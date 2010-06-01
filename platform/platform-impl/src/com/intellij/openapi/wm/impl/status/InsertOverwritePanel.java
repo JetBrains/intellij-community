@@ -15,20 +15,18 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.StatusBarWidget;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.ui.UIBundle;
-import com.intellij.util.Consumer;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ide.*;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.wm.*;
+import com.intellij.ui.*;
+import com.intellij.util.*;
+import org.jetbrains.annotations.*;
 
 import java.awt.*;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 
 /**
  * @author cdr

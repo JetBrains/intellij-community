@@ -12,12 +12,11 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.apache.commons.lang.StringUtils;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.vfs.*;
+import org.apache.commons.lang.*;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class HgMergeCommand {
 
@@ -42,8 +41,6 @@ public class HgMergeCommand {
 
   public HgCommandResult execute() {
     HgCommandService commandService = HgCommandService.getInstance(project);
-    List<String> config = new LinkedList<String>();
-    config.add("ui.merge=internal:merge");
     List<String> arguments = new LinkedList<String>();
     if (StringUtils.isNotBlank(revision)) {
       arguments.add("--rev");
@@ -51,7 +48,7 @@ public class HgMergeCommand {
     } else if (StringUtils.isNotBlank(branch)) {
       arguments.add(branch);
     }
-    return commandService.execute(repo, config, "merge", arguments);
+    return commandService.execute(repo, "merge", arguments);
   }
 
 }

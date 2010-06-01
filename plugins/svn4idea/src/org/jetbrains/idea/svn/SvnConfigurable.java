@@ -17,26 +17,21 @@
 
 package org.jetbrains.idea.svn;
 
-import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.ui.MultiLineTooltipUI;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.idea.svn.config.ConfigureProxiesListener;
-import org.tmatesoft.svn.core.wc.SVNWCUtil;
+import com.intellij.ide.util.*;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.fileChooser.*;
+import com.intellij.openapi.options.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.ui.*;
+import com.intellij.openapi.vfs.*;
+import com.intellij.ui.*;
+import org.jetbrains.annotations.*;
+import org.jetbrains.idea.svn.config.*;
+import org.tmatesoft.svn.core.wc.*;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.File;
+import java.awt.event.*;
+import java.io.*;
 
 public class SvnConfigurable implements Configurable {
 
@@ -53,6 +48,7 @@ public class SvnConfigurable implements Configurable {
   private JLabel myUseCommonProxyLabel;
   private JLabel myEditProxyLabel;
   private JCheckBox myLockOnDemand;
+  private JCheckBox myCheckNestedInQuickMerge;
   private JCheckBox myDetectNestedWorkingCopiesCheckBox;
   private JCheckBox myIgnoreWhitespaceDifferenciesInCheckBox;
   private JCheckBox myShowMergeSourceInAnnotate;
@@ -173,6 +169,9 @@ public class SvnConfigurable implements Configurable {
     if (configuration.DETECT_NESTED_COPIES != myDetectNestedWorkingCopiesCheckBox.isSelected()) {
       return true;
     }
+    if (configuration.CHECK_NESTED_FOR_QUICK_MERGE != myCheckNestedInQuickMerge.isSelected()) {
+      return true;
+    }
     if (configuration.IGNORE_SPACES_IN_ANNOTATE != myIgnoreWhitespaceDifferenciesInCheckBox.isSelected()) {
       return true;
     }
@@ -200,7 +199,8 @@ public class SvnConfigurable implements Configurable {
     if ((! configuration.DETECT_NESTED_COPIES) && (configuration.DETECT_NESTED_COPIES != myDetectNestedWorkingCopiesCheckBox.isSelected())) {
       SvnVcs.getInstance(myProject).invokeRefreshSvnRoots(true);
     }
-    configuration.DETECT_NESTED_COPIES = myDetectNestedWorkingCopiesCheckBox.isSelected(); 
+    configuration.DETECT_NESTED_COPIES = myDetectNestedWorkingCopiesCheckBox.isSelected();
+    configuration.CHECK_NESTED_FOR_QUICK_MERGE = myCheckNestedInQuickMerge.isSelected();
     configuration.UPDATE_LOCK_ON_DEMAND = myLockOnDemand.isSelected();
     configuration.setIgnoreSpacesInAnnotate(myIgnoreWhitespaceDifferenciesInCheckBox.isSelected());
     configuration.SHOW_MERGE_SOURCES_IN_ANNOTATE = myShowMergeSourceInAnnotate.isSelected();
@@ -221,6 +221,7 @@ public class SvnConfigurable implements Configurable {
     myUseDefaultCheckBox.setSelected(configuration.isUseDefaultConfiguation());
     myUseCommonProxy.setSelected(configuration.isIsUseDefaultProxy());
     myDetectNestedWorkingCopiesCheckBox.setSelected(configuration.DETECT_NESTED_COPIES);
+    myCheckNestedInQuickMerge.setSelected(configuration.CHECK_NESTED_FOR_QUICK_MERGE);
 
     boolean enabled = !myUseDefaultCheckBox.isSelected();
     myConfigurationDirectoryText.setEnabled(enabled);

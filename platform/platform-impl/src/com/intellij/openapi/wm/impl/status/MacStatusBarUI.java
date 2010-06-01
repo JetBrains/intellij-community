@@ -15,16 +15,13 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.update.Activatable;
-import com.intellij.util.ui.update.UiNotifyConnector;
+import com.intellij.util.ui.*;
+import com.intellij.util.ui.update.*;
 
 import javax.swing.*;
-import javax.swing.border.Border;
+import javax.swing.border.*;
 import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
+import java.awt.event.*;
 
 /**
  * User: spLeaner

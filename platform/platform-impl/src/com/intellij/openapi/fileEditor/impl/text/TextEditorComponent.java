@@ -15,44 +15,32 @@
  */
 package com.intellij.openapi.fileEditor.impl.text;
 
-import com.intellij.AppTopics;
-import com.intellij.ide.ui.customization.CustomActionsSchema;
+import com.intellij.*;
+import com.intellij.ide.ui.customization.*;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.diagnostic.*;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.event.*;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.EditorMarkupModel;
-import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
-import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
-import com.intellij.openapi.fileTypes.FileTypeEvent;
-import com.intellij.openapi.fileTypes.FileTypeListener;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
-import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.util.EditorPopupHandler;
-import com.intellij.util.messages.MessageBusConnection;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.editor.ex.*;
+import com.intellij.openapi.editor.highlighter.*;
+import com.intellij.openapi.editor.impl.*;
+import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.impl.*;
+import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.ex.*;
+import com.intellij.util.*;
+import com.intellij.util.messages.*;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
+import java.awt.event.*;
+import java.beans.*;
 
 /**
  * @author Anton Katilin

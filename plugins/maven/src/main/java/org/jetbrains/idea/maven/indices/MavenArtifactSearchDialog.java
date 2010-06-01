@@ -18,7 +18,7 @@ package org.jetbrains.idea.maven.indices;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import gnu.trove.THashMap;
-import org.jetbrains.idea.maven.project.MavenId;
+import org.jetbrains.idea.maven.model.MavenId;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;

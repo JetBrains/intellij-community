@@ -174,10 +174,14 @@ def layoutFull(String home, String targetDirectory) {
 
 
       layoutPlugin("maven") {
-        jar("maven-facade.jar") {
-          module("maven-facade")
+        jar("maven-facade-api.jar") {
+          module("maven-facade-api")
         }
-        fileset(dir: "$home/plugins/maven/lib")
+        jar("maven-facade-impl.jar") {
+          module("maven-facade-impl")
+        }
+        fileset(dir: "$home/plugins/maven/facade-impl/lib")
+        fileset(dir: "$home/plugins/maven/facade-api/lib")
       }
 
 

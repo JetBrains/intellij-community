@@ -76,11 +76,12 @@ public class MethodResolverProcessor extends ResolverProcessor {
       if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
       substitutor = obtainSubstitutor(substitutor, method);
       boolean isAccessible = isAccessible(method);
-      boolean isStaticsOK = isStaticsOK(method);
-      if (PsiUtil.isApplicable(myArgumentTypes, method, substitutor, myCurrentFileResolveContext instanceof GrMethodCallExpression, (GroovyPsiElement)myPlace)) {
-        myCandidates.add(new GroovyResolveResultImpl(method, myCurrentFileResolveContext, substitutor, isAccessible, isStaticsOK));
+      GroovyPsiElement fileResolveContext = state.get(RESOLVE_CONTEXT);
+      boolean isStaticsOK = isStaticsOK(method, fileResolveContext);
+      if (PsiUtil.isApplicable(myArgumentTypes, method, substitutor, fileResolveContext instanceof GrMethodCallExpression, (GroovyPsiElement)myPlace)) {
+        myCandidates.add(new GroovyResolveResultImpl(method, fileResolveContext, substitutor, isAccessible, isStaticsOK));
       } else {
-        myInapplicableCandidates.add(new GroovyResolveResultImpl(method, myCurrentFileResolveContext, substitutor, isAccessible, isStaticsOK));
+        myInapplicableCandidates.add(new GroovyResolveResultImpl(method, fileResolveContext, substitutor, isAccessible, isStaticsOK));
       }
 
       return true;

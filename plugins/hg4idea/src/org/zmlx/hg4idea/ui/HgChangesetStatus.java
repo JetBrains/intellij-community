@@ -12,10 +12,9 @@
 // limitations under the License.
 package org.zmlx.hg4idea.ui;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.wm.CustomStatusBarWidget;
-import com.intellij.openapi.wm.StatusBar;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.wm.*;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 

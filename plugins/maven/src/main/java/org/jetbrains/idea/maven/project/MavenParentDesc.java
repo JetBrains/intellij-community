@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.project;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.model.MavenId;
 
 public class MavenParentDesc {
   private final MavenId myParentId;

@@ -318,7 +318,7 @@ class Bar {}
 package pack
 class Foo extends Goo {
 }"""
-    def goo = myFixture.addFileToProject("Goo.groovy", """
+    def goo = myFixture.addFileToProject("pack/Goo.groovy", """
 package pack
 class Goo {}""")
 

@@ -15,39 +15,29 @@
  */
 package com.intellij.util.ui;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.SideBorder;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ReflectionUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import com.intellij.openapi.*;
+import com.intellij.openapi.diagnostic.*;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.*;
+import com.intellij.ui.*;
+import com.intellij.util.*;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.border.LineBorder;
-import javax.swing.plaf.ProgressBarUI;
-import javax.swing.plaf.basic.BasicTreeUI;
-import javax.swing.text.html.HTMLEditorKit;
-import javax.swing.text.html.StyleSheet;
-import javax.swing.tree.TreePath;
+import javax.swing.border.*;
+import javax.swing.plaf.*;
+import javax.swing.plaf.basic.*;
+import javax.swing.text.html.*;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.font.FontRenderContext;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import java.awt.font.*;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.regex.Pattern;
+import java.util.Map;
+import java.util.concurrent.*;
+import java.util.regex.*;
 
 /**
  * @author max

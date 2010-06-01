@@ -17,42 +17,28 @@
 package com.intellij.codeInsight.problems;
 
 import com.intellij.codeInsight.daemon.impl.*;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
-import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.FileStatusListener;
-import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.codeInsight.daemon.impl.analysis.*;
+import com.intellij.lang.annotation.*;
+import com.intellij.openapi.*;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.impl.*;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.module.*;
+import com.intellij.openapi.progress.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.*;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.problems.Problem;
-import com.intellij.problems.WolfTheProblemSolver;
+import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.ex.*;
+import com.intellij.problems.*;
 import com.intellij.psi.*;
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.containers.*;
+import gnu.trove.*;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 
@@ -87,25 +73,6 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
   };
 
-  private final VirtualFileListener myVirtualFileListener = new VirtualFileAdapter() {
-    public void fileDeleted(final VirtualFileEvent event) {
-      onDeleted(event.getFile());
-    }
-
-    public void fileMoved(final VirtualFileMoveEvent event) {
-      onDeleted(event.getFile());
-    }
-
-    private void onDeleted(final VirtualFile file) {
-      if (file.isDirectory()) {
-        clearInvalidFiles();
-      }
-      else {
-        doRemove(file);
-      }
-    }
-  };
-
   private void doRemove(VirtualFile problemFile) {
     ProblemFileInfo old;
     synchronized (myProblems) {
@@ -120,8 +87,6 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
   }
 
-  private final PsiTreeChangeListener myChangeListener;
-
   private static class ProblemFileInfo {
     private final Collection<Problem> problems = new THashSet<Problem>();
     private boolean hasSyntaxErrors;
@@ -132,10 +97,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
 
       final ProblemFileInfo that = (ProblemFileInfo)o;
 
-      if (hasSyntaxErrors != that.hasSyntaxErrors) return false;
-      if (!problems.equals(that.problems)) return false;
-
-      return true;
+      return hasSyntaxErrors == that.hasSyntaxErrors && problems.equals(that.problems);
     }
 
     public int hashCode() {
@@ -147,7 +109,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
 
   public WolfTheProblemSolverImpl(Project project, PsiManager psiManager, VirtualFileManager virtualFileManager) {
     myProject = project;
-    myChangeListener = new PsiTreeChangeAdapter() {
+    PsiTreeChangeListener changeListener = new PsiTreeChangeAdapter() {
       public void childAdded(PsiTreeChangeEvent event) {
         childrenChanged(event);
       }
@@ -172,8 +134,26 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
         clearSyntaxErrorFlag(event);
       }
     };
-    psiManager.addPsiTreeChangeListener(myChangeListener);
-    virtualFileManager.addVirtualFileListener(myVirtualFileListener, myProject);
+    psiManager.addPsiTreeChangeListener(changeListener);
+    VirtualFileListener virtualFileListener = new VirtualFileAdapter() {
+      public void fileDeleted(final VirtualFileEvent event) {
+        onDeleted(event.getFile());
+      }
+
+      public void fileMoved(final VirtualFileMoveEvent event) {
+        onDeleted(event.getFile());
+      }
+
+      private void onDeleted(final VirtualFile file) {
+        if (file.isDirectory()) {
+          clearInvalidFiles();
+        }
+        else {
+          doRemove(file);
+        }
+      }
+    };
+    virtualFileManager.addVirtualFileListener(virtualFileListener, myProject);
     FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
     if (fileStatusManager != null) { //tests?
       fileStatusManager.addFileStatusListener(new FileStatusListener() {

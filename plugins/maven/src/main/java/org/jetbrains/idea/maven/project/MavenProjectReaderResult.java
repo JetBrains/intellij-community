@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,32 +15,33 @@
  */
 package org.jetbrains.idea.maven.project;
 
-import org.apache.maven.project.MavenProject;
-import org.apache.maven.shared.dependency.tree.DependencyNode;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.facade.NativeMavenProjectHolder;
+import org.jetbrains.idea.maven.model.*;
 
-import java.io.File;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 
 public class MavenProjectReaderResult {
-  final public MavenGeneralSettings settings;
-  final public MavenProject nativeMavenProject;
-  final public Collection<DependencyNode> dependencyTree;
-  final public Collection<MavenProjectProblem> readingProblems;
-  final public Set<MavenId> unresolvedArtifactIds;
-  final public File localRepository;
+  public final MavenModel mavenModel;
+  public final Map<String, String> nativeModelMap;
+  public final Collection<MavenProfile> activatedProfiles;
+  @Nullable public final NativeMavenProjectHolder nativeMavenProject;
+  public final Collection<MavenProjectProblem> readingProblems;
+  public final Set<MavenId> unresolvedArtifactIds;
 
-  public MavenProjectReaderResult(MavenGeneralSettings settings,
-                                  MavenProject nativeMavenProject,
-                                  Collection<DependencyNode> dependencyTree,
+  public MavenProjectReaderResult(MavenModel mavenModel,
+                                  Map<String, String> nativeModelMap,
+                                  Collection<MavenProfile> activatedProfiles,
+                                  @Nullable NativeMavenProjectHolder nativeMavenProject,
                                   Collection<MavenProjectProblem> readingProblems,
-                                  Set<MavenId> unresolvedArtifactIds,
-                                  File localRepository) {
-    this.settings = settings;
+                                  Set<MavenId> unresolvedArtifactIds) {
+    this.mavenModel = mavenModel;
+    this.nativeModelMap = nativeModelMap;
+    this.activatedProfiles = activatedProfiles;
     this.nativeMavenProject = nativeMavenProject;
-    this.dependencyTree = dependencyTree;
     this.readingProblems = readingProblems;
     this.unresolvedArtifactIds = unresolvedArtifactIds;
-    this.localRepository = localRepository;
   }
 }

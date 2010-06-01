@@ -12,17 +12,15 @@
 // limitations under the License.
 package org.zmlx.hg4idea.action;
 
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsUtil;
-import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.command.HgResolveCommand;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vfs.*;
+import com.intellij.vcsUtil.*;
+import org.zmlx.hg4idea.*;
+import org.zmlx.hg4idea.command.*;
 
-import java.util.List;
+import java.util.*;
 
 public class HgMarkResolved extends HgAbstractFilesAction {
 
@@ -39,7 +37,7 @@ public class HgMarkResolved extends HgAbstractFilesAction {
       if (root == null) {
         return;
       }
-      resolveCommand.resolve(root, file);
+      resolveCommand.markResolved(root, file);
     }
   }
 

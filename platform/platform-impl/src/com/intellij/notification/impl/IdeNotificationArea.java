@@ -15,24 +15,21 @@
  */
 package com.intellij.notification.impl;
 
-import com.intellij.ide.DataManager;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.impl.ui.NotificationsListPanel;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.wm.StatusBarWidget;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.util.Consumer;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ide.*;
+import com.intellij.notification.*;
+import com.intellij.notification.impl.ui.*;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.wm.*;
+import com.intellij.util.*;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.lang.ref.WeakReference;
+import java.awt.event.*;
+import java.lang.ref.*;
 
 /**
  * @author spleaner

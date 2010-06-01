@@ -15,28 +15,22 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
-import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
-import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
-import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
+import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.daemon.impl.analysis.*;
+import com.intellij.codeInsight.daemon.impl.quickfix.*;
+import com.intellij.codeInsight.highlighting.*;
+import com.intellij.codeInsight.intention.*;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.colors.*;
+import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
-import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.impl.source.jsp.jspJava.*;
+import com.intellij.psi.javadoc.*;
+import com.intellij.psi.util.*;
+import com.intellij.util.*;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 
@@ -54,8 +48,7 @@ public class MoveInitializerToConstructorAction extends PsiElementBaseIntentionA
     return CodeInsightBundle.message("intention.move.initializer.to.constructor");
   }
 
-  public boolean isAvailable(@NotNull Project project, Editor editor, @Nullable PsiElement element) {
-    if (element == null) return false;
+  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     if (element instanceof PsiCompiledElement) return false;
     final PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class, false, PsiMember.class, PsiCodeBlock.class, PsiDocComment.class);
     if (field == null || field.hasModifierProperty(PsiModifier.STATIC)) return false;

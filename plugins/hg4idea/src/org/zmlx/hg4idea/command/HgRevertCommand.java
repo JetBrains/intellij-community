@@ -12,10 +12,11 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
-import com.intellij.openapi.project.Project;
-import org.zmlx.hg4idea.HgFile;
+import com.intellij.openapi.project.*;
+import org.apache.commons.lang.*;
+import org.zmlx.hg4idea.*;
 
-import java.util.Arrays;
+import java.util.*;
 
 public class HgRevertCommand {
 
@@ -25,9 +26,24 @@ public class HgRevertCommand {
     this.project = project;
   }
 
-  public void execute(HgFile hgFile) {
-    HgCommandService.getInstance(project)
-      .execute(hgFile.getRepo(), "revert", Arrays.asList(hgFile.getRelativePath()));
-  }
+  public void execute(HgFile hgFile, HgRevisionNumber vcsRevisionNumber, boolean backupFile) {
+    List<String> arguments = new LinkedList<String>();
 
+    if (vcsRevisionNumber != null) {
+      arguments.add("--rev");
+      if (StringUtils.isNotBlank(vcsRevisionNumber.getChangeset())) {
+        arguments.add(vcsRevisionNumber.getChangeset());
+      } else {
+        arguments.add(vcsRevisionNumber.getRevision());
+      }
+    }
+
+    if (!backupFile) {
+      arguments.add("--no-backup");
+    }
+
+    arguments.addAll(Arrays.asList(hgFile.getRelativePath()));
+
+    HgCommandService.getInstance(project).execute(hgFile.getRepo(), "revert", arguments);
+  }
 }

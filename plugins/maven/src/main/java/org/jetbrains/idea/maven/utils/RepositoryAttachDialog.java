@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -41,9 +42,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.facade.nexus.ArtifactType;
-import org.jetbrains.idea.maven.facade.nexus.RepositoryType;
-import org.jetbrains.idea.maven.facade.remote.MavenFacade;
+import org.jetbrains.idea.maven.model.MavenArtifactInfo;
+import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -63,8 +63,9 @@ public class RepositoryAttachDialog extends DialogWrapper {
   private final Project myProject;
   private final boolean myManaged;
   private final AsyncProcessIcon myProgressIcon;
-  private final THashMap<String, ArtifactType> myCoordinates = new THashMap<String, ArtifactType>();
-  private final Map<String, MavenFacade.Repository> myRepositories = new TreeMap<String, MavenFacade.Repository>();
+  private final THashMap<String, Pair<MavenArtifactInfo, MavenRepositoryInfo>> myCoordinates
+    = new THashMap<String, Pair<MavenArtifactInfo, MavenRepositoryInfo>>();
+  private final Map<String, MavenRepositoryInfo> myRepositories = new TreeMap<String, MavenRepositoryInfo>();
   private final ArrayList<String> myShownItems = new ArrayList<String>();
   private final JComboBox myCombobox = new JComboBox(new CollectionComboBoxModel(myShownItems, null));
 
@@ -171,15 +172,16 @@ public class RepositoryAttachDialog extends DialogWrapper {
     if (myProgressIcon.isVisible()) return false;
     myProgressIcon.setVisible(true);
     myProgressIcon.resume();
-    RepositoryAttachHandler.searchArtifacts(myProject, text, new PairProcessor<Collection<ArtifactType>, Boolean>() {
-      public boolean process(Collection<ArtifactType> artifactTypes, Boolean tooMany) {
+    RepositoryAttachHandler.searchArtifacts(myProject, text, new PairProcessor<Collection<Pair<MavenArtifactInfo, MavenRepositoryInfo>>, Boolean>() {
+      public boolean process(Collection<Pair<MavenArtifactInfo, MavenRepositoryInfo>> artifacts, Boolean tooMany) {
         if (myProgressIcon.isDisposed()) return true;
         myProgressIcon.suspend();
         myProgressIcon.setVisible(false);
         final int prevSize = myCoordinates.size();
-        for (ArtifactType artifactType : artifactTypes) {
-          myCoordinates.put(artifactType.getGroupId() + ":" + artifactType.getArtifactId() + ":" + artifactType.getVersion(), artifactType);
+        for (Pair<MavenArtifactInfo, MavenRepositoryInfo> each : artifacts) {
+          myCoordinates.put(each.first.getGroupId() + ":" + each.first.getArtifactId() + ":" + each.first.getVersion(), each);
         }
+
         myRepositoryUrl.setModel(new CollectionComboBoxModel(new ArrayList<String>(myRepositories.keySet()), myRepositoryUrl.getEditor().getItem()));
         if (Boolean.TRUE.equals(tooMany)) {
           final Point point = new Point(myCombobox.getWidth() / 2, 0);
@@ -190,13 +192,11 @@ public class RepositoryAttachDialog extends DialogWrapper {
         updateComboboxSelection(prevSize != myCoordinates.size());
         return true;
       }
-    }, new Processor<Collection<RepositoryType>>() {      
-      public boolean process(Collection<RepositoryType> repositoryTypes) {
-        for (RepositoryType repositoryType : repositoryTypes) {
-          if (!myRepositories.containsKey(repositoryType.getContentResourceURI())) {
-            myRepositories.put(
-              repositoryType.getContentResourceURI(),
-              new MavenFacade.Repository(repositoryType.getId(), repositoryType.getContentResourceURI(), "default"));
+    }, new Processor<Collection<MavenRepositoryInfo>>() {
+      public boolean process(Collection<MavenRepositoryInfo> repos) {
+        for (MavenRepositoryInfo each : repos) {
+          if (!myRepositories.containsKey(each.getUrl())) {
+            myRepositories.put(each.getUrl(), each);
           }
         }
         return true;
@@ -274,7 +274,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
       final LabeledComponent<JComboBox> repository = new LabeledComponent<JComboBox>();
       repository.getLabel().setText("Repository URL to Download From:");
       myRepositories.put(DEFAULT_REPOSITORY, null);
-      for (MavenFacade.Repository repo : RepositoryAttachHandler.getDefaultRepositories()) {
+      for (MavenRepositoryInfo repo : RepositoryAttachHandler.getDefaultRepositories()) {
         myRepositories.put(repo.getUrl(), repo);
       }
       myRepositoryUrl = new JComboBox(new CollectionComboBoxModel(new ArrayList<String>(myRepositories.keySet()), DEFAULT_REPOSITORY));
@@ -324,15 +324,14 @@ public class RepositoryAttachDialog extends DialogWrapper {
   }
 
   @NotNull
-  public List<MavenFacade.Repository> getRepositories() {
+  public List<MavenRepositoryInfo> getRepositories() {
     final String selectedRepository = (String)myRepositoryUrl.getEditor().getItem();
     if (StringUtil.isNotEmpty(selectedRepository) && !DEFAULT_REPOSITORY.equals(selectedRepository) && !myRepositories.containsKey(selectedRepository)) {
-      return Collections.singletonList(new MavenFacade.Repository("custom", selectedRepository, "default"));
+      return Collections.singletonList(new MavenRepositoryInfo("custom", null, selectedRepository));
     }
     else {
-      final ArtifactType artifact = myCoordinates.get(getCoordinateText());
-      final MavenFacade.Repository repository =
-        artifact != null && artifact.getResourceUri() != null ? myRepositories.get(artifact.getResourceUri()) : null;
+      final Pair<MavenArtifactInfo, MavenRepositoryInfo> artifactAndRepo = myCoordinates.get(getCoordinateText());
+      final MavenRepositoryInfo repository = artifactAndRepo.second;
       return repository != null? Collections.singletonList(repository) : ContainerUtil.findAll(myRepositories.values(), Condition.NOT_NULL);
     }
   }

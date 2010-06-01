@@ -28,9 +28,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.embedder.MavenConsole;
-import org.jetbrains.idea.maven.embedder.MavenConsoleHelper;
-import org.jetbrains.idea.maven.embedder.MavenConsoleImpl;
+import org.jetbrains.idea.maven.project.MavenConsole;
+import org.jetbrains.idea.maven.project.MavenConsoleImpl;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.SimpleProjectComponent;
@@ -108,7 +107,7 @@ public class MavenRunner extends SimpleProjectComponent implements PersistentSta
       });
     }
     catch (Exception e) {
-      MavenConsoleHelper.printException(console, e);
+      console.printException(e);
       console.finish();
       MavenLog.LOG.warn(e);
     }

@@ -12,22 +12,21 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.intellij.openapi.vfs.VirtualFile;
-import org.testng.annotations.Test;
+import com.intellij.openapi.vfs.*;
+import org.testng.annotations.*;
 
 public class HgAddTestCase extends HgTestCase {
 
   @Test
   public void testAddFile() throws Exception {
     createFileInCommand("a.txt", "new file content");
-    verify(runHg("status"), "A a.txt");
+    verify(runHgOnProjectRepo("status"), added("a.txt"));
   }
 
   @Test
   public void testAddFileInDirectory() throws Exception {
     VirtualFile parent = createDirInCommand(myWorkingCopyDir, "com");
     createFileInCommand(parent, "a.txt", "new file content");
-    verify(runHg("status"), "A com/a.txt");
+    verify(runHgOnProjectRepo("status"), added("com", "a.txt"));
   }
-
 }

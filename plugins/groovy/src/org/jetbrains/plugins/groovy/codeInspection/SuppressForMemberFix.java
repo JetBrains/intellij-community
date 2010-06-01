@@ -16,28 +16,22 @@
 
 package org.jetbrains.plugins.groovy.codeInspection;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.SuppressIntentionAction;
-import com.intellij.codeInspection.SuppressManager;
-import com.intellij.codeInspection.SuppressManagerImpl;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.daemon.*;
+import com.intellij.codeInspection.*;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.project.*;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
+import com.intellij.psi.util.*;
+import com.intellij.util.*;
+import org.jetbrains.annotations.*;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.*;
+import org.jetbrains.plugins.groovy.lang.psi.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
 
 /**
  * @author peter
@@ -85,7 +79,7 @@ public class SuppressForMemberFix extends SuppressIntentionAction {
     return InspectionsBundle.message("suppress.inspection.family");
   }
 
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, @Nullable final PsiElement context) {
+  public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement context) {
     final GrDocCommentOwner container = getContainer(context);
     myKey = container instanceof PsiClass
             ? "suppress.inspection.class"

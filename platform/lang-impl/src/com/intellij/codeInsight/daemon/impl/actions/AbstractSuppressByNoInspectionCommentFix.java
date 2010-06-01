@@ -16,27 +16,19 @@
 
 package com.intellij.codeInsight.daemon.impl.actions;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.SuppressIntentionAction;
-import com.intellij.codeInspection.SuppressionUtil;
-import com.intellij.lang.Commenter;
-import com.intellij.lang.LanguageCommenters;
-import com.intellij.openapi.command.undo.UndoUtil;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiParserFacade;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.codeInsight.*;
+import com.intellij.codeInspection.*;
+import com.intellij.lang.*;
+import com.intellij.openapi.command.undo.*;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.project.*;
+import com.intellij.psi.*;
+import com.intellij.psi.util.*;
+import com.intellij.util.*;
+import org.jetbrains.annotations.*;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Roman.Chernyatchik
@@ -94,8 +86,8 @@ public abstract class AbstractSuppressByNoInspectionCommentFix extends SuppressI
     container.getParent().addBefore(comment, container);
   }
 
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, @Nullable final PsiElement context) {
-    return context != null && context.getManager().isInProject(context) && getContainer(context) != null;
+  public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement context) {
+    return context.getManager().isInProject(context) && getContainer(context) != null;
   }
 
   public void invoke(final Project project, @Nullable Editor editor, final PsiElement element) throws IncorrectOperationException {

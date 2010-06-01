@@ -12,23 +12,18 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.zmlx.hg4idea.HgFile;
+import com.intellij.openapi.project.*;
 
-import java.util.Arrays;
+import java.util.*;
 
-public class HgIncomingCommand extends HgRevisionsCommand {
+public class HgIncomingCommand extends HgChangesetsCommand {
 
   public HgIncomingCommand(Project project) {
-    super(project);
+    super(project, "incoming");
   }
 
   @Override
-  protected HgCommandResult execute(HgCommandService service, VirtualFile repo,
-    String template, int limit, HgFile hgFile) {
-    return service.execute(repo, "incoming",
-      Arrays.asList("--newest-first", "--template", template, "--limit", String.valueOf(limit)));
+  protected void addArguments(List<String> args) {
+    args.add("--newest-first");
   }
-
 }

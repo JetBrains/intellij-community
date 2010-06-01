@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.containers.WeakValueHashMap;
+import com.intellij.util.io.fs.FilePath;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.Reference;

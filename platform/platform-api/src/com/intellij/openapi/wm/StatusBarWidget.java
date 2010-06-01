@@ -15,17 +15,16 @@
  */
 package com.intellij.openapi.wm;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.Consumer;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.*;
+import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.util.*;
+import com.intellij.util.*;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
-import javax.swing.border.Border;
+import javax.swing.border.*;
 import java.awt.*;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 
 /**
  * User: spLeaner

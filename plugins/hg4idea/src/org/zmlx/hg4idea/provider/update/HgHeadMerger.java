@@ -12,23 +12,18 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider.update;
 
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vcs.update.FileGroup;
-import com.intellij.openapi.vcs.update.UpdatedFiles;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
-import org.zmlx.hg4idea.HgFile;
-import org.zmlx.hg4idea.HgVcsMessages;
-import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.command.HgChange;
-import org.zmlx.hg4idea.command.HgMergeCommand;
-import org.zmlx.hg4idea.command.HgStatusCommand;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.history.*;
+import com.intellij.openapi.vcs.update.*;
+import com.intellij.openapi.vfs.*;
+import org.jetbrains.annotations.*;
+import org.zmlx.hg4idea.*;
+import org.zmlx.hg4idea.command.*;
 
-import java.util.Set;
+import java.util.*;
+
+import static org.zmlx.hg4idea.HgErrorHandler.*;
 
 final class HgHeadMerger {
 
@@ -40,43 +35,39 @@ final class HgHeadMerger {
     this.hgMergeCommand = hgMergeCommand;
   }
 
-  public void merge(VirtualFile repo, UpdatedFiles updatedFiles,
-    ProgressIndicator indicator, VcsRevisionNumber revisionNumber) throws VcsException {
-    indicator.setText2(HgVcsMessages.message("hg4idea.progress.merging"));
+  public HgCommandResult merge(VirtualFile repo, UpdatedFiles updatedFiles,
+    VcsRevisionNumber revisionNumber) throws VcsException {
 
-    hgMergeCommand.execute();
+    HgCommandResult commandResult = ensureSuccess(hgMergeCommand.execute());
 
-    VcsDirtyScopeManager vcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
-    vcsDirtyScopeManager.dirDirtyRecursively(repo);
-    repo.refresh(false, true);
+    HgUtil.markDirectoryDirty(project, repo);
 
     HgStatusCommand hgStatusCommand = new HgStatusCommand(project);
     hgStatusCommand.setIncludeIgnored(false);
     hgStatusCommand.setIncludeUnknown(false);
     Set<HgChange> changes = hgStatusCommand.execute(repo);
-    if (changes.isEmpty()) {
-      return;
-    }
-
-    for (HgChange change : changes) {
-      HgFile afterFile = change.afterFile();
-      HgFile beforeFile = change.beforeFile();
-      String fileGroupId = null;
-      String filePath = null;
-      if (afterFile != null && beforeFile != null) {
-        fileGroupId = FileGroup.MODIFIED_ID;
-        filePath = afterFile.getFile().getAbsolutePath();
-      } else if (beforeFile != null) {
-        fileGroupId = FileGroup.LOCALLY_REMOVED_ID;
-        filePath = beforeFile.getFile().getAbsolutePath();
-      } else if (afterFile != null) {
-        fileGroupId = FileGroup.LOCALLY_ADDED_ID;
-        filePath = afterFile.getFile().getAbsolutePath();
-      }
-      if (fileGroupId != null && filePath != null) {
-        updatedFiles.getGroupById(fileGroupId).add(filePath, HgVcs.VCS_NAME, revisionNumber);
+    if (!changes.isEmpty()) {
+      for (HgChange change : changes) {
+        HgFile afterFile = change.afterFile();
+        HgFile beforeFile = change.beforeFile();
+        String fileGroupId = null;
+        String filePath = null;
+        if (afterFile != null && beforeFile != null) {
+          fileGroupId = FileGroup.MODIFIED_ID;
+          filePath = afterFile.getFile().getAbsolutePath();
+        } else if (beforeFile != null) {
+          fileGroupId = FileGroup.LOCALLY_REMOVED_ID;
+          filePath = beforeFile.getFile().getAbsolutePath();
+        } else if (afterFile != null) {
+          fileGroupId = FileGroup.LOCALLY_ADDED_ID;
+          filePath = afterFile.getFile().getAbsolutePath();
+        }
+        if (fileGroupId != null && filePath != null) {
+          updatedFiles.getGroupById(fileGroupId).add(filePath, HgVcs.VCS_NAME, revisionNumber);
+        }
       }
     }
+    return commandResult;
   }
 
 }

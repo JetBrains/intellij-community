@@ -38,33 +38,30 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
   public void handleInsert(InsertionContext context, LookupElementDecorator<LookupItem> item) {
     @SuppressWarnings({"unchecked"}) final LookupItem<PsiClass> delegate = item.getDelegate();
 
+    final PsiElement position = SmartCompletionDecorator.getPosition(context, delegate);
+    final PsiExpression enclosing = PsiTreeUtil.getContextOfType(position, PsiExpression.class, true);
+    final PsiAnonymousClass anonymousClass = PsiTreeUtil.getParentOfType(position, PsiAnonymousClass.class);
+    final boolean inAnonymous = anonymousClass != null && anonymousClass.getParent() == enclosing;
+
     insertParentheses(context, delegate, delegate.getObject());
 
     DefaultInsertHandler.addImportForItem(context.getFile(), context.getStartOffset(), delegate);
 
-    final PsiElement position = SmartCompletionDecorator.getPosition(context, delegate);
 
-    final PsiExpression enclosing = PsiTreeUtil.getContextOfType(position, PsiExpression.class, true);
-    if (item.getUserData(LookupItem.BRACKETS_COUNT_ATTR) == null) {
-      final PsiAnonymousClass anonymousClass = PsiTreeUtil.getParentOfType(position, PsiAnonymousClass.class);
-      if (anonymousClass == null || anonymousClass.getParent() != enclosing) {
+    if (item.getUserData(LookupItem.BRACKETS_COUNT_ATTR) == null && !inAnonymous) {
+      if (((PsiClass)item.getObject()).hasModifierProperty(PsiModifier.ABSTRACT)) {
+        FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.smarttype.anonymous");
 
-        final PsiClass psiClass = (PsiClass)item.getObject();
+        PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting(context.getFile().getViewProvider());
 
-        if (psiClass.hasModifierProperty(PsiModifier.ABSTRACT) || psiClass.isInterface()) {
-          FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.smarttype.anonymous");
-
-          PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting(context.getFile().getViewProvider());
-
-          final Editor editor = context.getEditor();
-          final int offset = context.getTailOffset();
-          editor.getDocument().insertString(offset, " {}");
-          editor.getCaretModel().moveToOffset(offset + 2);
-          context.setLaterRunnable(generateAnonymousBody(editor, context.getFile()));
-        }
-        else {
-          FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.smarttype.afternew");
-        }
+        final Editor editor = context.getEditor();
+        final int offset = context.getTailOffset();
+        editor.getDocument().insertString(offset, " {}");
+        editor.getCaretModel().moveToOffset(offset + 2);
+        context.setLaterRunnable(generateAnonymousBody(editor, context.getFile()));
+      }
+      else {
+        FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.smarttype.afternew");
       }
     }
   }

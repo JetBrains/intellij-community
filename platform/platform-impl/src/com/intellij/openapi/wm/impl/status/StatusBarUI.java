@@ -15,9 +15,11 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.util.ui.*;
+
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.plaf.ComponentUI;
+import javax.swing.border.*;
+import javax.swing.plaf.*;
 import java.awt.*;
 
 /**
@@ -82,7 +84,9 @@ public class StatusBarUI extends ComponentUI {
     public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
       final Graphics2D g2d = (Graphics2D) g.create();
 
-      g2d.setColor(BG_COLOR);
+      final Color background = UIUtil.getPanelBackgound();
+
+      g2d.setColor(background);
       g2d.fillRect(0, 0, width, height);
 
       g2d.setColor(BORDER_TOP_COLOR);

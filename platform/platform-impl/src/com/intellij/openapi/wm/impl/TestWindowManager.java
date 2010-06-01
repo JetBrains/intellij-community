@@ -15,26 +15,20 @@
  */
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.progress.TaskInfo;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.popup.BalloonHandler;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.StatusBarWidget;
-import com.intellij.openapi.wm.WindowManagerListener;
-import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
-import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.*;
+import com.intellij.openapi.components.*;
+import com.intellij.openapi.progress.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.ex.*;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkListener;
+import javax.swing.event.*;
 import java.awt.*;
-import java.awt.event.ComponentEvent;
+import java.awt.event.*;
 
 /**
  * @author Anton Katilin

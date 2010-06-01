@@ -12,21 +12,19 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.jetbrains.annotations.NotNull;
-import org.zmlx.hg4idea.command.HgCatCommand;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.*;
+import org.apache.commons.lang.*;
+import org.apache.commons.lang.builder.*;
+import org.jetbrains.annotations.*;
+import org.zmlx.hg4idea.command.*;
 
 public class HgContentRevision implements ContentRevision {
 
   private final Project project;
   private final HgFile hgFile;
-  private final HgRevisionNumber revisionNumber;
+  @NotNull private final HgRevisionNumber revisionNumber;
 
   private FilePath filePath;
   private String content;

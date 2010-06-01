@@ -16,14 +16,11 @@
 
 package com.intellij.util.lang;
 
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
-import sun.misc.Resource;
+import org.jetbrains.annotations.*;
+import sun.misc.*;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.net.URLClassLoader;
+import java.io.*;
+import java.net.*;
 import java.util.*;
 
 public class UrlClassLoader extends ClassLoader {
@@ -34,7 +31,7 @@ public class UrlClassLoader extends ClassLoader {
   protected static final long NS_THRESHOLD = 10000000;
 
   public UrlClassLoader(ClassLoader parent) {
-    this(Arrays.asList(((URLClassLoader)parent).getURLs()), null, true, true);
+    this(Arrays.asList(((URLClassLoader)parent).getURLs()), parent.getParent(), true, true);
   }
 
   public UrlClassLoader(List<URL> urls, ClassLoader parent) {

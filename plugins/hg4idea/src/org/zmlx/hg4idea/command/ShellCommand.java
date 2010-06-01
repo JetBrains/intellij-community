@@ -12,11 +12,11 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.*;
 
 import java.io.*;
-import java.nio.charset.Charset;
-import java.util.List;
+import java.nio.charset.*;
+import java.util.*;
 
 
 final class ShellCommand {
@@ -32,7 +32,6 @@ final class ShellCommand {
     }
     StringWriter out = new StringWriter();
     StringWriter err = new StringWriter();
-    HgCommandResult result = new HgCommandResult(out, err);
     try {
       ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
       if (dir != null) {
@@ -46,9 +45,10 @@ final class ShellCommand {
         new InputStreamReader(process.getErrorStream()), err
       );
       process.waitFor();
+      int exitValue = process.exitValue();
       outReaderThread.join();
       errReaderThread.join();
-      return result;
+      return new HgCommandResult(out, err, exitValue );
     } catch (IOException e) {
       throw new ShellCommandException(e);
     } catch (InterruptedException e) {

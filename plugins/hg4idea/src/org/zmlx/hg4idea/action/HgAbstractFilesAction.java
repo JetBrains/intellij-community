@@ -13,18 +13,13 @@
 package org.zmlx.hg4idea.action;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.TransactionRunnable;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.zmlx.hg4idea.HgVcs;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vfs.*;
+import org.zmlx.hg4idea.*;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 abstract class HgAbstractFilesAction extends AnAction {
 
@@ -44,7 +39,7 @@ abstract class HgAbstractFilesAction extends AnAction {
 
     project.save();
 
-    final HgVcs vcs = HgVcs.getInstance(project);
+    final HgVcs vcs = getHgVcs(project);
     if (!ProjectLevelVcsManager.getInstance(project).checkAllFilesAreUnder(vcs, files)) {
       return;
     }
@@ -81,7 +76,12 @@ abstract class HgAbstractFilesAction extends AnAction {
       return;
     }
 
-    final HgVcs vcs = HgVcs.getInstance(project);
+    HgVcs vcs = getHgVcs(project);
+    if (!vcs.isStarted()) {
+      presentation.setEnabled(false);
+      return;
+    }
+
     if (!ProjectLevelVcsManager.getInstance(project).checkAllFilesAreUnder(vcs, files)) {
       presentation.setEnabled(false);
       return;
@@ -120,12 +120,12 @@ abstract class HgAbstractFilesAction extends AnAction {
     });
 
     for (VirtualFile file : enabledFiles) {
-      doVcsRefresh(project, file);
+      HgUtil.markFileDirty(project, file);
     }
   }
 
-  private void doVcsRefresh(final Project project, final VirtualFile file) {
-    VcsDirtyScopeManager.getInstance(project).fileDirty(file);
+  private HgVcs getHgVcs(Project project) {
+    return (HgVcs) ProjectLevelVcsManager.getInstance(project).findVcsByName(HgVcs.VCS_NAME);
   }
 
 }

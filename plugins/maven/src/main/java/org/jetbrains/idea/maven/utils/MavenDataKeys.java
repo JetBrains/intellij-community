@@ -16,7 +16,7 @@
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.openapi.actionSystem.DataKey;
-import org.jetbrains.idea.maven.project.MavenArtifact;
+import org.jetbrains.idea.maven.model.MavenArtifact;
 
 import javax.swing.*;
 import java.util.Collection;

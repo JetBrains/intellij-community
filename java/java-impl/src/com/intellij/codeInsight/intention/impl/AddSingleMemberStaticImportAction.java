@@ -19,20 +19,17 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
+import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.intention.*;
+import com.intellij.openapi.diagnostic.*;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.impl.source.tree.java.*;
+import com.intellij.psi.util.*;
+import com.intellij.util.*;
+import org.jetbrains.annotations.*;
 
 public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.AddSingleMemberStaticImportAction");
@@ -43,8 +40,8 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
     return CodeInsightBundle.message("intention.add.single.member.static.import.family");
   }
 
-  public boolean isAvailable(@NotNull Project project, Editor editor, @Nullable PsiElement element) {
-    if (element == null || !PsiUtil.isLanguageLevel5OrHigher(element)) return false;
+  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+    if (!PsiUtil.isLanguageLevel5OrHigher(element)) return false;
     PsiFile file = element.getContainingFile();
     if (element instanceof PsiIdentifier && element.getParent() instanceof PsiReferenceExpression &&
         ((PsiReferenceExpression)element.getParent()).getQualifierExpression() != null) {

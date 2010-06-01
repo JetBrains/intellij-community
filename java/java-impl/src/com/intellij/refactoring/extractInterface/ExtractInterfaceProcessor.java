@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,12 @@
  */
 package com.intellij.refactoring.extractInterface;
 
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.*;
 import com.intellij.psi.*;
-import com.intellij.refactoring.extractSuperclass.ExtractSuperBaseProcessor;
-import com.intellij.refactoring.util.DocCommentPolicy;
-import com.intellij.refactoring.util.classMembers.MemberInfo;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.refactoring.extractSuperclass.*;
+import com.intellij.refactoring.util.*;
+import com.intellij.refactoring.util.classMembers.*;
+import com.intellij.util.*;
 
 /**
  * @author dsl
@@ -37,7 +37,7 @@ public class ExtractInterfaceProcessor extends ExtractSuperBaseProcessor {
   }
 
   protected PsiClass extractSuper(String superClassName) throws IncorrectOperationException {
-    return ExtractInterfaceHandler.extractInterface(myTargetDirectory, myClass, superClassName, myMemberInfos, myJavaDocPolicy);
+    return ExtractInterfaceHandler.extractInterface(myClass.getContainingFile().getContainingDirectory(), myClass, superClassName, myMemberInfos, myJavaDocPolicy);
   }
 
   protected boolean isSuperInheritor(PsiClass aClass) {

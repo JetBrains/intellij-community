@@ -15,28 +15,24 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.StatusBarWidget;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.ui.UIBundle;
-import com.intellij.util.Consumer;
-import com.intellij.util.io.ReadOnlyAttributeUtil;
-import com.intellij.util.ui.EmptyIcon;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ide.*;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.ui.*;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.wm.*;
+import com.intellij.ui.*;
+import com.intellij.util.*;
+import com.intellij.util.io.*;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
-import java.awt.event.MouseEvent;
-import java.io.IOException;
+import java.awt.event.*;
+import java.io.*;
 
 public class ToggleReadOnlyAttributePanel implements StatusBarWidget, StatusBarWidget.IconPresentation {
   private static final Icon myLockedIcon = IconLoader.getIcon("/ide/readonly.png");

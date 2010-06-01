@@ -15,12 +15,9 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.openapi.wm.CustomStatusBarWidget;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.StatusBarWidget;
-import com.intellij.util.ui.AsyncProcessIcon;
-import com.intellij.util.ui.EmptyIcon;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.wm.*;
+import com.intellij.util.ui.*;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;

@@ -15,42 +15,30 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.ObjectsConvertor;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.committed.CommittedChangeListDecorator;
-import com.intellij.openapi.vcs.changes.committed.CommittedChangeListRenderer;
-import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
-import com.intellij.openapi.vcs.changes.committed.RepositoryChangesBrowser;
-import com.intellij.openapi.vcs.changes.issueLinks.AbstractBaseTagMouseListener;
-import com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.table.TableView;
-import com.intellij.util.containers.Convertor;
-import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.ListTableModel;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.idea.svn.history.SvnChangeList;
-import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.ui.*;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.committed.*;
+import com.intellij.openapi.vcs.changes.issueLinks.*;
+import com.intellij.openapi.vcs.changes.ui.*;
+import com.intellij.openapi.vcs.versionBrowser.*;
+import com.intellij.ui.*;
+import com.intellij.ui.table.*;
+import com.intellij.util.containers.*;
+import com.intellij.util.ui.*;
+import org.jetbrains.idea.svn.history.*;
+import org.jetbrains.idea.svn.mergeinfo.*;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.table.TableCellRenderer;
+import javax.swing.event.*;
+import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
+import java.util.HashSet;
 import java.util.List;
 
 public class ToBeMergedDialog extends DialogWrapper {
@@ -375,7 +363,7 @@ public class ToBeMergedDialog extends DialogWrapper {
       }
   }
 
-  private final static int ourPageSize = 20;
+  private final static int ourPageSize = 30;
 
   private static final ColumnInfo FAKE_COLUMN = new ColumnInfo<CommittedChangeList, CommittedChangeList>("fake column"){
     @Override

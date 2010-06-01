@@ -49,10 +49,12 @@ import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.execution.SoutMavenConsole;
+import org.jetbrains.idea.maven.facade.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.importing.MavenDefaultModifiableModelsProvider;
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
 import org.jetbrains.idea.maven.importing.MavenModifiableModelsProvider;
 import org.jetbrains.idea.maven.importing.MavenProjectImporter;
+import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.utils.*;
 
 import java.io.File;
@@ -237,7 +239,7 @@ public class MavenProjectsManager extends SimpleProjectComponent
   }
 
   private void initWorkers() {
-    myEmbeddersManager = new MavenEmbeddersManager(getGeneralSettings());
+    myEmbeddersManager = new MavenEmbeddersManager(myProject);
 
     myReadingProcessor = new MavenProjectsProcessor(myProject, ProjectBundle.message("maven.reading"), false, myEmbeddersManager);
     myResolvingProcessor = new MavenProjectsProcessor(myProject, ProjectBundle.message("maven.resolving"), true, myEmbeddersManager);
@@ -330,9 +332,9 @@ public class MavenProjectsManager extends SimpleProjectComponent
 
       @Override
       public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                                  org.apache.maven.project.MavenProject nativeMavenProject,
+                                  @Nullable NativeMavenProjectHolder nativeMavenProject,
                                   Object message) {
-        if (shouldScheduleProject(projectWithChanges)) {
+        if (nativeMavenProject != null && shouldScheduleProject(projectWithChanges)) {
           if (projectWithChanges.first.hasUnresolvedPlugins()) {
             schedulePluginsResolving(projectWithChanges.first, nativeMavenProject);
           }
@@ -392,16 +394,13 @@ public class MavenProjectsManager extends SimpleProjectComponent
       myArtifactsDownloadingProcessor.stop();
       myPostProcessor.stop();
 
-      myEmbeddersManager.release();
-
       if (isUnitTestMode()) {
         FileUtil.delete(getProjectsTreesDir());
       }
     }
   }
 
-  @TestOnly
-  public MavenEmbeddersManager getEmbeddersManagerInTests() {
+  public MavenEmbeddersManager getEmbeddersManager() {
     return myEmbeddersManager;
   }
 
@@ -478,7 +477,7 @@ public class MavenProjectsManager extends SimpleProjectComponent
     return myProjectsTree.getAvailableProfiles();
   }
 
-  public Collection<Pair<String, MavenProfileState>> getProfilesWithStates() {
+  public Collection<Pair<String, MavenProfileKind>> getProfilesWithStates() {
     if (!isInitialized()) return Collections.emptyList();
     return myProjectsTree.getProfilesWithStates();
   }
@@ -679,7 +678,7 @@ public class MavenProjectsManager extends SimpleProjectComponent
           MavenProject each = it.next();
           Object message = it.hasNext() ? null : FORCE_IMPORT_MESSAGE;
           myFoldersResolvingProcessor.scheduleTask(
-            new MavenProjectsProcessorFoldersResolvingTask(each, getGeneralSettings(), getImportingSettings(), myProjectsTree, message));
+            new MavenProjectsProcessorFoldersResolvingTask(each, getImportingSettings(), myProjectsTree, message));
         }
       }
     });
@@ -689,7 +688,7 @@ public class MavenProjectsManager extends SimpleProjectComponent
     scheduleFoldersResolving(getProjects());
   }
 
-  private void schedulePluginsResolving(final MavenProject project, final org.apache.maven.project.MavenProject nativeMavenProject) {
+  private void schedulePluginsResolving(final MavenProject project, final NativeMavenProjectHolder nativeMavenProject) {
     runWhenFullyOpen(new Runnable() {
       public void run() {
         myPluginsResolvingProcessor

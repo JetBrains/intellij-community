@@ -16,28 +16,18 @@
 
 package com.intellij.codeInsight.intention;
 
-import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.ExternalAnnotationsManager;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.lang.findUsages.FindUsagesProvider;
-import com.intellij.lang.findUsages.LanguageFindUsages;
-import com.intellij.openapi.command.undo.UndoUtil;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.codeInsight.*;
+import com.intellij.codeInspection.*;
+import com.intellij.lang.findUsages.*;
+import com.intellij.openapi.command.undo.*;
+import com.intellij.openapi.diagnostic.*;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.project.*;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.util.*;
+import com.intellij.util.*;
+import org.jetbrains.annotations.*;
 
 /**
  * @author ven
@@ -104,8 +94,8 @@ public class AddAnnotationFix extends PsiElementBaseIntentionAction implements L
     return listOwner;
   }
 
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, @Nullable final PsiElement element) {
-    if (element == null || !element.isValid()) return false;
+  public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
+    if (!element.isValid()) return false;
     if (!PsiUtil.isLanguageLevel5OrHigher(element)) return false;
     final PsiModifierListOwner owner;
     if (myModifierListOwner != null) {
@@ -139,7 +129,7 @@ public class AddAnnotationFix extends PsiElementBaseIntentionAction implements L
       final int position = caretModel.getOffset();
       element = file.findElementAt(position);
     }
-    return isAvailable(project, editor, element);
+    return element != null && isAvailable(project, editor, element);
   }
 
   public void invoke(@NotNull final Project project, Editor editor, PsiFile file) throws IncorrectOperationException {

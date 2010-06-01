@@ -20,10 +20,9 @@
  */
 package com.intellij.psi.impl;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.extensions.*;
+import com.intellij.psi.*;
+import org.jetbrains.annotations.*;
 
 public abstract class AllowedApiFilterExtension {
   public static final ExtensionPointName<AllowedApiFilterExtension> EP_NAME = ExtensionPointName.create("com.intellij.allowedApiFilter");

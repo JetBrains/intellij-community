@@ -40,6 +40,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.Res
  * @author ven
  */
 public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint, ElementClassHint {
+  public static final Key<GroovyPsiElement> RESOLVE_CONTEXT = Key.create("RESOLVE_CONTEXT");
   protected String myName;
   private final EnumSet<ResolveKind> myResolveTargetKinds;
   private final Set<String> myProcessedClasses = new HashSet<String>();
@@ -48,16 +49,6 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
   @NotNull final PsiType[] myTypeArguments;
 
   protected Set<GroovyResolveResult> myCandidates = new LinkedHashSet<GroovyResolveResult>();
-
-  public GroovyPsiElement getCurrentFileResolveContext() {
-    return myCurrentFileResolveContext;
-  }
-
-  public void setCurrentFileResolveContext(GroovyPsiElement currentFileResolveContext) {
-    myCurrentFileResolveContext = currentFileResolveContext;
-  }
-
-  protected GroovyPsiElement myCurrentFileResolveContext;
 
   protected ResolverProcessor(String name, EnumSet<ResolveKind> resolveTargets,
                               PsiElement place,
@@ -89,8 +80,9 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
       }
 
       boolean isAccessible = isAccessible(namedElement);
-      boolean isStaticsOK = isStaticsOK(namedElement);
-      myCandidates.add(new GroovyResolveResultImpl(namedElement, myCurrentFileResolveContext, substitutor, isAccessible, isStaticsOK));
+      final GroovyPsiElement resolveContext = state.get(RESOLVE_CONTEXT);
+      boolean isStaticsOK = isStaticsOK(namedElement, resolveContext);
+      myCandidates.add(new GroovyResolveResultImpl(namedElement, resolveContext, substitutor, isAccessible, isStaticsOK));
       return !isAccessible;
     }
 
@@ -102,8 +94,8 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
         PsiUtil.isAccessible(myPlace, ((PsiMember) namedElement));
   }
 
-  protected boolean isStaticsOK(PsiNamedElement element) {
-    if (myCurrentFileResolveContext instanceof GrImportStatement) return true;
+  protected boolean isStaticsOK(PsiNamedElement element, GroovyPsiElement resolveContext) {
+    if (resolveContext instanceof GrImportStatement) return true;
 
     if (element instanceof PsiModifierListOwner) {
       return PsiUtil.isStaticsOK((PsiModifierListOwner) element, myPlace);

@@ -12,25 +12,27 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
-import com.intellij.openapi.util.text.LineTokenizer;
+import com.intellij.openapi.util.text.*;
 
-import java.io.StringWriter;
-import java.util.Arrays;
-import java.util.List;
+import java.io.*;
+import java.util.*;
 
 public final class HgCommandResult {
 
-  static final HgCommandResult EMPTY = new HgCommandResult(new StringWriter(), new StringWriter());
+  static final HgCommandResult EMPTY = new HgCommandResult(new StringWriter(), new StringWriter(), 0);
 
   private final StringWriter out;
   private final StringWriter err;
+  private final int exitValue;
 
   private List<String> outLines;
   private List<String> errLines;
+  private String warnings;
 
-  public HgCommandResult(StringWriter out, StringWriter err) {
+  public HgCommandResult(StringWriter out, StringWriter err, int exitValue) {
     this.out = out;
     this.err = err;
+    this.exitValue = exitValue;
   }
 
   public List<String> getOutputLines() {
@@ -50,5 +52,20 @@ public final class HgCommandResult {
   public String getRawOutput() {
     return out.toString();
   }
+  
+  public String getRawError() {
+    return err.toString();
+  }
 
+  public int getExitValue() {
+    return exitValue;
+  }
+
+  void setWarnings(String warnings) {
+    this.warnings = warnings;
+  }
+
+  public String getWarnings() {
+    return warnings;
+  }
 }

@@ -919,6 +919,7 @@
 
   <action id="Jdbc.OpenConsole"><keyboard-shortcut first-keystroke="control shift F10"/></action>
   <action id="Hibernate.OpenConsole"><keyboard-shortcut first-keystroke="control shift F10"/></action>
+  <action id="Jpa.OpenConsole"><keyboard-shortcut first-keystroke="control shift F10"/></action>
 
   <action id="Console.TableResult.PreviousPage"><keyboard-shortcut first-keystroke="control alt UP"/></action>
   <action id="Console.TableResult.NextPage"><keyboard-shortcut first-keystroke="control alt DOWN"/></action>
@@ -940,6 +941,11 @@
   <action id="Console.Hibernate.Properties"><keyboard-shortcut first-keystroke="alt ENTER"/></action>
   <action id="Console.Hibernate.Close"><keyboard-shortcut first-keystroke="control alt shift F4"/></action>
   <action id="Console.Hibernate.Terminate"><keyboard-shortcut first-keystroke="control alt shift DELETE"/></action>
+
+  <action id="Console.Jpa.Execute"><keyboard-shortcut first-keystroke="control ENTER"/></action>
+  <action id="Console.Jpa.Properties"><keyboard-shortcut first-keystroke="alt ENTER"/></action>
+  <action id="Console.Jpa.Close"><keyboard-shortcut first-keystroke="control alt shift F4"/></action>
+  <action id="Console.Jpa.Terminate"><keyboard-shortcut first-keystroke="control alt shift DELETE"/></action>
 
   <action id="Jdbc.RunSqlScript"><keyboard-shortcut first-keystroke="control shift F10"/></action>
 

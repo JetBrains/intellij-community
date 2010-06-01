@@ -44,6 +44,7 @@ import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.MavenSchemaProvider;
 import org.jetbrains.idea.maven.dom.model.*;
+import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenIcons;
 import org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem;

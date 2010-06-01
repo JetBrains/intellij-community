@@ -16,10 +16,10 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.util.io.ReadOnlyAttributeUtil;
+import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
-import org.jetbrains.idea.maven.indices.MavenCustomRepositoryHelper;
-import org.jetbrains.idea.maven.project.MavenArtifact;
-import org.jetbrains.idea.maven.project.MavenId;
+import org.jetbrains.idea.maven.model.MavenArtifact;
+import org.jetbrains.idea.maven.model.MavenId;
 
 import java.io.File;
 import java.util.List;

@@ -15,18 +15,12 @@
  */
 package org.jetbrains.idea.svn.checkout;
 
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.StatusBar;
-import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnUtil;
-import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.SVNCancelException;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
-import org.tmatesoft.svn.core.wc.SVNEvent;
-import org.tmatesoft.svn.core.wc.SVNEventAction;
+import com.intellij.openapi.progress.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.wm.*;
+import org.jetbrains.idea.svn.*;
+import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.wc.*;
 
 public class CheckoutEventHandler implements ISVNEventHandler {
   private final ProgressIndicator myIndicator;

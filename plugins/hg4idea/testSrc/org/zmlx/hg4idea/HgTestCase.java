@@ -12,66 +12,49 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.VcsShowConfirmationOption;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.AbstractVcsTestCase;
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.testFramework.fixtures.TempDirTestFixture;
-import com.intellij.vcsUtil.VcsUtil;
-import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
+import com.intellij.execution.process.*;
+import com.intellij.openapi.vcs.*;
+import com.intellij.testFramework.fixtures.*;
+import org.testng.*;
+import org.testng.annotations.*;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 
-public abstract class HgTestCase extends AbstractVcsTestCase {
+public abstract class HgTestCase extends AbstractHgTestCase {
 
-  private File repo;
+  protected File projectRepo;
+  private TempDirTestFixture tempDirTestFixture;
 
   @BeforeMethod
   public void setUp() throws Exception {
-    final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
-    TempDirTestFixture testFixture = fixtureFactory.createTempDirTestFixture();
-    testFixture.setUp();
+    tempDirTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
+    tempDirTestFixture.setUp();
+    projectRepo = new File(tempDirTestFixture.getTempDirPath(), "repo");
+    Assert.assertTrue(projectRepo.mkdir());
 
-    repo = new File(testFixture.getTempDirPath(), "repo");
-    Assert.assertTrue(repo.mkdir());
-
-    myClientBinaryPath = new File("/usr/bin");
-
-    verify(runClient("hg", null, repo, new String[] {"init"}));
-    initProject(repo);
+    ProcessOutput processOutput = runHg(projectRepo, "init");
+    verify(processOutput);
+    initProject(projectRepo);
     activateVCS(HgVcs.VCS_NAME);
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
   }
 
-  protected ProcessOutput runHg(String... commandLine) throws IOException {
-    return runClient("hg", null, repo, commandLine);
+  @AfterMethod
+  public void tearDown() throws Exception {
+//    tempDirTestFixture.tearDown();
   }
 
-  protected void enableSilentOperation(final VcsConfiguration.StandardConfirmation op) {
-    setStandardConfirmation(
-      HgVcs.VCS_NAME, op, VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY
-    );
+  protected ProcessOutput runHgOnProjectRepo(String... commandLine) throws IOException {
+    return runHg(projectRepo, commandLine);
   }
 
-  protected void disableSilentOperation(final VcsConfiguration.StandardConfirmation op) {
-    setStandardConfirmation(
-      HgVcs.VCS_NAME, op, VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY
-    );
+  protected HgFile getHgFile(String... filepath) {
+    File fileToInclude = projectRepo;
+    for (String path : filepath) {
+      fileToInclude = new File(fileToInclude, path);
+    }
+    return new HgFile(myWorkingCopyDir, fileToInclude);
   }
-
-  protected VirtualFile makeFile(File file) throws IOException {
-    Assert.assertTrue(file.createNewFile());
-    VcsDirtyScopeManager.getInstance(myProject).fileDirty(myWorkingCopyDir);
-    LocalFileSystem.getInstance().refresh(false);
-    return VcsUtil.getVirtualFile(file);
-  }
-
 }

@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.util.*;
+import com.intellij.util.ui.*;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;

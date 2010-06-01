@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,28 +15,23 @@
  */
 package com.intellij.refactoring.extractSuperclass;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.diagnostic.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperProcessorBase;
-import com.intellij.refactoring.util.DocCommentPolicy;
-import com.intellij.refactoring.util.classMembers.MemberInfo;
-import com.intellij.usageView.UsageInfo;
-import com.intellij.usageView.UsageViewDescriptor;
-import com.intellij.usageView.UsageViewUtil;
-import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.search.*;
+import com.intellij.psi.search.searches.*;
+import com.intellij.psi.util.*;
+import com.intellij.refactoring.*;
+import com.intellij.refactoring.turnRefsToSuper.*;
+import com.intellij.refactoring.util.*;
+import com.intellij.refactoring.util.classMembers.*;
+import com.intellij.usageView.*;
+import com.intellij.util.*;
+import org.jetbrains.annotations.*;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 
 /**
  * @author dsl
@@ -125,6 +120,11 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
       final String oldQualifiedName = myClass.getQualifiedName();
       myClass.setName(myNewClassName);
       PsiClass superClass = extractSuper(superClassName);
+      final PsiDirectory initialDirectory = myClass.getContainingFile().getContainingDirectory();
+      if (myTargetDirectory != initialDirectory) {
+        myTargetDirectory.add(myClass.getContainingFile().copy());
+        myClass.getContainingFile().delete();
+      }
       for (final UsageInfo usage : usages) {
         if (usage instanceof BindToOldUsageInfo) {
           final PsiReference reference = usage.getReference();

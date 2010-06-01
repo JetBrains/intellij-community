@@ -15,13 +15,12 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
-import com.intellij.openapi.project.DumbAware;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.idea.*;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.wm.ex.*;
+import com.intellij.openapi.wm.impl.*;
+import org.jetbrains.annotations.*;
 
 import java.awt.*;
 

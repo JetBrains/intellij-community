@@ -16,18 +16,16 @@
 
 package com.intellij.packaging.impl.compiler;
 
-import com.intellij.compiler.impl.FileProcessingCompilerStateCache;
-import com.intellij.compiler.impl.packagingCompiler.DestinationInfo;
-import com.intellij.openapi.compiler.FileProcessingCompiler;
-import com.intellij.openapi.compiler.ValidityState;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.SmartList;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.compiler.impl.*;
+import com.intellij.compiler.impl.packagingCompiler.*;
+import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.vfs.*;
+import com.intellij.util.*;
+import org.jetbrains.annotations.*;
 
-import java.io.IOException;
-import java.util.List;
+import java.io.*;
+import java.util.*;
 
 /**
  * @author nik

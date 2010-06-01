@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
  * Represents a Java <code>super</code> expression in a super method call. Note that the qualifier of
  * a super constructor call is represented as a {@link PsiKeyword} rather than a <code>PsiSuperExpression</code>.  
  */
-public interface PsiSuperExpression extends PsiExpression {
+public interface PsiSuperExpression extends PsiQualifiedExpression {
   /**
    * Returns the expression representing the class name qualifying the <code>super</code>
    * expression.

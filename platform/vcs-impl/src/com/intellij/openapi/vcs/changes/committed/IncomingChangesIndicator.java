@@ -15,29 +15,25 @@
  */
 package com.intellij.openapi.vcs.changes.committed;
 
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.ide.*;
+import com.intellij.openapi.*;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.components.*;
+import com.intellij.openapi.diagnostic.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.ui.*;
+import com.intellij.openapi.vcs.versionBrowser.*;
 import com.intellij.openapi.wm.*;
-import com.intellij.util.Consumer;
-import com.intellij.util.messages.MessageBus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.*;
+import com.intellij.util.messages.*;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.List;
 
 /**

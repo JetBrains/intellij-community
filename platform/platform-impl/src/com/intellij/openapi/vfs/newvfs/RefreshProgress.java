@@ -19,12 +19,11 @@
  */
 package com.intellij.openapi.vfs.newvfs;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ex.StatusBarEx;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.progress.util.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.ex.*;
 
 import javax.swing.*;
 

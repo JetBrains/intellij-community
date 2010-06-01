@@ -12,24 +12,41 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import org.apache.commons.lang.builder.HashCodeBuilder;
+import com.intellij.openapi.vcs.history.*;
+import org.apache.commons.lang.builder.*;
+
+import java.util.*;
 
 public final class HgRevisionNumber implements VcsRevisionNumber {
 
   private final String revision;
   private final String changeset;
+  private final String commitMessage;
+  private final String author;
+  private final List<HgRevisionNumber> parents;
+
   private final boolean isWorkingVersion;
 
+  public static HgRevisionNumber getInstance(String revision, String changeset, String author, String commitMessage) {
+    return new HgRevisionNumber(revision, changeset, author, commitMessage, Collections.<HgRevisionNumber>emptyList());
+  }
+
   public static HgRevisionNumber getInstance(String revision, String changeset) {
-    return new HgRevisionNumber(revision, changeset);
+    return new HgRevisionNumber(revision, changeset, "", "", Collections.<HgRevisionNumber>emptyList());
+  }
+  
+  public static HgRevisionNumber getInstance(String revision, String changeset, List<HgRevisionNumber> parents) {
+    return new HgRevisionNumber(revision, changeset, "", "", parents);
   }
 
   public static HgRevisionNumber getLocalInstance(String revision) {
-    return new HgRevisionNumber(revision, "");
+    return new HgRevisionNumber(revision, "", "", "", Collections.<HgRevisionNumber>emptyList());
   }
 
-  private HgRevisionNumber(String revision, String changeset) {
+  private HgRevisionNumber(String revision, String changeset, String author, String commitMessage, List<HgRevisionNumber> parents) {
+    this.commitMessage = commitMessage;
+    this.author = author;
+    this.parents = parents;
     this.revision = revision.trim();
     this.changeset = changeset.trim();
     isWorkingVersion = changeset.endsWith("+");
@@ -43,8 +60,16 @@ public final class HgRevisionNumber implements VcsRevisionNumber {
     return revision;
   }
 
-  public int getRevisionAsInt() {
-    return Integer.parseInt(revision);
+  public long getRevisionAsLong() {
+    return java.lang.Long.parseLong(revision);
+  }
+
+  public String getCommitMessage() {
+    return commitMessage;
+  }
+
+  public String getAuthor() {
+    return author;
   }
 
   public boolean isWorkingVersion() {
@@ -53,6 +78,10 @@ public final class HgRevisionNumber implements VcsRevisionNumber {
 
   public String asString() {
     return revision + ":" + changeset;
+  }
+
+  public List<HgRevisionNumber> getParents() {
+    return parents;
   }
 
   public int compareTo(VcsRevisionNumber o) {
@@ -68,8 +97,7 @@ public final class HgRevisionNumber implements VcsRevisionNumber {
     if (changeset.equals(hgRevisionNumber.changeset)) {
       return 0;
     }
-
-    return getRevisionAsInt() - hgRevisionNumber.getRevisionAsInt();
+    return java.lang.Long.valueOf(revision).compareTo(java.lang.Long.valueOf(hgRevisionNumber.revision));
   }
 
   @Override
@@ -92,4 +120,8 @@ public final class HgRevisionNumber implements VcsRevisionNumber {
     return compareTo(that) == 0;
   }
 
+  @Override
+  public String toString() {
+    return asString();
+  }
 }

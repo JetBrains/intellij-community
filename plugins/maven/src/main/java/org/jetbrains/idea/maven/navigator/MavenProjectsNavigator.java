@@ -37,6 +37,7 @@ import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.idea.maven.facade.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
@@ -348,7 +349,7 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
     }
 
     public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                                org.apache.maven.project.MavenProject nativeMavenProject,
+                                NativeMavenProjectHolder nativeMavenProject,
                                 Object message) {
       scheduleUpdateProjects(Collections.singletonList(projectWithChanges.first), Collections.EMPTY_LIST);
     }
