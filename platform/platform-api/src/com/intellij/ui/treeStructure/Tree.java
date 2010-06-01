@@ -29,6 +29,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.TreeSelectionEvent;
 import javax.swing.plaf.TreeUI;
 import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.text.Position;
@@ -48,6 +49,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, Autoscroll, Q
   private Rectangle myLastVisibleRec;
 
   private Dimension myHoldSize;
+  private MySelectionModel mySelectionModel = new MySelectionModel();
 
   public Tree() {
     initTree_();
@@ -80,6 +82,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, Autoscroll, Q
     }
 
     setCellRenderer(new NodeRenderer());
+
+    setSelectionModel(mySelectionModel);
   }
 
   @Override
@@ -161,15 +165,25 @@ public class Tree extends JTree implements ComponentWithEmptyText, Autoscroll, Q
 
   @Override
   public void paint(Graphics g) {
-    super.paint(g);
-
+    Rectangle clip = g.getClipBounds();
     final Rectangle visible = getVisibleRect();
 
-    if (!visible.equals(myLastVisibleRec)) {
-      updateBusyIconLocation();
+    if (!AbstractTreeBuilder.isToPaintSelection(this)) {
+      mySelectionModel.holdSelection();
     }
 
-    myLastVisibleRec = visible;
+    try {
+      super.paint(g);
+
+      if (!visible.equals(myLastVisibleRec)) {
+        updateBusyIconLocation();
+      }
+
+      myLastVisibleRec = visible;
+    }
+    finally {
+      mySelectionModel.unholdSelection();
+    }
   }
 
   public void setPaintBusy(boolean paintBusy) {
@@ -451,6 +465,30 @@ public class Tree extends JTree implements ComponentWithEmptyText, Autoscroll, Q
     final DefaultMutableTreeNode treeNode = builder.getNodeForElement(node);
 
     return treeNode != null ? new TreePath(treeNode.getPath()) : new TreePath(node);
+  }
+
+  private static class MySelectionModel extends DefaultTreeSelectionModel {
+
+    private TreePath[] myHeldSelection;
+
+    @Override
+    protected void fireValueChanged(TreeSelectionEvent e) {
+      if (myHeldSelection == null) {
+        super.fireValueChanged(e);
+      }
+    }
+
+    public void holdSelection() {
+      myHeldSelection = getSelectionPaths();
+      clearSelection();
+    }
+
+    public void unholdSelection() {
+      if (myHeldSelection != null) {
+        setSelectionPaths(myHeldSelection);
+        myHeldSelection = null;
+      }
+    }
   }
 
   private class MyMouseListener extends MouseAdapter {

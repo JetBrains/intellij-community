@@ -1213,7 +1213,9 @@ public class UIUtil {
       final int containerWidth = tree.getParent() instanceof JViewport ? tree.getParent().getWidth() : tree.getWidth();
       final int xOffset = tree.getParent() instanceof JViewport ? ((JViewport)tree.getParent()).getViewPosition().x : 0;
 
-      if (path != null && tree.isPathSelected(path)) {
+      boolean selected = false;
+      if (path != null) {
+        selected = tree.isPathSelected(path);
         Graphics2D rowGraphics = (Graphics2D)g.create();
         if (clipBounds.height >= bounds.height) {
           // fill the row only if clip bounds intersects actual node bounds
@@ -1226,14 +1228,24 @@ public class UIUtil {
 
         final Object sourceList = tree.getClientProperty(SOURCE_LIST_CLIENT_PROPERTY);
         if (sourceList != null && ((Boolean)sourceList)) {
-          if (tree.hasFocus()) {
-            LIST_FOCUSED_SELECTION_BACKGROUND_PAINTER.paintBorder(tree, rowGraphics, xOffset, bounds.y, containerWidth, bounds.height);
-          }
-          else {
-            LIST_SELECTION_BACKGROUND_PAINTER.paintBorder(tree, rowGraphics, xOffset, bounds.y, containerWidth, bounds.height);
+          if (selected) {
+            if (tree.hasFocus()) {
+              LIST_FOCUSED_SELECTION_BACKGROUND_PAINTER.paintBorder(tree, rowGraphics, xOffset, bounds.y, containerWidth, bounds.height);
+            }
+            else {
+              LIST_SELECTION_BACKGROUND_PAINTER.paintBorder(tree, rowGraphics, xOffset, bounds.y, containerWidth, bounds.height);
+            }
+          } else {
+            rowGraphics.setColor(tree.getBackground());
+            rowGraphics.fillRect(xOffset, bounds.y, containerWidth, bounds.height);
           }
         } else {
-          rowGraphics.setColor(tree.hasFocus() ? getTreeSelectionBackground() : UNFOCUSED_SELECTION_COLOR);
+          Color bg = tree.hasFocus() ? getTreeSelectionBackground() : UNFOCUSED_SELECTION_COLOR;
+          if (!selected) {
+            bg = tree.getBackground();
+          }
+
+          rowGraphics.setColor(bg);
           rowGraphics.fillRect(xOffset, bounds.y, containerWidth, bounds.height - 1);
         }
 

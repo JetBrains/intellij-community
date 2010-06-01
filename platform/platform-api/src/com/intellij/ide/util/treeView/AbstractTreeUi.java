@@ -172,6 +172,8 @@ public class AbstractTreeUi {
 
   private Map<DefaultMutableTreeNode, DefaultMutableTreeNode> myCancelledBuild = new WeakHashMap<DefaultMutableTreeNode, DefaultMutableTreeNode>();
 
+  private boolean mySelectionIsAdjusted;
+
   protected void init(AbstractTreeBuilder builder,
                       JTree tree,
                       DefaultTreeModel treeModel,
@@ -1825,6 +1827,17 @@ public class AbstractTreeUi {
       if (myInitialized.isDone()) {
         myBusyObject.onReady();
       }
+
+      TreePath[] selection = getTree().getSelectionPaths();
+      Rectangle visible = getTree().getVisibleRect();
+      if (selection != null) {
+        for (TreePath each : selection) {
+          Rectangle bounds = getTree().getPathBounds(each);
+          if (bounds != null && (visible.contains(bounds) || visible.intersects(bounds))) {
+            getTree().repaint(bounds);
+          }
+        }
+      }
     }
   }
 
@@ -2151,6 +2164,10 @@ public class AbstractTreeUi {
 
   public boolean isCancelProcessed() {
     return myCancelRequest.get() || myResettingToReadyNow.get();
+  }
+
+  public boolean isToPaintSelection() {
+    return isReady() || !mySelectionIsAdjusted;
   }
 
   static class ElementNode extends DefaultMutableTreeNode {
@@ -2766,6 +2783,8 @@ public class AbstractTreeUi {
         }
 
         if (toSelect != null) {
+          mySelectionIsAdjusted = isAdjustedSelection;
+
           myTree.addSelectionPath(toSelect);
 
           if (isAdjustedSelection && myUpdaterState != null) {
@@ -3948,6 +3967,7 @@ public class AbstractTreeUi {
     if (!isInnerChange()) {
       clearUpdaterState();
       myAutoExpandRoots.clear();
+      mySelectionIsAdjusted = false;
     }
   }
 

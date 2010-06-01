@@ -492,4 +492,9 @@ public class AbstractTreeBuilder implements Disposable {
     return app != null && app.isUnitTestMode();
   }
 
+  public static boolean isToPaintSelection(JTree tree) {
+    AbstractTreeBuilder builder = getBuilderFor(tree);
+    return builder == null ? true : builder.getUi().isToPaintSelection();
+  }
+
 }
