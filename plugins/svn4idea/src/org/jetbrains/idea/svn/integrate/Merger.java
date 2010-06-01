@@ -106,7 +106,8 @@ public class Merger implements IMerger {
       if (myCommitMessage.length() != 0) {
         myCommitMessage.append('\n');
       }
-      myCommitMessage.append(nextComment);
+      // todo
+      myCommitMessage.append(nextComment).append(" [merged from ").append(myLatestProcessed.getNumber()).append("]");
     }
   }
 
