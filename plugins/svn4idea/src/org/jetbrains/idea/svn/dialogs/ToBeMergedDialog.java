@@ -45,14 +45,12 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 
 public class ToBeMergedDialog extends DialogWrapper {
+  public static final int MERGE_ALL_CODE = 222;
   private final JPanel myPanel;
   private final Project myProject;
   private final PageEngine<List<CommittedChangeList>> myListsEngine;
@@ -76,8 +74,19 @@ public class ToBeMergedDialog extends DialogWrapper {
     myPanel = new JPanel(new BorderLayout());
     myWiseSelection = new QuantitySelection<Long>(true);
     myAlreadyMerged = new HashSet<Change>();
+    setOKButtonText("Merge Selected");
     initUI();
     init();
+  }
+
+  @Override
+  protected Action[] createActions() {
+    return new Action[]{getOKAction(), new DialogWrapperAction("Merge All") {
+      @Override
+      protected void doAction(ActionEvent e) {
+        close(MERGE_ALL_CODE);
+      }
+    }, getCancelAction()};
   }
 
   public List<CommittedChangeList> getSelected() {
