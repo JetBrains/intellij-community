@@ -126,8 +126,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     private final String myRepositoryPath;
     private final AbstractVcs myVcs;
     private final Runnable myRefresher;
-    private VcsAbstractHistorySession mySession;
-    private BufferedListConsumer<VcsFileRevision> myBuffer;
+    private volatile VcsAbstractHistorySession mySession;
+    private final BufferedListConsumer<VcsFileRevision> myBuffer;
 
     private MyVcsAppendableHistorySessionPartner(final VcsHistoryProvider vcsHistoryProvider, final AnnotationProvider annotationProvider,
                                                  final FilePath path,
@@ -200,7 +200,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   private static class MyRefresher implements Runnable {
-    private MyVcsAppendableHistorySessionPartner mySessionPartner;
+    private final MyVcsAppendableHistorySessionPartner mySessionPartner;
     private final VcsHistoryProvider myVcsHistoryProvider;
     private final FilePath myPath;
     private final AbstractVcs myVcs;
@@ -700,7 +700,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       myCanceled = true;
     }
 
-    @Override
     public void run(@NotNull final ProgressIndicator indicator) {
       final AsynchConsumer<List<CommittedChangeList>> appender = myDlg.getAppender();
       final BufferedListConsumer<CommittedChangeList> bufferedListConsumer = new BufferedListConsumer<CommittedChangeList>(10, appender, -1);
