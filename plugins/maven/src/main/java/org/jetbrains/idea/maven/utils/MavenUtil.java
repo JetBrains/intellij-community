@@ -547,7 +547,7 @@ public class MavenUtil {
   public static VirtualFile resolveSuperPomFile(@Nullable File mavenHome) {
     VirtualFile result = doResolveSuperPomFile(mavenHome);
     if (result == null) {
-      doResolveSuperPomFile(MavenFacadeManager.collectClassPathAndLIbsFolder().second);
+      result = doResolveSuperPomFile(MavenFacadeManager.collectClassPathAndLIbsFolder().second);
     }
     return result;
   }
