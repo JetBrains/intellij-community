@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.findUsages;
 
+import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -35,7 +36,7 @@ public class GroovyFindUsagesProvider implements FindUsagesProvider {
     }
 
     @Nullable
-    public GroovyWordsScanner getWordsScanner() {
+    public WordsScanner getWordsScanner() {
         return new GroovyWordsScanner();
     }
 
