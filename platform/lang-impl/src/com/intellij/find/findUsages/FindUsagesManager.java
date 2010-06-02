@@ -368,6 +368,7 @@ public class FindUsagesManager implements JDOMExternalizable {
     };
   }
 
+  
   private static PsiElement2UsageTargetAdapter[] convertToUsageTargets(final List<? extends PsiElement> elementsToSearch) {
     final ArrayList<PsiElement2UsageTargetAdapter> targets = new ArrayList<PsiElement2UsageTargetAdapter>(elementsToSearch.size());
     for (PsiElement element : elementsToSearch) {
