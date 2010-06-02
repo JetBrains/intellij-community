@@ -31,6 +31,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.impl.search.MethodUsagesSearcher;
 import com.intellij.psi.impl.search.ThrowSearchUtil;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
@@ -585,11 +586,18 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
       addMethodUsages((PsiMethod)element, results, options, options.searchScope);
     }
     else {
-      ReferencesSearch.search(element, options.searchScope, false).forEach(new ReadActionProcessor<PsiReference>() {
+      final ReadActionProcessor<PsiReference> consumer = new ReadActionProcessor<PsiReference>() {
         public boolean processInReadAction(final PsiReference ref) {
           return addResult(results, ref, options, element);
         }
-      });
+      };
+
+      if (options.fastTrack != null) {
+        SearchRequestor.contributeTargets(element, options, options.fastTrack, consumer);
+        return;
+      }
+
+      ReferencesSearch.search(element, options.searchScope, false).forEach(consumer);
     }
   }
 
@@ -605,12 +613,23 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
       }
     }
     else {
-      boolean strictSignatureSearch = !options.isIncludeOverloadUsages;
-      MethodReferencesSearch.search(method, searchScope, strictSignatureSearch).forEach(new PsiReferenceProcessorAdapter(new PsiReferenceProcessor() {
-          public boolean execute(PsiReference ref) {
-            return addResult(result, ref, options, method);
+      final boolean strictSignatureSearch = !options.isIncludeOverloadUsages;
+      final PsiReferenceProcessorAdapter processor = new PsiReferenceProcessorAdapter(new PsiReferenceProcessor() {
+        public boolean execute(PsiReference ref) {
+          return addResult(result, ref, options, method);
+        }
+      });
+      if (options.fastTrack != null) {
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            MethodUsagesSearcher.contributeSearchTargets(method, options, options.fastTrack, processor, strictSignatureSearch, true);
           }
-        }));
+        });
+
+        return;
+      }
+
+      MethodReferencesSearch.search(method, searchScope, strictSignatureSearch).forEach(processor);
     }
   }
 

@@ -175,6 +175,8 @@ public interface PsiSearchHelper {
    */
   void processAllFilesWithWordInLiterals(@NotNull String word, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiFile> processor);
 
+  boolean processRequest(@NotNull PsiSearchRequest request);
+
   boolean processElementsWithWord(@NotNull TextOccurenceProcessor processor,
                                   @NotNull SearchScope searchScope,
                                   @NotNull String text,

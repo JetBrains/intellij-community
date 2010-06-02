@@ -23,10 +23,9 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Processor;
@@ -90,18 +89,39 @@ public abstract class FindUsagesHandler {
     return options;
   }
 
-  public void processElementUsages(@NotNull final PsiElement element, @NotNull final Processor<UsageInfo> processor, @NotNull FindUsagesOptions options) {
-    if (options.isUsages) {
-      ReferencesSearch.search(element, options.searchScope, false).forEach(new ReadActionProcessor<PsiReference>() {
-        public boolean processInReadAction(final PsiReference ref) {
-          TextRange rangeInElement = ref.getRangeInElement();
-          return processor.process(new UsageInfo(ref.getElement(), rangeInElement.getStartOffset(), rangeInElement.getEndOffset(), false));
+  public void processElementUsages(@NotNull final PsiElement element, @NotNull final Processor<UsageInfo> processor, @NotNull final FindUsagesOptions options) {
+    final ReadActionProcessor<PsiReference> refProcessor = new ReadActionProcessor<PsiReference>() {
+      public boolean processInReadAction(final PsiReference ref) {
+        TextRange rangeInElement = ref.getRangeInElement();
+        return processor
+          .process(new UsageInfo(ref.getElement(), rangeInElement.getStartOffset(), rangeInElement.getEndOffset(), false));
+      }
+    };
+
+    final SearchScope scope = options.searchScope;
+
+    final boolean searchText = options.isSearchForTextOccurences && scope instanceof GlobalSearchScope;
+    if (options.fastTrack != null) {
+      SearchRequestor.contributeTargets(element, options, options.fastTrack, refProcessor);
+
+      // todo special kind of request for that
+      options.fastTrack.addRequest(PsiSearchRequest.custom(new Runnable() {
+        public void run() {
+          if (searchText) {
+            processUsagesInText(element, processor, (GlobalSearchScope)scope);
+          }
         }
-      });
+      }));
+
+      return;
     }
 
-    if (options.isSearchForTextOccurences && options.searchScope instanceof GlobalSearchScope) {
-      processUsagesInText(element, processor, (GlobalSearchScope)options.searchScope);
+    if (options.isUsages) {
+      ReferencesSearch.search(element, scope, false).forEach(refProcessor);
+    }
+
+    if (searchText) {
+      processUsagesInText(element, processor, (GlobalSearchScope)scope);
     }
   }
 

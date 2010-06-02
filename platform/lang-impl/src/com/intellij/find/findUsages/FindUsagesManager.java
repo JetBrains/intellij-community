@@ -349,6 +349,9 @@ public class FindUsagesManager implements JDOMExternalizable {
               return descriptor.getAllElements();
             }
           });
+
+        options.fastTrack = PsiSearchRequest.composite();
+
         for (final PsiElement element : elements) {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
@@ -357,6 +360,8 @@ public class FindUsagesManager implements JDOMExternalizable {
           });
           handler.processElementUsages(element, usageInfoProcessorToUsageProcessorAdapter, options);
         }
+
+        PsiManager.getInstance(handler.getProject()).getSearchHelper().processRequest(options.fastTrack);
       }
     };
   }
