@@ -14,6 +14,7 @@ package org.zmlx.hg4idea;
 
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.project.*;
+import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.*;
@@ -133,8 +134,7 @@ public abstract class HgUtil {
     try {
       final File file = copyResourceToTempFile(base, ".py");
       final String fileName = file.getName();
-      Runtime.getRuntime().addShutdownHook(new Thread(){
-        @Override
+      ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
         public void run() {
           File[] files = file.getParentFile().listFiles(new FilenameFilter() {
             public boolean accept(File dir, String name) {
