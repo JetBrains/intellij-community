@@ -49,6 +49,7 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.facade.MavenFacadeManager;
 import org.jetbrains.idea.maven.facade.MavenFacadeUtil;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
@@ -544,10 +545,12 @@ public class MavenUtil {
 
   @NotNull
   public static VirtualFile resolveSuperPomFile(@Nullable File mavenHome) {
-    VirtualFile result = doResolveSuperPomFile(mavenHome);
+    VirtualFile result = null;
+    if (mavenHome != null) {
+      result = doResolveSuperPomFile(new File(mavenHome, LIB_DIR));
+    }
     if (result == null) {
-      URL resource = MavenFacadeUtil.class.getResource("/" + SUPER_POM_PATH);
-      return VfsUtil.findFileByURL(resource);
+      result = doResolveSuperPomFile(MavenFacadeManager.collectClassPathAndLIbsFolder().second);
     }
     return result;
   }
@@ -567,11 +570,8 @@ public class MavenUtil {
   }
 
   @Nullable
-  public static File resolveMavenLib(@Nullable File mavenHome) {
-    if (mavenHome == null) return null;
-
-    File libs = new File(mavenHome, LIB_DIR);
-    File[] files = libs.listFiles();
+  public static File resolveMavenLib(@NotNull File dir) {
+    File[] files = dir.listFiles();
     if (files != null) {
       Pattern pattern = Pattern.compile("maven-\\d+\\.\\d+\\.\\d+-uber\\.jar");
       for (File each : files) {

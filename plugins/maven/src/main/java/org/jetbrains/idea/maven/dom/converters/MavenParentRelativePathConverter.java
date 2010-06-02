@@ -46,7 +46,6 @@ public class MavenParentRelativePathConverter extends ResolvingConverter<PsiFile
   public PsiFile fromString(@Nullable @NonNls String s, ConvertContext context) {
     if (s == null) return null;
 
-    // todo do need to refreshAndFind here?
     VirtualFile f = context.getFile().getVirtualFile().getParent().findFileByRelativePath(s);
     if (f == null) return null;
 

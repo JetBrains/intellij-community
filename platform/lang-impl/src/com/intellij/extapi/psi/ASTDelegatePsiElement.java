@@ -148,15 +148,31 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
     return node == null ? null : node.getPsi();
   }
 
+  @NotNull
+  protected PsiElement findNotNullChildByType(IElementType type) {
+    return notNullChild(findChildByType(type));
+  }
+
+  @Nullable
   protected PsiElement findChildByType(TokenSet type) {
     ASTNode node = getNode().findChildByType(type);
     return node == null ? null : node.getPsi();
+  }
+
+  @NotNull
+  protected PsiElement findNotNullChildByType(TokenSet type) {
+    return notNullChild(findChildByType(type));
   }
 
   @Nullable
   protected PsiElement findChildByFilter(TokenSet tokenSet) {
     ASTNode[] nodes = getNode().getChildren(tokenSet);
     return nodes == null || nodes.length == 0 ? null : nodes[0].getPsi();
+  }
+
+  @NotNull
+  protected PsiElement findNotNullChildByFilter(TokenSet tokenSet) {
+    return notNullChild(findChildByFilter(tokenSet));
   }
 
   protected <T extends PsiElement> T[] findChildrenByType(IElementType elementType, Class<T> arrayClass) {

@@ -18,7 +18,7 @@ import org.zmlx.hg4idea.ui.*;
 
 import javax.swing.*;
 
-public class HgProjectConfigurable implements Configurable {
+public class HgProjectConfigurable implements SearchableConfigurable {
 
   private final HgConfigurationProjectPanel hgConfigurationProjectPanel;
 
@@ -56,6 +56,14 @@ public class HgProjectConfigurable implements Configurable {
   }
 
   public void disposeUIResources() {
+  }
+
+  public String getId() {
+    return "Mercurial.Project";
+  }
+
+  public Runnable enableSearch(String option) {
+    return null;
   }
 
 }

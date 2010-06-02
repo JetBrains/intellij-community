@@ -48,10 +48,8 @@ public class QueueProcessor<T> {
     }
   }
 
-  public void cleanAndWait() throws InterruptedException {
+  public void waitFor() throws InterruptedException {
     synchronized (myQueue) {
-      myQueue.clear();
-
       while (isProcessing) {
         myQueue.wait();
       }

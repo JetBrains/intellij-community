@@ -476,6 +476,7 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
     });
   }
 
+  // todo
   //public static RemoteTransferListener fromProgressIndicator(final ProgressIndicator indicator) {
   //  return new RemoteTransferListenerImpl() {
   //

@@ -19,7 +19,7 @@ import org.zmlx.hg4idea.ui.*;
 
 import javax.swing.*;
 
-public class HgIdeConfigurable implements ApplicationComponent, Configurable {
+public class HgIdeConfigurable implements SearchableConfigurable {
 
   private final HgConfigurationIdePanel panel;
 
@@ -60,14 +60,11 @@ public class HgIdeConfigurable implements ApplicationComponent, Configurable {
   public void disposeUIResources() {
   }
 
-  @NotNull
-  public String getComponentName() {
-    return getClass().getName();
+  public String getId() {
+    return "Mercurial";
   }
 
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
+  public Runnable enableSearch(String option) {
+    return null;
   }
 }

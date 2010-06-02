@@ -38,10 +38,12 @@ import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
-import com.intellij.util.PathsList;
+import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -119,7 +121,6 @@ public class MavenFacadeManager {
         myFacade.setLogger(myLogger);
       }
       catch (Exception e) {
-        // todo
         throw new RuntimeException(e);
       }
     }
@@ -143,10 +144,18 @@ public class MavenFacadeManager {
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(Element.class), classPath);
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(Query.class), classPath);
         params.getClassPath().addAll(classPath);
-        addPluginLibraries(params.getClassPath());
+        params.getClassPath().addAllFiles(collectClassPathAndLIbsFolder().first);
 
         params.setMainClass(MAIN_CLASS);
-        params.getVMParametersList().addParametersString("-d32 -Xmx512m");
+
+        // todo pass sensible parameters, MAVEN_OPTS?
+        if (SystemInfo.isMac) {
+          String arch = System.getProperty("sun.arch.data.model");
+          if (arch != null) {
+            params.getVMParametersList().addParametersString("-d" + arch);
+          }
+        }
+        params.getVMParametersList().addParametersString("-Xmx512m");
         return params;
       }
 
@@ -176,14 +185,15 @@ public class MavenFacadeManager {
     };
   }
 
-  private void addPluginLibraries(PathsList classPath) {
-    File pluginFileOrDir = new File(PathUtil.getJarPathForClass(this.getClass()));
+  public static Pair<List<File>, File> collectClassPathAndLIbsFolder() {
+    File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenFacadeManager.class));
 
     File libDir;
+    List<File> classpath = new SmartList<File>();
 
     if (pluginFileOrDir.isDirectory()) {
-      classPath.add(new File(pluginFileOrDir.getParent(), "maven-facade-api"));
-      classPath.add(new File(pluginFileOrDir.getParent(), "maven-facade-impl"));
+      classpath.add(new File(pluginFileOrDir.getParent(), "maven-facade-api"));
+      classpath.add(new File(pluginFileOrDir.getParent(), "maven-facade-impl"));
       File luceneLib = new File(PathUtil.getJarPathForClass(Query.class));
       libDir = new File(luceneLib.getParentFile().getParentFile().getParentFile(), "facade-impl/lib");
     }
@@ -195,9 +205,10 @@ public class MavenFacadeManager {
     File[] files = libDir.listFiles();
     for (File jar : files) {
       if (jar.isFile() && jar.getName().endsWith(".jar") && !jar.equals(pluginFileOrDir)) {
-        classPath.add(jar.getPath());
+        classpath.add(jar);
       }
     }
+    return Pair.create(classpath, libDir);
   }
 
   public MavenEmbedderWrapper createEmbedder(Project project) {
@@ -207,7 +218,6 @@ public class MavenFacadeManager {
       return new MavenEmbedderWrapper(facade.createEmbedder(convertSettings(settings)));
     }
     catch (RemoteException e) {
-      // todo
       throw new RuntimeException(e);
     }
   }
@@ -217,7 +227,6 @@ public class MavenFacadeManager {
       return new MavenIndexerWrapper(getFacade().createIndexer());
     }
     catch (RemoteException e) {
-      //todo
       throw new RuntimeException(e);
     }
   }
@@ -227,7 +236,6 @@ public class MavenFacadeManager {
       return getFacade().getRepositories(nexusUrl);
     }
     catch (RemoteException e) {
-      // todo
       throw new RuntimeException(e);
     }
   }
@@ -237,7 +245,6 @@ public class MavenFacadeManager {
       return getFacade().findArtifacts(template, nexusUrl);
     }
     catch (RemoteException e) {
-      // todo
       throw new RuntimeException(e);
     }
   }
@@ -247,7 +254,6 @@ public class MavenFacadeManager {
       return getFacade().interpolateAndAlignModel(model, basedir);
     }
     catch (RemoteException e) {
-      // todo
       throw new RuntimeException(e);
     }
   }
@@ -257,7 +263,6 @@ public class MavenFacadeManager {
       return getFacade().assembleInheritance(model, parentModel);
     }
     catch (RemoteException e) {
-      // todo
       throw new RuntimeException(e);
     }
   }
@@ -270,7 +275,6 @@ public class MavenFacadeManager {
       return getFacade().applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
     }
     catch (RemoteException e) {
-      // todo
       throw new RuntimeException(e);
     }
   }
@@ -288,7 +292,7 @@ public class MavenFacadeManager {
     return result;
   }
 
-  public static MavenFacadeConsole wrapandExport(final MavenConsole console) {
+  public static MavenFacadeConsole wrapAndExport(final MavenConsole console) {
     try {
       RemoteMavenFacadeConsole result = new RemoteMavenFacadeConsole(console);
       UnicastRemoteObject.exportObject(result, 0);

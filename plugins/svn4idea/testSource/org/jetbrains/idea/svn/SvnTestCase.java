@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.pending.MockChangeListManagerGate;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.AbstractVcsTestCase;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.vcs.MockChangelistBuilder;
@@ -39,6 +40,10 @@ public abstract class SvnTestCase extends AbstractVcsTestCase {
   protected String myRepoUrl;
   private ChangeListManagerGate myGate;
   protected AtomicSectionsAware myRefreshCopiesStub;
+
+  protected SvnTestCase() {
+    PlatformTestCase.initPlatformLangPrefix();
+  }
 
   @Before
   public void setUp() throws Exception {

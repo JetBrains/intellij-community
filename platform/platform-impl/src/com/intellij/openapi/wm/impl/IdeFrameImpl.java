@@ -261,6 +261,8 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
         statusBar.removeWidget(positionPanel.ID());
         statusBar.removeWidget(readOnlyAttributePanel.ID());
         if (finalInsertOverwritePanel != null) statusBar.removeWidget(finalInsertOverwritePanel.ID());
+
+        ((StatusBarEx)statusBar).removeCustomIndicationComponents();
       }
     });
   }

@@ -159,7 +159,7 @@ public class IncomingChangesIndicator implements ProjectComponent {
       return "IncomingChanges";
     }
 
-    public Presentation getPresentation(@NotNull Type type) {
+    public WidgetPresentation getPresentation(@NotNull Type type) {
       return this;
     }
 
