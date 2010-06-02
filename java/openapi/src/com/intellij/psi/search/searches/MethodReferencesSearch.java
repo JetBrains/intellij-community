@@ -20,6 +20,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.Query;
+import gnu.trove.TObjectHashingStrategy;
 
 /**
  * @author max
@@ -54,7 +55,8 @@ public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference,
   private MethodReferencesSearch() {}
 
   public static Query<PsiReference> search(final PsiMethod method, SearchScope scope, final boolean strictSignatureSearch) {
-    return INSTANCE.createUniqueResultsQuery(new SearchParameters(method, scope, strictSignatureSearch));
+    //noinspection unchecked
+    return INSTANCE.createUniqueResultsQuery(new SearchParameters(method, scope, strictSignatureSearch), TObjectHashingStrategy.CANONICAL, ReferenceDescriptor.MAPPER);
   }
 
   public static Query<PsiReference> search(final PsiMethod method, final boolean strictSignatureSearch) {
