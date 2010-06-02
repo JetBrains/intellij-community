@@ -43,10 +43,6 @@ import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 public class MavenProjectReader {
   private static final String UNKNOWN = MavenId.UNKNOWN_VALUE;
 
-  private static final String PROFILE_FROM_POM = "pom";
-  private static final String PROFILE_FROM_PROFILES_XML = "profiles.xml";
-  private static final String PROFILE_FROM_SETTINGS_XML = "settings.xml";
-
   private final Map<VirtualFile, RawModelReadResult> myRawModelsCache = new THashMap<VirtualFile, RawModelReadResult>();
   private Pair<List<MavenProfile>, Collection<MavenProjectProblem>> mySettingsProfilesWithProblemsCache;
 
@@ -214,14 +210,14 @@ public class MavenProjectReader {
                                              Collection<MavenProjectProblem> problems,
                                              Collection<String> alwaysOnProfiles) {
     List<MavenProfile> result = new ArrayList<MavenProfile>();
-    collectProfiles(MavenJDOMUtil.findChildrenByPath(xmlProject, "profiles", "profile"), result, PROFILE_FROM_POM);
+    collectProfiles(MavenJDOMUtil.findChildrenByPath(xmlProject, "profiles", "profile"), result, MavenConstants.PROFILE_FROM_POM);
 
     VirtualFile profilesFile = MavenUtil.findProfilesXmlFile(projectFile);
     if (profilesFile != null) {
       collectProfilesFromSettingsXmlOrProfilesXml(profilesFile,
                                                   "profilesXml",
                                                   true,
-                                                  PROFILE_FROM_PROFILES_XML,
+                                                  MavenConstants.PROFILE_FROM_PROFILES_XML,
                                                   result,
                                                   alwaysOnProfiles,
                                                   problems);
@@ -243,7 +239,7 @@ public class MavenProjectReader {
         collectProfilesFromSettingsXmlOrProfilesXml(each,
                                                     "settings",
                                                     false,
-                                                    PROFILE_FROM_SETTINGS_XML,
+                                                    MavenConstants.PROFILE_FROM_SETTINGS_XML,
                                                     settingsProfiles,
                                                     alwaysOnProfiles,
                                                     settingsProblems);
