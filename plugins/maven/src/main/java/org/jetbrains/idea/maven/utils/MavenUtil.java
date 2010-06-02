@@ -545,7 +545,10 @@ public class MavenUtil {
 
   @NotNull
   public static VirtualFile resolveSuperPomFile(@Nullable File mavenHome) {
-    VirtualFile result = doResolveSuperPomFile(mavenHome);
+    VirtualFile result = null;
+    if (mavenHome != null) {
+      result = doResolveSuperPomFile(new File(mavenHome, LIB_DIR));
+    }
     if (result == null) {
       result = doResolveSuperPomFile(MavenFacadeManager.collectClassPathAndLIbsFolder().second);
     }
@@ -567,11 +570,8 @@ public class MavenUtil {
   }
 
   @Nullable
-  public static File resolveMavenLib(@Nullable File mavenHome) {
-    if (mavenHome == null) return null;
-
-    File libs = new File(mavenHome, LIB_DIR);
-    File[] files = libs.listFiles();
+  public static File resolveMavenLib(@NotNull File dir) {
+    File[] files = dir.listFiles();
     if (files != null) {
       Pattern pattern = Pattern.compile("maven-\\d+\\.\\d+\\.\\d+-uber\\.jar");
       for (File each : files) {
