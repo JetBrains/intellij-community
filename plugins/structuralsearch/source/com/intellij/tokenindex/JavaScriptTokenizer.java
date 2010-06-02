@@ -6,6 +6,7 @@ import com.intellij.lang.javascript.psi.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -31,24 +32,38 @@ public class JavaScriptTokenizer implements Tokenizer {
 
   private static class MyVisitor extends JSRecursiveElementVisitor {
     private final List<Token> myTokens = new ArrayList<Token>();
+    private int myParentOffset = -1;
 
     @Override
     public void visitElement(PsiElement element) {
-      if (element instanceof JSExpression) {
-        myTokens.add(new AnonymToken(EXPRESSION_TYPE, element.getTextOffset()));
-      }
-      else {
-        super.visitElement(element);
-        if (element instanceof PsiWhiteSpace || !(element instanceof LeafElement)) {
-          return;
-        }
+      int temp = myParentOffset;
+      myParentOffset = getTextOffset(element);
+      super.visitElement(element);
+      myParentOffset = temp;
+      if (element instanceof LeafElement && !(element instanceof PsiWhiteSpace)) {
         visitLeafElement(element);
       }
     }
 
     @Override
+    public void visitJSExpression(JSExpression expression) {
+      myTokens.add(new AnonymToken(EXPRESSION_TYPE, getTextOffset(expression)));
+    }
+
+    private int getTextOffset(@NotNull PsiElement element) {
+      // performance hint: TreeElement#getTextOffset() works recursively upwards
+      if (myParentOffset >= 0) {
+        ASTNode node = element.getNode();
+        if (node instanceof TreeElement) {
+          return myParentOffset + ((TreeElement)node).getStartOffsetInParent();
+        }
+      }
+      return element.getTextOffset();
+    }
+
+    @Override
     public void visitJSParameterList(JSParameterList node) {
-      myTokens.add(new AnonymToken(PARAM_LIST_TYPE, node.getTextOffset()));
+      myTokens.add(new AnonymToken(PARAM_LIST_TYPE, getTextOffset(node)));
     }
 
     @Override
@@ -70,10 +85,10 @@ public class JavaScriptTokenizer implements Tokenizer {
       }
       ASTNode node = element.getNode();
       if (node != null && node.getElementType() == JSTokenTypes.IDENTIFIER) {
-        myTokens.add(new AnonymToken(IDENTIFIER_TYPE, element.getTextOffset()));
+        myTokens.add(new AnonymToken(IDENTIFIER_TYPE, getTextOffset(element)));
       }
       else {
-        myTokens.add(new TextToken(element.getText().hashCode(), element.getTextOffset()));
+        myTokens.add(new TextToken(element.getText().hashCode(), getTextOffset(element)));
       }
     }
 
