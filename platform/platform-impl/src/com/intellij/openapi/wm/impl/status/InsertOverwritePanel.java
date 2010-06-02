@@ -39,7 +39,7 @@ public class InsertOverwritePanel implements StatusBarWidget, StatusBarWidget.Te
     return "InsertOverwrite";
   }
 
-  public Presentation getPresentation(@NotNull Type type) {
+  public WidgetPresentation getPresentation(@NotNull Type type) {
     return this;
   }
 

@@ -127,7 +127,7 @@ public class SvnCommittedViewTest extends SvnTestCase {
     final List<SvnChangeList> changeListList =
       committedChangesProvider.getCommittedChanges(committedChangesProvider.createDefaultSettings(),
                                                    new SvnRepositoryLocation(myRepoUrl), 0);
-    checkList(changeListList, 2, new Data[] {new Data(absPath(d1), FileStatus.MODIFIED, "- moved from ..\\d1"),
+    checkList(changeListList, 2, new Data[] {new Data(absPath(d1), FileStatus.MODIFIED, "- moved from .." + File.separatorChar + "d1"),
       new Data(oldPath, FileStatus.DELETED, null)});
   }
 
@@ -159,7 +159,7 @@ public class SvnCommittedViewTest extends SvnTestCase {
     final List<SvnChangeList> changeListList =
       committedChangesProvider.getCommittedChanges(committedChangesProvider.createDefaultSettings(),
                                                    new SvnRepositoryLocation(myRepoUrl), 0);
-    checkList(changeListList, 2, new Data[] {new Data(absPath(d1), FileStatus.MODIFIED, "- moved from ..\\d1"),
+    checkList(changeListList, 2, new Data[] {new Data(absPath(d1), FileStatus.MODIFIED, "- moved from .." + File.separatorChar + "d1"),
       new Data(oldPath, FileStatus.DELETED, null),
       new Data(absPath(f11), FileStatus.MODIFIED, "- moved from " + oldF11Path)});
   }
@@ -270,7 +270,7 @@ public class SvnCommittedViewTest extends SvnTestCase {
     }
   }
 
-  private String printChanges(final Data data, final Collection<Change> changes) {
+  private static String printChanges(final Data data, final Collection<Change> changes) {
     final StringBuilder sb = new StringBuilder("Data: ").append(data.myLocalPath).append(" exists: ").
       append(new File(data.myLocalPath).exists()).append(" Changes: ");
     for (Change change : changes) {

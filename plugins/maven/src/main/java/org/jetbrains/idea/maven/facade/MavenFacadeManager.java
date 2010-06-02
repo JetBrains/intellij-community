@@ -40,9 +40,9 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
-import com.intellij.util.PathsList;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -147,8 +147,15 @@ public class MavenFacadeManager {
         params.getClassPath().addAllFiles(collectClassPathAndLIbsFolder().first);
 
         params.setMainClass(MAIN_CLASS);
+
         // todo pass sensible parameters, MAVEN_OPTS?
-        params.getVMParametersList().addParametersString("-d32 -Xmx512m");
+        if (SystemInfo.isMac) {
+          String arch = System.getProperty("sun.arch.data.model");
+          if (arch != null) {
+            params.getVMParametersList().addParametersString("-d" + arch);
+          }
+        }
+        params.getVMParametersList().addParametersString("-Xmx512m");
         return params;
       }
 

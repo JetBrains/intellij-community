@@ -52,7 +52,7 @@ public class HgChangesetStatus extends JLabel implements CustomStatusBarWidget {
     return "HgChangeSetStatus";
   }
 
-  public Presentation getPresentation(@NotNull Type type) {
+  public WidgetPresentation getPresentation(@NotNull Type type) {
     return null;
   }
 

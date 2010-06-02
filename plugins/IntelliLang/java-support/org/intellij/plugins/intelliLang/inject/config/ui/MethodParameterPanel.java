@@ -72,6 +72,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
 
   public MethodParameterPanel(MethodParameterInjection injection, final Project project) {
     super(injection, project);
+    $$$setupUI$$$();
 
     myClassField = new ReferenceEditorWithBrowseButton(new BrowseClassListener(project), project, new Function<String, Document>() {
       public Document fun(String s) {
@@ -411,4 +412,8 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
       }
     }
   }
+
+  private void $$$setupUI$$$() {
+  }
+
 }

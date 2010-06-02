@@ -29,7 +29,7 @@ import java.util.List;
 
 public final class HgCommandService {
   
-  private static final File PROMPT_HOOKS_PLUGIN = HgUtil.getTemporaryPythonFile("prompthooks");
+  private static File PROMPT_HOOKS_PLUGIN;
 
   static final Logger LOG = Logger.getInstance(HgCommandService.class.getName());
 
@@ -43,6 +43,9 @@ public final class HgCommandService {
   public HgCommandService(Project project, HgGlobalSettings settings) {
     this.project = project;
     this.settings = settings;
+    if (PROMPT_HOOKS_PLUGIN == null) {
+      PROMPT_HOOKS_PLUGIN = HgUtil.getTemporaryPythonFile("prompthooks");
+    }
   }
 
   public static HgCommandService getInstance(Project project) {

@@ -33,8 +33,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.text.CharArrayUtil;
 
-import java.util.List;
-
 /**
  * @author max
  */
@@ -91,14 +89,9 @@ public class SmartEnterAction extends EditorAction {
       final Language language = PsiUtilBase.getLanguageInEditor(editor, project);
       boolean processed = false;
       if (language != null) {
-        final List<SmartEnterProcessor> processors = SmartEnterProcessors.INSTANCE.forKey(language);
-        if (!processors.isEmpty()) {
-          for (SmartEnterProcessor processor : processors) {
-            if (processor.process(project, editor, psiFile)) {
-              processed = true;
-              break;
-            }
-          }
+        final SmartEnterProcessor processor = SmartEnterProcessors.INSTANCE.forLanguage(language);
+        if (processor != null && processor.process(project, editor, psiFile)) {
+          processed = true;
         }
       } 
       if (!processed) {
