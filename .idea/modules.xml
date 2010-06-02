@@ -58,7 +58,6 @@
       <module fileurl="file://$PROJECT_DIR$/platform/lvcs-api/lvcs-api.iml" filepath="$PROJECT_DIR$/platform/lvcs-api/lvcs-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/lvcs-impl/lvcs-impl.iml" filepath="$PROJECT_DIR$/platform/lvcs-impl/lvcs-impl.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven.iml" filepath="$PROJECT_DIR$/plugins/maven/maven.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven-facade.iml" filepath="$PROJECT_DIR$/plugins/maven/maven-facade.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/facade-api/maven-facade-api.iml" filepath="$PROJECT_DIR$/plugins/maven/facade-api/maven-facade-api.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/facade-impl/maven-facade-impl.iml" filepath="$PROJECT_DIR$/plugins/maven/facade-impl/maven-facade-impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/compiler/notNull/notNull.iml" filepath="$PROJECT_DIR$/java/compiler/notNull/notNull.iml" group="java/compiler" />
