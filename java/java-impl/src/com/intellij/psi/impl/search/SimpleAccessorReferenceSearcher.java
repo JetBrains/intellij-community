@@ -15,63 +15,57 @@
  */
 package com.intellij.psi.impl.search;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.find.findUsages.FindUsagesOptions;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ReferenceRange;
 import com.intellij.psi.search.*;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.QueryExecutor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
  */
-public class SimpleAccessorReferenceSearcher implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters> {
-  public boolean execute(final ReferencesSearch.SearchParameters queryParameters, final Processor<PsiReference> consumer) {
-    final PsiElement refElement = queryParameters.getElementToSearch();
-    if (!(refElement instanceof PsiMethod)) return true;
-    final PsiMethod method = (PsiMethod)refElement;
-    final String propertyName = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      public String compute() {
-        if (!method.isValid()) return null;
-        return PropertyUtil.getPropertyName(method);
-      }
-    });
-    if (StringUtil.isEmptyOrSpaces(propertyName)) {
-      return true;
-    }
-    SearchScope searchScope = ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
-      public SearchScope compute() {
-        SearchScope searchScope = queryParameters.getEffectiveSearchScope();
-        if (searchScope instanceof GlobalSearchScope) {
-          searchScope = GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope)searchScope,
-                                                                        StdFileTypes.JSP,
-                                                                        StdFileTypes.JSPX,
-                                                                        StdFileTypes.XML,
-                                                                        StdFileTypes.XHTML);
-        }
-        return searchScope;
-      }
-    });
+public class SimpleAccessorReferenceSearcher extends SearchRequestor {
 
-    final PsiSearchHelper helper = PsiManager.getInstance(refElement.getProject()).getSearchHelper();
-    final TextOccurenceProcessor processor = new TextOccurenceProcessor() {
-      public boolean execute(PsiElement element, int offsetInElement) {
-        final PsiReference[] refs = element.getReferences();
-        for (PsiReference ref : refs) {
-          if (ReferenceRange.containsOffsetInElement(ref, offsetInElement)) {
-            if (ref.isReferenceTo(refElement)) {
-              return consumer.process(ref);
+  @Override
+  public void contributeSearchTargets(@NotNull final PsiElement refElement,
+                                      @NotNull FindUsagesOptions options,
+                                      @NotNull PsiSearchRequest.ComplexRequest collector,
+                                      final Processor<PsiReference> consumer) {
+    if (!(refElement instanceof PsiMethod)) return;
+
+    final PsiMethod method = (PsiMethod)refElement;
+
+    final String propertyName = PropertyUtil.getPropertyName(method);
+    if (StringUtil.isNotEmpty(propertyName)) {
+      SearchScope additional = GlobalSearchScope.getScopeRestrictedByFileTypes(GlobalSearchScope.allScope(method.getProject()),
+                                                                               StdFileTypes.JSP, StdFileTypes.JSPX,
+                                                                               StdFileTypes.XML, StdFileTypes.XHTML);
+
+      for (CustomPropertyScopeProvider provider : Extensions.getExtensions(CustomPropertyScopeProvider.EP_NAME)) {
+        additional = additional.union(provider.getScope(method.getProject()));
+      }
+      assert propertyName != null;
+      final SearchScope propScope = options.searchScope.intersectWith(method.getUseScope()).intersectWith(additional);
+      collector.addRequest(PsiSearchRequest.elementsWithWord(propScope, propertyName, UsageSearchContext.IN_FOREIGN_LANGUAGES, true, new TextOccurenceProcessor() {
+        public boolean execute(PsiElement element, int offsetInElement) {
+          for (PsiReference ref : element.getReferences()) {
+            if (ReferenceRange.containsOffsetInElement(ref, offsetInElement)) {
+              if (ref.isReferenceTo(refElement)) {
+                return consumer.process(ref);
+              }
             }
           }
+          return true;
         }
-        return true;
-      }
-    };
+      }));
+    }
 
-    return helper.processElementsWithWord(processor, searchScope, propertyName, UsageSearchContext.IN_FOREIGN_LANGUAGES, false);
   }
 }

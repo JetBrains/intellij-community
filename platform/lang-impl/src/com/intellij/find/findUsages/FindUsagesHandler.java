@@ -105,11 +105,12 @@ public abstract class FindUsagesHandler {
       SearchRequestor.contributeTargets(element, options, options.fastTrack, refProcessor);
 
       // todo special kind of request for that
-      options.fastTrack.addRequest(PsiSearchRequest.custom(new Runnable() {
-        public void run() {
+      options.fastTrack.addRequest(PsiSearchRequest.custom(new Computable<Boolean>() {
+        public Boolean compute() {
           if (searchText) {
             processUsagesInText(element, processor, (GlobalSearchScope)scope);
           }
+          return true;
         }
       }));
 

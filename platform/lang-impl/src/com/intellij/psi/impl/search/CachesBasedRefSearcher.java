@@ -5,7 +5,7 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -35,7 +35,8 @@ public class CachesBasedRefSearcher extends SearchRequestor implements QueryExec
       public void run() {
         final FindUsagesOptions options = new FindUsagesOptions(p.getScope());
         options.isUsages = true;
-        contributeSearchTargets(refElement, options, collector, consumer, p.isIgnoreAccessScope(), false, options.searchScope);
+        contributeSearchTargets(refElement, options, collector, consumer, p.isIgnoreAccessScope(), options.searchScope);
+        SearchRequestor.contributeTargets(refElement, options, collector, consumer);
       }
     });
     return refElement.getManager().getSearchHelper().processRequest(collector);
@@ -46,7 +47,20 @@ public class CachesBasedRefSearcher extends SearchRequestor implements QueryExec
                                       @NotNull FindUsagesOptions options,
                                       @NotNull PsiSearchRequest.ComplexRequest collector,
                                       final Processor<PsiReference> consumer) {
-    contributeSearchTargets(refElement, options, collector, consumer, false, true, options.searchScope);
+    final boolean ignoreAccessScope = false;
+    final SearchScope scope = options.searchScope;
+    contributeSearchTargets(refElement, options, collector, consumer, ignoreAccessScope, scope);
+    collector.addRequest(PsiSearchRequest.custom(new Computable<Boolean>() {
+      public Boolean compute() {
+        ourProcessing.set(true);
+        try {
+          return ReferencesSearch.search(refElement, scope, ignoreAccessScope).forEach(consumer);
+        }
+        finally {
+          ourProcessing.set(null);
+        }
+      }
+    }));
   }
 
   private static void contributeSearchTargets(@NotNull final PsiElement refElement,
@@ -54,24 +68,9 @@ public class CachesBasedRefSearcher extends SearchRequestor implements QueryExec
                                               @NotNull PsiSearchRequest.ComplexRequest collector,
                                               final Processor<PsiReference> consumer,
                                               final boolean ignoreAccessScope,
-                                              final boolean callOtherSearchers,
                                               final SearchScope scope) {
     if (!options.isUsages) {
       return;
-    }
-
-    if (callOtherSearchers) {
-      collector.addRequest(PsiSearchRequest.custom(new Runnable() {
-        public void run() {
-          ourProcessing.set(true);
-          try {
-            ReferencesSearch.search(refElement, scope, ignoreAccessScope).forEach(consumer);
-          }
-          finally {
-            ourProcessing.set(null);
-          }
-        }
-      }));
     }
 
     String text = null;
@@ -99,7 +98,6 @@ public class CachesBasedRefSearcher extends SearchRequestor implements QueryExec
 
       final TextOccurenceProcessor processor = new TextOccurenceProcessor() {
         public boolean execute(PsiElement element, int offsetInElement) {
-          ProgressManager.checkCanceled();
           if (ignoreInjectedPsi && element instanceof PsiLanguageInjectionHost) return true;
           final PsiReference[] refs = element.getReferences();
           for (PsiReference ref : refs) {
