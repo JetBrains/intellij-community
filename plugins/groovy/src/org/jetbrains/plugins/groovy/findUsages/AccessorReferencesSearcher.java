@@ -28,26 +28,37 @@ import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.Nullable;
+import com.intellij.find.findUsages.FindUsagesOptions;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ReferenceRange;
+import com.intellij.psi.search.*;
+import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * author ven
  */
-public class AccessorReferencesSearcher implements QueryExecutor<PsiReference, MethodReferencesSearch.SearchParameters> {
+public class AccessorReferencesSearcher extends SearchRequestor {
+  @Override
+  public void contributeSearchTargets(@NotNull PsiElement target,
+                                      @NotNull final FindUsagesOptions options,
+                                      @NotNull PsiSearchRequest.ComplexRequest collector,
+                                      final Processor<PsiReference> consumer) {
+    if (!(target instanceof PsiMethod)) {
+      return;
+    }
 
-  public boolean execute(final MethodReferencesSearch.SearchParameters searchParameters, final Processor<PsiReference> consumer) {
-    final PsiMethod method = searchParameters.getMethod();
-    final String propertyName = getPropertyName(method);
-    if (propertyName == null) return true;
+    final PsiMethod method = (PsiMethod)target;
 
-    SearchScope searchScope = PsiUtil.restrictScopeToGroovyFiles(new Computable<SearchScope>() {
-      public SearchScope compute() {
-        return searchParameters.getScope();
-      }
-    });
+    final String propertyName = GroovyPropertyUtils.getPropertyName(method);
+    if (propertyName == null) return;
 
-    final PsiSearchHelper helper = PsiManager.getInstance(method.getProject()).getSearchHelper();
+    SearchScope searchScope = PsiUtil.restrictScopeToGroovyFiles(options.searchScope);
+
     final TextOccurenceProcessor processor = new TextOccurenceProcessor() {
       public boolean execute(PsiElement element, int offsetInElement) {
         final PsiReference[] refs = element.getReferences();
@@ -62,16 +73,7 @@ public class AccessorReferencesSearcher implements QueryExecutor<PsiReference, M
       }
     };
 
-    return helper.processElementsWithWord(processor, searchScope, propertyName, UsageSearchContext.IN_CODE, false);
+    collector.addRequest(PsiSearchRequest.elementsWithWord(searchScope, propertyName, UsageSearchContext.IN_CODE, true, processor));
   }
 
-  @Nullable
-  private static String getPropertyName(final PsiMethod method) {
-    return ApplicationManager.getApplication().runReadAction(new NullableComputable<String>() {
-      @Nullable
-      public String compute() {
-        return GroovyPropertyUtils.getPropertyName(method);
-      }
-    });
-  }
 }

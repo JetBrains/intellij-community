@@ -16,21 +16,18 @@
 
 package org.jetbrains.plugins.groovy.findUsages;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.TextOccurenceProcessor;
-import com.intellij.psi.search.UsageSearchContext;
-import com.intellij.psi.search.searches.MethodReferencesSearch;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.search.*;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.QueryExecutor;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.search.GrSourceFilterScope;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -38,25 +35,25 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 /**
  * @author ven
  */
-public class MethodLateBoundReferencesSearcher implements QueryExecutor<PsiReference, MethodReferencesSearch.SearchParameters> {
-  public boolean execute(final MethodReferencesSearch.SearchParameters params, final Processor<PsiReference> consumer) {
-    final PsiMethod method = params.getMethod();
-    SearchScope searchScope = PsiUtil.restrictScopeToGroovyFiles(new Computable<SearchScope>() {
-      public SearchScope compute() {
-        return params.getScope().intersectWith(getUseScope(method));
-      }
-    });
-
-    final String name = method.getName();
-
-    final Project project = method.getProject();
-    if (!processTextOccurrences(searchScope, name, consumer, project)) return false;
-
-    final String propName = getPropertyName(method);
-    if (propName != null) {
-      if (!processTextOccurrences(searchScope, propName, consumer, project)) return false;
+public class MethodLateBoundReferencesSearcher extends SearchRequestor {
+  @Override
+  public void contributeSearchTargets(@NotNull PsiElement target,
+                                      @NotNull FindUsagesOptions options,
+                                      @NotNull PsiSearchRequest.ComplexRequest collector,
+                                      Processor<PsiReference> consumer) {
+    if (!(target instanceof PsiMethod)) {
+      return;
     }
-    return true;
+
+    final PsiMethod method = (PsiMethod)target;
+    SearchScope searchScope = PsiUtil.restrictScopeToGroovyFiles(options.searchScope.intersectWith(getUseScope(method)));
+
+    orderSearching(searchScope, method.getName(), consumer, collector);
+
+    final String propName = PropertyUtil.getPropertyName(method);
+    if (propName != null) {
+      orderSearching(searchScope, propName, consumer, collector);
+    }
   }
 
   private static SearchScope getUseScope(final PsiMethod method) {
@@ -72,16 +69,11 @@ public class MethodLateBoundReferencesSearcher implements QueryExecutor<PsiRefer
     return scope;
   }
 
-  private static String getPropertyName(final PsiMethod method) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<String>(){
-      @Nullable
-      public String compute() {
-        return PropertyUtil.getPropertyName(method);
-      }
-    });
-  }
 
-  private static boolean processTextOccurrences(SearchScope searchScope, final String name, final Processor<PsiReference> consumer, Project project) {
+  private static void orderSearching(SearchScope searchScope,
+                                             final String name,
+                                             final Processor<PsiReference> consumer,
+                                             @NotNull PsiSearchRequest.ComplexRequest collector) {
     final TextOccurenceProcessor processor = new TextOccurenceProcessor() {
       public boolean execute(PsiElement element, int offsetInElement) {
         if (!(element instanceof GrReferenceExpression)) {
@@ -97,8 +89,7 @@ public class MethodLateBoundReferencesSearcher implements QueryExecutor<PsiRefer
       }
     };
 
-    return PsiManager.getInstance(project).getSearchHelper().processElementsWithWord(processor,
-                                                                                     searchScope, name, UsageSearchContext.IN_CODE, true);
+    collector.addRequest(PsiSearchRequest.elementsWithWord(searchScope, name, UsageSearchContext.IN_CODE, true, processor));
   }
 
 }
