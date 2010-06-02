@@ -24,6 +24,8 @@ import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyCallExpressionImpl;
+import com.jetbrains.python.psi.impl.PyKeywordArgumentImpl;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -601,5 +603,18 @@ public class PyUtil {
       if (have_underscores != 0 && name.length() > 1 && name.charAt(1) == '_') have_underscores = 2;
       return myAllowed >= have_underscores;
     }
+  }
+
+  @Nullable
+  public static PyExpression getKeywordArgument(PyCallExpressionImpl expr, String keyword) {
+    for (PyExpression arg : expr.getArguments()) {
+      if (arg instanceof PyKeywordArgumentImpl) {
+        PyKeywordArgumentImpl kwarg = (PyKeywordArgumentImpl)arg;
+        if (keyword.equals(kwarg.getKeyword())) {
+          return kwarg.getValueExpression();
+        }
+      }
+    }
+    return null;
   }
 }

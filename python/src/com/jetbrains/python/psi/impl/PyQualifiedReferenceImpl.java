@@ -5,9 +5,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.Processor;
+import com.jetbrains.django.facet.DjangoFacet;
+import com.jetbrains.django.model.DjangoModel;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.patterns.SyntaxMatchers;
 import com.jetbrains.python.psi.resolve.*;
+import com.jetbrains.python.psi.search.PyClassInheritorsSearch;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +42,7 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
     // is it a class-private name qualified by a different class?
     if (PyUtil.isClassPrivateName(referencedName) && qualifierType instanceof PyClassType) {
       final List<? extends PsiElement> match = SyntaxMatchers.DEEP_IN_METHOD.search(qualifier);
-      if (match == null || (match.size() > 1 && ((PyClassType)qualifierType).getPyClass() != match.get(match.size()-1))) {
+      if (match == null || (match.size() > 1 && ((PyClassType)qualifierType).getPyClass() != match.get(match.size() - 1))) {
         return Collections.emptyList();
       }
     }
@@ -46,19 +50,14 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
     if (qualifierType != null && !(qualifierType instanceof PyTypeReference)) {
       if (qualifier instanceof PyQualifiedExpression) {
         // enrich the type info with any fields assigned nearby
-        List<PyQualifiedExpression> qualifier_path = PyResolveUtil.unwindQualifiers((PyQualifiedExpression)qualifier);
-        if (qualifier_path != null) {
-          for (PyExpression ex : collectAssignedAttributes((PyQualifiedExpression)qualifier)) {
-            if (referencedName.equals(ex.getName())) {
-              ret.poke(ex, RatedResolveResult.RATE_NORMAL);
-              return ret;
-            }
-          }
-        }
+        if (addAssignedAttributes(ret, referencedName, qualifier)) return ret;
       }
       // resolve within the type proper
-      PsiElement ref_elt = PyUtil.turnDirIntoInit(qualifierType.resolveMember(referencedName));
-      if (ref_elt != null) ret.poke(ref_elt, RatedResolveResult.RATE_NORMAL);
+      addResolveMemeber(ret, referencedName, qualifierType);
+
+      if (DjangoFacet.isPresent(myElement)) {
+        addAttributesFromModelRelations(ret, referencedName, qualifierType);
+      }
     }
     else if (myContext.allowImplicits()) {
       final Collection<PyFunction> functions = PyFunctionNameIndex.find(referencedName, myElement.getProject());
@@ -70,28 +69,99 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
     }
     // special case of __doc__
     if ("__doc__".equals(referencedName)) {
-      PsiElement docstring = null;
-      if (qualifierType instanceof PyClassType) {
-        PyClass qual_class = ((PyClassType)qualifierType).getPyClass();
-        if (qual_class != null) docstring = qual_class.getDocStringExpression();
-      }
-      else if (qualifierType instanceof PyModuleType) {
-        PsiFile qual_module = ((PyModuleType)qualifierType).getModule();
-        if (qual_module instanceof PyDocStringOwner) {
-          docstring = ((PyDocStringOwner)qual_module).getDocStringExpression();
-        }
-      }
-      else if (qualifier instanceof PyReferenceExpression) {
-        PsiElement qual_object = ((PyReferenceExpression)qualifier).getReference(myContext).resolve();
-        if (qual_object instanceof PyDocStringOwner) {
-          docstring = ((PyDocStringOwner)qual_object).getDocStringExpression();
-        }
-      }
-      if (docstring != null) {
-        ret.poke(docstring, RatedResolveResult.RATE_HIGH);
-      }
+      addDocReference(ret, qualifier, qualifierType);
     }
     return ret;
+  }
+
+  private void addAttributesFromModelRelations(final ResultList ret, final String referencedName, final PyType qualifierType) {
+    if (qualifierType instanceof PyClassType) {
+      final PyClassType qualifierClassType = (PyClassType)qualifierType;
+      final PyClass clazz = qualifierClassType.getPyClass();
+      PyClass modelClass = DjangoModel.getAncestorModelClass(clazz);
+      if (modelClass != null) {
+        PyClassInheritorsSearch.search(modelClass, true).forEach(new Processor<PyClass>() {
+          public boolean process(PyClass pyClass) {
+            if (addForeignKeyAttributes(qualifierClassType, pyClass, referencedName)) {
+              ret.poke(pyClass, RatedResolveResult.RATE_NORMAL);
+              return false;
+            }
+            return true;
+          }
+        });
+      }
+
+    }
+  }
+
+  private boolean addForeignKeyAttributes(PyClassType referencedType, PyClass pyClass, String referencedName) {
+    for (PyTargetExpression e : pyClass.getClassAttributes()) {
+      if (e.getParent() instanceof PyAssignmentStatement) {
+        if (e.getParent().getLastChild() instanceof PyCallExpressionImpl) {
+          PyCallExpressionImpl initCall = (PyCallExpressionImpl)e.getParent().getLastChild();
+          if (initCall != null && initCall.getCallee() != null && "models.ForeignKey".equals(initCall.getCallee().getText())) {
+            PyExpression[] args = initCall.getArguments();
+            if (args.length > 0 && args[0] instanceof PyReferenceExpressionImpl) {
+              PyReferenceExpressionImpl refClassRef = (PyReferenceExpressionImpl)args[0];
+              PyType refClassType = refClassRef.getType(TypeEvalContext.slow());
+              if (refClassType != null &&
+                  ((PyClassType)refClassType).getPyClass() == referencedType.getPyClass()) { //argument init type the same as our type
+                PyExpression expr = PyUtil.getKeywordArgument(initCall, "related_name");
+                String relatedNamed = pyClass.getName().toLowerCase() + "_set";
+                if (expr != null && expr instanceof PyStringLiteralExpression) {
+                  relatedNamed = ((PyStringLiteralExpression)expr).getStringValue();
+                }
+                if (referencedName.equals(relatedNamed)) {
+                  return true; //tada!
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  private void addResolveMemeber(ResultList ret, String referencedName, PyType qualifierType) {
+    PsiElement ref_elt = PyUtil.turnDirIntoInit(qualifierType.resolveMember(referencedName));
+    if (ref_elt != null) ret.poke(ref_elt, RatedResolveResult.RATE_NORMAL);
+  }
+
+  private boolean addAssignedAttributes(ResultList ret, String referencedName, PyExpression qualifier) {
+    List<PyQualifiedExpression> qualifier_path = PyResolveUtil.unwindQualifiers((PyQualifiedExpression)qualifier);
+    if (qualifier_path != null) {
+      for (PyExpression ex : collectAssignedAttributes((PyQualifiedExpression)qualifier)) {
+        if (referencedName.equals(ex.getName())) {
+          ret.poke(ex, RatedResolveResult.RATE_NORMAL);
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private void addDocReference(ResultList ret, PyExpression qualifier, PyType qualifierType) {
+    PsiElement docstring = null;
+    if (qualifierType instanceof PyClassType) {
+      PyClass qual_class = ((PyClassType)qualifierType).getPyClass();
+      if (qual_class != null) docstring = qual_class.getDocStringExpression();
+    }
+    else if (qualifierType instanceof PyModuleType) {
+      PsiFile qual_module = ((PyModuleType)qualifierType).getModule();
+      if (qual_module instanceof PyDocStringOwner) {
+        docstring = ((PyDocStringOwner)qual_module).getDocStringExpression();
+      }
+    }
+    else if (qualifier instanceof PyReferenceExpression) {
+      PsiElement qual_object = ((PyReferenceExpression)qualifier).getReference(myContext).resolve();
+      if (qual_object instanceof PyDocStringOwner) {
+        docstring = ((PyDocStringOwner)qual_object).getDocStringExpression();
+      }
+    }
+    if (docstring != null) {
+      ret.poke(docstring, RatedResolveResult.RATE_HIGH);
+    }
   }
 
   @NotNull
@@ -115,7 +185,7 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
             names_already.add(refex.getReferencedName());
           }
           else if (ex instanceof PyTargetExpression) {
-            PyTargetExpression targetExpr = (PyTargetExpression) ex;
+            PyTargetExpression targetExpr = (PyTargetExpression)ex;
             names_already.add(targetExpr.getName());
           }
         }
