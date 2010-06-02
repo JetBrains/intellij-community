@@ -654,7 +654,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
     public Settings(String fieldName, boolean replaceAll,
                     boolean declareStatic, boolean declareFinal,
-                    InitializationPlace initializerPlace, @Modifier String visibility, PsiLocalVariable localVariableToRemove, PsiType forcedType,
+                    InitializationPlace initializerPlace, String visibility, PsiLocalVariable localVariableToRemove, PsiType forcedType,
                     boolean deleteLocalVariable,
                     PsiClass targetClass,
                     final boolean annotateAsNonNls,
