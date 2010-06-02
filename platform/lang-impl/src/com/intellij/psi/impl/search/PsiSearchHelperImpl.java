@@ -484,17 +484,18 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       return processSingleRequest((PsiSearchRequest.SingleRequest)request);
     }
     else if (request instanceof PsiSearchRequest.CustomRequest) {
-      ((PsiSearchRequest.CustomRequest)request).searchAction.run();
-      return true;
+      return ((PsiSearchRequest.CustomRequest)request).searchAction.compute();
     }
     else if (request instanceof PsiSearchRequest.ComplexRequest) {
-      final MultiMap<IdIndexEntry, PsiSearchRequest.SingleRequest> singles = new MultiMap<IdIndexEntry, PsiSearchRequest.SingleRequest>();
+      final MultiMap<Set<IdIndexEntry>, PsiSearchRequest.SingleRequest> singles = new MultiMap<Set<IdIndexEntry>, PsiSearchRequest.SingleRequest>();
       final List<PsiSearchRequest.CustomRequest> customs = new ArrayList<PsiSearchRequest.CustomRequest>();
       distributePrimitives((PsiSearchRequest.ComplexRequest)request, singles, customs);
 
       if (processRequestsOptimized(singles)) {
         for (PsiSearchRequest.CustomRequest custom : customs) {
-          custom.searchAction.run();
+          if (!custom.searchAction.compute()) {
+            return false;
+          }
         }
         return true;
       }
@@ -506,7 +507,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
   }
 
-  private boolean processRequestsOptimized(MultiMap<IdIndexEntry, PsiSearchRequest.SingleRequest> singles) {
+  private boolean processRequestsOptimized(MultiMap<Set<IdIndexEntry>, PsiSearchRequest.SingleRequest> singles) {
     if (singles.isEmpty()) {
       return true;
     }
@@ -551,39 +552,68 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     });
   }
 
-  private MultiMap<VirtualFile, PsiSearchRequest.SingleRequest> collectFiles(MultiMap<IdIndexEntry, PsiSearchRequest.SingleRequest> singles) {
+  private MultiMap<VirtualFile, PsiSearchRequest.SingleRequest> collectFiles(MultiMap<Set<IdIndexEntry>, PsiSearchRequest.SingleRequest> singles) {
     final ProjectFileIndex index = ProjectRootManager.getInstance(myManager.getProject()).getFileIndex();
-    final MultiMap<VirtualFile, PsiSearchRequest.SingleRequest> candidateFiles = new MultiMap<VirtualFile, PsiSearchRequest.SingleRequest>();
-    for (IdIndexEntry key : singles.keySet()) {
+    final MultiMap<VirtualFile, PsiSearchRequest.SingleRequest> result = new MultiMap<VirtualFile, PsiSearchRequest.SingleRequest>();
+    for (Set<IdIndexEntry> key : singles.keySet()) {
       final Collection<PsiSearchRequest.SingleRequest> data = singles.get(key);
-      GlobalSearchScope commonScope = null;
-      for (PsiSearchRequest.SingleRequest r : data) {
-        final GlobalSearchScope scope = (GlobalSearchScope)r.searchScope;
-        commonScope = commonScope == null ? scope : commonScope.uniteWith(scope);
-      }
-      assert commonScope != null;
+      GlobalSearchScope commonScope = uniteScopes(data);
 
+      MultiMap<VirtualFile, PsiSearchRequest.SingleRequest> intersection = null;
 
-      FileBasedIndex.getInstance().processValues(IdIndex.NAME, key, null, new FileBasedIndex.ValueProcessor<Integer>() {
-        public boolean process(VirtualFile file, Integer value) {
-          if (!IndexCacheManagerImpl.shouldBeFound(file, index)) {
-            return true;
-          }
-          int mask = value.intValue();
-          for (PsiSearchRequest.SingleRequest single : data) {
-            if ((mask & single.searchContext) != 0) {
-              candidateFiles.putValue(file, single);
+      boolean first = true;
+      for (IdIndexEntry entry : key) {
+        final MultiMap<VirtualFile, PsiSearchRequest.SingleRequest> local = findFilesWithIndexEntry(entry, index, data, commonScope);
+        if (first) {
+          intersection = local;
+          first = false;
+        } else {
+          for (VirtualFile file : local.keySet()) {
+            if (intersection.containsKey(file)) {
+              intersection.putValues(file, local.get(file));
             }
           }
+        }
+      }
+      result.putAllValues(intersection);
+    }
+    return result;
+  }
+
+  private static GlobalSearchScope uniteScopes(Collection<PsiSearchRequest.SingleRequest> requests) {
+    GlobalSearchScope commonScope = null;
+    for (PsiSearchRequest.SingleRequest r : requests) {
+      final GlobalSearchScope scope = (GlobalSearchScope)r.searchScope;
+      commonScope = commonScope == null ? scope : commonScope.uniteWith(scope);
+    }
+    assert commonScope != null;
+    return commonScope;
+  }
+
+  private static MultiMap<VirtualFile, PsiSearchRequest.SingleRequest> findFilesWithIndexEntry(IdIndexEntry entry,
+                                              final ProjectFileIndex index,
+                                              final Collection<PsiSearchRequest.SingleRequest> data,
+                                              GlobalSearchScope commonScope) {
+    final MultiMap<VirtualFile, PsiSearchRequest.SingleRequest> local = new MultiMap<VirtualFile, PsiSearchRequest.SingleRequest>();
+    FileBasedIndex.getInstance().processValues(IdIndex.NAME, entry, null, new FileBasedIndex.ValueProcessor<Integer>() {
+      public boolean process(VirtualFile file, Integer value) {
+        if (!IndexCacheManagerImpl.shouldBeFound(file, index)) {
           return true;
         }
-      }, commonScope);
-    }
-    return candidateFiles;
+        int mask = value.intValue();
+        for (PsiSearchRequest.SingleRequest single : data) {
+          if ((mask & single.searchContext) != 0) {
+            local.putValue(file, single);
+          }
+        }
+        return true;
+      }
+    }, commonScope);
+    return local;
   }
 
   private void distributePrimitives(PsiSearchRequest.ComplexRequest request,
-                                    MultiMap<IdIndexEntry, PsiSearchRequest.SingleRequest> singles,
+                                    MultiMap<Set<IdIndexEntry>, PsiSearchRequest.SingleRequest> singles,
                                     List<PsiSearchRequest.CustomRequest> customs) {
     for (PsiSearchRequest primitive : request.getConstituents()) {
       if (primitive instanceof PsiSearchRequest.CustomRequest) {
@@ -592,13 +622,18 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         final PsiSearchRequest.SingleRequest single = (PsiSearchRequest.SingleRequest) primitive;
         final SearchScope scope = single.searchScope;
         if (scope instanceof LocalSearchScope) {
-          customs.add(PsiSearchRequest.custom(new Runnable() {
-            public void run() {
-              processSingleRequest(single);
+          customs.add(PsiSearchRequest.custom(new Computable<Boolean>() {
+            public Boolean compute() {
+              return processSingleRequest(single);
             }
           }));
         } else {
-          singles.putValue(new IdIndexEntry(single.word, single.caseSensitive), single);
+          final List<String> words = StringUtil.getWordsIn(single.word);
+          final Set<IdIndexEntry> key = new HashSet<IdIndexEntry>(words.size());
+          for (String word : words) {
+            key.add(new IdIndexEntry(word, single.caseSensitive));
+          }
+          singles.putValue(key, single);
         }
 
       }

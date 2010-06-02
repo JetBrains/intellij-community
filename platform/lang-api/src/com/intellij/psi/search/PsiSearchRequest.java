@@ -1,5 +1,6 @@
 package com.intellij.psi.search;
 
+import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -21,7 +22,7 @@ public class PsiSearchRequest {
     return new ComplexRequest();
   }
 
-  public static CustomRequest custom(Runnable searchAction) {
+  public static CustomRequest custom(Computable<Boolean> searchAction) {
     return new CustomRequest(searchAction);
   }
 
@@ -66,9 +67,9 @@ public class PsiSearchRequest {
   }
 
   public static class CustomRequest extends PsiSearchRequest {
-    public final Runnable searchAction;
+    public final Computable<Boolean> searchAction;
 
-    private CustomRequest(Runnable searchAction) {
+    private CustomRequest(Computable<Boolean> searchAction) {
       this.searchAction = searchAction;
     }
   }
