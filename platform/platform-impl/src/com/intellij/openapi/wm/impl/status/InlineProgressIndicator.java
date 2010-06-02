@@ -46,7 +46,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
   private final boolean myCompact;
   private TaskInfo myInfo;
 
-  private final FixedHeightLabel myProcessName = new FixedHeightLabel();
+  private final TextPanel myProcessName = new TextPanel();
   private boolean myDisposed;
 
   private long myLastTimeProgressWasAtZero;
@@ -81,10 +81,10 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       textAndProgress.add(myText, BorderLayout.CENTER);
 
       final NonOpaquePanel progressWrapper = new NonOpaquePanel(new GridBagLayout());
-      if (!myInfo.isCancellable()) progressWrapper.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 4));
       final GridBagConstraints c = new GridBagConstraints();
       c.weightx = 1;
       c.weighty = 1;
+      c.insets = new Insets(0, 0, 1, myInfo.isCancellable() ? 0 : 4);
       c.fill = GridBagConstraints.HORIZONTAL;
       progressWrapper.add(myProgress, c);
 
@@ -108,6 +108,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       myProcessName.setFont(font.deriveFont(Font.PLAIN, size));
       myProcessName.setForeground(UIManager.getColor("Panel.background").brighter().brighter());
       myProcessName.setBorder(new EmptyBorder(2, 2, 2, 2));
+      myProcessName.setDecorate(false);
 
       final NonOpaquePanel content = new NonOpaquePanel(new BorderLayout());
       content.setBorder(new EmptyBorder(2, 2, 2, myInfo.isCancellable() ? 2 : 4));
@@ -122,6 +123,9 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       content.add(myProgress, BorderLayout.CENTER);
       content.add(myText2, BorderLayout.SOUTH);
 
+      myText.setDecorate(false);
+      myText2.setDecorate(false);
+
       myComponent.setBorder(new EmptyBorder(2, 2, 2, 2));
       myProgress.setActive(false);
     }
@@ -130,6 +134,8 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
 
     if (!myCompact) {
       myProcessName.recomputeSize();
+      myText.recomputeSize();
+      myText2.recomputeSize();
     }
 
   }
@@ -274,33 +280,6 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     return myInfo;
   }
 
-  // TODO: use TextPanel instead
-  private static class FixedHeightLabel extends JLabel {
-    private Dimension myPrefSize;
-
-    public FixedHeightLabel() {
-      setOpaque(false);
-      if (SystemInfo.isMac) setFont(UIUtil.getLabelFont().deriveFont(11.0f));
-    }
-
-    public void recomputeSize() {
-      final String old = getText();
-      setText("XXX");
-      myPrefSize = getPreferredSize();
-      setText(old);
-    }
-
-
-    public Dimension getPreferredSize() {
-      final Dimension size = super.getPreferredSize();
-      if (myPrefSize != null) {
-        size.height = myPrefSize.height;
-      }
-
-      return size;
-    }
-  }
-
   private static class MyProgressBar extends JProgressBar {
 
     private boolean myActive = true;
@@ -336,9 +315,9 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
 
   private class MyComponent extends JPanel {
     private final boolean myCompact;
-    private final FixedHeightLabel myProcessName;
+    private final JComponent myProcessName;
 
-    private MyComponent(final boolean compact, final FixedHeightLabel processName) {
+    private MyComponent(final boolean compact, final JComponent processName) {
       myCompact = compact;
       myProcessName = processName;
       addMouseListener(new MouseAdapter() {
