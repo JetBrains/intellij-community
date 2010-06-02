@@ -73,7 +73,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
 
   public IdeStatusBarImpl() {
     setLayout(new BorderLayout());
-    setBorder(BorderFactory.createEmptyBorder(1, 2, 0, 2));
+    setBorder(BorderFactory.createEmptyBorder(1, 4, 0, 2));
 
     myInfoAndProgressPanel = new InfoAndProgressPanel();
     addWidget(myInfoAndProgressPanel, Position.CENTER);
