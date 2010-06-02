@@ -13,21 +13,80 @@
 package org.zmlx.hg4idea;
 
 import com.intellij.execution.process.*;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.*;
 import com.intellij.testFramework.*;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.vcsUtil.*;
+import org.junit.Before;
+import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
 
 import java.io.*;
 
 import static org.testng.Assert.*;
 
 /**
- * <strong><font color="#FF0000">TODO JavaDoc.</font></strong>
+ * The ancestor of all hg4idea test cases.
  */
-public class AbstractHgTestCase extends AbstractVcsTestCase {
+public abstract class AbstractHgTestCase extends AbstractVcsTestCase {
+
+  public static final String HG_EXECUTABLE_PATH = "IDEA_TEST_HG_EXECUTABLE_PATH";
+
+  protected File myProjectRepo;
+  private TempDirTestFixture myTempDirTestFixture;
+
+  @BeforeMethod
+  protected void setUp() throws Exception {
+    setHGExecutablePath();
+
+    myTempDirTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
+    myTempDirTestFixture.setUp();
+    myProjectRepo = new File(myTempDirTestFixture.getTempDirPath(), "repo");
+    Assert.assertTrue(myProjectRepo.mkdir());
+
+    ProcessOutput processOutput = runHg(myProjectRepo, "init");
+    verify(processOutput);
+    initProject(myProjectRepo);
+    activateVCS(HgVcs.VCS_NAME);
+
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
+  }
+
+  protected void setHGExecutablePath() {
+    // setting hg executable
+    String exec = System.getenv(HG_EXECUTABLE_PATH);
+    System.out.println("exec: " + exec);
+    if (exec != null) {
+      System.out.println("Using external");
+      myClientBinaryPath = new File(exec);
+    }
+    if (exec == null || !myClientBinaryPath.exists()) {
+      System.out.println("Using checked in");
+      File pluginRoot = new File(PluginPathManager.getPluginHomePath(HgVcs.VCS_NAME));
+      myClientBinaryPath = new File(pluginRoot, "testData/hg/bin");
+    }
+
+    HgVcs.setTestHgExecutablePath(myClientBinaryPath.getPath());
+  }
+
+  protected ProcessOutput runHgOnProjectRepo(String... commandLine) throws IOException {
+    return runHg(myProjectRepo, commandLine);
+  }
+
+  protected HgFile getHgFile(String... filepath) {
+    File fileToInclude = myProjectRepo;
+    for (String path : filepath) {
+      fileToInclude = new File(fileToInclude, path);
+    }
+    return new HgFile(myWorkingCopyDir, fileToInclude);
+  }
+
   protected void enableSilentOperation(final VcsConfiguration.StandardConfirmation op) {
     setStandardConfirmation(
       HgVcs.VCS_NAME, op, VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY

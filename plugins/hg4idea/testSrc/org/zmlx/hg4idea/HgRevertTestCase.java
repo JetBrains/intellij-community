@@ -7,14 +7,14 @@ import java.nio.charset.*;
 
 import static org.testng.Assert.*;
 
-public class HgRevertTestCase extends HgTestCase {
+public class HgRevertTestCase extends AbstractHgTestCase {
   @Test
   public void testRevertToCurrentRevision() throws Exception {
-    fillFile(projectRepo, new String[]{"file.txt"}, "initial contents");
+    fillFile(myProjectRepo, new String[]{"file.txt"}, "initial contents");
     runHgOnProjectRepo("add", ".");
     runHgOnProjectRepo("commit", "-m", "initial contents");
 
-    fillFile(projectRepo, new String[]{"file.txt"}, "new contents");
+    fillFile(myProjectRepo, new String[]{"file.txt"}, "new contents");
 
     HgRevertCommand revertCommand = new HgRevertCommand(myProject);
     revertCommand.execute(getHgFile("file.txt"), null, false);
@@ -28,11 +28,11 @@ public class HgRevertTestCase extends HgTestCase {
 
   @Test
   public void testRevertToGivenRevision() throws Exception {
-    fillFile(projectRepo, new String[]{"file.txt"}, "initial contents");
+    fillFile(myProjectRepo, new String[]{"file.txt"}, "initial contents");
     runHgOnProjectRepo("add", ".");
     runHgOnProjectRepo("commit", "-m", "initial contents");
 
-    fillFile(projectRepo, new String[]{"file.txt"}, "new contents");
+    fillFile(myProjectRepo, new String[]{"file.txt"}, "new contents");
     runHgOnProjectRepo("commit", "-m", "new contents");
 
     HgRevertCommand revertCommand = new HgRevertCommand(myProject);

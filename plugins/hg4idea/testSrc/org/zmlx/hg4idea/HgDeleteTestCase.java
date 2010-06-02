@@ -18,7 +18,7 @@ import org.testng.annotations.*;
 
 import java.io.*;
 
-public class HgDeleteTestCase extends HgTestCase {
+public class HgDeleteTestCase extends AbstractHgTestCase {
 
   @Test
   public void testDeleteUnmodifiedFile() throws Exception {

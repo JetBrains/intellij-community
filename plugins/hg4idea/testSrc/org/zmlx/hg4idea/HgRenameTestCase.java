@@ -17,7 +17,7 @@ import org.testng.annotations.*;
 
 import java.io.*;
 
-public class HgRenameTestCase extends HgTestCase {
+public class HgRenameTestCase extends AbstractHgTestCase {
 
   @Test
   public void testRenameUnmodifiedFile() throws Exception {
