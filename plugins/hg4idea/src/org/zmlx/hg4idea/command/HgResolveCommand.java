@@ -28,7 +28,7 @@ import static org.zmlx.hg4idea.HgErrorHandler.*;
 
 public class HgResolveCommand {
 
-  private static final File FILEMERGE_PLUGIN = HgUtil.getTemporaryPythonFile("filemerge");
+  private static File FILEMERGE_PLUGIN;
 
   private static final int ITEM_COUNT = 3;
 
@@ -36,6 +36,9 @@ public class HgResolveCommand {
 
   public HgResolveCommand(Project project) {
     this.project = project;
+    if (FILEMERGE_PLUGIN == null) {
+      FILEMERGE_PLUGIN = HgUtil.getTemporaryPythonFile("filemerge");
+    }
   }
 
   public Map<HgFile, HgResolveStatusEnum> list(VirtualFile repo) {
