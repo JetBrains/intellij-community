@@ -99,6 +99,8 @@ public interface ApplicationEx extends Application {
   
   void assertIsDispatchThread(@Nullable JComponent component);
 
+  void assertTimeConsuming();
+
   void runEdtSafeAction(@NotNull Runnable runnable);
 
   /**

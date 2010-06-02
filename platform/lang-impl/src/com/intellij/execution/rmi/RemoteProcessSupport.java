@@ -13,6 +13,7 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.DefaultProgramRunner;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
@@ -78,6 +79,8 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
   }
 
   public EntryPoint acquire(@NotNull final Target target, @NotNull final Parameters configuration) throws Exception {
+    ApplicationManagerEx.getApplicationEx().assertTimeConsuming();
+
     final Ref<Info> ref = Ref.create(null);
     final Pair<Target, Parameters> key = Pair.create(target, configuration);
     if (!getExistingInfo(ref, key)) {

@@ -134,7 +134,7 @@ public class MavenProject {
     newState.myFilters = model.getBuild().getFilters();
     newState.myProperties = model.getProperties();
 
-    doSetResolvedAttributes(newState, readerResult, settings, resetArtifacts);
+    doSetResolvedAttributes(newState, readerResult, resetArtifacts);
 
     newState.myModulesPathsAndNames = collectModulePathsAndNames(model, getDirectory(), activeProfiles);
     Collection<String> newProfiles = collectProfilesIds(model.getProfiles());
@@ -160,7 +160,6 @@ public class MavenProject {
 
   private static void doSetResolvedAttributes(State state,
                                               MavenProjectReaderResult readerResult,
-                                              MavenGeneralSettings settings,
                                               boolean reset) {
     MavenModel model = readerResult.mavenModel;
 

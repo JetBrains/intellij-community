@@ -59,7 +59,7 @@ public class MavenProjectIndicesManagerTest extends MavenIndicesTestCase {
     removeFromLocalRepository("junit/junit/4.0");
     myIndicesFixture.getProjectIndicesManager().scheduleUpdate(myIndicesFixture.getProjectIndicesManager().getIndices());
 
-    assertFalse(myIndicesFixture.getProjectIndicesManager().hasVersion("junit", "junit", "4.0"));
+    assertUnorderedElementsAreEqual(myIndicesFixture.getProjectIndicesManager().getVersions("junit", "junit"), "3.8.1", "3.8.2");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -73,7 +73,7 @@ public class MavenProjectIndicesManagerTest extends MavenIndicesTestCase {
                   "  </dependency>" +
                   "</dependencies>");
 
-    assertTrue(myIndicesFixture.getProjectIndicesManager().hasVersion("junit", "junit", "4.0"));
+    assertUnorderedElementsAreEqual(myIndicesFixture.getProjectIndicesManager().getVersions("junit", "junit"), "3.8.1", "3.8.2", "4.0");
   }
 
   public void testUpdatingIndexUsingMirrors() throws Exception {

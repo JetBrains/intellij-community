@@ -33,13 +33,12 @@ import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 
 public class MavenFacadeImpl extends RemoteObject implements MavenFacade {
-  public void setLogger(MavenFacadeLogger logger) throws RemoteException {
+  public void set(MavenFacadeLogger logger, MavenFacadeDownloadListener downloadListener) throws RemoteException {
     try {
-      MavenFacadeLoggerManager.setLogger(logger);
+      MavenFacadeGlobalsManager.set(logger, downloadListener);
     }
     catch (Exception e) {
       throw new RuntimeException(wrapException(e));

@@ -15,16 +15,15 @@
  */
 package org.jetbrains.idea.maven.indices;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
@@ -36,7 +35,7 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.idea.maven.facade.MavenFacadeIndexer;
+import org.jetbrains.idea.maven.facade.MavenFacadeDownloadListener;
 import org.jetbrains.idea.maven.facade.MavenFacadeManager;
 import org.jetbrains.idea.maven.facade.MavenIndexerWrapper;
 import org.jetbrains.idea.maven.model.MavenArchetype;
@@ -46,6 +45,7 @@ import org.jetbrains.idea.maven.utils.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.rmi.RemoteException;
 import java.util.*;
 
 public class MavenIndicesManager {
@@ -58,6 +58,7 @@ public class MavenIndicesManager {
   private static final String ELEMENT_DESCRIPTION = "description";
 
   private static final String LOCAL_REPOSITORY_ID = "local";
+  private MavenFacadeDownloadListener myDownloadListener;
 
   public enum IndexUpdatingState {
     IDLE, WAITING, UPDATING
@@ -93,14 +94,22 @@ public class MavenIndicesManager {
     if (myIndices != null) return;
 
     myIndexer = MavenFacadeManager.getInstance().createIndexer();
+
+    myDownloadListener = new MavenFacadeDownloadListener() {
+      public void artifactDownloaded(File file, String relativePath) throws RemoteException {
+        addArtifact(file, relativePath);
+      }
+    };
+    MavenFacadeManager.getInstance().addDownloadListener(myDownloadListener);
+
     myIndices = new MavenIndices(myIndexer, getIndicesDir(), new MavenIndex.IndexListener() {
       public void indexIsBroken(MavenIndex index) {
         scheduleUpdate(null, Collections.singletonList(index), false);
       }
     });
 
-    ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
-      public void run() {
+    Disposer.register(ApplicationManager.getApplication(), new Disposable() {
+      public void dispose() {
         doShutdown();
       }
     });
@@ -122,6 +131,11 @@ public class MavenIndicesManager {
   }
 
   private synchronized void doShutdown() {
+    if (myDownloadListener != null) {
+      MavenFacadeManager.getInstance().removeDownloadListener(myDownloadListener);
+      myDownloadListener = null;
+    }
+
     if (myIndices != null) {
       try {
         myIndices.close();
@@ -183,8 +197,8 @@ public class MavenIndicesManager {
     return new ArrayList<MavenIndex>(result);
   }
 
-  public void addArtifact(File artifactFile, String name) {
-    String repositoryPath = getRepositoryUrl(artifactFile, name);
+  private void addArtifact(File artifactFile, String relativePath) {
+    String repositoryPath = getRepositoryUrl(artifactFile, relativePath);
 
     MavenIndex index = getIndicesObject().find(LOCAL_REPOSITORY_ID, repositoryPath, MavenIndex.Kind.LOCAL);
     if (index != null) {

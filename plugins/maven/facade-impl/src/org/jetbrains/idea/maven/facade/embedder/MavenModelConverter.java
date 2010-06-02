@@ -26,7 +26,7 @@ import org.apache.maven.shared.dependency.tree.DependencyNode;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.jdom.Element;
 import org.jdom.IllegalNameException;
-import org.jetbrains.idea.maven.facade.MavenFacadeLoggerManager;
+import org.jetbrains.idea.maven.facade.MavenFacadeGlobalsManager;
 import org.jetbrains.idea.maven.facade.nexus.ArtifactType;
 import org.jetbrains.idea.maven.facade.nexus.RepositoryType;
 import org.jetbrains.idea.maven.model.*;
@@ -287,7 +287,7 @@ public class MavenModelConverter {
       result = new Element(xpp.getName());
     }
     catch (IllegalNameException e) {
-      MavenFacadeLoggerManager.getLogger().error(e);
+      MavenFacadeGlobalsManager.getLogger().error(e);
       return null;
     }
 
