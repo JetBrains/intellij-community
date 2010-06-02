@@ -197,6 +197,8 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
   }
 
   private void queue(Update update) {
+    if (isReleased()) return;
+
     myUpdateQueue.queue(update);
   }
 
@@ -233,6 +235,8 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
       });
     }
 
+    if (isReleased()) return;
+
     myTreeBuilder.getUi().maybeReady();
 
     if (myRunAfterUpdate != null) {
@@ -255,6 +259,10 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
 
       myTreeBuilder.getReady(this).doWhenDone(runnable);
     }
+  }
+
+  private boolean isReleased() {
+    return myTreeBuilder.getUi() == null;
   }
 
   protected void invokeLater(Runnable runnable) {
