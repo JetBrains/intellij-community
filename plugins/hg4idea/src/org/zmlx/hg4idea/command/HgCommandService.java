@@ -66,7 +66,7 @@ public final class HgCommandService {
   HgCommandResult execute(VirtualFile repo, List<String> hgOptions,
     String operation, List<String> arguments, Charset charset) {
     List<String> cmdLine = new LinkedList<String>();
-    cmdLine.add(settings.getHgExecutable());
+    cmdLine.add(HgVcs.getInstance(project).getHgExecutable());
     if (repo != null) {
       cmdLine.add("--repository");
       cmdLine.add(repo.getPath());
@@ -122,7 +122,7 @@ public final class HgCommandService {
   private void showError(Exception e) {
     StringBuilder message = new StringBuilder();
     message.append(HgVcsMessages.message("hg4idea.command.executable.error",
-      settings.getHgExecutable()))
+      HgVcs.getInstance(project).getHgExecutable()))
       .append("\n")
       .append("Original Error:\n")
       .append(e.getMessage());

@@ -36,6 +36,7 @@ import org.zmlx.hg4idea.provider.update.*;
 import org.zmlx.hg4idea.ui.*;
 
 import javax.swing.*;
+import java.io.File;
 import java.util.concurrent.*;
 
 public class HgVcs extends AbstractVcs {
@@ -300,6 +301,27 @@ public class HgVcs extends AbstractVcs {
 
   public static HgVcs getInstance(Project project) {
     return (HgVcs) ProjectLevelVcsManager.getInstance(project).findVcsByName(VCS_NAME);
+  }
+
+  private static String ourTestHgExecutablePath; // path to hg in test mode
+
+  /**
+   * Sets the path to hg executable used in the test mode.
+   */
+  public static void setTestHgExecutablePath(String path) {
+    ourTestHgExecutablePath = path;
+  }
+
+  /**
+   * Returns the hg executable file.
+   * If it is a test, returns the special value set in the test setup.
+   * If it is a normal app, returns the value from global settings.
+   */
+  public String getHgExecutable() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return (new File(ourTestHgExecutablePath, SystemInfo.isWindows ? "hg.exe" : "hg")).getPath();
+    }
+    return globalSettings.getHgExecutable();
   }
 
 }
