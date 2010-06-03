@@ -32,7 +32,6 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.ui.RowIcon;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
@@ -323,45 +322,7 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
 
   @NotNull
   public PsiMethod[] findDeepestSuperMethods() {
-    List<PsiMethod> methods = new ArrayList<PsiMethod>();
-    findDeepestSuperMethodsForClass(methods, this);
-    return methods.toArray(new PsiMethod[methods.size()]);
-  }
-
-  private void findDeepestSuperMethodsForClass(List<PsiMethod> collectedMethods, PsiMethod method) {
-    PsiClassType[] superClassTypes = method.getContainingClass().getSuperTypes();
-
-    for (PsiClassType superClassType : superClassTypes) {
-      PsiClass resolvedSuperClass = superClassType.resolve();
-
-      if (resolvedSuperClass == null) continue;
-      PsiMethod[] superClassMethods = resolvedSuperClass.getMethods();
-
-      for (PsiMethod superClassMethod : superClassMethods) {
-        MethodSignature superMethodSignature = superClassMethod.getHierarchicalMethodSignature();
-        final HierarchicalMethodSignature thisMethodSignature = getHierarchicalMethodSignature();
-
-        if (superMethodSignature.equals(thisMethodSignature) &&
-            !superClassMethod.getModifierList().hasExplicitModifier(PsiModifier.STATIC)) {
-          checkForMethodOverriding(collectedMethods, superClassMethod);
-        }
-        findDeepestSuperMethodsForClass(collectedMethods, superClassMethod);
-      }
-    }
-  }
-
-  private static void checkForMethodOverriding(List<PsiMethod> collectedMethods, PsiMethod superClassMethod) {
-    int i = 0;
-    while (i < collectedMethods.size()) {
-      PsiMethod collectedMethod = collectedMethods.get(i);
-      if (collectedMethod.getContainingClass().equals(superClassMethod.getContainingClass()) ||
-          collectedMethod.getContainingClass().isInheritor(superClassMethod.getContainingClass(), true)) {
-        collectedMethods.remove(collectedMethod);
-        continue;
-      }
-      i++;
-    }
-    collectedMethods.add(superClassMethod);
+    return PsiSuperMethodImplUtil.findDeepestSuperMethods(this);
   }
 
   @NotNull
@@ -529,7 +490,7 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
     if (map == null) return GrNamedArgumentSearchVisitor.EMPTY_SET_ARRAY;
 
     body.accept(new GrNamedArgumentSearchVisitor(map));
-    return map.values().toArray(GrNamedArgumentSearchVisitor.EMPTY_SET_ARRAY);
+    return map.values().toArray(new Set[map.values().size()]);
   }
 
   public PsiMethodReceiver getMethodReceiver() {
