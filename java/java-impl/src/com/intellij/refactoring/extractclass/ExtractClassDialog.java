@@ -34,14 +34,16 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
-import java.util.ArrayList;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 @SuppressWarnings({"OverridableMethodCallInConstructor"})
 class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeListener<PsiMember, MemberInfo> {
@@ -53,6 +55,8 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
   private final JTextField sourceClassTextField;
   private JCheckBox myGenerateAccessorsCb;
   private final VisibilityPanel myVisibilityPanel;
+  private JCheckBox extractAsEnum;
+  private List<MemberInfo> enumConstants = new ArrayList<MemberInfo>();
 
   ExtractClassDialog(PsiClass sourceClass, PsiMember selectedMember) {
     super(sourceClass.getProject(), true);
@@ -93,10 +97,19 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
       }
     };
     memberInfo = MemberInfo.extractClassMembers(this.sourceClass, filter, false);
+    extractAsEnum = new JCheckBox("Extract as enum");
+    boolean hasConstants = false;
     for (MemberInfo info : memberInfo) {
-      if (info.getMember().equals(selectedMember)) {
+      final PsiMember member = info.getMember();
+      if (member.equals(selectedMember)) {
         info.setChecked(true);
       }
+      if (!hasConstants && member instanceof PsiField && member.hasModifierProperty(PsiModifier.FINAL) && member.hasModifierProperty(PsiModifier.STATIC)) {
+        hasConstants = true;
+      }
+    }
+    if (!hasConstants) {
+      extractAsEnum.setVisible(false);
     }
     super.init();
     sourceClassTextField.setText(sourceClass.getQualifiedName());
@@ -111,7 +124,13 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
     final String newClassName = getClassName();
     final String packageName = getPackageName();
 
-    final ExtractClassProcessor processor = new ExtractClassProcessor(sourceClass, fields, methods, classes, packageName, newClassName, myVisibilityPanel.getVisibility(), isGenerateAccessors());
+    Collections.sort(enumConstants, new Comparator<MemberInfo>() {
+      public int compare(MemberInfo o1, MemberInfo o2) {
+        return o1.getMember().getTextOffset() - o2.getMember().getTextOffset();
+      }
+    });
+    final ExtractClassProcessor processor = new ExtractClassProcessor(sourceClass, fields, methods, classes, packageName, newClassName, myVisibilityPanel.getVisibility(), isGenerateAccessors(),
+                                                                      isExtractAsEnum() ? enumConstants : Collections.<MemberInfo>emptyList());
     invokeRefactoring(processor);
   }
 
@@ -180,6 +199,10 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
     return myGenerateAccessorsCb.isSelected();
   }
 
+  public boolean isExtractAsEnum() {
+    return extractAsEnum.isVisible() && extractAsEnum.isEnabled() && extractAsEnum.isSelected();
+  }
+
   protected String getDimensionServiceKey() {
     return "RefactorJ.ExtractClass";
   }
@@ -200,6 +223,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
     final JPanel classNamePanel = new JPanel(new BorderLayout());
     classNamePanel.add(classNameLabel, BorderLayout.NORTH);
     classNamePanel.add(classNameField, BorderLayout.CENTER);
+    classNamePanel.add(extractAsEnum, BorderLayout.SOUTH);
     box.add(classNamePanel);
 
     box.add(Box.createVerticalStrut(5));
@@ -221,12 +245,40 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
   protected JComponent createCenterPanel() {
     final JPanel panel = new JPanel(new BorderLayout());
     final MemberSelectionPanel memberSelectionPanel =
-      new MemberSelectionPanel(RefactorJBundle.message("members.to.extract.label"), memberInfo, null);
+      new MemberSelectionPanel(RefactorJBundle.message("members.to.extract.label"), memberInfo, "as enum"){
+        @Override
+        protected MemberSelectionTable createMemberSelectionTable(final List<MemberInfo> memberInfo, String abstractColumnHeader) {
+          return new MemberSelectionTable(memberInfo, abstractColumnHeader) {
+            @Nullable
+            @Override
+            protected Object getAbstractColumnValue(MemberInfo memberInfo) {
+              if (isExtractAsEnum()) {
+                final PsiMember member = memberInfo.getMember();
+                if (isConstantField(member)) {
+                  return Boolean.valueOf(enumConstants.contains(memberInfo));
+                }
+              }
+              return null;
+            }
+
+            @Override
+            protected boolean isAbstractColumnEditable(int rowIndex) {
+              final MemberInfo info = memberInfo.get(rowIndex);
+              if (info.isChecked()) {
+                final PsiMember member = info.getMember();
+                if (isConstantField(member)) {
+                  if (enumConstants.isEmpty()) return true;
+                  final MemberInfo currentEnumConstant = enumConstants.get(0);
+                  if (((PsiField)currentEnumConstant.getMember()).getType().equals(((PsiField)member).getType())) return true;
+                }
+              }
+              return false;
+            }
+          };
+        }
+      };
     final MemberSelectionTable table = memberSelectionPanel.getTable();
     table.setMemberInfoModel(new DelegatingMemberInfoModel<PsiMember, MemberInfo>(table.getMemberInfoModel()) {
-      public Boolean isFixedAbstract(MemberInfo member) {
-        return Boolean.TRUE;
-      }
 
       @Override
       public int checkForProblems(@NotNull final MemberInfo member) {
@@ -274,13 +326,24 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
     });
     panel.add(memberSelectionPanel, BorderLayout.CENTER);
     table.addMemberInfoChangeListener(this);
-
+    extractAsEnum.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        table.repaint();
+      }
+    });
     myGenerateAccessorsCb = new JCheckBox("Generate accessors");
     myGenerateAccessorsCb.setMnemonic('G');
     panel.add(myGenerateAccessorsCb, BorderLayout.SOUTH);
 
     panel.add(myVisibilityPanel, BorderLayout.EAST);
     return panel;
+  }
+
+  private static boolean isConstantField(PsiMember member) {
+    return member instanceof PsiField &&
+           member.hasModifierProperty(PsiModifier.STATIC) &&
+           member.hasModifierProperty(PsiModifier.FINAL) &&
+           ((PsiField)member).hasInitializer();
   }
 
   public JComponent getPreferredFocusedComponent() {
@@ -295,5 +358,34 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
   public void memberInfoChanged(MemberInfoChange memberInfoChange) {
     validateButtons();
     myMember2CauseMap.clear();
+    if (extractAsEnum.isVisible()) {
+      for (Object info : memberInfoChange.getChangedMembers()) {
+        if (((MemberInfo)info).isToAbstract()) {
+          enumConstants.add((MemberInfo)info);
+        } else {
+          enumConstants.remove((MemberInfo)info);
+        }
+      }
+      extractAsEnum.setEnabled(canExtractEnum());
+    }
+  }
+
+  private boolean canExtractEnum() {
+    final List<PsiField> fields = new ArrayList<PsiField>();
+    final List<PsiClass> innerClasses = new ArrayList<PsiClass>();
+    final List<PsiMethod> methods = new ArrayList<PsiMethod>();
+    for (MemberInfo info : memberInfo) {
+      if (info.isChecked()) {
+        final PsiMember member = info.getMember();
+        if (member instanceof PsiField) {
+          fields.add((PsiField)member);
+        } else if (member instanceof PsiMethod) {
+          methods.add((PsiMethod)member);
+        } else if (member instanceof PsiClass) {
+          innerClasses.add((PsiClass)member);
+        }
+      }
+    }
+    return !new BackpointerUsageVisitor(fields, innerClasses, methods, sourceClass).backpointerRequired();
   }
 }

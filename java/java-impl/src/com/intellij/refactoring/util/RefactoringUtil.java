@@ -307,6 +307,7 @@ public class RefactoringUtil {
 
   public static PsiElement getParentExpressionAnchorElement(PsiElement place) {
     PsiElement parent = place.getUserData(ElementToWorkOn.PARENT);
+    if (place.getUserData(ElementToWorkOn.OUT_OF_CODE_BLOCK) != null) return parent;
     if (parent == null) parent = place;
     while (true) {
       if (isExpressionAnchorElement(parent)) return parent;
@@ -545,6 +546,7 @@ public class RefactoringUtil {
   public static PsiElement getAnchorElementForMultipleExpressions(PsiExpression[] occurrences, PsiElement scope) {
     PsiElement anchor = null;
     for (PsiExpression occurrence : occurrences) {
+    //  if (!occurrence.isPhysical()) continue;
       if (scope != null && !PsiTreeUtil.isAncestor(scope, occurrence, false)) {
         continue;
       }

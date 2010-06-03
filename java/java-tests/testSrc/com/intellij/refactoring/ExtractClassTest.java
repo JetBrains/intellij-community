@@ -14,10 +14,12 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.extractclass.ExtractClassProcessor;
+import com.intellij.refactoring.util.classMembers.MemberInfo;
 import junit.framework.Assert;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.TreeSet;
 
 public class ExtractClassTest extends MultiFileTestCase{
@@ -135,7 +137,7 @@ public class ExtractClassTest extends MultiFileTestCase{
   private static void doTest(final PsiClass aClass, final ArrayList<PsiMethod> methods, final ArrayList<PsiField> fields, final String conflicts,
                              boolean generateGettersSetters) {
     try {
-      ExtractClassProcessor processor = new ExtractClassProcessor(aClass, fields, methods, new ArrayList<PsiClass>(), "", "Extracted", null, generateGettersSetters);
+      ExtractClassProcessor processor = new ExtractClassProcessor(aClass, fields, methods, new ArrayList<PsiClass>(), "", "Extracted", null, generateGettersSetters, Collections.<MemberInfo>emptyList());
       processor.run();
       LocalFileSystem.getInstance().refresh(false);
       FileDocumentManager.getInstance().saveAllDocuments();
@@ -253,7 +255,7 @@ public class ExtractClassTest extends MultiFileTestCase{
         fields.add(aClass.findFieldByName("myT", false));
 
         final ExtractClassProcessor processor =
-          new ExtractClassProcessor(aClass, fields, methods, new ArrayList<PsiClass>(), "", "Extracted", PsiModifier.PUBLIC, false);
+          new ExtractClassProcessor(aClass, fields, methods, new ArrayList<PsiClass>(), "", "Extracted", PsiModifier.PUBLIC, false, Collections.<MemberInfo>emptyList());
         processor.run();
         LocalFileSystem.getInstance().refresh(false);
         FileDocumentManager.getInstance().saveAllDocuments();

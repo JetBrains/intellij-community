@@ -110,6 +110,10 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
     doTest(true);
   }
 
+  public void testWildcard() throws Exception {
+    doTest(true);
+  }
+
   private void doTest(final boolean inlineDef, String conflictMessage) throws Exception {
     try {
       doTest(inlineDef);
