@@ -249,7 +249,7 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
     }
   }
 
-  private static class CollectingRootVisitor implements SdkRootVisitor {
+  private static class CollectingRootVisitor implements RootVisitor {
     Set<ModuleResult> result;
     PsiManager psimgr;
 
