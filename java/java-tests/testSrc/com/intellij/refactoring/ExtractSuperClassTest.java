@@ -29,16 +29,16 @@ import java.io.File;
  */
 public class ExtractSuperClassTest extends CodeInsightTestCase {
   public void testFinalFieldInitialization() throws Exception {   // IDEADEV-19704
-    doTest("Test", "TestSubclass", new PullUpTest.MemberDescriptor("X", PsiClass.class),
-           new PullUpTest.MemberDescriptor("x", PsiField.class));
+    doTest("Test", "TestSubclass", new RefactoringTestUtil.MemberDescriptor("X", PsiClass.class),
+           new RefactoringTestUtil.MemberDescriptor("x", PsiField.class));
   }
 
   public void testFieldInitializationWithCast() throws Exception {
-    doTest("Test", "TestSubclass", new PullUpTest.MemberDescriptor("x", PsiField.class));
+    doTest("Test", "TestSubclass", new RefactoringTestUtil.MemberDescriptor("x", PsiField.class));
   }
 
   public void testParameterNameEqualsFieldName() throws Exception {    // IDEADEV-10629
-    doTest("Test", "TestSubclass", new PullUpTest.MemberDescriptor("a", PsiField.class));
+    doTest("Test", "TestSubclass", new RefactoringTestUtil.MemberDescriptor("a", PsiField.class));
   }
 
   public void testExtendsLibraryClass() throws Exception {
@@ -46,7 +46,7 @@ public class ExtractSuperClassTest extends CodeInsightTestCase {
   }
 
   public void testRequiredImportRemoved() throws Exception {
-    doTest("foo.impl.B", "BImpl", new PullUpTest.MemberDescriptor("getInstance", PsiMethod.class));
+    doTest("foo.impl.B", "BImpl", new RefactoringTestUtil.MemberDescriptor("getInstance", PsiMethod.class));
   }
 
   public void testSubstituteGenerics() throws Exception {
@@ -54,11 +54,11 @@ public class ExtractSuperClassTest extends CodeInsightTestCase {
   }
 
   public void testExtendsList() throws Exception {
-    doTest("Test", "TestSubclass", new PullUpTest.MemberDescriptor("List", PsiClass.class));
+    doTest("Test", "TestSubclass", new RefactoringTestUtil.MemberDescriptor("List", PsiClass.class));
   }
 
   public void testImportsCorruption() throws Exception {
-    doTest("p1.A", "AA", new PullUpTest.MemberDescriptor("m1", PsiMethod.class));
+    doTest("p1.A", "AA", new RefactoringTestUtil.MemberDescriptor("m1", PsiMethod.class));
   }
 
   @Override
@@ -78,13 +78,13 @@ public class ExtractSuperClassTest extends CodeInsightTestCase {
   }
 
   private void doTest(@NonNls final String className, @NonNls final String newClassName,
-                      PullUpTest.MemberDescriptor... membersToFind) throws Exception {
+                      RefactoringTestUtil.MemberDescriptor... membersToFind) throws Exception {
     String rootBefore = getRoot() + "/before";
     PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk("java 1.5"));
     final VirtualFile rootDir = PsiTestUtil.createTestProjectStructure(myProject, myModule, rootBefore, myFilesToDelete);
     PsiClass psiClass = myJavaFacade.findClass(className, ProjectScope.getAllScope(myProject));
     assertNotNull(psiClass);
-    final MemberInfo[] members = PullUpTest.findMembers(psiClass, membersToFind);
+    final MemberInfo[] members = RefactoringTestUtil.findMembers(psiClass, membersToFind);
     ExtractSuperClassProcessor processor = new ExtractSuperClassProcessor(myProject,
                                                                           psiClass.getContainingFile().getContainingDirectory(),
                                                                           newClassName,

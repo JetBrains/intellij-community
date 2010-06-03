@@ -33,6 +33,7 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.IconUtil;
 import com.intellij.util.VisibilityIcons;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
@@ -47,6 +48,7 @@ public class MemberSelectionTable extends AbstractMemberSelectionTable<PsiMember
     super(memberInfos, memberInfoModel, abstractColumnHeader);
   }
 
+  @Nullable
   @Override
   protected Object getAbstractColumnValue(MemberInfo memberInfo) {
     if (!(memberInfo.getMember() instanceof PsiMethod)) return null;

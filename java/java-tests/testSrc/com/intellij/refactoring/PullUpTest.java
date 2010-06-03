@@ -23,75 +23,75 @@ public class PullUpTest extends LightCodeInsightTestCase {
 
 
   public void testQualifiedThis() throws Exception {
-    doTest(new MemberDescriptor ("Inner", PsiClass.class));
+    doTest(new RefactoringTestUtil.MemberDescriptor("Inner", PsiClass.class));
   }
 
   public void testQualifiedSuper() throws Exception {
-    doTest(new MemberDescriptor ("Inner", PsiClass.class));
+    doTest(new RefactoringTestUtil.MemberDescriptor("Inner", PsiClass.class));
   }
 
   public void testQualifiedReference() throws Exception {     // IDEADEV-25008
-    doTest(new MemberDescriptor ("x", PsiField.class),
-           new MemberDescriptor ("getX", PsiMethod.class),
-           new MemberDescriptor ("setX", PsiMethod.class));
+    doTest(new RefactoringTestUtil.MemberDescriptor("x", PsiField.class),
+           new RefactoringTestUtil.MemberDescriptor("getX", PsiMethod.class),
+           new RefactoringTestUtil.MemberDescriptor("setX", PsiMethod.class));
 
   }
   
   public void testPullUpAndAbstractize() throws Exception {
-    doTest(new MemberDescriptor("a", PsiMethod.class),
-           new MemberDescriptor("b", PsiMethod.class, true));
+    doTest(new RefactoringTestUtil.MemberDescriptor("a", PsiMethod.class),
+           new RefactoringTestUtil.MemberDescriptor("b", PsiMethod.class, true));
   }
 
   public void testTryCatchFieldInitializer() throws Exception {
-    doTest(new MemberDescriptor("field", PsiField.class));
+    doTest(new RefactoringTestUtil.MemberDescriptor("field", PsiField.class));
   }
 
   public void testIfFieldInitializationWithNonMovedField() throws Exception {
-    doTest(new MemberDescriptor("f", PsiField.class));
+    doTest(new RefactoringTestUtil.MemberDescriptor("f", PsiField.class));
   }
 
   public void testIfFieldMovedInitialization() throws Exception {
-    doTest(new MemberDescriptor("f", PsiField.class));
+    doTest(new RefactoringTestUtil.MemberDescriptor("f", PsiField.class));
   }
 
   public void testMultipleConstructorsFieldInitialization() throws Exception {
-    doTest(new MemberDescriptor("f", PsiField.class));
+    doTest(new RefactoringTestUtil.MemberDescriptor("f", PsiField.class));
   }
 
   public void testMultipleConstructorsFieldInitializationNoGood() throws Exception {
-    doTest(new MemberDescriptor("f", PsiField.class));
+    doTest(new RefactoringTestUtil.MemberDescriptor("f", PsiField.class));
   }
 
 
   public void testRemoveOverride() throws Exception {
-    doTest(new MemberDescriptor ("get", PsiMethod.class));
+    doTest(new RefactoringTestUtil.MemberDescriptor("get", PsiMethod.class));
   }
 
   public void testTypeParamErasure() throws Exception {
-    doTest(new MemberDescriptor("f", PsiField.class));
+    doTest(new RefactoringTestUtil.MemberDescriptor("f", PsiField.class));
   }
 
   public void testTypeParamSubst() throws Exception {
-    doTest(new MemberDescriptor("f", PsiField.class));
+    doTest(new RefactoringTestUtil.MemberDescriptor("f", PsiField.class));
   }
 
   public void testTypeArgument() throws Exception {
-    doTest(new MemberDescriptor("f", PsiField.class));
+    doTest(new RefactoringTestUtil.MemberDescriptor("f", PsiField.class));
   }
 
   public void testGenericsInAbstractMethod() throws Exception {
-    doTest(new MemberDescriptor("method", PsiMethod.class, true));
+    doTest(new RefactoringTestUtil.MemberDescriptor("method", PsiMethod.class, true));
   }
 
   public void testGenericsInImplements() throws Exception {
-    doTest(false, new MemberDescriptor("I", PsiClass.class));
+    doTest(false, new RefactoringTestUtil.MemberDescriptor("I", PsiClass.class));
   }
 
-  private void doTest(MemberDescriptor... membersToFind) throws Exception {
+  private void doTest(RefactoringTestUtil.MemberDescriptor... membersToFind) throws Exception {
     doTest(true, membersToFind);
   }
 
-  private void doTest(final boolean checkMemebersMovedCount, MemberDescriptor... membersToFind) throws Exception {
+  private void doTest(final boolean checkMemebersMovedCount, RefactoringTestUtil.MemberDescriptor... membersToFind) throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     PsiElement elementAt = getFile().findElementAt(getEditor().getCaretModel().getOffset());
     final PsiClass sourceClass = PsiTreeUtil.getParentOfType(elementAt, PsiClass.class);
@@ -104,7 +104,7 @@ public class PullUpTest extends LightCodeInsightTestCase {
       assertTrue(interfaces[0].isWritable());
       targetClass = interfaces[0];
     }
-    MemberInfo[] infos = findMembers(sourceClass, membersToFind);
+    MemberInfo[] infos = RefactoringTestUtil.findMembers(sourceClass, membersToFind);
 
     final int[] countMoved = new int[] {0};
     final MoveMemberListener listener = new MoveMemberListener() {
@@ -123,43 +123,6 @@ public class PullUpTest extends LightCodeInsightTestCase {
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 
-  public static MemberInfo[] findMembers(final PsiClass sourceClass, final MemberDescriptor... membersToFind) {
-    MemberInfo[] infos = new MemberInfo[membersToFind.length];
-    for (int i = 0; i < membersToFind.length; i++) {
-      final Class<? extends PsiMember> clazz = membersToFind[i].myClass;
-      final String name = membersToFind[i].myName;
-      PsiMember member = null;
-      boolean overrides = false;
-      PsiReferenceList refList = null;
-      if (PsiClass.class.isAssignableFrom(clazz)) {
-        member = sourceClass.findInnerClassByName(name, false);
-        if (member == null) {
-          final PsiClass[] supers = sourceClass.getSupers();
-          for (PsiClass superTypeClass : supers) {
-            if (superTypeClass.getName().equals(name)) {
-              member = superTypeClass;
-              overrides = true;
-              refList = superTypeClass.isInterface() ? sourceClass.getImplementsList() : sourceClass.getExtendsList();
-              break;
-            }
-          }
-        }
-
-      } else if (PsiMethod.class.isAssignableFrom(clazz)) {
-        final PsiMethod[] methods = sourceClass.findMethodsByName(name, false);
-        assertEquals(1, methods.length);
-        member = methods[0];
-      } else if (PsiField.class.isAssignableFrom(clazz)) {
-        member = sourceClass.findFieldByName(name, false);
-      }
-
-      assertNotNull(member);
-      infos[i] = new MemberInfo(member, overrides, refList);
-      infos[i].setToAbstract(membersToFind[i].myAbstract);
-    }
-    return infos;
-  }
-
   protected Sdk getProjectJDK() {
     return JavaSdkImpl.getMockJdk15("50");
   }
@@ -168,21 +131,5 @@ public class PullUpTest extends LightCodeInsightTestCase {
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
   }
-  
-  public static class MemberDescriptor {
-    private String myName;
-    private Class<? extends PsiMember> myClass;
-    private boolean myAbstract;
 
-    public MemberDescriptor(String name, Class<? extends PsiMember> aClass, boolean isAbstract) {
-      myName = name;
-      myClass = aClass;
-      myAbstract = isAbstract;
-    }
-
-
-    public MemberDescriptor(String name, Class<? extends PsiMember> aClass) {
-      this(name, aClass, false);
-    }
-  }
 }
