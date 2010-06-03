@@ -123,17 +123,15 @@ class RunConfigurable extends BaseConfigurable {
             if (userObject instanceof SingleConfigurationConfigurable) {
               final SingleConfigurationConfigurable<?> settings = (SingleConfigurationConfigurable)userObject;
               RunnerAndConfigurationSettings snapshot;
-              boolean valid = true;
               try {
                 snapshot = settings.getSnapshot();
               }
               catch (ConfigurationException e) {
-                valid = false;
                 snapshot = settings.getSettings();
               }
               configuration = settings.getConfiguration();
               name = settings.getNameText();
-              setIcon(ProgramRunnerUtil.getConfigurationIcon(snapshot, !valid, runManager.isTemporary(configuration)));
+              setIcon(ProgramRunnerUtil.getConfigurationIcon(snapshot, !settings.isValid(), runManager.isTemporary(configuration)));
             }
             else if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
               RunnerAndConfigurationSettings settings = (RunnerAndConfigurationSettings)userObject;
