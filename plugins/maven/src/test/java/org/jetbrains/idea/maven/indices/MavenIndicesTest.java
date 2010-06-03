@@ -248,7 +248,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
     File dir = index.getDir();
     shutdownIndices();
 
-    File copy = new File(dir.getParentFile(), "INDEX_COPY");
+    File copy = new File(dir.getParentFile(), "ZZZ_INDEX_COPY");
     FileUtil.copyDir(dir, copy);
 
     initIndices();
