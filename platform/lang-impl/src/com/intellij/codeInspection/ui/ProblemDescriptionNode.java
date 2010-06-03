@@ -44,8 +44,7 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
   private CommonProblemDescriptor myDescriptor;
   protected DescriptorProviderInspection myTool;
 
-  public ProblemDescriptionNode(final Object userObject,
-                                final DescriptorProviderInspection tool) {
+  public ProblemDescriptionNode(final Object userObject, final DescriptorProviderInspection tool) {
     super(userObject);
     myTool = tool;
   }
@@ -60,9 +59,14 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
   }
 
   @Nullable
-  public RefEntity getElement() { return myElement; }
+  public RefEntity getElement() {
+    return myElement;
+  }
+
   @Nullable
-  public CommonProblemDescriptor getDescriptor() { return myDescriptor; }
+  public CommonProblemDescriptor getDescriptor() {
+    return myDescriptor;
+  }
 
   public Icon getIcon(boolean expanded) {
     if (myDescriptor instanceof ProblemDescriptorImpl) {
@@ -78,7 +82,7 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
   }
 
   public boolean isValid() {
-    if (myElement instanceof RefElement && !((RefElement)myElement).isValid()) return false;
+    if (myElement instanceof RefElement && !myElement.isValid()) return false;
     final CommonProblemDescriptor descriptor = getDescriptor();
     if (descriptor instanceof ProblemDescriptor) {
       final PsiElement psiElement = ((ProblemDescriptor)descriptor).getPsiElement();
@@ -127,15 +131,17 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
   public static String extractHighlightedText(CommonProblemDescriptor descriptor, PsiElement psiElement) {
     if (psiElement == null || !psiElement.isValid()) return "";
     String ref = psiElement.getText();
-    if(descriptor instanceof ProblemDescriptorImpl) {
+    if (descriptor instanceof ProblemDescriptorImpl) {
       TextRange textRange = ((ProblemDescriptorImpl)descriptor).getTextRange();
       final TextRange elementRange = psiElement.getTextRange();
-      if (textRange!=null && elementRange!=null) {
+      if (textRange != null && elementRange != null) {
         textRange = textRange.shiftRight(-elementRange.getStartOffset());
-        if(textRange.getStartOffset() >= 0 && textRange.getEndOffset() <= ref.length())
+        if (textRange.getStartOffset() >= 0 && textRange.getEndOffset() <= ref.length()) {
           ref = textRange.substring(ref);
+        }
       }
     }
+    ref = StringUtil.first(ref.replaceAll("\n"," ").trim(), 100, true);
     return ref;
   }
 }
