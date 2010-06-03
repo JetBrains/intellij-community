@@ -392,6 +392,26 @@ public class JDOMUtil {
     }
   }
 
+  @NotNull
+  public static String writeParent(Parent element, String lineSeparator) throws IOException {
+    try {
+      final StringWriter writer = new StringWriter();
+      writeParent(element, writer, lineSeparator);
+      return writer.toString();
+    }
+    catch (IOException ignored) {
+      throw new RuntimeException(ignored);
+    }
+  }
+
+  public static void writeParent(Parent element, Writer writer, String lineSeparator) throws IOException {
+    if (element instanceof Element) {
+      writeElement((Element) element, writer, lineSeparator);
+    } else if (element instanceof Document) {
+      writeDocument((Document) element, writer, lineSeparator);
+    }
+  }
+
   public static void writeElement(Element element, Writer writer, String lineSeparator) throws IOException {
     XMLOutputter xmlOutputter = createOutputter(lineSeparator);
     try {
