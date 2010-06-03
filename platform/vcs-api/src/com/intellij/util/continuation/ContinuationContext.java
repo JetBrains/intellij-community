@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs.changes;
+package com.intellij.util.continuation;
 
-import com.intellij.openapi.progress.PerformInBackgroundOption;
+import com.intellij.openapi.vcs.CalledInAny;
 
-public class BackgroundFromStartOption implements PerformInBackgroundOption {
-  private final static BackgroundFromStartOption ourInstance = new BackgroundFromStartOption();
+import java.util.List;
 
-  public static PerformInBackgroundOption getInstance() {
-    return ourInstance;
-  }
+public interface ContinuationContext {
+  @CalledInAny
+  void next(TaskDescriptor... next);
+  @CalledInAny
+  void next(List<TaskDescriptor> next);
+  @CalledInAny
+  void cancelEverything();
 
-  public boolean shouldStartInBackground() {
-    return true;
-  }
-
-  public void processSentToBackground() {
-  }
-
+  void suspend();
+  void ping();
 }

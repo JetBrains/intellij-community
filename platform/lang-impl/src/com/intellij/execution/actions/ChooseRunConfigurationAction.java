@@ -219,7 +219,7 @@ public class ChooseRunConfigurationAction extends AnAction {
     PropertiesComponent.getInstance().setValue("run.configuration.edit.ad", Boolean.toString(true));
     if (RunDialog.editConfiguration(project, configuration, "Edit configuration settings", executor.getActionName(), executor.getIcon())) {
       RunManagerEx.getInstanceEx(project).setSelectedConfiguration(configuration);
-      ExecutionUtil.executeConfiguration(project, configuration, executor, DataManager.getInstance().getDataContext());
+      ExecutionUtil.executeConfiguration(project, configuration, executor);
     }
   }
 
@@ -364,7 +364,7 @@ public class ChooseRunConfigurationAction extends AnAction {
         @Override
         public void perform(@NotNull Project project, @NotNull Executor executor, @NotNull DataContext context) {
           RunManagerEx.getInstanceEx(project).setSelectedConfiguration(getValue());
-          ExecutionUtil.executeConfiguration(project, getValue(), executor, DataManager.getInstance().getDataContext());
+          ExecutionUtil.executeConfiguration(project, getValue(), executor);
         }
 
         @Override
@@ -497,7 +497,7 @@ public class ChooseRunConfigurationAction extends AnAction {
                 final RunnerAndConfigurationSettings configuration = RunManager.getInstance(project).getSelectedConfiguration();
                 if (configuration instanceof RunnerAndConfigurationSettingsImpl) {
                   if (canRun(executor, (RunnerAndConfigurationSettingsImpl) configuration)) {
-                    ExecutionUtil.executeConfiguration(project, (RunnerAndConfigurationSettingsImpl) configuration, executor, DataManager.getInstance().getDataContext());
+                    ExecutionUtil.executeConfiguration(project, (RunnerAndConfigurationSettingsImpl) configuration, executor);
                   }
                 }
               }
@@ -577,7 +577,7 @@ public class ChooseRunConfigurationAction extends AnAction {
               public void perform(@NotNull Project project, @NotNull Executor executor, @NotNull DataContext context) {
                 manager.setTemporaryConfiguration(configuration);
                 RunManagerEx.getInstanceEx(project).setSelectedConfiguration(configuration);
-                ExecutionUtil.executeConfiguration(project, configuration, executor, DataManager.getInstance().getDataContext());
+                ExecutionUtil.executeConfiguration(project, configuration, executor);
               }
 
               @Override
@@ -710,7 +710,7 @@ public class ChooseRunConfigurationAction extends AnAction {
               final RunManagerEx manager = RunManagerEx.getInstanceEx(project);
               if (dynamic) manager.setTemporaryConfiguration(settings);
               manager.setSelectedConfiguration(settings);
-              ExecutionUtil.executeConfiguration(project, settings, executor, DataManager.getInstance().getDataContext());
+              ExecutionUtil.executeConfiguration(project, settings, executor);
             }
           });
         }

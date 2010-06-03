@@ -23,7 +23,7 @@ import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -50,7 +50,8 @@ public class ExecutionUtil {
     return RunnerRegistry.getInstance().getRunner(executorId, configuration.getConfiguration());
   }
 
-  public static void executeConfiguration(@NotNull final Project project, @NotNull final RunnerAndConfigurationSettingsImpl configuration, @NotNull final Executor executor, @NotNull final DataContext dataContext) {
+  public static void executeConfiguration(@NotNull final Project project, @NotNull final RunnerAndConfigurationSettingsImpl configuration,
+                                          @NotNull final Executor executor) {
     ProgramRunner runner = getRunner(executor.getId(), configuration);
     LOG.assertTrue(runner != null, "Runner MUST not be null!");
 
@@ -73,7 +74,7 @@ public class ExecutionUtil {
     }
 
     try {
-      runner.execute(executor, new ExecutionEnvironment(runner, configuration, dataContext));
+      runner.execute(executor, new ExecutionEnvironment(runner, configuration, SimpleDataContext.getProjectContext(project)));
     }
     catch (RunCanceledByUserException e) {
       // nothing

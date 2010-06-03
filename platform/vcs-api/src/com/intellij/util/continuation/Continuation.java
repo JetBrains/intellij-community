@@ -20,41 +20,59 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.CalledInAny;
 import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+
 public class Continuation {
-  private GeneralConsumer myGeneralConsumer;
+  private GeneralRunner myGeneralRunner;
 
   public Continuation(final Project project, final boolean cancellable) {
-    myGeneralConsumer = new GeneralConsumer(project, cancellable);
+    myGeneralRunner = new GeneralRunner(project, cancellable);
   }
 
-  public void run(final TaskDescriptor task) {
+  public void run(final TaskDescriptor... tasks) {
+    if (tasks.length == 0) return;
+    myGeneralRunner.next(tasks);
+
+    pingRunnerInCorrectThread();
+  }
+
+  public void run(final List<TaskDescriptor> tasks) {
+    if (tasks.isEmpty()) return;
+    myGeneralRunner.next(tasks);
+
+    pingRunnerInCorrectThread();
+  }
+
+  private void pingRunnerInCorrectThread() {
     if (! ApplicationManager.getApplication().isDispatchThread()) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          myGeneralConsumer.consume(task);
+          myGeneralRunner.ping();
         }
       });
     } else {
-      myGeneralConsumer.consume(task);
+      myGeneralRunner.ping();
     }
   }
 
   private static class TaskWrapper extends Task.Backgroundable {
     private final TaskDescriptor myTaskDescriptor;
-    private TaskDescriptor myResult;
-    private final Consumer<TaskDescriptor> myGeneralRunner;
+    private final GeneralRunner myGeneralRunner;
 
     private TaskWrapper(@Nullable Project project,
                        @NotNull String title,
                        boolean canBeCancelled,
                        TaskDescriptor taskDescriptor,
-                       Consumer<TaskDescriptor> generalRunner) {
+                       GeneralRunner generalRunner) {
       super(project, title, canBeCancelled, BackgroundFromStartOption.getInstance());
       myTaskDescriptor = taskDescriptor;
       myGeneralRunner = generalRunner;
@@ -62,34 +80,59 @@ public class Continuation {
 
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
-      myResult = myTaskDescriptor.run();
+      myTaskDescriptor.run(myGeneralRunner);
     }
 
     @Override
     public void onSuccess() {
-      if (myResult != null) {
-        myGeneralRunner.consume(myResult);
-      }
+      myGeneralRunner.ping();
     }
   }
 
-  private static class GeneralConsumer implements Consumer<TaskDescriptor> {
+  private static class GeneralRunner implements ContinuationContext {
     private final Project myProject;
     private final boolean myCancellable;
+    private final List<TaskDescriptor> myQueue;
+    private boolean myTriggerSuspend;
 
-    private GeneralConsumer(final Project project, boolean cancellable) {
+    private GeneralRunner(final Project project, boolean cancellable) {
       myProject = project;
       myCancellable = cancellable;
+      myQueue = Collections.synchronizedList(new LinkedList<TaskDescriptor>());
+    }
+
+    @CalledInAny
+    public void cancelEverything() {
+      myQueue.clear();
+    }
+
+    public void suspend() {
+      myTriggerSuspend = true;
+    }
+
+    @CalledInAny
+    public void next(TaskDescriptor... next) {
+      myQueue.addAll(0, Arrays.asList(next));
+    }
+
+    public void next(List<TaskDescriptor> next) {
+      myQueue.addAll(0, next);
     }
 
     @CalledInAwt
-    public void consume(TaskDescriptor taskDescriptor) {
+    public void ping() {
       ApplicationManager.getApplication().assertIsDispatchThread();
 
-      TaskDescriptor current = taskDescriptor;
-      while (current != null) {
+      while (true) {
+        if (myQueue.isEmpty()) return;
+        if (myTriggerSuspend) {
+          myTriggerSuspend = false;
+          return;
+        }
+        TaskDescriptor current = myQueue.remove(0);
+
         if (Where.AWT.equals(current.getWhere())) {
-          current = current.run();
+          current.run(this);
         } else {
           // dont forget cases here if more than 2 instances of Where
           ProgressManager.getInstance().run(new TaskWrapper(myProject, current.getName(), myCancellable, current, this));

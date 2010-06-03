@@ -24,9 +24,12 @@ import com.intellij.util.Processor;
 import com.intellij.util.ValueHolder;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.continuation.TaskDescriptor;
+import com.intellij.util.continuation.Where;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.PersistentHashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.history.CopyData;
@@ -361,5 +364,16 @@ public class SvnBranchPointsCalculator {
 
   public void getFirstCopyPoint(final String repoUID, final String sourceUrl, final String targetUrl, Consumer<WrapperInvertor<BranchCopyData>> consumer) {
     myCalculator.get(new KeyData(repoUID, sourceUrl, targetUrl), consumer);
+  }
+
+  public TaskDescriptor getFirstCopyPointTask(final String repoUID, final String sourceUrl, final String targetUrl,
+                                          final Consumer<WrapperInvertor<BranchCopyData>> consumer) {
+    return myCalculator.getTask(new KeyData(repoUID, sourceUrl, targetUrl), consumer);
+  }
+
+  public static abstract class CopyPointAcceptorTask extends TaskDescriptor implements Consumer<WrapperInvertor<BranchCopyData>> {
+    protected CopyPointAcceptorTask(String name, @NotNull Where where) {
+      super(name, where);
+    }
   }
 }
