@@ -58,6 +58,10 @@ public class ReplaceConstructorWithBuilderTest extends MultiFileTestCase {
     doTest(true);
   }
 
+  public void testImports() throws Exception {
+    doTest(true, null, null, "foo");
+  }
+
   private void doTest(final boolean createNewBuilderClass) throws Exception {
     doTest(createNewBuilderClass, null);
   }
@@ -67,6 +71,13 @@ public class ReplaceConstructorWithBuilderTest extends MultiFileTestCase {
   }
 
   private void doTest(final boolean createNewBuilderClass, final Map<String, String> expectedDefaults, final String conflicts) throws Exception {
+    doTest(createNewBuilderClass, expectedDefaults, conflicts, "");
+  }
+
+  private void doTest(final boolean createNewBuilderClass,
+                      final Map<String, String> expectedDefaults,
+                      final String conflicts,
+                      final String packageName) throws Exception {
     doTest(new PerformAction() {
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
         final PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(getProject()));
@@ -85,7 +96,7 @@ public class ReplaceConstructorWithBuilderTest extends MultiFileTestCase {
           }
         }
         try {
-          new ReplaceConstructorWithBuilderProcessor(getProject(), constructors, map, "Builder", "", createNewBuilderClass).run();
+          new ReplaceConstructorWithBuilderProcessor(getProject(), constructors, map, "Builder", packageName, createNewBuilderClass).run();
           if (conflicts != null) {
             fail("Conflicts were not detected:" + conflicts);
           }
