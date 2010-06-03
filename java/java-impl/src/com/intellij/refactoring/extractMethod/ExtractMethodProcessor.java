@@ -636,11 +636,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       if (myNullConditionalCheck) {
         final String varName = myOutputVariable.getName();
         if (isDeclaredInside(myOutputVariable)) {
-          PsiDeclarationStatement statement = (PsiDeclarationStatement)myElementFactory
-            .createStatementFromText(myOutputVariable.getType().getCanonicalText() + " " + varName + "=x;", null);
-          statement = (PsiDeclarationStatement)addToMethodCallLocation(statement);
-          myMethodCall =
-            (PsiMethodCallExpression)((PsiLocalVariable)statement.getDeclaredElements()[0]).getInitializer().replace(myMethodCall);
+          declareVariableAtMethodCallLocation(varName);
         }
         else {
           PsiExpressionStatement assignmentExpression =
@@ -676,12 +672,7 @@ public class ExtractMethodProcessor implements MatchProvider {
           myMethodCall = (PsiMethodCallExpression)assignment.getRExpression().replace(myMethodCall);
         }
         else {
-          PsiDeclarationStatement statement =
-            myElementFactory.createVariableDeclarationStatement(name, myOutputVariable.getType(), myMethodCall);
-          statement = (PsiDeclarationStatement)addToMethodCallLocation(statement);
-          PsiVariable var = (PsiVariable)statement.getDeclaredElements()[0];
-          myMethodCall = (PsiMethodCallExpression)var.getInitializer();
-          var.getModifierList().replace(myOutputVariable.getModifierList());
+          declareVariableAtMethodCallLocation(name);
         }
       }
       else if (myHasReturnStatementOutput) {
@@ -735,6 +726,15 @@ public class ExtractMethodProcessor implements MatchProvider {
       ChangeContextUtil.decodeContextInfo(myExtractedMethod, myTargetClass, RefactoringUtil.createThisExpression(myManager, null));
     }
 
+  }
+
+  private void declareVariableAtMethodCallLocation(String name) {
+    PsiDeclarationStatement statement =
+      myElementFactory.createVariableDeclarationStatement(name, myOutputVariable.getType(), myMethodCall);
+    statement = (PsiDeclarationStatement)addToMethodCallLocation(statement);
+    PsiVariable var = (PsiVariable)statement.getDeclaredElements()[0];
+    myMethodCall = (PsiMethodCallExpression)var.getInitializer();
+    var.getModifierList().replace(myOutputVariable.getModifierList());
   }
 
   private void adjustFinalParameters(final PsiMethod method) throws IncorrectOperationException {
