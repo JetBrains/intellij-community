@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.maven.indices;
 
-import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
@@ -157,7 +157,9 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
   public void testDoNotAddSameIndexTwice() throws Exception {
     MavenIndex local = myIndices.add("local", myRepositoryHelper.getTestDataPath("foo"), MavenIndex.Kind.LOCAL);
 
-    assertSame(local, myIndices.add("local", myRepositoryHelper.getTestDataPath("FOO"), MavenIndex.Kind.LOCAL));
+    if (!SystemInfo.isFileSystemCaseSensitive) {
+      assertSame(local, myIndices.add("local", myRepositoryHelper.getTestDataPath("FOO"), MavenIndex.Kind.LOCAL));
+    }
     assertSame(local, myIndices.add("local", myRepositoryHelper.getTestDataPath("foo") + "/\\", MavenIndex.Kind.LOCAL));
     assertSame(local, myIndices.add("local", "  " + myRepositoryHelper.getTestDataPath("foo") + "  ", MavenIndex.Kind.LOCAL));
 
