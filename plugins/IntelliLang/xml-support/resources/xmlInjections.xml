@@ -83,17 +83,4 @@
     <place><![CDATA[xmlAttribute().withLocalName(not(string().matches("id|type"))).withText(string().matches("[^${}/\\]+")).inside(xmlTag().withNamespace(string().matches("http://tapestry.apache.org/schema/tapestry_5_1_0.xsd|http://tapestry.apache.org/schema/tapestry_5_0_0.xsd")))]]></place>
     <place><![CDATA[xmlAttribute().withLocalName(not(string().matches("id|type"))).withText(string().matches("[^${}/\\]+")).withNamespace(string().matches("http://tapestry.apache.org/schema/tapestry_5_1_0.xsd|http://tapestry.apache.org/schema/tapestry_5_0_0.xsd"))]]></place>
   </injection>
-   <!--jsf component libraries-->
-  <injection language="CSS" injector-id="xml">
-    <display-name>CSS in jsf</display-name>
-    <prefix>inline.style {</prefix>
-    <suffix>}</suffix>
-    <place><![CDATA[xmlAttribute().withLocalName(string().matches(".*Style")).inside(xmlTag().withNamespace(string().matches("http://richfaces.org/rich|http://richfaces.org/a4j|http://richfaces.ajax4jsf.org/rich|https://ajax4jsf.dev.java.net/ajax|http://openfaces.org|http://primefaces.prime.com.tr/ui")))]]></place>
-  </injection>
-  <injection language="CSS" injector-id="xml">
-    <display-name>CSS in rich faces</display-name>
-    <prefix>inline.style {</prefix>
-    <suffix>}</suffix>
-    <place><![CDATA[xmlAttribute().withLocalName(string().matches("style")).inside(xmlTag().withNamespace(string().matches("http://richfaces.org/rich|http://richfaces.org/a4j|http://richfaces.ajax4jsf.org/rich|https://ajax4jsf.dev.java.net/ajax|http://primefaces.prime.com.tr/ui")))]]></place>
-  </injection>
 </component>
