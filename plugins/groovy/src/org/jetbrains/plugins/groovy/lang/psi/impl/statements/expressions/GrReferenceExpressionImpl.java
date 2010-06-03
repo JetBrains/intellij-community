@@ -442,13 +442,17 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       EnumSet<ClassHint.ResolveKind> kinds = refExpr.getParent() instanceof GrReferenceExpression
                                              ? EnumSet.of(ClassHint.ResolveKind.CLASS, ClassHint.ResolveKind.PACKAGE)
                                              : EnumSet.of(ClassHint.ResolveKind.CLASS);
-      ResolverProcessor classProcessor = new ClassResolverProcessor(refExpr.getReferenceName(), refExpr, kinds);
-      resolveImpl(refExpr, classProcessor);
-      final GroovyResolveResult[] classCandidates = classProcessor.getCandidates();
-      for (GroovyResolveResult classCandidate : classCandidates) {
-        final PsiElement element = classCandidate.getElement();
-        if (element instanceof PsiClass && ((PsiClass)element).isEnum()) {
-          return classCandidates;
+      boolean hasAt = refExpr.hasAt();
+      GroovyResolveResult[] classCandidates = GroovyResolveResult.EMPTY_ARRAY;
+      if (!hasAt) {
+        ResolverProcessor classProcessor = new ClassResolverProcessor(refExpr.getReferenceName(), refExpr, kinds);
+        resolveImpl(refExpr, classProcessor);
+        classCandidates = classProcessor.getCandidates();
+        for (GroovyResolveResult classCandidate : classCandidates) {
+          final PsiElement element = classCandidate.getElement();
+          if (element instanceof PsiClass && ((PsiClass)element).isEnum()) {
+            return classCandidates;
+          }
         }
       }
 
@@ -456,6 +460,10 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       resolveImpl(refExpr, processor);
       final GroovyResolveResult[] fieldCandidates = processor.getCandidates();
 
+      if (refExpr.hasAt()) {
+        return fieldCandidates;
+      }
+      
       //if reference expression is in class we need to return field instead of accessor method
       for (GroovyResolveResult candidate : fieldCandidates) {
         final PsiElement element = candidate.getElement();
@@ -669,6 +677,10 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   @NotNull
   public String getCanonicalText() {
     return getRangeInElement().substring(getElement().getText());
+  }
+
+  public boolean hasAt() {
+    return findChildByType(GroovyTokenTypes.mAT) != null;
   }
 
   public boolean isReferenceTo(PsiElement element) {
