@@ -30,6 +30,7 @@ import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -60,6 +61,7 @@ import java.util.*;
 
 public class PullUpHelper extends BaseRefactoringProcessor{
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.memberPullUp.PullUpHelper");
+  private static final Key<Boolean> PRESERVE_QUALIFIER = Key.<Boolean>create("PRESERVE_QUALIFIER");
   private final PsiClass mySourceClass;
   private final PsiClass myTargetSuperClass;
   private final boolean myIsTargetInterface;
@@ -234,6 +236,20 @@ public class PullUpHelper extends BaseRefactoringProcessor{
     ChangeContextUtil.decodeContextInfo(myTargetSuperClass, null, null);
 
     for (final PsiMember movedMember : myMembersAfterMove) {
+      movedMember.accept(new JavaRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitReferenceExpression(PsiReferenceExpression expression) {
+          final PsiExpression qualifierExpression = expression.getQualifierExpression();
+          if (qualifierExpression != null) {
+            final Boolean preserveQualifier = qualifierExpression.getCopyableUserData(PRESERVE_QUALIFIER);
+            if (preserveQualifier != null && !preserveQualifier) {
+              qualifierExpression.delete();
+              return;
+            }
+          }
+          super.visitReferenceExpression(expression);
+        }
+      });
       final JavaRefactoringListenerManager listenerManager = JavaRefactoringListenerManager.getInstance(movedMember.getProject());
       ((JavaRefactoringListenerManagerImpl)listenerManager).fireMemberMoved(mySourceClass, movedMember);
     }
@@ -632,7 +648,7 @@ public class PullUpHelper extends BaseRefactoringProcessor{
   }
 
   private void fixReferencesToStatic(PsiElement classMember, Set<PsiMember> movedMembers) throws IncorrectOperationException {
-    StaticReferencesCollector collector = new StaticReferencesCollector(movedMembers);
+    final StaticReferencesCollector collector = new StaticReferencesCollector(movedMembers);
     classMember.accept(collector);
     ArrayList<PsiJavaCodeReferenceElement> refs = collector.getReferences();
     ArrayList<PsiElement> members = collector.getReferees();
@@ -649,18 +665,19 @@ public class PullUpHelper extends BaseRefactoringProcessor{
                 (PsiReferenceExpression) factory.createExpressionFromText
                 ("a." + ((PsiNamedElement) namedElement).getName(),
                         null);
-        final PsiExpression qualifierExpression = newRef.getQualifierExpression();
+        PsiExpression qualifierExpression = newRef.getQualifierExpression();
         assert qualifierExpression != null;
-        qualifierExpression.replace(factory.createReferenceExpression(aClass));
+        qualifierExpression = (PsiExpression)qualifierExpression.replace(factory.createReferenceExpression(aClass));
+        qualifierExpression.putCopyableUserData(PRESERVE_QUALIFIER, ref.isQualified());
         ref.replace(newRef);
       }
     }
   }
 
   private class StaticReferencesCollector extends ClassMemberReferencesVisitor {
-    ArrayList<PsiJavaCodeReferenceElement> myReferences;
-    ArrayList<PsiElement> myReferees;
-    ArrayList<PsiClass> myRefereeClasses;
+    private ArrayList<PsiJavaCodeReferenceElement> myReferences;
+    private ArrayList<PsiElement> myReferees;
+    private ArrayList<PsiClass> myRefereeClasses;
     private final Set<PsiMember> myMovedMembers;
 
     private StaticReferencesCollector(Set<PsiMember> movedMembers) {
@@ -684,7 +701,6 @@ public class PullUpHelper extends BaseRefactoringProcessor{
     }
 
     protected void visitClassMemberReferenceElement(PsiMember classMember, PsiJavaCodeReferenceElement classMemberReference) {
-      if (classMember instanceof PsiClass) return;
       if (classMember.hasModifierProperty(PsiModifier.STATIC)) {
         if (!myMovedMembers.contains(classMember) &&
             RefactoringHierarchyUtil.isMemberBetween(myTargetSuperClass, mySourceClass, classMember)) {
@@ -692,7 +708,7 @@ public class PullUpHelper extends BaseRefactoringProcessor{
           myReferees.add(classMember);
           myRefereeClasses.add(classMember.getContainingClass());
         }
-        else if ((myMovedMembers.contains(classMember) || myMembersAfterMove.contains(classMember)) && classMemberReference.isQualified()) {
+        else if (myMovedMembers.contains(classMember) || myMembersAfterMove.contains(classMember)) {
           myReferences.add(classMemberReference);
           myReferees.add(classMember);
           myRefereeClasses.add(myTargetSuperClass);
