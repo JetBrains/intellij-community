@@ -32,6 +32,7 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.*;
+import java.awt.geom.Rectangle2D;
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.List;
@@ -1209,18 +1210,13 @@ public class UIUtil {
       final int containerWidth = tree.getParent() instanceof JViewport ? tree.getParent().getWidth() : tree.getWidth();
       final int xOffset = tree.getParent() instanceof JViewport ? ((JViewport)tree.getParent()).getViewPosition().x : 0;
 
-      boolean selected = false;
       if (path != null) {
-        selected = tree.isPathSelected(path);
+        boolean selected = tree.isPathSelected(path);
         Graphics2D rowGraphics = (Graphics2D)g.create();
-        if (clipBounds.height >= bounds.height) {
-          // fill the row only if clip bounds intersects actual node bounds
-          rowGraphics.setClip(xOffset, bounds.y, containerWidth, bounds.height);
-        }
-        else {
-          // just paint inside clip bounds otherwise
-          rowGraphics.setClip(clipBounds);
-        }
+        Rectangle visible = tree.getVisibleRect();
+        Rectangle2D union = visible.createIntersection(bounds);
+        Rectangle clip = new Rectangle(visible.x, (int)union.getY(), visible.width, (int)union.getHeight());
+        rowGraphics.setClip(clip);
 
         final Object sourceList = tree.getClientProperty(SOURCE_LIST_CLIENT_PROPERTY);
         if (sourceList != null && ((Boolean)sourceList)) {
@@ -1249,10 +1245,12 @@ public class UIUtil {
           paintExpandControl(rowGraphics, bounds, insets, bounds, path, row, isExpanded, hasBeenExpanded, isLeaf);
         }
 
+        super.paintRow(rowGraphics, clip, insets, bounds, path, row, isExpanded, hasBeenExpanded, isLeaf);
         rowGraphics.dispose();
-      }
 
-      super.paintRow(g, clipBounds, insets, bounds, path, row, isExpanded, hasBeenExpanded, isLeaf);
+      } else {
+        super.paintRow(g, clipBounds, insets, bounds, path, row, isExpanded, hasBeenExpanded, isLeaf);
+      }
     }
 
     @Override
