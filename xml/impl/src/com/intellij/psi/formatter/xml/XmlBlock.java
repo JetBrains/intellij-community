@@ -25,6 +25,7 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlElementType;
@@ -128,23 +129,23 @@ public class XmlBlock extends AbstractXmlBlock {
 
 
   private List<Block> splitComment() {
-    if (myNode.getElementType() != XmlElementType.XML_COMMENT) return null;
-    //
-    // Do not build subblocks for comment-only node.
-    if (myNode.getFirstChildNode() != null &&
-        myNode.getFirstChildNode().getElementType() == XmlElementType.XML_COMMENT_START &&
-        myNode.getLastChildNode().getElementType() == XmlElementType.XML_COMMENT_END) {
-      return EMPTY;
-    }
+    if (myNode.getElementType() != XmlElementType.XML_COMMENT) return EMPTY;
     final ArrayList<Block> result = new ArrayList<Block>(3);
-    final ArrayList<Block> commentBlocks = new ArrayList<Block>(3);
     ASTNode child = myNode.getFirstChildNode();
+    boolean hasOuterLangElements = false;
     while (child != null) {
-      IElementType childType = child.getElementType();
+      if (child instanceof OuterLanguageElement) {
+        hasOuterLangElements = true;
+      }
       result.add(new XmlBlock(child, null, null, myXmlFormattingPolicy, getChildIndent(), null));
       child = child.getTreeNext();
     }
-    return result;
+    if (hasOuterLangElements) {
+      return result;
+    }
+    else {
+      return EMPTY;
+    }
   }
 
   protected @Nullable Wrap getDefaultWrap(ASTNode node) {

@@ -53,9 +53,9 @@ public final class PsiUtil extends PsiUtilBase {
   private PsiUtil() {}
 
   public static boolean isOnAssignmentLeftHand(PsiExpression expr) {
-    PsiElement parent = expr.getParent();
-    return parent instanceof PsiAssignmentExpression
-           && expr.equals(((PsiAssignmentExpression) parent).getLExpression());
+    PsiElement parent = PsiTreeUtil.skipParentsOfType(expr, PsiParenthesizedExpression.class);
+    return parent instanceof PsiAssignmentExpression &&
+           PsiTreeUtil.isAncestor(((PsiAssignmentExpression)parent).getLExpression(), expr, false);
   }
 
   public static boolean isAccessibleFromPackage(@NotNull PsiModifierListOwner element, @NotNull PsiPackage aPackage) {
@@ -66,7 +66,7 @@ public final class PsiUtil extends PsiUtilBase {
 
   public static boolean isAccessedForWriting(PsiExpression expr) {
     if (isOnAssignmentLeftHand(expr)) return true;
-    PsiElement parent = expr.getParent();
+    PsiElement parent = PsiTreeUtil.skipParentsOfType(expr, PsiParenthesizedExpression.class);
     if (parent instanceof PsiPrefixExpression) {
       IElementType tokenType = ((PsiPrefixExpression) parent).getOperationTokenType();
       return tokenType == JavaTokenType.PLUSPLUS || tokenType == JavaTokenType.MINUSMINUS;
@@ -81,9 +81,9 @@ public final class PsiUtil extends PsiUtilBase {
   }
 
   public static boolean isAccessedForReading(PsiExpression expr) {
-    PsiElement parent = expr.getParent();
+    PsiElement parent = PsiTreeUtil.skipParentsOfType(expr, PsiParenthesizedExpression.class);
     return !(parent instanceof PsiAssignmentExpression) ||
-           !expr.equals(((PsiAssignmentExpression)parent).getLExpression()) ||
+           !PsiTreeUtil.isAncestor(((PsiAssignmentExpression)parent).getLExpression(), expr, false) ||
            ((PsiAssignmentExpression)parent).getOperationSign().getTokenType() != JavaTokenType.EQ;
   }
 
