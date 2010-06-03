@@ -29,6 +29,7 @@ import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
 import java.util.Arrays;
@@ -100,6 +101,7 @@ public class ResolveCache {
     myRunnablesToRunOnDropCaches.add(r);
   }
 
+  @Nullable
   private <TRef extends PsiReference, TResult> TResult resolve(TRef ref,
                                         AbstractResolver<TRef, TResult> resolver,
                                         Map<? super TRef,Reference<TResult>>[] maps,

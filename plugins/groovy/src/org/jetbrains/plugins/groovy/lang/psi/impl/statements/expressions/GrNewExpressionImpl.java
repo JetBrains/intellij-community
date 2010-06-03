@@ -158,6 +158,7 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     return PsiImplUtil.extractUniqueElement(multiResolveConstructor());
   }
 
+  @NotNull
   public GroovyResolveResult resolveConstructorGenerics() {
     return PsiImplUtil.extractUniqueResult(multiResolveConstructor());
   }

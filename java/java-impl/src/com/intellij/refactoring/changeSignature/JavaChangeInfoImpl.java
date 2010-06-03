@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@
  */
 package com.intellij.refactoring.changeSignature;
 
+import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.refactoring.util.CanonicalTypes;
@@ -30,10 +32,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
-class ChangeInfoImpl implements ChangeInfo {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.ChangeInfoImpl");
+class JavaChangeInfoImpl implements JavaChangeInfo {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.JavaChangeInfoImpl");
 
+  @Modifier
   final String newVisibility;
   private PsiMethod method;
   final String oldName;
@@ -59,24 +63,35 @@ class ChangeInfoImpl implements ChangeInfo {
   final boolean obtainsVarags;
   final boolean arrayToVarargs;
   PsiIdentifier newNameIdentifier;
-  PsiType newTypeElement;
+//  PsiType newTypeElement;
   final PsiExpression[] defaultValues;
+
+  final boolean isGenerateDelegate;
+  final Set<PsiMethod> propagateParametersMethods;
+  final Set<PsiMethod> propagateExceptionsMethods;
 
   /**
    * @param newExceptions null if not changed
    */
-  public ChangeInfoImpl(@Modifier String newVisibility,
+  public JavaChangeInfoImpl(@Modifier String newVisibility,
                     PsiMethod method,
                     String newName,
                     CanonicalTypes.Type newType,
                     @NotNull ParameterInfoImpl[] newParms,
-                    ThrownExceptionInfo[] newExceptions) {
+                    ThrownExceptionInfo[] newExceptions,
+                    boolean generateDelegate,
+                    Set<PsiMethod> propagateParametersMethods,
+                    Set<PsiMethod> propagateExceptionsMethods) {
     this.newVisibility = newVisibility;
     this.method = method;
     this.newName = newName;
     newReturnType = newType;
     this.newParms = newParms;
     wasVararg = method.isVarArgs();
+
+    this.isGenerateDelegate =generateDelegate;
+    this.propagateExceptionsMethods=propagateExceptionsMethods;
+    this.propagateParametersMethods=propagateParametersMethods;
 
     oldName = method.getName();
     final PsiManager manager = method.getManager();
@@ -175,11 +190,21 @@ class ChangeInfoImpl implements ChangeInfo {
         arrayToVarargs = false;
       }
     }
+
+    if (isNameChanged) {
+      newNameIdentifier = factory.createIdentifier(newName);
+    }
+
   }
 
   @NotNull
-  public ParameterInfo[] getNewParameters() {
+  public JavaParameterInfo[] getNewParameters() {
     return newParms;
+  }
+
+  @Modifier
+  public String getNewVisibility() {
+    return newVisibility;
   }
 
   public boolean isParameterSetOrOrderChanged() {
@@ -196,7 +221,7 @@ class ChangeInfoImpl implements ChangeInfo {
     if (!isExceptionSetChanged) {
       for (int i = 0; i < newExceptions.length; i++) {
         try {
-          if (newExceptions[i].oldIndex < 0 || !types[i].equals(newExceptions[i].myType.getType(method, method.getManager()))) {
+          if (newExceptions[i].getOldIndex() < 0 || !types[i].equals(newExceptions[i].createType(method, method.getManager()))) {
             isExceptionSetChanged = true;
             break;
           }
@@ -204,7 +229,7 @@ class ChangeInfoImpl implements ChangeInfo {
         catch (IncorrectOperationException e) {
           isExceptionSetChanged = true;
         }
-        if (newExceptions[i].oldIndex != i) isExceptionSetOrOrderChanged = true;
+        if (newExceptions[i].getOldIndex() != i) isExceptionSetOrOrderChanged = true;
       }
     }
 
@@ -231,13 +256,17 @@ class ChangeInfoImpl implements ChangeInfo {
     PsiClassType[] types = method.getThrowsList().getReferencedTypes();
     ThrownExceptionInfo[] result = new ThrownExceptionInfo[types.length];
     for (int i = 0; i < result.length; i++) {
-      result[i] = new ThrownExceptionInfo(i, types[i]);
+      result[i] = new JavaThrownExceptionInfo(i, types[i]);
     }
     return result;
   }
 
   public PsiMethod getMethod() {
     return method;
+  }
+
+  public CanonicalTypes.Type getNewReturnType() {
+    return newReturnType;
   }
 
   public void updateMethod(PsiMethod method) {
@@ -258,5 +287,87 @@ class ChangeInfoImpl implements ChangeInfo {
   public PsiExpression getValue(int i, PsiCallExpression expr) throws IncorrectOperationException {
     if (defaultValues[i] != null) return defaultValues[i];
     return newParms[i].getValue(expr);
+  }
+
+  public boolean isVisibilityChanged() {
+    return isVisibilityChanged;
+  }
+
+  public boolean isNameChanged() {
+    return isNameChanged;
+  }
+
+  public boolean isReturnTypeChanged() {
+    return isReturnTypeChanged;
+  }
+
+  public String getNewName() {
+    return newName;
+  }
+
+  public Language getLanguage() {
+    return StdLanguages.JAVA;
+  }
+
+  public boolean isExceptionSetChanged() {
+    return isExceptionSetChanged;
+  }
+
+  public boolean isExceptionSetOrOrderChanged() {
+    return isExceptionSetOrOrderChanged;
+  }
+
+  public boolean isParameterNamesChanged() {
+    return isParameterNamesChanged;
+  }
+
+  public boolean isParameterTypesChanged() {
+    return isParameterTypesChanged;
+  }
+
+  public boolean isGenerateDelegate() {
+    return isGenerateDelegate;
+  }
+
+  @NotNull
+  public String[] getOldParameterNames() {
+    return oldParameterNames;
+  }
+
+  @NotNull
+  public String[] getOldParameterTypes() {
+    return oldParameterTypes;
+  }
+
+  public ThrownExceptionInfo[] getNewExceptions() {
+    return newExceptions;
+  }
+
+  public boolean isRetainsVarargs() {
+    return retainsVarargs;
+  }
+
+  public boolean isObtainsVarags() {
+    return obtainsVarags;
+  }
+
+  public boolean isArrayToVarargs() {
+    return arrayToVarargs;
+  }
+
+  public PsiIdentifier getNewNameIdentifier() {
+    return newNameIdentifier;
+  }
+
+  public String getOldName() {
+    return oldName;
+  }
+
+  public boolean wasVararg() {
+    return wasVararg;
+  }
+
+  public boolean[] toRemoveParm() {
+    return toRemoveParm;
   }
 }

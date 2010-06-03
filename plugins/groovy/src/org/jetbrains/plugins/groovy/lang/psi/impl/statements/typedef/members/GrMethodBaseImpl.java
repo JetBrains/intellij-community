@@ -45,6 +45,8 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrNamedArgumentSearchVisitor;
@@ -55,6 +57,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterLi
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
@@ -237,6 +240,32 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
     }
   }
 
+  @Nullable
+  public GrTypeElement setReturnType(@Nullable PsiType newReturnType) {
+    GrTypeElement typeElement = getReturnTypeElementGroovy();
+    if (newReturnType == null) {
+      if (typeElement != null) typeElement.delete();
+      return null;
+    }
+    GrTypeElement newTypeElement = GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(newReturnType);
+    if (typeElement == null) {
+      GrModifierList list = getModifierList();
+      newTypeElement =  (GrTypeElement)addAfter(newTypeElement, list);
+    }
+    else {
+      newTypeElement= (GrTypeElement)typeElement.replace(newTypeElement);
+    }
+
+    newTypeElement.accept(new GroovyRecursiveElementVisitor() {
+      @Override
+      public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
+        super.visitCodeReferenceElement(refElement);
+        PsiUtil.shortenReference(refElement);
+      }
+    });
+    return newTypeElement;
+  }
+
   @Override
   public Icon getIcon(int flags) {
     RowIcon baseIcon = createLayeredIcon(GroovyIcons.METHOD, ElementPresentationUtil.getFlags(this, false));
@@ -293,45 +322,7 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
 
   @NotNull
   public PsiMethod[] findDeepestSuperMethods() {
-    List<PsiMethod> methods = new ArrayList<PsiMethod>();
-    findDeepestSuperMethodsForClass(methods, this);
-    return methods.toArray(new PsiMethod[methods.size()]);
-  }
-
-  private void findDeepestSuperMethodsForClass(List<PsiMethod> collectedMethods, PsiMethod method) {
-    PsiClassType[] superClassTypes = method.getContainingClass().getSuperTypes();
-
-    for (PsiClassType superClassType : superClassTypes) {
-      PsiClass resolvedSuperClass = superClassType.resolve();
-
-      if (resolvedSuperClass == null) continue;
-      PsiMethod[] superClassMethods = resolvedSuperClass.getMethods();
-
-      for (PsiMethod superClassMethod : superClassMethods) {
-        MethodSignature superMethodSignature = superClassMethod.getHierarchicalMethodSignature();
-        final HierarchicalMethodSignature thisMethodSignature = getHierarchicalMethodSignature();
-
-        if (superMethodSignature.equals(thisMethodSignature) &&
-            !superClassMethod.getModifierList().hasExplicitModifier(PsiModifier.STATIC)) {
-          checkForMethodOverriding(collectedMethods, superClassMethod);
-        }
-        findDeepestSuperMethodsForClass(collectedMethods, superClassMethod);
-      }
-    }
-  }
-
-  private static void checkForMethodOverriding(List<PsiMethod> collectedMethods, PsiMethod superClassMethod) {
-    int i = 0;
-    while (i < collectedMethods.size()) {
-      PsiMethod collectedMethod = collectedMethods.get(i);
-      if (collectedMethod.getContainingClass().equals(superClassMethod.getContainingClass()) ||
-          collectedMethod.getContainingClass().isInheritor(superClassMethod.getContainingClass(), true)) {
-        collectedMethods.remove(collectedMethod);
-        continue;
-      }
-      i++;
-    }
-    collectedMethods.add(superClassMethod);
+    return PsiSuperMethodImplUtil.findDeepestSuperMethods(this);
   }
 
   @NotNull
@@ -364,6 +355,8 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
 
   @Nullable
   public PsiMethod findDeepestSuperMethod() {
+    final PsiMethod[] methods = findDeepestSuperMethods();
+    if (methods.length > 0) return methods[0];
     return null;
   }
 
@@ -497,7 +490,7 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
     if (map == null) return GrNamedArgumentSearchVisitor.EMPTY_SET_ARRAY;
 
     body.accept(new GrNamedArgumentSearchVisitor(map));
-    return map.values().toArray(GrNamedArgumentSearchVisitor.EMPTY_SET_ARRAY);
+    return map.values().toArray(new Set[map.values().size()]);
   }
 
   public PsiMethodReceiver getMethodReceiver() {

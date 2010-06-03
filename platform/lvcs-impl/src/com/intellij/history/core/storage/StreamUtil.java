@@ -20,7 +20,6 @@ import com.intellij.history.core.changes.*;
 import com.intellij.history.core.tree.DirectoryEntry;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.FileEntry;
-import com.intellij.history.core.tree.RootEntry;
 
 import java.io.DataInput;
 import java.io.DataOutput;

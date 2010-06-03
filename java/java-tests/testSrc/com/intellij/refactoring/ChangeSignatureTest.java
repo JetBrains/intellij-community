@@ -4,6 +4,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.*;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
+import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.testFramework.LightCodeInsightTestCase;
@@ -152,7 +153,7 @@ public class ChangeSignatureTest extends LightCodeInsightTestCase {
 
   public void testReorderExceptions() throws Exception {
     doTest(null, null, null, new SimpleParameterGen(new ParameterInfoImpl[0]),
-           new SimpleExceptionsGen(new ThrownExceptionInfo[]{new ThrownExceptionInfo(1), new ThrownExceptionInfo(0)}),
+           new SimpleExceptionsGen(new ThrownExceptionInfo[]{new JavaThrownExceptionInfo(1), new JavaThrownExceptionInfo(0)}),
            false);
   }
 
@@ -161,7 +162,7 @@ public class ChangeSignatureTest extends LightCodeInsightTestCase {
            new GenExceptions() {
              public ThrownExceptionInfo[] genExceptions(PsiMethod method) {
                return new ThrownExceptionInfo[] {
-                 new ThrownExceptionInfo(-1, JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createTypeByFQClassName("java.lang.Exception", method.getResolveScope()))
+                 new JavaThrownExceptionInfo(-1, JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createTypeByFQClassName("java.lang.Exception", method.getResolveScope()))
                };
              }
            },
@@ -173,7 +174,7 @@ public class ChangeSignatureTest extends LightCodeInsightTestCase {
            new GenExceptions() {
              public ThrownExceptionInfo[] genExceptions(PsiMethod method) {
                return new ThrownExceptionInfo[] {
-                 new ThrownExceptionInfo(-1, JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createTypeByFQClassName("java.lang.RuntimeException", method.getResolveScope()))
+                 new JavaThrownExceptionInfo(-1, JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createTypeByFQClassName("java.lang.RuntimeException", method.getResolveScope()))
                };
              }
            },
@@ -185,7 +186,7 @@ public class ChangeSignatureTest extends LightCodeInsightTestCase {
            new GenExceptions() {
              public ThrownExceptionInfo[] genExceptions(PsiMethod method) {
                return new ThrownExceptionInfo[] {
-                 new ThrownExceptionInfo(-1, JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createTypeByFQClassName("java.lang.Exception", method.getResolveScope()))
+                 new JavaThrownExceptionInfo(-1, JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createTypeByFQClassName("java.lang.Exception", method.getResolveScope()))
                };
              }
            },
@@ -207,6 +208,18 @@ public class ChangeSignatureTest extends LightCodeInsightTestCase {
   public void testReorderMultilineMethodParameters() throws Exception {
     // Inspired by IDEA-54902
     doTest(null, new ParameterInfoImpl[] {new ParameterInfoImpl(1), new ParameterInfoImpl(0)}, false);
+  }
+
+  public void testReplaceVarargWithArray() throws Exception {
+    doTest(null, null, null, new GenParams() {
+      public ParameterInfoImpl[] genParams(PsiMethod method) throws IncorrectOperationException {
+        final PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
+        return new ParameterInfoImpl[] {
+          new ParameterInfoImpl(1, "l", factory.createTypeFromText("List<T>[]", method.getParameterList()), "null", false),
+          new ParameterInfoImpl(0, "s", factory.createTypeFromText("String", method.getParameterList()))
+        };
+      }
+    }, false);
   }
 
   private void doTest(String newReturnType, ParameterInfoImpl[] parameterInfos, final boolean generateDelegate) throws Exception {

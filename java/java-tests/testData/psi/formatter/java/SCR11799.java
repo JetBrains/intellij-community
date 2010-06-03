@@ -1,9 +1,10 @@
 package br.com.vivo.torpedeiro.pull.impl;
 
-import javax.sql.DataSource;
-import org.springframework.jdbc.core.JdbcTemplate;
 import br.com.vivo.torpedeiro.pull.MensagemPull;
 import br.com.vivo.torpedeiro.pull.PullDAO;
+import org.springframework.jdbc.core.JdbcTemplate;
+
+import javax.sql.DataSource;
 
 /**
  * Implementa? padr?de {@link PullDAO} que realiza todas as opera?s utilizando SQL atrav?de um {@link

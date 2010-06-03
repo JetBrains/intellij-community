@@ -33,16 +33,20 @@ public interface StatusBar extends StatusBarInfo {
   abstract class Info implements StatusBarInfo {
     public static final Topic<StatusBarInfo> TOPIC = Topic.create("IdeStatusBar.Text", StatusBarInfo.class);
 
-    private Info() {}
+    private Info() {
+    }
 
     public static void set(@Nullable final String text, @Nullable final Project project) {
-      if (project != null && !project.isInitialized() && !project.isDisposed()) {
-        StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
-           public void run() {
-             project.getMessageBus().syncPublisher(TOPIC).setInfo(text);
-           }
-         });
-        return;
+      if (project != null) {
+        if (project.isDisposed()) return;
+        if (!project.isInitialized()) {
+          StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
+            public void run() {
+              project.getMessageBus().syncPublisher(TOPIC).setInfo(text);
+            }
+          });
+          return;
+        }
       }
 
       final MessageBus bus = project == null ? ApplicationManager.getApplication().getMessageBus() : project.getMessageBus();
@@ -51,9 +55,11 @@ public interface StatusBar extends StatusBarInfo {
   }
 
   void addWidget(@NotNull StatusBarWidget widget);
+
   void addWidget(@NotNull StatusBarWidget widget, @NotNull String anchor);
-  
+
   void addWidget(@NotNull StatusBarWidget widget, @NotNull Disposable parentDisposable);
+
   void addWidget(@NotNull StatusBarWidget widget, @NotNull String anchor, @NotNull Disposable parentDisposable);
 
   /**
@@ -61,9 +67,11 @@ public interface StatusBar extends StatusBarInfo {
    */
   @Deprecated
   void addCustomIndicationComponent(@NotNull JComponent c);
+
   void removeCustomIndicationComponent(@NotNull JComponent c);
 
   void removeWidget(@NotNull String id);
+
   void updateWidget(@NotNull String id);
 
   void fireNotificationPopup(@NotNull JComponent content, Color backgroundColor);

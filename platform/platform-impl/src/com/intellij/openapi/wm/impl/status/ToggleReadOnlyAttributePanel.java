@@ -51,7 +51,7 @@ public class ToggleReadOnlyAttributePanel implements StatusBarWidget, StatusBarW
     return "ReadOnlyAttribute";
   }
 
-  public Presentation getPresentation(@NotNull Type type) {
+  public WidgetPresentation getPresentation(@NotNull Type type) {
     return this;
   }
 

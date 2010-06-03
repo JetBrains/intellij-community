@@ -12,6 +12,7 @@ import org.jetbrains.idea.svn.integrate.AlienDirtyScope;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.List;
 
@@ -27,11 +28,11 @@ public class SvnDeleteTest extends SvnTestCase {
     VirtualFile dir = createDirInCommand(myWorkingCopyDir, "child");
     createFileInCommand(dir, "a.txt", "content");
 
-    verify(runSvn("status"), "A child", "A child\\a.txt");
+    verify(runSvn("status"), "A child", "A child" + File.separatorChar + "a.txt");
     checkin();
 
     deleteFileInCommand(dir);
-    verify(runSvn("status"), "D child", "D child\\a.txt");
+    verify(runSvn("status"), "D child", "D child" + File.separatorChar + "a.txt");
 
     LocalFileSystem.getInstance().refresh(false);
 

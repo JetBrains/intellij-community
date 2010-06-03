@@ -131,10 +131,7 @@ public class PsiUtil {
 
     //check for default constructor
     if (method.isConstructor() && method.getParameterList().getParametersCount() == 0 && argumentTypes.length == 1) {
-      final PsiType type = argumentTypes[0];
-      final PsiClassType mapType = JavaPsiFacade.getElementFactory(method.getProject())
-        .createTypeByFQClassName(CommonClassNames.JAVA_UTIL_MAP, method.getResolveScope());
-      return TypesUtil.isAssignable(mapType, type, place);
+      return InheritanceUtil.isInheritor(argumentTypes[0], CommonClassNames.JAVA_UTIL_MAP);
     }
     LOG.assertTrue(signature != null);
     return GrClosureSignatureUtil.isSignatureApplicable(signature, argumentTypes, place);
@@ -152,14 +149,13 @@ public class PsiUtil {
   }
 
   @Nullable
-  public static GroovyPsiElement getArgumentsElement(PsiElement methodRef) {
+  public static GrArgumentList getArgumentsList(PsiElement methodRef) {
     PsiElement parent = methodRef.getParent();
-    if (parent instanceof GrMethodCallExpression) {
-      return ((GrMethodCallExpression)parent).getArgumentList();
-    } else if (parent instanceof GrApplicationStatement) {
-      return ((GrApplicationStatement)parent).getArgumentList();
-    } else if (parent instanceof GrNewExpression) {
-      return ((GrNewExpression)parent).getArgumentList();
+    if (parent instanceof GrCall) {
+      return ((GrCall)parent).getArgumentList();
+    }
+    if (parent instanceof GrAnonymousClassDefinition) {
+      return ((GrAnonymousClassDefinition)parent).getArgumentListGroovy();
     }
     return null;
   }
@@ -741,6 +737,19 @@ public class PsiUtil {
     else {
       return method.getReturnType();
     }
+  }
+
+  public static boolean isMethodUsage(PsiElement element) {
+    if (element instanceof GrEnumConstant) return true;
+    if (!(element instanceof GrReferenceElement)) return false;
+    PsiElement parent = element.getParent();
+    if (parent instanceof GrCall) {
+      return true;
+    }
+    else if (parent instanceof GrAnonymousClassDefinition) {
+      return element.equals(((GrAnonymousClassDefinition)parent).getBaseClassReferenceGroovy());
+    }
+    return false;
   }
 
   public static GroovyResolveResult[] getConstructorCandidates(GroovyPsiElement place, GroovyResolveResult[] classCandidates, PsiType[] argTypes) {

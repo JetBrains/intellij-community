@@ -659,7 +659,6 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
       anchor = lBrace.getNextSibling();
     }
 
-    ASTNode bodyNode = body.getNode();
     if (anchor != null) {
       ASTNode node = anchor.getNode();
       assert node != null;
@@ -669,7 +668,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
       psiElement = body.addBefore(psiElement, anchor);
     }
     else {
-      bodyNode.addChild(psiElement.getNode());
+      body.add(psiElement);
     }
 
     return psiElement;
@@ -707,10 +706,10 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
           while (nextSibling instanceof LeafPsiElement && (nextSibling.getText().equals(",") || nextSibling.getText().equals(";"))) {
             nextSibling = nextSibling.getNextSibling();
           }
-          return nextSibling == null && lBrace != null ? lBrace.getNextSibling() : nextSibling;
+          return nextSibling == null && lBrace != null ? PsiUtil.skipWhitespaces(lBrace.getNextSibling(), true) : nextSibling;
         }
         else if (lBrace != null) {
-          return lBrace.getNextSibling();
+          return PsiUtil.skipWhitespaces(lBrace.getNextSibling(), true);
         }
       }
       lastMember = child;
@@ -728,12 +727,12 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
 
     GrTypeDefinitionBody body = getBody();
     if (body == null) throw new IncorrectOperationException("Type definition without a body");
-    ASTNode anchorNode;
-    anchorNode = anchorBefore.getNode();
-    ASTNode bodyNode = body.getNode();
-    bodyNode.addChild(decl.getNode(), anchorNode);
-    bodyNode.addLeaf(GroovyTokenTypes.mWS, " ", decl.getNode()); //add whitespaces before and after to hack over incorrect auto reformat
-    bodyNode.addLeaf(GroovyTokenTypes.mWS, " ", anchorNode);
+//    ASTNode anchorNode;
+//    anchorNode = anchorBefore.getNode();
+//    ASTNode bodyNode = body.getNode();
+    decl = (T)body.addBefore(decl, anchorBefore);
+//    bodyNode.addLeaf(GroovyTokenTypes.mWS, " ", decl.getNode()); //add whitespaces before and after to hack over incorrect auto reformat
+//    bodyNode.addLeaf(GroovyTokenTypes.mWS, " ", anchorNode);
     return decl;
   }
 

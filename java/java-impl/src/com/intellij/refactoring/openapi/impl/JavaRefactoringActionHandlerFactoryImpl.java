@@ -18,7 +18,7 @@ package com.intellij.refactoring.openapi.impl;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.anonymousToInner.AnonymousToInnerHandler;
-import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
+import com.intellij.refactoring.changeSignature.JavaChangeSignatureHandler;
 import com.intellij.refactoring.convertToInstanceMethod.ConvertToInstanceMethodHandler;
 import com.intellij.refactoring.encapsulateFields.EncapsulateFieldsHandler;
 import com.intellij.refactoring.extractInterface.ExtractInterfaceHandler;
@@ -86,7 +86,7 @@ public class JavaRefactoringActionHandlerFactoryImpl extends JavaRefactoringActi
   }
 
   public RefactoringActionHandler createChangeSignatureHandler() {
-    return new ChangeSignatureHandler();
+    return new JavaChangeSignatureHandler();
   }
 
   public RefactoringActionHandler createExtractSuperclassHandler() {

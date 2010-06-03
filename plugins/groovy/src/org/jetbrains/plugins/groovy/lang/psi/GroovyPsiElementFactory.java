@@ -18,17 +18,19 @@ package org.jetbrains.plugins.groovy.lang.psi;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -84,6 +86,8 @@ public abstract class GroovyPsiElementFactory {
 
   public abstract GrReferenceExpression createReferenceExpressionFromText(String exprText);
 
+  public abstract GrReferenceExpression createReferenceExpressionFromText(String idText, PsiElement context) ;
+
   public abstract GrCodeReferenceElement createReferenceElementFromText(String refName);
 
   public abstract GrExpression createExpressionFromText(String exprText);
@@ -100,11 +104,22 @@ public abstract class GroovyPsiElementFactory {
 
   public abstract PsiElement createDocMemberReferenceNameFromText(String idText);
 
+  public abstract GrDocMemberReference createDocMemberReferenceFromText(String className, String text);
+
+  public abstract GrDocReferenceElement createDocReferenceElementFromFQN(String qName);
+
   public abstract GrTopStatement createTopElementFromText(String text);
 
   public abstract GrClosableBlock createClosureFromText(String s) throws IncorrectOperationException;
 
-  public abstract GrParameter createParameter(String name, @Nullable String typeText, GroovyPsiElement context) throws IncorrectOperationException;
+  public GrParameter createParameter(String name, @Nullable String typeText, GroovyPsiElement context) throws IncorrectOperationException {
+    return createParameter(name, typeText, null, context);
+  }
+
+  public abstract GrParameter createParameter(String name,
+                                              @Nullable String typeText,
+                                              String initializer,
+                                              GroovyPsiElement context) throws IncorrectOperationException;
 
   public abstract GrCodeReferenceElement createTypeOrPackageReference(String qName);
 
@@ -129,17 +144,37 @@ public abstract class GroovyPsiElementFactory {
 
   public abstract PsiElement createDotToken(String newDot);
 
-  public abstract GrMethod createMethodFromText(String methodText);
+  public abstract GrMethod createMethodFromText(String methodText, PsiElement context);
+
+  public GrMethod createMethodFromText(String methodText) {
+    return createMethodFromText(methodText, null);
+  }
 
   public abstract GrAnnotation createAnnotationFromText(String annoText);
 
   public abstract GroovyFile createGroovyFile(String text, boolean isPhisical, PsiElement context);
 
-  public abstract GrMethod createMethodFromText(String modifier, String name, String type, String[] paramTypes);
+  public abstract GrMethod createMethodFromText(String modifier, String name, String type, String[] paramTypes, PsiElement context);
 
-  public abstract GrMethod createConstructorFromText(@NotNull String constructorName, String[] paramTypes, String[] paramNames, String body);
+  public abstract GrMethod createConstructorFromText(@NotNull String constructorName,
+                                                     String[] paramTypes,
+                                                     String[] paramNames,
+                                                     String body,
+                                                     PsiElement context);
+
+  public GrMethod createConstructorFromText(@NotNull String constructorName, String[] paramTypes, String[] paramNames, String body) {
+    return createConstructorFromText(constructorName, paramTypes, paramNames, body, null);
+  }
 
   public abstract GrLabel createLabel(@NotNull String name);
 
   public abstract GrDocComment createDocCommentFromText(String text) ;
+
+  public abstract GrConstructorInvocation createConstructorInvocation(String text);
+
+  public abstract PsiReferenceList createThrownList(PsiClassType[] exceptionTypes);
+
+  public abstract GrCatchClause createCatchClause(PsiClassType type, String parameterName);
+
+  public abstract GrArgumentList createArgumentList();
 }

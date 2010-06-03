@@ -16,12 +16,12 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments;
 
+import com.intellij.psi.PsiElement;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.psi.PsiElement;
 
 /**
  * @author ilyas
@@ -48,5 +48,4 @@ public interface GrArgumentList extends GroovyPsiElement {
   GrExpression removeArgument(int argNumber);
 
   GrNamedArgument addNamedArgument(GrNamedArgument namedArgument);
-
 }

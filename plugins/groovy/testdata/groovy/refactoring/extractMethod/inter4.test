@@ -1,25 +1,25 @@
 def i = 6
 while (true) {
-    println "preved"
-    i = 42
-    if (i > 0) {
-        break;
-    } else {
-        <begin>cl = { continue; }
-        cl.call()<end>
-    }
+  println "preved"
+  i = 42
+  if (i > 0) {
+    break;
+  } else {
+    <begin>cl = { continue; }
+    cl.call()<end>
+  }
 }
 println i
 -----
 def i = 6
 while (true) {
-    println "preved"
-    i = 42
-    if (i > 0) {
-        break;
-    } else {
-        <caret>testMethod()
-    }
+  println "preved"
+  i = 42
+  if (i > 0) {
+    break;
+  } else {
+    <caret>testMethod()
+  }
 }
 
 private def testMethod() {

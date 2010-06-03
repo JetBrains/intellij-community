@@ -1,20 +1,20 @@
 protected static def getGeneratedFileNames() {
-    foo = 0
-    while (true) {
-<begin>        println(foo)
-        foo = ""
-<end>    }
+  foo = 0
+  while (true) {
+<begin>    println(foo)
+    foo = ""
+<end>  }
 
-    int t = foo
+  int t = foo
 }
 -----
 protected static def getGeneratedFileNames() {
-    foo = 0
-    while (true) {
-        foo = <caret>testMethod(foo)
-    }
+  foo = 0
+  while (true) {
+    foo = <caret>testMethod(foo)
+  }
 
-    int t = foo
+  int t = foo
 }
 
 private static String testMethod(Serializable foo) {

@@ -22,7 +22,6 @@ import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.TreeModel;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;

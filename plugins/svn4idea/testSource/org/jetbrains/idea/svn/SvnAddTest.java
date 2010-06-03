@@ -43,7 +43,7 @@ public class SvnAddTest extends SvnTestCase {
     }.execute();
     
     final ProcessOutput result = runSvn("status");
-    verify(result, "A child", "A child\\a.txt");
+    verify(result, "A child", "A child" + File.separatorChar + "a.txt");
   }
 
   // IDEADEV-19308

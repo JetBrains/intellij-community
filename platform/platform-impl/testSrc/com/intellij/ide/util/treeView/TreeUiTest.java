@@ -1413,33 +1413,51 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     final NodeElement actionSystem = new NodeElement("actionSystem");
     actionSystem.setForcedParent(com);
 
+    final NodeElement fabrique = new NodeElement("fabrique");
+    final NodeElement ide = new NodeElement("ide");
+    fabrique.setForcedParent(myRoot.getElement());
+
     doAndWaitForBuilder(new Runnable() {
       public void run() {
         myRoot.addChild(com).addChild(actionSystem);
+        myRoot.addChild(fabrique).addChild(ide);
         getBuilder().getUi().activate(true);
       }
     });
 
     select(actionSystem, false);
+    expand(getPath("ide"));
 
     assertTree("-/\n" +
                " -com\n" +
-               "  [actionSystem]\n");
+               "  [actionSystem]\n" +
+               " -fabrique\n" +
+               "  ide\n");
 
 
     removeFromParentButKeepRef(actionSystem);
+    removeFromParentButKeepRef(fabrique);
 
     final NodeElement newActionSystem = new NodeElement("actionSystem");
+    final NodeElement newFabrique = new NodeElement("fabrique");
 
     myStructure.getNodeFor(com).addChild("intellij").addChild("openapi").addChild(newActionSystem);
+    myRoot.addChild("jetbrains").addChild("tools").addChild(newFabrique).addChild("ide");
 
     assertSame(com, myStructure.getParentElement(actionSystem));
     assertNotSame(com, newActionSystem);
     assertEquals(new NodeElement("openapi"), myStructure.getParentElement(newActionSystem));
 
+    assertSame(myRoot.getElement(), myStructure.getParentElement(fabrique));
+
     myStructure.setRevalidator(new Revalidator() {
       public AsyncResult<Object> revalidate(NodeElement element) {
-        return element == actionSystem ? new AsyncResult.Done<Object>(newActionSystem) : null;
+        if (element == actionSystem) {
+          return new AsyncResult.Done<Object>(newActionSystem);
+        } else if (element == fabrique) {
+          return new AsyncResult.Done<Object>(newFabrique);
+        }
+        return null;
       }
     });
 
@@ -1449,7 +1467,11 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " -com\n" +
                "  -intellij\n" +
                "   -openapi\n" +
-               "    [actionSystem]\n");
+               "    [actionSystem]\n" +
+               " -jetbrains\n" +
+               "  -tools\n" +
+               "   -fabrique\n" +
+               "    ide\n");
   }
 
   private void doTestSelectionOnDelete(boolean keepRef) throws Exception {
@@ -1714,20 +1736,26 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       public void onElementAction(String action, Object element) {
         if (!element.toString().equals(actionElement.toString())) return;
 
+        Runnable runnable = new Runnable() {
+          public void run() {
+            myReadyRequest = true;
+            Disposer.dispose(getBuilder());
+          }
+        };
+
         if (actionAction.equals(action)) {
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              myReadyRequest = true;
-              Disposer.dispose(getBuilder());
-            }
-          });
+          if (getBuilder().getUi().isPassthroughMode()) {
+            runnable.run();
+          } else {
+            SwingUtilities.invokeLater(runnable);
+          }
         }
       }
     };
 
     buildAction.run();
 
-    boolean released = new WaitFor(60000) {
+    boolean released = new WaitFor(15000) {
       @Override
       protected boolean condition() {
         return getBuilder().getUi() == null;
@@ -1741,21 +1769,11 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     public SyncUpdate() {
       super(false, false);
     }
-
-    @Override
-    public void testRevalidateStructure() throws Exception {
-      super.testRevalidateStructure();
-    }
   }
 
   public static class Passthrough extends TreeUiTest {
     public Passthrough() {
       super(true);
-    }
-
-    @Override
-    public void testCancelUpdate() throws Exception {
-      super.testCancelUpdate();
     }
 
     public void testSelectionGoesToParentWhenOnlyChildMoved2() throws Exception {
@@ -1796,6 +1814,11 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
   public static class BgLoadingSyncUpdate extends TreeUiTest {
     public BgLoadingSyncUpdate() {
       super(false, true);
+    }
+
+    @Override
+    public void testReleaseBuilderDuringUpdate() throws Exception {
+      super.testReleaseBuilderDuringUpdate();
     }
 
     @Override

@@ -3,6 +3,7 @@
 }
 -----
 {
-  {-> owner.call 0
+  {->
+    owner.call 0
   }.call()
 }

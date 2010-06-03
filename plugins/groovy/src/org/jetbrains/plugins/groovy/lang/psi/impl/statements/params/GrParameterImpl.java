@@ -96,22 +96,24 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
   }
 
 
-  @NotNull
-  public PsiType getType() {
-    /*PsiType type = getTypeGroovy();
-    if (type == null) type = super.getType();*/
-    PsiType type = super.getType();
+  @Override
+  public PsiType getDeclaredType() {
+    final PsiType type = super.getDeclaredType();
     if (isVarArgs()) {
       return new PsiEllipsisType(type);
     }
-    else if (isMainMethodFirstUntypedParameter()) {
+    return type;
+  }
+
+  @NotNull
+  public PsiType getType() {
+    PsiType type = super.getType();
+    if (isMainMethodFirstUntypedParameter()) {
       PsiClassType stringType =
         JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName("java.lang.String", getResolveScope());
       return stringType.createArrayType();
     }
-    else {
-      return type;
-    }
+    return type;
   }
 
   private boolean isMainMethodFirstUntypedParameter() {
