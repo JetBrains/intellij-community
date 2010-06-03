@@ -508,9 +508,11 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       }
     };
 
+    private static final int MAX_NESTING_LEVEL = 30;
+
     @Nullable
     public ResolveResult[] resolve(final PyReferenceImpl ref, final boolean incompleteCode) {
-      if (myNesting.get().getAndIncrement() >= 30) {
+      if (myNesting.get().getAndIncrement() >= MAX_NESTING_LEVEL) {
         System.out.println("Stack overflow pending");
       }
       try {

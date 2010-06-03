@@ -99,12 +99,12 @@ public class PyDynamicMember {
             searchElement = funcs[0];
           }
         }
-        if (myResolveData.getString() != null) {
+        if (myResolveData.getCall() != null) {
           PsiElement[] elements = PsiTreeUtil.collectElements(searchElement, new PsiElementFilter() {
             public boolean isAccepted(PsiElement element) {
               PyCallExpression call = PsiTreeUtil.getParentOfType(element, PyCallExpression.class);
-              return element instanceof PyStringLiteralExpression && call!= null && "add_to_class".equals(call.getCallee().getName()) &&
-                     myResolveData.getString().equals(((PyStringLiteralExpression)element).getStringValue());
+              return element instanceof PyStringLiteralExpression && call!= null && myResolveData.getCall().equals(call.getCallee().getName()) &&
+                     myResolveData.getArg().equals(((PyStringLiteralExpression)element).getStringValue());
             }
           });
           if (elements.length > 0) {
@@ -142,13 +142,15 @@ public class PyDynamicMember {
   static class ResolveData {
     private final String myShortName;
     private final String myModuleName;
-    private final String myString;
     private final String myFunctionName;
+    private final String myCall;
+    private final String myArg;
 
-    private ResolveData(String shortName, String moduleName, String string, String functionName) {
+    private ResolveData(String shortName, String moduleName, String functionName, String call, String arg) {
       myShortName = shortName;
       myModuleName = moduleName;
-      myString = string;
+      myCall = call;
+      myArg = arg;
       myFunctionName = functionName;
     }
 
@@ -157,14 +159,22 @@ public class PyDynamicMember {
       if (resolveTo == null) {
         return null;
       }
-      String string;
+      String call;
+      String arg;
       int ind = resolveTo.indexOf("#");
       if (ind != -1) {
-        string = resolveTo.substring(ind + 1);
+        call = resolveTo.substring(ind + 1);
+        if (call.indexOf(",")>0) {
+          arg = call.substring(call.indexOf(",") + 1);
+          call = call.substring(0, call.indexOf(","));
+        } else {
+          arg = null;
+        }
         resolveTo = resolveTo.substring(0, ind);
       }
       else {
-        string = null;
+        call = null;
+        arg = null;
       }
 
       int split = resolveTo.lastIndexOf('.');
@@ -180,7 +190,7 @@ public class PyDynamicMember {
       } else {
         functionName = null;
       }
-      return new ResolveData(shortName, moduleName, string, functionName);
+      return new ResolveData(shortName, moduleName, functionName, call, arg);
     }
 
     /**
@@ -194,8 +204,12 @@ public class PyDynamicMember {
       return myModuleName;
     }
 
-    public String getString() {
-      return myString;
+    public String getCall() {
+      return myCall;
+    }
+
+    public String getArg() {
+      return myArg;
     }
 
     /**

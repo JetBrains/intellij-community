@@ -54,10 +54,6 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
       }
       // resolve within the type proper
       addResolveMemeber(ret, referencedName, qualifierType);
-
-      if (DjangoFacet.isPresent(myElement)) {
-        addAttributesFromModelRelations(ret, referencedName, qualifierType);
-      }
     }
     else if (myContext.allowImplicits()) {
       final Collection<PyFunction> functions = PyFunctionNameIndex.find(referencedName, myElement.getProject());
@@ -72,55 +68,6 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
       addDocReference(ret, qualifier, qualifierType);
     }
     return ret;
-  }
-
-  private void addAttributesFromModelRelations(final ResultList ret, final String referencedName, final PyType qualifierType) {
-    if (qualifierType instanceof PyClassType) {
-      final PyClassType qualifierClassType = (PyClassType)qualifierType;
-      final PyClass clazz = qualifierClassType.getPyClass();
-      PyClass modelClass = DjangoModel.getAncestorModelClass(clazz);
-      if (modelClass != null) {
-        PyClassInheritorsSearch.search(modelClass, true).forEach(new Processor<PyClass>() {
-          public boolean process(PyClass pyClass) {
-            if (addForeignKeyAttributes(qualifierClassType, pyClass, referencedName)) {
-              ret.poke(pyClass, RatedResolveResult.RATE_NORMAL);
-              return false;
-            }
-            return true;
-          }
-        });
-      }
-
-    }
-  }
-
-  private boolean addForeignKeyAttributes(PyClassType referencedType, PyClass pyClass, String referencedName) {
-    for (PyTargetExpression e : pyClass.getClassAttributes()) {
-      if (e.getParent() instanceof PyAssignmentStatement) {
-        if (e.getParent().getLastChild() instanceof PyCallExpressionImpl) {
-          PyCallExpressionImpl initCall = (PyCallExpressionImpl)e.getParent().getLastChild();
-          if (initCall != null && initCall.getCallee() != null && "models.ForeignKey".equals(initCall.getCallee().getText())) {
-            PyExpression[] args = initCall.getArguments();
-            if (args.length > 0 && args[0] instanceof PyReferenceExpressionImpl) {
-              PyReferenceExpressionImpl refClassRef = (PyReferenceExpressionImpl)args[0];
-              PyType refClassType = refClassRef.getType(TypeEvalContext.slow());
-              if (refClassType != null &&
-                  ((PyClassType)refClassType).getPyClass() == referencedType.getPyClass()) { //argument init type the same as our type
-                PyExpression expr = PyUtil.getKeywordArgument(initCall, "related_name");
-                String relatedNamed = pyClass.getName().toLowerCase() + "_set";
-                if (expr != null && expr instanceof PyStringLiteralExpression) {
-                  relatedNamed = ((PyStringLiteralExpression)expr).getStringValue();
-                }
-                if (referencedName.equals(relatedNamed)) {
-                  return true; //tada!
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    return false;
   }
 
   private void addResolveMemeber(ResultList ret, String referencedName, PyType qualifierType) {
