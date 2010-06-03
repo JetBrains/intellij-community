@@ -20,7 +20,6 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
@@ -75,7 +74,7 @@ public class ProgramRunnerUtil {
     }
 
     try {
-      runner.execute(executor, new ExecutionEnvironment(runner, configuration, dataContext));
+      runner.execute(executor, new ExecutionEnvironment(runner, configuration, project));
     }
     catch (ExecutionException e) {
       ExecutionUtil.handleExecutionError(project, configuration.getConfiguration(), e);

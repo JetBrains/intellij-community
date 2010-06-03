@@ -15,7 +15,6 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -186,8 +185,8 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
     configuration.setModule(module);
     configuration.setMainClassName(className);
     final DefaultRunExecutor extension = Executor.EXECUTOR_EXTENSION_NAME.findExtension(DefaultRunExecutor.class);
-    final ExecutionEnvironment environment = new ExecutionEnvironment(configuration, new RunnerSettings<JDOMExternalizable>(null, null),null, DataManager
-      .getInstance().getDataContext());
+    final ExecutionEnvironment environment = new ExecutionEnvironment(configuration, getProject(),
+                                                                      new RunnerSettings<JDOMExternalizable>(null, null), null, null);
     final DefaultJavaProgramRunner runner = ProgramRunner.PROGRAM_RUNNER_EP.findExtension(DefaultJavaProgramRunner.class);
     final StringBuffer sb = new StringBuffer();
     final Semaphore semaphore = new Semaphore();
