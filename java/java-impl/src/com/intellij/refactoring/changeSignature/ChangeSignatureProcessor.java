@@ -29,14 +29,12 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.*;
-import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
-import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.HashSet;
@@ -46,11 +44,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
+public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.ChangeSignatureProcessor");
-
-  private final JavaChangeInfoImpl myChangeInfo;
-  private final PsiManager myManager;
 
   public ChangeSignatureProcessor(Project project,
                                   PsiMethod method,
@@ -87,9 +82,19 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
                                   ThrownExceptionInfo[] thrownExceptions,
                                   Set<PsiMethod> propagateParametersMethods,
                                   Set<PsiMethod> propagateExceptionsMethods) {
-    super(project);
-    myManager = PsiManager.getInstance(project);
+    super(project, generateChangeInfo(method, generateDelegate, newVisibility, newName, newType, parameterInfo, thrownExceptions, propagateParametersMethods, propagateExceptionsMethods));
+    LOG.assertTrue(myChangeInfo.getMethod().isValid());
+  }
 
+  private static JavaChangeInfo generateChangeInfo(PsiMethod method,
+                                                   boolean generateDelegate,
+                                                   @Modifier String newVisibility,
+                                                   String newName,
+                                                   CanonicalTypes.Type newType,
+                                                   @NotNull ParameterInfoImpl[] parameterInfo,
+                                                   ThrownExceptionInfo[] thrownExceptions,
+                                                   Set<PsiMethod> propagateParametersMethods,
+                                                   Set<PsiMethod> propagateExceptionsMethods) {
     Set<PsiMethod> myPropagateParametersMethods =
       propagateParametersMethods != null ? propagateParametersMethods : new HashSet<PsiMethod>();
     Set<PsiMethod> myPropagateExceptionsMethods =
@@ -98,32 +103,25 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     LOG.assertTrue(method.isValid());
     if (newVisibility == null) {
       newVisibility = VisibilityUtil.getVisibilityModifier(method.getModifierList());
-    } 
+    }
 
-    myChangeInfo = new JavaChangeInfoImpl(newVisibility, method, newName, newType, parameterInfo, thrownExceptions, generateDelegate, myPropagateParametersMethods, myPropagateExceptionsMethods);
-    LOG.assertTrue(myChangeInfo.getMethod().isValid());
+    return new JavaChangeInfoImpl(newVisibility, method, newName, newType, parameterInfo, thrownExceptions, generateDelegate,
+                                  myPropagateParametersMethods, myPropagateExceptionsMethods);
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
-    return new ChangeSignatureViewDescriptor(myChangeInfo.getMethod());
+    return new ChangeSignatureViewDescriptor(getChangeInfo().getMethod());
   }
 
-  @NotNull
-  protected UsageInfo[] findUsages() {
-    List<UsageInfo> infos = new ArrayList<UsageInfo>();
-
-    final ChangeSignatureUsageProcessor[] processors = ChangeSignatureUsageProcessor.EP_NAME.getExtensions();
-    for (ChangeSignatureUsageProcessor processor : processors) {
-      infos.addAll(Arrays.asList(processor.findUsages(myChangeInfo)));
-    }
-    return infos.toArray(new UsageInfo[infos.size()]);
+  @Override
+  public JavaChangeInfoImpl getChangeInfo() {
+    return (JavaChangeInfoImpl)super.getChangeInfo();
   }
-
 
   protected void refreshElements(PsiElement[] elements) {
     boolean condition = elements.length == 1 && elements[0] instanceof PsiMethod;
     LOG.assertTrue(condition);
-    myChangeInfo.updateMethod((PsiMethod) elements[0]);
+    getChangeInfo().updateMethod((PsiMethod) elements[0]);
   }
 
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
@@ -175,7 +173,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
           PsiSubstitutor substitutor = calculateSubstitutor(overrider, baseMethod);
           PsiType type;
           try {
-            type = substitutor.substitute(myChangeInfo.newReturnType.getType(myChangeInfo.getMethod(), myManager));
+            type = substitutor.substitute(getChangeInfo().newReturnType.getType(myChangeInfo.getMethod(), myManager));
           }
           catch (IncorrectOperationException e) {
             LOG.error(e);
@@ -204,48 +202,10 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
   protected void preprocessCovariantOverriders(final List<UsageInfo> covariantOverriderInfos) {
   }
 
-  @Override
-  protected boolean isPreviewUsages(UsageInfo[] usages) {
-    for (ChangeSignatureUsageProcessor processor : ChangeSignatureUsageProcessor.EP_NAME.getExtensions()) {
-      if (processor.shouldPreviewUsages(myChangeInfo, usages)) return true;
-    }
-    return super.isPreviewUsages(usages);
-  }
-
   protected boolean isProcessCovariantOverriders() {
     return Messages
              .showYesNoDialog(myProject, RefactoringBundle.message("do.you.want.to.process.overriding.methods.with.covariant.return.type"),
                               JavaChangeSignatureHandler.REFACTORING_NAME, Messages.getQuestionIcon()) == DialogWrapper.OK_EXIT_CODE;
-  }
-
-  protected void performRefactoring(UsageInfo[] usages) {
-    try {
-      final ChangeSignatureUsageProcessor[] processors = ChangeSignatureUsageProcessor.EP_NAME.getExtensions();
-
-      for (UsageInfo usage : usages) {
-        for (ChangeSignatureUsageProcessor processor : processors) {
-          if (processor.processUsage(myChangeInfo, usage, true, usages)) break;
-        }
-      }
-
-      LOG.assertTrue(myChangeInfo.getMethod().isValid());
-      for (ChangeSignatureUsageProcessor processor : processors) {
-        if (processor.processPrimaryMethod(myChangeInfo)) break;
-      }
-
-      for (UsageInfo usage : usages) {
-        for (ChangeSignatureUsageProcessor processor : processors) {
-          if (processor.processUsage(myChangeInfo, usage, false, usages)) {
-            break;
-          }
-        }
-      }
-
-      LOG.assertTrue(myChangeInfo.getMethod().isValid());
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
   }
 
   public static void makeEmptyBody(final PsiElementFactory factory, final PsiMethod delegate) throws IncorrectOperationException {
@@ -288,10 +248,6 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     return callExpression;
   }
 
-  protected String getCommandName() {
-    return RefactoringBundle.message("changing.signature.of.0", UsageViewUtil.getDescriptiveName(myChangeInfo.getMethod()));
-  }
-
   public static PsiSubstitutor calculateSubstitutor(PsiMethod derivedMethod, PsiMethod baseMethod) {
     PsiSubstitutor substitutor;
     if (derivedMethod.getManager().areElementsEquivalent(derivedMethod, baseMethod)) {
@@ -311,7 +267,4 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     }
     return substitutor;
   }
-
-
-
 }
