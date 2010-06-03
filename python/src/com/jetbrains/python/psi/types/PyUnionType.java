@@ -19,9 +19,9 @@ public class PyUnionType implements PyType {
     myMembers = new ArrayList<PyType>(members);
   }
 
-  public PsiElement resolveMember(String name) {
+  public PsiElement resolveMember(String name, Context context) {
     for (PyType member : myMembers) {
-      final PsiElement result = member.resolveMember(name);
+      final PsiElement result = member.resolveMember(name, context);
       if (result != null) {
         return result;
       }

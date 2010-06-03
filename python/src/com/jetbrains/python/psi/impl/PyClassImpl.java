@@ -28,6 +28,7 @@ import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.resolve.VariantsProcessor;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -296,7 +297,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   public PyFunction findMethodByName(@NotNull final String name, boolean inherited) {
     NameFindingProcessor proc = new NameFindingProcessor(name);
-    scanMethods(proc, inherited);
+    visitMethods(proc, inherited);
     return proc.getResult();
   }
 
@@ -305,18 +306,93 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     NameFindingProcessor proc;
     if (isNewStyleClass()) proc = new NameFindingProcessor(PyNames.INIT, PyNames.NEW);
     else proc = new NameFindingProcessor(PyNames.INIT); 
-    scanMethods(proc, inherited);
+    visitMethods(proc, inherited);
     return proc.getResult();
   }
 
-  public boolean scanMethods(Processor<PyFunction> processor, boolean inherited) {
+  public Property findProperty(@NotNull String name) {
+    // NOTE: maybe cache the result?
+    Callable getter = null;
+    Callable setter = null;
+    Callable deleter = null;
+    String doc = null;
+    // look at @property decorators, all stub-based
+    for (PyFunction method : getMethods()) {
+      if (name.equals(method.getName())) {
+        PyDecoratorList decolist = method.getDecoratorList();
+        if (decolist != null) {
+          for (PyDecorator deco : decolist.getDecorators()) {
+            PyQualifiedName deco_name = deco.getQualifiedName();
+            if (deco_name != null) {
+              if (deco_name.matches("property")) {
+                getter = method; 
+              }
+              else if (deco_name.matches(name, "setter")) {
+                setter = method;
+              }
+              else if (deco_name.matches(name, "deleter")) {
+                deleter = method; 
+              }
+            }
+          }
+        }
+      }
+    }
+    // TODO: look at name = property(...) assignments
+    if (getter != null || setter != null || deleter != null) return new PropertyImpl(PyQualifiedName.fromComponents(name), getter, setter, deleter, doc);
+    else return null;
+  }
+
+  private static class PropertyImpl implements Property {
+    private PyQualifiedName myName;
+    private Callable myGetter;
+    private Callable mySetter;
+    private Callable myDeleter;
+    private String myDoc;
+
+    private PropertyImpl(PyQualifiedName name, Callable getter, Callable setter, Callable deleter, String doc) {
+      myDeleter = deleter;
+      myDoc = doc;
+      myGetter = getter;
+      myName = name;
+      mySetter = setter;
+    }
+
+    public Callable getDeleter() {
+      return myDeleter;
+    }
+
+    @NotNull
+    public PyQualifiedName getQualifiedName() {
+      return myName;
+    }
+
+    public Callable getSetter() {
+      return mySetter;
+    }
+
+    public Callable getGetter() {
+      return myGetter;
+    }
+
+    public String getDoc() {
+      if (myDoc != null) return myDoc;
+      if (myGetter instanceof PyFunction) {
+        final PyStringLiteralExpression doc_expr = ((PyFunction)myGetter).getDocStringExpression();
+        if (doc_expr != null) return doc_expr.getStringValue();
+      }
+      return null;
+    }
+  }
+
+  public boolean visitMethods(Processor<PyFunction> processor, boolean inherited) {
     PyFunction[] methods = getMethods();
     for(PyFunction method: methods) {
       if (! processor.process(method)) return false;
     }
     if (inherited) {
       for (PyClass ancestor : iterateAncestors()) {
-        if (!ancestor.scanMethods(processor, false)) {
+        if (!ancestor.visitMethods(processor, false)) {
           return false;
         }
       }

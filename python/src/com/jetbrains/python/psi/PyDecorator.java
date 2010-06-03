@@ -1,6 +1,7 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.StubBasedPsiElement;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.stubs.PyDecoratorStub;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,5 +32,12 @@ public interface PyDecorator extends PyCallExpression, StubBasedPsiElement<PyDec
    * @return true if invocation has a form of <code>@foo(...)</code>.
    */
   boolean hasArgumentList();
+
+  /**
+   * For cases when decorators are referenced via a qualified name, e.g. @property.setter.
+   * @return dot-separated qualified name, or just {@link #getName()}'s value if no qualifiers are present.
+   */
+  @Nullable
+  PyQualifiedName getQualifiedName();
 
 }

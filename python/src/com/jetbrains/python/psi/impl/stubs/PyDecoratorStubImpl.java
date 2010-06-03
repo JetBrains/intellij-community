@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.impl.stubs;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.stubs.PyDecoratorStub;
 import com.jetbrains.python.psi.PyDecorator;
 
@@ -12,14 +13,14 @@ import com.jetbrains.python.psi.PyDecorator;
  * Date: Dec 18, 2008 10:01:57 PM
  */
 public class PyDecoratorStubImpl extends StubBase<PyDecorator> implements PyDecoratorStub {
-  private final String myName;
+  private final PyQualifiedName myQualifiedName;
 
-  protected PyDecoratorStubImpl(final String name, final StubElement parent) {
+  protected PyDecoratorStubImpl(final PyQualifiedName qualname, final StubElement parent) {
     super(parent, PyElementTypes.DECORATOR_CALL);
-    myName = name;
+    myQualifiedName = qualname;
   }
 
-  public String getName() {
-    return myName;
+  public PyQualifiedName getQualifiedName() {
+    return myQualifiedName;
   }
 }

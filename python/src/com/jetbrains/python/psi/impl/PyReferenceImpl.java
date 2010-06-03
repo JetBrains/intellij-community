@@ -188,7 +188,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     if (uexpr == null) {
       // ...as a part of current module
       PyType otype = PyBuiltinCache.getInstance(realContext).getObjectType(); // "object" as a closest kin to "module"
-      if (otype != null) uexpr = otype.resolveMember(myElement.getName());
+      if (otype != null) uexpr = otype.resolveMember(myElement.getName(), PyType.Context.READ);
     }
     if (uexpr == null) {
       // ...as a builtin symbol
@@ -199,11 +199,21 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     }
     if (uexpr == null) {
       //uexpr = PyResolveUtil.resolveOffContext(this);
-      uexpr = PyResolveUtil.scanOuterContext(new ResolveProcessor(referencedName), realContext);
+      uexpr = PyUtil.turnDirIntoInit(PyResolveUtil.scanOuterContext(new ResolveProcessor(referencedName), realContext));
     }
-    uexpr = PyUtil.turnDirIntoInit(uexpr); // treeCrawlUp might have found a dir
     if (uexpr != null) {
       ret.add(new ImportedResolveResult(uexpr, getRate(uexpr), processor.getDefiners()));
+    }
+    if (uexpr == null) {
+      PyDecorator deco = PsiTreeUtil.getParentOfType(myElement, PyDecorator.class);
+      if (deco != null) {
+        PyClass cls = PsiTreeUtil.getParentOfType(deco, PyClass.class);
+        if (cls != null) {
+          Property prop = cls.findProperty(referencedName);
+          if (prop != null && prop.getGetter() != null) ret.poke(prop.getGetter(), RatedResolveResult.RATE_NORMAL);
+          // TODO: support name = property(...) case
+        }
+      }
     }
     return ret;
   }

@@ -23,7 +23,7 @@ public class PyImportedModuleType implements PyType {
     myImportedModule = importedModule;
   }
 
-  public PsiElement resolveMember(String name) {
+  public PsiElement resolveMember(String name, Context context) {
     return myImportedModule.getElementNamed(name);
   }
 

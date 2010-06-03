@@ -9,7 +9,7 @@ import com.jetbrains.python.psi.PyQualifiedExpression;
  * @author yole
  */
 public abstract class PyTypeReferenceImpl implements PyTypeReference {
-  public PsiElement resolveMember(String name) {
+  public PsiElement resolveMember(String name, Context context) {
     return null;
   }
 

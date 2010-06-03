@@ -6,6 +6,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.util.Processor;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -54,11 +55,18 @@ public interface PyClass extends PsiNamedElement, PyStatement, NameDefiner, PyDo
   PyFunction findInitOrNew(boolean inherited);
 
   /**
+   * @param name of the property
+   * @return descriptor of property accessors, or null if such property does not exist.
+   */
+  @Nullable
+  Property findProperty(@NotNull String name);
+
+  /**
    * Apply a processor to every method, looking at superclasses in method resolution order as needed.
    * @param processor what to apply
    * @param inherited true: search in superclasses, too.
    */
-  boolean scanMethods(Processor<PyFunction> processor, boolean inherited);
+  boolean visitMethods(Processor<PyFunction> processor, boolean inherited);
 
   PyTargetExpression[] getClassAttributes();
 

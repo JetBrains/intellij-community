@@ -16,7 +16,7 @@ public class PyJavaClassType implements PyType {
     myClass = aClass;
   }
 
-  public PsiElement resolveMember(final String name) {
+  public PsiElement resolveMember(final String name, Context context) {
     final PsiMethod[] methods = myClass.findMethodsByName(name, true);
     if (methods.length > 0) {
       return methods [0]; // TODO[yole]: correct resolve

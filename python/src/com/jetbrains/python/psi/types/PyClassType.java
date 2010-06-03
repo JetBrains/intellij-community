@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.codeInsight.PyDynamicMember;
+import com.jetbrains.python.psi.Property;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.PyUtil;
@@ -62,8 +63,19 @@ public class PyClassType implements PyType {
   }
 
   @Nullable
-  public PsiElement resolveMember(final String name) {
+  public PsiElement resolveMember(final String name, Context context) {
     if (myClass == null) return null;
+    Property property = myClass.findProperty(name);
+    if (property != null) {
+      switch (context) {
+        case READ:
+          return property.getGetter();
+        case WRITE:
+          return property.getSetter();
+        case DELETE:
+          return property.getDeleter();
+      }
+    }
     final PsiElement classMember = resolveClassMember(myClass, name);
     if (classMember != null) {
       return classMember;
@@ -90,7 +102,7 @@ public class PyClassType implements PyType {
             if (oldstyleclass != null) {
               final String oldstylename = oldstyleclass.getName();
               if ((myname != null) && (oldstylename != null) && !myname.equals(oldstylename) && !myname.equals("object")) {
-                return oldstyle.resolveMember(name);
+                return oldstyle.resolveMember(name, context);
               }
             }
           }

@@ -11,6 +11,7 @@ import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.PyDecorator;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyDecoratorImpl;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.stubs.PyDecoratorStub;
 
 import java.io.IOException;
@@ -34,16 +35,16 @@ public class PyDecoratorCallElementType extends PyStubElementType<PyDecoratorStu
   }
 
   public PyDecoratorStub createStub(PyDecorator psi, StubElement parentStub) {
-    return new PyDecoratorStubImpl(psi.getName(), parentStub);
+    return new PyDecoratorStubImpl(psi.getQualifiedName(), parentStub);
   }
 
   public void serialize(PyDecoratorStub stub, StubOutputStream dataStream) throws IOException {
-    dataStream.writeName(stub.getName());
+    PyQualifiedName.serialize(stub.getQualifiedName(), dataStream);
   }
 
   public PyDecoratorStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
-    String name = StringRef.toString(dataStream.readName());
-    return new PyDecoratorStubImpl(name, parentStub);
+    PyQualifiedName q_name = PyQualifiedName.deserialize(dataStream);
+    return new PyDecoratorStubImpl(q_name, parentStub);
   }
 
 }

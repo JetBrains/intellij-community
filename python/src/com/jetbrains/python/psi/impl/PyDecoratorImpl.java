@@ -7,6 +7,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.stubs.PyDecoratorStub;
 import com.jetbrains.python.psi.PyDecorator;
 import com.jetbrains.python.psi.types.PyType;
@@ -14,6 +15,9 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author dcheryasov
@@ -33,18 +37,8 @@ public class PyDecoratorImpl extends PyPresentableElementImpl<PyDecoratorStub> i
    */
   @Override
   public String getName() {
-    final PyDecoratorStub stub = getStub();
-    if (stub != null) {
-      return stub.getName();
-    }
-    else {
-      ASTNode node = getNode().findChildByType(PyElementTypes.REFERENCE_EXPRESSION);
-      if (node != null) {
-        node = node.findChildByType(PyTokenTypes.IDENTIFIER);
-        if (node != null) return node.getText();
-      }
-      return null;
-    }
+    final PyQualifiedName qname = getQualifiedName();
+    return qname != null? qname.getLastComponent() : null;
   }
 
   @Nullable
@@ -65,6 +59,24 @@ public class PyDecoratorImpl extends PyPresentableElementImpl<PyDecoratorStub> i
   public boolean hasArgumentList() {
     ASTNode arglist_node = getNode().findChildByType(PyElementTypes.ARGUMENT_LIST);
     return (arglist_node != null) && (arglist_node.findChildByType(PyTokenTypes.LPAR) != null);
+  }
+
+  public PyQualifiedName getQualifiedName() {
+    final PyDecoratorStub stub = getStub();
+    if (stub != null) {
+      return stub.getQualifiedName();
+    }
+    else {
+      PyReferenceExpression node = PsiTreeUtil.getChildOfType(this, PyReferenceExpression.class);
+      if (node != null) {
+        List<PyReferenceExpression> parts = PyResolveUtil.unwindQualifiers(node);
+        if (parts != null) {
+          //Collections.reverse(parts);
+          return new PyQualifiedName(parts);
+        }
+      }
+      return null;
+    }
   }
 
   public PyExpression getCallee() {

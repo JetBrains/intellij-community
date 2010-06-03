@@ -41,7 +41,7 @@ public class PyModuleType implements PyType { // Maybe make it a PyClassType ref
     return myModule;
   }
 
-  public PsiElement resolveMember(final String name) {
+  public PsiElement resolveMember(final String name, Context context) {
     //return PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(name), myModule, null, null);
     return ResolveImportUtil.resolveChild(myModule, name, null, false);
   }

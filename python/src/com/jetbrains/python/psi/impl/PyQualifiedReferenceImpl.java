@@ -44,21 +44,22 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
     }
     //
     if (qualifierType != null && !(qualifierType instanceof PyTypeReference)) {
+      // resolve within the type proper
+      PyType.Context ctx;
+      if (myElement instanceof PyTargetExpression) ctx = PyType.Context.WRITE;
+      else if (myElement.getParent() instanceof PyDelStatement) ctx = PyType.Context.DELETE;
+      else ctx = PyType.Context.READ;
+      PsiElement ref_elt = PyUtil.turnDirIntoInit(qualifierType.resolveMember(referencedName, ctx));
+      if (ref_elt != null) ret.poke(ref_elt, RatedResolveResult.RATE_NORMAL);
+      // enrich the type info with any fields assigned nearby
       if (qualifier instanceof PyQualifiedExpression) {
-        // enrich the type info with any fields assigned nearby
-        List<PyQualifiedExpression> qualifier_path = PyResolveUtil.unwindQualifiers((PyQualifiedExpression)qualifier);
-        if (qualifier_path != null) {
-          for (PyExpression ex : collectAssignedAttributes((PyQualifiedExpression)qualifier)) {
-            if (referencedName.equals(ex.getName())) {
-              ret.poke(ex, RatedResolveResult.RATE_NORMAL);
-              return ret;
-            }
+        for (PyExpression ex : collectAssignedAttributes((PyQualifiedExpression)qualifier)) {
+          if (referencedName.equals(ex.getName())) {
+            ret.poke(ex, RatedResolveResult.RATE_NORMAL);
+            return ret;
           }
         }
       }
-      // resolve within the type proper
-      PsiElement ref_elt = PyUtil.turnDirIntoInit(qualifierType.resolveMember(referencedName));
-      if (ref_elt != null) ret.poke(ref_elt, RatedResolveResult.RATE_NORMAL);
     }
     else if (myContext.allowImplicits()) {
       final Collection<PyFunction> functions = PyFunctionNameIndex.find(referencedName, myElement.getProject());
@@ -91,8 +92,50 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
         ret.poke(docstring, RatedResolveResult.RATE_HIGH);
       }
     }
+    /*
+    // case of a field marked as @property_name.{getter,setter,deleter}
+    final PsiFile containing_file = myElement.getContainingFile();
+    if (containing_file != null) {
+      final VirtualFile vfile = containing_file.getVirtualFile();
+      if (vfile != null && LanguageLevel.forFile(vfile).isAtLeast(LanguageLevel.PYTHON26)) {
+        String expected_accessor;
+        if (PsiTreeUtil.getParentOfType(myElement, PyDelStatement.class) != null) expected_accessor = "deleter";
+        else if (PsiTreeUtil.getParentOfType(myElement, PyTargetExpression.class) != null)  expected_accessor = "setter";
+        else expected_accessor = "getter";
+
+        final PsiElement parent = myElement.getParent();
+        PyExpression prev_qualifier = null;
+        if (qualifier instanceof PyQualifiedExpression) {
+          prev_qualifier = ((PyQualifiedExpression)qualifier).getQualifier();
+        }
+        if (prev_qualifier == null && parent instanceof PyDecorator) {
+          if (ArrayUtil.contains(referencedName, PROPERTY_DECO_ATTRIBUTES)) {
+            // find above us a method named as referencedName and marked with @property
+            PyFunction method = ((PyDecorator)parent).getTarget();
+            if (method != null) {
+              final PyClass containing_class = method.getContainingClass();
+              if (containing_class != null) {
+                for (PyFunction a_method : containing_class.getMethods()) { // not treeCrawlUp, use stubs
+                  if (referencedName.equals(a_method.getName()) && "property".equals(PyUtil.getTheOnlyBuiltinDecorator(a_method))) {
+                    // are we textually after that method?
+                    if (a_method.getTextOffset() > method.getTextOffset()) {
+                      ret.poke(a_method, RatedResolveResult.RATE_HIGH);
+                      break;
+                      // NOTE: maybe find the closest, since redefinitions are possible
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    */
     return ret;
   }
+
+  protected final static String[] PROPERTY_DECO_ATTRIBUTES = {"getter", "setter", "deleter"};
 
   @NotNull
   @Override

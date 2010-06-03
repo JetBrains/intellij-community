@@ -14,7 +14,7 @@ public class PyNoneType implements PyType { // TODO must extend ClassType. It's 
   private PyNoneType() {
   }
 
-  public PsiElement resolveMember(final String name) {
+  public PsiElement resolveMember(final String name, Context context) {
     return null;
   }
 

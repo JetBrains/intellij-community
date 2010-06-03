@@ -18,10 +18,11 @@ public interface PyType {
   /**
    * Resolves an attribute of type.
    * @param name attribute name
+   * @param context
    * @return attribute's definition element
    */
   @Nullable
-  PsiElement resolveMember(final String name);
+  PsiElement resolveMember(final String name, Context context);
 
   /**
    * Proposes completion variants from type's attributes.
@@ -41,5 +42,18 @@ public interface PyType {
    */
   @Nullable
   String getName();
+
+  /** How we refer to a name */
+  enum Context {
+
+    /** Reference */
+    READ,
+
+    /** Target of assignment */
+    WRITE,
+
+    /** Target of del statement */
+    DELETE
+  }
 
 }
