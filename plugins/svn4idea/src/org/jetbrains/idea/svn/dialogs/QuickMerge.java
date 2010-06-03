@@ -308,9 +308,26 @@ public class QuickMerge {
         return;
       }
 
+      createChangelist();
       final SvnIntegrateChangesTask task = new SvnIntegrateChangesTask(SvnVcs.getInstance(myProject),
                                                new WorkingCopyInfo(myWcInfo.getPath(), true), myFactory, sourceUrlUrl, getName(), false, myBranchName);
       RunBackgroundable.run(task);
+    }
+
+    private void createChangelist() {
+      final ChangeListManager listManager = ChangeListManager.getInstance(myProject);
+      String name = myTitle;
+      int i = 1;
+      while (true) {
+        final LocalChangeList changeList = listManager.findChangeList(name);
+        if (changeList == null) {
+          break;
+        }
+        name = myTitle + " (" + i + ")";
+        ++ i;
+      }
+      final LocalChangeList newList = listManager.addChangeList(name, null);
+      listManager.setDefaultChangeList(newList);
     }
   }
 
