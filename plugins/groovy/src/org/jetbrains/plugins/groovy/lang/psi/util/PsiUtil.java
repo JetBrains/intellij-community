@@ -27,6 +27,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -109,11 +110,11 @@ public class PsiUtil {
 
   public static boolean isLValue(GroovyPsiElement element) {
     if (element instanceof GrExpression) {
-      PsiElement parent = element.getParent();
+      PsiElement parent = PsiTreeUtil.skipParentsOfType(element, GrParenthesizedExpression.class);
       if (parent instanceof GrListOrMap && !((GrListOrMap)parent).isMap()) {
         return isLValue((GroovyPsiElement)parent);
       }
-      return parent instanceof GrAssignmentExpression && element.equals(((GrAssignmentExpression)parent).getLValue());
+      return parent instanceof GrAssignmentExpression && PsiTreeUtil.isAncestor(((GrAssignmentExpression)parent).getLValue(), element, false);
     }
     return false;
   }
@@ -776,5 +777,21 @@ public class PsiUtil {
     }
 
     return constructorResults.toArray(new GroovyResolveResult[constructorResults.size()]);
+  }
+
+  public static boolean isAccessedForReading(GrExpression expr) {
+    return !isLValue(expr);
+  }
+
+  public static boolean isAccessedForWriting(GrExpression expr) {
+    if (isLValue(expr)) return true;
+
+    PsiElement parent = PsiTreeUtil.skipParentsOfType(expr, GrParenthesizedExpression.class);
+
+    if (parent instanceof GrUnaryExpression) {
+      IElementType tokenType = ((GrUnaryExpression)parent).getOperationTokenType();
+      return tokenType == GroovyTokenTypes.mINC || tokenType == GroovyTokenTypes.mDEC;
+    }
+    return false;
   }
 }

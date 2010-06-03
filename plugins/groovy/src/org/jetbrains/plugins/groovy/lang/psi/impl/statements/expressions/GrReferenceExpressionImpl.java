@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -55,7 +54,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
@@ -684,30 +682,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   }
 
   public boolean isReferenceTo(PsiElement element) {
-    if (element instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertyAccessor((PsiMethod) element)) {
-      final PsiElement target = resolve();
-      if (element instanceof GrAccessorMethod && getManager().areElementsEquivalent(((GrAccessorMethod)element).getProperty(), target)) {
-        return false;
-      }
-
-      return getManager().areElementsEquivalent(element, target);
-    }
-
-    if (element instanceof GrField && ((GrField) element).isProperty()) {
-      final PsiElement target = resolve();
-      if (getManager().areElementsEquivalent(element, target)) {
-        return true;
-      }
-
-      for (final GrAccessorMethod getter : ((GrField)element).getGetters()) {
-        if (getManager().areElementsEquivalent(getter, target)) {
-          return true;
-        }
-      }
-      return getManager().areElementsEquivalent(((GrField)element).getSetter(), target);
-    }
-
-    if (element instanceof PsiNamedElement && Comparing.equal(((PsiNamedElement) element).getName(), getReferenceName())) {
+    if (element instanceof PsiNamedElement) {
       return getManager().areElementsEquivalent(element, resolve());
     }
     return false;
