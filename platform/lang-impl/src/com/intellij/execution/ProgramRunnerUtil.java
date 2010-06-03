@@ -23,7 +23,6 @@ import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -49,7 +48,8 @@ public class ProgramRunnerUtil {
     return RunnerRegistry.getInstance().getRunner(executorId, configuration.getConfiguration());
   }
 
-  public static void executeConfiguration(@NotNull final Project project, @NotNull final RunnerAndConfigurationSettings configuration, @NotNull final Executor executor, @NotNull final DataContext dataContext) {
+  public static void executeConfiguration(@NotNull final Project project, @NotNull final RunnerAndConfigurationSettings configuration,
+                                          @NotNull final Executor executor) {
     ProgramRunner runner = getRunner(executor.getId(), configuration);
     if (runner == null) {
       LOG.error("Runner MUST not be null! Cannot find runner for " + executor.getId() + " and " + configuration);
