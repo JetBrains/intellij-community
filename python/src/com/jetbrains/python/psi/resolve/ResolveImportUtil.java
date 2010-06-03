@@ -413,8 +413,8 @@ public class ResolveImportUtil {
    */
   @Nullable
   public static PsiElement resolveInRoots(@NotNull final PsiElement elt, final String refName) {
-    // NOTE: a quick and ditry temporary fix for "current dir" root path, which is assumed to be present first (but may be not).
-    PsiElement res = resoveInCurrentDir(elt, refName);
+    // NOTE: a quick and dirty temporary fix for "current dir" root path, which is assumed to be present first (but may be not).
+    PsiElement res = resolveInCurrentDir(elt, refName);
     if (res != null) {
       return res;
     }
@@ -424,7 +424,7 @@ public class ResolveImportUtil {
   }
 
   @Nullable
-  public static PsiElement resoveInCurrentDir(@NotNull final PsiElement elt, final String refName) {
+  public static PsiElement resolveInCurrentDir(@NotNull final PsiElement elt, final String refName) {
     PsiFile pfile = elt.getContainingFile();
     VirtualFile vfile = pfile.getVirtualFile();
     if (vfile == null) { // we're probably within a copy, e.g. for completion; get the real thing
@@ -449,56 +449,6 @@ public class ResolveImportUtil {
       }
     }
     return null;
-  }
-
-  @Nullable
-  private static PsiElement resolveWithinRoots(final VirtualFile[] roots, final String referencedName, final Project project) {
-    final PsiManager psi_mgr = PsiManager.getInstance(project);
-    for (VirtualFile contentRoot : roots) {
-      PsiElement result = null;
-      final VirtualFile childFile = contentRoot.findChild(referencedName + PyNames.DOT_PY);
-      if (childFile != null) {
-        result = psi_mgr.findFile(childFile);
-      }
-      else {
-        final VirtualFile childDir = contentRoot.findChild(referencedName);
-        if (childDir != null) result = psi_mgr.findDirectory(childDir);
-      }
-      if (result != null) return result;
-    }
-    return null;
-  }
-
-  static class LookupRootVisitor implements RootVisitor {
-    String path;
-    PsiManager psimgr;
-    PsiElement result;
-
-    public LookupRootVisitor(String name, PsiManager psimgr) {
-      this.path = name.replace('.', '/');
-      this.psimgr = psimgr;
-      this.result = null;
-    }
-
-    public boolean visitRoot(final VirtualFile root) {
-      if (result != null) return false;
-      final VirtualFile childFile = root.findFileByRelativePath(path + PyNames.DOT_PY);
-      if (childFile != null) {
-        result = psimgr.findFile(childFile);
-        return (result == null);
-      }
-
-      final VirtualFile childDir = root.findFileByRelativePath(path);
-      if (childDir != null) {
-        result = psimgr.findDirectory(childDir);
-        return (result == null);
-      }
-      return true;
-    }
-
-    public PsiElement getResult() {
-      return result;
-    }
   }
 
   static class ResolveInRootVisitor implements RootVisitor {
