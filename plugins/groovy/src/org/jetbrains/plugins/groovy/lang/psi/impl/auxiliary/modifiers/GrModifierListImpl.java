@@ -170,6 +170,7 @@ public class GrModifierListImpl extends GroovyBaseElementImpl<GrModifierListStub
     if (name.equals(GrModifier.FINAL)) return findChildByType(GroovyElementTypes.kFINAL) != null;
     if (name.equals(GrModifier.TRANSIENT)) return findChildByType(GroovyElementTypes.kTRANSIENT) != null;
     if (name.equals(GrModifier.NATIVE)) return findChildByType(GroovyElementTypes.kNATIVE) != null;
+    if (name.equals(GrModifier.DEF)) return findChildByType(GroovyTokenTypes.kDEF) != null;
     return name.equals(GrModifier.VOLATILE) && findChildByType(GroovyElementTypes.kVOLATILE) != null;
   }
 

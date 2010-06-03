@@ -30,9 +30,12 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
-import git4idea.commands.*;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitFileUtils;
+import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
@@ -216,19 +219,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
                 log.warn("Failed to remove temporary file: " + messageFile);
               }
             }
-            if (myNextCommitIsPushed != null && myNextCommitIsPushed.booleanValue()) {
-              // push
-              GitLineHandler pushHandler = GitPushUtils.preparePush(myProject, root);
-              if (pushHandler != null) {
-                Collection<VcsException> problems = GitHandlerUtil.doSynchronouslyWithExceptions(pushHandler);
-                for (VcsException e : problems) {
-                  if (!isNoOrigin(e)) {
-                    // no origin exception just means that push was not applicable to the repository
-                    exceptions.add(e);
-                  }
-                }
-              }
-            }
           }
           catch (VcsException e) {
             exceptions.add(e);
@@ -239,6 +229,14 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
           exceptions.add(new VcsException("Creation of commit message file failed", ex));
         }
       }
+    }
+    if (myNextCommitIsPushed != null && myNextCommitIsPushed.booleanValue() && exceptions.isEmpty()) {
+      // push
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        public void run() {
+          GitPushActiveBranchesDialog.showDialogForProject(myProject);
+        }
+      });
     }
     return exceptions;
   }
@@ -327,7 +325,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
                                                 GitBundle.getString("commit.partial.merge.title"), null);
 
           }
-        }                       );
+        });
       }
       catch (RuntimeException ex) {
         throw ex;
@@ -376,17 +374,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   private static boolean isMergeCommit(final VcsException ex) {
     //noinspection HardCodedStringLiteral
     return -1 != ex.getMessage().indexOf("fatal: cannot do a partial commit during a merge.");
-  }
-
-  /**
-   * Check if the exception means that no origin was found for pus operation
-   *
-   * @param ex an exception to use
-   * @return true if exception means that changes cannot be pushed because repository is entirely local.
-   */
-  private static boolean isNoOrigin(final VcsException ex) {
-    //noinspection HardCodedStringLiteral
-    return ex.getMessage().indexOf("': unable to chdir or not a git archive") != -1;
   }
 
   /**
@@ -497,7 +484,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       handler.setNoSSH(true);
       if (isFirst) {
         isFirst = false;
-      } else {
+      }
+      else {
         handler.addParameters("--amend");
       }
       handler.addParameters("--only", "-F", message.getAbsolutePath());

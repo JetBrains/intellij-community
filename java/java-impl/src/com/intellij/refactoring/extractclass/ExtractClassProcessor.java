@@ -43,7 +43,9 @@ import com.intellij.refactoring.psi.MethodInheritanceUtils;
 import com.intellij.refactoring.psi.TypeParametersVisitor;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.refactoring.util.FixableUsagesRefactoringProcessor;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
@@ -66,6 +68,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
   private final String newPackageName;
   private final String myNewVisibility;
   private final boolean myGenerateAccessors;
+  private final List<PsiField> enumConstants;
   private final String newClassName;
   private final String delegateFieldName;
   private final boolean requiresBackpointer;
@@ -77,7 +80,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
                                List<PsiClass> innerClasses,
                                String newPackageName,
                                String newClassName) {
-    this(sourceClass, fields, methods, innerClasses, newPackageName, newClassName, null, false);
+    this(sourceClass, fields, methods, innerClasses, newPackageName, newClassName, null, false, Collections.<MemberInfo>emptyList());
   }
 
   public ExtractClassProcessor(PsiClass sourceClass,
@@ -87,12 +90,16 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
                                String packageName,
                                String newClassName,
                                String newVisibility,
-                               boolean generateAccessors) {
+                               boolean generateAccessors, List<MemberInfo> enumConstants) {
     super(sourceClass.getProject());
     this.sourceClass = sourceClass;
     this.newPackageName = packageName;
     myNewVisibility = newVisibility;
     myGenerateAccessors = generateAccessors;
+    this.enumConstants = new ArrayList<PsiField>();
+    for (MemberInfo constant : enumConstants) {
+      this.enumConstants.add((PsiField)constant.getMember());
+    }
     this.fields = new ArrayList<PsiField>(fields);
     this.methods = new ArrayList<PsiMethod>(methods);
     this.innerClasses = new ArrayList<PsiClass>(classes);
@@ -145,6 +152,21 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       for (PsiField field : fieldsNeedingSetter) {
         conflicts.putValue(field, "Field \'" + field.getName() + "\' needs setter");
       }
+    }
+    for (final PsiField enumConstant : enumConstants) {
+      final PsiExpression initializer = enumConstant.getInitializer();
+      assert initializer != null;
+      initializer.accept(new JavaRecursiveElementWalkingVisitor(){
+        @Override
+        public void visitReferenceExpression(PsiReferenceExpression expression) {
+          super.visitReferenceExpression(expression);
+          final PsiElement resolved = expression.resolve();
+          if (!enumConstants.contains(resolved) && fields.contains(resolved)) {
+            conflicts.putValue(initializer, "Enum constant " + RefactoringUIUtil.getDescription(enumConstant, false) +
+                                            " would forward reference on field " + RefactoringUIUtil.getDescription(resolved, false));
+          }
+        }
+      });
     }
     return showConflicts(conflicts, refUsages.get());
   }
@@ -250,16 +272,14 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
 
           if (moveInitializerToConstructor[0]) {
             final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
-            PsiMethod constructor;
-            final PsiMethod[] constructors = psiClass.getConstructors();
+            PsiMethod[] constructors = psiClass.getConstructors();
             if (constructors.length == 0) {
-              constructor = elementFactory.createConstructor();
-              constructor.setName(psiClass.getName());
-              constructor = (PsiMethod)psiClass.add(constructor);
-            } else {
-              constructor = constructors[0];
+              final PsiMethod constructor = (PsiMethod)elementFactory.createConstructor().setName(psiClass.getName());
+              constructors = new PsiMethod[] {(PsiMethod)psiClass.add(constructor)};
             }
-            MoveInstanceMembersUtil.moveInitializerToConstructor(elementFactory, constructor, member);
+            for (PsiMethod constructor : constructors) {
+              MoveInstanceMembersUtil.moveInitializerToConstructor(elementFactory, constructor, member);
+            }
           }
         }
       }
@@ -607,7 +627,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
         }
         else {
           usages.add(isStatic
-                     ? new ReplaceStaticVariableAccess(exp, qualifiedName)
+                     ? new ReplaceStaticVariableAccess(exp, qualifiedName, enumConstants.contains(field))
                      : new ReplaceInstanceVariableAccess(exp, delegateFieldName, getter, field.getName()));
         }
 
@@ -630,6 +650,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     extractedClassBuilder.setPackageName(newPackageName);
     extractedClassBuilder.setOriginalClassName(sourceClass.getQualifiedName());
     extractedClassBuilder.setRequiresBackPointer(requiresBackpointer);
+    extractedClassBuilder.setExtractAsEnum(enumConstants);
     for (PsiField field : fields) {
       extractedClassBuilder.addField(field);
     }

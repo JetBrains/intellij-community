@@ -158,7 +158,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     try {
       Project project = psiFile.getProject();
       if (action instanceof PsiElementBaseIntentionAction) {
-        if (!inProject || !((PsiElementBaseIntentionAction)action).isAvailable(project, editor, psiElement)) return false;
+        if (!inProject || psiElement == null || !((PsiElementBaseIntentionAction)action).isAvailable(project, editor, psiElement)) return false;
       }
       else if (!action.isAvailable(project, editor, psiFile)) {
         return false;

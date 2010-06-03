@@ -17,7 +17,9 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConstant;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
@@ -42,7 +45,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProces
  * @author: Dmitry.Krasilschikov
  * @date: 06.04.2007
  */
-public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
+public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant, PsiPolyVariantReference {
   public GrEnumConstantImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -94,6 +97,7 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
     return false;
   }
 
+  @NotNull
   public GroovyResolveResult resolveConstructorGenerics() {
     return PsiImplUtil.extractUniqueResult(multiResolveConstructor());
   }
@@ -113,6 +117,7 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
     return new GroovyResolveResult[]{result};
   }
 
+  @Nullable
   public PsiMethod resolveConstructor() {
     return PsiImplUtil.extractUniqueElement(multiResolveConstructor());
   }
@@ -133,5 +138,53 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
 
   public GrTypeDefinitionBody getAnonymousBlock() {
     return findChildByClass(GrTypeDefinitionBody.class);
+  }
+
+  @Override
+  public PsiReference getReference() {
+    return this;
+  }
+
+  @NotNull
+  public ResolveResult[] multiResolve(boolean incompleteCode) {
+    return multiResolveConstructor();
+  }
+
+  public PsiElement getElement() {
+    return this;
+  }
+
+  public TextRange getRangeInElement() {
+    return getNameIdentifierGroovy().getTextRange().shiftRight(-getTextOffset());
+  }
+
+  public PsiElement resolve() {
+    return resolveConstructor();
+  }
+
+  @NotNull
+  public String getCanonicalText() {
+    return getText(); //todo
+  }
+
+  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    return getElement();
+  }
+
+  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
+    throw new IncorrectOperationException("invalid operation");
+  }
+
+  public boolean isReferenceTo(PsiElement element) {
+    return element instanceof GrMethod && ((GrMethod)element).isConstructor() && getManager().areElementsEquivalent(resolve(), element);
+  }
+
+  @NotNull
+  public Object[] getVariants() {
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  }
+
+  public boolean isSoft() {
+    return false;
   }
 }

@@ -95,7 +95,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
     String result = "";
     try {
       for (ParameterInfoImpl info : infos) {
-        PsiType type = info.getTypeWrapper().getType(context, context.getManager());
+        PsiType type = info.createType(context, context.getManager());
         if (result.length() != 0) {
           result += ", ";
         }

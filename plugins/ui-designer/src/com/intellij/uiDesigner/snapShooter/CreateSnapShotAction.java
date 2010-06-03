@@ -174,7 +174,7 @@ public class CreateSnapShotAction extends AnAction {
         final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(DefaultRunExecutor.EXECUTOR_ID, appConfig);
         LOG.assertTrue(runner != null, "Runner MUST not be null!");
         runner.execute(DefaultRunExecutor.getRunExecutorInstance(),
-                       new ExecutionEnvironment(runner, snapshotConfiguration, e.getDataContext()));
+                       new ExecutionEnvironment(runner, snapshotConfiguration, project));
       }
       catch (ExecutionException ex) {
         Messages.showMessageDialog(project, UIDesignerBundle.message("snapshot.run.error", ex.getMessage()),

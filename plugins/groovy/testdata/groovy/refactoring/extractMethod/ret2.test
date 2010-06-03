@@ -1,20 +1,20 @@
 static def foo(int i, int j, int k) {
-    def v
-    println(i + j - k)
-    v = 42
-    <begin>if (i > 42) {
-        println("preved!")
-        return v + i
-    } else {
-        return v + j
-    }<end>
+  def v
+  println(i + j - k)
+  v = 42
+  <begin>if (i > 42) {
+     println("preved!")
+     return v + i
+  } else {
+    return v + j
+  }<end>
 }
 ------
 static def foo(int i, int j, int k) {
-    def v
-    println(i + j - k)
-    v = 42
-    <caret>return testMethod(i, v, j)
+  def v
+  println(i + j - k)
+  v = 42
+  <caret>return testMethod(i, v, j)
 }
 
 private static def testMethod(int i, int v, int j) {

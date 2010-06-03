@@ -16,7 +16,10 @@
 
 package com.intellij.execution.actions;
 
-import com.intellij.execution.*;
+import com.intellij.execution.Location;
+import com.intellij.execution.PsiLocation;
+import com.intellij.execution.RunManager;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RuntimeConfiguration;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
@@ -34,12 +37,10 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.List;
-import java.util.Set;
 
 public class ConfigurationContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.actions.ConfigurationContext");
@@ -101,26 +102,17 @@ public class ConfigurationContext {
       return null;
     }
 
-    final Set<ConfigurationType> types = new HashSet<ConfigurationType>();
+    final List<RuntimeConfigurationProducer> producers = PreferedProducerFind.findPreferredProducers(myLocation, this, true);
+    if (producers == null) return null;
     if (myRuntimeConfiguration != null) {
-      types.add(myRuntimeConfiguration.getType());
-    }
-    else {
-      final List<RuntimeConfigurationProducer> producers = PreferedProducerFind.findPreferredProducers(myLocation, this, true);
-      if (producers == null) return null;
       for (RuntimeConfigurationProducer producer : producers) {
-        types.add(producer.createProducer(myLocation, this).getConfigurationType());
+        final RunnerAndConfigurationSettings configuration = producer.findExistingConfiguration(myLocation);
+        if (configuration != null && configuration.getConfiguration() == myRuntimeConfiguration) return configuration;
       }
     }
-    for (ConfigurationType type : types) {
-      if (!(type instanceof LocatableConfigurationType)) continue;
-      final LocatableConfigurationType factoryLocatable = (LocatableConfigurationType)type;
-      final RunnerAndConfigurationSettings[] configurations = getRunManager().getConfigurationSettings(type);
-      for (final RunnerAndConfigurationSettings existingConfiguration : configurations) {
-        if (factoryLocatable.isConfigurationByLocation(existingConfiguration.getConfiguration(), myLocation)) {
-          return existingConfiguration;
-        }
-      }
+    for (RuntimeConfigurationProducer producer : producers) {
+      final RunnerAndConfigurationSettings configuration = producer.findExistingConfiguration(myLocation);
+      if (configuration != null) return configuration;
     }
     return null;
   }

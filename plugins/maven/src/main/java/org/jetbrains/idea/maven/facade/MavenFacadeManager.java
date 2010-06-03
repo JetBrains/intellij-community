@@ -72,7 +72,9 @@ public class MavenFacadeManager {
   @NonNls private static final String MAIN_CLASS = "org.jetbrains.idea.maven.facade.RemoteMavenServer";
   private final RemoteProcessSupport<Object, MavenFacade, Object> mySupport;
   private MavenFacade myFacade;
-  private RemoteMavenFacadeLogger myLogger;
+
+  private RemoteMavenFacadeLogger myLogger = new RemoteMavenFacadeLogger();
+  private RemoteMavenFacadeDownloadListener myDownloadListener = new RemoteMavenFacadeDownloadListener();
 
   public static MavenFacadeManager getInstance() {
     return ServiceManager.getService(MavenFacadeManager.class);
@@ -98,10 +100,10 @@ public class MavenFacadeManager {
     ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
       public void run() {
         mySupport.stopAll();
-
-        if (myLogger != null) {
+        if (myFacade != null) {
           try {
             UnicastRemoteObject.unexportObject(myLogger, true);
+            UnicastRemoteObject.unexportObject(myDownloadListener, true);
           }
           catch (RemoteException e) {
             MavenLog.LOG.error(e);
@@ -115,10 +117,9 @@ public class MavenFacadeManager {
     if (myFacade == null) {
       try {
         myFacade = mySupport.acquire(this, "");
-
-        myLogger = new RemoteMavenFacadeLogger();
         UnicastRemoteObject.exportObject(myLogger, 0);
-        myFacade.setLogger(myLogger);
+        UnicastRemoteObject.exportObject(myDownloadListener, 0);
+        myFacade.set(myLogger, myDownloadListener);
       }
       catch (Exception e) {
         throw new RuntimeException(e);
@@ -143,6 +144,8 @@ public class MavenFacadeManager {
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(THashSet.class), classPath);
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(Element.class), classPath);
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(Query.class), classPath);
+        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(Query.class), classPath);
+        params.getClassPath().add(PathManager.getResourceRoot(getClass(), "/messages/CommonBundle.properties"));
         params.getClassPath().addAll(classPath);
         params.getClassPath().addAllFiles(collectClassPathAndLIbsFolder().first);
 
@@ -155,7 +158,7 @@ public class MavenFacadeManager {
             params.getVMParametersList().addParametersString("-d" + arch);
           }
         }
-        params.getVMParametersList().addParametersString("-Xmx512m");
+        params.getVMParametersList().addParametersString("-Djava.awt.headless=true -Xmx512m");
         return params;
       }
 
@@ -279,6 +282,14 @@ public class MavenFacadeManager {
     }
   }
 
+  public void addDownloadListener(MavenFacadeDownloadListener listener) {
+    myDownloadListener.myListeners.add(listener);
+  }
+
+  public void removeDownloadListener(MavenFacadeDownloadListener listener) {
+    myDownloadListener.myListeners.remove(listener);
+  }
+
   public static MavenFacadeSettings convertSettings(MavenGeneralSettings settings) {
     MavenFacadeSettings result = new MavenFacadeSettings();
     result.setLoggingLevel(settings.getLoggingLevel().getLevel());
@@ -325,6 +336,16 @@ public class MavenFacadeManager {
 
     public void error(Throwable e) {
       MavenLog.LOG.error(e);
+    }
+  }
+
+  private static class RemoteMavenFacadeDownloadListener extends RemoteObject implements MavenFacadeDownloadListener {
+    private final List<MavenFacadeDownloadListener> myListeners = ContainerUtil.createEmptyCOWList();
+
+    public void artifactDownloaded(File file, String relativePath) throws RemoteException {
+      for (MavenFacadeDownloadListener each : myListeners) {
+        each.artifactDownloaded(file, relativePath);
+      }
     }
   }
 

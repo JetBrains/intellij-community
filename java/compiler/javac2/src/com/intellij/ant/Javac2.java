@@ -482,7 +482,7 @@ public class Javac2 extends Javac {
                     return container;
                 }
             }
-            InputStream resourceStream = myLoader.getResourceAsStream("/" + formFileName + ".form");
+            InputStream resourceStream = myLoader.getResourceAsStream(formFileName);
             if (resourceStream != null) {
                 final LwRootContainer container = Utils.getRootContainer(resourceStream, null);
                 myFormCache.put(formFileName, container);

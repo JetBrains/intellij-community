@@ -32,6 +32,17 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertProblems(root, "'pom.xml' has syntax errors");
   }
 
+  public void testUnknownProblemWithEmptyFile() throws Exception {
+    createProjectPom("");
+    myProjectPom.setBinaryContent(new byte[0]);
+    importProject();
+    
+    assertModules("project");
+
+    MavenProject root = getRootProjects().get(0);
+    assertProblems(root, "'pom.xml' has syntax errors");
+  }
+
   public void testUndefinedPropertyInHeader() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>${undefined}</artifactId>" +

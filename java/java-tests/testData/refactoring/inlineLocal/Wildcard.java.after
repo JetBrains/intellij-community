@@ -1,0 +1,10 @@
+import java.util.*;
+class Test {
+  void foo() {
+      for (Number extension : getExtensions()) {
+    }
+  }
+
+  Collection<? extends Number> getExtensions() {return null;}
+}
+

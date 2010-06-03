@@ -65,6 +65,9 @@ public interface GrMethod extends GrMembersDeclaration, GrNamedElement, PsiMetho
   @Nullable
   PsiType getReturnType();
 
+  @Nullable
+  GrTypeElement setReturnType(@Nullable PsiType newReturnType);
+
   @NotNull
   @NonNls
   String getName();

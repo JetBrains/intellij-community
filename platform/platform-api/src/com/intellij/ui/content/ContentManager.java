@@ -16,9 +16,9 @@
 package com.intellij.ui.content;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

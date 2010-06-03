@@ -16,10 +16,8 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.params;
 
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiParameterList;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 /**
@@ -31,9 +29,6 @@ public interface GrParameterList extends GroovyPsiElement, PsiParameterList {
   GrParameter[] getParameters();
 
   void addParameterToEnd(GrParameter parameter);
-
-  @Nullable
-  PsiElement removeParameter(GrParameter parameter);
 
   void addParameterToHead(GrParameter parameter);
 

@@ -18,7 +18,6 @@ package com.intellij.javadoc.actions;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.BaseAnalysisAction;
 import com.intellij.analysis.BaseAnalysisActionDialog;
-import com.intellij.ide.DataManager;
 import com.intellij.javadoc.JavadocBundle;
 import com.intellij.javadoc.JavadocConfigurable;
 import com.intellij.javadoc.JavadocGenerationManager;
@@ -37,7 +36,7 @@ public final class GenerateJavadocAction extends BaseAnalysisAction{
   @Override
   protected void analyze(@NotNull Project project, AnalysisScope scope) {
     myConfigurable.apply();
-    JavadocGenerationManager.getInstance(project).generateJavadoc(scope, DataManager.getInstance().getDataContext());
+    JavadocGenerationManager.getInstance(project).generateJavadoc(scope);
     dispose();
   }
 

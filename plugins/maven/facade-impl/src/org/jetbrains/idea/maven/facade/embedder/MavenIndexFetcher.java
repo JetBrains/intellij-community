@@ -25,13 +25,12 @@ import org.apache.maven.wagon.authentication.AuthenticationException;
 import org.apache.maven.wagon.authorization.AuthorizationException;
 import org.apache.maven.wagon.events.TransferListener;
 import org.apache.maven.wagon.repository.Repository;
-import org.jetbrains.idea.maven.facade.MavenFacadeLoggerManager;
+import org.jetbrains.idea.maven.facade.MavenFacadeGlobalsManager;
 import org.sonatype.nexus.index.updater.ResourceFetcher;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.rmi.RemoteException;
 
 public class MavenIndexFetcher implements ResourceFetcher {
   private final String myOriginalRepositoryId;
@@ -81,7 +80,7 @@ public class MavenIndexFetcher implements ResourceFetcher {
       myWagon.disconnect();
     }
     catch (ConnectionException ex) {
-      MavenFacadeLoggerManager.getLogger().warn(ex);
+      MavenFacadeGlobalsManager.getLogger().warn(ex);
     }
   }
 

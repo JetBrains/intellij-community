@@ -44,11 +44,15 @@ public class MemberSelectionPanel extends JPanel {
     setBorder(border);
     setLayout(new BorderLayout());
 
-    myTable = new MemberSelectionTable(memberInfo, abstractColumnHeader);
+    myTable = createMemberSelectionTable(memberInfo, abstractColumnHeader);
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
 
 
     add(scrollPane, BorderLayout.CENTER);
+  }
+
+  protected MemberSelectionTable createMemberSelectionTable(List<MemberInfo> memberInfo, String abstractColumnHeader) {
+    return new MemberSelectionTable(memberInfo, abstractColumnHeader);
   }
 
   public MemberSelectionTable getTable() {

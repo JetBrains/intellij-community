@@ -323,6 +323,19 @@ public class PsiTreeUtil {
   }
 
   @Nullable
+  public static PsiElement skipParentsOfType(@Nullable PsiElement element, @NotNull Class... parentClasses) {
+    if (element == null) return null;
+    NextSibling:
+    for (PsiElement e = element.getParent(); e != null; e = e.getParent()) {
+      for (Class aClass : parentClasses) {
+        if (instanceOf(aClass, e)) continue NextSibling;
+      }
+      return e;
+    }
+    return null;
+  }
+
+  @Nullable
   public static <T extends PsiElement> T getParentOfType(PsiElement element, @NotNull Class<? extends T>... classes) {
     if (element == null) return null;
     PsiElement parent = element.getParent();

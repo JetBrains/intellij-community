@@ -27,6 +27,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -109,11 +110,11 @@ public class PsiUtil {
 
   public static boolean isLValue(GroovyPsiElement element) {
     if (element instanceof GrExpression) {
-      PsiElement parent = element.getParent();
+      PsiElement parent = PsiTreeUtil.skipParentsOfType(element, GrParenthesizedExpression.class);
       if (parent instanceof GrListOrMap && !((GrListOrMap)parent).isMap()) {
         return isLValue((GroovyPsiElement)parent);
       }
-      return parent instanceof GrAssignmentExpression && element.equals(((GrAssignmentExpression)parent).getLValue());
+      return parent instanceof GrAssignmentExpression && PsiTreeUtil.isAncestor(((GrAssignmentExpression)parent).getLValue(), element, false);
     }
     return false;
   }
@@ -131,10 +132,7 @@ public class PsiUtil {
 
     //check for default constructor
     if (method.isConstructor() && method.getParameterList().getParametersCount() == 0 && argumentTypes.length == 1) {
-      final PsiType type = argumentTypes[0];
-      final PsiClassType mapType = JavaPsiFacade.getElementFactory(method.getProject())
-        .createTypeByFQClassName(CommonClassNames.JAVA_UTIL_MAP, method.getResolveScope());
-      return TypesUtil.isAssignable(mapType, type, place);
+      return InheritanceUtil.isInheritor(argumentTypes[0], CommonClassNames.JAVA_UTIL_MAP);
     }
     LOG.assertTrue(signature != null);
     return GrClosureSignatureUtil.isSignatureApplicable(signature, argumentTypes, place);
@@ -152,14 +150,13 @@ public class PsiUtil {
   }
 
   @Nullable
-  public static GroovyPsiElement getArgumentsElement(PsiElement methodRef) {
+  public static GrArgumentList getArgumentsList(PsiElement methodRef) {
     PsiElement parent = methodRef.getParent();
-    if (parent instanceof GrMethodCallExpression) {
-      return ((GrMethodCallExpression)parent).getArgumentList();
-    } else if (parent instanceof GrApplicationStatement) {
-      return ((GrApplicationStatement)parent).getArgumentList();
-    } else if (parent instanceof GrNewExpression) {
-      return ((GrNewExpression)parent).getArgumentList();
+    if (parent instanceof GrCall) {
+      return ((GrCall)parent).getArgumentList();
+    }
+    if (parent instanceof GrAnonymousClassDefinition) {
+      return ((GrAnonymousClassDefinition)parent).getArgumentListGroovy();
     }
     return null;
   }
@@ -743,6 +740,19 @@ public class PsiUtil {
     }
   }
 
+  public static boolean isMethodUsage(PsiElement element) {
+    if (element instanceof GrEnumConstant) return true;
+    if (!(element instanceof GrReferenceElement)) return false;
+    PsiElement parent = element.getParent();
+    if (parent instanceof GrCall) {
+      return true;
+    }
+    else if (parent instanceof GrAnonymousClassDefinition) {
+      return element.equals(((GrAnonymousClassDefinition)parent).getBaseClassReferenceGroovy());
+    }
+    return false;
+  }
+
   public static GroovyResolveResult[] getConstructorCandidates(GroovyPsiElement place, GroovyResolveResult[] classCandidates, PsiType[] argTypes) {
     List<GroovyResolveResult> constructorResults = new ArrayList<GroovyResolveResult>();
     for (GroovyResolveResult classResult : classCandidates) {
@@ -767,5 +777,21 @@ public class PsiUtil {
     }
 
     return constructorResults.toArray(new GroovyResolveResult[constructorResults.size()]);
+  }
+
+  public static boolean isAccessedForReading(GrExpression expr) {
+    return !isLValue(expr);
+  }
+
+  public static boolean isAccessedForWriting(GrExpression expr) {
+    if (isLValue(expr)) return true;
+
+    PsiElement parent = PsiTreeUtil.skipParentsOfType(expr, GrParenthesizedExpression.class);
+
+    if (parent instanceof GrUnaryExpression) {
+      IElementType tokenType = ((GrUnaryExpression)parent).getOperationTokenType();
+      return tokenType == GroovyTokenTypes.mINC || tokenType == GroovyTokenTypes.mDEC;
+    }
+    return false;
   }
 }

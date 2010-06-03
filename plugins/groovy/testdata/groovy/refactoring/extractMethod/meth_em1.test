@@ -1,16 +1,16 @@
 protected static def getGeneratedFileNames(String name, int boo) {
-    def names = new ArrayList<String>()
-    foo = null
-<begin>    println (names.toString() + boo + name)
-    println (names + foo)<end>
-    names
+  def names = new ArrayList<String>()
+  foo = null
+<begin>  println (names.toString() + boo + name)
+  println (names + foo)<end>
+  names
 }
 -----
 protected static def getGeneratedFileNames(String name, int boo) {
-    def names = new ArrayList<String>()
-    foo = null
-    <caret>testMethod(names, boo, name, foo)
-    names
+  def names = new ArrayList<String>()
+  foo = null
+  <caret>testMethod(names, boo, name, foo)
+  names
 }
 
 private static def testMethod(ArrayList<String> names, int boo, String name, foo) {

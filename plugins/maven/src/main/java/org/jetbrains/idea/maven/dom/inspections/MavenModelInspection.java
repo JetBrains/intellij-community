@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.dom.inspections;
 
-import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.util.xml.highlighting.BasicDomElementsInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;

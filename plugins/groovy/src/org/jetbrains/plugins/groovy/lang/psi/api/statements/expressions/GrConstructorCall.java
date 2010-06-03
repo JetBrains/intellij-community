@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
 import com.intellij.psi.PsiMethod;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -27,8 +28,10 @@ public interface GrConstructorCall extends GrCall {
   @Nullable
   GrArgumentList getArgumentList();
 
+  @Nullable
   PsiMethod resolveConstructor();
 
+  @NotNull
   GroovyResolveResult resolveConstructorGenerics();
 
   GroovyResolveResult[] multiResolveConstructor();

@@ -139,6 +139,12 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
       PsiClass parent = (PsiClass)aClass.getParent();
       Collection<PsiClass> inheritors = ClassInheritorsSearch.search(parent, parent.getUseScope(), true).findAll();
       for (PsiClass inheritor : inheritors) {
+        if (newName.equals(inheritor.getName())) {
+          final ClassCollisionsDetector classCollisionsDetector = new ClassCollisionsDetector(aClass);
+          for (PsiReference reference : ReferencesSearch.search(inheritor, new LocalSearchScope(inheritor))) {
+            classCollisionsDetector.addClassCollisions(reference.getElement(), newName, result);
+          }
+        }
         PsiClass[] inners = inheritor.getInnerClasses();
         for (PsiClass inner : inners) {
           if (newName.equals(inner.getName())) {

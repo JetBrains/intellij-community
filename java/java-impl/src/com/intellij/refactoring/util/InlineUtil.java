@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.RedundantCastUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -54,7 +55,8 @@ public class InlineUtil {
     ChangeContextUtil.encodeContextInfo(initializer, false);
     PsiExpression expr = (PsiExpression)ref.replace(initializer);
     PsiType exprType = expr.getType();
-    if (exprType != null && !varType.equals(exprType)) {
+    if (exprType != null && (!varType.equals(exprType) && varType instanceof PsiPrimitiveType
+                             || !TypeConversionUtil.isAssignable(varType, exprType))) {
       boolean matchedTypes = false;
       //try explicit type arguments
       final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();

@@ -1,17 +1,17 @@
 enum E {
-    A, B, C;
+  A, B, C;
 
-    def r(){
-         <begin>def e = C<end>
-    }
+  def r(){
+     <begin>def e = C<end>
+  }
 }
 -----
 enum E {
-    A, B, C;
+  A, B, C;
 
-    def r(){
-         <caret>testMethod()
-    }
+  def r(){
+    <caret>testMethod()
+  }
 
   private def testMethod() {
     def e = C

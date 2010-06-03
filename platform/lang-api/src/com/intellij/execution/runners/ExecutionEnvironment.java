@@ -27,6 +27,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -35,31 +36,61 @@ import org.jetbrains.annotations.TestOnly;
  * @author spleaner
  */
 public class ExecutionEnvironment {
-  private DataContext myDataContext;
+  private final Project myProject;
+  private final RunContentDescriptor myContentToReuse;
   private RunProfile myRunProfile;
   private RunnerSettings myRunnerSettings;
   private ConfigurationPerRunnerSettings myConfigurationSettings;
 
   @TestOnly
   public ExecutionEnvironment() {
+    myProject = null;
+    myContentToReuse = null;
   }
 
+  public ExecutionEnvironment(@NotNull final ProgramRunner runner,
+                              @NotNull final RunnerAndConfigurationSettings configuration,
+                              Project project) {
+    this(configuration.getConfiguration(), project, configuration.getRunnerSettings(runner), configuration.getConfigurationSettings(runner),
+         null);
+  }
+
+  public ExecutionEnvironment(@NotNull RunProfile runProfile,
+                              Project project,
+                              RunnerSettings runnerSettings,
+                              ConfigurationPerRunnerSettings configurationSettings, @Nullable RunContentDescriptor contentToReuse) {
+    myRunProfile = runProfile;
+    myRunnerSettings = runnerSettings;
+    myConfigurationSettings = configurationSettings;
+    myProject = project;
+    myContentToReuse = contentToReuse;
+  }
+
+  /**
+   * @deprecated use {@link #ExecutionEnvironment(ProgramRunner, com.intellij.execution.RunnerAndConfigurationSettings, com.intellij.openapi.project.Project)}
+   */
+  @Deprecated
   public ExecutionEnvironment(@NotNull final ProgramRunner runner, @NotNull final RunnerAndConfigurationSettings configuration, final DataContext context) {
-    this(configuration.getConfiguration(), configuration.getRunnerSettings(runner), configuration.getConfigurationSettings(runner), context);
+    this(configuration.getConfiguration(), PlatformDataKeys.PROJECT.getData(context), configuration.getRunnerSettings(runner), configuration.getConfigurationSettings(runner), null);
   }
 
+  /**
+   * @deprecated use {@link #ExecutionEnvironment(com.intellij.execution.configurations.RunProfile, com.intellij.openapi.project.Project, com.intellij.execution.configurations.RunnerSettings, com.intellij.execution.configurations.ConfigurationPerRunnerSettings, com.intellij.execution.ui.RunContentDescriptor)}
+   */
+  @Deprecated
   public ExecutionEnvironment(@NotNull final RunProfile profile, final DataContext dataContext) {
-    myRunProfile = profile;
-    myDataContext = dataContext;
+    this(profile, PlatformDataKeys.PROJECT.getData(dataContext), null, null, null);
   }
 
+  /**
+   * @deprecated use {@link #ExecutionEnvironment(com.intellij.execution.configurations.RunProfile, com.intellij.openapi.project.Project, com.intellij.execution.configurations.RunnerSettings, com.intellij.execution.configurations.ConfigurationPerRunnerSettings, com.intellij.execution.ui.RunContentDescriptor)}
+   */
+  @Deprecated
   public ExecutionEnvironment(@NotNull final RunProfile runProfile,
                               final RunnerSettings runnerSettings,
                               final ConfigurationPerRunnerSettings configurationSettings,
                               final DataContext dataContext) {
-    this(runProfile, dataContext);
-    myRunnerSettings = runnerSettings;
-    myConfigurationSettings = configurationSettings;
+    this(runProfile, PlatformDataKeys.PROJECT.getData(dataContext), runnerSettings, configurationSettings, null);
   }
 
   @NotNull
@@ -69,17 +100,24 @@ public class ExecutionEnvironment {
 
   @Nullable
   public Project getProject() {
-    return PlatformDataKeys.PROJECT.getData(myDataContext);
+    return myProject;
   }
 
+  /**
+   * @deprecated use {@link #getProject()} and {@link #getContentToReuse()}
+   */
   @Deprecated
   public DataContext getDataContext() {
-    return myDataContext;
+    return new DataContext() {
+      public Object getData(@NonNls String dataId) {
+        return PlatformDataKeys.PROJECT.is(dataId) ? myProject : null;
+      }
+    };
   }
 
   @Nullable
   public RunContentDescriptor getContentToReuse() {
-    return GenericProgramRunner.CONTENT_TO_REUSE_DATA_KEY.getData(myDataContext);
+    return myContentToReuse;
   }
 
   @Nullable

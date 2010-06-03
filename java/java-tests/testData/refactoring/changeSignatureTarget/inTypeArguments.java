@@ -1,4 +1,3 @@
-import java.util.*;
 class A1<T> {
   A1(){}
 

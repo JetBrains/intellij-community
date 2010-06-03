@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.findUsages;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMemberReference;
@@ -25,12 +26,14 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Processor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
@@ -44,21 +47,49 @@ public class GroovyConstructorUsagesSearchHelper {
 
   public static boolean execute(final PsiMethod constructor, final SearchScope searchScope, final Processor<PsiReference> consumer) {
     if (!constructor.isConstructor()) return true;
-
-    final PsiClass clazz = constructor.getContainingClass();
+    final PsiClass clazz = ApplicationManager.getApplication().runReadAction(new NullableComputable<PsiClass>(){
+      public PsiClass compute() {
+        return constructor.getContainingClass();
+      }
+    });
     if (clazz == null) return true;
 
 
-    ReferencesSearch.search(clazz, searchScope, true).forEach(new Processor<PsiReference>() {
-      public boolean process(PsiReference ref) {
-        final PsiElement element = ref.getElement();
-        if (element instanceof GrCodeReferenceElement && element.getParent() instanceof GrNewExpression) {
-          final GrNewExpression newExpression = (GrNewExpression)element.getParent();
-          final PsiMethod resolvedConstructor = newExpression.resolveConstructor();
-          final PsiManager manager = constructor.getManager();
-          if (manager.areElementsEquivalent(resolvedConstructor, constructor) && !consumer.process(ref)) return false;
+    //enum constants
+    if (!ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      public Boolean compute() {
+        if (!clazz.isEnum()) return true;
+        if (!(clazz instanceof GroovyPsiElement)) return true;
+        final PsiField[] fields = clazz.getFields();
+        for (PsiField field : fields) {
+          if (field instanceof GrEnumConstant) {
+            final PsiReference ref = field.getReference();
+            if (ref.isReferenceTo(constructor)) {
+              if (!consumer.process(ref)) return false;
+            }
+          }
         }
         return true;
+      }
+    })) {
+      return false;
+    }
+
+
+    ReferencesSearch.search(clazz, searchScope, true).forEach(new Processor<PsiReference>() {
+      public boolean process(final PsiReference ref) {
+        return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+          public Boolean compute() {
+            final PsiElement element = ref.getElement();
+            if (element instanceof GrCodeReferenceElement && element.getParent() instanceof GrNewExpression) {
+              final GrNewExpression newExpression = (GrNewExpression)element.getParent();
+              final PsiMethod resolvedConstructor = newExpression.resolveConstructor();
+              final PsiManager manager = constructor.getManager();
+              if (manager.areElementsEquivalent(resolvedConstructor, constructor) && !consumer.process(ref)) return false;
+            }
+            return true;
+          }
+        });
       }
     });
 

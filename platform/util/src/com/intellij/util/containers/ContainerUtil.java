@@ -1009,4 +1009,14 @@ public class ContainerUtil {
       }
     };
   }
+
+  public static <E> List<E> flatten(Collection<? extends Collection<E>> collections) {
+    List<E> result = new ArrayList<E>();
+    for (Collection<E> list : collections) {
+      result.addAll(list);
+    }
+
+    return result;
+  }
+
 }

@@ -33,6 +33,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -43,10 +44,7 @@ import com.intellij.util.UniqueFileNamesProvider;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.fs.FileSystem;
 import com.intellij.util.io.fs.IFile;
-import org.jdom.Attribute;
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.JDOMException;
+import org.jdom.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -91,13 +89,15 @@ public class StorageUtil {
     }
   }
 
-  static void save(final IFile file, final byte[] text, final Object requestor) throws StateStorage.StateStorageException {
+  static void save(final IFile file, final Parent element, final Object requestor) throws StateStorage.StateStorageException {
     final String filePath = file.getCanonicalPath();
     try {
       final Ref<IOException> refIOException = Ref.create(null);
 
+      final Pair<String, String> pair = loadFile(file);
+      final byte[] text = JDOMUtil.writeParent(element, pair.second).getBytes(CharsetToolkit.UTF8);
       if (file.exists()) {
-        if (contentEquals(new String(text), file)) return;
+        if (new String(text).equals(pair.first)) return;
         IFile backupFile = deleteBackup(filePath);
         file.renameTo(backupFile);
       }
@@ -131,9 +131,6 @@ public class StorageUtil {
       if (refIOException.get() != null) {
         throw new StateStorage.StateStorageException(refIOException.get());
       }
-    }
-    catch (StateStorage.StateStorageException e) {
-      throw new StateStorage.StateStorageException(e);
     }
     catch (IOException e) {
       throw new StateStorage.StateStorageException(e);
@@ -182,19 +179,25 @@ public class StorageUtil {
     }
   }
 
+  /**
+   * @return pair.first - file contents (null if file does not exist), pair.second - file line separators
+   */
+  public static Pair<String, String> loadFile(@NotNull final IFile file) throws IOException {
+    if (!file.exists()) return Pair.create(null, SystemProperties.getLineSeparator());
+
+    String fileText = new String(file.loadBytes(), CharsetToolkit.UTF8);
+    if (!Registry.is("storage.preserve.line.separators")) return Pair.create(fileText, SystemProperties.getLineSeparator());
+
+    final int ndx = fileText.indexOf('\n');
+    return Pair.create(fileText, ndx == -1
+                                 ? SystemProperties.getLineSeparator()
+                                 : (ndx - 1 >=0 ? (fileText.charAt(ndx - 1) == '\r' ? "\r\n" : "\n") : "\n"));
+  }
+
   public static boolean contentEquals(@NotNull final Document document, @NotNull final IFile file) {
-    return contentEquals(printDocumentToString(document), file);
-  }
-
-  public static boolean contentEquals(@NotNull final Element element, @NotNull final IFile file) {
-    return contentEquals(printElement(element), file);
-  }
-
-  private static boolean contentEquals(final String text, final IFile file) {
     try {
-      String fileText = new String(file.loadBytes(), CharsetToolkit.UTF8);
-      final String convertedFileText = StringUtil.convertLineSeparators(fileText, SystemProperties.getLineSeparator());
-      return convertedFileText.equals(text);
+      final Pair<String, String> pair = loadFile(file);
+      return pair.first == null ? false : pair.first.equals(printDocumentToString(document, pair.second));
     }
     catch (IOException e) {
       LOG.debug(e);
@@ -202,21 +205,28 @@ public class StorageUtil {
     }
   }
 
-  public static String printDocumentToString(Document document) {
-    return JDOMUtil.writeDocument(document, SystemProperties.getLineSeparator());
-  }
-
-  static String printElement(Element element) throws StateStorage.StateStorageException {
-    return JDOMUtil.writeElement(element, SystemProperties.getLineSeparator());
-  }
-
-  static void save(IFile file, Element element, final Object requestor) throws StateStorage.StateStorageException {
+  public static boolean contentEquals(@NotNull final Element element, @NotNull final IFile file) {
     try {
-      save(file, JDOMUtil.writeElement(element, SystemProperties.getLineSeparator()).getBytes(CharsetToolkit.UTF8), requestor);
+      final Pair<String, String> pair = loadFile(file);
+      return pair.first == null ? false : pair.first.equals(printElement(element, pair.second));
     }
     catch (IOException e) {
-      throw new StateStorage.StateStorageException(e);
+      LOG.debug(e);
+      return false;
     }
+  }
+
+  public static String printDocumentToString(final Document document, final String lineSeparator) {
+    return JDOMUtil.writeDocument(document, lineSeparator);
+  }
+
+  @Deprecated
+  public static String printDocumentToString(final Document document) {
+    return printDocumentToString(document, SystemProperties.getLineSeparator());
+  }
+
+  static String printElement(final Element element, final String lineSeparator) throws StateStorage.StateStorageException {
+    return JDOMUtil.writeElement(element, lineSeparator);
   }
 
   @NotNull

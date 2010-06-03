@@ -199,8 +199,10 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     if (elementAtEnd == null) return null;
 
     PsiExpression tempExpr;
-    final PsiElement elementAt = PsiTreeUtil.findCommonParent(elementAtStart, elementAtEnd);
-    if (PsiTreeUtil.getParentOfType(elementAt, PsiExpression.class, false) == null) return null;
+    PsiElement elementAt = PsiTreeUtil.findCommonParent(elementAtStart, elementAtEnd);
+    if (PsiTreeUtil.getParentOfType(elementAt, PsiExpression.class, false) == null) {
+      elementAt = null;
+    }
     final PsiLiteralExpression literalExpression = PsiTreeUtil.getParentOfType(elementAt, PsiLiteralExpression.class);
 
     final PsiLiteralExpression startLiteralExpression = PsiTreeUtil.getParentOfType(elementAtStart, PsiLiteralExpression.class);
@@ -286,7 +288,19 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
         FileDocumentManager.getInstance().getDocument(file.getVirtualFile()).createRangeMarker(startOffset, endOffset);
       tempExpr.putUserData(ElementToWorkOn.TEXT_RANGE, rangeMarker);
 
-      tempExpr.putUserData(ElementToWorkOn.PARENT, parent);
+      if (parent != null) {
+        tempExpr.putUserData(ElementToWorkOn.PARENT, parent);
+      }
+      else {
+        PsiErrorElement errorElement = PsiTreeUtil.getNextSiblingOfType(elementAtStart, PsiErrorElement.class);
+        if (errorElement == null) {
+          errorElement = PsiTreeUtil.getParentOfType(elementAtStart, PsiErrorElement.class);
+        }
+        if (errorElement == null) return null;
+        if (!(errorElement.getParent() instanceof PsiClass)) return null;
+        tempExpr.putUserData(ElementToWorkOn.PARENT, errorElement);
+        tempExpr.putUserData(ElementToWorkOn.OUT_OF_CODE_BLOCK, Boolean.TRUE);
+      }
 
       final String fakeInitializer = "intellijidearulezzz";
       final int[] refIdx = new int[1];
@@ -567,18 +581,21 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
                                                  final String prefix,
                                                  final String suffix,
                                                  final PsiElement parent, final RangeMarker rangeMarker, int[] refIdx) {
-    final String allText = parent.getContainingFile().getText();
-    final TextRange parentRange = parent.getTextRange();
+    String text = refText;
+    if (parent != null) {
+      final String allText = parent.getContainingFile().getText();
+      final TextRange parentRange = parent.getTextRange();
 
-    String beg = allText.substring(parentRange.getStartOffset(), rangeMarker.getStartOffset());
-    if (StringUtil.stripQuotesAroundValue(beg).trim().length() == 0 && prefix == null) beg = "";
+      String beg = allText.substring(parentRange.getStartOffset(), rangeMarker.getStartOffset());
+      if (StringUtil.stripQuotesAroundValue(beg).trim().length() == 0 && prefix == null) beg = "";
 
-    String end = allText.substring(rangeMarker.getEndOffset(), parentRange.getEndOffset());
-    if (StringUtil.stripQuotesAroundValue(end).trim().length() == 0 && suffix == null) end = "";
+      String end = allText.substring(rangeMarker.getEndOffset(), parentRange.getEndOffset());
+      if (StringUtil.stripQuotesAroundValue(end).trim().length() == 0 && suffix == null) end = "";
 
-    final String start = beg + (prefix != null ? prefix : "");
-    refIdx[0] = start.length();
-    final String text = start + refText + (suffix != null ? suffix : "") + end;
+      final String start = beg + (prefix != null ? prefix : "");
+      refIdx[0] = start.length();
+      text = start + refText + (suffix != null ? suffix : "") + end;
+    }
     return JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText(text, parent);
   }
 

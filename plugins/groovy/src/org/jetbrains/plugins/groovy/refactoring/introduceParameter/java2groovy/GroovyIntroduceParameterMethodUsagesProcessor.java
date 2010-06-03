@@ -241,7 +241,7 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
     constructor = (GrMethod)aClass.add(constructor);
     PsiUtil.setModifierProperty(constructor, VisibilityUtil.getVisibilityModifier(aClass.getModifierList()), true);
     processAddSuperCall(data, new UsageInfo(constructor), usages);
-    constructor = (GrMethod)CodeStyleManager.getInstance(data.getProject()).reformat(constructor);
+//    constructor = (GrMethod)CodeStyleManager.getInstance(data.getProject()).reformat(constructor);
     return false;
   }
 

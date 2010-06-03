@@ -243,7 +243,7 @@ public class Tool implements SchemeElement {
         final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(DefaultRunExecutor.EXECUTOR_ID, profile);
         assert runner != null;
 
-        runner.execute(new DefaultRunExecutor(), new ExecutionEnvironment(profile, dataContext));
+        runner.execute(new DefaultRunExecutor(), new ExecutionEnvironment(profile, project, null, null, null));
       }
       else {
         GeneralCommandLine commandLine = createCommandLine(dataContext);

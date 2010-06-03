@@ -48,7 +48,8 @@ public class FileUtil {
   };
 
   // do not use channels to copy files larger than 5 Mb because of possible MapFailed error
-  private static final long CHANNELS_COPYING_LIMIT = 5L * 1024L *  1024L; 
+  private static final long CHANNELS_COPYING_LIMIT = 5L * 1024L *  1024L;
+  private static String ourCanonicalTempPathCache = null;
 
   //private static final byte[] BUFFER = new byte[1024 * 20];
 
@@ -369,7 +370,24 @@ public class FileUtil {
   }
 
   public static String getTempDirectory() {
-    return System.getProperty("java.io.tmpdir");
+    if (ourCanonicalTempPathCache == null) {
+      ourCanonicalTempPathCache = calcCanonicalTempPath();
+    }
+    return ourCanonicalTempPathCache;
+  }
+
+  public static void resetCanonicalTempPathCache() {
+    ourCanonicalTempPathCache = null;
+  }
+
+  private static String calcCanonicalTempPath() {
+    final String prop = System.getProperty("java.io.tmpdir");
+    try {
+      return new File(prop).getCanonicalPath();
+    }
+    catch (IOException e) {
+      return prop;
+    }
   }
 
   public static void asyncDelete(@NotNull File file) {

@@ -299,6 +299,7 @@
 
   <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.EnumMacro"/>
   <internalFileTemplate name="Html"/>
+  <internalFileTemplate name="Html5"/>
   <internalFileTemplate name="Xhtml"/>
   <fileBasedIndex implementation="com.intellij.psi.impl.cache.impl.todo.TodoIndex" />
   <fileBasedIndex implementation="com.intellij.psi.impl.cache.impl.id.IdIndex" />

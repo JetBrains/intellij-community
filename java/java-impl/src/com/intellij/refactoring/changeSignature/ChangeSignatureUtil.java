@@ -26,10 +26,13 @@ import java.util.List;
  * @author dsl
  */
 public class ChangeSignatureUtil {
-  private ChangeSignatureUtil() {}
+  private ChangeSignatureUtil() {
+  }
 
-  public static <Parent extends PsiElement, Child extends PsiElement>
-  void synchronizeList(Parent list, final List<Child> newElements, ChildrenGenerator<Parent, Child> generator, final boolean[] shouldRemoveChild)
+  public static <Parent extends PsiElement, Child extends PsiElement> void synchronizeList(Parent list,
+                                                                                           final List<Child> newElements,
+                                                                                           ChildrenGenerator<Parent, Child> generator,
+                                                                                           final boolean[] shouldRemoveChild)
     throws IncorrectOperationException {
 
     ArrayList<Child> elementsToRemove = null;

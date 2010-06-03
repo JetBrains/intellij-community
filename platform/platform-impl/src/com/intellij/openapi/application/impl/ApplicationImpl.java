@@ -905,6 +905,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   }
 
+  public void assertTimeConsuming() {
+    if (myTestModeFlag || myHeadlessMode || ShutDownTracker.isShutdownHookRunning()) return;
+    LOG.assertTrue(!isDispatchThread(), "This operation is time consuming and must not be called on EDT");
+  }
+
   public boolean tryRunReadAction(@NotNull Runnable action) {
     /** if we are inside read action, do not try to acquire read lock again since it will deadlock if there is a pending writeAction
      * see {@link com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock#allowReader()} */

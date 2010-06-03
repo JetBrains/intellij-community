@@ -33,6 +33,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -49,6 +50,7 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicProperty
 import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
+import org.jetbrains.plugins.groovy.lang.documentation.GroovyPresentationUtil;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.*;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -92,7 +94,10 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProc
 import org.jetbrains.plugins.groovy.overrideImplement.GroovyOverrideImplementUtil;
 import org.jetbrains.plugins.groovy.overrideImplement.quickFix.ImplementMethodsQuickFix;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author ven
@@ -467,7 +472,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
           if (argumentTypes == null ||
               argumentTypes.length == 0 ||
               (argumentTypes.length == 1 &&
-               PsiUtil.createMapType(newExpression.getManager(), newExpression.getResolveScope()).isAssignableFrom(argumentTypes[0]))) {
+               InheritanceUtil.isInheritor(argumentTypes[0], CommonClassNames.JAVA_UTIL_MAP))) {
             checkDefaultMapConstructor(myHolder, argList, element);
           }
           else {
@@ -978,32 +983,20 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   }
 
   private static void checkDuplicateMethod(GrMethod[] methods, AnnotationHolder holder) {
-    Map<MethodSignature, List<GrMethod>> map = GrClosureSignatureUtil.findMethodSignatures(methods);
+    MultiMap<MethodSignature, PsiMethod> map = GrClosureSignatureUtil.findMethodSignatures(methods);
     processMethodDuplicates(map, holder);
   }
 
-  protected static void processMethodDuplicates(Map<MethodSignature, List<GrMethod>> map, AnnotationHolder holder) {
+  protected static void processMethodDuplicates(MultiMap<MethodSignature, PsiMethod> map, AnnotationHolder holder) {
     for (MethodSignature signature : map.keySet()) {
-      List<GrMethod> methods = map.get(signature);
+      Collection<PsiMethod> methods = map.get(signature);
       if (methods.size() > 1) {
-        String signaturePresentation = getSignaturePresentation(signature);
-        for (GrMethod method : methods) {
-          holder.createErrorAnnotation(method.getNameIdentifierGroovy(), GroovyBundle.message("method.duplicate", signaturePresentation));
+        String signaturePresentation = GroovyPresentationUtil.getSignaturePresentation(signature);
+        for (PsiMethod method : methods) {
+          holder.createErrorAnnotation(method.getNameIdentifier(), GroovyBundle.message("method.duplicate", signaturePresentation, method.getContainingClass().getName()));
         }
       }
     }
-  }
-
-  private static String getSignaturePresentation(MethodSignature signature) {
-    StringBuilder builder = new StringBuilder();
-    builder.append(signature.getName()).append('(');
-    PsiType[] types = signature.getParameterTypes();
-    for (PsiType type : types) {
-      builder.append(type.getPresentableText()).append(", ");
-    }
-    if (types.length > 0) builder.delete(builder.length() - 2, builder.length());
-    builder.append(")");
-    return builder.toString();
   }
 
   private static void checkTypeDefinition(AnnotationHolder holder, GrTypeDefinition typeDefinition) {
@@ -1260,7 +1253,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
   private static void highlightInapplicableMethodUsage(GroovyResolveResult methodResolveResult, PsiElement place, AnnotationHolder holder,
                                                         PsiMethod method, PsiType[] argumentTypes) {
-    PsiElement elementToHighlight = PsiUtil.getArgumentsElement(place);
+    PsiElement elementToHighlight = PsiUtil.getArgumentsList(place);
     if (elementToHighlight == null) {
       elementToHighlight = place;
     }
@@ -1392,7 +1385,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
     final String typesString = buildArgTypesList(argumentTypes);
     String message = GroovyBundle.message("cannot.apply.method.or.closure", variable.getName(), typesString);
-    PsiElement elementToHighlight = PsiUtil.getArgumentsElement(place);
+    PsiElement elementToHighlight = PsiUtil.getArgumentsList(place);
     if (elementToHighlight == null) elementToHighlight = place;
     holder.createWarningAnnotation(elementToHighlight, message);
   }

@@ -92,9 +92,9 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GroovyBa
     PsiElement next = PsiUtil.getNextNonSpace(this);
     ASTNode parentNode = parent.getNode();
     assert parentNode != null;
-    parentNode.removeChild(getNode());
+    super.delete();
     if (prev != null && prev.getNode() != null && prev.getNode().getElementType() == GroovyTokenTypes.mCOMMA) {
-      parentNode.removeChild(prev.getNode());
+      prev.delete();
     } else if (next instanceof LeafPsiElement && next.getNode() != null && next.getNode().getElementType() == GroovyTokenTypes.mCOMMA) {
       next.delete();
     }

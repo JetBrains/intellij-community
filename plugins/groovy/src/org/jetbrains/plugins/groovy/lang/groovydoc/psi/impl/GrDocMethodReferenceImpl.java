@@ -55,6 +55,37 @@ public class GrDocMethodReferenceImpl extends GrDocMemberReferenceImpl implement
     return child;
   }
 
+  @Override
+  public PsiElement resolve() {
+    String name = getReferenceName();
+    GrDocReferenceElement holder = getReferenceHolder();
+    PsiElement resolved;
+    if (holder != null) {
+      GrCodeReferenceElement referenceElement = holder.getReferenceElement();
+      resolved = referenceElement != null ? referenceElement.resolve() : null;
+    } else {
+      resolved = getEnclosingClass(this);
+    }
+    if (resolved instanceof PsiClass) {
+      PsiType[] parameterTypes = getParameterList().getParameterTypes();
+      PsiType thisType = JavaPsiFacade.getInstance(getProject()).getElementFactory().createType((PsiClass)resolved, PsiSubstitutor.EMPTY);
+
+      MethodResolverProcessor processor = new MethodResolverProcessor(name, this, false, thisType, parameterTypes, PsiType.EMPTY_ARRAY);
+      resolved.processDeclarations(processor, ResolveState.initial(), resolved, this);
+      if (processor.hasApplicableCandidates()) {
+        return processor.getCandidates()[0].getElement();
+      }
+
+      MethodResolverProcessor constructorProcessor =
+        new MethodResolverProcessor(name, this, true, thisType, parameterTypes, PsiType.EMPTY_ARRAY);
+      resolved.processDeclarations(constructorProcessor, ResolveState.initial(), resolved, this);
+      if (constructorProcessor.hasApplicableCandidates()) {
+        return constructorProcessor.getCandidates()[0].getElement();
+      }
+    }
+    return null;
+  }
+
   protected ResolveResult[] multiResolveImpl() {
     String name = getReferenceName();
     GrDocReferenceElement holder = getReferenceHolder();

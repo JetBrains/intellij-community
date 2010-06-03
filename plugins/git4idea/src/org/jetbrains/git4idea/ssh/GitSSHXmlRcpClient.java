@@ -179,14 +179,14 @@ public class GitSSHXmlRcpClient implements GitSSHHandler {
 
   /**
    * Since XML RPC client does not understand null values, the value should be
-   * adjusted. This is done by replacing string {@code "\u0000"} with null.
+   * adjusted (The password is {@code "-"} if null, {@code "+"+s) if non-null).
    *
    * @param s a value to adjust
    * @return adjusted value.
    */
   @Nullable
   private static String adjustNull(final String s) {
-    return GitSSHHandler.XML_RPC_NULL_STRING.equals(s) ? null : s;
+    return s.charAt(0) == '-' ? null : s.substring(1);
   }
 
   /**
