@@ -1,5 +1,7 @@
 package com.intellij.refactoring;
 
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler;
@@ -13,6 +15,11 @@ public class IntroduceFieldInSameClassTest extends LightCodeInsightTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
+  }
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return JavaSdkImpl.getMockJdk15("java 1.5");
   }
 
   public void testInClassInitializer () throws Exception {
