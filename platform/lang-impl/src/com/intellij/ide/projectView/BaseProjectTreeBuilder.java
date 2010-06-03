@@ -50,21 +50,12 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
                                 DefaultTreeModel treeModel,
                                 AbstractTreeStructure treeStructure,
                                 Comparator<NodeDescriptor> comparator) {
-    init(tree, treeModel, new AbstractTreeStructure.Delegate(treeStructure) {
-      @Override
-      public AsyncResult revalidateElement(Object element) {
-        return _revalidateElement(element);
-      }
-    }, comparator, DEFAULT_UPDATE_INACTIVE);
+    init(tree, treeModel, treeStructure, comparator, DEFAULT_UPDATE_INACTIVE);
     myProject = project;
   }
 
-  protected AbstractTreeStructure getOriginalStructure() {
-    return ((AbstractTreeStructure.Delegate)getTreeStructure()).getOriginalStructure();
-
-  }
-
-  private AsyncResult _revalidateElement(Object element) {
+  @Override
+  public AsyncResult<Object> revalidateElement(Object element) {
     final AsyncResult<Object> result = new AsyncResult<Object>();
 
     if (element instanceof AbstractTreeNode) {
@@ -102,6 +93,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     }
     return result;
   }
+
 
   protected boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
     return ((AbstractTreeNode)nodeDescriptor).isAlwaysShowPlus();

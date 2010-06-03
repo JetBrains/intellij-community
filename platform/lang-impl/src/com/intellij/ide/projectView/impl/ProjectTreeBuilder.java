@@ -131,7 +131,7 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
     }
 
     protected boolean isFlattenPackages(){
-      return ((AbstractProjectTreeStructure)getOriginalStructure()).isFlattenPackages();
+      return ((AbstractProjectTreeStructure)getTreeStructure()).isFlattenPackages();
     }
   }
 

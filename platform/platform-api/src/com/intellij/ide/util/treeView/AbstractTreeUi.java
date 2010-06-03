@@ -3520,7 +3520,7 @@ public class AbstractTreeUi {
       return;
     }
 
-    AsyncResult<Object> revalidated = getTreeStructure().revalidateElement(element);
+    AsyncResult<Object> revalidated = getBuilder().revalidateElement(element);
     if (revalidated == null) {
       runDone(onDone);
       return;
