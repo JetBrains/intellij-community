@@ -141,7 +141,10 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
         }
       }
     }
-    ref = StringUtil.first(ref.replaceAll("\n"," ").trim(), 100, true);
+    ref = ref.replaceAll("\n", " ").trim();
+    if (ref.length() > 100) {
+      ref = ref.substring(0, 100).trim() + "...";
+    }
     return ref;
   }
 }
