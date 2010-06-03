@@ -41,10 +41,6 @@ public interface GitSSHHandler {
    */
   @NonNls String GIT_SSH_ENV = "GIT_SSH";
   /**
-   * The string used to indicate missing value
-   */
-  String XML_RPC_NULL_STRING = "\u0000";
-  /**
    * Name of the handler
    */
   @NonNls String HANDLER_NAME = "Git4ideaSSHHandler";
