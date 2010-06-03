@@ -16,20 +16,16 @@
 package com.intellij.util.continuation;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public abstract class TaskDescriptor {
+public class TaskData {
   private final String myName;
   @NotNull
   private final Where myWhere;
 
-  public TaskDescriptor(final String name, @NotNull final Where where) {
+  public TaskData(String name, @NotNull Where where) {
     myName = name;
     myWhere = where;
   }
-
-  @Nullable
-  public abstract void run(final ContinuationContext context);
 
   public String getName() {
     return myName;
