@@ -45,10 +45,6 @@ public interface GitSSHHandler {
    */
   @NonNls String GIT_SSH_ENV = "GIT_SSH";
   /**
-   * The string used to indicate missing value
-   */
-  String XML_RPC_NULL_STRING = "\u0000";
-  /**
    * Name of the handler
    */
   @NonNls String HANDLER_NAME = "Git4ideaSSHHandler";
@@ -74,11 +70,11 @@ public interface GitSSHHandler {
   /**
    * Ask passphrase for the key
    *
-   * @param handler   a handler identifier
-   * @param userName  a name of user
-   * @param keyPath   a path for the key
+   * @param handler       a handler identifier
+   * @param userName      a name of user
+   * @param keyPath       a path for the key
    * @param resetPassword a reset password if one was stored in password database
-   * @param lastError a last error (or empty string)
+   * @param lastError     a last error (or empty string)
    * @return the passphrase entered by the user
    */
   @Nullable
@@ -111,10 +107,10 @@ public interface GitSSHHandler {
   /**
    * Ask password for the specified user name
    *
-   * @param handlerNo a handler identifier
-   * @param userName  a name of user to ask password for
+   * @param handlerNo     a handler identifier
+   * @param userName      a name of user to ask password for
    * @param resetPassword a reset password if one was stored in password database
-   * @param lastError a last error
+   * @param lastError     a last error
    * @return the password or null if authentication failed.
    */
   @Nullable
