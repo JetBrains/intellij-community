@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.rmi.PortableRemoteObject;
 import java.rmi.Remote;
 import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -189,9 +190,10 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
   }
 
   private EntryPoint acquire(final Info port) throws Exception {
-    return RemoteUtil.executeWithClassLoader(new ThrowableComputable<EntryPoint, Exception>() {
+    final EntryPoint result = RemoteUtil.executeWithClassLoader(new ThrowableComputable<EntryPoint, Exception>() {
       public EntryPoint compute() throws Exception {
-        final Remote remote = LocateRegistry.getRegistry(port.port).lookup(port.name);
+        final Registry registry = LocateRegistry.getRegistry(port.port);
+        final Remote remote = registry.lookup(port.name);
         if (Remote.class.isAssignableFrom(myValueClass)) {
           return RemoteUtil.substituteClassLoader(narrowImpl(remote, myValueClass), myValueClass.getClassLoader());
         }
@@ -200,6 +202,9 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
         }
       }
     }, getClass().getClassLoader()); // should be the loader of client plugin
+    // init hard ref that will keep it from DGC and thus preventing from System.exit
+    port.entryPointHardRef = result;
+    return result;
   }
 
   private static <T> T narrowImpl(Remote remote, Class<T> to) {
@@ -307,6 +312,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     final ProcessHandler handler;
     final int port;
     final String name;
+    Object entryPointHardRef;
 
     private Info(ProcessHandler handler, int port, String name) {
       this.handler = handler;

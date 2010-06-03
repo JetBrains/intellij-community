@@ -137,4 +137,9 @@ public class MavenFacadeImpl extends RemoteObject implements MavenFacade {
       throw new RuntimeException(wrapException(e));
     }
   }
+
+  @Override
+  public void unreferenced() {
+    System.exit(0);
+  }
 }
