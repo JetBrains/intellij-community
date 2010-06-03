@@ -59,6 +59,11 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     myProject = project;
   }
 
+  protected AbstractTreeStructure getOriginalStructure() {
+    return ((AbstractTreeStructure.Delegate)getTreeStructure()).getOriginalStructure();
+
+  }
+
   private AsyncResult _revalidateElement(Object element) {
     final AsyncResult<Object> result = new AsyncResult<Object>();
 

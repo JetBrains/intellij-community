@@ -96,6 +96,10 @@ public abstract class AbstractTreeStructure {
     public AsyncResult revalidateElement(Object element) {
       return myDelegee.revalidateElement(element);
     }
+
+    public AbstractTreeStructure getOriginalStructure() {
+      return myDelegee;
+    }
   }
 
 }
