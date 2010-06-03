@@ -1072,6 +1072,12 @@ public class UIUtil {
     c.putClientProperty(FOCUS_PROXY_KEY, isProxy ? Boolean.TRUE : null);
   }
 
+  public static void maybeInstall(InputMap map, String action, KeyStroke stroke) {
+    if (map.get(stroke) == null) {
+      map.put(stroke, action);
+    }
+  }
+
   public static class MacTreeUI extends BasicTreeUI {
     public static final String SOURCE_LIST_CLIENT_PROPERTY = "mac.ui.source.list";
 
