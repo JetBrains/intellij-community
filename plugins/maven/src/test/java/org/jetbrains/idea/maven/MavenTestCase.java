@@ -178,8 +178,9 @@ public abstract class MavenTestCase extends UsefulTestCase {
     return "";
   }
 
-  protected String getEnvVar() {
+  protected static String getEnvVar() {
     if (SystemInfo.isWindows) return "TEMP";
+    else if (SystemInfo.isLinux) return "HOME";
     return "TMPDIR";
   }
 
