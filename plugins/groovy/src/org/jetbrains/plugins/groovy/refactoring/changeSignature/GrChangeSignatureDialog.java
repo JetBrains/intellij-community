@@ -103,6 +103,14 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
     if (psiClass.isInterface()) {
       myDelegatePanel.setVisible(false);
     }
+
+    if (myMethod.hasModifierProperty(GrModifier.PRIVATE)) {
+      myPrivateRadioButton.setSelected(true);
+    } else if (myMethod.hasModifierProperty(GrModifier.PROTECTED)) {
+      myProtectedRadioButton.setSelected(true);
+    } else if (myMethod.hasModifierProperty(GrModifier.PUBLIC)) {
+      myPublicRadioButton.setSelected(true);
+    }
   }
 
   private void stopEditing() {
