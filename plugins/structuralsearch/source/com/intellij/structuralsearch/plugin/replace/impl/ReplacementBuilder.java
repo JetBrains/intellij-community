@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.structuralsearch.MalformedPatternException;
 import com.intellij.structuralsearch.MatchResult;
+import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
 import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
@@ -359,7 +360,7 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
     }
 
     String name = ((PsiParameter)info.myElement.getParent()).getName();
-    name = isTypedVariable(name) ? stripTypedVariableDecoration(name):name;
+    name = StructuralSearchUtil.isTypedVariable(name) ? stripTypedVariableDecoration(name):name;
 
     final MatchResult matchResult = matchMap.get(name);
     if (matchResult == null) return;
@@ -414,7 +415,7 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
     if (parameterizations!=null && initializer!=null) {
       final String initText = initializer.getText();
 
-      if(isTypedVariable(initText)) {
+      if(StructuralSearchUtil.isTypedVariable(initText)) {
         final ParameterInfo initInfo = findParameterization(stripTypedVariableDecoration(initText));
 
         if (initInfo != null) {
@@ -428,7 +429,7 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
     super.visitMethod(method);
 
     String name = method.getName();
-    if (isTypedVariable(name)) {
+    if (StructuralSearchUtil.isTypedVariable(name)) {
       name = stripTypedVariableDecoration(name);
 
       ParameterInfo methodInfo = findParameterization(name);
@@ -444,10 +445,10 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
       String name = parameter.getName();
       String type = parameter.getTypeElement().getText();
 
-      if (isTypedVariable(name)) {
+      if (StructuralSearchUtil.isTypedVariable(name)) {
         name = stripTypedVariableDecoration(name);
 
-        if (isTypedVariable(type)) {
+        if (StructuralSearchUtil.isTypedVariable(type)) {
           type = stripTypedVariableDecoration(type);
         }
         ParameterInfo nameInfo = findParameterization(name);
@@ -468,7 +469,4 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
     return type.substring(1,type.length()-1);
   }
 
-  static boolean isTypedVariable(final String name) {
-    return name.charAt(0)=='$' && name.charAt(name.length()-1)=='$';
-  }
 }

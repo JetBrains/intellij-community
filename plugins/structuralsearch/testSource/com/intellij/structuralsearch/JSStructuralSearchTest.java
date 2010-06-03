@@ -11,10 +11,10 @@ public class JSStructuralSearchTest extends StructuralSearchTestCase {
     String s = "location.host.indexOf(\"name\");\n" +
                "host.indexOf(\"name\") ;\n" +
                "object.indexOf( \"text\" );\n";
+    doTest(s, "location.host.$method$($arg$) ;", 1);
     doTest(s, "$var$.indexOf($arg$);\n$var1$.indexOf($arg1$);", 1);
     doTest(s, "host.indexOf( \"name\" )", 1);
     doTest(s, "host.indexOf(\"name\");", 1);
-    doTest(s, "location.host.$method$($arg$) ;", 1);
     doTest(s, "location.$var$.indexOf( $arg$ )", 1);
     doTest(s, "$var$.indexOf($arg$);$var1$.indexOf($arg$);", 1);
   }
@@ -70,9 +70,31 @@ public class JSStructuralSearchTest extends StructuralSearchTestCase {
     doTest(s, "$var$[0] = $value$", 1);
   }
 
+  public void test8() {
+    String s = "var a = 10;\n" +
+               "var b = 10;";
+    doTest(s, "var a = 10", 1);
+  }
+
+  public void testInnerExpression1() {
+    String s = "a + b + c";
+
+    options.setRecursiveSearch(true);
+    doTest(s, "$var1$ + $var2$", 2);
+    options.setRecursiveSearch(false);
+    doTest(s, "$var1$ + $var2$", 1);
+
+    doTest(s, "a+b", 1);
+  }
+
+  public void testInnerExpression2() {
+    String s = "((dialog==null)? (dialog = new SearchDialog()): dialog).show();";
+    doTest(s, "dialog = new SearchDialog()", 1);
+  }
+
   public void testCondition() {
     String s = "function f() {\n" +
-               "  doc.init();\n" +                                                               
+               "  doc.init();\n" +
                "  if (a == 0) {\n" +
                "    doc.print(\"zero\");\n" +
                "  }\n" +

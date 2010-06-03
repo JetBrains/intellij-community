@@ -6,6 +6,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiElement;
 import com.intellij.tokenindex.LanguageTokenizer;
 import com.intellij.tokenindex.Tokenizer;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,5 +58,24 @@ public class StructuralSearchUtil {
   @Nullable
   public static Tokenizer getTokenizerForLanguage(@NotNull Language language) {
     return LanguageTokenizer.INSTANCE.forLanguage(language);
+  }
+
+  public static boolean isTypedVariable(@NotNull final String name) {
+    return name.charAt(0)=='$' && name.charAt(name.length()-1)=='$';
+  }
+
+  @Nullable
+  public static StructuralSearchProfile getProfileByFileType(FileType fileType) {
+    for (StructuralSearchProfile profile : myRegisteredProfiles) {
+      if (ArrayUtil.contains(fileType, profile.getFileTypes())) {
+        return profile;
+      }
+    }
+    for (StructuralSearchProfile profile : StructuralSearchProfile.EP_NAME.getExtensions()) {
+      if (ArrayUtil.contains(fileType, profile.getFileTypes())) {
+        return profile;
+      }
+    }
+    return null;
   }
 }

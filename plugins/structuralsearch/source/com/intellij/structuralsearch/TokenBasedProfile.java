@@ -1,18 +1,22 @@
 package com.intellij.structuralsearch;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiRecursiveElementVisitor;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor;
+import com.intellij.structuralsearch.impl.matcher.TokenBasedMatchResult;
 import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.TopLevelMatchingHandler;
-import com.intellij.structuralsearch.impl.matcher.iterators.ArrayBackedNodeIterator;
+import com.intellij.structuralsearch.impl.matcher.iterators.FilteringNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
+import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
+import com.intellij.structuralsearch.plugin.replace.impl.ReplacementInfoImpl;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -41,6 +45,7 @@ public abstract class TokenBasedProfile extends StructuralSearchProfile {
     element.accept(new MyCompilingVisitor(globalVisitor));
   }
 
+  @NotNull
   public PsiElementVisitor createMatchingVisitor(@NotNull GlobalMatchingVisitor globalVisitor) {
     return new MyMatchingVisitor(globalVisitor);
   }
@@ -70,8 +75,15 @@ public abstract class TokenBasedProfile extends StructuralSearchProfile {
 
   protected abstract boolean canBeVariable(PsiElement element);
 
+  protected abstract boolean canBePatternVariable(PsiElement element);
+
   @NotNull
   protected abstract MatchingStrategy getMatchingStrategy(PsiElement root);
+
+  @Override
+  public StructuralReplaceHandler getReplaceHandler(ReplacementContext context) {
+    return new MyReplaceHandler();
+  }
 
   protected class MyCompilingVisitor extends PsiRecursiveElementVisitor {
     protected final GlobalCompilingVisitor myGlobalVisitor;
@@ -96,8 +108,8 @@ public abstract class TokenBasedProfile extends StructuralSearchProfile {
         myGlobalVisitor.setCodeBlockLevel(myGlobalVisitor.getCodeBlockLevel() - 1);
         return;
       }
-      if (pattern.isRealTypedVar(element)) {
-        if (element.getChildren().length == 0) {
+      if (canBePatternVariable(element)) {
+        if (pattern.isRealTypedVar(element)) {
           myGlobalVisitor.handle(element);
           final MatchingHandler handler = pattern.getHandler(element);
           handler.setFilter(new NodeFilter() {
@@ -150,7 +162,7 @@ public abstract class TokenBasedProfile extends StructuralSearchProfile {
     }
   }
 
-  protected static class MyMatchingVisitor extends PsiElementVisitor {
+  protected class MyMatchingVisitor extends PsiElementVisitor {
     protected final GlobalMatchingVisitor myGlobalVisitor;
 
     public MyMatchingVisitor(GlobalMatchingVisitor globalVisitor) {
@@ -165,8 +177,7 @@ public abstract class TokenBasedProfile extends StructuralSearchProfile {
     public void visitElement(PsiElement element) {
       super.visitElement(element);
 
-      PsiElement[] children = element.getChildren();
-      if (children.length == 0) {
+      if (canBePatternVariable(element)) {
         String text = element.getText();
         final boolean isTypedVar = myGlobalVisitor.getMatchContext().getPattern().isTypedVar(text);
 
@@ -179,10 +190,81 @@ public abstract class TokenBasedProfile extends StructuralSearchProfile {
       }
       else {
         myGlobalVisitor.setResult(myGlobalVisitor.matchSequentially(
-          new ArrayBackedNodeIterator(children),
-          new ArrayBackedNodeIterator(myGlobalVisitor.getElement().getChildren())
+          new FilteringNodeIterator(element.getFirstChild()),
+          new FilteringNodeIterator(myGlobalVisitor.getElement().getFirstChild())
         ));
       }
+    }
+  }
+
+  /*private static class MyIterator extends NodeIterator {
+    private ASTNode[] myNodes;
+    private int myIndex = 0;
+
+    private MyIterator(ASTNode[] nodes) {
+      myNodes = nodes;
+    }
+
+    public boolean hasNext() {
+      return myIndex < myNodes.length;
+    }
+
+    public void rewind(int number) {
+      myIndex -= number;
+    }
+
+    public PsiElement current() {
+      if (myIndex < myNodes.length) {
+        return myNodes[myIndex].getPsi();
+      }
+
+      return null;
+    }
+
+    public void advance() {
+      ++myIndex;
+    }
+
+    public void rewind() {
+      --myIndex;
+    }
+
+    public void reset() {
+      myIndex = 0;
+    }
+  }*/
+
+  private static class MyReplaceHandler extends StructuralReplaceHandler {
+    public void replace(ReplacementInfoImpl info,
+                        PsiElement elementToReplace,
+                        String replacementToMake,
+                        PsiElement elementParent) {
+      MatchResult result = info.getMatchResult();
+      assert result instanceof TokenBasedMatchResult;
+      PsiElement element = result.getMatch();
+      PsiFile file = element instanceof PsiFile ? (PsiFile)element : element.getContainingFile();
+      assert file != null;
+      TokenBasedMatchResult tokenBasedResult = (TokenBasedMatchResult)result;
+      RangeMarker rangeMarker = tokenBasedResult.getRangeMarker();
+      Document document = rangeMarker.getDocument();
+      document.replaceString(rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), info.getReplacement());
+      PsiDocumentManager.getInstance(element.getProject()).commitDocument(document);
+    }
+
+    @Override
+    public void prepare(ReplacementInfoImpl info, Project project) {
+      MatchResult result = info.getMatchResult();
+      PsiElement element = result.getMatch();
+      PsiFile file = element instanceof PsiFile ? (PsiFile)element : element.getContainingFile();
+      Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+      assert result instanceof TokenBasedMatchResult;
+      TokenBasedMatchResult res = (TokenBasedMatchResult)result;
+      TextRange textRange = res.getTextRangeInFile();
+      assert textRange != null;
+      RangeMarker rangeMarker = document.createRangeMarker(textRange);
+      rangeMarker.setGreedyToLeft(true);
+      rangeMarker.setGreedyToRight(true);
+      res.setRangeMarker(rangeMarker);
     }
   }
 }

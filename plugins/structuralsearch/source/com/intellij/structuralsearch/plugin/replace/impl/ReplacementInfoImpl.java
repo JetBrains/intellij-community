@@ -1,7 +1,7 @@
 package com.intellij.structuralsearch.plugin.replace.impl;
 
-import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 
@@ -28,5 +28,17 @@ public class ReplacementInfoImpl extends ReplacementInfo {
 
   public void setReplacement(String replacement) {
     result = replacement;
+  }
+
+  public Map<String, MatchResult> getVariableMap() {
+    return variableMap;
+  }
+
+  public MatchResult getMatchResult() {
+    return matchResult;
+  }
+
+  public List<SmartPsiElementPointer> getMatchesPtrList() {
+    return matchesPtrList;
   }
 }

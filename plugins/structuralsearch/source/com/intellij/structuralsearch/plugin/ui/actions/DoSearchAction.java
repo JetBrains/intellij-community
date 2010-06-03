@@ -1,5 +1,6 @@
 package com.intellij.structuralsearch.plugin.ui.actions;
 
+import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.*;
 import com.intellij.openapi.project.Project;
@@ -9,16 +10,19 @@ import com.intellij.openapi.project.Project;
  */
 public class DoSearchAction {
   public static void execute(final Project project, MatchResultSink sink,
-                             Configuration configuration) {
+                             final Configuration configuration) {
     final MatchOptions options = configuration.getMatchOptions();
 
     Matcher matcher = new Matcher(project);
 
+    sink = new FilteringMatchResultSink(sink, configuration instanceof ReplaceConfiguration);
+
     try {
-        matcher.findMatches(sink, options);
-      }
+      matcher.findMatches(sink, options);
+    }
     finally {
       sink.matchingFinished();
     }
   }
+
 }

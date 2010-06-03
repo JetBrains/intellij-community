@@ -5,7 +5,7 @@ import com.intellij.lang.javascript.JSTokenTypes;
 import com.intellij.lang.javascript.psi.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,18 +36,23 @@ public class JavaScriptTokenizer implements Tokenizer {
 
     @Override
     public void visitElement(PsiElement element) {
+      visitChildren(element);
+      if (element instanceof LeafPsiElement && !(element instanceof PsiWhiteSpace)) {
+        visitLeafElement((LeafPsiElement)element);
+      }
+    }
+
+    private void visitChildren(PsiElement element) {
       int temp = myParentOffset;
       myParentOffset = getTextOffset(element);
       super.visitElement(element);
       myParentOffset = temp;
-      if (element instanceof LeafElement && !(element instanceof PsiWhiteSpace)) {
-        visitLeafElement(element);
-      }
     }
 
     @Override
     public void visitJSExpression(JSExpression expression) {
-      myTokens.add(new AnonymToken(EXPRESSION_TYPE, getTextOffset(expression)));
+      int offset = getTextOffset(expression);
+      myTokens.add(new AnonymToken(EXPRESSION_TYPE, offset));
     }
 
     private int getTextOffset(@NotNull PsiElement element) {
@@ -70,21 +75,23 @@ public class JavaScriptTokenizer implements Tokenizer {
     public void visitJSBlock(JSBlockStatement node) {
       PsiElement parent = node.getParent();
       if (parent instanceof JSIfStatement || parent instanceof JSLoopStatement) {
+        int temp = myParentOffset;
+        myParentOffset = getTextOffset(node);
         for (JSStatement statement : node.getStatements()) {
           statement.accept(this);
         }
+        myParentOffset = temp;
       }
       else {
-        super.visitJSBlock(node);
+        visitChildren(node);
       }
     }
 
-    private void visitLeafElement(PsiElement element) {
+    private void visitLeafElement(LeafPsiElement element) {
       if (element.getTextLength() == 0) {
         return;
       }
-      ASTNode node = element.getNode();
-      if (node != null && node.getElementType() == JSTokenTypes.IDENTIFIER) {
+      if (element.getElementType() == JSTokenTypes.IDENTIFIER) {
         myTokens.add(new AnonymToken(IDENTIFIER_TYPE, getTextOffset(element)));
       }
       else {

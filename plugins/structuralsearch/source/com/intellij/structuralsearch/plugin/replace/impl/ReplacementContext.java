@@ -1,11 +1,14 @@
 package com.intellij.structuralsearch.plugin.replace.impl;
 
-import com.intellij.psi.PsiCodeBlock;
-import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
-import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.structuralsearch.MatchResult;
+import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -14,29 +17,41 @@ import com.intellij.openapi.project.Project;
  * Time: 14:27:20
  * To change this template use File | Settings | File Templates.
  */
-class ReplacementContext {
-  private PsiCodeBlock codeBlock;
+public class ReplacementContext {
   ReplacementInfoImpl replacementInfo;
   ReplaceOptions options;
   Project project;
-  
-  ReplacementContext(ReplaceOptions _options,Project _project) {
+
+  public ReplaceOptions getOptions() {
+    return options;
+  }
+
+  public Project getProject() {
+    return project;
+  }
+
+  ReplacementContext(ReplaceOptions _options, Project _project) {
     options = _options;
     project = _project;
   }
 
-  PsiCodeBlock getCodeBlock() throws IncorrectOperationException {
-    if (codeBlock == null) {
-      PsiCodeBlock search;
-      search = (PsiCodeBlock)MatcherImplUtil.createTreeFromText(
-        options.getMatchOptions().getSearchPattern(),
-        PatternTreeContext.Block,
-        options.getMatchOptions().getFileType(),
-        project
-      )[0].getParent();
+  public Map<String, String> getNewName2PatternNameMap() {
+    Map<String, String> newNameToSearchPatternNameMap = new HashMap<String, String>(1);
+    final Map<String, MatchResult> variableMap = replacementInfo.getVariableMap();
 
-      codeBlock = search;
+    if (variableMap != null) {
+      for (String s : variableMap.keySet()) {
+        final MatchResult matchResult = replacementInfo.getVariableMap().get(s);
+        PsiElement match = matchResult.getMatchRef() != null ? matchResult.getMatch() : null;
+        if (match instanceof PsiIdentifier) match = match.getParent();
+
+        if (match instanceof PsiNamedElement) {
+          final String name = ((PsiNamedElement)match).getName();
+
+          newNameToSearchPatternNameMap.put(name, s);
+        }
+      }
     }
-    return codeBlock;
+    return newNameToSearchPatternNameMap;
   }
 }

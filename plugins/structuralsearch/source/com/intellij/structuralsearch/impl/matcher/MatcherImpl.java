@@ -270,7 +270,7 @@ public class MatcherImpl {
     scheduler.init();
     progress = matchContext.getSink().getProgressIndicator();
 
-    if (TokenBasedSearcher.canProcess(project, options)) {
+    if (TokenBasedSearcher.canProcess(compiledPattern, options.getScope())) {
       TokenBasedSearcher searcher = new TokenBasedSearcher(this);
       searcher.search(compiledPattern);
       if (isTesting) {

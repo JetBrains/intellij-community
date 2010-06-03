@@ -1,5 +1,6 @@
 package com.intellij.structuralsearch;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.javascript.JSTokenTypes;
 import com.intellij.lang.javascript.JavaScriptSupportLoader;
@@ -10,17 +11,21 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor;
+import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor;
 import com.intellij.structuralsearch.impl.matcher.filters.DefaultFilter;
 import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
+import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
+import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -31,27 +36,7 @@ public class JSStructuralSearchProfile extends TokenBasedProfile {
 
   @Override
   public void compile(PsiElement element, @NotNull GlobalCompilingVisitor globalVisitor) {
-    element.accept(new MyCompilingVisitor(globalVisitor) {
-      @Override
-      public void visitElement(final PsiElement element) {
-        super.visitElement(element);
-        if (element instanceof JSStatement) {
-          CompiledPattern pattern = myGlobalVisitor.getContext().getPattern();
-          MatchingHandler handler = pattern.getHandler(element);
-          if (handler.getFilter() == null) {
-            handler.setFilter(new NodeFilter() {
-              public boolean accepts(PsiElement e) {
-                if (e instanceof JSBlockStatement) {
-                  e = extractOnlyStatement((JSBlockStatement)e);
-                }
-                return DefaultFilter.accepts(
-                  element instanceof JSBlockStatement ? extractOnlyStatement((JSBlockStatement)element) : element, e);
-              }
-            });
-          }
-        }
-      }
-    });
+    element.accept(new MyJsCompilingVisitor(globalVisitor));
   }
 
   private static PsiElement extractOnlyStatement(JSBlockStatement e) {
@@ -95,8 +80,24 @@ public class JSStructuralSearchProfile extends TokenBasedProfile {
   protected boolean canBeVariable(PsiElement element) {
     if (element instanceof JSExpression ||
         element instanceof JSParameter ||
-        element instanceof JSVariable) {
+        element instanceof JSVariable ||
+        (element instanceof LeafElement && ((LeafElement)element).getElementType() == JSTokenTypes.IDENTIFIER)) {
       return true;
+    }
+    return false;
+  }
+
+  @Override
+  protected boolean canBePatternVariable(PsiElement element) {
+    PsiElement child = element.getFirstChild();
+    if (child == null) {
+      return true;
+    }
+    if (element instanceof JSReferenceExpression || element instanceof JSParameter) {
+      ASTNode node = child.getNode();
+      if (node != null) {
+        return node.getElementType() == JSTokenTypes.IDENTIFIER && child.getNextSibling() == null;
+      }
     }
     return false;
   }
@@ -127,11 +128,26 @@ public class JSStructuralSearchProfile extends TokenBasedProfile {
   public PsiElement[] createPatternTree(@NotNull String text,
                                         @NotNull PatternTreeContext context,
                                         @NotNull FileType fileType,
-                                        @NotNull Project project) {
-    return PsiFileFactory.getInstance(project).createFileFromText("__dummy.js", text).getChildren();
+                                        @NotNull Project project,
+                                        boolean physical) {
+    return PsiFileFactory.getInstance(project)
+      .createFileFromText("__dummy.js", fileType, text, LocalTimeCounter.currentTime(), physical, true).getChildren();
   }
 
-  private static class MyJsMatchingVisitor extends JSElementVisitor {
+  @Override
+  public void checkReplacementPattern(Project project, ReplaceOptions options) {
+    MatchOptions matchOptions = options.getMatchOptions();
+    FileType fileType = matchOptions.getFileType();
+    PsiElement[] elements = createPatternTree(matchOptions.getSearchPattern(), PatternTreeContext.File, fileType, project, false);
+
+    for (PsiElement element : elements) {
+      if (element.getLastChild() instanceof PsiErrorElement) {
+        throw new UnsupportedPatternException(SSRBundle.message("replacement.template.expression.not.supported", fileType.getName()));
+      }
+    }
+  }
+
+  private class MyJsMatchingVisitor extends JSElementVisitor {
     private final GlobalMatchingVisitor myGlobalVisitor;
     private final MyMatchingVisitor myBaseVisitor;
 
@@ -217,6 +233,70 @@ public class JSStructuralSearchProfile extends TokenBasedProfile {
         element instanceof JSBlockStatement ? ((JSBlockStatement)element).getStatements() : new PsiElement[]{element};
 
       myGlobalVisitor.setResult(myGlobalVisitor.matchSequentially(block1.getStatements(), statements2));
+    }
+  }
+
+  private class MyJsCompilingVisitor extends MyCompilingVisitor {
+
+    protected MyJsCompilingVisitor(GlobalCompilingVisitor globalVisitor) {
+      super(globalVisitor);
+    }
+
+    @Override
+    public void visitElement(final PsiElement element) {
+      super.visitElement(element);
+      if (element instanceof JSExpressionStatement) {
+        if (visitJsReferenceExpression((JSExpressionStatement)element)) {
+          return;
+        }
+      }
+      if (element instanceof JSStatement) {
+        CompiledPattern pattern = myGlobalVisitor.getContext().getPattern();
+        MatchingHandler handler = pattern.getHandler(element);
+        if (handler.getFilter() == null) {
+          handler.setFilter(new NodeFilter() {
+            public boolean accepts(PsiElement e) {
+              if (e instanceof JSBlockStatement) {
+                e = extractOnlyStatement((JSBlockStatement)e);
+              }
+              return DefaultFilter.accepts(
+                element instanceof JSBlockStatement ? extractOnlyStatement((JSBlockStatement)element) : element, e);
+            }
+          });
+        }
+      }
+    }
+
+    private boolean visitJsReferenceExpression(JSExpressionStatement element) {
+      PsiElement parent = element.getParent();
+      if (!(parent instanceof JSFile)) {
+        return false;
+      }
+      if (parent.getChildren().length != 1) {
+        return false;
+      }
+      JSExpression expression = element.getExpression();
+      String expText = expression.getText();
+      if (expText == null || !expText.equals(element.getText())) {
+        return false;
+      }
+
+      MatchingHandler handler = new MatchingHandler() {
+        public boolean match(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {
+          if (!super.match(patternNode, matchedNode, context)) {
+            return false;
+          }
+          JSExpression jsExpression = ((JSExpressionStatement)patternNode).getExpression();
+          return context.getMatcher().match(jsExpression, matchedNode);
+        }
+      };
+      myGlobalVisitor.setHandler(element, handler);
+      handler.setFilter(new NodeFilter() {
+        public boolean accepts(PsiElement element) {
+          return element instanceof JSExpression;
+        }
+      });
+      return true;
     }
   }
 }

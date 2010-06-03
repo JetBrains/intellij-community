@@ -31,7 +31,7 @@ public class GlobalCompilingVisitor {
     return ourFilter;
   }
 
-  protected void setHandler(PsiElement element, MatchingHandler handler) {
+  public void setHandler(PsiElement element, MatchingHandler handler) {
     MatchingHandler realHandler = context.getPattern().getHandlerSimple(element);
 
     if (realHandler instanceof SubstitutionHandler) {

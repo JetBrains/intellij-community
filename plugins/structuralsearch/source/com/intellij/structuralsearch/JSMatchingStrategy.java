@@ -56,6 +56,13 @@ public class JSMatchingStrategy extends JSElementVisitor implements MatchingStra
     result = true;
   }
 
+  @Override
+  public void visitJSElement(JSElement node) {
+    if (node instanceof JSFile) {
+      result = true;
+    }
+  }
+
   public boolean continueMatching(PsiElement start) {
     result = false;
     start.accept(this);

@@ -27,6 +27,11 @@ public class Replacer extends ReplacerImpl {
     return super.testReplace(in, what, by, options, filePattern);
   }
 
+  public String testReplace(String in, String what, String by, ReplaceOptions options, boolean filePattern, boolean createPhysicalFile)
+    throws IncorrectOperationException {
+    return super.testReplace(in, what, by, options, filePattern, createPhysicalFile);
+  }
+
   public void replaceAll(final List<ReplacementInfo> resultPtrList) {
     super.replaceAll(resultPtrList);
   }

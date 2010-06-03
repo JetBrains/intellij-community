@@ -1,17 +1,17 @@
 package com.intellij.structuralsearch.plugin.replace.ui;
 
-import com.intellij.structuralsearch.plugin.ui.UsageViewContext;
-import com.intellij.structuralsearch.plugin.ui.SearchContext;
-import com.intellij.structuralsearch.plugin.ui.Configuration;
-import com.intellij.structuralsearch.plugin.ui.SearchCommand;
+import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.replace.Replacer;
-import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.plugin.ui.Configuration;
+import com.intellij.structuralsearch.plugin.ui.SearchCommand;
+import com.intellij.structuralsearch.plugin.ui.SearchContext;
+import com.intellij.structuralsearch.plugin.ui.UsageViewContext;
 import com.intellij.usages.Usage;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.ArrayList;
 
 /**
  * Created by IntelliJ IDEA.

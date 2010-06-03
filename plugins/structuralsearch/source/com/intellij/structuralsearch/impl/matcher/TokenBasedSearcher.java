@@ -14,9 +14,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.structuralsearch.MatchOptions;
-import com.intellij.structuralsearch.StructuralSearchUtil;
-import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
+import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.iterators.ArrayBackedNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.iterators.FilteringNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
@@ -26,6 +24,7 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.indexing.FileBasedIndex;
 import gnu.trove.TIntObjectHashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -40,9 +39,93 @@ public class TokenBasedSearcher {
   private List<Token> myTokens;
   private int[] myOccurences;
 
+  private final MyMatchingResultSink mySink;
+
   public TokenBasedSearcher(MatcherImpl matcher) {
     myTesting = ApplicationManager.getApplication().isUnitTestMode();
     myMatcher = matcher;
+    mySink = new MyMatchingResultSink(myMatcher.getMatchContext().getSink());
+  }
+
+  private static class MyMatchingResultSink implements MatchResultSink {
+    private final MatchResultSink myDelegate;
+    private final Set<TokenBasedMatchResult> myResultsWithoutLexicalInfo = new HashSet<TokenBasedMatchResult>();
+
+    private int myStart;
+    private int myEnd;
+
+    private MyMatchingResultSink(MatchResultSink delegate) {
+      myDelegate = delegate;
+    }
+
+    public void processLexicalOccurence(int start, int end) {
+      myStart = start;
+      myEnd = end;
+      for (Iterator<TokenBasedMatchResult> iterator = myResultsWithoutLexicalInfo.iterator(); iterator.hasNext();) {
+        TokenBasedMatchResult result = iterator.next();
+        if (isOurElement(result.getMatch())) {
+          result.setTextRangeInFile(new TextRange(start, end));
+          iterator.remove();
+          myDelegate.newMatch(result);
+        }
+      }
+    }
+
+    private boolean isOurElement(@NotNull PsiElement element) {
+      PsiElement parent = element;
+      while (parent != null) {
+        if (parent.getTextOffset() == myStart) {
+          return true;
+        }
+        PsiElement gp = parent.getParent();
+        if (gp != null && gp.getFirstChild() != parent) {
+          break;
+        }
+        parent = gp;
+      }
+      PsiElement child = element.getFirstChild();
+      while (child != null) {
+        if (child.getTextOffset() == myStart) {
+          return true;
+        }
+        child = child.getFirstChild();
+      }
+      return false;
+    }
+
+    public void newMatch(MatchResult result) {
+      PsiElement element = result.getMatch();
+      TextRange range = element.getTextRange();
+      if (myStart <= range.getStartOffset() && myEnd > range.getEndOffset()) {
+        // inner match
+        // TokenBasedProfile replacement cannot process it
+        myDelegate.newMatch(new TokenBasedMatchResult(result, null));
+      }
+      else if (myStart >= 0 && isOurElement(element)) {
+        myDelegate.newMatch(new TokenBasedMatchResult(result, new TextRange(myStart, myEnd)));
+        myStart = -1;
+      }
+      else {
+        TokenBasedMatchResult res = new TokenBasedMatchResult(result, null);
+        myResultsWithoutLexicalInfo.add(res);
+      }
+    }
+
+    public void processFile(PsiFile element) {
+      myDelegate.processFile(element);
+    }
+
+    public void setMatchingProcess(MatchingProcess matchingProcess) {
+      myDelegate.setMatchingProcess(matchingProcess);
+    }
+
+    public void matchingFinished() {
+      myDelegate.matchingFinished();
+    }
+
+    public ProgressIndicator getProgressIndicator() {
+      return myDelegate.getProgressIndicator();
+    }
   }
 
   public void search(CompiledPattern compiledPattern) {
@@ -64,14 +147,6 @@ public class TokenBasedSearcher {
         }
       }
     });
-
-    final MatchContext context = new MatchContext();
-    context.setOptions(options);
-    context.setSink(myMatcher.getMatchContext().getSink());
-    context.setPattern(compiledPattern);
-    GlobalMatchingVisitor visitor = new GlobalMatchingVisitor();
-    visitor.setMatchContext(context);
-    context.setMatcher(visitor);
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
@@ -117,10 +192,28 @@ public class TokenBasedSearcher {
     }
   }
 
+  @Nullable
+  private static List<PsiElement> computeScope(PsiFile file, int start, int end) {
+    if (start == end) {
+      return Collections.emptyList();
+    }
+    int length = end - start;
+    PsiElement element = file.findElementAt(start);
+    while (element != null) {
+      //TextRange range = element.getTextRange();
+      //if (element == file || range.getStartOffset() <= start && range.getEndOffset() > end) {
+      if (element == file || element.getTextLength() > length) {
+        return Arrays.asList(element);
+      }
+      element = element.getParent();
+    }
+    return null;
+  }
+
   private class MySearcher implements Runnable {
     private final TIntObjectHashMap<PsiFile> myPsiFiles = new TIntObjectHashMap<PsiFile>();
-    private final Set<PsiElement> startElements = new HashSet<PsiElement>();
     private final int myPatternLength;
+    private final Set<PsiElement> myVisitedScopes = new HashSet<PsiElement>();
     private double myStartFraction = -1;
 
     private int myIndex = 0;
@@ -154,7 +247,7 @@ public class TokenBasedSearcher {
         return;
       }
       myPsiFiles.put(occurence, psiFile);
-      int start = myTokens.get(occurence).getOffset();
+      final int start = myTokens.get(occurence).getOffset();
       assert start >= 0;
       int afterOccurence = occurence + myPatternLength;
       int end = -1;
@@ -169,24 +262,28 @@ public class TokenBasedSearcher {
       final MatchContext context = myMatcher.getMatchContext();
       SearchScope scope = context.getOptions().getScope();
 
-      final PsiElement[] elements;
-      if (scope instanceof LocalSearchScope) {
-        List<PsiElement> elementList = filterScope(psiFile, start, end, (LocalSearchScope)scope);
-        elements = elementList.toArray(new PsiElement[elementList.size()]);
+      List<PsiElement> elementList;
+      if (scope instanceof LocalSearchScope && !ApplicationManager.getApplication().isUnitTestMode()) {
+        elementList = filterScope((LocalSearchScope)scope, psiFile, start, end);
       }
       else {
-        elements = new PsiElement[]{psiFile};
+        elementList = computeScope(psiFile, start, end);
       }
+      assert elementList != null;
+      final PsiElement[] elements = elementList.toArray(new PsiElement[elementList.size()]);
       if (elements.length > 0) {
         context.setResult(null);
-        if (startElements.add(elements[0])) {
-          myBound = occurence + myPatternLength;
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            public void run() {
+        myBound = occurence + myPatternLength;
+        final int finalEnd = end;
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            mySink.processLexicalOccurence(start, finalEnd);
+            if (myVisitedScopes.add(elements[0])) {
+              context.setSink(mySink);
               context.getMatcher().matchContext(new FilteringNodeIterator(new ArrayBackedNodeIterator(elements)));
             }
-          });
-        }
+          }
+        });
       }
       doContinue();
     }
@@ -288,7 +385,7 @@ public class TokenBasedSearcher {
     return result.toArray();
   }
 
-  private static List<PsiElement> filterScope(PsiFile file, int start, int end, LocalSearchScope scope) {
+  private static List<PsiElement> filterScope(LocalSearchScope scope, PsiFile file, int start, int end) {
     List<PsiElement> elements = new ArrayList<PsiElement>();
     for (PsiElement element : scope.getScope()) {
       if (file == element) {
@@ -360,12 +457,10 @@ public class TokenBasedSearcher {
     return result;
   }
 
-  public static boolean canProcess(Project project, MatchOptions options) {
-    CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, options);
+  public static boolean canProcess(CompiledPattern compiledPattern, SearchScope scope) {
     if (!checkLanguages(getLanguages(compiledPattern))) {
       return false;
     }
-    SearchScope scope = options.getScope();
     if (scope instanceof LocalSearchScope) {
       PsiElement[] elements = ((LocalSearchScope)scope).getScope();
       return checkLanguages(getLanguages(elements));
@@ -384,5 +479,9 @@ public class TokenBasedSearcher {
       }
     }
     return true;
+  }
+
+  public static boolean isApplicableResult(TokenBasedMatchResult result, boolean replacement) {
+    return !(replacement && result.getTextRangeInFile() == null);
   }
 }
