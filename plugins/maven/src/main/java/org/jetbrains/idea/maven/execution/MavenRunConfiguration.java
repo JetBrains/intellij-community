@@ -33,10 +33,10 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.embedder.MavenConsoleImpl;
+import org.jetbrains.idea.maven.model.MavenConstants;
+import org.jetbrains.idea.maven.project.MavenConsoleImpl;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.utils.MavenConstants;
 
 import java.io.File;
 

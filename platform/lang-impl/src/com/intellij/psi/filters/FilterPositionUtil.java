@@ -30,10 +30,17 @@ public class FilterPositionUtil {
 
   @Nullable
   public static PsiElement searchNonSpaceNonCommentBack(PsiElement element) {
+    return searchNonSpaceNonCommentBack(element, false);
+  }
+
+  @Nullable
+  public static PsiElement searchNonSpaceNonCommentBack(PsiElement element, final boolean strict) {
     if(element == null || element.getNode() == null) return null;
     ASTNode leftNeibour = TreeUtil.prevLeaf(element.getNode());
-    while (leftNeibour != null && (leftNeibour.getElementType() == TokenType.WHITE_SPACE || leftNeibour.getPsi() instanceof PsiComment)){
-      leftNeibour = TreeUtil.prevLeaf(leftNeibour);
+    if (!strict) {
+      while (leftNeibour != null && (leftNeibour.getElementType() == TokenType.WHITE_SPACE || leftNeibour.getPsi() instanceof PsiComment)){
+        leftNeibour = TreeUtil.prevLeaf(leftNeibour);
+      }
     }
     return leftNeibour != null ? leftNeibour.getPsi() : null;
 

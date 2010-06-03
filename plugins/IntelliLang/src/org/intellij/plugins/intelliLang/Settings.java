@@ -114,7 +114,7 @@ public class Settings implements SearchableConfigurable {
   }
 
   public String getId() {
-    return getHelpTopic();
+    return "IntelliLang.Configuration";
   }
 
   public Runnable enableSearch(String option) {

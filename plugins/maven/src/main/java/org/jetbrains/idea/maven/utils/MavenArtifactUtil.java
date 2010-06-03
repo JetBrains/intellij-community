@@ -21,7 +21,7 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.indices.IndicesBundle;
-import org.jetbrains.idea.maven.project.MavenId;
+import org.jetbrains.idea.maven.model.MavenId;
 
 import java.io.File;
 import java.io.IOException;

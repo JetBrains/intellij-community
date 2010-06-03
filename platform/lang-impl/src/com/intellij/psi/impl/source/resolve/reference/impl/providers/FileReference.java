@@ -383,7 +383,21 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
           }
         }
       }
-      if (root == null) return element;
+      if (root == null) {
+        PsiFileSystemItem _dstItem = FileReferenceHelperRegistrar.NullFileReferenceHelper.INSTANCE.getPsiFileSystemItem(project, dstVFile);
+        if (_dstItem != null) {
+          PsiFileSystemItem _root = FileReferenceHelperRegistrar.NullFileReferenceHelper.INSTANCE.findRoot(project, dstVFile);
+          if (_root != null) {
+            root = _root;
+            dstItem = _dstItem;
+          }
+        }
+
+        if (root == null) {
+          return element;
+        }
+      }
+
       final String relativePath = PsiFileSystemItemUtil.getRelativePath(root, dstItem);
       if (relativePath == null) {
         return element;

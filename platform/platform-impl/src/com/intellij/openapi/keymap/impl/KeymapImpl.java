@@ -269,6 +269,8 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
   }
 
   private Map<KeyStroke, List<String>> getKeystroke2ListOfIds() {
+    if (myKeystroke2ListOfIds != null) return myKeystroke2ListOfIds;
+
     myKeystroke2ListOfIds = new THashMap<KeyStroke, List<String>>();
     for (String id : ContainerUtil.concat(myActionId2ListOfShortcuts.keySet(), getKeymapManager().getBoundActions())) {
       addKeystrokesMap(id, myKeystroke2ListOfIds);

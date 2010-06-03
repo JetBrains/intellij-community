@@ -32,7 +32,7 @@ public abstract class DataManager {
 
   /**
    * @return {@link DataContext} constructed by the current focused component
-   * @deprecated use either {@link #getDataContext(java.awt.Component)} or {@link #getDataContextFromFocus())
+   * @deprecated use either {@link #getDataContext(java.awt.Component)} or {@link #getDataContextFromFocus()}
    */
   public abstract DataContext getDataContext();
 

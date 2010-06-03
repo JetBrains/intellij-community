@@ -26,7 +26,7 @@ import java.util.List;
  * @author yole
  */
 public class SvnRenameTest extends SvnTestCase {
-  @NonNls private static final String LOG_SEPARATOR = "------------------------------------------------------------------------\r\n";
+  @NonNls private static final String LOG_SEPARATOR = "------------------------------------------------------------------------\n";
 
   @Test
   public void testSimpleRename() throws Exception {
@@ -59,7 +59,7 @@ public class SvnRenameTest extends SvnTestCase {
     final VirtualFile dir = createDirInCommand(myWorkingCopyDir, "child");
     createFileInCommand(dir, "a.txt", "content");
     renameFileInCommand(dir, "newchild");
-    verify(runSvn("status"), "A newchild", "A newchild\\a.txt");
+    verify(runSvn("status"), "A newchild", "A newchild" + File.separatorChar + "a.txt");
   }
 
   // IDEADEV-8091
@@ -81,7 +81,7 @@ public class SvnRenameTest extends SvnTestCase {
 
     renameFileInCommand(child, "childnew");
     final ProcessOutput result = runSvn("status");
-    verify(result, "D child", "D child\\grandChild", "D child\\grandChild\\b.txt", "D child\\a.txt", "A + childnew");
+    verify(result, "D child", "D child" + File.separatorChar + "grandChild", "D child" + File.separatorChar + "grandChild" + File.separatorChar + "b.txt", "D child" + File.separatorChar + "a.txt", "A + childnew");
 
     LocalFileSystem.getInstance().refresh(false);   // wait for end of refresh operations initiated from SvnFileSystemListener
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
@@ -90,9 +90,9 @@ public class SvnRenameTest extends SvnTestCase {
     Assert.assertEquals(4, changes.size());
     sortChanges(changes);
     verifyChange(changes.get(0), "child", "childnew");
-    verifyChange(changes.get(1), "child\\a.txt", "childnew\\a.txt");
-    verifyChange(changes.get(2), "child\\grandChild", "childnew\\grandChild");
-    verifyChange(changes.get(3), "child\\grandChild\\b.txt", "childnew\\grandChild\\b.txt");
+    verifyChange(changes.get(1), "child" + File.separatorChar + "a.txt", "childnew" + File.separatorChar + "a.txt");
+    verifyChange(changes.get(2), "child" + File.separatorChar + "grandChild", "childnew" + File.separatorChar + "grandChild");
+    verifyChange(changes.get(3), "child" + File.separatorChar + "grandChild" + File.separatorChar + "b.txt", "childnew" + File.separatorChar + "grandChild" + File.separatorChar + "b.txt");
 
     VirtualFile oldChild = myWorkingCopyDir.findChild("child");
     Assert.assertEquals(FileStatus.DELETED, changeListManager.getStatus(oldChild));
@@ -159,8 +159,8 @@ public class SvnRenameTest extends SvnTestCase {
     final List<Change> changes = new ArrayList<Change>(changeListManager.getDefaultChangeList().getChanges());
     Assert.assertEquals(listToString(changes), 2, changes.size());
     sortChanges(changes);
-    verifyChange(changes.get(0), "child\\grandChild", "grandChild");
-    verifyChange(changes.get(1), "child\\grandChild\\a.txt", "grandChild\\a.txt");
+    verifyChange(changes.get(0), "child" + File.separatorChar + "grandChild", "grandChild");
+    verifyChange(changes.get(1), "child" + File.separatorChar + "grandChild" + File.separatorChar + "a.txt", "grandChild" + File.separatorChar + "a.txt");
   }
 
   private String listToString(final List<Change> changes) {
@@ -226,8 +226,8 @@ public class SvnRenameTest extends SvnTestCase {
     renameFileInCommand(f, "anew.txt");
     renameFileInCommand(child, "newchild");
 
-    verifySorted(runSvn("status"), "A + newchild", "A + newchild\\anew.txt",
-                 "D child", "D child\\a.txt", "D child\\grandChild", "D child\\grandChild\\b.txt", "D + newchild\\a.txt");
+    verifySorted(runSvn("status"), "A + newchild", "A + newchild" + File.separatorChar + "anew.txt",
+                 "D child", "D child" + File.separatorChar + "a.txt", "D child" + File.separatorChar + "grandChild", "D child" + File.separatorChar + "grandChild" + File.separatorChar + "b.txt", "D + newchild" + File.separatorChar + "a.txt");
 
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
     LocalFileSystem.getInstance().refresh(false);   // wait for end of refresh operations initiated from SvnFileSystemListener
@@ -283,7 +283,7 @@ public class SvnRenameTest extends SvnTestCase {
     checkin();
 
     undo();
-    verifySorted(runSvn("status"), "A + parent1\\child", "D parent2\\child", "D parent2\\child\\a.txt");
+    verifySorted(runSvn("status"), "A + parent1" + File.separatorChar + "child", "D parent2" + File.separatorChar + "child", "D parent2" + File.separatorChar + "child" + File.separatorChar + "a.txt");
   }*/
 
   @Test
@@ -291,7 +291,7 @@ public class SvnRenameTest extends SvnTestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile file = createFileInCommand(myWorkingCopyDir, "a.txt", "A");
     moveToNewPackage(file, "child");
-    verifySorted(runSvn("status"), "A child", "A child\\a.txt");
+    verifySorted(runSvn("status"), "A child", "A child" + File.separatorChar + "a.txt");
   }
 
   @Test
@@ -300,7 +300,7 @@ public class SvnRenameTest extends SvnTestCase {
     final VirtualFile file = createFileInCommand(myWorkingCopyDir, "a.txt", "A");
     checkin();
     moveToNewPackage(file, "child");
-    verifySorted(runSvn("status"), "A child", "A + child\\a.txt", "D a.txt");
+    verifySorted(runSvn("status"), "A child", "A + child" + File.separatorChar + "a.txt", "D a.txt");
   }
 
   private void moveToNewPackage(final VirtualFile file, final String packageName) throws Throwable {

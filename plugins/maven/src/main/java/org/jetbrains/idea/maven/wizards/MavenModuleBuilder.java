@@ -31,8 +31,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.maven.indices.ArchetypeInfo;
-import org.jetbrains.idea.maven.project.MavenId;
+import org.jetbrains.idea.maven.model.MavenArchetype;
+import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenUtil;
@@ -54,7 +54,7 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
   private boolean myInheritVersion;
 
   private MavenId myProjectId;
-  private ArchetypeInfo myArchetype;
+  private MavenArchetype myArchetype;
 
   public void setupRootModel(ModifiableRootModel rootModel) throws ConfigurationException {
     final Project project = rootModel.getProject();
@@ -173,11 +173,11 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
     return myProjectId;
   }
 
-  public void setArchetype(ArchetypeInfo archetype) {
+  public void setArchetype(MavenArchetype archetype) {
     myArchetype = archetype;
   }
 
-  public ArchetypeInfo getArchetype() {
+  public MavenArchetype getArchetype() {
     return myArchetype;
   }
 }

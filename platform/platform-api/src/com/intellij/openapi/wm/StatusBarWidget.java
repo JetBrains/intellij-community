@@ -15,16 +15,17 @@
  */
 package com.intellij.openapi.wm;
 
-import com.intellij.openapi.*;
-import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.util.*;
-import com.intellij.util.*;
-import org.jetbrains.annotations.*;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.*;
+import javax.swing.border.Border;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.MouseEvent;
 
 /**
  * User: spLeaner
@@ -35,7 +36,7 @@ public interface StatusBarWidget extends Disposable {
     DEFAULT, MAC
   }
 
-  interface Presentation {
+  interface WidgetPresentation {
     @Nullable
     String getTooltipText();
 
@@ -43,12 +44,12 @@ public interface StatusBarWidget extends Disposable {
     Consumer<MouseEvent> getClickConsumer();
   }
 
-  interface IconPresentation extends Presentation {
+  interface IconPresentation extends WidgetPresentation {
     @NotNull
     Icon getIcon();
   }
 
-  interface TextPresentation extends Presentation {
+  interface TextPresentation extends WidgetPresentation {
     @NotNull
     String getText();
 
@@ -56,7 +57,7 @@ public interface StatusBarWidget extends Disposable {
     String getMaxPossibleText();
   }
 
-  interface MultipleTextValuesPresentation extends Presentation {
+  interface MultipleTextValuesPresentation extends WidgetPresentation {
     @NotNull
     ListPopup getPopupStep();
 
@@ -71,7 +72,7 @@ public interface StatusBarWidget extends Disposable {
   String ID();
 
   @Nullable
-  Presentation getPresentation(@NotNull Type type);
+  WidgetPresentation getPresentation(@NotNull Type type);
 
   void install(@NotNull final StatusBar statusBar);
 

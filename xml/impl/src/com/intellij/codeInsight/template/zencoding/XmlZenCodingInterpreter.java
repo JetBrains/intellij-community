@@ -17,6 +17,7 @@ package com.intellij.codeInsight.template.zencoding;
 
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Pair;
@@ -306,21 +307,19 @@ class XmlZenCodingInterpreter {
 
   private static void invokeTemplate(TemplateToken token,
                                      final CustomTemplateCallback callback,
-                                     int numberInIteration,
+                                     final int numberInIteration,
                                      String filter) {
     if (token instanceof XmlTemplateToken && token.getTemplate() != null) {
       XmlTemplateToken xmlTemplateToken = (XmlTemplateToken)token;
-      List<Pair<String, String>> attr2value = new ArrayList<Pair<String, String>>(xmlTemplateToken.getAttribute2Value());
+      final List<Pair<String, String>> attr2value = new ArrayList<Pair<String, String>>(xmlTemplateToken.getAttribute2Value());
       TemplateImpl modifiedTemplate = token.getTemplate().copy();
-      XmlTag tag = xmlTemplateToken.getTag();
+      final XmlTag tag = xmlTemplateToken.getTag();
       if (tag != null) {
-        for (Iterator<Pair<String, String>> iterator = attr2value.iterator(); iterator.hasNext();) {
-          Pair<String, String> pair = iterator.next();
-          if (tag.getAttribute(pair.first) != null) {
-            tag.setAttribute(pair.first, ZenCodingUtil.getValue(pair, numberInIteration));
-            iterator.remove();
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            setAttributeValues(tag, attr2value, numberInIteration);
           }
-        }
+        });
         String s = filterXml(tag, callback, filter);
         assert s != null;
         if (HtmlUtil.isHtmlBlockTagL(tag.getName())) {
@@ -347,6 +346,16 @@ class XmlZenCodingInterpreter {
     else {
       // for CSS
       callback.expandTemplate(token.getKey(), null);
+    }
+  }
+
+  private static void setAttributeValues(XmlTag tag, List<Pair<String, String>> attr2value, int numberInIteration) {
+    for (Iterator<Pair<String, String>> iterator = attr2value.iterator(); iterator.hasNext();) {
+      Pair<String, String> pair = iterator.next();
+      if (tag.getAttribute(pair.first) != null) {
+        tag.setAttribute(pair.first, ZenCodingUtil.getValue(pair, numberInIteration));
+        iterator.remove();
+      }
     }
   }
 

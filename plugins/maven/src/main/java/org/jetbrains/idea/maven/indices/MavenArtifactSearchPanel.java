@@ -24,9 +24,9 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.idea.maven.project.MavenId;
+import org.jetbrains.idea.maven.model.MavenArtifactInfo;
+import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.utils.MavenLog;
-import org.sonatype.nexus.index.ArtifactInfo;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -171,15 +171,15 @@ public class MavenArtifactSearchPanel extends JPanel {
 
   public MavenId getResult() {
     Object sel = myResultList.getLastSelectedPathComponent();
-    ArtifactInfo info;
-    if (sel instanceof ArtifactInfo) {
-      info = (ArtifactInfo)sel;
+    MavenArtifactInfo info;
+    if (sel instanceof MavenArtifactInfo) {
+      info = (MavenArtifactInfo)sel;
     }
     else {
       info = ((MavenArtifactSearchResult)sel).versions.get(0);
     }
 
-    return new MavenId(info.groupId, info.artifactId, info.version);
+    return new MavenId(info.getGroupId(), info.getArtifactId(), info.getVersion());
   }
 
   private static class MyTreeModel implements TreeModel {
@@ -260,9 +260,9 @@ public class MavenArtifactSearchPanel extends JPanel {
       else if (value instanceof MavenArtifactSearchResult) {
         formatSearchResult(tree, (MavenArtifactSearchResult)value);
       }
-      else if (value instanceof ArtifactInfo) {
-        ArtifactInfo info = (ArtifactInfo)value;
-        myLeftComponent.append(info.groupId + ":" + info.artifactId + ":" + info.version,
+      else if (value instanceof MavenArtifactInfo) {
+        MavenArtifactInfo info = (MavenArtifactInfo)value;
+        myLeftComponent.append(info.getGroupId() + ":" + info.getArtifactId() + ":" + info.getVersion(),
                                SimpleTextAttributes.GRAY_ATTRIBUTES);
       }
 
@@ -277,10 +277,10 @@ public class MavenArtifactSearchPanel extends JPanel {
     }
 
     protected void formatSearchResult(JTree tree, MavenArtifactSearchResult searchResult) {
-      ArtifactInfo first = searchResult.versions.get(0);
-      ArtifactInfo last = searchResult.versions.get(searchResult.versions.size() - 1);
-      myLeftComponent.append(first.groupId + ":" + first.artifactId, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      myLeftComponent.append(":" + last.version + "-" + first.version, SimpleTextAttributes.GRAY_ATTRIBUTES);
+      MavenArtifactInfo first = searchResult.versions.get(0);
+      MavenArtifactInfo last = searchResult.versions.get(searchResult.versions.size() - 1);
+      myLeftComponent.append(first.getGroupId() + ":" + first.getArtifactId(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      myLeftComponent.append(":" + last.getVersion() + "-" + first.getVersion(), SimpleTextAttributes.GRAY_ATTRIBUTES);
     }
   }
 
@@ -288,12 +288,12 @@ public class MavenArtifactSearchPanel extends JPanel {
     @Override
     protected void formatSearchResult(JTree tree, MavenArtifactSearchResult searchResult) {
       MavenClassSearchResult classResult = (MavenClassSearchResult)searchResult;
-      ArtifactInfo info = searchResult.versions.get(0);
+      MavenArtifactInfo info = searchResult.versions.get(0);
 
       myLeftComponent.append(classResult.className, SimpleTextAttributes.REGULAR_ATTRIBUTES);
       myLeftComponent.append(" (" + classResult.packageName + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
 
-      myRightComponent.append(" " + info.groupId + ":" + info.artifactId,
+      myRightComponent.append(" " + info.getGroupId() + ":" + info.getArtifactId(),
                               SimpleTextAttributes.GRAY_ATTRIBUTES);
     }
   }

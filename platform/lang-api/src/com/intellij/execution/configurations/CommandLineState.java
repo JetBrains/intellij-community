@@ -18,7 +18,6 @@ package com.intellij.execution.configurations;
 import com.intellij.execution.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.filters.TextConsoleBuilder;
-import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
@@ -61,7 +60,7 @@ public abstract class CommandLineState implements RunnableState {
     return new DefaultExecutionResult(console, processHandler, createActions(console, processHandler, executor));
   }
 
-  protected abstract OSProcessHandler startProcess() throws ExecutionException;
+  protected abstract ProcessHandler startProcess() throws ExecutionException;
 
   protected AnAction[] createActions(final ConsoleView console, final ProcessHandler processHandler) {
     return createActions(console, processHandler, null);

@@ -20,8 +20,8 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
@@ -31,8 +31,8 @@ import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomParent;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
+import org.jetbrains.idea.maven.model.MavenProjectProblem;
 import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectProblem;
 
 import java.util.Arrays;
 
@@ -56,7 +56,7 @@ public class MavenDomAnnotator implements DomElementsAnnotator {
       for (MavenProjectProblem each : mavenProject.getProblems()) {
         MavenProjectProblem.ProblemType type = each.getType();
         if (!Arrays.asList(types).contains(type)) continue;
-        VirtualFile problemFile = each.findFile();
+        VirtualFile problemFile = LocalFileSystem.getInstance().findFileByPath(each.getPath());
 
         LocalQuickFix[] fixes = LocalQuickFix.EMPTY_ARRAY;
         if (problemFile != null && mavenProject.getFile() != problemFile) {

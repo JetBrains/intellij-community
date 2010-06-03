@@ -30,13 +30,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
-import org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesHelper;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
+import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.utils.MavenConstants;
-import org.jetbrains.idea.maven.project.MavenId;
+import org.jetbrains.idea.maven.model.MavenConstants;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -47,7 +46,6 @@ public class MavenParentRelativePathConverter extends ResolvingConverter<PsiFile
   public PsiFile fromString(@Nullable @NonNls String s, ConvertContext context) {
     if (s == null) return null;
 
-    // todo do need to refreshAndFind here?
     VirtualFile f = context.getFile().getVirtualFile().getParent().findFileByRelativePath(s);
     if (f == null) return null;
 

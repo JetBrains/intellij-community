@@ -59,7 +59,7 @@ public class HgCurrentBranchStatus extends JLabel implements CustomStatusBarWidg
     return "HgCurrentBranchStatus";
   }
 
-  public Presentation getPresentation(@NotNull Type type) {
+  public WidgetPresentation getPresentation(@NotNull Type type) {
     return null;
   }
 

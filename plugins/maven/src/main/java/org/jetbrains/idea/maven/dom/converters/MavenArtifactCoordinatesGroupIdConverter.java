@@ -3,13 +3,10 @@ package org.jetbrains.idea.maven.dom.converters;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.xml.ConvertContext;
-import com.intellij.util.xml.impl.ConvertContextImpl;
-import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
-import org.jetbrains.idea.maven.project.MavenId;
+import org.jetbrains.idea.maven.model.MavenId;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Set;
 
 public class MavenArtifactCoordinatesGroupIdConverter extends MavenArtifactCoordinatesConverter {

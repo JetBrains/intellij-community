@@ -25,9 +25,17 @@ import java.awt.*;
 public class TextPanel extends JComponent {
   private String myText;
   private final String myMaxPossibleString;
+  private Dimension myPrefSize;
+
+  private boolean myDecorate = true;
 
   TextPanel() {
     this(null);
+  }
+
+  TextPanel(final boolean decorate) {
+    this(null);
+    myDecorate = decorate;
   }
 
   TextPanel(@Nullable final String maxPossibleString) {
@@ -35,6 +43,16 @@ public class TextPanel extends JComponent {
 
     setFont(SystemInfo.isMac ? UIUtil.getLabelFont().deriveFont(11.0f) : UIUtil.getLabelFont());
     setOpaque(false);
+  }
+
+  public void recomputeSize() {
+    final JLabel label = new JLabel("XXX");
+    label.setFont(getFont());
+    myPrefSize = label.getPreferredSize();
+  }
+
+  public void setDecorate(boolean decorate) {
+    myDecorate = decorate;
   }
 
   @Override
@@ -47,13 +65,13 @@ public class TextPanel extends JComponent {
       final Graphics2D g2 = (Graphics2D)g;
       g2.setFont(getFont());
 
+      UIUtil.applyRenderingHints(g2);
+
       final int y = UIUtil.getStringY(s, bounds, g2);
-      if (SystemInfo.isMac) {
+      if (SystemInfo.isMac && myDecorate) {
         g2.setColor(new Color(215, 215, 215));
         g2.drawString(s, insets.left, y+1);
       }
-
-      UIUtil.applyRenderingHints(g2);
 
       g2.setColor(getForeground());
       g2.drawString(s, insets.left, y);
@@ -88,6 +106,11 @@ public class TextPanel extends JComponent {
   public Dimension getPreferredSize(){
     int max = 0;
     if (myMaxPossibleString != null) max = getFontMetrics(getFont()).stringWidth(myMaxPossibleString);
+
+    if (myPrefSize != null) {
+      return new Dimension(20 + max, myPrefSize.height);
+    }
+
     return new Dimension(20 + max, getMinimumSize().height);
   }
 }

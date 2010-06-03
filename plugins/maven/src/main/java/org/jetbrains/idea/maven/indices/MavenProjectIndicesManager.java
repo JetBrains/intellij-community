@@ -23,11 +23,13 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import gnu.trove.THashSet;
 import org.apache.lucene.search.Query;
+import org.jetbrains.idea.maven.facade.NativeMavenProjectHolder;
+import org.jetbrains.idea.maven.model.MavenArtifactInfo;
+import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.model.MavenRemoteRepository;
 import org.jetbrains.idea.maven.project.*;
-import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.utils.MavenMergingUpdateQueue;
 import org.jetbrains.idea.maven.utils.SimpleProjectComponent;
-import org.sonatype.nexus.index.ArtifactInfo;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -75,7 +77,7 @@ public class MavenProjectIndicesManager extends SimpleProjectComponent {
 
       @Override
       public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                                  org.apache.maven.project.MavenProject nativeMavenProject,
+                                  NativeMavenProjectHolder nativeMavenProject,
                                   Object message) {
         scheduleUpdateIndicesList();
       }
@@ -191,8 +193,8 @@ public class MavenProjectIndicesManager extends SimpleProjectComponent {
     return checkLocalRepository(groupId, artifactId, version);
   }
 
-  public Set<ArtifactInfo> search(Query query, int maxResult) {
-    Set<ArtifactInfo> result = new THashSet<ArtifactInfo>();
+  public Set<MavenArtifactInfo> search(Query query, int maxResult) {
+    Set<MavenArtifactInfo> result = new THashSet<MavenArtifactInfo>();
 
     for (MavenIndex each : myProjectIndices) {
       int remained = maxResult - result.size();

@@ -28,6 +28,8 @@ import com.intellij.openapi.util.AsyncResult;
 import com.intellij.psi.PsiFile;
 import gnu.trove.THashSet;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
+import org.jetbrains.idea.maven.model.MavenArtifact;
+import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.*;
 
 import javax.swing.*;

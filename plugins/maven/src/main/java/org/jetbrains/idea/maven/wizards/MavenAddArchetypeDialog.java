@@ -18,7 +18,7 @@ package org.jetbrains.idea.maven.wizards;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
-import org.jetbrains.idea.maven.indices.ArchetypeInfo;
+import org.jetbrains.idea.maven.model.MavenArchetype;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -80,8 +80,8 @@ public class MavenAddArchetypeDialog extends DialogWrapper {
     getRootPane().revalidate();
   }
 
-  public ArchetypeInfo getArchetype() {
-    return new ArchetypeInfo(myGroupIdField.getText(),
+  public MavenArchetype getArchetype() {
+    return new MavenArchetype(myGroupIdField.getText(),
                              myArtifactIdField.getText(),
                              myVersionField.getText(),
                              myRepositoryField.getText(),

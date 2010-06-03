@@ -15,11 +15,12 @@
  */
 package org.jetbrains.idea.maven.indices;
 
-import org.sonatype.nexus.index.ArtifactInfo;
 
-import java.util.List;
+import org.jetbrains.idea.maven.model.MavenArtifactInfo;
+
 import java.util.ArrayList;
+import java.util.List;
 
 public class MavenArtifactSearchResult {
-  public List<ArtifactInfo> versions = new ArrayList<ArtifactInfo>();
+  public List<MavenArtifactInfo> versions = new ArrayList<MavenArtifactInfo>();
 }

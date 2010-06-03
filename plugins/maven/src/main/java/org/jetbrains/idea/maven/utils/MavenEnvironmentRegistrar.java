@@ -22,7 +22,7 @@ import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.embedder.MavenEmbedderUtilEx;
+import org.jetbrains.idea.maven.model.MavenConstants;
 
 import java.io.File;
 
@@ -46,7 +46,7 @@ public class MavenEnvironmentRegistrar implements ApplicationComponent {
   }
 
   private void registerPathVariable() {
-    File repository = MavenEmbedderUtilEx.resolveLocalRepository(null, null, null);
+    File repository = MavenUtil.resolveLocalRepository(null, null, null);
     PathMacros macros = PathMacros.getInstance();
 
     for (String each : macros.getAllMacroNames()) {

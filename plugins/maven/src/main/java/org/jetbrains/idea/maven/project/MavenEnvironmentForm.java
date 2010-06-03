@@ -22,7 +22,7 @@ import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.embedder.MavenEmbedderUtilEx;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -32,21 +32,18 @@ import java.io.File;
 public class MavenEnvironmentForm {
   private JPanel panel;
   private LabeledComponent<TextFieldWithBrowseButton> mavenHomeComponent;
-  private LabeledComponent<TextFieldWithBrowseButton> localRepositoryComponent;
   private LabeledComponent<TextFieldWithBrowseButton> mavenSettingsFileComponent;
   private JCheckBox mavenHomeOverrideCheckBox;
   private JCheckBox mavenSettingsFileOverrideCheckBox;
-  private JCheckBox localRepositoryOverrideCheckBox;
   private final PathOverrider mavenHomeOverrider;
   private final PathOverrider mavenSettingsFileOverrider;
-  private final PathOverrider localRepositoryOverrider;
 
   public MavenEnvironmentForm() {
 
     mavenHomeOverrider = new PathOverrider(mavenHomeComponent, mavenHomeOverrideCheckBox, new PathOverrider.PathProvider() {
       @Nullable
       protected File getFile() {
-        return MavenEmbedderUtilEx.resolveMavenHomeDirectory("");
+        return MavenUtil.resolveMavenHomeDirectory("");
       }
     });
 
@@ -54,17 +51,7 @@ public class MavenEnvironmentForm {
       new PathOverrider(mavenSettingsFileComponent, mavenSettingsFileOverrideCheckBox, new PathOverrider.PathProvider() {
         @Nullable
         protected File getFile() {
-          return MavenEmbedderUtilEx.resolveUserSettingsFile("");
-        }
-      });
-
-    localRepositoryOverrider =
-      new PathOverrider(localRepositoryComponent, localRepositoryOverrideCheckBox, new PathOverrider.PathProvider() {
-        @Nullable
-        protected File getFile() {
-          return MavenEmbedderUtilEx.resolveLocalRepository(mavenHomeOverrider.getText(),
-                                                             mavenSettingsFileOverrider.getText(),
-                                                             "");
+          return MavenUtil.resolveUserSettingsFile("");
         }
       });
   }
@@ -78,13 +65,11 @@ public class MavenEnvironmentForm {
   public void setData(MavenGeneralSettings data) {
     data.setMavenHome(mavenHomeOverrider.getText());
     data.setMavenSettingsFile(mavenSettingsFileOverrider.getText());
-    data.setLocalRepository(localRepositoryOverrider.getText());
   }
 
   public void getData(MavenGeneralSettings data) {
     mavenHomeOverrider.setText(data.getMavenHome());
     mavenSettingsFileOverrider.setText(data.getMavenSettingsFile());
-    localRepositoryOverrider.setText(data.getLocalRepository());
   }
 
   public JComponent createComponent() {
@@ -93,9 +78,6 @@ public class MavenEnvironmentForm {
                                                               new FileChooserDescriptor(false, true, false, false, false, false));
     mavenSettingsFileComponent.getComponent().addBrowseFolderListener(ProjectBundle.message("maven.select.maven.settings.file"), "", null,
                                                                       new FileChooserDescriptor(true, false, false, false, false, false));
-    localRepositoryComponent.getComponent().addBrowseFolderListener(ProjectBundle.message("maven.select.local.repository"), "", null,
-                                                                    new FileChooserDescriptor(false, true, false, false, false, false));
-
     return panel;
   }
 

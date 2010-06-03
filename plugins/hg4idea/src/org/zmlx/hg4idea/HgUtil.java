@@ -18,6 +18,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.*;
 import com.intellij.vcsUtil.*;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 
@@ -127,6 +128,7 @@ public abstract class HgUtil {
    * @return The temporary copy the specified python file, with all the necessary hooks installed
    * to make sure it is completely removed at shutdown
    */
+  @Nullable
   public static File getTemporaryPythonFile(String base) {
     try {
       final File file = copyResourceToTempFile(base, ".py");

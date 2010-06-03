@@ -2,6 +2,7 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.module.Module;
 import org.jdom.Element;
+import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 

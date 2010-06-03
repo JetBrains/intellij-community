@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.maven.indices;
 
-import org.sonatype.nexus.index.ArtifactInfo;
+import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -114,9 +114,9 @@ public class MavenSearcherTest extends MavenIndicesTestCase {
     List<String> actualArtifacts = new ArrayList<String>();
     for (MavenClassSearchResult eachResult : new MavenClassSearcher().search(myProject, pattern, 100)) {
       String s = eachResult.className + "(" + eachResult.packageName + ")";
-      for (ArtifactInfo eachVersion : eachResult.versions) {
+      for (MavenArtifactInfo eachVersion : eachResult.versions) {
         if (s.length() > 0) s += " ";
-        s += eachVersion.groupId + ":" + eachVersion.artifactId + ":" + eachVersion.version;
+        s += eachVersion.getGroupId() + ":" + eachVersion.getArtifactId()+ ":" + eachVersion.getVersion();
       }
       actualArtifacts.add(s);
     }
@@ -127,9 +127,9 @@ public class MavenSearcherTest extends MavenIndicesTestCase {
     List<String> actual = new ArrayList<String>();
     for (MavenArtifactSearchResult eachResult : new MavenArtifactSearcher().search(myProject, pattern, 100)) {
       String s = "";
-      for (ArtifactInfo eachVersion : eachResult.versions) {
+      for (MavenArtifactInfo eachVersion : eachResult.versions) {
         if (s.length() > 0) s += " ";
-        s += eachVersion.groupId + ":" + eachVersion.artifactId + ":" + eachVersion.version;
+        s += eachVersion.getGroupId() + ":" + eachVersion.getArtifactId()+ ":" + eachVersion.getVersion();
       }
       actual.add(s);
     }

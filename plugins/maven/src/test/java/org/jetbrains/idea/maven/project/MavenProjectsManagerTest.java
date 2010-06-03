@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.facade.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 
 import java.io.File;
@@ -816,7 +817,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     myProjectsManager.addProjectsTreeListener(new MavenProjectsTree.ListenerAdapter() {
       @Override
       public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                                  org.apache.maven.project.MavenProject nativeMavenProject, Object message) {
+                                  NativeMavenProjectHolder nativeMavenProject, Object message) {
         called[0] = true;
       }
     });

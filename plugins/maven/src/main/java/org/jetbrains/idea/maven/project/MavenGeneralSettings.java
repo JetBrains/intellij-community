@@ -23,9 +23,9 @@ import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.embedder.MavenEmbedderUtilEx;
-import org.jetbrains.idea.maven.embedder.MavenExecutionOptions;
+import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -37,7 +37,7 @@ public class MavenGeneralSettings implements Cloneable {
   private boolean workOffline = false;
   private String mavenHome = "";
   private String mavenSettingsFile = "";
-  private String localRepository = "";
+  private String overridenLocalRepository = "";
   private boolean printErrorStackTraces = false;
   private boolean usePluginRegistry = false;
   private boolean nonRecursive = false;
@@ -52,7 +52,9 @@ public class MavenGeneralSettings implements Cloneable {
 
   private List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
 
-  public @NotNull MavenExecutionOptions.PluginUpdatePolicy getPluginUpdatePolicy() {
+  public
+  @NotNull
+  MavenExecutionOptions.PluginUpdatePolicy getPluginUpdatePolicy() {
     return pluginUpdatePolicy;
   }
 
@@ -81,7 +83,9 @@ public class MavenGeneralSettings implements Cloneable {
     this.failureBehavior = value;
   }
 
-  public @NotNull MavenExecutionOptions.LoggingLevel getLoggingLevel() {
+  public
+  @NotNull
+  MavenExecutionOptions.LoggingLevel getLoggingLevel() {
     return outputLevel;
   }
 
@@ -90,7 +94,9 @@ public class MavenGeneralSettings implements Cloneable {
     this.outputLevel = value;
   }
 
-  public @NotNull MavenExecutionOptions.SnapshotUpdatePolicy getSnapshotUpdatePolicy() {
+  public
+  @NotNull
+  MavenExecutionOptions.SnapshotUpdatePolicy getSnapshotUpdatePolicy() {
     return snapshotUpdatePolicy;
   }
 
@@ -108,23 +114,23 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   @NotNull
-  public String getLocalRepository() {
-    return localRepository;
+  public String getOverridenLocalRepository() {
+    return overridenLocalRepository;
   }
 
   public File getEffectiveLocalRepository() {
     File result = myEffectiveLocalRepositoryCache;
     if (result != null) return result;
 
-    result = MavenEmbedderUtilEx.resolveLocalRepository(mavenHome, mavenSettingsFile, localRepository);
+    result = MavenUtil.resolveLocalRepository(overridenLocalRepository, mavenHome, mavenSettingsFile);
     myEffectiveLocalRepositoryCache = result;
     return result;
   }
 
-  public void setLocalRepository(final @Nullable String localRepository) {
-    if (localRepository != null) {
-      if (!Comparing.equal(this.localRepository, localRepository)) {
-        this.localRepository = localRepository;
+  public void setOverridenLocalRepository(final @Nullable String overridenLocalRepository) {
+    if (overridenLocalRepository != null) {
+      if (!Comparing.equal(this.overridenLocalRepository, overridenLocalRepository)) {
+        this.overridenLocalRepository = overridenLocalRepository;
 
         localRepositoryChanged();
       }
@@ -147,7 +153,7 @@ public class MavenGeneralSettings implements Cloneable {
 
   @Nullable
   public File getEffectiveMavenHome() {
-    return MavenEmbedderUtilEx.resolveMavenHomeDirectory(getMavenHome());
+    return MavenUtil.resolveMavenHomeDirectory(getMavenHome());
   }
 
   @NotNull
@@ -175,12 +181,12 @@ public class MavenGeneralSettings implements Cloneable {
 
   @Nullable
   public File getEffectiveUserSettingsIoFile() {
-    return MavenEmbedderUtilEx.resolveUserSettingsFile(getMavenSettingsFile());
+    return MavenUtil.resolveUserSettingsFile(getMavenSettingsFile());
   }
 
   @Nullable
   public File getEffectiveGlobalSettingsIoFile() {
-    return MavenEmbedderUtilEx.resolveGlobalSettingsFile(getMavenHome());
+    return MavenUtil.resolveGlobalSettingsFile(getMavenHome());
   }
 
   @Nullable
@@ -206,7 +212,7 @@ public class MavenGeneralSettings implements Cloneable {
 
   @NotNull
   public VirtualFile getEffectiveSuperPom() {
-    return MavenEmbedderUtilEx.resolveSuperPomFile(getMavenHome());
+    return MavenUtil.resolveSuperPomFile(getEffectiveMavenHome());
   }
 
   public boolean isDefaultPlugin(String groupId, String artifactId) {
@@ -269,7 +275,7 @@ public class MavenGeneralSettings implements Cloneable {
     if (workOffline != that.workOffline) return false;
     if (!checksumPolicy.equals(that.checksumPolicy)) return false;
     if (!failureBehavior.equals(that.failureBehavior)) return false;
-    if (!localRepository.equals(that.localRepository)) return false;
+    if (!overridenLocalRepository.equals(that.overridenLocalRepository)) return false;
     if (!mavenHome.equals(that.mavenHome)) return false;
     if (!mavenSettingsFile.equals(that.mavenSettingsFile)) return false;
 
@@ -281,7 +287,7 @@ public class MavenGeneralSettings implements Cloneable {
     result = (workOffline ? 1 : 0);
     result = 31 * result + mavenHome.hashCode();
     result = 31 * result + mavenSettingsFile.hashCode();
-    result = 31 * result + localRepository.hashCode();
+    result = 31 * result + overridenLocalRepository.hashCode();
     result = 31 * result + (printErrorStackTraces ? 1 : 0);
     result = 31 * result + (usePluginRegistry ? 1 : 0);
     result = 31 * result + (nonRecursive ? 1 : 0);

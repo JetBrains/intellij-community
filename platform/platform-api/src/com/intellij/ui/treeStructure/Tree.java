@@ -29,6 +29,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.TreeSelectionEvent;
 import javax.swing.plaf.TreeUI;
 import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.text.Position;
@@ -46,6 +47,9 @@ public class Tree extends JTree implements ComponentWithEmptyText, Autoscroll, Q
   private AsyncProcessIcon myBusyIcon;
   private boolean myBusy;
   private Rectangle myLastVisibleRec;
+
+  private Dimension myHoldSize;
+  private MySelectionModel mySelectionModel = new MySelectionModel();
 
   public Tree() {
     initTree_();
@@ -78,6 +82,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, Autoscroll, Q
     }
 
     setCellRenderer(new NodeRenderer());
+
+    setSelectionModel(mySelectionModel);
   }
 
   @Override
@@ -159,15 +165,25 @@ public class Tree extends JTree implements ComponentWithEmptyText, Autoscroll, Q
 
   @Override
   public void paint(Graphics g) {
-    super.paint(g);
-
+    Rectangle clip = g.getClipBounds();
     final Rectangle visible = getVisibleRect();
 
-    if (!visible.equals(myLastVisibleRec)) {
-      updateBusyIconLocation();
+    if (!AbstractTreeBuilder.isToPaintSelection(this)) {
+      mySelectionModel.holdSelection();
     }
 
-    myLastVisibleRec = visible;
+    try {
+      super.paint(g);
+
+      if (!visible.equals(myLastVisibleRec)) {
+        updateBusyIconLocation();
+      }
+
+      myLastVisibleRec = visible;
+    }
+    finally {
+      mySelectionModel.unholdSelection();
+    }
   }
 
   public void setPaintBusy(boolean paintBusy) {
@@ -184,14 +200,26 @@ public class Tree extends JTree implements ComponentWithEmptyText, Autoscroll, Q
         myBusyIcon.setOpaque(false);
         myBusyIcon.setPaintPassiveIcon(false);
         add(myBusyIcon);
+        myBusyIcon.addMouseListener(new MouseAdapter() {
+          @Override
+          public void mousePressed(MouseEvent e) {
+            if (!UIUtil.isActionClick(e)) return;
+            AbstractTreeBuilder builder = AbstractTreeBuilder.getBuilderFor(Tree.this);
+            if (builder != null) {
+              builder.cancelUpdate();
+            }
+          }
+        });
       }
     }
 
     if (myBusyIcon != null) {
       if (myBusy) {
         myBusyIcon.resume();
+        myBusyIcon.setToolTipText("Update is in progress. Click to cancel");
       } else {
         myBusyIcon.suspend();
+        myBusyIcon.setToolTipText(null);
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             if (myBusyIcon != null) {
@@ -439,6 +467,30 @@ public class Tree extends JTree implements ComponentWithEmptyText, Autoscroll, Q
     return treeNode != null ? new TreePath(treeNode.getPath()) : new TreePath(node);
   }
 
+  private static class MySelectionModel extends DefaultTreeSelectionModel {
+
+    private TreePath[] myHeldSelection;
+
+    @Override
+    protected void fireValueChanged(TreeSelectionEvent e) {
+      if (myHeldSelection == null) {
+        super.fireValueChanged(e);
+      }
+    }
+
+    public void holdSelection() {
+      myHeldSelection = getSelectionPaths();
+      clearSelection();
+    }
+
+    public void unholdSelection() {
+      if (myHeldSelection != null) {
+        setSelectionPaths(myHeldSelection);
+        myHeldSelection = null;
+      }
+    }
+  }
+
   private class MyMouseListener extends MouseAdapter {
     public void mousePressed(MouseEvent mouseevent) {
       if (!SwingUtilities.isLeftMouseButton(mouseevent) &&
@@ -538,5 +590,25 @@ public class Tree extends JTree implements ComponentWithEmptyText, Autoscroll, Q
   @Override
   public void reshape(int x, int y, int w, int h) {
     super.reshape(x, y, w, h);
+  }
+
+  public void setHoldSize(boolean hold) {
+    if (hold && myHoldSize == null) {
+      myHoldSize = getPreferredSize();
+    } else if (!hold && myHoldSize != null) {
+      myHoldSize = null;
+      revalidate();
+    }
+  }
+
+  public Dimension getPreferredSize() {
+    Dimension size = super.getPreferredSize();
+
+    if (myHoldSize != null) {
+      size.width = Math.max(size.width, myHoldSize.width);
+      size.height = Math.max(size.height, myHoldSize.height);      
+    }
+
+    return size;
   }
 }
