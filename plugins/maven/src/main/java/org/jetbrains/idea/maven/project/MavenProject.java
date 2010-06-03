@@ -231,7 +231,9 @@ public class MavenProject {
 
   private static void addModulesToList(List<String> moduleNames, LinkedHashMap<String, String> result) {
     for (String name : moduleNames) {
-      if (name.trim().length() == 0) continue;
+      name = name.trim();
+      
+      if (name.length() == 0) continue;
 
       String originalName = name;
       // module name can be relative and contain either / of \\ separators

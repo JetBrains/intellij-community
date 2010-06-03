@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.model;
 
+import java.util.Collections;
 import java.util.List;
 
 public class MavenModel extends MavenModelBase {
@@ -23,7 +24,7 @@ public class MavenModel extends MavenModelBase {
   private String myPackaging;
   private String myName;
 
-  private List<MavenProfile> myProfiles;
+  private List<MavenProfile> myProfiles = Collections.emptyList();
 
   private final MavenBuild myBuild = new MavenBuild();
 

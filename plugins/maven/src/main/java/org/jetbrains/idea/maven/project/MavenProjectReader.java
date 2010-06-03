@@ -44,7 +44,7 @@ public class MavenProjectReader {
   private static final String UNKNOWN = MavenId.UNKNOWN_VALUE;
 
   private final Map<VirtualFile, RawModelReadResult> myRawModelsCache = new THashMap<VirtualFile, RawModelReadResult>();
-  private Pair<List<MavenProfile>, Collection<MavenProjectProblem>> mySettingsProfilesWithProblemsCache;
+  private SettingsProfilesCache mySettingsProfilesCache;
 
   public MavenProjectReaderResult readProject(MavenGeneralSettings generalSettings,
                                               VirtualFile file,
@@ -103,6 +103,9 @@ public class MavenProjectReader {
 
     Element xmlProject = readXml(file, problems, MavenProjectProblem.ProblemType.SYNTAX);
     if (xmlProject == null || !"project".equals(xmlProject.getName())) {
+      result.setMavenId(new MavenId(UNKNOWN, UNKNOWN, UNKNOWN));
+      result.setPackaging(MavenConstants.TYPE_JAR);
+
       return new RawModelReadResult(result, problems, alwaysOnProfiles);
     }
 
@@ -121,7 +124,7 @@ public class MavenProjectReader {
 
     if (headerOnly) return new RawModelReadResult(result, problems, alwaysOnProfiles);
 
-    result.setPackaging(MavenJDOMUtil.findChildValueByPath(xmlProject, "packaging", "jar"));
+    result.setPackaging(MavenJDOMUtil.findChildValueByPath(xmlProject, "packaging", MavenConstants.TYPE_JAR));
     result.setName(MavenJDOMUtil.findChildValueByPath(xmlProject, "name"));
 
     readModelBody(result, result.getBuild(), xmlProject);
@@ -208,7 +211,7 @@ public class MavenProjectReader {
   private List<MavenProfile> collectProfiles(VirtualFile projectFile,
                                              Element xmlProject,
                                              Collection<MavenProjectProblem> problems,
-                                             Collection<String> alwaysOnProfiles) {
+                                             Set<String> alwaysOnProfiles) {
     List<MavenProfile> result = new ArrayList<MavenProfile>();
     collectProfiles(MavenJDOMUtil.findChildrenByPath(xmlProject, "profiles", "profile"), result, MavenConstants.PROFILE_FROM_POM);
 
@@ -228,12 +231,13 @@ public class MavenProjectReader {
 
   private void addSettingsProfiles(MavenGeneralSettings generalSettings,
                                    MavenModel model,
-                                   Collection<String> alwaysOnProfiles,
+                                   Set<String> alwaysOnProfiles,
                                    Collection<MavenProjectProblem> problems) {
-    if (mySettingsProfilesWithProblemsCache == null) {
+    if (mySettingsProfilesCache == null) {
 
       List<MavenProfile> settingsProfiles = new ArrayList<MavenProfile>();
       Collection<MavenProjectProblem> settingsProblems = MavenProjectProblem.createProblemsList();
+      Set<String> settingsAlwaysOnProfiles = new THashSet<String>();
 
       for (VirtualFile each : generalSettings.getEffectiveSettingsFiles()) {
         collectProfilesFromSettingsXmlOrProfilesXml(each,
@@ -241,17 +245,18 @@ public class MavenProjectReader {
                                                     false,
                                                     MavenConstants.PROFILE_FROM_SETTINGS_XML,
                                                     settingsProfiles,
-                                                    alwaysOnProfiles,
+                                                    settingsAlwaysOnProfiles,
                                                     settingsProblems);
       }
-      mySettingsProfilesWithProblemsCache = Pair.create(settingsProfiles, settingsProblems);
+      mySettingsProfilesCache = new SettingsProfilesCache(settingsProfiles, settingsAlwaysOnProfiles, settingsProblems);
     }
 
     List<MavenProfile> modelProfiles = model.getProfiles();
-    for (MavenProfile each : mySettingsProfilesWithProblemsCache.first) {
+    for (MavenProfile each : mySettingsProfilesCache.profiles) {
       addProfileIfDoesNotExist(each, modelProfiles);
     }
-    problems.addAll(mySettingsProfilesWithProblemsCache.second);
+    problems.addAll(mySettingsProfilesCache.problems);
+    alwaysOnProfiles.addAll(mySettingsProfilesCache.alwaysOnProfiles);
   }
 
   private void collectProfilesFromSettingsXmlOrProfilesXml(VirtualFile profilesFile,
@@ -259,7 +264,7 @@ public class MavenProjectReader {
                                                            boolean wrapRootIfNecessary,
                                                            String profilesSource,
                                                            List<MavenProfile> result,
-                                                           Collection<String> alwaysOnProfiles,
+                                                           Set<String> alwaysOnProfiles,
                                                            Collection<MavenProjectProblem> problems) {
     Element rootElement = readXml(profilesFile, problems, MavenProjectProblem.ProblemType.SETTINGS_OR_PROFILES);
     if (rootElement == null) return;
@@ -506,6 +511,18 @@ public class MavenProjectReader {
         problems.add(MavenProjectProblem.createSyntaxProblem(file.getPath(), type));
       }
     });
+  }
+
+  private static class SettingsProfilesCache {
+    final List<MavenProfile> profiles;
+    final Set<String> alwaysOnProfiles;
+    final Collection<MavenProjectProblem> problems;
+
+    private SettingsProfilesCache(List<MavenProfile> profiles, Set<String> alwaysOnProfiles, Collection<MavenProjectProblem> problems) {
+      this.profiles = profiles;
+      this.alwaysOnProfiles = alwaysOnProfiles;
+      this.problems = problems;
+    }
   }
 
   private static class RawModelReadResult {

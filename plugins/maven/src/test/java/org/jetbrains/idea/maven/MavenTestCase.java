@@ -322,6 +322,10 @@ public abstract class MavenTestCase extends UsefulTestCase {
     return createProfilesFile(myProjectRoot, content);
   }
 
+  protected VirtualFile createFullProfilesXml(String relativePath, String content) throws IOException {
+    return createProfilesFile(createProjectSubDir(relativePath), content);
+  }
+
   private VirtualFile createProfilesFile(VirtualFile dir, String content) throws IOException {
     VirtualFile f = dir.findChild("profiles.xml");
     if (f == null) {
