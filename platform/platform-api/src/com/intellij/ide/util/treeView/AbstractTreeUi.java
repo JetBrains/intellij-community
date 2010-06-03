@@ -174,6 +174,8 @@ public class AbstractTreeUi {
   private boolean mySelectionIsAdjusted;
   private boolean myReleaseRequested;
 
+  private Set<Object> myRevalidatedObjects = new HashSet<Object>();
+
   protected void init(AbstractTreeBuilder builder,
                       JTree tree,
                       DefaultTreeModel treeModel,
@@ -230,20 +232,6 @@ public class AbstractTreeUi {
     Disposer.register(getBuilder(), uiNotify);
 
     myTree.addFocusListener(myFocusListener);
-
-    myTree.addComponentListener(new ComponentListener() {
-      public void componentResized(ComponentEvent e) {
-      }
-
-      public void componentMoved(ComponentEvent e) {
-      }
-
-      public void componentShown(ComponentEvent e) {
-      }
-
-      public void componentHidden(ComponentEvent e) {
-      }
-    });
   }
 
 
@@ -1786,6 +1774,8 @@ public class AbstractTreeUi {
     if (isReleased()) return;
 
     if (isReady()) {
+      myRevalidatedObjects.clear();
+
       myInitialized.setDone();
 
       if (canInitiateNewActivity()) {
@@ -3514,12 +3504,13 @@ public class AbstractTreeUi {
   }
 
   private void checkPathAndMaybeRevalidate(Object element, final Runnable onDone, final boolean parentsOnly, final boolean checkIfInStructure, final boolean canSmartExpand) {
-    boolean toRevalidate = getNodeForElement(element, false) == null && isInStructure(element);
+    boolean toRevalidate = !myRevalidatedObjects.contains(element) && getNodeForElement(element, false) == null && isInStructure(element);
     if (!toRevalidate) {
       runDone(onDone);
       return;
     }
 
+    myRevalidatedObjects.add(element);
     AsyncResult<Object> revalidated = getBuilder().revalidateElement(element);
     if (revalidated == null) {
       runDone(onDone);
