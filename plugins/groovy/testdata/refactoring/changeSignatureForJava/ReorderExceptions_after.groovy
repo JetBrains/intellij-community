@@ -5,7 +5,7 @@ class Derived1 extends Test {
 
     void bar () {
         try {
-            Test.foo();
+            foo();
         }
         catch (MyException e) {}
         catch (MyException1 myException1) {}

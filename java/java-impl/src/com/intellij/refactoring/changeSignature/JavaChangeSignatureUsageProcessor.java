@@ -26,7 +26,10 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.scope.processor.VariablesProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.*;
@@ -581,7 +584,8 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       }
     }
 
-    final PsiSubstitutor substitutor = baseMethod == null ? PsiSubstitutor.EMPTY : calculateSubstitutor(method, baseMethod);
+    final PsiSubstitutor substitutor =
+      baseMethod == null ? PsiSubstitutor.EMPTY : ChangeSignatureProcessor.calculateSubstitutor(method, baseMethod);
 
     if (changeInfo.isReturnTypeChanged()) {
       PsiType newTypeElement = changeInfo.getNewReturnType().getType(changeInfo.getMethod().getParameterList(), method.getManager());
@@ -658,7 +662,8 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       List<PsiParameter> newParameters = new ArrayList<PsiParameter>();
       newParameters.addAll(Arrays.asList(caller.getParameterList().getParameters()));
       final JavaParameterInfo[] primaryNewParms = changeInfo.getNewParameters();
-      PsiSubstitutor substitutor = baseMethod == null ? PsiSubstitutor.EMPTY : calculateSubstitutor(caller, baseMethod);
+      PsiSubstitutor substitutor =
+        baseMethod == null ? PsiSubstitutor.EMPTY : ChangeSignatureProcessor.calculateSubstitutor(caller, baseMethod);
       for (JavaParameterInfo info : primaryNewParms) {
         if (info.getOldIndex() < 0) newParameters.add(createNewParameter(changeInfo, info, substitutor));
       }
@@ -739,30 +744,6 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     for (FieldConflictsResolver fieldConflictsResolver : conflictResolvers) {
       fieldConflictsResolver.fix();
     }
-  }
-
-  private static PsiSubstitutor calculateSubstitutor(PsiMethod derivedMethod, PsiMethod baseMethod) {
-    PsiSubstitutor substitutor;
-    if (derivedMethod.getManager().areElementsEquivalent(derivedMethod, baseMethod)) {
-      substitutor = PsiSubstitutor.EMPTY;
-    }
-    else {
-      final PsiClass baseClass = baseMethod.getContainingClass();
-      final PsiClass derivedClass = derivedMethod.getContainingClass();
-      if (baseClass != null && derivedClass != null && InheritanceUtil.isInheritorOrSelf(derivedClass, baseClass, true)) {
-        final PsiSubstitutor superClassSubstitutor =
-          TypeConversionUtil.getSuperClassSubstitutor(baseClass, derivedClass, PsiSubstitutor.EMPTY);
-        final MethodSignature superMethodSignature = baseMethod.getSignature(superClassSubstitutor);
-        final MethodSignature methodSignature = derivedMethod.getSignature(PsiSubstitutor.EMPTY);
-        final PsiSubstitutor superMethodSubstitutor =
-          MethodSignatureUtil.getSuperMethodSignatureSubstitutor(methodSignature, superMethodSignature);
-        substitutor = superMethodSubstitutor != null ? superMethodSubstitutor : superClassSubstitutor;
-      }
-      else {
-        substitutor = PsiSubstitutor.EMPTY;
-      }
-    }
-    return substitutor;
   }
 
   private static boolean needToCatchExceptions(JavaChangeInfo changeInfo, PsiMethod caller) {

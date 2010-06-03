@@ -212,6 +212,10 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
     doTest(new SimpleInfo[]{new SimpleInfo("l", 1, null, null, "List<T>[]"), new SimpleInfo(0)});
   }
 
+  public void testReplaceVarargWithArray2() throws Exception {
+    doTest(new SimpleInfo[]{new SimpleInfo("l", 1, null, null, "Map<T, E>[]"), new SimpleInfo(0)});
+  }
+
   private PsiType createType(String typeText) {
     return JavaPsiFacade.getElementFactory(getProject()).createTypeByFQClassName(typeText, GlobalSearchScope.allScope(getProject()));
   }
@@ -243,7 +247,6 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
     executeRefactoring(newVisibility, newName, newReturnType, new SimpleParameterGen(parameterInfo, getProject()),
                        new SimpleExceptionsGen(exceptionInfo), generateDelegate);
     if (javaSrc.exists()) {
-      System.out.println(getTestName(false));
       myFixture.checkResultByFile(getTestName(false) + ".java", getTestName(false) + "_after.java", true);
     }
     myFixture.checkResultByFile(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy", true);

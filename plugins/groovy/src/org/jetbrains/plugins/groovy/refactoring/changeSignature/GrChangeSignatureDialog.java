@@ -331,17 +331,19 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
       return false;
     }
 
-    if (!checkType(myReturnTypeCodeFragment)) {
+    if (!checkType(myReturnTypeCodeFragment, true)) {
       showErrorHint(message("return.type.is.wrong"));
       return false;
     }
 
-    for (GrTableParameterInfo info : myParameterModel.getParameterInfos()) {
+    List<GrTableParameterInfo> parameterInfos = myParameterModel.getParameterInfos();
+    for (int i = 0; i < parameterInfos.size(); i++) {
+      GrTableParameterInfo info = parameterInfos.get(i);
       if (!StringUtil.isJavaIdentifier(info.getName())) {
         showErrorHint(message("name.is.wrong", info.getName()));
         return false;
       }
-      if (!checkType(info.getTypeFragment())) {
+      if (!checkType(info.getTypeFragment(), i == parameterInfos.size() - 1)) {
         showErrorHint(message("type.for.parameter.is.incorrect", info.getName()));
         return false;
       }
@@ -365,7 +367,7 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
         }
 
         PsiClassType throwable = JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory()
-          .createTypeByFQClassName("java.lang.Throwable", type.getResolveScope());
+          .createTypeByFQClassName("java.lang.Throwable", myMethod.getResolveScope());
         if (!throwable.isAssignableFrom(type)) {
           showErrorHint(GroovyRefactoringBundle.message("changeSignature.not.throwable.type", typeCodeFragment.getText()));
           return false;
@@ -385,9 +387,10 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
     return true;
   }
 
-  private static boolean checkType(PsiTypeCodeFragment typeCodeFragment) {
+  private static boolean checkType(PsiTypeCodeFragment typeCodeFragment, boolean allowEllipsis) {
     try {
-      typeCodeFragment.getType();
+      final PsiType type = typeCodeFragment.getType();
+      return allowEllipsis || !(type instanceof PsiEllipsisType);
     }
     catch (PsiTypeCodeFragment.TypeSyntaxException e) {
       return false;
@@ -395,7 +398,5 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
     catch (PsiTypeCodeFragment.NoTypeException e) {
       return true; //Groovy accepts methods and parameters without explicit type
     }
-    return true;
   }
-
 }

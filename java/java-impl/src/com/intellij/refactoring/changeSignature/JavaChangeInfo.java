@@ -62,4 +62,6 @@ public interface JavaChangeInfo extends ChangeInfo {
   boolean[] toRemoveParm();
 
   PsiExpression getValue(int i, PsiCallExpression callExpression);
+
+  void updateMethod(PsiMethod psiMethod);
 }
