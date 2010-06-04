@@ -102,15 +102,15 @@ public class JSStructuralSearchTest extends StructuralSearchTestCase {
                "    doc.print(\"not zero\");\n" +
                "  }\n" +
                "}";
+    doTest(s, "if ($exp$)" +
+              "  doc.print($lit1$);" +
+              "else" +
+              "  doc.print($lit2$);\n", 1);
     doTest(s, "if ($exp$) {\n" +
               "  doc.print($lit1$);" +
               "} else {" +
               "  doc.print($lit2$);\n" +
               "}", 1);
-/*    doTest(s, "if ($exp$)" +
-              "  doc.print($lit1$);" +
-              "else" +
-              "  doc.print($lit2$);\n", 1);*/
   }
 
   public void testCondition2() {
@@ -142,6 +142,8 @@ public class JSStructuralSearchTest extends StructuralSearchTestCase {
                "  doc.print(i);\n" +
                "  i++;\n" +
                "}";
+    doTest(s, "for (var $var$ = $start$; $var$ < $end$; $var$++)\n" +
+              "  $exp$;", 1);
     doTest(s, "for (var $var$ = $start$; $var$ < $end$; $var$++) {\n" +
               "}", 0);
     doTest(s, "for each(var $var$ in $list$){\n" +
@@ -158,12 +160,10 @@ public class JSStructuralSearchTest extends StructuralSearchTestCase {
               "  $exp$;\n" +
               "}", 0);
     doTest(s, "while($condition$)", 1);
-/*    doTest(s, "for (var $var$ = $start$; $var$ < $end$; $var$++)\n" +
-              "  $exp$;", 1);
     doTest(s, "while( $var$ < $end$) $exp$;", 0);
     doTest(s, "for each(var $var$ in $list$)\n" +
               "  $exp$;", 1);
-    doTest(s, "for (var $var$ = $start$; $var$ < $end$; $var$++)", 1);*/
+    doTest(s, "for (var $var$ = $start$; $var$ < $end$; $var$++)", 1);
   }
 
   public void testFunc1() {

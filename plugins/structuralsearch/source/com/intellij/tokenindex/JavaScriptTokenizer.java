@@ -21,67 +21,53 @@ public class JavaScriptTokenizer implements Tokenizer {
 
   @NotNull
   public List<Token> tokenize(Collection<? extends PsiElement> roots) {
-    MyVisitor visitor = new MyVisitor();
+    ArrayList<Token> tokens = new ArrayList<Token>();
     for (PsiElement root : roots) {
-      root.accept(visitor);
+      tokenize(root, tokens);
     }
-    return visitor.getTokens();
+    return tokens;
+  }
+
+  private static void tokenize(PsiElement root, List<Token> tokens) {
+    root.accept(new MyVisitor(tokens));
   }
 
   private static class MyVisitor extends JSRecursiveWalkingElementVisitor {
-    private final List<Token> myTokens = new ArrayList<Token>();
-    //private int myParentOffset = -1;
+    private final List<Token> myTokens;
+
+    private MyVisitor(List<Token> tokens) {
+      myTokens = tokens;
+    }
 
     @Override
     public void visitElement(PsiElement element) {
-      visitChildren(element);
+      super.visitElement(element);
       if (element instanceof LeafPsiElement && !(element instanceof PsiWhiteSpace)) {
         visitLeafElement((LeafPsiElement)element);
       }
     }
 
-    private void visitChildren(PsiElement element) {
-      //int temp = myParentOffset;
-      //myParentOffset = getTextOffset(element);
-      super.visitElement(element);
-      //myParentOffset = temp;
-    }
-
     @Override
     public void visitJSExpression(JSExpression expression) {
-      int offset = getTextOffset(expression);
+      int offset = expression.getTextOffset();
       myTokens.add(new AnonymToken(EXPRESSION_TYPE, offset));
-    }
-
-    private int getTextOffset(@NotNull PsiElement element) {
-      // performance hint: TreeElement#getTextOffset() works recursively upwards
-      /*if (myParentOffset >= 0) {
-        ASTNode node = element.getNode();
-        if (node instanceof TreeElement) {
-          return myParentOffset + ((TreeElement)node).getStartOffsetInParent();
-        }
-      }*/
-      return element.getTextOffset();
     }
 
     @Override
     public void visitJSParameterList(JSParameterList node) {
-      myTokens.add(new AnonymToken(PARAM_LIST_TYPE, getTextOffset(node)));
+      myTokens.add(new AnonymToken(PARAM_LIST_TYPE, node.getTextOffset()));
     }
 
     @Override
     public void visitJSBlock(JSBlockStatement node) {
       PsiElement parent = node.getParent();
       if (parent instanceof JSIfStatement || parent instanceof JSLoopStatement) {
-        //int temp = myParentOffset;
-        //myParentOffset = getTextOffset(node);
         for (JSStatement statement : node.getStatements()) {
-          statement.accept(this);
+          tokenize(statement, myTokens);
         }
-        //myParentOffset = temp;
       }
       else {
-        visitChildren(node);
+        super.visitElement(node);
       }
     }
 
@@ -90,15 +76,11 @@ public class JavaScriptTokenizer implements Tokenizer {
         return;
       }
       if (element.getElementType() == JSTokenTypes.IDENTIFIER) {
-        myTokens.add(new AnonymToken(IDENTIFIER_TYPE, getTextOffset(element)));
+        myTokens.add(new AnonymToken(IDENTIFIER_TYPE, element.getTextOffset()));
       }
       else {
-        myTokens.add(new TextToken(element.getText().hashCode(), getTextOffset(element)));
+        myTokens.add(new TextToken(element.getText().hashCode(), element.getTextOffset()));
       }
-    }
-
-    public List<Token> getTokens() {
-      return myTokens;
     }
   }
 }
