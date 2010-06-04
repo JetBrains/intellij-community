@@ -1500,6 +1500,8 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
   }
 
   public void testCustomSourcesAndJavadocPaths() throws Exception {
+    if (!checkUltimate()) return;
+    
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +

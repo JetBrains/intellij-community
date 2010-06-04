@@ -28,7 +28,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -44,8 +43,7 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
   private CommonProblemDescriptor myDescriptor;
   protected DescriptorProviderInspection myTool;
 
-  public ProblemDescriptionNode(final Object userObject,
-                                final DescriptorProviderInspection tool) {
+  public ProblemDescriptionNode(final Object userObject, final DescriptorProviderInspection tool) {
     super(userObject);
     myTool = tool;
   }
@@ -60,9 +58,14 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
   }
 
   @Nullable
-  public RefEntity getElement() { return myElement; }
+  public RefEntity getElement() {
+    return myElement;
+  }
+
   @Nullable
-  public CommonProblemDescriptor getDescriptor() { return myDescriptor; }
+  public CommonProblemDescriptor getDescriptor() {
+    return myDescriptor;
+  }
 
   public Icon getIcon(boolean expanded) {
     if (myDescriptor instanceof ProblemDescriptorImpl) {
@@ -78,7 +81,7 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
   }
 
   public boolean isValid() {
-    if (myElement instanceof RefElement && !((RefElement)myElement).isValid()) return false;
+    if (myElement instanceof RefElement && !myElement.isValid()) return false;
     final CommonProblemDescriptor descriptor = getDescriptor();
     if (descriptor instanceof ProblemDescriptor) {
       final PsiElement psiElement = ((ProblemDescriptor)descriptor).getPsiElement();
@@ -108,33 +111,49 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
   }
 
   public String toString() {
-    return renderDescriptionMessage(getDescriptor());
+    return renderDescriptionMessage(getDescriptor()).replaceAll("<[^>]*>", "");
   }
 
-  private static String renderDescriptionMessage(@Nullable CommonProblemDescriptor descriptor) {
+  public static String renderDescriptionMessage(CommonProblemDescriptor descriptor) {
     PsiElement psiElement = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
-    @NonNls String message = descriptor != null ? descriptor.getDescriptionTemplate().replaceAll("<[^>]*>", "") : "";
+    String message = descriptor.getDescriptionTemplate();
+
+    // no message. Should not be the case if inspection correctly implemented.
+    // noinspection ConstantConditions
+    if (message == null) return "";
+
+    message = StringUtil.replace(message, "<code>", "'");
+    message = StringUtil.replace(message, "</code>", "'");
     message = StringUtil.replace(message, "#loc", "");
-    message = StringUtil.replace(message, "#ref", extractHighlightedText(descriptor, psiElement));
+    if (message.contains("#ref")) {
+      String ref = extractHighlightedText(descriptor, psiElement);
+      message = StringUtil.replace(message, "#ref", ref);
+    }
     final int endIndex = message.indexOf("#end");
     if (endIndex > 0) {
       message = message.substring(0, endIndex);
     }
-    message = StringUtil.unescapeXml(message);
+
+    message = StringUtil.unescapeXml(message).trim();
     return message;
   }
 
   public static String extractHighlightedText(CommonProblemDescriptor descriptor, PsiElement psiElement) {
     if (psiElement == null || !psiElement.isValid()) return "";
     String ref = psiElement.getText();
-    if(descriptor instanceof ProblemDescriptorImpl) {
+    if (descriptor instanceof ProblemDescriptorImpl) {
       TextRange textRange = ((ProblemDescriptorImpl)descriptor).getTextRange();
       final TextRange elementRange = psiElement.getTextRange();
-      if (textRange!=null && elementRange!=null) {
+      if (textRange != null && elementRange != null) {
         textRange = textRange.shiftRight(-elementRange.getStartOffset());
-        if(textRange.getStartOffset() >= 0 && textRange.getEndOffset() <= ref.length())
+        if (textRange.getStartOffset() >= 0 && textRange.getEndOffset() <= ref.length()) {
           ref = textRange.substring(ref);
+        }
       }
+    }
+    ref = ref.replaceAll("\n", " ").trim();
+    if (ref.length() > 100) {
+      ref = ref.substring(0, 100).trim() + "...";
     }
     return ref;
   }

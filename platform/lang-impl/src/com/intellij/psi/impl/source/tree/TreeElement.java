@@ -93,8 +93,14 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
   }
 
   public int getStartOffset() {
-    if (myParent == null) return 0;
-    return myParent.getStartOffset() + getStartOffsetInParent();
+    int result = 0;
+    TreeElement current = this;
+    while(current.myParent != null) {
+      result += current.getStartOffsetInParent();
+      current = current.myParent;
+    }
+    
+    return result;
   }
 
   public final int getStartOffsetInParent() {

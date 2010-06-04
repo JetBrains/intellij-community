@@ -19,12 +19,14 @@ package com.intellij.refactoring.move.moveFilesOrDirectories;
 import com.intellij.ide.util.DirectoryUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.event.DocumentAdapter;
-import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -32,14 +34,15 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.ui.EditorComboBox;
-import com.intellij.ui.EditorComboWithBrowseButton;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.RecentsManager;
+import com.intellij.ui.TextFieldWithStoredHistory;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.io.File;
 
@@ -51,7 +54,7 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper{
   }
 
   private JLabel myNameLabel;
-  private EditorComboWithBrowseButton myTargetDirectoryField;
+  private ComponentWithBrowseButton<TextFieldWithStoredHistory> myTargetDirectoryField;
   private String myHelpID;
   private final Project myProject;
   private final Callback myCallback;
@@ -89,18 +92,21 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper{
     panel.add(new JLabel(RefactoringBundle.message("move.files.to.directory.label")),
               new GridBagConstraints(0,1,1,1,0,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(4,8,4,8),0,0));
 
-    myTargetDirectoryField = new EditorComboWithBrowseButton(null, "", myProject, RECENT_KEYS);
+    myTargetDirectoryField = new ComponentWithBrowseButton<TextFieldWithStoredHistory>(new TextFieldWithStoredHistory(RECENT_KEYS), null);
+    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     myTargetDirectoryField.addBrowseFolderListener(RefactoringBundle.message("select.target.directory"),
                                                    RefactoringBundle.message("the.file.will.be.moved.to.this.directory"),
                                                    myProject,
-                                                   FileChooserDescriptorFactory.createSingleFolderDescriptor(),
-                                                   EditorComboBox.COMPONENT_ACCESSOR);
+                                                   descriptor,
+                                                   TextComponentAccessor.TEXT_FIELD_WITH_STORED_HISTORY_WHOLE_TEXT);
+    final TextFieldWithStoredHistory textFieldWithStoredHistory = myTargetDirectoryField.getChildComponent();
+    FileChooserFactory.getInstance().installFileCompletion(textFieldWithStoredHistory.getTextEditor(), descriptor, true, getDisposable());
     myTargetDirectoryField.setTextFieldPreferredWidth(60);
     panel.add(myTargetDirectoryField, new GridBagConstraints(1,1,1,1,1,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(4,0,4,8),0,0));
 
-    myTargetDirectoryField.getChildComponent().getDocument().addDocumentListener(new DocumentAdapter() {
+    textFieldWithStoredHistory.addDocumentListener(new DocumentAdapter(){
       @Override
-      public void documentChanged(DocumentEvent e) {
+      protected void textChanged(DocumentEvent e) {
         validateOKButton();
       }
     });
@@ -135,7 +141,8 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper{
                           RefactoringBundle.message("move.specified.directories") :
                           RefactoringBundle.message("move.specified.elements"));
     }
-    myTargetDirectoryField.prependItem(initialTargetDirectory == null ? "" : initialTargetDirectory.getVirtualFile().getPresentableUrl());
+
+    myTargetDirectoryField.getChildComponent().setText(initialTargetDirectory == null ? "" : initialTargetDirectory.getVirtualFile().getPresentableUrl());
 
     validateOKButton();
     myHelpID = helpID;
@@ -146,16 +153,16 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper{
   }
 
   private void validateOKButton() {
-    setOKActionEnabled(myTargetDirectoryField.getText().length() > 0);
+    setOKActionEnabled(myTargetDirectoryField.getChildComponent().getText().length() > 0);
   }
 
   protected void doOKAction() {
-    RecentsManager.getInstance(myProject).registerRecentEntry(RECENT_KEYS, myTargetDirectoryField.getText());
+    myTargetDirectoryField.getChildComponent().addCurrentTextToHistory();
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
         final Runnable action = new Runnable() {
           public void run() {
-            String directoryName = myTargetDirectoryField.getText().replace(File.separatorChar, '/');
+            String directoryName = myTargetDirectoryField.getChildComponent().getText().replace(File.separatorChar, '/');
             try {
               myTargetDirectory = DirectoryUtil.mkdirs(PsiManager.getInstance(myProject), directoryName);
             }

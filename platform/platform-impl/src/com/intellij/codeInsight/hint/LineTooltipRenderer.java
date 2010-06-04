@@ -81,14 +81,14 @@ public class LineTooltipRenderer implements TooltipRenderer {
     int height = expanded ? Math.max(pane.getPreferredSize().height, 150) : pane.getPreferredSize().height;
 
     if (alignToRight) {
-      p.x -= width;
+      p.x = Math.max(0, p.x - width);
     }
 
     // try to make cursor outside tooltip. SCR 15038
     p.x += 3;
     p.y += 3;
 
-    if (p.x + width >= widthLimit) {
+    if (p.x >= widthLimit - width) {
       p.x = widthLimit - width;
       width = Math.min(width, widthLimit);
       height += 20;
@@ -98,7 +98,7 @@ public class LineTooltipRenderer implements TooltipRenderer {
       p.x = 3;
     }
 
-    if (p.y + height > heightLimit) {
+    if (p.y > heightLimit - height) {
       p.y = heightLimit - height;
       height = Math.min(heightLimit, height);
     }
@@ -107,7 +107,9 @@ public class LineTooltipRenderer implements TooltipRenderer {
       p.y = 3;
     }
 
-    //in order to restrict tooltip size
+    locateOutsideMouseCursor(editor, layeredPane, p, width, height, heightLimit);
+
+    // in order to restrict tooltip size
     pane.setSize(width, height);
     pane.setMaximumSize(new Dimension(width, height));
     pane.setMinimumSize(new Dimension(width, height));
@@ -115,7 +117,6 @@ public class LineTooltipRenderer implements TooltipRenderer {
 
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-
 
     final Ref<AnAction> anAction = new Ref<AnAction>();
     final LightweightHint hint = new LightweightHint(scrollPane) {
@@ -195,6 +196,27 @@ public class LineTooltipRenderer implements TooltipRenderer {
                                HintManagerImpl.HIDE_BY_ANY_KEY | HintManagerImpl.HIDE_BY_TEXT_CHANGE | HintManagerImpl.HIDE_BY_OTHER_HINT |
                                HintManagerImpl.HIDE_BY_SCROLLING, 0, false);
     return hint;
+  }
+
+  private static void locateOutsideMouseCursor(Editor editor,
+                                               JComponent editorComponent,
+                                               Point p,
+                                               int width,
+                                               int height,
+                                               int heightLimit) {
+    Point mouse = MouseInfo.getPointerInfo().getLocation();
+    SwingUtilities.convertPointFromScreen(mouse, editorComponent);
+    Rectangle tooltipRect = new Rectangle(p, new Dimension(width, height));
+    // should show at least one line apart
+    tooltipRect.setBounds(tooltipRect.x, tooltipRect.y - editor.getLineHeight(), width, height + 2 * editor.getLineHeight());
+    if (tooltipRect.contains(mouse)) {
+      if (mouse.y + height + editor.getLineHeight() > heightLimit && mouse.y - height - editor.getLineHeight() > 0) {
+        p.y = mouse.y - height - editor.getLineHeight();
+      }
+      else {
+        p.y = mouse.y + editor.getLineHeight();
+      }
+    }
   }
 
   protected String convertTextOnLinkHandled(String text) {

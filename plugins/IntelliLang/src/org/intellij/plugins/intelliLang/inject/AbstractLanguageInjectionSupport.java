@@ -87,7 +87,7 @@ public abstract class AbstractLanguageInjectionSupport extends LanguageInjection
       public void actionPerformed(AnActionEvent e) {
         if (!ApplicationManagerEx.getApplicationEx().isInternal()) return;
         final BaseInjection originalInjection = producer.create();
-        final BaseInjection newInjection = showInjectionUI(project, originalInjection.copy());
+        final BaseInjection newInjection = showDefaultInjectionUI(project, originalInjection.copy());
         if (newInjection != null) {
           originalInjection.copyFrom(newInjection);
           originalInjection.initializePlaces(true);
@@ -103,8 +103,8 @@ public abstract class AbstractLanguageInjectionSupport extends LanguageInjection
       @Override
       public void actionPerformed(AnActionEvent e) {
         final BaseInjection injection = new BaseInjection(support.getId());
-        injection.setDisplayName("New "+support.getId()+" Injection");
-        final BaseInjection newInjection = showInjectionUI(project, injection);
+        injection.setDisplayName("New "+ StringUtil.capitalize(support.getId())+" Injection");
+        final BaseInjection newInjection = showDefaultInjectionUI(project, injection);
         if (newInjection != null) {
           consumer.consume(injection);
         }
@@ -113,7 +113,8 @@ public abstract class AbstractLanguageInjectionSupport extends LanguageInjection
   }
 
   @Nullable
-  private static BaseInjection showInjectionUI(Project project, BaseInjection injection) {
+  protected static BaseInjection showDefaultInjectionUI(Project project, BaseInjection injection) {
+    if (!ApplicationManagerEx.getApplicationEx().isInternal()) return null;
     final BaseInjectionPanel panel = new BaseInjectionPanel(injection, project);
     panel.reset();
     final DialogBuilder builder = new DialogBuilder(project);

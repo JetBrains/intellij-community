@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="Mocks">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/dev/easymock.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/dev/jmock-1.0.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/dev/jmock-cglib-1.0.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/dev/easymockclassextension.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/dev/jmock-junit4-2.3.0-RC2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/dev/jmock-2.3.0-RC2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/dev/objenesis-1.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/dev/mockobjects-core-0.09.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/dev/hamcrest-library-1.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/dev/hamcrest-api-1.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

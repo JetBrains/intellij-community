@@ -67,6 +67,15 @@ public abstract class ParsingTestCase extends LightPlatformTestCase {
     }
   }
 
+  protected void doTest(String suffix) throws Exception{
+    String name = getTestName(false);
+    String text = loadFile(name + "." + myFileExt);
+    myFile = createPsiFile(name, text);
+    myFile.accept(new PsiRecursiveElementVisitor(){});
+    assertEquals(text, myFile.getText());
+    checkResult(name + suffix + ".txt", myFile);
+  }
+
   protected PsiFile createPsiFile(String name, String text) {
     return createFile(name + "." + myFileExt, text);
   }

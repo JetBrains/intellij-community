@@ -21,6 +21,7 @@
     <orderEntry type="module" module-name="xdebugger-impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="resources-en" scope="RUNTIME" />
     <orderEntry type="module" module-name="community-resources" scope="RUNTIME" />
+    <orderEntry type="library" exported="" name="Mocks" level="project" />
   </component>
 </module>
 
