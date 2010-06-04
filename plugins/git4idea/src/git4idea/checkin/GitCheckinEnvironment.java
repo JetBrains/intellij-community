@@ -170,6 +170,11 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    */
   public List<VcsException> commit(@NotNull List<Change> changes, @NotNull String message) {
     List<VcsException> exceptions = new ArrayList<VcsException>();
+    if (message.length() == 0) {
+      //noinspection ThrowableInstanceNeverThrown
+      exceptions.add(new VcsException("Empty commit message is not supported for the Git"));
+      return exceptions;
+    }
     Map<VirtualFile, List<Change>> sortedChanges = sortChangesByGitRoot(changes, exceptions);
     if (GitConvertFilesDialog.showDialogIfNeeded(myProject, mySettings, sortedChanges, exceptions)) {
       for (Map.Entry<VirtualFile, List<Change>> entry : sortedChanges.entrySet()) {
