@@ -611,7 +611,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       c.gridy = 1;
       c.weightx = 1;
       c.fill = GridBagConstraints.HORIZONTAL;
-      myAuthor = new JComboBox(mySettings.PREVIOUS_COMMIT_AUTHORS);
+      myAuthor = new JComboBox(mySettings.getCommitAuthors());
       myAuthor.insertItemAt("", 0);
       myAuthor.setSelectedItem("");
       myAuthor.setEditable(true);
