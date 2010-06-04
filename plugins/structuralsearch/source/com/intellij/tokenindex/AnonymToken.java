@@ -6,8 +6,8 @@ package com.intellij.tokenindex;
 public class AnonymToken extends Token {
   private final byte myType;
 
-  public AnonymToken(byte type, int offset) {
-    super(offset);
+  public AnonymToken(byte type, int start, int end) {
+    super(start, end);
     myType = type;
   }
 

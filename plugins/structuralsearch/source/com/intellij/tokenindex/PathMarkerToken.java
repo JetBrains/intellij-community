@@ -9,7 +9,7 @@ public class PathMarkerToken extends Token {
   private final String myPath;
 
   public PathMarkerToken(@NotNull String path) {
-    super(-1);
+    super(-1, -1);
     myPath = path;
   }
 

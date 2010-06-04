@@ -26,7 +26,7 @@ public class TokenIndex extends FileBasedIndexExtension<TokenIndexKey, List<Toke
   public static final ID<TokenIndexKey, List<Token>> ID = new ID<TokenIndexKey, List<Token>>("token.index") {
   };
 
-  private static final int VERSION = 1;
+  private static final int VERSION = 2;
 
   private final KeyDescriptor<TokenIndexKey> myKeyDescriptor = new TokenIndexKeyDescriptor();
 
@@ -40,12 +40,14 @@ public class TokenIndex extends FileBasedIndexExtension<TokenIndexKey, List<Toke
       for (Token token : value) {
         if (token instanceof AnonymToken) {
           out.writeByte(ANONYM_TOKEN_ID);
-          out.writeInt(token.getOffset());
+          out.writeInt(token.getStart());
+          out.writeInt(token.getEnd());
           out.writeByte(((AnonymToken)token).getType());
         }
         else if (token instanceof TextToken) {
           out.writeByte(TEXT_TOKEN_ID);
-          out.writeInt(token.getOffset());
+          out.writeInt(token.getStart());
+          out.writeInt(token.getEnd());
           out.writeInt(((TextToken)token).getHash());
         }
         else if (token instanceof PathMarkerToken) {
@@ -65,15 +67,17 @@ public class TokenIndex extends FileBasedIndexExtension<TokenIndexKey, List<Toke
         byte tokenTypeId = in.readByte();
         switch (tokenTypeId) {
           case ANONYM_TOKEN_ID: {
-            int offset = in.readInt();
+            int start = in.readInt();
+            int end = in.readInt();
             byte anonymTokenTypeValue = in.readByte();
-            result.add(new AnonymToken(anonymTokenTypeValue, offset));
+            result.add(new AnonymToken(anonymTokenTypeValue, start, end));
             break;
           }
           case TEXT_TOKEN_ID: {
-            int offset = in.readInt();
+            int start = in.readInt();
+            int end = in.readInt();
             int hash = in.readInt();
-            result.add(new TextToken(hash, offset));
+            result.add(new TextToken(hash, start, end));
             break;
           }
           case MARKER_TOKEN_ID: {

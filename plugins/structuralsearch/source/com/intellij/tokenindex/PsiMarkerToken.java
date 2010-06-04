@@ -9,7 +9,7 @@ public class PsiMarkerToken extends Token {
   private final PsiFile myFile;
 
   public PsiMarkerToken(PsiFile file) {
-    super(-1);
+    super(-1, -1);
     myFile = file;
   }
 

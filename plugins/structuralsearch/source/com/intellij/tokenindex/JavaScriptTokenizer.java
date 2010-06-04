@@ -2,6 +2,7 @@ package com.intellij.tokenindex;
 
 import com.intellij.lang.javascript.JSTokenTypes;
 import com.intellij.lang.javascript.psi.*;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
@@ -33,6 +34,10 @@ public class JavaScriptTokenizer implements Tokenizer {
     root.accept(new MyVisitor(tokens));
   }
 
+  private static void tokenizeChildren(PsiElement root, List<Token> tokens) {
+    root.acceptChildren(new MyVisitor(tokens));
+  }
+
   private static class MyVisitor extends JSRecursiveWalkingElementVisitor {
     private final List<Token> myTokens;
 
@@ -50,25 +55,32 @@ public class JavaScriptTokenizer implements Tokenizer {
 
     @Override
     public void visitJSExpression(JSExpression expression) {
-      int offset = expression.getTextOffset();
-      myTokens.add(new AnonymToken(EXPRESSION_TYPE, offset));
+      TextRange range = expression.getTextRange();
+      myTokens.add(new AnonymToken(EXPRESSION_TYPE, range.getStartOffset(), range.getEndOffset()));
     }
 
     @Override
     public void visitJSParameterList(JSParameterList node) {
-      myTokens.add(new AnonymToken(PARAM_LIST_TYPE, node.getTextOffset()));
+      TextRange range = node.getTextRange();
+      myTokens.add(new AnonymToken(PARAM_LIST_TYPE, range.getStartOffset(), range.getEndOffset()));
     }
 
     @Override
-    public void visitJSBlock(JSBlockStatement node) {
+    public void visitJSStatement(JSStatement node) {
       PsiElement parent = node.getParent();
       if (parent instanceof JSIfStatement || parent instanceof JSLoopStatement) {
-        for (JSStatement statement : node.getStatements()) {
-          tokenize(statement, myTokens);
+        if (node instanceof JSBlockStatement) {
+          for (JSStatement statement : ((JSBlockStatement)node).getStatements()) {
+            tokenize(statement, myTokens);
+          }
         }
+        else {
+          tokenizeChildren(node, myTokens);
+        }
+        myTokens.add(new IndentToken(-1, node.getTextRange().getEndOffset()));
       }
       else {
-        super.visitElement(node);
+        super.visitJSStatement(node);
       }
     }
 
@@ -77,10 +89,12 @@ public class JavaScriptTokenizer implements Tokenizer {
         return;
       }
       if (element.getElementType() == JSTokenTypes.IDENTIFIER) {
-        myTokens.add(new AnonymToken(IDENTIFIER_TYPE, element.getTextOffset()));
+        TextRange range = element.getTextRange();
+        myTokens.add(new AnonymToken(IDENTIFIER_TYPE, range.getStartOffset(), range.getEndOffset()));
       }
       else {
-        myTokens.add(new TextToken(element.getText().hashCode(), element.getTextOffset()));
+        TextRange range = element.getTextRange();
+        myTokens.add(new TextToken(element.getText().hashCode(), range.getStartOffset(), range.getEndOffset()));
       }
     }
   }

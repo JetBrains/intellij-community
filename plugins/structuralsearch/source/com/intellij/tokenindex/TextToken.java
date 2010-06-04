@@ -6,8 +6,8 @@ package com.intellij.tokenindex;
 public class TextToken extends Token {
   private final int myHash;
 
-  public TextToken(int hash, int offset) {
-    super(offset);
+  public TextToken(int hash, int start, int end) {
+    super(start, end);
     myHash = hash;
   }
 
