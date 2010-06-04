@@ -38,6 +38,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshSessionImpl;
 import com.intellij.util.Consumer;
+import com.intellij.util.FilePathByPathComparator;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.continuation.Continuation;
@@ -115,14 +116,6 @@ public class QuickMerge {
   private boolean prompt(final String question) {
     return Messages.showOkCancelDialog(myProject, question, myTitle, Messages.getQuestionIcon()) == 0;
   }
-
-  /*
-  * check whether urls are ok (not merge into self) (AWT)
-  * switched roots prompt (AWT)
-  * check source url
-  * ...
-  *
-  * */
 
   private class MyInitChecks extends TaskDescriptor {
     private MyInitChecks() {
@@ -525,22 +518,45 @@ public class QuickMerge {
         message = "There are local changes that will intersect with merge changes.\nDo you want to continue?";
       }
       if (intersection == null || intersection.getChangesSubset().isEmpty()) return;
-      /*final int result = Messages.showDialog(message, myTitle,
+
+      final LocalChangesAction action;
+      if (! myMergeAll) {
+        final LocalChangesAction[] possibleResults = {LocalChangesAction.shelve, LocalChangesAction.inspect,
+          LocalChangesAction.continueMerge, LocalChangesAction.cancel};
+        final int result = Messages.showDialog(message, myTitle,
                                                    new String[]{"Shelve local changes", "Inspect changes", "Continue merge", "Cancel"},
-                                                    0, Messages.getQuestionIcon());*/
-      final int result = Messages.showDialog(message, myTitle,
-                                                   new String[]{"Shelve local changes", "Continue merge", "Cancel"},
                                                     0, Messages.getQuestionIcon());
-      switch (result) {
+        action = possibleResults[result];
+      } else {
+        final LocalChangesAction[] possibleResults = {LocalChangesAction.shelve, LocalChangesAction.continueMerge, LocalChangesAction.cancel};
+        final int result = Messages.showDialog(message, myTitle,
+                                                     new String[]{"Shelve local changes", "Continue merge", "Cancel"},
+                                                      0, Messages.getQuestionIcon());
+        action = possibleResults[result];
+      }
+      switch (action) {
+        // shelve
+        case shelve:
+          context.next(new ShelveLocalChanges(intersection));
+          return;
         // cancel
-        case 2:
+        case cancel:
           context.cancelEverything();
           return;
-        case 1:
+        // continue
+        case continueMerge:
           return;
-        case 0:
+        // inspect
+        case inspect:
+          final Collection<Change> changes = (Collection<Change>) intersection.getChangesSubset().values();
+          final List<FilePath> paths = ChangesUtil.getPaths(changes);
+          Collections.sort(paths, FilePathByPathComparator.getInstance());
+          // todo rework message
+          IntersectingLocalChangesPanel.showInVersionControlToolWindow(myProject, myTitle + ", local changes intersection",
+                    paths, "The following file(s) have local changes that will intersect with merge changes:");
+          context.cancelEverything();
+          return;
         default:
-          context.next(new ShelveLocalChanges(intersection));
       }
     }
 
@@ -578,6 +594,13 @@ public class QuickMerge {
       }
       return intersection;
     }
+  }
+
+  private enum LocalChangesAction {
+    cancel,
+    continueMerge,
+    shelve,
+    inspect
   }
 
   private class ShelveLocalChanges extends TaskDescriptor {
