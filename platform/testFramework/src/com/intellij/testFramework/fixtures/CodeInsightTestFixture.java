@@ -26,6 +26,7 @@ import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -276,6 +277,8 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   Collection<UsageInfo> findUsages(final PsiElement to) throws Exception;
 
+  RangeHighlighter[] testHighlightUsages(String... files);
+
   void moveFile(@NonNls String filePath, @NonNls String to, final String... additionalFiles) throws Exception;
 
   /**
@@ -325,6 +328,9 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   @Nullable
   List<String> getLookupElementStrings();
+
+  @NotNull
+  PsiElement getElementAtCaret();
 
   void renameElementAtCaret(String newName) throws Exception;
 
