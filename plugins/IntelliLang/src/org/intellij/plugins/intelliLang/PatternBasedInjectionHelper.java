@@ -174,7 +174,9 @@ public class PatternBasedInjectionHelper {
       final char ch = curPos++ < text.length()? text.charAt(curPos-1) : 0;
       switch (curFrame.state) {
         case init:
-          if (Character.isJavaIdentifierStart(ch)) {
+          if (Character.isWhitespace(ch)) {
+          }
+          else if (Character.isJavaIdentifierStart(ch)) {
             curString.append(ch);
             curFrame.state = State.name;
           }
