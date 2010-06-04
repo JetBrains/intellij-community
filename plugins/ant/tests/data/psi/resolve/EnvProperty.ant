@@ -1,5 +1,5 @@
 <project default="main">
   <target name="main">
-    <echo message="p1=${<ref>env.ComSpec}"/>
+    <echo message="p1=${<ref>env.PATH}"/>
   </target>
 </project>
