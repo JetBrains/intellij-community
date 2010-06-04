@@ -11,9 +11,9 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor;
@@ -141,8 +141,11 @@ public class JSStructuralSearchProfile extends TokenBasedProfile {
     PsiElement[] elements = createPatternTree(matchOptions.getSearchPattern(), PatternTreeContext.File, fileType, project, false);
 
     for (PsiElement element : elements) {
-      if (element.getLastChild() instanceof PsiErrorElement) {
-        throw new UnsupportedPatternException(SSRBundle.message("replacement.template.expression.not.supported", fileType.getName()));
+      if (element instanceof JSExpressionStatement){
+        PsiElement lastChild = element.getLastChild();
+        if (!(lastChild instanceof LeafPsiElement && ((LeafPsiElement)lastChild).getElementType() == JSTokenTypes.SEMICOLON)) {
+          throw new UnsupportedPatternException(SSRBundle.message("replacement.template.expression.not.supported", fileType.getName()));
+        }
       }
     }
   }

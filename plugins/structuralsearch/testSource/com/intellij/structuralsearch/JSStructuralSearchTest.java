@@ -79,6 +79,16 @@ public class JSStructuralSearchTest extends StructuralSearchTestCase {
     doTest(s, "var a = 10", 1, 2);
   }
 
+  public void test9() {
+    String s = "doc.method1(null, \"a\");\n" +
+               "doc.method2(null);\n" +
+               "doc.method3(1, 2, 3);\n" +
+               "doc.method4();";
+    doTest(s, "doc.'_T('_T1*)", 4, 4);
+    doTest(s, "doc.'_T('_T1+)", 3, 4);
+    doTest(s, "doc.'_T('_T1)", 1, 4);
+  }
+
   public void testInnerExpression1() {
     String s = "a + b + c";
 
@@ -126,11 +136,18 @@ public class JSStructuralSearchTest extends StructuralSearchTestCase {
                "    doc.print(\"not zero\");\n" +
                "  }\n" +
                "}";
-    doTest(s, "if ($condition$) $exp$", 0, 1);
+    doTest(s, "if ($condition$) $exp$", 0, 0);
     doTest(s, "if ($condition$)", 1, 1);
     doTest(s, "if ($condition$) {\n" +
               "  $exp$;" +
-              "}", 0, 1);
+              "}", 0, 0);
+    doTest(s, "if ($condition$) {\n" +
+              "  $exp1$;\n" +
+              "  $exp2$;\n" +
+              "}", 1, 1);
+    /*doTest(s, "if ('condition) {\n" +
+              "  'exp*;\n" +
+              "}", 1, 1);*/
   }
 
   public void testLoop() {
@@ -146,26 +163,26 @@ public class JSStructuralSearchTest extends StructuralSearchTestCase {
                "  i++;\n" +
                "}";
     doTest(s, "for (var $var$ = $start$; $var$ < $end$; $var$++)\n" +
-              "  $exp$;", 1, 1);           doTest(s, "for each(var $var$ in $list$){\n" +
+              "  $exp$;", 1, 1);
+    doTest(s, "for each(var $var$ in $list$){\n" +
               "  $exp$;\n" +
               "}", 1, 1);
     doTest(s, "for (var $var$ = $start$; $var$ < $end$; $var$++) {\n" +
               "  $exp$;\n" +
               "}", 1, 1);
-
     doTest(s, "for(var $var$ = $start$; $endexp$; $incexp$) {\n" +
               "  $exp$;\n" +
               "}", 1, 1);
     doTest(s, "while( $var$ < $end$) {\n" +
               "  $exp$;\n" +
-              "}", 0, 1);
+              "}", 0, 0);
     doTest(s, "while($condition$)", 1, 1);
-    doTest(s, "while( $var$ < $end$) $exp$;", 0, 1);
+    doTest(s, "while( $var$ < $end$) $exp$;", 0, 0);
     doTest(s, "for each(var $var$ in $list$)\n" +
               "  $exp$;", 1, 1);
     doTest(s, "for (var $var$ = $start$; $var$ < $end$; $var$++)", 1, 1);
     doTest(s, "for (var $var$ = $start$; $var$ < $end$; $var$++) {\n" +
-              "}", 0, 1);
+              "}", 0, 0);
   }
 
   public void testFunc1() {
