@@ -141,7 +141,7 @@ public class QuickMerge {
     tasks.add(new MyInitChecks());
     tasks.add(new SourceUrlCorrection());
 
-    final boolean supportsMergeinfo = myWcInfo.getFormat().supportsMergeInfo();
+    final boolean supportsMergeinfo = myWcInfo.getFormat().supportsMergeInfo() && myWcInfo.isRepoSupportsMergeInfo();
     if (! supportsMergeinfo) {
       insertMergeAll(tasks);
     } else {
