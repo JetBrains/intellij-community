@@ -38,14 +38,16 @@ public abstract class InjectedLanguageBlockBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.xml.XmlInjectedLanguageBlockBuilder");
 
   public Block createInjectedBlock(ASTNode node, Block originalBlock, Indent indent, int offset, TextRange range) {
-    return new InjectedLanguageBlockWrapper(originalBlock, offset, range);
+    return new InjectedLanguageBlockWrapper(originalBlock, offset, range, indent);
   }
 
   public abstract CodeStyleSettings getSettings();
 
   public abstract boolean canProcessFragment(String text, ASTNode injectionHost);
 
-  public abstract Block createBlockNextToInjection(ASTNode node, Wrap wrap, Alignment alignment, Indent indent, TextRange range);
+  public abstract Block createBlockBeforeInjection(ASTNode node, Wrap wrap, Alignment alignment, Indent indent, TextRange range);
+
+  public abstract Block createBlockAfterInjection(ASTNode node, Wrap wrap, Alignment alignment, Indent indent, TextRange range);
 
   public boolean addInjectedBlocks(List<Block> result, final ASTNode injectionHost, Wrap wrap, Alignment alignment, Indent indent) {
     final PsiFile[] injectedFile = new PsiFile[1];
@@ -85,7 +87,7 @@ public abstract class InjectedLanguageBlockBuilder {
         int childOffset = range.getStartOffset();
         if (startOffset != 0) {
           final ASTNode leaf = injectionHost.findLeafElementAt(startOffset - 1);
-          result.add(createBlockNextToInjection(leaf, wrap, alignment, indent, new TextRange(childOffset, childOffset + startOffset)));
+          result.add(createBlockBeforeInjection(leaf, wrap, alignment, indent, new TextRange(childOffset, childOffset + startOffset)));
         }
 
         addInjectedLanguageBlockWrapper(result, injectedFile[0].getNode(), indent, childOffset + startOffset,
@@ -93,7 +95,7 @@ public abstract class InjectedLanguageBlockBuilder {
 
         if (endOffset != injectionHost.getTextLength()) {
           final ASTNode leaf = injectionHost.findLeafElementAt(endOffset);
-          result.add(createBlockNextToInjection(leaf, wrap, alignment, indent, new TextRange(childOffset + endOffset, range.getEndOffset())));
+          result.add(createBlockAfterInjection(leaf, wrap, alignment, indent, new TextRange(childOffset + endOffset, range.getEndOffset())));
         }
         return true;
       }

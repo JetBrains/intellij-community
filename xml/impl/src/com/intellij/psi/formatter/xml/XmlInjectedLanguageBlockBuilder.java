@@ -42,7 +42,12 @@ public class XmlInjectedLanguageBlockBuilder extends InjectedLanguageBlockBuilde
   }
 
   @Override
-  public Block createBlockNextToInjection(ASTNode node, Wrap wrap, Alignment alignment, Indent indent, TextRange range) {
+  public Block createBlockBeforeInjection(ASTNode node, Wrap wrap, Alignment alignment, Indent indent, TextRange range) {
+    return new XmlBlock(node, wrap, alignment, myXmlFormattingPolicy, indent, range);
+  }
+
+  @Override
+  public Block createBlockAfterInjection(ASTNode node, Wrap wrap, Alignment alignment, Indent indent, TextRange range) {
     return new XmlBlock(node, wrap, alignment, myXmlFormattingPolicy, indent, range);
   }
 

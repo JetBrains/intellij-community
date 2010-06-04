@@ -27,6 +27,7 @@ public final class InjectedLanguageBlockWrapper implements Block {
   private final Block myOriginal;
   private final int myOffset;
   private final TextRange myRange;
+  @Nullable private final Indent myIndent;
   private List<Block> myBlocks;
 
   /**
@@ -40,15 +41,17 @@ public final class InjectedLanguageBlockWrapper implements Block {
    * @param original block inside injected code
    * @param offset start offset of injected code inside the main document
    * @param range range of code inside injected document which is really placed in the main document
+   * @param indent
    */
-  public InjectedLanguageBlockWrapper(final @NotNull Block original, final int offset, @Nullable TextRange range) {
+  public InjectedLanguageBlockWrapper(final @NotNull Block original, final int offset, @Nullable TextRange range, @Nullable Indent indent) {
     myOriginal = original;
     myOffset = offset;
     myRange = range;
+    myIndent = indent;
   }
 
   public Indent getIndent() {
-    return myOriginal.getIndent();
+    return myIndent != null ? myIndent : myOriginal.getIndent();
   }
 
   @Nullable
@@ -58,7 +61,10 @@ public final class InjectedLanguageBlockWrapper implements Block {
 
   @NotNull
   public TextRange getTextRange() {
-    final TextRange range = myOriginal.getTextRange();
+    TextRange range = myOriginal.getTextRange();
+    if (myRange != null) {
+      range = range.intersection(myRange);
+    }
 
     int start = myOffset + range.getStartOffset() - (myRange != null ? myRange.getStartOffset() : 0);
     return TextRange.from(start, range.getLength());
@@ -80,7 +86,7 @@ public final class InjectedLanguageBlockWrapper implements Block {
     final ArrayList<Block> result = new ArrayList<Block>(list.size());
     if (myRange == null) {
       for (Block block : list) {
-        result.add(new InjectedLanguageBlockWrapper(block, myOffset, myRange));
+        result.add(new InjectedLanguageBlockWrapper(block, myOffset, myRange, null));
       }
     }
     else {
@@ -93,7 +99,7 @@ public final class InjectedLanguageBlockWrapper implements Block {
     for (Block block : list) {
       final TextRange textRange = block.getTextRange();
       if (range.contains(textRange)) {
-        result.add(new InjectedLanguageBlockWrapper(block, myOffset, range));
+        result.add(new InjectedLanguageBlockWrapper(block, myOffset, range, null));
       }
       else if (textRange.intersectsStrict(range)) {
         collectBlocksIntersectingRange(block.getSubBlocks(), result, range);
