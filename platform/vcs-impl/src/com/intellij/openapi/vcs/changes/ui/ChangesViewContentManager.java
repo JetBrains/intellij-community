@@ -42,6 +42,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -78,27 +80,29 @@ public class ChangesViewContentManager extends AbstractProjectComponent {
           myToolWindow = toolWindowManager.registerToolWindow(TOOLWINDOW_ID, true, ToolWindowAnchor.BOTTOM, myProject, true);
           myToolWindow.setIcon(IconLoader.getIcon("/general/toolWindowChanges.png"));
           updateToolWindowAvailability();
-          myContentManager = myToolWindow.getContentManager();
+          final ContentManager contentManager = myToolWindow.getContentManager();
           myContentManagerListener = new MyContentManagerListener();
-          myContentManager.addContentManagerListener(myContentManagerListener);
+          contentManager.addContentManagerListener(myContentManagerListener);
 
-          for(Content content: myAddedContents) {
-            myContentManager.addContent(content);
-          }
-          myAddedContents.clear();
           myVcsManager.addVcsListener(myVcsListener);
 
           Disposer.register(myProject, new Disposable(){
             public void dispose() {
-              myContentManager.removeContentManagerListener(myContentManagerListener);
+              contentManager.removeContentManagerListener(myContentManagerListener);
 
               myVcsManager.removeVcsListener(myVcsListener);
             }
           });
 
           loadExtensionTabs();
-          if (myContentManager.getContentCount() > 0) {
-            myContentManager.setSelectedContent(myContentManager.getContent(0));
+          myContentManager = contentManager;
+          final List<Content> ordered = doPresetOrdering(myAddedContents);
+          for(Content content: ordered) {
+            myContentManager.addContent(content);
+          }
+          myAddedContents.clear();
+          if (contentManager.getContentCount() > 0) {
+            contentManager.setSelectedContent(contentManager.getContent(0));
           }
         }
       }
@@ -106,13 +110,18 @@ public class ChangesViewContentManager extends AbstractProjectComponent {
   }
 
   private void loadExtensionTabs() {
+    final List<Content> contentList = new LinkedList<Content>();
     final ChangesViewContentEP[] contentEPs = myProject.getExtensions(ChangesViewContentEP.EP_NAME);
     for(ChangesViewContentEP ep: contentEPs) {
       final NotNullFunction<Project,Boolean> predicate = ep.newPredicateInstance(myProject);
       if (predicate == null || predicate.fun(myProject).equals(Boolean.TRUE)) {
-        addExtensionTab(ep);
+        final Content content = ContentFactory.SERVICE.getInstance().createContent(new ContentStub(ep), ep.getTabName(), false);
+        content.setCloseable(false);
+        content.putUserData(myEPKey, ep);
+        contentList.add(content);
       }
     }
+    myAddedContents.addAll(0, contentList);
   }
 
   private void addExtensionTab(final ChangesViewContentEP ep) {
@@ -244,5 +253,21 @@ public class ChangesViewContentManager extends AbstractProjectComponent {
         }
       }
     }
+  }
+
+  private final static String[] ourPresetOrder = {"Local", "Repository", "Incoming", "Shelf"};
+  private List<Content> doPresetOrdering(final List<Content> contents) {
+    final List<Content> result = new ArrayList<Content>(contents.size());
+    for (final String preset : ourPresetOrder) {
+      for (Iterator<Content> iterator = contents.iterator(); iterator.hasNext();) {
+        final Content current = iterator.next();
+        if (preset.equals(current.getTabName())) {
+          iterator.remove();
+          result.add(current);
+        }
+      }
+    }
+    result.addAll(contents);
+    return result;
   }
 }
