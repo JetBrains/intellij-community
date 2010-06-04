@@ -146,6 +146,72 @@ public class ArtifactsDownloadingTest extends MavenImportingTestCase {
     assertTrue(javadoc.exists());
   }
 
+  public void testCustomDocsAndSources() throws Exception {
+    if (!checkUltimate()) return;
+
+    String remoteRepo = FileUtil.toSystemIndependentName(myDir.getPath() + "/repo");
+    updateSettingsXmlFully("<settings>" +
+                           "<mirrors>" +
+                           "  <mirror>" +
+                           "    <id>Nexus</id>" +
+                           "    <url>" + VfsUtil.pathToUrl(remoteRepo) + "</url>" +
+                           "    <mirrorOf>*</mirrorOf>" +
+                           "  </mirror>" +
+                           "</mirrors>" +
+                           "</settings>");
+
+    FileUtil.writeToFile(new File(remoteRepo, "/xxx/yyy/1/yyy-1-sources.jar"), "111".getBytes());
+    FileUtil.writeToFile(new File(remoteRepo, "/xxx/yyy/1/yyy-1-sources.jar.sha1"),
+                         "6216f8a75fd5bb3d5f22b6f9958cdede3fc086c2  xxx/yyy/1/yyy-1-sources.jar".getBytes());
+
+    FileUtil.writeToFile(new File(remoteRepo, "/xxx/yyy/1/yyy-1-asdoc.zip"), "111".getBytes());
+    FileUtil.writeToFile(new File(remoteRepo, "/xxx/yyy/1/yyy-1-asdoc.zip.sha1"),
+                         "6216f8a75fd5bb3d5f22b6f9958cdede3fc086c2  xxx/yyy/1/yyy-1-asdoc.zip".getBytes());
+
+    FileUtil.writeToFile(new File(remoteRepo, "/xxx/yyy/1/yyy-1-javadoc.jar"), "111".getBytes());
+    FileUtil.writeToFile(new File(remoteRepo, "/xxx/yyy/1/yyy-1-javadoc.jar.sha1"),
+                         "6216f8a75fd5bb3d5f22b6f9958cdede3fc086c2  xxx/yyy/1/yyy-1-javadoc.jar".getBytes());
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<packaging>swf</packaging>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>xxx</groupId>" +
+                  "    <artifactId>yyy</artifactId>" +
+                  "    <version>1</version>" +
+                  "    <type>swc</type>" +
+                  "  </dependency>" +
+                  "</dependencies>" +
+
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.sonatype.flexmojos</groupId>" +
+                  "      <artifactId>flexmojos-maven-plugin</artifactId>" +
+                  "      <version>3.5.0</version>" +
+                  "      <extensions>true</extensions>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    File sources = new File(getRepositoryPath(), "/xxx/yyy/1/yyy-1-sources.jar");
+    File asdoc = new File(getRepositoryPath(), "/xxx/yyy/1/yyy-1-asdoc.zip");
+    File javadoc = new File(getRepositoryPath(), "/xxx/yyy/1/yyy-1-javadoc.jar");
+
+    assertFalse(sources.exists());
+    assertFalse(asdoc.exists());
+    assertFalse(javadoc.exists());
+
+    downloadArtifacts();
+
+    assertTrue(sources.exists());
+    assertTrue(asdoc.exists());
+    assertFalse(javadoc.exists());
+  }
+
   public void testDownloadingPlugins() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +

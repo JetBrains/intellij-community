@@ -52,6 +52,7 @@ import com.intellij.usages.UsageTargetUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
+import junit.framework.AssertionFailedError;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
@@ -279,7 +280,7 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
     invokeRename(context, renameHandler);
   }
 
-  protected void assertCannotRename() throws IOException {
+  protected void assertCannotRename() throws Exception {
     MapDataContext context = createRenameDataContext(myProjectPom, "new name");
     RenameHandler handler = RenameHandlerRegistry.getInstance().getRenameHandler(context);
     if (handler == null) return;
@@ -287,7 +288,9 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
       invokeRename(context, handler);
     }
     catch (Exception e) {
-      assertTrue(e.getMessage(), e.getMessage().startsWith("Cannot perform refactoring."));
+      if (!e.getMessage().startsWith("Cannot perform refactoring.")) {
+        throw e;
+      }
     }
   }
 
