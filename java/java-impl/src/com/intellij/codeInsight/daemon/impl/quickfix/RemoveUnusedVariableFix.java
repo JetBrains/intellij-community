@@ -39,8 +39,6 @@ import java.util.*;
 public class RemoveUnusedVariableFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableFix");
   private final PsiVariable myVariable;
-  @NonNls private static final String JAVA_LANG_PCKG = "java.lang";
-  @NonNls private static final String JAVA_IO_PCKG = "java.io";
 
   public RemoveUnusedVariableFix(PsiVariable variable) {
     myVariable = variable;
@@ -356,10 +354,10 @@ public class RemoveUnusedVariableFix implements IntentionAction {
     PsiFile file = aClass.getContainingFile();
     PsiDirectory directory = file.getContainingDirectory();
     PsiPackage classPackage = JavaDirectoryService.getInstance().getPackage(directory);
-    String packageName = classPackage.getQualifiedName();
+    String packageName = classPackage == null ? null : classPackage.getQualifiedName();
 
     // all Throwable descendants from java.lang are side effects free
-    if (JAVA_LANG_PCKG.equals(packageName) || JAVA_IO_PCKG.equals(packageName)) {
+    if ("java.lang".equals(packageName) || "java.io".equals(packageName)) {
       PsiClass throwableClass = JavaPsiFacade.getInstance(aClass.getProject()).findClass("java.lang.Throwable", aClass.getResolveScope());
       if (throwableClass != null && InheritanceUtil.isInheritorOrSelf(aClass, throwableClass, true)) {
         return true;

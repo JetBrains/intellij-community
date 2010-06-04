@@ -29,6 +29,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -518,6 +519,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     checkResultByFile(fileAfter);
   }
 
+  @NotNull
+  public PsiElement getElementAtCaret() {
+    assertInitialized();
+    final PsiElement element = TargetElementUtilBase.findTargetElement(getCompletionEditor(),
+        TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED | TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
+    assert element != null : "element not found in file " + myFile.getName() + " at caret position, offset " + myEditor.getCaretModel().getOffset();
+    return element;
+  }
+
   public void renameElementAtCaret(final String newName) throws Exception {
     assertInitialized();
     final PsiElement element = TargetElementUtilBase.findTargetElement(getCompletionEditor(), TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED |
@@ -597,14 +607,20 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final FindUsagesHandler handler = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager().getFindUsagesHandler(targetElement, false);
 
     final CommonProcessors.CollectProcessor<UsageInfo> processor = new CommonProcessors.CollectProcessor<UsageInfo>();
-    final FindUsagesOptions options = new FindUsagesOptions(project, null);
-    options.isUsages = true;
     assert handler != null : "Cannot find handler for: " + targetElement;
     final PsiElement[] psiElements = ArrayUtil.mergeArrays(handler.getPrimaryElements(), handler.getSecondaryElements(), PsiElement.class);
+    final FindUsagesOptions options = handler.getFindUsagesOptions();
     for (PsiElement psiElement : psiElements) {
       handler.processElementUsages(psiElement, processor, options);
     }
     return processor.getResults();
+  }
+
+  public RangeHighlighter[] testHighlightUsages(final String... files) {
+    configureByFiles(files);
+    final Editor editor = getEditor();
+    HighlightUsagesHandler.invoke(getProject(), editor, getFile());
+    return editor.getMarkupModel().getAllHighlighters();
   }
 
   public void moveFile(@NonNls final String filePath, @NonNls final String to, final String... additionalFiles) throws Exception {
