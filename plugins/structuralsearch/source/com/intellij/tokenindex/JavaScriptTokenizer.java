@@ -2,6 +2,7 @@ package com.intellij.tokenindex;
 
 import com.intellij.lang.javascript.JSTokenTypes;
 import com.intellij.lang.javascript.psi.*;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
@@ -42,7 +43,7 @@ public class JavaScriptTokenizer implements Tokenizer {
     @Override
     public void visitElement(PsiElement element) {
       super.visitElement(element);
-      if (element instanceof LeafPsiElement && !(element instanceof PsiWhiteSpace)) {
+      if (element instanceof LeafPsiElement && !(element instanceof PsiWhiteSpace) && !(element instanceof PsiComment)) {
         visitLeafElement((LeafPsiElement)element);
       }
     }

@@ -128,7 +128,7 @@ public class TokenBasedSearcher {
     }
   }
 
-  public void search(CompiledPattern compiledPattern) {
+  public int search(CompiledPattern compiledPattern) {
     Set<Language> languages = getLanguages(compiledPattern);
     assert languages.size() == 1;
     final Language patternLanguage = languages.iterator().next();
@@ -148,9 +148,9 @@ public class TokenBasedSearcher {
       }
     });
 
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        search(patternTokens);
+    return ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
+      public Integer compute() {
+        return search(patternTokens);
       }
     });
   }
@@ -294,7 +294,7 @@ public class TokenBasedSearcher {
     }
   }
 
-  private void search(final List<Token> patternTokens) {
+  private int search(final List<Token> patternTokens) {
     addTask(new Runnable() {
       public void run() {
         if (myTokens == null) {
@@ -313,6 +313,8 @@ public class TokenBasedSearcher {
     assert patternLength > 0;
 
     addTask(new MySearcher(patternLength));
+
+    return myOccurences.length;
   }
 
   @Nullable
