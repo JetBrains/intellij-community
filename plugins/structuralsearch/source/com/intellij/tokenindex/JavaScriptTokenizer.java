@@ -1,12 +1,10 @@
 package com.intellij.tokenindex;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.javascript.JSTokenTypes;
 import com.intellij.lang.javascript.psi.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -30,9 +28,9 @@ public class JavaScriptTokenizer implements Tokenizer {
     return visitor.getTokens();
   }
 
-  private static class MyVisitor extends JSRecursiveElementVisitor {
+  private static class MyVisitor extends JSRecursiveWalkingElementVisitor {
     private final List<Token> myTokens = new ArrayList<Token>();
-    private int myParentOffset = -1;
+    //private int myParentOffset = -1;
 
     @Override
     public void visitElement(PsiElement element) {
@@ -43,10 +41,10 @@ public class JavaScriptTokenizer implements Tokenizer {
     }
 
     private void visitChildren(PsiElement element) {
-      int temp = myParentOffset;
-      myParentOffset = getTextOffset(element);
+      //int temp = myParentOffset;
+      //myParentOffset = getTextOffset(element);
       super.visitElement(element);
-      myParentOffset = temp;
+      //myParentOffset = temp;
     }
 
     @Override
@@ -57,12 +55,12 @@ public class JavaScriptTokenizer implements Tokenizer {
 
     private int getTextOffset(@NotNull PsiElement element) {
       // performance hint: TreeElement#getTextOffset() works recursively upwards
-      if (myParentOffset >= 0) {
+      /*if (myParentOffset >= 0) {
         ASTNode node = element.getNode();
         if (node instanceof TreeElement) {
           return myParentOffset + ((TreeElement)node).getStartOffsetInParent();
         }
-      }
+      }*/
       return element.getTextOffset();
     }
 
@@ -75,12 +73,12 @@ public class JavaScriptTokenizer implements Tokenizer {
     public void visitJSBlock(JSBlockStatement node) {
       PsiElement parent = node.getParent();
       if (parent instanceof JSIfStatement || parent instanceof JSLoopStatement) {
-        int temp = myParentOffset;
-        myParentOffset = getTextOffset(node);
+        //int temp = myParentOffset;
+        //myParentOffset = getTextOffset(node);
         for (JSStatement statement : node.getStatements()) {
           statement.accept(this);
         }
-        myParentOffset = temp;
+        //myParentOffset = temp;
       }
       else {
         visitChildren(node);
