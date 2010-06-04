@@ -403,4 +403,14 @@ public class InjectedLanguageUtil {
 
     return isStartOverflows && isEndOverflows;
   }
+
+  public static boolean hasInjections(@NotNull PsiLanguageInjectionHost host) {
+    final Ref<Boolean> result = Ref.create(false);
+    host.processInjectedPsi(new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+      public void visit(@NotNull final PsiFile injectedPsi, @NotNull final List<PsiLanguageInjectionHost.Shred> places) {
+        result.set(true);
+      }
+    });
+    return result.get().booleanValue();
+  }
 }

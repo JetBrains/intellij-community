@@ -18,8 +18,8 @@ package com.intellij.util.xml.impl;
 import com.intellij.javaee.web.PsiReferenceConverter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
@@ -44,16 +44,6 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
     myProviders.put(clazz, provider);
   }
 
-  static boolean hasInjections(PsiLanguageInjectionHost host) {
-    final Ref<Boolean> result = Ref.create(false);
-    host.processInjectedPsi(new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-      public void visit(@NotNull final PsiFile injectedPsi, @NotNull final List<PsiLanguageInjectionHost.Shred> places) {
-        result.set(true);
-      }
-    });
-    return result.get().booleanValue();
-  }
-
   @NotNull
   public final PsiReference[] getReferencesByElement(@NotNull PsiElement psiElement, @NotNull final ProcessingContext context) {
     final DomManager domManager = DomManager.getDomManager(psiElement.getProject());
@@ -73,10 +63,10 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
 
     if (psiElement instanceof XmlTag) {
       for (XmlText text : ((XmlTag)psiElement).getValue().getTextElements()) {
-        if (hasInjections((PsiLanguageInjectionHost)text)) return PsiReference.EMPTY_ARRAY;
+        if (InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)text)) return PsiReference.EMPTY_ARRAY;
       }
     } else {
-      if (hasInjections((PsiLanguageInjectionHost)psiElement)) return PsiReference.EMPTY_ARRAY;
+      if (InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)psiElement)) return PsiReference.EMPTY_ARRAY;
     }
 
     final GenericDomValue domValue = (GenericDomValue)domElement;
