@@ -570,18 +570,21 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       String methodName = methodExpr.getReferenceName();
       if (methodName != null) {
         String[] words = NameUtil.nameToWords(methodName);
-        if (words.length > 1) {
-          String firstWord = words[0];
+        if (words.length > 0) {
+          final String firstWord = words[0];
           if (GET_PREFIX.equals(firstWord)
               || IS_PREFIX.equals(firstWord)
               || FIND_PREFIX.equals(firstWord)
               || CREATE_PREFIX.equals(firstWord)) {
-            final String propertyName = methodName.substring(firstWord.length());
-            final String[] names = getSuggestionsByName(propertyName, variableKind, false);
-            return new NamesByExprInfo(propertyName, names);
+            if (words.length > 1) {
+              final String propertyName = methodName.substring(firstWord.length());
+              final String[] names = getSuggestionsByName(propertyName, variableKind, false);
+              return new NamesByExprInfo(propertyName, names);
+            }
           }
-        } else {
-          return new NamesByExprInfo(methodName, getSuggestionsByName(methodName, variableKind, false));
+          else if (words.length == 1) {
+            return new NamesByExprInfo(methodName, getSuggestionsByName(methodName, variableKind, false));
+          }
         }
       }
     }
