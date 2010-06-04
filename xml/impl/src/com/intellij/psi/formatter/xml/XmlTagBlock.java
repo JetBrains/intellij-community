@@ -18,10 +18,10 @@ package com.intellij.psi.formatter.xml;
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.lang.LanguageFormatting;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.tree.IElementType;
@@ -152,76 +152,10 @@ public class XmlTagBlock extends AbstractXmlBlock{
   }
 
   private boolean buildInjectedPsiBlocks(List<Block> result, final ASTNode child, Wrap wrap, Alignment alignment, Indent indent) {
-    final PsiFile[] injectedFile = new PsiFile[1];
-    final Ref<Integer> offset = new Ref<Integer>();
-    final Ref<Integer> offset2 = new Ref<Integer>();
-    final Ref<Integer> prefixLength = new Ref<Integer>();
-    final Ref<Integer> suffixLength = new Ref<Integer>();
-
-    ((PsiLanguageInjectionHost)child.getPsi()).processInjectedPsi(new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-      public void visit(@NotNull final PsiFile injectedPsi, @NotNull final List<PsiLanguageInjectionHost.Shred> places) {
-        if (places.size() == 1) {
-          final PsiLanguageInjectionHost.Shred shred = places.get(0);
-          final TextRange textRange = shred.getRangeInsideHost();
-          String childText;
-
-          if (( child.getTextLength() == textRange.getEndOffset() &&
-                textRange.getStartOffset() == 0
-              ) ||
-              ( canProcessFragments((childText = child.getText()).substring(0, textRange.getStartOffset())) &&
-                canProcessFragments(childText.substring(textRange.getEndOffset()))
-              )
-             ) {
-            injectedFile[0] = injectedPsi;
-            offset.set(textRange.getStartOffset());
-            offset2.set(textRange.getEndOffset());
-            prefixLength.set(shred.prefix != null ? shred.prefix.length():0);
-            suffixLength.set(shred.suffix != null ? shred.suffix.length():0);
-          }
-        }
-      }
-
-      private boolean canProcessFragments(String s) {
-        IElementType type = child.getElementType();
-        if (type == XmlElementType.XML_TEXT) {
-          s = s.trim();
-          s = s.replace("<![CDATA[","");
-          s = s.replace("]]>","");
-        } else if (type == XmlElementType.XML_COMMENT) {   // <!--[if IE]>, <![endif]--> of conditional comments injection
-          s = "";
-        }
-
-        return s.length() == 0;
-      }
-    });
-
-    if  (injectedFile[0] != null) {
-      final Language childLanguage = injectedFile[0].getLanguage();
-      final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(childLanguage, child.getPsi());
-
-      if (builder != null) {
-        final int startOffset = offset.get().intValue();
-        final int endOffset = offset2.get().intValue();
-        TextRange range = child.getTextRange();
-
-        int childOffset = range.getStartOffset();
-        if (startOffset != 0) {
-          final ASTNode leaf = child.findLeafElementAt(startOffset - 1);
-          result.add(new XmlBlock(leaf, wrap, alignment, myXmlFormattingPolicy, indent, new TextRange(childOffset, childOffset + startOffset)));
-        }
-
-        createAnotherLanguageBlockWrapper(childLanguage, injectedFile[0].getNode(), result, indent,
-                                          childOffset + startOffset,
-                                          new TextRange(prefixLength.get(), injectedFile[0].getTextLength() - suffixLength.get()));
-
-        if (endOffset != child.getTextLength()) {
-          final ASTNode leaf = child.findLeafElementAt(endOffset);
-          result.add(new XmlBlock(leaf, wrap, alignment, myXmlFormattingPolicy, indent, new TextRange(childOffset + endOffset, range.getEndOffset())));
-        }
-        return true;
-      }
+    if (myInjectedBlockBuilder.addInjectedBlocks(result, child, wrap, alignment, indent)) {
+      return true;
     }
-    
+
     PsiFile containingFile = child.getPsi().getContainingFile();
     FileViewProvider fileViewProvider = containingFile.getViewProvider();
     

@@ -46,6 +46,7 @@ import java.util.List;
 
 public abstract class AbstractXmlBlock extends AbstractBlock {
   protected XmlFormattingPolicy myXmlFormattingPolicy;
+  protected XmlInjectedLanguageBlockBuilder myInjectedBlockBuilder;
 
   protected AbstractXmlBlock(final ASTNode node,
                           final Wrap wrap,
@@ -59,6 +60,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     if (node.getTreeParent() == null) {
       myXmlFormattingPolicy.setRootBlock(node, this);
     }
+    myInjectedBlockBuilder = new XmlInjectedLanguageBlockBuilder(myXmlFormattingPolicy);
   }
 
 
@@ -160,10 +162,10 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
       processSimpleChild(child, indent, result, wrap, alignment);
       return child;
-
     }
     else {
-      return createAnotherLanguageBlockWrapper(childLanguage, child, result, indent, 0, null);
+      myInjectedBlockBuilder.addInjectedLanguageBlockWrapper(result, child, indent, 0, null);
+      return child;
     }
   }
 
@@ -272,28 +274,6 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
   protected XmlTagBlock createTagBlock(final ASTNode child, final Indent indent, final Wrap wrap, final Alignment alignment) {
     return new XmlTagBlock(child, wrap, alignment, myXmlFormattingPolicy, indent != null ? indent : Indent.getNoneIndent());
-  }
-
-
-  protected ASTNode createAnotherLanguageBlockWrapper(final Language childLanguage,
-                                                    final ASTNode child,
-                                                    final List<Block> result,
-                                                    final Indent indent,
-                                                    int offset,
-                                                    @Nullable TextRange range) {
-    final PsiElement childPsi = child.getPsi();
-    final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(childLanguage, childPsi);
-    LOG.assertTrue(builder != null);
-    final FormattingModel childModel = builder.createModel(childPsi, getSettings());
-    Block original = childModel.getRootBlock();
-    
-    if ((original.isLeaf() && child.getText().trim().length() > 0) || original.getSubBlocks().size() != 0) {
-      result.add(new AnotherLanguageBlockWrapper(child,
-                                                 myXmlFormattingPolicy, original,
-                                                 indent, offset, range));
-      
-    }
-    return child;
   }
 
   @Nullable
@@ -411,4 +391,5 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   public void setXmlFormattingPolicy(final XmlFormattingPolicy xmlFormattingPolicy) {
     myXmlFormattingPolicy = xmlFormattingPolicy;
   }
+
 }
