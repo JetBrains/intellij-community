@@ -306,7 +306,7 @@ public class TokenBasedSearcher {
 
     addTask(new MySearcher(patternLength));
 
-    return myOccurences.length;
+    return myOccurences != null ? myOccurences.length : 0;
   }
 
   @Nullable

@@ -15,7 +15,10 @@ import org.jetbrains.annotations.NotNull;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Eugene.Kudelevsky
@@ -33,6 +36,7 @@ public class TokenIndex extends FileBasedIndexExtension<TokenIndexKey, List<Toke
   private static final int ANONYM_TOKEN_ID = 0;
   private static final int TEXT_TOKEN_ID = 1;
   private static final int MARKER_TOKEN_ID = 2;
+  private static final int INDENT_TOKEN_ID = 3;
 
   private final DataExternalizer<List<Token>> myDataExternalizer = new DataExternalizer<List<Token>>() {
     public void save(DataOutput out, List<Token> value) throws IOException {
@@ -53,6 +57,11 @@ public class TokenIndex extends FileBasedIndexExtension<TokenIndexKey, List<Toke
         else if (token instanceof PathMarkerToken) {
           out.writeByte(MARKER_TOKEN_ID);
           out.writeUTF(((PathMarkerToken)token).getPath());
+        }
+        else if (token instanceof IndentToken) {
+          out.writeByte(INDENT_TOKEN_ID);
+          out.writeInt(token.getStart());
+          out.writeInt(token.getEnd());
         }
         else {
           assert false : "Unsupported token type " + token.getClass();
@@ -85,6 +94,11 @@ public class TokenIndex extends FileBasedIndexExtension<TokenIndexKey, List<Toke
             result.add(new PathMarkerToken(path));
             break;
           }
+          case INDENT_TOKEN_ID:
+            int start = in.readInt();
+            int end = in.readInt();
+            result.add(new IndentToken(start, end));
+            break;
         }
       }
       return result;
