@@ -41,6 +41,8 @@ public interface GrReferenceExpression extends GrExpression, GrReferenceElement,
   @Nullable
   PsiElement getDotToken();
 
+  boolean hasAt();
+
   void replaceDotToken(PsiElement newDotToken);
 
   //not caching!

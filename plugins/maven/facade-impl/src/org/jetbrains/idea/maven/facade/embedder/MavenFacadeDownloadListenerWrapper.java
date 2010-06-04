@@ -13,19 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.facade;
+package org.jetbrains.idea.maven.facade.embedder;
 
-import org.jetbrains.idea.maven.facade.embedder.MavenFacadeLoggerWrapper;
+import org.jetbrains.idea.maven.facade.MavenFacadeDownloadListener;
 
-public class MavenFacadeLoggerManager {
-  private static MavenFacadeLoggerWrapper myLogger;
+import java.io.File;
+import java.rmi.RemoteException;
 
-  public static MavenFacadeLoggerWrapper getLogger() {
-    return myLogger;
+public class MavenFacadeDownloadListenerWrapper {
+  private final MavenFacadeDownloadListener myWrappee;
+
+  public MavenFacadeDownloadListenerWrapper(MavenFacadeDownloadListener wrappee) {
+    myWrappee = wrappee;
   }
 
-
-  public static void setLogger(MavenFacadeLogger logger) {
-    myLogger = new MavenFacadeLoggerWrapper(logger);
+  public void artifactDownloaded(File file, String relativePath) {
+    try {
+      myWrappee.artifactDownloaded(file, relativePath);
+    }
+    catch (RemoteException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

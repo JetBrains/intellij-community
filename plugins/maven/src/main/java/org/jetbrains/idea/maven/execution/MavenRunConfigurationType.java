@@ -24,7 +24,6 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
@@ -148,18 +147,16 @@ public class MavenRunConfigurationType implements ConfigurationType {
 
   public static void runConfiguration(Project project,
                                       MavenRunnerParameters params,
-                                      DataContext dataContext,
                                       @Nullable ProgramRunner.Callback callback) {
     MavenGeneralSettings settings = MavenProjectsManager.getInstance(project).getGeneralSettings();
     MavenRunnerSettings runnerSettings = MavenRunner.getInstance(project).getState();
-    runConfiguration(project, params, settings, runnerSettings, dataContext, callback);
+    runConfiguration(project, params, settings, runnerSettings, callback);
   }
 
   public static void runConfiguration(Project project,
                                       MavenRunnerParameters params,
                                       MavenGeneralSettings settings,
                                       MavenRunnerSettings runnerSettings,
-                                      DataContext context,
                                       @Nullable ProgramRunner.Callback callback) {
     RunnerAndConfigurationSettings configSettings = createRunnerAndConfigurationSettings(settings,
                                                                                          runnerSettings,
@@ -167,7 +164,7 @@ public class MavenRunConfigurationType implements ConfigurationType {
                                                                                          project);
 
     ProgramRunner runner = RunnerRegistry.getInstance().findRunnerById(DefaultRunExecutor.EXECUTOR_ID);
-    ExecutionEnvironment env = new ExecutionEnvironment(runner, configSettings, context);
+    ExecutionEnvironment env = new ExecutionEnvironment(runner, configSettings, project);
     Executor executor = DefaultRunExecutor.getRunExecutorInstance();
 
     try {

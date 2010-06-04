@@ -22,7 +22,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.idea.maven.MavenTestCase;
-import org.jetbrains.idea.maven.facade.MavenFacadeUtil;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -1078,6 +1077,50 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("settings.xml", p.getProfiles().get(0).getSource());
   }
 
+  public void testActivatingProfilesByDefault() throws Exception {
+    createProjectPom("<profiles>" +
+                     "  <profile>" +
+                     "    <id>one</id>" +
+                     "    <activation>" +
+                     "      <activeByDefault>true</activeByDefault>" +
+                     "    </activation>" +
+                     "  </profile>" +
+                     "  <profile>" +
+                     "    <id>two</id>" +
+                     "    <activation>" +
+                     "      <activeByDefault>false</activeByDefault>" +
+                     "    </activation>" +
+                     "  </profile>" +
+                     "</profiles>");
+
+    assertActiveProfiles("one");
+  }
+
+  public void testActivatingProfilesAfterResolvingInheritance() throws Exception {
+    createModulePom("parent",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>parent</artifactId>" +
+                    "<version>1</version>");
+
+    createProjectPom("<parent>" +
+                     "  <groupId>test</groupId>" +
+                     "  <artifactId>parent</artifactId>" +
+                     "  <version>1</version>" +
+                     "  <relativePath>parent/pom.xml</relativePath>" +
+                     "</parent>" +
+
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>one</id>" +
+                     "    <activation>" +
+                     "      <activeByDefault>true</activeByDefault>" +
+                     "    </activation>" +
+                     "  </profile>" +
+                     "</profiles>");
+
+    assertActiveProfiles("one");
+  }
+
   public void testActivatingProfilesByOS() throws Exception {
     String os = SystemInfo.isWindows ? "windows" : SystemInfo.isMac ? "mac" : "unix";
 
@@ -1318,7 +1361,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertActiveProfiles("settings", "implicit");
   }
 
-  public void testDoNotActivateDefaultProfilesWhenThereAreOlwaysOnProfilesInPomXml() throws Exception {
+  public void testDoNotActivateDefaultProfilesWhenThereAreAlwaysOnProfilesInPomXml() throws Exception {
     updateSettingsXml("<activeProfiles>" +
                       "  <activeProfile>settings</activeProfile>" +
                       "</activeProfiles>");
@@ -1383,6 +1426,54 @@ public class MavenProjectReaderTest extends MavenTestCase {
                      "</profiles>");
 
     assertActiveProfiles("default", "profiles");
+  }
+
+  public void testActiveProfilesInSettingsXmlOrProfilesXmlThroughInheritance() throws Exception {
+    updateSettingsXml("<activeProfiles>" +
+                      "  <activeProfile>settings</activeProfile>" +
+                      "</activeProfiles>");
+
+    createFullProfilesXml("parent",
+                          "<?xml version=\"1.0\"?>" +
+                          "<profilesXml>" +
+                          "  <activeProfiles>" +
+                          "    <activeProfile>parent</activeProfile>" +
+                          "  </activeProfiles>" +
+                          "</profilesXml>");
+
+    createModulePom("parent",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>parent</artifactId>" +
+                    "<version>1</version>");
+
+    createFullProfilesXml("<?xml version=\"1.0\"?>" +
+                          "<profilesXml>" +
+                          "  <activeProfiles>" +
+                          "    <activeProfile>project</activeProfile>" +
+                          "  </activeProfiles>" +
+                          "</profilesXml>");
+
+
+    createProjectPom("<parent>" +
+                     "  <groupId>test</groupId>" +
+                     "  <artifactId>parent</artifactId>" +
+                     "  <version>1</version>" +
+                     "  <relativePath>parent/pom.xml</relativePath>" +
+                     "</parent>" +
+
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>project</id>" +
+                     "  </profile>" +
+                     "  <profile>" +
+                     "    <id>parent</id>" +
+                     "  </profile>" +
+                     "  <profile>" +
+                     "    <id>settings</id>" +
+                     "  </profile>" +
+                     "</profiles>");
+
+    assertActiveProfiles("project", "settings");
   }
 
   private MavenModel readProject(VirtualFile file, String... profiles) {

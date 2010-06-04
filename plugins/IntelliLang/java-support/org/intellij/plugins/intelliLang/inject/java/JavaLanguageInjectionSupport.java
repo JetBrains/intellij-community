@@ -377,7 +377,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
           found = pkg.substring(1, pkg.length()-1)+"." + matcher.group(1);
         }
       }
-      containingClass = found != null? JavaPsiFacade.getInstance(project).findClass(found, GlobalSearchScope.allScope(project)) : null;
+      containingClass = found != null && project.isInitialized()? JavaPsiFacade.getInstance(project).findClass(found, GlobalSearchScope.allScope(project)) : null;
       className = StringUtil.notNullize(containingClass == null ? found : containingClass.getQualifiedName());
     }
     final MethodParameterInjection result = new MethodParameterInjection();
@@ -452,7 +452,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
         final BaseInjection originalInjection = producer.create();
         final MethodParameterInjection injection = createFrom(project, originalInjection, null, false);
         if (injection != null) {
-          final boolean mergeEnabled =
+          final boolean mergeEnabled = !project.isInitialized() || 
             JavaPsiFacade.getInstance(project).findClass(injection.getClassName(), GlobalSearchScope.allScope(project)) == null;
           final BaseInjection newInjection = showInjectionUI(project, injection);
           if (newInjection != null) {

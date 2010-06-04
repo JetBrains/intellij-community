@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.indices;
 
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.idea.maven.facade.MavenIndexerWrapper;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
@@ -25,6 +24,7 @@ import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class MavenIndices {
@@ -49,6 +49,7 @@ public class MavenIndices {
 
     File[] indices = myIndicesDir.listFiles();
     if (indices == null) return;
+    Arrays.sort(indices);
     for (File each : indices) {
       if (!each.isDirectory()) continue;
 

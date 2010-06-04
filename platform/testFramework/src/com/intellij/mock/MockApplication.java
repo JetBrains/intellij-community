@@ -261,6 +261,9 @@ public class MockApplication extends MockComponentManager implements Application
   public void assertIsDispatchThread(@Nullable final JComponent component) {
   }
 
+  public void assertTimeConsuming() {
+  }
+
   public void runEdtSafeAction(@NotNull Runnable runnable) {
     runnable.run();
   }

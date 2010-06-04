@@ -43,6 +43,7 @@ public class ElementToWorkOn {
   public static final Key<String> PREFIX = Key.create("prefix");
   public static final Key<String> SUFFIX = Key.create("suffix");
   public static final Key<RangeMarker> TEXT_RANGE = Key.create("range");
+  public static final Key<Boolean> OUT_OF_CODE_BLOCK= Key.create("out_of_code_block");
 
   private ElementToWorkOn(PsiLocalVariable localVariable, PsiExpression expr) {
     myLocalVariable = localVariable;

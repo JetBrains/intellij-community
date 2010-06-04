@@ -116,7 +116,7 @@ public class MavenFacadeEmbedderImpl extends RemoteObject implements MavenFacade
       case DO_NOT_UPDATE:
         return MavenEmbedderSettings.UpdatePolicy.DO_NOT_UPDATE;
       default:
-        MavenFacadeLoggerManager.getLogger().error(new Throwable("unexpected update policy"));
+        MavenFacadeGlobalsManager.getLogger().error(new Throwable("unexpected update policy"));
     }
     return MavenEmbedderSettings.UpdatePolicy.DO_NOT_UPDATE;
   }
@@ -197,10 +197,10 @@ public class MavenFacadeEmbedderImpl extends RemoteObject implements MavenFacade
                                                   new THashMap<Artifact, MavenArtifact>(), getLocalRepositoryFile());
     }
     catch (ArtifactResolutionException e) {
-      MavenFacadeLoggerManager.getLogger().info(e);
+      MavenFacadeGlobalsManager.getLogger().info(e);
     }
     catch (ArtifactNotFoundException e) {
-      MavenFacadeLoggerManager.getLogger().info(e);
+      MavenFacadeGlobalsManager.getLogger().info(e);
     }
     catch (Exception e) {
       throw new RuntimeException(wrapException(e));
@@ -228,7 +228,7 @@ public class MavenFacadeEmbedderImpl extends RemoteObject implements MavenFacade
       return artifact;
     }
     catch (Exception e) {
-      MavenFacadeLoggerManager.getLogger().info(e);
+      MavenFacadeGlobalsManager.getLogger().info(e);
     }
     return artifact;
   }
@@ -241,7 +241,7 @@ public class MavenFacadeEmbedderImpl extends RemoteObject implements MavenFacade
         result.add(ProjectUtils.buildArtifactRepository(MavenModelConverter.toNativeRepository(each), factory, getContainer()));
       }
       catch (InvalidRepositoryException e) {
-        MavenFacadeLoggerManager.getLogger().warn(e);
+        MavenFacadeGlobalsManager.getLogger().warn(e);
       }
     }
     return result;
@@ -277,7 +277,7 @@ public class MavenFacadeEmbedderImpl extends RemoteObject implements MavenFacade
           return new THashSet<MavenArtifact>(resolvedArtifacts.values());
         }
         catch (Exception e) {
-          MavenFacadeLoggerManager.getLogger().info(e);
+          MavenFacadeGlobalsManager.getLogger().info(e);
           return Collections.emptyList();
         }
       }
@@ -309,7 +309,7 @@ public class MavenFacadeEmbedderImpl extends RemoteObject implements MavenFacade
                         Collection<MavenProjectProblem> problems,
                         Collection<MavenId> unresolvedArtifacts) {
     for (Exception each : exceptions) {
-      MavenFacadeLoggerManager.getLogger().info(each);
+      MavenFacadeGlobalsManager.getLogger().info(each);
 
       if (each instanceof InvalidProjectModelException) {
         ModelValidationResult modelValidationResult = ((InvalidProjectModelException)each).getValidationResult();
@@ -360,10 +360,10 @@ public class MavenFacadeEmbedderImpl extends RemoteObject implements MavenFacade
       result = interpolator.interpolate(result, basedir, config, false);
     }
     catch (ModelInterpolationException e) {
-      MavenFacadeLoggerManager.getLogger().warn(e);
+      MavenFacadeGlobalsManager.getLogger().warn(e);
     }
     catch (InitializationException e) {
-      MavenFacadeLoggerManager.getLogger().error(e);
+      MavenFacadeGlobalsManager.getLogger().error(e);
     }
     return result;
   }
@@ -410,7 +410,7 @@ public class MavenFacadeEmbedderImpl extends RemoteObject implements MavenFacade
             }
           }
           catch (ProfileActivationException e) {
-            MavenFacadeLoggerManager.getLogger().warn(e);
+            MavenFacadeGlobalsManager.getLogger().warn(e);
           }
         }
       }
@@ -444,7 +444,7 @@ public class MavenFacadeEmbedderImpl extends RemoteObject implements MavenFacade
       sysPropertyActivator.contextualize(context);
     }
     catch (ContextException e) {
-      MavenFacadeLoggerManager.getLogger().error(e);
+      MavenFacadeGlobalsManager.getLogger().error(e);
       return new ProfileActivator[0];
     }
 
@@ -627,10 +627,10 @@ public class MavenFacadeEmbedderImpl extends RemoteObject implements MavenFacade
       func.fun(((Map)field.get(builder)));
     }
     catch (NoSuchFieldException e) {
-      MavenFacadeLoggerManager.getLogger().info(e);
+      MavenFacadeGlobalsManager.getLogger().info(e);
     }
     catch (IllegalAccessException e) {
-      MavenFacadeLoggerManager.getLogger().info(e);
+      MavenFacadeGlobalsManager.getLogger().info(e);
     }
     catch(Exception e) {
       throw new RuntimeException(wrapException(e));

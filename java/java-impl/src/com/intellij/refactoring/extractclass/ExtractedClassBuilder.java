@@ -26,6 +26,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.psi.MethodInheritanceUtils;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
@@ -54,6 +55,8 @@ class ExtractedClassBuilder {
   private JavaCodeStyleManager myJavaCodeStyleManager;
   private Set<PsiField> myFieldsNeedingSetters;
   private Set<PsiField> myFieldsNeedingGetter;
+  private List<PsiField> enumConstantFields;
+  private PsiType myEnumParameterType;
 
   public void setClassName(String className) {
     this.className = className;
@@ -105,10 +108,8 @@ class ExtractedClassBuilder {
     if (packageName.length() > 0) out.append("package " + packageName + ';');
 
     out.append("public ");
-    if (hasAbstractMethod()) {
-      out.append("abstract ");
-    }
-    out.append("class ");
+    fields.removeAll(enumConstantFields);
+    out.append(hasEnumConstants() ? "enum " : "class ");
     out.append(className);
     if (!typeParams.isEmpty()) {
       out.append('<');
@@ -152,7 +153,13 @@ class ExtractedClassBuilder {
       out.append(' ' + backPointerName + ";");
     }
     outputFieldsAndInitializers(out);
-    if (needConstructor() || requiresBackPointer) {
+    if (hasEnumConstants()) {
+      final String fieldName = getValueFieldName();
+      out.append("\n").append("private ").append(myEnumParameterType.getCanonicalText()).append(" ").append(fieldName).append(";\n");
+      out.append("public ").append(myEnumParameterType.getCanonicalText()).append(" ")
+        .append(getterName()).append("(){\nreturn ").append(fieldName).append(";\n}\n");
+    }
+    if (hasEnumConstants() || needConstructor() || requiresBackPointer) {
       outputConstructor(out);
     }
     outputMethods(out);
@@ -161,13 +168,17 @@ class ExtractedClassBuilder {
     return out.toString();
   }
 
-  private boolean hasAbstractMethod() {
-    for (PsiMethod method : methods) {
-      if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        return true;
-      }
-    }
-    return false;
+  private String getterName() {//todo unique getterName: see also com.intellij.refactoring.extractclass.usageInfo.ReplaceStaticVariableAccess
+    return PropertyUtil.suggestGetterName("value", myEnumParameterType);
+  }
+
+  private boolean hasEnumConstants() {
+    return !enumConstantFields.isEmpty();
+  }
+
+  private String getValueFieldName() {
+    final String myValue = myJavaCodeStyleManager.variableNameToPropertyName("value", VariableKind.FIELD);
+    return myJavaCodeStyleManager.suggestUniqueVariableName(myValue, enumConstantFields.get(0), true);
   }
 
   private void calculateBackpointerName() {
@@ -221,7 +232,7 @@ class ExtractedClassBuilder {
 
   private void outputMethods(StringBuffer out) {
     for (PsiMethod method : methods) {
-      outputMutatedMethod(out, method);
+      method.accept(new Mutator(out));
     }
   }
 
@@ -229,16 +240,6 @@ class ExtractedClassBuilder {
     for (PsiClass innerClass : innerClasses) {
       outputMutatedInnerClass(out, innerClass, innerClassesToMakePublic.contains(innerClass));
     }
-  }
-
-  private void outputMutatedInitializer(StringBuffer out, PsiClassInitializer initializer) {
-    final PsiElementVisitor visitor = new Mutator(out);
-    initializer.accept(visitor);
-  }
-
-  private void outputMutatedMethod(StringBuffer out, PsiMethod method) {
-    final PsiElementVisitor visitor = new Mutator(out);
-    method.accept(visitor);
   }
 
   private void outputMutatedInnerClass(StringBuffer out, PsiClass innerClass, boolean makePublic) {
@@ -250,12 +251,26 @@ class ExtractedClassBuilder {
         LOGGER.error(e);
       }
     }
-    final PsiElementVisitor visitor = new Mutator(out);
-    innerClass.accept(visitor);
+    innerClass.accept(new Mutator(out));
   }
 
 
-  private void outputFieldsAndInitializers(StringBuffer out) {
+  private void outputFieldsAndInitializers(final StringBuffer out) {
+    if (hasEnumConstants()) {
+      out.append(StringUtil.join(enumConstantFields, new Function<PsiField, String>() {
+        public String fun(PsiField field) {
+          final StringBuffer fieldStr = new StringBuffer(field.getName().toUpperCase() + "(");
+          final PsiExpression initializer = field.getInitializer();
+          if (initializer != null) {
+            initializer.accept(new Mutator(fieldStr));
+          }
+          fieldStr.append(")");
+          return fieldStr.toString();
+        }
+      }, ", "));
+      out.append(";");
+    }
+
     final List<PsiClassInitializer> remainingInitializers = new ArrayList<PsiClassInitializer>(initializers);
     for (final PsiField field : fields) {
       final Iterator<PsiClassInitializer> initializersIterator = remainingInitializers.iterator();
@@ -263,12 +278,12 @@ class ExtractedClassBuilder {
       while (initializersIterator.hasNext()) {
         final PsiClassInitializer initializer = initializersIterator.next();
         if (initializer.getTextRange().getStartOffset() < fieldOffset) {
-          outputMutatedInitializer(out, initializer);
+          initializer.accept(new Mutator(out));
           initializersIterator.remove();
         }
       }
 
-      outputField(field, out);
+      field.accept(new Mutator(out));
 
       if (myFieldsNeedingGetter != null && myFieldsNeedingGetter.contains(field)) {
         out.append(PropertyUtil.generateGetterPrototype(field).getText());
@@ -281,27 +296,13 @@ class ExtractedClassBuilder {
       }
     }
     for (PsiClassInitializer initializer : remainingInitializers) {
-      outputMutatedInitializer(out, initializer);
+      initializer.accept(new Mutator(out));
     }
-  }
-
-
-  private String calculateStrippedName(PsiVariable variable) {
-    String name = variable.getName();
-    if (name == null) {
-      return null;
-    }
-    if (variable instanceof PsiField) {
-      name = myJavaCodeStyleManager.variableNameToPropertyName(name, variable.hasModifierProperty(PsiModifier.STATIC)
-                                                                     ? VariableKind.STATIC_FIELD
-                                                                     : VariableKind.FIELD);
-    }
-    return name;
   }
 
 
   private void outputConstructor(@NonNls StringBuffer out) {
-    out.append("\tpublic " + className + '(');
+    out.append("\t").append(hasEnumConstants() ? "" : "public ").append(className).append('(');
     if (requiresBackPointer) {
       final String parameterName = myJavaCodeStyleManager.propertyNameToVariableName(backPointerName, VariableKind.PARAMETER);
       out.append(originalClassName);
@@ -318,6 +319,8 @@ class ExtractedClassBuilder {
         out.append('>');
       }
       out.append(' ' + parameterName);
+    } else if (hasEnumConstants()) {
+      out.append(myEnumParameterType.getCanonicalText()).append(" ").append("value");
     }
 
     out.append(")");
@@ -331,12 +334,11 @@ class ExtractedClassBuilder {
         out.append("\t\t" + backPointerName + " = " + parameterName + ";");
       }
 
+    } else if (hasEnumConstants()) {
+      final String fieldName = getValueFieldName();
+      out.append(fieldName.equals("value") ? "this." : "").append(fieldName).append(" = value;");
     }
     out.append("\t}");
-  }
-
-  private void outputField(PsiField field, @NonNls StringBuffer out) {
-    field.accept(new Mutator(out));
   }
 
   public void setRequiresBackPointer(boolean requiresBackPointer) {
@@ -358,13 +360,19 @@ class ExtractedClassBuilder {
   }
 
   private boolean fieldIsExtracted(PsiField field) {
-    for (PsiField psiField : fields) {
-      if (psiField.equals(field)) {
-        return true;
-      }
-    }
+    final ArrayList<PsiField> extractedFields = new ArrayList<PsiField>(fields);
+    extractedFields.addAll(enumConstantFields);
+    if (extractedFields.contains(field)) return true;
+
     final PsiClass containingClass = field.getContainingClass();
     return innerClasses.contains(containingClass);
+  }
+
+  public void setExtractAsEnum(List<PsiField> extractAsEnum) {
+    this.enumConstantFields = extractAsEnum;
+    if (hasEnumConstants()) {
+      myEnumParameterType = enumConstantFields.get(0).getType();
+    }
   }
 
   private class Mutator extends JavaElementVisitor {
@@ -402,11 +410,14 @@ class ExtractedClassBuilder {
           if (fieldIsExtracted(field)) {
 
             final String name = field.getName();
-
-            if (qualifier != null && name.equals(expression.getReferenceName())) {
-              out.append("this.");
+            if (enumConstantFields.contains(field)) {
+              out.append(name.toUpperCase()).append(".").append(getterName()).append("()");
+            } else {
+              if (qualifier != null && name.equals(expression.getReferenceName())) {
+                out.append("this.");
+              }
+              out.append(name);
             }
-            out.append(name);
           }
           else {
             if (field.hasModifierProperty(PsiModifier.STATIC)) {

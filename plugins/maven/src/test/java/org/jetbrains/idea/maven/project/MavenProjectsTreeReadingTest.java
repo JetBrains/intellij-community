@@ -49,6 +49,35 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(m2, roots.get(1).getFile());
   }
 
+  public void testModulesWithWhiteSpaces() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+
+                     "<modules>" +
+                     "  <module>" +
+                     "" +
+                     "  m" +
+                     "" +
+                     "  </module>" +
+                     "</modules>");
+
+    VirtualFile m = createModulePom("m",
+                                    "<groupId>test</groupId>" +
+                                    "<artifactId>m</artifactId>" +
+                                    "<version>1</version>");
+
+    updateAll(myProjectPom);
+    List<MavenProject> roots = myTree.getRootProjects();
+                       
+    assertEquals(1, roots.size());
+    assertEquals(myProjectPom, roots.get(0).getFile());
+
+    assertEquals(1, myTree.getModules(roots.get(0)).size());
+    assertEquals(m, myTree.getModules(roots.get(0)).get(0).getFile());
+  }
+
   public void testDoNotImportChildAsRootProject() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +

@@ -16,7 +16,6 @@
 package com.intellij.util.ui.tree;
 
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
@@ -35,6 +34,7 @@ import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
 
@@ -547,11 +547,8 @@ public final class TreeUtil {
         }
       };
 
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        runnable.run();        
-      } else {
-        SwingUtilities.invokeLater(runnable);
-      }
+      runnable.run();
+
     } else {
       callback.setDone();
     }
@@ -618,6 +615,14 @@ public final class TreeUtil {
     });
     copyAction(tree, "selectLast", "selectLastChangeLead");
     copyAction(tree, "selectFirst", "selectFirstChangeLead");
+
+    InputMap inputMap = tree.getInputMap(JComponent.WHEN_FOCUSED);
+    UIUtil.maybeInstall(inputMap, "scrollUpChangeSelection", KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, 0));
+    UIUtil.maybeInstall(inputMap, "scrollDownChangeSelection", KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, 0));
+    UIUtil.maybeInstall(inputMap, "selectNext", KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0));
+    UIUtil.maybeInstall(inputMap, "selectPrevious", KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0));
+    UIUtil.maybeInstall(inputMap, "selectLast", KeyStroke.getKeyStroke(KeyEvent.VK_END, 0));
+    UIUtil.maybeInstall(inputMap, "selectFirst", KeyStroke.getKeyStroke(KeyEvent.VK_HOME, 0));
   }
 
   private static void copyAction(final JTree tree, String original, String copyTo) {

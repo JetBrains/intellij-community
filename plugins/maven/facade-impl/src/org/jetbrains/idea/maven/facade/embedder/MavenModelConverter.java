@@ -26,7 +26,7 @@ import org.apache.maven.shared.dependency.tree.DependencyNode;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.jdom.Element;
 import org.jdom.IllegalNameException;
-import org.jetbrains.idea.maven.facade.MavenFacadeLoggerManager;
+import org.jetbrains.idea.maven.facade.MavenFacadeGlobalsManager;
 import org.jetbrains.idea.maven.facade.nexus.ArtifactType;
 import org.jetbrains.idea.maven.facade.nexus.RepositoryType;
 import org.jetbrains.idea.maven.model.*;
@@ -287,7 +287,7 @@ public class MavenModelConverter {
       result = new Element(xpp.getName());
     }
     catch (IllegalNameException e) {
-      MavenFacadeLoggerManager.getLogger().error(e);
+      MavenFacadeGlobalsManager.getLogger().error(e);
       return null;
     }
 
@@ -313,10 +313,35 @@ public class MavenModelConverter {
       MavenProfile profile = new MavenProfile(id, each.getSource());
       List<String> modules = each.getModules();
       profile.setModules(modules == null ? Collections.<String>emptyList() : modules);
+      profile.setActivation(convertActivation(each.getActivation()));
       if (each.getBuild() != null) convertBuildBase(profile.getBuild(), each.getBuild());
       result.add(profile);
     }
     return result;
+  }
+
+  private static MavenProfileActivation convertActivation(Activation activation) {
+    if (activation == null) return null;
+
+    MavenProfileActivation result = new MavenProfileActivation();
+    result.setActiveByDefault(activation.isActiveByDefault());
+    result.setOs(convertOsActivation(activation.getOs()));
+    result.setJdk(activation.getJdk());
+    result.setFile(convertFileActivation(activation.getFile()));
+    result.setProperty(convertPropertyActivation(activation.getProperty()));
+    return result;
+  }
+
+  private static MavenProfileActivationOS convertOsActivation(ActivationOS os) {
+    return os == null ? null : new MavenProfileActivationOS(os.getName(), os.getFamily(), os.getArch(), os.getVersion());
+  }
+
+  private static MavenProfileActivationFile convertFileActivation(ActivationFile file) {
+    return file == null ? null : new MavenProfileActivationFile(file.getExists(), file.getMissing());
+  }
+
+  private static MavenProfileActivationProperty convertPropertyActivation(ActivationProperty property) {
+    return property == null ? null : new MavenProfileActivationProperty(property.getName(), property.getValue());
   }
 
   public static Map<String, String> convertToMap(Object object) {

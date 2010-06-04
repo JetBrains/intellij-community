@@ -23,9 +23,9 @@ public class MavenBuildBase implements Serializable {
   private String myFinalName;
   private String myDefaultGoal;
   private String myDirectory;
-  private List<MavenResource> myResources;
-  private List<MavenResource> myTestResources;
-  private List<String> myFilters;
+  private List<MavenResource> myResources = Collections.emptyList();
+  private List<MavenResource> myTestResources = Collections.emptyList();
+  private List<String> myFilters = Collections.emptyList();
 
   public String getFinalName() {
     return myFinalName;
@@ -52,7 +52,7 @@ public class MavenBuildBase implements Serializable {
   }
 
   public List<MavenResource> getResources() {
-    return myResources == null ? Collections.<MavenResource>emptyList() : myResources;
+    return myResources;
   }
 
   public void setResources(List<MavenResource> resources) {
@@ -60,7 +60,7 @@ public class MavenBuildBase implements Serializable {
   }
 
   public List<MavenResource> getTestResources() {
-    return myTestResources == null ? Collections.<MavenResource>emptyList() : myTestResources;
+    return myTestResources;
   }
 
   public void setTestResources(List<MavenResource> testResources) {
@@ -68,7 +68,7 @@ public class MavenBuildBase implements Serializable {
   }
 
   public List<String> getFilters() {
-    return myFilters == null ? Collections.<String>emptyList() : myFilters;
+    return myFilters;
   }
 
   public void setFilters(List<String> filters) {

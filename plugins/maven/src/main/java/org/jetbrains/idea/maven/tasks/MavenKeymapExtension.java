@@ -25,7 +25,6 @@ import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
-import org.jetbrains.idea.maven.facade.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -185,7 +184,7 @@ public class MavenKeymapExtension implements KeymapExtension {
                                                                myMavenProject.getDirectory(),
                                                                Arrays.asList(myGoal),
                                                                MavenActionUtil.getProjectsManager(context).getExplicitProfiles());
-      MavenRunConfigurationType.runConfiguration(MavenActionUtil.getProject(context), params, context, null);
+      MavenRunConfigurationType.runConfiguration(MavenActionUtil.getProject(context), params, null);
     }
 
     public MavenProject getMavenProject() {

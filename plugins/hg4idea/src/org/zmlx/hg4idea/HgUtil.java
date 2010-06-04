@@ -141,8 +141,10 @@ public abstract class HgUtil {
               return name.startsWith(fileName);
             }
           });
-          for (File file1 : files) {
-            file1.delete();
+          if (files != null) {
+            for (File file1 : files) {
+              file1.delete();
+            }
           }
         }
       });

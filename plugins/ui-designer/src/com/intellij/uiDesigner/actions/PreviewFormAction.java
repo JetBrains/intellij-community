@@ -30,7 +30,6 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileStatusNotification;
@@ -292,14 +291,8 @@ public final class PreviewFormAction extends AnAction{
       final RunProfile profile = new MyRunProfile(module, parameters, UIDesignerBundle.message("progress.preview.started", formFile.getPresentableUrl()));
       ProgramRunner defaultRunner = RunnerRegistry.getInstance().getRunner(DefaultRunExecutor.EXECUTOR_ID, profile);
       LOG.assertTrue(defaultRunner != null);
-      defaultRunner.execute(DefaultRunExecutor.getRunExecutorInstance(), new ExecutionEnvironment(profile, new DataContext() {   // IDEADEV-3596
-        public Object getData(String dataId) {
-          if (PlatformDataKeys.PROJECT.is(dataId)) {
-            return module.getProject();
-          }
-          return dataContext.getData(dataId);
-        }
-      }));
+      defaultRunner.execute(DefaultRunExecutor.getRunExecutorInstance(), new ExecutionEnvironment(profile, module.getProject(), null, null,
+                                                                                                  null));
     }
     catch (ExecutionException e) {
       Messages.showErrorDialog(

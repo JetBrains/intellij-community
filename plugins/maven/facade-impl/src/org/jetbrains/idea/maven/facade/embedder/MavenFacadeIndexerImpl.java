@@ -1,18 +1,18 @@
 /*
-* Copyright 2000-2010 JetBrains s.r.o.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Copyright 2000-2010 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.idea.maven.facade.embedder;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -39,12 +39,10 @@ import org.jetbrains.idea.maven.model.MavenId;
 import org.sonatype.nexus.index.*;
 import org.sonatype.nexus.index.context.IndexUtils;
 import org.sonatype.nexus.index.context.IndexingContext;
-import org.sonatype.nexus.index.context.UnsupportedExistingLuceneIndexException;
 import org.sonatype.nexus.index.updater.IndexUpdateRequest;
 import org.sonatype.nexus.index.updater.IndexUpdater;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 public class MavenFacadeIndexerImpl extends RemoteObject implements MavenFacadeIndexer {
@@ -139,8 +137,8 @@ public class MavenFacadeIndexerImpl extends RemoteObject implements MavenFacadeI
                                                            embedder.getComponent(WagonManager.class),
                                                            new TransferListenerAdapter(indicatorWrapper) {
                                                              @Override
-                                                             protected void doUpdateProgress(long downloaded, long total) {
-                                                               super.doUpdateProgress(downloaded, total);
+                                                             protected void downloadProgress(long downloaded, long total) {
+                                                               super.downloadProgress(downloaded, total);
                                                                myIndicator.setFraction(((double)downloaded) / total);
                                                              }
 
@@ -257,7 +255,7 @@ public class MavenFacadeIndexerImpl extends RemoteObject implements MavenFacadeI
       }
     }
     catch (ArchetypeDataSourceException e) {
-      MavenFacadeLoggerManager.getLogger().warn(e);
+      MavenFacadeGlobalsManager.getLogger().warn(e);
     }
   }
 

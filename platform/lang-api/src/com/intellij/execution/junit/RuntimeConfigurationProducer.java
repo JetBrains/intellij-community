@@ -68,6 +68,13 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
     return result;
   }
 
+  @Nullable
+  public RunnerAndConfigurationSettings findExistingConfiguration(@NotNull Location location) {
+    final RunManager runManager = RunManager.getInstance(location.getProject());
+    final RunnerAndConfigurationSettings[] configurations = runManager.getConfigurationSettings(getConfigurationType());
+    return findExistingByElement(location, configurations);
+  }
+
   public abstract PsiElement getSourceElement();
 
   public RunnerAndConfigurationSettings getConfiguration() {

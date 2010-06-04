@@ -262,13 +262,13 @@ public abstract class GitSSHService {
     }
 
     /**
-     * Adjust null value (by converting to {@link GitSSHHandler#XML_RPC_NULL_STRING})
+     * Adjust null value ({@code "-"} if null, {@code "+"+s) if non-null)
      *
      * @param s a value to adjust
-     * @return a string if non-null or {@link GitSSHHandler#XML_RPC_NULL_STRING} if s == null
+     * @return adjusted string
      */
     private String adjustNull(final String s) {
-      return s == null ? XML_RPC_NULL_STRING : s;
+      return s == null ? "-" : "+" + s;
     }
 
     /**

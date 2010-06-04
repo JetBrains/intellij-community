@@ -1038,7 +1038,7 @@
 
     <vetoRenameCondition implementation="com.intellij.refactoring.rename.JavaVetoRenameCondition"/>
 
-    <readWriteAccessDetector implementation="com.intellij.codeInsight.highlighting.JavaReadWriteAccessDetector"/>
+    <readWriteAccessDetector implementation="com.intellij.codeInsight.highlighting.JavaReadWriteAccessDetector" id="java"/>
     <elementDescriptionProvider implementation="com.intellij.codeInsight.highlighting.JavaHighlightUsagesDescriptionProvider"/>
 
     <elementDescriptionProvider implementation="com.intellij.usageView.JavaUsageViewDescriptionProvider"/>

@@ -16,11 +16,19 @@
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.PsiModificationTrackerImpl;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
+import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.facade.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectChanges;
@@ -30,12 +38,17 @@ import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import java.util.List;
 
 public class MavenRehighlighter extends SimpleProjectComponent {
+  private MergingUpdateQueue myQueue;
+
   protected MavenRehighlighter(Project project) {
     super(project);
   }
 
   public void initComponent() {
+    myQueue = new MergingUpdateQueue(getClass().getSimpleName(), 1000, true, MergingUpdateQueue.ANY_COMPONENT, myProject);
+
     MavenProjectsManager m = MavenProjectsManager.getInstance(myProject);
+
     m.addManagerListener(new MavenProjectsManager.Listener() {
       public void activated() {
         rehighlight(myProject);
@@ -44,41 +57,84 @@ public class MavenRehighlighter extends SimpleProjectComponent {
       public void scheduledImportsChanged() {
       }
     });
+
     m.addProjectsTreeListener(new MavenProjectsTree.ListenerAdapter() {
       public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted, Object message) {
-        rehighlight(myProject);
+        for (Pair<MavenProject, MavenProjectChanges> each : updated) {
+          rehighlight(myProject, each.first);
+        }
       }
 
       public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
                                   NativeMavenProjectHolder nativeMavenProject,
                                   Object message) {
-        rehighlight(myProject);
+        rehighlight(myProject, projectWithChanges.first);
       }
 
       public void pluginsResolved(MavenProject project) {
-        rehighlight(myProject);
+        rehighlight(myProject, project);
       }
 
       public void foldersResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges, Object message) {
-        rehighlight(myProject);
+        rehighlight(myProject, projectWithChanges.first);
       }
 
       public void artifactsDownloaded(MavenProject project) {
-        rehighlight(myProject);
+        rehighlight(myProject, project);
       }
     });
   }
 
+  private static MavenRehighlighter getInstance(Project project) {
+    return ServiceManager.getService(project, MavenRehighlighter.class);
+  }
+
   public static void rehighlight(final Project project) {
-    MavenUtil.invokeLater(project, new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            ((PsiModificationTrackerImpl)PsiManager.getInstance(project).getModificationTracker()).incCounter();
-            DaemonCodeAnalyzer.getInstance(project).restart();
-          }
-        });
+    rehighlight(project, null);
+  }
+
+  public static void rehighlight(final Project project, final MavenProject mavenProject) {
+    getInstance(project).myQueue.queue(new MyUpdate(project, mavenProject));
+  }
+
+  private static class MyUpdate extends Update {
+    private final Project myProject;
+    private final MavenProject myMavenProject;
+
+    public MyUpdate(Project project, MavenProject mavenProject) {
+      super(project);
+      myProject = project;
+      myMavenProject = mavenProject;
+    }
+
+    public void run() {
+      if (myMavenProject == null) {
+        for (VirtualFile each : FileEditorManager.getInstance(myProject).getOpenFiles()) {
+          doRehighlightMavenFile(each);
+        }
       }
-    });
+      else {
+        doRehighlightMavenFile(myMavenProject.getFile());
+      }
+    }
+
+    private void doRehighlightMavenFile(VirtualFile file) {
+      Document doc = FileDocumentManager.getInstance().getCachedDocument(file);
+      if (doc == null) return;
+      PsiFile psi = PsiDocumentManager.getInstance(myProject).getCachedPsiFile(doc);
+      if (psi == null) return;
+      if (!MavenDomUtil.isMavenFile(psi)) return;
+
+      DaemonCodeAnalyzerImpl daemon = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
+      daemon.getFileStatusMap().markFileScopeDirtyDefensively(psi);
+      daemon.stopProcess(true);
+    }
+
+    @Override
+    public boolean canEat(Update update) {
+      if (myMavenProject == null) return true;
+      if (myMavenProject == ((MyUpdate)update).myMavenProject) return true;
+      return false;
+    }
   }
 }

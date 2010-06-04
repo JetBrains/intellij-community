@@ -16,6 +16,7 @@
 package com.intellij.refactoring.extractclass.usageInfo;
 
 import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.refactoring.psi.MutationUtils;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
@@ -23,14 +24,17 @@ import com.intellij.util.IncorrectOperationException;
 public class ReplaceStaticVariableAccess extends FixableUsageInfo {
     private final PsiReferenceExpression expression;
     private final String delegateClass;
+  private final boolean myEnumConstant;
 
-    public ReplaceStaticVariableAccess(PsiReferenceExpression expression, String delegateClass) {
+  public ReplaceStaticVariableAccess(PsiReferenceExpression expression, String delegateClass, boolean enumConstant) {
         super(expression);
         this.expression = expression;
         this.delegateClass = delegateClass;
-    }
+    myEnumConstant = enumConstant;
+  }
 
     public void fixUsage() throws IncorrectOperationException {
-      MutationUtils.replaceExpression(delegateClass + '.' + expression.getReferenceName(), expression);
+      MutationUtils.replaceExpression(delegateClass + '.' + expression.getReferenceName() + (myEnumConstant ? "." + PropertyUtil.suggestGetterName("value", expression.getType())+ 
+                                                                                                              "()" : ""), expression);
     }
 }

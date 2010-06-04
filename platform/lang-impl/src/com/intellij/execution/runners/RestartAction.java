@@ -60,12 +60,8 @@ public class RestartAction extends AnAction implements DumbAware {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     try {
       final ExecutionEnvironment old = myEnvironment;
-      myRunner.execute(myExecutor, new ExecutionEnvironment(old.getRunProfile(), old.getRunnerSettings(), old.getConfigurationSettings(), new DataContext() {
-        public Object getData(final String dataId) {
-          if (GenericProgramRunner.CONTENT_TO_REUSE_DATA_KEY.is(dataId)) return myDescriptor;
-          return dataContext.getData(dataId);
-        }
-      }));
+      myRunner.execute(myExecutor, new ExecutionEnvironment(old.getRunProfile(), project, old.getRunnerSettings(),
+                                                            old.getConfigurationSettings(), myDescriptor));
     }
     catch (RunCanceledByUserException ignore) {
     }

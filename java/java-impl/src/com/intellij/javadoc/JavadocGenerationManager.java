@@ -23,7 +23,6 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.util.ExecutionErrorDialog;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -61,12 +60,12 @@ public final class JavadocGenerationManager extends AbstractProjectComponent imp
     return myConfiguration;
   }
 
-  public void generateJavadoc(AnalysisScope scope, DataContext dataContext) {
+  public void generateJavadoc(AnalysisScope scope) {
     myConfiguration.setGenerationScope(scope);
     try {
       final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(DefaultRunExecutor.EXECUTOR_ID, myConfiguration);
       assert runner != null;
-      runner.execute(DefaultRunExecutor.getRunExecutorInstance(), new ExecutionEnvironment(myConfiguration, dataContext));
+      runner.execute(DefaultRunExecutor.getRunExecutorInstance(), new ExecutionEnvironment(myConfiguration, myProject, null, null, null));
     }
     catch (ExecutionException e) {
       ExecutionErrorDialog.show(e, CommonBundle.getErrorTitle(), myProject);

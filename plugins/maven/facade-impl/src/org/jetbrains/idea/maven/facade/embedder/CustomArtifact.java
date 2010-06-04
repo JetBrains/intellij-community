@@ -25,7 +25,7 @@ import org.apache.maven.artifact.resolver.filter.ArtifactFilter;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.artifact.versioning.OverConstrainedVersionException;
 import org.apache.maven.artifact.versioning.VersionRange;
-import org.jetbrains.idea.maven.facade.MavenFacadeLoggerManager;
+import org.jetbrains.idea.maven.facade.MavenFacadeGlobalsManager;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -143,7 +143,7 @@ public class CustomArtifact implements Artifact {
       ourStubCache.put(getId(), f);
     }
     catch (IOException e) {
-      MavenFacadeLoggerManager.getLogger().warn(e);
+      MavenFacadeGlobalsManager.getLogger().warn(e);
     }
     finally {
       ourCacheWriteLock.unlock();

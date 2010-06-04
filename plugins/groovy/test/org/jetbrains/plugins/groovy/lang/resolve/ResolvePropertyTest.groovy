@@ -529,4 +529,20 @@ print fo<caret>o""")
     def resolved = ref.resolve()
     assertInstanceOf(resolved, GrAccessorMethod)
   }
+
+  public void testFieldAccessOutsideClass() {
+    myFixture.configureByText("A.groovy", """
+class X {
+  public def foo = 3
+  def getFoo() {2}
+  def setFoo(def foo) {}
+}
+
+print new X().@f<caret>oo
+""")
+
+    def ref = findReference()
+    def resolved = ref.resolve()
+    assertInstanceOf(resolved, GrField)
+  }
 }

@@ -16,16 +16,17 @@
 package org.jetbrains.idea.maven.model;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
 public class MavenModelBase implements Serializable {
   private Properties myProperties;
-  private List<MavenPlugin> myPlugins;
-  private List<MavenArtifact> myExtensions;
-  private List<MavenArtifact> myDependencies;
-  private List<MavenArtifactNode> myDependencyTree;
-  private List<MavenRemoteRepository> myRemoteRepositories;
+  private List<MavenPlugin> myPlugins = Collections.emptyList();
+  private List<MavenArtifact> myExtensions = Collections.emptyList();
+  private List<MavenArtifact> myDependencies = Collections.emptyList();
+  private List<MavenArtifactNode> myDependencyTree = Collections.emptyList();
+  private List<MavenRemoteRepository> myRemoteRepositories = Collections.emptyList();
 
   private List<String> myModules;
 

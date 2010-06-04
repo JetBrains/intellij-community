@@ -15,6 +15,8 @@
  */
 package org.intellij.plugins.intelliLang;
 
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.DocumentReference;
@@ -38,6 +40,7 @@ import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.inject.config.*;
@@ -50,6 +53,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -183,16 +187,31 @@ public final class Configuration implements PersistentStateComponent<Element> {
   private void mergeWithDefaultConfiguration() {
     final ArrayList<Configuration> cfgList = new ArrayList<Configuration>();
     for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
-      final String url = support.getDefaultConfigUrl();
+      final String config = support.getDefaultConfigUrl();
+      final URL url = config == null? null : support.getClass().getResource(config);
       if (url != null) {
         try {
-          cfgList.add(load(support.getClass().getResourceAsStream(url)));
+          cfgList.add(load(url.openStream()));
         }
         catch (Exception e) {
           LOG.warn(e);
         }
       }
     }
+    final THashSet<String> visitedUrls = new THashSet<String>();
+    for (IdeaPluginDescriptor pluginDescriptor : PluginManager.getPlugins()) {
+      final ClassLoader loader = pluginDescriptor.getPluginClassLoader();
+      final URL url = loader != null ? loader.getResource("META-INF/languageInjections.xml") : null;
+      if (url == null) continue;
+      if (!visitedUrls.add(url.getFile())) continue; // for DEBUG mode
+      try {
+        cfgList.add(load(url.openStream()));
+      }
+      catch (Exception e) {
+        LOG.warn(e);
+      }
+    }
+
     final ArrayList<BaseInjection> originalInjections = new ArrayList<BaseInjection>();
     final ArrayList<BaseInjection> newInjections = new ArrayList<BaseInjection>();
     myDefaultInjections = new ArrayList<BaseInjection>();
