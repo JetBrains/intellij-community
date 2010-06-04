@@ -94,6 +94,12 @@ public class XMLLanguage extends CompositeLanguage {
     super(name, mime);
   }
 
+  @Override
+  public boolean isCaseSensitive() {
+    return true;
+  }
+
+
   public XmlPsiPolicy getPsiPolicy() {
     return CDATA_ON_ANY_ENCODED_POLICY;
   }
