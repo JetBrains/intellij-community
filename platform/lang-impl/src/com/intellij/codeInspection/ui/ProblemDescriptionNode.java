@@ -28,7 +28,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -112,19 +111,30 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
   }
 
   public String toString() {
-    return renderDescriptionMessage(getDescriptor());
+    return renderDescriptionMessage(getDescriptor()).replaceAll("<[^>]*>", "");
   }
 
-  private static String renderDescriptionMessage(@Nullable CommonProblemDescriptor descriptor) {
+  public static String renderDescriptionMessage(CommonProblemDescriptor descriptor) {
     PsiElement psiElement = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
-    @NonNls String message = descriptor != null ? descriptor.getDescriptionTemplate().replaceAll("<[^>]*>", "") : "";
+    String message = descriptor.getDescriptionTemplate();
+
+    // no message. Should not be the case if inspection correctly implemented.
+    // noinspection ConstantConditions
+    if (message == null) return "";
+
+    message = StringUtil.replace(message, "<code>", "'");
+    message = StringUtil.replace(message, "</code>", "'");
     message = StringUtil.replace(message, "#loc", "");
-    message = StringUtil.replace(message, "#ref", extractHighlightedText(descriptor, psiElement));
+    if (message.contains("#ref")) {
+      String ref = extractHighlightedText(descriptor, psiElement);
+      message = StringUtil.replace(message, "#ref", ref);
+    }
     final int endIndex = message.indexOf("#end");
     if (endIndex > 0) {
       message = message.substring(0, endIndex);
     }
-    message = StringUtil.unescapeXml(message);
+
+    message = StringUtil.unescapeXml(message).trim();
     return message;
   }
 
