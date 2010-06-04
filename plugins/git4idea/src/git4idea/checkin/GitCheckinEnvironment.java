@@ -79,7 +79,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   /**
    * the file name prefix for commit message file
    */
-  @NonNls private static final String GIT_COMMIT_MSG_FILE_PREFIX = "git-comit-msg-";
+  @NonNls private static final String GIT_COMMIT_MSG_FILE_PREFIX = "git-commit-msg-";
   /**
    * the file extension for commit message file
    */
