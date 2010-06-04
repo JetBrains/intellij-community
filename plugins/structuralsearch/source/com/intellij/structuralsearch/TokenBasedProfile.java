@@ -65,7 +65,7 @@ public abstract class TokenBasedProfile extends StructuralSearchProfile {
   }
 
   protected boolean isLexicalNode(@NotNull PsiElement element) {
-    return element instanceof PsiWhiteSpace;
+    return element instanceof PsiWhiteSpace || element instanceof PsiErrorElement;
   }
 
   @NotNull
