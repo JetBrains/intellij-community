@@ -41,10 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author yole
@@ -128,7 +125,7 @@ public class ChangesViewContentManager extends AbstractProjectComponent {
     final Content content = ContentFactory.SERVICE.getInstance().createContent(new ContentStub(ep), ep.getTabName(), false);
     content.setCloseable(false);
     content.putUserData(myEPKey, ep);
-    myContentManager.addContent(content);
+    addIntoCorrectPlace(content);
   }
 
   private void updateExtensionTabs() {
@@ -180,7 +177,7 @@ public class ChangesViewContentManager extends AbstractProjectComponent {
       myAddedContents.add(content);
     }
     else {
-      myContentManager.addContent(content);
+      addIntoCorrectPlace(content);
     }
   }
 
@@ -269,5 +266,36 @@ public class ChangesViewContentManager extends AbstractProjectComponent {
     }
     result.addAll(contents);
     return result;
+  }
+
+  private void addIntoCorrectPlace(final Content content) {
+    final String name = content.getTabName();
+    final Content[] contents = myContentManager.getContents();
+
+    int idxOfBeingInserted = -1;
+    for (int i = 0; i < ourPresetOrder.length; i++) {
+      final String s = ourPresetOrder[i];
+      if (s.equals(name)) {
+        idxOfBeingInserted = i;
+      }
+    }
+    if (idxOfBeingInserted == -1) {
+      myContentManager.addContent(content);
+      return;
+    }
+
+    final Set<String> existingNames = new HashSet<String>();
+    for (Content existingContent : contents) {
+      existingNames.add(existingContent.getTabName());
+    }
+
+    int place = idxOfBeingInserted;
+    for (int i = 0; i < idxOfBeingInserted; i++) {
+      if (! existingNames.contains(ourPresetOrder[i])) {
+        -- place;
+      }
+
+    }
+    myContentManager.addContent(content, place);
   }
 }
