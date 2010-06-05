@@ -5,6 +5,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.toolbox.Maybe;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -19,14 +21,15 @@ public class PyUnionType implements PyType {
     myMembers = new ArrayList<PyType>(members);
   }
 
-  public PsiElement resolveMember(String name, Context context) {
+  @NotNull
+  public Maybe<? extends PsiElement> resolveMember(String name, Context context) {
     for (PyType member : myMembers) {
-      final PsiElement result = member.resolveMember(name, context);
-      if (result != null) {
+      Maybe<? extends PsiElement> result = member.resolveMember(name, context);
+      if (result.valueOrNull() != null) {
         return result;
       }
     }
-    return null;
+    return NOT_RESOLVED_YET; // NOTE: or UNRESOLVED ?
   }
 
   public Object[] getCompletionVariants(PyQualifiedExpression referenceExpression, ProcessingContext context) {

@@ -1,6 +1,7 @@
 package com.jetbrains.python.psi;
 
 import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,34 +13,35 @@ import org.jetbrains.annotations.Nullable;
  * Date: May 31, 2010 5:18:10 PM
  */
 public interface Property {
+
   /**
-   * @return the name of this property
+   * @return the setter: a method or null if defined, or something else callable if undefined.
    */
   @NotNull
-  PyQualifiedName getQualifiedName();
+  Maybe<PyFunction> getSetter();
 
   /**
-   * @return the setter (usually a method)
+   * @return the getter: a method or null if defined, or something else callable if undefined.
    */
-  @Nullable
-  Callable getSetter();
+  @NotNull
+  Maybe<PyFunction> getGetter();
 
   /**
-   * @return the getter (usually a method)
+   * @return the deleter: a method or null if defined, or something else callable if undefined.
    */
-  @Nullable
-  Callable getGetter();
-
-  /**
-   * @return the deleter (usually a method)
-   */
-  @Nullable
-  Callable getDeleter();
+  @NotNull
+  Maybe<PyFunction> getDeleter();
 
   /**
    * @return doc comment, explicit if present, else from getter.
    */
   @Nullable
   String getDoc();
+
+  /**
+   * @return the target to which the result of property() call is assigned. For things defined via @property, it is null. 
+   */
+  @Nullable
+  PyTargetExpression getDefinitionSite();
 
 }

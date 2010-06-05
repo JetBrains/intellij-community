@@ -19,7 +19,7 @@ all this too.
 """
 
 from datetime import datetime
-OUR_OWN_DATETIME = datetime(2010, 5, 14, 3, 32, 12) # datetime.now() of edit time
+OUR_OWN_DATETIME = datetime(2010, 6, 3, 17, 13, 12) # datetime.now() of edit time
 # we could use script's ctime, but the actual running copy may have it all wrong.
 #
 # Note: DON'T FORGET TO UPDATE!
@@ -531,6 +531,7 @@ class ModuleRedeclarator(object):
     ("tuple", "__init__"): "(self, seq=())", # overrides a fake
     ("set", "__init__"): "(self, seq=())",
     ("dict", "__init__"): "(self, seq=None, **kwargs)",
+    ("property", "__init__"): "(self, fget=None, fset=None, fdel=None, doc=None)", # TODO: infer, doc comments have it
     (None, "zip"): "(seq1, seq2, *more_seqs)",
     (None, "range"): "(start=None, stop=None, step=None)", # suboptimal: allows empty arglist
     (None, "filter"): "(function_or_none, sequence)",

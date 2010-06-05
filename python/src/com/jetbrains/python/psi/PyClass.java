@@ -68,6 +68,8 @@ public interface PyClass extends PsiNamedElement, PyStatement, NameDefiner, PyDo
    */
   boolean visitMethods(Processor<PyFunction> processor, boolean inherited);
 
+  boolean visitClassAttributes(Processor<PyTargetExpression> processor, boolean inherited);
+
   PyTargetExpression[] getClassAttributes();
 
   PyTargetExpression[] getInstanceAttributes();

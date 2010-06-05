@@ -10,6 +10,7 @@ import com.jetbrains.python.psi.patterns.SyntaxMatchers;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -49,7 +50,11 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
       if (myElement instanceof PyTargetExpression) ctx = PyType.Context.WRITE;
       else if (myElement.getParent() instanceof PyDelStatement) ctx = PyType.Context.DELETE;
       else ctx = PyType.Context.READ;
-      PsiElement ref_elt = PyUtil.turnDirIntoInit(qualifierType.resolveMember(referencedName, ctx));
+      final Maybe<? extends PsiElement> member_of_qualifier = qualifierType.resolveMember(referencedName, ctx);
+      if (member_of_qualifier.isDefined() && member_of_qualifier.value() == null) {
+        return ret; // qualifier is positive that such name cannot exist in it
+      }
+      PsiElement ref_elt = PyUtil.turnDirIntoInit(member_of_qualifier.valueOrNull());
       if (ref_elt != null) ret.poke(ref_elt, RatedResolveResult.RATE_NORMAL);
       // enrich the type info with any fields assigned nearby
       if (qualifier instanceof PyQualifiedExpression) {

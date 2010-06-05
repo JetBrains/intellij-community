@@ -5,6 +5,8 @@ import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.resolve.VariantsProcessor;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.toolbox.Maybe;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -16,14 +18,15 @@ public class PyJavaClassType implements PyType {
     myClass = aClass;
   }
 
-  public PsiElement resolveMember(final String name, Context context) {
+  @NotNull
+  public Maybe<PsiElement> resolveMember(final String name, Context context) {
     final PsiMethod[] methods = myClass.findMethodsByName(name, true);
     if (methods.length > 0) {
-      return methods [0]; // TODO[yole]: correct resolve
+      return new Maybe<PsiElement>(methods[0]); // TODO[yole]: correct resolve
     }
     final PsiField field = myClass.findFieldByName(name, true);
-    if (field != null) return field;
-    return null;
+    if (field != null) return new Maybe<PsiElement>(field);
+    return UNRESOLVED;
   }
 
   public Object[] getCompletionVariants(final PyQualifiedExpression referenceExpression, ProcessingContext context) {

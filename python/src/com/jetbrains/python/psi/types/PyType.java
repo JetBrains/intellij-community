@@ -5,6 +5,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.toolbox.Maybe;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
@@ -21,8 +23,18 @@ public interface PyType {
    * @param context
    * @return attribute's definition element
    */
-  @Nullable
-  PsiElement resolveMember(final String name, Context context);
+  @NotNull
+  Maybe<? extends PsiElement> resolveMember(final String name, Context context);
+
+  /**
+   * Return this from resolveMember() when the name is neither definitely resolved nor definitely unresolved.
+   */
+  Maybe<PsiElement> NOT_RESOLVED_YET = new Maybe<PsiElement>();
+
+  /**
+   * Return this from resolveMember() when the name definitely cannot be resolved, and no other attempts should be made.
+   */
+  Maybe<PsiElement> UNRESOLVED = new Maybe<PsiElement>(null);
 
   /**
    * Proposes completion variants from type's attributes.

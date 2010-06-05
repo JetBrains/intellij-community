@@ -8,15 +8,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.codeInsight.PyDynamicMember;
-import com.jetbrains.python.psi.Property;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyQualifiedExpression;
-import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.patterns.ParentMatcher;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.ResolveProcessor;
 import com.jetbrains.python.psi.resolve.VariantsProcessor;
+import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,22 +61,29 @@ public class PyClassType implements PyType {
   }
 
   @Nullable
-  public PsiElement resolveMember(final String name, Context context) {
+  private static Maybe<? extends PsiElement> valueOrTarget(Maybe<PyFunction> what, PyTargetExpression target_site) {
+    if (what.isDefined()) return what;
+    else return new Maybe<PsiElement>(target_site);
+  }
+
+  @NotNull
+  public Maybe<? extends PsiElement> resolveMember(final String name, Context context) {
     if (myClass == null) return null;
     Property property = myClass.findProperty(name);
     if (property != null) {
+      PyTargetExpression prop_definition = property.getDefinitionSite();
       switch (context) {
         case READ:
-          return property.getGetter();
+          return valueOrTarget(property.getGetter(), prop_definition);
         case WRITE:
-          return property.getSetter();
+          return valueOrTarget(property.getSetter(), prop_definition);
         case DELETE:
-          return property.getDeleter();
+          return valueOrTarget(property.getDeleter(), prop_definition);
       }
     }
     final PsiElement classMember = resolveClassMember(myClass, name);
     if (classMember != null) {
-      return classMember;
+      return new Maybe<PsiElement>(classMember);
     }
 
     boolean hasSuperClasses = false;
@@ -86,7 +91,7 @@ public class PyClassType implements PyType {
       hasSuperClasses = true;
       PsiElement superMember = resolveClassMember(superClass, name);
       if (superMember != null) {
-        return superMember;
+        return new Maybe<PsiElement>(superMember);
       }
     }
     if (!hasSuperClasses) {
@@ -109,7 +114,7 @@ public class PyClassType implements PyType {
         }
       }
     }
-    return null;
+    return NOT_RESOLVED_YET;
   }
 
   @Nullable

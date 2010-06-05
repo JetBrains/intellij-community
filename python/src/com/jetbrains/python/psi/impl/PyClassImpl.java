@@ -26,9 +26,11 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.resolve.VariantsProcessor;
+import com.jetbrains.python.psi.stubs.PropertyStubStorage;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
-import org.jetbrains.annotations.NonNls;
+import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
+import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -270,24 +272,24 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return result.toArray(new PyFunction[result.size()]);
   }
 
-  private static class NameFindingProcessor implements Processor<PyFunction> {
-    private PyFunction myResult;
+  private static class NameFinder<T extends PyElement> implements Processor<T> {
+    private T myResult;
     private final String[] myNames;
 
-    public NameFindingProcessor(String... names) {
+    public NameFinder(String... names) {
       myNames = names;
       myResult = null;
     }
 
-    public PyFunction getResult() {
+    public T getResult() {
       return myResult;
     }
 
-    public boolean process(PyFunction pyFunction) {
-      String fname = pyFunction.getName();
+    public boolean process(T target) {
+      String fname = target.getName();
       for (String name: myNames) {
         if (name.equals(fname)) {
-          myResult = pyFunction;
+          myResult = target;
           return false;
         }
       }
@@ -295,28 +297,33 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     }
   }
 
-  public PyFunction findMethodByName(@NotNull final String name, boolean inherited) {
-    NameFindingProcessor proc = new NameFindingProcessor(name);
+  public PyFunction findMethodByName(final String name, boolean inherited) {
+    if (name == null) return null;
+    NameFinder<PyFunction> proc = new NameFinder<PyFunction>(name);
     visitMethods(proc, inherited);
     return proc.getResult();
   }
 
   @Nullable
   public PyFunction findInitOrNew(boolean inherited) {
-    NameFindingProcessor proc;
-    if (isNewStyleClass()) proc = new NameFindingProcessor(PyNames.INIT, PyNames.NEW);
-    else proc = new NameFindingProcessor(PyNames.INIT); 
+    NameFinder<PyFunction> proc;
+    if (isNewStyleClass()) proc = new NameFinder<PyFunction>(PyNames.INIT, PyNames.NEW);
+    else proc = new NameFinder<PyFunction>(PyNames.INIT);
     visitMethods(proc, inherited);
     return proc.getResult();
   }
 
-  public Property findProperty(@NotNull String name) {
+  private final static Maybe<PyFunction> unknown_call = new Maybe<PyFunction>(); // denotes _not_ a PyFunction, actually
+  private final static Maybe<PyFunction> none = new Maybe<PyFunction>(null); // denotes an explicit None
+
+  @Nullable
+  private Property findPropertyLocally(@NotNull String name) {
     // NOTE: maybe cache the result?
-    Callable getter = null;
-    Callable setter = null;
-    Callable deleter = null;
+    Maybe<PyFunction> getter = none;
+    Maybe<PyFunction> setter = none;
+    Maybe<PyFunction> deleter = none;
     String doc = null;
-    // look at @property decorators, all stub-based
+    // look at @property decorators
     for (PyFunction method : getMethods()) {
       if (name.equals(method.getName())) {
         PyDecoratorList decolist = method.getDecoratorList();
@@ -325,63 +332,132 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
             PyQualifiedName deco_name = deco.getQualifiedName();
             if (deco_name != null) {
               if (deco_name.matches("property")) {
-                getter = method; 
+                getter = new Maybe<PyFunction>(method);
               }
               else if (deco_name.matches(name, "setter")) {
-                setter = method;
+                setter = new Maybe<PyFunction>(method);
               }
               else if (deco_name.matches(name, "deleter")) {
-                deleter = method; 
+                deleter = new Maybe<PyFunction>(method);
               }
             }
           }
         }
       }
+      if (getter != none && setter != none && deleter != none) break; // can't improve
     }
-    // TODO: look at name = property(...) assignments
-    if (getter != null || setter != null || deleter != null) return new PropertyImpl(PyQualifiedName.fromComponents(name), getter, setter, deleter, doc);
-    else return null;
+    if (getter != none || setter != none || deleter != none) return new PropertyImpl(getter, setter, deleter, doc, null);
+    // look at name = property(...) assignments
+    final PyClassStub stub = getStub();
+    if (stub != null) {
+      for (StubElement substub : stub.getChildrenStubs()) {
+        if (substub.getStubType() == PyElementTypes.TARGET_EXPRESSION) {
+          final PyTargetExpressionStub target_stub = (PyTargetExpressionStub)substub;
+          PropertyStubStorage prop = target_stub.getPropertyPack();
+          if (prop != null && name.equals(target_stub.getName())) {
+            getter = prop.getGetter().isDefined()? new Maybe<PyFunction>(findMethodByName(prop.getGetter().value(), true)) : unknown_call;
+            setter = prop.getSetter().isDefined()? new Maybe<PyFunction>(findMethodByName(prop.getSetter().value(), true)): unknown_call;
+            deleter = prop.getDeleter().isDefined()? new Maybe<PyFunction>(findMethodByName(prop.getDeleter().value(), true)) : unknown_call;
+            doc = prop.getDoc();
+          }
+        }
+      }
+      if (getter != none || setter != none || deleter != none) return new PropertyImpl(getter, setter, deleter, doc, null);
+    }
+    else {
+      // from PSI
+      for (PyTargetExpression target : getClassAttributes()) {
+        if (name.equals(target.getName())) {
+          Property prop = PropertyImpl.fromTarget(target);
+          if (prop != null) return prop;
+        }
+      }
+    }
+    return null;
   }
 
-  private static class PropertyImpl implements Property {
-    private PyQualifiedName myName;
-    private Callable myGetter;
-    private Callable mySetter;
-    private Callable myDeleter;
-    private String myDoc;
-
-    private PropertyImpl(PyQualifiedName name, Callable getter, Callable setter, Callable deleter, String doc) {
-      myDeleter = deleter;
-      myDoc = doc;
-      myGetter = getter;
-      myName = name;
-      mySetter = setter;
+  public Property findProperty(@NotNull String name) {
+    Property prop = findPropertyLocally(name);
+    if (prop != null) return prop;
+    for (PyClass cls : iterateAncestors()) {
+      prop = ((PyClassImpl)cls).findPropertyLocally(name);
+      if (prop != null) return prop;
     }
+    return null;
+  }
 
-    public Callable getDeleter() {
-      return myDeleter;
+  private static class PropertyImpl extends PropertyBunch<PyFunction> implements Property {
+
+    private PropertyImpl(Maybe<PyFunction> getter, Maybe<PyFunction> setter, Maybe<PyFunction> deleter, String doc, PyTargetExpression site) {
+      myDeleter = deleter;
+      myGetter = getter;
+      mySetter = setter;
+      myDoc = doc;
+      mySite = site;
     }
 
     @NotNull
-    public PyQualifiedName getQualifiedName() {
-      return myName;
+    public Maybe<PyFunction> getDeleter() {
+      return myDeleter;
     }
 
-    public Callable getSetter() {
+    @Override
+    @NotNull
+    public Maybe<PyFunction> getSetter() {
       return mySetter;
     }
 
-    public Callable getGetter() {
+    @Override
+    @NotNull
+    public Maybe<PyFunction> getGetter() {
       return myGetter;
     }
 
     public String getDoc() {
       if (myDoc != null) return myDoc;
-      if (myGetter instanceof PyFunction) {
-        final PyStringLiteralExpression doc_expr = ((PyFunction)myGetter).getDocStringExpression();
+      if (myGetter.isDefined()) {
+        final PyStringLiteralExpression doc_expr = ((PyFunction)myGetter.value()).getDocStringExpression();
         if (doc_expr != null) return doc_expr.getStringValue();
       }
       return null;
+    }
+
+    public PyTargetExpression getDefinitionSite() {
+      return mySite;
+    }
+
+    @Override
+    protected PyFunction translate(@NotNull PyReferenceExpression ref) {
+      if (PyNames.NONE.equals(ref.getName())) return null; // short-circuit a common case
+      PsiElement something = ref.getReference().resolve();
+      if (something instanceof PyFunction) {
+        return (PyFunction)something;
+      }
+      return null;
+    }
+
+    private static String nvl(Object s) {
+      return s == null? "null" : s.toString();
+    }
+
+    public String toString() {
+      // for debug
+      return
+        new StringBuilder("property(")
+         .append(nvl(myGetter)).append(", ")
+         .append(nvl(mySetter)).append(", ")
+         .append(nvl(myDeleter)).append(", ")
+         .append(nvl(myDoc)).append(")")
+         .toString()
+      ;
+    }
+
+    @Nullable
+    public static PropertyImpl fromTarget(PyTargetExpression target) {
+      PyExpression expr = target.findAssignedValue();
+      final PropertyImpl prop = new PropertyImpl(null, null, null, null, target);
+      final boolean success = fillFromCall(expr, prop);
+      return success? prop : null;
     }
   }
 
@@ -399,6 +475,23 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     }
     return true;
   }
+
+  public boolean visitClassAttributes(Processor<PyTargetExpression> processor, boolean inherited) {
+    PyTargetExpression[] methods = getClassAttributes();
+    for(PyTargetExpression attribute: methods) {
+      if (! processor.process(attribute)) return false;
+    }
+    if (inherited) {
+      for (PyClass ancestor : iterateAncestors()) {
+        if (!ancestor.visitClassAttributes(processor, false)) {
+          return false;
+        }
+      }
+    }
+    return true;
+    // NOTE: sorry, not enough metaprogramming to generalize visitMethods and visitClassAttributes 
+  }
+
 
 
   public PyTargetExpression[] getClassAttributes() {

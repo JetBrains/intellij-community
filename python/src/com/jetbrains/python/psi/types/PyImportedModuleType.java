@@ -9,6 +9,8 @@ import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.jetbrains.python.toolbox.Maybe;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,8 +25,9 @@ public class PyImportedModuleType implements PyType {
     myImportedModule = importedModule;
   }
 
-  public PsiElement resolveMember(String name, Context context) {
-    return myImportedModule.getElementNamed(name);
+  @NotNull
+  public Maybe<PsiElement> resolveMember(String name, Context context) {
+    return new Maybe<PsiElement>(myImportedModule.getElementNamed(name));
   }
 
   public Object[] getCompletionVariants(PyQualifiedExpression referenceExpression, ProcessingContext context) {

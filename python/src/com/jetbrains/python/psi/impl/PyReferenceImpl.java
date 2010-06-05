@@ -188,7 +188,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     if (uexpr == null) {
       // ...as a part of current module
       PyType otype = PyBuiltinCache.getInstance(realContext).getObjectType(); // "object" as a closest kin to "module"
-      if (otype != null) uexpr = otype.resolveMember(myElement.getName(), PyType.Context.READ);
+      if (otype != null) uexpr = otype.resolveMember(myElement.getName(), PyType.Context.READ).valueOrNull();
     }
     if (uexpr == null) {
       // ...as a builtin symbol
@@ -210,8 +210,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         PyClass cls = PsiTreeUtil.getParentOfType(deco, PyClass.class);
         if (cls != null) {
           Property prop = cls.findProperty(referencedName);
-          if (prop != null && prop.getGetter() != null) ret.poke(prop.getGetter(), RatedResolveResult.RATE_NORMAL);
-          // TODO: support name = property(...) case
+          if (prop != null && prop.getGetter().isDefined()) ret.poke(prop.getGetter().value(), RatedResolveResult.RATE_NORMAL);
         }
       }
     }

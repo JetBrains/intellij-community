@@ -9,6 +9,7 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.resolve.VariantsProcessor;
+import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -41,9 +42,12 @@ public class PyModuleType implements PyType { // Maybe make it a PyClassType ref
     return myModule;
   }
 
-  public PsiElement resolveMember(final String name, Context context) {
+  @NotNull
+  public Maybe<PsiElement> resolveMember(final String name, Context context) {
     //return PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(name), myModule, null, null);
-    return ResolveImportUtil.resolveChild(myModule, name, null, false);
+    final PsiElement result = ResolveImportUtil.resolveChild(myModule, name, null, false);
+    if (result != null) return new Maybe<PsiElement>(result);
+    return NOT_RESOLVED_YET;
   }
 
 
