@@ -7,6 +7,7 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -25,17 +26,9 @@ public class JavaScriptTokenizer implements Tokenizer {
   public List<Token> tokenize(Collection<? extends PsiElement> roots) {
     ArrayList<Token> tokens = new ArrayList<Token>();
     for (PsiElement root : roots) {
-      tokenize(root, tokens);
+      root.accept(new MyVisitor(tokens));
     }
     return tokens;
-  }
-
-  private static void tokenize(PsiElement root, List<Token> tokens) {
-    root.accept(new MyVisitor(tokens));
-  }
-
-  private static void tokenizeChildren(PsiElement root, List<Token> tokens) {
-    root.acceptChildren(new MyVisitor(tokens));
   }
 
   private static class MyVisitor extends JSRecursiveWalkingElementVisitor {
@@ -60,42 +53,42 @@ public class JavaScriptTokenizer implements Tokenizer {
     }
 
     @Override
-    public void visitJSParameterList(JSParameterList node) {
-      TextRange range = node.getTextRange();
-      myTokens.add(new AnonymToken(PARAM_LIST_TYPE, range.getStartOffset(), range.getEndOffset()));
+    protected void elementFinished(@NotNull PsiElement element) {
+      if (element instanceof JSStatement) {
+        PsiElement parent = element.getParent();
+        if (parent instanceof JSIfStatement || parent instanceof JSLoopStatement) {
+          myTokens.add(new IndentToken(-1, element.getTextRange().getEndOffset()));
+        }
+      }
     }
 
     @Override
-    public void visitJSStatement(JSStatement node) {
-      PsiElement parent = node.getParent();
-      if (parent instanceof JSIfStatement || parent instanceof JSLoopStatement) {
-        if (node instanceof JSBlockStatement) {
-          for (JSStatement statement : ((JSBlockStatement)node).getStatements()) {
-            tokenize(statement, myTokens);
-          }
-        }
-        else {
-          tokenizeChildren(node, myTokens);
-        }
-        myTokens.add(new IndentToken(-1, node.getTextRange().getEndOffset()));
-      }
-      else {
-        super.visitJSStatement(node);
-      }
+    public void visitJSParameterList(JSParameterList node) {
+      TextRange range = node.getTextRange();
+      myTokens.add(new AnonymToken(PARAM_LIST_TYPE, range.getStartOffset(), range.getEndOffset()));
     }
 
     private void visitLeafElement(LeafPsiElement element) {
       if (element.getTextLength() == 0) {
         return;
       }
-      if (element.getElementType() == JSTokenTypes.IDENTIFIER) {
+      IElementType type = element.getElementType();
+      if (type == JSTokenTypes.IDENTIFIER) {
         TextRange range = element.getTextRange();
         myTokens.add(new AnonymToken(IDENTIFIER_TYPE, range.getStartOffset(), range.getEndOffset()));
+        return;
       }
-      else {
-        TextRange range = element.getTextRange();
-        myTokens.add(new TextToken(element.getText().hashCode(), range.getStartOffset(), range.getEndOffset()));
+      if (type == JSTokenTypes.LBRACE || type == JSTokenTypes.RBRACE) {
+        PsiElement parent = element.getParent();
+        if (parent instanceof JSBlockStatement) {
+          parent = parent.getParent();
+          if (parent instanceof JSIfStatement || parent instanceof JSLoopStatement) {
+            return;
+          }
+        }
       }
+      TextRange range = element.getTextRange();
+      myTokens.add(new TextToken(element.getText().hashCode(), range.getStartOffset(), range.getEndOffset()));
     }
   }
 }
