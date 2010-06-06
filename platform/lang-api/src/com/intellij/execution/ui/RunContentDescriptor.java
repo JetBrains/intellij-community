@@ -40,6 +40,7 @@ public class RunContentDescriptor {
    * Used to hack {@link com.intellij.execution.runners.RestartAction}
    */
   private Content myContent;
+  private Runnable myRestarter;
 
   public RunContentDescriptor(final ExecutionConsole executionConsole,
                               final ProcessHandler processHandler, final JComponent component, final String displayName, final Icon icon) {
@@ -107,5 +108,13 @@ public class RunContentDescriptor {
    */
   public Content getAttachedContent() {
     return myContent;
+  }
+
+  public void setRestarter(Runnable runnable) {
+    myRestarter = runnable;
+  }
+
+  public Runnable getRestarter() {
+    return myRestarter;
   }
 }
