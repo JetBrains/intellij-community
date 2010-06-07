@@ -1,7 +1,13 @@
 package com.intellij.refactoring.typeMigration;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiExpression;
-import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
+import com.intellij.structuralsearch.MatchOptions;
+import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
+import com.intellij.structuralsearch.plugin.replace.Replacer;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -11,15 +17,12 @@ import org.jetbrains.annotations.NonNls;
  * Time: 7:13:53 PM
  * To change this template use File | Settings | File Templates.
  */
-public class TypeConversionDescriptor {
+public class TypeConversionDescriptor extends TypeConversionDescriptorBase {
+  private static final Logger LOG = Logger.getInstance("#" + TypeConversionDescriptor.class.getName());
 
   private String myStringToReplace = null;
   private String myReplaceByString = "$";
   private PsiExpression myExpression;
-  private TypeMigrationUsageInfo myRoot;
-
-  public TypeConversionDescriptor() {
-  }
 
   public TypeConversionDescriptor(@NonNls final String stringToReplace, @NonNls final String replaceByString) {
     myStringToReplace = stringToReplace;
@@ -56,12 +59,26 @@ public class TypeConversionDescriptor {
     myExpression = expression;
   }
 
-  public TypeMigrationUsageInfo getRoot() {
-    return myRoot;
-  }
-
-  public void setRoot(final TypeMigrationUsageInfo root) {
-    myRoot = root;
+  @Override
+  public void replace(PsiExpression expression) {
+    if (getExpression() != null) expression = getExpression();
+    final Project project = expression.getProject();
+    final ReplaceOptions options = new ReplaceOptions();
+    options.setMatchOptions(new MatchOptions());
+    final Replacer replacer = new Replacer(project, null);
+    try {
+      final String replacement = replacer.testReplace(expression.getText(), getStringToReplace(), getReplaceByString(), options);
+      try {
+        expression.replace(
+          JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText(replacement, expression));
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
   }
 
   @Override

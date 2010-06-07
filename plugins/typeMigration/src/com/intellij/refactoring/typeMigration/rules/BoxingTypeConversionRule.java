@@ -8,11 +8,12 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
+import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 
 public class BoxingTypeConversionRule extends TypeConversionRule {
 
-  public TypeConversionDescriptor findConversion(final PsiType from, final PsiType to, final PsiMember member, final PsiExpression context,
+  public TypeConversionDescriptorBase findConversion(final PsiType from, final PsiType to, final PsiMember member, final PsiExpression context,
                                                  final TypeMigrationLabeler labeler) {
     if (to instanceof PsiClassType && from instanceof PsiPrimitiveType) {
       if (!PsiUtil.getLanguageLevel(context).hasEnumKeywordAndAutoboxing()) {

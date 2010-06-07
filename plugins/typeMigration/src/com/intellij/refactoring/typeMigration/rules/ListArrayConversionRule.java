@@ -13,12 +13,13 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
+import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 public class ListArrayConversionRule extends TypeConversionRule {
-  public TypeConversionDescriptor findConversion(final PsiType from,
+  public TypeConversionDescriptorBase findConversion(final PsiType from,
                                                  final PsiType to,
                                                  PsiMember member,
                                                  final PsiExpression context,

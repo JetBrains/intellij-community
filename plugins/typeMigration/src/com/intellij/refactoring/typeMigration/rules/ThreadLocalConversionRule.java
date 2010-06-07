@@ -11,6 +11,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
+import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +21,7 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
 
 
   @Override
-  public TypeConversionDescriptor findConversion(PsiType from,
+  public TypeConversionDescriptorBase findConversion(PsiType from,
                                                  PsiType to,
                                                  PsiMember member,
                                                  PsiExpression context,

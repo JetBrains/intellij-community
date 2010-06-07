@@ -8,10 +8,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
+import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 
 public class ElementToArrayConversionRule extends TypeConversionRule{
-  public TypeConversionDescriptor findConversion(final PsiType from, final PsiType to, final PsiMember member, final PsiExpression context,
+  public TypeConversionDescriptorBase findConversion(final PsiType from, final PsiType to, final PsiMember member, final PsiExpression context,
                                                  final TypeMigrationLabeler labeler) {
     if (member == null && to instanceof PsiArrayType && TypeConversionUtil.isAssignable(((PsiArrayType)to).getComponentType(), from)) {
       TypeConversionDescriptor wrapDescription =

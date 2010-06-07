@@ -8,6 +8,11 @@
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <codeInsight.changeVariableTypeQuickFixProvider
         implementation="com.intellij.refactoring.typeMigration.TypeMigrationVariableTypeFixProvider"/>
+    <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.ListArrayConversionRule"/>
+    <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.AtomicConversionRule"/>
+    <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.BoxingTypeConversionRule"/>
+    <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.ElementToArrayConversionRule"/>
+    <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.ThreadLocalConversionRule"/>
     <intentionAction>
       <className>com.intellij.refactoring.typeMigration.intentions.ConvertFieldToAtomicIntention</className>
        <category>Concurrency</category>
@@ -17,14 +22,5 @@
       <category>Concurrency</category>
     </intentionAction>
   </extensions>
-  <actions>
-    <group id="Type Migration">
-      <action id="ChangeTypeSignature"
-              class="com.intellij.refactoring.typeMigration.actions.ChangeTypeSignatureAction"
-              text="T_ype Migration..."
-              description="Change type of the return type of the method, field, parameter, variable or class type arguments and correct all references"/>
-      <add-to-group group-id="RefactoringMenu1" relative-to-action="ChangeSignature" anchor="after"/>
-    </group>
-  </actions>
   <depends>Structural Search</depends>
 </idea-plugin>
