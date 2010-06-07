@@ -25,8 +25,23 @@ public class AsyncResult<T> extends ActionCallback {
     return this;
   }
 
+  public AsyncResult<T> setRejected(T result) {
+    myResult = result;
+    super.setRejected();
+    return this;
+  }
+
   public AsyncResult<T> doWhenDone(final Handler<T> handler) {
     doWhenDone(new Runnable() {
+      public void run() {
+        handler.run(myResult);
+      }
+    });
+    return this;
+  }
+
+  public AsyncResult<T> doWhenRejected(final Handler<T> handler) {
+    doWhenRejected(new Runnable() {
       public void run() {
         handler.run(myResult);
       }
@@ -51,6 +66,10 @@ public class AsyncResult<T> extends ActionCallback {
   public static class Rejected<T> extends AsyncResult<T> {
     public Rejected() {
       setRejected();
+    }
+
+    public Rejected(T value) {
+      setRejected(value);
     }
   }
 
