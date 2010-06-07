@@ -202,9 +202,7 @@ public class ShowUsagesAction extends AnAction {
     final List<Usage> usages = new ArrayList<Usage>();
     final Set<UsageNode> visibleNodes = new LinkedHashSet<UsageNode>();
     Processor<Usage> collect = new Processor<Usage>() {
-      final UsageTarget[] myUsageTarget = new UsageTarget[] {
-        new PsiElement2UsageTargetAdapter(handler.getPsiElement())
-      };
+      final UsageTarget[] myUsageTarget = {new PsiElement2UsageTargetAdapter(handler.getPsiElement())};
 
       public boolean process(@NotNull Usage usage) {
         synchronized (usages) {
@@ -387,7 +385,9 @@ public class ShowUsagesAction extends AnAction {
         if (!(element instanceof UsageNode)) return element.toString();
         UsageNode node = (UsageNode)element;
         GroupNode group = (GroupNode)node.getParent();
-        return node.getUsage().getPresentation().getPlainText() + group.toString();
+        Usage usage = node.getUsage();
+        if (usage == NullUsage.INSTANCE) return "";
+        return usage.getPresentation().getPlainText() + group.toString();
       }
 
       protected void selectElement(Object element, String selectedText) {
