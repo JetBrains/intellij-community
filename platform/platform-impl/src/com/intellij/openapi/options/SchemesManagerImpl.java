@@ -340,8 +340,6 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
       finally {
         output.close();
       }
-
-
     }
 
     return file;
@@ -864,11 +862,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
           }
         }
-
-
       }
-
-
     }
   }
 
@@ -885,7 +879,6 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     return fileName + EXT;
   }
 
-  // TODO: preserve line separators
   private void saveIfNeeded(final E schemeKey, final String fileName, final Document document, final long newHash, final Long oldHash)
       throws IOException {
     if (oldHash == null || newHash != oldHash.longValue() || (myVFSBaseDir.findChild(fileName) == null)) {
@@ -893,7 +886,6 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
         final byte[] text = StorageUtil.printDocument(document);
 
         ensureFileText(fileName, text);
-
       }
       else {
         byte[] text = StorageUtil.printDocument(document);
