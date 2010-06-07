@@ -1,0 +1,27 @@
+#!/usr/bin/env python
+#
+# mercurial - scalable distributed SCM
+#
+# Copyright 2005-2007 Matt Mackall <mpm@selenic.com>
+#
+# This software may be used and distributed according to the terms of the
+# GNU General Public License version 2 or any later version.
+
+# enable importing on demand to reduce startup time
+try:
+    from mercurial import demandimport; demandimport.enable()
+except ImportError:
+    import sys
+    sys.stderr.write("abort: couldn't find mercurial libraries in [%s]\n" %
+                     ' '.join(sys.path))
+    sys.stderr.write("(check your install and PYTHONPATH)\n")
+    sys.exit(-1)
+
+import sys
+import mercurial.util
+import mercurial.dispatch
+
+for fp in (sys.stdin, sys.stdout, sys.stderr):
+    mercurial.util.set_binary(fp)
+
+mercurial.dispatch.run()
