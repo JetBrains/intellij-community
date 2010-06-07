@@ -57,7 +57,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
   }
 
   public void testCancelUpdate() throws Exception {
-    System.out.println("TreeUiTest.testCancelUpdate --------------------");
     assertInterruption(Interruption.invokeCancel);
   }
 
@@ -917,8 +916,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
   }
 
   private void assertInterruption(Interruption cancelled) throws Exception {
-    Log.print("assert interruption started ");
-
     buildStructure(myRoot);
 
     expand(getPath("/"));
@@ -937,25 +934,18 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " -xunit\n" +
                "  runner\n");
 
-    Log.print("--------------- 1 ready=" + getBuilder().getUi().isReady());
     runAndInterrupt(new MyRunnable() {
       public void runSafe() throws Exception {
         updateFrom(new NodeElement("/"));
       }
     }, "update", new NodeElement("jetbrains"), cancelled);
 
-    Log.print("--------------- 1 PASSED ready=" + getBuilder().getUi().isReady());
-
-    Log.print("--------------- 2 ready=" + getBuilder().getUi().isReady());
     runAndInterrupt(new MyRunnable() {
       @Override
       public void runSafe() throws Exception {
         updateFrom(new NodeElement("/"));
       }
     }, "getChildren", new NodeElement("jetbrains"), cancelled);
-    Log.print("--------------- 2 PASSED ready=" + getBuilder().getUi().isReady());
-
-    Log.print("assert interruption finished ");
   }
 
 
@@ -1019,8 +1009,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
   private void runAndInterrupt(final Runnable action, final String interruptAction, final Object interruptElement, final Interruption interruption) throws Exception {
     myElementUpdate.clear();
 
-    Log.print("runAndInterrupt action=" + interruptAction + " element=" + interruptElement + " cancelRequest=" + myCancelRequest  + " interruption=" + interruption + " builder=" + getBuilder());
-
     final Ref<Thread> thread = new Ref<Thread>();
 
     final boolean[] wasInterrupted = new boolean[] {false};
@@ -1031,22 +1019,15 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
         }
 
 
-        if (thread.get() != Thread.currentThread()) {
-          Log.print("FFFFFFFFFFUUUUUUUUUUUUUCCCCCCCCCCCCKKKKKKKKK!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-        }
-
         boolean toInterrupt = element.equals(interruptElement) && action.equals(interruptAction);
-        Log.print("-- onElementAction action=" + action + " element=" + element + " wasInterrupted=" + wasInterrupted[0] + " toInterrupt=" + toInterrupt + " cancelProcessed" + getBuilder().getUi().isCancelProcessed());
 
         if (wasInterrupted[0]) {
           if (myCancelRequest == null) {
             String status = getBuilder().getUi().getStatus();
-            Log.print("!!!! status=" + status);
             myCancelRequest = new AssertionError("Not supposed to be update after interruption request: action=" + action + " element=" + element + " interruptAction=" + interruptAction + " interruptElement=" + interruptElement);
           }
         } else {
           if (toInterrupt) {
-            Log.print("-- send interruption ready=" + getBuilder().getUi().isReady());
             wasInterrupted[0] = true;
             switch (interruption) {
               case throwProcessCancelled:
@@ -1933,9 +1914,9 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
   public static TestSuite suite() {
     TestSuite suite = new TestSuite();
-    //suite.addTestSuite(Passthrough.class);
-    //suite.addTestSuite(SyncUpdate.class);
-    //suite.addTestSuite(YieldingUpdate.class);
+    suite.addTestSuite(Passthrough.class);
+    suite.addTestSuite(SyncUpdate.class);
+    suite.addTestSuite(YieldingUpdate.class);
     suite.addTestSuite(VeryQuickBgLoadingSyncUpdate.class);
     suite.addTestSuite(QuickBgLoadingSyncUpdate.class);
     suite.addTestSuite(BgLoadingSyncUpdate.class);

@@ -18,7 +18,6 @@ package com.intellij.ide.util.treeView;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Log;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -1640,8 +1639,6 @@ public class AbstractTreeUi {
   private ActionCallback resetToReadyNow() {
     assertIsDispatchThread();
 
-    Log.print("resetToReadyNow children=" + myUpdatingChildren + " loadedInBg=" + myLoadedInBackground + " workers=" + myActiveWorkerTasks);
-
     DefaultMutableTreeNode[] uc = myUpdatingChildren.toArray(new DefaultMutableTreeNode[myUpdatingChildren.size()]);
     for (DefaultMutableTreeNode each : uc) {
       resetIncompleteNode(each);
@@ -1764,13 +1761,18 @@ public class AbstractTreeUi {
 
   private void executeYieldingRequest(Runnable runnable, TreeUpdatePass pass) {
     try {
-      myYeildingPasses.remove(pass);
-      runnable.run();
-    }
-    finally {
-      if (!isReleased()) {
-        maybeYeildingFinished();
+      try {
+        myYeildingPasses.remove(pass);
+        runnable.run();
       }
+      finally {
+        if (!isReleased()) {
+          maybeYeildingFinished();
+        }
+      }
+    }
+    catch (ProcessCanceledException e) {
+      resetToReady();
     }
   }
 
@@ -1788,6 +1790,9 @@ public class AbstractTreeUi {
 
     if (isReady()) {
       myRevalidatedObjects.clear();
+
+      setCancelRequested(false);
+      myResettingToReadyNow.set(false);
 
       myInitialized.setDone();
 
@@ -2079,8 +2084,6 @@ public class AbstractTreeUi {
 
     setCancelRequested(true);
 
-    Log.print("cancelUpdate requested isReleased=" + isReleased() + " cancelProcessed=" + isCancelProcessed());
-
     final ActionCallback done = new ActionCallback();
 
     invokeLaterIfNeeded(new Runnable() {
@@ -2091,19 +2094,15 @@ public class AbstractTreeUi {
         }
 
         if (myResettingToReadyNow.get()) {
-          Log.print("1");
           getReady(this).notify(done);
         } else if (isReady()) {
-          Log.print("2");
           resetToReadyNow();
           done.setDone();
         } else {
           if (isIdle() && hasPendingWork()) {
-            Log.print("3");
             resetToReadyNow();
             done.setDone();
           } else {
-            Log.print("4 cancelProcessed=" + isCancelProcessed());
             getReady(this).notify(done);
           }
         }
@@ -2147,7 +2146,14 @@ public class AbstractTreeUi {
 
     try {
       progressive.run(indicator);
-    } finally {
+    } catch (ProcessCanceledException e) {
+      resetToReadyNow().doWhenDone(new Runnable() {
+        public void run() {
+          callback.setRejected();
+        }
+      });
+      return callback;
+    }finally {
       if (isReleased()) return new ActionCallback.Rejected();
 
       getReady(this).doWhenDone(new Runnable() {
@@ -3091,7 +3097,6 @@ public class AbstractTreeUi {
 
   private void registerWorkerTask(Runnable runnable, Object id) {
     synchronized (myActiveWorkerTasks) {
-      Log.print("worker started canDoNewActivity=" + canInitiateNewActivity() + " id=" + id);
       myActiveWorkerTasks.add(runnable);
     }
   }
@@ -3101,9 +3106,6 @@ public class AbstractTreeUi {
 
     synchronized (myActiveWorkerTasks) {
       wasRemoved = myActiveWorkerTasks.remove(runnable);
-      if (wasRemoved) {
-        Log.print("worker finished id=" + id);
-      }
     }
 
     if (wasRemoved && finalizeRunnable != null) {
@@ -3714,32 +3716,37 @@ public class AbstractTreeUi {
                final boolean checkIfInStructure,
                final boolean canSmartExpand) {
 
-    runDone(new Runnable() {
-      public void run() {
-        if (element.length == 0) {
-          runDone(onDone);
-          return;
-        }
-
-        if (myUpdaterState != null) {
-          myUpdaterState.clearExpansion();
-        }
-
-
-        final ActionCallback done = new ActionCallback(element.length);
-        done.doWhenDone(new Runnable() {
-          public void run() {
+    try {
+      runDone(new Runnable() {
+        public void run() {
+          if (element.length == 0) {
             runDone(onDone);
+            return;
           }
-        }).doWhenRejected(new Runnable() {
-          public void run() {
-            runDone(onDone);
-          }
-        });
 
-        expandNext(element, 0, parentsOnly, checkIfInStructure, canSmartExpand, done, 0);
-      }
-    });
+          if (myUpdaterState != null) {
+            myUpdaterState.clearExpansion();
+          }
+
+
+          final ActionCallback done = new ActionCallback(element.length);
+          done.doWhenDone(new Runnable() {
+            public void run() {
+              runDone(onDone);
+            }
+          }).doWhenRejected(new Runnable() {
+            public void run() {
+              runDone(onDone);
+            }
+          });
+
+          expandNext(element, 0, parentsOnly, checkIfInStructure, canSmartExpand, done, 0);
+        }
+      });
+    }
+    catch (ProcessCanceledException e) {
+      runDone(onDone);
+    }
   }
 
   private void expandNext(final Object[] elements,
@@ -4230,7 +4237,6 @@ public class AbstractTreeUi {
         return;
       }
 
-      //myRequestedExpand = null;
 
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
 
