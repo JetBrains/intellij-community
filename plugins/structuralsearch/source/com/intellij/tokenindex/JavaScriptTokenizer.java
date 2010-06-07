@@ -81,9 +81,12 @@ public class JavaScriptTokenizer implements Tokenizer {
       if (type == JSTokenTypes.LBRACE || type == JSTokenTypes.RBRACE) {
         PsiElement parent = element.getParent();
         if (parent instanceof JSBlockStatement) {
-          parent = parent.getParent();
-          if (parent instanceof JSIfStatement || parent instanceof JSLoopStatement) {
-            return;
+          JSStatement[] statements = ((JSBlockStatement)parent).getStatements();
+          if (statements != null && statements.length == 1) {
+            parent = parent.getParent();
+            if (parent instanceof JSIfStatement || parent instanceof JSLoopStatement) {
+              return;
+            }
           }
         }
       }
