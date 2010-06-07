@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.impl.ProjectRootUtil;
@@ -270,8 +271,9 @@ public class PackageUtil {
     return false;
   }
 
-  private static PsiDirectory getWritableDirectory(Query<VirtualFile> vFiles, PsiManager manager) {
+  private static PsiDirectory getWritableModuleDirectory(@NotNull Query<VirtualFile> vFiles, @NotNull Module module, PsiManager manager) {
     for (VirtualFile vFile : vFiles) {
+      if (ModuleUtil.findModuleForFile(vFile, module.getProject()) != module) continue;
       PsiDirectory directory = manager.findDirectory(vFile);
       if (directory != null && directory.isValid() && directory.isWritable()) {
         return directory;
@@ -286,7 +288,7 @@ public class PackageUtil {
     String nameToMatch = packageName;
     while (true) {
       Query<VirtualFile> vFiles = ModulePackageIndex.getInstance(module).getDirsByPackageName(nameToMatch, false);
-      PsiDirectory directory = getWritableDirectory(vFiles, manager);
+      PsiDirectory directory = getWritableModuleDirectory(vFiles, module, manager);
       if (directory != null) return JavaDirectoryService.getInstance().getPackage(directory);
 
       int lastDotIndex = nameToMatch.lastIndexOf('.');
