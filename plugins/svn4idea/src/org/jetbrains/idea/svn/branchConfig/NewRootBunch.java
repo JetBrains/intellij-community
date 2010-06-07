@@ -20,6 +20,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vcs.CalledInBackground;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
@@ -28,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.integrate.SvnBranchItem;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -93,6 +96,42 @@ public class NewRootBunch implements SvnBranchConfigManager {
                              final Consumer<List<SvnBranchItem>> callback) {
     ApplicationManager.getApplication().executeOnPooledThread(new BranchesLoadRunnable(myProject, this, branchParentUrl,
                                                                                        InfoReliability.setByUser, root, callback));
+  }
+
+  @Nullable
+  @CalledInBackground
+  public SVNURL getWorkingBranchWithReload(final SVNURL svnurl, final VirtualFile root) {
+    final Ref<SVNURL> result = new Ref<SVNURL>();
+    try {
+      final SvnBranchConfigurationNew configuration = myMap.get(root).getValue();
+      final String group = configuration.getGroupToLoadToReachUrl(svnurl);
+      final Runnable runnable = new Runnable() {
+        public void run() {
+          final SvnBranchConfigurationNew reloadedConfiguration = myMap.get(root).getValue();
+          try {
+            result.set(reloadedConfiguration.getWorkingBranch(svnurl));
+          }
+          catch (SVNException e) {
+            //
+          }
+        }
+      };
+
+      if (group == null) {
+        runnable.run();
+      } else {
+        new BranchesLoadRunnable(myProject, this, group, InfoReliability.setByUser, root,
+                                 new Consumer<List<SvnBranchItem>>() {
+                                   public void consume(List<SvnBranchItem> svnBranchItems) {
+                                     runnable.run();
+                                   }
+                                 }).run();
+      }
+    }
+    catch (SVNException e) {
+      //
+    }
+    return result.get();
   }
 
   public static class BranchesLoadRunnable implements Runnable {

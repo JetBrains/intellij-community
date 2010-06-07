@@ -17,6 +17,7 @@ package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -30,17 +31,35 @@ import org.jetbrains.annotations.Nullable;
 public interface GeneralTestEventsProcessor extends Disposable {
   void onTestsCountInSuite(final int count);
 
-  void onTestStarted(final String testName, @Nullable final String locationUrl);
-  void onTestFinished(final String testName, final int duration);
-  void onTestFailure(final String testName, final String localizedMessage, final String stackTrace,
+  void onTestStarted(@NotNull final String testName,
+                     @Nullable final String locationUrl);
+
+  void onTestFinished(@NotNull final String testName,
+                      final int duration);
+
+  void onTestFailure(@NotNull final String testName, 
+                     @NotNull final String localizedMessage,
+                     @Nullable final String stackTrace,
                      final boolean testError);
-  void onTestIgnored(final String testName, final String ignoreComment, @Nullable final String stackTrace);
-  void onTestOutput(final String testName, final String text, final boolean stdOut);
 
-  void onSuiteStarted(final String suiteName, @Nullable final String locationUrl);
-  void onSuiteFinished(final String suiteName);
+  void onTestIgnored(@NotNull final String testName,
+                     @NotNull final String ignoreComment,
+                     @Nullable final String stackTrace);
 
-  void onUncapturedOutput(final String text, final Key outputType);
+  void onTestOutput(@NotNull final String testName,
+                    @NotNull final String text,
+                    final boolean stdOut);
+
+  void onSuiteStarted(@NotNull final String suiteName,
+                      @Nullable final String locationUrl);
+
+  void onSuiteFinished(@NotNull final String suiteName);
+
+  void onUncapturedOutput(@NotNull final String text,
+                          final Key outputType);
+
+  void onError(@NotNull final String localizedMessage,
+               @Nullable final String stackTrace);
 
   // Custom progress statistics
 
@@ -49,7 +68,8 @@ public interface GeneralTestEventsProcessor extends Disposable {
    * If name is null statistics will be switched to normal mode
    * @param testCount - 0 will be considered as unknown tests number
    */
-  void onCustomProgressTestsCategory(@Nullable final String categoryName, final int testCount);
+  void onCustomProgressTestsCategory(@Nullable final String categoryName,
+                                     final int testCount);
   void onCustomProgressTestStarted();
   void onCustomProgressTestFailed();
 }

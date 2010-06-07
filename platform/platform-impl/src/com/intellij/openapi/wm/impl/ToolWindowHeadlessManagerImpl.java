@@ -23,13 +23,13 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ActiveRunnable;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
@@ -46,9 +46,9 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.InputEvent;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.ArrayList;
 
 @SuppressWarnings({"ConstantConditions"})
 public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
@@ -176,6 +176,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
   @NonNls private static final ContentManager MOCK_CONTENT_MANAGER = new ContentManager() {
     public void addContent(@NotNull final Content content) { }
+    public void addContent(@NotNull Content content, int order) { }
     public void addContent(@NotNull final Content content, final Object constraints) { }
     public void addContentManagerListener(@NotNull final ContentManagerListener l) { }
     public void addDataProvider(@NotNull final DataProvider provider) { }

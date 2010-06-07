@@ -53,6 +53,7 @@ public class SvnConfigurable implements Configurable {
   private JLabel myUseCommonProxyLabel;
   private JLabel myEditProxyLabel;
   private JCheckBox myLockOnDemand;
+  private JCheckBox myCheckNestedInQuickMerge;
   private JCheckBox myDetectNestedWorkingCopiesCheckBox;
   private JCheckBox myIgnoreWhitespaceDifferenciesInCheckBox;
   private JCheckBox myShowMergeSourceInAnnotate;
@@ -173,6 +174,9 @@ public class SvnConfigurable implements Configurable {
     if (configuration.DETECT_NESTED_COPIES != myDetectNestedWorkingCopiesCheckBox.isSelected()) {
       return true;
     }
+    if (configuration.CHECK_NESTED_FOR_QUICK_MERGE != myCheckNestedInQuickMerge.isSelected()) {
+      return true;
+    }
     if (configuration.IGNORE_SPACES_IN_ANNOTATE != myIgnoreWhitespaceDifferenciesInCheckBox.isSelected()) {
       return true;
     }
@@ -200,7 +204,8 @@ public class SvnConfigurable implements Configurable {
     if ((! configuration.DETECT_NESTED_COPIES) && (configuration.DETECT_NESTED_COPIES != myDetectNestedWorkingCopiesCheckBox.isSelected())) {
       SvnVcs.getInstance(myProject).invokeRefreshSvnRoots(true);
     }
-    configuration.DETECT_NESTED_COPIES = myDetectNestedWorkingCopiesCheckBox.isSelected(); 
+    configuration.DETECT_NESTED_COPIES = myDetectNestedWorkingCopiesCheckBox.isSelected();
+    configuration.CHECK_NESTED_FOR_QUICK_MERGE = myCheckNestedInQuickMerge.isSelected();
     configuration.UPDATE_LOCK_ON_DEMAND = myLockOnDemand.isSelected();
     configuration.setIgnoreSpacesInAnnotate(myIgnoreWhitespaceDifferenciesInCheckBox.isSelected());
     configuration.SHOW_MERGE_SOURCES_IN_ANNOTATE = myShowMergeSourceInAnnotate.isSelected();
@@ -221,6 +226,7 @@ public class SvnConfigurable implements Configurable {
     myUseDefaultCheckBox.setSelected(configuration.isUseDefaultConfiguation());
     myUseCommonProxy.setSelected(configuration.isIsUseDefaultProxy());
     myDetectNestedWorkingCopiesCheckBox.setSelected(configuration.DETECT_NESTED_COPIES);
+    myCheckNestedInQuickMerge.setSelected(configuration.CHECK_NESTED_FOR_QUICK_MERGE);
 
     boolean enabled = !myUseDefaultCheckBox.isSelected();
     myConfigurationDirectoryText.setEnabled(enabled);

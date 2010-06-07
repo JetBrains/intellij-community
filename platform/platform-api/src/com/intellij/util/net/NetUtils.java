@@ -17,9 +17,12 @@
 package com.intellij.util.net;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
+import java.net.UnknownHostException;
 
 /**
  * @author yole
@@ -56,9 +59,9 @@ public class NetUtils {
       sockets[i] = serverSocket;
       ports[i] = serverSocket.getLocalPort();
     }
-  //workaround for linux : calling close() immediately after opening socket
-  //may result that socket is not closed
-    synchronized (sockets) {
+    //workaround for linux : calling close() immediately after opening socket
+    //may result that socket is not closed
+    synchronized(sockets) {
       try {
         sockets.wait(1);
       }
@@ -71,5 +74,20 @@ public class NetUtils {
       socket.close();
     }
     return ports;
+  }
+
+  public static String getLocalHostString() {
+    // HACK for Windows with ipv6
+    String localHostString = "localhost";
+    try {
+      final InetAddress localHost = InetAddress.getByName(localHostString);
+      if (localHost.getAddress().length != 4 && SystemInfo.isWindows){
+        localHostString = "127.0.0.1";
+      }
+    }
+    catch (UnknownHostException e) {
+      // ignore
+    }
+    return localHostString;
   }
 }

@@ -278,8 +278,9 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
       if (range.contains(offset) || range.getEndOffset() == offset/* in case of inserting at the end*/) {
         TextRange rangeToModify = new TextRange(offset, Math.min(range.getEndOffset(), endOffset));
         TextRange hostRangeToModify = rangeToModify.shiftRight(hostRange.getStartOffset() - curRangeStart);
-        CharSequence toReplace = i == myShreds.size() - 1 ? s : s.subSequence(0, Math.min(hostRangeToModify.getLength(), s.length()));
-        s = s.subSequence(toReplace.length(), s.length());
+        CharSequence toReplace = i == myShreds.size() - 1 || range.getEndOffset() + shred.suffix.length() >= endOffset
+                                 ? s : s.subSequence(0, Math.min(hostRangeToModify.getLength(), s.length()));
+        s = toReplace == s ? "" : s.subSequence(toReplace.length(), s.length());
         hostRangesToModify.add(Pair.create(hostRangeToModify, toReplace));
         offset = rangeToModify.getEndOffset();
       }

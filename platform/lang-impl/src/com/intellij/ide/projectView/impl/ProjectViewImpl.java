@@ -545,7 +545,7 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
         }
         myUninitializedPaneState.remove(pane.getId());
       }
-      if (pane.isInitiallyVisible()) {
+      if (pane.isInitiallyVisible() && !myId2Pane.containsKey(pane.getId())) {
         addProjectPane(pane);
       }
       Disposer.register(this, pane);
@@ -688,6 +688,10 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
   }
 
   public AbstractProjectViewPane getProjectViewPaneById(String id) {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {   // most tests don't need all panes to be loaded
+      ensurePanesLoaded();
+    }
+
     final AbstractProjectViewPane pane = myId2Pane.get(id);
     if (pane != null) {
       return pane;

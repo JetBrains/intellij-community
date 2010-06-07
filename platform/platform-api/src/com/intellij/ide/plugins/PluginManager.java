@@ -321,6 +321,7 @@ public class PluginManager {
 
       if (!shouldLoadPlugins()) return true;
     }
+    final List<String> pluginIds = pluginId == null ? null : StringUtil.split(pluginId, ",");
 
     final boolean checkModuleDependencies = !ourAvailableModules.isEmpty() && !ourAvailableModules.contains("com.intellij.modules.all");
     if (checkModuleDependencies && !hasModuleDependencies(descriptor)) {
@@ -334,8 +335,8 @@ public class PluginManager {
       shouldLoad = loadPluginCategory.equals(descriptor.getCategory());
     }
     else {
-      if (pluginId != null) {
-        shouldLoad = pluginId.equals(idString);
+      if (pluginIds != null) {
+        shouldLoad = pluginIds.contains(idString);
         if (!shouldLoad) {
           Map<PluginId,IdeaPluginDescriptor> map = new HashMap<PluginId, IdeaPluginDescriptor>();
           for (final IdeaPluginDescriptor pluginDescriptor : loaded) {

@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -49,6 +50,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -260,6 +262,11 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   }
 
   public void addToHistory(final String text, final TextAttributes attributes) {
+    printToHistory(text, attributes);
+  }
+
+  public void printToHistory(String text, final TextAttributes attributes) {
+    text = StringUtil.convertLineSeparators(text);
     final boolean scrollToEnd = shouldScrollHistoryToEnd();
     final Document history = myHistoryViewer.getDocument();
     final MarkupModel markupModel = history.getMarkupModel(myProject);
@@ -519,17 +526,17 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     });
   }
 
-
   public static void printToConsole(final LanguageConsoleImpl console, final String string, final ConsoleViewContentType type) {
     printToConsole(console, string, type.getAttributes());
   }
 
-  public static void printToConsole(final LanguageConsoleImpl console, final String string, final TextAttributes textAttributes) {
-    final TextAttributes attributes = TextAttributes.merge(textAttributes, ConsoleHighlighter.OUT.getDefaultAttributes());
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        console.addToHistory(string, attributes);
-      }
-    }, ModalityState.stateForComponent(console.getComponent()));
-  }
+   public static void printToConsole(final LanguageConsoleImpl console, final String string, final TextAttributes textAttributes) {
+     final TextAttributes outAttrs = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(ConsoleHighlighter.OUT);
+     final TextAttributes attributes = TextAttributes.merge(outAttrs, textAttributes);
+     ApplicationManager.getApplication().invokeLater(new Runnable() {
+       public void run() {
+         console.printToHistory(string, attributes);
+       }
+     }, ModalityState.stateForComponent(console.getComponent()));
+   }
 }

@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
-import com.intellij.util.NotNullFunction;
+import com.intellij.util.Consumer;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.integrate.IMerger;
@@ -37,13 +37,15 @@ public class BranchMerger implements IMerger {
   private final UpdateEventHandler myHandler;
   private final boolean myReintegrate;
   private final String myBranchName;
+  private final long mySourceCopyRevision;
   private boolean myAtStart;
+  private long mySourceLatestRevision;
 
   public BranchMerger(final SvnVcs vcs,
                       final SVNURL sourceUrl,
                       final SVNURL targetUrl, final String targetPath,
                       final UpdateEventHandler handler,
-                      final boolean isReintegrate, final String branchName) {
+                      final boolean isReintegrate, final String branchName, final long sourceCopyRevision) {
     myVcs = vcs;
     myTargetPath = targetPath;
     mySourceUrl = sourceUrl;
@@ -51,11 +53,18 @@ public class BranchMerger implements IMerger {
     myHandler = handler;
     myReintegrate = isReintegrate;
     myBranchName = branchName;
+    mySourceCopyRevision = sourceCopyRevision;
     myAtStart = true;
+    try {
+      mySourceLatestRevision = myVcs.createRepository(mySourceUrl).getLatestRevision();
+    }
+    catch (SVNException e) {
+      mySourceLatestRevision = SVNRevision.HEAD.getNumber();
+    }
   }
 
   public String getComment() {
-    return "Merge from " + myBranchName;
+    return "Merge all from " + myBranchName + " at " + mySourceLatestRevision +(myReintegrate ? " (reintegration)" : "");
   }
 
   public boolean hasNext() {
@@ -73,12 +82,12 @@ public class BranchMerger implements IMerger {
     if (myReintegrate) {
       dc.doMergeReIntegrate(mySourceUrl, SVNRevision.UNDEFINED, new File(myTargetPath), false);
     } else {
-      dc.doMerge(myTargetUrl, SVNRevision.HEAD, mySourceUrl, SVNRevision.HEAD,
+      dc.doMerge(mySourceUrl, SVNRevision.create(mySourceCopyRevision), mySourceUrl, SVNRevision.create(mySourceLatestRevision),
         new File(myTargetPath), SVNDepth.INFINITY, true, true, false, false);
     }
   }
 
-  public void getInfo(NotNullFunction<String, Boolean> holder, boolean getLatest) {
+  public void getInfo(Consumer<String> holder, boolean getLatest) {
   }
 
   public File getMergeInfoHolder() {
@@ -86,5 +95,8 @@ public class BranchMerger implements IMerger {
   }
 
   public void afterProcessing() {
+  }
+
+  public void getSkipped(Consumer<String> holder) {
   }
 }

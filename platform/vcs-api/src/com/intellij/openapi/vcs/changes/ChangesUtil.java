@@ -79,7 +79,7 @@ public class ChangesUtil {
   }
 
   private static class Adder {
-    private final Collection<FilePath> myResult = new ArrayList<FilePath>();
+    private final List<FilePath> myResult = new ArrayList<FilePath>();
     private final Set<String> myDuplicatesControlSet = new HashSet<String>();
 
     public void add(final FilePath file) {
@@ -90,12 +90,12 @@ public class ChangesUtil {
       }
     }
 
-    public Collection<FilePath> getResult() {
+    public List<FilePath> getResult() {
       return myResult;
     }
   }
 
-  public static Collection<FilePath> getPaths(final List<Change> changes) {
+  public static List<FilePath> getPaths(final Collection<Change> changes) {
     final Adder adder = new Adder();
     for (Change change : changes) {
       ContentRevision beforeRevision = change.getBeforeRevision();

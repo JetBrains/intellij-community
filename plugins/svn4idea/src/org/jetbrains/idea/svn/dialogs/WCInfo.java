@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.dialogs;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.NestedCopyType;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNURL;
 
 public class WCInfo implements WCPaths {
@@ -27,15 +28,23 @@ public class WCInfo implements WCPaths {
   private final String myRepositoryRoot;
   private final boolean myIsWcRoot;
   private final NestedCopyType myType;
+  private final SVNDepth myStickyDepth;
+  private final boolean myRepoSupportsMergeInfo;
 
   public WCInfo(final String path, final SVNURL url, final WorkingCopyFormat format, final String repositoryRoot, final boolean isWcRoot,
-                final NestedCopyType type) {
+                final NestedCopyType type, SVNDepth stickyDepth, boolean repoSupportsMergeInfo) {
     myPath = path;
     myUrl = url;
     myFormat = format;
     myRepositoryRoot = repositoryRoot;
     myIsWcRoot = isWcRoot;
     myType = type;
+    myStickyDepth = stickyDepth;
+    myRepoSupportsMergeInfo = repoSupportsMergeInfo;
+  }
+
+  public SVNDepth getStickyDepth() {
+    return myStickyDepth;
   }
 
   public String getPath() {
@@ -89,5 +98,9 @@ public class WCInfo implements WCPaths {
 
   public NestedCopyType getType() {
     return myType;
+  }
+
+  public boolean isRepoSupportsMergeInfo() {
+    return myRepoSupportsMergeInfo;
   }
 }

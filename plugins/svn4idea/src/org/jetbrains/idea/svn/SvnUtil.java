@@ -36,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.dialogs.LockDialog;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -536,6 +537,20 @@ public class SvnUtil {
     }
   }
 
+  public static SVNDepth getDepth(final SvnVcs vcs, final File file) {
+    final SVNWCClient client = vcs.createWCClient();
+    try {
+      final SVNInfo svnInfo = client.doInfo(file, SVNRevision.WORKING);
+      if (svnInfo != null) {
+        return svnInfo.getDepth();
+      }
+    }
+    catch (SVNException e) {
+      //
+    }
+    return SVNDepth.UNKNOWN;
+  }
+
   public static boolean seemsLikeVersionedDir(final VirtualFile file) {
     final String adminName = SVNFileUtil.getAdminDirectoryName();
     final VirtualFile[] children = file.getChildren();
@@ -603,5 +618,14 @@ public class SvnUtil {
       }
     }
     return null;
+  }
+
+  public static boolean doesRepositorySupportMergeinfo(final SvnVcs vcs, final SVNURL url) {
+    try {
+      return vcs.createRepository(url).hasCapability(SVNCapability.MERGE_INFO);
+    }
+    catch (SVNException e) {
+      return false;
+    }
   }
 }

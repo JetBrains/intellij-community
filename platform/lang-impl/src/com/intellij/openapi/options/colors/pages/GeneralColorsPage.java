@@ -113,6 +113,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.selected.folding.outline"), EditorColors.SELECTED_FOLDING_TREE_COLOR, ColorDescriptor.Kind.FOREGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.added.lines"), EditorColors.ADDED_LINES_COLOR, ColorDescriptor.Kind.BACKGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.modified.lines"), EditorColors.MODIFIED_LINES_COLOR, ColorDescriptor.Kind.BACKGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.java.color.descriptor.method.separator.color"), CodeInsightColors.METHOD_SEPARATORS_COLOR, ColorDescriptor.Kind.FOREGROUND),
 
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.console.background"), ConsoleViewContentType.CONSOLE_BACKGROUND_KEY, ColorDescriptor.Kind.BACKGROUND),
   };

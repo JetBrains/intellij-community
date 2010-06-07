@@ -22,14 +22,13 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +51,7 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
     public String lastPath;
   }
 
-  protected State myState = new State();
+  private State myState = new State();
 
   private static final int MAX_RECENT_PROJECTS = 15;
 
@@ -80,24 +79,26 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
   }
 
   private void validateRecentProjects() {
-    for (Iterator i = myState.recentPaths.iterator(); i.hasNext();) {
-      String s = (String)i.next();
+    synchronized (myState) {
+      for (Iterator i = myState.recentPaths.iterator(); i.hasNext();) {
+        String s = (String)i.next();
 
-      if (s == null) {
-        i.remove();
-      } else {
-        final File file = new File(s);
-        if (file.isDirectory()) {
-          if (!new File(file, ProjectUtil.DIRECTORY_BASED_PROJECT_DIR).exists()) {
+        if (s == null) {
+          i.remove();
+        } else {
+          final File file = new File(s);
+          if (file.isDirectory()) {
+            if (!new File(file, ProjectUtil.DIRECTORY_BASED_PROJECT_DIR).exists()) {
+              i.remove();
+            }
+          } else if (!file.exists()) {
             i.remove();
           }
-        } else if (!file.exists()) {
-          i.remove();
         }
       }
-    }
-    while (myState.recentPaths.size() > MAX_RECENT_PROJECTS) {
-      myState.recentPaths.remove(myState.recentPaths.size() - 1);
+      while (myState.recentPaths.size() > MAX_RECENT_PROJECTS) {
+        myState.recentPaths.remove(myState.recentPaths.size() - 1);
+      }
     }
   }
 
@@ -141,16 +142,18 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
 
     ArrayList<AnAction> actions = new ArrayList<AnAction>();
-    outer: for (String recentPath : myState.recentPaths) {
+    synchronized (myState) {
+      outer: for (String recentPath : myState.recentPaths) {
 
-      for (Project openProject : openProjects) {
-        final String path = getProjectPath(openProject);
-        if (path == null || recentPath.equals(path)) {
-          continue outer;
+        for (Project openProject : openProjects) {
+          final String path = getProjectPath(openProject);
+          if (path == null || recentPath.equals(path)) {
+            continue outer;
+          }
         }
-      }
 
-      actions.add(new ReopenProjectAction(recentPath));
+        actions.add(new ReopenProjectAction(recentPath));
+      }
     }
 
 
@@ -171,7 +174,9 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
                                                      Messages.getQuestionIcon());
 
           if (rc == 0) {
-            myState.recentPaths.clear();
+            synchronized (myState) {
+              myState.recentPaths.clear();
+            }
           }
         }
       };
@@ -182,9 +187,12 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
     return list.toArray(new AnAction[list.size()]);
   }
 
-  public String[] getRecentProjectPaths() {
-    validateRecentProjects();
-    return ArrayUtil.toStringArray(myState.recentPaths);
+  private void markPathRecent(String path) {
+    synchronized (myState) {
+      myState.lastPath = path;
+      removePath(path);
+      myState.recentPaths.add(0, path);
+    }
   }
 
   @Nullable
@@ -195,9 +203,7 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
   private class MyProjectManagerListener extends ProjectManagerAdapter {
     public void projectOpened(final Project project) {
       String path = getProjectPath(project);
-      myState.lastPath = path;
-      removePath(path);
-      myState.recentPaths.add(0, path);
+      markPathRecent(path);
     }
 
     public void projectClosed(final Project project) {
@@ -205,9 +211,7 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
       if (openProjects.length > 0) {
         String path = getProjectPath(openProjects[openProjects.length - 1]);
         if (path != null) {
-          myState.lastPath = path;
-          removePath(path);
-          myState.recentPaths.add(0, path);
+          markPathRecent(path);
         }
       }
     }

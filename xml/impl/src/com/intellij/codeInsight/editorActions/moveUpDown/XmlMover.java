@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
@@ -104,6 +105,9 @@ class XmlMover extends LineMover {
       final int endOffset = textRange.getEndOffset() + 1;
       if (endOffset < document.getTextLength()) movedLineStart = updateMovedRegionEnd(document, movedLineStart, endOffset, info, down);
       movedLineStart = updatedMovedRegionStart(document, movedLineStart, textRange.getStartOffset(), info, down);
+    }
+    else if (!movedParent.getLanguage().isKindOf(XMLLanguage.INSTANCE)) {
+      return false;
     }
 
     final TextRange moveDestinationRange = new TextRange(

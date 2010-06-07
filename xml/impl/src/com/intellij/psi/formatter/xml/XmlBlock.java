@@ -17,13 +17,16 @@ package com.intellij.psi.formatter.xml;
 
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlElementType;
@@ -109,7 +112,7 @@ public class XmlBlock extends AbstractXmlBlock {
     }
   }
 
-  private static List<Block> splitAttribute(ASTNode node, XmlFormattingPolicy formattingPolicy) {
+  private List<Block> splitAttribute(ASTNode node, XmlFormattingPolicy formattingPolicy) {
     final ArrayList<Block> result = new ArrayList<Block>(3);
     ASTNode child = node.getFirstChildNode();
     while (child != null) {
@@ -117,7 +120,13 @@ public class XmlBlock extends AbstractXmlBlock {
           child.getElementType() == XmlElementType.XML_ATTRIBUTE_VALUE_END_DELIMITER) {
         result.add(new XmlBlock(child, null, null, formattingPolicy, null, null));
       }
-      else {
+      else if (!child.getPsi().getLanguage().isKindOf(XMLLanguage.INSTANCE) && containsOuterLanguageElement(child)) {
+        // Fix for EA-20311:
+        // In case of another embedded language create a splittable XML block which can be
+        // merged with other language's code blocks.
+        result.add(new XmlBlock(child, null, null, myXmlFormattingPolicy, getChildIndent(), null));
+      }
+      else if (child.getElementType() != TokenType.ERROR_ELEMENT) {
         result.add(new ReadOnlyBlock(child));
       }
       child = child.getTreeNext();
@@ -126,24 +135,36 @@ public class XmlBlock extends AbstractXmlBlock {
   }
 
 
-  private List<Block> splitComment() {
-    if (myNode.getElementType() != XmlElementType.XML_COMMENT) return null;
-    //
-    // Do not build subblocks for comment-only node.
-    if (myNode.getFirstChildNode() != null &&
-        myNode.getFirstChildNode().getElementType() == XmlElementType.XML_COMMENT_START &&
-        myNode.getLastChildNode().getElementType() == XmlElementType.XML_COMMENT_END) {
-      return EMPTY;
-    }
-    final ArrayList<Block> result = new ArrayList<Block>(3);
-    final ArrayList<Block> commentBlocks = new ArrayList<Block>(3);
-    ASTNode child = myNode.getFirstChildNode();
+  private static boolean containsOuterLanguageElement(ASTNode node) {
+    ASTNode child = node.getFirstChildNode();
     while (child != null) {
-      IElementType childType = child.getElementType();
+      if (child instanceof OuterLanguageElement) {
+        return true;
+      }
+      child = child.getTreeNext();
+    }
+    return false;
+  }
+
+
+  private List<Block> splitComment() {
+    if (myNode.getElementType() != XmlElementType.XML_COMMENT) return EMPTY;
+    final ArrayList<Block> result = new ArrayList<Block>(3);
+    ASTNode child = myNode.getFirstChildNode();
+    boolean hasOuterLangElements = false;
+    while (child != null) {
+      if (child instanceof OuterLanguageElement) {
+        hasOuterLangElements = true;
+      }
       result.add(new XmlBlock(child, null, null, myXmlFormattingPolicy, getChildIndent(), null));
       child = child.getTreeNext();
     }
-    return result;
+    if (hasOuterLangElements) {
+      return result;
+    }
+    else {
+      return EMPTY;
+    }
   }
 
   protected @Nullable Wrap getDefaultWrap(ASTNode node) {

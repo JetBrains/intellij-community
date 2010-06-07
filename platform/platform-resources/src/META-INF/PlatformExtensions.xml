@@ -94,6 +94,17 @@
   <applicationService serviceInterface="com.intellij.openapi.keymap.impl.DefaultKeymap"
                       serviceImplementation="com.intellij.openapi.keymap.impl.DefaultKeymap"/>
 
+  <applicationService serviceInterface="com.intellij.ide.passwordSafe.impl.providers.masterKey.PasswordDatabase"
+                      serviceImplementation="com.intellij.ide.passwordSafe.impl.providers.masterKey.PasswordDatabase"/>
+  <applicationService serviceInterface="com.intellij.ide.passwordSafe.config.PasswordSafeSettings"
+                      serviceImplementation="com.intellij.ide.passwordSafe.config.PasswordSafeSettings"/>
+  <applicationService serviceInterface="com.intellij.ide.passwordSafe.PasswordSafe"
+                      serviceImplementation="com.intellij.ide.passwordSafe.impl.PasswordSafeImpl"/>
+  <applicationConfigurable implementation="com.intellij.ide.passwordSafe.config.PasswordSafeConfigurable"/>
+
+  <applicationService serviceInterface="com.intellij.execution.process.ColoredOutputTypeRegistry"
+                      serviceImplementation="com.intellij.execution.process.ColoredOutputTypeRegistry"/>
+
   <projectService serviceInterface="com.intellij.openapi.vfs.ReadonlyStatusHandler"
                   serviceImplementation="com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl"/>
   <projectService serviceInterface="com.intellij.openapi.startup.StartupManager"

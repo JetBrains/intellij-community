@@ -27,6 +27,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -104,26 +105,45 @@ public class SdkConfigurationUtil {
 
   @Nullable
   public static Sdk setupSdk(final VirtualFile homeDir, final SdkType sdkType, final boolean silent) {
+    return setupSdk(homeDir, sdkType, silent, null, null);
+  }
+
+  @Nullable
+  public static Sdk setupSdk(final VirtualFile homeDir, final SdkType sdkType, final boolean silent,
+                             @Nullable final SdkAdditionalData additionalData,
+                             @Nullable final String customSdkSuggestedName) {
+    final Sdk[] sdks = ProjectJdkTable.getInstance().getAllJdks();
+    final List<Sdk> sdksList = Arrays.asList(sdks);
+
+    final ProjectJdkImpl projectJdk;
+    try {
+      final String sdkName = customSdkSuggestedName == null
+                             ? createUniqueSdkName(sdkType, homeDir.getPath(), sdksList)
+                             : createUniqueSdkName(customSdkSuggestedName, sdksList);
+      projectJdk = new ProjectJdkImpl(sdkName, sdkType);
+
+      if (additionalData != null) {
+        // additional initialization.
+        // E.g. some ruby sdks must be initialized before
+        // setupSdkPaths() method invocation
+        projectJdk.setSdkAdditionalData(additionalData);
+      }
+
+      projectJdk.setHomePath(homeDir.getPath());
+      sdkType.setupSdkPaths(projectJdk);
+    }
+    catch (Exception e) {
+      if (!silent) {
+        Messages.showErrorDialog("Error configuring SDK: " +
+                                 e.getMessage() +
+                                 ".\nPlease make sure that " +
+                                 FileUtil.toSystemDependentName(homeDir.getPath()) +
+                                 " is a valid home path for this SDK type.", "Error configuring SDK");
+      }
+      return null;
+    }
     return ApplicationManager.getApplication().runWriteAction(new NullableComputable<Sdk>() {
         public Sdk compute() {
-          final Sdk[] sdks = ProjectJdkTable.getInstance().getAllJdks();
-          ProjectJdkImpl projectJdk;
-          try {
-            final String sdkName = createUniqueSdkName(sdkType, homeDir.getPath(), Arrays.asList(sdks));
-            projectJdk = new ProjectJdkImpl(sdkName, sdkType);
-            projectJdk.setHomePath(homeDir.getPath());
-            sdkType.setupSdkPaths(projectJdk);
-          }
-          catch (Exception e) {
-            if (!silent) {
-              Messages.showErrorDialog("Error configuring SDK: " +
-                                       e.getMessage() +
-                                       ".\nPlease make sure that " +
-                                       FileUtil.toSystemDependentName(homeDir.getPath()) +
-                                       " is a valid home path for this SDK type.", "Error configuring SDK");
-            }
-            return null;
-          }
           ProjectJdkTable.getInstance().addJdk(projectJdk);
           return projectJdk;
         }
@@ -195,11 +215,14 @@ public class SdkConfigurationUtil {
   }
 
   public static String createUniqueSdkName(SdkType type, String home, final Collection<Sdk> sdks) {
+    return createUniqueSdkName(type.suggestSdkName(null, home), sdks);
+  }
+
+  public static String createUniqueSdkName(final String suggestedName, final Collection<Sdk> sdks) {
     final Set<String> names = new HashSet<String>();
     for (Sdk jdk : sdks) {
       names.add(jdk.getName());
     }
-    final String suggestedName = type.suggestSdkName(null, home);
     String newSdkName = suggestedName;
     int i = 0;
     while (names.contains(newSdkName)) {

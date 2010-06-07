@@ -99,7 +99,7 @@ public class GitSSHIdeaClient implements GitSSHHandler {
    */
   @Nullable
   @SuppressWarnings("unchecked")
-  public String askPassphrase(final int handler, final String username, final String keyPath, final String lastError) {
+  public String askPassphrase(final int handler, final String username, final String keyPath, final boolean resetPassword, final String lastError) {
     if (myClient == null) {
       return null;
     }
@@ -107,6 +107,7 @@ public class GitSSHIdeaClient implements GitSSHHandler {
     parameters.add(handler);
     parameters.add(username);
     parameters.add(keyPath);
+    parameters.add(resetPassword);
     parameters.add(lastError);
     try {
       return adjustNull(((String)myClient.execute(methodName("askPassphrase"), parameters)));
@@ -160,13 +161,14 @@ public class GitSSHIdeaClient implements GitSSHHandler {
    */
   @Nullable
   @SuppressWarnings("unchecked")
-  public String askPassword(final int handlerNo, final String username, final String lastError) {
+  public String askPassword(final int handlerNo, final String username, final boolean resetPassword, final String lastError) {
     if (myClient == null) {
       return null;
     }
     Vector parameters = new Vector();
     parameters.add(handlerNo);
     parameters.add(username);
+    parameters.add(resetPassword);
     parameters.add(lastError);
     try {
       return adjustNull(((String)myClient.execute(methodName("askPassword"), parameters)));

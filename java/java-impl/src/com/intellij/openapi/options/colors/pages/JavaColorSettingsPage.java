@@ -16,14 +16,11 @@
 package com.intellij.openapi.options.colors.pages;
 
 import com.intellij.application.options.colors.InspectionColorSettingsPage;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.daemon.impl.SeveritiesProvider;
 import com.intellij.ide.highlighter.JavaFileHighlighter;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.SyntaxHighlighterColors;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.OptionsBundle;
@@ -85,10 +82,7 @@ public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColor
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.annotation.attribute.name"), CodeInsightColors.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES)
   };
 
-  private static final ColorDescriptor[] ourColorDescriptors = new ColorDescriptor[]{
-    new ColorDescriptor(OptionsBundle.message("options.java.color.descriptor.method.separator.color"), CodeInsightColors.METHOD_SEPARATORS_COLOR, ColorDescriptor.Kind.FOREGROUND)
-
-  };
+  private static final ColorDescriptor[] ourColorDescriptors = new ColorDescriptor[0];
 
   @NonNls private static final Map<String, TextAttributesKey> ourTags = new HashMap<String, TextAttributesKey>();
   static {
@@ -136,12 +130,6 @@ public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColor
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.color.descriptor.full.coverage"), CodeInsightColors.LINE_FULL_COVERAGE));
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.color.descriptor.partial.coverage"), CodeInsightColors.LINE_PARTIAL_COVERAGE));
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.color.descriptor.none.coverage"), CodeInsightColors.LINE_NONE_COVERAGE));
-    for (SeveritiesProvider provider : Extensions.getExtensions(SeveritiesProvider.EP_NAME)) {
-      for (HighlightInfoType highlightInfoType : provider.getSeveritiesHighlightInfoTypes()) {
-        final TextAttributesKey attributesKey = highlightInfoType.getAttributesKey();
-        descriptors.add(new AttributesDescriptor(attributesKey.myExternalName, attributesKey));
-      }
-    }
     return descriptors.toArray(new AttributesDescriptor[descriptors.size()]);
   }
 

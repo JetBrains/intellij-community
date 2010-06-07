@@ -21,6 +21,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.RunCanceledByUserException;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.DumbAware;
@@ -57,6 +58,14 @@ public class RestartAction extends AnAction implements DumbAware {
 
   public void actionPerformed(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
+    doRestart(dataContext);
+  }
+
+  public void restart() {
+    doRestart(DataManager.getInstance().getDataContext(myDescriptor.getComponent()));
+  }
+
+  private void doRestart(final DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     try {
       final ExecutionEnvironment old = myEnvironment;

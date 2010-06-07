@@ -35,6 +35,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -148,22 +149,22 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     return editables.size() == 1 && editables.get(0).equals(rangeToEdit);
   }
 
+  @Nullable
   public static LogicalPosition getBackspaceUnindentPosition(final PsiFile file, final Editor editor) {
     if (editor.getSelectionModel().hasSelection() || editor.getSelectionModel().hasBlockSelection()) return null;
 
-    LogicalPosition caretPos = editor.getCaretModel().getLogicalPosition();
+    final LogicalPosition caretPos = editor.getCaretModel().getLogicalPosition();
     if (caretPos.line == 0 || caretPos.column == 0) {
       return null;
     }
-    int lineStartOffset = editor.getDocument().getLineStartOffset(caretPos.line);
-    int lineEndOffset = editor.getDocument().getLineEndOffset(caretPos.line);
+    final int startCheckRange = editor.getDocument().getLineStartOffset(caretPos.line);
+    final int endCheckRange = startCheckRange + caretPos.column;
 
-    CharSequence charSeq = editor.getDocument().getCharsSequence();
-    // smart backspace is activated only if all characters in the caret line
-    // are whitespace characters
-    for(int pos=lineStartOffset; pos<lineEndOffset; pos++) {
-      if (charSeq.charAt(pos) != '\t' && charSeq.charAt(pos) != ' ' &&
-            charSeq.charAt(pos) != '\n') {
+    final CharSequence charSeq = editor.getDocument().getCharsSequence();
+    // smart backspace is activated only if all characters in the check range are whitespace characters
+    for(int pos=startCheckRange; pos<endCheckRange; pos++) {
+      final char c = charSeq.charAt(pos);
+      if (c != '\t' && c != ' ' && c != '\n') {
         return null;
       }
     }
@@ -176,4 +177,5 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     }
     return new LogicalPosition(caretPos.line, column);
   }
+
 }

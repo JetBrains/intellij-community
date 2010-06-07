@@ -387,6 +387,12 @@
       <action id="ChangeLaf" class="com.intellij.ide.actions.QuickChangeLookAndFeel"/>
     </group>
 
+    <action id="Console.Execute" class="com.intellij.openapi.actionSystem.EmptyAction" text="Execute Current Statement"/>
+    <group id="Console.HistoryActions">
+      <action id="Console.History.Previous" class="com.intellij.openapi.actionSystem.EmptyAction" text="Previous"/>
+      <action id="Console.History.Next" class="com.intellij.openapi.actionSystem.EmptyAction" text="Next"/>
+    </group>
+
     <group id="Internal" text="Internal Actions" internal="true" popup="true">
       <action id="DropAnError" internal="true" class="com.intellij.diagnostic.DropAnErrorAction"/>
       <action id="DropAnOutOfMemoryError" internal="true" class="com.intellij.diagnostic.DropAnOutOfMemoryErrorAction"/>

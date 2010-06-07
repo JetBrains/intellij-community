@@ -333,10 +333,10 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       Evaluator lResult, final PsiType lType, Evaluator rResult, final PsiType rType, final IElementType operation, final PsiType expressionExpectedType) {
       // handle unboxing if neccesary
       if (isUnboxingInBinaryExpressionApplicable(lType, rType, operation)) {
-        if (rType instanceof PsiClassType) {
+        if (rType instanceof PsiClassType && UnBoxingEvaluator.isTypeUnboxable(rType.getCanonicalText())) {
           rResult = new UnBoxingEvaluator(rResult);
         }
-        if (lType instanceof PsiClassType) {
+        if (lType instanceof PsiClassType && UnBoxingEvaluator.isTypeUnboxable(lType.getCanonicalText())) {
           lResult = new UnBoxingEvaluator(lResult);
         }
       }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.execution.console;
+package com.intellij.execution.runners;
 
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -21,6 +21,8 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
+import com.intellij.execution.console.LanguageConsoleImpl;
+import com.intellij.execution.console.LanguageConsoleViewImpl;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.*;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -32,21 +34,14 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.PairProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,16 +51,17 @@ import java.awt.*;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
-import java.util.Arrays;
 
 /**
  * @author oleg
+ * This class provides basic functionality for running consoles.
+ * It launches extrnal process and handles line input with history
  */
-public class AbstractConsoleRunnerWithHistory {
-/*  protected final Project myProject;
+public abstract class AbstractConsoleRunnerWithHistory {
+  protected final Project myProject;
   protected final String myConsoleTitle;
 
-  private OSProcessHandler myProcessHandler;
+  protected OSProcessHandler myProcessHandler;
   protected final CommandLineArgumentsProvider myProvider;
   protected final String myWorkingDir;
 
@@ -83,20 +79,10 @@ public class AbstractConsoleRunnerWithHistory {
     myWorkingDir = workingDir;
   }
 
-  public static void run(@NotNull final Project project,
-                         @NotNull final String consoleTitle,
-                         @NotNull final CommandLineArgumentsProvider provider,
-                         @Nullable final String workingDir) {
-
-    final AbstractConsoleRunnerWithHistory consoleRunner = new AbstractConsoleRunnerWithHistory(project, consoleTitle, provider, workingDir);
-    try {
-      consoleRunner.initAndRun();
-    }
-    catch (ExecutionException e) {
-      ExecutionHelper.showErrors(project, Arrays.<Exception>asList(e), consoleTitle, null);
-    }
-  }
-
+  /**
+   * Launch process, setup history, actions etc.
+   * @throws ExecutionException
+   */
   public void initAndRun() throws ExecutionException {
     // Create Server process
     final Process process = createProcess();
@@ -107,23 +93,6 @@ public class AbstractConsoleRunnerWithHistory {
     myProcessHandler = createProcessHandler(process);
 
     ProcessTerminatedListener.attach(myProcessHandler);
-
-    // Set language level
-    for (Module module : ModuleManager.getInstance(myProject).getModules()) {
-      final Sdk pythonSdk = PythonSdkType.findPythonSdk(module);
-      if (pythonSdk != null){
-        final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(pythonSdk);
-        final PsiFile psiFile = getLanguageConsole().getFile();
-        // Set module explicitly
-        psiFile.putUserData(ModuleUtil.KEY_MODULE, module);
-        final VirtualFile vFile = psiFile.getVirtualFile();
-        if (vFile != null) {
-          // Set language level
-          vFile.putUserData(LanguageLevel.KEY, languageLevel);
-        }
-        break;
-      }
-    }
 
     myProcessHandler.addProcessListener(new ProcessAdapter() {
       @Override
@@ -139,14 +108,8 @@ public class AbstractConsoleRunnerWithHistory {
       }
     });
 
-// Setup default prompt
-    myConsoleView.getConsole().setPrompt(PyConsoleHighlightingUtil.ORDINARY_PROMPT.trim());
-
 // Attach to process
     myConsoleView.attachToProcess(myProcessHandler);
-
-// Add filter TODO[oleg]: Add stacktrace filters
-//    myConsoleView.addMessageFilter(new OutputConsoleFilter());
 
 // Runner creating
     final Executor defaultExecutor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID);
@@ -181,20 +144,12 @@ public class AbstractConsoleRunnerWithHistory {
     myProcessHandler.startNotify();
   }
 
-  protected LanguageConsoleViewImpl createConsoleView() {
-    return new PyLanguageConsoleView(myProject, myConsoleTitle);
-  }
-
+  protected abstract LanguageConsoleViewImpl createConsoleView();
 
   @Nullable
-  protected Process createProcess() throws ExecutionException {
-    return Runner.createProcess(myWorkingDir, true, myProvider.getAdditionalEnvs(), myProvider.getArguments());
-  }
+  protected abstract Process createProcess() throws ExecutionException;
 
-  private PyConsoleProcessHandler createProcessHandler(final Process process) {
-    final Charset outputEncoding = EncodingManager.getInstance().getDefaultCharset();
-    return new PyConsoleProcessHandler(process, myConsoleView.getConsole(), getProviderCommandLine(myProvider), outputEncoding);
-  }
+  protected abstract OSProcessHandler createProcessHandler(final Process process);
 
   private void registerActionShortcuts(final AnAction[] actions, final JComponent component) {
     for (AnAction action : actions) {
@@ -204,9 +159,9 @@ public class AbstractConsoleRunnerWithHistory {
     }
   }
 
-  private AnAction[] fillToolBarActions(final DefaultActionGroup toolbarActions,
-                                        final Executor defaultExecutor,
-                                        final RunContentDescriptor myDescriptor) {
+  protected AnAction[] fillToolBarActions(final DefaultActionGroup toolbarActions,
+                                          final Executor defaultExecutor,
+                                          final RunContentDescriptor myDescriptor) {
 //stop
     final AnAction stopAction = createStopAction();
     toolbarActions.add(stopAction);
@@ -218,7 +173,7 @@ public class AbstractConsoleRunnerWithHistory {
 // run action
     myRunAction = new DumbAwareAction(null, null, IconLoader.getIcon("/actions/execute.png")) {
       public void actionPerformed(final AnActionEvent e) {
-        runExecuteActionInner(true);
+        runExecuteActionInner();
       }
 
       public void update(final AnActionEvent e) {
@@ -228,7 +183,7 @@ public class AbstractConsoleRunnerWithHistory {
                                        (lookup == null || !lookup.isCompletion()));
       }
     };
-    EmptyAction.setupAction(myRunAction, "Console.Python.Execute", null);
+    EmptyAction.setupAction(myRunAction, "Console.Execute", null);
     toolbarActions.add(myRunAction);
 
 // Help
@@ -263,7 +218,7 @@ public class AbstractConsoleRunnerWithHistory {
     return ActionManager.getInstance().getAction(IdeActions.ACTION_STOP_PROGRAM);
   }
 
-  protected void sendInput(final String input) {
+  public void sendInput(final String input) {
     final Charset charset = myProcessHandler.getCharset();
     final OutputStream outputStream = myProcessHandler.getProcessInput();
     try {
@@ -280,16 +235,14 @@ public class AbstractConsoleRunnerWithHistory {
     return myConsoleView.getConsole();
   }
 
-  private void runExecuteActionInner(final boolean erase) {
+  protected void runExecuteActionInner() {
     // Process input and add to history
     final Document document = getLanguageConsole().getCurrentEditor().getDocument();
     final String documentText = document.getText();
     final TextRange range = new TextRange(0, document.getTextLength());
     getLanguageConsole().getCurrentEditor().getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
     getLanguageConsole().addCurrentToHistory(range, false);
-    if (erase) {
-      getLanguageConsole().setInputText("");
-    }
+    getLanguageConsole().setInputText("");
     final String line = documentText;
     if (!StringUtil.isEmptyOrSpaces(line)){
       myHistory.addToHistory(line);
@@ -297,13 +250,9 @@ public class AbstractConsoleRunnerWithHistory {
     // Send to interpreter / server
     final String text2send = line.length() == 0 ? "\n\n" : line + "\n";
     sendInput(text2send);
-
-    if (myConsoleView instanceof ConsoleNotification){
-      ((ConsoleNotification)myConsoleView).inputSent(text2send);
-    }
   }
 
-  private static String getProviderCommandLine(final CommandLineArgumentsProvider provider) {
+  protected static String getProviderCommandLine(final CommandLineArgumentsProvider provider) {
     final StringBuilder builder = new StringBuilder();
     for (String s : provider.getArguments()) {
       if (builder.length() > 0){
@@ -316,5 +265,5 @@ public class AbstractConsoleRunnerWithHistory {
 
   public Project getProject() {
     return myProject;
-  }*/
+  }
 }

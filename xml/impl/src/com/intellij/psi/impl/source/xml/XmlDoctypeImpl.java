@@ -87,8 +87,34 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype, XmlEle
     return extractValue(dtdUrlElement);
   }
 
-  private String extractValue(PsiElement element) {
-    return StringUtil.stripQuotesAroundValue(element.getText());
+  private static String extractValue(PsiElement element) {
+    String text = element.getText();
+    
+    if (!text.startsWith("\"") && !text.startsWith("\'")) {
+      if (hasInjectedEscapingQuotes(element, text)) return stripInjectedEscapingQuotes(text);
+    }
+    return StringUtil.stripQuotesAroundValue(text);
+  }
+
+  // TODO: share common code
+  private static String stripInjectedEscapingQuotes(String text) {
+    return text.substring(2, text.length() - 2);
+  }
+
+  private static boolean hasInjectedEscapingQuotes(PsiElement element, String text) {
+    if (text.startsWith("\\") && text.length() >= 4) {
+      char escapedChar = text.charAt(1);
+      PsiElement context = element.getContainingFile().getContext();
+      
+      if (context != null && 
+          context.textContains(escapedChar) && 
+          context.getText().startsWith(String.valueOf(escapedChar)) &&
+          text.endsWith("\\"+escapedChar)
+        ) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Nullable

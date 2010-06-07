@@ -16,9 +16,9 @@
 package com.intellij.ui.content;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +33,7 @@ public interface ContentManager extends Disposable {
   JComponent getComponent();
 
   void addContent(@NotNull Content content);
+  void addContent(@NotNull Content content, final int order);
   void addContent(@NotNull Content content, Object constraints);
 
   boolean removeContent(@NotNull Content content, final boolean dispose);

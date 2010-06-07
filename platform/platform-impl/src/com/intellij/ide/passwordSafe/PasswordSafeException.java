@@ -13,11 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.dialogs;
+package com.intellij.ide.passwordSafe;
 
-public interface SelectionManipulation<T> {
-  void add(T t);
-  void remove(T t);
-  void clearAll();
-  void setAll();
+/**
+ * The exception that is thrown when password safe is not available (unable to ask for master password)
+ */
+public class PasswordSafeException extends Exception {
+  /**
+   * The constructor
+   *
+   * @param message the message
+   * @param cause   the cause
+   */
+  public PasswordSafeException(String message, Throwable cause) {
+    super(message, cause);
+  }
+
+  /**
+   * The constructor
+   *
+   * @param message the message
+   */
+  public PasswordSafeException(String message) {
+    super(message);
+  }
 }

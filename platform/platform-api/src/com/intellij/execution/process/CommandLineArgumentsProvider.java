@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 /**
- * @author oleg
+ * @author Roman.Chernyatchik, oleg
  */
 public interface CommandLineArgumentsProvider {
     /**

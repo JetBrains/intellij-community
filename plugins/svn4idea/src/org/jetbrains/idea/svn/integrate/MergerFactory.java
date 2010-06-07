@@ -15,12 +15,22 @@
  */
 package org.jetbrains.idea.svn.integrate;
 
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
 import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.File;
+import java.util.List;
 
 public interface MergerFactory {
-  IMerger createMerger(final SvnVcs vcs, final File target, final UpdateEventHandler handler, final SVNURL currentBranchUrl);
+  IMerger createMerger(final SvnVcs vcs,
+                       final File target,
+                       final UpdateEventHandler handler,
+                       final SVNURL currentBranchUrl,
+                       String branchName);
+  boolean isMergeAll();
+  @Nullable
+  List<CommittedChangeList> getListsToMerge();
 }

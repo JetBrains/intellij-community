@@ -18,6 +18,7 @@ import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 
 import java.util.*;
 
@@ -90,6 +91,9 @@ public class DFAEngine<E> {
         // This gives us more chances that resulting info will be closer to expected result
         // Also it is used as indicator that "equals" method is implemented correctly in E
         while (true) {
+          // Check if canceled
+          ProgressManager.checkCanceled();
+
           count++;
           if (count > limit){
              if (LOG.isDebugEnabled()){

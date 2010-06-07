@@ -19,6 +19,7 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.ide.FrameStateListener;
 import com.intellij.ide.FrameStateManager;
+import com.intellij.idea.RareLogger;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
@@ -67,6 +68,7 @@ import org.jetbrains.idea.svn.actions.ShowPropertiesDiffWithLocalAction;
 import org.jetbrains.idea.svn.actions.SvnMergeProvider;
 import org.jetbrains.idea.svn.annotate.SvnAnnotationProvider;
 import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
+import org.jetbrains.idea.svn.dialogs.SvnBranchPointsCalculator;
 import org.jetbrains.idea.svn.dialogs.SvnFormatWorker;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
 import org.jetbrains.idea.svn.history.*;
@@ -100,7 +102,14 @@ import java.util.logging.Level;
 public class SvnVcs extends AbstractVcs {
   private final static Logger REFRESH_LOG = Logger.getInstance("#svn_refresh");
 
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.SvnVcs");
+  private final static int ourLogUsualInterval = 20 * 1000;
+  private final static int ourLogRareInterval = 30 * 1000;
+
+  private final static Set<SVNErrorCode> ourLogRarely = new HashSet<SVNErrorCode>(
+    Arrays.asList(new SVNErrorCode[]{SVNErrorCode.WC_UNSUPPORTED_FORMAT, SVNErrorCode.WC_CORRUPT, SVNErrorCode.WC_CORRUPT_TEXT_BASE,
+      SVNErrorCode.WC_NOT_FILE, SVNErrorCode.WC_NOT_DIRECTORY, SVNErrorCode.WC_PATH_NOT_FOUND}));
+
+  private static final Logger LOG = wrapLogger(Logger.getInstance("org.jetbrains.idea.svn.SvnVcs"));
   @NonNls public static final String VCS_NAME = "svn";
   private static final VcsKey ourKey = createKey(VCS_NAME);
   private final Map<String, Map<String, Pair<SVNPropertyValue, Trinity<Long, Long, Long>>>> myPropertyCache = new SoftHashMap<String, Map<String, Pair<SVNPropertyValue, Trinity<Long, Long, Long>>>>();
@@ -123,6 +132,7 @@ public class SvnVcs extends AbstractVcs {
 
   private ChangeProvider myChangeProvider;
   private MergeProvider myMergeProvider;
+  private final WorkingCopiesContent myWorkingCopiesContent;
 
   @NonNls public static final String LOG_PARAMETER_NAME = "javasvn.log";
   public static final String pathToEntries = SvnUtil.SVN_ADMIN_DIR_NAME + File.separatorChar + SvnUtil.ENTRIES_FILE_NAME;
@@ -136,8 +146,11 @@ public class SvnVcs extends AbstractVcs {
   public static final Topic<Runnable> ROOTS_RELOADED = new Topic<Runnable>("ROOTS_RELOADED", Runnable.class);
   private VcsListener myVcsListener;
 
+  private SvnBranchPointsCalculator mySvnBranchPointsCalculator;
+
   private final RootsToWorkingCopies myRootsToWorkingCopies;
   private final SvnAuthenticationNotifier myAuthNotifier;
+  private static RareLogger.LogFilter[] ourLogFilters;
 
   static {
     SVNJNAUtil.setJNAEnabled(true);
@@ -160,6 +173,7 @@ public class SvnVcs extends AbstractVcs {
     if (! SVNJNAUtil.isJNAPresent()) {
       LOG.warn("JNA is not found by svnkit library");
     }
+    initLogFilters();
   }
 
   private static Boolean booleanProperty(final String systemParameterName) {
@@ -208,6 +222,7 @@ public class SvnVcs extends AbstractVcs {
     }
 
     myFrameStateListener = new MyFrameStateListener(changeListManager, vcsDirtyScopeManager);
+    myWorkingCopiesContent = new WorkingCopiesContent(this);
   }
 
   public void postStartup() {
@@ -215,6 +230,7 @@ public class SvnVcs extends AbstractVcs {
     myCopiesRefreshManager = new SvnCopiesRefreshManager(myProject, (SvnFileUrlMappingImpl) getSvnFileUrlMapping());
 
     invokeRefreshSvnRoots(true);
+    myWorkingCopiesContent.activate();
   }
 
   public void invokeRefreshSvnRoots(final boolean asynchronous) {
@@ -355,6 +371,7 @@ public class SvnVcs extends AbstractVcs {
     FrameStateManager.getInstance().addListener(myFrameStateListener);
 
     myAuthNotifier.init();
+    mySvnBranchPointsCalculator = new SvnBranchPointsCalculator(myProject);
 
     // do one time after project loaded
     StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
@@ -377,6 +394,52 @@ public class SvnVcs extends AbstractVcs {
     });
 
     vcsManager.addVcsListener(myRootsToWorkingCopies);
+  }
+
+  private static void initLogFilters() {
+    if (ourLogFilters != null) return;
+    ourLogFilters = new RareLogger.LogFilter[] {new RareLogger.LogFilter() {
+      public Object getKey(@NotNull org.apache.log4j.Level level,
+                           @NonNls String message,
+                           @Nullable Throwable t,
+                           @NonNls String... details) {
+        SVNException svnExc = null;
+        if (t instanceof SVNException) {
+          svnExc = (SVNException) t;
+        } else if (t instanceof VcsException && (t.getCause() instanceof SVNException)) {
+          svnExc = (SVNException) t.getCause();
+        }
+        if (svnExc != null) {
+          // only filter a few cases
+          if (ourLogRarely.contains(svnExc.getErrorMessage().getErrorCode())) {
+            return svnExc.getErrorMessage().getErrorCode();
+          }
+        }
+        return null;
+      }
+      @NotNull
+      public Integer getAllowedLoggingInterval(org.apache.log4j.Level level, String message, Throwable t, String[] details) {
+        SVNException svnExc = null;
+        if (t instanceof SVNException) {
+          svnExc = (SVNException) t;
+        } else if (t instanceof VcsException && (t.getCause() instanceof SVNException)) {
+          svnExc = (SVNException) t.getCause();
+        }
+        if (svnExc != null) {
+          if (ourLogRarely.contains(svnExc.getErrorMessage().getErrorCode())) {
+            return ourLogRareInterval;
+          } else {
+            return ourLogUsualInterval;
+          }
+        }
+        return 0;
+      }
+    }};
+  }
+
+  public static Logger wrapLogger(final Logger logger) {
+    initLogFilters();
+    return RareLogger.wrap(logger, Boolean.getBoolean("svn.logger.fairsynch"), ourLogFilters);
   }
 
   public RootsToWorkingCopies getRootsToWorkingCopies() {
@@ -410,6 +473,9 @@ public class SvnVcs extends AbstractVcs {
 
     myAuthNotifier.stop();
     myAuthNotifier.clear();
+
+    mySvnBranchPointsCalculator = null;
+    myWorkingCopiesContent.deactivate();
   }
 
   public VcsShowConfirmationOption getAddConfirmation() {
@@ -829,7 +895,8 @@ public class SvnVcs extends AbstractVcs {
     for (RootUrlInfo info : infoList) {
       final File file = info.getIoFile();
       infos.add(new WCInfo(file.getAbsolutePath(), info.getAbsoluteUrlAsUrl(),
-        SvnFormatSelector.getWorkingCopyFormat(file), info.getRepositoryUrl(), SvnUtil.isWorkingCopyRoot(file), info.getType()));
+        SvnFormatSelector.getWorkingCopyFormat(file), info.getRepositoryUrl(), SvnUtil.isWorkingCopyRoot(file), info.getType(),
+        SvnUtil.getDepth(this, file), info.isRepoSupportsMergeInfo()));
     }
     return infos;
   }
@@ -980,5 +1047,9 @@ public class SvnVcs extends AbstractVcs {
   @Override
   public CommittedChangeList getRevisionChanges(VcsFileRevision revision, VirtualFile file) throws VcsException {
     return ShowAllSubmittedFilesAction.loadRevisions(getProject(), (SvnFileRevision)revision, file, false);
+  }
+
+  public SvnBranchPointsCalculator getSvnBranchPointsCalculator() {
+    return mySvnBranchPointsCalculator;
   }
 }

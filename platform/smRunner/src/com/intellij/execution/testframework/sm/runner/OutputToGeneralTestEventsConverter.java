@@ -29,6 +29,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.execution.testframework.sm.runner.GeneralToSMTRunnerEventsConvertor.getTFrameworkPrefix;
+
 /**
  * @author Roman Chernyatchik
  *
@@ -42,6 +44,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   
   private GeneralTestEventsProcessor myProcessor;
   private final MyServiceMessageVisitor myServiceMessageVisitor;
+  private final String myTestFrameworkName;
 
   private static class OutputChunk {
     private Key myKey;
@@ -67,7 +70,8 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
 
   private final List<OutputChunk> myOutputChunks;
 
-  public OutputToGeneralTestEventsConverter() {
+  public OutputToGeneralTestEventsConverter(@NotNull final String testFrameworkName) {
+    myTestFrameworkName = testFrameworkName;
     myServiceMessageVisitor = new MyServiceMessageVisitor();
     myOutputChunks = new ArrayList<OutputChunk>();
   }
@@ -78,7 +82,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
 
   public void process(final String text, final Key outputType) {
     if (outputType != ProcessOutputTypes.STDERR && outputType != ProcessOutputTypes.SYSTEM) {
-      // we check for consistensy only std output
+      // we check for consistently only std output
       // because all events must be send to stdout
       processStdOutConsistently(text, outputType);
     } else {
@@ -165,11 +169,14 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
       }
     }
     catch (ParseException e) {
-      LOG.error(e);
+
+      LOG.error(getTFrameworkPrefix(myTestFrameworkName) + "Parsing error.", e);
     }
   }
 
   private void fireOnTestStarted(final String testName, @Nullable  final String locationUrl) {
+    assertNotNull(testName);
+
     // local variable is used to prevent concurrent modification
     final GeneralTestEventsProcessor processor = myProcessor;
     if (processor != null) {
@@ -179,6 +186,8 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
 
   private void fireOnTestFailure(final String testName, final String localizedMessage, final String stackTrace,
                                  final boolean isTestError) {
+    assertNotNull(testName);
+    assertNotNull(localizedMessage);
 
      // local variable is used to prevent concurrent modification
      final GeneralTestEventsProcessor processor = myProcessor;
@@ -189,6 +198,8 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
 
   private void fireOnTestIgnored(final String testName, final String ignoreComment,
                                  @Nullable final String details) {
+    assertNotNull(testName);
+    assertNotNull(ignoreComment);
 
     // local variable is used to prevent concurrent modification
     final GeneralTestEventsProcessor processor = myProcessor;
@@ -198,6 +209,8 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   }
 
   private void fireOnTestFinished(final String testName, final int duration) {
+    assertNotNull(testName);
+
     // local variable is used to prevent concurrent modification
     final GeneralTestEventsProcessor processor = myProcessor;
     if (processor != null) {
@@ -205,7 +218,10 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
   }
 
-  private void fireOnCustomProgressTestsCategory(@NotNull final String categoryName, int testsCount) {
+  private void fireOnCustomProgressTestsCategory(final String categoryName,
+                                                 int testsCount) {
+    assertNotNull(categoryName);
+
     final GeneralTestEventsProcessor processor = myProcessor;
     if (processor != null) {
       final boolean disableCustomMode = StringUtil.isEmpty(categoryName);
@@ -229,6 +245,9 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   }
 
   private void fireOnTestOutput(final String testName, final String text, final boolean stdOut) {
+    assertNotNull(testName);
+    assertNotNull(text);
+
     // local variable is used to prevent concurrent modification
     final GeneralTestEventsProcessor processor = myProcessor;
     if (processor != null) {
@@ -237,6 +256,8 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   }
 
   private void fireOnUncapturedOutput(final String text, final Key outputType) {
+    assertNotNull(text);
+
     // local variable is used to prevent concurrent modification
     final GeneralTestEventsProcessor processor = myProcessor;
     if (processor != null) {
@@ -253,6 +274,8 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   }
 
   private void fireOnSuiteStarted(final String suiteName, @Nullable final String locationUrl) {
+    assertNotNull(suiteName);
+
     // local variable is used to prevent concurrent modification
     final GeneralTestEventsProcessor processor = myProcessor;
     if (processor != null) {
@@ -261,10 +284,29 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   }
 
   private void fireOnSuiteFinished(final String suiteName) {
+    assertNotNull(suiteName);
+
     // local variable is used to prevent concurrent modification
     final GeneralTestEventsProcessor processor = myProcessor;
     if (processor != null) {
       processor.onSuiteFinished(suiteName);
+    }
+  }
+
+  private void fireOnErrorMsg(final String localizedMessage,
+                              @Nullable final String stackTrace) {
+    assertNotNull(localizedMessage);
+
+    // local variable is used to prevent concurrent modification
+    final GeneralTestEventsProcessor processor = myProcessor;
+    if (processor != null) {
+      processor.onError(localizedMessage, stackTrace);
+    }
+  }
+
+  private void assertNotNull(final String s) {
+    if (s == null) {
+      LOG.error(getTFrameworkPrefix(myTestFrameworkName) + " @NotNull value is expected.");
     }
   }
 
@@ -276,6 +318,13 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     @NonNls private static final String ATTR_KEY_LOCATION_URL = "locationHint";
     @NonNls private static final String ATTR_KEY_LOCATION_URL_OLD = "location";
     @NonNls private static final String ATTR_KEY_STACKTRACE_DETAILS = "details";
+
+    @NonNls private static final String MESSAGE = "message";
+    @NonNls private static final String ATTR_KEY_STATUS = "status";
+    @NonNls private static final String ATTR_VALUE_STATUS_ERROR = "ERROR";
+    @NonNls private static final String ATTR_VALUE_STATUS_WARNING = "WARNING";
+    @NonNls private static final String ATTR_KEY_TEXT = "text";
+    @NonNls private static final String ATTR_KEY_ERROR_DETAILS = "errorDetails";
 
     @NonNls public static final String CUSTOM_STATUS = "customProgressStatus";
     @NonNls private static final String ATTR_KEY_TEST_TYPE = "type";
@@ -289,14 +338,15 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
 
     @Nullable
-    private String fetchTestLocation(TestSuiteStarted suiteStarted) {
+    private String fetchTestLocation(final TestSuiteStarted suiteStarted) {
       final Map<String, String> attrs = suiteStarted.getAttributes();
       final String location = attrs.get(ATTR_KEY_LOCATION_URL);
       if (location == null) {
         // try old API
         final String oldLocation = attrs.get(ATTR_KEY_LOCATION_URL_OLD);
         if (oldLocation != null) {
-          LOG.error("Test Runner API was changed for TeamCity 5.0 compatibility. Please use 'locationHint' attribute instead of 'location'.");
+          LOG.error(getTFrameworkPrefix(myTestFrameworkName)
+                    + "Test Runner API was changed for TeamCity 5.0 compatibility. Please use 'locationHint' attribute instead of 'location'.");
           return oldLocation;
         }
         return null;
@@ -320,15 +370,11 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
 
       final String durationStr = testFinished.getAttributes().get(ATTR_KEY_TEST_DURATION);
 
-      // Test's duration in milliseconds
+      // Test duration in milliseconds
       int duration = 0;
 
       if (!StringUtil.isEmptyOrSpaces(durationStr)) {
-        try {
-          duration = Integer.parseInt(durationStr);
-        } catch (NumberFormatException ex) {
-          LOG.error(ex);
-        }
+        duration = convertToInt(durationStr);
       }
       
       fireOnTestFinished(testFinished.getTestName(), duration);
@@ -388,7 +434,32 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
         processTestCountInSuite(msg);
       } else if (CUSTOM_STATUS.equals(name)) {
         processCustomStatus(msg);
-      } else {
+      } else if (MESSAGE.equals(name)) {
+        final Map<String, String> msgAttrs = msg.getAttributes();
+
+        final String text = msgAttrs.get(ATTR_KEY_TEXT);
+        if (!StringUtil.isEmpty(text)){
+          // msg status
+          final String status = msgAttrs.get(ATTR_KEY_STATUS);
+          if (status.equals(ATTR_VALUE_STATUS_ERROR)) {
+            // error msg
+
+            final String stackTrace = msgAttrs.get(ATTR_KEY_ERROR_DETAILS);
+            fireOnErrorMsg(text, stackTrace);
+          } else if (status.equals(ATTR_VALUE_STATUS_WARNING)) {
+            // warning msg
+
+            // let's show warning via stderr
+            fireOnUncapturedOutput(text, ProcessOutputTypes.STDERR);
+          } else {
+            // some other text
+
+            // we cannot pass output type here but it is a service message
+            // let's think that is was stdout
+            fireOnUncapturedOutput(text, ProcessOutputTypes.STDOUT);
+          }
+        }
+      }  else {
         //Do nothing
       }
     }
@@ -403,7 +474,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
       try {
         count = Integer.parseInt(countStr);
       } catch (NumberFormatException ex) {
-        LOG.error(ex);
+        LOG.error(getTFrameworkPrefix(myTestFrameworkName) + "Parse integer error.", ex);
       }
       return count;
     }

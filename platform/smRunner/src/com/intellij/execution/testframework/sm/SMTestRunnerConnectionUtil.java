@@ -37,12 +37,13 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Roman Chernyatchik
  */
 public class SMTestRunnerConnectionUtil {
+  private static final String TEST_RUNNER_DEBUG_MODE_PROPERTY = "idea.smrunner.debug";
+
   private SMTestRunnerConnectionUtil() {
     // Do nothing. Utility class.
   }
@@ -55,25 +56,35 @@ public class SMTestRunnerConnectionUtil {
    * just override "execute" method of your custom command line state and return
    * test runner's console.
    *
+   * NB: For debug purposes please enable "debug mode". In this mode test runner will also validate
+   * consistency of test events communication protocol and throw assertion errors. To enable debug mode
+   * please set system property idea.smrunner.debug=true
+   *
+   * @param testFrameworkName Is used to store(project level) latest value of testTree/consoleTab splitter and other settings
+   * and also will be mentioned in debug diagnostics
    * @param processHandler Process handler
    * @param consoleProperties Console properties for test console actions
    * @return Console view
    * @throws ExecutionException If IDEA cannot execute process this Exception will
-   * be catched and shown in error message box
+   * be caught and shown in error message box
    */
-  public static BaseTestsOutputConsoleView attachRunner(@NotNull final ProcessHandler processHandler,
+  public static BaseTestsOutputConsoleView attachRunner(@NotNull final String testFrameworkName,
+                                                        @NotNull final ProcessHandler processHandler,
                                                         @NotNull final TestConsoleProperties consoleProperties,
                                                         final RunnerSettings runnerSettings,
-                                                        final ConfigurationPerRunnerSettings configurationSettings,
-                                                        final String splitterPropertyName) throws ExecutionException {
+                                                        final ConfigurationPerRunnerSettings configurationSettings
+  ) throws ExecutionException {
 
     // Console
+    final String splitterPropertyName = testFrameworkName + ".Splitter.Proportion";
     final SMTRunnerConsoleView testRunnerConsole = new SMTRunnerConsoleView(consoleProperties, runnerSettings, configurationSettings, splitterPropertyName);
     testRunnerConsole.initUI();
     final SMTestRunnerResultsForm resultsViewer = testRunnerConsole.getResultsViewer();
 
     // attach listeners
-    attachEventsProcessors(consoleProperties, resultsViewer, resultsViewer.getStatisticsPane(), processHandler);
+    attachEventsProcessors(consoleProperties, resultsViewer,
+                           resultsViewer.getStatisticsPane(),
+                           processHandler, testFrameworkName);
     testRunnerConsole.attachToProcess(processHandler);
 
     return testRunnerConsole;
@@ -111,35 +122,54 @@ public class SMTestRunnerConnectionUtil {
    * }
    * </code>
    *
+   *
+   * NB: For debug purposes please enable "debug mode". In this mode test runner will also validate
+   * consistency of test events communication protocol and throw assertion errors. To enable debug mode
+   * please set system property idea.smrunner.debug=true
+   *
+   * @param testFrameworkName Is used to store(project level) latest value of testTree/consoleTab splitter and other settings
    * @param processHandler Process handler
    * @param commandLineState  Command line state
    * @param config User run configuration settings
-   * @param splitterPropertyName This property will be used for storing splitter position.
    * @return Console view
    * @throws ExecutionException If IDEA cannot execute process this Exception will
-   * be catched and shown in error message box
+   * be caught and shown in error message box
    */
-  public static ConsoleView attachRunner(@NotNull final ProcessHandler processHandler,
+  public static ConsoleView attachRunner(@NotNull final String testFrameworkName, @NotNull final ProcessHandler processHandler,
                                          @NotNull final CommandLineState commandLineState,
-                                         @NotNull final RuntimeConfiguration config,
-                                         @Nullable final String splitterPropertyName) throws ExecutionException {
-    final TestConsoleProperties consoleProperties = new SMTRunnerConsoleProperties(config);
+                                         @NotNull final RuntimeConfiguration config
+  ) throws ExecutionException {
+    // final String testFrameworkName
+    final TestConsoleProperties consoleProperties = new SMTRunnerConsoleProperties(config, testFrameworkName);
 
-    return attachRunner(processHandler, consoleProperties,
-                        commandLineState.getRunnerSettings(), commandLineState.getConfigurationSettings(), splitterPropertyName);
+    return attachRunner(testFrameworkName, processHandler, consoleProperties,
+                        commandLineState.getRunnerSettings(),
+                        commandLineState.getConfigurationSettings());
+  }
+
+  /**
+   * In debug mode SM Runner will check events consistency. All errors will be reported using IDEA errors logger.
+   * This mode must be disabled in production. The most widespread false positives were detected when you debug tests.
+   * In such cases Test Framework may fire events several times, etc.
+   * @return true if in debug mode, otherwise false.
+   */
+  public static boolean isInDebugMode() {
+    return Boolean.valueOf(System.getProperty(TEST_RUNNER_DEBUG_MODE_PROPERTY));
   }
 
   private static ProcessHandler attachEventsProcessors(@NotNull final TestConsoleProperties consoleProperties,
                                                        final SMTestRunnerResultsForm resultsViewer,
                                                        final StatisticsPanel statisticsPane,
-                                                       final ProcessHandler processHandler)
+                                                       final ProcessHandler processHandler,
+                                                       @NotNull final String testFrameworkName)
       throws ExecutionException {
 
     //build messages consumer
-    final OutputToGeneralTestEventsConverter outputConsumer = new OutputToGeneralTestEventsConverter();
+    final OutputToGeneralTestEventsConverter outputConsumer = new OutputToGeneralTestEventsConverter(testFrameworkName);
 
     //events processor
-    final GeneralToSMTRunnerEventsConvertor eventsProcessor = new GeneralToSMTRunnerEventsConvertor(resultsViewer.getTestsRootNode());
+    final GeneralToSMTRunnerEventsConvertor eventsProcessor = new GeneralToSMTRunnerEventsConvertor(resultsViewer.getTestsRootNode(),
+                                                                                                    testFrameworkName);
 
     // ui actions
     final SMTRunnerUIActionsHandler uiActionsHandler = new SMTRunnerUIActionsHandler(consoleProperties);

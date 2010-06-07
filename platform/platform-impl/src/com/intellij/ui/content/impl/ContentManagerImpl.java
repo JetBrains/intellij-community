@@ -141,17 +141,26 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     }
   }
 
+  public void addContent(@NotNull Content content, final int order) {
+    addContent(content, null, order);
+  }
+
   public void addContent(@NotNull Content content) {
-    addContent(content, null);
+    addContent(content, null, -1);
   }
 
   public void addContent(@NotNull final Content content, final Object constraints) {
+    addContent(content, constraints, -1);
+  }
+
+  private void addContent(@NotNull final Content content, final Object constraints, final int index) {
     if (myContents.contains(content)) return;
 
     ((ContentImpl)content).setManager(this);
-    myContents.add(content);
+    final int insertIndex = (index == -1) ? myContents.size() : index;
+    myContents.add(insertIndex, content);
     content.addPropertyChangeListener(this);
-    fireContentAdded(content, myContents.size() - 1, ContentManagerEvent.ContentOperation.add);
+    fireContentAdded(content, insertIndex, ContentManagerEvent.ContentOperation.add);
     if (myUI.isToSelectAddedContent() || mySelection.isEmpty() && !myUI.canBeEmptySelection()) {
       if (myUI.isSingleSelection()) {
         setSelectedContent(content);

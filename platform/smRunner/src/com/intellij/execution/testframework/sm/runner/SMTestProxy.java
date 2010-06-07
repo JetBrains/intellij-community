@@ -50,7 +50,8 @@ public class SMTestProxy extends CompositePrintable implements PrintableTestProx
   private Integer myDuration = null; // duration is unknown
   @Nullable private final String myLocationUrl;
   private boolean myDurationIsCached = false; // is used for separating unknown and unset duration
-
+  private boolean myHasErrors = false;
+  private boolean myHasErrorsCached = false;
 
   private Printer myPrinter = Printer.DEAF;
 
@@ -86,6 +87,35 @@ public class SMTestProxy extends CompositePrintable implements PrintableTestProx
 
   public TestStateInfo.Magnitude getMagnitudeInfo() {
     return myState.getMagnitude();
+  }
+
+  public boolean hasErrors() {
+    // if already cached
+    if (myHasErrorsCached) {
+      return myHasErrors;
+    }
+
+    final boolean canCacheErrors = !myState.isInProgress();
+    // calculate
+    final boolean hasErrors = calcHasErrors();
+    if (canCacheErrors) {
+      myHasErrors = hasErrors;
+      myHasErrorsCached = true;
+    }
+    return hasErrors;
+  }
+
+  private boolean calcHasErrors() {
+    if (myHasErrors) {
+      return true;
+    }
+
+    for (SMTestProxy child : getChildren()) {
+      if (child.hasErrors()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public boolean isLeaf() {
@@ -227,7 +257,7 @@ public class SMTestProxy extends CompositePrintable implements PrintableTestProx
       return;
     }
 
-    // Not allow to diractly set duration for suites.
+    // Not allow to directly set duration for suites.
     // It should be the sum of children. This requirement is only
     // for safety of current model and may be changed
     LOG.warn("Unsupported operation");
@@ -242,7 +272,7 @@ public class SMTestProxy extends CompositePrintable implements PrintableTestProx
 
     if (!isSuite()) {
       // if isn't in other finished state (ignored, failed or passed)
-      myState = TestPassedState.INSTACE;
+      myState = TestPassedState.INSTANCE;
     } else {
       //Test Suite
       myState = determineSuiteStateOnFinished();
@@ -252,7 +282,8 @@ public class SMTestProxy extends CompositePrintable implements PrintableTestProx
   }
 
   public void setTestFailed(@NotNull final String localizedMessage,
-                            @NotNull final String stackTrace, final boolean testError) {
+                            @Nullable final String stackTrace,
+                            final boolean testError) {
     myState = testError
               ? new TestErrorState(localizedMessage, stackTrace)
               : new TestFailedState(localizedMessage, stackTrace);
@@ -343,6 +374,19 @@ public class SMTestProxy extends CompositePrintable implements PrintableTestProx
     addLast(new Printable() {
       public void printOn(final Printer printer) {
         printer.print(output, ConsoleViewContentType.ERROR_OUTPUT);
+      }
+    });
+  }
+
+  public void addError(final String output,
+                       @Nullable final String stackTrace) {
+    myHasErrors = true;
+    addLast(new Printable() {
+      public void printOn(final Printer printer) {
+        final String errorText = TestFailedState.buildErrorPresentationText(output, stackTrace);
+        LOG.assertTrue(errorText != null);
+
+        TestFailedState.printError(printer, errorText);
       }
     });
   }

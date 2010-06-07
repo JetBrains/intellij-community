@@ -20,21 +20,49 @@ import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode;
+import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 /**
  * @author yole
  */
 public class PlatformProjectViewStructureProvider implements TreeStructureProvider, DumbAware {
+  private final Project myProject;
+
+  public PlatformProjectViewStructureProvider(Project project) {
+    myProject = project;
+  }
+
   public Collection<AbstractTreeNode> modify(final AbstractTreeNode parent, final Collection<AbstractTreeNode> children, final ViewSettings settings) {
     if (parent instanceof ProjectViewProjectNode) {
       for(AbstractTreeNode child: children) {
         if (child instanceof ProjectViewModuleNode) {
           return child.getChildren();
         }
+      }
+    }
+    else if (parent instanceof PsiDirectoryNode) {
+      final VirtualFile vFile = ((PsiDirectoryNode)parent).getVirtualFile();
+      if (vFile != null && vFile.equals(myProject.getBaseDir())) {
+        final Collection<AbstractTreeNode> moduleChildren = ((PsiDirectoryNode) parent).getChildren();
+        Collection<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+        for (AbstractTreeNode moduleChild : moduleChildren) {
+          if (moduleChild instanceof PsiDirectoryNode) {
+            final PsiDirectory value = ((PsiDirectoryNode)moduleChild).getValue();
+            if (value.getName().equals(".idea")) {
+              continue;
+            }
+          }
+          result.add(moduleChild);
+        }
+        return result;
       }
     }
     return children;

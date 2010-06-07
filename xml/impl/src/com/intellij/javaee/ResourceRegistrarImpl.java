@@ -16,6 +16,7 @@
 
 package com.intellij.javaee;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
@@ -50,7 +51,13 @@ public class ResourceRegistrarImpl implements ResourceRegistrar {
       map.put(resource, file);
     }
     else {
-      ExternalResourceManagerImpl.LOG.info("Cannot find standard resource. filename:" + fileName + " klass=" + klass);
+      String message = "Cannot find standard resource. filename:" + fileName + " klass=" + klass;
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        ExternalResourceManagerImpl.LOG.error(message);
+      }
+      else {
+        ExternalResourceManagerImpl.LOG.warn(message);
+      }
     }
   }
 

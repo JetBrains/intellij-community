@@ -33,11 +33,13 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
+import java.util.regex.Pattern;
 
 //TeamCity inherits StringUtil: do not add private constructors!!!
 public class StringUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.text.StringUtil");
   @NonNls private static final String VOWELS = "aeiouy";
+  private static final Pattern EOL_SPLIT_PATTERN = Pattern.compile(" *(\r|\n|\r\n)+ *");
 
   public static String replace(@NonNls @NotNull String text, @NonNls @NotNull String oldS, @NonNls @Nullable String newS) {
     return replace(text, oldS, newS, false);
@@ -1574,5 +1576,15 @@ public class StringUtil {
   @NotNull
   public static String tail(@NotNull String s, final int idx) {
     return idx >= s.length() ? "" : s.substring(idx, s.length());
+  }
+
+  /**
+   * Splits string by lines.
+   *
+   * @param string String to split
+   * @return array of strings
+   */
+  public static String[] splitByLines(final String string) {
+    return EOL_SPLIT_PATTERN.split(string);
   }
 }
