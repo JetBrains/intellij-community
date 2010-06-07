@@ -28,6 +28,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 
 public class AutoIndentLinesAction extends BaseCodeInsightAction implements DumbAware {
+  public AutoIndentLinesAction() {
+    super(false);
+  }
+
   protected CodeInsightActionHandler getHandler() {
     return new AutoIndentLinesHandler();
   }
