@@ -90,7 +90,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
         final PsiElement element = reference.getElement();
         final PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(element, PsiNewExpression.class);
         if (newExpression != null && !PsiTreeUtil.isAncestor(builderClass, element, false)) {
-          usages.add(new ReplaceConstructorWithSettersChainInfo(newExpression, myClassName, myParametersMap));
+          usages.add(new ReplaceConstructorWithSettersChainInfo(newExpression, StringUtil.getQualifiedName(myPackageName, myClassName), myParametersMap));
         }
       }
     }

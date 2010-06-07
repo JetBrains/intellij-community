@@ -30,6 +30,7 @@
     <orderEntry type="module" module-name="idea-tests" scope="TEST" />
     <orderEntry type="module" module-name="testFramework-java" exported="" scope="TEST" />
     <orderEntry type="module" module-name="jetgroovy" scope="TEST" />
+    <orderEntry type="module" module-name="FlexSupport" scope="TEST" />
   </component>
   <component name="copyright">
     <Base>

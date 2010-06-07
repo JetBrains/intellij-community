@@ -16,6 +16,7 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.ui.TextFieldWithHistory;
+import com.intellij.ui.TextFieldWithStoredHistory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -78,6 +79,19 @@ public interface TextComponentAccessor<T extends Component> {
     }
 
     public void setText(TextFieldWithHistory textField, String text) {
+      textField.setText(text);
+    }
+  };
+
+  /**
+   * The accessor that gets and changes whole text
+   */
+  TextComponentAccessor<TextFieldWithStoredHistory> TEXT_FIELD_WITH_STORED_HISTORY_WHOLE_TEXT = new TextComponentAccessor<TextFieldWithStoredHistory>() {
+    public String getText(TextFieldWithStoredHistory textField) {
+      return textField.getText();
+    }
+
+    public void setText(TextFieldWithStoredHistory textField, String text) {
       textField.setText(text);
     }
   };

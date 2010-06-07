@@ -133,8 +133,8 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
     else {
       targetPackage = null;
     }
-    MultiMap<PsiElement,String> conflicts =
-      PullUpConflictsUtil.checkConflicts(infos, mySubclass, null, targetPackage, targetDirectory, dialog.getContainmentVerifier());
+    final MultiMap<PsiElement,String> conflicts =
+      PullUpConflictsUtil.checkConflicts(infos, mySubclass, mySubclass.getSuperClass(), targetPackage, targetDirectory, dialog.getContainmentVerifier());
     if (!conflicts.isEmpty()) {
       ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);
       conflictsDialog.show();

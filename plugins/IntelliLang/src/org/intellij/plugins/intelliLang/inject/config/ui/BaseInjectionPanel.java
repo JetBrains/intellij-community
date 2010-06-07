@@ -93,7 +93,7 @@ public class BaseInjectionPanel extends AbstractInjectionPanel<BaseInjection> {
         s = s.substring(1).trim();
       }
       else {
-        sb.append(s);
+        sb.append(s.trim());
         continue;
       }
       if (sb.length() > 0) {

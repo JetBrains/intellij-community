@@ -529,6 +529,7 @@ public class HighlightMethodUtil {
     return containingClass == null ? method.getContainingFile().getName() : HighlightUtil.formatClass(containingClass, false);
   }
 
+  @Language("HTML")
   private static String createAmbiguousMethodHtmlTooltipMethodRow(final MethodCandidateInfo methodCandidate) {
     PsiMethod method = methodCandidate.getElement();
     PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -565,6 +566,7 @@ public class HighlightMethodUtil {
     PsiExpression[] expressions = list.getExpressions();
     int cols = Math.max(parameters.length, expressions.length);
 
+    @Language("HTML")
     @NonNls String parensizedName = methodName + (parameters.length == 0 ? "(&nbsp;)&nbsp;" : "");
     return JavaErrorMessages.message(
       "argument.mismatch.html.tooltip",
@@ -576,7 +578,7 @@ public class HighlightMethodUtil {
   }
 
   private static String esctrim(@NotNull String s) {
-    return StringUtil.first(XmlStringUtil.escapeString(s), 40, true);
+    return XmlStringUtil.escapeString(StringUtil.first(s, 40, true));
   }
 
   private static String createMismatchedArgumentsHtmlTooltip(PsiExpressionList list,
@@ -592,6 +594,7 @@ public class HighlightMethodUtil {
     }
   }
   
+  @Language("HTML")
   private static String createLongMismatchedArgumentsHtmlTooltip(PsiExpressionList list,
                                                              PsiParameter[] parameters,
                                                              String methodName,
@@ -599,22 +602,21 @@ public class HighlightMethodUtil {
                                                              PsiClass aClass) {
     PsiExpression[] expressions = list.getExpressions();
 
-    @NonNls @Language("HTML")
+    @NonNls
     String s = "<html><body><table border=0>" +
-               " <caption align=top><nobr><b>" + methodName + "() </b> in <b>" + HighlightUtil.formatClass(aClass, false) +"</b>  cannot be applied to:</nobr></caption>"+
-               "  <tr><th colspan=2 align=left>Expected<br>Parameters:</th><th align=left>Actual<br>Arguments:</th></tr>"
-               +"  <tr><td colspan=3><hr></td></tr>"
+               "<tr><td colspan=3>" +
+               "<nobr><b>" + methodName + "()</b> in <b>" + HighlightUtil.formatClass(aClass, false) +"</b> cannot be applied to:</nobr>" +
+               "</td></tr>"+
+               "<tr><td colspan=2 align=left>Expected<br>Parameters:</td><td align=left>Actual<br>Arguments:</td></tr>"+
+               "<tr><td colspan=3><hr></td></tr>"
       ;
-
 
     for (int i = 0; i < Math.max(parameters.length,expressions.length); i++) {
       PsiParameter parameter = i < parameters.length ? parameters[i] : null;
       PsiExpression expression = i < expressions.length ? expressions[i] : null;
       @NonNls String mismatchColor = showShortType(i, parameters, expressions, substitutor) ? null : "red";
 
-      s += "<tr" +
-           (i%2 == 0 ? " style='background-color: #eeeeee'" : "") +
-           ">";
+      s += "<tr" + (i % 2 == 0 ? " style='background-color: #eeeeee'" : "") + ">";
       s += "<td><b><nobr>";
       if (parameter != null) {
         String name = parameter.getName();
@@ -651,10 +653,11 @@ public class HighlightMethodUtil {
       s += "</tr>";
     }
 
-    s+= "  </table></body></html>";
+    s+= "</table></body></html>";
     return s;
   }
 
+  @Language("HTML")
   private static String createMismatchedArgsHtmlTooltipArgumentsRow(final PsiExpression[] expressions, final PsiParameter[] parameters,
                                                                       final PsiSubstitutor substitutor, final int cols) {
     @NonNls String ms = "";
@@ -678,6 +681,7 @@ public class HighlightMethodUtil {
     return ms;
   }
 
+  @Language("HTML")
   private static String createMismatchedArgsHtmlTooltipParamsRow(final PsiParameter[] parameters,
                                                                  final PsiSubstitutor substitutor,
                                                                  final PsiExpression[] expressions) {

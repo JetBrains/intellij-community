@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -49,10 +50,11 @@ public class TooltipController {
     }
   }
 
-  public void showTooltipByMouseMove(final Editor editor,
-                                     MouseEvent e,
+  public void showTooltipByMouseMove(@NotNull final Editor editor,
+                                     @NotNull MouseEvent e,
                                      final TooltipRenderer tooltipObject,
-                                     final boolean alignToRight, final TooltipGroup group) {
+                                     final boolean alignToRight,
+                                     @NotNull final TooltipGroup group) {
     myTooltipAlarm.cancelAllRequests();
     if (myCurrentTooltip == null || !myCurrentTooltip.isVisible()) {
       myCurrentTooltipObject = null;
@@ -95,11 +97,13 @@ public class TooltipController {
   }
 
   public void showTooltip(final Editor editor, Point p, String text, boolean alignToRight, TooltipGroup group) {
-    showTooltip(editor, p, ((EditorMarkupModel)editor.getMarkupModel()).getErrorStripTooltipRendererProvider().calcTooltipRenderer(text), alignToRight, group);
+    TooltipRenderer tooltipRenderer = ((EditorMarkupModel)editor.getMarkupModel()).getErrorStripTooltipRendererProvider().calcTooltipRenderer(text);
+    showTooltip(editor, p, tooltipRenderer, alignToRight, group);
   }
 
   public void showTooltip(final Editor editor, Point p, String text, int currentWidth, boolean alignToRight, TooltipGroup group) {
-    showTooltip(editor, p, ((EditorMarkupModel)editor.getMarkupModel()).getErrorStripTooltipRendererProvider().calcTooltipRenderer(text, currentWidth), alignToRight, group);
+    TooltipRenderer tooltipRenderer = ((EditorMarkupModel)editor.getMarkupModel()).getErrorStripTooltipRendererProvider().calcTooltipRenderer(text, currentWidth);
+    showTooltip(editor, p, tooltipRenderer, alignToRight, group);
   }
 
   public void showTooltip(final Editor editor, Point p, TooltipRenderer tooltipRenderer, boolean alignToRight, TooltipGroup group) {

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven;
 
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
@@ -36,6 +37,7 @@ import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -157,15 +159,28 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
   @Override
   protected void runTest() throws Throwable {
-    if (runInWriteAction()) {
-      new WriteAction() {
-        protected void run(Result result) throws Throwable {
-          MavenTestCase.super.runTest();
-        }
-      }.executeSilently().throwException();
+    try {
+      if (runInWriteAction()) {
+        new WriteAction() {
+          protected void run(Result result) throws Throwable {
+            MavenTestCase.super.runTest();
+          }
+        }.executeSilently().throwException();
+      }
+      else {
+        MavenTestCase.super.runTest();
+      }
     }
-    else {
-      MavenTestCase.super.runTest();
+    catch (Exception throwable) {
+      Throwable each = throwable;
+      do {
+        if (each instanceof HeadlessException) {
+          printIgnoredMessage("Doesn't work in Headless environment");
+          return;
+        }
+      }
+      while ((each = each.getCause()) != null);
+      throw throwable;
     }
   }
 
@@ -450,14 +465,29 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   protected boolean ignore() {
-    System.out.println("Ignored: " + getClass().getSimpleName() + "." + getName());
+    printIgnoredMessage(null);
     return true;
+  }
+
+  public boolean checkUltimate() {
+    if ("IU".equals(ApplicationInfo.getInstance().getBuild().getProductCode())) return true;
+    printIgnoredMessage("Ultimate edition is required");
+    return false;
   }
 
   protected boolean hasMavenInstallation() {
     boolean result = getTestMavenHome() != null;
-    if (!result) System.out.println("Ignored, because Maven installation not found: " + getClass().getSimpleName() + "." + getName());
+    if (!result) printIgnoredMessage("Maven installation not found");
     return result;
+  }
+
+  private void printIgnoredMessage(String message) {
+    String toPrint = "Ignored";
+    if (message != null) {
+      toPrint += ", beacuse " + message;
+    }
+    toPrint += ": " + getClass().getSimpleName() + "." + getName();
+    System.out.println(toPrint);
   }
 
   private String getTestMavenHome() {

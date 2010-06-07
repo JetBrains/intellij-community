@@ -36,6 +36,11 @@ public class PullUpTest extends LightCodeInsightTestCase {
            new RefactoringTestUtil.MemberDescriptor("setX", PsiMethod.class));
 
   }
+
+  public void testPullUpInheritedStaticClasses() throws Exception {
+    doTest(new RefactoringTestUtil.MemberDescriptor("C", PsiClass.class),
+           new RefactoringTestUtil.MemberDescriptor("D", PsiClass.class));
+  }
   
   public void testPullUpAndAbstractize() throws Exception {
     doTest(new RefactoringTestUtil.MemberDescriptor("a", PsiMethod.class),

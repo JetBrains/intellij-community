@@ -1132,7 +1132,6 @@ public class UIUtil {
       super.completeUIInstall();
 
       tree.setOpaque(false);
-      tree.setLargeModel(true);
       tree.setShowsRootHandles(true);
 
       tree.addMouseListener(mySelectionListener);
