@@ -24,7 +24,10 @@ import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.util.text.MergingCharSequence;
 
 /**
- *
+ * Data structure specialized for working with document text lines, i.e. stores information about line mapping to document
+ * offsets and provides convenient ways to work with that information like retrieving target line by document offset etc.
+ * <p/>
+ * Not thread-safe.
  */
 public class LineSet{
   private SegmentArrayWithData mySegments = new SegmentArrayWithData();
