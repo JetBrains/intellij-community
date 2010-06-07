@@ -124,12 +124,11 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
     final Project project = host.getProject();
     final BaseInjection originalInjection = injections.get(0);
     final BaseInjection xmlInjection = createFrom(originalInjection, host);
-    if (xmlInjection == null) return false;
-    final AbstractTagInjection newInjection = showInjectionUI(project, xmlInjection);
+    final BaseInjection newInjection =
+      xmlInjection == null? showDefaultInjectionUI(project, originalInjection.copy()) : showInjectionUI(project, xmlInjection);
     if (newInjection != null) {
-      newInjection.mergeOriginalPlacesFrom(originalInjection, true);
       Configuration.getInstance().replaceInjectionsWithUndo(
-        project, Collections.singletonList(xmlInjection),
+        project, Collections.singletonList(newInjection),
         Collections.singletonList(originalInjection),
         Collections.<PsiElement>emptyList());
     }
@@ -137,7 +136,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
   }
 
   @Nullable
-  private AbstractTagInjection showInjectionUI(final Project project, final BaseInjection xmlInjection) {
+  private static AbstractTagInjection showInjectionUI(final Project project, final BaseInjection xmlInjection) {
     final DialogBuilder builder = new DialogBuilder(project);
     final AbstractInjectionPanel panel;
     if (xmlInjection instanceof XmlTagInjection) {
@@ -169,6 +168,8 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
 
   @Nullable
   private static BaseInjection createFrom(final BaseInjection injection, final PsiLanguageInjectionHost host) {
+    if (injection.getInjectionPlaces().size() > 1) return null;
+
     final PsiElement element;
     AbstractTagInjection result;
     if (host instanceof XmlText) {
@@ -217,10 +218,6 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
             result.setTagNamespace(StringUtil.notNullize(pair1.second));
           }
           else continue;
-          // for debugging
-          //result.initializePlaces(false);
-          //if (!place.getText().equals(result.getInjectionPlaces().get(0).getText())) {
-          //}
           break;
         }
       }

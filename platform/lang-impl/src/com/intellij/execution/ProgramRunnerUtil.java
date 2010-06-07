@@ -83,11 +83,17 @@ public class ProgramRunnerUtil {
 
   public static Icon getConfigurationIcon(final Project project, final RunnerAndConfigurationSettings settings, final boolean invalid) {
     final RunManager runManager = RunManager.getInstance(project);
+    return getConfigurationIcon(settings, invalid, runManager.isTemporary(settings.getConfiguration()));
+  }
+
+  public static Icon getConfigurationIcon(final RunnerAndConfigurationSettings settings,
+                                          final boolean invalid,
+                                          boolean isTemporary) {
     RunConfiguration configuration = settings.getConfiguration();
     final Icon icon = settings.getFactory().getIcon(configuration);
     LOG.assertTrue(icon != null, "Icon should not be null!");
 
-    final Icon configurationIcon = runManager.isTemporary(configuration) ? IconLoader.getTransparentIcon(icon, 0.3f) : icon;
+    final Icon configurationIcon = isTemporary ? IconLoader.getTransparentIcon(icon, 0.3f) : icon;
     if (invalid) {
       return LayeredIcon.create(configurationIcon, INVALID_CONFIGURATION);
     }

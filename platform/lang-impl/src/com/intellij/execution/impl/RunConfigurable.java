@@ -129,9 +129,9 @@ class RunConfigurable extends BaseConfigurable {
               catch (ConfigurationException e) {
                 snapshot = settings.getSettings();
               }
-              setIcon(ProgramRunnerUtil.getConfigurationIcon(getProject(), snapshot, !settings.isValid()));
               configuration = settings.getConfiguration();
               name = settings.getNameText();
+              setIcon(ProgramRunnerUtil.getConfigurationIcon(snapshot, !settings.isValid(), runManager.isTemporary(configuration)));
             }
             else if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
               RunnerAndConfigurationSettings settings = (RunnerAndConfigurationSettings)userObject;

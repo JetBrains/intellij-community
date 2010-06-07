@@ -17,6 +17,7 @@ package com.intellij.psi.formatter.xml;
 
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiErrorElement;
@@ -111,7 +112,7 @@ public class XmlBlock extends AbstractXmlBlock {
     }
   }
 
-  private static List<Block> splitAttribute(ASTNode node, XmlFormattingPolicy formattingPolicy) {
+  private List<Block> splitAttribute(ASTNode node, XmlFormattingPolicy formattingPolicy) {
     final ArrayList<Block> result = new ArrayList<Block>(3);
     ASTNode child = node.getFirstChildNode();
     while (child != null) {
@@ -119,12 +120,30 @@ public class XmlBlock extends AbstractXmlBlock {
           child.getElementType() == XmlElementType.XML_ATTRIBUTE_VALUE_END_DELIMITER) {
         result.add(new XmlBlock(child, null, null, formattingPolicy, null, null));
       }
+      else if (!child.getPsi().getLanguage().isKindOf(XMLLanguage.INSTANCE) && containsOuterLanguageElement(child)) {
+        // Fix for EA-20311:
+        // In case of another embedded language create a splittable XML block which can be
+        // merged with other language's code blocks.
+        result.add(new XmlBlock(child, null, null, myXmlFormattingPolicy, getChildIndent(), null));
+      }
       else if (child.getElementType() != TokenType.ERROR_ELEMENT) {
         result.add(new ReadOnlyBlock(child));
       }
       child = child.getTreeNext();
     }
     return result;
+  }
+
+
+  private static boolean containsOuterLanguageElement(ASTNode node) {
+    ASTNode child = node.getFirstChildNode();
+    while (child != null) {
+      if (child instanceof OuterLanguageElement) {
+        return true;
+      }
+      child = child.getTreeNext();
+    }
+    return false;
   }
 
 

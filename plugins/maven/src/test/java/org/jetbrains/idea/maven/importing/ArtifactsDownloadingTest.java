@@ -147,6 +147,8 @@ public class ArtifactsDownloadingTest extends MavenImportingTestCase {
   }
 
   public void testCustomDocsAndSources() throws Exception {
+    if (!checkUltimate()) return;
+
     String remoteRepo = FileUtil.toSystemIndependentName(myDir.getPath() + "/repo");
     updateSettingsXmlFully("<settings>" +
                            "<mirrors>" +
