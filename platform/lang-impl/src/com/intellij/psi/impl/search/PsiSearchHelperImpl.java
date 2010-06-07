@@ -602,7 +602,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         }
         int mask = value.intValue();
         for (PsiSearchRequest.SingleRequest single : data) {
-          if ((mask & single.searchContext) != 0) {
+          if ((mask & single.searchContext) != 0 && ((GlobalSearchScope)single.searchScope).contains(file)) {
             local.putValue(file, single);
           }
         }
