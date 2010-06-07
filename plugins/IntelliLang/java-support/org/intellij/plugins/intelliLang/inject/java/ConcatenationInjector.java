@@ -68,7 +68,6 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
 
   private boolean processAnnotationInjections(final boolean unparsable, final PsiModifierListOwner annoElement, final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor,
                                               final PsiElement... operands) {
-    final Collection<String> names = getAnnotatedElementsValue(annoElement.getProject(), Configuration.getInstance().getLanguageAnnotationClass());
     final String checkName;
     if (annoElement instanceof PsiParameter) {
       final PsiElement scope = ((PsiParameter)annoElement).getDeclarationScope();
@@ -78,7 +77,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       checkName = ((PsiNamedElement)annoElement).getName();
     }
     else checkName = null;
-    if (checkName == null || !names.contains(checkName)) return false;
+    if (checkName == null || !getAnnotatedElementsValue(annoElement.getProject(), myInjectionConfiguration).contains(checkName)) return false;
     final PsiAnnotation[] annotations =
       AnnotationUtilEx.getAnnotationFrom(annoElement, myInjectionConfiguration.getLanguageAnnotationPair(), true);
     if (annotations.length > 0) {
@@ -157,9 +156,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
           methodName = classRef == null? null : classRef.getReferenceName();
         }
         else methodName = null;
-        if (methodName != null &&
-          (getXmlAnnotatedElementsValue(expression.getProject()).contains(methodName) ||
-          getAnnotatedElementsValue(expression.getProject(), configuration.getLanguageAnnotationClass()).contains(methodName))) {
+        if (methodName != null && areThereInjectionsWithName(expression.getProject(), configuration, methodName)) {
           final PsiMethod method = psiCallExpression.resolveMethod();
           final PsiParameter[] parameters = method == null ? PsiParameter.EMPTY_ARRAY : method.getParameterList().getParameters();
           if (index >= 0 && index < parameters.length && method != null) {
@@ -170,7 +167,9 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       }
 
       public boolean visitMethodReturnStatement(PsiReturnStatement parent, PsiMethod method) {
-        process(method, method, -1);
+        if (areThereInjectionsWithName(parent.getProject(), configuration, method.getName())) {
+          process(method, method, -1);
+        }
         return false;
       }
 
@@ -194,8 +193,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       public boolean visitAnnotationParameter(PsiNameValuePair nameValuePair, PsiAnnotation psiAnnotation) {
         final String paramName = nameValuePair.getName();
         final String methodName = paramName != null? paramName : PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME;
-        if (getXmlAnnotatedElementsValue(nameValuePair.getProject()).contains(methodName) ||
-             getAnnotatedElementsValue(nameValuePair.getProject(), configuration.getLanguageAnnotationClass()).contains(methodName)) {
+        if (areThereInjectionsWithName(nameValuePair.getProject(), configuration, methodName)) {
           final PsiReference reference = nameValuePair.getReference();
           final PsiElement element = reference == null ? null : reference.resolve();
           if (element instanceof PsiMethod) {
@@ -241,6 +239,13 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       final PsiElement curPlace = places.removeFirst();
       AnnotationUtilEx.visitAnnotatedElements(curPlace, visitor);
     }
+  }
+
+  private static boolean areThereInjectionsWithName(Project project,
+                                                    Configuration configuration,
+                                                    String methodName) {
+    return getXmlAnnotatedElementsValue(project).contains(methodName) ||
+         getAnnotatedElementsValue(project, configuration).contains(methodName);
   }
 
   private static void processInjectionWithContext(final boolean unparsable, final BaseInjection injection,
@@ -329,15 +334,16 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
 
   private static Key<Pair<String, CachedValue<Collection<String>>>> LANGUAGE_ANNOTATED_STUFF = Key.create("LANGUAGE_ANNOTATED_STUFF");
 
-  private static Collection<String> getAnnotatedElementsValue(final Project project, final String languageAnnotationClass) {
+  private static Collection<String> getAnnotatedElementsValue(final Project project, final Configuration configuration) {
     // note: external annotations not supported
+    final String annotationClass = configuration.getLanguageAnnotationClass();
     Pair<String, CachedValue<Collection<String>>> userData = project.getUserData(LANGUAGE_ANNOTATED_STUFF);
-    if (userData == null || !Comparing.equal(userData.first, languageAnnotationClass)) {
-      userData = Pair.create(languageAnnotationClass, CachedValuesManager.getManager(project).createCachedValue(new CachedValueProvider<Collection<String>>() {
+    if (userData == null || !Comparing.equal(userData.first, annotationClass)) {
+      userData = Pair.create(annotationClass, CachedValuesManager.getManager(project).createCachedValue(new CachedValueProvider<Collection<String>>() {
         public Result<Collection<String>> compute() {
           final Collection<String> result = new THashSet<String>();
           final ArrayList<String> annoClasses = new ArrayList<String>(3);
-          annoClasses.add(StringUtil.getShortName(languageAnnotationClass));
+          annoClasses.add(StringUtil.getShortName(annotationClass));
           for (int cursor = 0; cursor < annoClasses.size(); cursor++) {
             final String annoClass = annoClasses.get(cursor);
             for (PsiAnnotation annotation : JavaAnnotationIndex.getInstance()
@@ -365,8 +371,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
               }
             }
           }
-          return new Result<Collection<String>>(result, PsiModificationTracker.MODIFICATION_COUNT,
-                                                Configuration.getInstance());
+          return new Result<Collection<String>>(result, PsiModificationTracker.MODIFICATION_COUNT, configuration);
         }
       }, false));
       project.putUserData(LANGUAGE_ANNOTATED_STUFF, userData);
