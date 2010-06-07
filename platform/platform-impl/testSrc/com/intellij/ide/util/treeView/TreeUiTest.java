@@ -1,9 +1,11 @@
 package com.intellij.ide.util.treeView;
 
+import com.intellij.openapi.diagnostic.Log;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.util.*;
+import com.intellij.testFramework.TestLogger;
 import com.intellij.util.Time;
 import com.intellij.util.WaitFor;
 import junit.framework.TestSuite;
@@ -49,6 +51,126 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     updateFromRoot();
     assertTree("+/\n");
   }
+
+  public void testThrowingProcessCancelledInterruptsUpdate() throws Exception {
+    assertInterruption(Interruption.throwProcessCancelled);
+  }
+
+  public void testCancelUpdate() throws Exception {
+    System.out.println("TreeUiTest.testCancelUpdate --------------------");
+    assertInterruption(Interruption.invokeCancel);
+  }
+
+
+  public void testBatchUpdate() throws Exception {
+    buildStructure(myRoot);
+
+    myElementUpdate.clear();
+
+    final NodeElement[] toExpand = new NodeElement[] {
+      new NodeElement("com"),
+      new NodeElement("jetbrains"),
+      new NodeElement("org"),
+      new NodeElement("xunit")
+    };
+
+    final ActionCallback done = new ActionCallback();
+    final Ref<ProgressIndicator> indicatorRef = new Ref<ProgressIndicator>();
+    invokeLaterIfNeeded(new Runnable() {
+      public void run() {
+        getBuilder().batch(new Progressive() {
+          public void run(@NotNull ProgressIndicator indicator) {
+            indicatorRef.set(indicator);
+            expandNext(toExpand, 0, indicator, done);
+          }
+        }).notify(done);
+      }
+    });
+
+
+    waitBuilderToCome(new Condition() {
+      public boolean value(Object o) {
+        return done.isProcessed();
+      }
+    });
+
+    assertTrue(done.isDone());
+
+    assertTree("-/\n" +
+               " -com\n" +
+               "  +intellij\n" +
+               " -jetbrains\n" +
+               "  +fabrique\n" +
+               " -org\n" +
+               "  +eclipse\n" +
+               " -xunit\n" +
+               "  runner\n");
+
+    assertFalse(indicatorRef.get().isCanceled());
+  }
+
+
+  public void testCancelUpdateBatch() throws Exception {
+    buildStructure(myRoot);
+
+    myAlwaysShowPlus.add(new NodeElement("com"));
+    myAlwaysShowPlus.add(new NodeElement("jetbrains"));
+    myAlwaysShowPlus.add(new NodeElement("org"));
+    myAlwaysShowPlus.add(new NodeElement("xunit"));
+
+    final Ref<Boolean> cancelled = new Ref<Boolean>(false);
+    myElementUpdateHook = new ElementUpdateHook() {
+      public void onElementAction(String action, Object element) {
+        NodeElement stopElement = new NodeElement("com");
+
+        if (cancelled.get()) {
+          myCancelRequest = new AssertionError("Not supposed to update after element=" + stopElement);
+          return;
+        }
+
+        if (element.equals(stopElement) && action.equals("getChildren")) {
+          cancelled.set(true);
+          getBuilder().cancelUpdate();
+        }
+      }
+    };
+
+    final NodeElement[] toExpand = new NodeElement[] {
+      new NodeElement("com"),
+      new NodeElement("jetbrains"),
+      new NodeElement("org"),
+      new NodeElement("xunit")
+    };
+
+    final ActionCallback done = new ActionCallback();
+    final Ref<ProgressIndicator> indicatorRef = new Ref<ProgressIndicator>();
+
+    invokeLaterIfNeeded(new Runnable() {
+      public void run() {
+        getBuilder().batch(new Progressive() {
+          public void run(@NotNull ProgressIndicator indicator) {
+            indicatorRef.set(indicator);
+            expandNext(toExpand, 0, indicator, done);
+          }
+        }).notify(done);
+      }
+    });
+
+
+    waitBuilderToCome(new Condition() {
+      public boolean value(Object o) {
+        return done.isProcessed() || myCancelRequest != null;
+      }
+    });
+
+
+    assertNull(myCancelRequest);
+    assertTrue(done.isRejected());
+    assertTrue(indicatorRef.get().isCanceled());
+
+    assertFalse(getBuilder().getUi().isCancelProcessed());
+  }
+  
 
   public void testExpandAll() throws Exception {
     buildStructure(myRoot);
@@ -775,123 +897,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       " +xunit\n");
   }
 
-  public void testThrowingProcessCancelledInterruptsUpdate() throws Exception {
-    assertInterruption(Interruption.throwProcessCancelled);
-  }
-
-  public void testCancelUpdate() throws Exception {
-    assertInterruption(Interruption.invokeCancel);
-  }
-
-
-  public void testBatchUpdate() throws Exception {
-    buildStructure(myRoot);
-
-    myElementUpdate.clear();
-
-    final NodeElement[] toExpand = new NodeElement[] {
-      new NodeElement("com"),
-      new NodeElement("jetbrains"),
-      new NodeElement("org"),
-      new NodeElement("xunit")
-    };
-
-    final ActionCallback done = new ActionCallback();
-    final Ref<ProgressIndicator> indicatorRef = new Ref<ProgressIndicator>();
-    invokeLaterIfNeeded(new Runnable() {
-      public void run() {
-        getBuilder().batch(new Progressive() {
-          public void run(@NotNull ProgressIndicator indicator) {
-            indicatorRef.set(indicator);
-            expandNext(toExpand, 0, indicator, done);
-          }
-        }).notify(done);
-      }
-    });
-
-
-    waitBuilderToCome(new Condition() {
-      public boolean value(Object o) {
-        return done.isProcessed();
-      }
-    });
-
-    assertTrue(done.isDone());
-
-    assertTree("-/\n" +
-               " -com\n" +
-               "  +intellij\n" +
-               " -jetbrains\n" +
-               "  +fabrique\n" +
-               " -org\n" +
-               "  +eclipse\n" +
-               " -xunit\n" +
-               "  runner\n");
-
-    assertFalse(indicatorRef.get().isCanceled());
-  }
-
-
-  public void testCancelUpdateBatch() throws Exception {
-    buildStructure(myRoot);
-
-    myAlwaysShowPlus.add(new NodeElement("com"));
-    myAlwaysShowPlus.add(new NodeElement("jetbrains"));
-    myAlwaysShowPlus.add(new NodeElement("org"));
-    myAlwaysShowPlus.add(new NodeElement("xunit"));
-
-    final Ref<Boolean> cancelled = new Ref<Boolean>(false);
-    myElementUpdateHook = new ElementUpdateHook() {
-      public void onElementAction(String action, Object element) {
-        NodeElement stopElement = new NodeElement("com");
-
-        if (cancelled.get()) {
-          myCancelRequest = new AssertionError("Not supposed to update after element=" + stopElement);
-          return;
-        }
-
-        if (element.equals(stopElement) && action.equals("getChildren")) {
-          cancelled.set(true);
-          getBuilder().cancelUpdate();
-        }
-      }
-    };
-
-    final NodeElement[] toExpand = new NodeElement[] {
-      new NodeElement("com"),
-      new NodeElement("jetbrains"),
-      new NodeElement("org"),
-      new NodeElement("xunit")
-    };
-
-    final ActionCallback done = new ActionCallback();
-    final Ref<ProgressIndicator> indicatorRef = new Ref<ProgressIndicator>();
-
-    invokeLaterIfNeeded(new Runnable() {
-      public void run() {
-        getBuilder().batch(new Progressive() {
-          public void run(@NotNull ProgressIndicator indicator) {
-            indicatorRef.set(indicator);
-            expandNext(toExpand, 0, indicator, done);
-          }
-        }).notify(done);
-      }
-    });
-
-
-    waitBuilderToCome(new Condition() {
-      public boolean value(Object o) {
-        return done.isProcessed() || myCancelRequest != null;
-      }
-    });
-
-
-    assertNull(myCancelRequest);
-    assertTrue(done.isRejected());
-    assertTrue(indicatorRef.get().isCanceled());
-
-    assertFalse(getBuilder().getUi().isCancelProcessed());
-  }
 
   private void expandNext(final NodeElement[] elements, final int index, final ProgressIndicator indicator, final ActionCallback callback) {
     if (indicator.isCanceled()) {
@@ -912,6 +917,8 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
   }
 
   private void assertInterruption(Interruption cancelled) throws Exception {
+    Log.print("assert interruption started ");
+
     buildStructure(myRoot);
 
     expand(getPath("/"));
@@ -930,18 +937,25 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " -xunit\n" +
                "  runner\n");
 
+    Log.print("--------------- 1 ready=" + getBuilder().getUi().isReady());
     runAndInterrupt(new MyRunnable() {
       public void runSafe() throws Exception {
         updateFrom(new NodeElement("/"));
       }
     }, "update", new NodeElement("jetbrains"), cancelled);
 
+    Log.print("--------------- 1 PASSED ready=" + getBuilder().getUi().isReady());
+
+    Log.print("--------------- 2 ready=" + getBuilder().getUi().isReady());
     runAndInterrupt(new MyRunnable() {
       @Override
       public void runSafe() throws Exception {
         updateFrom(new NodeElement("/"));
       }
     }, "getChildren", new NodeElement("jetbrains"), cancelled);
+    Log.print("--------------- 2 PASSED ready=" + getBuilder().getUi().isReady());
+
+    Log.print("assert interruption finished ");
   }
 
 
@@ -1005,15 +1019,34 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
   private void runAndInterrupt(final Runnable action, final String interruptAction, final Object interruptElement, final Interruption interruption) throws Exception {
     myElementUpdate.clear();
 
-    final boolean[] wasInterrupted = new boolean[1];
+    Log.print("runAndInterrupt action=" + interruptAction + " element=" + interruptElement + " cancelRequest=" + myCancelRequest  + " interruption=" + interruption + " builder=" + getBuilder());
+
+    final Ref<Thread> thread = new Ref<Thread>();
+
+    final boolean[] wasInterrupted = new boolean[] {false};
     myElementUpdateHook = new ElementUpdateHook() {
       public void onElementAction(String action, Object element) {
+        if (thread.get() == null) {
+          thread.set(Thread.currentThread());
+        }
+
+
+        if (thread.get() != Thread.currentThread()) {
+          Log.print("FFFFFFFFFFUUUUUUUUUUUUUCCCCCCCCCCCCKKKKKKKKK!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        }
+
+        boolean toInterrupt = element.equals(interruptElement) && action.equals(interruptAction);
+        Log.print("-- onElementAction action=" + action + " element=" + element + " wasInterrupted=" + wasInterrupted[0] + " toInterrupt=" + toInterrupt + " cancelProcessed" + getBuilder().getUi().isCancelProcessed());
+
         if (wasInterrupted[0]) {
           if (myCancelRequest == null) {
+            String status = getBuilder().getUi().getStatus();
+            Log.print("!!!! status=" + status);
             myCancelRequest = new AssertionError("Not supposed to be update after interruption request: action=" + action + " element=" + element + " interruptAction=" + interruptAction + " interruptElement=" + interruptElement);
           }
         } else {
-          if (element.equals(interruptElement) && action.equals(interruptAction)) {
+          if (toInterrupt) {
+            Log.print("-- send interruption ready=" + getBuilder().getUi().isReady());
             wasInterrupted[0] = true;
             switch (interruption) {
               case throwProcessCancelled:
@@ -1028,6 +1061,8 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     };
 
     action.run();
+
+    myCancelRequest = null;
   }
 
   public void testQueryStructure() throws Exception {
@@ -1898,13 +1933,28 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
   public static TestSuite suite() {
     TestSuite suite = new TestSuite();
-    suite.addTestSuite(Passthrough.class);
-    suite.addTestSuite(SyncUpdate.class);
-    suite.addTestSuite(YieldingUpdate.class);
-    suite.addTestSuite(BgLoadingSyncUpdate.class);
+    //suite.addTestSuite(Passthrough.class);
+    //suite.addTestSuite(SyncUpdate.class);
+    //suite.addTestSuite(YieldingUpdate.class);
     suite.addTestSuite(VeryQuickBgLoadingSyncUpdate.class);
     suite.addTestSuite(QuickBgLoadingSyncUpdate.class);
+    suite.addTestSuite(BgLoadingSyncUpdate.class);
     return suite;
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    AbstractTreeUi ui = getBuilder().getUi();
+    if (ui != null) {
+      ui.getReady(this).doWhenProcessed(new Runnable() {
+        public void run() {
+          Log.flush();
+        }
+      });
+    } else {
+      Log.flush();
+    }
+    super.tearDown();
   }
 
   abstract class MyRunnable implements Runnable {

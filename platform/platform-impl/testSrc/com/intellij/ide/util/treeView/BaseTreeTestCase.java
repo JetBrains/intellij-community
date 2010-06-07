@@ -336,6 +336,13 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
       }
     });
 
+    new WaitFor(6000) {
+      @Override
+      protected boolean condition() {
+        return getBuilder() == null || getBuilder().getUi() == null;
+      }
+    };
+
     super.tearDown();
   }
 
