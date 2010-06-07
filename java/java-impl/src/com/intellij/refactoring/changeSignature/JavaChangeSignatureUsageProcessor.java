@@ -603,7 +603,9 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     PsiParameter[] parameters = list.getParameters();
 
     final JavaParameterInfo[] parameterInfos = changeInfo.getNewParameters();
-    PsiParameter[] newParms = new PsiParameter[parameterInfos.length];
+    PsiParameter[] newParms = new PsiParameter[parameterInfos.length -
+                                               (baseMethod != null ? baseMethod.getParameterList().getParametersCount() -
+                                                                     method.getParameterList().getParametersCount() : 0)];
     final String[] oldParameterNames = changeInfo.getOldParameterNames();
     final String[] oldParameterTypes = changeInfo.getOldParameterTypes();
     for (int i = 0; i < newParms.length; i++) {
@@ -634,7 +636,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
 
 
     resolveParameterVsFieldsConflicts(newParms, method, list, changeInfo.toRemoveParm());
-    fixJavadocsForChangedMethod(method, changeInfo);
+    fixJavadocsForChangedMethod(method, changeInfo, newParms.length);
     if (changeInfo.isExceptionSetOrOrderChanged()) {
       final PsiClassType[] newExceptions = getPrimaryChangedExceptionInfo(changeInfo);
       fixPrimaryThrowsLists(method, newExceptions);
@@ -707,13 +709,13 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
                                                             methodThrowsList.getTextRange().getEndOffset());
   }
 
-  private static void fixJavadocsForChangedMethod(PsiMethod method, JavaChangeInfo changeInfo) throws IncorrectOperationException {
+  private static void fixJavadocsForChangedMethod(PsiMethod method, JavaChangeInfo changeInfo, int newParamsLength) throws IncorrectOperationException {
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     final JavaParameterInfo[] newParms = changeInfo.getNewParameters();
-    LOG.assertTrue(parameters.length == newParms.length);
+    LOG.assertTrue(parameters.length <= newParamsLength);
     final Set<PsiParameter> newParameters = new HashSet<PsiParameter>();
     final String[] oldParameterNames = changeInfo.getOldParameterNames();
-    for (int i = 0; i < newParms.length; i++) {
+    for (int i = 0; i < newParamsLength; i++) {
       JavaParameterInfo newParm = newParms[i];
       if (newParm.getOldIndex() < 0 ||
           !newParm.getName().equals(oldParameterNames[newParm.getOldIndex()])) {

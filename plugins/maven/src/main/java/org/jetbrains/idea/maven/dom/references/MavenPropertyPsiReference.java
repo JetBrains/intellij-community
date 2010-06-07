@@ -181,7 +181,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
       return MavenDomUtil.findTag(projectDom, path.replace("project.", "project.parent."));
     }
 
-    result = new MyMavenParentProjectFileProcessor<PsiElement>() {
+    result = new MavenDomProjectProcessorUtils.DomParentProjectFileProcessor<PsiElement>(myProjectsManager) {
       protected PsiElement doProcessParent(VirtualFile parentFile) {
         MavenDomProjectModel parentProjectDom = MavenDomUtil.getMavenDomProjectModel(myProject, parentFile);
         return resolveModelProperty(parentProjectDom, path, recursionGuard);
@@ -355,30 +355,6 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     public Object process(@NotNull String property, XmlElementDescriptor descriptor) {
       myResult.add(createLookupElement(descriptor, property, MavenIcons.MAVEN_ICON));
       return null;
-    }
-  }
-
-  private abstract class MyMavenParentProjectFileProcessor<T> extends MavenParentProjectFileProcessor<T> {
-    protected VirtualFile findManagedFile(@NotNull MavenId id) {
-      MavenProject project = myProjectsManager.findProject(id);
-      return project == null ? null : project.getFile();
-    }
-
-    @Nullable
-    public T process(@NotNull MavenDomProjectModel projectDom) {
-      MavenDomParent parent = projectDom.getMavenParent();
-      MavenParentDesc parentDesc = null;
-      if (DomUtil.hasXml(parent)) {
-        String parentGroupId = parent.getGroupId().getStringValue();
-        String parentArtifactId = parent.getArtifactId().getStringValue();
-        String parentVersion = parent.getVersion().getStringValue();
-        String parentRelativePath = parent.getRelativePath().getStringValue();
-        if (StringUtil.isEmptyOrSpaces(parentRelativePath)) parentRelativePath = "../pom.xml";
-        MavenId parentId = new MavenId(parentGroupId, parentArtifactId, parentVersion);
-        parentDesc = new MavenParentDesc(parentId, parentRelativePath);
-      }
-
-      return process(myProjectsManager.getGeneralSettings(), MavenDomUtil.getVirtualFile(projectDom), parentDesc);
     }
   }
 }

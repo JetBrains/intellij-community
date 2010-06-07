@@ -152,7 +152,7 @@ public abstract class Language extends UserDataHolderBase {
   }
 
   public boolean isCaseSensitive() {
-    return false;
+    return myBaseLanguage != null ? myBaseLanguage.isCaseSensitive() : false;
   }
 
   public final boolean isKindOf(Language another) {

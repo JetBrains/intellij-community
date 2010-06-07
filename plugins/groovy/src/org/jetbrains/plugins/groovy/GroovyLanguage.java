@@ -28,5 +28,9 @@ public class GroovyLanguage extends Language {
   public GroovyLanguage() {
     super("Groovy");
   }
-  
+
+  @Override
+  public boolean isCaseSensitive() {
+    return true;
+  }
 }

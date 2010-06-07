@@ -99,6 +99,9 @@
         serviceInterface="git4idea.config.GitVcsSettings"
         serviceImplementation="git4idea.config.GitVcsSettings"/>
     <applicationService
+        serviceInterface="git4idea.config.GitVcsApplicationSettings"
+        serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>
+    <applicationService
         serviceInterface="git4idea.commands.GitSSHIdeaService"
         serviceImplementation="git4idea.commands.GitSSHIdeaService"/>
     <applicationService

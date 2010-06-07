@@ -15,12 +15,20 @@
  */
 package com.intellij.util.containers;
 
+import org.jetbrains.annotations.NotNull;
+
 public class DoubleArrayList implements Cloneable {
   private double[] myData;
   private int mySize;
 
   public DoubleArrayList(int initialCapacity) {
     myData = new double[initialCapacity];
+  }
+
+  public DoubleArrayList(@NotNull DoubleArrayList init) {
+    myData = new double[init.myData.length];
+    System.arraycopy(init.myData, 0, myData, 0, init.myData.length);
+    mySize = init.mySize;
   }
 
   public DoubleArrayList() {
@@ -40,7 +48,7 @@ public class DoubleArrayList implements Cloneable {
     int oldCapacity = myData.length;
     if (minCapacity > oldCapacity){
       double[] oldData = myData;
-      int newCapacity = (oldCapacity * 3) / 2 + 1;
+      int newCapacity = oldCapacity * 3 / 2 + 1;
       if (newCapacity < minCapacity){
         newCapacity = minCapacity;
       }
@@ -95,8 +103,8 @@ public class DoubleArrayList implements Cloneable {
   }
 
   public double[] toArray(double[] a) {
-    if (a.length < mySize){
-      a = (double[])java.lang.reflect.Array.newInstance(a.getClass().getComponentType(), mySize);
+    if (a.length < mySize) {
+      a = new double[mySize];
     }
 
     System.arraycopy(myData, 0, a, 0, mySize);
@@ -154,7 +162,7 @@ public class DoubleArrayList implements Cloneable {
   protected void removeRange(int fromIndex, int toIndex) {
     int numMoved = mySize - toIndex;
     System.arraycopy(myData, toIndex, myData, fromIndex, numMoved);
-    mySize -= (toIndex - fromIndex);
+    mySize -= toIndex - fromIndex;
   }
 
   private void checkRange(int index) {
