@@ -1637,6 +1637,8 @@ public class AbstractTreeUi {
   }
 
   private ActionCallback resetToReadyNow() {
+    if (isReleased()) return new ActionCallback.Rejected();
+
     assertIsDispatchThread();
 
     DefaultMutableTreeNode[] uc = myUpdatingChildren.toArray(new DefaultMutableTreeNode[myUpdatingChildren.size()]);
@@ -2147,7 +2149,7 @@ public class AbstractTreeUi {
     try {
       progressive.run(indicator);
     } catch (ProcessCanceledException e) {
-      resetToReadyNow().doWhenDone(new Runnable() {
+      resetToReadyNow().doWhenProcessed(new Runnable() {
         public void run() {
           callback.setRejected();
         }
