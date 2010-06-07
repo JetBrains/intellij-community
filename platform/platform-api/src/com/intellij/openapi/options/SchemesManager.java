@@ -52,7 +52,7 @@ public interface SchemesManager <T extends Scheme, E extends ExternalizableSchem
       return false;
     }
 
-    public void addNewScheme(final Scheme scheme, final boolean replaceExisting) {
+    public void addNewScheme(@NotNull final Scheme scheme, final boolean replaceExisting) {
 
     }
 
@@ -111,7 +111,7 @@ public interface SchemesManager <T extends Scheme, E extends ExternalizableSchem
 
   boolean isShared(final Scheme scheme);
 
-  void addNewScheme(final T scheme, final boolean replaceExisting);
+  void addNewScheme(@NotNull T scheme, final boolean replaceExisting);
 
   void clearAllSchemes();
 

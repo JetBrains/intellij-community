@@ -21,14 +21,12 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.WriteExternalException;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-
-import org.jetbrains.annotations.NotNull;
 
 public class SchemesManagerFactoryImpl extends SchemesManagerFactory implements SettingsSavingComponent {
 
@@ -62,7 +60,7 @@ public class SchemesManagerFactoryImpl extends SchemesManagerFactory implements 
           return Collections.emptyList();
         }
 
-        public void exportScheme(final E scheme, final String name, final String description) throws WriteExternalException {
+        public void exportScheme(final E scheme, final String name, final String description) {
         }
 
         public boolean isImportAvailable() {
@@ -73,7 +71,7 @@ public class SchemesManagerFactoryImpl extends SchemesManagerFactory implements 
           return false;
         }
 
-        public void save() throws WriteExternalException {
+        public void save() {
         }
 
         protected void onSchemeDeleted(final Scheme toDelete) {
