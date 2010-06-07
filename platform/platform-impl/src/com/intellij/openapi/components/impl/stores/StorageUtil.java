@@ -33,7 +33,6 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -170,6 +169,7 @@ public class StorageUtil {
     return LocalFileSystem.getInstance().findFileByIoFile(ioFile);
   }
 
+  @Deprecated
   public static byte[] printDocument(final Document document) throws StateStorage.StateStorageException {
     try {
       return printDocumentToString(document).getBytes(CharsetToolkit.UTF8);
@@ -186,8 +186,6 @@ public class StorageUtil {
     if (!file.exists()) return Pair.create(null, SystemProperties.getLineSeparator());
 
     String fileText = new String(file.loadBytes(), CharsetToolkit.UTF8);
-    if (!Registry.is("storage.preserve.line.separators")) return Pair.create(fileText, SystemProperties.getLineSeparator());
-
     final int ndx = fileText.indexOf('\n');
     return Pair.create(fileText, ndx == -1
                                  ? SystemProperties.getLineSeparator()
