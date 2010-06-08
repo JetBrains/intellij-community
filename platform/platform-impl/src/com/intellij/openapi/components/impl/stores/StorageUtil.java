@@ -232,6 +232,9 @@ public class StorageUtil {
             return false; // do not proceed environment variables from run configurations
           }
 
+          if ("MESSAGE".equals(parentName) && "value".equals(attribute.getName())) return false;
+          if ("option".equals(parentName) && "LAST_COMMIT_MESSAGE".equals(parent.getAttributeValue("name"))) return false;
+
           // do not proceed macros in searchConfigurations (structural search)
           if ("replaceConfiguration".equals(parentName) || "searchConfiguration".equals(parentName)) return false;
         }
