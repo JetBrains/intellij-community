@@ -23,13 +23,16 @@ import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.PairConsumer;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.HgAddCommand;
+import org.zmlx.hg4idea.command.HgCommandException;
 import org.zmlx.hg4idea.command.HgCommitCommand;
 import org.zmlx.hg4idea.command.HgRemoveCommand;
-import org.zmlx.hg4idea.command.HgCommandException;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -44,7 +47,8 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     this.project = project;
   }
 
-  public RefreshableOnComponent createAdditionalOptionsPanel(CheckinProjectPanel panel) {
+  public RefreshableOnComponent createAdditionalOptionsPanel(CheckinProjectPanel panel,
+                                                             PairConsumer<Object, Object> additionalDataConsumer) {
     return null;
   }
 
@@ -76,7 +80,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
   }
 
   public List<VcsException> commit(List<Change> changes,
-    String preparedComment, Object parameters) {
+    String preparedComment, @NotNull NullableFunction<Object, Object> parametersHolder) {
     return commit(changes, preparedComment);
   }
 

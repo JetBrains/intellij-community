@@ -37,7 +37,10 @@ import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
@@ -62,7 +65,8 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     mySvnVcs = svnVcs;
   }
 
-  public RefreshableOnComponent createAdditionalOptionsPanel(CheckinProjectPanel panel) {
+  public RefreshableOnComponent createAdditionalOptionsPanel(CheckinProjectPanel panel,
+                                                             PairConsumer<Object, Object> additionalDataConsumer) {
     return new KeepLocksComponent(panel);
   }
 
@@ -293,7 +297,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     return commitInt(collectPaths(changes), preparedComment, true, false);
   }
 
-  public List<VcsException> commit(List<Change> changes, String preparedComment, Object parameters) {
+  public List<VcsException> commit(List<Change> changes, String preparedComment, @NotNull NullableFunction<Object, Object> parametersHolder) {
     return commit(changes, preparedComment);
   }
 

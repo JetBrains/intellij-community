@@ -30,6 +30,8 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.PairConsumer;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.commands.*;
@@ -110,9 +112,12 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
   /**
    * {@inheritDoc}
+   * @param panel
+   * @param additionalDataConsumer
    */
   @Nullable
-  public RefreshableOnComponent createAdditionalOptionsPanel(CheckinProjectPanel panel) {
+  public RefreshableOnComponent createAdditionalOptionsPanel(CheckinProjectPanel panel,
+                                                             PairConsumer<Object, Object> additionalDataConsumer) {
     return new GitCheckinOptions();
   }
 
@@ -243,7 +248,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     return exceptions;
   }
 
-  public List<VcsException> commit(List<Change> changes, String preparedComment, Object parameters) {
+  public List<VcsException> commit(List<Change> changes, String preparedComment, @NotNull NullableFunction<Object, Object> parametersHolder) {
     return commit(changes, preparedComment);
   }
 

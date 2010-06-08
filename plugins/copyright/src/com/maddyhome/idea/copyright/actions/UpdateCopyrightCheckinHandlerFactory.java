@@ -29,6 +29,7 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,7 +68,7 @@ public class UpdateCopyrightCheckinHandlerFactory extends CheckinHandlerFactory 
       }
 
       @Override
-      public ReturnResult beforeCheckin(@Nullable CommitExecutor executor) {
+      public ReturnResult beforeCheckin(@Nullable CommitExecutor executor, PairConsumer<Object, Object> additionalDataConsumer) {
         if (UpdateCopyrightCheckinHandlerState.getInstance(panel.getProject()).UPDATE_COPYRIGHT) {
           new UpdateCopyrightProcessor(panel.getProject(), null, getPsiFiles()).run();
           FileDocumentManager.getInstance().saveAllDocuments();
