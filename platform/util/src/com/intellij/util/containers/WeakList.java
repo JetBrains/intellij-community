@@ -46,6 +46,22 @@ public class WeakList<T> extends AbstractList<T> {
     return true;
   }
 
+  @Override
+  public boolean contains(Object o) {
+    synchronized (myArray) {
+      return super.contains(o);
+    }
+  }
+
+  public boolean addIfAbsent(T element) {
+    synchronized (myArray) {
+      tryReduceCapacity(-1);
+      if (contains(element)) return false;
+      myArray.add(element);
+    }
+    return true;
+  }
+
   public void add(int index, T element) {
     synchronized (myArray) {
       tryReduceCapacity(-1);

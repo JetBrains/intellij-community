@@ -19,14 +19,15 @@
  */
 package com.intellij.util.containers;
 
-import java.util.ArrayList;
-import java.util.EmptyStackException;
-import java.util.List;
-import java.util.RandomAccess;
+import java.util.*;
 
 public class Stack<T> extends ArrayList<T> {
   public Stack(int initialCapacity) {
     super(initialCapacity);
+  }
+
+  public Stack(Collection<T> init) {
+    super(init);
   }
 
   public Stack() {

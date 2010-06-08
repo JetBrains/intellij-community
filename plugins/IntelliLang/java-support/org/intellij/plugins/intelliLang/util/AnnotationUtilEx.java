@@ -93,11 +93,11 @@ public class AnnotationUtilEx {
         final PsiArrayInitializerMemberValue value = (PsiArrayInitializerMemberValue)parent;
         final PsiElement pair = value.getParent();
         if (pair instanceof PsiNameValuePair) {
-          return getAnnotationMethod((PsiNameValuePair)pair, element);
+          return getAnnotationMethod((PsiNameValuePair)pair);
         }
       }
       else if (parent instanceof PsiNameValuePair) {
-        return getAnnotationMethod((PsiNameValuePair)parent, element);
+        return getAnnotationMethod((PsiNameValuePair)parent);
       }
       else {
         return PsiUtilEx.getParameterForArgument(element);
@@ -118,15 +118,70 @@ public class AnnotationUtilEx {
     return null;
   }
 
+  public interface AnnotatedElementVisitor {
+    boolean visitMethodParameter(PsiExpression expression, PsiCallExpression psiCallExpression);
+    boolean visitMethodReturnStatement(PsiReturnStatement parent, PsiMethod method);
+    boolean visitVariable(PsiVariable variable);
+    boolean visitAnnotationParameter(PsiNameValuePair nameValuePair, PsiAnnotation psiAnnotation);
+    boolean visitReference(PsiReferenceExpression expression);
+  }
+
+  public static void visitAnnotatedElements(@Nullable PsiElement element, AnnotatedElementVisitor visitor) {
+    if (element == null) return;
+    for (PsiElement cur = ContextComputationProcessor.getTopLevelInjectionTarget(element); cur != null; cur = cur.getParent()) {
+      if (!visitAnnotatedElementInner(cur, visitor)) return;
+    }
+  }
+
+  private static boolean visitAnnotatedElementInner(PsiElement element, AnnotatedElementVisitor visitor) {
+    final PsiElement parent = element.getParent();
+
+    if (element instanceof PsiReferenceExpression) {
+      if (!visitor.visitReference((PsiReferenceExpression)element)) return false;
+    }
+    else if (element instanceof PsiNameValuePair && parent != null && parent.getParent() instanceof PsiAnnotation) {
+      return visitor.visitAnnotationParameter((PsiNameValuePair)element, (PsiAnnotation)parent.getParent());
+    }
+
+    if (parent instanceof PsiAssignmentExpression) {
+      final PsiAssignmentExpression p = (PsiAssignmentExpression)parent;
+      if (p.getRExpression() == element || p.getOperationSign().getTokenType() == JavaTokenType.PLUSEQ) {
+        final PsiExpression left = p.getLExpression();
+        if (left instanceof PsiReferenceExpression) {
+          if (!visitor.visitReference((PsiReferenceExpression)left)) return false;
+        }
+      }
+    }
+    else if (parent instanceof PsiReturnStatement) {
+      final PsiMethod m = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
+      if (m != null) {
+        if (!visitor.visitMethodReturnStatement((PsiReturnStatement)parent, m)) return false;
+      }
+    }
+    else if (parent instanceof PsiVariable) {
+      return visitor.visitVariable((PsiVariable)parent);
+    }
+    else if (parent instanceof PsiModifierListOwner) {
+      return false; // PsiClass/PsiClassInitializer/PsiCodeBlock
+    }
+    else if (parent instanceof PsiArrayInitializerMemberValue || parent instanceof PsiNameValuePair) {
+      return true;
+    }
+    else if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiCallExpression) {
+      return visitor.visitMethodParameter((PsiExpression)element, (PsiCallExpression)parent.getParent());
+    }
+    return true;
+  }
+
   @Nullable
-  private static PsiModifierListOwner getAnnotationMethod(PsiNameValuePair pair, PsiElement element) {
+  private static PsiModifierListOwner getAnnotationMethod(PsiNameValuePair pair) {
     final PsiAnnotation annotation = PsiTreeUtil.getParentOfType(pair.getParent(), PsiAnnotation.class);
     assert annotation != null;
 
     final String fqn = annotation.getQualifiedName();
     if (fqn == null) return null;
 
-    final PsiClass psiClass = JavaPsiFacade.getInstance(element.getProject()).findClass(fqn, element.getResolveScope());
+    final PsiClass psiClass = JavaPsiFacade.getInstance(pair.getProject()).findClass(fqn, pair.getResolveScope());
     if (psiClass != null && psiClass.isAnnotationType()) {
       final String name = pair.getName();
       final PsiMethod[] methods = psiClass.findMethodsByName(name != null ? name : "value", false);

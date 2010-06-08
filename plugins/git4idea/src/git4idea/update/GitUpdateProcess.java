@@ -77,7 +77,7 @@ public class GitUpdateProcess extends GitBaseRebaseProcess {
     GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.PULL);
     // ignore merge failure for the pull
     h.ignoreErrorCode(1);
-    switch (mySettings.UPDATE_TYPE) {
+    switch (mySettings.getUpdateType()) {
       case REBASE:
         h.addParameters("--rebase");
         break;
@@ -88,7 +88,7 @@ public class GitUpdateProcess extends GitBaseRebaseProcess {
         // use default for the branch
         break;
       default:
-        assert false : "Unknown update type: " + mySettings.UPDATE_TYPE;
+        assert false : "Unknown update type: " + mySettings.getUpdateType();
     }
     h.addParameters("--no-stat");
     h.addParameters("-v");

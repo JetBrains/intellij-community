@@ -110,7 +110,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     connection.subscribe(StateStorage.STORAGE_TOPIC, new StateStorage.Listener() {
       public void storageFileChanged(final VirtualFileEvent event, @NotNull final StateStorage storage) {
         VirtualFile file = event.getFile();
-        LOG.info("[RELOAD] Storage file changed: " + file.getPath());
+        LOG.debug("[RELOAD] Storage file changed: " + file.getPath());
         if (!file.isDirectory() && !(event.getRequestor() instanceof StateStorage.SaveSession)) {
           saveChangedProjectFile(file, null, storage);
         }
@@ -536,7 +536,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   private void askToReloadProjectIfConfigFilesChangedExternally() {
-    LOG.info("[RELOAD] myReloadBlockCount = " + myReloadBlockCount.get());
+    LOG.debug("[RELOAD] myReloadBlockCount = " + myReloadBlockCount.get());
     if (myReloadBlockCount.get() == 0) {
       Set<Project> projects;
 
@@ -640,7 +640,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         try {
-          LOG.info("[RELOAD] Reloading project/components...");
+          LOG.debug("[RELOAD] Reloading project/components...");
           reloadOk[0] = ((ProjectEx)project).getStateStore().reload(causes);
         }
         catch (StateStorage.StateStorageException e) {
@@ -727,7 +727,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   private void registerProjectToReload(final Project project, final VirtualFile cause, final StateStorage storage) {
-    LOG.info("[RELOAD] Registering project to reload.");
+    LOG.debug("[RELOAD] Registering project to reload.");
 
     if (project != null) {
       synchronized (myChangedProjectFiles) {
@@ -747,7 +747,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     myChangedFilesAlarm.cancelAllRequests();
     myChangedFilesAlarm.addRequest(new Runnable() {
       public void run() {
-        LOG.info("[RELOAD] Scheduling reload application & project, myReloadBlockCount = " + myReloadBlockCount);
+        LOG.debug("[RELOAD] Scheduling reload application & project, myReloadBlockCount = " + myReloadBlockCount);
         if (myReloadBlockCount.get() == 0) {
           scheduleReloadApplicationAndProject();
         }
@@ -808,7 +808,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
     application.invokeLater(new Runnable() {
       public void run() {
-        LOG.info("Reloading project.");
+        LOG.debug("Reloading project.");
         ProjectImpl projectImpl = (ProjectImpl)project[0];
         if (projectImpl.isDisposed()) return;
         IProjectStore projectStore = projectImpl.getStateStore();

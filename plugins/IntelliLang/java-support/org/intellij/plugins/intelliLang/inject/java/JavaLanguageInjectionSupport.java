@@ -184,7 +184,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
         parent instanceof PsiNameValuePair) {
       return doInjectInJavaMethod(project, findPsiMethod(parent), -1, languageId);
     }
-    else if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiMethodCallExpression) {
+    else if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiCallExpression) {
       return doInjectInJavaMethod(project, findPsiMethod(parent), findParameterIndex(target, (PsiExpressionList)parent), languageId);
     }
     else if (parent instanceof PsiAssignmentExpression) {
@@ -281,8 +281,8 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
       }
     }
     final PsiMethod first;
-    if (parent.getParent() instanceof PsiMethodCallExpression) {
-      first = ((PsiMethodCallExpression)parent.getParent()).resolveMethod();
+    if (parent.getParent() instanceof PsiCallExpression) {
+      first = ((PsiCallExpression)parent.getParent()).resolveMethod();
     }
     else {
       first = PsiTreeUtil.getParentOfType(parent, PsiMethod.class, false);
