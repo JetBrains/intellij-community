@@ -16,6 +16,9 @@
 package com.intellij.ide.util.treeView;
 
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.util.*;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
@@ -233,12 +236,18 @@ public class TreeState implements JDOMExternalizable {
   private void applyExpanded(final TreeFacade tree, final Object root) {
     tree.getIntialized().doWhenDone(new Runnable() {
       public void run() {
-        _applyExpanded(tree, root);
+        tree.batch(new Progressive() {
+          public void run(@NotNull ProgressIndicator indicator) {
+            _applyExpanded(tree, root, indicator);
+          }
+        });
       }
     });
   }
 
-  private void _applyExpanded(TreeFacade tree, Object root) {
+  private void _applyExpanded(TreeFacade tree, Object root, ProgressIndicator indicator) {
+    indicator.checkCanceled();
+
     if (!(root instanceof DefaultMutableTreeNode)) {
       return;
     }
@@ -246,7 +255,7 @@ public class TreeState implements JDOMExternalizable {
     final TreeNode[] nodePath = nodeRoot.getPath();
     if (nodePath.length > 0) {
       for (final List<PathElement> path : myExpandedPaths) {
-        applyTo(nodePath.length - 1,path, root, tree);
+        applyTo(nodePath.length - 1,path, root, tree, indicator);
       }
     }
   }
@@ -309,7 +318,7 @@ public class TreeState implements JDOMExternalizable {
 
   }
 
-  private static boolean applyTo(final int positionInPath, final List<PathElement> path, final Object root, final TreeFacade tree) {
+  private static boolean applyTo(final int positionInPath, final List<PathElement> path, final Object root, final TreeFacade tree, final ProgressIndicator indicator) {
     if (!(root instanceof DefaultMutableTreeNode)) return false;
 
     final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)root;
@@ -326,13 +335,15 @@ public class TreeState implements JDOMExternalizable {
 
     tree.expand(treeNode).doWhenDone(new Runnable() {
       public void run() {
+        indicator.checkCanceled();
+
         if (positionInPath == path.size() - 1) {
           return;
         }
 
         for (int j = 0; j < treeNode.getChildCount(); j++) {
           final TreeNode child = treeNode.getChildAt(j);
-          final boolean resultFromChild = applyTo(positionInPath + 1, path, child, tree);
+          final boolean resultFromChild = applyTo(positionInPath + 1, path, child, tree, indicator);
           if (resultFromChild) {
             break;
           }
@@ -369,6 +380,8 @@ public class TreeState implements JDOMExternalizable {
   interface TreeFacade {
     ActionCallback getIntialized();
     ActionCallback expand(DefaultMutableTreeNode node);
+
+    void batch(Progressive progressive);
   }
 
   private static TreeFacade getFacade(JTree tree) {
@@ -392,6 +405,10 @@ public class TreeState implements JDOMExternalizable {
     public ActionCallback getIntialized() {
       return new ActionCallback.Done();
     }
+
+    public void batch(Progressive progressive) {
+      progressive.run(new EmptyProgressIndicator());
+    }
   }
 
   static class BuilderFacade implements TreeFacade {
@@ -403,7 +420,11 @@ public class TreeState implements JDOMExternalizable {
     }
 
     public ActionCallback getIntialized() {
-      return myBuilder.getIntialized();
+      return myBuilder.getReady(this);
+    }
+
+    public void batch(Progressive progressive) {
+      myBuilder.batch(progressive);
     }
 
     public ActionCallback expand(DefaultMutableTreeNode node) {
@@ -418,7 +439,7 @@ public class TreeState implements JDOMExternalizable {
 
       myBuilder.expand(element, new Runnable() {
         public void run() {
-          result.setDone();
+          myBuilder.getUi().getReady(this).notify(result);
         }
       });
 
