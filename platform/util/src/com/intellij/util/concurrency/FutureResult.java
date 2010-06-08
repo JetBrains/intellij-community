@@ -1,16 +1,14 @@
 package com.intellij.util.concurrency;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.concurrent.Semaphore;
 
 public class FutureResult<T> implements Future<T> {
   private final Semaphore mySema = new Semaphore(0);
-  private volatile Ref<T> myValue;
+  private volatile Ref<Pair<Object, Boolean>> myValue;
 
   public boolean cancel(boolean mayInterruptIfRunning) {
     return false;
@@ -27,14 +25,21 @@ public class FutureResult<T> implements Future<T> {
   public void set(T result) {
     assert myValue == null;
     
-    myValue = new Ref<T>(result);
+    myValue = Ref.create(Pair.create((Object)result, true));
+    mySema.release();
+  }
+
+  public void setException(Throwable e) {
+    assert myValue == null;
+
+    myValue = Ref.create(Pair.create((Object)e, false));
     mySema.release();
   }
 
   public T get() throws InterruptedException, ExecutionException {
     try {
       mySema.acquire();
-      return myValue.get();
+      return doGet();
     }
     finally {
       mySema.release();
@@ -44,10 +49,16 @@ public class FutureResult<T> implements Future<T> {
   public T get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
     try {
       if (!mySema.tryAcquire(timeout, unit)) throw new TimeoutException();
-      return myValue.get();
+      return doGet();
     }
     finally {
       mySema.release();
     }
+  }
+
+  private T doGet() throws ExecutionException {
+    Pair<Object, Boolean> pair = myValue.get();
+    if (!pair.second) throw new ExecutionException((Throwable)pair.first);
+    return (T)pair.first;
   }
 }

@@ -319,14 +319,11 @@ public class GitCheckoutDialog extends DialogWrapper {
    * Setup {@link #myIncludeTagsCheckBox}
    */
   private void setupIncludeTags() {
-    Boolean tagsIncluded = mySettings.CHECKOUT_INCLUDE_TAGS;
-    if (tagsIncluded == null) {
-      tagsIncluded = Boolean.FALSE;
-    }
-    myIncludeTagsCheckBox.setSelected(tagsIncluded.booleanValue());
+    boolean tagsIncluded = mySettings.isCheckoutIncludesTags();
+    myIncludeTagsCheckBox.setSelected(tagsIncluded);
     myIncludeTagsCheckBox.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        mySettings.CHECKOUT_INCLUDE_TAGS = myIncludeTagsCheckBox.isSelected();
+        mySettings.setCheckoutIncludesTags(myIncludeTagsCheckBox.isSelected());
       }
     });
   }
