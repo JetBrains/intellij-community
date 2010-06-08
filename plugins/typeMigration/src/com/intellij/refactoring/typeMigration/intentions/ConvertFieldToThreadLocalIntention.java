@@ -26,7 +26,6 @@ import com.intellij.refactoring.typeMigration.rules.ThreadLocalConversionRule;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -95,7 +94,7 @@ public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionA
       rules.setMigrationRootType(toType);
       rules.setBoundScope(GlobalSearchScope.fileScope(file));
       final TypeMigrationLabeler labeler = new TypeMigrationLabeler(rules);
-      labeler.getMigratedUsages(psiField, false);
+      labeler.getMigratedUsages(false, psiField);
       for (PsiReference reference : refs) {
         PsiElement psiElement = reference.getElement();
         if (psiElement instanceof PsiExpression) {
