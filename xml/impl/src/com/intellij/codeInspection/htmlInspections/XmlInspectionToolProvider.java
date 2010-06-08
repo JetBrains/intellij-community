@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.htmlInspections;
 
+import com.intellij.codeInsight.daemon.impl.analysis.XmlUnusedNamespaceInspection;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.xml.util.*;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlUnboundNsPrefixInspection;
@@ -38,6 +39,7 @@ public class XmlInspectionToolProvider implements InspectionToolProvider {
       HtmlUnknownTagInspection.class,
       HtmlUnknownAttributeInspection.class,
       XmlUnboundNsPrefixInspection.class,
+      XmlUnusedNamespaceInspection.class,
       XmlHighlightVisitorBasedInspection.class
     };
   }
