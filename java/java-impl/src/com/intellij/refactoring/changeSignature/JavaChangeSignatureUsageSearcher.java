@@ -103,7 +103,7 @@ class JavaChangeSignatureUsageSearcher {
     if (isOriginal) {
       deletedOrRenamedParameters.addAll(Arrays.asList(parameters));
       for (ParameterInfo parameterInfo : myChangeInfo.getNewParameters()) {
-        if (parameterInfo.getOldIndex() >= 0) {
+        if (parameterInfo.getOldIndex() >= 0 && parameterInfo.getOldIndex() < parameters.length) {
           final PsiParameter parameter = parameters[parameterInfo.getOldIndex()];
           if (parameterInfo.getName().equals(parameter.getName())) {
             deletedOrRenamedParameters.remove(parameter);
@@ -115,7 +115,7 @@ class JavaChangeSignatureUsageSearcher {
     for (ParameterInfo parameterInfo : myChangeInfo.getNewParameters()) {
       final int oldParameterIndex = parameterInfo.getOldIndex();
       final String newName = parameterInfo.getName();
-      if (oldParameterIndex >= 0) {
+      if (oldParameterIndex >= 0 && oldParameterIndex < parameters.length) {
         if (isOriginal) {   //Name changes take place only in primary method
           final PsiParameter parameter = parameters[oldParameterIndex];
           if (!newName.equals(parameter.getName())) {

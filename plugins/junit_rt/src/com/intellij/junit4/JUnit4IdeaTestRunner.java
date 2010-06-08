@@ -116,21 +116,23 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
     field.setAccessible(true);
     final Filter filter = (Filter)field.get(request);
     final String filterDescription = filter.describe();
-    try {
-      final Description failedTestsDescription = Description.createSuiteDescription(filterDescription, null);
-      for (Iterator iterator = description.getChildren().iterator(); iterator.hasNext();) {
-        final Description childDescription = (Description)iterator.next();
-        if (filter.shouldRun(childDescription)) {
-          failedTestsDescription.addChild(childDescription);
+    if (filterDescription != null && (filterDescription.startsWith("Failed tests") || filterDescription.startsWith("Ignored"))) {
+      try {
+        final Description failedTestsDescription = Description.createSuiteDescription(filterDescription, null);
+        for (Iterator iterator = description.getChildren().iterator(); iterator.hasNext();) {
+          final Description childDescription = (Description)iterator.next();
+          if (filter.shouldRun(childDescription)) {
+            failedTestsDescription.addChild(childDescription);
+          }
+        }
+        description = failedTestsDescription;
+        if (!failedTestsDescription.isTest() && failedTestsDescription.testCount() == 1 && filterDescription.startsWith("Method")) {
+          description = (Description)failedTestsDescription.getChildren().get(0);
         }
       }
-      description = failedTestsDescription;
-      if (!failedTestsDescription.isTest() && failedTestsDescription.testCount() == 1 && filterDescription.startsWith("Method")) {
-        description = (Description)failedTestsDescription.getChildren().get(0);
+      catch (NoSuchMethodError e) {
+        //junit 4.0 doesn't have method createSuite(String, Annotation...) : skip it
       }
-    }
-    catch (NoSuchMethodError e) {
-      //junit 4.0 doesn't have method createSuite(String, Annotation...) : skip it
     }
     return description;
   }

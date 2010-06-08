@@ -1,5 +1,6 @@
 package com.intellij.ide.util.treeView;
 
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
@@ -335,6 +336,13 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
         }
       }
     });
+
+    new WaitFor(6000) {
+      @Override
+      protected boolean condition() {
+        return getBuilder() == null || getBuilder().getUi() == null;
+      }
+    };
 
     super.tearDown();
   }

@@ -134,7 +134,16 @@ public class JUnit4TestRunnerUtil {
                     return super.getRunner();
                   }
                 };
-                return classRequest.filterWith(Description.createTestDescription(clazz, methodName));
+                final Filter ignoredTestFilter = Filter.matchMethodDescription(Description.createTestDescription(clazz, methodName));
+                return classRequest.filterWith(new Filter() {
+                  public boolean shouldRun(Description description) {
+                    return ignoredTestFilter.shouldRun(description);
+                  }
+
+                  public String describe() {
+                    return "Ignored " + methodName;
+                  }
+                });
               }
             }
             catch (Exception ignored) {

@@ -44,9 +44,7 @@
           <root url="jar://$MODULE_DIR$/lib/maven-embedder-1.0-SNAPSHOT.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES>
-          <root url="file://$MODULE_DIR$/../../../../../maven/idea-embedder/src/main/java" />
-        </SOURCES>
+        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library">
@@ -73,45 +71,7 @@
           <root url="jar://$MODULE_DIR$/lib/maven-2.2.1-uber.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES>
-          <root url="file://$MODULE_DIR$/../../../../../maven/maven-2/core/maven-core/src/test/java" />
-          <root url="file://$MODULE_DIR$/../../../../../maven/maven-2/core/maven-model/src/test/java" />
-          <root url="file://$MODULE_DIR$/../../../../../maven/maven-2/core/maven-model/target/generated-sources/modello" />
-          <root url="file://$MODULE_DIR$/../../../../../maven/maven-2/core/maven-core/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../../maven/maven-2/core/maven-core-it-runner/src/test/java" />
-          <root url="file://$MODULE_DIR$/../../../../../maven/maven-2/core/maven-plugin-descriptor/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../../maven/maven-2/core/maven-profile/target/generated-sources/modello" />
-          <root url="file://$MODULE_DIR$/../../../../../maven/maven-2/core/maven-artifact-test/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../../maven/maven-2/core/maven-script/maven-script-ant/src/test/java" />
-          <root url="file://$MODULE_DIR$/../../../../../maven/maven-2/core/maven-toolchain/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../../maven/maven-2/core/maven-script/maven-script-ant/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../../maven/maven-2/core/maven-project/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../../maven/maven-2/core/maven-settings/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../../maven/maven-2/core/maven-compat/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../../maven/maven-2/core/maven-monitor/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../../maven/maven-2/core/maven-plugin-registry/target/generated-sources/modello" />
-          <root url="file://$MODULE_DIR$/../../../../../maven/maven-2/core/maven-toolchain/target/generated-sources/modello" />
-          <root url="file://$MODULE_DIR$/../../../../../maven/maven-2/core/maven-plugin-descriptor/target/generated-sources/modello" />
-          <root url="file://$MODULE_DIR$/../../../../../maven/maven-2/core/maven-plugin-registry/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../../maven/maven-2/core/maven-artifact-manager/src/test/java" />
-          <root url="file://$MODULE_DIR$/../../../../../maven/maven-2/core/maven-reporting/maven-reporting-api/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../../maven/maven-2/core/maven-settings/target/generated-sources/modello" />
-          <root url="file://$MODULE_DIR$/../../../../../maven/maven-2/core/maven-plugin-descriptor/src/test/java" />
-          <root url="file://$MODULE_DIR$/../../../../../maven/maven-2/core/maven-plugin-parameter-documenter/target/generated-sources/modello" />
-          <root url="file://$MODULE_DIR$/../../../../../maven/maven-2/core/maven-artifact/src/test/java" />
-          <root url="file://$MODULE_DIR$/../../../../../maven/maven-2/core/maven-plugin-api/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../../maven/maven-2/core/apache-maven/src/test/java" />
-          <root url="file://$MODULE_DIR$/../../../../../maven/maven-2/core/maven-project/src/test/java" />
-          <root url="file://$MODULE_DIR$/../../../../../maven/maven-2/core/maven-error-diagnostics/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../../maven/maven-2/core/maven-script/maven-script-beanshell/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../../maven/maven-2/core/maven-artifact-manager/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../../maven/maven-2/core/maven-toolchain/src/test/java" />
-          <root url="file://$MODULE_DIR$/../../../../../maven/maven-2/core/maven-profile/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../../maven/maven-2/core/maven-repository-metadata/target/generated-sources/modello" />
-          <root url="file://$MODULE_DIR$/../../../../../maven/maven-2/core/maven-artifact/src/main/java" />
-          <root url="file://$MODULE_DIR$/../../../../../maven/maven-2/core/maven-plugin-parameter-documenter/src/test/java" />
-          <root url="file://$MODULE_DIR$/../../../../../maven/maven-2/core/maven-settings/src/test/java" />
-        </SOURCES>
+        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library">
@@ -138,9 +98,7 @@
           <root url="jar://$MODULE_DIR$/lib/nexus-indexer-1.2.3.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES>
-          <root url="file://$MODULE_DIR$/../../../../../maven/nexus-1.2.3/src/main/java" />
-        </SOURCES>
+        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library">

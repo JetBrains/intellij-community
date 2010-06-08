@@ -47,18 +47,18 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
 
   private volatile boolean myIndeterminate;
 
-  private final Stack<String> myTextStack = new Stack<String>(2);
-  private final DoubleArrayList myFractionStack = new DoubleArrayList(2);
-  private final Stack<String> myText2Stack = new Stack<String>(2);
-  private volatile int myNonCancelableCount = 0;
+  private Stack<String> myTextStack;
+  private DoubleArrayList myFractionStack; 
+  private Stack<String> myText2Stack;
+  private volatile int myNonCancelableCount;
 
-  private ProgressIndicator myModalityProgress = null;
+  private ProgressIndicator myModalityProgress;
   private ModalityState myModalityState = ModalityState.NON_MODAL;
-  private boolean myModalityEntered = false;
+  private volatile boolean myModalityEntered;
 
-  private final CopyOnWriteArrayList<ProgressIndicatorEx> myStateDelegates = ContainerUtil.createEmptyCOWList();
-  private final WeakList<TaskInfo> myFinished = new WeakList<TaskInfo>();
-  private boolean myWasStarted;
+  private volatile CopyOnWriteArrayList<ProgressIndicatorEx> myStateDelegates;
+  private volatile WeakList<TaskInfo> myFinished;
+  private volatile boolean myWasStarted;
 
   private TaskInfo myOwnerTask;
   private static final IndicatorAction CHECK_CANCELED_ACTION = new IndicatorAction() {
@@ -173,11 +173,16 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
   }
 
   public void finish(@NotNull final TaskInfo task) {
-    synchronized (myFinished) {
-      if (myFinished.contains(task)) return;
-
-      myFinished.add(task);
+    WeakList<TaskInfo> finished = myFinished;
+    if (finished == null) {
+      synchronized (this) {
+        finished = myFinished;
+        if (finished == null) {
+          myFinished = finished = new WeakList<TaskInfo>();
+        }
+      }
     }
+    if (!finished.addIfAbsent(task)) return;
 
     delegateRunningChange(new IndicatorAction() {
       public void execute(final ProgressIndicatorEx each) {
@@ -187,9 +192,8 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
   }
 
   public boolean isFinished(@NotNull final TaskInfo task) {
-    synchronized (myFinished) {
-      return myFinished.contains(task);
-    }
+    WeakList<TaskInfo> list = myFinished;
+    return list != null && list.contains(task);
   }
 
   protected void setOwnerTask(TaskInfo owner) {
@@ -257,8 +261,11 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
   }
 
   public synchronized void pushState() {
+    if (myTextStack == null) myTextStack = new Stack<String>(2);
     myTextStack.push(myText);
+    if (myFractionStack == null) myFractionStack = new DoubleArrayList(2);
     myFractionStack.add(myFraction);
+    if (myText2Stack == null) myText2Stack = new Stack<String>(2);
     myText2Stack.push(myText2);
 
     delegateProgressChange(PUSH_ACTION);
@@ -324,7 +331,16 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
 
   public final void addStateDelegate(@NotNull ProgressIndicatorEx delegate) {
     delegate.initStateFrom(this);
-    myStateDelegates.addIfAbsent(delegate);
+    CopyOnWriteArrayList<ProgressIndicatorEx> stateDelegates = myStateDelegates;
+    if (stateDelegates == null) {
+      synchronized (this) {
+        stateDelegates = myStateDelegates;
+        if (stateDelegates == null) {
+          myStateDelegates = stateDelegates = ContainerUtil.createEmptyCOWList();
+        }
+      }
+    }
+    stateDelegates.addIfAbsent(delegate);
   }
 
   private void delegateProgressChange(IndicatorAction action) {
@@ -338,8 +354,11 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
   }
 
   private void delegate(IndicatorAction action) {
-    for (ProgressIndicatorEx each : myStateDelegates) {
-      action.execute(each);
+    CopyOnWriteArrayList<ProgressIndicatorEx> list = myStateDelegates;
+    if (list != null) {
+      for (ProgressIndicatorEx each : list) {
+        action.execute(each);
+      }
     }
   }
 
@@ -358,16 +377,19 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
 
   @NotNull
   public Stack<String> getTextStack() {
+    if (myTextStack == null) myTextStack = new Stack<String>(2);
     return myTextStack;
   }
 
   @NotNull
   public DoubleArrayList getFractionStack() {
+    if (myFractionStack == null) myFractionStack = new DoubleArrayList(2);
     return myFractionStack;
   }
 
   @NotNull
   public Stack<String> getText2Stack() {
+    if (myText2Stack == null) myText2Stack = new Stack<String>(2);
     return myText2Stack;
   }
 
@@ -392,20 +414,13 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
     myIndeterminate = indicator.isIndeterminate();
     myNonCancelableCount = indicator.getNonCancelableCount();
 
-    myTextStack.clear();
-    myTextStack.addAll(indicator.getTextStack());
+    myTextStack = new Stack<String>(indicator.getTextStack());
     myText = indicator.getText();
 
-    myText2Stack.clear();
-    myText2Stack.addAll(indicator.getText2Stack());
+    myText2Stack = new Stack<String>(indicator.getText2Stack());
     myText2 = indicator.getText2();
 
-    myFractionStack.clear();
-    final double[] fractions = indicator.getFractionStack().toArray();
-    for (double eachFraction : fractions) {
-      myFractionStack.add(eachFraction);
-    }
+    myFractionStack = new DoubleArrayList(indicator.getFractionStack());
     myFraction = indicator.getFraction();
   }
-
 }

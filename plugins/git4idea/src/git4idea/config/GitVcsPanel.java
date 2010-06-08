@@ -68,7 +68,8 @@ public class GitVcsPanel {
   /**
    * IDEA ssh value
    */
-  private static final String IDEA_SSH = ApplicationNamesInfo.getInstance().getProductName() + " " + GitBundle.getString("git.vcs.config.ssh.mode.idea");
+  private static final String IDEA_SSH =
+    ApplicationNamesInfo.getInstance().getProductName() + " " + GitBundle.getString("git.vcs.config.ssh.mode.idea");
   /**
    * Native SSH value
    */
@@ -93,8 +94,9 @@ public class GitVcsPanel {
     mySSHExecutableComboBox.addItem(IDEA_SSH);
     mySSHExecutableComboBox.addItem(NATIVE_SSH);
     mySSHExecutableComboBox.setSelectedItem(GitVcsSettings.isDefaultIdeaSsh() ? IDEA_SSH : NATIVE_SSH);
-    mySSHExecutableComboBox.setToolTipText(GitBundle.message("git.vcs.config.ssh.mode.tooltip", ApplicationNamesInfo.getInstance().getFullProductName()));
-    myAskBeforeConversionsCheckBox.setSelected(mySettings.LINE_SEPARATORS_CONVERSION_ASK);
+    mySSHExecutableComboBox
+      .setToolTipText(GitBundle.message("git.vcs.config.ssh.mode.tooltip", ApplicationNamesInfo.getInstance().getFullProductName()));
+    myAskBeforeConversionsCheckBox.setSelected(mySettings.askBeforeLineSeparatorConversion());
     myTestButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         testConnection();
@@ -111,7 +113,7 @@ public class GitVcsPanel {
    * Test availability of the connection
    */
   private void testConnection() {
-    mySettings.GIT_EXECUTABLE = myGitField.getText();
+    mySettings.setGitExecutable(myGitField.getText());
     final String s;
     try {
       s = GitVcs.version(myProject);
@@ -142,9 +144,9 @@ public class GitVcsPanel {
    * @param settings the settings to load
    */
   public void load(@NotNull GitVcsSettings settings) {
-    myGitField.setText(settings.GIT_EXECUTABLE);
+    myGitField.setText(settings.getGitExecutable());
     mySSHExecutableComboBox.setSelectedItem(settings.isIdeaSsh() ? IDEA_SSH : NATIVE_SSH);
-    myAskBeforeConversionsCheckBox.setSelected(settings.LINE_SEPARATORS_CONVERSION_ASK);
+    myAskBeforeConversionsCheckBox.setSelected(settings.askBeforeLineSeparatorConversion());
     myConvertTextFilesComboBox.setSelectedItem(crlfPolicyItem(settings));
   }
 
@@ -156,7 +158,7 @@ public class GitVcsPanel {
    */
   static private String crlfPolicyItem(GitVcsSettings settings) {
     String crlf;
-    switch (settings.LINE_SEPARATORS_CONVERSION) {
+    switch (settings.getLineSeparatorsConversion()) {
       case NONE:
         crlf = CRLF_DO_NOT_CONVERT;
         break;
@@ -164,7 +166,7 @@ public class GitVcsPanel {
         crlf = CRLF_CONVERT_TO_PROJECT;
         break;
       default:
-        assert false : "Unknown crlf policy: " + settings.LINE_SEPARATORS_CONVERSION;
+        assert false : "Unknown crlf policy: " + settings.getLineSeparatorsConversion();
         crlf = null;
     }
     return crlf;
@@ -176,10 +178,10 @@ public class GitVcsPanel {
    * @param settings the settings to load
    */
   public boolean isModified(@NotNull GitVcsSettings settings) {
-    return !settings.GIT_EXECUTABLE.equals(myGitField.getText()) ||
+    return !settings.getGitExecutable().equals(myGitField.getText()) ||
            (settings.isIdeaSsh() != IDEA_SSH.equals(mySSHExecutableComboBox.getSelectedItem())) ||
            !crlfPolicyItem(settings).equals(myConvertTextFilesComboBox.getSelectedItem()) ||
-           settings.LINE_SEPARATORS_CONVERSION_ASK != myAskBeforeConversionsCheckBox.isSelected();
+           settings.askBeforeLineSeparatorConversion() != myAskBeforeConversionsCheckBox.isSelected();
   }
 
   /**
@@ -188,7 +190,7 @@ public class GitVcsPanel {
    * @param settings the settings object
    */
   public void save(@NotNull GitVcsSettings settings) {
-    settings.GIT_EXECUTABLE = myGitField.getText();
+    settings.setGitExecutable(myGitField.getText());
     settings.setIdeaSsh(IDEA_SSH.equals(mySSHExecutableComboBox.getSelectedItem()));
     Object policyItem = myConvertTextFilesComboBox.getSelectedItem();
     GitVcsSettings.ConversionPolicy conversionPolicy;
@@ -201,7 +203,7 @@ public class GitVcsPanel {
     else {
       throw new IllegalStateException("Unknown selected CRLF policy: " + policyItem);
     }
-    settings.LINE_SEPARATORS_CONVERSION = conversionPolicy;
-    settings.LINE_SEPARATORS_CONVERSION_ASK = myAskBeforeConversionsCheckBox.isSelected();
+    settings.setLineSeparatorsConversion(conversionPolicy);
+    settings.setAskBeforeLineSeparatorConversion(myAskBeforeConversionsCheckBox.isSelected());
   }
 }

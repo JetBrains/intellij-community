@@ -82,7 +82,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   /**
    * the file name prefix for commit message file
    */
-  @NonNls private static final String GIT_COMMIT_MSG_FILE_PREFIX = "git-comit-msg-";
+  @NonNls private static final String GIT_COMMIT_MSG_FILE_PREFIX = "git-commit-msg-";
   /**
    * the file extension for commit message file
    */
@@ -170,6 +170,11 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    */
   public List<VcsException> commit(@NotNull List<Change> changes, @NotNull String message) {
     List<VcsException> exceptions = new ArrayList<VcsException>();
+    if (message.length() == 0) {
+      //noinspection ThrowableInstanceNeverThrown
+      exceptions.add(new VcsException("Empty commit message is not supported for the Git"));
+      return exceptions;
+    }
     Map<VirtualFile, List<Change>> sortedChanges = sortChangesByGitRoot(changes, exceptions);
     if (GitConvertFilesDialog.showDialogIfNeeded(myProject, mySettings, sortedChanges, exceptions)) {
       for (Map.Entry<VirtualFile, List<Change>> entry : sortedChanges.entrySet()) {
@@ -606,7 +611,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       c.gridy = 1;
       c.weightx = 1;
       c.fill = GridBagConstraints.HORIZONTAL;
-      myAuthor = new JComboBox(mySettings.PREVIOUS_COMMIT_AUTHORS);
+      myAuthor = new JComboBox(mySettings.getCommitAuthors());
       myAuthor.insertItemAt("", 0);
       myAuthor.setSelectedItem("");
       myAuthor.setEditable(true);

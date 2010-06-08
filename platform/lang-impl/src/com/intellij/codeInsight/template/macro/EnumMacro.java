@@ -56,7 +56,9 @@ public class EnumMacro implements Macro{
 
     for (Expression param : params) {
       Result object = param.calculateResult(context);
-      set.add(LookupElementBuilder.create(object.toString()));
+      if (object != null) {
+        set.add(LookupElementBuilder.create(object.toString()));
+      }
     }
     return set.toArray(new LookupElement[set.size()]);
   }

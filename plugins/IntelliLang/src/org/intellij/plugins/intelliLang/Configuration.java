@@ -65,7 +65,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @State(
   name = Configuration.COMPONENT_NAME,
   storages = {@Storage(id = "dir", file = "$APP_CONFIG$/IntelliLang.xml", scheme = StorageScheme.DIRECTORY_BASED)})
-public final class Configuration implements PersistentStateComponent<Element> {
+public final class Configuration implements PersistentStateComponent<Element>, ModificationTracker {
   static final Logger LOG = Logger.getInstance(Configuration.class.getName());
 
   @NonNls public static final String COMPONENT_NAME = "LanguageInjectionConfiguration";
