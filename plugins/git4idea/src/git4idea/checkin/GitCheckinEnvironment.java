@@ -30,6 +30,8 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.PairConsumer;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
@@ -171,7 +173,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   /**
    * {@inheritDoc}
    */
-  public List<VcsException> commit(@NotNull List<Change> changes, @NotNull String message) {
+  public List<VcsException> commit(@NotNull List<Change> changes,
+                                   @NotNull String message,
+                                   @NotNull NullableFunction<Object, Object> parametersHolder) {
     List<VcsException> exceptions = new ArrayList<VcsException>();
     if (message.length() == 0) {
       //noinspection ThrowableInstanceNeverThrown
@@ -249,8 +253,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     return exceptions;
   }
 
-  public List<VcsException> commit(List<Change> changes, String preparedComment, @NotNull NullableFunction<Object, Object> parametersHolder) {
-    return commit(changes, preparedComment);
+  public List<VcsException> commit(List<Change> changes, String preparedComment) {
+    return commit(changes, preparedComment, NullableFunction.NULL);
   }
 
   /**

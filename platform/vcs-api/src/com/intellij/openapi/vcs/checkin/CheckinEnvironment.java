@@ -54,7 +54,7 @@ public interface CheckinEnvironment extends VcsProviderMarker {
   List<VcsException> commit(List<Change> changes, String preparedComment);
 
   @Nullable
-  List<VcsException> commit(List<Change> changes, String preparedComment, @NotNull final NullableFunction<Object, Object> parametersHolder);
+  List<VcsException> commit(List<Change> changes, String preparedComment, @NotNull NullableFunction<Object, Object> parametersHolder);
 
   @Nullable
   List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files);

@@ -26,7 +26,10 @@ import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.PairConsumer;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.HgVcsMessages;
@@ -60,7 +63,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
   }
 
   @SuppressWarnings({"ThrowableInstanceNeverThrown"})
-  public List<VcsException> commit(List<Change> changes, String preparedComment) {
+  public List<VcsException> commit(List<Change> changes, String preparedComment, @NotNull NullableFunction<Object, Object> parametersHolder) {
     List<VcsException> exceptions = new LinkedList<VcsException>();
     for (Map.Entry<VirtualFile, Set<HgFile>> entry : getFilesByRepository(changes).entrySet()) {
 
@@ -155,8 +158,8 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
   }
 
   public List<VcsException> commit(List<Change> changes,
-    String preparedComment, @NotNull NullableFunction<Object, Object> parametersHolder) {
-    return commit(changes, preparedComment);
+    String preparedComment) {
+    return commit(changes, preparedComment, NullableFunction.NULL);
   }
 
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {
