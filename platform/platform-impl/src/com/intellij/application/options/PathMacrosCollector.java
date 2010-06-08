@@ -19,6 +19,7 @@ import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.PathMacroMap;
 import com.intellij.util.NotNullFunction;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -45,22 +46,22 @@ public class PathMacrosCollector extends PathMacroMap {
     myMatcher = MACRO_PATTERN.matcher("");
   }
 
-  public static Set<String> getMacroNames(Element root) {
-    return getMacroNames(root, null);
-  }
-
   public static Set<String> getMacroNames(Element root, @Nullable final NotNullFunction<Object, Boolean> filter) {
     return getMacroNames(root, filter, null);
   }
 
-  public static Set<String> getMacroNames(Element root, @Nullable final NotNullFunction<Object, Boolean> filter, @Nullable final NotNullFunction<Object, Boolean> recursiveFilter) {
+  public static Set<String> getMacroNames(Element root, @Nullable final NotNullFunction<Object, Boolean> filter, @Nullable final NotNullFunction<Object, Boolean> recursiveFilter, @NotNull final PathMacros pathMacros) {
     final PathMacrosCollector collector = new PathMacrosCollector();
     collector.substitute(root, true, false, filter, recursiveFilter);
     final HashSet<String> result = new HashSet<String>(collector.myMacroMap.keySet());
     result.removeAll(ourSystemMacroNames);
     result.removeAll(PathMacrosImpl.getToolMacroNames());
-    result.removeAll(PathMacros.getInstance().getIgnoredMacroNames());
+    result.removeAll(pathMacros.getIgnoredMacroNames());
     return result;
+  }
+
+  public static Set<String> getMacroNames(Element root, @Nullable final NotNullFunction<Object, Boolean> filter, @Nullable final NotNullFunction<Object, Boolean> recursiveFilter) {
+    return getMacroNames(root, filter, recursiveFilter, PathMacros.getInstance());
   }
 
   @Override
@@ -84,7 +85,7 @@ public class PathMacrosCollector extends PathMacroMap {
       protocol = FILE_PROTOCOL;
     } else if (text.length() > 6 && text.charAt(0) == 'j') {
       protocol = JAR_PROTOCOL;
-    } else if (!('$' == text.charAt(0))) {
+    } else if ('$' != text.charAt(0)) {
       return text;
     }
 
