@@ -77,11 +77,17 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private InplaceButton myCommandButton;
   private List<Pair<ActionListener, KeyStroke>> myKeyboardActions = Collections.emptyList();
   private Component mySettingsButtons;
+  private boolean myMayBeParent;
 
   public ComponentPopupBuilderImpl(final JComponent component,
                                    final JComponent prefferedFocusedComponent) {
     myComponent = component;
     myPrefferedFocusedComponent = prefferedFocusedComponent;
+  }
+
+  public ComponentPopupBuilder setMayBeParent(boolean mayBeParent) {
+    myMayBeParent = mayBeParent;
+    return this;
   }
 
   @NotNull
@@ -201,7 +207,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
                                               myCancelButton,
                                               myCancelOnMouseOutCallback, myCancelOnWindow, myTitleIcon, myCancelKeyEnabled, myLocateByContent,
                                               myPlacewithinScreen, myMinSize, myAlpha, myMaskProvider, myInStack, myModalContext, myFocusOwners, myAd,
-                                              myHeaderAlwaysFocusable, myKeyboardActions, mySettingsButtons, myPinCallback);
+                                              myHeaderAlwaysFocusable, myKeyboardActions, mySettingsButtons, myPinCallback, myMayBeParent);
     if (myUserData != null) {
       popup.setUserData(myUserData);
     }

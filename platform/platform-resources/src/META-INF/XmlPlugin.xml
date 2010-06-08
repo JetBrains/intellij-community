@@ -231,7 +231,7 @@
 
     <psi.includeHandler implementation="com.intellij.xml.util.XmlIncludeHandler"/>
 
-    <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.EnterBetweenXmlTagsHandler"/>
+    <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.EnterBetweenXmlTagsHandler" id="xmlEnter"/>
 
     <declarationRangeHandler key="com.intellij.psi.xml.XmlTag"
                              implementationClass="com.intellij.codeInsight.hint.TagDeclarationRangeHandler"/>
