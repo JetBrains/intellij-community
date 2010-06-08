@@ -19,6 +19,7 @@ import com.intellij.pom.PomDeclarationSearcher;
 import com.intellij.pom.PomTarget;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.util.Consumer;
@@ -39,7 +40,7 @@ public class DomDeclarationSearcher extends PomDeclarationSearcher {
     if (tokenType == XmlTokenType.XML_DATA_CHARACTERS && psiElement.getParent() instanceof XmlText && psiElement.getParent().getParent() instanceof XmlTag) {
       final XmlTag tag = (XmlTag)psiElement.getParent().getParent();
       for (XmlText text : tag.getValue().getTextElements()) {
-        if (GenericValueReferenceProvider.hasInjections((PsiLanguageInjectionHost)text)) {
+        if (InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)text)) {
           return;
         }
       }
@@ -47,7 +48,7 @@ public class DomDeclarationSearcher extends PomDeclarationSearcher {
       domElement = domManager.getDomElement(tag);
     } else if (tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN && psiElement.getParent() instanceof XmlAttributeValue && psiElement.getParent().getParent() instanceof XmlAttribute) {
       final PsiElement attributeValue = psiElement.getParent();
-      if (GenericValueReferenceProvider.hasInjections((PsiLanguageInjectionHost)attributeValue)) {
+      if (InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)attributeValue)) {
         return;
       }
       domElement = domManager.getDomElement((XmlAttribute)attributeValue.getParent());

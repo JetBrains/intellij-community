@@ -21,16 +21,15 @@ import com.intellij.formatting.Indent;
 import com.intellij.formatting.Spacing;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.formatter.common.InjectedLanguageBlockWrapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public class AnotherLanguageBlockWrapper extends AbstractXmlBlock{
-  private final Block myOriginal;
+  private final InjectedLanguageBlockWrapper myInjectedBlock;
   private final Indent myIndent;
-  private final int myOffset;
-  @Nullable private final TextRange myRange;
 
   public AnotherLanguageBlockWrapper(final ASTNode node,
                                      final XmlFormattingPolicy policy,
@@ -38,10 +37,8 @@ public class AnotherLanguageBlockWrapper extends AbstractXmlBlock{
                                      final int offset,
                                      @Nullable TextRange range) {
     super(node, original.getWrap(), original.getAlignment(), policy);
-    myOriginal = original;
+    myInjectedBlock = new InjectedLanguageBlockWrapper(original, offset, range, null);
     myIndent = indent;
-    myOffset = offset;
-    myRange = range;
   }
 
   public Indent getIndent() {
@@ -61,30 +58,21 @@ public class AnotherLanguageBlockWrapper extends AbstractXmlBlock{
   }
 
   protected List<Block> buildChildren() {
-    if (myOffset == 0 && myRange == null) return myOriginal.getSubBlocks();
-
-    return InjectedLanguageBlockWrapper.buildBlocks(myOriginal, myOffset, myRange);
+    return myInjectedBlock.getSubBlocks();
   }
 
   @NotNull
   public TextRange getTextRange() {
-    final TextRange range = super.getTextRange();
-    if (myOffset == 0) return range;
-    
-    return new TextRange(
-        myOffset + range.getStartOffset(),
-        myOffset + (myRange != null ? myRange.getLength() : range.getLength())
-    );
+    return myInjectedBlock.getTextRange();
   }
 
-  @Nullable public Spacing getSpacing(Block child1, Block child2) {
-    if (child1 instanceof InjectedLanguageBlockWrapper) child1 = ((InjectedLanguageBlockWrapper)child1).myOriginal;
-    if (child2 instanceof InjectedLanguageBlockWrapper) child2 = ((InjectedLanguageBlockWrapper)child2).myOriginal;
-    return myOriginal.getSpacing(child1,  child2);
+  @Nullable
+  public Spacing getSpacing(Block child1, Block child2) {
+    return myInjectedBlock.getSpacing(child1,  child2);
   }
 
   @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
-    return myOriginal.getChildAttributes(newChildIndex);
+    return myInjectedBlock.getChildAttributes(newChildIndex);
   }
 }
