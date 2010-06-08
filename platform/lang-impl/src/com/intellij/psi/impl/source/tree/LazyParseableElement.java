@@ -169,14 +169,12 @@ public class LazyParseableElement extends CompositeElement {
       rawAddChildren((TreeElement)parsedNode);
 
       //ensure PSI is created all at once, to reduce contention of PsiLock in CompositeElement.getPsi()
-      /*
       synchronized (PsiLock.LOCK) {
         while (parsedNode != null) {
           ((TreeElement)parsedNode).acceptTree(CREATE_PSI);
           parsedNode = parsedNode.getTreeNext();
         }
       }
-      */
     }
   }
 
