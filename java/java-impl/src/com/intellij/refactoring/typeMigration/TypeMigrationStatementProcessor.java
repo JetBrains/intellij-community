@@ -103,6 +103,22 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
   }
 
   @Override
+  public void visitSwitchLabelStatement(PsiSwitchLabelStatement statement) {
+    super.visitSwitchLabelStatement(statement);
+    final PsiExpression caseValue = statement.getCaseValue();
+    if (caseValue != null) {
+      final TypeView typeView = new TypeView(caseValue);
+      if (typeView.isChanged()) {
+        final PsiSwitchStatement switchStatement = statement.getEnclosingSwitchStatement();
+        if (switchStatement != null) {
+          final PsiExpression expression = switchStatement.getExpression();
+          myLabeler.migrateExpressionType(expression, typeView.getType(), myStatement, false, false);
+        }
+      }
+    }
+  }
+
+  @Override
   public void visitInstanceOfExpression(final PsiInstanceOfExpression expression) {
     super.visitInstanceOfExpression(expression);
     final PsiTypeElement typeElement = expression.getCheckType();

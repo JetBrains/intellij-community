@@ -342,7 +342,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
   private static boolean isConstantField(PsiMember member) {
     return member instanceof PsiField &&
            member.hasModifierProperty(PsiModifier.STATIC) &&
-           member.hasModifierProperty(PsiModifier.FINAL) &&
+          // member.hasModifierProperty(PsiModifier.FINAL) &&
            ((PsiField)member).hasInitializer();
   }
 

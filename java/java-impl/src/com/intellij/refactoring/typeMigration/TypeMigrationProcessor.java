@@ -23,22 +23,26 @@ import java.util.List;
 
 public class TypeMigrationProcessor extends BaseRefactoringProcessor {
 
-  private PsiElement myRoot;
+  private PsiElement[] myRoot;
   private final TypeMigrationRules myRules;
   private TypeMigrationLabeler myLabeler;
 
   public TypeMigrationProcessor(final Project project, final PsiElement root, final TypeMigrationRules rules) {
+    this(project, new PsiElement[]{root}, rules);
+  }
+
+  public TypeMigrationProcessor(final Project project, final PsiElement[] roots, final TypeMigrationRules rules) {
     super(project);
-    myRoot = root;
+    myRoot = roots;
     myRules = rules;
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
-    return new TypeMigrationViewDescriptor(myRoot);
+    return new TypeMigrationViewDescriptor(myRoot[0]);
   }
 
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
-    if (myLabeler.hasFailedConversions()) {
+    if (hasFailedConversions()) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         throw new RuntimeException(StringUtil.join(myLabeler.getFailedConversionsReport(), "\n"));
       }
@@ -57,18 +61,22 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
     return true;
   }
 
+  public boolean hasFailedConversions() {
+    return myLabeler.hasFailedConversions();
+  }
+
   @Override
   protected void previewRefactoring(final UsageInfo[] usages) {
-    MigrationPanel panel = new MigrationPanel(myRoot, myLabeler, myProject, isPreviewUsages());
+    MigrationPanel panel = new MigrationPanel(myRoot[0], myLabeler, myProject, isPreviewUsages());
     String text;
-    if (myRoot instanceof PsiField) {
-      text = "field \'" + ((PsiField)myRoot).getName() + "\'";
-    } else if (myRoot instanceof PsiParameter) {
-      text = "parameter \'" + ((PsiParameter)myRoot).getName() + "\'";
-    } else if (myRoot instanceof PsiLocalVariable) {
-      text = "variable \'" + ((PsiLocalVariable)myRoot).getName() + "\'";
-    } else if (myRoot instanceof PsiMethod) {
-      text = "method \'" + ((PsiMethod)myRoot).getName() + "\' return";
+    if (myRoot[0] instanceof PsiField) {
+      text = "field \'" + ((PsiField)myRoot[0]).getName() + "\'";
+    } else if (myRoot[0] instanceof PsiParameter) {
+      text = "parameter \'" + ((PsiParameter)myRoot[0]).getName() + "\'";
+    } else if (myRoot[0] instanceof PsiLocalVariable) {
+      text = "variable \'" + ((PsiLocalVariable)myRoot[0]).getName() + "\'";
+    } else if (myRoot[0] instanceof PsiMethod) {
+      text = "method \'" + ((PsiMethod)myRoot[0]).getName() + "\' return";
     } else {
       text = myRoot.toString();
     }
@@ -76,7 +84,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
         .addContent("Migrate Type of " +
                     text +
                     " from \'" +
-                    TypeMigrationLabeler.getElementType(myRoot).getPresentableText() +
+                    TypeMigrationLabeler.getElementType(myRoot[0]).getPresentableText() +
                     "\' to \'" +
                     myRules.getMigrationRootType().getPresentableText() +
                     "\'", false, panel, true, true);
@@ -85,23 +93,23 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
   }
 
   @NotNull
-  protected UsageInfo[] findUsages() {
+  public UsageInfo[] findUsages() {
     myLabeler = new TypeMigrationLabeler(myRules);
 
     try {
-      return myLabeler.getMigratedUsages(myRoot, !isPreviewUsages());
+      return myLabeler.getMigratedUsages(!isPreviewUsages(), myRoot);
     }
     catch (TypeMigrationLabeler.MigrateException e) {
       setPreviewUsages(true);
-      return myLabeler.getMigratedUsages(myRoot, false);
+      return myLabeler.getMigratedUsages(false, myRoot);
     }
   }
 
   protected void refreshElements(PsiElement[] elements) {
-    myRoot = elements[0];
+    myRoot = elements;
   }
 
-  protected void performRefactoring(UsageInfo[] usages) {
+  public void performRefactoring(UsageInfo[] usages) {
     change(myLabeler, usages);
   }
 

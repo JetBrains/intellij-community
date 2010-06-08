@@ -23,6 +23,9 @@ package com.intellij.refactoring.util;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
 
 public class EnumConstantsUtil {
   private EnumConstantsUtil() {
@@ -47,5 +50,32 @@ public class EnumConstantsUtil {
 
   public static PsiEnumConstant createEnumConstant(PsiClass enumClass, PsiLocalVariable local, final String fieldName) throws IncorrectOperationException {
     return createEnumConstant(enumClass, fieldName, local.getInitializer());
+  }
+
+  @Nullable
+  public static PsiStatement isEnumSwitch(final PsiSwitchStatement switchStatement,
+                                          final PsiType enumValueType,
+                                          final Set<Object> enumValues) {
+    final PsiExpression expression = switchStatement.getExpression();
+    if (expression != null) {
+      final PsiType expressionType = expression.getType();
+      if (expressionType != null && !TypeConversionUtil.isAssignable(expressionType, enumValueType)) {
+        return switchStatement;
+      }
+      final PsiConstantEvaluationHelper evaluationHelper =
+        JavaPsiFacade.getInstance(expression.getProject()).getConstantEvaluationHelper();
+      final PsiCodeBlock body = switchStatement.getBody();
+      if (body != null) {
+        for (PsiStatement statement : body.getStatements()) {
+          if (statement instanceof PsiSwitchLabelStatement) {
+            final PsiSwitchLabelStatement labelStatement = (PsiSwitchLabelStatement)statement;
+            final Object caseValue = evaluationHelper.computeConstantExpression(labelStatement.getCaseValue());
+            if (caseValue != null && !enumValues.contains(caseValue)) return statement;
+          }
+        }
+        return null;
+      }
+    }
+    return switchStatement;
   }
 }

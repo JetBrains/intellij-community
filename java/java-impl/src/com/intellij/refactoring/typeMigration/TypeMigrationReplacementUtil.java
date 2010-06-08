@@ -87,8 +87,11 @@ public class TypeMigrationReplacementUtil {
     }
   }
 
-  static void migratePsiMemeberType(final PsiElement element, final Project project, final PsiType migratedType) {
+  static void migratePsiMemeberType(final PsiElement element, final Project project, PsiType migratedType) {
     try {
+      if (!migratedType.isValid()) {
+        migratedType = JavaPsiFacade.getElementFactory(project).createTypeByFQClassName(migratedType.getCanonicalText());
+      }
       final PsiTypeElement typeElement =
           JavaPsiFacade.getInstance(project).getElementFactory().createTypeElement(migratedType);
       if (element instanceof PsiMethod) {

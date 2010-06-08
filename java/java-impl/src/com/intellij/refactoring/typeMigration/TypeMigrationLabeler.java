@@ -204,10 +204,10 @@ public class TypeMigrationLabeler {
     return myConversions.get(element);
   }
 
-  public TypeMigrationUsageInfo[] getMigratedUsages(final PsiElement element, boolean autoMigrate) {
+  public TypeMigrationUsageInfo[] getMigratedUsages(boolean autoMigrate, final PsiElement... roots) {
     if (myMigratedUsages == null) {
       myShowWarning = autoMigrate;
-      migrate(element, autoMigrate);
+      migrate(autoMigrate, roots);
       myMigratedUsages = getMigratedUsages();
     }
     return myMigratedUsages;
@@ -695,11 +695,15 @@ public class TypeMigrationLabeler {
     }
   }
 
-  private void migrate(final PsiElement victim, boolean autoMigrate) {
+  private void migrate(boolean autoMigrate, final PsiElement... victims) {
     myMigrationRoots = new LinkedList<Pair<TypeMigrationUsageInfo, PsiType>>();
     myTypeEvaluator = new TypeEvaluator(myMigrationRoots, this);
 
-    addMigrationRoot(victim, myRules.getMigrationRootType(), null, false, true, true);
+
+    final PsiType rootType = myRules.getMigrationRootType();
+    for (PsiElement victim : victims) {
+      addMigrationRoot(victim, rootType, null, false, true, true);
+    }
 
     if (autoMigrate) {
       while (myMigrationRoots.size() > 0) {
