@@ -70,7 +70,6 @@ public class CherryPicker {
     checkListsForSamePaths();
 
     final RefreshSessionImpl refreshSession = new RefreshSessionImpl(true, false, new Runnable() {
-      @Override
       public void run() {
         findAndProcessChangedForVcs();
       }
