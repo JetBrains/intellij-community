@@ -18,8 +18,8 @@ import com.intellij.structuralsearch.impl.matcher.compiler.XmlCompilingVisitor;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.filters.XmlLexicalNodesFilter;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
+import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
-import com.intellij.structuralsearch.plugin.replace.impl.ReplacementInfoImpl;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacerImpl;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacerUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -98,7 +98,7 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  public StructuralReplaceHandler getReplaceHandler(ReplacementContext context) {
+  public StructuralReplaceHandler getReplaceHandler(@NotNull ReplacementContext context) {
     return new MyReplaceHanler(context);
   }
 
@@ -109,10 +109,11 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
       myContext = context;
     }
 
-    public void replace(ReplacementInfoImpl info,
-                        PsiElement elementToReplace,
-                        String replacementToMake,
-                        PsiElement elementParent) {
+    public void replace(ReplacementInfo info) {
+      PsiElement elementToReplace = info.getMatch(0);
+      assert elementToReplace != null;
+      PsiElement elementParent = elementToReplace.getParent();
+      String replacementToMake = info.getReplacement();
       boolean listContext = elementToReplace.getParent() instanceof XmlTag;
 
       if (listContext) {
@@ -141,7 +142,7 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
     }
   }
 
-  private static void doReplaceInContext(ReplacementInfoImpl info,
+  private static void doReplaceInContext(ReplacementInfo info,
                                          PsiElement elementToReplace,
                                          String replacementToMake,
                                          PsiElement elementParent,
@@ -164,11 +165,10 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
       }
     }
 
-    final int matchSize = info.getMatchesPtrList().size();
+    final int matchSize = info.getMatchesCount();
 
     for (int i = 0; i < matchSize; ++i) {
-      SmartPsiElementPointer aMatchesPtrList = info.getMatchesPtrList().get(i);
-      PsiElement element = aMatchesPtrList.getElement();
+      PsiElement element = info.getMatch(i);
 
       if (element == null) continue;
       PsiElement firstToDelete = element;
@@ -183,7 +183,7 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
         lastToDelete = nextSibling;
       }
       if (nextSibling instanceof XmlText && i + 1 < matchSize) {
-        final PsiElement next = info.getMatchesPtrList().get(i + 1).getElement();
+        final PsiElement next = info.getMatch(i + 1);
         if (next != null && next == nextSibling.getNextSibling()) {
           lastToDelete = nextSibling;
         }

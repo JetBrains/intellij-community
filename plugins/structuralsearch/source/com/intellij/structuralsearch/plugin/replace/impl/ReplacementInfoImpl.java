@@ -4,6 +4,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -30,15 +31,22 @@ public class ReplacementInfoImpl extends ReplacementInfo {
     result = replacement;
   }
 
+  @Nullable
+  @Override
+  public PsiElement getMatch(int index) {
+    return matchesPtrList.get(index).getElement();
+  }
+
+  @Override
+  public int getMatchesCount() {
+    return matchesPtrList.size();
+  }
+
   public Map<String, MatchResult> getVariableMap() {
     return variableMap;
   }
 
   public MatchResult getMatchResult() {
     return matchResult;
-  }
-
-  public List<SmartPsiElementPointer> getMatchesPtrList() {
-    return matchesPtrList;
   }
 }

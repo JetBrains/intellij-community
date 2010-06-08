@@ -15,6 +15,7 @@ import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.TopLevelMatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.iterators.FilteringNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
+import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacementInfoImpl;
 import org.jetbrains.annotations.NotNull;
@@ -81,8 +82,8 @@ public abstract class TokenBasedProfile extends StructuralSearchProfile {
   protected abstract MatchingStrategy getMatchingStrategy(PsiElement root);
 
   @Override
-  public StructuralReplaceHandler getReplaceHandler(ReplacementContext context) {
-    return new MyReplaceHandler();
+  public StructuralReplaceHandler getReplaceHandler(@NotNull ReplacementContext context) {
+    return new MyReplaceHandler(context.getProject());
   }
 
   protected class MyCompilingVisitor extends PsiRecursiveElementVisitor {
@@ -169,10 +170,6 @@ public abstract class TokenBasedProfile extends StructuralSearchProfile {
       myGlobalVisitor = globalVisitor;
     }
 
-    public GlobalMatchingVisitor getGlobalVisitor() {
-      return myGlobalVisitor;
-    }
-
     @Override
     public void visitElement(PsiElement element) {
       super.visitElement(element);
@@ -197,51 +194,20 @@ public abstract class TokenBasedProfile extends StructuralSearchProfile {
     }
   }
 
-  /*private static class MyIterator extends NodeIterator {
-    private ASTNode[] myNodes;
-    private int myIndex = 0;
-
-    private MyIterator(ASTNode[] nodes) {
-      myNodes = nodes;
-    }
-
-    public boolean hasNext() {
-      return myIndex < myNodes.length;
-    }
-
-    public void rewind(int number) {
-      myIndex -= number;
-    }
-
-    public PsiElement current() {
-      if (myIndex < myNodes.length) {
-        return myNodes[myIndex].getPsi();
-      }
-
-      return null;
-    }
-
-    public void advance() {
-      ++myIndex;
-    }
-
-    public void rewind() {
-      --myIndex;
-    }
-
-    public void reset() {
-      myIndex = 0;
-    }
-  }*/
-
   private static class MyReplaceHandler extends StructuralReplaceHandler {
-    public void replace(ReplacementInfoImpl info,
-                        PsiElement elementToReplace,
-                        String replacementToMake,
-                        PsiElement elementParent) {
-      MatchResult result = info.getMatchResult();
+    private final Project myProject;
+
+    private MyReplaceHandler(Project project) {
+      myProject = project;
+    }
+
+    public void replace(ReplacementInfo info) {
+      if (info.getMatchesCount() == 0) return;
+      assert info instanceof ReplacementInfoImpl;
+      MatchResult result = ((ReplacementInfoImpl)info).getMatchResult();
       assert result instanceof TokenBasedMatchResult;
-      PsiElement element = result.getMatch();
+      PsiElement element = info.getMatch(0);
+      if (element == null) return;
       PsiFile file = element instanceof PsiFile ? (PsiFile)element : element.getContainingFile();
       assert file != null;
       TokenBasedMatchResult tokenBasedResult = (TokenBasedMatchResult)result;
@@ -252,11 +218,12 @@ public abstract class TokenBasedProfile extends StructuralSearchProfile {
     }
 
     @Override
-    public void prepare(ReplacementInfoImpl info, Project project) {
-      MatchResult result = info.getMatchResult();
+    public void prepare(ReplacementInfo info) {
+      assert info instanceof ReplacementInfoImpl;
+      MatchResult result = ((ReplacementInfoImpl)info).getMatchResult();
       PsiElement element = result.getMatch();
       PsiFile file = element instanceof PsiFile ? (PsiFile)element : element.getContainingFile();
-      Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+      Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
       assert result instanceof TokenBasedMatchResult;
       TokenBasedMatchResult res = (TokenBasedMatchResult)result;
       TextRange textRange = res.getTextRangeInFile();

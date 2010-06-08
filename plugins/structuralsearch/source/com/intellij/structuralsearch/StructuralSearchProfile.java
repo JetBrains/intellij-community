@@ -55,7 +55,7 @@ public abstract class StructuralSearchProfile {
   }
 
   @Nullable
-  public StructuralReplaceHandler getReplaceHandler(ReplacementContext context) {
+  public StructuralReplaceHandler getReplaceHandler(@NotNull ReplacementContext context) {
     return null;
   }
 

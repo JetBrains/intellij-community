@@ -8,8 +8,8 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
 import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
+import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
-import com.intellij.structuralsearch.plugin.replace.impl.ReplacementInfoImpl;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacerImpl;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacerUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -245,10 +245,10 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     return replacement;
   }
 
-  public void replace(final ReplacementInfoImpl info,
-                      final PsiElement elementToReplace,
-                      String replacementToMake,
-                      final PsiElement elementParent) {
+  public void replace(final ReplacementInfo info) {
+    PsiElement elementToReplace = info.getMatch(0);
+    PsiElement elementParent = elementToReplace.getParent();
+    String replacementToMake = info.getReplacement();
     Project project = myContext.getProject();
     PsiElement el = findRealSubstitutionElement(elementToReplace);
     boolean listContext = isListContext(el);
@@ -397,13 +397,11 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     }
 
     if (listContext) {
-      final int matchSize = info.getMatchesPtrList().size();
+      final int matchSize = info.getMatchesCount();
 
       for (int i = 0; i < matchSize; ++i) {
-        SmartPsiElementPointer aMatchesPtrList = info.getMatchesPtrList().get(i);
-        PsiElement element = findRealSubstitutionElement(
-          aMatchesPtrList.getElement()
-        );
+        PsiElement matchElement = info.getMatch(i);
+        PsiElement element = findRealSubstitutionElement(matchElement);
 
         if (element == null) continue;
         PsiElement firstToDelete = element;
@@ -420,7 +418,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
         }
 
         if (nextSibling instanceof XmlText && i + 1 < matchSize) {
-          final PsiElement next = info.getMatchesPtrList().get(i + 1).getElement();
+          final PsiElement next = info.getMatch(i + 1);
           if (next != null && next == nextSibling.getNextSibling()) {
             lastToDelete = nextSibling;
           }

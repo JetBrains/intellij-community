@@ -128,15 +128,11 @@ public class ReplacerImpl {
     PsiElement lastAffectedElement = null;
     PsiElement currentAffectedElement;
 
-    for (ReplacementInfo replacementInfo : resultPtrList) {
-      ReplacementInfoImpl info = (ReplacementInfoImpl)replacementInfo;
-      PsiElement element = info.getMatchResult().getMatch();
-      StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(element);
-      if (profile != null) {
-        StructuralReplaceHandler handler = profile.getReplaceHandler(context);
-        if (handler != null) {
-          handler.prepare(info, project);
-        }
+    for (ReplacementInfo info : resultPtrList) {
+      PsiElement element = info.getMatch(0);
+      initContextAndHandler(element);
+      if (replaceHandler != null) {
+        replaceHandler.prepare(info);
       }
     }
 
@@ -159,7 +155,6 @@ public class ReplacerImpl {
   private PsiElement doReplace(final ReplacementInfo info) {
     final ReplacementInfoImpl replacementInfo = (ReplacementInfoImpl)info;
     final PsiElement element = replacementInfo.matchesPtrList.get(0).getElement();
-    final String replacement = replacementInfo.result;
 
     if (element==null || !element.isWritable() || !element.isValid()) return null;
 
@@ -173,7 +168,7 @@ public class ReplacerImpl {
           ApplicationManager.getApplication().runWriteAction(
             new Runnable() {
               public void run() {
-                doReplace(element, replacement, replacementInfo, elementParent);
+                doReplace(element, replacementInfo);
               }
             }
           );
@@ -232,33 +227,30 @@ public class ReplacerImpl {
   }
 
   private void doReplace(final PsiElement elementToReplace,
-                         final String replacementToMake,
-                         final ReplacementInfoImpl info,
-                         final PsiElement elementParent) {
-    PsiManager.getInstance(project).performActionWithFormatterDisabled(
-      new Runnable() {
+                         final ReplacementInfoImpl info) {
+    PsiManager.getInstance(project).performActionWithFormatterDisabled(new Runnable() {
         public void run() {
-          doReplacement(info, elementToReplace, replacementToMake, elementParent);
+          initContextAndHandler(elementToReplace);
+
+          context.replacementInfo = info;
+
+          if (replaceHandler != null) {
+            replaceHandler.replace(info);
+          }
         }
       }
     );
   }
 
-  private void doReplacement(final ReplacementInfoImpl info,
-                             final PsiElement elementToReplace,
-                             String replacementToMake,
-                             final PsiElement elementParent) {
-    if (context == null) context = new ReplacementContext(options, project);
-    context.replacementInfo = info;
-
-    if (replaceHandler == null) {
-      StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(elementToReplace);
-      if (profile != null) {
-        replaceHandler = profile.getReplaceHandler(context);
-      }
+  private void initContextAndHandler(PsiElement psiContext) {
+    if (context == null) {
+      context = new ReplacementContext(options, project);
     }
-    if (replaceHandler != null) {
-      replaceHandler.replace(info, elementToReplace, replacementToMake, elementParent);
+    if (replaceHandler == null) {
+      StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(psiContext);
+      if (profile != null) {
+        replaceHandler = profile.getReplaceHandler(this.context);
+      }
     }
   }
 

@@ -53,7 +53,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  public StructuralReplaceHandler getReplaceHandler(ReplacementContext context) {
+  public StructuralReplaceHandler getReplaceHandler(@NotNull ReplacementContext context) {
     return new JavaReplaceHandler(context);
   }
 
