@@ -19,6 +19,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -45,7 +46,7 @@ public class StatusBarUpdater implements Disposable {
 
     CaretListener caretListener = new CaretListener() {
       public void caretPositionChanged(CaretEvent e) {
-        ApplicationManager.getApplication().invokeLater(myUpdateStatusRunnable);
+        updateLater();
       }
     };
     EditorFactory.getInstance().getEventMulticaster().addCaretListener(caretListener, this);
@@ -53,9 +54,19 @@ public class StatusBarUpdater implements Disposable {
     project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
       @Override
       public void selectionChanged(FileEditorManagerEvent event) {
-        ApplicationManager.getApplication().invokeLater(myUpdateStatusRunnable);
+        updateLater();
       }
     });
+  }
+
+  private void updateLater() {
+    final Application application = ApplicationManager.getApplication();
+    if (!application.isUnitTestMode()) {
+      application.invokeLater(myUpdateStatusRunnable);
+    }
+    else {
+      myUpdateStatusRunnable.run();
+    }
   }
 
   public void dispose() {
