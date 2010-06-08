@@ -284,6 +284,22 @@ public class GitChangeUtils {
   }
 
   @Nullable
+  public static String getCommitAbbreviation(final Project project, final VirtualFile root, final SHAHash hash) {
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
+    h.setNoSSH(true);
+    h.setSilent(true);
+    h.addParameters("--max-count=1", "--pretty=%h", "--encoding=UTF-8", "\"" + hash.getValue() + "\"", "--");
+    try {
+      final String output = h.run().trim();
+      if (StringUtil.isEmptyOrSpaces(output)) return null;
+      return output.trim();
+    }
+    catch (VcsException e) {
+      return null;
+    }
+  }
+
+  @Nullable
   public static SHAHash commitExists(final Project project, final VirtualFile root, final String anyReference) {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
     h.setNoSSH(true);

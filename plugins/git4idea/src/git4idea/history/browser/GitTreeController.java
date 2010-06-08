@@ -15,17 +15,16 @@
  */
 package git4idea.history.browser;
 
-import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.CalledInBackground;
+import com.intellij.openapi.vcs.RequestsMerger;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier;
-import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -384,136 +383,10 @@ class GitTreeController implements ManageGitTreeView {
     return new ArrayList<String>(myUsers.get());
   }
 
-  private static class GroupOfListsProcessor {
-    private final Set<String> myHaveLostSomething;
-//    private final Set<String> myRemoved;
-
-    private GroupOfListsProcessor() {
-      myHaveLostSomething = new HashSet<String>();
-//      myRemoved = new HashSet<String>();
-    }
-
-    public void process(final List<String> messagesInOrder, final Map<String, Collection<FilePath>> filesToMove) {
-      // remove those that are in newer lists
-      for (int i = 1; i < messagesInOrder.size(); i++) {
-        final String message = messagesInOrder.get(i);
-        final Collection<FilePath> currentFiles = filesToMove.get(message);
-
-        for (int j = 0; j < i; j++) {
-          final String previous = messagesInOrder.get(j);
-          final boolean somethingChanged = filesToMove.get(previous).removeAll(currentFiles);
-          if (somethingChanged) {
-            myHaveLostSomething.add(previous);
-          }
-        }
-      }
-    }
-
-    public Set<String> getHaveLostSomething() {
-      return myHaveLostSomething;
-    }
-
-    /*public Set<String> getRemoved() {
-      return myRemoved;
-    }*/
-  }
-
   @CalledInBackground
   public void cherryPick(final Collection<SHAHash> hashes) {
-    final List<VcsException> exceptions = new LinkedList<VcsException>();
-    final List<VcsException> warnings = new LinkedList<VcsException>();
-
-    final List<FilePath> dirtyFiles = new LinkedList<FilePath>();
-    final List<String> messagesInOrder = new ArrayList<String>(hashes.size());
-    final Map<String, Collection<FilePath>> filesToMove = new HashMap<String, Collection<FilePath>>();
-
-    final GitVcs vcs = GitVcs.getInstance(myProject);
-    final CheckinEnvironment ce = vcs.getCheckinEnvironment();
-
-    for (SHAHash hash : hashes) {
-      try {
-        myAccess.cherryPick(hash);
-      }
-      catch (VcsException e) {
-        exceptions.add(e);
-      }
-      final CommittedChangeList cl = myListsCache.get(hash);
-
-      final Collection<FilePath> paths = ChangesUtil.getPaths(new ArrayList<Change>(cl.getChanges()));
-      String message = ce.getDefaultMessageFor(paths.toArray(new FilePath[paths.size()]));
-      message = (message == null) ? new StringBuilder().append(cl.getComment()).append("(cherry picked from commit ")
-        .append(hash.getValue()).append(")").toString() : message;
-      messagesInOrder.add(message);
-      filesToMove.put(message, paths);
-      dirtyFiles.addAll(paths);
-    }
-
-    // remove those that are in newer lists
-    final GroupOfListsProcessor listsProcessor = new GroupOfListsProcessor();
-    listsProcessor.process(messagesInOrder, filesToMove);
-    final Set<String> lostSet = listsProcessor.getHaveLostSomething();
-    markFilesMovesToNewerLists(warnings, lostSet, filesToMove);
-
-    final ChangeListManager clm = PeriodicalTasksCloser.safeGetComponent(myProject, ChangeListManager.class);
-    clm.invokeAfterUpdate(new Runnable() {
-      public void run() {
-        for (Map.Entry<String, Collection<FilePath>> entry : filesToMove.entrySet()) {
-          final Collection<FilePath> filePaths = entry.getValue();
-          final String message = entry.getKey();
-
-          if (filePaths.isEmpty()) continue;
-
-          final List<Change> changes = new ArrayList<Change>(filePaths.size());
-          for (FilePath filePath : filePaths) {
-            changes.add(clm.getChange(filePath));
-          }
-          if (! changes.isEmpty()) {
-            final LocalChangeList cl = clm.addChangeList(message, null);
-            clm.moveChangesTo(cl, changes.toArray(new Change[changes.size()]));
-          }
-        }
-      }
-    }, InvokeAfterUpdateMode.SILENT, "", new Consumer<VcsDirtyScopeManager>() {
-      public void consume(VcsDirtyScopeManager vcsDirtyScopeManager) {
-        vcsDirtyScopeManager.filePathsDirty(dirtyFiles, null);
-      }
-    }, ModalityState.NON_MODAL);
-
-    if (exceptions.isEmpty()) {
-      ChangesViewBalloonProblemNotifier.showMe(myProject, "Successful cherry-pick into working tree, please commit changes", MessageType.INFO);
-    } else {
-      ChangesViewBalloonProblemNotifier.showMe(myProject, "Errors in cherry-pick", MessageType.ERROR);
-    }
-    if ((! exceptions.isEmpty()) || (! warnings.isEmpty())) {
-      exceptions.addAll(warnings);
-      AbstractVcsHelper.getInstance(myProject).showErrors(exceptions, "Cherry-pick problems");
-    }
-  }
-
-  private void markFilesMovesToNewerLists(List<VcsException> exceptions, Set<String> lostSet, Map<String, Collection<FilePath>> filesToMove) {
-    if (! lostSet.isEmpty()) {
-      final StringBuilder sb = new StringBuilder("Some changes are moved from following list(s) to other:");
-      boolean first = true;
-      for (String s : lostSet) {
-        if (filesToMove.get(s).isEmpty()) {
-          final VcsException exc =
-            new VcsException("Changelist not created since all files moved to other cherry-pick(s): '" + s + "'");
-          exc.setIsWarning(true);
-          exceptions.add(exc);
-          continue;
-        }
-        sb.append(s);
-        if (! first) {
-          sb.append(", ");
-        }
-        first = false;
-      }
-      if (! first) {
-        final VcsException exc = new VcsException(sb.toString());
-        exc.setIsWarning(true);
-        exceptions.add(exc);
-      }
-    }
+    final CherryPicker picker = new CherryPicker(GitVcs.getInstance(myProject), hashes, myListsCache, myAccess);
+    picker.execute();
   }
 
   public List<String> getAllBranchesOrdered() {
