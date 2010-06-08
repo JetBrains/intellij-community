@@ -275,7 +275,7 @@ public class ChooseRunConfigurationAction extends AnAction {
                 execute((ItemWrapper)item, executor);
               }
             });
-            listPopup.cancel();
+            listPopup.closeOk(null);
           }
         }
       }

@@ -107,12 +107,16 @@ public abstract class JBPopupFactory {
   public abstract RelativePoint guessBestPopupLocation(JComponent component);
 
   public boolean isChildPopupFocused(@Nullable Component parent) {
-    if (parent == null) return false;
+    return getChildFocusedPopup(parent) != null;
+  }
+
+  public JBPopup getChildFocusedPopup(@Nullable Component parent) {
+    if (parent == null) return null;
     List<JBPopup> popups = getChildPopups(parent);
     for (JBPopup each : popups) {
-      if (each.isFocused()) return true;
+      if (each.isFocused()) return each;
     }
-    return false;
+    return null;
   }
 
   /**
