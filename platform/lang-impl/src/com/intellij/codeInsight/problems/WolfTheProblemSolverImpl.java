@@ -87,25 +87,6 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
   };
 
-  private final VirtualFileListener myVirtualFileListener = new VirtualFileAdapter() {
-    public void fileDeleted(final VirtualFileEvent event) {
-      onDeleted(event.getFile());
-    }
-
-    public void fileMoved(final VirtualFileMoveEvent event) {
-      onDeleted(event.getFile());
-    }
-
-    private void onDeleted(final VirtualFile file) {
-      if (file.isDirectory()) {
-        clearInvalidFiles();
-      }
-      else {
-        doRemove(file);
-      }
-    }
-  };
-
   private void doRemove(VirtualFile problemFile) {
     ProblemFileInfo old;
     synchronized (myProblems) {
@@ -120,8 +101,6 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
   }
 
-  private final PsiTreeChangeListener myChangeListener;
-
   private static class ProblemFileInfo {
     private final Collection<Problem> problems = new THashSet<Problem>();
     private boolean hasSyntaxErrors;
@@ -132,10 +111,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
 
       final ProblemFileInfo that = (ProblemFileInfo)o;
 
-      if (hasSyntaxErrors != that.hasSyntaxErrors) return false;
-      if (!problems.equals(that.problems)) return false;
-
-      return true;
+      return hasSyntaxErrors == that.hasSyntaxErrors && problems.equals(that.problems);
     }
 
     public int hashCode() {
@@ -147,7 +123,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
 
   public WolfTheProblemSolverImpl(Project project, PsiManager psiManager, VirtualFileManager virtualFileManager) {
     myProject = project;
-    myChangeListener = new PsiTreeChangeAdapter() {
+    PsiTreeChangeListener changeListener = new PsiTreeChangeAdapter() {
       public void childAdded(PsiTreeChangeEvent event) {
         childrenChanged(event);
       }
@@ -172,8 +148,26 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
         clearSyntaxErrorFlag(event);
       }
     };
-    psiManager.addPsiTreeChangeListener(myChangeListener);
-    virtualFileManager.addVirtualFileListener(myVirtualFileListener, myProject);
+    psiManager.addPsiTreeChangeListener(changeListener);
+    VirtualFileListener virtualFileListener = new VirtualFileAdapter() {
+      public void fileDeleted(final VirtualFileEvent event) {
+        onDeleted(event.getFile());
+      }
+
+      public void fileMoved(final VirtualFileMoveEvent event) {
+        onDeleted(event.getFile());
+      }
+
+      private void onDeleted(final VirtualFile file) {
+        if (file.isDirectory()) {
+          clearInvalidFiles();
+        }
+        else {
+          doRemove(file);
+        }
+      }
+    };
+    virtualFileManager.addVirtualFileListener(virtualFileListener, myProject);
     FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
     if (fileStatusManager != null) { //tests?
       fileStatusManager.addFileStatusListener(new FileStatusListener() {

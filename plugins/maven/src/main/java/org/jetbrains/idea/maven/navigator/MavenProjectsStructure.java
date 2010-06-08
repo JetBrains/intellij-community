@@ -30,8 +30,9 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
-import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.model.*;
+import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 import org.jetbrains.idea.maven.utils.*;
@@ -48,8 +49,8 @@ import static org.jetbrains.idea.maven.project.ProjectBundle.message;
 
 public class MavenProjectsStructure extends SimpleTreeStructure {
   private static final URL ERROR_ICON_URL = MavenProjectsStructure.class.getResource("/images/error.png");
-  private static final Collection<String> BASIC_PHASES = MavenEmbedderWrapper.BASIC_PHASES;
-  private static final Collection<String> PHASES = MavenEmbedderWrapper.PHASES;
+  private static final Collection<String> BASIC_PHASES = MavenConstants.BASIC_PHASES;
+  private static final Collection<String> PHASES = MavenConstants.PHASES;
 
   private static final Comparator<MavenSimpleNode> NODE_COMPARATOR = new Comparator<MavenSimpleNode>() {
     public int compare(MavenSimpleNode o1, MavenSimpleNode o2) {
@@ -106,7 +107,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       }
 
       public MavenUIUtil.CheckBoxState getState(Object userObject) {
-        MavenProfileState state = ((ProfileNode)userObject).getState();
+        MavenProfileKind state = ((ProfileNode)userObject).getState();
         switch (state) {
           case NONE: return MavenUIUtil.CheckBoxState.UNCHECKED;
           case EXPLICIT:  return MavenUIUtil.CheckBoxState.CHECKED;
@@ -563,10 +564,10 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     public void updateProfiles() {
-      Collection<Pair<String,MavenProfileState>> profiles = myProjectsManager.getProfilesWithStates();
+      Collection<Pair<String, MavenProfileKind>> profiles = myProjectsManager.getProfilesWithStates();
 
       List<ProfileNode> newNodes = new ArrayList<ProfileNode>(profiles.size());
-      for (Pair<String, MavenProfileState> each : profiles) {
+      for (Pair<String, MavenProfileKind> each : profiles) {
         ProfileNode node = findOrCreateNodeFor(each.first);
         node.setState(each.second);
         newNodes.add(node);
@@ -587,7 +588,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
   public class ProfileNode extends MavenSimpleNode {
     private final String myProfileName;
-    private MavenProfileState myState;
+    private MavenProfileKind myState;
 
     public ProfileNode(ProfilesNode parent, String profileName) {
       super(parent);
@@ -603,11 +604,11 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       return myProfileName;
     }
 
-    public MavenProfileState getState() {
+    public MavenProfileKind getState() {
       return myState;
     }
 
-    private void setState(MavenProfileState state) {
+    private void setState(MavenProfileKind state) {
       myState = state;
     }
 

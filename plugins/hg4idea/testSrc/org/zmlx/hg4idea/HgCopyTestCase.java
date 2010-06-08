@@ -22,44 +22,44 @@ public class HgCopyTestCase extends HgTestCase {
   @Test
   public void testCopyUnmodifiedFile() throws Exception {
     VirtualFile file = createFileInCommand("a.txt", "new file content");
-    runHg("commit", "-m", "added file");
+    runHgOnProjectRepo("commit", "-m", "added file");
     copyFileInCommand(file, "b.txt");
-    verify(runHg("status"), "A b.txt");
+    verify(runHgOnProjectRepo("status"), added("b.txt"));
   }
 
   @Test
   public void testCopyModifiedFile() throws Exception {
     VirtualFile file = createFileInCommand("a.txt", "new file content");
-    runHg("commit", "-m", "added file");
+    runHgOnProjectRepo("commit", "-m", "added file");
     editFileInCommand(myProject, file, "newer content");
-    verify(runHg("status"), "M a.txt");
+    verify(runHgOnProjectRepo("status"), modified("a.txt"));
     copyFileInCommand(file, "b.txt");
-    verify(runHg("status"), "M a.txt", "A b.txt");
+    verify(runHgOnProjectRepo("status"), modified("a.txt"), added("b.txt"));
   }
 
   @Test
   public void testCopyUnversionedFile() throws Exception {
     VirtualFile file = makeFile(new File(myWorkingCopyDir.getPath(), "a.txt"));
     copyFileInCommand(file, "b.txt");
-    verify(runHg("status"), "? a.txt", "? b.txt");
+    verify(runHgOnProjectRepo("status"), unknown("a.txt"), unknown("b.txt"));
   }
 
   @Test
   public void testCopyCopiedFile() throws Exception {
     VirtualFile file = createFileInCommand("a.txt", "new file content");
-    runHg("commit", "-m", "added file");
+    runHgOnProjectRepo("commit", "-m", "added file");
     copyFileInCommand(file, "b.txt");
     copyFileInCommand(file, "c.txt");
-    verify(runHg("status"), "A b.txt", "A c.txt");
+    verify(runHgOnProjectRepo("status"), added("b.txt"), added("c.txt"));
   }
 
   @Test
   public void testCopyDirWithFiles() throws Exception {
     VirtualFile parent = createDirInCommand(myWorkingCopyDir, "com");
     createFileInCommand(parent, "a.txt", "new file content");
-    runHg("commit", "-m", "added file");
+    runHgOnProjectRepo("commit", "-m", "added file");
     copyFileInCommand(parent, "org");
-    verify(runHg("status"), "A org/a.txt");
+    verify(runHgOnProjectRepo("status"), added("org", "a.txt"));
   }
 
 }

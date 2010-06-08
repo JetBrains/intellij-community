@@ -21,7 +21,7 @@ public class HgVersionCommand {
 
   public boolean isValid(String executable) {
     String hgExecutable = StringUtils.trim(executable);
-    if (!hgExecutable.contains("hg")) {
+    if (!hgExecutable.endsWith("hg")) {
       return false;
     }
     ShellCommand shellCommand = new ShellCommand();

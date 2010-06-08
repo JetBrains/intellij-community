@@ -15,10 +15,10 @@
  */
 package org.jetbrains.idea.maven.importing;
 
+import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
-import org.jetbrains.idea.maven.indices.MavenCustomRepositoryHelper;
+import org.jetbrains.idea.maven.model.MavenProjectProblem;
 import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectProblem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +26,17 @@ import java.util.List;
 public class InvalidProjectImportingTest extends MavenImportingTestCase {
   public void testUnknownProblem() throws Exception {
     importProject("");
+    assertModules("project");
+
+    MavenProject root = getRootProjects().get(0);
+    assertProblems(root, "'pom.xml' has syntax errors");
+  }
+
+  public void testUnknownProblemWithEmptyFile() throws Exception {
+    createProjectPom("");
+    myProjectPom.setBinaryContent(new byte[0]);
+    importProject();
+    
     assertModules("project");
 
     MavenProject root = getRootProjects().get(0);

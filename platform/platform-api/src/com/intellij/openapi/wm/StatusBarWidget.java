@@ -36,7 +36,7 @@ public interface StatusBarWidget extends Disposable {
     DEFAULT, MAC
   }
 
-  interface Presentation {
+  interface WidgetPresentation {
     @Nullable
     String getTooltipText();
 
@@ -44,12 +44,12 @@ public interface StatusBarWidget extends Disposable {
     Consumer<MouseEvent> getClickConsumer();
   }
 
-  interface IconPresentation extends Presentation {
+  interface IconPresentation extends WidgetPresentation {
     @NotNull
     Icon getIcon();
   }
 
-  interface TextPresentation extends Presentation {
+  interface TextPresentation extends WidgetPresentation {
     @NotNull
     String getText();
 
@@ -57,7 +57,7 @@ public interface StatusBarWidget extends Disposable {
     String getMaxPossibleText();
   }
 
-  interface MultipleTextValuesPresentation extends Presentation {
+  interface MultipleTextValuesPresentation extends WidgetPresentation {
     @NotNull
     ListPopup getPopupStep();
 
@@ -72,7 +72,7 @@ public interface StatusBarWidget extends Disposable {
   String ID();
 
   @Nullable
-  Presentation getPresentation(@NotNull Type type);
+  WidgetPresentation getPresentation(@NotNull Type type);
 
   void install(@NotNull final StatusBar statusBar);
 

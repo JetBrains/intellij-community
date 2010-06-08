@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -117,7 +118,7 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
         if (resolvedMethod != null) {
           final PsiParameter[] parameters = resolvedMethod.getParameterList().getParameters();
           if (parameters.length > 0) {
-            if (PsiUtil.createMapType(resolvedMethod.getManager(), resolvedMethod.getResolveScope()).isAssignableFrom(parameters[0].getType())) {
+            if (InheritanceUtil.isInheritor(parameters[0].getType(), CommonClassNames.JAVA_UTIL_MAP)) {
               //call with named argument, not setting property
               return null;
             }

@@ -164,7 +164,8 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
     PsiElement anchor = getNormalizedAnchor(anchorElement);
 
-    boolean tempDeleteSelf = false;
+    final Boolean outOfCodeBlockExtraction = selectedExpr.getUserData(ElementToWorkOn.OUT_OF_CODE_BLOCK);
+    boolean tempDeleteSelf = outOfCodeBlockExtraction != null;
     if (element.getParent() instanceof PsiExpressionStatement && anchor.equals(anchorElement)) {
       PsiStatement statement = (PsiStatement)element.getParent();
       if (statement.getParent() instanceof PsiCodeBlock) {
@@ -252,7 +253,16 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
           if (expr.getParent() instanceof PsiParenthesizedExpression) {
             expr = (PsiExpression)expr.getParent();
           }
-          if (deleteSelf) {
+          if (outOfCodeBlockExtraction != null) {
+            final int endOffset = selectedExpr.getUserData(ElementToWorkOn.TEXT_RANGE).getEndOffset();
+            PsiElement endElement = element.getContainingFile().findElementAt(endOffset);
+            while (true) {
+              final PsiElement parent = endElement.getParent();
+              if (parent instanceof PsiClass) break;
+              endElement = parent;
+            }
+            element.getParent().deleteChildRange(element, PsiTreeUtil.skipSiblingsBackward(endElement, PsiWhiteSpace.class));
+          } else if (deleteSelf) {
             element.getParent().delete();
           }
 
@@ -643,7 +653,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
     public Settings(String fieldName, boolean replaceAll,
                     boolean declareStatic, boolean declareFinal,
-                    InitializationPlace initializerPlace, @Modifier String visibility, PsiLocalVariable localVariableToRemove, PsiType forcedType,
+                    InitializationPlace initializerPlace, String visibility, PsiLocalVariable localVariableToRemove, PsiType forcedType,
                     boolean deleteLocalVariable,
                     PsiClass targetClass,
                     final boolean annotateAsNonNls,

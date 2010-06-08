@@ -68,6 +68,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <refactoring.introduceParameterMethodUsagesProcessor implementation="org.jetbrains.plugins.groovy.refactoring.introduceParameter.java2groovy.GroovyIntroduceParameterMethodUsagesProcessor"/>
+    <refactoring.changeSignatureUsageProcessor implementation="org.jetbrains.plugins.groovy.refactoring.changeSignature.GrChangeSignatureUsageProcessor" id="groovyProcessor" order="before javaProcessor"/>
 
     <constantExpressionEvaluator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator"/>
     <annotationSupport language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GroovyAnnotationSupport"/>
@@ -115,6 +116,8 @@
     <lang.surroundDescriptor language="Groovy"
                              implementationClass="org.jetbrains.plugins.groovy.lang.surroundWith.descriptors.GroovyStmtsSurroundDescriptor"/>
     <lang.findUsagesProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.findUsages.GroovyFindUsagesProvider"/>
+    <readWriteAccessDetector implementation="org.jetbrains.plugins.groovy.findUsages.GroovyReadWriteAccessDetector" order="before java"/>
+    <findUsagesHandlerFactory implementation="org.jetbrains.plugins.groovy.findUsages.GroovyFindUsagesHandlerFactory"/>
     <lang.braceMatcher language="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovyBraceMatcher"/>
     <lang.importOptimizer language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.editor.GroovyImportOptimizer"/>
     <lang.documentationProvider language="Groovy"

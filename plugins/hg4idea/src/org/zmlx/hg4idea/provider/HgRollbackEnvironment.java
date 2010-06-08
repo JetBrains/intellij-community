@@ -16,16 +16,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
-import org.zmlx.hg4idea.command.HgRevertCommand;
-import org.zmlx.hg4idea.HgVcsMessages;
-import org.zmlx.hg4idea.HgFile;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgFile;
+import org.zmlx.hg4idea.HgRevisionNumber;
+import org.zmlx.hg4idea.HgVcsMessages;
+import org.zmlx.hg4idea.command.HgResolveCommand;
+import org.zmlx.hg4idea.command.HgRevertCommand;
+import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -84,13 +87,23 @@ public class HgRollbackEnvironment implements RollbackEnvironment {
 
   private void revert(List<FilePath> filePaths) {
     VcsDirtyScopeManager dirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
-    HgRevertCommand command = new HgRevertCommand(project);
+
+    HgWorkingCopyRevisionsCommand identifyCommand = new HgWorkingCopyRevisionsCommand(project);
+    HgRevertCommand revertCommand = new HgRevertCommand(project);
+    HgResolveCommand resolveCommand = new HgResolveCommand(project);
+
     for (FilePath filePath : filePaths) {
       VirtualFile vcsRoot = VcsUtil.getVcsRootFor(project, filePath);
       if (vcsRoot == null) {
         continue;
       }
-      command.execute(new HgFile(vcsRoot, filePath));
+
+      HgFile hgFile = new HgFile(vcsRoot, filePath);
+
+      HgRevisionNumber revisionNumber = identifyCommand.firstParent(vcsRoot);
+      revertCommand.execute(hgFile, revisionNumber, false);
+      resolveCommand.markResolved(vcsRoot, filePath);
+
       dirtyScopeManager.dirDirtyRecursively(filePath.getParentPath());
     }
   }

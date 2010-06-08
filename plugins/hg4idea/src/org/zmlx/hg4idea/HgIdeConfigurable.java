@@ -20,6 +20,7 @@ import org.zmlx.hg4idea.ui.HgConfigurationIdePanel;
 import javax.swing.*;
 
 public class HgIdeConfigurable implements SearchableConfigurable {
+
   private final HgConfigurationIdePanel panel;
 
   public HgIdeConfigurable(HgGlobalSettings globalSettings) {

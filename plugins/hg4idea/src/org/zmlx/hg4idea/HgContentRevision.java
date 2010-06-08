@@ -26,7 +26,7 @@ public class HgContentRevision implements ContentRevision {
 
   private final Project project;
   private final HgFile hgFile;
-  private final HgRevisionNumber revisionNumber;
+  @NotNull private final HgRevisionNumber revisionNumber;
 
   private FilePath filePath;
   private String content;

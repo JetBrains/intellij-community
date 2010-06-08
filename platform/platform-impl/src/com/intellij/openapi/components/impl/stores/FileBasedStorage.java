@@ -30,7 +30,6 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
 import com.intellij.util.ArrayUtil;
-import static com.intellij.util.io.fs.FileSystem.FILE_SYSTEM;
 import com.intellij.util.io.fs.IFile;
 import com.intellij.util.messages.MessageBus;
 import org.jdom.Document;
@@ -47,6 +46,8 @@ import java.io.InputStream;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.util.io.fs.FileSystem.FILE_SYSTEM;
 
 public class FileBasedStorage extends XmlElementStorage {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.FileBasedStorage");
@@ -163,8 +164,7 @@ public class FileBasedStorage extends XmlElementStorage {
 
     protected void doSave() throws StateStorageException {
       if (!myBlockSavingTheContent) {
-        final byte[] text = StorageUtil.printDocument(getDocumentToSave());
-        StorageUtil.save(myFile, text, this);
+        StorageUtil.save(myFile, getDocumentToSave(), this);
       }
     }
 

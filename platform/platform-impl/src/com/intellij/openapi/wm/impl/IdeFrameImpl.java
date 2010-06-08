@@ -40,6 +40,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
+import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.status.EncodingPanel;
 import com.intellij.openapi.wm.impl.status.InsertOverwritePanel;
 import com.intellij.openapi.wm.impl.status.PositionPanel;
@@ -280,6 +281,8 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
         statusBar.removeWidget(positionPanel.ID());
         statusBar.removeWidget(readOnlyAttributePanel.ID());
         if (finalInsertOverwritePanel != null) statusBar.removeWidget(finalInsertOverwritePanel.ID());
+
+        ((StatusBarEx)statusBar).removeCustomIndicationComponents();
       }
     });
   }

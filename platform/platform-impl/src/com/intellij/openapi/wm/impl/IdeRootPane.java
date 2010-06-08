@@ -235,7 +235,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
             return c.getClass().getSimpleName();
           }
 
-          public Presentation getPresentation(@NotNull Type type) {
+          public WidgetPresentation getPresentation(@NotNull Type type) {
             return null;
           }
 

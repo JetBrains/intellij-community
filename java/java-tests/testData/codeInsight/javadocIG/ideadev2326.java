@@ -1,4 +1,6 @@
-import java.io.*;
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.InterruptedIOException;
 
 public interface Idea4780 {
     /**

@@ -27,6 +27,7 @@ public class MethodCallUsageInfo extends UsageInfo {
   private final boolean myToChangeArguments;
   private final boolean myToCatchExceptions;
   private final PsiMethod myReferencedMethod;
+  private final PsiSubstitutor mySubstitutor;
 
   public boolean isToCatchExceptions() {
     return myToCatchExceptions;
@@ -40,17 +41,19 @@ public class MethodCallUsageInfo extends UsageInfo {
     super(ref);
     myToChangeArguments = isToChangeArguments;
     myToCatchExceptions = isToCatchExceptions;
-    myReferencedMethod = resolveMethod(ref);
+    final JavaResolveResult resolveResult = resolveMethod(ref);
+    myReferencedMethod = (PsiMethod)resolveResult.getElement();
+    mySubstitutor = resolveResult.getSubstitutor();
   }
 
-  private static PsiMethod resolveMethod(final PsiElement ref) {
-    if (ref instanceof PsiEnumConstant) return ((PsiEnumConstant)ref).resolveConstructor();
+  private static JavaResolveResult resolveMethod(final PsiElement ref) {
+    if (ref instanceof PsiEnumConstant) return ((PsiEnumConstant)ref).resolveMethodGenerics();
     PsiElement parent = ref.getParent();
     if (parent instanceof PsiCall) {
-      return ((PsiCall)parent).resolveMethod();
+      return ((PsiCall)parent).resolveMethodGenerics();
     }
     else if (parent instanceof PsiAnonymousClass) {
-      return ((PsiNewExpression)parent.getParent()).resolveConstructor();
+      return ((PsiNewExpression)parent.getParent()).resolveMethodGenerics();
     }
     LOG.error("Unknown reference");
 
@@ -59,5 +62,9 @@ public class MethodCallUsageInfo extends UsageInfo {
 
   public PsiMethod getReferencedMethod() {
     return myReferencedMethod;
+  }
+
+  public PsiSubstitutor getSubstitutor() {
+    return mySubstitutor;
   }
 }

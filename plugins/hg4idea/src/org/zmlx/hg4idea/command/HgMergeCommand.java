@@ -42,8 +42,6 @@ public class HgMergeCommand {
 
   public HgCommandResult execute() {
     HgCommandService commandService = HgCommandService.getInstance(project);
-    List<String> config = new LinkedList<String>();
-    config.add("ui.merge=internal:merge");
     List<String> arguments = new LinkedList<String>();
     if (StringUtils.isNotBlank(revision)) {
       arguments.add("--rev");
@@ -51,7 +49,7 @@ public class HgMergeCommand {
     } else if (StringUtils.isNotBlank(branch)) {
       arguments.add(branch);
     }
-    return commandService.execute(repo, config, "merge", arguments);
+    return commandService.execute(repo, "merge", arguments);
   }
 
 }

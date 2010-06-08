@@ -23,8 +23,8 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +50,7 @@ public class IdeNotificationArea implements StatusBarWidget, StatusBarWidget.Ico
   public IdeNotificationArea() {
   }
 
-  public Presentation getPresentation(@NotNull Type type) {
+  public WidgetPresentation getPresentation(@NotNull Type type) {
     return this;
   }
 

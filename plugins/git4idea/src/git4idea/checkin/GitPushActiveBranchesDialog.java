@@ -30,6 +30,7 @@ import git4idea.GitBranch;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
+import git4idea.actions.GitRepositoryAction;
 import git4idea.actions.GitShowAllSubmittedFilesAction;
 import git4idea.commands.*;
 import git4idea.config.GitVcsSettings;
@@ -112,10 +113,10 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
     updateTree(roots, null);
     TreeUtil.expandAll(myCommitTree);
     final GitVcsSettings settings = GitVcsSettings.getInstance(project);
-    UpdatePolicyUtils.updatePolicyItem(settings.PUSH_ACTIVE_BRANCHES_REBASE_SAVE_POLICY, myStashRadioButton, myShelveRadioButton, null);
+    UpdatePolicyUtils.updatePolicyItem(settings.getPushActiveBranchesRebaseSavePolicy(), myStashRadioButton, myShelveRadioButton, null);
     ChangeListener listener = new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
-        settings.PUSH_ACTIVE_BRANCHES_REBASE_SAVE_POLICY = UpdatePolicyUtils.getUpdatePolicy(myStashRadioButton, myShelveRadioButton, null);
+        settings.setPushActiveBranchesRebaseSavePolicy(UpdatePolicyUtils.getUpdatePolicy(myStashRadioButton, myShelveRadioButton, null));
       }
     };
     myStashRadioButton.addChangeListener(listener);
@@ -430,7 +431,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
    */
   @Override
   protected String getHelpId() {
-    return "reference?.?VersionControl?.?Git?.?PushActiveBranches";
+    return "reference.VersionControl.Git.PushActiveBranches";
   }
 
   /**
@@ -509,6 +510,22 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
       }
     }, GitBundle.getString("push.active.fetching"), false, project);
     return rc;
+  }
+
+  /**
+   * Show dialog for the project
+   *
+   * @param project the project to show dialog for
+   */
+  public static void showDialogForProject(final Project project) {
+    GitVcs vcs = GitVcs.getInstance(project);
+    List<VirtualFile> roots = GitRepositoryAction.getGitRoots(project, vcs);
+    if (roots == null) {
+      return;
+    }
+    List<VcsException> pushExceptions = new ArrayList<VcsException>();
+    showDialog(project, roots, pushExceptions);
+    vcs.showErrors(pushExceptions, GitBundle.getString("push.active.action.name"));
   }
 
   /**

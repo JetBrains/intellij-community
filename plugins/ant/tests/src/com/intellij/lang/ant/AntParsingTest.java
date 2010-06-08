@@ -17,6 +17,7 @@
 package com.intellij.lang.ant;
 
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.testFramework.ParsingTestCase;
 
 public class AntParsingTest extends ParsingTestCase {
@@ -110,7 +111,7 @@ public class AntParsingTest extends ParsingTestCase {
   }
 
   public void testDirname() throws Exception {
-    doTest(true);
+    doTest(SystemInfo.isWindows ? "_w" : "_u");
   }
 
   public void testBasename() throws Exception {

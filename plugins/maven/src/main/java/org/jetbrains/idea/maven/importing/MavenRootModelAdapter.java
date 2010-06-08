@@ -23,17 +23,17 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.project.MavenArtifact;
+import org.jetbrains.idea.maven.model.MavenArtifact;
+import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.utils.MavenConstants;
 import org.jetbrains.idea.maven.utils.Path;
 import org.jetbrains.idea.maven.utils.Url;
 
 import java.io.File;
-import java.util.List;
 
 public class MavenRootModelAdapter {
   private static final String MAVEN_LIB_PREFIX = "Maven: ";
@@ -250,7 +250,9 @@ public class MavenRootModelAdapter {
       extension = result.second;
     }
 
-    String newUrl = artifact.getUrlForExtraArtifact(classifier, extension);
+
+    String newPath = artifact.getPathForExtraArtifact(classifier, extension);
+    String newUrl = VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, newPath) + JarFileSystem.JAR_SEPARATOR;
     for (String url : library.getUrls(type)) {
       if (newUrl.equals(url)) return;
       if (clearAll || isRepositoryUrl(artifact, url, classifier, extension)) {

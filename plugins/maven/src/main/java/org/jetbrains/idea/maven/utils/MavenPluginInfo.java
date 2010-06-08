@@ -16,13 +16,13 @@
 package org.jetbrains.idea.maven.utils;
 
 import org.jdom.Element;
-import org.jetbrains.idea.maven.project.MavenId;
-
-import static org.jetbrains.idea.maven.project.MavenId.append;
+import org.jetbrains.idea.maven.model.MavenId;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+import static org.jetbrains.idea.maven.model.MavenId.append;
 
 public class MavenPluginInfo {
   private final String myGroupId;
@@ -35,7 +35,7 @@ public class MavenPluginInfo {
     Element plugin = MavenJDOMUtil.read(text, null);
 
     myGroupId = MavenJDOMUtil.findChildValueByPath(plugin, "groupId", MavenId.UNKNOWN_VALUE);
-    myArtifactId = MavenJDOMUtil.findChildValueByPath(plugin, "artifactId",MavenId.UNKNOWN_VALUE);
+    myArtifactId = MavenJDOMUtil.findChildValueByPath(plugin, "artifactId", MavenId.UNKNOWN_VALUE);
     myVersion = MavenJDOMUtil.findChildValueByPath(plugin, "version", MavenId.UNKNOWN_VALUE);
 
     myGoalPrefix = MavenJDOMUtil.findChildValueByPath(plugin, "goalPrefix", "unknown");

@@ -12,49 +12,38 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider.update;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.merge.MergeData;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.update.FileGroup;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgFile;
-import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.command.HgCatCommand;
 import org.zmlx.hg4idea.command.HgResolveCommand;
 import org.zmlx.hg4idea.command.HgResolveStatusEnum;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public final class HgConflictResolver {
 
-  private final Project project;
-  private final HgRevisionNumber incomingRevision;
-  private final HgRevisionNumber localRevision;
+  @NotNull private final Project project;
   private final UpdatedFiles updatedFiles;
 
-  public HgConflictResolver(Project project,
-    HgRevisionNumber incomingRevision, HgRevisionNumber localRevision) {
-    this(project, incomingRevision, localRevision, null);
+  public HgConflictResolver(@NotNull Project project) {
+    this(project, null);
   }
 
-  public HgConflictResolver(Project project, HgRevisionNumber incomingRevision,
-    HgRevisionNumber localRevision, UpdatedFiles updatedFiles) {
+  public HgConflictResolver(Project project, UpdatedFiles updatedFiles) {
     this.project = project;
-    this.incomingRevision = incomingRevision;
-    this.localRevision = localRevision;
     this.updatedFiles = updatedFiles;
   }
 
@@ -75,8 +64,10 @@ public final class HgConflictResolver {
         default:
       }
       if (updatedFiles != null && fileGroupId != null) {
+        updatedFiles.getGroupById(FileGroup.UPDATED_ID).remove(file.getAbsolutePath());
+        //TODO get the correct revision to pass to the UpdatedFiles
         updatedFiles.getGroupById(fileGroupId)
-          .add(file.getPath(), HgVcs.VCS_NAME, incomingRevision);
+          .add(file.getPath(), HgVcs.VCS_NAME, null); 
       }
     }
 
@@ -84,56 +75,27 @@ public final class HgConflictResolver {
       return;
     }
 
-    AbstractVcsHelper.getInstance(project).showMergeDialog(conflicts, buildMergeProvider(repo));
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      AbstractVcsHelper.getInstance(project).showMergeDialog(conflicts, buildMergeProvider(repo));
+    }
   }
 
   private MergeProvider buildMergeProvider(final VirtualFile repo) {
     return new MergeProvider() {
       @NotNull
       public MergeData loadRevisions(VirtualFile file) throws VcsException {
-        try {
-          MergeData mergeData = new MergeData();
-          final FileInputStream stream = new FileInputStream(file.getPath() + ".orig");
-          try {
-            mergeData.ORIGINAL = FileUtil.loadBytes(stream);
-          }
-          finally {
-            stream.close();
-          }
-          mergeData.LAST_REVISION_NUMBER = incomingRevision;
 
-          HgFile hgFile = new HgFile(repo, VfsUtil.virtualToIoFile(file));
+        HgResolveCommand.MergeData resolveData = new HgResolveCommand(project).getResolveData(repo, file);
 
-          HgCatCommand hgCatCommand = new HgCatCommand(project);
-          String last = hgCatCommand.execute(
-            hgFile,
-            (HgRevisionNumber) mergeData.LAST_REVISION_NUMBER,
-            file.getCharset()
-          );
-          if (last != null) {
-            mergeData.LAST = last.getBytes(file.getCharset().name());
-          } else {
-            mergeData.LAST = new byte[0];
-          }
-
-          String current = hgCatCommand.execute(
-            hgFile, localRevision, file.getCharset()
-          );
-
-          if (current != null) {
-            mergeData.CURRENT = current.getBytes(file.getCharset().name());
-          } else {
-            mergeData.CURRENT = new byte[0];
-          }
-
-          return mergeData;
-        } catch (IOException e) {
-          throw new VcsException(e);
-        }
+        MergeData mergeData = new MergeData();
+        mergeData.ORIGINAL = resolveData.getBase();
+        mergeData.CURRENT = resolveData.getLocal();
+        mergeData.LAST = resolveData.getOther();
+        return mergeData;
       }
 
       public void conflictResolvedForFile(VirtualFile file) {
-        new HgResolveCommand(project).resolve(repo, file);
+        new HgResolveCommand(project).markResolved(repo, file);
       }
 
       public boolean isBinary(VirtualFile file) {

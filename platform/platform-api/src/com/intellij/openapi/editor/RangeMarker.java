@@ -31,7 +31,7 @@ import java.util.Comparator;
  *
  * @see Document#createRangeMarker(int, int)
  */
-public interface RangeMarker extends UserDataHolder {
+public interface RangeMarker extends UserDataHolder{
   /**
    * Returns the document to which the marker belongs.
    *

@@ -33,6 +33,7 @@ public abstract class FileTemplateManager{
   public static final int RECENT_TEMPLATES_SIZE = 25;
 
   @NonNls public static final String INTERNAL_HTML_TEMPLATE_NAME = "Html";
+  @NonNls public static final String INTERNAL_HTML5_TEMPLATE_NAME = "Html5";
   @NonNls public static final String INTERNAL_XHTML_TEMPLATE_NAME = "Xhtml";
   @NonNls public static final String FILE_HEADER_TEMPLATE_NAME = "File Header";
 

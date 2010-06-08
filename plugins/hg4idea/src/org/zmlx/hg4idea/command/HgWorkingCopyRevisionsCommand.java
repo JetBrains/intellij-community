@@ -16,8 +16,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -29,26 +31,31 @@ public class HgWorkingCopyRevisionsCommand {
     this.project = project;
   }
 
-  public HgRevisionNumber parent(@NotNull VirtualFile repo) {
-    return getRevision(repo, "parents");
+  public List<HgRevisionNumber> parents(@NotNull VirtualFile repo) {
+    return getRevisions(repo, "parents");
+  }
+
+  @Nullable
+  public HgRevisionNumber firstParent(@NotNull VirtualFile repo) {
+    List<HgRevisionNumber> parents = parents(repo);
+    if (parents.isEmpty()) {
+      //this is possible when we have a freshly initialized mercurial repository
+      return null;
+    }
+    else {
+      return parents.get(0);
+    }
   }
 
   public HgRevisionNumber tip(@NotNull VirtualFile repo) {
-    return getRevision(repo, "tip");
-  }
-
-  public HgRevisionNumber parent(@NotNull VirtualFile repo, HgRevisionNumber revision) {
-    HgCommandService commandService = HgCommandService.getInstance(project);
-    HgCommandResult result = commandService.execute(
-      repo, "parent",
-      Arrays.asList("--rev", revision.getChangeset(), "--template", "{rev}|{node|short}\\n")
-    );
-    List<String> lines = result.getOutputLines();
-    if (!lines.isEmpty()) {
-      String[] parts = StringUtils.split(lines.get(0), '|');
-      return HgRevisionNumber.getInstance(parts[0], parts[1]);
+    List<HgRevisionNumber> tips = getRevisions(repo, "tip");
+    if (tips.size() > 1) {
+      throw new IllegalStateException("There cannot be multiple tips");
     }
-    return null;
+    if(!tips.isEmpty()) {
+      return tips.get(0);
+    }
+    else return null;
   }
 
   public HgRevisionNumber identify(@NotNull VirtualFile repo) {
@@ -66,17 +73,20 @@ public class HgWorkingCopyRevisionsCommand {
     return null;
   }
 
-  private HgRevisionNumber getRevision(VirtualFile repo, String command) {
+  private List<HgRevisionNumber> getRevisions(VirtualFile repo, String command) {
     HgCommandService commandService = HgCommandService.getInstance(project);
     HgCommandResult result = commandService.execute(
       repo, command, Arrays.asList("--template", "{rev}|{node|short}\\n")
     );
     List<String> lines = result.getOutputLines();
-    if (!lines.isEmpty()) {
-      String[] parts = StringUtils.split(lines.get(0), '|');
-      return HgRevisionNumber.getInstance(parts[0], parts[1]);
+    List<HgRevisionNumber> revisions = new ArrayList<HgRevisionNumber>(lines.size());
+    
+    for(String line: lines) {
+      String[] parts = StringUtils.split(line, '|');
+      revisions.add(HgRevisionNumber.getInstance(parts[0], parts[1]));
     }
-    return null;
+    
+    return revisions;
   }
 
 }

@@ -190,7 +190,7 @@
     <autoImportOptionsProvider implementation="com.intellij.application.options.editor.JavaAutoImportOptions"/>
     <codeFoldingOptionsProvider implementation="com.intellij.application.options.editor.JavaCodeFoldingOptionsProvider"/>
 
-    <refactoring.introduceParameterMethodUsagesProcessor implementation="com.intellij.refactoring.introduceParameter.JavaIntroduceParameterMethodUsagesProcessor"/>
+
 
     <!--<expectedTypesProvider implementation="com.intellij.codeInsight.JavaExpectedTypesProvider"/>-->
 
@@ -968,6 +968,9 @@
 
     <refactoring.safeDeleteProcessor implementation="com.intellij.refactoring.safeDelete.JavaSafeDeleteProcessor"/>
 
+    <refactoring.introduceParameterMethodUsagesProcessor implementation="com.intellij.refactoring.introduceParameter.JavaIntroduceParameterMethodUsagesProcessor"/>
+    <refactoring.changeSignatureUsageProcessor implementation="com.intellij.refactoring.changeSignature.JavaChangeSignatureUsageProcessor" id="javaProcessor"/>
+
     <refactoring.helper implementation="com.intellij.refactoring.OptimizeImportsRefactoringHelper"/>
 
     <projectService serviceInterface="com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper"
@@ -1035,7 +1038,7 @@
 
     <vetoRenameCondition implementation="com.intellij.refactoring.rename.JavaVetoRenameCondition"/>
 
-    <readWriteAccessDetector implementation="com.intellij.codeInsight.highlighting.JavaReadWriteAccessDetector"/>
+    <readWriteAccessDetector implementation="com.intellij.codeInsight.highlighting.JavaReadWriteAccessDetector" id="java"/>
     <elementDescriptionProvider implementation="com.intellij.codeInsight.highlighting.JavaHighlightUsagesDescriptionProvider"/>
 
     <elementDescriptionProvider implementation="com.intellij.usageView.JavaUsageViewDescriptionProvider"/>

@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -29,11 +30,11 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import org.apache.maven.artifact.Artifact;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.idea.maven.embedder.MavenConsole;
-import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
+import org.jetbrains.idea.maven.facade.MavenEmbedderWrapper;
+import org.jetbrains.idea.maven.facade.NativeMavenProjectHolder;
+import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.utils.*;
 
 import java.io.*;
@@ -64,7 +65,7 @@ public class MavenProjectsTree {
   private final Map<MavenProject, MavenProjectTimestamp> myTimestamps = new THashMap<MavenProject, MavenProjectTimestamp>();
   private final Map<VirtualFile, MavenProject> myVirtualFileToProjectMapping = new THashMap<VirtualFile, MavenProject>();
   private final Map<MavenId, MavenProject> myMavenIdToProjectMapping = new THashMap<MavenId, MavenProject>();
-  private final Map<MavenId, VirtualFile> myMavenIdToFileMapping = new THashMap<MavenId, VirtualFile>();
+  private final Map<MavenId, File> myMavenIdToFileMapping = new THashMap<MavenId, File>();
   private final Map<MavenProject, List<MavenProject>> myAggregatorToModuleMapping = new THashMap<MavenProject, List<MavenProject>>();
   private final Map<MavenProject, MavenProject> myModuleToAggregatorMapping = new THashMap<MavenProject, MavenProject>();
 
@@ -138,7 +139,7 @@ public class MavenProjectsTree {
         tree.myTimestamps.put(project, timestamp);
         tree.myVirtualFileToProjectMapping.put(project.getFile(), project);
         tree.myMavenIdToProjectMapping.put(project.getMavenId(), project);
-        tree.myMavenIdToFileMapping.put(project.getMavenId(), project.getFile());
+        tree.myMavenIdToFileMapping.put(project.getMavenId(), new File(project.getFile().getPath()));
         tree.myAggregatorToModuleMapping.put(project, modules);
         for (MavenProject eachModule : modules) {
           tree.myModuleToAggregatorMapping.put(eachModule, project);
@@ -387,8 +388,8 @@ public class MavenProjectsTree {
     return Pair.create(available, active);
   }
 
-  public Collection<Pair<String, MavenProfileState>> getProfilesWithStates() {
-    Collection<Pair<String, MavenProfileState>> result = new ArrayListSet<Pair<String, MavenProfileState>>();
+  public Collection<Pair<String, MavenProfileKind>> getProfilesWithStates() {
+    Collection<Pair<String, MavenProfileKind>> result = new ArrayListSet<Pair<String, MavenProfileKind>>();
 
     Pair<Collection<String>, Collection<String>> profiles = getAvailableAndActiveProfiles(true, true);
     Collection<String> available = profiles.first;
@@ -396,11 +397,11 @@ public class MavenProjectsTree {
     Collection<String> explicitProfiles = getExplicitProfiles();
 
     for (String each : available) {
-      MavenProfileState state = MavenProfileState.NONE;
+      MavenProfileKind state = MavenProfileKind.NONE;
       if (explicitProfiles.contains(each)) {
-        state = MavenProfileState.EXPLICIT;
+        state = MavenProfileKind.EXPLICIT;
       }
-      else if (active.contains(each)) state = MavenProfileState.IMPLICIT;
+      else if (active.contains(each)) state = MavenProfileKind.IMPLICIT;
       result.add(Pair.create(each, state));
     }
     return result;
@@ -541,7 +542,7 @@ public class MavenProjectsTree {
       try {
         myVirtualFileToProjectMapping.put(mavenProject.getFile(), mavenProject);
         myMavenIdToProjectMapping.put(mavenProject.getMavenId(), mavenProject);
-        myMavenIdToFileMapping.put(mavenProject.getMavenId(), mavenProject.getFile());
+        myMavenIdToFileMapping.put(mavenProject.getMavenId(), new File(mavenProject.getFile().getPath()));
       }
       finally {
         writeUnlock();
@@ -891,14 +892,10 @@ public class MavenProjectsTree {
     return findProject(artifact.getMavenId());
   }
 
-  public MavenProject findProject(Artifact artifact) {
-    return findProject(new MavenId(artifact));
-  }
-
-  private Map<MavenId, VirtualFile> getProjectIdToFileMapping() {
+  private Map<MavenId, File> getProjectIdToFileMapping() {
     readLock();
     try {
-      return new THashMap<MavenId, VirtualFile>(myMavenIdToFileMapping);
+      return new THashMap<MavenId, File>(myMavenIdToFileMapping);
     }
     finally {
       readUnlock();
@@ -990,17 +987,17 @@ public class MavenProjectsTree {
                       MavenConsole console,
                       MavenProgressIndicator process,
                       Object message) throws MavenProcessCanceledException {
-    MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.EmbedderKind.FOR_DEPENDENCIES_RESOLVE);
+    MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE);
     embedder.customizeForResolve(getProjectIdToFileMapping(), console, process);
 
     try {
       process.checkCanceled();
       process.setText(ProjectBundle.message("maven.resolving.pom", mavenProject.getDisplayName()));
       process.setText2("");
-      Pair<MavenProjectChanges, org.apache.maven.project.MavenProject> resolveResult = mavenProject.resolve(generalSettings,
-                                                                                                            embedder,
-                                                                                                            new MavenProjectReader(),
-                                                                                                            myProjectLocator);
+      Pair<MavenProjectChanges, NativeMavenProjectHolder> resolveResult = mavenProject.resolve(generalSettings,
+                                                                                               embedder,
+                                                                                               new MavenProjectReader(),
+                                                                                               myProjectLocator);
 
       fireProjectResolved(Pair.create(mavenProject, resolveResult.first), resolveResult.second, message);
     }
@@ -1010,11 +1007,11 @@ public class MavenProjectsTree {
   }
 
   public void resolvePlugins(MavenProject mavenProject,
-                             org.apache.maven.project.MavenProject nativeMavenProject,
+                             NativeMavenProjectHolder nativeMavenProject,
                              MavenEmbeddersManager embeddersManager,
                              MavenConsole console,
                              MavenProgressIndicator process) throws MavenProcessCanceledException {
-    MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.EmbedderKind.FOR_PLUGINS_RESOLVE);
+    MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_PLUGINS_RESOLVE);
     embedder.customizeForResolve(console, process);
     embedder.clearCachesFor(mavenProject.getMavenId());
 
@@ -1022,7 +1019,7 @@ public class MavenProjectsTree {
       for (MavenPlugin each : mavenProject.getDeclaredPlugins()) {
         process.checkCanceled();
         process.setText(ProjectBundle.message("maven.downloading.pom.plugins", mavenProject.getDisplayName()));
-        embedder.resolvePlugin(each, nativeMavenProject, false);
+        embedder.resolvePlugin(each, mavenProject.getRemoteRepositories(), nativeMavenProject, false);
       }
       mavenProject.resetCache();
       firePluginsResolved(mavenProject);
@@ -1033,7 +1030,6 @@ public class MavenProjectsTree {
   }
 
   public void resolveFolders(final MavenProject mavenProject,
-                             final MavenGeneralSettings generalSettings,
                              final MavenImportingSettings importingSettings,
                              final MavenEmbeddersManager embeddersManager,
                              final MavenConsole console,
@@ -1041,7 +1037,7 @@ public class MavenProjectsTree {
                              final Object message) throws MavenProcessCanceledException {
     executeWithEmbedder(mavenProject,
                         embeddersManager,
-                        MavenEmbeddersManager.EmbedderKind.FOR_FOLDERS_RESOLVE,
+                        MavenEmbeddersManager.FOR_FOLDERS_RESOLVE,
                         console,
                         process,
                         new EmbedderTask() {
@@ -1051,7 +1047,6 @@ public class MavenProjectsTree {
                             process.setText2("");
 
                             Pair<Boolean, MavenProjectChanges> resolveResult = mavenProject.resolveFolders(embedder,
-                                                                                                           generalSettings,
                                                                                                            importingSettings,
                                                                                                            new MavenProjectReader(),
                                                                                                            console);
@@ -1073,7 +1068,7 @@ public class MavenProjectsTree {
                                                                   MavenConsole console,
                                                                   MavenProgressIndicator process)
     throws MavenProcessCanceledException {
-    MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.EmbedderKind.FOR_DOWNLOAD);
+    MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DOWNLOAD);
     embedder.customizeForResolve(console, process);
 
     try {
@@ -1095,12 +1090,13 @@ public class MavenProjectsTree {
                                         MavenEmbeddersManager embeddersManager,
                                         MavenConsole console,
                                         MavenProgressIndicator process) throws MavenProcessCanceledException {
-    MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.EmbedderKind.FOR_DOWNLOAD);
+    MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DOWNLOAD);
     embedder.customizeForResolve(console, process);
 
     try {
-      MavenArtifact result = embedder.resolve(id, MavenConstants.TYPE_JAR, null, mavenProject.getRemoteRepositories());
-      result.setScope(Artifact.SCOPE_COMPILE);
+      MavenArtifact result = embedder.resolve(new MavenArtifactInfo(id, MavenConstants.TYPE_JAR, null), 
+                                              mavenProject.getRemoteRepositories());
+      result.setScope(MavenConstants.SCOPE_COMPILE);
       return result;
     }
     finally {
@@ -1110,7 +1106,7 @@ public class MavenProjectsTree {
 
   public void executeWithEmbedder(MavenProject mavenProject,
                                   MavenEmbeddersManager embeddersManager,
-                                  MavenEmbeddersManager.EmbedderKind embedderKind,
+                                  Key embedderKind,
                                   MavenConsole console,
                                   MavenProgressIndicator process,
                                   EmbedderTask task) throws MavenProcessCanceledException {
@@ -1183,7 +1179,7 @@ public class MavenProjectsTree {
   }
 
   private void fireProjectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                                   org.apache.maven.project.MavenProject nativeMavenProject,
+                                   NativeMavenProjectHolder nativeMavenProject,
                                    Object message) {
     for (Listener each : myListeners) {
       each.projectResolved(projectWithChanges, nativeMavenProject, message);
@@ -1360,7 +1356,7 @@ public class MavenProjectsTree {
     void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted, Object message);
 
     void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                         org.apache.maven.project.MavenProject nativeMavenProject,
+                         @Nullable NativeMavenProjectHolder nativeMavenProject,
                          Object message);
 
     void pluginsResolved(MavenProject project);
@@ -1381,7 +1377,7 @@ public class MavenProjectsTree {
     }
 
     public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                                org.apache.maven.project.MavenProject nativeMavenProject,
+                                @Nullable NativeMavenProjectHolder nativeMavenProject,
                                 Object message) {
     }
 

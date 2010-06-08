@@ -27,7 +27,6 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.util.JreVersionDetector;
 import com.intellij.ide.IdeView;
-import com.intellij.uiDesigner.GuiFormFileType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -53,6 +52,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.uiDesigner.GuiFormFileType;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.designSurface.InsertComponentProcessor;
 import com.intellij.uiDesigner.palette.ComponentItem;
@@ -174,7 +174,7 @@ public class CreateSnapShotAction extends AnAction {
         final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(DefaultRunExecutor.EXECUTOR_ID, appConfig);
         LOG.assertTrue(runner != null, "Runner MUST not be null!");
         runner.execute(DefaultRunExecutor.getRunExecutorInstance(),
-                       new ExecutionEnvironment(runner, snapshotConfiguration, e.getDataContext()));
+                       new ExecutionEnvironment(runner, snapshotConfiguration, project));
       }
       catch (ExecutionException ex) {
         Messages.showMessageDialog(project, UIDesignerBundle.message("snapshot.run.error", ex.getMessage()),

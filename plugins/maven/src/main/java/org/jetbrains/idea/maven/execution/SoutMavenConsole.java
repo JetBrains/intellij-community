@@ -19,8 +19,7 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.util.Key;
-import org.jetbrains.idea.maven.embedder.MavenConsole;
-import org.jetbrains.idea.maven.embedder.MavenExecutionOptions;
+import org.jetbrains.idea.maven.project.MavenConsole;
 
 public class SoutMavenConsole extends MavenConsole {
   public SoutMavenConsole() {

@@ -28,9 +28,8 @@ import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.embedder.MavenEmbedderUtilEx;
-import org.jetbrains.idea.maven.embedder.MavenExecutionOptions;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -123,7 +122,7 @@ public class MavenExternalParameters {
 
     addParameters(list, StringUtil.notNullize(System.getenv(MAVEN_OPTS)));
 
-    addProperty(list, "classworlds.conf", MavenEmbedderUtilEx.getMavenConfFile(new File(mavenHome)).getPath());
+    addProperty(list, "classworlds.conf", MavenUtil.getMavenConfFile(new File(mavenHome)).getPath());
 
     addProperty(list, "maven.home", mavenHome);
 
@@ -180,7 +179,7 @@ public class MavenExternalParameters {
   }
 
   private static String resolveMavenHome(@NotNull MavenGeneralSettings coreSettings) throws ExecutionException {
-    final File file = MavenEmbedderUtilEx.resolveMavenHomeDirectory(coreSettings.getMavenHome());
+    final File file = MavenUtil.resolveMavenHomeDirectory(coreSettings.getMavenHome());
 
     if (file == null) {
       throw new ExecutionException(RunnerBundle.message("external.maven.home.no.default"));
@@ -190,7 +189,7 @@ public class MavenExternalParameters {
       throw new ExecutionException(RunnerBundle.message("external.maven.home.does.not.exist", file.getPath()));
     }
 
-    if (!MavenEmbedderUtilEx.isValidMavenHome(file)) {
+    if (!MavenUtil.isValidMavenHome(file)) {
       throw new ExecutionException(RunnerBundle.message("external.maven.home.invalid", file.getPath()));
     }
 

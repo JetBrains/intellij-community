@@ -31,7 +31,10 @@ import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.ListPopupStep;
+import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
@@ -129,9 +132,9 @@ class RunConfigurable extends BaseConfigurable {
               catch (ConfigurationException e) {
                 snapshot = settings.getSettings();
               }
-              setIcon(ProgramRunnerUtil.getConfigurationIcon(getProject(), snapshot, !settings.isValid()));
               configuration = settings.getConfiguration();
               name = settings.getNameText();
+              setIcon(ProgramRunnerUtil.getConfigurationIcon(snapshot, !settings.isValid(), runManager.isTemporary(configuration)));
             }
             else if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
               RunnerAndConfigurationSettings settings = (RunnerAndConfigurationSettings)userObject;

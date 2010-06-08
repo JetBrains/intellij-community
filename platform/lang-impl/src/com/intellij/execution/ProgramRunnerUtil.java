@@ -20,11 +20,9 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -50,7 +48,8 @@ public class ProgramRunnerUtil {
     return RunnerRegistry.getInstance().getRunner(executorId, configuration.getConfiguration());
   }
 
-  public static void executeConfiguration(@NotNull final Project project, @NotNull final RunnerAndConfigurationSettings configuration, @NotNull final Executor executor, @NotNull final DataContext dataContext) {
+  public static void executeConfiguration(@NotNull final Project project, @NotNull final RunnerAndConfigurationSettings configuration,
+                                          @NotNull final Executor executor) {
     ProgramRunner runner = getRunner(executor.getId(), configuration);
     if (runner == null) {
       LOG.error("Runner MUST not be null! Cannot find runner for " + executor.getId() + " and " + configuration);
@@ -75,7 +74,7 @@ public class ProgramRunnerUtil {
     }
 
     try {
-      runner.execute(executor, new ExecutionEnvironment(runner, configuration, dataContext));
+      runner.execute(executor, new ExecutionEnvironment(runner, configuration, project));
     }
     catch (ExecutionException e) {
       ExecutionUtil.handleExecutionError(project, configuration.getConfiguration(), e);
@@ -84,11 +83,17 @@ public class ProgramRunnerUtil {
 
   public static Icon getConfigurationIcon(final Project project, final RunnerAndConfigurationSettings settings, final boolean invalid) {
     final RunManager runManager = RunManager.getInstance(project);
+    return getConfigurationIcon(settings, invalid, runManager.isTemporary(settings.getConfiguration()));
+  }
+
+  public static Icon getConfigurationIcon(final RunnerAndConfigurationSettings settings,
+                                          final boolean invalid,
+                                          boolean isTemporary) {
     RunConfiguration configuration = settings.getConfiguration();
     final Icon icon = settings.getFactory().getIcon(configuration);
     LOG.assertTrue(icon != null, "Icon should not be null!");
 
-    final Icon configurationIcon = runManager.isTemporary(configuration) ? IconLoader.getTransparentIcon(icon, 0.3f) : icon;
+    final Icon configurationIcon = isTemporary ? IconLoader.getTransparentIcon(icon, 0.3f) : icon;
     if (invalid) {
       return LayeredIcon.create(configurationIcon, INVALID_CONFIGURATION);
     }

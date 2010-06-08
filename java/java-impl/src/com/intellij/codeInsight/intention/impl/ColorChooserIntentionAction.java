@@ -34,7 +34,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.ColorChooser;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 

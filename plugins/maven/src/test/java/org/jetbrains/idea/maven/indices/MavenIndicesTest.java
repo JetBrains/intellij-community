@@ -15,14 +15,16 @@
  */
 package org.jetbrains.idea.maven.indices;
 
-import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.WildcardQuery;
-import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
-import org.sonatype.nexus.index.ArtifactInfo;
+import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
+import org.jetbrains.idea.maven.facade.MavenFacadeIndexer;
+import org.jetbrains.idea.maven.facade.MavenFacadeManager;
+import org.jetbrains.idea.maven.facade.MavenIndexerWrapper;
+import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -33,7 +35,7 @@ import java.util.List;
 public class MavenIndicesTest extends MavenIndicesTestCase {
   private MavenCustomRepositoryHelper myRepositoryHelper;
   private MavenIndices myIndices;
-  private MavenEmbedderWrapper myEmbedder;
+  private MavenIndexerWrapper myIndexer;
   private File myIndicesDir;
   private boolean isBroken;
 
@@ -55,9 +57,9 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
   }
 
   private void initIndices(String relativeDir) {
-    myEmbedder = MavenEmbedderWrapper.create(getMavenGeneralSettings());
+    myIndexer = MavenFacadeManager.getInstance().createIndexer();
     myIndicesDir = new File(myDir, relativeDir);
-    myIndices = new MavenIndices(myEmbedder, myIndicesDir, new MavenIndex.IndexListener() {
+    myIndices = new MavenIndices(myIndexer, myIndicesDir, new MavenIndex.IndexListener() {
       public void indexIsBroken(MavenIndex index) {
         isBroken = true;
       }
@@ -66,12 +68,12 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
 
   private void shutdownIndices() throws Exception {
     myIndices.close();
-    myEmbedder.release();
+    myIndexer.release();
   }
 
   public void testCreatingAndUpdatingLocal() throws Exception {
     MavenIndex i = myIndices.add("id", myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
-    myIndices.updateOrRepair(i, myEmbedder, true, new EmptyProgressIndicator());
+    myIndices.updateOrRepair(i, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
 
     assertUnorderedElementsAreEqual(i.getGroupIds(), "junit");
   }
@@ -79,8 +81,8 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
   public void testCreatingSeveral() throws Exception {
     MavenIndex i1 = myIndices.add("id1", myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
     MavenIndex i2 = myIndices.add("id2", myRepositoryHelper.getTestDataPath("local2"), MavenIndex.Kind.LOCAL);
-    myIndices.updateOrRepair(i1, myEmbedder, true, new EmptyProgressIndicator());
-    myIndices.updateOrRepair(i2, myEmbedder, true, new EmptyProgressIndicator());
+    myIndices.updateOrRepair(i1, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
+    myIndices.updateOrRepair(i2, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
 
     assertUnorderedElementsAreEqual(i1.getGroupIds(), "junit");
     assertUnorderedElementsAreEqual(i2.getGroupIds(), "jmock");
@@ -90,8 +92,8 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
     MavenIndex i1 = myIndices.add("id", myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
     MavenIndex i2 = myIndices.add("id", myRepositoryHelper.getTestDataPath("local2"), MavenIndex.Kind.LOCAL);
     assertNotSame(i1, i2);
-    myIndices.updateOrRepair(i1, myEmbedder, true, new EmptyProgressIndicator());
-    myIndices.updateOrRepair(i2, myEmbedder, true, new EmptyProgressIndicator());
+    myIndices.updateOrRepair(i1, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
+    myIndices.updateOrRepair(i2, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
 
     assertUnorderedElementsAreEqual(i1.getGroupIds(), "junit");
     assertUnorderedElementsAreEqual(i2.getGroupIds(), "jmock");
@@ -101,9 +103,9 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
     MavenIndex i1 = myIndices.add("id1", myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
     MavenIndex i2 = myIndices.add("id2", myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
     assertNotSame(i1, i2);
-    myIndices.updateOrRepair(i1, myEmbedder, true, new EmptyProgressIndicator());
-    myIndices.updateOrRepair(i2, myEmbedder, true, new EmptyProgressIndicator());
-
+    myIndices.updateOrRepair(i1, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
+    myIndices.updateOrRepair(i2, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
+    
     assertUnorderedElementsAreEqual(i1.getGroupIds(), "junit");
     assertUnorderedElementsAreEqual(i2.getGroupIds(), "junit");
   }
@@ -116,13 +118,13 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
   public void testUpdatingLocalClearsPreviousIndex() throws Exception {
     MavenIndex i = myIndices.add("id", myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
 
-    myIndices.updateOrRepair(i, myEmbedder, true, new EmptyProgressIndicator());
+    myIndices.updateOrRepair(i, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
     assertUnorderedElementsAreEqual(i.getGroupIds(), "junit");
 
     myRepositoryHelper.delete("local1");
     myRepositoryHelper.copy("local2", "local1");
 
-    myIndices.updateOrRepair(i, myEmbedder, true, new EmptyProgressIndicator());
+    myIndices.updateOrRepair(i, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
     assertUnorderedElementsAreEqual(i.getGroupIds(), "jmock");
   }
 
@@ -138,24 +140,26 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
 
   public void testAddingRemote() throws Exception {
     MavenIndex i = myIndices.add("id", "file:///" + myRepositoryHelper.getTestDataPath("remote"), MavenIndex.Kind.REMOTE);
-    myIndices.updateOrRepair(i, myEmbedder, true, new EmptyProgressIndicator());
+    myIndices.updateOrRepair(i, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
 
     assertUnorderedElementsAreEqual(i.getGroupIds(), "junit");
   }
 
   public void testUpdatingRemote() throws Exception {
     MavenIndex i = myIndices.add("id", "file:///" + myRepositoryHelper.getTestDataPath("remote"), MavenIndex.Kind.REMOTE);
-    myIndices.updateOrRepair(i, myEmbedder, true, new EmptyProgressIndicator());
+    myIndices.updateOrRepair(i, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
 
     //shouldn't throw 'The existing index is for repository [remote] and not for repository [xxx]'
-    myIndices.updateOrRepair(i, myEmbedder, true, new EmptyProgressIndicator());
+    myIndices.updateOrRepair(i, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
     assertUnorderedElementsAreEqual(i.getGroupIds(), "junit");
   }
 
   public void testDoNotAddSameIndexTwice() throws Exception {
     MavenIndex local = myIndices.add("local", myRepositoryHelper.getTestDataPath("foo"), MavenIndex.Kind.LOCAL);
 
-    assertSame(local, myIndices.add("local", myRepositoryHelper.getTestDataPath("FOO"), MavenIndex.Kind.LOCAL));
+    if (!SystemInfo.isFileSystemCaseSensitive) {
+      assertSame(local, myIndices.add("local", myRepositoryHelper.getTestDataPath("FOO"), MavenIndex.Kind.LOCAL));
+    }
     assertSame(local, myIndices.add("local", myRepositoryHelper.getTestDataPath("foo") + "/\\", MavenIndex.Kind.LOCAL));
     assertSame(local, myIndices.add("local", "  " + myRepositoryHelper.getTestDataPath("foo") + "  ", MavenIndex.Kind.LOCAL));
 
@@ -173,19 +177,19 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
   }
 
   public void testAddingCorrectlyToIndexer() throws Exception {
-    assertEquals(0, myIndices.getIndexer().getIndexingContexts().size());
+    assertEquals(0, myIndexer.getIndexCount());
 
     MavenIndex i1 = myIndices.add("local", myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
-    assertEquals(1, myIndices.getIndexer().getIndexingContexts().size());
+    assertEquals(1, myIndexer.getIndexCount());
 
     MavenIndex i2 = myIndices.add("local", myRepositoryHelper.getTestDataPath("local2"), MavenIndex.Kind.LOCAL);
-    assertEquals(2, myIndices.getIndexer().getIndexingContexts().size());
+    assertEquals(2, myIndexer.getIndexCount());
 
-    myIndices.updateOrRepair(i1, myEmbedder, true, new EmptyProgressIndicator());
-    assertEquals(2, myIndices.getIndexer().getIndexingContexts().size());
+    myIndices.updateOrRepair(i1, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
+    assertEquals(2, myIndexer.getIndexCount());
 
-    myIndices.updateOrRepair(i2, myEmbedder, true, new EmptyProgressIndicator());
-    assertEquals(2, myIndices.getIndexer().getIndexingContexts().size());
+    myIndices.updateOrRepair(i2, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
+    assertEquals(2, myIndexer.getIndexCount());
   }
 
   public void testClearingIndexDirOnLoadError() throws Exception {
@@ -220,8 +224,8 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
   public void testLoadingIndexIfCachesAreBroken() throws Exception {
     MavenIndex i1 = myIndices.add("id", myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
     MavenIndex i2 = myIndices.add("id", myRepositoryHelper.getTestDataPath("local2"), MavenIndex.Kind.LOCAL);
-    myIndices.updateOrRepair(i1, myEmbedder, true, new EmptyProgressIndicator());
-    myIndices.updateOrRepair(i2, myEmbedder, true, new EmptyProgressIndicator());
+    myIndices.updateOrRepair(i1, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
+    myIndices.updateOrRepair(i2, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
 
     assertUnorderedElementsAreEqual(i1.getGroupIds(), "junit");
     assertUnorderedElementsAreEqual(i2.getGroupIds(), "jmock");
@@ -235,7 +239,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
     assertTrue(myIndices.getIndices().get(0).getGroupIds().isEmpty());
     assertUnorderedElementsAreEqual(myIndices.getIndices().get(1).getGroupIds(), "jmock");
 
-    myIndices.updateOrRepair(myIndices.getIndices().get(0), myEmbedder, false, new EmptyProgressIndicator());
+    myIndices.updateOrRepair(myIndices.getIndices().get(0), false, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
     assertUnorderedElementsAreEqual(myIndices.getIndices().get(0).getGroupIds(), "junit");
   }
 
@@ -244,7 +248,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
     File dir = index.getDir();
     shutdownIndices();
 
-    File copy = new File(dir.getParentFile(), "INDEX_COPY");
+    File copy = new File(dir.getParentFile(), "ZZZ_INDEX_COPY");
     FileUtil.copyDir(dir, copy);
 
     initIndices();
@@ -255,18 +259,18 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
 
   public void testAddingIndexWithExistingDirectoryDoesNotThrowException() throws Exception {
     MavenIndex i = myIndices.add("id", myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
-    myIndices.updateOrRepair(i, myEmbedder, true, new EmptyProgressIndicator());
+    myIndices.updateOrRepair(i, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
 
     shutdownIndices();
 
     initIndices();
     i = myIndices.add("id", myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
-    myIndices.updateOrRepair(i, myEmbedder, true, new EmptyProgressIndicator());
+    myIndices.updateOrRepair(i, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
   }
 
   public void testSavingFailureMessage() throws Exception {
     MavenIndex i = myIndices.add("id", "xxx", MavenIndex.Kind.REMOTE);
-    myIndices.updateOrRepair(i, myEmbedder, true, new EmptyProgressIndicator());
+    myIndices.updateOrRepair(i, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
 
     String message = i.getFailureMessage();
     assertNotNull(message);
@@ -279,7 +283,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
 
   public void testRepairingIndicesOnReadError() throws Exception {
     MavenIndex index = myIndices.add("id", myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
-    myIndices.updateOrRepair(index, myEmbedder, true, new EmptyProgressIndicator());
+    myIndices.updateOrRepair(index, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
 
     shutdownIndices();
     damageFile(index, "groupIds.dat", false);
@@ -292,13 +296,13 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
 
     assertTrue(index.getGroupIds().isEmpty());
 
-    myIndices.updateOrRepair(myIndices.getIndices().get(0), myEmbedder, false, new EmptyProgressIndicator());
+    myIndices.updateOrRepair(myIndices.getIndices().get(0), false, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
     assertUnorderedElementsAreEqual(index.getGroupIds(), "junit");
   }
 
   public void testRepairingIndicesOnReadWhileAddingArtifact() throws Exception {
     MavenIndex index = myIndices.add("id", myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
-    myIndices.updateOrRepair(index, myEmbedder, true, new EmptyProgressIndicator());
+    myIndices.updateOrRepair(index, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
 
     shutdownIndices();
     damageFile(index, "artifactIds-map.dat", false);
@@ -311,7 +315,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
 
     assertTrue(index.getGroupIds().isEmpty());
 
-    myIndices.updateOrRepair(myIndices.getIndices().get(0), myEmbedder, false, new EmptyProgressIndicator());
+    myIndices.updateOrRepair(myIndices.getIndices().get(0), false, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
     assertUnorderedElementsAreEqual(index.getGroupIds(), "junit");
   }
 
@@ -337,7 +341,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
   public void testGettingArtifactInfos() throws Exception {
     myRepositoryHelper.copy("local2", "local1");
     MavenIndex i = myIndices.add("id", myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
-    myIndices.updateOrRepair(i, myEmbedder, true, new EmptyProgressIndicator());
+    myIndices.updateOrRepair(i, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
 
     assertUnorderedElementsAreEqual(i.getGroupIds(), "junit", "jmock");
 
@@ -357,9 +361,8 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
 
   public void testGettingArtifactInfosAfterReload() throws Exception {
     myIndices.updateOrRepair(myIndices.add("id", myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL),
-                             myEmbedder,
                              true,
-                             new EmptyProgressIndicator());
+                             getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
 
     shutdownIndices();
     initIndices();
@@ -370,7 +373,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
   public void testHasArtifactInfo() throws Exception {
     myRepositoryHelper.copy("local2", "local1");
     MavenIndex i = myIndices.add("id", myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
-    myIndices.updateOrRepair(i, myEmbedder, true, new EmptyProgressIndicator());
+    myIndices.updateOrRepair(i, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
 
     assertTrue(i.hasGroupId("junit"));
     assertTrue(i.hasGroupId("jmock"));
@@ -387,45 +390,42 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
 
   public void testSearching() throws Exception {
     MavenIndex i = myIndices.add("id", myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
-    myIndices.updateOrRepair(i, myEmbedder, true, new EmptyProgressIndicator());
+    myIndices.updateOrRepair(i, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
 
-    assertSearchResults(i, new TermQuery(new Term(ArtifactInfo.GROUP_ID, "junit")),
+    assertSearchResults(i, new WildcardQuery(new Term(MavenFacadeIndexer.SEARCH_TERM_COORDINATES, "*junit*")),
                         "junit:junit:3.8.1", "junit:junit:3.8.2", "junit:junit:4.0");
   }
 
   public void testSearchingAfterArtifactAddition() throws Exception {
     MavenIndex i = myIndices.add("id", myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
-    myIndices.updateOrRepair(i, myEmbedder, true, new EmptyProgressIndicator());
+    myIndices.updateOrRepair(i, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
 
     i.addArtifact(new File(myRepositoryHelper.getTestDataPath("local2/jmock/jmock/1.0.0/jmock-1.0.0.jar")));
 
-    assertSearchResults(i, new TermQuery(new Term(ArtifactInfo.GROUP_ID, "jmock")),
-                        "jmock:jmock:1.0.0");
+    assertSearchResults(i, new WildcardQuery(new Term(MavenFacadeIndexer.SEARCH_TERM_COORDINATES, "*jmock*")), "jmock:jmock:1.0.0");
   }
 
   private void assertSearchResults(MavenIndex i, Query query, String... expectedArtifacts) {
     List<String> actualArtifacts = new ArrayList<String>();
-    for (ArtifactInfo each : i.search(query, 100)) {
-      actualArtifacts.add(each.groupId + ":" + each.artifactId + ":" + each.version);
+    for (MavenArtifactInfo each : i.search(query, 100)) {
+      actualArtifacts.add(each.getGroupId() + ":" + each.getArtifactId() + ":" + each.getVersion());
     }
     assertUnorderedElementsAreEqual(actualArtifacts, expectedArtifacts);
   }
 
   public void testSearchingForClasses() throws Exception {
     MavenIndex i = myIndices.add("id", myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
-    myIndices.updateOrRepair(i, myEmbedder, true, new EmptyProgressIndicator());
+    myIndices.updateOrRepair(i, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
 
-    assertSearchResults(i, new WildcardQuery(new Term(ArtifactInfo.NAMES, "*runwith*")),
-                        "junit:junit:4.0");
+    assertSearchResults(i, new WildcardQuery(new Term(MavenFacadeIndexer.SEARCH_TERM_CLASS_NAMES, "*runwith*")), "junit:junit:4.0");
   }
 
   public void testSearchingForClassesAfterArtifactAddition() throws Exception {
     MavenIndex i = myIndices.add("id", myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
-    myIndices.updateOrRepair(i, myEmbedder, true, new EmptyProgressIndicator());
+    myIndices.updateOrRepair(i, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
 
     i.addArtifact(new File(myRepositoryHelper.getTestDataPath("local2/jmock/jmock/1.0.0/jmock-1.0.0.jar")));
 
-    assertSearchResults(i, new WildcardQuery(new Term(ArtifactInfo.NAMES, "*mock*")),
-                        "jmock:jmock:1.0.0");
+    assertSearchResults(i, new WildcardQuery(new Term(MavenFacadeIndexer.SEARCH_TERM_CLASS_NAMES, "*mock*")), "jmock:jmock:1.0.0");
   }
 }

@@ -66,4 +66,5 @@ public class HgProjectConfigurable implements SearchableConfigurable {
   public Runnable enableSearch(String option) {
     return null;
   }
+
 }

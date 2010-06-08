@@ -22,7 +22,8 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.WildcardQuery;
-import org.sonatype.nexus.index.ArtifactInfo;
+import org.jetbrains.idea.maven.facade.MavenFacadeIndexer;
+import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -30,6 +31,8 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
+  public static final String TERM = MavenFacadeIndexer.SEARCH_TERM_CLASS_NAMES;
+
   protected Pair<String, Query> preparePatternAndQuery(String pattern) {
     pattern = pattern.toLowerCase();
     if (pattern.trim().length() == 0) {
@@ -53,10 +56,10 @@ public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
     pattern = newPattern.toString();
     String queryPattern = "*/" + pattern.replaceAll("\\.", "/");
 
-    return new Pair<String, Query>(pattern, new WildcardQuery(new Term(ArtifactInfo.NAMES, queryPattern)));
+    return new Pair<String, Query>(pattern, new WildcardQuery(new Term(TERM, queryPattern)));
   }
 
-  protected Collection<MavenClassSearchResult> processResults(Set<ArtifactInfo> infos, String pattern, int maxResult) {
+  protected Collection<MavenClassSearchResult> processResults(Set<MavenArtifactInfo> infos, String pattern, int maxResult) {
     if (pattern.length() == 0 || pattern.equals("*")) {
       pattern = "^/(.*)$";
     }
@@ -84,10 +87,10 @@ public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
     }
 
     Map<String, MavenClassSearchResult> result = new THashMap<String, MavenClassSearchResult>();
-    for (ArtifactInfo each : infos) {
-      if (each.classNames == null) continue;
+    for (MavenArtifactInfo each : infos) {
+      if (each.getClassNames() == null) continue;
 
-      Matcher matcher = p.matcher(each.classNames);
+      Matcher matcher = p.matcher(each.getClassNames());
       while (matcher.find()) {
         String classFQName = matcher.group(1);
         classFQName = classFQName.replace("/", ".");
@@ -124,7 +127,7 @@ public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
     return makeKey(result.className, result.versions.get(0));
   }
 
-  private String makeKey(String className, ArtifactInfo info) {
+  private String makeKey(String className, MavenArtifactInfo info) {
     return className + " " + super.makeKey(info);
   }
 }

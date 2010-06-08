@@ -39,7 +39,7 @@ public class HgMarkResolved extends HgAbstractFilesAction {
       if (root == null) {
         return;
       }
-      resolveCommand.resolve(root, file);
+      resolveCommand.markResolved(root, file);
     }
   }
 

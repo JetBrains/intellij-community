@@ -41,6 +41,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.FontRenderContext;
+import java.awt.geom.Rectangle2D;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -1082,6 +1083,12 @@ public class UIUtil {
     c.putClientProperty(FOCUS_PROXY_KEY, isProxy ? Boolean.TRUE : null);
   }
 
+  public static void maybeInstall(InputMap map, String action, KeyStroke stroke) {
+    if (map.get(stroke) == null) {
+      map.put(stroke, action);
+    }
+  }
+
   public static class MacTreeUI extends BasicTreeUI {
     public static final String SOURCE_LIST_CLIENT_PROPERTY = "mac.ui.source.list";
 
@@ -1135,7 +1142,6 @@ public class UIUtil {
       super.completeUIInstall();
 
       tree.setOpaque(false);
-      tree.setLargeModel(true);
       tree.setShowsRootHandles(true);
 
       tree.addMouseListener(mySelectionListener);
@@ -1213,27 +1219,34 @@ public class UIUtil {
       final int containerWidth = tree.getParent() instanceof JViewport ? tree.getParent().getWidth() : tree.getWidth();
       final int xOffset = tree.getParent() instanceof JViewport ? ((JViewport)tree.getParent()).getViewPosition().x : 0;
 
-      if (path != null && tree.isPathSelected(path)) {
+      if (path != null) {
+        boolean selected = tree.isPathSelected(path);
         Graphics2D rowGraphics = (Graphics2D)g.create();
-        if (clipBounds.height >= bounds.height) {
-          // fill the row only if clip bounds intersects actual node bounds
-          rowGraphics.setClip(xOffset, bounds.y, containerWidth, bounds.height);
-        }
-        else {
-          // just paint inside clip bounds otherwise
-          rowGraphics.setClip(clipBounds);
-        }
+        Rectangle visible = tree.getVisibleRect();
+        Rectangle2D union = visible.createIntersection(bounds);
+        Rectangle clip = new Rectangle(visible.x, (int)union.getY(), visible.width, (int)union.getHeight());
+        rowGraphics.setClip(clip);
 
         final Object sourceList = tree.getClientProperty(SOURCE_LIST_CLIENT_PROPERTY);
         if (sourceList != null && ((Boolean)sourceList)) {
-          if (tree.hasFocus()) {
-            LIST_FOCUSED_SELECTION_BACKGROUND_PAINTER.paintBorder(tree, rowGraphics, xOffset, bounds.y, containerWidth, bounds.height);
-          }
-          else {
-            LIST_SELECTION_BACKGROUND_PAINTER.paintBorder(tree, rowGraphics, xOffset, bounds.y, containerWidth, bounds.height);
+          if (selected) {
+            if (tree.hasFocus()) {
+              LIST_FOCUSED_SELECTION_BACKGROUND_PAINTER.paintBorder(tree, rowGraphics, xOffset, bounds.y, containerWidth, bounds.height);
+            }
+            else {
+              LIST_SELECTION_BACKGROUND_PAINTER.paintBorder(tree, rowGraphics, xOffset, bounds.y, containerWidth, bounds.height);
+            }
+          } else {
+            rowGraphics.setColor(tree.getBackground());
+            rowGraphics.fillRect(xOffset, bounds.y, containerWidth, bounds.height);
           }
         } else {
-          rowGraphics.setColor(tree.hasFocus() ? getTreeSelectionBackground() : UNFOCUSED_SELECTION_COLOR);
+          Color bg = tree.hasFocus() ? getTreeSelectionBackground() : UNFOCUSED_SELECTION_COLOR;
+          if (!selected) {
+            bg = tree.getBackground();
+          }
+
+          rowGraphics.setColor(bg);
           rowGraphics.fillRect(xOffset, bounds.y, containerWidth, bounds.height - 1);
         }
 
@@ -1241,10 +1254,12 @@ public class UIUtil {
           paintExpandControl(rowGraphics, bounds, insets, bounds, path, row, isExpanded, hasBeenExpanded, isLeaf);
         }
 
+        super.paintRow(rowGraphics, clip, insets, bounds, path, row, isExpanded, hasBeenExpanded, isLeaf);
         rowGraphics.dispose();
-      }
 
-      super.paintRow(g, clipBounds, insets, bounds, path, row, isExpanded, hasBeenExpanded, isLeaf);
+      } else {
+        super.paintRow(g, clipBounds, insets, bounds, path, row, isExpanded, hasBeenExpanded, isLeaf);
+      }
     }
 
     @Override

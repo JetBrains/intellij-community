@@ -31,18 +31,77 @@ public class HgCatCommand {
   }
 
   public String execute(HgFile hgFile, HgRevisionNumber vcsRevisionNumber, Charset charset) {
-    List<String> arguments = new LinkedList<String>();
-    if (StringUtils.isNotBlank(vcsRevisionNumber.getChangeset())) {
-      arguments.add("--rev");
-      arguments.add(vcsRevisionNumber.getChangeset());
-    }
-    arguments.add(hgFile.getRelativePath());
+    List<String> arguments = createArguments(vcsRevisionNumber, hgFile.getRelativePath());
 
     HgCommandService service = HgCommandService.getInstance(project);
     HgCommandResult result = service.execute(
       hgFile.getRepo(), Collections.<String>emptyList(), "cat", arguments, charset
     );
+
+    if (result.getExitValue() == 1) {
+      // file not found in given revision 
+      return getContentFollowingRenames(hgFile, vcsRevisionNumber, charset, service);
+    }
+
     return result.getRawOutput();
+  }
+
+  private String getContentFollowingRenames(HgFile hgFile, HgRevisionNumber vcsRevisionNumber, Charset charset, HgCommandService service) {
+    String currentRevision = getCurrentRevision(hgFile);
+
+    HgTrackFileNamesAccrossRevisionsCommand trackCommand = new HgTrackFileNamesAccrossRevisionsCommand(project);
+    String renamedHgFile = trackCommand.execute(hgFile, currentRevision, vcsRevisionNumber.getRevision(), -1);
+
+    if (renamedHgFile != null) {
+      List<String> arguments = createArguments(vcsRevisionNumber, renamedHgFile);
+
+      HgCommandResult result = service.execute(
+        hgFile.getRepo(), Collections.<String>emptyList(), "cat", arguments, charset
+      );
+
+      return result.getRawOutput();
+    }
+
+    return "";
+  }
+
+  private String getCurrentRevision(HgFile hgFile) {
+    HgParentsCommand parentsCommand = new HgParentsCommand(project);
+    List<HgRevisionNumber> parents = parentsCommand.execute(hgFile.getRepo());
+
+    String currentRevision = "0";
+
+    if (parents.size() == 1) {
+      currentRevision = parents.get(0).getRevision();
+    } else if (parents.size() > 1) {
+      long maxParentNumber = Long.MIN_VALUE;
+
+      for (HgRevisionNumber revisionNumber : parents) {
+        long revisionAsLong = revisionNumber.getRevisionAsLong();
+
+        if (revisionAsLong > maxParentNumber) {
+          maxParentNumber = revisionAsLong;
+          currentRevision = revisionNumber.getRevision();
+        }
+      }
+    }
+
+    return currentRevision;
+  }
+
+  private List<String> createArguments(HgRevisionNumber vcsRevisionNumber, String fileName) {
+    List<String> arguments = new LinkedList<String>();
+    if (vcsRevisionNumber != null) {
+      arguments.add("--rev");
+      if (StringUtils.isNotBlank(vcsRevisionNumber.getChangeset())) {
+        arguments.add(vcsRevisionNumber.getChangeset());
+      } else {
+        arguments.add(vcsRevisionNumber.getRevision());
+      }
+    }
+
+    arguments.add(fileName);
+    return arguments;
   }
 
 }

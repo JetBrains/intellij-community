@@ -34,8 +34,8 @@ import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.find.impl.FindManagerImpl;
-import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.Editor;
@@ -95,7 +95,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
     String result = "";
     try {
       for (ParameterInfoImpl info : infos) {
-        PsiType type = info.getTypeWrapper().getType(context, context.getManager());
+        PsiType type = info.createType(context, context.getManager());
         if (result.length() != 0) {
           result += ", ";
         }

@@ -284,7 +284,9 @@ static int walk_tree(const char* path, watch_node* parent, array* ignores) {
 
 
 int watch(const char* root, array* ignores) {
-  return walk_tree(root, NULL, ignores);
+  char buf[PATH_MAX];
+  const char* normalized = realpath(root, buf);
+  return walk_tree((normalized != NULL ? normalized : root), NULL, ignores);
 }
 
 

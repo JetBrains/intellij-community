@@ -21,12 +21,8 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import org.apache.maven.model.Build;
-import org.apache.maven.model.Parent;
-import org.apache.maven.model.Profile;
-import org.apache.maven.model.Resource;
 import org.jetbrains.idea.maven.MavenTestCase;
-import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
+import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
@@ -41,10 +37,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>");
 
-    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
-
-    assertEquals(new File(myProjectPom.getPath()), p.getFile());
-    assertEquals(new File(myProjectRoot.getPath()), p.getBasedir());
+    MavenId p = readProject(myProjectPom).getMavenId();
 
     assertEquals("test", p.getGroupId());
     assertEquals("project", p.getArtifactId());
@@ -67,10 +60,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
 
     MavenProjectReaderResult result = readProject(myProjectPom, new NullProjectLocator());
     assertProblems(result, "'pom.xml' has syntax errors");
-    org.apache.maven.project.MavenProject p = result.nativeMavenProject;
-
-    assertEquals(new File(myProjectPom.getPath()), p.getFile());
-    assertEquals(new File(myProjectRoot.getPath()), p.getBasedir());
+    MavenId p = result.mavenModel.getMavenId();
 
     assertEquals("test", p.getGroupId());
     assertEquals("project", p.getArtifactId());
@@ -88,7 +78,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
 
     MavenProjectReaderResult result = readProject(myProjectPom, new NullProjectLocator());
     assertProblems(result, "'pom.xml' has syntax errors");
-    org.apache.maven.project.MavenProject p = result.nativeMavenProject;
+    MavenModel p = result.mavenModel;
 
     assertEquals("a0x0a", p.getName());
   }
@@ -158,14 +148,11 @@ public class MavenProjectReaderTest extends MavenTestCase {
 
     MavenProjectReaderResult readResult = readProject(myProjectPom, new NullProjectLocator());
     assertProblems(readResult, "'pom.xml' has syntax errors");
-    org.apache.maven.project.MavenProject p = readResult.nativeMavenProject;
+    MavenModel p = readResult.mavenModel;
 
-    assertEquals(new File(myProjectPom.getPath()), p.getFile());
-    assertEquals(new File(myProjectRoot.getPath()), p.getBasedir());
-
-    assertEquals("test", p.getGroupId());
-    assertEquals("project", p.getArtifactId());
-    assertEquals("Unknown", p.getVersion());
+    assertEquals("test", p.getMavenId().getGroupId());
+    assertEquals("project", p.getMavenId().getArtifactId());
+    assertEquals("Unknown", p.getMavenId().getVersion());
     assertEquals("foo", p.getName());
   }
 
@@ -179,38 +166,35 @@ public class MavenProjectReaderTest extends MavenTestCase {
 
     MavenProjectReaderResult readResult = readProject(myProjectPom, new NullProjectLocator());
     assertProblems(readResult, "'pom.xml' has syntax errors");
-    org.apache.maven.project.MavenProject p = readResult.nativeMavenProject;
+    MavenModel p = readResult.mavenModel;
 
-    assertEquals(new File(myProjectPom.getPath()), p.getFile());
-    assertEquals(new File(myProjectRoot.getPath()), p.getBasedir());
-
-    assertEquals("test", p.getGroupId());
-    assertEquals("project", p.getArtifactId());
-    assertEquals("1", p.getVersion());
+    assertEquals("test", p.getMavenId().getGroupId());
+    assertEquals("project", p.getMavenId().getArtifactId());
+    assertEquals("1", p.getMavenId().getVersion());
     assertEquals("foo", p.getName());
   }
 
   public void testEmpty() throws Exception {
     createProjectPom("");
 
-    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
+    MavenModel p = readProject(myProjectPom);
 
-    assertEquals("Unknown", p.getGroupId());
-    assertEquals("Unknown", p.getArtifactId());
-    assertEquals("Unknown", p.getVersion());
+    assertEquals("Unknown", p.getMavenId().getGroupId());
+    assertEquals("Unknown", p.getMavenId().getArtifactId());
+    assertEquals("Unknown", p.getMavenId().getVersion());
   }
 
   public void testSpacesInTest() throws Exception {
     createProjectPom("<name>foo bar</name>");
 
-    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
+    MavenModel p = readProject(myProjectPom);
     assertEquals("foo bar", p.getName());
   }
 
   public void testTextInContainerTag() throws Exception {
     createProjectPom("foo <name>name</name> bar");
 
-    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
+    MavenModel p = readProject(myProjectPom);
     assertEquals("name", p.getName());
   }
 
@@ -222,30 +206,27 @@ public class MavenProjectReaderTest extends MavenTestCase {
                            "  <version>1</version>" +
                            "</project>");
 
-    org.apache.maven.project.MavenProject p = readProject(file);
+    MavenModel p = readProject(file);
 
-    assertEquals("4.0.0", p.getModelVersion());
     assertEquals("jar", p.getPackaging());
-    assertNull(p.getModel().getName());
+    assertNull(p.getName());
     assertNull(p.getParent());
-    assertNull(p.getParentArtifact());
 
-    Build build = p.getBuild();
-    assertNotNull(build);
-    assertEquals("project-1", build.getFinalName());
-    assertEquals(null, build.getDefaultGoal());
-    assertPathEquals(pathFromBasedir("src/main/java"), build.getSourceDirectory());
-    assertPathEquals(pathFromBasedir("src/test/java"), build.getTestSourceDirectory());
-    assertPathEquals(pathFromBasedir("src/main/scripts"), build.getScriptSourceDirectory());
-    assertEquals(1, build.getResources().size());
-    assertResource((Resource)build.getResources().get(0), pathFromBasedir("src/main/resources"),
+    assertEquals("project-1", p.getBuild().getFinalName());
+    assertEquals(null, p.getBuild().getDefaultGoal());
+    assertSize(1, p.getBuild().getSources());
+    assertPathEquals(pathFromBasedir("src/main/java"), p.getBuild().getSources().get(0));
+    assertSize(1, p.getBuild().getTestSources());
+    assertPathEquals(pathFromBasedir("src/test/java"), p.getBuild().getTestSources().get(0));
+    assertEquals(1, p.getBuild().getResources().size());
+    assertResource(p.getBuild().getResources().get(0), pathFromBasedir("src/main/resources"),
                    false, null, Collections.EMPTY_LIST, Collections.EMPTY_LIST);
-    assertEquals(1, build.getTestResources().size());
-    assertResource((Resource)build.getTestResources().get(0), pathFromBasedir("src/test/resources"),
+    assertEquals(1, p.getBuild().getTestResources().size());
+    assertResource(p.getBuild().getTestResources().get(0), pathFromBasedir("src/test/resources"),
                    false, null, Collections.EMPTY_LIST, Collections.EMPTY_LIST);
-    assertPathEquals(pathFromBasedir("target"), build.getDirectory());
-    assertPathEquals(pathFromBasedir("target/classes"), build.getOutputDirectory());
-    assertPathEquals(pathFromBasedir("target/test-classes"), build.getTestOutputDirectory());
+    assertPathEquals(pathFromBasedir("target"), p.getBuild().getDirectory());
+    assertPathEquals(pathFromBasedir("target/classes"), p.getBuild().getOutputDirectory());
+    assertPathEquals(pathFromBasedir("target/test-classes"), p.getBuild().getTestOutputDirectory());
   }
 
   public void testDefaultsForParent() throws Exception {
@@ -257,9 +238,9 @@ public class MavenProjectReaderTest extends MavenTestCase {
                      "  dummy" +
                      "</parent>");
 
-    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
+    MavenModel p = readProject(myProjectPom);
 
-    assertParent(p, "Unknown", "Unknown", "Unknown", "../pom.xml");
+    assertParent(p, "Unknown", "Unknown", "Unknown");
   }
 
   public void testTakingCoordinatesFromParent() throws Exception {
@@ -269,11 +250,11 @@ public class MavenProjectReaderTest extends MavenTestCase {
                      "  <version>1</version>" +
                      "</parent>");
 
-    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
+    MavenId id = readProject(myProjectPom).getMavenId();
 
-    assertEquals("test", p.getGroupId());
-    assertEquals("Unknown", p.getArtifactId());
-    assertEquals("1", p.getVersion());
+    assertEquals("test", id.getGroupId());
+    assertEquals("Unknown", id.getArtifactId());
+    assertEquals("1", id.getVersion());
   }
 
   public void testCustomSettings() throws Exception {
@@ -320,30 +301,28 @@ public class MavenProjectReaderTest extends MavenTestCase {
                            "  </build>" +
                            "</project>");
 
-    org.apache.maven.project.MavenProject p = readProject(file);
+    MavenModel p = readProject(file);
 
-    assertEquals("1.2.3", p.getModelVersion());
     assertEquals("pom", p.getPackaging());
     assertEquals("foo", p.getName());
 
-    assertParent(p, "testParent", "projectParent", "2", "../parent/pom.xml");
+    assertParent(p, "testParent", "projectParent", "2");
 
-    Build build = p.getBuild();
-    assertNotNull(build);
-    assertEquals("xxx", build.getFinalName());
-    assertEquals("someGoal", build.getDefaultGoal());
-    assertPathEquals(pathFromBasedir("mySrc"), build.getSourceDirectory());
-    assertPathEquals(pathFromBasedir("myTestSrc"), build.getTestSourceDirectory());
-    assertPathEquals(pathFromBasedir("myScriptSrc"), build.getScriptSourceDirectory());
-    assertEquals(1, build.getResources().size());
-    assertResource((Resource)build.getResources().get(0), pathFromBasedir("myRes"),
+    assertEquals("xxx", p.getBuild().getFinalName());
+    assertEquals("someGoal", p.getBuild().getDefaultGoal());
+    assertSize(1, p.getBuild().getSources());
+    assertPathEquals(pathFromBasedir("mySrc"), p.getBuild().getSources().get(0));
+    assertSize(1, p.getBuild().getTestSources());
+    assertPathEquals(pathFromBasedir("myTestSrc"), p.getBuild().getTestSources().get(0));
+    assertEquals(1, p.getBuild().getResources().size());
+    assertResource(p.getBuild().getResources().get(0), pathFromBasedir("myRes"),
                    true, "dir", Collections.singletonList("**.properties"), Collections.singletonList("**.xml"));
-    assertEquals(1, build.getTestResources().size());
-    assertResource((Resource)build.getTestResources().get(0), pathFromBasedir("myTestRes"),
+    assertEquals(1, p.getBuild().getTestResources().size());
+    assertResource(p.getBuild().getTestResources().get(0), pathFromBasedir("myTestRes"),
                    false, null, Collections.singletonList("**.properties"), Collections.EMPTY_LIST);
-    assertPathEquals(pathFromBasedir("myOutput"), build.getDirectory());
-    assertPathEquals(pathFromBasedir("myClasses"), build.getOutputDirectory());
-    assertPathEquals(pathFromBasedir("myTestClasses"), build.getTestOutputDirectory());
+    assertPathEquals(pathFromBasedir("myOutput"), p.getBuild().getDirectory());
+    assertPathEquals(pathFromBasedir("myClasses"), p.getBuild().getOutputDirectory());
+    assertPathEquals(pathFromBasedir("myTestClasses"), p.getBuild().getTestOutputDirectory());
   }
 
   public void testOutputPathsAreBasedOnTargetPath() throws Exception {
@@ -354,13 +333,11 @@ public class MavenProjectReaderTest extends MavenTestCase {
                      "  <directory>my-target</directory>" +
                      "</build>");
 
-    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
+    MavenModel p = readProject(myProjectPom);
 
-    Build build = p.getBuild();
-    assertNotNull(build);
-    assertPathEquals(pathFromBasedir("my-target"), build.getDirectory());
-    assertPathEquals(pathFromBasedir("my-target/classes"), build.getOutputDirectory());
-    assertPathEquals(pathFromBasedir("my-target/test-classes"), build.getTestOutputDirectory());
+    assertPathEquals(pathFromBasedir("my-target"), p.getBuild().getDirectory());
+    assertPathEquals(pathFromBasedir("my-target/classes"), p.getBuild().getOutputDirectory());
+    assertPathEquals(pathFromBasedir("my-target/test-classes"), p.getBuild().getTestOutputDirectory());
   }
 
   public void testDoesNotIncludeResourcesWithoutDirectory() throws Exception {
@@ -377,11 +354,10 @@ public class MavenProjectReaderTest extends MavenTestCase {
                      "  </testResources>" +
                      "</build>");
 
-    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
+    MavenModel p = readProject(myProjectPom);
 
-    Build build = p.getBuild();
-    assertEquals(0, build.getResources().size());
-    assertEquals(0, build.getTestResources().size());
+    assertEquals(0, p.getBuild().getResources().size());
+    assertEquals(0, p.getBuild().getTestResources().size());
   }
 
   public void testPathsWithProperties() throws Exception {
@@ -407,21 +383,21 @@ public class MavenProjectReaderTest extends MavenTestCase {
                      "  <testOutputDirectory>${foo}/myTestClasses</testOutputDirectory>" +
                      "</build>");
 
-    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
+    MavenModel p = readProject(myProjectPom);
 
-    Build build = p.getBuild();
-    assertPathEquals(pathFromBasedir("subDir/mySrc"), build.getSourceDirectory());
-    assertPathEquals(pathFromBasedir("subDir/myTestSrc"), build.getTestSourceDirectory());
-    assertPathEquals(pathFromBasedir("subDir/myScriptSrc"), build.getScriptSourceDirectory());
-    assertEquals(1, build.getResources().size());
-    assertResource((Resource)build.getResources().get(0), pathFromBasedir("subDir/myRes"),
+    assertSize(1, p.getBuild().getSources());
+    assertPathEquals(pathFromBasedir("subDir/mySrc"), p.getBuild().getSources().get(0));
+    assertSize(1, p.getBuild().getTestSources());
+    assertPathEquals(pathFromBasedir("subDir/myTestSrc"), p.getBuild().getTestSources().get(0));
+    assertEquals(1, p.getBuild().getResources().size());
+    assertResource(p.getBuild().getResources().get(0), pathFromBasedir("subDir/myRes"),
                    false, null, Collections.EMPTY_LIST, Collections.EMPTY_LIST);
-    assertEquals(1, build.getTestResources().size());
-    assertResource((Resource)build.getTestResources().get(0), pathFromBasedir("subDir/myTestRes"),
+    assertEquals(1, p.getBuild().getTestResources().size());
+    assertResource(p.getBuild().getTestResources().get(0), pathFromBasedir("subDir/myTestRes"),
                    false, null, Collections.EMPTY_LIST, Collections.EMPTY_LIST);
-    assertPathEquals(pathFromBasedir("subDir/myOutput"), build.getDirectory());
-    assertPathEquals(pathFromBasedir("subDir/myClasses"), build.getOutputDirectory());
-    assertPathEquals(pathFromBasedir("subDir/myTestClasses"), build.getTestOutputDirectory());
+    assertPathEquals(pathFromBasedir("subDir/myOutput"), p.getBuild().getDirectory());
+    assertPathEquals(pathFromBasedir("subDir/myClasses"), p.getBuild().getOutputDirectory());
+    assertPathEquals(pathFromBasedir("subDir/myTestClasses"), p.getBuild().getTestOutputDirectory());
   }
 
   public void testExpandingProperties() throws Exception {
@@ -432,7 +408,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
 
                      "<name>${prop1}</name>" +
                      "<packaging>${prop2}</packaging>");
-    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
+    MavenModel p = readProject(myProjectPom);
 
     assertEquals("value1", p.getName());
     assertEquals("value2", p.getPackaging());
@@ -446,7 +422,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
 
                      "<name>${prop1}</name>" +
                      "<packaging>${prop2}</packaging>");
-    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
+    MavenModel p = readProject(myProjectPom);
 
     assertEquals("value1", p.getName());
     assertEquals("value12", p.getPackaging());
@@ -460,7 +436,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
 
                      "<name>${prop1}</name>" +
                      "<packaging>${prop2}</packaging>");
-    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
+    MavenModel p = readProject(myProjectPom);
 
     assertEquals("${prop1}", p.getName());
     assertEquals("${prop2}", p.getPackaging());
@@ -532,7 +508,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     createProjectPom("<name>${java.home}</name>" +
                      "<packaging>${env." + getEnvVar() + "}</packaging>");
 
-    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
+    MavenModel p = readProject(myProjectPom);
     assertEquals(System.getProperty("java.home"), p.getName());
     assertEquals(System.getenv(getEnvVar()), p.getPackaging());
   }
@@ -559,7 +535,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
                      "  </profile>" +
                      "</profiles>");
 
-    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
+    MavenModel p = readProject(myProjectPom);
     assertEquals("value1", p.getName());
     assertEquals("${prop2}", p.getPackaging());
   }
@@ -586,7 +562,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
                      "  </profile>" +
                      "</profiles>");
 
-    org.apache.maven.project.MavenProject p = readProject(myProjectPom, "two");
+    MavenModel p = readProject(myProjectPom, "two");
     assertEquals("${prop1}", p.getName());
     assertEquals("value2", p.getPackaging());
   }
@@ -608,7 +584,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
                                          "</parent>" +
                                          "<name>${prop}</name>");
 
-    org.apache.maven.project.MavenProject p = readProject(module);
+    MavenModel p = readProject(module);
     assertEquals("value", p.getName());
   }
 
@@ -629,7 +605,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
                                          "</parent>" +
                                          "<name>${prop}</name>");
 
-    org.apache.maven.project.MavenProject p = readProject(module);
+    MavenModel p = readProject(module);
     assertEquals("${prop}", p.getName());
   }
 
@@ -651,7 +627,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
                                          "</parent>" +
                                          "<name>${prop}</name>");
 
-    org.apache.maven.project.MavenProject p = readProject(module);
+    MavenModel p = readProject(module);
     assertEquals("value", p.getName());
   }
 
@@ -683,7 +659,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
                                             "</parent>" +
                                             "<name>${prop}</name>");
 
-    org.apache.maven.project.MavenProject p = readProject(subModule);
+    MavenModel p = readProject(subModule);
     assertEquals("value", p.getName());
   }
 
@@ -706,7 +682,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
                                          "</parent>" +
                                          "<name>${prop}</name>");
 
-    org.apache.maven.project.MavenProject p = readProject(module);
+    MavenModel p = readProject(module);
     assertEquals("value", p.getName());
   }
 
@@ -729,7 +705,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
                                          "</parent>" +
                                          "<name>${prop}</name>");
 
-    org.apache.maven.project.MavenProject p = readProject(module);
+    MavenModel p = readProject(module);
     assertEquals("value", p.getName());
   }
 
@@ -755,7 +731,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
                      "</parent>" +
                      "<name>${prop}</name>");
 
-    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
+    MavenModel p = readProject(myProjectPom);
     assertEquals("value", p.getName());
   }
 
@@ -777,11 +753,11 @@ public class MavenProjectReaderTest extends MavenTestCase {
                                          "</parent>" +
                                          "<name>${prop}</name>");
 
-    org.apache.maven.project.MavenProject p = readProject(module, new MavenProjectReaderProjectLocator() {
+    MavenModel p = readProject(module, new MavenProjectReaderProjectLocator() {
       public VirtualFile findProjectFile(MavenId coordinates) {
         return new MavenId("test", "parent", "1").equals(coordinates) ? parent : null;
       }
-    }).nativeMavenProject;
+    }).mavenModel;
     assertEquals("value", p.getName());
   }
 
@@ -803,8 +779,8 @@ public class MavenProjectReaderTest extends MavenTestCase {
                                          "</parent>" +
                                          "<artifactId>module</artifactId>");
 
-    org.apache.maven.project.MavenProject p = readProject(module);
-    assertEquals("test:module:1", p.getGroupId() + ":" + p.getArtifactId() + ":" + p.getVersion());
+    MavenId id = readProject(module).getMavenId();
+    assertEquals("test:module:1", id.getGroupId() + ":" + id.getArtifactId() + ":" + id.getVersion());
   }
 
   public void testInheritingSettingsFromParentAndAlignCorrectly() throws Exception {
@@ -822,7 +798,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
                                          "  <version>1</version>" +
                                          "</parent>");
 
-    org.apache.maven.project.MavenProject p = readProject(module);
+    MavenModel p = readProject(module);
     assertPathEquals(pathFromBasedir(module.getParent(), "custom"), p.getBuild().getDirectory());
   }
 
@@ -845,7 +821,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
                                          "  <version>1</version>" +
                                          "</parent>");
 
-    org.apache.maven.project.MavenProject p = readProject(module);
+    MavenModel p = readProject(module);
     assertPathEquals(pathFromBasedir(module.getParent(), "subDir/custom"), p.getBuild().getDirectory());
   }
 
@@ -873,7 +849,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
                                          "  <version>1</version>" +
                                          "</parent>");
 
-    org.apache.maven.project.MavenProject p = readProject(module, "one");
+    MavenModel p = readProject(module, "one");
     assertPathEquals(pathFromBasedir(module.getParent(), "subDir/custom"), p.getBuild().getDirectory());
   }
 
@@ -886,7 +862,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
                               "  </properties>" +
                               "</profile>");
 
-    org.apache.maven.project.MavenProject mavenProject = readProject(myProjectPom);
+    MavenModel mavenProject = readProject(myProjectPom);
     assertEquals("${prop}", mavenProject.getName());
 
     mavenProject = readProject(myProjectPom, "one");
@@ -902,7 +878,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
                       "  </properties>" +
                       "</profile>");
 
-    org.apache.maven.project.MavenProject mavenProject = readProject(myProjectPom);
+    MavenModel mavenProject = readProject(myProjectPom);
     assertEquals("${prop}", mavenProject.getName());
 
     mavenProject = readProject(myProjectPom, "one");
@@ -920,7 +896,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
                       "  </profile>" +
                       "</profiles>");
 
-    org.apache.maven.project.MavenProject mavenProject = readProject(myProjectPom);
+    MavenModel mavenProject = readProject(myProjectPom);
     assertEquals("${prop}", mavenProject.getName());
 
     mavenProject = readProject(myProjectPom, "one");
@@ -943,7 +919,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
                                          "  <version>1</version>" +
                                          "</parent>");
 
-    org.apache.maven.project.MavenProject p = readProject(module, "one");
+    MavenModel p = readProject(module, "one");
     assertEquals("module-2", p.getBuild().getFinalName());
   }
 
@@ -967,7 +943,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
                                          "  <version>1</version>" +
                                          "</parent>");
 
-    org.apache.maven.project.MavenProject p = readProject(module, "one");
+    MavenModel p = readProject(module, "one");
     assertEquals("xxx", p.getBuild().getFinalName());
   }
 
@@ -1000,9 +976,9 @@ public class MavenProjectReaderTest extends MavenTestCase {
                                          "  </profile>" +
                                          "</profiles>");
 
-    org.apache.maven.project.MavenProject p = readProject(module);
-    assertOrderedElementsAreEqual(ContainerUtil.map(p.getModel().getProfiles(), new Function<Profile, Object>() {
-      public Object fun(Profile profile) {
+    MavenModel p = readProject(module);
+    assertOrderedElementsAreEqual(ContainerUtil.map(p.getProfiles(), new Function<MavenProfile, Object>() {
+      public Object fun(MavenProfile profile) {
         return profile.getId();
       }
     }), "profileFromChild", "profileFromParent");
@@ -1016,13 +992,13 @@ public class MavenProjectReaderTest extends MavenTestCase {
                      "<profiles>" +
                      "  <profile>" +
                      "    <id>profile</id>" +
-                     "    <properties><prop>parent</prop></properties>" +
+                     "    <modules><module>parent</module></modules>" +
                      "  </profile>" +
                      "</profiles>");
 
     VirtualFile parentProfiles = createProfilesXml("<profile>" +
                                                    "  <id>profile</id>" +
-                                                   "  <properties><prop>parentProfiles</prop></properties>" +
+                                                   "  <modules><module>parentProfiles</module></modules>" +
                                                    "</profile>");
 
     VirtualFile module = createModulePom("module",
@@ -1039,27 +1015,27 @@ public class MavenProjectReaderTest extends MavenTestCase {
                                          "<profiles>" +
                                          "  <profile>" +
                                          "    <id>profile</id>" +
-                                         "    <properties><prop>pom</prop></properties>" +
+                                         "    <modules><module>pom</module></modules>" +
                                          "  </profile>" +
                                          "</profiles>");
 
     updateSettingsXml("<profiles>" +
                       "  <profile>" +
                       "    <id>profile</id>" +
-                      "    <properties><prop>settings</prop></properties>" +
+                      "    <modules><module>settings</module></modules>" +
                       "  </profile>" +
                       "</profiles>");
 
     VirtualFile profiles = createProfilesXml("module",
                                              "<profile>" +
                                              "  <id>profile</id>" +
-                                             "  <properties><prop>profiles</prop></properties>" +
+                                             "  <modules><module>profiles</module></modules>" +
                                              "</profile>");
 
-    org.apache.maven.project.MavenProject p = readProject(module);
-    assertEquals(1, p.getModel().getProfiles().size());
-    assertEquals("pom", p.getModel().getProfiles().get(0).getProperties().getProperty("prop"));
-    assertEquals("pom", p.getModel().getProfiles().get(0).getSource());
+    MavenModel p = readProject(module);
+    assertEquals(1, p.getProfiles().size());
+    assertEquals("pom", p.getProfiles().get(0).getModules().get(0));
+    assertEquals("pom", p.getProfiles().get(0).getSource());
 
     createModulePom("module",
                     "<groupId>test</groupId>" +
@@ -1073,32 +1049,76 @@ public class MavenProjectReaderTest extends MavenTestCase {
                     "</parent>");
 
     p = readProject(module);
-    assertEquals(1, p.getModel().getProfiles().size());
-    assertEquals("profiles", p.getModel().getProfiles().get(0).getProperties().getProperty("prop"));
-    assertEquals("profiles.xml", p.getModel().getProfiles().get(0).getSource());
+    assertEquals(1, p.getProfiles().size());
+    assertEquals("profiles", p.getProfiles().get(0).getModules().get(0));
+    assertEquals("profiles.xml", p.getProfiles().get(0).getSource());
 
     profiles.delete(this);
 
     p = readProject(module);
-    assertEquals(1, p.getModel().getProfiles().size());
-    assertEquals("parent", p.getModel().getProfiles().get(0).getProperties().getProperty("prop"));
-    assertEquals("pom", p.getModel().getProfiles().get(0).getSource());
+    assertEquals(1, p.getProfiles().size());
+    assertEquals("parent", p.getProfiles().get(0).getModules().get(0));
+    assertEquals("pom", p.getProfiles().get(0).getSource());
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
                      "<version>1</version>");
 
     p = readProject(module);
-    assertEquals(1, p.getModel().getProfiles().size());
-    assertEquals("parentProfiles", p.getModel().getProfiles().get(0).getProperties().getProperty("prop"));
-    assertEquals("profiles.xml", p.getModel().getProfiles().get(0).getSource());
+    assertEquals(1, p.getProfiles().size());
+    assertEquals("parentProfiles", p.getProfiles().get(0).getModules().get(0));
+    assertEquals("profiles.xml", p.getProfiles().get(0).getSource());
 
     parentProfiles.delete(null);
 
     p = readProject(module);
-    assertEquals(1, p.getModel().getProfiles().size());
-    assertEquals("settings", p.getModel().getProfiles().get(0).getProperties().getProperty("prop"));
-    assertEquals("settings.xml", p.getModel().getProfiles().get(0).getSource());
+    assertEquals(1, p.getProfiles().size());
+    assertEquals("settings", p.getProfiles().get(0).getModules().get(0));
+    assertEquals("settings.xml", p.getProfiles().get(0).getSource());
+  }
+
+  public void testActivatingProfilesByDefault() throws Exception {
+    createProjectPom("<profiles>" +
+                     "  <profile>" +
+                     "    <id>one</id>" +
+                     "    <activation>" +
+                     "      <activeByDefault>true</activeByDefault>" +
+                     "    </activation>" +
+                     "  </profile>" +
+                     "  <profile>" +
+                     "    <id>two</id>" +
+                     "    <activation>" +
+                     "      <activeByDefault>false</activeByDefault>" +
+                     "    </activation>" +
+                     "  </profile>" +
+                     "</profiles>");
+
+    assertActiveProfiles("one");
+  }
+
+  public void testActivatingProfilesAfterResolvingInheritance() throws Exception {
+    createModulePom("parent",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>parent</artifactId>" +
+                    "<version>1</version>");
+
+    createProjectPom("<parent>" +
+                     "  <groupId>test</groupId>" +
+                     "  <artifactId>parent</artifactId>" +
+                     "  <version>1</version>" +
+                     "  <relativePath>parent/pom.xml</relativePath>" +
+                     "</parent>" +
+
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>one</id>" +
+                     "    <activation>" +
+                     "      <activeByDefault>true</activeByDefault>" +
+                     "    </activation>" +
+                     "  </profile>" +
+                     "</profiles>");
+
+    assertActiveProfiles("one");
   }
 
   public void testActivatingProfilesByOS() throws Exception {
@@ -1155,16 +1175,13 @@ public class MavenProjectReaderTest extends MavenTestCase {
   }
 
   public void testActivatingProfilesByProperty() throws Exception {
-    System.setProperty("maven.test.property", "foo");
-    MavenEmbedderWrapper.resetSystemPropertiesCacheInTests();
-
     createProjectPom("<profiles>" +
                      "  <profile>" +
                      "    <id>one</id>" +
                      "    <activation>" +
                      "      <property>" +
-                     "        <name>maven.test.property</name>" +
-                     "        <value>foo</value>" +
+                     "        <name>os.name</name>" +
+                     "        <value>" + System.getProperty("os.name") + "</value>" +
                      "      </property>" +
                      "    </activation>" +
                      "  </profile>" +
@@ -1172,8 +1189,8 @@ public class MavenProjectReaderTest extends MavenTestCase {
                      "    <id>two</id>" +
                      "    <activation>" +
                      "      <property>" +
-                     "        <name>maven.test.property</name>" +
-                     "        <value>bar</value>" +
+                     "        <name>os.name</name>" +
+                     "        <value>xxx</value>" +
                      "      </property>" +
                      "    </activation>" +
                      "  </profile>" +
@@ -1344,7 +1361,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertActiveProfiles("settings", "implicit");
   }
 
-  public void testDoNotActivateDefaultProfilesWhenThereAreOlwaysOnProfilesInPomXml() throws Exception {
+  public void testDoNotActivateDefaultProfilesWhenThereAreAlwaysOnProfilesInPomXml() throws Exception {
     updateSettingsXml("<activeProfiles>" +
                       "  <activeProfile>settings</activeProfile>" +
                       "</activeProfiles>");
@@ -1411,10 +1428,58 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertActiveProfiles("default", "profiles");
   }
 
-  private org.apache.maven.project.MavenProject readProject(VirtualFile file, String... profiles) {
+  public void testActiveProfilesInSettingsXmlOrProfilesXmlThroughInheritance() throws Exception {
+    updateSettingsXml("<activeProfiles>" +
+                      "  <activeProfile>settings</activeProfile>" +
+                      "</activeProfiles>");
+
+    createFullProfilesXml("parent",
+                          "<?xml version=\"1.0\"?>" +
+                          "<profilesXml>" +
+                          "  <activeProfiles>" +
+                          "    <activeProfile>parent</activeProfile>" +
+                          "  </activeProfiles>" +
+                          "</profilesXml>");
+
+    createModulePom("parent",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>parent</artifactId>" +
+                    "<version>1</version>");
+
+    createFullProfilesXml("<?xml version=\"1.0\"?>" +
+                          "<profilesXml>" +
+                          "  <activeProfiles>" +
+                          "    <activeProfile>project</activeProfile>" +
+                          "  </activeProfiles>" +
+                          "</profilesXml>");
+
+
+    createProjectPom("<parent>" +
+                     "  <groupId>test</groupId>" +
+                     "  <artifactId>parent</artifactId>" +
+                     "  <version>1</version>" +
+                     "  <relativePath>parent/pom.xml</relativePath>" +
+                     "</parent>" +
+
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>project</id>" +
+                     "  </profile>" +
+                     "  <profile>" +
+                     "    <id>parent</id>" +
+                     "  </profile>" +
+                     "  <profile>" +
+                     "    <id>settings</id>" +
+                     "  </profile>" +
+                     "</profiles>");
+
+    assertActiveProfiles("project", "settings");
+  }
+
+  private MavenModel readProject(VirtualFile file, String... profiles) {
     MavenProjectReaderResult readResult = readProject(file, new NullProjectLocator(), profiles);
     assertProblems(readResult);
-    return readResult.nativeMavenProject;
+    return readResult.mavenModel;
   }
 
   private MavenProjectReaderResult readProject(VirtualFile file,
@@ -1427,27 +1492,24 @@ public class MavenProjectReaderTest extends MavenTestCase {
     return result;
   }
 
-  private void assertParent(org.apache.maven.project.MavenProject p,
+  private void assertParent(MavenModel p,
                             String groupId,
                             String artifactId,
-                            String version,
-                            String relativePath) {
-    Parent parent = p.getModel().getParent();
-    assertNotNull(parent);
+                            String version) {
+    MavenId parent = p.getParent().getMavenId();
     assertEquals(groupId, parent.getGroupId());
     assertEquals(artifactId, parent.getArtifactId());
     assertEquals(version, parent.getVersion());
-    assertEquals(relativePath, parent.getRelativePath());
   }
 
-  private void assertResource(Resource resource,
+  private void assertResource(MavenResource resource,
                               String dir,
                               boolean filtered,
                               String targetPath,
                               List<String> includes,
                               List<String> excludes) {
     assertPathEquals(dir, resource.getDirectory());
-    assertEquals(filtered, resource.isFiltering());
+    assertEquals(filtered, resource.isFiltered());
     assertPathEquals(targetPath, resource.getTargetPath());
     assertOrderedElementsAreEqual(resource.getIncludes(), includes);
     assertOrderedElementsAreEqual(resource.getExcludes(), excludes);
@@ -1466,9 +1528,10 @@ public class MavenProjectReaderTest extends MavenTestCase {
   }
 
   private void assertActiveProfiles(List<String> explicitProfiles, String... expected) {
-    org.apache.maven.project.MavenProject p = readProject(myProjectPom, explicitProfiles.toArray(new String[explicitProfiles.size()]));
-    assertUnorderedElementsAreEqual(ContainerUtil.map((List<Profile>)p.getActiveProfiles(), new Function<Profile, String>() {
-      public String fun(Profile profile) {
+    MavenProjectReaderResult result =
+      readProject(myProjectPom, new NullProjectLocator(), explicitProfiles.toArray(new String[explicitProfiles.size()]));
+    assertUnorderedElementsAreEqual(ContainerUtil.map(result.activatedProfiles, new Function<MavenProfile, String>() {
+      public String fun(MavenProfile profile) {
         return profile.getId();
       }
     }), expected);

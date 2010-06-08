@@ -7,6 +7,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
+import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.util.CanonicalTypes;
@@ -101,7 +102,7 @@ public class ChangeSignaturePropagationTest extends LightCodeInsightTestCase {
 
   private void exceptionPropagationTest(final PsiMethod method, final Set<PsiMethod> methodsToPropagateExceptions) throws Exception {
     PsiClassType newExceptionType = JavaPsiFacade.getElementFactory(getProject()).createTypeByFQClassName("java.lang.Exception", GlobalSearchScope.allScope(getProject()));
-    final ThrownExceptionInfo[] newExceptions = new ThrownExceptionInfo[]{new ThrownExceptionInfo(-1, newExceptionType)};
+    final ThrownExceptionInfo[] newExceptions = new ThrownExceptionInfo[]{new JavaThrownExceptionInfo(-1, newExceptionType)};
     doTest(new ParameterInfoImpl[0], newExceptions, null, methodsToPropagateExceptions, method);
   }
 
@@ -149,7 +150,7 @@ public class ChangeSignaturePropagationTest extends LightCodeInsightTestCase {
     final PsiClassType[] exceptions = method.getThrowsList().getReferencedTypes();
     ThrownExceptionInfo[] result = new ThrownExceptionInfo[exceptions.length + newExceptions.length];
     for (int i = 0; i < exceptions.length; i++) {
-      result[i] = new ThrownExceptionInfo(i);
+      result[i] = new JavaThrownExceptionInfo(i);
     }
     System.arraycopy(newExceptions, 0, result, exceptions.length, newExceptions.length);
     return result;

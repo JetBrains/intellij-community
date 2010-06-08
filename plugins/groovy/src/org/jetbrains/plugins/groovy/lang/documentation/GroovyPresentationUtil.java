@@ -20,6 +20,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.MethodSignature;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
@@ -90,5 +91,17 @@ public class GroovyPresentationUtil {
       }
       return builder.toString();
     }
+  }
+
+  public static String getSignaturePresentation(MethodSignature signature) {
+    StringBuilder builder = new StringBuilder();
+    builder.append(signature.getName()).append('(');
+    PsiType[] types = signature.getParameterTypes();
+    for (PsiType type : types) {
+      builder.append(type.getPresentableText()).append(", ");
+    }
+    if (types.length > 0) builder.delete(builder.length() - 2, builder.length());
+    builder.append(")");
+    return builder.toString();
   }
 }

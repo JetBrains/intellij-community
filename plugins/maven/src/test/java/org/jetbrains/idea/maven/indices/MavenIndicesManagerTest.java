@@ -16,13 +16,15 @@
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.idea.maven.model.MavenArchetype;
 
 import java.io.File;
 import java.util.ArrayList;
-import static java.util.Arrays.asList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+
+import static java.util.Arrays.asList;
 
 public class MavenIndicesManagerTest extends MavenIndicesTestCase {
   private MavenIndicesTestFixture myIndicesFixture;
@@ -98,7 +100,7 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
   }
 
   public void testAddingArchetypes() throws Exception {
-    myIndicesFixture.getIndicesManager().addArchetype(new ArchetypeInfo("myGroup",
+    myIndicesFixture.getIndicesManager().addArchetype(new MavenArchetype("myGroup",
                                                                         "myArtifact",
                                                                         "666",
                                                                         null,
@@ -113,9 +115,9 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
   }
 
   private void assertArchetypeExists(String archetypeId) {
-    Set<ArchetypeInfo> achetypes = myIndicesFixture.getIndicesManager().getArchetypes();
+    Set<MavenArchetype> achetypes = myIndicesFixture.getIndicesManager().getArchetypes();
     List<String> actualNames = new ArrayList<String>();
-    for (ArchetypeInfo each : achetypes) {
+    for (MavenArchetype each : achetypes) {
       actualNames.add(each.groupId + ":" + each.artifactId + ":" + each.version);
     }
     assertTrue(actualNames.toString(), actualNames.contains(archetypeId));

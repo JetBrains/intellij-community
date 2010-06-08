@@ -65,7 +65,7 @@ binding.setVariable("guessHome", {
 })
 
 binding.setVariable("loadProject", {
-  requireProperty("jdk", requireProperty("jdk15.home", guessJdk()))
+  requireProperty("jdk", requireProperty("jdk16.home", guessJdk()))
   new IdeaProjectLoader().loadFromPath(project, "${home}")
 
   binding.ant.patternset(id: "idea.compiler.resources") {

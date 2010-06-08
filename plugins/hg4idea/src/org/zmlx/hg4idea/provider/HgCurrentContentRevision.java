@@ -12,55 +12,38 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgFile;
+import org.zmlx.hg4idea.HgRevisionNumber;
 
-class HgCurrentContentRevision implements ContentRevision {
-
-  private final HgFile hgFile;
+class HgCurrentContentRevision extends CurrentContentRevision {
   private final VcsRevisionNumber revisionNumber;
-  private final VirtualFile virtualFile;
 
-  private FilePath filePath;
-
-  public HgCurrentContentRevision(HgFile hgFile,
-    VcsRevisionNumber revisionNumber, VirtualFile virtualFile) {
-    this.hgFile = hgFile;
+  public HgCurrentContentRevision(HgFile hgFile, VcsRevisionNumber revisionNumber, VirtualFile virtualFile) {
+    super( hgFile.toFilePath() );
     this.revisionNumber = revisionNumber;
-    this.virtualFile = virtualFile;
-  }
-
-  public String getContent() throws VcsException {
-    Document doc = ApplicationManager.getApplication().runReadAction(new Computable<Document>() {
-      public Document compute() {
-        return FileDocumentManager.getInstance().getDocument(virtualFile);
-      }
-    });
-    if (doc == null) {
-      return null;
-    }
-    return doc.getText();
-  }
-
-  @NotNull
-  public FilePath getFile() {
-    if (filePath == null) {
-      filePath = hgFile.toFilePath();
-    }
-    return filePath;
   }
 
   @NotNull
   public VcsRevisionNumber getRevisionNumber() {
     return revisionNumber;
+  }
+
+  public static ContentRevision create(HgFile hgFile, HgRevisionNumber revision) {
+    VirtualFile virtualFile = VcsUtil.getVirtualFile(hgFile.getFile());
+    if (virtualFile == null) {
+      return null;
+    }
+
+    if (!virtualFile.getFileType().isBinary()) {
+      return new HgCurrentContentRevision(hgFile, revision, virtualFile);
+    }
+
+    return new HgCurrentBinaryContentRevision(hgFile, revision);
   }
 }

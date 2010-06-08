@@ -1,12 +1,12 @@
 def foo = {
-    int x, int y ->
-<begin>    println (x + y)
-    foo(x, y)
+  int x, int y ->
+<begin>  println (x + y)
+  foo(x, y)
 <end>}
 -----
 def foo = {
-    int x, int y ->
-    <caret>testMethod(x, y)
+  int x, int y ->
+  <caret>testMethod(x, y)
 }
 
 private def testMethod(int x, int y) {

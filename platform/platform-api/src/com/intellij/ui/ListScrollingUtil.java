@@ -20,14 +20,15 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
 import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 
 public class ListScrollingUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.ListScrollingUtil");
@@ -276,5 +277,15 @@ public class ListScrollingUtil {
         moveEnd(list);
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0)), list);
+
+
+    InputMap map = list.getInputMap(JComponent.WHEN_FOCUSED);
+    UIUtil.maybeInstall(map, SCROLLUP_ACTION_ID, KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, 0));
+    UIUtil.maybeInstall(map, SCROLLDOWN_ACTION_ID, KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, 0));
+    UIUtil.maybeInstall(map, SELECT_PREVIOUS_ROW_ACTION_ID, KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0));
+    UIUtil.maybeInstall(map, SELECT_NEXT_ROW_ACTION_ID, KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0));
+    UIUtil.maybeInstall(map, SELECT_FIRST_ROW_ACTION_ID, KeyStroke.getKeyStroke(KeyEvent.VK_HOME, 0));
+    UIUtil.maybeInstall(map, SELECT_LAST_ROW_ACTION_ID, KeyStroke.getKeyStroke(KeyEvent.VK_END, 0));
+
   }
 }

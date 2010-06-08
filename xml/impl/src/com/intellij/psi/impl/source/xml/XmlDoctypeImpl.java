@@ -20,11 +20,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.URLReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.URLReference;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -87,8 +87,34 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype, XmlEle
     return extractValue(dtdUrlElement);
   }
 
-  private String extractValue(PsiElement element) {
-    return StringUtil.stripQuotesAroundValue(element.getText());
+  private static String extractValue(PsiElement element) {
+    String text = element.getText();
+    
+    if (!text.startsWith("\"") && !text.startsWith("\'")) {
+      if (hasInjectedEscapingQuotes(element, text)) return stripInjectedEscapingQuotes(text);
+    }
+    return StringUtil.stripQuotesAroundValue(text);
+  }
+
+  // TODO: share common code
+  private static String stripInjectedEscapingQuotes(String text) {
+    return text.substring(2, text.length() - 2);
+  }
+
+  private static boolean hasInjectedEscapingQuotes(PsiElement element, String text) {
+    if (text.startsWith("\\") && text.length() >= 4) {
+      char escapedChar = text.charAt(1);
+      PsiElement context = element.getContainingFile().getContext();
+      
+      if (context != null && 
+          context.textContains(escapedChar) && 
+          context.getText().startsWith(String.valueOf(escapedChar)) &&
+          text.endsWith("\\"+escapedChar)
+        ) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Nullable

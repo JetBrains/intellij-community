@@ -1,25 +1,25 @@
 class S {
-    def r() {
-        <begin>Closure sin = {x -> Math.sin(x)}<end>
+  def r() {
+    <begin>Closure sin = {x -> Math.sin(x)}<end>
 
 
-        10.times {
-            x -> sin x
-        }
-
+    10.times {
+      x -> sin x
     }
+
+  }
 }
 -----
 class S {
-    def r() {
-        Closure sin = <caret>testMethod()
+  def r() {
+    Closure sin = <caret>testMethod()
 
 
-        10.times {
-            x -> sin x
-        }
-
+    10.times {
+      x -> sin x
     }
+
+  }
 
   private Closure testMethod() {
     Closure sin = {x -> Math.sin(x)}

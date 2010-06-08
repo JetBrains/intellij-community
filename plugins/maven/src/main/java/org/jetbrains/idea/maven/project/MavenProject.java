@@ -26,17 +26,14 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import gnu.trove.TObjectIdentityHashingStrategy;
-import org.apache.maven.artifact.Artifact;
-import org.apache.maven.model.*;
-import org.apache.maven.shared.dependency.tree.DependencyNode;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.embedder.MavenConsole;
-import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
+import org.jetbrains.idea.maven.facade.MavenEmbedderWrapper;
+import org.jetbrains.idea.maven.facade.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.importing.MavenExtraArtifactType;
 import org.jetbrains.idea.maven.importing.MavenImporter;
+import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.utils.*;
 
 import java.io.*;
@@ -100,49 +97,42 @@ public class MavenProject {
   }
 
   private MavenProjectChanges set(MavenProjectReaderResult readerResult,
+                                  MavenGeneralSettings settings,
                                   boolean updateLastReadStamp,
                                   boolean resetArtifacts,
                                   boolean resetProfiles) {
     State newState = myState.clone();
 
-    if (updateLastReadStamp) newState.myLastReadStamp++;
-
-    org.apache.maven.project.MavenProject nativeMavenProject = readerResult.nativeMavenProject;
+    if (updateLastReadStamp) newState.myLastReadStamp = myState.myLastReadStamp + 1;
 
     newState.myReadingProblems = readerResult.readingProblems;
-    newState.myLocalRepository = readerResult.localRepository;
+    newState.myLocalRepository = settings.getEffectiveLocalRepository();
 
-    Collection<Profile> activeProfiles = collectActivateProfiles(nativeMavenProject);
+    Collection<MavenProfile> activeProfiles = readerResult.activatedProfiles;
 
     newState.myActiveProfilesIds = collectProfilesIds(activeProfiles);
 
-    Model model = nativeMavenProject.getModel();
+    MavenModel model = readerResult.mavenModel;
 
-    newState.myMavenId = new MavenId(model.getGroupId(),
-                                     model.getArtifactId(),
-                                     model.getVersion());
-
-    Parent parent = model.getParent();
-    newState.myParentId = parent != null
-                          ? new MavenId(parent.getGroupId(), parent.getArtifactId(), parent.getVersion())
-                          : null;
+    newState.myMavenId = model.getMavenId();
+    if (model.getParent() != null) {
+      newState.myParentId = model.getParent().getMavenId();
+    }
 
     newState.myPackaging = model.getPackaging();
     newState.myName = model.getName();
 
-    Build build = model.getBuild();
+    newState.myFinalName = model.getBuild().getFinalName();
+    newState.myDefaultGoal = model.getBuild().getDefaultGoal();
 
-    newState.myFinalName = build.getFinalName();
-    newState.myDefaultGoal = build.getDefaultGoal();
-
-    newState.myBuildDirectory = build.getDirectory();
-    newState.myOutputDirectory = build.getOutputDirectory();
-    newState.myTestOutputDirectory = build.getTestOutputDirectory();
+    newState.myBuildDirectory = model.getBuild().getDirectory();
+    newState.myOutputDirectory = model.getBuild().getOutputDirectory();
+    newState.myTestOutputDirectory = model.getBuild().getTestOutputDirectory();
 
     doSetFolders(newState, readerResult);
 
-    newState.myFilters = build.getFilters() == null ? Collections.EMPTY_LIST : build.getFilters();
-    newState.myProperties = model.getProperties() != null ? model.getProperties() : new Properties();
+    newState.myFilters = model.getBuild().getFilters();
+    newState.myProperties = model.getProperties();
 
     doSetResolvedAttributes(newState, readerResult, resetArtifacts);
 
@@ -157,8 +147,7 @@ public class MavenProject {
       newState.myProfilesIds = new ArrayList<String>(mergedProfiles);
     }
 
-    newState.myStrippedMavenModel = MavenUtil.cloneObject(model);
-    MavenUtil.stripDown(newState.myStrippedMavenModel);
+    newState.myModelMap = readerResult.nativeModelMap;
 
     return setState(newState);
   }
@@ -169,9 +158,10 @@ public class MavenProject {
     return changes;
   }
 
-  private static void doSetResolvedAttributes(State state, MavenProjectReaderResult readerResult, boolean reset) {
-    org.apache.maven.project.MavenProject nativeMavenProject = readerResult.nativeMavenProject;
-    Model model = nativeMavenProject.getModel();
+  private static void doSetResolvedAttributes(State state,
+                                              MavenProjectReaderResult readerResult,
+                                              boolean reset) {
+    MavenModel model = readerResult.mavenModel;
 
     Set<MavenId> newUnresolvedArtifacts = new THashSet<MavenId>();
     LinkedHashSet<MavenRemoteRepository> newRepositories = new LinkedHashSet<MavenRemoteRepository>();
@@ -190,15 +180,11 @@ public class MavenProject {
     }
 
     newUnresolvedArtifacts.addAll(readerResult.unresolvedArtifactIds);
-    newRepositories.addAll(convertRepositories(model.getRepositories()));
-
-    Map<Artifact, MavenArtifact> nativeToConvertedMap =
-      new THashMap<Artifact, MavenArtifact>(new TObjectIdentityHashingStrategy<Artifact>());
-    newDependencyTree.addAll(convertDependencyNodes(null, readerResult.dependencyTree, nativeToConvertedMap, state.myLocalRepository));
-    newDependencies.addAll(convertArtifacts(nativeMavenProject.getArtifacts(), nativeToConvertedMap, state.myLocalRepository));
-
-    newPlugins.addAll(collectPlugins(readerResult.settings, model));
-    newExtensions.addAll(convertArtifacts(nativeMavenProject.getExtensionArtifacts(), nativeToConvertedMap, state.myLocalRepository));
+    newRepositories.addAll(model.getRemoteRepositories());
+    newDependencyTree.addAll(model.getDependencyTree());
+    newDependencies.addAll(model.getDependencies());
+    newPlugins.addAll(model.getPlugins());
+    newExtensions.addAll(model.getExtensions());
 
     state.myUnresolvedArtifactIds = newUnresolvedArtifacts;
     state.myRemoteRepositories = new ArrayList<MavenRemoteRepository>(newRepositories);
@@ -215,123 +201,17 @@ public class MavenProject {
   }
 
   private static void doSetFolders(State newState, MavenProjectReaderResult readerResult) {
-    org.apache.maven.project.MavenProject nativeMavenProject = readerResult.nativeMavenProject;
+    MavenModel model = readerResult.mavenModel;
+    newState.mySources = model.getBuild().getSources();
+    newState.myTestSources = model.getBuild().getTestSources();
 
-    newState.mySources = new ArrayList<String>(nativeMavenProject.getCompileSourceRoots());
-    newState.myTestSources = new ArrayList<String>(nativeMavenProject.getTestCompileSourceRoots());
-
-    newState.myResources = convertResources(nativeMavenProject.getResources());
-    newState.myTestResources = convertResources(nativeMavenProject.getTestResources());
+    newState.myResources = model.getBuild().getResources();
+    newState.myTestResources = model.getBuild().getTestResources();
   }
 
-  private static List<MavenResource> convertResources(List<Resource> resources) {
-    if (resources == null) return new ArrayList<MavenResource>();
-
-    List<MavenResource> result = new ArrayList<MavenResource>(resources.size());
-    for (Resource each : resources) {
-      result.add(new MavenResource(each));
-    }
-    return result;
-  }
-
-  private static List<MavenRemoteRepository> convertRepositories(List<Repository> repositories) {
-    if (repositories == null) return new ArrayList<MavenRemoteRepository>();
-
-    List<MavenRemoteRepository> result = new ArrayList<MavenRemoteRepository>(repositories.size());
-    for (Repository each : repositories) {
-      result.add(new MavenRemoteRepository(each));
-    }
-    return result;
-  }
-
-  private static List<MavenArtifact> convertArtifacts(Collection<Artifact> artifacts,
-                                                      Map<Artifact, MavenArtifact> nativeToConvertedMap,
-                                                      File localRepository) {
-    if (artifacts == null) return new ArrayList<MavenArtifact>();
-
-    List<MavenArtifact> result = new ArrayList<MavenArtifact>(artifacts.size());
-    for (Artifact each : artifacts) {
-      result.add(convertArtifact(each, nativeToConvertedMap, localRepository));
-    }
-    return result;
-  }
-
-  private static List<MavenArtifactNode> convertDependencyNodes(MavenArtifactNode parent,
-                                                                Collection<DependencyNode> nodes,
-                                                                Map<Artifact, MavenArtifact> nativeToConvertedMap,
-                                                                File localRepository) {
-    List<MavenArtifactNode> result = new ArrayList<MavenArtifactNode>(nodes.size());
-    for (DependencyNode each : nodes) {
-      Artifact a = each.getArtifact();
-      MavenArtifact ma = convertArtifact(a, nativeToConvertedMap, localRepository);
-
-      MavenArtifactState state = MavenArtifactState.ADDED;
-      switch (each.getState()) {
-        case DependencyNode.INCLUDED:
-          break;
-        case DependencyNode.OMITTED_FOR_CONFLICT:
-          state = MavenArtifactState.CONFLICT;
-          break;
-        case DependencyNode.OMITTED_FOR_DUPLICATE:
-          state = MavenArtifactState.DUPLICATE;
-          break;
-        case DependencyNode.OMITTED_FOR_CYCLE:
-          state = MavenArtifactState.CYCLE;
-          break;
-        default:
-          MavenLog.LOG.error("unknown dependency node state: " + each.getState());
-      }
-      MavenArtifact relatedMA = each.getRelatedArtifact() == null ? null
-                                : convertArtifact(each.getRelatedArtifact(), nativeToConvertedMap, localRepository);
-      MavenArtifactNode newNode = new MavenArtifactNode(parent, ma, state, relatedMA, each.getOriginalScope(),
-                                                        each.getPremanagedVersion(), each.getPremanagedScope());
-      newNode.setDependencies(convertDependencyNodes(newNode, each.getChildren(), nativeToConvertedMap, localRepository));
-      result.add(newNode);
-    }
-    return result;
-  }
-
-  private static MavenArtifact convertArtifact(Artifact artifact, Map<Artifact, MavenArtifact> nativeToConvertedMap, File localRepository) {
-    MavenArtifact ma = nativeToConvertedMap.get(artifact);
-    if (ma == null) {
-      ma = new MavenArtifact(artifact, localRepository);
-      nativeToConvertedMap.put(artifact, ma);
-    }
-    return ma;
-  }
-
-  private static List<MavenPlugin> collectPlugins(MavenGeneralSettings settings, Model mavenModel) {
-    List<MavenPlugin> result = new ArrayList<MavenPlugin>();
-    Set<String> pluginKeys = new THashSet<String>();
-    Build build = mavenModel.getBuild();
-    doCollectPlugins(settings, build, false, result, pluginKeys);
-    if (build != null) doCollectPlugins(settings, build.getPluginManagement(), true, result, pluginKeys);
-    return result;
-  }
-
-  private static void doCollectPlugins(MavenGeneralSettings settings,
-                                       PluginContainer container,
-                                       boolean management,
-                                       List<MavenPlugin> result,
-                                       Set<String> pluginKeys) {
-    if (container == null) return;
-
-    List<Plugin> plugins = container.getPlugins();
-    if (plugins == null) return;
-
-    for (Plugin each : plugins) {
-      String key = each.getGroupId() + ":" + each.getArtifactId();
-      if (management && (!isDefaultPlugin(settings, each) || pluginKeys.contains(key))) continue;
-      result.add(new MavenPlugin(each, management));
-      pluginKeys.add(key);
-    }
-  }
-
-  private static boolean isDefaultPlugin(MavenGeneralSettings settings, Plugin plugin) {
-    return settings.isDefaultPlugin(plugin.getGroupId(), plugin.getArtifactId());
-  }
-
-  private static Map<String, String> collectModulePathsAndNames(Model mavenModel, String baseDir, Collection<Profile> activeProfiles) {
+  private static Map<String, String> collectModulePathsAndNames(MavenModel mavenModel,
+                                                                String baseDir,
+                                                                Collection<MavenProfile> activeProfiles) {
     String basePath = baseDir + "/";
     Map<String, String> result = new LinkedHashMap<String, String>();
     for (Map.Entry<String, String> each : collectModulesRelativePathsAndNames(mavenModel, activeProfiles).entrySet()) {
@@ -340,18 +220,20 @@ public class MavenProject {
     return result;
   }
 
-  private static Map<String, String> collectModulesRelativePathsAndNames(Model mavenModel, Collection<Profile> activeProfiles) {
+  private static Map<String, String> collectModulesRelativePathsAndNames(MavenModel mavenModel, Collection<MavenProfile> activeProfiles) {
     LinkedHashMap<String, String> result = new LinkedHashMap<String, String>();
     addModulesToList(mavenModel.getModules(), result);
-    for (Profile profile : activeProfiles) {
+    for (MavenProfile profile : activeProfiles) {
       addModulesToList(profile.getModules(), result);
     }
     return result;
   }
 
-  private static void addModulesToList(List moduleNames, LinkedHashMap<String, String> result) {
-    for (String name : (List<String>)moduleNames) {
-      if (name.trim().length() == 0) continue;
+  private static void addModulesToList(List<String> moduleNames, LinkedHashMap<String, String> result) {
+    for (String name : moduleNames) {
+      name = name.trim();
+      
+      if (name.length() == 0) continue;
 
       String originalName = name;
       // module name can be relative and contain either / of \\ separators
@@ -364,18 +246,12 @@ public class MavenProject {
     }
   }
 
-  private static Collection<Profile> collectActivateProfiles(org.apache.maven.project.MavenProject nativeMavenProject) {
-    Collection<Profile> activatedProfiles = nativeMavenProject.getActiveProfiles();
-    return activatedProfiles == null ? Collections.<Profile>emptySet() : activatedProfiles;
-  }
-
-  private static Collection<String> collectProfilesIds(Collection<Profile> profiles) {
+  private static Collection<String> collectProfilesIds(Collection<MavenProfile> profiles) {
     if (profiles == null) return Collections.emptyList();
 
     Set<String> result = new THashSet<String>(profiles.size());
-    for (Profile each : profiles) {
-      String id = each.getId();
-      if (id != null) result.add(id);
+    for (MavenProfile each : profiles) {
+      result.add(each.getId());
     }
     return result;
   }
@@ -427,8 +303,8 @@ public class MavenProject {
     return state.myName;
   }
 
-  public Model getMavenModel() {
-    return myState.myStrippedMavenModel;
+  public Map<String, String> getModelMap() {
+    return myState.myModelMap;
   }
 
   public MavenId getMavenId() {
@@ -491,34 +367,34 @@ public class MavenProject {
                                   Collection<String> profiles,
                                   MavenProjectReader reader,
                                   MavenProjectReaderProjectLocator locator) {
-    return set(reader.readProject(generalSettings, myFile, profiles, locator), true, false, true);
+    return set(reader.readProject(generalSettings, myFile, profiles, locator), generalSettings, true, false, true);
   }
 
-  public Pair<MavenProjectChanges, org.apache.maven.project.MavenProject> resolve(MavenGeneralSettings generalSettings,
-                                                                                  MavenEmbedderWrapper embedder,
-                                                                                  MavenProjectReader reader,
-                                                                                  MavenProjectReaderProjectLocator locator)
+  public Pair<MavenProjectChanges, NativeMavenProjectHolder> resolve(MavenGeneralSettings generalSettings,
+                                                                     MavenEmbedderWrapper embedder,
+                                                                     MavenProjectReader reader,
+                                                                     MavenProjectReaderProjectLocator locator)
     throws MavenProcessCanceledException {
     MavenProjectReaderResult result = reader.resolveProject(generalSettings,
                                                             embedder,
                                                             getFile(),
                                                             getActiveProfilesIds(),
                                                             locator);
-    MavenProjectChanges changes = set(result, false, result.readingProblems.isEmpty(), false);
+    MavenProjectChanges changes = set(result, generalSettings, false, result.readingProblems.isEmpty(), false);
 
-    for (MavenImporter eachImporter : getSuitableImporters()) {
-      eachImporter.resolve(this, result.nativeMavenProject, embedder);
+    if (result.nativeMavenProject != null) {
+      for (MavenImporter eachImporter : getSuitableImporters()) {
+        eachImporter.resolve(this, result.nativeMavenProject, embedder);
+      }
     }
     return Pair.create(changes, result.nativeMavenProject);
   }
 
   public Pair<Boolean, MavenProjectChanges> resolveFolders(MavenEmbedderWrapper embedder,
-                                                           MavenGeneralSettings generalSettings,
                                                            MavenImportingSettings importingSettings,
                                                            MavenProjectReader reader,
                                                            MavenConsole console) throws MavenProcessCanceledException {
     MavenProjectReaderResult result = reader.generateSources(embedder,
-                                                             generalSettings,
                                                              importingSettings,
                                                              getFile(),
                                                              getActiveProfilesIds(),
@@ -597,7 +473,7 @@ public class MavenProject {
   }
 
   private static MavenProjectProblem createDependencyProblem(VirtualFile file, String description) {
-    return new MavenProjectProblem(file, description, MavenProjectProblem.ProblemType.DEPENDENCY);
+    return new MavenProjectProblem(file.getPath(), description, MavenProjectProblem.ProblemType.DEPENDENCY);
   }
 
   private static boolean isParentResolved(State state) {
@@ -892,12 +768,13 @@ public class MavenProject {
     List<MavenArtifact> myDependencies;
     List<MavenArtifactNode> myDependencyTree;
 
+    List<MavenRemoteRepository> myRemoteRepositories;
+
     Map<String, String> myModulesPathsAndNames;
 
     Collection<String> myProfilesIds;
 
-    Model myStrippedMavenModel;
-    List<MavenRemoteRepository> myRemoteRepositories;
+    Map<String, String> myModelMap;
 
     Collection<String> myActiveProfilesIds;
     Collection<MavenProjectProblem> myReadingProblems;

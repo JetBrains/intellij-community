@@ -20,11 +20,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.THashMap;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.*;
-import org.sonatype.nexus.index.ArtifactInfo;
+import org.jetbrains.idea.maven.facade.MavenFacadeIndexer;
+import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 
 import java.util.*;
 
 public class MavenArtifactSearcher extends MavenSearcher<MavenArtifactSearchResult> {
+  public static final String TERM = MavenFacadeIndexer.SEARCH_TERM_COORDINATES;
+
   protected Pair<String, Query> preparePatternAndQuery(String pattern) {
     pattern = pattern.toLowerCase();
     if (pattern.trim().length() == 0) return Pair.create(pattern, (Query)new MatchAllDocsQuery());
@@ -37,31 +40,28 @@ public class MavenArtifactSearcher extends MavenSearcher<MavenArtifactSearchResu
     BooleanQuery query = new BooleanQuery();
 
     if (parts.size() == 1) {
-      query.add(new WildcardQuery(new Term(ArtifactInfo.UINFO, "*" + parts.get(0) + "*|*|*|*")), BooleanClause.Occur.SHOULD);
-      query.add(new WildcardQuery(new Term(ArtifactInfo.UINFO, "*|*" + parts.get(0) + "*|*|*")), BooleanClause.Occur.SHOULD);
+      query.add(new WildcardQuery(new Term(TERM, "*" + parts.get(0) + "*|*|*|*")), BooleanClause.Occur.SHOULD);
+      query.add(new WildcardQuery(new Term(TERM, "*|*" + parts.get(0) + "*|*|*")), BooleanClause.Occur.SHOULD);
     }
     if (parts.size() == 2) {
-      query.add(new WildcardQuery(new Term(ArtifactInfo.UINFO, "*" + parts.get(0) + "*|*" + parts.get(1) + "*|*|*")),
-                 BooleanClause.Occur.SHOULD);
-      query.add(new WildcardQuery(new Term(ArtifactInfo.UINFO, "*" + parts.get(0) + "*|*|" + parts.get(1) + "*|*")),
-                 BooleanClause.Occur.SHOULD);
-      query.add(new WildcardQuery(new Term(ArtifactInfo.UINFO, "*|*" + parts.get(0) + "*|" + parts.get(1) + "*|*")),
-                 BooleanClause.Occur.SHOULD);
+      query.add(new WildcardQuery(new Term(TERM, "*" + parts.get(0) + "*|*" + parts.get(1) + "*|*|*")), BooleanClause.Occur.SHOULD);
+      query.add(new WildcardQuery(new Term(TERM, "*" + parts.get(0) + "*|*|" + parts.get(1) + "*|*")), BooleanClause.Occur.SHOULD);
+      query.add(new WildcardQuery(new Term(TERM, "*|*" + parts.get(0) + "*|" + parts.get(1) + "*|*")), BooleanClause.Occur.SHOULD);
     }
     if (parts.size() >= 3) {
       String s = "*" + parts.get(0) + "*|*" + parts.get(1) + "*|" + parts.get(2) + "*|*";
-      query.add(new WildcardQuery(new Term(ArtifactInfo.UINFO, s)), BooleanClause.Occur.MUST);
+      query.add(new WildcardQuery(new Term(TERM, s)), BooleanClause.Occur.MUST);
     }
 
     return Pair.create(pattern, (Query)query);
   }
 
-  protected Collection<MavenArtifactSearchResult> processResults(Set<ArtifactInfo> infos, String pattern, int maxResult) {
+  protected Collection<MavenArtifactSearchResult> processResults(Set<MavenArtifactInfo> infos, String pattern, int maxResult) {
     Map<String, MavenArtifactSearchResult> result = new THashMap<String, MavenArtifactSearchResult>();
 
-    for (ArtifactInfo each : infos) {
-      if (!StringUtil.isEmptyOrSpaces(each.classifier)) continue; // todo skip for now
-      
+    for (MavenArtifactInfo each : infos) {
+      if (!StringUtil.isEmptyOrSpaces(each.getClassifier())) continue; // todo skip for now
+
       String key = makeKey(each);
       MavenArtifactSearchResult searchResult = result.get(key);
       if (searchResult == null) {

@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents a Java <code>this</code> expression.
  */
-public interface PsiThisExpression extends PsiExpression {
+public interface PsiThisExpression extends PsiQualifiedExpression {
   /**
    * Returns the expression representing the class name qualifying the <code>this</code>
    * expression.

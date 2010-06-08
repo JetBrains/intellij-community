@@ -12,79 +12,118 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgGlobalSettings;
-import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.HgUtil;
 import org.zmlx.hg4idea.HgVcsMessages;
 
+import javax.swing.*;
+import java.awt.*;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.net.Socket;
 import java.nio.charset.Charset;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
 public final class HgCommandService {
+  
+  private static File PROMPT_HOOKS_PLUGIN;
 
   static final Logger LOG = Logger.getInstance(HgCommandService.class.getName());
+
+  private static final List<String> DEFAULT_OPTIONS = Arrays.asList(
+    "--config", "ui.merge=internal:merge"
+  );
 
   private final Project project;
   private final HgGlobalSettings settings;
 
-  private HgVcs hgVcs;
-
   public HgCommandService(Project project, HgGlobalSettings settings) {
     this.project = project;
     this.settings = settings;
+    if (PROMPT_HOOKS_PLUGIN == null) {
+      PROMPT_HOOKS_PLUGIN = HgUtil.getTemporaryPythonFile("prompthooks");
+    }
   }
 
   public static HgCommandService getInstance(Project project) {
     return project.getComponent(HgCommandService.class);
   }
 
-  HgCommandResult execute(@NotNull VirtualFile repo, String operation, List<String> arguments) {
+  HgCommandResult execute(VirtualFile repo, String operation, List<String> arguments) {
     return execute(
-      repo, Collections.<String>emptyList(), operation, arguments, Charset.defaultCharset()
+      repo, DEFAULT_OPTIONS, operation, arguments, Charset.defaultCharset()
     );
   }
 
-  HgCommandResult execute(@NotNull VirtualFile repo, List<String> config,
+  HgCommandResult execute(VirtualFile repo, List<String> hgOptions,
     String operation, List<String> arguments) {
-    return execute(repo, config, operation, arguments, Charset.defaultCharset());
+    return execute(repo, hgOptions, operation, arguments, Charset.defaultCharset());
   }
 
-  HgCommandResult execute(@NotNull VirtualFile repo, List<String> config,
+  HgCommandResult execute(VirtualFile repo, List<String> hgOptions,
     String operation, List<String> arguments, Charset charset) {
-    
-    if (hgVcs == null) {
-      hgVcs = HgVcs.getInstance(project);
-    }
-
-    if (hgVcs == null || !hgVcs.validateHgExecutable()) {
-      return HgCommandResult.EMPTY;
-    }
-
     List<String> cmdLine = new LinkedList<String>();
     cmdLine.add(settings.getHgExecutable());
-    if (config != null && !config.isEmpty()) {
-      cmdLine.add("--config");
-      cmdLine.addAll(config);
+    if (repo != null) {
+      cmdLine.add("--repository");
+      cmdLine.add(repo.getPath());
     }
+
+    SocketServer promptServer = new SocketServer(new PromptReceiver());
+    WarningReceiver warningReceiver = new WarningReceiver();
+    SocketServer warningServer = new SocketServer(warningReceiver);
+    if (PROMPT_HOOKS_PLUGIN == null) {
+      throw new RuntimeException("Could not hook into the prompt mechanism of Mercurial");
+    }
+    try {
+      int promptPort = promptServer.start();
+      int warningPort = warningServer.start();
+      cmdLine.add("--config");
+      cmdLine.add("extensions.hg4ideapromptextension=" + PROMPT_HOOKS_PLUGIN.getAbsolutePath());
+      cmdLine.add("--config");
+      cmdLine.add("hg4ideaprompt.port=" + promptPort);
+      cmdLine.add("--config");
+      cmdLine.add("hg4ideawarn.port=" + warningPort);
+
+      // Other parts of the plugin count on the availability of the MQ extension, so make sure it is enabled
+      cmdLine.add("--config");
+      cmdLine.add("extensions.mq=");
+    } catch (IOException e) {
+      throw new RuntimeException(e); //TODO implement catch clause
+    }
+    cmdLine.addAll(hgOptions);
     cmdLine.add(operation);
     if (arguments != null && arguments.size() != 0) {
       cmdLine.addAll(arguments);
     }
     ShellCommand shellCommand = new ShellCommand();
+    HgCommandResult result;
     try {
-      LOG.info(cmdLine.toString());
-      return shellCommand.execute(cmdLine, repo.getPath(), charset);
+      LOG.debug(cmdLine.toString());
+      String workingDir = repo != null ? repo.getPath() : null;
+      result = shellCommand.execute(cmdLine, workingDir, charset);
     } catch (ShellCommandException e) {
       showError(e);
       LOG.error(e.getMessage(), e);
+      result = HgCommandResult.EMPTY;
+    } finally {
+      promptServer.stop();
+      warningServer.stop();
     }
-    return HgCommandResult.EMPTY;
+    String warnings = warningReceiver.getWarnings();
+    result.setWarnings(warnings);
+    return result;
+
   }
 
   private void showError(Exception e) {
@@ -101,5 +140,102 @@ public final class HgCommandService {
       HgVcsMessages.message("hg4idea.error")
     );
   }
+
+  private static class WarningReceiver extends SocketServer.Protocol{
+    private StringBuffer warnings = new StringBuffer();
+
+    public boolean handleConnection(Socket socket) throws IOException {
+      DataInputStream dataInput = new DataInputStream(socket.getInputStream());
+
+      int numOfWarnings = dataInput.readInt();
+      for (int i = 0; i < numOfWarnings; i++) {
+        warnings.append(new String(readDataBlock(dataInput)));
+      }
+      return true;
+    }
+
+
+    public String getWarnings() {
+      return warnings.toString();
+    }
+  }
+
+  private static class PromptReceiver extends SocketServer.Protocol {
+
+    public boolean handleConnection(Socket socket) throws IOException {
+      DataInputStream dataInput = new DataInputStream(socket.getInputStream());
+      final String message = new String(readDataBlock(dataInput));
+      int numOfChoices = dataInput.readInt();
+      final Choice[] choices = new Choice[numOfChoices];
+      for (int i = 0; i < numOfChoices; i++) {
+        String choice = new String(readDataBlock(dataInput));
+        choices[i] = new Choice(choice);
+      }
+      int defaultChoiceInt = dataInput.readInt();
+      final Choice defaultChoice = choices[defaultChoiceInt];
+
+      final int[] index = new int[]{-1};
+      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+        public void run() {
+          Window parent = ApplicationManager.getApplication().getComponent(Window.class);
+          index[0] = JOptionPane.showOptionDialog(
+            parent,
+            message,
+            "hg4idea",
+            JOptionPane.OK_CANCEL_OPTION,
+            JOptionPane.QUESTION_MESSAGE,
+            null,
+            choices,
+            defaultChoice);
+        }
+      }, ModalityState.defaultModalityState());
+
+      int chosen = index[0];
+      DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+      if (chosen == JOptionPane.CLOSED_OPTION) {
+        out.writeInt(-1);
+      } else {
+        out.writeInt(chosen);
+      }
+      return true;
+    }
+
+    private static class Choice{
+      private final String fullString;
+      private final String representation;
+      private final String choiceChar;
+
+      private Choice(String fullString) {
+        this.fullString = fullString;
+        this.representation = fullString.replaceAll("&", "");
+        int index = fullString.indexOf("&");
+        this.choiceChar = "" + fullString.charAt(index + 1);
+        
+      }
+
+      @Override
+      public String toString() {
+        return representation;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Choice choice = (Choice) o;
+
+        if (!fullString.equals(choice.fullString)) return false;
+
+        return true;
+      }
+
+      @Override
+      public int hashCode() {
+        return fullString.hashCode();
+      }
+    }
+  }
+
 
 }

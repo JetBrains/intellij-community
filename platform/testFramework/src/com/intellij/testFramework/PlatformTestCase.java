@@ -589,6 +589,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
       field.setAccessible(true);
       field.set(ioFile, null);
+      FileUtil.resetCanonicalTempPathCache();
     }
     catch (NoSuchFieldException ignore) {
       // field was removed in JDK 1.6.0_12

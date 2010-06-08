@@ -15,10 +15,9 @@
  */
 package org.jetbrains.idea.maven.project;
 
-import org.jetbrains.idea.maven.embedder.MavenConsole;
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
-import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
+import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 public class MavenProjectsProcessorEmptyTask extends MavenProjectsProcessorBasicTask {
   public MavenProjectsProcessorEmptyTask(MavenProject project) {

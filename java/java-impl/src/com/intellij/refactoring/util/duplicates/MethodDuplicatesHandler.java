@@ -48,8 +48,8 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.util.VisibilityUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -257,7 +257,12 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
         } else if (needStaticQualifier || myMethod.hasModifierProperty(PsiModifier.STATIC)) {
           qualifierExpression.replace(factory.createReferenceExpression(containingClass));
         } else {
-          qualifierExpression.replace(RefactoringUtil.createThisExpression(containingClass.getManager(), containingClass));
+          final PsiClass psiClass = PsiTreeUtil.getParentOfType(match.getMatchStart(), PsiClass.class);
+          if (psiClass != null && psiClass.isInheritor(containingClass, true)) {
+            qualifierExpression.replace(RefactoringUtil.createSuperExpression(containingClass.getManager(), psiClass));
+          } else {
+            qualifierExpression.replace(RefactoringUtil.createThisExpression(containingClass.getManager(), containingClass));
+          }
         }
       }
       VisibilityUtil.escalateVisibility(myMethod, match.getMatchStart());

@@ -19,6 +19,10 @@ package org.jetbrains.plugins.groovy.util;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -65,4 +69,16 @@ public abstract class GroovyUtils {
   public static boolean isAcceptableModuleType(ModuleType type) {
     return type instanceof JavaModuleType || PLUGIN_MODULE_ID.equals(type.getId());
   }
+
+  @Nullable
+  public static GrTypeDefinition getClassDefinition(@NotNull GroovyFile groovyFile, @NotNull String classSimpleName) {
+    for (GrTypeDefinition definition : (groovyFile).getTypeDefinitions()) {
+      if (classSimpleName.equals(definition.getName())) {
+        return definition;
+      }
+    }
+
+    return null;
+  }
+
 }

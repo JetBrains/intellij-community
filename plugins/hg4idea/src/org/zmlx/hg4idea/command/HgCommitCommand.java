@@ -13,23 +13,23 @@
 package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgFile;
-import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.HgVcsMessages;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Writer;
+import java.io.*;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
+
+import static org.zmlx.hg4idea.HgErrorHandler.ensureSuccess;
 
 public class HgCommitCommand {
 
@@ -41,7 +41,7 @@ public class HgCommitCommand {
   private final VirtualFile repo;
   private final String message;
 
-  private List<HgFile> files = Collections.emptyList();
+  private Set<HgFile> files = Collections.emptySet();
 
   public HgCommitCommand(Project project, @NotNull VirtualFile repo, String message) {
     this.project = project;
@@ -49,11 +49,11 @@ public class HgCommitCommand {
     this.message = message;
   }
 
-  public void setFiles(@NotNull List<HgFile> files) {
+  public void setFiles(@NotNull Set<HgFile> files) {
     this.files = files;
   }
 
-  public void execute() throws HgCommandException {
+  public void execute() throws HgCommandException, VcsException {
     if (StringUtils.isBlank(message)) {
       throw new HgCommandException(HgVcsMessages.message("hg4idea.commit.error.messageEmpty"));
     }
@@ -64,7 +64,7 @@ public class HgCommitCommand {
       for (HgFile hgFile : files) {
         parameters.add(hgFile.getRelativePath());
       }
-      HgCommandService.getInstance(project).execute(repo, "commit", parameters);
+      ensureSuccess(HgCommandService.getInstance(project).execute(repo, "commit", parameters));
       project.getMessageBus().syncPublisher(HgVcs.OUTGOING_TOPIC).update(project);
     } catch (IOException e) {
       LOG.error(e);

@@ -24,4 +24,8 @@ public class HgMercurialMenu extends StandardVcsGroup {
     return ProjectLevelVcsManager.getInstance(project).findVcsByName(HgVcs.VCS_NAME);
   }
 
+  @Override
+  public String getVcsName(Project project) {
+    return HgVcs.VCS_NAME;
+  }
 }

@@ -38,8 +38,15 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
-import org.jetbrains.idea.maven.project.*;
-import org.jetbrains.idea.maven.execution.*;
+import org.jetbrains.idea.maven.execution.MavenExecutor;
+import org.jetbrains.idea.maven.execution.MavenExternalExecutor;
+import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
+import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
+import org.jetbrains.idea.maven.model.MavenArtifact;
+import org.jetbrains.idea.maven.project.MavenArtifactDownloader;
+import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.MavenProjectsTree;
 
 import java.io.File;
 import java.io.IOException;

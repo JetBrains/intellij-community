@@ -97,11 +97,12 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
     }.isConditionRealized();
 
     if (myCancelRequest != null) {
-      Thread.dumpStack();
       throw new Exception(myCancelRequest);
     }
 
-    Assert.assertTrue(getBuilder().getUi().getNodeActions().isEmpty());
+    if (myCancelRequest == null && !myReadyRequest) {
+      Assert.assertTrue(getBuilder().getUi().getNodeActions().isEmpty());
+    }
 
     Assert.assertTrue(success);
   }
@@ -226,7 +227,13 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
   }
 
   void _runBackgroundLoading(Runnable runnable) {
-    SimpleTimer.getInstance().setUp(runnable, getChildrenLoadingDelay());
+    try {
+      Thread.currentThread().sleep(getChildrenLoadingDelay());
+      runnable.run();
+    }
+    catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
   }
 
 
@@ -328,6 +335,13 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
         }
       }
     });
+
+    new WaitFor(6000) {
+      @Override
+      protected boolean condition() {
+        return getBuilder() == null || getBuilder().getUi() == null;
+      }
+    };
 
     super.tearDown();
   }
@@ -448,6 +462,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
   public static class NodeElement extends ComparableObject.Impl implements Comparable<NodeElement>{
 
     final String myName;
+    private NodeElement myForcedParent;
 
     public NodeElement(String name) {
       super(name);
@@ -460,6 +475,14 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
 
     public int compareTo(NodeElement o) {
       return myName.compareTo(o.myName);
+    }
+
+    public NodeElement getForcedParent() {
+      return myForcedParent;
+    }
+
+    public void setForcedParent(NodeElement forcedParent) {
+      myForcedParent = forcedParent;
     }
   }
 

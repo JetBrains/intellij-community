@@ -50,7 +50,7 @@ public class RunBuildAction extends MavenAction {
                                                                    project.getDirectory(),
                                                                    goals,
                                                                    MavenActionUtil.getProjectsManager(context).getExplicitProfiles());
-    MavenRunConfigurationType.runConfiguration(MavenActionUtil.getProject(context), params, context, null);
+    MavenRunConfigurationType.runConfiguration(MavenActionUtil.getProject(context), params, null);
 
     return true;
   }

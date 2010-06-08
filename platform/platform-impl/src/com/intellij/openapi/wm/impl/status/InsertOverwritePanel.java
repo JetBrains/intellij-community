@@ -20,8 +20,8 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +41,7 @@ public class InsertOverwritePanel implements StatusBarWidget, StatusBarWidget.Te
     return "InsertOverwrite";
   }
 
-  public Presentation getPresentation(@NotNull Type type) {
+  public WidgetPresentation getPresentation(@NotNull Type type) {
     return this;
   }
 

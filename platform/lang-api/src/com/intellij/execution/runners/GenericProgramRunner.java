@@ -36,9 +36,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class GenericProgramRunner<Settings extends JDOMExternalizable> implements ProgramRunner<Settings> {
 
-  /**
-   * @see com.intellij.execution.ui.RunContentDescriptor#myContent
-   */
+  @Deprecated
   public static final DataKey<RunContentDescriptor> CONTENT_TO_REUSE_DATA_KEY = DataKey.create("contentToReuse");
   @Deprecated @NonNls public static final String CONTENT_TO_REUSE = CONTENT_TO_REUSE_DATA_KEY.getName();
 

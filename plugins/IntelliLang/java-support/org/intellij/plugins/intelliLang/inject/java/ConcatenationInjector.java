@@ -18,34 +18,33 @@ package org.intellij.plugins.intelliLang.inject.java;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.ConcatenationAwareInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.Configuration;
-import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
+import org.intellij.plugins.intelliLang.PatternBasedInjectionHelper;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
-import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
+import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
+import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
+import org.intellij.plugins.intelliLang.inject.config.InjectionPlace;
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.intellij.plugins.intelliLang.util.ContextComputationProcessor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author cdr
@@ -69,6 +68,16 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
 
   private boolean processAnnotationInjections(final boolean unparsable, final PsiModifierListOwner annoElement, final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor,
                                               final PsiElement... operands) {
+    final String checkName;
+    if (annoElement instanceof PsiParameter) {
+      final PsiElement scope = ((PsiParameter)annoElement).getDeclarationScope();
+      checkName = scope instanceof PsiMethod ? ((PsiNamedElement)scope).getName() : ((PsiNamedElement)annoElement).getName();
+    }
+    else if (annoElement instanceof PsiNamedElement) {
+      checkName = ((PsiNamedElement)annoElement).getName();
+    }
+    else checkName = null;
+    if (checkName == null || !getAnnotatedElementsValue(annoElement.getProject(), myInjectionConfiguration).contains(checkName)) return false;
     final PsiAnnotation[] annotations =
       AnnotationUtilEx.getAnnotationFrom(annoElement, myInjectionConfiguration.getLanguageAnnotationPair(), true);
     if (annotations.length > 0) {
@@ -131,60 +140,112 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
     final THashSet<PsiModifierListOwner> visitedVars = new THashSet<PsiModifierListOwner>();
     final LinkedList<PsiElement> places = new LinkedList<PsiElement>();
     places.add(firstOperand);
-    boolean unparsable = false;
-    while (!places.isEmpty()) {
-      final PsiElement curPlace = places.removeFirst();
-      final PsiModifierListOwner owner = AnnotationUtilEx.getAnnotatedElementFor(curPlace, AnnotationUtilEx.LookupType.PREFER_CONTEXT);
-      if (owner == null) continue;
+    final Ref<Boolean> unparsableRef = Ref.create(Boolean.FALSE);
+    final Ref<Boolean> stopRef = Ref.create(Boolean.FALSE);
+    final AnnotationUtilEx.AnnotatedElementVisitor visitor = new AnnotationUtilEx.AnnotatedElementVisitor() {
+      public boolean visitMethodParameter(PsiExpression expression, PsiCallExpression psiCallExpression) {
+        final PsiExpressionList list = psiCallExpression.getArgumentList();
+        assert list != null;
+        final int index = ArrayUtil.indexOf(list.getExpressions(), expression);
+        final String methodName;
+        if (psiCallExpression instanceof PsiMethodCallExpression) {
+          methodName = ((PsiMethodCallExpression)psiCallExpression).getMethodExpression().getReferenceName();
+        }
+        else if (psiCallExpression instanceof PsiNewExpression) {
+          final PsiJavaCodeReferenceElement classRef = ((PsiNewExpression)psiCallExpression).getClassOrAnonymousClassReference();
+          methodName = classRef == null? null : classRef.getReferenceName();
+        }
+        else methodName = null;
+        if (methodName != null && areThereInjectionsWithName(expression.getProject(), configuration, methodName)) {
+          final PsiMethod method = psiCallExpression.resolveMethod();
+          final PsiParameter[] parameters = method == null ? PsiParameter.EMPTY_ARRAY : method.getParameterList().getParameters();
+          if (index >= 0 && index < parameters.length && method != null) {
+            process(parameters[index], method, index);
+          }
+        }
+        return false;
+      }
 
-      final PsiMethod psiMethod;
-      final int parameterIndex;
-      if (owner instanceof PsiParameter) {
-        final PsiElement declarationScope = ((PsiParameter)owner).getDeclarationScope();
-        psiMethod = declarationScope instanceof PsiMethod? (PsiMethod)declarationScope : null;
-        final PsiParameterList parameterList = psiMethod == null? null : ((PsiMethod)declarationScope).getParameterList();
-        // don't check catchblock parameters & etc.
-        if (parameterList == null || parameterList != owner.getParent()) continue;
-        parameterIndex = parameterList.getParameterIndex((PsiParameter)owner);
+      public boolean visitMethodReturnStatement(PsiReturnStatement parent, PsiMethod method) {
+        if (areThereInjectionsWithName(parent.getProject(), configuration, method.getName())) {
+          process(method, method, -1);
+        }
+        return false;
       }
-      else if (owner instanceof PsiMethod) {
-        psiMethod = (PsiMethod)owner;
-        parameterIndex = -1;
-      }
-      else if (configuration.isResolveReferences() &&
-               owner instanceof PsiVariable && visitedVars.add(owner)) {
-        final PsiVariable variable = (PsiVariable)owner;
-        for (PsiReference psiReference : ReferencesSearch.search(variable, searchScope).findAll()) {
-          final PsiElement element = psiReference.getElement();
-          if (element instanceof PsiExpression) {
-            final PsiExpression refExpression = (PsiExpression)element;
-            places.add(refExpression);
-            if (!unparsable) {
-              unparsable = checkUnparsableReference(refExpression);  
+
+      public boolean visitVariable(PsiVariable variable) {
+        if (configuration.isResolveReferences() && visitedVars.add(variable)) {
+          for (PsiReference psiReference : ReferencesSearch.search(variable, searchScope).findAll()) {
+            final PsiElement element = psiReference.getElement();
+            if (element instanceof PsiExpression) {
+              final PsiExpression refExpression = (PsiExpression)element;
+              places.add(refExpression);
+              if (!unparsableRef.get()) {
+                unparsableRef.set(checkUnparsableReference(refExpression));
+              }
             }
           }
         }
-        parameterIndex = -1;
-        psiMethod = null;
+        process(variable, null, -1);
+        return false;
       }
-      else {
-        parameterIndex = -1;
-        psiMethod = null;
-      }
-      final List<BaseInjection> injections;
-      if (psiMethod == null) {
-        injections = Collections.emptyList();
-      }
-      else {
-        injections = ContainerUtil.findAll(configuration.getInjections(LanguageInjectionSupport.JAVA_SUPPORT_ID), new Condition<BaseInjection>() {
-          public boolean value(final BaseInjection injection) {
-            return injection.acceptsPsiElement(owner);
+
+      public boolean visitAnnotationParameter(PsiNameValuePair nameValuePair, PsiAnnotation psiAnnotation) {
+        final String paramName = nameValuePair.getName();
+        final String methodName = paramName != null? paramName : PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME;
+        if (areThereInjectionsWithName(nameValuePair.getProject(), configuration, methodName)) {
+          final PsiReference reference = nameValuePair.getReference();
+          final PsiElement element = reference == null ? null : reference.resolve();
+          if (element instanceof PsiMethod) {
+            process((PsiMethod)element, (PsiMethod)element, -1);
           }
-        });
+        }
+        return false;
       }
-      final Info info = new Info(owner, psiMethod, injections, unparsable, parameterIndex);
-      if (!processor.process(info)) return;
+
+      public boolean visitReference(PsiReferenceExpression expression) {
+        if (!configuration.isResolveReferences()) return true;
+        final PsiElement e = expression.resolve();
+        if (e instanceof PsiVariable) {
+          if (e instanceof PsiParameter) {
+            final PsiParameter p = (PsiParameter)e;
+            final PsiElement declarationScope = p.getDeclarationScope();
+            final PsiMethod method = declarationScope instanceof PsiMethod ? (PsiMethod)declarationScope : null;
+            final PsiParameterList parameterList = method == null ? null : method.getParameterList();
+            // don't check catchblock parameters & etc.
+            if (!(parameterList == null || parameterList != e.getParent())) {
+              final int parameterIndex = parameterList.getParameterIndex((PsiParameter)e);
+              process((PsiModifierListOwner)e, method, parameterIndex);
+            }
+          }
+          visitVariable((PsiVariable)e);
+        }
+        return !stopRef.get();
+      }
+
+      private void process(final PsiModifierListOwner owner, PsiMethod method, int paramIndex) {
+        final List<BaseInjection> injections =
+          ContainerUtil.findAll(configuration.getInjections(JavaLanguageInjectionSupport.JAVA_SUPPORT_ID), new Condition<BaseInjection>() {
+            public boolean value(final BaseInjection injection) {
+              return injection.acceptsPsiElement(owner);
+            }
+          });
+        final Info info = new Info(owner, method, injections, unparsableRef.get(), paramIndex);
+        stopRef.set(!processor.process(info));
+      }
+    };
+
+    while (!places.isEmpty() && !stopRef.get()) {
+      final PsiElement curPlace = places.removeFirst();
+      AnnotationUtilEx.visitAnnotatedElements(curPlace, visitor);
     }
+  }
+
+  private static boolean areThereInjectionsWithName(Project project,
+                                                    Configuration configuration,
+                                                    String methodName) {
+    return getXmlAnnotatedElementsValue(project).contains(methodName) ||
+         getAnnotatedElementsValue(project, configuration).contains(methodName);
   }
 
   private static void processInjectionWithContext(final boolean unparsable, final BaseInjection injection,
@@ -268,5 +329,95 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       return true;
     }
     return false;
+  }
+
+
+  private static Key<Pair<String, CachedValue<Collection<String>>>> LANGUAGE_ANNOTATED_STUFF = Key.create("LANGUAGE_ANNOTATED_STUFF");
+
+  private static Collection<String> getAnnotatedElementsValue(final Project project, final Configuration configuration) {
+    // note: external annotations not supported
+    final String annotationClass = configuration.getLanguageAnnotationClass();
+    Pair<String, CachedValue<Collection<String>>> userData = project.getUserData(LANGUAGE_ANNOTATED_STUFF);
+    if (userData == null || !Comparing.equal(userData.first, annotationClass)) {
+      userData = Pair.create(annotationClass, CachedValuesManager.getManager(project).createCachedValue(new CachedValueProvider<Collection<String>>() {
+        public Result<Collection<String>> compute() {
+          final Collection<String> result = new THashSet<String>();
+          final ArrayList<String> annoClasses = new ArrayList<String>(3);
+          annoClasses.add(StringUtil.getShortName(annotationClass));
+          for (int cursor = 0; cursor < annoClasses.size(); cursor++) {
+            final String annoClass = annoClasses.get(cursor);
+            for (PsiAnnotation annotation : JavaAnnotationIndex.getInstance()
+              .get(annoClass, project, GlobalSearchScope.allScope(project))) {
+              final PsiElement modList = annotation.getParent();
+              if (!(modList instanceof PsiModifierList)) continue;
+              final PsiElement element = modList.getParent();
+              if (element instanceof PsiParameter) {
+                final PsiElement scope = ((PsiParameter)element).getDeclarationScope();
+                if (scope instanceof PsiNamedElement) {
+                  ContainerUtil.addIfNotNull(((PsiNamedElement)scope).getName(), result);
+                }
+                else {
+                  ContainerUtil.addIfNotNull(((PsiNamedElement)element).getName(), result);
+                }
+              }
+              else if (element instanceof PsiNamedElement) {
+                if (element instanceof PsiClass && ((PsiClass)element).isAnnotationType()) {
+                  final String s = ((PsiClass)element).getName();
+                  if (!annoClasses.contains(s)) annoClasses.add(s);
+                }
+                else {
+                  ContainerUtil.addIfNotNull(((PsiNamedElement)element).getName(), result);
+                }
+              }
+            }
+          }
+          return new Result<Collection<String>>(result, PsiModificationTracker.MODIFICATION_COUNT, configuration);
+        }
+      }, false));
+      project.putUserData(LANGUAGE_ANNOTATED_STUFF, userData);
+    }
+    return userData.second.getValue();
+  }
+
+  private static Key<CachedValue<Collection<String>>> XML_ANNOTATED_STUFF = Key.create("XML_ANNOTATED_STUFF");
+
+  private static Collection<String> getXmlAnnotatedElementsValue(final Project project) {
+    CachedValue<Collection<String>> userData = project.getUserData(XML_ANNOTATED_STUFF);
+    if (userData == null) {
+      userData = CachedValuesManager.getManager(project).createCachedValue(new CachedValueProvider<Collection<String>>() {
+        public Result<Collection<String>> compute() {
+          final Configuration configuration = Configuration.getInstance();
+          final Collection<String> result = new THashSet<String>();
+          final PatternBasedInjectionHelper helper = new PatternBasedInjectionHelper(JavaLanguageInjectionSupport.JAVA_SUPPORT_ID) {
+            @Override
+            protected void preInvoke(Object target, String methodName, Object[] arguments) {
+              if (arguments.length == 1 && arguments[0] instanceof String) {
+                if ("withName".equals(methodName)) {
+                  result.add((String)arguments[0]);
+                }
+                else if ("definedInClass".equals(methodName)) {
+                  result.add(StringUtil.getShortName((Class)arguments[0]));
+                }
+              }
+            }
+          };
+          for (BaseInjection injection : configuration.getInjections(JavaLanguageInjectionSupport.JAVA_SUPPORT_ID)) {
+            for (InjectionPlace place : injection.getInjectionPlaces()) {
+              try {
+                helper.compileElementPattern(place.getText());
+              }
+              catch (Exception e) {
+                // do nothing
+              }
+            }
+          }
+          final Result<Collection<String>> r = new Result<Collection<String>>(result, configuration);
+          r.setLockValue(true);
+          return r;
+        }
+      }, false);
+      project.putUserData(XML_ANNOTATED_STUFF, userData);
+    }
+    return userData.getValue();
   }
 }

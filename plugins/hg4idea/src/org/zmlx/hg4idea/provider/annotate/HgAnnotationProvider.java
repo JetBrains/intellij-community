@@ -12,17 +12,17 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider.annotate;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
+import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.command.HgAnnotateCommand;
 import org.zmlx.hg4idea.command.HgLogCommand;
-import org.zmlx.hg4idea.HgFile;
 
 public class HgAnnotationProvider implements AnnotationProvider {
 
@@ -45,7 +45,7 @@ public class HgAnnotationProvider implements AnnotationProvider {
     return new HgAnnotation(
       hgFile,
       hgAnnotateCommand.execute(hgFile),
-      hgLogCommand.execute(hgFile, DEFAULT_LIMIT)
+      hgLogCommand.execute(hgFile, DEFAULT_LIMIT, false)
     );
   }
 

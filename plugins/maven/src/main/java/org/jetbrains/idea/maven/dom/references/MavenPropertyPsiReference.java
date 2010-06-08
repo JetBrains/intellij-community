@@ -20,7 +20,6 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
@@ -34,7 +33,6 @@ import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import gnu.trove.THashSet;
@@ -43,8 +41,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.MavenSchemaProvider;
-import org.jetbrains.idea.maven.dom.model.*;
-import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
+import org.jetbrains.idea.maven.dom.model.MavenDomSettingsModel;
+import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.utils.MavenIcons;
 import org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem;
 
@@ -180,7 +179,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
       return MavenDomUtil.findTag(projectDom, path.replace("project.", "project.parent."));
     }
 
-    result = new MyMavenParentProjectFileProcessor<PsiElement>() {
+    result = new MavenDomProjectProcessorUtils.DomParentProjectFileProcessor<PsiElement>(myProjectsManager) {
       protected PsiElement doProcessParent(VirtualFile parentFile) {
         MavenDomProjectModel parentProjectDom = MavenDomUtil.getMavenDomProjectModel(myProject, parentFile);
         return resolveModelProperty(parentProjectDom, path, recursionGuard);
@@ -354,30 +353,6 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     public Object process(@NotNull String property, XmlElementDescriptor descriptor) {
       myResult.add(createLookupElement(descriptor, property, MavenIcons.MAVEN_ICON));
       return null;
-    }
-  }
-
-  private abstract class MyMavenParentProjectFileProcessor<T> extends MavenParentProjectFileProcessor<T> {
-    protected VirtualFile findManagedFile(@NotNull MavenId id) {
-      MavenProject project = myProjectsManager.findProject(id);
-      return project == null ? null : project.getFile();
-    }
-
-    @Nullable
-    public T process(@NotNull MavenDomProjectModel projectDom) {
-      MavenDomParent parent = projectDom.getMavenParent();
-      MavenParentDesc parentDesc = null;
-      if (DomUtil.hasXml(parent)) {
-        String parentGroupId = parent.getGroupId().getStringValue();
-        String parentArtifactId = parent.getArtifactId().getStringValue();
-        String parentVersion = parent.getVersion().getStringValue();
-        String parentRelativePath = parent.getRelativePath().getStringValue();
-        if (StringUtil.isEmptyOrSpaces(parentRelativePath)) parentRelativePath = "../pom.xml";
-        MavenId parentId = new MavenId(parentGroupId, parentArtifactId, parentVersion);
-        parentDesc = new MavenParentDesc(parentId, parentRelativePath);
-      }
-
-      return process(myProjectsManager.getGeneralSettings(), MavenDomUtil.getVirtualFile(projectDom), parentDesc);
     }
   }
 }

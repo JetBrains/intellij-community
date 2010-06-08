@@ -15,25 +15,20 @@
  */
 package org.jetbrains.idea.maven.indices;
 
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.io.FileUtil;
-import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
+import org.jetbrains.idea.maven.facade.MavenIndexerWrapper;
+import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.utils.MavenLog;
-import org.sonatype.nexus.index.ArtifactContextProducer;
-import org.sonatype.nexus.index.NexusIndexer;
-import org.sonatype.nexus.index.updater.IndexUpdater;
+import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
+import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class MavenIndices {
-  private final MavenEmbedderWrapper myEmbedder;
-  private final NexusIndexer myIndexer;
-  private final IndexUpdater myUpdater;
-  private final ArtifactContextProducer myArtifactContextProducer;
+  private final MavenIndexerWrapper myIndexer;
 
   private final File myIndicesDir;
   private final MavenIndex.IndexListener myListener;
@@ -41,14 +36,10 @@ public class MavenIndices {
   private final List<MavenIndex> myIndices = new ArrayList<MavenIndex>();
   private static final Object ourDirectoryLock = new Object();
 
-  public MavenIndices(MavenEmbedderWrapper embedder, File indicesDir, MavenIndex.IndexListener listener) {
-    myEmbedder = embedder;
+  public MavenIndices(MavenIndexerWrapper indexer, File indicesDir, MavenIndex.IndexListener listener) {
+    myIndexer = indexer;
     myIndicesDir = indicesDir;
     myListener = listener;
-
-    myIndexer = myEmbedder.getComponent(NexusIndexer.class);
-    myUpdater = myEmbedder.getComponent(IndexUpdater.class);
-    myArtifactContextProducer = myEmbedder.getComponent(ArtifactContextProducer.class);
 
     load();
   }
@@ -58,11 +49,12 @@ public class MavenIndices {
 
     File[] indices = myIndicesDir.listFiles();
     if (indices == null) return;
+    Arrays.sort(indices);
     for (File each : indices) {
       if (!each.isDirectory()) continue;
 
       try {
-        MavenIndex index = new MavenIndex(myIndexer, myArtifactContextProducer, each, myListener);
+        MavenIndex index = new MavenIndex(myIndexer, each, myListener);
         if (find(index.getRepositoryId(), index.getRepositoryPathOrUrl(), index.getKind()) != null) {
           index.close();
           FileUtil.delete(each);
@@ -75,11 +67,6 @@ public class MavenIndices {
         MavenLog.LOG.warn(e);
       }
     }
-  }
-
-  @TestOnly
-  public NexusIndexer getIndexer() {
-    return myIndexer;
   }
 
   public synchronized void close() {
@@ -98,7 +85,7 @@ public class MavenIndices {
     if (index != null) return index;
 
     File dir = getAvailableIndexDir();
-    index = new MavenIndex(myIndexer, myArtifactContextProducer, dir, repositoryId, repositoryPathOrUrl, kind, myListener);
+    index = new MavenIndex(myIndexer, dir, repositoryId, repositoryPathOrUrl, kind, myListener);
     myIndices.add(index);
     return index;
   }
@@ -129,10 +116,8 @@ public class MavenIndices {
     }
   }
 
-  public void updateOrRepair(MavenIndex index,
-                             MavenEmbedderWrapper embedderToUse,
-                             boolean fullUpdate,
-                             ProgressIndicator progress)throws ProcessCanceledException {
-    index.updateOrRepair(embedderToUse, myUpdater, fullUpdate, progress);
+  public void updateOrRepair(MavenIndex index, boolean fullUpdate, MavenGeneralSettings settings, MavenProgressIndicator progress)
+    throws MavenProcessCanceledException {
+    index.updateOrRepair(fullUpdate, settings, progress);
   }
 }

@@ -1,15 +1,15 @@
 static def foo(int i, int j, int k) {
-    def v
-    println(i + j - k)
-    v = 42
-    <begin>return v + j<end>
+  def v
+  println(i + j - k)
+  v = 42
+  <begin>return v + j<end>
 }
 -----
 static def foo(int i, int j, int k) {
-    def v
-    println(i + j - k)
-    v = 42
-    <caret>return testMethod(v, j)
+  def v
+  println(i + j - k)
+  v = 42
+  <caret>return testMethod(v, j)
 }
 
 private static def testMethod(int v, int j) {

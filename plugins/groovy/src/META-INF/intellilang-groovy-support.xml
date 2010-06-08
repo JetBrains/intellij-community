@@ -6,5 +6,8 @@
     <languageSupport implementation="org.intellij.plugins.intelliLang.inject.groovy.GroovyLanguageInjectionSupport"
                      config="/resources/groovyInjections.xml"/>
   </extensions>
+  <extensions defaultExtensionNs="org.intellij.groovy">
+    <nonCodeProcessor implementation="org.intellij.plugins.intelliLang.inject.groovy.PatternEditorContextMembersProvider"/>
+  </extensions>
 
 </idea-plugin>

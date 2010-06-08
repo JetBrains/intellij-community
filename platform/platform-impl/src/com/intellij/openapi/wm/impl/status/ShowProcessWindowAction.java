@@ -18,9 +18,9 @@ package com.intellij.openapi.wm.impl.status;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
-import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;

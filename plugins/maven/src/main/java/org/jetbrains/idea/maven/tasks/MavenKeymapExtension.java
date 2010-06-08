@@ -23,10 +23,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
-import org.jetbrains.idea.maven.project.MavenPlugin;
+import org.jetbrains.idea.maven.model.MavenConstants;
+import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
@@ -142,7 +142,7 @@ public class MavenKeymapExtension implements KeymapExtension {
 
   private static List<String> collectGoals(MavenProject project) {
     LinkedHashSet<String> result = new LinkedHashSet<String>(); // may contains similar plugins or somethig
-    result.addAll(MavenEmbedderWrapper.PHASES);
+    result.addAll(MavenConstants.PHASES);
 
     for (MavenPlugin each : project.getDeclaredPlugins()) {
       collectGoals(project.getLocalRepository(), each, result);
@@ -184,7 +184,7 @@ public class MavenKeymapExtension implements KeymapExtension {
                                                                myMavenProject.getDirectory(),
                                                                Arrays.asList(myGoal),
                                                                MavenActionUtil.getProjectsManager(context).getExplicitProfiles());
-      MavenRunConfigurationType.runConfiguration(MavenActionUtil.getProject(context), params, context, null);
+      MavenRunConfigurationType.runConfiguration(MavenActionUtil.getProject(context), params, null);
     }
 
     public MavenProject getMavenProject() {

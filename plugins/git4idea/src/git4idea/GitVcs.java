@@ -559,7 +559,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
    * Check version and report problem
    */
   public void checkVersion() {
-    final String executable = mySettings.GIT_EXECUTABLE;
+    final String executable = mySettings.getGitExecutable();
     synchronized (myCheckingVersion) {
       if (myVersion != null && myVersionCheckExcecutable.equals(executable)) {
         return;

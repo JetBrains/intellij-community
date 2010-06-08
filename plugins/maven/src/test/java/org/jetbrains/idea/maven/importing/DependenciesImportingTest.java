@@ -23,8 +23,8 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
-import org.jetbrains.idea.maven.indices.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.io.File;
@@ -1352,7 +1352,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/");
 
     setRepositoryPath(new File(myDir, "__repo").getPath());
-    myProjectsManager.getEmbeddersManagerInTests().reset(); // to recognize repository change
+    myProjectsManager.getEmbeddersManager().reset(); // to recognize repository change
 
     scheduleResolveAll();
     resolveDependenciesAndImport();
@@ -1384,7 +1384,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                        "jar://" + getRepositoryPath() + "/org/testng/testng/5.8/testng-5.8-javadoc.jar!/");
 
     setRepositoryPath(new File(myDir, "__repo").getPath());
-    myProjectsManager.getEmbeddersManagerInTests().reset(); // to recognize repository change
+    myProjectsManager.getEmbeddersManager().reset(); // to recognize repository change
 
     scheduleResolveAll();
 
@@ -1500,6 +1500,8 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
   }
 
   public void testCustomSourcesAndJavadocPaths() throws Exception {
+    if (!checkUltimate()) return;
+    
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +

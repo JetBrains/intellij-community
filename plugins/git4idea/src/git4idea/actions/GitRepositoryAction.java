@@ -33,6 +33,7 @@ import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -62,19 +63,8 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
       return;
     }
     GitVcs vcs = GitVcs.getInstance(project);
-    final VirtualFile[] contentRoots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs);
-    if (contentRoots == null || contentRoots.length == 0) {
-      Messages.showErrorDialog(project, GitBundle.getString("repository.action.missing.roots.unconfigured.message"),
-                               GitBundle.getString("repository.action.missing.roots.title"));
-      return;
-    }
-    final List<VirtualFile> roots = new ArrayList<VirtualFile>(GitUtil.gitRootsForPaths(Arrays.asList(contentRoots)));
-    if (roots.size() == 0) {
-      Messages.showErrorDialog(project, GitBundle.getString("repository.action.missing.roots.misconfigured"),
-                               GitBundle.getString("repository.action.missing.roots.title"));
-      return;
-    }
-    Collections.sort(roots, GitUtil.VIRTUAL_FILE_COMPARATOR);
+    final List<VirtualFile> roots = getGitRoots(project, vcs);
+    if (roots == null) return;
     // get default root
     final VirtualFile[] vFiles = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
     VirtualFile defaultRootVar = null;
@@ -112,6 +102,32 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
     }, null);
     myDelayedTasks.clear();
     vcs.showErrors(exceptions, actionName);
+  }
+
+  /**
+   * Get git roots for the project. The method shows dialogs in the case when roots cannot be retrieved, so it should be called
+   * from the event dispatch thread.
+   *
+   * @param project the project
+   * @param vcs     the git Vcs
+   * @return the list of the roots, or null
+   */
+  @Nullable
+  public static List<VirtualFile> getGitRoots(Project project, GitVcs vcs) {
+    final VirtualFile[] contentRoots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs);
+    if (contentRoots == null || contentRoots.length == 0) {
+      Messages.showErrorDialog(project, GitBundle.getString("repository.action.missing.roots.unconfigured.message"),
+                               GitBundle.getString("repository.action.missing.roots.title"));
+      return null;
+    }
+    final List<VirtualFile> roots = new ArrayList<VirtualFile>(GitUtil.gitRootsForPaths(Arrays.asList(contentRoots)));
+    if (roots.size() == 0) {
+      Messages.showErrorDialog(project, GitBundle.getString("repository.action.missing.roots.misconfigured"),
+                               GitBundle.getString("repository.action.missing.roots.title"));
+      return null;
+    }
+    Collections.sort(roots, GitUtil.VIRTUAL_FILE_COMPARATOR);
+    return roots;
   }
 
   /**

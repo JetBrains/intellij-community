@@ -42,6 +42,7 @@ import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -62,9 +63,9 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   private JPanel myRightPanel;
   private JPanel myCenterPanel;
 
-  private ProcessIconWidget myProcessWidget;
-
   private String myInfo;
+
+  private List<String> myCustomComponentIds = new ArrayList<String>();
 
   private static class WidgetBean {
     JComponent component;
@@ -82,10 +83,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
 
   public IdeStatusBarImpl() {
     setLayout(new BorderLayout());
-    setBorder(BorderFactory.createEmptyBorder(1, 2, 0, 2));
-
-    myProcessWidget = new ProcessIconWidget();
-    addWidget(myProcessWidget, Position.LEFT);
+    setBorder(BorderFactory.createEmptyBorder(1, 4, 0, 2));
 
     myInfoAndProgressPanel = new InfoAndProgressPanel();
     addWidget(myInfoAndProgressPanel, Position.CENTER);
@@ -124,15 +122,24 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     });
   }
 
+  public void removeCustomIndicationComponents() {
+    for (final String id : myCustomComponentIds) {
+      removeWidget(id);
+    }
+
+    myCustomComponentIds.clear();
+  }
+
   public void addCustomIndicationComponent(@NotNull final JComponent c) {
+    final String customId = c.getClass().getName() + new Random().nextLong();
     addWidget(new CustomStatusBarWidget() {
       @NotNull
       public String ID() {
-        return c.getClass().getSimpleName() + new Random().toString();
+        return customId;
       }
 
       @Nullable
-      public Presentation getPresentation(@NotNull Type type) {
+      public WidgetPresentation getPresentation(@NotNull Type type) {
         return null;
       }
 
@@ -146,6 +153,8 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
         return c;
       }
     });
+
+    myCustomComponentIds.add(customId);
   }
 
   public void removeCustomIndicationComponent(@NotNull final JComponent c) {
@@ -284,12 +293,12 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   }
 
   public void startRefreshIndication(String tooltipText) {
-    myProcessWidget.setToolTipText(tooltipText);
-    myProcessWidget.setRefreshVisible(true);
+    myInfoAndProgressPanel.setRefreshToolTipText(tooltipText);
+    myInfoAndProgressPanel.setRefreshVisible(true);
   }
 
   public void stopRefreshIndication() {
-    myProcessWidget.setRefreshVisible(false);
+    myInfoAndProgressPanel.setRefreshVisible(false);
   }
 
   public BalloonHandler notifyProgressByBalloon(@NotNull MessageType type, @NotNull String htmlBody) {
@@ -313,7 +322,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   }
 
   private static JComponent wrap(@NotNull final StatusBarWidget widget) {
-    final StatusBarWidget.Presentation presentation =
+    final StatusBarWidget.WidgetPresentation presentation =
       widget.getPresentation(SystemInfo.isMac ? StatusBarWidget.Type.MAC : StatusBarWidget.Type.DEFAULT);
     assert presentation != null : "Presentation should not be null!";
 
@@ -440,6 +449,8 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
           popup.show(new RelativePoint(e.getComponent(), at));
         }
       });
+
+      setOpaque(false);
     }
 
     @SuppressWarnings({"unchecked"})
@@ -494,6 +505,8 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
           myMouseOver = false;
         }
       });
+
+      setOpaque(false);
     }
 
     public void beforeUpdate() {
@@ -521,6 +534,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
       });
 
       ToolTipManager.sharedInstance().registerComponent(this);
+      setOpaque(false);
     }
 
     public void beforeUpdate() {

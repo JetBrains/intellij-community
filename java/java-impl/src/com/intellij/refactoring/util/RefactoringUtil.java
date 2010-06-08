@@ -307,6 +307,7 @@ public class RefactoringUtil {
 
   public static PsiElement getParentExpressionAnchorElement(PsiElement place) {
     PsiElement parent = place.getUserData(ElementToWorkOn.PARENT);
+    if (place.getUserData(ElementToWorkOn.OUT_OF_CODE_BLOCK) != null) return parent;
     if (parent == null) parent = place;
     while (true) {
       if (isExpressionAnchorElement(parent)) return parent;
@@ -413,19 +414,27 @@ public class RefactoringUtil {
   }
 
   public static PsiThisExpression createThisExpression(PsiManager manager, PsiClass qualifierClass) throws IncorrectOperationException {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-    if (qualifierClass != null) {
-      PsiThisExpression qualifiedThis = (PsiThisExpression)factory.createExpressionFromText("q.this", null);
-      qualifiedThis = (PsiThisExpression)CodeStyleManager.getInstance(manager.getProject()).reformat(qualifiedThis);
-      PsiJavaCodeReferenceElement thisQualifier = qualifiedThis.getQualifier();
-      LOG.assertTrue(thisQualifier != null);
-      thisQualifier.bindToElement(qualifierClass);
-      return qualifiedThis;
-    }
-    else {
-      return (PsiThisExpression)factory.createExpressionFromText("this", null);
-    }
+    return RefactoringUtil.<PsiThisExpression>createQualifiedExpression(manager, qualifierClass, "this");
   }
+
+  public static PsiSuperExpression createSuperExpression(PsiManager manager, PsiClass qualifierClass) throws IncorrectOperationException {
+    return RefactoringUtil.<PsiSuperExpression>createQualifiedExpression(manager, qualifierClass, "super");
+  }
+
+  private static <T extends PsiQualifiedExpression> T createQualifiedExpression(PsiManager manager, PsiClass qualifierClass, String qName) throws IncorrectOperationException {
+     PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+     if (qualifierClass != null) {
+       T qualifiedThis = (T)factory.createExpressionFromText("q." + qName, null);
+       qualifiedThis = (T)CodeStyleManager.getInstance(manager.getProject()).reformat(qualifiedThis);
+       PsiJavaCodeReferenceElement thisQualifier = qualifiedThis.getQualifier();
+       LOG.assertTrue(thisQualifier != null);
+       thisQualifier.bindToElement(qualifierClass);
+       return qualifiedThis;
+     }
+     else {
+       return (T)factory.createExpressionFromText(qName, null);
+     }
+   }
 
   /**
    * removes a reference to the specified class from the reference list given
@@ -537,6 +546,7 @@ public class RefactoringUtil {
   public static PsiElement getAnchorElementForMultipleExpressions(PsiExpression[] occurrences, PsiElement scope) {
     PsiElement anchor = null;
     for (PsiExpression occurrence : occurrences) {
+    //  if (!occurrence.isPhysical()) continue;
       if (scope != null && !PsiTreeUtil.isAncestor(scope, occurrence, false)) {
         continue;
       }

@@ -23,8 +23,8 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -32,9 +32,12 @@ import com.intellij.util.ui.update.Update;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.execution.MavenRunner;
+import org.jetbrains.idea.maven.facade.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectChanges;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.utils.MavenMergingUpdateQueue;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.utils.SimpleProjectComponent;
@@ -195,7 +198,7 @@ public class MavenShortcutsManager extends SimpleProjectComponent {
 
     @Override
     public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                                org.apache.maven.project.MavenProject nativeMavenProject,
+                                NativeMavenProjectHolder nativeMavenProject,
                                 Object message) {
       scheduleKeymapUpdate(Collections.singletonList(projectWithChanges.first), true);
     }

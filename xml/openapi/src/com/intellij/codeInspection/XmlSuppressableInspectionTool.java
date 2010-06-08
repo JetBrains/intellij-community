@@ -25,7 +25,6 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool implements CustomSuppressableInspectionTool {
   @NonNls static final String ALL = "ALL";

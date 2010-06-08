@@ -23,8 +23,8 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.utils.Strings;
-import org.jetbrains.idea.maven.utils.MavenConstants;
 
 import javax.swing.*;
 

@@ -39,7 +39,10 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Eugene Belyaev
@@ -269,6 +272,8 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
   }
 
   private Map<KeyStroke, List<String>> getKeystroke2ListOfIds() {
+    if (myKeystroke2ListOfIds != null) return myKeystroke2ListOfIds;
+
     myKeystroke2ListOfIds = new THashMap<KeyStroke, List<String>>();
     for (String id : ContainerUtil.concat(myActionId2ListOfShortcuts.keySet(), getKeymapManager().getBoundActions())) {
       addKeystrokesMap(id, myKeystroke2ListOfIds);

@@ -40,7 +40,6 @@ import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 

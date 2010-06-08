@@ -161,6 +161,14 @@ public class RenameCollisionsTest extends LightCodeInsightTestCase {
     doTest("P");
   }
 
+  public void testRenameInnerInSuperClass() throws Exception {
+    doTest("C");
+  }
+
+  public void testRenameInnerInSuperClassStatic() throws Exception {
+    doTest("C");
+  }
+
   private void doTest(final String newName) throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     PsiElement element = TargetElementUtilBase

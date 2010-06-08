@@ -384,6 +384,12 @@ public class DuplicatesFinder {
       final PsiExpression candidateQualifier = candidateRefExpr.getQualifierExpression();
       if (patternQualifier == null) {
         PsiClass contextClass = PsiTreeUtil.getParentOfType(pattern, PsiClass.class);
+        if (candidateQualifier instanceof PsiReferenceExpression) {
+          final PsiElement resolved = ((PsiReferenceExpression)candidateQualifier).resolve();
+          if (resolved instanceof PsiClass && contextClass != null && contextClass.isInheritor((PsiClass)resolved, true)) {
+            return true;
+          }
+        }
         return contextClass != null && match.registerInstanceExpression(candidateQualifier, contextClass);
       } else {
         if (candidateQualifier == null) {
@@ -411,6 +417,14 @@ public class DuplicatesFinder {
                   contextClass = thisCandidate;
                 }
                 return contextClass != null && match.putParameter(parameter, RefactoringUtil.createThisExpression(patternQualifier.getManager(), contextClass));
+              } else if (patternQualifier instanceof PsiReferenceExpression) {
+                final PsiElement resolved = ((PsiReferenceExpression)patternQualifier).resolve();
+                if (resolved instanceof PsiClass) {
+                  final PsiClass classContext = PsiTreeUtil.getParentOfType(candidate, PsiClass.class);
+                  if (classContext != null && classContext.isInheritor((PsiClass)resolved, true)) {
+                    return true;
+                  }
+                }
               }
 
               return false;
@@ -440,6 +454,13 @@ public class DuplicatesFinder {
         final PsiJavaCodeReferenceElement candidateQualifier = ((PsiThisExpression)candidate).getQualifier();
         final PsiElement candidateContextClass = candidateQualifier == null ? PsiTreeUtil.getParentOfType(candidate, PsiClass.class) : candidateQualifier.resolve();
         return contextClass == candidateContextClass;
+      }
+    } else if (pattern instanceof PsiSuperExpression) {
+      final PsiJavaCodeReferenceElement qualifier = ((PsiSuperExpression)pattern).getQualifier();
+      final PsiElement contextClass = qualifier == null ? PsiTreeUtil.getParentOfType(pattern, PsiClass.class) : qualifier.resolve();
+      if (candidate instanceof PsiSuperExpression) {
+        final PsiJavaCodeReferenceElement candidateQualifier = ((PsiSuperExpression)candidate).getQualifier();
+        return contextClass == (candidateQualifier != null ? candidateQualifier.resolve() : PsiTreeUtil.getParentOfType(candidate, PsiClass.class));
       }
     }
 

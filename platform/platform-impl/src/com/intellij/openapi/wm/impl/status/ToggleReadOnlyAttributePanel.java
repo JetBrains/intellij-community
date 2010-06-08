@@ -25,12 +25,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.Consumer;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
-import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +54,7 @@ public class ToggleReadOnlyAttributePanel implements StatusBarWidget, StatusBarW
     return "ReadOnlyAttribute";
   }
 
-  public Presentation getPresentation(@NotNull Type type) {
+  public WidgetPresentation getPresentation(@NotNull Type type) {
     return this;
   }
 

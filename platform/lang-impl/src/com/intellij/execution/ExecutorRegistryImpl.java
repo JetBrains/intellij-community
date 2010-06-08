@@ -22,8 +22,8 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
@@ -189,7 +189,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
         return;
       }
 
-      ProgramRunnerUtil.executeConfiguration(project, getConfiguration(project), myExecutor, dataContext);
+      ProgramRunnerUtil.executeConfiguration(project, getConfiguration(project), myExecutor);
     }
   }
 }

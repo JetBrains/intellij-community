@@ -13,11 +13,7 @@
 package org.zmlx.hg4idea.provider;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.CachingCommittedChangesProvider;
-import com.intellij.openapi.vcs.ChangeListColumn;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.RepositoryLocation;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
 import com.intellij.openapi.vcs.changes.committed.VcsCommittedListsZipper;
@@ -36,25 +32,17 @@ import org.zmlx.hg4idea.HgContentRevision;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileRevision;
 import org.zmlx.hg4idea.HgRevisionNumber;
+import org.zmlx.hg4idea.command.HgIncomingCommand;
 import org.zmlx.hg4idea.command.HgLogCommand;
-import org.zmlx.hg4idea.command.HgShowConfigCommand;
-import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.util.Collection;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class HgCachingCommitedChangesProvider
   implements CachingCommittedChangesProvider<CommittedChangeList, ChangeBrowserSettings> {
-
-  private static final int DEFAULT_MAX_COUNT = 500;
 
   private final Project project;
 
@@ -66,10 +54,33 @@ public class HgCachingCommitedChangesProvider
     return 0;
   }
 
+  public CommittedChangeList readChangeList(RepositoryLocation repositoryLocation,
+    DataInput dataInput) throws IOException {
+    HgRevisionNumber revision = HgRevisionNumber.getInstance(
+      dataInput.readUTF(),
+      dataInput.readUTF()
+    );
+    String committerName = dataInput.readUTF();
+    String comment = dataInput.readUTF();
+    Date commitDate = new Date(dataInput.readLong());
+    int changesCount = dataInput.readInt();
+    List<Change> changes = new ArrayList<Change>();
+    for (int i = 0; i < changesCount; i++) {
+      HgContentRevision beforeRevision = readRevision(repositoryLocation, dataInput);
+      HgContentRevision afterRevision = readRevision(repositoryLocation, dataInput);
+      changes.add(new Change(beforeRevision, afterRevision));
+    }
+    return new HgCommitedChangeList(
+      revision, comment,
+      committerName,
+      commitDate,
+      changes);
+  }
+
   public void writeChangeList(DataOutput dataOutput, CommittedChangeList committedChangeList)
     throws IOException {
     HgCommitedChangeList changeList = (HgCommitedChangeList) committedChangeList;
-    writeRevisionNumber(dataOutput, changeList.getRevisionNumber());
+    writeRevisionNumber(dataOutput, changeList.getRevision());
     dataOutput.writeUTF(changeList.getCommitterName());
     dataOutput.writeUTF(changeList.getComment());
     dataOutput.writeLong(changeList.getCommitDate().getTime());
@@ -80,38 +91,10 @@ public class HgCachingCommitedChangesProvider
     }
   }
 
-  public CommittedChangeList readChangeList(RepositoryLocation repositoryLocation,
-    DataInput dataInput) throws IOException {
-    HgRevisionNumber revisionNumber = readRevisionNumber(dataInput);
-    String committerName = dataInput.readUTF();
-    String comment = dataInput.readUTF();
-    Date commitDate = new Date(dataInput.readLong());
-    int changesCount = dataInput.readInt();
-    List<Change> changes = new LinkedList<Change>();
-    for (int i = 0; i < changesCount; i++) {
-      HgContentRevision beforeRevision = readRevision(repositoryLocation, dataInput);
-      HgContentRevision afterRevision = readRevision(repositoryLocation, dataInput);
-      Change change = new Change(beforeRevision, afterRevision);
-      changes.add(change);
-    }
-    return new HgCommitedChangeList(comment, committerName, revisionNumber, commitDate, changes);
-  }
-
-  private void writeRevision(DataOutput dataOutput, HgContentRevision revision) throws IOException {
-    if (revision == null) {
-      dataOutput.writeUTF("");
-      dataOutput.writeUTF("");
-      dataOutput.writeUTF("");
-    } else {
-      dataOutput.writeUTF(revision.getFile().getIOFile().toString());
-      writeRevisionNumber(dataOutput, revision.getRevisionNumber());
-    }
-  }
-
-  private HgContentRevision readRevision(RepositoryLocation repositoryLocation, DataInput dataInput)
-    throws IOException {
+  private HgContentRevision readRevision(RepositoryLocation repositoryLocation, DataInput dataInput) throws IOException {
     String revisionPath = dataInput.readUTF();
     HgRevisionNumber revisionNumber = readRevisionNumber(dataInput);
+
     if (!StringUtils.isEmpty(revisionPath)) {
       VirtualFile root = ((HgRepositoryLocation) repositoryLocation).getRoot();
       return new HgContentRevision(
@@ -124,16 +107,25 @@ public class HgCachingCommitedChangesProvider
     }
   }
 
-  private void writeRevisionNumber(DataOutput dataOutput, HgRevisionNumber revisionNumber)
-    throws IOException {
-    dataOutput.writeUTF(revisionNumber.getRevision());
-    dataOutput.writeUTF(revisionNumber.getChangeset());
+  private void writeRevision(DataOutput dataOutput, HgContentRevision revision) throws IOException {
+    if (revision == null) {
+      dataOutput.writeUTF("");
+      writeRevisionNumber(dataOutput, HgRevisionNumber.getInstance("", ""));
+    } else {
+      dataOutput.writeUTF(revision.getFile().getIOFile().toString());
+      writeRevisionNumber(dataOutput, revision.getRevisionNumber());
+    }
   }
 
   private HgRevisionNumber readRevisionNumber(DataInput dataInput) throws IOException {
     String revisionRevision = dataInput.readUTF();
     String revisionChangeset = dataInput.readUTF();
     return HgRevisionNumber.getInstance(revisionRevision, revisionChangeset);
+  }
+
+  private void writeRevisionNumber(DataOutput dataOutput, HgRevisionNumber revisionNumber) throws IOException {
+    dataOutput.writeUTF(revisionNumber.getRevision());
+    dataOutput.writeUTF(revisionNumber.getChangeset());
   }
 
   public boolean isMaxCountSupported() {
@@ -157,15 +149,15 @@ public class HgCachingCommitedChangesProvider
   public boolean isChangeLocallyAvailable(FilePath filePath,
     @Nullable VcsRevisionNumber localRevision,
     VcsRevisionNumber changeRevision, CommittedChangeList committedChangeList) {
-    HgRevisionNumber hgLocalRevision = (HgRevisionNumber) localRevision;
-    HgRevisionNumber hgChangeRevision = (HgRevisionNumber) changeRevision;
-
-    return hgLocalRevision != null && hgChangeRevision != null
-      && hgLocalRevision.getRevisionAsInt() >= hgChangeRevision.getRevisionAsInt();
+    return localRevision != null && localRevision.compareTo(changeRevision) >= 0;
   }
 
   public boolean refreshIncomingWithCommitted() {
-    return true;
+    return false;
+  }
+
+  public void loadCommittedChanges(ChangeBrowserSettings changeBrowserSettings, RepositoryLocation repositoryLocation, int i, AsynchConsumer<CommittedChangeList> committedChangeListAsynchConsumer) throws VcsException {
+    throw new UnsupportedOperationException();  //TODO implement method
   }
 
   public ChangeBrowserSettings createDefaultSettings() {
@@ -181,17 +173,7 @@ public class HgCachingCommitedChangesProvider
     if (repo == null) {
       return null;
     }
-    HgShowConfigCommand configCommand = new HgShowConfigCommand(project);
-    String defaultPath = configCommand.getDefaultPath(repo);
-    VirtualFile baseDir = project.getBaseDir();
-    if (StringUtils.isBlank(defaultPath) && baseDir != null) {
-      try {
-        defaultPath = new File(baseDir.getPath()).toURI().toURL().toString();
-      } catch (MalformedURLException e) {
-        throw new RuntimeException(e);
-      }
-    }
-    return new HgRepositoryLocation(defaultPath, repo);
+    return new HgRepositoryLocation(repo.getUrl(), repo);
   }
 
   public RepositoryLocation getLocationFor(FilePath root, String repositoryPath) {
@@ -212,54 +194,61 @@ public class HgCachingCommitedChangesProvider
     HgLogCommand hgLogCommand = new HgLogCommand(project);
     hgLogCommand.setLogFile(false);
 
-    List<HgFileRevision> localRevisions =
-      hgLogCommand.execute(hgFile, maxCount > 0 ? maxCount : DEFAULT_MAX_COUNT);
+    List<HgFileRevision> localRevisions = hgLogCommand.execute(hgFile, maxCount == 0 ? -1 : maxCount, true); //can be zero
+    List<HgRevisionNumber> incomingRevisions = new HgIncomingCommand(project).execute(root);
+
+    Collections.reverse(localRevisions);
 
     for (HgFileRevision revision : localRevisions) {
       HgRevisionNumber vcsRevisionNumber = revision.getRevisionNumber();
-      List<Change> changes = new LinkedList<Change>();
-      for (String file : revision.getFilesModified()) {
-        changes.add(createChange(root, vcsRevisionNumber, file, file));
+      HgRevisionNumber firstParent = vcsRevisionNumber.getParents().get(0);
+      List<Change> changes = new ArrayList<Change>();
+      for (String file : revision.getModifiedFiles()) {
+        changes.add(createChange(root, file, firstParent, file, vcsRevisionNumber, FileStatus.MODIFIED));
       }
-      for (String file : revision.getFilesAdded()) {
-        changes.add(createChange(root, vcsRevisionNumber, null, file));
+      for (String file : revision.getAddedFiles()) {
+        changes.add(createChange(root, null, null, file, vcsRevisionNumber, FileStatus.ADDED));
       }
-      for (String file : revision.getFilesDeleted()) {
-        changes.add(createChange(root, vcsRevisionNumber, file, null));
+      for (String file : revision.getDeletedFiles()) {
+        changes.add(createChange(root, file, firstParent, null, vcsRevisionNumber, FileStatus.DELETED));
       }
-      for (Map.Entry<String, String> copiedFile : revision.getFilesCopied().entrySet()) {
-        changes.add(
-          createChange(root, vcsRevisionNumber, copiedFile.getKey(), copiedFile.getValue())
-        );
+      for (Map.Entry<String,String> copiedFile : revision.getCopiedFiles().entrySet()) {
+        changes.add(createChange(root, copiedFile.getKey(), firstParent, copiedFile.getValue(), vcsRevisionNumber, FileStatus.ADDED));
       }
-      result.add(
-        new HgCommitedChangeList(
-          revision.getCommitMessage(),
-          revision.getAuthor(),
-          vcsRevisionNumber,
-          revision.getRevisionDate(),
-          changes
-        )
-      );
+
+      result.add(new HgCommitedChangeList(
+        vcsRevisionNumber, revision.getCommitMessage(),
+        revision.getAuthor(),
+        revision.getRevisionDate(),
+        changes));
+
     }
+    Collections.reverse(result);
     return result;
   }
 
-  private Change createChange(VirtualFile root, HgRevisionNumber vcsRevisionNumber,
-    String fileBefore, String fileAfter) {
+  private Change createChange(VirtualFile root,
+    String fileBefore,
+    HgRevisionNumber revisionBefore,
+    String fileAfter,
+    HgRevisionNumber revisionAfter,
+    FileStatus aStatus ) {
+    
     HgContentRevision beforeRevision = fileBefore == null ? null : new HgContentRevision(
       project,
       new HgFile(root, new File(root.getPath(), fileBefore)),
-      new HgWorkingCopyRevisionsCommand(project).parent(root, vcsRevisionNumber)
+      revisionBefore
     );
-
     HgContentRevision afterRevision = fileAfter == null ? null : new HgContentRevision(
-        project,
-        new HgFile(root, new File(root.getPath(), fileAfter)),
-        vcsRevisionNumber
-      );
-
-    return new Change(beforeRevision, afterRevision);
+      project,
+      new HgFile(root, new File(root.getPath(), fileAfter)),
+      revisionAfter
+    );
+    return new Change(
+      beforeRevision,
+      afterRevision,
+      aStatus
+    );
   }
 
   public ChangeListColumn[] getColumns() {
@@ -277,11 +266,6 @@ public class HgCachingCommitedChangesProvider
   }
 
   public int getUnlimitedCountValue() {
-    return DEFAULT_MAX_COUNT;
-  }
-
-  public void loadCommittedChanges(ChangeBrowserSettings changeBrowserSettings,
-    RepositoryLocation repositoryLocation, int i,
-    AsynchConsumer<CommittedChangeList> committedChangeListAsynchConsumer) throws VcsException {
+    return -1;
   }
 }

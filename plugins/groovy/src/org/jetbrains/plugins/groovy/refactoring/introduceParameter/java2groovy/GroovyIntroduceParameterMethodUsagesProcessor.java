@@ -26,12 +26,12 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterData;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterMethodUsagesProcessor;
-import com.intellij.util.VisibilityUtil;
-import com.intellij.refactoring.util.usageInfo.DefaultConstructorImplicitUsageInfo;
 import com.intellij.refactoring.util.javadoc.MethodJavaDocHelper;
+import com.intellij.refactoring.util.usageInfo.DefaultConstructorImplicitUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
@@ -49,7 +49,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Maxim.Medvedev
@@ -241,7 +242,7 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
     constructor = (GrMethod)aClass.add(constructor);
     PsiUtil.setModifierProperty(constructor, VisibilityUtil.getVisibilityModifier(aClass.getModifierList()), true);
     processAddSuperCall(data, new UsageInfo(constructor), usages);
-    constructor = (GrMethod)CodeStyleManager.getInstance(data.getProject()).reformat(constructor);
+//    constructor = (GrMethod)CodeStyleManager.getInstance(data.getProject()).reformat(constructor);
     return false;
   }
 

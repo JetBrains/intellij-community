@@ -30,10 +30,7 @@ import javax.swing.*;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
+import java.io.*;
 import java.lang.reflect.Field;
 import java.nio.charset.Charset;
 import java.util.HashMap;
@@ -64,10 +61,12 @@ public class AsmCodeGeneratorTest extends TestCase {
   }
 
   private AsmCodeGenerator initCodeGenerator(final String formFileName, final String className, final String testDataPath) throws Exception {
+    String tmpPath = FileUtil.getTempDirectory();
     String formPath = testDataPath + formFileName;
     String javaPath = testDataPath + className + ".java";
-    com.sun.tools.javac.Main.compile(new String[] { javaPath } );
-    String classPath = testDataPath + className + ".class";
+    com.sun.tools.javac.Main.compile(new String[] { "-d", tmpPath, javaPath } );
+
+    String classPath = tmpPath + "/" + className + ".class";
     final LwRootContainer rootContainer = loadFormData(formPath);
     final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, myClassLoader, myNestedFormLoader, false,
                                                                 new ClassWriter(ClassWriter.COMPUTE_FRAMES));
@@ -78,6 +77,14 @@ public class AsmCodeGeneratorTest extends TestCase {
     finally {
       classStream.close();
       FileUtil.delete(new File(classPath));
+      final File[] inners = new File(tmpPath).listFiles(new FilenameFilter() {
+        public boolean accept(File dir, String name) {
+          return name.startsWith(className + "$") && name.endsWith(".class");
+        }
+      });
+      if (inners != null) {
+        for (File file : inners) FileUtil.delete(file);
+      }
     }
     return codeGenerator;
   }

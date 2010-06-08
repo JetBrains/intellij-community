@@ -20,7 +20,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.zmlx.hg4idea.command.HgTagBranchCommand;
+import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
 import org.zmlx.hg4idea.ui.HgCurrentBranchStatus;
+
+import java.util.Collections;
+import java.util.List;
 
 class HgCurrentBranchStatusUpdater implements HgUpdater {
 
@@ -31,21 +35,21 @@ class HgCurrentBranchStatusUpdater implements HgUpdater {
   }
 
   public void update(Project project) {
-    hgCurrentBranchStatus.setCurrentBranch(null);
     Editor textEditor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-    if (textEditor == null) {
-      return;
-    }
-    Document document = textEditor.getDocument();
-    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+    if (textEditor != null) {
+      Document document = textEditor.getDocument();
+      VirtualFile file = FileDocumentManager.getInstance().getFile(document);
 
-    VirtualFile repo = VcsUtil.getVcsRootFor(project, file);
-    String branch = null;
-    if (repo != null) {
-      HgTagBranchCommand hgTagBranchCommand = new HgTagBranchCommand(project, repo);
-      branch = hgTagBranchCommand.getCurrentBranch();
+      VirtualFile repo = VcsUtil.getVcsRootFor(project, file);
+      if (repo != null) {
+        HgTagBranchCommand hgTagBranchCommand = new HgTagBranchCommand(project, repo);
+        String branch = hgTagBranchCommand.getCurrentBranch();
+        List<HgRevisionNumber> parents = new HgWorkingCopyRevisionsCommand(project).parents(repo);
+        hgCurrentBranchStatus.updateFor(branch, parents);
+        return;
+      }
     }
-    hgCurrentBranchStatus.setCurrentBranch(branch);
+    hgCurrentBranchStatus.updateFor(null, Collections.<HgRevisionNumber>emptyList());
   }
 
 }

@@ -27,7 +27,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class AddDeprecationAnnotationFix extends AddAnnotationFix {
   public AddDeprecationAnnotationFix() {

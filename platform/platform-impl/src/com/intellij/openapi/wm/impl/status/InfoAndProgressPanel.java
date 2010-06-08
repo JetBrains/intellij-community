@@ -38,6 +38,7 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -57,6 +58,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   private final ProcessPopup myPopup;
 
   private final TextPanel myInfoPanel = new TextPanel();
+  private final JPanel myRefreshAndInfoPanel = new JPanel();
   private final AsyncProcessIcon myProgressIcon;
 
   private final ArrayList<ProgressIndicatorEx> myOriginals = new ArrayList<ProgressIndicatorEx>();
@@ -70,9 +72,31 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   private final Alarm myQueryAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   private boolean myShouldClosePopupAndOnProcessFinish;
+  private AsyncProcessIcon myRefreshIcon;
+  private EmptyIcon myEmptyRefreshIcon;
 
   public InfoAndProgressPanel() {
     setOpaque(false);
+
+    myRefreshIcon = new AsyncProcessIcon("Refreshing filesystem") {
+      protected Icon getPassiveIcon() {
+        return myEmptyRefreshIcon;
+      }
+
+      @Override
+      public Dimension getPreferredSize() {
+        if (!isRunning()) return new Dimension(0, 0);
+        return super.getPreferredSize();
+      }
+    };
+
+    myRefreshIcon.setPaintPassiveIcon(false);
+    myEmptyRefreshIcon = new EmptyIcon(0, myRefreshIcon.getPreferredSize().height);
+
+    myRefreshAndInfoPanel.setLayout(new BorderLayout());
+    myRefreshAndInfoPanel.setOpaque(false);
+    myRefreshAndInfoPanel.add(myRefreshIcon, BorderLayout.WEST);
+    myRefreshAndInfoPanel.add(myInfoPanel, BorderLayout.CENTER);
 
     myProgressIcon = new AsyncProcessIcon("Background process");
     myProgressIcon.setOpaque(false);
@@ -103,7 +127,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     return "InfoAndProgress";
   }
 
-  public Presentation getPresentation(@NotNull Type type) {
+  public WidgetPresentation getPresentation(@NotNull Type type) {
     return null;
   }
 
@@ -111,6 +135,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   }
 
   public void dispose() {
+    setRefreshVisible(false);
   }
 
   public JComponent getComponent() {
@@ -247,7 +272,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     //myProgressIcon.setBorder(new IdeStatusBarImpl.MacStatusBarWidgetBorder());
     progressCountPanel.add(myProgressIcon, BorderLayout.WEST);
 
-    add(myInfoPanel, BorderLayout.CENTER);
+    add(myRefreshAndInfoPanel, BorderLayout.CENTER);
 
     progressCountPanel.setBorder(new EmptyBorder(0, 0, 0, 4));
     add(progressCountPanel, BorderLayout.EAST);
@@ -259,7 +284,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   private void buildInInlineIndicator(final InlineProgressIndicator inline) {
     removeAll();
     setLayout(new InlineLayout());
-    add(myInfoPanel);
+    add(myRefreshAndInfoPanel);
 
     final JPanel inlinePanel = new JPanel(new BorderLayout()) {
       @Override
@@ -281,12 +306,28 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
     add(inlinePanel);
 
-    myInfoPanel.revalidate();
-    myInfoPanel.repaint();
+    myRefreshAndInfoPanel.revalidate();
+    myRefreshAndInfoPanel.repaint();
   }
 
   public void setText(final String text) {
     myInfoPanel.setText(text);
+  }
+
+  public void setRefreshVisible(final boolean visible) {
+    if (visible) {
+      myRefreshIcon.resume();
+    }
+    else {
+      myRefreshIcon.suspend();
+    }
+
+    myRefreshIcon.revalidate();
+    myRefreshIcon.repaint();
+  }
+
+  public void setRefreshToolTipText(final String tooltip) {
+    myRefreshIcon.setToolTipText(tooltip);
   }
 
   public BalloonHandler notifyByBalloon(MessageType type, String htmlBody, Icon icon, HyperlinkListener listener) {
@@ -393,9 +434,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   private void restoreEmptyStatus() {
     removeAll();
     setLayout(new BorderLayout());
-    add(myInfoPanel, BorderLayout.CENTER);
-
-    //myProgressIcon.setBorder(new IdeStatusBarImpl.MacStatusBarWidgetBorder());
+    add(myRefreshAndInfoPanel, BorderLayout.CENTER);
 
     long wastedTime = ProgressManagerImpl.getWastedTime();
     if (ApplicationManagerEx.getApplicationEx().isInternal() && wastedTime > 10 * 60 * 1000) {
@@ -428,8 +467,8 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     }
 
     myProgressIcon.suspend();
-    myInfoPanel.revalidate();
-    myInfoPanel.repaint();
+    myRefreshAndInfoPanel.revalidate();
+    myRefreshAndInfoPanel.repaint();
   }
 
   private String formatTime(long t) {

@@ -23,6 +23,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.CommittedChangesProvider;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
@@ -89,6 +90,8 @@ public class HgVcs extends AbstractVcs {
   private final HgGlobalSettings globalSettings;
   private final HgProjectSettings projectSettings;
 
+  private boolean started = false;
+
   public HgVcs(Project project,
     HgGlobalSettings globalSettings, HgProjectSettings projectSettings) {
     super(project, VCS_NAME);
@@ -118,21 +121,37 @@ public class HgVcs extends AbstractVcs {
 
   @Override
   public ChangeProvider getChangeProvider() {
+    if (!started) {
+      return null;
+    }
+
     return changeProvider;
   }
 
   @Override
   public RollbackEnvironment getRollbackEnvironment() {
+    if (!started) {
+      return null;
+    }
+
     return rollbackEnvironment;
   }
 
   @Override
   public DiffProvider getDiffProvider() {
+    if (!started) {
+      return null;
+    }
+
     return diffProvider;
   }
 
   @Override
   public VcsHistoryProvider getVcsHistoryProvider() {
+    if (!started) {
+      return null;
+    }
+
     return historyProvider;
   }
 
@@ -143,31 +162,55 @@ public class HgVcs extends AbstractVcs {
 
   @Override
   public CheckinEnvironment getCheckinEnvironment() {
+    if (!started) {
+      return null;
+    }
+
     return checkinEnvironment;
   }
 
   @Override
   public AnnotationProvider getAnnotationProvider() {
+    if (!started) {
+      return null;
+    }
+
     return annotationProvider;
   }
 
   @Override
   public UpdateEnvironment getUpdateEnvironment() {
+    if (!started) {
+      return null;
+    }
+
     return updateEnvironment;
   }
 
   @Override
   public UpdateEnvironment getIntegrateEnvironment() {
+    if (!started) {
+      return null;
+    }
+
     return integrateEnvironment;
   }
 
   @Override
   public CommittedChangesProvider getCommittedChangesProvider() {
-    return commitedChangesProvider;
+    if (!started) {
+      return null;
+    }
+    return null;
+//    return commitedChangesProvider;
   }
 
   @Override
   public boolean isVersionedDirectory(VirtualFile dir) {
+    if (!started) {
+      return false;
+    }
+
     VirtualFile currentDir = dir;
     while (currentDir != null) {
       if (currentDir.findFileByRelativePath(".hg") != null) {
@@ -178,27 +221,28 @@ public class HgVcs extends AbstractVcs {
     return false;
   }
 
+  public boolean isStarted() {
+    return started;
+  }
+
   @Override
-  protected void activate() {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        if (!validateHgExecutable()) {
-          return;
-        }
-        addListeners();
-      }
-    }, myProject.getDisposed());
+  protected void shutdown() throws VcsException {
+    started = false;
   }
 
-  public boolean validateHgExecutable() {
-    return (new HgExecutableValidator(myProject)).check(globalSettings);
-  }
+  @Override
+  public void activate() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      started = true;
+    } else {
+      HgExecutableValidator validator = new HgExecutableValidator(myProject);
+      started = validator.check(globalSettings);
+    }
 
-  public static HgVcs getInstance(Project project) {
-    return (HgVcs) ProjectLevelVcsManager.getInstance(project).findVcsByName(VCS_NAME);
-  }
+    if (!started) {
+      return;
+    }
 
-  public void addListeners() {
     LocalFileSystem.getInstance().addVirtualFileListener(virtualFileListener);
     ChangeListManager.getInstance(myProject).registerCommitExecutor(commitExecutor);
 
@@ -249,6 +293,10 @@ public class HgVcs extends AbstractVcs {
 
   @Override
   public void deactivate() {
+    if (!started) {
+      return;
+    }
+
     LocalFileSystem.getInstance().removeVirtualFileListener(virtualFileListener);
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
     if (messageBusConnection != null) {
@@ -262,6 +310,10 @@ public class HgVcs extends AbstractVcs {
       //statusBar.removeCustomIndicationComponent(outgoingChangesStatus);
       //statusBar.removeCustomIndicationComponent(hgCurrentBranchStatus);
     }
+  }
+
+  public static HgVcs getInstance(Project project) {
+    return (HgVcs) ProjectLevelVcsManager.getInstance(project).findVcsByName(VCS_NAME);
   }
 
 }

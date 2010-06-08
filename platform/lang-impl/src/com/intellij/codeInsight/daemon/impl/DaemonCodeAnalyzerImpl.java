@@ -101,6 +101,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   @NonNls private static final String FILE_TAG = "file";
   @NonNls private static final String URL_ATT = "url";
   private DaemonListeners myDaemonListeners;
+  private StatusBarUpdater myStatusBarUpdater;
   private final PassExecutorService myPassExecutorService;
   private static final Key<List<HighlightInfo>> HIGHLIGHTS_TO_REMOVE_KEY = Key.create("HIGHLIGHTS_TO_REMOVE");
   private int myModificationCount = 0;
@@ -145,6 +146,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
   public void projectOpened() {
     assert !myInitialized : "Double Initializing";
+    myStatusBarUpdater = new StatusBarUpdater(myProject);
+    Disposer.register(myProject, myStatusBarUpdater);
+
     myDaemonListeners = new DaemonListeners(myProject, this, myEditorTracker);
     Disposer.register(myProject, myDaemonListeners);
     reloadScopes();
@@ -470,6 +474,11 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     markup.putUserData(HIGHLIGHTS_IN_EDITOR_DOCUMENT_KEY, Collections.unmodifiableList(highlightsToSet));
 
     markup.putUserData(HIGHLIGHTS_TO_REMOVE_KEY, Collections.unmodifiableList(highlightsToRemove));
+
+    DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
+    if (codeAnalyzer instanceof DaemonCodeAnalyzerImpl && ((DaemonCodeAnalyzerImpl)codeAnalyzer).myStatusBarUpdater != null) {
+      ((DaemonCodeAnalyzerImpl)codeAnalyzer).myStatusBarUpdater.updateStatus();
+    }
   }
 
   private static void stripWarningsCoveredByErrors(final Project project, List<HighlightInfo> highlights, MarkupModel markup) {

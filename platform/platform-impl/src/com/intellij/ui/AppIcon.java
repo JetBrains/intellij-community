@@ -130,8 +130,8 @@ public abstract class AppIcon {
           @Override
           public void applicationActivated(IdeFrame ideFrame) {
             hideProgress(myCurrentProcessId);
-            setOkBadge(false);
-            setErrorBadge(null);
+            _setOkBadge(false);
+            _setTextBadge(null);
           }
         };
         app.addApplicationListener(myAppListener);

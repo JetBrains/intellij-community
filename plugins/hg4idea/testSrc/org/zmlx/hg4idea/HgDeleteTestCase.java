@@ -23,15 +23,15 @@ public class HgDeleteTestCase extends HgTestCase {
   @Test
   public void testDeleteUnmodifiedFile() throws Exception {
     VirtualFile file = createFileInCommand("a.txt", "new file content");
-    runHg("commit", "-m", "added file");
+    runHgOnProjectRepo("commit", "-m", "added file");
     deleteFileInCommand(file);
-    verify(runHg("status"), "R a.txt");
+    verify(runHgOnProjectRepo("status"), removed("a.txt"));
   }
 
   @Test
   public void testDeleteUnversionedFile() throws Exception {
     VirtualFile file = makeFile(new File(myWorkingCopyDir.getPath(), "a.txt"));
-    verify(runHg("status"), "? a.txt");
+    verify(runHgOnProjectRepo("status"), unknown("a.txt"));
     deleteFileInCommand(file);
     Assert.assertFalse(file.exists());
   }
@@ -46,20 +46,20 @@ public class HgDeleteTestCase extends HgTestCase {
   @Test
   public void testDeleteModifiedFile() throws Exception {
     VirtualFile file = createFileInCommand("a.txt", "new file content");
-    runHg("commit", "-m", "added file");
+    runHgOnProjectRepo("commit", "-m", "added file");
     editFileInCommand(myProject, file, "even newer content");
-    verify(runHg("status"), "M a.txt");
+    verify(runHgOnProjectRepo("status"), modified("a.txt"));
     deleteFileInCommand(file);
-    verify(runHg("status"), "R a.txt");
+    verify(runHgOnProjectRepo("status"), removed("a.txt"));
   }
 
   @Test
   public void testDeleteDirWithFiles() throws Exception {
     VirtualFile parent = createDirInCommand(myWorkingCopyDir, "com");
     createFileInCommand(parent, "a.txt", "new file content");
-    runHg("commit", "-m", "added file");
+    runHgOnProjectRepo("commit", "-m", "added file");
     deleteFileInCommand(parent);
-    verify(runHg("status"), "R com/a.txt");
+    verify(runHgOnProjectRepo("status"), removed("com", "a.txt"));
   }
 
 }

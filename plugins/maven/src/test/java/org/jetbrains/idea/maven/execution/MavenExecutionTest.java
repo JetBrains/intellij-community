@@ -19,11 +19,9 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.testFramework.MapDataContext;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 
@@ -95,11 +93,9 @@ public class MavenExecutionTest extends MavenImportingTestCase {
   private void execute(MavenRunnerParameters params) {
     final Semaphore sema = new Semaphore();
     sema.down();
-    MapDataContext context = new MapDataContext();
-    context.put(PlatformDataKeys.PROJECT, myProject);
     MavenRunConfigurationType.runConfiguration(myProject, params, getMavenGeneralSettings(),
                                                new MavenRunnerSettings(),
-                                               context, new ProgramRunner.Callback() {
+                                               new ProgramRunner.Callback() {
         public void processStarted(final RunContentDescriptor descriptor) {
           descriptor.getProcessHandler().addProcessListener(new ProcessAdapter() {
             @Override

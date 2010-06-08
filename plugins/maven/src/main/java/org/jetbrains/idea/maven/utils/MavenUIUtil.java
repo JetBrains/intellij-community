@@ -30,7 +30,9 @@ import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.TreeSet;
 
 public class MavenUIUtil {
   public static void executeAction(final String actionId, final InputEvent e) {
@@ -38,7 +40,8 @@ public class MavenUIUtil {
     final AnAction action = actionManager.getAction(actionId);
     if (action != null) {
       final Presentation presentation = new Presentation();
-      final AnActionEvent event = new AnActionEvent(e, DataManager.getInstance().getDataContext(e.getComponent()), "", presentation, actionManager, 0);
+      final AnActionEvent event =
+        new AnActionEvent(e, DataManager.getInstance().getDataContext(e.getComponent()), "", presentation, actionManager, 0);
       action.update(event);
       if (presentation.isEnabled()) {
         action.actionPerformed(event);
@@ -46,13 +49,13 @@ public class MavenUIUtil {
     }
   }
 
-  public static <E> void setElements(ElementsChooser<E> chooser, Collection<E> all, Collection<E> selected, Comparator<E> comparator){
+  public static <E> void setElements(ElementsChooser<E> chooser, Collection<E> all, Collection<E> selected, Comparator<E> comparator) {
     java.util.List<E> selection = chooser.getSelectedElements();
     chooser.clear();
     Collection<E> sorted = new TreeSet<E>(comparator);
     sorted.addAll(all);
     for (E element : sorted) {
-      chooser.addElement( element, selected.contains(element));
+      chooser.addElement(element, selected.contains(element));
     }
     chooser.selectElements(selection);
   }
@@ -86,7 +89,7 @@ public class MavenUIUtil {
         panel.setForeground(foreground);
 
         CheckBoxState state = handler.getState(userObject);
-        checkbox.setSelected(state !=  CheckBoxState.UNCHECKED);
+        checkbox.setSelected(state != CheckBoxState.UNCHECKED);
         checkbox.setEnabled(state != CheckBoxState.PARTIAL);
         checkbox.setBackground(UIUtil.getTreeTextBackground());
         checkbox.setForeground(foreground);

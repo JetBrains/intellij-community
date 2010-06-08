@@ -16,9 +16,49 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 
-interface HgUpdater {
+import java.util.List;
 
-  void update(UpdatedFiles updatedFiles, ProgressIndicator indicator)
+public interface HgUpdater {
+
+  void update(UpdatedFiles updatedFiles, ProgressIndicator indicator, List<VcsException> exceptions)
     throws VcsException;
 
+  static class UpdateConfiguration{
+    private boolean shouldPull = true;
+    private boolean shouldUpdate = true;
+    private boolean shouldMerge = true;
+    private boolean shouldCommitAfterMerge = true;
+
+    public void setShouldPull(boolean shouldPull) {
+      this.shouldPull = shouldPull;
+    }
+
+    public void setShouldUpdate(boolean shouldUpdate) {
+      this.shouldUpdate = shouldUpdate;
+    }
+
+    public void setShouldMerge(boolean shouldMerge) {
+      this.shouldMerge = shouldMerge;
+    }
+
+    public void setShouldCommitAfterMerge(boolean shouldCommitAfterMerge) {
+      this.shouldCommitAfterMerge = shouldCommitAfterMerge;
+    }
+
+    public boolean shouldPull() {
+    return shouldPull;
+  }
+  
+  public boolean shouldUpdate() {
+    return shouldUpdate;
+  }
+  
+  public boolean shouldMerge() {
+    return shouldUpdate() && shouldMerge;
+  }
+  
+  public boolean shouldCommitAfterMerge() {
+    return shouldMerge() && shouldCommitAfterMerge;
+  }
+  }
 }

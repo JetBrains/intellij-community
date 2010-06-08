@@ -89,7 +89,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
                                      runAfterOfStartingOf == null || runAfterOfStartingOf.length == 0 ? ArrayUtil.EMPTY_INT_ARRAY : runAfterOfStartingOf);
     int passId = forcedPassId == -1 ? nextAvailableId++ : forcedPassId;
     PassConfig registered = myRegisteredPassFactories.get(passId);
-    assert registered == null: "Pass id "+passId +" has already been registered: "+ registered.passFactory;
+    assert registered == null: "Pass id "+passId +" has already been registered in: "+ registered.passFactory;
     myRegisteredPassFactories.put(passId, info);
     if (factory instanceof DirtyScopeTrackingHighlightingPassFactory) {
       myDirtyScopeTrackingFactories.add((DirtyScopeTrackingHighlightingPassFactory) factory);

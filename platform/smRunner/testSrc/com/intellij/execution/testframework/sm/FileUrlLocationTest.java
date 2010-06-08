@@ -29,39 +29,16 @@ public class FileUrlLocationTest extends SMLightFixtureTestCase {
   }
 
   public void testSpecNavigation() throws Throwable {
-    createAndAddFile("my_example_spec.rb",
+    createAndAddFile("my_example_spec.xml",
                      "\n" +
-                     "require \"spec\"\n" +
-                     "\n" +
-                     "describe \"Blabla\" do\n" +
-                     "\n" +
-                     "  # Called before each example.\n" +
-                     "  before(:each) do\n" +
-                     "    # Do nothing\n" +
-                     "  end\n" +
-                     "\n" +
-                     "  # Called after each example.\n" +
-                     "  after(:each) do\n" +
-                     "    # Do nothing\n" +
-                     "  end\n" +
-                     "\n" +
-                     "  it \"should fail\" do\n" +
-                     "\n" +
-                     "    #should pass\n" +
-                     "    true.should == false\n" +
-                     "  end\n" +
-                     "\n" +
-                     "  it \"should pass\" do\n" +
-                     "\n" +
-                     "    #should pass\n" +
-                     "    true.should == true\n" +
-                     "  end\n" +
-                     "end");
+                     "<describe>\n" +
+                     "    <a></a>\n" +
+                     "</describe>\n" +
+                     "\n");
 
     final String path = myFixture.getFile().getVirtualFile().getPath();
-    doTest(17, "describe", path, 4);
-    doTest(189, "it", path, 16);
-    doTest(261, "it", path, 22);
+    doTest(1, "<", path, 2);
+    doTest(16, "<", path, 3);
   }
 
   private void doTest(final int expectedOffset, final String expectedStartsWith,

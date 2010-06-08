@@ -12,20 +12,15 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgRevisionNumber;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class HgHeadsCommand {
-
-  private static final Logger LOG = Logger.getInstance(HgHeadsCommand.class.getName());
 
   private final Project project;
   private final VirtualFile repo;
@@ -35,22 +30,26 @@ public class HgHeadsCommand {
     this.repo = repo;
   }
 
-  public List<HgRevisionNumber> execute(String branch) {
-    HgCommandService command = HgCommandService.getInstance(project);
-
-    HgCommandResult result = command.execute(repo, "heads",
-      Arrays.asList("--template", "{rev}|{node|short}\\n", branch));
-
-    List<HgRevisionNumber> heads = new ArrayList<HgRevisionNumber>();
-    for (String line : result.getOutputLines()) {
-      try {
-        String[] parts = StringUtils.split(line, '|');
-        heads.add(HgRevisionNumber.getInstance(parts[0], parts[1]));
-      } catch (NumberFormatException e) {
-        LOG.warn("Unexpected head line '" + line + "'");
-      }
-    }
-    return heads;
+  public List<HgRevisionNumber> execute() {
+    return execute(".");
   }
 
+  public List<HgRevisionNumber> execute(String branch) {
+    return new HeadsCommand(project, branch).execute(repo);
+  }
+
+  private class HeadsCommand extends HgChangesetsCommand {
+    private final String branch;
+    public HeadsCommand(Project project, String branch) {
+      super(project, "heads");
+      this.branch = branch;
+    }
+
+    @Override
+    protected void addArguments(List<String> args) {
+      if (StringUtils.isNotEmpty(branch)) {
+        args.add(branch);
+      }
+    }
+  }
 }

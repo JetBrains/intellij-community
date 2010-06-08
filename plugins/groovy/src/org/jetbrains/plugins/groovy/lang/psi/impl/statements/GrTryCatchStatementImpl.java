@@ -17,7 +17,9 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrCatchClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrFinallyClause;
@@ -51,5 +53,13 @@ public class GrTryCatchStatementImpl extends GroovyPsiElementImpl implements GrT
 
   public GrFinallyClause getFinallyClause() {
     return findChildByClass(GrFinallyClause.class);
+  }
+
+  public GrCatchClause addCatchClause(@NotNull GrCatchClause clause, @Nullable GrCatchClause anchorBefore) {
+    PsiElement anchor = anchorBefore;
+    if (anchor == null) {
+      anchor = getTryBlock();
+    }
+    return (GrCatchClause)addAfter(clause, anchor);
   }
 }

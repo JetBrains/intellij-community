@@ -16,13 +16,12 @@
 
 package org.jetbrains.plugins.groovy.compiler;
 
-import com.intellij.compiler.CompilerConfiguration;
 
-
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import junit.framework.AssertionFailedError;
+import com.intellij.compiler.CompilerConfiguration
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiFile
+import junit.framework.AssertionFailedError
 
 /**
  * @author peter
@@ -318,7 +317,7 @@ class Bar {}
 package pack
 class Foo extends Goo {
 }"""
-    def goo = myFixture.addFileToProject("Goo.groovy", """
+    def goo = myFixture.addFileToProject("pack/Goo.groovy", """
 package pack
 class Goo {}""")
 

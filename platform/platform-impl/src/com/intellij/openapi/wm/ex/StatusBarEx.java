@@ -43,4 +43,7 @@ public interface StatusBarEx extends StatusBar, Disposable {
   boolean isProcessWindowOpen();
 
   void setProcessWindowOpen(boolean open);
+
+  @Deprecated
+  void removeCustomIndicationComponents();
 }

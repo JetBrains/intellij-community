@@ -18,16 +18,13 @@ package org.jetbrains.idea.maven.dom;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlTag;
-import org.apache.commons.beanutils.BeanAccessLanguageException;
-import org.apache.commons.beanutils.BeanUtils;
 import org.jetbrains.idea.maven.dom.model.MavenDomProfile;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.model.MavenDomProperties;
-import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
+import org.jetbrains.idea.maven.facade.MavenFacadeUtil;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Properties;
 import java.util.Stack;
@@ -137,7 +134,7 @@ public class MavenPropertyResolver {
   private static String doResolveProperty(String propName, MavenProject project, Properties additionalProperties) {
     String result;
 
-    result = MavenEmbedderWrapper.collectSystemProperties().getProperty(propName);
+    result = MavenFacadeUtil.collectSystemProperties().getProperty(propName);
     if (result != null) return result;
 
     if (propName.startsWith("project.") || propName.startsWith("pom.")) {
@@ -151,19 +148,7 @@ public class MavenPropertyResolver {
 
     if (propName.equals("basedir")) return project.getDirectory();
 
-    try {
-      result = BeanUtils.getNestedProperty(project.getMavenModel(), propName);
-    }
-    catch (IllegalAccessException e) {
-    }
-    catch (BeanAccessLanguageException e) {
-    }
-    catch (InvocationTargetException e) {
-    }
-    catch (NoSuchMethodException e) {
-    }
-    catch (IllegalArgumentException e) {
-    }
+    result = project.getModelMap().get(propName);
     if (result != null) return result;
 
     result = additionalProperties.getProperty(propName);

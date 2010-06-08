@@ -15,16 +15,16 @@
  */
 package com.intellij.notification.impl;
 
-import com.intellij.notification.Notifications;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.Notifications;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;

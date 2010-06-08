@@ -73,7 +73,7 @@ public class ReplaceConstructorWithSettersChainInfo extends FixableUsageInfo {
             "new " + myBuilderClass + "()." + buf.toString() + "create" + StringUtil.capitalize(constructor.getName()) + "()",
             null);
 
-          expr.replace(settersChain);
+          styleManager.shortenClassReferences(expr.replace(settersChain));
         }
       }
     }

@@ -13,21 +13,22 @@
 package org.zmlx.hg4idea.provider.update;
 
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.update.SequentialUpdatesContext;
-import com.intellij.openapi.vcs.update.UpdateEnvironment;
-import com.intellij.openapi.vcs.update.UpdateSession;
-import com.intellij.openapi.vcs.update.UpdateSessionAdapter;
-import com.intellij.openapi.vcs.update.UpdatedFiles;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.update.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.ui.HgUpdateDialog;
 
+import javax.swing.*;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -36,6 +37,7 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
 
   private final Project project;
   private final HgUpdaterFactory hgUpdaterFactory;
+  private final HgUpdater.UpdateConfiguration updateConfiguration = new HgUpdater.UpdateConfiguration();
 
   public HgUpdateEnvironment(Project project) {
     this.project = project;
@@ -49,6 +51,7 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
   public UpdateSession updateDirectories(@NotNull FilePath[] contentRoots,
     UpdatedFiles updatedFiles, ProgressIndicator indicator,
     @NotNull Ref<SequentialUpdatesContext> context) {
+    
     List<VcsException> exceptions = new LinkedList<VcsException>();
 
     for (FilePath contentRoot : contentRoots) {
@@ -64,8 +67,10 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
         continue;
       }
       try {
-        hgUpdaterFactory.buildUpdater(repository).update(updatedFiles, indicator);
+        HgUpdater updater = hgUpdaterFactory.buildUpdater(repository, updateConfiguration);
+        updater.update(updatedFiles, indicator, exceptions);
       } catch (VcsException e) {
+        //TODO include module name where exception occurred
         exceptions.add(e);
       }
       if (indicator != null) {
@@ -75,12 +80,55 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
     return new UpdateSessionAdapter(exceptions, false);
   }
 
-  public Configurable createConfigurable(Collection<FilePath> files) {
-    return null;
+  public Configurable createConfigurable(Collection<FilePath> contentRoots) {
+    return new UpdateConfigurable(updateConfiguration);
   }
 
   public boolean validateOptions(Collection<FilePath> roots) {
     return true;
+  }
+  
+  public static class UpdateConfigurable implements Configurable {
+    private final HgUpdater.UpdateConfiguration updateConfiguration;
+    protected HgUpdateDialog updateDialog;
+
+    public UpdateConfigurable(HgUpdater.UpdateConfiguration updateConfiguration) {
+      this.updateConfiguration = updateConfiguration;
+    }
+
+    @Nls
+    public String getDisplayName() {
+      return "Update";
+    }
+
+    public Icon getIcon() {
+      return IconLoader.getIcon("/images/mercurial.png");
+    }
+
+    public String getHelpTopic() {
+      return null;
+    }
+
+    public JComponent createComponent() {
+      updateDialog = new HgUpdateDialog();
+      return updateDialog.createCenterPanel();
+    }
+
+    public boolean isModified() {
+      return true;
+    }
+
+    public void apply() throws ConfigurationException {
+      updateDialog.applyTo(updateConfiguration);
+    }
+
+    public void reset() {
+      updateDialog.updateFrom(updateConfiguration);
+    }
+
+    public void disposeUIResources() {
+      updateDialog = null;
+    }
   }
 
 }

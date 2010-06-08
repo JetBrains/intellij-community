@@ -16,7 +16,10 @@
 
 package com.intellij.execution.junit;
 
-import com.intellij.execution.*;
+import com.intellij.execution.Location;
+import com.intellij.execution.PsiLocation;
+import com.intellij.execution.RunManager;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
@@ -66,6 +69,13 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
     }
 
     return result;
+  }
+
+  @Nullable
+  public RunnerAndConfigurationSettings findExistingConfiguration(@NotNull Location location) {
+    final RunManager runManager = RunManager.getInstance(location.getProject());
+    final RunnerAndConfigurationSettings[] configurations = runManager.getConfigurationSettings(getConfigurationType());
+    return findExistingByElement(location, configurations);
   }
 
   public abstract PsiElement getSourceElement();

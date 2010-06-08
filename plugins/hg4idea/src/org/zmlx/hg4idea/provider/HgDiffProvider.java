@@ -13,16 +13,16 @@
 package org.zmlx.hg4idea.provider;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.ItemLatestState;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
-import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgContentRevision;
+import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
 
@@ -47,7 +47,7 @@ public class HgDiffProvider implements DiffProvider {
     }
 
     if (currentRevision.isWorkingVersion()) {
-      return command.parent(vcsRoot);
+      return command.firstParent(vcsRoot);
     }
     return currentRevision;
   }
@@ -78,7 +78,7 @@ public class HgDiffProvider implements DiffProvider {
 
     boolean fileExists = filePath.getIOFile().exists();
     if (currentRevision.isWorkingVersion()) {
-      return new ItemLatestState(command.parent(vcsRoot), fileExists, true);
+      return new ItemLatestState(command.firstParent(vcsRoot), fileExists, true);
     }
 
     return new ItemLatestState(currentRevision, fileExists, true);

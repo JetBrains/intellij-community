@@ -26,6 +26,7 @@ import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.*;
+import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -360,7 +361,7 @@ public class MavenDomProjectProcessorUtils {
                                                       final Function<MavenDomProfile, T> domProfileFunction,
                                                       final Function<MavenDomProjectModel, T> projectDomFunction,
                                                       final Set<MavenDomProjectModel> processed) {
-    Boolean aBoolean = new MyMavenParentProjectFileProcessor<Boolean>(project) {
+    Boolean aBoolean = new DomParentProjectFileProcessor<Boolean>(MavenProjectsManager.getInstance(project)) {
       protected Boolean doProcessParent(VirtualFile parentFile) {
         MavenDomProjectModel parentProjectDom = MavenDomUtil.getMavenDomProjectModel(project, parentFile);
         if (parentProjectDom == null) return false;
@@ -436,20 +437,20 @@ public class MavenDomProjectProcessorUtils {
     return false;
   }
 
-  private abstract static class MyMavenParentProjectFileProcessor<T> extends MavenParentProjectFileProcessor<Boolean> {
-    private final Project myProject;
+  public abstract static class DomParentProjectFileProcessor<T> extends MavenParentProjectFileProcessor<T> {
+    private final MavenProjectsManager myManager;
 
-    public MyMavenParentProjectFileProcessor(Project project) {
-      myProject = project;
+    public DomParentProjectFileProcessor(MavenProjectsManager manager) {
+      myManager = manager;
     }
 
     protected VirtualFile findManagedFile(@NotNull MavenId id) {
-      MavenProject project = MavenProjectsManager.getInstance(myProject).findProject(id);
+      MavenProject project = myManager.findProject(id);
       return project == null ? null : project.getFile();
     }
 
     @Nullable
-    public Boolean process(@NotNull MavenDomProjectModel projectDom) {
+    public T process(@NotNull MavenDomProjectModel projectDom) {
       MavenDomParent parent = projectDom.getMavenParent();
       MavenParentDesc parentDesc = null;
       if (DomUtil.hasXml(parent)) {
@@ -462,7 +463,7 @@ public class MavenDomProjectProcessorUtils {
         parentDesc = new MavenParentDesc(parentId, parentRelativePath);
       }
 
-      return process(MavenProjectsManager.getInstance(myProject).getGeneralSettings(), MavenDomUtil.getVirtualFile(projectDom), parentDesc);
+      return process(myManager.getGeneralSettings(), MavenDomUtil.getVirtualFile(projectDom), parentDesc);
     }
   }
 

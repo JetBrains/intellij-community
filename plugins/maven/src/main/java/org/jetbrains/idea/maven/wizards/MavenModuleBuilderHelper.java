@@ -34,11 +34,11 @@ import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
-import org.jetbrains.idea.maven.indices.ArchetypeInfo;
-import org.jetbrains.idea.maven.project.MavenId;
+import org.jetbrains.idea.maven.model.MavenArchetype;
+import org.jetbrains.idea.maven.model.MavenConstants;
+import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.utils.MavenConstants;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -56,7 +56,7 @@ public class MavenModuleBuilderHelper {
   private final boolean myInheritGroupId;
   private final boolean myInheritVersion;
 
-  private final ArchetypeInfo myArchetype;
+  private final MavenArchetype myArchetype;
 
   private final String myCommandName;
 
@@ -65,7 +65,7 @@ public class MavenModuleBuilderHelper {
                                   MavenProject parentProject,
                                   boolean inheritGroupId,
                                   boolean inheritVersion,
-                                  ArchetypeInfo archetype,
+                                  MavenArchetype archetype,
                                   String commaneName) {
     myProjectId = projectId;
     myAggregatorProject = aggregatorProject;

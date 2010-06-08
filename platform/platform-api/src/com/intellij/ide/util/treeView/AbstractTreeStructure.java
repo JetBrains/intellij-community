@@ -16,6 +16,7 @@
 
 package com.intellij.ide.util.treeView;
 
+import com.intellij.openapi.util.AsyncResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +38,68 @@ public abstract class AbstractTreeStructure {
 
   public boolean isAlwaysLeaf(Object element) {
     return false;
+  }
+
+  public AsyncResult<Object> revalidateElement(Object element) {
+    return new AsyncResult.Done<Object>(element);
+  }
+
+  public static class Delegate extends AbstractTreeStructure {
+    private AbstractTreeStructure myDelegee;
+
+    public Delegate(AbstractTreeStructure delegee) {
+      myDelegee = delegee;
+    }
+
+    @Override
+    public Object getRootElement() {
+      return myDelegee.getRootElement();
+    }
+
+    @Override
+    public Object[] getChildElements(Object element) {
+      return myDelegee.getChildElements(element);
+    }
+
+    @Override
+    public Object getParentElement(Object element) {
+      return myDelegee.getParentElement(element);
+    }
+
+    @NotNull
+    @Override
+    public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
+      return myDelegee.createDescriptor(element, parentDescriptor);
+    }
+
+    @Override
+    public void commit() {
+      myDelegee.commit();
+    }
+
+    @Override
+    public boolean hasSomethingToCommit() {
+      return myDelegee.hasSomethingToCommit();
+    }
+
+    @Override
+    public boolean isToBuildChildrenInBackground(Object element) {
+      return myDelegee.isToBuildChildrenInBackground(element);
+    }
+
+    @Override
+    public boolean isAlwaysLeaf(Object element) {
+      return myDelegee.isAlwaysLeaf(element);
+    }
+
+    @Override
+    public AsyncResult revalidateElement(Object element) {
+      return myDelegee.revalidateElement(element);
+    }
+
+    public AbstractTreeStructure getOriginalStructure() {
+      return myDelegee;
+    }
   }
 
 }

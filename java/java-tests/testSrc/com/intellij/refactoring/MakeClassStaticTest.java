@@ -3,6 +3,7 @@
  */
 package com.intellij.refactoring;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -13,7 +14,6 @@ import com.intellij.refactoring.makeStatic.MakeStaticUtil;
 import com.intellij.refactoring.makeStatic.Settings;
 import com.intellij.refactoring.util.ParameterTablePanel;
 import com.intellij.testFramework.LightCodeInsightTestCase;
-import com.intellij.JavaTestUtil;
 
 import java.util.ArrayList;
 

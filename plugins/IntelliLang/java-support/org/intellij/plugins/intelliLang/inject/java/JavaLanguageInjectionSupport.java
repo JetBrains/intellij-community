@@ -32,17 +32,17 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.ui.SimpleColoredText;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
 import com.intellij.util.Icons;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.ui.SimpleColoredText;
-import com.intellij.ui.SimpleTextAttributes;
 import org.intellij.plugins.intelliLang.AdvancedSettingsUI;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.AbstractLanguageInjectionSupport;
@@ -62,8 +62,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.intellij.plugins.intelliLang.inject.config.MethodParameterInjection.*;
 
@@ -184,7 +184,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
         parent instanceof PsiNameValuePair) {
       return doInjectInJavaMethod(project, findPsiMethod(parent), -1, languageId);
     }
-    else if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiMethodCallExpression) {
+    else if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiCallExpression) {
       return doInjectInJavaMethod(project, findPsiMethod(parent), findParameterIndex(target, (PsiExpressionList)parent), languageId);
     }
     else if (parent instanceof PsiAssignmentExpression) {
@@ -281,8 +281,8 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
       }
     }
     final PsiMethod first;
-    if (parent.getParent() instanceof PsiMethodCallExpression) {
-      first = ((PsiMethodCallExpression)parent.getParent()).resolveMethod();
+    if (parent.getParent() instanceof PsiCallExpression) {
+      first = ((PsiCallExpression)parent.getParent()).resolveMethod();
     }
     else {
       first = PsiTreeUtil.getParentOfType(parent, PsiMethod.class, false);
@@ -377,7 +377,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
           found = pkg.substring(1, pkg.length()-1)+"." + matcher.group(1);
         }
       }
-      containingClass = found != null? JavaPsiFacade.getInstance(project).findClass(found, GlobalSearchScope.allScope(project)) : null;
+      containingClass = found != null && project.isInitialized()? JavaPsiFacade.getInstance(project).findClass(found, GlobalSearchScope.allScope(project)) : null;
       className = StringUtil.notNullize(containingClass == null ? found : containingClass.getQualifiedName());
     }
     final MethodParameterInjection result = new MethodParameterInjection();
@@ -452,7 +452,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
         final BaseInjection originalInjection = producer.create();
         final MethodParameterInjection injection = createFrom(project, originalInjection, null, false);
         if (injection != null) {
-          final boolean mergeEnabled =
+          final boolean mergeEnabled = !project.isInitialized() || 
             JavaPsiFacade.getInstance(project).findClass(injection.getClassName(), GlobalSearchScope.allScope(project)) == null;
           final BaseInjection newInjection = showInjectionUI(project, injection);
           if (newInjection != null) {

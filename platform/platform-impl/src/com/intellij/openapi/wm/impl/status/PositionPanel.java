@@ -60,7 +60,7 @@ public class PositionPanel implements StatusBarWidget, StatusBarWidget.TextPrese
     return "Position";
   }
 
-  public Presentation getPresentation(@NotNull final Type type) {
+  public WidgetPresentation getPresentation(@NotNull final Type type) {
     return this;
   }
 

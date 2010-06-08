@@ -1,5 +1,6 @@
 package com.intellij.refactoring;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -15,7 +16,6 @@ import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.JavaTestUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.List;
@@ -397,6 +397,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testNullableCheckVoid() throws Exception {
+    doTest();
+  }
+
+  public void testNullableCheckDontMissFinal() throws Exception {
     doTest();
   }
 

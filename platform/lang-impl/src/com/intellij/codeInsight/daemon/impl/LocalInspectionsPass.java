@@ -380,7 +380,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                             final Set<TextRange> emptyActionRegistered) {
     PsiElement psiElement = descriptor.getPsiElement();
     if (psiElement == null) return null;
-    @NonNls String message = renderDescriptionMessage(descriptor);
+    @NonNls String message = ProblemDescriptionNode.renderDescriptionMessage(descriptor);
 
     final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
     final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
@@ -430,25 +430,6 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       EmptyIntentionAction emptyIntentionAction = new EmptyIntentionAction(tool.getDisplayName());
       QuickFixAction.registerQuickFixAction(highlightInfo, emptyIntentionAction, key);
     }
-  }
-
-  private static String renderDescriptionMessage(ProblemDescriptor descriptor) {
-    PsiElement psiElement = descriptor.getPsiElement();
-    String message = descriptor.getDescriptionTemplate();
-
-    // no message. Should not be the case if inspection correctly implemented.
-    // noinspection ConstantConditions
-    if (message == null) return "";
-
-    message = StringUtil.replace(message, "<code>", "'");
-    message = StringUtil.replace(message, "</code>", "'");
-    //message = message.replaceAll("<[^>]*>", "");
-    String ref = ProblemDescriptionNode.extractHighlightedText(descriptor, psiElement);
-    message = StringUtil.replace(message, "#loc", "");
-    message = StringUtil.replace(message, "#ref", ref);
-
-    message = StringUtil.unescapeXml(message).trim();
-    return message;
   }
 
   public static PsiElement[] getElementsIntersectingRange(PsiFile file, final int startOffset, final int endOffset) {

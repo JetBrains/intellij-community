@@ -12,23 +12,20 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.application.ApplicationManager;
+import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.command.HgIncomingCommand;
 import org.zmlx.hg4idea.ui.HgChangesetStatus;
-import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
 
 class HgIncomingStatusUpdater implements HgUpdater {
-
-  private static final int LIMIT = 100;
 
   private final HgChangesetStatus status;
   private final HgProjectSettings projectSettings;
@@ -49,10 +46,9 @@ class HgIncomingStatusUpdater implements HgUpdater {
             if (project.isDisposed()) return;
             HgIncomingCommand command = new HgIncomingCommand(project);
             VcsRoot[] roots = ProjectLevelVcsManager.getInstance(project).getAllVcsRoots();
-            List<HgFileRevision> changesets = new LinkedList<HgFileRevision>();
+            List<HgRevisionNumber> changesets = new LinkedList<HgRevisionNumber>();
             for (VcsRoot root : roots) {
-              HgFile hgFile = new HgFile(root.path, new File("."));
-              changesets.addAll(command.execute(hgFile, LIMIT - changesets.size()));
+              changesets.addAll(command.execute(root.path));
             }
             status.setChanges(changesets.size(), new IncomingChangesetFormatter(changesets));
           }
@@ -64,12 +60,12 @@ class HgIncomingStatusUpdater implements HgUpdater {
   private final class IncomingChangesetFormatter implements HgChangesetStatus.ChangesetWriter {
     private final StringBuilder builder = new StringBuilder();
 
-    private IncomingChangesetFormatter(List<HgFileRevision> changesets) {
+    private IncomingChangesetFormatter(List<HgRevisionNumber> changesets) {
       builder.append("<html>");
       builder.append("<b>Incoming changesets</b>:<br>");
-      for (HgFileRevision changeset : changesets) {
+      for (HgRevisionNumber changeset : changesets) {
         builder
-          .append(changeset.getRevisionNumber().asString()).append(" ")
+          .append(changeset.asString()).append(" ")
           .append(changeset.getCommitMessage()).append(" ")
           .append("(").append(changeset.getAuthor()).append(")<br>");
       }

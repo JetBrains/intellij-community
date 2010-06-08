@@ -25,8 +25,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.idea.maven.facade.MavenFacadeConsole;
+import org.jetbrains.idea.maven.project.MavenConsole;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
-import org.jetbrains.idea.maven.embedder.MavenConsole;
 
 public class MavenExternalExecutor extends MavenExecutor {
 
@@ -60,7 +61,7 @@ public class MavenExternalExecutor extends MavenExecutor {
       myConsole.attachToProcess(myProcessHandler);
     }
     catch (ExecutionException e) {
-      myConsole.systemMessage(MavenConsole.LEVEL_FATAL, RunnerBundle.message("external.startup.failed", e.getMessage()), null);
+      myConsole.systemMessage(MavenFacadeConsole.LEVEL_FATAL, RunnerBundle.message("external.startup.failed", e.getMessage()), null);
       return false;
     }
 

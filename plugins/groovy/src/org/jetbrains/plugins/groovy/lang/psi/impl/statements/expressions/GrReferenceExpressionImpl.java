@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -55,7 +54,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
@@ -442,13 +440,17 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       EnumSet<ClassHint.ResolveKind> kinds = refExpr.getParent() instanceof GrReferenceExpression
                                              ? EnumSet.of(ClassHint.ResolveKind.CLASS, ClassHint.ResolveKind.PACKAGE)
                                              : EnumSet.of(ClassHint.ResolveKind.CLASS);
-      ResolverProcessor classProcessor = new ClassResolverProcessor(refExpr.getReferenceName(), refExpr, kinds);
-      resolveImpl(refExpr, classProcessor);
-      final GroovyResolveResult[] classCandidates = classProcessor.getCandidates();
-      for (GroovyResolveResult classCandidate : classCandidates) {
-        final PsiElement element = classCandidate.getElement();
-        if (element instanceof PsiClass && ((PsiClass)element).isEnum()) {
-          return classCandidates;
+      boolean hasAt = refExpr.hasAt();
+      GroovyResolveResult[] classCandidates = GroovyResolveResult.EMPTY_ARRAY;
+      if (!hasAt) {
+        ResolverProcessor classProcessor = new ClassResolverProcessor(refExpr.getReferenceName(), refExpr, kinds);
+        resolveImpl(refExpr, classProcessor);
+        classCandidates = classProcessor.getCandidates();
+        for (GroovyResolveResult classCandidate : classCandidates) {
+          final PsiElement element = classCandidate.getElement();
+          if (element instanceof PsiClass && ((PsiClass)element).isEnum()) {
+            return classCandidates;
+          }
         }
       }
 
@@ -456,6 +458,10 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       resolveImpl(refExpr, processor);
       final GroovyResolveResult[] fieldCandidates = processor.getCandidates();
 
+      if (refExpr.hasAt()) {
+        return fieldCandidates;
+      }
+      
       //if reference expression is in class we need to return field instead of accessor method
       for (GroovyResolveResult candidate : fieldCandidates) {
         final PsiElement element = candidate.getElement();
@@ -671,31 +677,12 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     return getRangeInElement().substring(getElement().getText());
   }
 
+  public boolean hasAt() {
+    return findChildByType(GroovyTokenTypes.mAT) != null;
+  }
+
   public boolean isReferenceTo(PsiElement element) {
-    if (element instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertyAccessor((PsiMethod) element)) {
-      final PsiElement target = resolve();
-      if (element instanceof GrAccessorMethod && getManager().areElementsEquivalent(((GrAccessorMethod)element).getProperty(), target)) {
-        return false;
-      }
-
-      return getManager().areElementsEquivalent(element, target);
-    }
-
-    if (element instanceof GrField && ((GrField) element).isProperty()) {
-      final PsiElement target = resolve();
-      if (getManager().areElementsEquivalent(element, target)) {
-        return true;
-      }
-
-      for (final GrAccessorMethod getter : ((GrField)element).getGetters()) {
-        if (getManager().areElementsEquivalent(getter, target)) {
-          return true;
-        }
-      }
-      return getManager().areElementsEquivalent(((GrField)element).getSetter(), target);
-    }
-
-    if (element instanceof PsiNamedElement && Comparing.equal(((PsiNamedElement) element).getName(), getReferenceName())) {
+    if (element instanceof PsiNamedElement) {
       return getManager().areElementsEquivalent(element, resolve());
     }
     return false;

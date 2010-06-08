@@ -17,7 +17,7 @@ package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.PluginPathManager;
 
 /**
  * User: cdr
@@ -38,6 +38,6 @@ public class StaticInheritanceTest extends LightQuickFixTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return PathManager.getHomePath() + "/community/plugins/InspectionGadgets/test";
+    return PluginPathManager.getPluginHomePath("InspectionGadgets") + "/test";
   }
 }

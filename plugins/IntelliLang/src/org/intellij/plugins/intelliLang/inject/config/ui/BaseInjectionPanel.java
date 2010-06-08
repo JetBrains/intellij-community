@@ -15,16 +15,18 @@
  */
 package org.intellij.plugins.intelliLang.inject.config.ui;
 
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.ui.EditorTextField;
-import com.intellij.ui.ScrollPaneFactory;
 import org.intellij.plugins.intelliLang.PatternBasedInjectionHelper;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.config.InjectionPlace;
@@ -46,26 +48,40 @@ public class BaseInjectionPanel extends AbstractInjectionPanel<BaseInjection> {
   AdvancedPanel myAdvancedPanel;
 
   private JPanel myRoot;
+  private JTextField myNameTextField;
+  private PatternBasedInjectionHelper myHelper;
 
   public BaseInjectionPanel(BaseInjection injection, Project project) {
     super(injection, project);
     $$$setupUI$$$(); // see IDEA-9987
+    myHelper = new PatternBasedInjectionHelper(injection.getSupportId());
     final FileType groovy = FileTypeManager.getInstance().getFileTypeByExtension("groovy");
-    myTextArea = new EditorTextField("", project, groovy == UnknownFileType.INSTANCE? FileTypes.PLAIN_TEXT : groovy) {
+    final FileType realFileType = groovy == UnknownFileType.INSTANCE ? FileTypes.PLAIN_TEXT : groovy;
+    final PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText("injection." + realFileType.getDefaultExtension(), realFileType, "", 0, true);
+    final Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
+    psiFile.putUserData(BaseInjection.INJECTION_KEY, injection);
+    myTextArea = new EditorTextField(document, project, realFileType) {
       @Override
       protected EditorEx createEditor() {
         final EditorEx ex = super.createEditor();
         ex.setOneLineMode(false);
+        ex.setVerticalScrollbarVisible(true);
+        ex.setHorizontalScrollbarVisible(true);
         return ex;
       }
     };
-    myCenterPanel.add(ScrollPaneFactory.createScrollPane(myTextArea), BorderLayout.CENTER);
+    myCenterPanel.add(myTextArea, BorderLayout.CENTER);
     myTextArea.setFontInheritedFromLAF(false);
     //myTextArea.setFont(EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN));
     init(injection.copy());
   }
 
   protected void apply(BaseInjection other) {
+    final String displayName = myNameTextField.getText();
+    if (StringUtil.isEmpty(displayName)) {
+      throw new IllegalArgumentException("Display name should not be empty");
+    }
+    other.setDisplayName(displayName);
     boolean enabled = true;
     final StringBuilder sb = new StringBuilder();
     final ArrayList<InjectionPlace> places = new ArrayList<InjectionPlace>();
@@ -79,19 +95,19 @@ public class BaseInjectionPanel extends AbstractInjectionPanel<BaseInjection> {
         s = s.substring(1).trim();
       }
       else {
-        sb.append(s);
+        sb.append(s.trim());
         continue;
       }
       if (sb.length() > 0) {
         final String text = sb.toString();
-        places.add(new InjectionPlace(text, PatternBasedInjectionHelper.compileElementPattern(text, other.getSupportId()), enabled));
+        places.add(new InjectionPlace(text, myHelper.compileElementPattern(text), enabled));
         sb.setLength(0);
       }
       sb.append(s);
     }
     if (sb.length() > 0) {
       final String text = sb.toString();
-      places.add(new InjectionPlace(text, PatternBasedInjectionHelper.compileElementPattern(text, other.getSupportId()), enabled));
+      places.add(new InjectionPlace(text, myHelper.compileElementPattern(text), enabled));
     }
     other.getInjectionPlaces().clear();
     other.getInjectionPlaces().addAll(places);
@@ -104,6 +120,7 @@ public class BaseInjectionPanel extends AbstractInjectionPanel<BaseInjection> {
       sb.append(place.isEnabled()?"+ ":"- ").append(place.getText()).append("\n");
     }
     myTextArea.setText(sb.toString());
+    myNameTextField.setText(myOrigInjection.getDisplayName());
   }
 
   public JPanel getComponent() {

@@ -72,7 +72,7 @@ public class DMethodElement extends DItemElement {
 
     final String[] argumentsTypes = QuickfixUtil.getArgumentsTypes(myPairs);
     final GrMethod method = GroovyPsiElementFactory.getInstance(manager.getProject())
-        .createMethodFromText(staticModifier, getName(), type, argumentsTypes);
+        .createMethodFromText(staticModifier, getName(), type, argumentsTypes, null);
 
     myImplicitMethod = new GrDynamicImplicitMethod(manager, method, containingClassName) {
       @Override

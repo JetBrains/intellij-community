@@ -12,33 +12,22 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider;
 
-import org.zmlx.hg4idea.HgFile;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.vcs.changes.CurrentBinaryContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.changes.BinaryContentRevision;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgFile;
 
-import java.io.IOException;
+final class HgCurrentBinaryContentRevision extends CurrentBinaryContentRevision {
+  private VcsRevisionNumber revisionNumber;
 
-final class HgCurrentBinaryContentRevision
-  extends HgCurrentContentRevision implements BinaryContentRevision {
-
-  private final VirtualFile virtualFile;
-
-  HgCurrentBinaryContentRevision(HgFile hgFile,
-    VcsRevisionNumber revisionNumber, VirtualFile virtualFile) {
-    super(hgFile, revisionNumber, virtualFile);
-    this.virtualFile = virtualFile;
+  HgCurrentBinaryContentRevision(HgFile hgFile, VcsRevisionNumber revisionNumber) {
+    super(hgFile.toFilePath());
+    this.revisionNumber = revisionNumber;
   }
 
-  @Nullable
-  public byte[] getBinaryContent() throws VcsException {
-    try {
-      return virtualFile.contentsToByteArray();
-    } catch (IOException e) {
-      throw new VcsException(e);
-    }
+  @NotNull
+  @Override
+  public VcsRevisionNumber getRevisionNumber() {
+    return revisionNumber;
   }
-
 }

@@ -125,6 +125,9 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
     public void setProcessWindowOpen(final boolean open) {
     }
 
+    public void removeCustomIndicationComponents() {
+    }
+
     public BalloonHandler notifyProgressByBalloon(@NotNull MessageType type, @NotNull String htmlBody) {
       return new BalloonHandler() {
         public void hide() {
