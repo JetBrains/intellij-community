@@ -49,7 +49,7 @@ public class IdeaProjectLoader {
       }
     }
 
-    project.error("Cannot file IntelliJ IDEA project files at $path")
+    project.error("Cannot find IntelliJ IDEA project files at $path")
   }
 
   def loadFromIpr(Project project, String path) {
