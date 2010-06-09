@@ -44,7 +44,11 @@ public abstract class CoverageRunner {
     return false;
   }
 
-  public void generateReport(final Project project, final String coverageDataFileName, final String outputDir, boolean openInBrowser){}
+  public void generateReport(final Project project,
+                             boolean trackTestFolders,
+                             final String coverageDataFileName,
+                             final String outputDir,
+                             boolean openInBrowser){}
 
   public boolean isHTMLReportSupported() {
     return false;

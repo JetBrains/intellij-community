@@ -28,7 +28,7 @@ public class GenerateCoverageReportAction extends AnAction {
     dialog.apply();
 
     final ExportToHTMLSettings settings = ExportToHTMLSettings.getInstance(project);
-    currentSuite.getRunner().generateReport(project, currentSuite.getCoverageDataFileName(), settings.OUTPUT_DIRECTORY, settings.OPEN_IN_BROWSER);
+    currentSuite.getRunner().generateReport(project, currentSuite.isTrackTestFolders(), currentSuite.getCoverageDataFileName(), settings.OUTPUT_DIRECTORY, settings.OPEN_IN_BROWSER);
   }
 
   public void update(final AnActionEvent e) {
