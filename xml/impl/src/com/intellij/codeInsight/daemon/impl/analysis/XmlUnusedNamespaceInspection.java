@@ -22,19 +22,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlBundle;
+import com.intellij.xml.util.XmlRefCountHolder;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * @author Dmitry Avdeev
@@ -47,20 +42,14 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
 
     return new XmlElementVisitor() {
 
-      Set<String> descriptorsBuilt;
-
       @Override
       public void visitXmlAttribute(XmlAttribute attribute) {
 
-        if (descriptorsBuilt == null) {
-          descriptorsBuilt = ensureDescriptorsBuilt(attribute);
-        }
-        if (descriptorsBuilt == null) {
-          return;
-        }
+        XmlRefCountHolder refCountHolder = XmlRefCountHolder.getRefCountHolder(attribute);
+        if (refCountHolder == null) return;
         if (attribute.isNamespaceDeclaration()) {
           String namespace = attribute.getValue();
-          if (namespace != null && !descriptorsBuilt.contains(namespace)) {
+          if (namespace != null && !refCountHolder.isInUse(namespace)) {
 
             /*
             final ImplicitUsageProvider[] implicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
@@ -74,27 +63,6 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
             holder.registerProblem(value, "Namespace declaration is not in use", ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                                    new RemoveNamespaceDeclarationFix());
           }
-        }
-      }
-
-      @Nullable
-      private Set<String> ensureDescriptorsBuilt(XmlAttribute attribute) {
-        XmlDocument document = PsiTreeUtil.getParentOfType(attribute, XmlDocument.class);
-        if (document == null) {
-          return null;
-        }
-        HashSet<String> set = new HashSet<String>();
-        buildDescriptors(document.getRootTag(), set);
-        return set;
-      }
-
-      private void buildDescriptors(XmlTag tag, Set<String> set) {
-        set.add(tag.getNamespace());
-        for (XmlAttribute attribute : tag.getAttributes()) {
-          set.add(attribute.getNamespace());
-        }
-        for (XmlTag subTag : tag.getSubTags()) {
-          buildDescriptors(subTag, set);
         }
       }
     };
