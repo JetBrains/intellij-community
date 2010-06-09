@@ -48,7 +48,6 @@ public abstract class PsiElementBaseIntentionAction extends BaseIntentionAction 
     if (!file.getManager().isInProject(file)) return false;
     final CaretModel caretModel = editor.getCaretModel();
     final int position = caretModel.getOffset();
-    return false;
-    //return isAvailable(project, editor, file.findElementAt(position));
+    return isAvailable(project, editor, file.findElementAt(position));
   }
 }
