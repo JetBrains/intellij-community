@@ -31,10 +31,7 @@ import com.intellij.util.io.ReadOnlyAttributeUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class FileListeningTest extends IntegrationTestCase {
   public void testCreatingFiles() throws Exception {
@@ -233,11 +230,13 @@ public class FileListeningTest extends IntegrationTestCase {
     List<Change> changes = getVcs().getChangeListInTests().getChangesInTests().get(0).getChanges();
     assertEquals(1, changes.size());
     Entry e = ((DeleteChange)changes.get(0)).getDeletedEntry();
-    assertEquals(2, e.getChildren().size());
-    assertEquals("f.txt", e.getChildren().get(0).getName());
-    assertEquals("subdir", e.getChildren().get(1).getName());
-    assertEquals(1, e.getChildren().get(1).getChildren().size());
-    assertEquals("subdir2", e.getChildren().get(1).getChildren().get(0).getName());
+    final List<Entry> children = e.getChildren();
+    sortEntries(children);
+    assertEquals(2, children.size());
+    assertEquals("f.txt", children.get(0).getName());
+    assertEquals("subdir", children.get(1).getName());
+    assertEquals(1, children.get(1).getChildren().size());
+    assertEquals("subdir2", children.get(1).getChildren().get(0).getName());
   }
 
   public void testCreationAndDeletionOfUnversionedFile() throws IOException {
@@ -286,4 +285,11 @@ public class FileListeningTest extends IntegrationTestCase {
     assertNull(revs.get(3).getEntry().findEntry("dir/subDir"));
   }
 
+  private static void sortEntries(final List<Entry> entries) {
+    Collections.sort(entries, new Comparator<Entry>() {
+      public int compare(Entry o1, Entry o2) {
+        return o1.getName().compareTo(o2.getName());
+      }
+    });
+  }
 }
