@@ -563,13 +563,13 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   private static void setTmpDir(String path) {
     System.setProperty("java.io.tmpdir", path);
+    FileUtil.resetCanonicalTempPathCache();
+
     try {
       Class<File> ioFile = File.class;
       Field field = ioFile.getDeclaredField("tmpdir");
-
       field.setAccessible(true);
       field.set(ioFile, null);
-      FileUtil.resetCanonicalTempPathCache();
     }
     catch (NoSuchFieldException ignore) {
       // field was removed in JDK 1.6.0_12
