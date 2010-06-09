@@ -49,11 +49,7 @@ public class NavigateFromSourceTest extends BaseProjectViewTestCase {
   public void testShowClassMembers() throws Exception {
     useStandardProviders();
     final PsiClass[] classes = JavaDirectoryService.getInstance().getClasses(getPackageDirectory());
-    Arrays.sort(classes, new Comparator<PsiClass>() {
-      public int compare(PsiClass o1, PsiClass o2) {
-        return o1.getName().compareTo(o2.getName());
-      }
-    });
+    sortClasses(classes);
     PsiClass psiClass = classes[0];
 
     final AbstractProjectViewPSIPane pane = createPane();
