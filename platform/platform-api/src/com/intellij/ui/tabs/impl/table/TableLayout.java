@@ -132,6 +132,8 @@ public class TableLayout extends TabLayout {
         TabInfo tabInfo = eachRow.myColumns.get(i);
         final TabLabel label = myTabs.myInfo2Label.get(tabInfo);
 
+        label.putClientProperty(JBTabsImpl.STRETCHED_BY_WIDTH, Boolean.valueOf(toAjust));
+        
         int width;
         if (i < eachRow.myColumns.size() - 1 || !toAjust) {
           width = label.getPreferredSize().width + deltaToFit;

@@ -137,6 +137,7 @@ public class JBTabsImpl extends JComponent
   private final TabActionsAutoHideListener myTabActionsAutoHideListener = new TabActionsAutoHideListener();
   private IdeGlassPane myGlassPane;
   @NonNls private static final String LAYOUT_DONE = "Layout.done";
+  @NonNls public static final String STRETCHED_BY_WIDTH = "Layout.stretchedByWidth";
 
   private TimedDeadzone.Length myTabActionsMouseDeadzone = TimedDeadzone.DEFAULT;
 
@@ -1381,7 +1382,7 @@ public class JBTabsImpl extends JComponent
       }
 
 
-      paintNonSelectedTabs(g2d, leftGhostExists);
+      paintNonSelectedTabs(g2d, leftGhostExists, rightGhostExists);
 
       if (isSingleRow() && mySingleRowLayout.myLastSingRowLayout.firstGhostVisible) {
         paintFirstGhost(g2d);
@@ -1502,10 +1503,23 @@ public class JBTabsImpl extends JComponent
     shape.labelLeftX = shape.labelPath.getX();
     shape.labelRightX = shape.labelPath.getX() + shape.labelPath.deltaX(shape.labelPath.getWidth());
 
-    shape.path.moveTo(shape.insets.left, shape.labelBottomY);
-    shape.path.lineTo(shape.labelLeftX, shape.labelBottomY);
-    shape.path.lineTo(shape.labelLeftX, shape.labelTopY + shape.labelPath.deltaY(getArcSize()));
-    shape.path.quadTo(shape.labelLeftX, shape.labelTopY, shape.labelLeftX + shape.labelPath.deltaX(getArcSize()), shape.labelTopY);
+    Insets border = myBorder.getEffectiveBorder();
+    TabInfo selected = getSelectedInfo();
+    boolean first = myLastLayoutPass.getPreviousFor(selected) == null;
+    boolean last = myLastLayoutPass.getNextFor(selected) == null;
+
+    boolean leftEdge = !isSingleRow() && first && border.left == 0;
+    boolean rightEdge = !isSingleRow() && last && Boolean.TRUE.equals(myInfo2Label.get(selected).getClientProperty(STRETCHED_BY_WIDTH)) && border.right == 0;
+
+    if (leftEdge) {
+      shape.path.moveTo(shape.insets.left, shape.labelTopY);
+      shape.path.lineTo(shape.labelRightX - shape.labelPath.deltaX(getArcSize()), shape.labelTopY);
+    } else {
+      shape.path.moveTo(shape.insets.left, shape.labelBottomY);
+      shape.path.lineTo(shape.labelLeftX, shape.labelBottomY);
+      shape.path.lineTo(shape.labelLeftX, shape.labelTopY + shape.labelPath.deltaY(getArcSize()));
+      shape.path.quadTo(shape.labelLeftX, shape.labelTopY, shape.labelLeftX + shape.labelPath.deltaX(getArcSize()), shape.labelTopY);
+    }
 
     int lastX = shape.path.getWidth() - shape.path.deltaX(shape.insets.right + 1);
 
@@ -1515,18 +1529,28 @@ public class JBTabsImpl extends JComponent
       shape.path.lineTo(lastX, shape.labelBottomY);
     }
     else {
-      shape.path.lineTo(shape.labelRightX - shape.path.deltaX(getArcSize()), shape.labelTopY);
-      shape.path.quadTo(shape.labelRightX, shape.labelTopY, shape.labelRightX, shape.labelTopY + shape.path.deltaY(getArcSize()));
-      if (myLastLayoutPass.hasCurveSpaceFor(getSelectedInfo())) {
+      if (rightEdge) {
+        shape.path.lineTo(shape.labelRightX + 1, shape.labelTopY);
+      } else {
+        shape.path.lineTo(shape.labelRightX - shape.path.deltaX(getArcSize()), shape.labelTopY);
+        shape.path.quadTo(shape.labelRightX, shape.labelTopY, shape.labelRightX, shape.labelTopY + shape.path.deltaY(getArcSize()));
+      }
+      if (myLastLayoutPass.hasCurveSpaceFor(selected)) {
         shape.path.lineTo(shape.labelRightX, shape.labelBottomY - shape.path.deltaY(getArcSize()));
         shape.path.quadTo(shape.labelRightX, shape.labelBottomY, shape.labelRightX + shape.path.deltaX(getArcSize()), shape.labelBottomY);
       }
       else {
-        shape.path.lineTo(shape.labelRightX, shape.labelBottomY);
+        if (rightEdge) {
+          shape.path.lineTo(shape.labelRightX + 1, shape.labelBottomY);
+        } else {
+          shape.path.lineTo(shape.labelRightX, shape.labelBottomY);
+        }
       }
     }
 
-    shape.path.lineTo(lastX, shape.labelBottomY);
+    if (!rightEdge) {
+      shape.path.lineTo(lastX, shape.labelBottomY);
+    }
 
     if (isStealthModeEffective()) {
       shape.path.closePath();
@@ -1644,7 +1668,7 @@ public class JBTabsImpl extends JComponent
     return Color.white;
   }
 
-  private void paintNonSelectedTabs(final Graphics2D g2d, final boolean leftGhostExists) {
+  private void paintNonSelectedTabs(final Graphics2D g2d, final boolean leftGhostExists, final boolean rightGhostExists) {
     TabInfo selected = getSelectedInfo();
     if (myLastPaintedSelection == null || !myLastPaintedSelection.equals(selected)) {
       List<TabInfo> tabs = getTabs();
@@ -1659,14 +1683,14 @@ public class JBTabsImpl extends JComponent
         if (getSelectedInfo() == each) {
           continue;
         }
-        paintNonSelected(g2d, each, leftGhostExists);
+        paintNonSelected(g2d, each, leftGhostExists, rightGhostExists);
       }
     }
 
     myLastPaintedSelection = selected;
   }
 
-  private void paintNonSelected(final Graphics2D g2d, final TabInfo each, final boolean leftGhostExists) {
+  private void paintNonSelected(final Graphics2D g2d, final TabInfo each, final boolean leftGhostExists, final boolean rightGhostExists) {
     final TabLabel label = myInfo2Label.get(each);
     if (label.getBounds().width == 0) return;
 
@@ -1686,7 +1710,7 @@ public class JBTabsImpl extends JComponent
         img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D imgG2d = img.createGraphics();
         imgG2d.addRenderingHints(g2d.getRenderingHints());
-        doPaintInactictive(imgG2d, leftGhostExists, label, new Rectangle(imageInsets, 0, label.getWidth(), label.getHeight()));
+        doPaintInactictive(imgG2d, leftGhostExists, label, new Rectangle(imageInsets, 0, label.getWidth(), label.getHeight()), rightGhostExists);
         imgG2d.dispose();
       }
 
@@ -1694,7 +1718,7 @@ public class JBTabsImpl extends JComponent
 
       label.setInactiveStateImage(img);
     } else {
-      doPaintInactictive(g2d, leftGhostExists, label, label.getBounds());
+      doPaintInactictive(g2d, leftGhostExists, label, label.getBounds(), rightGhostExists);
       label.setInactiveStateImage(null);
     }
   }
@@ -1703,7 +1727,7 @@ public class JBTabsImpl extends JComponent
     return Registry.is("ide.tabbedPane.bufferedPaint") && myUseBufferedPaint;
   }
 
-  private void doPaintInactictive(Graphics2D g2d, boolean leftGhostExists, TabLabel label, Rectangle effectiveBounds) {
+  private void doPaintInactictive(Graphics2D g2d, boolean leftGhostExists, TabLabel label, Rectangle effectiveBounds, boolean rightGhostExists) {
     int tabIndex = myVisibleInfos.indexOf(label.getInfo());
 
     final int arc = getArcSize();
@@ -1748,12 +1772,30 @@ public class JBTabsImpl extends JComponent
     int rigthX = !lastShowing && leftFromSelection ? shape.getMaxX() + shape.deltaX(arc + 1) : shape.getMaxX();
     int bottomY = shape.getMaxY() + shape.deltaY(1);
 
-    shape.moveTo(leftX, bottomY);
-    shape.lineTo(leftX, topY + shape.deltaY(arc));
-    shape.quadTo(leftX, topY, leftX + shape.deltaX(arc), topY);
-    shape.lineTo(rigthX - shape.deltaX(arc), topY);
-    shape.quadTo(rigthX, topY, rigthX, topY + shape.deltaY(arc));
-    shape.lineTo(rigthX, bottomY);
+    Insets border = myBorder.getEffectiveBorder();
+
+    if (border.left > 0 || leftGhostExists || !firstShowing) {
+      shape.moveTo(leftX, bottomY);
+      shape.lineTo(leftX, topY + shape.deltaY(arc));
+      shape.quadTo(leftX, topY, leftX + shape.deltaX(arc), topY);
+    } else {
+      if (firstShowing) {
+        shape.moveTo(leftX, topY);
+      }
+    }
+
+    boolean rightEdge = false;
+    if (border.right > 0 || rightGhostExists || !lastShowing || !Boolean.TRUE.equals(label.getClientProperty(STRETCHED_BY_WIDTH))) {
+      shape.lineTo(rigthX - shape.deltaX(arc), topY);
+      shape.quadTo(rigthX, topY, rigthX, topY + shape.deltaY(arc));
+      shape.lineTo(rigthX, bottomY);
+    } else {
+      if (lastShowing) {
+        shape.lineTo(rigthX + 1, topY);
+        shape.lineTo(rigthX + 1, bottomY);
+        rightEdge = true;
+      }
+    }
 
     if (!isSingleRow()) {
       final TablePassInfo info = myTableLayout.myLastTableLayout;
@@ -1764,7 +1806,9 @@ public class JBTabsImpl extends JComponent
       }
     }
 
-    shape.closePath();
+    if (!rightEdge) {
+      shape.lineTo(leftX, bottomY);
+    }
 
     g2d.setColor(backgroundColor);
     g2d.fill(shape.getShape());
@@ -1788,8 +1832,10 @@ public class JBTabsImpl extends JComponent
     g2d.draw(
       shape.transformLine(leftX + shape.deltaX(arc + 1), topY + shape.deltaY(1), rigthX - shape.deltaX(arc - 1), topY + shape.deltaY(1)));
 
-    g2d.setColor(rightBlockColor);
-    g2d.draw(shape.transformLine(rigthX - shape.deltaX(1), topY + shape.deltaY(arc - 1), rigthX - shape.deltaX(1), bottomY));
+    if (!rightEdge) {
+      g2d.setColor(rightBlockColor);
+      g2d.draw(shape.transformLine(rigthX - shape.deltaX(1), topY + shape.deltaY(arc - 1), rigthX - shape.deltaX(1), bottomY));
+    }
 
     g2d.setColor(boundsColor);
     g2d.draw(shape.getShape());
@@ -2683,6 +2729,7 @@ public class JBTabsImpl extends JComponent
   public static void resetLayout(JComponent c) {
     if (c == null) return;
     c.putClientProperty(LAYOUT_DONE, null);
+    c.putClientProperty(STRETCHED_BY_WIDTH, null);
   }
 
   private void applyResetComponents() {
