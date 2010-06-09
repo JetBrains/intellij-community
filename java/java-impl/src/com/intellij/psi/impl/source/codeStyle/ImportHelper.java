@@ -644,6 +644,7 @@ public class ImportHelper{
     while (!stack.isEmpty()) {
       final PsiElement child = stack.removeFirst();
       if (child instanceof PsiImportList) continue;
+      if (child instanceof PsiLiteralExpression) continue;
       stack.addAll(Arrays.asList(child.getChildren()));
 
       for(final PsiReference reference : child.getReferences()){
