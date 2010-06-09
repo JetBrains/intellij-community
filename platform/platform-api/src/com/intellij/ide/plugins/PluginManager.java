@@ -438,10 +438,17 @@ public class PluginManager {
   }
 
   private static Graph<PluginId> createPluginIdGraph(final Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap) {
-    final PluginId[] ids = idToDescriptorMap.keySet().toArray(new PluginId[idToDescriptorMap.size()]);
+    final List<PluginId> ids = new ArrayList<PluginId>(idToDescriptorMap.keySet());
+    // this magic ensures that the dependent plugins always follow their dependencies in lexicographic order
+    // needed to make sure that extensions are always in the same order
+    Collections.sort(ids, new Comparator<PluginId>() {
+      public int compare(PluginId o1, PluginId o2) {
+        return o2.getIdString().compareTo(o1.getIdString());
+      }
+    });
     return GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<PluginId>() {
       public Collection<PluginId> getNodes() {
-        return Arrays.asList(ids);
+        return ids;
       }
 
       public Iterator<PluginId> getIn(PluginId pluginId) {
@@ -529,6 +536,7 @@ public class PluginManager {
   private static void loadDescriptorsFromClassPath(final List<IdeaPluginDescriptorImpl> result) {
     try {
       final Collection<URL> urls = getClassLoaderUrls();
+      final String platformPrefix = System.getProperty("idea.platform.prefix");
       for (URL url : urls) {
         final String protocol = url.getProtocol();
         if ("file".equals(protocol)) {
@@ -537,7 +545,6 @@ public class PluginManager {
           //if (!canonicalPath.startsWith(homePath) || canonicalPath.endsWith(".jar")) continue;
           //if (!canonicalPath.startsWith(homePath)) continue;
 
-          final String platformPrefix = System.getProperty("idea.platform.prefix");
           IdeaPluginDescriptorImpl platformPluginDescriptor = null;
           if (platformPrefix != null) {
             platformPluginDescriptor = loadDescriptor(file, platformPrefix + "Plugin.xml");

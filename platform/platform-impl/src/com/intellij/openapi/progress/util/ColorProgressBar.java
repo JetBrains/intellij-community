@@ -149,7 +149,7 @@ public class ColorProgressBar extends JComponent {
 
     g.setClip(4, 3, size.width - 8, size.height - 6);
 
-    int bricksToDraw = getBricksToDraw(myFraction);
+    int bricksToDraw = myFraction == 0 ? 0 : getBricksToDraw(myFraction);
 
     if (myIndeterminate) {
 

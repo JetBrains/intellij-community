@@ -19,11 +19,10 @@ package com.intellij.psi.impl.source.codeStyle;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
-import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -47,8 +46,6 @@ import java.util.Collection;
  *         Date: Jul 16, 2002
  */
 public class CodeStyleSchemesImpl extends CodeStyleSchemes implements ExportableApplicationComponent,JDOMExternalizable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.CodeStyleSchemesImpl");
-
   @NonNls private static final String DEFAULT_SCHEME_NAME = "Default";
 
   public String CURRENT_SCHEME_NAME = DEFAULT_SCHEME_NAME;
@@ -56,7 +53,7 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
   @NonNls private static final String CODESTYLES_DIRECTORY = "codestyles";
 
   private final SchemesManager<CodeStyleScheme, CodeStyleSchemeImpl> mySchemesManager;
-  private static final String FILE_SPEC = "$ROOT_CONFIG$/" + CODESTYLES_DIRECTORY;
+  @NonNls private static final String FILE_SPEC = "$ROOT_CONFIG$/" + CODESTYLES_DIRECTORY;
 
   public CodeStyleSchemesImpl(SchemesManagerFactory schemesManagerFactory) {
     SchemeProcessor<CodeStyleSchemeImpl> processor = new SchemeProcessor<CodeStyleSchemeImpl>() {

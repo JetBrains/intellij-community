@@ -20,6 +20,8 @@
 
     <extensionPoint name="codeInsight.changeVariableTypeQuickFixProvider"
                     interface="com.intellij.codeInsight.quickfix.ChangeVariableTypeQuickFixProvider"/>
+    <extensionPoint name="conversion.rule" 
+                    interface="com.intellij.refactoring.typeMigration.rules.TypeConversionRule"/>
 
     <extensionPoint name="overrideImplementsAnnotationsHandler"
                     interface="com.intellij.codeInsight.generation.OverrideImplementsAnnotationsHandler"/>

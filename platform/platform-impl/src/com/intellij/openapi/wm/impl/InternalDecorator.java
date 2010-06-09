@@ -17,6 +17,7 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.ResizeToolWindowAction;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -32,10 +33,7 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindowContentUiType;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ToolWindowType;
+import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.UIBundle;
@@ -427,7 +425,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     innerPanel.add(toolWindowComponent, BorderLayout.CENTER);
 
     final NonOpaquePanel inner = new NonOpaquePanel(innerPanel);
-    inner.setBorder(new InnerPanelBorder());
+    inner.setBorder(new InnerPanelBorder(myToolWindow));
 
     contentPane.add(inner, BorderLayout.CENTER);
     add(contentPane, BorderLayout.CENTER);
@@ -441,15 +439,30 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
   }
 
   private static class InnerPanelBorder implements Border {
+
+    private ToolWindow myWindow;
+
+    private InnerPanelBorder(ToolWindow window) {
+      myWindow = window;
+    }
+
     public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
       g.setColor(UIUtil.getBorderInactiveColor());
       UIUtil.drawLine(g, x, y, x, y + height - 2);
       UIUtil.drawLine(g, x + width - 1, y, x + width - 1, y + height - 2);
-      UIUtil.drawLine(g, x + 1, y + height - 1, x + width - 2, y + height - 1);
+
+      if (hasBottomLine()) {
+        UIUtil.drawLine(g, x + 1, y + height - 1, x + width - 2, y + height - 1);
+      }
+    }
+
+    private boolean hasBottomLine() {
+      return (myWindow.getAnchor() == ToolWindowAnchor.BOTTOM || myWindow.getAnchor() == ToolWindowAnchor.LEFT || myWindow.getAnchor() == ToolWindowAnchor.RIGHT)
+          && !UISettings.getInstance().HIDE_TOOL_STRIPES && UISettings.getInstance().SHOW_STATUS_BAR;
     }
 
     public Insets getBorderInsets(final Component c) {
-      return new Insets(0, 1, 1, 1);
+      return new Insets(0, 1, hasBottomLine() ? 1 : 0, 1);
     }
 
     public boolean isBorderOpaque() {

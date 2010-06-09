@@ -49,6 +49,7 @@ public class XmlRefCountHolder {
             final XmlRefCountHolder holder = new XmlRefCountHolder();
             final Language language = file.getViewProvider().getBaseLanguage();
             final PsiFile psiFile = file.getViewProvider().getPsi(language);
+            assert psiFile != null;
             psiFile.accept(new IdGatheringRecursiveVisitor(holder));
             return new Result<XmlRefCountHolder>(holder, file);
           }
@@ -61,9 +62,12 @@ public class XmlRefCountHolder {
   private final List<XmlAttributeValue> myIdReferences = new ArrayList<XmlAttributeValue>();
   private final Set<String> myAdditionallyDeclaredIds = new HashSet<String>();
   private final Set<PsiElement> myDoNotValidateParentsList = new HashSet<PsiElement>();
+  private final Set<String> myUsedNamespaces = new HashSet<String>();
 
-  public static XmlRefCountHolder getInstance(final XmlFile file) {
-    return CACHE.get(xmlRefCountHolderKey, file, null).getValue();
+  @Nullable
+  public static XmlRefCountHolder getRefCountHolder(final XmlElement element) {
+    PsiFile file = element.getContainingFile();
+    return file instanceof XmlFile ? CACHE.get(xmlRefCountHolderKey, (XmlFile)file, null).getValue() : null;
   }
 
   private XmlRefCountHolder() {
@@ -124,6 +128,10 @@ public class XmlRefCountHolder {
     myDoNotValidateParentsList.add(parent);
   }
 
+  public boolean isInUse(String namespace) {
+    return myUsedNamespaces.contains(namespace);
+  }
+
   private static class IdGatheringRecursiveVisitor extends XmlRecursiveElementVisitor {
     private final XmlRefCountHolder myHolder;
 
@@ -164,6 +172,17 @@ public class XmlRefCountHolder {
       }
     }
 
+    @Override
+    public void visitXmlTag(XmlTag tag) {
+      myHolder.addNamespace(tag.getNamespace());
+      super.visitXmlTag(tag);
+    }
+
+    @Override
+    public void visitXmlAttribute(XmlAttribute attribute) {
+      myHolder.addNamespace(attribute.getNamespace());
+      super.visitXmlAttribute(attribute);
+    }
 
     @Override
     public void visitXmlAttributeValue(final XmlAttributeValue value) {
@@ -207,5 +226,9 @@ public class XmlRefCountHolder {
         myHolder.registerId(id, value, soft);
       }
     }
+  }
+
+  private void addNamespace(String namespace) {
+    myUsedNamespaces.add(namespace);
   }
 }

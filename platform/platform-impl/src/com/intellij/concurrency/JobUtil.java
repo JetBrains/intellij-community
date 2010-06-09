@@ -114,6 +114,14 @@ public class JobUtil {
     }, failFastOnAcquireReadAction);
   }
 
+  public static void invokeConcurrentlyOnAllCores(@NotNull final Runnable action) throws Throwable {
+    Job<Void> job = new JobImpl<Void>(Job.DEFAULT_PRIORITY, false);
+    for (int i=0; i< JobSchedulerImpl.CORES_COUNT; i++) {
+      job.addTask(action);
+    }
+    job.scheduleAndWaitForResults();
+  }
+
   public static Job<Void> submitToJobThread(@NotNull final Runnable action, int priority) {
     Job<Void> job = new JobImpl<Void>(priority, false);
     Callable<Void> callable = new Callable<Void>() {

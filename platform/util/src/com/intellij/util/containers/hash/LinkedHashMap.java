@@ -82,7 +82,7 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
         return e.setValue(value);
       }
     }
-    final Entry<K, V> e = new Entry<K, V>(key, value);
+    final Entry<K, V> e = new Entry<K, V>(key, value, hash);
     e.hashNext = table[index];
     table[index] = e;
     final Entry<K, V> top = this.top;
@@ -230,9 +230,9 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
     private Entry<K, V> previous;
     private Entry<K, V> hashNext;
 
-    public Entry(final K key, final V value) {
+    public Entry(final K key, final V value, int hash) {
       this.key = key;
-      keyHash = HashUtil.hash(key);
+      keyHash = hash;
       this.value = value;
     }
 

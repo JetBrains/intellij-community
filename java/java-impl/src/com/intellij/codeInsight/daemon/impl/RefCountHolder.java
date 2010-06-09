@@ -49,7 +49,7 @@ public class RefCountHolder {
   private enum State {
     VIRGIN,                       // just created or cleared
     BEING_WRITTEN_BY_GHP,         // general highlighting pass is storing references during analysis
-    READY,                        // may be used for higlighting unused stuff
+    READY,                        // may be used for highlighting unused stuff
     BEING_USED_BY_PHP,            // post highlighting pass is retrieving info
   }
 
