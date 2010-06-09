@@ -16,10 +16,12 @@
 package com.intellij.refactoring.extractclass;
 
 import com.intellij.ide.util.PackageUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -43,7 +45,6 @@ import com.intellij.refactoring.psi.MethodInheritanceUtils;
 import com.intellij.refactoring.psi.TypeParametersVisitor;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.refactoring.util.FixableUsagesRefactoringProcessor;
-import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.usageView.UsageInfo;
@@ -73,6 +74,8 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
   private final String delegateFieldName;
   private final boolean requiresBackpointer;
   private boolean delegationRequired = false;
+  private ExtractEnumProcessor myExtractEnumProcessor;
+  private PsiClass myClass;
 
   public ExtractClassProcessor(PsiClass sourceClass,
                                List<PsiField> fields,
@@ -122,11 +125,25 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       }
       typeParams.addAll(typeParamSet);
     }
+    myClass = ApplicationManager.getApplication().runWriteAction(
+      new Computable<PsiClass>() {
+        public PsiClass compute() {
+          return buildClass();
+        }
+      }
+    );
+    myExtractEnumProcessor = new ExtractEnumProcessor(myProject, this.enumConstants, fields, myClass);
   }
 
   @Override
   protected boolean preprocessUsages(final Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    myExtractEnumProcessor.findEnumConstantConflicts(refUsages, conflicts);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        myClass.delete();
+      }
+    });
     final Project project = sourceClass.getProject();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
     final PsiClass existingClass =
@@ -153,21 +170,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
         conflicts.putValue(field, "Field \'" + field.getName() + "\' needs setter");
       }
     }
-    for (final PsiField enumConstant : enumConstants) {
-      final PsiExpression initializer = enumConstant.getInitializer();
-      assert initializer != null;
-      initializer.accept(new JavaRecursiveElementWalkingVisitor(){
-        @Override
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
-          super.visitReferenceExpression(expression);
-          final PsiElement resolved = expression.resolve();
-          if (!enumConstants.contains(resolved) && fields.contains(resolved)) {
-            conflicts.putValue(initializer, "Enum constant " + RefactoringUIUtil.getDescription(enumConstant, false) +
-                                            " would forward reference on field " + RefactoringUIUtil.getDescription(resolved, false));
-          }
-        }
-      });
-    }
+    checkConflicts(refUsages, conflicts);
     return showConflicts(conflicts, refUsages.get());
   }
 
@@ -245,6 +248,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     if (delegationRequired) {
       buildDelegate();
     }
+    myExtractEnumProcessor.performEnumConstantTypeMigration(usageInfos);
     final Set<PsiMember> members = new HashSet<PsiMember>();
     for (PsiMethod method : methods) {
       final PsiMethod member = psiClass.findMethodBySignature(method, false);
@@ -470,6 +474,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       findUsagesForField(field, usages);
       usages.add(new RemoveField(field));
     }
+    usages.addAll(myExtractEnumProcessor.findEnumConstantUsages(new ArrayList<FixableUsageInfo>(usages)));
     for (PsiClass innerClass : innerClasses) {
       findUsagesForInnerClass(innerClass, usages);
       usages.add(new RemoveInnerClass(innerClass));

@@ -89,7 +89,7 @@ public interface StatusBarWidget extends Disposable {
     private static final Color PIXEL = LEFT1_FROM_INACTIVE;
     private static final Color LEFT1_TO_INACTIVE = new Color(180, 180, 180);
 
-    private static final Color SEPARATOR_COLOR = UIUtil.getPanelBackgound().darker().darker().darker();
+    private static final Color SEPARATOR_COLOR = UIUtil.getPanelBackgound().darker();
 
     public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
       final Graphics2D g2 = (Graphics2D)g.create();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ package com.intellij.psi.impl.source.html;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveState;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.xml.*;
@@ -91,19 +91,11 @@ public class ScriptSupportUtil {
           final XmlAttribute attribute = tag.getAttribute("src", null);
 
           if (attribute != null) {
-            final XmlAttributeValue valueElement = attribute.getValueElement();
+            final PsiFile psiFile = FileReferenceUtil.findFile(attribute.getValueElement());
 
-            if (valueElement != null) {
-              final PsiReference[] references = valueElement.getReferences();
-
-              if (references.length > 0) {
-                final PsiElement psiElement = references[references.length - 1].resolve();
-
-                if (psiElement instanceof PsiFile && psiElement.isValid()) {
-                  if(!psiElement.processDeclarations(processor, state, null, place))
-                    return false;
-                }
-              }
+            if (psiFile != null && psiFile.isValid()) {
+              if(!psiFile.processDeclarations(processor, state, null, place))
+                return false;
             }
           }
         }
