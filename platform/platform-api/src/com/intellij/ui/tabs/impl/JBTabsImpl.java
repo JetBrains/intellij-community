@@ -443,10 +443,11 @@ public class JBTabsImpl extends JComponent
   public void updateTabActions(final boolean validateNow) {
     final Ref<Boolean> changed = new Ref<Boolean>(Boolean.FALSE);
     for (final TabInfo eachInfo : myInfo2Label.keySet()) {
-      updateTab(new Runnable() {
-        public void run() {
+      updateTab(new Computable<Boolean>() {
+        public Boolean compute() {
           final boolean changes = myInfo2Label.get(eachInfo).updateTabActions();
           changed.set(changed.get().booleanValue() || changes);
+          return changes;
         }
       }, eachInfo);
     }
@@ -898,9 +899,10 @@ public class JBTabsImpl extends JComponent
   }
 
   private void updateIcon(final TabInfo tabInfo) {
-    updateTab(new Runnable() {
-      public void run() {
+    updateTab(new Computable<Boolean>() {
+      public Boolean compute() {
         myInfo2Label.get(tabInfo).setIcon(tabInfo.getIcon());
+        return true;
       }
     }, tabInfo);
   }
@@ -908,19 +910,22 @@ public class JBTabsImpl extends JComponent
   private void updateColor(final TabInfo tabInfo) {
     myInfo2Label.get(tabInfo).setInactiveStateImage(null);
 
-    updateTab(new Runnable() {
-      public void run() {
+    updateTab(new Computable<Boolean>() {
+      public Boolean compute() {
         repaint();
+        return true;
       }
     }, tabInfo);
   }
 
-  private void updateTab(Runnable update, TabInfo info) {
+  private void updateTab(Computable<Boolean> update, TabInfo info) {
     final TabLabel label = myInfo2Label.get(info);
-    update.run();
+    Boolean changes = update.compute();
     if (label.getRootPane() != null) {
       if (label.isValid()) {
-        label.repaint();
+        if (changes) {
+          label.repaint();
+        }
       }
       else {
         revalidateAndRepaint(false);
@@ -972,11 +977,12 @@ public class JBTabsImpl extends JComponent
   }
 
   private void updateText(final TabInfo tabInfo) {
-    updateTab(new Runnable() {
-      public void run() {
+    updateTab(new Computable<Boolean>() {
+      public Boolean compute() {
         final TabLabel label = myInfo2Label.get(tabInfo);
         label.setText(tabInfo.getColoredText());
         label.setToolTipText(tabInfo.getTooltipText());
+        return true;
       }
     }, tabInfo);
   }
@@ -1360,6 +1366,11 @@ public class JBTabsImpl extends JComponent
     g2d.fillRect(clip.x, clip.y, clip.width, clip.height);
 
     final TabInfo selected = getSelectedInfo();
+
+    if (selected != null) {
+      Rectangle compBounds = selected.getComponent().getBounds();
+      if (compBounds.contains(clip) && !compBounds.intersects(clip)) return;
+    }
 
     boolean leftGhostExists = isSingleRow();
     boolean rightGhostExists = isSingleRow();
