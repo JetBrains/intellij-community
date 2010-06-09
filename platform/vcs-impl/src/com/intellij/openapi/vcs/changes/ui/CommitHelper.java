@@ -37,6 +37,7 @@ import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.util.Consumer;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.ui.ConfirmationDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +45,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 public class CommitHelper {
   private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ui.CommitHelper");
@@ -59,7 +59,7 @@ public class CommitHelper {
   private final List<CheckinHandler> myHandlers;
   private final boolean myAllOfDefaultChangeListChangesIncluded;
   private final boolean myForceSyncCommit;
-  private final Map<String, Object> myAdditionalData;
+  private final NullableFunction<Object, Object> myAdditionalData;
   private final List<Document> myCommittingDocuments = new ArrayList<Document>();
   private final VcsConfiguration myConfiguration;
   private final VcsDirtyScopeManager myDirtyScopeManager;
@@ -71,7 +71,7 @@ public class CommitHelper {
                       final String commitMessage,
                       final List<CheckinHandler> handlers,
                       final boolean allOfDefaultChangeListChangesIncluded,
-                      final boolean synchronously, final Map<String, Object> additionalData) {
+                      final boolean synchronously, final NullableFunction<Object, Object> additionalDataHolder) {
     myProject = project;
     myChangeList = changeList;
     myIncludedChanges = includedChanges;
@@ -80,7 +80,7 @@ public class CommitHelper {
     myHandlers = handlers;
     myAllOfDefaultChangeListChangesIncluded = allOfDefaultChangeListChangesIncluded;
     myForceSyncCommit = synchronously;
-    myAdditionalData = additionalData;
+    myAdditionalData = additionalDataHolder;
     myConfiguration = VcsConfiguration.getInstance(myProject);
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
   }
@@ -208,9 +208,7 @@ public class CommitHelper {
           Collection<FilePath> paths = ChangesUtil.getPaths(items);
           myPathsToRefresh.addAll(paths);
 
-          final Object addData = (myAdditionalData == null) ? null : myAdditionalData.get(vcs.getName());
-
-          final List<VcsException> exceptions = environment.commit(items, myCommitMessage, addData);
+          final List<VcsException> exceptions = environment.commit(items, myCommitMessage, myAdditionalData);
           if (exceptions != null && exceptions.size() > 0) {
             myVcsExceptions.addAll(exceptions);
             myChangesFailedToCommit.addAll(items);
@@ -314,8 +312,7 @@ public class CommitHelper {
         if (environment.keepChangeListAfterCommit(myChangeList)) {
           myKeepChangeListAfterCommit = true;
         }
-        final Object addData = (myAdditionalData == null) ? null : myAdditionalData.get(vcs.getName());
-        final List<VcsException> exceptions = environment.commit(items, myCommitMessage, addData);
+        final List<VcsException> exceptions = environment.commit(items, myCommitMessage, myAdditionalData);
         if (exceptions != null && exceptions.size() > 0) {
           myVcsExceptions.addAll(exceptions);
           myChangesFailedToCommit.addAll(items);

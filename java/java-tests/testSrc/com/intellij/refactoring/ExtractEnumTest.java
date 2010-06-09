@@ -29,7 +29,10 @@ import com.intellij.refactoring.extractclass.ExtractClassProcessor;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import junit.framework.Assert;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.TreeSet;
 
 public class ExtractEnumTest extends MultiFileTestCase {
 

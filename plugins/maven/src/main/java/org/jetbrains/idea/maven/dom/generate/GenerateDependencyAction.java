@@ -19,10 +19,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.xml.ui.actions.generate.GenerateDomElementAction;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
-import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.indices.MavenArtifactSearchDialog;
+import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenIcons;
 

@@ -438,10 +438,17 @@ public class PluginManager {
   }
 
   private static Graph<PluginId> createPluginIdGraph(final Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap) {
-    final PluginId[] ids = idToDescriptorMap.keySet().toArray(new PluginId[idToDescriptorMap.size()]);
+    final List<PluginId> ids = new ArrayList<PluginId>(idToDescriptorMap.keySet());
+    // this magic ensures that the dependent plugins always follow their dependencies in lexicographic order
+    // needed to make sure that extensions are always in the same order
+    Collections.sort(ids, new Comparator<PluginId>() {
+      public int compare(PluginId o1, PluginId o2) {
+        return o2.getIdString().compareTo(o1.getIdString());
+      }
+    });
     return GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<PluginId>() {
       public Collection<PluginId> getNodes() {
-        return Arrays.asList(ids);
+        return ids;
       }
 
       public Iterator<PluginId> getIn(PluginId pluginId) {

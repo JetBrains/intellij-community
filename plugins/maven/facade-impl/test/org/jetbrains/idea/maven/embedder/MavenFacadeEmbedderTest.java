@@ -20,12 +20,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.maven.artifact.handler.ArtifactHandler;
 import org.codehaus.plexus.component.repository.ComponentDescriptor;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.execution.SoutMavenConsole;
 import org.jetbrains.idea.maven.facade.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.facade.MavenFacadeManager;
 import org.jetbrains.idea.maven.facade.MavenWrapperExecutionResult;
 import org.jetbrains.idea.maven.facade.embedder.MavenFacadeEmbedderImpl;
 import org.jetbrains.idea.maven.model.MavenId;
-import org.jetbrains.idea.maven.execution.SoutMavenConsole;
 import org.jetbrains.idea.maven.model.MavenModel;
 
 import java.io.File;

@@ -17,6 +17,7 @@
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,6 +31,8 @@ public interface TempDirTestFixture extends IdeaTestFixture {
   VirtualFile copyFile(VirtualFile file, String targetPath);
 
   VirtualFile copyAll(String dataDir, String targetDir);
+
+  VirtualFile copyAll(String dataDir, String targetDir, @NotNull VirtualFileFilter filter);
 
   String getTempDirPath();
 

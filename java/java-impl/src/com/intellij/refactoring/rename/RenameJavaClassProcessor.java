@@ -15,25 +15,32 @@
  */
 package com.intellij.refactoring.rename;
 
-import com.intellij.codeInsight.*;
-import com.intellij.openapi.diagnostic.*;
-import com.intellij.openapi.project.*;
-import com.intellij.openapi.util.*;
+import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.search.*;
-import com.intellij.psi.search.searches.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.ClassUtil;
-import com.intellij.refactoring.*;
-import com.intellij.refactoring.listeners.*;
-import com.intellij.refactoring.util.*;
-import com.intellij.usageView.*;
-import com.intellij.util.*;
-import com.intellij.util.containers.*;
-import org.jetbrains.annotations.*;
+import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.refactoring.util.MoveRenameUsageInfo;
+import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.HashSet;
-import java.util.regex.*;
+import java.util.regex.Pattern;
 
 /**
  * @author yole

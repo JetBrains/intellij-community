@@ -12,18 +12,27 @@
 // limitations under the License.
 package org.zmlx.hg4idea.ui;
 
-import com.intellij.openapi.options.*;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vfs.*;
-import org.jetbrains.annotations.*;
-import org.zmlx.hg4idea.*;
-import org.zmlx.hg4idea.command.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
+import org.zmlx.hg4idea.HgRevisionNumber;
+import org.zmlx.hg4idea.HgVcsMessages;
+import org.zmlx.hg4idea.command.HgHeadsCommand;
+import org.zmlx.hg4idea.command.HgTagBranch;
+import org.zmlx.hg4idea.command.HgTagBranchCommand;
+import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
 
 import javax.swing.*;
-import javax.swing.event.*;
-import java.awt.event.*;
-import java.util.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 
 public class HgIntegrateDialog implements Configurable {
 

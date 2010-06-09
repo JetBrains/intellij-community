@@ -27,8 +27,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
 import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 
 public class ListScrollingUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.ListScrollingUtil");

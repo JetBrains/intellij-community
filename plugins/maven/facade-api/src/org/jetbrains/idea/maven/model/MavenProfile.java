@@ -18,7 +18,6 @@ package org.jetbrains.idea.maven.model;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
-import java.util.List;
 
 public class MavenProfile extends MavenModelBase implements Serializable {
   private final String myId;

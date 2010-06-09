@@ -15,17 +15,20 @@
  */
 package org.zmlx.hg4idea.provider;
 
-import com.intellij.openapi.application.*;
-import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.project.*;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vfs.*;
-import org.jetbrains.annotations.*;
-import org.zmlx.hg4idea.*;
-import org.zmlx.hg4idea.command.*;
-import org.zmlx.hg4idea.ui.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.CheckoutProvider;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgUtil;
+import org.zmlx.hg4idea.command.HgCloneCommand;
+import org.zmlx.hg4idea.command.HgCommandResult;
+import org.zmlx.hg4idea.ui.HgCloneDialog;
 
-import java.io.*;
+import java.io.File;
 
 /**
  * Checkout provider for Mercurial

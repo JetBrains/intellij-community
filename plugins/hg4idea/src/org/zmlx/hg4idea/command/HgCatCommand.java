@@ -12,12 +12,15 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
-import com.intellij.openapi.project.*;
-import org.apache.commons.lang.*;
-import org.zmlx.hg4idea.*;
+import com.intellij.openapi.project.Project;
+import org.apache.commons.lang.StringUtils;
+import org.zmlx.hg4idea.HgFile;
+import org.zmlx.hg4idea.HgRevisionNumber;
 
-import java.nio.charset.*;
-import java.util.*;
+import java.nio.charset.Charset;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 
 public class HgCatCommand {
 

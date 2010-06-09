@@ -16,17 +16,21 @@
 
 package com.intellij.uiDesigner.designSurface;
 
-import com.intellij.openapi.command.*;
-import com.intellij.openapi.wm.*;
-import com.intellij.uiDesigner.*;
-import com.intellij.uiDesigner.lw.*;
-import com.intellij.uiDesigner.radComponents.*;
-import gnu.trove.*;
-import org.jetbrains.annotations.*;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.lw.IComponent;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadContainer;
+import gnu.trove.TIntArrayList;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.awt.event.*;
-import java.util.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 
 /**
  * @author yole

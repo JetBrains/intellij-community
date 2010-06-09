@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.wm;
 
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: spLeaner

@@ -15,7 +15,5 @@
  */
 package org.jetbrains.idea.maven.facade;
 
-import java.rmi.RemoteException;
-
 public class MavenFacadeProcessCanceledException extends Exception {
 }

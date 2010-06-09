@@ -12,14 +12,15 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
-import com.intellij.openapi.diagnostic.*;
-import com.intellij.openapi.project.*;
-import com.intellij.openapi.vfs.*;
-import org.apache.commons.lang.*;
-import org.jetbrains.annotations.*;
-import org.zmlx.hg4idea.*;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.apache.commons.lang.StringUtils;
+import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgFile;
+import org.zmlx.hg4idea.HgRevisionNumber;
 
-import java.io.*;
+import java.io.File;
 import java.util.*;
 
 public class HgStatusCommand {

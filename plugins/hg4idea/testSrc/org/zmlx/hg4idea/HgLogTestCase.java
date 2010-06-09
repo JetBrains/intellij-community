@@ -12,12 +12,12 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import org.testng.annotations.*;
-import org.zmlx.hg4idea.command.*;
+import org.testng.annotations.Test;
+import org.zmlx.hg4idea.command.HgLogCommand;
 
-import java.util.*;
+import java.util.List;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
 
 public class HgLogTestCase extends AbstractHgTestCase {
   

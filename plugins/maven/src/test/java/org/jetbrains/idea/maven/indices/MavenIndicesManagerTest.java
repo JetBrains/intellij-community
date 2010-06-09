@@ -20,10 +20,11 @@ import org.jetbrains.idea.maven.model.MavenArchetype;
 
 import java.io.File;
 import java.util.ArrayList;
-import static java.util.Arrays.asList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+
+import static java.util.Arrays.asList;
 
 public class MavenIndicesManagerTest extends MavenIndicesTestCase {
   private MavenIndicesTestFixture myIndicesFixture;

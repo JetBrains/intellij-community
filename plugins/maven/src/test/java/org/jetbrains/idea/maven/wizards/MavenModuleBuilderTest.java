@@ -25,8 +25,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenId;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.util.List;
 

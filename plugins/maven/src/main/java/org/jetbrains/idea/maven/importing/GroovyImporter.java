@@ -3,7 +3,10 @@ package org.jetbrains.idea.maven.importing;
 import com.intellij.openapi.module.Module;
 import org.jdom.Element;
 import org.jetbrains.idea.maven.model.MavenArtifact;
-import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectChanges;
+import org.jetbrains.idea.maven.project.MavenProjectsProcessorTask;
+import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 
 import java.util.List;

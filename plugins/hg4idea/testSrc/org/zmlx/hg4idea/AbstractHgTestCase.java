@@ -28,7 +28,7 @@ import org.testng.annotations.BeforeMethod;
 
 import java.io.*;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertTrue;
 
 /**
  * The ancestor of all hg4idea test cases.

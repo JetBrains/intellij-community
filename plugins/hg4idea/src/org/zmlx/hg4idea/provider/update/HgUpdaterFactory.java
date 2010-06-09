@@ -12,11 +12,11 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider.update;
 
-import com.intellij.openapi.project.*;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vfs.*;
-import org.jetbrains.annotations.*;
-import org.zmlx.hg4idea.command.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.command.HgMQCommand;
 
 class HgUpdaterFactory {
 

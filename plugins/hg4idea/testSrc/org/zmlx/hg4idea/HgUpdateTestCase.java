@@ -12,17 +12,20 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.intellij.execution.process.*;
-import com.intellij.openapi.progress.*;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.update.*;
-import com.intellij.openapi.vfs.*;
-import org.testng.annotations.*;
+import com.intellij.execution.process.ProcessOutput;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.update.UpdatedFiles;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.testng.annotations.Test;
 import org.zmlx.hg4idea.command.*;
-import org.zmlx.hg4idea.provider.update.*;
+import org.zmlx.hg4idea.provider.update.HgRegularUpdater;
 
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 import static org.testng.Assert.*;
 

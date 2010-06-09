@@ -16,17 +16,18 @@
  */
 package org.jetbrains.idea.maven.facade.nexus;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.util.HashMap;
-import java.util.List;
+import org.jvnet.ws.wadl.util.DSDispatcher;
+import org.jvnet.ws.wadl.util.JAXBDispatcher;
+import org.jvnet.ws.wadl.util.UriBuilder;
+
 import javax.activation.DataSource;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
-import org.jvnet.ws.wadl.util.DSDispatcher;
-import org.jvnet.ws.wadl.util.JAXBDispatcher;
-import org.jvnet.ws.wadl.util.UriBuilder;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.util.HashMap;
+import java.util.List;
 
 public class Endpoint {
 

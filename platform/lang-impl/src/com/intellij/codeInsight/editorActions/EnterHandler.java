@@ -19,6 +19,7 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate;
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.*;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
@@ -39,6 +40,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
@@ -321,7 +323,16 @@ public class EnterHandler extends BaseEnterHandler {
 
         if (CodeInsightSettings.getInstance().SMART_INDENT_ON_ENTER || myForceIndent || docStart || docAsterisk ||
             slashSlash) {
-          myOffset = CodeStyleManager.getInstance(getProject()).adjustLineIndent(myFile, myOffset);
+          final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(getProject());
+          if (myDocument instanceof DocumentWindow) {
+            DocumentWindow documentWindow = (DocumentWindow)myDocument;
+            final int correctedOffset = codeStyleManager.adjustLineIndent(InjectedLanguageUtil.getTopLevelFile(myFile),
+                                                                          documentWindow.injectedToHost(myOffset));
+            myOffset = documentWindow.hostToInjected(correctedOffset);
+          }
+          else {
+            myOffset = codeStyleManager.adjustLineIndent(myFile, myOffset);
+          }
         }
 
         if (docAsterisk || docStart || slashSlash) {

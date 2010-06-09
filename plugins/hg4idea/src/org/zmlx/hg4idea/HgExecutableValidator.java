@@ -12,9 +12,9 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.intellij.openapi.project.*;
-import org.zmlx.hg4idea.command.*;
-import org.zmlx.hg4idea.ui.*;
+import com.intellij.openapi.project.Project;
+import org.zmlx.hg4idea.command.HgVersionCommand;
+import org.zmlx.hg4idea.ui.HgSetExecutableDialog;
 
 class HgExecutableValidator {
 

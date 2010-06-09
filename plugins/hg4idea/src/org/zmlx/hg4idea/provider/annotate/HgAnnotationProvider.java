@@ -12,14 +12,17 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider.annotate;
 
-import com.intellij.openapi.project.*;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.annotate.*;
-import com.intellij.openapi.vcs.history.*;
-import com.intellij.openapi.vfs.*;
-import com.intellij.vcsUtil.*;
-import org.zmlx.hg4idea.*;
-import org.zmlx.hg4idea.command.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.annotate.AnnotationProvider;
+import com.intellij.openapi.vcs.annotate.FileAnnotation;
+import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
+import org.zmlx.hg4idea.HgFile;
+import org.zmlx.hg4idea.command.HgAnnotateCommand;
+import org.zmlx.hg4idea.command.HgLogCommand;
 
 public class HgAnnotationProvider implements AnnotationProvider {
 

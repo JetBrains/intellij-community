@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.vcs;
 
-import java.util.*;
+import java.util.Set;
 
 public interface SelectionResult<T> {
   Set<T> getMarked();

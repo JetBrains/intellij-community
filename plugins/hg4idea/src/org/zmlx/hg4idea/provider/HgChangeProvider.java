@@ -12,14 +12,18 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider;
 
-import com.intellij.openapi.progress.*;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vfs.*;
-import com.intellij.vcsUtil.*;
-import org.zmlx.hg4idea.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
+import org.zmlx.hg4idea.HgContentRevision;
+import org.zmlx.hg4idea.HgFile;
+import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.command.*;
 
 import java.util.*;

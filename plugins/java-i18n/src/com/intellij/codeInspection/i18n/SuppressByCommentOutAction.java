@@ -15,18 +15,19 @@
  */
 package com.intellij.codeInspection.i18n;
 
-import com.intellij.codeInsight.daemon.*;
-import com.intellij.codeInspection.*;
-import com.intellij.lang.*;
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.project.*;
-import com.intellij.openapi.util.text.*;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.SuppressIntentionAction;
+import com.intellij.lang.StdLanguages;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.*;
-import com.intellij.psi.tree.*;
-import com.intellij.psi.util.*;
-import com.intellij.util.*;
-import org.jetbrains.annotations.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
 * User: cdr

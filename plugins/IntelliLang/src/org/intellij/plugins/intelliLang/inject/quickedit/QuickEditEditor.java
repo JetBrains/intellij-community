@@ -16,24 +16,27 @@
 
 package org.intellij.plugins.intelliLang.inject.quickedit;
 
-import com.intellij.ide.highlighter.*;
+import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.*;
-import com.intellij.openapi.command.*;
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.ex.*;
-import com.intellij.openapi.editor.impl.*;
-import com.intellij.openapi.fileTypes.*;
-import com.intellij.openapi.project.*;
-import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.wm.*;
-import com.intellij.psi.*;
-import com.intellij.ui.plaf.beg.*;
-import org.jetbrains.annotations.*;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.ui.plaf.beg.BegBorders;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.KeyEvent;
 
 // Adapted from QuickEditHotspot that came with the source of the first designer release ;)
 public class QuickEditEditor {

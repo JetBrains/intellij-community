@@ -12,10 +12,11 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.intellij.openapi.vcs.history.*;
-import org.apache.commons.lang.builder.*;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import org.apache.commons.lang.builder.HashCodeBuilder;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
 
 public final class HgRevisionNumber implements VcsRevisionNumber {
 

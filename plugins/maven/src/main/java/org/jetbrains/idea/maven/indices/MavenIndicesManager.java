@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.THashSet;

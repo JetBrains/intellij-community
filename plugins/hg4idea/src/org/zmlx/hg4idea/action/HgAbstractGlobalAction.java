@@ -13,15 +13,19 @@
 package org.zmlx.hg4idea.action;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.*;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vfs.*;
-import com.intellij.vcsUtil.*;
-import org.jetbrains.annotations.*;
-import org.zmlx.hg4idea.*;
-import org.zmlx.hg4idea.command.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsRoot;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgUtil;
+import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.command.HgCommandException;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 
 abstract class HgAbstractGlobalAction extends AnAction {
 

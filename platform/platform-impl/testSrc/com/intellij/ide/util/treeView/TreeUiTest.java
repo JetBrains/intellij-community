@@ -5,7 +5,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.util.*;
-import com.intellij.testFramework.TestLogger;
 import com.intellij.util.Time;
 import com.intellij.util.WaitFor;
 import junit.framework.TestSuite;

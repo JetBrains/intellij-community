@@ -23,6 +23,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +51,11 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
     }
   }
 
-  public VirtualFile copyAll(final String dataDir, final String targetDir) {
+  public VirtualFile copyAll(String dataDir, String targetDir) {
+    return copyAll(dataDir, targetDir, VirtualFileFilter.ALL);
+  }
+
+  public VirtualFile copyAll(final String dataDir, final String targetDir, @NotNull final VirtualFileFilter filter) {
     createTempDirectory();
     return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
       public VirtualFile compute() {
@@ -67,7 +72,7 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
           }
           final VirtualFile from = LocalFileSystem.getInstance().refreshAndFindFileByPath(dataDir);
           assert from != null : dataDir + " not found";
-          VfsUtil.copyDirectory(null, from, tempDir, null);
+          VfsUtil.copyDirectory(null, from, tempDir, filter);
           return tempDir;
         }
         catch (IOException e) {

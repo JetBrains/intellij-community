@@ -12,9 +12,9 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.Project;
 
-import java.util.*;
+import java.util.List;
 
 public class HgIncomingCommand extends HgChangesetsCommand {
 

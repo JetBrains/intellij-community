@@ -18,8 +18,8 @@ package com.intellij.execution.actions;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;

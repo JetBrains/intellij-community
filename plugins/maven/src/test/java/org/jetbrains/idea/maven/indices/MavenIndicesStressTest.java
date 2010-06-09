@@ -15,8 +15,6 @@
  */
 package org.jetbrains.idea.maven.indices;
 
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.facade.MavenFacadeManager;
 import org.jetbrains.idea.maven.facade.MavenIndexerWrapper;

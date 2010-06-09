@@ -12,18 +12,24 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider.commit;
 
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vfs.*;
-import com.intellij.vcsUtil.*;
-import org.apache.commons.lang.*;
-import org.zmlx.hg4idea.*;
-import org.zmlx.hg4idea.command.*;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.CommitSession;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
+import org.apache.commons.lang.StringUtils;
+import org.zmlx.hg4idea.HgUtil;
+import org.zmlx.hg4idea.HgVcsMessages;
+import org.zmlx.hg4idea.command.HgCommandException;
+import org.zmlx.hg4idea.command.HgCommitCommand;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 public class HgCommitSession implements CommitSession {
 

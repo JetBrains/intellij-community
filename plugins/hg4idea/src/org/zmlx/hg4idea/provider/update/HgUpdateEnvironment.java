@@ -12,19 +12,26 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider.update;
 
-import com.intellij.openapi.options.*;
-import com.intellij.openapi.progress.*;
-import com.intellij.openapi.project.*;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.*;
-import com.intellij.openapi.vfs.*;
-import org.jetbrains.annotations.*;
-import org.zmlx.hg4idea.ui.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.ui.HgUpdateDialog;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 
 public class HgUpdateEnvironment implements UpdateEnvironment {
 

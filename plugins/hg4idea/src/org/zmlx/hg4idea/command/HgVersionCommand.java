@@ -12,10 +12,10 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
-import org.apache.commons.lang.*;
+import org.apache.commons.lang.StringUtils;
 
-import java.nio.charset.*;
-import java.util.*;
+import java.nio.charset.Charset;
+import java.util.Arrays;
 
 public class HgVersionCommand {
 

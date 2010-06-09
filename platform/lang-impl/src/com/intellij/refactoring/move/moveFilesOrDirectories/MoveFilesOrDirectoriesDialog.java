@@ -36,7 +36,6 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.RecentsManager;
 import com.intellij.ui.TextFieldWithStoredHistory;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;

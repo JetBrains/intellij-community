@@ -29,20 +29,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.ui.SimpleColoredText;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
 import com.intellij.util.Icons;
 import com.intellij.util.NullableFunction;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.ui.SimpleColoredText;
-import com.intellij.ui.SimpleTextAttributes;
 import org.intellij.plugins.intelliLang.AdvancedSettingsUI;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.AbstractLanguageInjectionSupport;
@@ -62,8 +62,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.intellij.plugins.intelliLang.inject.config.MethodParameterInjection.*;
 
@@ -102,17 +102,18 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
   public boolean removeInjectionInPlace(final PsiLanguageInjectionHost psiElement) {
     if (!isMine(psiElement)) return false;
     final Configuration configuration = Configuration.getInstance();
-    final HashMap<BaseInjection, ConcatenationInjector.Info> injectionsMap = new HashMap<BaseInjection, ConcatenationInjector.Info>();
+    final HashMap<BaseInjection, Pair<PsiMethod, Integer>> injectionsMap = new HashMap<BaseInjection, Pair<PsiMethod, Integer>>();
     final ArrayList<PsiAnnotation> annotations = new ArrayList<PsiAnnotation>();
     final PsiLiteralExpression host = (PsiLiteralExpression)psiElement;
     final Project project = host.getProject();
     collectInjections(host, configuration, injectionsMap, annotations);
+
     if (injectionsMap.isEmpty() && annotations.isEmpty()) return false;
     final ArrayList<BaseInjection> originalInjections = new ArrayList<BaseInjection>(injectionsMap.keySet());
     final List<BaseInjection> newInjections = ContainerUtil.mapNotNull(originalInjections, new NullableFunction<BaseInjection, BaseInjection>() {
       public BaseInjection fun(final BaseInjection injection) {
-        final ConcatenationInjector.Info info = injectionsMap.get(injection);
-        final String placeText = getPatternStringForJavaPlace(info.method, info.parameterIndex);
+        final Pair<PsiMethod, Integer> pair = injectionsMap.get(injection);
+        final String placeText = getPatternStringForJavaPlace(pair.first, pair.second);
         final BaseInjection newInjection = injection.copy();
         newInjection.setPlaceEnabled(placeText, false);
         return newInjection;
@@ -125,7 +126,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
   public boolean editInjectionInPlace(final PsiLanguageInjectionHost psiElement) {
     if (!isMine(psiElement)) return false;
     final Configuration configuration = Configuration.getInstance();
-    final HashMap<BaseInjection, ConcatenationInjector.Info> injectionsMap = new HashMap<BaseInjection, ConcatenationInjector.Info>();
+    final HashMap<BaseInjection, Pair<PsiMethod, Integer>> injectionsMap = new HashMap<BaseInjection, Pair<PsiMethod, Integer>>();
     final ArrayList<PsiAnnotation> annotations = new ArrayList<PsiAnnotation>();
     final PsiLiteralExpression host = (PsiLiteralExpression)psiElement;
     final Project project = host.getProject();
@@ -133,7 +134,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     if (injectionsMap.isEmpty() || !annotations.isEmpty()) return false;
 
     final BaseInjection originalInjection = injectionsMap.keySet().iterator().next();
-    final MethodParameterInjection methodParameterInjection = createFrom(psiElement.getProject(), originalInjection, injectionsMap.get(originalInjection).method, false);
+    final MethodParameterInjection methodParameterInjection = createFrom(psiElement.getProject(), originalInjection, injectionsMap.get(originalInjection).first, false);
     final MethodParameterInjection copy = methodParameterInjection.copy();
     final BaseInjection newInjection = showInjectionUI(project, methodParameterInjection);
     if (newInjection != null) {
@@ -318,8 +319,8 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     else {
       final BaseInjection originalCopy = originalInjection.copy();
       final InjectionPlace currentPlace = template.getInjectionPlaces().get(0);
-      final String text = currentPlace.getText();
-      originalCopy.setPlaceEnabled(text, true);
+      originalCopy.mergeOriginalPlacesFrom(template, true);
+      originalCopy.setPlaceEnabled(currentPlace.getText(), true);
       methodParameterInjection = createFrom(project, originalCopy, contextMethod, false);
     }
     if (InjectLanguageAction.doEditConfigurable(project, new MethodParameterInjectionConfigurable(methodParameterInjection, null, project))) {
@@ -336,18 +337,21 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
   }
 
   private static void collectInjections(final PsiLiteralExpression host, final Configuration configuration,
-                                       final Map<BaseInjection, ConcatenationInjector.Info> injectionsToRemove,
-                                       final ArrayList<PsiAnnotation> annotationsToRemove) {
-    ConcatenationInjector.processLiteralExpressionInjectionsInner(configuration, new Processor<ConcatenationInjector.Info>() {
-      public boolean process(final ConcatenationInjector.Info info) {
-        final PsiAnnotation[] annotations = AnnotationUtilEx.getAnnotationFrom(info.owner, configuration.getLanguageAnnotationPair(), true);
-        annotationsToRemove.addAll(Arrays.asList(annotations));
-        for (BaseInjection injection : info.injections) {
-          injectionsToRemove.put(injection, info);
-        }
+                                        final HashMap<BaseInjection, Pair<PsiMethod, Integer>> injectionsMap,
+                                        final ArrayList<PsiAnnotation> annotations) {
+    new ConcatenationInjector.InjectionProcessor(configuration, host) {
+      @Override
+      protected boolean processAnnotationInjections(PsiModifierListOwner annoElement) {
+        annotations.addAll(Arrays.asList(AnnotationUtilEx.getAnnotationFrom(annoElement, configuration.getLanguageAnnotationPair(), true)));
         return true;
       }
-    }, host);
+
+      @Override
+      protected boolean processXmlInjections(BaseInjection injection, PsiModifierListOwner owner, PsiMethod method, int paramIndex) {
+        injectionsMap.put(injection, Pair.create(method, paramIndex));
+        return true;
+      }
+    }.processInjections();
   }
 
   private static MethodParameterInjection createFrom(final Project project,

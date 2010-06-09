@@ -16,7 +16,6 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
 import org.jetbrains.idea.maven.execution.RunnerBundle;

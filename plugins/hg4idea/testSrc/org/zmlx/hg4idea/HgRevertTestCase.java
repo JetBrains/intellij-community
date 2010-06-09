@@ -1,11 +1,12 @@
 package org.zmlx.hg4idea;
 
-import org.testng.annotations.*;
-import org.zmlx.hg4idea.command.*;
+import org.testng.annotations.Test;
+import org.zmlx.hg4idea.command.HgCatCommand;
+import org.zmlx.hg4idea.command.HgRevertCommand;
 
-import java.nio.charset.*;
+import java.nio.charset.Charset;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
 
 public class HgRevertTestCase extends AbstractHgTestCase {
   @Test

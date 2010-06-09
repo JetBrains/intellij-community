@@ -32,8 +32,8 @@ import org.jetbrains.idea.maven.project.MavenConsole;
 import org.jetbrains.idea.maven.project.MavenConsoleImpl;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.utils.SimpleProjectComponent;
 import org.jetbrains.idea.maven.utils.MavenLog;
+import org.jetbrains.idea.maven.utils.SimpleProjectComponent;
 
 import java.util.List;
 

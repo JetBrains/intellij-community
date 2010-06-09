@@ -12,12 +12,12 @@
 // limitations under the License.
 package org.zmlx.hg4idea.action;
 
-import com.intellij.openapi.project.*;
-import com.intellij.openapi.vfs.*;
-import org.zmlx.hg4idea.provider.update.*;
-import org.zmlx.hg4idea.ui.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.zmlx.hg4idea.provider.update.HgConflictResolver;
+import org.zmlx.hg4idea.ui.HgRunConflictResolverDialog;
 
-import java.util.*;
+import java.util.Collection;
 
 public class HgRunConflictResolverAction extends HgAbstractGlobalAction {
 

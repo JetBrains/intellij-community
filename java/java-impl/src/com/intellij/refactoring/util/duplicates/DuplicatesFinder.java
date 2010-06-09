@@ -15,20 +15,26 @@
  */
 package com.intellij.refactoring.util.duplicates;
 
-import com.intellij.codeInsight.*;
-import com.intellij.lang.*;
-import com.intellij.openapi.diagnostic.*;
-import com.intellij.openapi.util.*;
+import com.intellij.codeInsight.PsiEquivalenceUtil;
+import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
-import com.intellij.psi.impl.source.*;
-import com.intellij.psi.tree.*;
-import com.intellij.psi.util.*;
-import com.intellij.refactoring.extractMethod.*;
-import com.intellij.refactoring.util.*;
-import com.intellij.util.*;
-import com.intellij.util.containers.*;
-import org.jetbrains.annotations.*;
+import com.intellij.psi.impl.source.PsiImmediateClassType;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.refactoring.extractMethod.InputVariables;
+import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.IntArrayList;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 

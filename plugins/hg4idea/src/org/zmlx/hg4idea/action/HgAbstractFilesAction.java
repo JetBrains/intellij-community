@@ -13,13 +13,18 @@
 package org.zmlx.hg4idea.action;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.*;
-import com.intellij.openapi.project.*;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vfs.*;
-import org.zmlx.hg4idea.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.TransactionRunnable;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.zmlx.hg4idea.HgUtil;
+import org.zmlx.hg4idea.HgVcs;
 
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
 
 abstract class HgAbstractFilesAction extends AnAction {
 

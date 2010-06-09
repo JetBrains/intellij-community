@@ -15,15 +15,16 @@
  */
 package com.intellij.openapi.wm.ex;
 
-import com.intellij.openapi.*;
-import com.intellij.openapi.progress.*;
-import com.intellij.openapi.ui.*;
-import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.wm.*;
-import org.jetbrains.annotations.*;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.progress.TaskInfo;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.BalloonHandler;
+import com.intellij.openapi.wm.StatusBar;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.*;
+import javax.swing.event.HyperlinkListener;
 
 /**
  * @author spleaner

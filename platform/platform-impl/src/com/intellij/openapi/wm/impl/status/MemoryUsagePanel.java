@@ -15,17 +15,23 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.concurrency.*;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.wm.*;
-import com.intellij.ui.*;
-import com.intellij.util.ui.*;
-import org.jetbrains.annotations.*;
+import com.intellij.concurrency.JobScheduler;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.CustomStatusBarWidget;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.StatusBarWidget;
+import com.intellij.ui.UIBundle;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
-import java.util.concurrent.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
   @NonNls

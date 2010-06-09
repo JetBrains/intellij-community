@@ -15,17 +15,19 @@
  */
 package com.intellij.uiDesigner.componentTree;
 
-import com.intellij.openapi.diagnostic.*;
-import com.intellij.openapi.wm.*;
-import com.intellij.uiDesigner.*;
-import com.intellij.uiDesigner.designSurface.*;
-import com.intellij.uiDesigner.quickFixes.*;
-import com.intellij.uiDesigner.radComponents.*;
-import org.jetbrains.annotations.*;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.uiDesigner.ErrorAnalyzer;
+import com.intellij.uiDesigner.ErrorInfo;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.quickFixes.QuickFixManager;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.*;
-import javax.swing.tree.*;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 
 /**

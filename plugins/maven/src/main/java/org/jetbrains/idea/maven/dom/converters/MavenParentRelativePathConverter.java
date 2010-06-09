@@ -29,13 +29,13 @@ import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
-import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
+import org.jetbrains.idea.maven.dom.MavenDomUtil;
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
+import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.model.MavenConstants;
 
 import java.util.ArrayList;
 import java.util.Collection;

@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.ProjectTopics;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
@@ -39,7 +40,6 @@ import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.openapi.Disposable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.PathUtil;
 import com.intellij.util.messages.MessageBusConnection;

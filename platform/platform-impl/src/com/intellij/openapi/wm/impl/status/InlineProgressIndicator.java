@@ -15,22 +15,27 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.ide.*;
-import com.intellij.ide.ui.*;
-import com.intellij.openapi.*;
-import com.intellij.openapi.progress.*;
-import com.intellij.openapi.progress.util.*;
-import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.wm.impl.content.*;
-import com.intellij.ui.*;
-import com.intellij.ui.components.panels.*;
-import com.intellij.util.ui.*;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.LafManager;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.progress.TaskInfo;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.ui.popup.IconButton;
+import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.wm.impl.content.GraphicsConfig;
+import com.intellij.ui.InplaceButton;
+import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.border.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class InlineProgressIndicator extends ProgressIndicatorBase implements Disposable {
 

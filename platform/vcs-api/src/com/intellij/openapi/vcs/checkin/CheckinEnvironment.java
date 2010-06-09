@@ -23,7 +23,10 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -36,7 +39,7 @@ import java.util.List;
  */
 public interface CheckinEnvironment extends VcsProviderMarker {
   @Nullable
-  RefreshableOnComponent createAdditionalOptionsPanel(CheckinProjectPanel panel);
+  RefreshableOnComponent createAdditionalOptionsPanel(CheckinProjectPanel panel, PairConsumer<Object, Object> additionalDataConsumer);
 
   @Nullable
   String getDefaultMessageFor(FilePath[] filesToCheckin);
@@ -51,7 +54,7 @@ public interface CheckinEnvironment extends VcsProviderMarker {
   List<VcsException> commit(List<Change> changes, String preparedComment);
 
   @Nullable
-  List<VcsException> commit(List<Change> changes, String preparedComment, final Object parameters);
+  List<VcsException> commit(List<Change> changes, String preparedComment, @NotNull NullableFunction<Object, Object> parametersHolder);
 
   @Nullable
   List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files);

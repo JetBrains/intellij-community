@@ -15,27 +15,37 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.openapi.*;
-import com.intellij.openapi.progress.*;
-import com.intellij.openapi.ui.*;
-import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.text.*;
-import com.intellij.openapi.wm.*;
-import com.intellij.openapi.wm.ex.*;
-import com.intellij.ui.awt.*;
-import com.intellij.ui.popup.*;
-import com.intellij.util.*;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.progress.TaskInfo;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.BalloonHandler;
+import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.CustomStatusBarWidget;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.StatusBarWidget;
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.openapi.wm.ex.StatusBarEx;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.popup.NotificationPopup;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.ui.*;
-import org.jetbrains.annotations.*;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.*;
+import javax.swing.event.HyperlinkListener;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.Random;
 
 /**
  * User: spLeaner

@@ -12,19 +12,26 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider.update;
 
-import com.intellij.openapi.application.*;
-import com.intellij.openapi.project.*;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.merge.*;
-import com.intellij.openapi.vcs.update.*;
-import com.intellij.openapi.vfs.*;
-import com.intellij.vcsUtil.*;
-import org.jetbrains.annotations.*;
-import org.zmlx.hg4idea.*;
-import org.zmlx.hg4idea.command.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.merge.MergeData;
+import com.intellij.openapi.vcs.merge.MergeProvider;
+import com.intellij.openapi.vcs.update.FileGroup;
+import com.intellij.openapi.vcs.update.UpdatedFiles;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgFile;
+import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.command.HgResolveCommand;
+import org.zmlx.hg4idea.command.HgResolveStatusEnum;
 
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public final class HgConflictResolver {
 

@@ -16,7 +16,7 @@
 
 package com.intellij.util.ui;
 
-import com.intellij.openapi.*;
+import com.intellij.openapi.Disposable;
 
 import javax.swing.*;
 import java.awt.*;

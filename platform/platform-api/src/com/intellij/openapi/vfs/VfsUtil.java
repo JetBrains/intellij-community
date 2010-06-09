@@ -680,27 +680,46 @@ public class VfsUtil {
 
   public static void processFilesRecursively(@NotNull VirtualFile root, @NotNull Processor<VirtualFile> processor,
                                              @NotNull Convertor<VirtualFile, Boolean> directoryFilter) {
-    final LinkedList<VirtualFile> queue = new LinkedList<VirtualFile>();
-    queue.add(root);
-    while (!queue.isEmpty()) {
-      final VirtualFile file = queue.removeFirst();
-      if (!processor.process(file)) return;
-      if (file.isDirectory() && directoryFilter.convert(file)) {
-        queue.addAll(Arrays.asList(file.getChildren()));
-      }
+    if (!processor.process(root)) return;
+
+    if (root.isDirectory() && directoryFilter.convert(root)) {
+      final LinkedList<VirtualFile[]> queue = new LinkedList<VirtualFile[]>();
+
+      queue.add(root.getChildren());
+
+      do {
+        final VirtualFile[] files = queue.removeFirst();
+
+        for (VirtualFile file : files) {
+          if (!processor.process(file)) return;
+          if (file.isDirectory() && directoryFilter.convert(file)) {
+            queue.add(file.getChildren());
+          }
+        }
+      } while (!queue.isEmpty());
     }
   }
 
   public static boolean processFilesRecursively(@NotNull VirtualFile root, @NotNull Processor<VirtualFile> processor) {
-    final LinkedList<VirtualFile> queue = new LinkedList<VirtualFile>();
-    queue.add(root);
-    while (!queue.isEmpty()) {
-      final VirtualFile file = queue.removeFirst();
-      if (!processor.process(file)) return false;
-      if (file.isDirectory()) {
-        queue.addAll(Arrays.asList(file.getChildren()));
-      }
+    if (!processor.process(root)) return false;
+
+    if (root.isDirectory()) {
+      final LinkedList<VirtualFile[]> queue = new LinkedList<VirtualFile[]>();
+
+      queue.add(root.getChildren());
+
+      do {
+        final VirtualFile[] files = queue.removeFirst();
+
+        for (VirtualFile file : files) {
+          if (!processor.process(file)) return false;
+          if (file.isDirectory()) {
+            queue.add(file.getChildren());
+          }
+        }
+      } while (!queue.isEmpty());
     }
+
     return true;
   }
 

@@ -101,7 +101,16 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
       final LinkedList<String> branches = new LinkedList<String>();
       // we do not use passed revision convertor since it returns just recent commit on repo
       final VcsRevisionNumber revision = GitHistoryUtils.getCurrentRevision(myProject, filePatchConvertor.convert(t));
-      GitBranch.listAsStrings(myProject, vcsRoot, true, false, branches, revision == null ? convertor.convert(t).asString() : revision.asString());
+      final String containingCommit = revision == null ? convertor.convert(t).asString() : revision.asString();
+      try {
+        GitBranch.listAsStrings(myProject, vcsRoot, true, false, branches, containingCommit);
+      }
+      catch (VcsException e) {
+        LOG.info("containingCommit = '" + containingCommit + "', current revision = '" + (revision == null ? null : revision.asString())
+                 + "', file = " + filePatchConvertor.convert(t).getPath());
+        LOG.info(e);
+        throw e;
+      }
 
       if (branches.contains(target.getName())) {
         iterator.remove();

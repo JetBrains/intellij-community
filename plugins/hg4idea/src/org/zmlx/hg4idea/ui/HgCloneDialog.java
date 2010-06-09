@@ -15,21 +15,27 @@
  */
 package org.zmlx.hg4idea.ui;
 
-import com.intellij.openapi.fileChooser.*;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
-import com.intellij.openapi.vfs.*;
-import com.intellij.uiDesigner.core.*;
-import org.zmlx.hg4idea.*;
-import org.zmlx.hg4idea.command.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.Spacer;
+import org.zmlx.hg4idea.HgVcsMessages;
+import org.zmlx.hg4idea.command.HgCommandResult;
+import org.zmlx.hg4idea.command.HgIdentifyCommand;
 
 import javax.swing.*;
-import javax.swing.event.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
-import java.awt.event.*;
-import java.io.*;
-import java.net.*;
-import java.util.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ResourceBundle;
 
 /**
  * A dialog for the mercurial clone options

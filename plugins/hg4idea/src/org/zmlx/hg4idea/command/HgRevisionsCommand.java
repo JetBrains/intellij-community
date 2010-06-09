@@ -12,13 +12,16 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
-import com.intellij.openapi.diagnostic.*;
-import com.intellij.openapi.project.*;
-import com.intellij.openapi.vfs.*;
-import org.apache.commons.lang.*;
-import org.zmlx.hg4idea.*;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.apache.commons.lang.StringUtils;
+import org.zmlx.hg4idea.HgFile;
+import org.zmlx.hg4idea.HgFileRevision;
+import org.zmlx.hg4idea.HgRevisionNumber;
 
-import java.text.*;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 abstract class HgRevisionsCommand {

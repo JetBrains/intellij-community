@@ -12,11 +12,12 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
-import com.intellij.openapi.project.*;
-import com.intellij.openapi.vfs.*;
-import org.zmlx.hg4idea.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.zmlx.hg4idea.HgFile;
 
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
 
 public class HgLogCommand extends HgRevisionsCommand {
   private boolean includeRemoved;

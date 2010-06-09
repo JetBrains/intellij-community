@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -25,6 +26,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,15 +55,17 @@ public class AutoIndentLinesHandler implements CodeInsightActionHandler {
     int line1 = editor.offsetToLogicalPosition(startOffset).line;
     int col = editor.getCaretModel().getLogicalPosition().column;
 
-    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
     try{
-      if (startOffset == endOffset) {
-        int lineStart = document.getLineStartOffset(line1);
-        if (codeStyleManager.isLineToBeIndented(file, lineStart)) {
-          codeStyleManager.adjustLineIndent(file, lineStart);
-        }
-      } else {
-        codeStyleManager.adjustLineIndent(file, new TextRange(startOffset, endOffset));
+      if (document instanceof DocumentWindow) {
+        final DocumentWindow documentWindow = (DocumentWindow)document;
+        int hostLine = documentWindow.injectedToHostLine(line1);
+        int hostStartOffset = documentWindow.injectedToHost(startOffset);
+        int hostEndOffset = documentWindow.injectedToHost(endOffset);
+        adjustLineIndent(InjectedLanguageUtil.getTopLevelFile(file), documentWindow.getDelegate(),
+                         hostStartOffset, hostEndOffset, hostLine, project);
+      }
+      else {
+        adjustLineIndent(file, document, startOffset, endOffset, line1, project);
       }
     }
     catch(IncorrectOperationException e){
@@ -83,6 +87,20 @@ public class AutoIndentLinesHandler implements CodeInsightActionHandler {
       if (!selectionEndMarker.isValid()) return;
       endOffset = selectionEndMarker.getEndOffset();
       editor.getSelectionModel().setSelection(startOffset, endOffset);
+    }
+  }
+
+  private static void adjustLineIndent(PsiFile file,
+                                Document document,
+                                int startOffset, int endOffset, int line1, Project project) {
+    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
+    if (startOffset == endOffset) {
+      int lineStart = document.getLineStartOffset(line1);
+      if (codeStyleManager.isLineToBeIndented(file, lineStart)) {
+        codeStyleManager.adjustLineIndent(file, lineStart);
+      }
+    } else {
+      codeStyleManager.adjustLineIndent(file, new TextRange(startOffset, endOffset));
     }
   }
 

@@ -17,8 +17,8 @@ package org.jetbrains.idea.maven.importing;
 
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
-import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.model.MavenProjectProblem;
+import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.util.ArrayList;
 import java.util.List;
