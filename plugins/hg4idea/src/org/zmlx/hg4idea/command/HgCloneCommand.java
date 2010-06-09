@@ -1,9 +1,11 @@
 package org.zmlx.hg4idea.command;
 
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.Project;
 
-import java.nio.charset.*;
-import java.util.*;
+import java.nio.charset.Charset;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 
 public class HgCloneCommand {
   private final Project project;

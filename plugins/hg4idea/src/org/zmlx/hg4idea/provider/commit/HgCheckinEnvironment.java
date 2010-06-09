@@ -12,17 +12,27 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider.commit;
 
-import com.intellij.openapi.application.*;
-import com.intellij.openapi.project.*;
-import com.intellij.openapi.ui.*;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vcs.checkin.*;
-import com.intellij.openapi.vcs.ui.*;
-import com.intellij.openapi.vfs.*;
-import com.intellij.vcsUtil.*;
-import org.zmlx.hg4idea.*;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
+import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.PairConsumer;
+import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgFile;
+import org.zmlx.hg4idea.HgRevisionNumber;
+import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.*;
 
 import java.util.*;
@@ -35,7 +45,8 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     this.project = project;
   }
 
-  public RefreshableOnComponent createAdditionalOptionsPanel(CheckinProjectPanel panel) {
+  public RefreshableOnComponent createAdditionalOptionsPanel(CheckinProjectPanel panel,
+                                                             PairConsumer<Object, Object> additionalDataConsumer) {
     return null;
   }
 
@@ -52,7 +63,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
   }
 
   @SuppressWarnings({"ThrowableInstanceNeverThrown"})
-  public List<VcsException> commit(List<Change> changes, String preparedComment) {
+  public List<VcsException> commit(List<Change> changes, String preparedComment, @NotNull NullableFunction<Object, Object> parametersHolder) {
     List<VcsException> exceptions = new LinkedList<VcsException>();
     for (Map.Entry<VirtualFile, Set<HgFile>> entry : getFilesByRepository(changes).entrySet()) {
 
@@ -147,8 +158,8 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
   }
 
   public List<VcsException> commit(List<Change> changes,
-    String preparedComment, Object parameters) {
-    return commit(changes, preparedComment);
+    String preparedComment) {
+    return commit(changes, preparedComment, NullableFunction.NULL);
   }
 
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {

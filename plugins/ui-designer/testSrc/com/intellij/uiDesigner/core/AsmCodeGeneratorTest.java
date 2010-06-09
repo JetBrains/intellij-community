@@ -16,7 +16,6 @@
 package com.intellij.uiDesigner.core;
 
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.compiler.FormErrorInfo;

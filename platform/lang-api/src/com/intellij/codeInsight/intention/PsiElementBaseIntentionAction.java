@@ -22,11 +22,13 @@
  */
 package com.intellij.codeInsight.intention;
 
-import com.intellij.codeInsight.intention.impl.*;
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.project.*;
-import com.intellij.psi.*;
-import org.jetbrains.annotations.*;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class PsiElementBaseIntentionAction extends BaseIntentionAction {
 

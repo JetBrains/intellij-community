@@ -12,10 +12,10 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
-import com.intellij.openapi.project.*;
-import org.zmlx.hg4idea.*;
+import com.intellij.openapi.project.Project;
+import org.zmlx.hg4idea.HgRevisionNumber;
 
-import java.util.*;
+import java.util.List;
 
 public class HgParentsCommand extends HgChangesetsCommand{
 

@@ -17,8 +17,8 @@ package org.jetbrains.idea.maven.facade.embedder;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.versioning.VersionRange;
-import org.apache.maven.project.artifact.ProjectArtifactFactory;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.project.artifact.ProjectArtifactFactory;
 
 public class CustomArtifactFactory extends ProjectArtifactFactory {
   private static final VersionRange UNKNOWN_VERSION_RANGE = VersionRange.createFromVersion("unknown");

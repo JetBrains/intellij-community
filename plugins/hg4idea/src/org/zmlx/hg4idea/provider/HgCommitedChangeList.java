@@ -1,10 +1,11 @@
 package org.zmlx.hg4idea.provider;
 
-import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vcs.versionBrowser.*;
-import org.zmlx.hg4idea.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl;
+import org.zmlx.hg4idea.HgRevisionNumber;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Date;
 
 public class HgCommitedChangeList extends CommittedChangeListImpl {
   private HgRevisionNumber revision;

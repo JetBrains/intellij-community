@@ -12,15 +12,16 @@
 // limitations under the License.
 package org.zmlx.hg4idea.action;
 
-import com.intellij.openapi.project.*;
-import com.intellij.openapi.vfs.*;
-import org.apache.commons.lang.*;
-import org.zmlx.hg4idea.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.apache.commons.lang.StringUtils;
+import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.command.*;
-import org.zmlx.hg4idea.provider.update.*;
-import org.zmlx.hg4idea.ui.*;
+import org.zmlx.hg4idea.provider.update.HgConflictResolver;
+import org.zmlx.hg4idea.ui.HgPullDialog;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
 
 public class HgMqRebaseAction extends HgAbstractGlobalAction {
 

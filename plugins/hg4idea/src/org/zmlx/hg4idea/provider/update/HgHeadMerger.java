@@ -12,18 +12,24 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider.update;
 
-import com.intellij.openapi.project.*;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.history.*;
-import com.intellij.openapi.vcs.update.*;
-import com.intellij.openapi.vfs.*;
-import org.jetbrains.annotations.*;
-import org.zmlx.hg4idea.*;
-import org.zmlx.hg4idea.command.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.update.FileGroup;
+import com.intellij.openapi.vcs.update.UpdatedFiles;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgFile;
+import org.zmlx.hg4idea.HgUtil;
+import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.command.HgChange;
+import org.zmlx.hg4idea.command.HgCommandResult;
+import org.zmlx.hg4idea.command.HgMergeCommand;
+import org.zmlx.hg4idea.command.HgStatusCommand;
 
-import java.util.*;
+import java.util.Set;
 
-import static org.zmlx.hg4idea.HgErrorHandler.*;
+import static org.zmlx.hg4idea.HgErrorHandler.ensureSuccess;
 
 final class HgHeadMerger {
 

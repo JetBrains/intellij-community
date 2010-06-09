@@ -12,10 +12,10 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider;
 
-import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vcs.history.*;
-import org.jetbrains.annotations.*;
-import org.zmlx.hg4idea.*;
+import com.intellij.openapi.vcs.changes.CurrentBinaryContentRevision;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgFile;
 
 final class HgCurrentBinaryContentRevision extends CurrentBinaryContentRevision {
   private VcsRevisionNumber revisionNumber;

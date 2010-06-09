@@ -12,8 +12,8 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.intellij.openapi.vcs.*;
-import org.zmlx.hg4idea.command.*;
+import com.intellij.openapi.vcs.VcsException;
+import org.zmlx.hg4idea.command.HgCommandResult;
 
 public abstract class HgErrorHandler {
   

@@ -12,20 +12,20 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.intellij.openapi.fileTypes.*;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.*;
-import com.intellij.vcsUtil.*;
-import org.jetbrains.annotations.*;
+import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.command.*;
 
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.util.Arrays;
 
-import static com.intellij.openapi.vcs.VcsShowConfirmationOption.Value.*;
+import static com.intellij.openapi.vcs.VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY;
+import static com.intellij.openapi.vcs.VcsShowConfirmationOption.Value.SHOW_CONFIRMATION;
 
 public class HgVirtualFileListener extends VirtualFileAdapter {
 

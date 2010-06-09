@@ -12,10 +12,10 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.intellij.openapi.vfs.*;
-import org.testng.*;
-import org.testng.annotations.*;
-import org.zmlx.hg4idea.command.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+import org.zmlx.hg4idea.command.HgResolveCommand;
 
 public class HgResolveConflictTestCase extends HgTestCase{
 

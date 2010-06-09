@@ -400,7 +400,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     return new WriteCommandAction<List<IntentionAction>>(myProjectFixture.getProject()) {
       protected void run(final Result<List<IntentionAction>> result) throws Exception {
-        configureByFilesInner(filePaths);
+        if (filePaths.length > 0) {
+          configureByFilesInner(filePaths);
+        }
         result.setResult(getAvailableIntentions());
       }
     }.execute().getResultObject();

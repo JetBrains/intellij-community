@@ -12,15 +12,19 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.project.*;
-import com.intellij.openapi.vfs.*;
-import com.intellij.vcsUtil.*;
-import org.zmlx.hg4idea.command.*;
-import org.zmlx.hg4idea.ui.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
+import org.zmlx.hg4idea.command.HgTagBranchCommand;
+import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
+import org.zmlx.hg4idea.ui.HgCurrentBranchStatus;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
 
 class HgCurrentBranchStatusUpdater implements HgUpdater {
 

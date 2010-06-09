@@ -15,16 +15,17 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.*;
-import com.intellij.codeInsight.intention.*;
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.project.*;
+import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.*;
-import com.intellij.psi.javadoc.*;
-import com.intellij.psi.util.*;
-import com.intellij.util.*;
-import org.jetbrains.annotations.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max

@@ -22,12 +22,12 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.*;
-import com.intellij.codeInsight.intention.*;
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.project.*;
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NotNull;
 
 public class AddNullableNotNullAnnotationFix extends AddAnnotationFix {
   public AddNullableNotNullAnnotationFix(final String annotation, final String annotationToRemove) {

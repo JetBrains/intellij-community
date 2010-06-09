@@ -12,14 +12,15 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
-import com.intellij.openapi.application.*;
-import com.intellij.openapi.project.*;
-import com.intellij.openapi.vfs.*;
-import com.intellij.vcsUtil.*;
-import org.zmlx.hg4idea.ui.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
+import org.zmlx.hg4idea.ui.HgUsernamePasswordDialog;
 
-import java.net.*;
-import java.util.*;
+import java.net.URISyntaxException;
+import java.util.List;
 
 /**
  * Base class for any command interacting with a remote repository and which needs authentication.

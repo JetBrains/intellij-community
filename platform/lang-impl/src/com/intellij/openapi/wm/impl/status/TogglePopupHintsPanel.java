@@ -16,28 +16,34 @@
 
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.codeInsight.daemon.*;
-import com.intellij.codeInsight.daemon.impl.*;
-import com.intellij.codeInsight.daemon.impl.analysis.*;
-import com.intellij.ide.*;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.fileEditor.ex.*;
-import com.intellij.openapi.project.*;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.wm.*;
-import com.intellij.profile.codeInspection.*;
-import com.intellij.psi.*;
-import com.intellij.ui.*;
-import com.intellij.ui.awt.*;
-import com.intellij.util.*;
-import org.jetbrains.annotations.*;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.HectorComponent;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.StatusBarWidget;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.ui.UIBundle;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.MouseEvent;
 
 public class TogglePopupHintsPanel implements StatusBarWidget, StatusBarWidget.IconPresentation {
   private static final Icon INSPECTIONS_ICON = IconLoader.getIcon("/ide/hectorOn.png");

@@ -15,11 +15,11 @@
  */
 package com.intellij.refactoring.extractSuperclass;
 
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.refactoring.util.*;
-import com.intellij.refactoring.util.classMembers.*;
-import com.intellij.util.*;
+import com.intellij.refactoring.util.DocCommentPolicy;
+import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.util.IncorrectOperationException;
 
 /**
  * @author dsl

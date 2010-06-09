@@ -22,6 +22,7 @@ import com.intellij.lang.ant.psi.AntTarget;
 import com.intellij.lang.ant.psi.AntTask;
 import com.intellij.lang.ant.psi.impl.reference.AntPropertyReference;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -138,12 +139,20 @@ public class AntResolveTest extends ResolveTestCase {
     assertTrue(elem == null);
   }
 
-  public void testEnvProperty() throws Exception {
-    doPropertyTest();
+  public void testEnvPropertyW() throws Exception {
+    if (SystemInfo.isWindows) doPropertyTest();
   }
 
-  public void testEnvProperty1() throws Exception {
-    doPropertyTest();
+  public void testEnvPropertyU() throws Exception {
+    if (SystemInfo.isUnix) doPropertyTest();
+  }
+
+  public void testEnvProperty1W() throws Exception {
+    if (SystemInfo.isWindows) doPropertyTest();
+  }
+
+  public void testEnvProperty1U() throws Exception {
+    if (SystemInfo.isUnix) doPropertyTest();
   }
 
   public void testNonExistingEnvProperty() throws Exception {

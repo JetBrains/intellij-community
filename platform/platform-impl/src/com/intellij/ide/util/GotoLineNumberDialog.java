@@ -15,11 +15,13 @@
  */
 package com.intellij.ide.util;
 
-import com.intellij.ide.*;
-import com.intellij.openapi.application.ex.*;
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.project.*;
-import com.intellij.openapi.ui.*;
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 
 import javax.swing.*;
 import java.awt.*;

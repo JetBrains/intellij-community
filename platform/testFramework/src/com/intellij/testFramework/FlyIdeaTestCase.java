@@ -2,6 +2,7 @@ package com.intellij.testFramework;
 
 import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
@@ -9,6 +10,7 @@ import junit.framework.TestCase;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.Future;
 
 public abstract class FlyIdeaTestCase extends TestCase {
 
@@ -16,7 +18,13 @@ public abstract class FlyIdeaTestCase extends TestCase {
   private File myTempDir;
 
   protected void setUp() throws Exception {
-    MockApplication app = new MockApplication();
+    final Application old = ApplicationManagerEx.getApplication();
+    MockApplication app = new MockApplication() {
+      @Override
+      public Future<?> executeOnPooledThread(Runnable action) {
+        return old != null ? old.executeOnPooledThread(action) : super.executeOnPooledThread(action);
+      }
+    };
     myRootDisposable = Disposer.newDisposable();
     ApplicationManagerEx.setApplication(app, myRootDisposable);
 

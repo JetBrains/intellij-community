@@ -15,14 +15,18 @@
  */
 package com.intellij.refactoring.extractInterface;
 
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.refactoring.*;
-import com.intellij.refactoring.classMembers.*;
-import com.intellij.refactoring.extractSuperclass.*;
-import com.intellij.refactoring.ui.*;
-import com.intellij.refactoring.util.*;
-import com.intellij.refactoring.util.classMembers.*;
+import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.classMembers.DelegatingMemberInfoModel;
+import com.intellij.refactoring.classMembers.MemberInfoBase;
+import com.intellij.refactoring.extractSuperclass.ExtractSuperBaseDialog;
+import com.intellij.refactoring.extractSuperclass.ExtractSuperBaseProcessor;
+import com.intellij.refactoring.ui.MemberSelectionPanel;
+import com.intellij.refactoring.util.DocCommentPolicy;
+import com.intellij.refactoring.util.classMembers.MemberInfo;
 
 import javax.swing.*;
 import java.awt.*;

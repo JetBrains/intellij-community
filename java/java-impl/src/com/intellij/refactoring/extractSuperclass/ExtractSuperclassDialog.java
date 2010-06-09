@@ -15,18 +15,25 @@
  */
 package com.intellij.refactoring.extractSuperclass;
 
-import com.intellij.openapi.project.*;
-import com.intellij.psi.*;
-import com.intellij.refactoring.*;
-import com.intellij.refactoring.classMembers.*;
-import com.intellij.refactoring.memberPullUp.*;
-import com.intellij.refactoring.ui.*;
-import com.intellij.refactoring.util.*;
-import com.intellij.refactoring.util.classMembers.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.classMembers.MemberInfoChange;
+import com.intellij.refactoring.classMembers.MemberInfoModel;
+import com.intellij.refactoring.memberPullUp.PullUpHelper;
+import com.intellij.refactoring.ui.MemberSelectionPanel;
+import com.intellij.refactoring.util.DocCommentPolicy;
+import com.intellij.refactoring.util.classMembers.InterfaceContainmentVerifier;
+import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.refactoring.util.classMembers.UsesAndInterfacesDependencyMemberInfoModel;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
 
 class ExtractSuperclassDialog extends ExtractSuperBaseDialog {

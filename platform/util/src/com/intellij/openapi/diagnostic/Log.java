@@ -16,7 +16,8 @@
 package com.intellij.openapi.diagnostic;
 
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This is a very primitive fast logging class, primary for race-conditions debugging 

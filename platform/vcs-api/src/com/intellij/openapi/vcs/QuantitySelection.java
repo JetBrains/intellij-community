@@ -15,7 +15,8 @@
  */
 package com.intellij.openapi.vcs;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
 public class QuantitySelection<T> implements SelectionManipulation<T>, SelectionState<T> {
   private final Group<T> mySelected;

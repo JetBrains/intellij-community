@@ -12,10 +12,11 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
-import com.intellij.openapi.util.text.*;
+import com.intellij.openapi.util.text.LineTokenizer;
 
-import java.io.*;
-import java.util.*;
+import java.io.StringWriter;
+import java.util.Arrays;
+import java.util.List;
 
 public final class HgCommandResult {
 

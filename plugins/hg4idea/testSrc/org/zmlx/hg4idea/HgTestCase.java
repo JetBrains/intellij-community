@@ -12,13 +12,16 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.intellij.execution.process.*;
-import com.intellij.openapi.vcs.*;
-import com.intellij.testFramework.fixtures.*;
-import org.testng.*;
-import org.testng.annotations.*;
+import com.intellij.execution.process.ProcessOutput;
+import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.TempDirTestFixture;
+import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 
 public abstract class HgTestCase extends AbstractHgTestCase {
 

@@ -15,22 +15,28 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.ide.*;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.*;
-import com.intellij.openapi.editor.*;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.project.*;
-import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.encoding.*;
-import com.intellij.openapi.wm.*;
-import com.intellij.util.*;
-import org.jetbrains.annotations.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.encoding.ChooseFileEncodingAction;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.StatusBarWidget;
+import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.awt.event.*;
-import java.nio.charset.*;
+import java.awt.event.MouseEvent;
+import java.nio.charset.Charset;
 
 /**
  * @author cdr

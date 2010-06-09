@@ -43,6 +43,7 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
@@ -247,7 +248,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     if (element == null && offset != file.getTextLength()) {
       return offset;
     }
-    if (element instanceof PsiComment && insideElement(element, offset)) {
+    if (element instanceof PsiComment && insideElement(element, offset) && !containsInjections(element)) {
       return CharArrayUtil.shiftForward(file.getViewProvider().getContents(), offset, " \t");
     }
     final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
@@ -272,6 +273,10 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     else {
       return offset;
     }
+  }
+
+  private static boolean containsInjections(PsiElement element) {
+    return element instanceof PsiLanguageInjectionHost && InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)element);
   }
 
   @Nullable

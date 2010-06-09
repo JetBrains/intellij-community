@@ -16,7 +16,6 @@
 package org.jetbrains.idea.maven.facade;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.*;
 
 import java.io.File;
@@ -25,7 +24,6 @@ import java.rmi.RemoteException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public interface MavenFacadeEmbedder extends Remote {
   void customizeForResolve(MavenFacadeConsole console, MavenFacadeProgressIndicator process) throws RemoteException;

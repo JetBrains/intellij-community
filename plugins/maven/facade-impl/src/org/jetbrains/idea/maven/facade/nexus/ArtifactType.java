@@ -15,8 +15,6 @@
  */
 package org.jetbrains.idea.maven.facade.nexus;
 
-import org.jetbrains.annotations.Nullable;
-
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;

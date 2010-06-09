@@ -15,23 +15,31 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.ide.*;
-import com.intellij.ide.util.*;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.command.*;
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.event.*;
-import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.fileEditor.ex.*;
-import com.intellij.openapi.project.*;
-import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.wm.*;
-import com.intellij.ui.*;
-import com.intellij.util.*;
-import org.jetbrains.annotations.*;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.util.GotoLineNumberDialog;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.event.CaretEvent;
+import com.intellij.openapi.editor.event.CaretListener;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.StatusBarWidget;
+import com.intellij.ui.UIBundle;
+import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.MouseEvent;
 
 public class PositionPanel implements StatusBarWidget, StatusBarWidget.TextPresentation, CaretListener {
   private String myText;

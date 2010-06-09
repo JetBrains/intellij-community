@@ -17,23 +17,34 @@
 
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.application.*;
-import com.intellij.openapi.components.*;
-import com.intellij.openapi.diagnostic.*;
-import com.intellij.openapi.progress.*;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.*;
-import com.intellij.openapi.vcs.annotate.*;
-import org.jdom.*;
-import org.jetbrains.idea.svn.dialogs.*;
-import org.jetbrains.idea.svn.update.*;
-import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.auth.*;
-import org.tmatesoft.svn.core.internal.wc.*;
-import org.tmatesoft.svn.core.wc.*;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.annotate.AnnotationListener;
+import org.jdom.Attribute;
+import org.jdom.DataConversionException;
+import org.jdom.Element;
+import org.jetbrains.idea.svn.dialogs.SvnAuthenticationProvider;
+import org.jetbrains.idea.svn.dialogs.SvnInteractiveAuthenticationProvider;
+import org.jetbrains.idea.svn.update.MergeRootInfo;
+import org.jetbrains.idea.svn.update.UpdateRootInfo;
+import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.wc.ISVNAuthenticationStorage;
+import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.wc.ISVNOptions;
+import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
-import java.io.*;
+import java.io.File;
+import java.io.FilenameFilter;
 import java.util.*;
 
 public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {

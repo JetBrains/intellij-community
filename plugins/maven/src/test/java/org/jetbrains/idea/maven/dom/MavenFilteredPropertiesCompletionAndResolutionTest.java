@@ -21,9 +21,6 @@ import com.intellij.psi.PsiManager;
 import org.jetbrains.idea.maven.dom.model.MavenDomProfilesModel;
 import org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReference;
 
-import java.awt.*;
-import java.io.IOException;
-
 public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDomTestCase {
   public void testBasic() throws Exception {
     createProjectSubDir("res");

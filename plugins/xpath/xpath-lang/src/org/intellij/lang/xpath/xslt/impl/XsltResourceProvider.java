@@ -16,8 +16,9 @@
 
 package org.intellij.lang.xpath.xslt.impl;
 
-import com.intellij.javaee.*;
-import org.intellij.lang.xpath.xslt.*;
+import com.intellij.javaee.ResourceRegistrar;
+import com.intellij.javaee.StandardResourceProvider;
+import org.intellij.lang.xpath.xslt.XsltSupport;
 
 /**
  * @author Dmitry Avdeev

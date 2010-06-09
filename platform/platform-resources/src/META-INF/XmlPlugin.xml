@@ -29,6 +29,8 @@
 
     <extensionPoint name="webBrowserUrlProvider"
                     interface="com.intellij.ide.browsers.WebBrowserUrlProvider"/>
+    <extensionPoint name="remoteFileUpdater"
+                    interface="com.intellij.ide.browsers.RemoteFileUpdater"/>
 
     <extensionPoint name="standardResourceProvider" interface="com.intellij.javaee.StandardResourceProvider"/>
 
@@ -229,7 +231,7 @@
 
     <psi.includeHandler implementation="com.intellij.xml.util.XmlIncludeHandler"/>
 
-    <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.EnterBetweenXmlTagsHandler"/>
+    <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.EnterBetweenXmlTagsHandler" id="xmlEnter"/>
 
     <declarationRangeHandler key="com.intellij.psi.xml.XmlTag"
                              implementationClass="com.intellij.codeInsight.hint.TagDeclarationRangeHandler"/>
