@@ -12,12 +12,15 @@
 // limitations under the License.
 package org.zmlx.hg4idea.ui;
 
-import com.intellij.uiDesigner.core.*;
-import org.zmlx.hg4idea.provider.update.*;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.Spacer;
+import org.zmlx.hg4idea.provider.update.HgUpdater;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
 /**
  * Configuration dialog for the update process.

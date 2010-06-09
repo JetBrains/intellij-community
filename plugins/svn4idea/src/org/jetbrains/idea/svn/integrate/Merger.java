@@ -15,19 +15,31 @@
  */
 package org.jetbrains.idea.svn.integrate;
 
-import com.intellij.openapi.progress.*;
-import com.intellij.openapi.project.*;
-import com.intellij.openapi.vcs.versionBrowser.*;
-import com.intellij.util.*;
-import com.intellij.util.messages.*;
-import org.jetbrains.annotations.*;
-import org.jetbrains.idea.svn.*;
-import org.jetbrains.idea.svn.update.*;
-import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.wc.*;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.util.NotNullFunction;
+import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnConfiguration;
+import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.update.UpdateEventHandler;
+import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.wc.SVNDiffClient;
+import org.tmatesoft.svn.core.wc.SVNDiffOptions;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 public class Merger implements IMerger {
   protected final List<CommittedChangeList> myChangeLists;

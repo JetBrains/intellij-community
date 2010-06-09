@@ -15,29 +15,40 @@
  */
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.diagnostic.*;
-import com.intellij.ide.*;
-import com.intellij.ide.actions.*;
-import com.intellij.ide.plugins.*;
-import com.intellij.ide.ui.*;
-import com.intellij.ide.ui.customization.*;
-import com.intellij.notification.impl.*;
+import com.intellij.diagnostic.IdeMessagePanel;
+import com.intellij.diagnostic.MessagePool;
+import com.intellij.ide.AppLifecycleListener;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.actions.CustomizeUIAction;
+import com.intellij.ide.actions.ViewToolbarAction;
+import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.ide.ui.customization.CustomActionsSchema;
+import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.*;
-import com.intellij.openapi.diagnostic.*;
-import com.intellij.openapi.extensions.*;
-import com.intellij.openapi.keymap.*;
-import com.intellij.openapi.project.*;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.wm.*;
-import com.intellij.openapi.wm.impl.status.*;
-import com.intellij.openapi.wm.impl.welcomeScreen.*;
-import com.intellij.ui.*;
-import org.jetbrains.annotations.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.wm.CustomStatusBarWidget;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.StatusBarCustomComponentFactory;
+import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
+import com.intellij.openapi.wm.impl.status.MemoryUsagePanel;
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreen;
+import com.intellij.ui.PopupHandler;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**

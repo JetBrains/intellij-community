@@ -15,18 +15,22 @@
  */
 package com.intellij.ui.components.labels;
 
-import com.intellij.openapi.application.*;
-import com.intellij.openapi.project.*;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.wm.*;
-import com.intellij.ui.*;
-import com.intellij.util.ui.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.ui.UI;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.border.*;
+import javax.swing.border.Border;
 import java.awt.*;
-import java.awt.event.*;
-import java.util.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionListener;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author kir

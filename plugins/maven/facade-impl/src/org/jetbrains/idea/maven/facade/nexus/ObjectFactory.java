@@ -16,7 +16,6 @@
  */
 package org.jetbrains.idea.maven.facade.nexus;
 
-import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 
 import javax.xml.bind.annotation.XmlRegistry;

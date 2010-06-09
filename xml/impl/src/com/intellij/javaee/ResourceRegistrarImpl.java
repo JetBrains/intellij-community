@@ -16,13 +16,16 @@
 
 package com.intellij.javaee;
 
-import com.intellij.openapi.application.*;
-import com.intellij.openapi.util.io.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.HashMap;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
-import java.net.*;
-import java.util.*;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Dmitry Avdeev

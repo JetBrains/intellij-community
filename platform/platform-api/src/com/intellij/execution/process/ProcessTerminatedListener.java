@@ -15,12 +15,12 @@
  */
 package com.intellij.execution.process;
 
-import com.intellij.ide.*;
-import com.intellij.openapi.application.*;
-import com.intellij.openapi.project.*;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.wm.*;
-import org.jetbrains.annotations.*;
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.wm.StatusBar;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author dyoma

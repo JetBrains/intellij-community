@@ -16,11 +16,14 @@
 
 package com.intellij.util.lang;
 
-import org.jetbrains.annotations.*;
-import sun.misc.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
+import sun.misc.Resource;
 
-import java.io.*;
-import java.net.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.*;
 
 public class UrlClassLoader extends ClassLoader {

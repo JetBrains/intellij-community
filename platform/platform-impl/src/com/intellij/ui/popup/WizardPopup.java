@@ -88,7 +88,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     init(project, scrollPane, getPreferredFocusableComponent(), true, true, true, true, null,
          false, aStep.getTitle(), null, true, null, false, null, null, null, false, null, true, false, true, null, 0f,
-         null, true, false, new Component[0], null, true, Collections.<Pair<ActionListener, KeyStroke>>emptyList(), null, null);
+         null, true, false, new Component[0], null, true, Collections.<Pair<ActionListener, KeyStroke>>emptyList(), null, null, false);
 
     registerAction("disposeAll", KeyEvent.VK_ESCAPE, InputEvent.SHIFT_MASK, new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
@@ -418,6 +418,15 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
       super.setFinalRunnable(runnable);
     } else {
       getParent().setFinalRunnable(runnable);
+    }
+  }
+
+  @Override
+  public void setOk(boolean ok) {
+    if (getParent() == null) {
+      super.setOk(ok);
+    } else {
+      getParent().setOk(ok);
     }
   }
 }

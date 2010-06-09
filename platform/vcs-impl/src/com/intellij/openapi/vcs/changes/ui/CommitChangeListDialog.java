@@ -90,6 +90,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private String myLastSelectedListName;
   private CommitLegendPanel.ChangeInfoCalculator myChangesInfoCalculator;
 
+  private final PseudoMap<Object, Object> myAdditionalData;
+
   private static class MyUpdateButtonsRunnable implements Runnable {
     private CommitChangeListDialog myDialog;
 
@@ -191,6 +193,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myShowVcsCommit = showVcsCommit;
     myVcs = singleVcs;
     myListComments = new HashMap<String, String>();
+    myAdditionalData = new PseudoMap<Object, Object>();
 
     if (!myShowVcsCommit && ((myExecutors == null) || myExecutors.size() == 0)) {
       throw new IllegalArgumentException("nothing found to execute commit with");
@@ -270,7 +273,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     for (AbstractVcs vcs : vcses) {
       final CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
       if (checkinEnvironment != null) {
-        final RefreshableOnComponent options = checkinEnvironment.createAdditionalOptionsPanel(this);
+        final RefreshableOnComponent options = checkinEnvironment.createAdditionalOptionsPanel(this, myAdditionalData);
         if (options != null) {
           JPanel vcsOptions = new JPanel(new BorderLayout());
           vcsOptions.add(options.getComponent(), BorderLayout.CENTER);
@@ -598,7 +601,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         FileDocumentManager.getInstance().saveAllDocuments();
 
         for (CheckinHandler handler : myHandlers) {
-          final CheckinHandler.ReturnResult result = handler.beforeCheckin(executor);
+          final CheckinHandler.ReturnResult result = handler.beforeCheckin(executor, myAdditionalData);
           if (result == CheckinHandler.ReturnResult.COMMIT) continue;
           if (result == CheckinHandler.ReturnResult.CANCEL) {
             restartUpdate();
@@ -718,17 +721,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     super.doCancelAction();
   }
 
-  private Map<String, Object> getAdditionalDataForSubmit() {
-    final Map<String, Object> result = new HashMap<String, Object>();
-    for (Map.Entry<String, CheckinChangeListSpecificComponent> entry : myCheckinChangeListSpecificComponents.entrySet()) {
-      final Object data = entry.getValue().getDataForCommit();
-      if (data != null) {
-        result.put(entry.getKey(), data);
-      }
-    }
-    return result;
-  }
-
   private void doCommit() {
     final CommitHelper helper = new CommitHelper(
       myProject,
@@ -737,7 +729,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       myActionName,
       getCommitMessage(),
       myHandlers,
-      myAllOfDefaultChangeListChangesIncluded, false, getAdditionalDataForSubmit());
+      myAllOfDefaultChangeListChangesIncluded, false, myAdditionalData);
 
     if (myIsAlien) {
       helper.doAlienCommit(myVcs);

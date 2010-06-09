@@ -23,8 +23,8 @@ import org.jetbrains.idea.maven.model.MavenId;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.awt.event.KeyEvent;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.util.Map;
 
 public class MavenArtifactSearchDialog extends DialogWrapper {

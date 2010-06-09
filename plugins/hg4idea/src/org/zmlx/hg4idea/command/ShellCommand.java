@@ -12,11 +12,11 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
-import com.intellij.openapi.diagnostic.*;
+import com.intellij.openapi.diagnostic.Logger;
 
 import java.io.*;
-import java.nio.charset.*;
-import java.util.*;
+import java.nio.charset.Charset;
+import java.util.List;
 
 
 final class ShellCommand {

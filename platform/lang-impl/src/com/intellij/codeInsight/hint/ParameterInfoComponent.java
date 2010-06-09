@@ -16,17 +16,20 @@
 
 package com.intellij.codeInsight.hint;
 
-import com.intellij.lang.parameterInfo.*;
-import com.intellij.openapi.editor.*;
-import com.intellij.psi.*;
-import com.intellij.ui.*;
-import com.intellij.util.ui.*;
-import org.jetbrains.annotations.*;
+import com.intellij.lang.parameterInfo.ParameterInfoHandler;
+import com.intellij.lang.parameterInfo.ParameterInfoUIContextEx;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.PsiElement;
+import com.intellij.ui.SideBorder;
+import com.intellij.ui.StrikeoutLabel;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.border.*;
+import javax.swing.border.Border;
+import javax.swing.border.LineBorder;
 import java.awt.*;
-import java.util.*;
+import java.util.EnumSet;
 
 class ParameterInfoComponent extends JPanel{
   private final Object[] myObjects;

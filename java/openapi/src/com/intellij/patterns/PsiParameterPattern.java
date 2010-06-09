@@ -36,9 +36,12 @@ public class PsiParameterPattern extends PsiModifierListOwnerPattern<PsiParamete
         PsiElement scope = t.getDeclarationScope();
         if (!(scope instanceof PsiMethod)) return false;
         PsiMethod psiMethod = (PsiMethod)scope;
+        // performance: check method pattern first, esp. name
+        if (!pattern.getCondition().accepts(psiMethod, context)) return false;
+
         final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
         if (index < 0 || index >= parameters.length || !t.equals(parameters[index])) return false;
-        return pattern.getCondition().accepts(psiMethod, context);
+        return true;
       }
     });
   }

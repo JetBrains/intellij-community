@@ -12,22 +12,27 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider.update;
 
-import com.intellij.openapi.application.*;
-import com.intellij.openapi.options.*;
-import com.intellij.openapi.progress.*;
-import com.intellij.openapi.project.*;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.*;
-import com.intellij.openapi.vfs.*;
-import org.apache.commons.lang.*;
-import org.jetbrains.annotations.*;
-import org.zmlx.hg4idea.*;
-import org.zmlx.hg4idea.command.*;
-import org.zmlx.hg4idea.ui.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.apache.commons.lang.StringUtils;
+import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgRevisionNumber;
+import org.zmlx.hg4idea.HgVcsMessages;
+import org.zmlx.hg4idea.command.HgMergeCommand;
+import org.zmlx.hg4idea.command.HgTagBranch;
+import org.zmlx.hg4idea.ui.HgIntegrateDialog;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 
 public class HgIntegrateEnvironment implements UpdateEnvironment {
 

@@ -16,10 +16,21 @@
 package com.intellij.openapi.ui.popup;
 
 public class LightweightWindowEvent {
+
   private final LightweightWindow myWindow;
+  private boolean myOk;
 
   public LightweightWindowEvent(LightweightWindow window) {
+    this(window, false);
+  }
+
+  public LightweightWindowEvent(LightweightWindow window, boolean isOk) {
     myWindow = window;
+    myOk = isOk;
+  }
+
+  public boolean isOk() {
+    return myOk;
   }
 
   public Balloon asBalloon() {

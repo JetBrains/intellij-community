@@ -29,19 +29,22 @@ import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.PairConsumer;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.ArrayList;
 
 /**
  * author: lesya
@@ -54,7 +57,8 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
     myProject = project;
   }
 
-  public RefreshableOnComponent createAdditionalOptionsPanel(final CheckinProjectPanel panel) {
+  public RefreshableOnComponent createAdditionalOptionsPanel(final CheckinProjectPanel panel,
+                                                             PairConsumer<Object, Object> additionalDataConsumer) {
     return null;
     // TODO: shall these options be available elsewhere?
     /*return new CvsProjectAdditionalPanel(panel, myProject);*/
@@ -78,7 +82,7 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
     return CvsBundle.message("operation.name.checkin.project");
   }
 
-  public List<VcsException> commit(List<Change> changes, String preparedComment) {
+  public List<VcsException> commit(List<Change> changes, String preparedComment, @NotNull NullableFunction<Object, Object> parametersHolder) {
     final Collection<FilePath> filesList = ChangesUtil.getPaths(changes);
     FilePath[] files = filesList.toArray(new FilePath[filesList.size()]);
     final CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
@@ -112,8 +116,8 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
     return executor.getResult().getErrorsAndWarnings();
   }
 
-  public List<VcsException> commit(List<Change> changes, String preparedComment, Object parameters) {
-    return commit(changes, preparedComment);
+  public List<VcsException> commit(List<Change> changes, String preparedComment) {
+    return commit(changes, preparedComment, NullableFunction.NULL);
   }
 
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {

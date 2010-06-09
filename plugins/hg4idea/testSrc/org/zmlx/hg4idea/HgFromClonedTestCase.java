@@ -12,15 +12,17 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vfs.*;
-import com.intellij.testFramework.fixtures.*;
-import com.intellij.vcsUtil.*;
-import org.testng.annotations.*;
+import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.TempDirTestFixture;
+import com.intellij.vcsUtil.VcsUtil;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 
-import java.io.*;
+import java.io.File;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertTrue;
 
 public class HgFromClonedTestCase extends AbstractHgTestCase {
 

@@ -12,11 +12,11 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.intellij.openapi.vfs.*;
-import org.testng.*;
-import org.testng.annotations.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
-import java.io.*;
+import java.io.File;
 
 public class HgDeleteTestCase extends HgTestCase {
 

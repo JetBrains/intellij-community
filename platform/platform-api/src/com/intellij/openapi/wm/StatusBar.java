@@ -15,12 +15,14 @@
  */
 package com.intellij.openapi.wm;
 
-import com.intellij.openapi.*;
-import com.intellij.openapi.application.*;
-import com.intellij.openapi.project.*;
-import com.intellij.openapi.startup.*;
-import com.intellij.util.messages.*;
-import org.jetbrains.annotations.*;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
+import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;

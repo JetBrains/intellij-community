@@ -12,20 +12,26 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider.update;
 
-import com.intellij.openapi.application.*;
-import com.intellij.openapi.progress.*;
-import com.intellij.openapi.project.*;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.update.*;
-import com.intellij.openapi.vfs.*;
-import org.apache.commons.lang.*;
-import org.jetbrains.annotations.*;
-import org.zmlx.hg4idea.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.update.FileGroup;
+import com.intellij.openapi.vcs.update.UpdatedFiles;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.apache.commons.lang.StringUtils;
+import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgRevisionNumber;
+import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
-import static org.zmlx.hg4idea.HgErrorHandler.*;
+import static org.zmlx.hg4idea.HgErrorHandler.ensureSuccess;
 
 public class HgRegularUpdater implements HgUpdater {
 

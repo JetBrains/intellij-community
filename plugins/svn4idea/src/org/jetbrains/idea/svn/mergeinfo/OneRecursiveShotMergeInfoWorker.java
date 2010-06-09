@@ -15,18 +15,23 @@
  */
 package org.jetbrains.idea.svn.mergeinfo;
 
-import com.intellij.openapi.project.*;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.*;
-import com.intellij.util.*;
-import org.jetbrains.idea.svn.*;
-import org.jetbrains.idea.svn.dialogs.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.PairProcessor;
+import org.jetbrains.idea.svn.SvnConfiguration;
+import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.dialogs.WCInfo;
 import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.internal.util.*;
-import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
+import org.tmatesoft.svn.core.wc.SVNPropertyData;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNWCClient;
 
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.util.Map;
 
 public class OneRecursiveShotMergeInfoWorker implements MergeInfoWorker {
   private final Project myProject;

@@ -302,6 +302,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
 
     if (myListModel.getSize() == 0) {
       setFinalRunnable(myStep.getFinalRunnable());
+      setOk(true);
       disposeAllParents(e);
       setIndexForShowingChild(-1);
       return true;
@@ -337,6 +338,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
       return false;
     }
     else {
+      setOk(true);
       setFinalRunnable(myStep.getFinalRunnable());
       disposeAllParents(e);
       setIndexForShowingChild(-1);

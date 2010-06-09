@@ -15,18 +15,25 @@
  */
 package org.jetbrains.idea.svn.update;
 
-import com.intellij.openapi.progress.*;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.update.*;
-import com.intellij.openapi.wm.*;
-import org.jetbrains.annotations.*;
-import org.jetbrains.idea.svn.*;
-import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.internal.wc.*;
-import org.tmatesoft.svn.core.wc.*;
-import org.tmatesoft.svn.util.*;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.update.FileGroup;
+import com.intellij.openapi.vcs.update.UpdatedFiles;
+import com.intellij.openapi.wm.StatusBar;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnFileUrlMapping;
+import org.jetbrains.idea.svn.SvnVcs;
+import org.tmatesoft.svn.core.SVNCancelException;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.SVNEvent;
+import org.tmatesoft.svn.core.wc.SVNEventAction;
+import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.util.SVNLogType;
 
-import java.io.*;
+import java.io.File;
 
 /**
  * @author lesya

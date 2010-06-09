@@ -15,18 +15,22 @@
  */
 package com.intellij.diagnostic;
 
-import com.intellij.concurrency.*;
-import com.intellij.ide.util.*;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.wm.*;
-import com.intellij.ui.*;
-import com.intellij.ui.popup.*;
-import org.jetbrains.annotations.*;
+import com.intellij.concurrency.JobScheduler;
+import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.wm.CustomStatusBarWidget;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.ui.LightColors;
+import com.intellij.ui.popup.NotificationPopup;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
-import java.util.concurrent.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.concurrent.TimeUnit;
 
 public class IdeMessagePanel extends JPanel implements MessagePoolListener, CustomStatusBarWidget {
   private final IconPane myIdeFatal;

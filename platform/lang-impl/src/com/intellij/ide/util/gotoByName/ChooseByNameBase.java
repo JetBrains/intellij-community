@@ -17,6 +17,7 @@
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.Patches;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.ide.ui.UISettings;
@@ -31,6 +32,8 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
@@ -345,7 +348,17 @@ public abstract class ChooseByNameBase{
         public void focusLost(final FocusEvent e) {
           myHideAlarm.addRequest(new Runnable() {
             public void run() {
-              if (!JBPopupFactory.getInstance().isChildPopupFocused(e.getComponent())) {
+              JBPopup popup = JBPopupFactory.getInstance().getChildFocusedPopup(e.getComponent());
+              if (popup != null) {
+                popup.addListener(new JBPopupListener.Adapter() {
+                  @Override
+                  public void onClosed(LightweightWindowEvent event) {
+                    if (event.isOk()) {
+                      hideHint();
+                    }
+                  }
+                });
+              } else {
                 hideHint();
               }
             }

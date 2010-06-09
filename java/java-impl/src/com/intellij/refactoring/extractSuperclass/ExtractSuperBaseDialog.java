@@ -15,24 +15,29 @@
  */
 package com.intellij.refactoring.extractSuperclass;
 
-import com.intellij.ide.util.*;
-import com.intellij.openapi.command.*;
-import com.intellij.openapi.help.*;
-import com.intellij.openapi.project.*;
-import com.intellij.openapi.roots.*;
-import com.intellij.openapi.util.text.*;
-import com.intellij.openapi.vfs.*;
+import com.intellij.ide.util.PackageUtil;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.refactoring.*;
-import com.intellij.refactoring.ui.*;
-import com.intellij.refactoring.util.*;
-import com.intellij.refactoring.util.classMembers.*;
-import com.intellij.ui.*;
-import com.intellij.util.*;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.ui.DocCommentPanel;
+import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
+import com.intellij.refactoring.ui.RefactoringDialog;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.ui.RecentsManager;
+import com.intellij.util.IncorrectOperationException;
 
 import javax.swing.*;
-import java.awt.event.*;
-import java.util.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.util.List;
 
 /**
  * @author dsl

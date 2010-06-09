@@ -15,8 +15,6 @@
  */
 package org.jetbrains.idea.maven.model;
 
-import com.intellij.util.SmartList;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;

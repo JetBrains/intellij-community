@@ -12,22 +12,33 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider;
 
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vcs.changes.committed.*;
-import com.intellij.openapi.vcs.history.*;
-import com.intellij.openapi.vcs.versionBrowser.*;
-import com.intellij.openapi.vfs.*;
-import com.intellij.util.*;
-import com.intellij.vcsUtil.*;
-import org.apache.commons.lang.*;
-import org.jetbrains.annotations.*;
-import org.zmlx.hg4idea.*;
-import org.zmlx.hg4idea.command.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
+import com.intellij.openapi.vcs.changes.committed.VcsCommittedListsZipper;
+import com.intellij.openapi.vcs.changes.committed.VcsCommittedViewAuxiliary;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
+import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.AsynchConsumer;
+import com.intellij.vcsUtil.VcsUtil;
+import org.apache.commons.lang.StringUtils;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgContentRevision;
+import org.zmlx.hg4idea.HgFile;
+import org.zmlx.hg4idea.HgFileRevision;
+import org.zmlx.hg4idea.HgRevisionNumber;
+import org.zmlx.hg4idea.command.HgIncomingCommand;
+import org.zmlx.hg4idea.command.HgLogCommand;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 public class HgCachingCommitedChangesProvider

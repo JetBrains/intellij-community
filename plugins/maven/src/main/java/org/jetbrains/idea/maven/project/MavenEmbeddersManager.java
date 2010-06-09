@@ -15,10 +15,7 @@
  */
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.Function;
 import com.intellij.util.containers.SoftValueHashMap;

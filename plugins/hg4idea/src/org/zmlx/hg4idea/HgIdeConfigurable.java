@@ -12,10 +12,10 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.intellij.openapi.components.*;
-import com.intellij.openapi.options.*;
-import org.jetbrains.annotations.*;
-import org.zmlx.hg4idea.ui.*;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
+import org.jetbrains.annotations.Nls;
+import org.zmlx.hg4idea.ui.HgConfigurationIdePanel;
 
 import javax.swing.*;
 

@@ -15,11 +15,11 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.border.*;
-import javax.swing.plaf.*;
+import javax.swing.border.Border;
+import javax.swing.plaf.ComponentUI;
 import java.awt.*;
 
 /**

@@ -15,11 +15,11 @@
  */
 package com.intellij.openapi.wm;
 
-import com.intellij.openapi.extensions.*;
-import org.jetbrains.annotations.*;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.EventListener;
 
 /**
  * @deprecated use StatusBarWidget instead

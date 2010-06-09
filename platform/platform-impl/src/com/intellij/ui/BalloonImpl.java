@@ -29,10 +29,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Alarm;
-import com.intellij.util.ui.Animator;
-import com.intellij.util.ui.BaseButtonBehavior;
-import com.intellij.util.ui.TimedDeadzone;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -45,7 +42,7 @@ import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-public class BalloonImpl implements Disposable, Balloon, LightweightWindow {
+public class BalloonImpl implements Disposable, Balloon, LightweightWindow, PositionTracker.Client<Balloon> {
 
   private MyComponent myComp;
   private JLayeredPane myLayeredPane;
@@ -96,6 +93,11 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow {
         }
       }
 
+      if (event instanceof MouseEvent && UIUtil.isCloseClick((MouseEvent)event)) {
+        hide();
+        return;
+      }
+
       if (myHideOnKey && (event.getID() == KeyEvent.KEY_PRESSED)) {
         final KeyEvent ke = (KeyEvent)event;
         if (SwingUtilities.isDescendingFrom(ke.getComponent(), myComp) || ke.getComponent() == myComp) return;
@@ -110,6 +112,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow {
 
   private final CopyOnWriteArraySet<JBPopupListener> myListeners = new CopyOnWriteArraySet<JBPopupListener>();
   private boolean myVisible;
+  private PositionTracker<Balloon> myTracker;
 
   private boolean isInsideBalloon(MouseEvent me) {
     if (!me.getComponent().isShowing()) return true;
@@ -188,13 +191,41 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow {
     show(target, pos);
   }
 
+  public void show(PositionTracker<Balloon> tracker, Balloon.Position position) {
+    Position pos = BELOW;
+    switch (position) {
+      case atLeft:
+        pos = AT_LEFT;
+        break;
+      case atRight:
+        pos = AT_RIGHT;
+        break;
+      case below:
+        pos = BELOW;
+        break;
+      case above:
+        pos = ABOVE;
+        break;
+    }
+
+    show(tracker, pos);
+  }
+
+
   private void show(RelativePoint target, Position position) {
+    show(new PositionTracker.Static<Balloon>(target), position);
+  }
+
+  private void show(PositionTracker<Balloon> tracker, Position position) {
     if (isVisible()) return;
 
     assert !myDisposed : "Balloon is already disposed";
-    assert target.getComponent().isShowing() : "Target component is not showing: " + target;
+    assert tracker.getComponent().isShowing() : "Target component is not showing: " + tracker;
 
-    final Window window = SwingUtilities.getWindowAncestor(target.getComponent());
+    myTracker = tracker;
+    myTracker.init(this);
+
+    final Window window = SwingUtilities.getWindowAncestor(tracker.getComponent());
 
     JRootPane root = null;
     if (window instanceof JFrame) {
@@ -219,7 +250,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow {
                                : new EmptyBorder(getNormalInset(), getNormalInset(), getNormalInset(), getNormalInset());
     myComp = new MyComponent(myContent, this, border);
 
-    myTargetPoint = target.getPoint(myLayeredPane);
+    myTargetPoint = tracker.recalculateLocation(this).getPoint(myLayeredPane);
 
     myComp.clear();
     myComp.myAlpha = 0f;
@@ -245,6 +276,15 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow {
     Toolkit.getDefaultToolkit().addAWTEventListener(myAwtActivityListener, MouseEvent.MOUSE_EVENT_MASK |
                                                                            MouseEvent.MOUSE_MOTION_EVENT_MASK |
                                                                            KeyEvent.KEY_EVENT_MASK);
+  }
+
+  public void revalidate(PositionTracker<Balloon> tracker) {
+    RelativePoint newPosition = tracker.recalculateLocation(this);
+
+    if (newPosition != null) {
+      myTargetPoint = newPosition.getPoint(myLayeredPane);
+      myPosition.updateLocation(this);
+    }
   }
 
   public void show(JLayeredPane pane) {

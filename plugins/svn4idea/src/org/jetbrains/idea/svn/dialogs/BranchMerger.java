@@ -15,14 +15,19 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
-import com.intellij.util.*;
-import org.jetbrains.idea.svn.*;
-import org.jetbrains.idea.svn.integrate.*;
-import org.jetbrains.idea.svn.update.*;
-import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.wc.*;
+import com.intellij.util.NotNullFunction;
+import org.jetbrains.idea.svn.SvnConfiguration;
+import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.integrate.IMerger;
+import org.jetbrains.idea.svn.update.UpdateEventHandler;
+import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.wc.SVNDiffClient;
+import org.tmatesoft.svn.core.wc.SVNDiffOptions;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 
-import java.io.*;
+import java.io.File;
 
 public class BranchMerger implements IMerger {
   private final SvnVcs myVcs;

@@ -12,11 +12,11 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider.update;
 
-import com.intellij.openapi.progress.*;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.update.*;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.update.UpdatedFiles;
 
-import java.util.*;
+import java.util.List;
 
 public interface HgUpdater {
 

@@ -20,17 +20,23 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.*;
-import com.intellij.codeInsight.intention.*;
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.project.*;
+import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.*;
-import com.intellij.psi.util.*;
-import com.intellij.util.*;
-import org.jetbrains.annotations.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
 
 public class SurroundWithArrayFix extends PsiElementBaseIntentionAction {
   private final PsiCall myMethodCall;

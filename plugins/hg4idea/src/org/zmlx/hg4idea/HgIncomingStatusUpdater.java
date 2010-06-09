@@ -12,15 +12,18 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.intellij.openapi.application.*;
-import com.intellij.openapi.progress.*;
-import com.intellij.openapi.project.*;
-import com.intellij.openapi.vcs.*;
-import org.jetbrains.annotations.*;
-import org.zmlx.hg4idea.command.*;
-import org.zmlx.hg4idea.ui.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsRoot;
+import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.command.HgIncomingCommand;
+import org.zmlx.hg4idea.ui.HgChangesetStatus;
 
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
 
 class HgIncomingStatusUpdater implements HgUpdater {
 

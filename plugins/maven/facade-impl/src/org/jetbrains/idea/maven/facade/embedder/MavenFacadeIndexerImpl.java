@@ -32,7 +32,6 @@ import org.apache.maven.wagon.events.TransferEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.facade.*;
-import org.jetbrains.idea.maven.facade.RemoteObject;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenId;

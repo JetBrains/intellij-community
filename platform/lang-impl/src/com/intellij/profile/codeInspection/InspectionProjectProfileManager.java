@@ -15,25 +15,33 @@
  */
 package com.intellij.profile.codeInspection;
 
-import com.intellij.codeInsight.daemon.impl.*;
-import com.intellij.codeInsight.daemon.impl.analysis.*;
-import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.*;
-import com.intellij.openapi.application.*;
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
+import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionProfileWrapper;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.project.*;
-import com.intellij.openapi.startup.*;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.wm.*;
-import com.intellij.openapi.wm.ex.*;
-import com.intellij.openapi.wm.impl.status.*;
-import com.intellij.packageDependencies.*;
-import com.intellij.profile.*;
-import com.intellij.psi.*;
-import org.jdom.*;
-import org.jetbrains.annotations.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.ex.StatusBarEx;
+import com.intellij.openapi.wm.impl.status.TogglePopupHintsPanel;
+import com.intellij.packageDependencies.DependencyValidationManager;
+import com.intellij.profile.DefaultProjectProfileManager;
+import com.intellij.profile.Profile;
+import com.intellij.psi.PsiElement;
+import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * User: anna

@@ -43,7 +43,8 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
-import org.intellij.plugins.intelliLang.inject.config.*;
+import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
+import org.intellij.plugins.intelliLang.inject.config.InjectionPlace;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -65,7 +66,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @State(
   name = Configuration.COMPONENT_NAME,
   storages = {@Storage(id = "dir", file = "$APP_CONFIG$/IntelliLang.xml", scheme = StorageScheme.DIRECTORY_BASED)})
-public final class Configuration implements PersistentStateComponent<Element> {
+public final class Configuration implements PersistentStateComponent<Element>, ModificationTracker {
   static final Logger LOG = Logger.getInstance(Configuration.class.getName());
 
   @NonNls public static final String COMPONENT_NAME = "LanguageInjectionConfiguration";

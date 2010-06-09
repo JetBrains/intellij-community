@@ -49,10 +49,12 @@ public class BaseInjectionPanel extends AbstractInjectionPanel<BaseInjection> {
 
   private JPanel myRoot;
   private JTextField myNameTextField;
+  private PatternBasedInjectionHelper myHelper;
 
   public BaseInjectionPanel(BaseInjection injection, Project project) {
     super(injection, project);
     $$$setupUI$$$(); // see IDEA-9987
+    myHelper = new PatternBasedInjectionHelper(injection.getSupportId());
     final FileType groovy = FileTypeManager.getInstance().getFileTypeByExtension("groovy");
     final FileType realFileType = groovy == UnknownFileType.INSTANCE ? FileTypes.PLAIN_TEXT : groovy;
     final PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText("injection." + realFileType.getDefaultExtension(), realFileType, "", 0, true);
@@ -98,14 +100,14 @@ public class BaseInjectionPanel extends AbstractInjectionPanel<BaseInjection> {
       }
       if (sb.length() > 0) {
         final String text = sb.toString();
-        places.add(new InjectionPlace(text, PatternBasedInjectionHelper.compileElementPattern(text, other.getSupportId()), enabled));
+        places.add(new InjectionPlace(text, myHelper.compileElementPattern(text), enabled));
         sb.setLength(0);
       }
       sb.append(s);
     }
     if (sb.length() > 0) {
       final String text = sb.toString();
-      places.add(new InjectionPlace(text, PatternBasedInjectionHelper.compileElementPattern(text, other.getSupportId()), enabled));
+      places.add(new InjectionPlace(text, myHelper.compileElementPattern(text), enabled));
     }
     other.getInjectionPlaces().clear();
     other.getInjectionPlaces().addAll(places);

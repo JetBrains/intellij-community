@@ -15,12 +15,13 @@
  */
 package com.intellij.notification;
 
-import com.intellij.openapi.diagnostic.*;
-import com.intellij.openapi.ui.popup.*;
-import org.jetbrains.annotations.*;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.popup.Balloon;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.lang.ref.*;
+import java.lang.ref.WeakReference;
 
 /**
  * @author spleaner

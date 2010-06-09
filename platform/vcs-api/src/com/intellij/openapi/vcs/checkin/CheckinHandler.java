@@ -20,6 +20,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
+import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -70,10 +71,11 @@ public abstract class CheckinHandler {
    * {@link CheckinHandlerFactory#createHandler(com.intellij.openapi.vcs.CheckinProjectPanel)} to
    * get information about the files to be checked in.
    *
-   * @param executor the commit executor, or null if the standard commit operation is executed. 
+   * @param executor the commit executor, or null if the standard commit operation is executed.
+   * @param additionalDataConsumer
    * @return the code indicating whether the check-in operation should be performed or aborted.
    */
-  public ReturnResult beforeCheckin(@Nullable CommitExecutor executor) {
+  public ReturnResult beforeCheckin(@Nullable CommitExecutor executor, PairConsumer<Object, Object> additionalDataConsumer) {
     return beforeCheckin();
   }
 

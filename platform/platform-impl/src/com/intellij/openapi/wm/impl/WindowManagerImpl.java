@@ -15,31 +15,49 @@
  */
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.*;
-import com.intellij.ide.*;
-import com.intellij.ide.impl.*;
-import com.intellij.ide.ui.*;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.*;
-import com.intellij.openapi.application.ex.*;
-import com.intellij.openapi.components.*;
-import com.intellij.openapi.diagnostic.*;
-import com.intellij.openapi.keymap.*;
-import com.intellij.openapi.project.*;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.wm.*;
-import com.intellij.openapi.wm.ex.*;
-import com.intellij.util.*;
-import com.intellij.util.ui.*;
-import com.sun.jna.examples.*;
-import org.jdom.*;
-import org.jetbrains.annotations.*;
+import com.intellij.Patches;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.impl.DataManagerImpl;
+import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NamedJDOMExternalizable;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.WindowManagerListener;
+import com.intellij.openapi.wm.ex.StatusBarEx;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.EventDispatcher;
+import com.intellij.util.ui.UIUtil;
+import com.sun.jna.examples.WindowUtils;
+import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
-import java.beans.*;
-import java.util.*;
+import java.awt.event.ComponentEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Anton Katilin

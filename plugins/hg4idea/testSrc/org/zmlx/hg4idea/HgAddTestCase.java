@@ -12,8 +12,8 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.intellij.openapi.vfs.*;
-import org.testng.annotations.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.testng.annotations.Test;
 
 public class HgAddTestCase extends HgTestCase {
 
