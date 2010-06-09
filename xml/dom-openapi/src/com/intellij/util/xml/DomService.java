@@ -20,7 +20,6 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
@@ -36,10 +35,13 @@ import java.util.List;
  * @author Gregory.Shrago
  */
 public abstract class DomService {
-  private static final NotNullLazyKey<DomService, Project> INSTANCE_KEY = ServiceManager.createLazyKey(DomService.class);
+  private static DomService ourCachedInstance = null;
   
-  public static DomService getInstance(Project project) {
-    return INSTANCE_KEY.getValue(project);
+  public static DomService getInstance() {
+    if (ourCachedInstance == null) {
+      ourCachedInstance = ServiceManager.getService(DomService.class);
+    }
+    return ourCachedInstance;
   }
 
   public Collection<VirtualFile> getDomFileCandidates(Class<? extends DomElement> description, Project project, final GlobalSearchScope scope) {
