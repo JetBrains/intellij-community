@@ -53,7 +53,7 @@ public class IdeaProjectLoader {
   }
 
   def loadFromIpr(Project project, String path) {
-    def iprFile = new File(path)
+    def iprFile = new File(path).getAbsoluteFile()
     def projectBasePath = iprFile.getParentFile().getAbsolutePath()
 
     def root = new XmlParser(false, false).parse(iprFile)
@@ -144,6 +144,7 @@ public class IdeaProjectLoader {
   }
 
   def loadArtifacts(Node artifactsComponent, Project project, String projectBasePath) {
+    if (artifactsComponent == null) return;
     ArtifactLoader artifactLoader = new ArtifactLoader(project, projectBasePath)
     artifactsComponent.artifact.each {Node artifactTag ->
       def artifactName = artifactTag."@name"
