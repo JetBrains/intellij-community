@@ -479,43 +479,34 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     myManager.getCacheManager().processFilesWithWord(processor, word, UsageSearchContext.IN_STRINGS, scope, true);
   }
 
-  public boolean processRequest(@NotNull PsiSearchRequest request) {
-    if (request instanceof PsiSearchRequest.SingleRequest) {
-      return processSingleRequest((PsiSearchRequest.SingleRequest)request);
-    }
-    else if (request instanceof PsiSearchRequest.CustomRequest) {
-      return ((PsiSearchRequest.CustomRequest)request).searchAction.compute();
-    }
-    else if (request instanceof PsiSearchRequest.ComplexRequest) {
-      final MultiMap<Set<IdIndexEntry>, PsiSearchRequest.SingleRequest> singles = new MultiMap<Set<IdIndexEntry>, PsiSearchRequest.SingleRequest>();
-      final List<PsiSearchRequest.CustomRequest> customs = new ArrayList<PsiSearchRequest.CustomRequest>();
-      distributePrimitives((PsiSearchRequest.ComplexRequest)request, singles, customs);
+  public boolean processRequests(@NotNull SearchRequestCollector request, Processor<PsiReference> processor) {
+    final MultiMap<Set<IdIndexEntry>, PsiSearchRequest> singles = new MultiMap<Set<IdIndexEntry>, PsiSearchRequest>();
+    final List<Processor<Processor<PsiReference>>> customs = new ArrayList<Processor<Processor<PsiReference>>>();
+    distributePrimitives(request, singles, customs);
 
-      if (processRequestsOptimized(singles)) {
-        for (PsiSearchRequest.CustomRequest custom : customs) {
-          if (!custom.searchAction.compute()) {
-            return false;
-          }
-        }
-        return true;
-      }
-
+    if (!processRequestsOptimized(singles, processor)) {
       return false;
-    } else {
-      LOG.error("Unknown request: " + request);
-      return true;
     }
+
+    for (Processor<Processor<PsiReference>> custom : customs) {
+      if (!custom.process(processor)) {
+        return false;
+      }
+    }
+
+    return true;
+
   }
 
-  private boolean processRequestsOptimized(MultiMap<Set<IdIndexEntry>, PsiSearchRequest.SingleRequest> singles) {
+  private boolean processRequestsOptimized(MultiMap<Set<IdIndexEntry>, PsiSearchRequest> singles, final Processor<PsiReference> consumer) {
     if (singles.isEmpty()) {
       return true;
     }
 
     if (singles.size() == 1) {
-      final Collection<PsiSearchRequest.SingleRequest> requests = singles.get(singles.keySet().iterator().next());
+      final Collection<PsiSearchRequest> requests = singles.get(singles.keySet().iterator().next());
       if (requests.size() == 1) {
-        return processSingleRequest(requests.iterator().next());
+        return processSingleRequest(requests.iterator().next(), consumer);
       }
     }
 
@@ -525,11 +516,11 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       progress.setText(PsiBundle.message("psi.scanning.files.progress"));
     }
 
-    final MultiMap<VirtualFile, PsiSearchRequest.SingleRequest> candidateFiles = collectFiles(singles);
+    final MultiMap<VirtualFile, PsiSearchRequest> candidateFiles = collectFiles(singles);
 
-    final Map<PsiSearchRequest.SingleRequest, StringSearcher> searchers = new HashMap<PsiSearchRequest.SingleRequest, StringSearcher>();
+    final Map<PsiSearchRequest, StringSearcher> searchers = new HashMap<PsiSearchRequest, StringSearcher>();
     final Set<String> allWords = new TreeSet<String>();
-    for (PsiSearchRequest.SingleRequest singleRequest : candidateFiles.values()) {
+    for (PsiSearchRequest singleRequest : candidateFiles.values()) {
       searchers.put(singleRequest, new StringSearcher(singleRequest.word, singleRequest.caseSensitive, true));
       allWords.add(singleRequest.word);
     }
@@ -541,9 +532,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return processPsiFileRoots(progress, new ArrayList<VirtualFile>(candidateFiles.keySet()), new Processor<PsiElement>() {
       public boolean process(PsiElement psiRoot) {
         final VirtualFile vfile = psiRoot.getContainingFile().getVirtualFile();
-        for (PsiSearchRequest.SingleRequest singleRequest : candidateFiles.get(vfile)) {
+        for (final PsiSearchRequest singleRequest : candidateFiles.get(vfile)) {
           StringSearcher searcher = searchers.get(singleRequest);
-          if (!LowLevelSearchUtil.processElementsContainingWordInElement(singleRequest.processor, psiRoot, searcher, false, progress)) {
+          if (!LowLevelSearchUtil.processElementsContainingWordInElement(adaptProcessor(singleRequest, consumer), psiRoot, searcher, false, progress)) {
             return false;
           }
         }
@@ -552,18 +543,31 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     });
   }
 
-  private MultiMap<VirtualFile, PsiSearchRequest.SingleRequest> collectFiles(MultiMap<Set<IdIndexEntry>, PsiSearchRequest.SingleRequest> singles) {
+  private static TextOccurenceProcessor adaptProcessor(final PsiSearchRequest singleRequest,
+                                                       final Processor<PsiReference> consumer) {
+    final SearchScope searchScope = singleRequest.searchScope;
+    final boolean ignoreInjectedPsi = searchScope instanceof LocalSearchScope && ((LocalSearchScope)searchScope).isIgnoreInjectedPsi();
+    return new TextOccurenceProcessor() {
+      public boolean execute(PsiElement element, int offsetInElement) {
+        if (ignoreInjectedPsi && element instanceof PsiLanguageInjectionHost) return true;
+
+        return singleRequest.processor.execute(element, offsetInElement, consumer);
+      }
+    };
+  }
+
+  private MultiMap<VirtualFile, PsiSearchRequest> collectFiles(MultiMap<Set<IdIndexEntry>, PsiSearchRequest> singles) {
     final ProjectFileIndex index = ProjectRootManager.getInstance(myManager.getProject()).getFileIndex();
-    final MultiMap<VirtualFile, PsiSearchRequest.SingleRequest> result = new MultiMap<VirtualFile, PsiSearchRequest.SingleRequest>();
+    final MultiMap<VirtualFile, PsiSearchRequest> result = new MultiMap<VirtualFile, PsiSearchRequest>();
     for (Set<IdIndexEntry> key : singles.keySet()) {
-      final Collection<PsiSearchRequest.SingleRequest> data = singles.get(key);
+      final Collection<PsiSearchRequest> data = singles.get(key);
       GlobalSearchScope commonScope = uniteScopes(data);
 
-      MultiMap<VirtualFile, PsiSearchRequest.SingleRequest> intersection = null;
+      MultiMap<VirtualFile, PsiSearchRequest> intersection = null;
 
       boolean first = true;
       for (IdIndexEntry entry : key) {
-        final MultiMap<VirtualFile, PsiSearchRequest.SingleRequest> local = findFilesWithIndexEntry(entry, index, data, commonScope);
+        final MultiMap<VirtualFile, PsiSearchRequest> local = findFilesWithIndexEntry(entry, index, data, commonScope);
         if (first) {
           intersection = local;
           first = false;
@@ -580,9 +584,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return result;
   }
 
-  private static GlobalSearchScope uniteScopes(Collection<PsiSearchRequest.SingleRequest> requests) {
+  private static GlobalSearchScope uniteScopes(Collection<PsiSearchRequest> requests) {
     GlobalSearchScope commonScope = null;
-    for (PsiSearchRequest.SingleRequest r : requests) {
+    for (PsiSearchRequest r : requests) {
       final GlobalSearchScope scope = (GlobalSearchScope)r.searchScope;
       commonScope = commonScope == null ? scope : commonScope.uniteWith(scope);
     }
@@ -590,18 +594,18 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return commonScope;
   }
 
-  private static MultiMap<VirtualFile, PsiSearchRequest.SingleRequest> findFilesWithIndexEntry(IdIndexEntry entry,
+  private static MultiMap<VirtualFile, PsiSearchRequest> findFilesWithIndexEntry(IdIndexEntry entry,
                                               final ProjectFileIndex index,
-                                              final Collection<PsiSearchRequest.SingleRequest> data,
+                                              final Collection<PsiSearchRequest> data,
                                               GlobalSearchScope commonScope) {
-    final MultiMap<VirtualFile, PsiSearchRequest.SingleRequest> local = new MultiMap<VirtualFile, PsiSearchRequest.SingleRequest>();
+    final MultiMap<VirtualFile, PsiSearchRequest> local = new MultiMap<VirtualFile, PsiSearchRequest>();
     FileBasedIndex.getInstance().processValues(IdIndex.NAME, entry, null, new FileBasedIndex.ValueProcessor<Integer>() {
       public boolean process(VirtualFile file, Integer value) {
         if (!IndexCacheManagerImpl.shouldBeFound(file, index)) {
           return true;
         }
         int mask = value.intValue();
-        for (PsiSearchRequest.SingleRequest single : data) {
+        for (PsiSearchRequest single : data) {
           if ((mask & single.searchContext) != 0 && ((GlobalSearchScope)single.searchScope).contains(file)) {
             local.putValue(file, single);
           }
@@ -612,36 +616,31 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return local;
   }
 
-  private void distributePrimitives(PsiSearchRequest.ComplexRequest request,
-                                    MultiMap<Set<IdIndexEntry>, PsiSearchRequest.SingleRequest> singles,
-                                    List<PsiSearchRequest.CustomRequest> customs) {
-    for (PsiSearchRequest primitive : request.getConstituents()) {
-      if (primitive instanceof PsiSearchRequest.CustomRequest) {
-        customs.add((PsiSearchRequest.CustomRequest)primitive);
-      } else {
-        final PsiSearchRequest.SingleRequest single = (PsiSearchRequest.SingleRequest) primitive;
-        final SearchScope scope = single.searchScope;
-        if (scope instanceof LocalSearchScope) {
-          customs.add(PsiSearchRequest.custom(new Computable<Boolean>() {
-            public Boolean compute() {
-              return processSingleRequest(single);
-            }
-          }));
-        } else {
-          final List<String> words = StringUtil.getWordsIn(single.word);
-          final Set<IdIndexEntry> key = new HashSet<IdIndexEntry>(words.size());
-          for (String word : words) {
-            key.add(new IdIndexEntry(word, single.caseSensitive));
+  private void distributePrimitives(SearchRequestCollector request,
+                                    MultiMap<Set<IdIndexEntry>, PsiSearchRequest> singles,
+                                    List<Processor<Processor<PsiReference>>> customs) {
+    for (final PsiSearchRequest primitive : request.getSearchRequests()) {
+      final SearchScope scope = primitive.searchScope;
+      if (scope instanceof LocalSearchScope) {
+        customs.add(new Processor<Processor<PsiReference>>() {
+          public boolean process(Processor<PsiReference> processor) {
+            return processSingleRequest(primitive, processor);
           }
-          singles.putValue(key, single);
+        });
+      } else {
+        final List<String> words = StringUtil.getWordsIn(primitive.word);
+        final Set<IdIndexEntry> key = new HashSet<IdIndexEntry>(words.size());
+        for (String word : words) {
+          key.add(new IdIndexEntry(word, primitive.caseSensitive));
         }
-
+        singles.putValue(key, primitive);
       }
     }
+    customs.addAll(request.getCustomSearchActions());
   }
 
-  private boolean processSingleRequest(PsiSearchRequest.SingleRequest single) {
-    return processElementsWithWord(single.processor, single.searchScope, single.word, single.searchContext, single.caseSensitive);
+  private boolean processSingleRequest(PsiSearchRequest single, Processor<PsiReference> consumer) {
+    return processElementsWithWord(adaptProcessor(single, consumer), single.searchScope, single.word, single.searchContext, single.caseSensitive);
   }
 
   public SearchCostResult isCheapEnoughToSearch(@NotNull String name,

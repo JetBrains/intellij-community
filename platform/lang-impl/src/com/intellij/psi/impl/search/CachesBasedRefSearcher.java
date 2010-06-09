@@ -5,13 +5,17 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
-import com.intellij.psi.search.*;
+import com.intellij.psi.search.SearchRequestCollector;
+import com.intellij.psi.search.SearchRequestor;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
@@ -29,29 +33,28 @@ public class CachesBasedRefSearcher extends SearchRequestor implements QueryExec
     }
 
     final PsiElement refElement = p.getElementToSearch();
-    final PsiSearchRequest.ComplexRequest collector = PsiSearchRequest.composite();
+    final SearchRequestCollector collector = new SearchRequestCollector(refElement);
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         final FindUsagesOptions options = new FindUsagesOptions(p.getScope());
         options.isUsages = true;
-        contributeSearchTargets(refElement, options, collector, consumer, p.isIgnoreAccessScope(), options.searchScope);
-        SearchRequestor.contributeTargets(refElement, options, collector, consumer);
+        contributeSearchTargets(refElement, options, collector, p.isIgnoreAccessScope(), options.searchScope);
+        SearchRequestor.collectRequests(refElement, options, collector);
       }
     });
-    return refElement.getManager().getSearchHelper().processRequest(collector);
+    return refElement.getManager().getSearchHelper().processRequests(collector, consumer);
   }
 
   @Override
-  public void contributeSearchTargets(@NotNull final PsiElement refElement,
+  public void contributeRequests(@NotNull final PsiElement refElement,
                                       @NotNull FindUsagesOptions options,
-                                      @NotNull PsiSearchRequest.ComplexRequest collector,
-                                      final Processor<PsiReference> consumer) {
+                                      @NotNull SearchRequestCollector collector) {
     final boolean ignoreAccessScope = false;
     final SearchScope scope = options.searchScope;
-    contributeSearchTargets(refElement, options, collector, consumer, ignoreAccessScope, scope);
-    collector.addRequest(PsiSearchRequest.custom(new Computable<Boolean>() {
-      public Boolean compute() {
+    contributeSearchTargets(refElement, options, collector, ignoreAccessScope, scope);
+    collector.searchCustom(new Processor<Processor<PsiReference>>() {
+      public boolean process(Processor<PsiReference> consumer) {
         ourProcessing.set(true);
         try {
           return ReferencesSearch.search(refElement, scope, ignoreAccessScope).forEach(consumer);
@@ -60,13 +63,12 @@ public class CachesBasedRefSearcher extends SearchRequestor implements QueryExec
           ourProcessing.set(null);
         }
       }
-    }));
+    });
   }
 
   private static void contributeSearchTargets(@NotNull final PsiElement refElement,
                                               @NotNull FindUsagesOptions options,
-                                              @NotNull PsiSearchRequest.ComplexRequest collector,
-                                              final Processor<PsiReference> consumer,
+                                              @NotNull SearchRequestCollector collector,
                                               final boolean ignoreAccessScope,
                                               final SearchScope scope) {
     if (!options.isUsages) {
@@ -94,26 +96,8 @@ public class CachesBasedRefSearcher extends SearchRequestor implements QueryExec
     }
     if (StringUtil.isNotEmpty(text)) {
       final SearchScope searchScope = ignoreAccessScope ? scope : refElement.getUseScope().intersectWith(scope);
-      final boolean ignoreInjectedPsi = searchScope instanceof LocalSearchScope && ((LocalSearchScope)searchScope).isIgnoreInjectedPsi();
-
-      final TextOccurenceProcessor processor = new TextOccurenceProcessor() {
-        public boolean execute(PsiElement element, int offsetInElement) {
-          if (ignoreInjectedPsi && element instanceof PsiLanguageInjectionHost) return true;
-          final PsiReference[] refs = element.getReferences();
-          for (PsiReference ref : refs) {
-            if (ReferenceRange.containsOffsetInElement(ref, offsetInElement)) {
-              if (ref.isReferenceTo(refElement)) {
-                return consumer.process(ref);
-              }
-            }
-          }
-          return true;
-        }
-      };
-
       assert text != null;
-      final short mask = UsageSearchContext.IN_CODE | UsageSearchContext.IN_FOREIGN_LANGUAGES | UsageSearchContext.IN_COMMENTS;
-      collector.addRequest(PsiSearchRequest.elementsWithWord(searchScope, text, mask, refElement.getLanguage().isCaseSensitive(), processor));
+      collector.searchWord(text, searchScope, refElement.getLanguage().isCaseSensitive());
     }
   }
 }

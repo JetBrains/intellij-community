@@ -23,7 +23,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.search.ProjectScope;
-import com.intellij.psi.search.PsiSearchRequest;
+import com.intellij.psi.search.SearchRequestCollector;
 import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,7 +56,7 @@ public class FindUsagesOptions extends UserDataHolderBase implements Cloneable {
   public boolean isWriteAccess = false;
   public boolean isIncludeOverloadUsages = false;
   public boolean isThrowUsages = false;
-  public PsiSearchRequest.ComplexRequest fastTrack = null;
+  public SearchRequestCollector fastTrack = null;
 
   public FindUsagesOptions(@NotNull Project project, @Nullable final DataContext dataContext) {
     String defaultScopeName = FindSettings.getInstance().getDefaultScopeName();

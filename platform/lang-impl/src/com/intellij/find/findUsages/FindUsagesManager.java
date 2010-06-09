@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -44,7 +45,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.PsiSearchRequest;
+import com.intellij.psi.search.SearchRequestCollector;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.content.Content;
@@ -352,7 +353,7 @@ public class FindUsagesManager implements JDOMExternalizable {
             }
           });
 
-        options.fastTrack = PsiSearchRequest.composite();
+        options.fastTrack = new SearchRequestCollector(scopeFile);
 
         for (final PsiElement element : elements) {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -363,7 +364,12 @@ public class FindUsagesManager implements JDOMExternalizable {
           handler.processElementUsages(element, usageInfoProcessor, options);
         }
 
-        PsiManager.getInstance(handler.getProject()).getSearchHelper().processRequest(options.fastTrack);
+        PsiManager.getInstance(handler.getProject()).getSearchHelper().processRequests(options.fastTrack, new ReadActionProcessor<PsiReference>() {
+          public boolean processInReadAction(final PsiReference ref) {
+            TextRange rangeInElement = ref.getRangeInElement();
+            return usageInfoProcessor.process(new UsageInfo(ref.getElement(), rangeInElement.getStartOffset(), rangeInElement.getEndOffset(), false));
+          }
+        });
       }
     };
   }

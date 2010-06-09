@@ -21,11 +21,8 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.ReferenceRange;
 import com.intellij.psi.search.*;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -34,10 +31,9 @@ import org.jetbrains.annotations.NotNull;
 public class SimpleAccessorReferenceSearcher extends SearchRequestor {
 
   @Override
-  public void contributeSearchTargets(@NotNull final PsiElement refElement,
+  public void contributeRequests(@NotNull final PsiElement refElement,
                                       @NotNull FindUsagesOptions options,
-                                      @NotNull PsiSearchRequest.ComplexRequest collector,
-                                      final Processor<PsiReference> consumer) {
+                                      @NotNull SearchRequestCollector collector) {
     if (!(refElement instanceof PsiMethod)) return;
 
     final PsiMethod method = (PsiMethod)refElement;
@@ -53,18 +49,7 @@ public class SimpleAccessorReferenceSearcher extends SearchRequestor {
       }
       assert propertyName != null;
       final SearchScope propScope = options.searchScope.intersectWith(method.getUseScope()).intersectWith(additional);
-      collector.addRequest(PsiSearchRequest.elementsWithWord(propScope, propertyName, UsageSearchContext.IN_FOREIGN_LANGUAGES, true, new TextOccurenceProcessor() {
-        public boolean execute(PsiElement element, int offsetInElement) {
-          for (PsiReference ref : element.getReferences()) {
-            if (ReferenceRange.containsOffsetInElement(ref, offsetInElement)) {
-              if (ref.isReferenceTo(refElement)) {
-                return consumer.process(ref);
-              }
-            }
-          }
-          return true;
-        }
-      }));
+      collector.searchWord(propertyName, propScope, UsageSearchContext.IN_FOREIGN_LANGUAGES, true);
     }
 
   }

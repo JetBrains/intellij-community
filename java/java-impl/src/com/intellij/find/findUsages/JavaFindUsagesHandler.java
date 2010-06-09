@@ -601,7 +601,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
     };
 
     if (options.fastTrack != null) {
-      SearchRequestor.contributeTargets(element, options, options.fastTrack, consumer);
+      SearchRequestor.collectRequests(element, options, options.fastTrack);
       return;
     }
 

@@ -102,17 +102,16 @@ public abstract class FindUsagesHandler {
 
     final boolean searchText = options.isSearchForTextOccurences && scope instanceof GlobalSearchScope;
     if (options.fastTrack != null) {
-      SearchRequestor.contributeTargets(element, options, options.fastTrack, refProcessor);
+      SearchRequestor.collectRequests(element, options, options.fastTrack);
 
-      // todo special kind of request for that
-      options.fastTrack.addRequest(PsiSearchRequest.custom(new Computable<Boolean>() {
-        public Boolean compute() {
-          if (searchText) {
+      if (searchText) {
+        options.fastTrack.searchCustom(new Processor<Processor<PsiReference>>() {
+          public boolean process(Processor<PsiReference> consumer) {
             processUsagesInText(element, processor, (GlobalSearchScope)scope);
+            return true;
           }
-          return true;
-        }
-      }));
+        });
+      }
 
       return;
     }

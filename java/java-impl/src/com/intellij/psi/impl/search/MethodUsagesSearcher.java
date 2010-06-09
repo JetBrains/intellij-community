@@ -5,7 +5,6 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
@@ -24,34 +23,31 @@ public class MethodUsagesSearcher extends SearchRequestor implements QueryExecut
       return true;
     }
 
-    final PsiSearchRequest.ComplexRequest collector = PsiSearchRequest.composite();
     final PsiMethod method = p.getMethod();
+    final SearchRequestCollector collector = new SearchRequestCollector(method);
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         final FindUsagesOptions options = new FindUsagesOptions(p.getScope());
         options.isUsages = true;
-        contributeSearchTargets(method, options, collector, consumer, p.isStrictSignatureSearch(), true);
-        SearchRequestor.contributeTargets(method, options, collector, consumer);
+        contributeSearchTargets(method, options, collector, p.isStrictSignatureSearch());
+        SearchRequestor.collectRequests(method, options, collector);
       }
     });
 
-
-
-    return method.getManager().getSearchHelper().processRequest(collector);
+    return method.getManager().getSearchHelper().processRequests(collector, consumer);
   }
 
   @Override
-  public void contributeSearchTargets(@NotNull PsiElement target,
+  public void contributeRequests(@NotNull PsiElement target,
                                       @NotNull final FindUsagesOptions options,
-                                      @NotNull PsiSearchRequest.ComplexRequest collector,
-                                      final Processor<PsiReference> processor) {
+                                      @NotNull SearchRequestCollector collector) {
     if (target instanceof PsiMethod) {
       final boolean strictSignatureSearch = !options.isIncludeOverloadUsages;
       final PsiMethod method = (PsiMethod)target;
-      contributeSearchTargets(method, options, collector, processor, strictSignatureSearch, false);
-      collector.addRequest(PsiSearchRequest.custom(new Computable<Boolean>() {
-        public Boolean compute() {
+      contributeSearchTargets(method, options, collector, strictSignatureSearch);
+      collector.searchCustom(new Processor<Processor<PsiReference>>() {
+        public boolean process(Processor<PsiReference> processor) {
           ourProcessing.set(true);
           try {
             return MethodReferencesSearch.search(method, options.searchScope, strictSignatureSearch).forEach(processor);
@@ -60,14 +56,14 @@ public class MethodUsagesSearcher extends SearchRequestor implements QueryExecut
             ourProcessing.set(null);
           }
         }
-      }));
+      });
     }
   }
 
   private static void contributeSearchTargets(@NotNull final PsiMethod method,
-                                      @NotNull FindUsagesOptions options,
-                                      @NotNull PsiSearchRequest.ComplexRequest collector,
-                                      final Processor<PsiReference> consumer, final boolean strictSignatureSearch, final boolean fromSearcher) {
+                                              @NotNull FindUsagesOptions options,
+                                              @NotNull SearchRequestCollector collector,
+                                              final boolean strictSignatureSearch) {
     final SearchScope searchScope = options.searchScope;
 
     final PsiManager psiManager = PsiManager.getInstance(method.getProject());
@@ -76,12 +72,12 @@ public class MethodUsagesSearcher extends SearchRequestor implements QueryExecut
     if (aClass == null) return;
 
     if (method.isConstructor()) {
-      collector.addRequest(PsiSearchRequest.custom(new Computable<Boolean>() {
-        public Boolean compute() {
+      collector.searchCustom(new Processor<Processor<PsiReference>>() {
+        public boolean process(Processor<PsiReference> consumer) {
           return new ConstructorReferencesSearchHelper(psiManager).
             processConstructorReferences(consumer, method, searchScope, !strictSignatureSearch, strictSignatureSearch);
         }
-      }));
+      });
     }
 
     boolean needStrictSignatureSearch = method.isValid() && strictSignatureSearch && (aClass instanceof PsiAnonymousClass
@@ -106,8 +102,7 @@ public class MethodUsagesSearcher extends SearchRequestor implements QueryExecut
     final SearchScope restrictedByAccess = searchScope.intersectWith(accessScope);
 
     short searchContext = UsageSearchContext.IN_CODE | UsageSearchContext.IN_COMMENTS | UsageSearchContext.IN_FOREIGN_LANGUAGES;
-    collector.addRequest(PsiSearchRequest.elementsWithWord(restrictedByAccess, textToSearch, searchContext, true,
-                                                           new MethodTextOccurenceProcessor(consumer, aClass, strictSignatureSearch, methods)));
+    collector.searchWord(textToSearch, restrictedByAccess, searchContext, true, new MethodTextOccurenceProcessor(aClass, strictSignatureSearch, methods));
   }
 
 }

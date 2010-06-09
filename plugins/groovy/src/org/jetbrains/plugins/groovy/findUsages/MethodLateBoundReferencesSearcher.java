@@ -37,10 +37,9 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
  */
 public class MethodLateBoundReferencesSearcher extends SearchRequestor {
   @Override
-  public void contributeSearchTargets(@NotNull PsiElement target,
+  public void contributeRequests(@NotNull PsiElement target,
                                       @NotNull FindUsagesOptions options,
-                                      @NotNull PsiSearchRequest.ComplexRequest collector,
-                                      Processor<PsiReference> consumer) {
+                                      @NotNull SearchRequestCollector collector) {
     if (!(target instanceof PsiMethod)) {
       return;
     }
@@ -48,11 +47,11 @@ public class MethodLateBoundReferencesSearcher extends SearchRequestor {
     final PsiMethod method = (PsiMethod)target;
     SearchScope searchScope = PsiUtil.restrictScopeToGroovyFiles(options.searchScope.intersectWith(getUseScope(method)));
 
-    orderSearching(searchScope, method.getName(), consumer, collector);
+    orderSearching(searchScope, method.getName(), collector);
 
     final String propName = PropertyUtil.getPropertyName(method);
     if (propName != null) {
-      orderSearching(searchScope, propName, consumer, collector);
+      orderSearching(searchScope, propName, collector);
     }
   }
 
@@ -71,11 +70,11 @@ public class MethodLateBoundReferencesSearcher extends SearchRequestor {
 
 
   private static void orderSearching(SearchScope searchScope,
-                                             final String name,
-                                             final Processor<PsiReference> consumer,
-                                             @NotNull PsiSearchRequest.ComplexRequest collector) {
-    final TextOccurenceProcessor processor = new TextOccurenceProcessor() {
-      public boolean execute(PsiElement element, int offsetInElement) {
+                                     final String name,
+                                     @NotNull SearchRequestCollector collector) {
+    collector.searchWord(name, searchScope, UsageSearchContext.IN_CODE, true, new SingleTargetRequestResultProcessor(collector.getTarget()) {
+      @Override
+      public boolean execute(PsiElement element, int offsetInElement, Processor<PsiReference> consumer) {
         if (!(element instanceof GrReferenceExpression)) {
           return true;
         }
@@ -87,9 +86,7 @@ public class MethodLateBoundReferencesSearcher extends SearchRequestor {
 
         return consumer.process((PsiReference)element);
       }
-    };
-
-    collector.addRequest(PsiSearchRequest.elementsWithWord(searchScope, name, UsageSearchContext.IN_CODE, true, processor));
+    });
   }
 
 }
