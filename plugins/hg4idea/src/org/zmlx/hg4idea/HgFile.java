@@ -13,6 +13,7 @@
 package org.zmlx.hg4idea;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -40,6 +41,10 @@ public class HgFile {
 
   public HgFile(@NotNull VirtualFile vcsRoot, FilePath filePath) {
     this(vcsRoot, filePath.getIOFile());
+  }
+
+  public HgFile(@NotNull Project project, @NotNull VirtualFile file) {
+    this(VcsUtil.getVcsRootFor(project, file), VcsUtil.getFilePath(file.getPath()));
   }
 
   @NotNull
