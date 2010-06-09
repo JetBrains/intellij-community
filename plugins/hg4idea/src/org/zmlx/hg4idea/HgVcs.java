@@ -59,7 +59,6 @@ public class HgVcs extends AbstractVcs {
 
   private final HgChangeProvider changeProvider;
   private final HgProjectConfigurable configurable;
-  private final HgVirtualFileListener virtualFileListener;
   private final HgRollbackEnvironment rollbackEnvironment;
   private final HgDiffProvider diffProvider;
   private final HgHistoryProvider historyProvider;
@@ -78,6 +77,7 @@ public class HgVcs extends AbstractVcs {
   private final HgProjectSettings projectSettings;
 
   private boolean started = false;
+  private HgVFSListener myVFSListener;
 
   public HgVcs(Project project,
     HgGlobalSettings globalSettings, HgProjectSettings projectSettings) {
@@ -86,7 +86,6 @@ public class HgVcs extends AbstractVcs {
     this.projectSettings = projectSettings;
     configurable = new HgProjectConfigurable(projectSettings);
     changeProvider = new HgChangeProvider(project, getKeyInstanceMethod());
-    virtualFileListener = new HgVirtualFileListener(project, this);
     rollbackEnvironment = new HgRollbackEnvironment(project);
     diffProvider = new HgDiffProvider(project);
     historyProvider = new HgHistoryProvider(project);
@@ -230,7 +229,6 @@ public class HgVcs extends AbstractVcs {
       return;
     }
 
-    LocalFileSystem.getInstance().addVirtualFileListener(virtualFileListener);
     ChangeListManager.getInstance(myProject).registerCommitExecutor(commitExecutor);
 
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
@@ -276,6 +274,8 @@ public class HgVcs extends AbstractVcs {
         }
       }
     );
+
+    myVFSListener = new HgVFSListener(myProject, this);
   }
 
   @Override
@@ -284,7 +284,6 @@ public class HgVcs extends AbstractVcs {
       return;
     }
 
-    LocalFileSystem.getInstance().removeVirtualFileListener(virtualFileListener);
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
     if (messageBusConnection != null) {
       messageBusConnection.disconnect();
@@ -296,6 +295,11 @@ public class HgVcs extends AbstractVcs {
       //statusBar.removeCustomIndicationComponent(incomingChangesStatus);
       //statusBar.removeCustomIndicationComponent(outgoingChangesStatus);
       //statusBar.removeCustomIndicationComponent(hgCurrentBranchStatus);
+    }
+
+    if (myVFSListener != null) {
+      Disposer.dispose(myVFSListener);
+      myVFSListener = null;
     }
   }
 
