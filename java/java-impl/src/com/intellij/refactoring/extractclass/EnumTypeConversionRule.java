@@ -30,7 +30,15 @@ import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.intellij.refactoring.typeMigration.rules.TypeConversionRule;
 
+import java.util.List;
+
 public class EnumTypeConversionRule extends TypeConversionRule {
+  private final List<PsiField> myEnumConstants;
+
+  public EnumTypeConversionRule(List<PsiField> enumConstants) {
+    myEnumConstants = enumConstants;
+  }
+
   @Override
   public TypeConversionDescriptorBase findConversion(PsiType from,
                                                      PsiType to,
@@ -46,6 +54,14 @@ public class EnumTypeConversionRule extends TypeConversionRule {
           return null;
         }
       }
+    }
+    final PsiField field = PsiTreeUtil.getParentOfType(context, PsiField.class);
+    if (field != null &&
+        !myEnumConstants.contains(field) &&
+        field.hasModifierProperty(PsiModifier.STATIC) &&
+        field.hasModifierProperty(PsiModifier.FINAL) &&
+        field.hasInitializer()) {
+      return null;
     }
     final PsiClass toClass = PsiUtil.resolveClassInType(to);
     if (toClass != null && toClass.isEnum()) {

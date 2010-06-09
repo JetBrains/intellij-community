@@ -60,7 +60,7 @@ public class ExtractEnumTest extends MultiFileTestCase {
   }
 
   public void testForwardReferenceConflict() throws Exception {
-    doTest("Enum constant field <b><code>BAR</code></b> would forward reference on field field <b><code>FOO</code></b>", false,
+    doTest("Unable to migrate statement to enum constant.", false,
            new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, false),
            new RefactoringTestUtil.MemberDescriptor("BAR", PsiField.class, true));
   }
@@ -76,13 +76,19 @@ public class ExtractEnumTest extends MultiFileTestCase {
   }
 
   public void testCantChangeMethodParameter() throws Exception {
-    doTest("Failed to migrate", false,
+    doTest("Unable to migrate statement to enum constant.", false,
            new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true),
            new RefactoringTestUtil.MemberDescriptor("BAR", PsiField.class, true));
   }
 
+  public void testDontChangeOtherConstants() throws Exception {
+    doTest("Unable to migrate statement to enum constant. Node.WARNING can not be replaced with enum", false,
+           new RefactoringTestUtil.MemberDescriptor("OK", PsiField.class, true),
+           new RefactoringTestUtil.MemberDescriptor("ERROR", PsiField.class, true));
+  }
+
   public void testCantChangeMethodParameter1() throws Exception {
-    doTest("Failed to migrate", false,
+    doTest("Unable to migrate statement to enum constant.", false,
            new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true),
            new RefactoringTestUtil.MemberDescriptor("BAR", PsiField.class, true));
   }
@@ -115,7 +121,7 @@ public class ExtractEnumTest extends MultiFileTestCase {
   }
 
   public void testUnknownSwitchLabel() throws Exception {
-    doTest("Unable to migrate statement to enum constant. 8 can&apos;t be replaced with enum", false,
+    doTest("Unable to migrate statement to enum constant. 8 can not be replaced with enum", false,
            new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true),
            new RefactoringTestUtil.MemberDescriptor("BAR", PsiField.class, true));
   }
