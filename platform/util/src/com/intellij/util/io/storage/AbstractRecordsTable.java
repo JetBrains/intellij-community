@@ -100,31 +100,21 @@ public abstract class AbstractRecordsTable implements Disposable, Forceable {
     }
   }
 
-  public int getRecordsCount() {
-    try {
-      return doGetRecordsCount();
-    }
-    catch (IOException e) {
-      throw new AssertionError(e);
-    }
-  }
-
-  private int doGetRecordsCount() throws IOException {
+  public int getRecordsCount() throws IOException {
     int recordsLength = (int)myStorage.length() - getHeaderSize();
     if ((recordsLength % getRecordSize()) != 0) {
       throw new IOException("Corrupted records");
     }
-
     return recordsLength / getRecordSize();
   }
 
-  private void ensureFreeRecordsScanned() {
+  private void ensureFreeRecordsScanned() throws IOException {
     if (myFreeRecordsList == null) {
       myFreeRecordsList = scanForFreeRecords();
     }
   }
 
-  private TIntArrayList scanForFreeRecords() {
+  private TIntArrayList scanForFreeRecords() throws IOException {
     final TIntArrayList result = new TIntArrayList();
     for (int i = 1; i <= getRecordsCount(); i++) {
       if (getSize(i) == -1) {
@@ -170,7 +160,7 @@ public abstract class AbstractRecordsTable implements Disposable, Forceable {
     return getHeaderSize() + (record - 1) * getRecordSize() + section;
   }
 
-  public void deleteRecord(final int record) {
+  public void deleteRecord(final int record) throws IOException {
     ensureFreeRecordsScanned();
     setSize(record, -1);
     clearDeletedRecord(record);

@@ -127,7 +127,7 @@ public class LinkedStorage extends AbstractStorage {
         table.setPrevRecord(next, prev);
       }
 
-      table.deleteRecord(id);
+      doDeleteRecord(id);
     }
   }
 }

@@ -297,7 +297,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     }
   }
 
-  protected void doDeleteRecord(int record) {
+  protected void doDeleteRecord(int record) throws IOException {
     myDataTable.reclaimSpace(myRecordsTable.getSize(record));
     myRecordsTable.deleteRecord(record);
   }
