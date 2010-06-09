@@ -14,6 +14,7 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.jetbrains.python.PythonTestUtil;
+import com.jetbrains.python.testing.JythonUnitTestUtil;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -75,7 +76,7 @@ public class PyTestRunnerTest extends LightPlatformTestCase {
     List<String> allArgs = new ArrayList<String>();
     allArgs.add(utRunner.getPath());
     Collections.addAll(allArgs, args);
-    final ProcessOutput output = runJython(workDir, helpersDir.getPath(), ArrayUtil.toStringArray(allArgs));
+    final ProcessOutput output = JythonUnitTestUtil.runJython(workDir, helpersDir.getPath(), ArrayUtil.toStringArray(allArgs));
     assertEquals(output.getStderr(), 0, splitLines(output.getStderr()).length);
     return splitLines(output.getStdout());
   }
@@ -89,24 +90,5 @@ public class PyTestRunnerTest extends LightPlatformTestCase {
       }
     }
     return ArrayUtil.toStringArray(result);
-  }
-
-  private static ProcessOutput runJython(String workDir, String pythonPath, String... args) throws ExecutionException {
-    final SimpleJavaSdkType sdkType = new SimpleJavaSdkType();
-    final Sdk ideaJdk = sdkType.createJdk("tmp", SystemProperties.getJavaHome());
-    SimpleJavaParameters parameters = new SimpleJavaParameters();
-    parameters.setJdk(ideaJdk);
-    parameters.setMainClass("org.python.util.jython");
-
-    File jythonJar = new File(PathManager.getHomePath(), "python/lib/jython.jar");
-    parameters.getClassPath().add(jythonJar.getPath());
-
-    parameters.getProgramParametersList().add("-Dpython.path=" + pythonPath + ";" + workDir);
-    parameters.getProgramParametersList().addAll(args);
-    parameters.setWorkingDirectory(workDir);
-
-    final GeneralCommandLine commandLine = JdkUtil.setupJVMCommandLine(sdkType.getVMExecutablePath(ideaJdk), parameters, false);
-    final CapturingProcessHandler processHandler = new CapturingProcessHandler(commandLine.createProcess());
-    return processHandler.runProcess();
   }
 }

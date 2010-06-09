@@ -17,6 +17,8 @@
     <orderEntry type="module" module-name="dom-impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="JavaScriptLanguage" scope="RUNTIME" />
     <orderEntry type="module" module-name="CSS" scope="RUNTIME" />
+    <orderEntry type="library" name="commons-collections" level="project" />
+    <orderEntry type="library" name="commons-lang" level="project" />
   </component>
 </module>
 
