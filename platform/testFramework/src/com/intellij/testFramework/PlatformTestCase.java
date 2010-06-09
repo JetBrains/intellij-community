@@ -90,7 +90,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   private static TestCase ourTestCase = null;
   public static final long DEFAULT_TEST_TIME = 300L;
   public static long ourTestTime = DEFAULT_TEST_TIME;
-  private static final MyThreadGroup MY_THREAD_GROUP = new MyThreadGroup();
   private static final String ourOriginalTempDir = FileUtil.getTempDirectory();
   private EditorListenerTracker myEditorListenerTracker;
   private String myTempDirPath;
@@ -302,11 +301,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
         setTmpDir(ourOriginalTempDir);
 
-        Throwable fromThreadGroup = MY_THREAD_GROUP.popThrowable();
-        if (fromThreadGroup != null) {
-          throw new RuntimeException(fromThreadGroup);
-        }
-
         if (!myAssertionsInTestDetected) {
           if (IdeaLogger.ourErrorsOccurred != null) {
             throw IdeaLogger.ourErrorsOccurred;
@@ -408,35 +402,21 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   public void runBare() throws Throwable {
-    final Throwable[] throwable = new Throwable[1];
-
-    Thread thread = new Thread(MY_THREAD_GROUP, new Runnable() {
-      public void run() {
-        try {
-          runBareImpl();
-        }
-        catch (Throwable th) {
-          throwable[0] = th;
-        } finally {
-          try {
-            ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-              public void run() {
-                cleanupApplicationCaches(getProject());
-                resetAllFields();
-              }
-            }, ModalityState.NON_MODAL);
+    try {
+      runBareImpl();
+    }
+    finally {
+      try {
+        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+          public void run() {
+            cleanupApplicationCaches(getProject());
+            resetAllFields();
           }
-          catch (Throwable e) {
-            // Ignore
-          }
-        }
+        }, ModalityState.NON_MODAL);
       }
-    }, "IDEA Test Case Thread");
-    thread.start();
-    thread.join();
-
-    if (throwable[0] != null) {
-      throw throwable[0];
+      catch (Throwable e) {
+        // Ignore
+      }
     }
   }
 
@@ -596,29 +576,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
     catch (IllegalAccessException e) {
       LOG.error(e);
-    }
-  }
-
-  private static class MyThreadGroup extends ThreadGroup {
-    private Throwable myThrowable;
-    @NonNls private static final String IDEATEST_THREAD_GROUP = "IDEATest";
-
-    private MyThreadGroup() {
-      super(IDEATEST_THREAD_GROUP);
-    }
-
-    public void uncaughtException(Thread t, Throwable e) {
-      myThrowable = e;
-      super.uncaughtException(t, e);
-    }
-
-    public Throwable popThrowable() {
-      try {
-        return myThrowable;
-      }
-      finally {
-        myThrowable = null;
-      }
     }
   }
 
