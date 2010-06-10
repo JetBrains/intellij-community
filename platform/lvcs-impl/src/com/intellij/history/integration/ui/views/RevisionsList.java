@@ -103,7 +103,7 @@ public class RevisionsList {
         }
       }
       else {
-        periods.put(each, Period.OLDER);
+        periods.put(each, periods.isEmpty() ? Period.OLD : Period.OLDER);
         indices.add(i);
         break;
       }
@@ -134,7 +134,8 @@ public class RevisionsList {
 
   private enum Period {
     RECENT(LocalHistoryBundle.message("revisions.table.period.recent", RECENT_PERIOD)),
-    OLDER(LocalHistoryBundle.message("revisions.table.period.older"));
+    OLDER(LocalHistoryBundle.message("revisions.table.period.older")),
+    OLD(LocalHistoryBundle.message("revisions.table.period.old"));
 
     private final String myDisplayString;
 
