@@ -27,6 +27,7 @@ import gnu.trove.TIntArrayList;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.MessageFormat;
 
 public abstract class AbstractRecordsTable implements Disposable, Forceable {
   private static final int HEADER_MAGIC_OFFSET = 0;
@@ -103,7 +104,8 @@ public abstract class AbstractRecordsTable implements Disposable, Forceable {
   public int getRecordsCount() throws IOException {
     int recordsLength = (int)myStorage.length() - getHeaderSize();
     if ((recordsLength % getRecordSize()) != 0) {
-      throw new IOException("Corrupted records");
+      throw new IOException(MessageFormat.format("Corrupted records: storageLength={0} recordsLength={1} recordSize={2}",
+                                                 myStorage.length(), recordsLength, getRecordSize()));
     }
     return recordsLength / getRecordSize();
   }
