@@ -15,13 +15,14 @@
  */
 package org.intellij.lang.xpath.psi.impl;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
+import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.xpath.context.ContextProvider;
 import org.intellij.lang.xpath.context.NamespaceContext;
 import org.intellij.lang.xpath.psi.PrefixReference;
 import org.intellij.lang.xpath.psi.QNameElement;
-
-import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
+import org.intellij.lang.xpath.psi.XPathNodeTest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,8 +43,14 @@ class PrefixReferenceImpl extends ReferenceBase implements PrefixReference {
         }
     }
 
-    public boolean isReferenceTo(PsiElement element) {
-        return element.equals(resolve());
+    @SuppressWarnings({"ConstantConditions"})
+    @Override
+    public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+      final XPathNodeTest expr =
+        (XPathNodeTest)XPathChangeUtil.createExpression(getElement(), newElementName + ":x").getFirstChild().getChildren()[1];
+      final ASTNode nameNode = getNameNode();
+      nameNode.getTreeParent().replaceChild(nameNode, ((PrefixedNameImpl)expr.getQName()).getPrefixNode());
+      return getElement();
     }
 
     @NotNull

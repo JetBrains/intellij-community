@@ -57,7 +57,7 @@ abstract class SimpleAttributeReference implements PsiReference {
             }
             return false;
         } else {
-            return Comparing.equal(element, resolve());
+            return Comparing.equal(resolve(), element);
         }
     }
 
