@@ -19,9 +19,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 
@@ -33,6 +35,7 @@ import java.beans.Introspector;
 public class GroovyPropertyUtils {
   private static final String IS_PREFIX = "is";
   private static final String GET_PREFIX = "get";
+  private static final String SET_PREFIX = "set";
 
   private GroovyPropertyUtils() {
   }
@@ -166,7 +169,7 @@ public class GroovyPropertyUtils {
 
   @Nullable
   public static String getPropertyNameBySetterName(String methodName) {
-    if (methodName.startsWith("set") && methodName.length() > 3) {
+    if (methodName.startsWith(SET_PREFIX) && methodName.length() > 3) {
       return StringUtil.decapitalize(methodName.substring(3));
     }
     else {
@@ -200,6 +203,7 @@ public class GroovyPropertyUtils {
 
   /**
    * Returns getter names in priority order
+   *
    * @param name property name
    * @return getter names
    */
@@ -208,11 +212,11 @@ public class GroovyPropertyUtils {
   }
 
   public static String[] suggestSettersName(@NotNull String name) {
-    return new String[]{"set"+capitalize(name)};
+    return new String[]{SET_PREFIX + capitalize(name)};
   }
 
   public static boolean isSetterName(String name) {
-    return name != null && name.startsWith("set") && name.length() > 3 && isUpperCase(name.charAt(3));
+    return name != null && name.startsWith(SET_PREFIX) && name.length() > 3 && isUpperCase(name.charAt(3));
   }
 
   public static boolean isProperty(@Nullable PsiClass aClass, @Nullable String propertyName, boolean isStatic) {
@@ -253,4 +257,65 @@ public class GroovyPropertyUtils {
     return Introspector.decapitalize(s);
   }
 
+  @Nullable
+  public static PsiField findFieldForAccessor(PsiMethod accessor, boolean checkSuperClasses) {
+    final PsiClass psiClass = accessor.getContainingClass();
+    if (psiClass == null) return null;
+    PsiField field = null;
+    if (!checkSuperClasses) {
+      field = psiClass.findFieldByName(getPropertyNameByAccessorName(accessor.getName()), true);
+    }
+    else {
+      final String name = getPropertyNameByAccessorName(accessor.getName());
+      assert name != null;
+      final PsiField[] allFields = psiClass.getAllFields();
+      for (PsiField psiField : allFields) {
+        if (name.equals(psiField.getName())) {
+          field = psiField;
+          break;
+        }
+      }
+    }
+    if (field == null) return null;
+    if (field.hasModifierProperty(GrModifier.STATIC) == accessor.hasModifierProperty(GrModifier.STATIC)) {
+      return field;
+    }
+    return null;
+  }
+
+  @Nullable
+  public static String getGetterPrefix(PsiMethod getter) {
+    final String name = getter.getName();
+    if (name.startsWith(GET_PREFIX)) return GET_PREFIX;
+    if (name.startsWith(IS_PREFIX)) return IS_PREFIX;
+
+    return null;
+  }
+
+  @Nullable
+  public static String getSetterPrefix(PsiMethod setter) {
+    if (setter.getName().startsWith(SET_PREFIX)) return SET_PREFIX;
+    return null;
+  }
+
+  @Nullable
+  public static String getAccessorPrefix(PsiMethod method) {
+    final String prefix = getGetterPrefix(method);
+    if (prefix != null) return prefix;
+
+    return getSetterPrefix(method);
+  }
+
+  public static boolean isAccessorFor(PsiMethod accessor, PsiField field) {
+    final String accessorName = accessor.getName();
+    final String fieldName = field.getName();
+    if (!ArrayUtil.contains(accessorName, suggestGettersName(fieldName)) &&
+        !ArrayUtil.contains(accessorName, suggestSettersName(fieldName))) {
+      return false;
+    }
+    final PsiClass accessorClass = accessor.getContainingClass();
+    final PsiClass fieldClass = field.getContainingClass();
+    if (!field.getManager().areElementsEquivalent(accessorClass, fieldClass)) return false;
+    return accessor.hasModifierProperty(GrModifier.STATIC) == field.hasModifierProperty(GrModifier.STATIC);
+  }
 }

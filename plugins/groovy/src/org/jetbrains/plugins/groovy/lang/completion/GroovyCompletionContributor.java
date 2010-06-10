@@ -16,7 +16,10 @@
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -109,11 +112,14 @@ public class GroovyCompletionContributor extends CompletionContributor {
             public void consume(Object element) {
               if (element instanceof PsiClass) {
                 final PsiClass clazz = (PsiClass)element;
-                final MutableLookupElement<PsiClass> lookupElement = LookupElementFactory.getInstance().createLookupElement(clazz);
+                final LookupElement lookupElement = GroovyCompletionUtil.getLookupElement(clazz);
                 result.addElement(GroovyCompletionUtil.setTailTypeForConstructor(clazz, lookupElement));
+              } else if (element instanceof LookupElement && ((LookupElement)element).getObject() instanceof PsiClass) {
+                result.addElement(GroovyCompletionUtil
+                                    .setTailTypeForConstructor(((PsiClass)((LookupElement)element).getObject()), ((LookupElement)element)));
               }
               else {
-                result.addElement(LookupItemUtil.objectToLookupItem(element));
+                result.addElement(GroovyCompletionUtil.getLookupElement(element));
               }
             }
           });
@@ -123,11 +129,8 @@ public class GroovyCompletionContributor extends CompletionContributor {
 //          final boolean addGDKMethods = parameters.getInvocationCount() > 1;
           ((GrReferenceElement)reference).processVariants(new Consumer<Object>() {
             public void consume(Object element) {
-              LookupElement lookupElement = LookupItemUtil.objectToLookupItem(element);
+              LookupElement lookupElement = GroovyCompletionUtil.getLookupElement(element);
 //              if (lookupElement.getObject() instanceof GrGdkMethod && !addGDKMethods) return;
-              if (lookupElement instanceof LookupItem) {
-                lookupElement = ((LookupItem)lookupElement).setInsertHandler(new GroovyInsertHandlerAdapter());
-              }
               result.addElement(lookupElement);
             }
           });

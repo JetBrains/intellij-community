@@ -110,7 +110,11 @@ public class FindUsagesTest extends LightGroovyTestCase {
   }
 
   public void testTypeAlias() throws Throwable {
-    doTestImpl("A.groovy", 1);
+    doTestImpl("A.groovy", 2);
+  }
+
+  public void testMethodAlias() throws Throwable {
+    doTestImpl("A.groovy", 2);
   }
 
   public void testForInParameter() throws Throwable {
