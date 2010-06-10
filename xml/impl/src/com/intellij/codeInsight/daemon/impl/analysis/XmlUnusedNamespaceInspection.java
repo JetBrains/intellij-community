@@ -50,32 +50,26 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
         if (refCountHolder == null) return;
         if (attribute.isNamespaceDeclaration()) {
           String namespace = attribute.getValue();
-          if (namespace != null && !refCountHolder.isInUse(namespace)) {
-
-            /*
-            final ImplicitUsageProvider[] implicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
-            for (ImplicitUsageProvider provider : implicitUsageProviders) {
-              if (provider.isImplicitUsage(attribute)) return;
-            }
-            */
+          boolean def = isDefaultNamespace(attribute);
+          String declaredPrefix = def ? "" : attribute.getLocalName();
+          if (namespace != null && !refCountHolder.isInUse(declaredPrefix)) {
 
             XmlAttributeValue value = attribute.getValueElement();
             assert value != null;
-            holder.registerProblem(value, "Namespace declaration is never used", ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                                   new RemoveNamespaceDeclarationFix());
+            holder.registerProblem(attribute, "Namespace declaration is never used", ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                                   new RemoveNamespaceDeclarationFix(declaredPrefix));
 
-            boolean def = isDefaultNamespace(attribute);
             String message = "Namespace location is never used";
             XmlTag parent = attribute.getParent();
             if (def) {
               XmlAttribute location = getDefaultLocation(parent);
               if (location != null) {
-                holder.registerProblem(location, message, ProblemHighlightType.LIKE_UNUSED_SYMBOL, new RemoveNamespaceDeclarationFix());
+                holder.registerProblem(location, message, ProblemHighlightType.LIKE_UNUSED_SYMBOL, new RemoveNamespaceDeclarationFix(declaredPrefix));
               }
             }
             else {
               for (PsiReference reference : getLocationReferences(namespace, parent)) {
-                holder.registerProblem(reference, message, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+                holder.registerProblem(reference, ProblemHighlightType.LIKE_UNUSED_SYMBOL, message, new RemoveNamespaceDeclarationFix(declaredPrefix));
               }
             }
           }
@@ -146,6 +140,13 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
   }
 
   private static class RemoveNamespaceDeclarationFix implements LocalQuickFix {
+
+    private final String myPrefix;
+
+    private RemoveNamespaceDeclarationFix(String prefix) {
+      myPrefix = prefix;
+    }
+
     @NotNull
     public String getName() {
       return "Remove namespace declaration";
@@ -158,17 +159,20 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
 
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof XmlAttributeValue)) {
+      if (!(element instanceof XmlAttribute)) {
         return;
       }
-      String namespace = ((XmlAttributeValue)element).getValue();
-      PsiElement attribute = element.getParent();
-      boolean def = isDefaultNamespace((XmlAttribute)attribute);
-      XmlTag parent = (XmlTag)element.getParent().getParent();
+      doRemove(project, (XmlAttribute)element);
+    }
+
+    private static void doRemove(Project project, XmlAttribute attribute) {
+      String namespace = attribute.getValue();
+      boolean def = isDefaultNamespace(attribute);
+      XmlTag parent = attribute.getParent();
       SmartPsiElementPointer<XmlTag> pointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(parent);
 
       PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-      Document document = documentManager.getDocument(element.getContainingFile());
+      Document document = documentManager.getDocument(attribute.getContainingFile());
       assert document != null;
       attribute.delete();
       if (def) {
