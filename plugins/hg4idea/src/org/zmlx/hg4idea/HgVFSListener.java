@@ -85,7 +85,7 @@ public class HgVFSListener extends VcsVFSListener {
 
   @Override
   protected String getDeleteTitle() {
-    return HgVcsMessages.message("hg4idea.remove.title");
+    return HgVcsMessages.message("hg4idea.remove.multiple.title");
   }
 
   @Override
@@ -95,7 +95,7 @@ public class HgVFSListener extends VcsVFSListener {
 
   @Override
   protected String getSingleFileDeletePromptTemplate() {
-    return HgVcsMessages.message("hg4idea.remove.body");
+    return HgVcsMessages.message("hg4idea.remove.single.body");
   }
 
   @Override
