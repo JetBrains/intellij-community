@@ -177,15 +177,9 @@ public class HgChangeProvider implements ChangeProvider {
     MISSING() {
       @Override
       void process(Project project, VcsKey vcsKey, ChangelistBuilder builder,
-        HgRevisionNumber currentNumber, HgRevisionNumber parentRevision,
-        HgFile beforeFile, HgFile afterFile) {
-        processChange(
-          new HgContentRevision(project, beforeFile, parentRevision),
-          null,
-          FileStatus.DELETED_FROM_FS,
-          builder,
-          vcsKey
-        );
+                   HgRevisionNumber currentNumber, HgRevisionNumber parentRevision,
+                   HgFile beforeFile, HgFile afterFile) {
+        builder.processLocallyDeletedFile(new LocallyDeletedChange(beforeFile.toFilePath()));
       }
     },
 
