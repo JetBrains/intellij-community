@@ -17,7 +17,7 @@ import org.testng.annotations.Test;
 
 import java.io.File;
 
-public class HgCopyTestCase extends HgTestCase {
+public class HgCopyTestCase extends AbstractHgTestCase {
 
   @Test
   public void testCopyUnmodifiedFile() throws Exception {

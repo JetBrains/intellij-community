@@ -17,7 +17,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 import org.zmlx.hg4idea.command.HgResolveCommand;
 
-public class HgResolveConflictTestCase extends HgTestCase{
+public class HgResolveConflictTestCase extends AbstractHgTestCase {
 
   public static final String BASE = "one\n" +
     "conflicting\n" +
@@ -47,7 +47,7 @@ public class HgResolveConflictTestCase extends HgTestCase{
 
     runHgOnProjectRepo("--config", "ui.merge=internal:merge", "merge");
 
-    VirtualFile repoFile = makeFile(projectRepo);
+    VirtualFile repoFile = makeFile(myProjectRepo);
     HgResolveCommand.MergeData data = new HgResolveCommand(myProject).getResolveData(repoFile, repoFile.findChild("conflicting"));
 
     Assert.assertEquals(data.getBase(), BASE.getBytes(),

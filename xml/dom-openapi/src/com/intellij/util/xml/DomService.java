@@ -35,9 +35,13 @@ import java.util.List;
  * @author Gregory.Shrago
  */
 public abstract class DomService {
-
+  private static DomService ourCachedInstance = null;
+  
   public static DomService getInstance() {
-    return ServiceManager.getService(DomService.class);
+    if (ourCachedInstance == null) {
+      ourCachedInstance = ServiceManager.getService(DomService.class);
+    }
+    return ourCachedInstance;
   }
 
   public Collection<VirtualFile> getDomFileCandidates(Class<? extends DomElement> description, Project project, final GlobalSearchScope scope) {

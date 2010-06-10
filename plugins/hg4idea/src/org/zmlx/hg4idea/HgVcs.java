@@ -12,45 +12,32 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.intellij.concurrency.JobScheduler;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.CommittedChangesProvider;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.annotate.AnnotationProvider;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangeProvider;
-import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
-import com.intellij.openapi.vcs.diff.DiffProvider;
-import com.intellij.openapi.vcs.history.VcsHistoryProvider;
-import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
-import com.intellij.openapi.vcs.update.UpdateEnvironment;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.util.messages.MessageBus;
-import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.messages.Topic;
+import com.intellij.concurrency.*;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.options.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.annotate.*;
+import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.checkin.*;
+import com.intellij.openapi.vcs.diff.*;
+import com.intellij.openapi.vcs.history.*;
+import com.intellij.openapi.vcs.rollback.*;
+import com.intellij.openapi.vcs.update.*;
+import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.wm.*;
+import com.intellij.util.messages.*;
 import org.zmlx.hg4idea.provider.*;
-import org.zmlx.hg4idea.provider.annotate.HgAnnotationProvider;
-import org.zmlx.hg4idea.provider.commit.HgCheckinEnvironment;
-import org.zmlx.hg4idea.provider.commit.HgCommitExecutor;
-import org.zmlx.hg4idea.provider.update.HgIntegrateEnvironment;
-import org.zmlx.hg4idea.provider.update.HgUpdateEnvironment;
-import org.zmlx.hg4idea.ui.HgChangesetStatus;
-import org.zmlx.hg4idea.ui.HgCurrentBranchStatus;
+import org.zmlx.hg4idea.provider.annotate.*;
+import org.zmlx.hg4idea.provider.commit.*;
+import org.zmlx.hg4idea.provider.update.*;
+import org.zmlx.hg4idea.ui.*;
 
 import javax.swing.*;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.io.File;
+import java.util.concurrent.*;
 
 public class HgVcs extends AbstractVcs {
 
@@ -72,7 +59,6 @@ public class HgVcs extends AbstractVcs {
 
   private final HgChangeProvider changeProvider;
   private final HgProjectConfigurable configurable;
-  private final HgVirtualFileListener virtualFileListener;
   private final HgRollbackEnvironment rollbackEnvironment;
   private final HgDiffProvider diffProvider;
   private final HgHistoryProvider historyProvider;
@@ -91,6 +77,7 @@ public class HgVcs extends AbstractVcs {
   private final HgProjectSettings projectSettings;
 
   private boolean started = false;
+  private HgVFSListener myVFSListener;
 
   public HgVcs(Project project,
     HgGlobalSettings globalSettings, HgProjectSettings projectSettings) {
@@ -99,7 +86,6 @@ public class HgVcs extends AbstractVcs {
     this.projectSettings = projectSettings;
     configurable = new HgProjectConfigurable(projectSettings);
     changeProvider = new HgChangeProvider(project, getKeyInstanceMethod());
-    virtualFileListener = new HgVirtualFileListener(project, this);
     rollbackEnvironment = new HgRollbackEnvironment(project);
     diffProvider = new HgDiffProvider(project);
     historyProvider = new HgHistoryProvider(project);
@@ -243,7 +229,6 @@ public class HgVcs extends AbstractVcs {
       return;
     }
 
-    LocalFileSystem.getInstance().addVirtualFileListener(virtualFileListener);
     ChangeListManager.getInstance(myProject).registerCommitExecutor(commitExecutor);
 
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
@@ -289,6 +274,8 @@ public class HgVcs extends AbstractVcs {
         }
       }
     );
+
+    myVFSListener = new HgVFSListener(myProject, this);
   }
 
   @Override
@@ -297,7 +284,6 @@ public class HgVcs extends AbstractVcs {
       return;
     }
 
-    LocalFileSystem.getInstance().removeVirtualFileListener(virtualFileListener);
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
     if (messageBusConnection != null) {
       messageBusConnection.disconnect();
@@ -310,10 +296,36 @@ public class HgVcs extends AbstractVcs {
       //statusBar.removeCustomIndicationComponent(outgoingChangesStatus);
       //statusBar.removeCustomIndicationComponent(hgCurrentBranchStatus);
     }
+
+    if (myVFSListener != null) {
+      Disposer.dispose(myVFSListener);
+      myVFSListener = null;
+    }
   }
 
   public static HgVcs getInstance(Project project) {
     return (HgVcs) ProjectLevelVcsManager.getInstance(project).findVcsByName(VCS_NAME);
+  }
+
+  private static String ourTestHgExecutablePath; // path to hg in test mode
+
+  /**
+   * Sets the path to hg executable used in the test mode.
+   */
+  public static void setTestHgExecutablePath(String path) {
+    ourTestHgExecutablePath = path;
+  }
+
+  /**
+   * Returns the hg executable file.
+   * If it is a test, returns the special value set in the test setup.
+   * If it is a normal app, returns the value from global settings.
+   */
+  public String getHgExecutable() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return (new File(ourTestHgExecutablePath, SystemInfo.isWindows ? "hg.exe" : "hg")).getPath();
+    }
+    return globalSettings.getHgExecutable();
   }
 
 }

@@ -148,7 +148,7 @@ public class GroovyPropertyUtils {
     if (methodName.startsWith(GET_PREFIX) && methodName.length() > 3) {
       return decapitalize(methodName.substring(3));
     }
-    else if (methodName.startsWith(IS_PREFIX) && methodName.length() > 2 && canBeBoolean) {
+    if (canBeBoolean && methodName.startsWith(IS_PREFIX) && methodName.length() > 2) {
       return decapitalize(methodName.substring(2));
     }
     return null;

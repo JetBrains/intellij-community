@@ -66,11 +66,6 @@ public class PsiImplUtil {
       if (method.isConstructor()) constructorsList.add(method);
     }
 
-    final List<PsiMethod> augments = PsiAugmentProvider.collectAugments(aClass, PsiMethod.class);
-    for (final PsiMethod method : augments) {
-      if (method.isConstructor()) constructorsList.add(method);
-    }
-
     return constructorsList.toArray(new PsiMethod[constructorsList.size()]);
   }
 

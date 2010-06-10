@@ -7,10 +7,10 @@ import java.nio.charset.Charset;
 
 import static org.testng.Assert.assertEquals;
 
-public class HgCatTestCase extends HgTestCase {
+public class HgCatTestCase extends AbstractHgTestCase {
   @Test
   public void testCatCurrentRevision() throws Exception {
-    fillFile(projectRepo, new String[]{"file.txt"}, "initial contents");
+    fillFile(myProjectRepo, new String[]{"file.txt"}, "initial contents");
     runHgOnProjectRepo("add", ".");
     runHgOnProjectRepo("commit", "-m", "initial contents");
 
@@ -22,14 +22,14 @@ public class HgCatTestCase extends HgTestCase {
 
   @Test
   public void testCatPastRevision() throws Exception {
-    fillFile(projectRepo, new String[]{"file.txt"}, "initial contents");
+    fillFile(myProjectRepo, new String[]{"file.txt"}, "initial contents");
     runHgOnProjectRepo("add", ".");
     runHgOnProjectRepo("commit", "-m", "initial contents");
 
     runHgOnProjectRepo("rename", "file.txt", "file2.txt");
     runHgOnProjectRepo("commit", "-m", "file renamed");
 
-    fillFile(projectRepo, new String[]{"file2.txt"}, "updated contents");
+    fillFile(myProjectRepo, new String[]{"file2.txt"}, "updated contents");
     runHgOnProjectRepo("commit", "-m", "updated contents");
 
     HgCatCommand command = new HgCatCommand(myProject);
@@ -40,14 +40,14 @@ public class HgCatTestCase extends HgTestCase {
 
   @Test
   public void testCatTrackFileNames() throws Exception {
-    fillFile(projectRepo, new String[]{"file.txt"}, "initial contents");
+    fillFile(myProjectRepo, new String[]{"file.txt"}, "initial contents");
     runHgOnProjectRepo("add", ".");
     runHgOnProjectRepo("commit", "-m", "initial contents");
 
     runHgOnProjectRepo("rename", "file.txt", "file2.txt");
     runHgOnProjectRepo("commit", "-m", "file renamed");
 
-    fillFile(projectRepo, new String[]{"file2.txt"}, "updated contents");
+    fillFile(myProjectRepo, new String[]{"file2.txt"}, "updated contents");
     runHgOnProjectRepo("commit", "-m", "updated contents");
 
     HgCatCommand command = new HgCatCommand(myProject);

@@ -247,4 +247,6 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testAmbiguousCodeBlock() throws Exception {doTest();}
   public void testNotAmbiguousClosableBlock() throws Exception {doTest();}
   public void testDuplicateParameterInClosableBlock() throws Exception {doTest();}
+
+  public void testCyclicInheritance() throws Exception {doTest();}
 }

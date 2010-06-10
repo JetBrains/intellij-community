@@ -16,6 +16,7 @@
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.roots.RootProvider;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Eugene Zhuravlev
  *         Date: Sep 23, 2004
  */
-public interface Sdk {
+public interface Sdk extends UserDataHolder {
 
   SdkType getSdkType();
 
