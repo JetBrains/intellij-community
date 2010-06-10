@@ -81,7 +81,7 @@ public class TagNameReference implements PsiReference {
       return new TextRange(parentOffset, parentOffset + nameElement.getTextLength());
     } else {
       final PsiElement element = getElement();
-      if (element == myNameElement) return new TextRange(0,myNameElement.getTextLength());
+      if (element == myNameElement) return new TextRange(0, myNameElement.getTextLength());
 
       final int elementLength = element.getTextLength();
       int diffFromEnd = 0;
@@ -350,7 +350,7 @@ public class TagNameReference implements PsiReference {
   }
 
   @Nullable
-  public static PsiReference createTagNameReference(XmlElement element, ASTNode nameElement, boolean startTagFlag) {
+  public static PsiReference createTagNameReference(XmlElement element, @NotNull ASTNode nameElement, boolean startTagFlag) {
     final XmlExtension extension = XmlExtension.getExtensionByElement(element);
     return extension == null ? null : extension.createTagNameReference(nameElement, startTagFlag);
   }
