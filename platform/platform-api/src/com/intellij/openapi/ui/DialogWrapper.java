@@ -32,6 +32,7 @@ import com.intellij.ui.UIBundle;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.AwtVisitor;
+import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -101,6 +102,17 @@ public abstract class DialogWrapper {
 
   private Action myYesAction = null;
   private Action myNoAction = null;
+
+  protected JCheckBox myCheckBoxDoNotShowDialog;
+  private DoNotAskOption myDoNotAsk;
+
+  protected String getDoNotShowMessage() {
+    return CommonBundle.message("dialog.options.do.not.show");
+  }
+
+  public void setDoNotAskOption(DoNotAskOption doNotAsk) {
+    myDoNotAsk = doNotAsk;
+  }
 
   protected final Disposable myDisposable = new Disposable() {
     public String toString() {
@@ -287,10 +299,45 @@ public abstract class DialogWrapper {
       panel.add(helpButton, BorderLayout.WEST);
     }
 
+
     panel.add(lrButtonsPanel, BorderLayout.CENTER);
     panel.setBorder(IdeBorderFactory.createEmptyBorder(new Insets(8, 0, 0, 0)));
+
+    if (myDoNotAsk != null) {
+      myCheckBoxDoNotShowDialog = new JCheckBox(getDoNotShowMessage());
+
+      JComponent southPanel = panel;
+
+      if (!myDoNotAsk.canBeHidden()) {
+        return southPanel;
+      }
+
+      final JPanel withCB = addDoNotShowCheckBox(southPanel, myCheckBoxDoNotShowDialog);
+      myCheckBoxDoNotShowDialog.setSelected(!myDoNotAsk.isToBeShown());
+      DialogUtil.registerMnemonic(myCheckBoxDoNotShowDialog, '&');
+
+      return withCB;
+    }
+
+
     return panel;
   }
+
+
+  protected boolean toBeShown() {
+    return !myCheckBoxDoNotShowDialog.isSelected();
+  }
+
+  public static JPanel addDoNotShowCheckBox(JComponent southPanel, JCheckBox checkBox) {
+    final JPanel panel = new JPanel(new GridBagLayout());
+    checkBox.setVerticalAlignment(SwingConstants.BOTTOM);
+
+    panel.add(checkBox, new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(15, 0, 0, 0), 0, 0));
+    panel.add(southPanel, new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    checkBox.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 20));
+    return panel;
+  }
+
 
   private JPanel createButtons(Action[] actions, List<JButton> buttons) {
     JPanel buttonsPanel = new JPanel(new GridLayout(1, actions.length, SystemInfo.isMacOSLeopard ? 0 : 5, 0));
@@ -470,6 +517,12 @@ public abstract class DialogWrapper {
    * Note that the method does nothing if "Cancel" action isn't enabled.
    */
   public void doCancelAction() {
+    if (myDoNotAsk != null) {
+      if (myDoNotAsk.shouldSaveOptionsOnCancel() && myDoNotAsk.canBeHidden()) {
+        myDoNotAsk.setToBeShown(toBeShown(), false);
+      }
+    }
+
     if (getCancelAction().isEnabled()) {
       close(CANCEL_EXIT_CODE);
     }
@@ -503,6 +556,12 @@ public abstract class DialogWrapper {
    * Note that the method does nothing if "OK" action isn't enabled.
    */
   protected void doOKAction() {
+    if (myDoNotAsk != null) {
+      if (myDoNotAsk.canBeHidden()) {
+        myDoNotAsk.setToBeShown(toBeShown(), true);
+      }
+    }
+
     if (getOKAction().isEnabled()) {
       close(OK_EXIT_CODE);
     }
@@ -1241,5 +1300,17 @@ public abstract class DialogWrapper {
 
   public final Disposable getDisposable() {
     return myDisposable;
+  }
+
+  public interface DoNotAskOption {
+
+    boolean isToBeShown();
+
+    void setToBeShown(boolean value, boolean onOk);
+
+    boolean canBeHidden();
+
+    boolean shouldSaveOptionsOnCancel();
+
   }
 }

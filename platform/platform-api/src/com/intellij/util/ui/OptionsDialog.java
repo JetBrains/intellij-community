@@ -26,83 +26,60 @@ import java.awt.*;
  * author: lesya
  */
 
-public abstract class OptionsDialog extends DialogWrapper {
-
-  protected JCheckBox myCheckBoxDoNotShowDialog;
-
-  protected String getDoNotShowMessage() {
-    return CommonBundle.message("dialog.options.do.not.show");
-  }
+public abstract class OptionsDialog extends DialogWrapper  {
 
   protected final Project myProject;
+
+  private class MyDoNotAsk implements DoNotAskOption {
+    public boolean isToBeShown() {
+      return OptionsDialog.this.isToBeShown();
+    }
+
+    public void setToBeShown(boolean value, boolean onOk) {
+      OptionsDialog.this.setToBeShown(value, onOk);
+    }
+
+    public boolean canBeHidden() {
+      return OptionsDialog.this.canBeHidden();
+    }
+
+    public boolean shouldSaveOptionsOnCancel() {
+      return OptionsDialog.this.shouldSaveOptionsOnCancel();
+    }
+  }
 
   protected OptionsDialog(Project project) {
     super(project, true);
     myProject = project;
+    setDoNotAskOption(new MyDoNotAsk());
   }
 
   protected OptionsDialog(Project project, boolean canBeParent) {
     super(project, canBeParent);
     myProject = project;
+    setDoNotAskOption(new MyDoNotAsk());
   }
 
   protected OptionsDialog(boolean canBeParent) {
     super(canBeParent);
     myProject = null;
+    setDoNotAskOption(new MyDoNotAsk());
   }
 
   protected OptionsDialog(Component parent, boolean canBeParent) {
     super(parent, canBeParent);
     myProject = null;
-  }
-
-  protected JComponent createSouthPanel() {
-
-    myCheckBoxDoNotShowDialog = new JCheckBox(getDoNotShowMessage());
-
-    JComponent southPanel = super.createSouthPanel();
-
-    if (!canBeHidden()) {
-      return southPanel;
-    }
-
-    final JPanel panel = addDoNotShowCheckBox(southPanel, myCheckBoxDoNotShowDialog);
-    myCheckBoxDoNotShowDialog.setSelected(!isToBeShown());
-    DialogUtil.registerMnemonic(myCheckBoxDoNotShowDialog, '&');
-    return panel;
+    setDoNotAskOption(new MyDoNotAsk());
   }
 
   public static JPanel addDoNotShowCheckBox(JComponent southPanel, JCheckBox checkBox) {
-    final JPanel panel = new JPanel(new GridBagLayout());
-    checkBox.setVerticalAlignment(SwingConstants.BOTTOM);
-    
-    panel.add(checkBox, new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(15, 0, 0, 0), 0, 0));
-    panel.add(southPanel, new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-    checkBox.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 20));
-    return panel;
+    return DialogWrapper.addDoNotShowCheckBox(southPanel, checkBox);
   }
 
   public static boolean shiftIsPressed(int inputEventModifiers) {
     return (inputEventModifiers & Event.SHIFT_MASK) != 0;
   }
 
-  protected void doOKAction() {
-    if (canBeHidden()) {
-      setToBeShown(toBeShown(), true);
-    }
-    super.doOKAction();
-  }
-
-  protected boolean toBeShown() {
-    return !myCheckBoxDoNotShowDialog.isSelected();
-  }
-
-  public void doCancelAction() {
-    if (shouldSaveOptionsOnCancel() && canBeHidden()) {
-      setToBeShown(toBeShown(), false);
-    }
-    super.doCancelAction();
-  }
 
   protected abstract boolean isToBeShown();
 
