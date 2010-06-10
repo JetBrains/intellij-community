@@ -259,7 +259,7 @@ class ExtractedClassBuilder {
     if (hasEnumConstants()) {
       out.append(StringUtil.join(enumConstantFields, new Function<PsiField, String>() {
         public String fun(PsiField field) {
-          final StringBuffer fieldStr = new StringBuffer(field.getName().toUpperCase() + "(");
+          final StringBuffer fieldStr = new StringBuffer(field.getName() + "(");
           final PsiExpression initializer = field.getInitializer();
           if (initializer != null) {
             initializer.accept(new Mutator(fieldStr));
@@ -411,7 +411,7 @@ class ExtractedClassBuilder {
 
             final String name = field.getName();
             if (enumConstantFields.contains(field)) {
-              out.append(name.toUpperCase()).append(".").append(getterName()).append("()");
+              out.append(name).append(".").append(getterName()).append("()");
             } else {
               if (qualifier != null && name.equals(expression.getReferenceName())) {
                 out.append("this.");

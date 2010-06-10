@@ -245,7 +245,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
   protected JComponent createCenterPanel() {
     final JPanel panel = new JPanel(new BorderLayout());
     final MemberSelectionPanel memberSelectionPanel =
-      new MemberSelectionPanel(RefactorJBundle.message("members.to.extract.label"), memberInfo, "as enum"){
+      new MemberSelectionPanel(RefactorJBundle.message("members.to.extract.label"), memberInfo, "As enum"){
         @Override
         protected MemberSelectionTable createMemberSelectionTable(final List<MemberInfo> memberInfo, String abstractColumnHeader) {
           return new MemberSelectionTable(memberInfo, abstractColumnHeader) {
@@ -342,7 +342,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
   private static boolean isConstantField(PsiMember member) {
     return member instanceof PsiField &&
            member.hasModifierProperty(PsiModifier.STATIC) &&
-           member.hasModifierProperty(PsiModifier.FINAL) &&
+          // member.hasModifierProperty(PsiModifier.FINAL) &&
            ((PsiField)member).hasInitializer();
   }
 

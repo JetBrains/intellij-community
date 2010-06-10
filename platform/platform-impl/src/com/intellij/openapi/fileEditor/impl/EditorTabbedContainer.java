@@ -19,6 +19,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.CloseAction;
 import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -33,9 +34,7 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.ui.SimpleTextAttributes;
@@ -116,6 +115,12 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
       }
     });
 
+    UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
+      public void uiSettingsChanged(UISettings source) {
+        updateTabBorder();
+      }
+    });
+
     Disposer.register(project, this);
   }
 
@@ -134,9 +139,57 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
   private void updateTabBorder() {
     if (!myProject.isOpen()) return;
 
+    ToolWindowManagerEx mgr = (ToolWindowManagerEx)ToolWindowManager.getInstance(myProject);
+
+    String[] ids = mgr.getToolWindowIds();
+
+    Insets border = new Insets(0, 0, 0, 0);
+
+    UISettings uiSettings = UISettings.getInstance();
+
+    for (String each : ids) {
+      ToolWindow eachWnd = mgr.getToolWindow(each);
+      if (!eachWnd.isAvailable()) continue;
+
+      if (eachWnd.isVisible() && eachWnd.getType() == ToolWindowType.DOCKED) {
+        ToolWindowAnchor eachAnchor = eachWnd.getAnchor();
+        if (eachAnchor == ToolWindowAnchor.TOP) {
+          border.top = 1;
+        } else if (eachAnchor == ToolWindowAnchor.BOTTOM) {
+          border.bottom = 1;
+        } else if (eachAnchor == ToolWindowAnchor.LEFT) {
+          border.left = 1;
+        } else if (eachAnchor == ToolWindowAnchor.RIGHT) {
+          border.right = 1;
+        }
+      }
+    }
+
+    if (!uiSettings.HIDE_TOOL_STRIPES) {
+      if (mgr.getIdsOn(ToolWindowAnchor.TOP).size() > 0) {
+        border.top = 1;
+      }
+
+      if (mgr.getIdsOn(ToolWindowAnchor.BOTTOM).size() > 0) {
+        border.bottom = 1;
+      }
+
+      if (mgr.getIdsOn(ToolWindowAnchor.LEFT).size() > 0) {
+        border.left = 1;
+      }
+
+      if (mgr.getIdsOn(ToolWindowAnchor.RIGHT).size() > 0) {
+        border.right = 1;
+      }
+
+      if (!uiSettings.SHOW_STATUS_BAR && !uiSettings.HIDE_TOOL_STRIPES) {
+        border.bottom = 1;
+      }
+    }
+
     myTabs.getComponent().setBorder(new EmptyBorder(1, 0, 0, 0));
-    final List<String> rightIds = ((ToolWindowManagerEx)ToolWindowManager.getInstance(myProject)).getIdsOn(ToolWindowAnchor.RIGHT);
-    myTabs.getPresentation().setPaintBorder(-1, -1, rightIds.size() > 0 ? 1 : 0, -1).setTabSidePaintBorder(5);
+
+    myTabs.getPresentation().setPaintBorder(border.top, border.left, border.right, border.bottom).setTabSidePaintBorder(5);
   }
 
   public Component getComponent() {

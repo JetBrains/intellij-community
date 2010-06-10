@@ -84,7 +84,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
       PsiReferenceExpression refExpr = (PsiReferenceExpression)usage.reference;
       PsiExpression qualifier = refExpr.getQualifierExpression();
       if (qualifier != null) {
-        if (usage.qualifierClass != null) {
+        if (usage.qualifierClass != null && PsiTreeUtil.getParentOfType(refExpr, PsiSwitchLabelStatement.class) == null) {
           changeQualifier(refExpr, usage.qualifierClass, usage.member);
         }
         else {
@@ -92,7 +92,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
         }
       }
       else { // no qualifier
-        if (usage.qualifierClass != null) {
+        if (usage.qualifierClass != null && PsiTreeUtil.getParentOfType(refExpr, PsiSwitchLabelStatement.class) == null) {
           changeQualifier(refExpr, usage.qualifierClass, usage.member);
         }
       }

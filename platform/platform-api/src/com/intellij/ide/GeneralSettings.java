@@ -52,6 +52,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
   private String myLastProjectLocation;
   private boolean mySearchInBackground;
   private boolean myConfirmExit = true;
+  private int myConfirmOpenNewProject = -1;
   @NonNls private static final String ELEMENT_OPTION = "option";
   @NonNls private static final String ATTRIBUTE_NAME = "name";
   @NonNls private static final String ATTRIBUTE_VALUE = "value";
@@ -73,6 +74,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
   @NonNls private static final String OPTION_USE_CYCLIC_BUFFER = "useCyclicBuffer";
   @NonNls private static final String OPTION_SEARCH_IN_BACKGROUND = "searchInBackground";
   @NonNls private static final String OPTION_CONFIRM_EXIT = "confirmExit";
+  @NonNls private static final String OPTION_CONFIRM_OPEN_NEW_PROJECT = "confirmOpenNewProject";
   @NonNls private static final String OPTION_CYCLIC_BUFFER_SIZE = "cyclicBufferSize";
   @NonNls private static final String OPTION_LAST_PROJECT_LOCATION = "lastProjectLocation";
   @Deprecated
@@ -324,6 +326,15 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
         }
       }
 
+      if (OPTION_CONFIRM_OPEN_NEW_PROJECT.equals(name)) {
+        try {
+          myConfirmOpenNewProject = Integer.valueOf(value).intValue();
+        }
+        catch (Exception ex) {
+          myConfirmOpenNewProject = -1;
+        }
+      }
+
       if (OPTION_LAST_PROJECT_LOCATION.equals(name)) {
         try {
           myLastProjectLocation = value;
@@ -407,6 +418,11 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
     optionElement.setAttribute(ATTRIBUTE_VALUE, Boolean.toString(myConfirmExit));
     parentNode.addContent(optionElement);
 
+    optionElement = new Element(ELEMENT_OPTION);
+    optionElement.setAttribute(ATTRIBUTE_NAME, OPTION_CONFIRM_OPEN_NEW_PROJECT);
+    optionElement.setAttribute(ATTRIBUTE_VALUE, Integer.toString(myConfirmOpenNewProject));
+    parentNode.addContent(optionElement);
+
     if (myLastProjectLocation != null) {
       optionElement = new Element(ELEMENT_OPTION);
       optionElement.setAttribute(ATTRIBUTE_NAME, OPTION_LAST_PROJECT_LOCATION);
@@ -456,6 +472,14 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
 
   public void setConfirmExit(boolean confirmExit) {
     myConfirmExit = confirmExit;
+  }
+
+  public int getConfirmOpenNewProject() {
+    return myConfirmOpenNewProject;
+  }
+
+  public void setConfirmOpenNewProject(int confirmOpenNewProject) {
+    myConfirmOpenNewProject = confirmOpenNewProject;
   }
 
   public boolean isSearchInBackground() {
