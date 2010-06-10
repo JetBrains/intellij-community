@@ -7,7 +7,7 @@
   <!-- 
   <property name="skip.tests" value="true"/>
    -->
-
+  
   <!-- Compiler options -->
   
   <property name="compiler.debug" value="on"/>
@@ -58,10 +58,6 @@
     <pathelement location="${basedir}/lib/ant-1.7.1.jar"/>
   </path>
   
-  <path id="library.groovy.classpath">
-    <pathelement location="${basedir}/lib/groovy-all-1.7.1.jar"/>
-  </path>
-  
   <path id="library.javac2.classpath">
     <pathelement location="${basedir}/lib/javac2-all.jar"/>
   </path>
@@ -74,16 +70,16 @@
   <!-- Global Libraries -->
   
   <path id="library.gant.classpath">
-    <pathelement location="C:/Tools/gant-1.8.1/lib/ant-launcher-1.7.1.jar"/>
-    <pathelement location="C:/Tools/gant-1.8.1/lib/gant-1.8.1_groovy-1.6.5.jar"/>
-    <pathelement location="C:/Tools/gant-1.8.1/lib/groovy-all-1.6.5.jar"/>
+    <pathelement location="${path.variable.gant_home}/lib/ant-1.8.0.jar"/>
+    <pathelement location="${path.variable.gant_home}/lib/gant_groovy1.7-1.9.2.jar"/>
+    <pathelement location="${path.variable.gant_home}/lib/groovy-all-1.7.1.jar"/>
   </path>
   
   
   <!-- Application Server Libraries -->
   
   <!-- Custom Compiler Taskdefs -->
-  <property name="grooovyc.task.sdk" value="library.groovy.classpath"/>
+  <property name="grooovyc.task.sdk" value="library.gant.classpath"/>
   <taskdef name="groovyc" classname="org.codehaus.groovy.ant.Groovyc" classpathref="${grooovyc.task.sdk}"/>
   
   <!-- Modules -->
@@ -251,7 +247,6 @@
     <pathelement location="${antlayout.testoutput.dir}"/>
     <path refid="library.junit.classpath"/>
     <path refid="library.gant.classpath"/>
-    <path refid="library.groovy.classpath"/>
   </path>
   
   <path id="jps.runtime.module.classpath">
@@ -263,7 +258,6 @@
     <pathelement location="${antlayout.testoutput.dir}"/>
     <path refid="library.junit.classpath"/>
     <path refid="library.gant.classpath"/>
-    <path refid="library.groovy.classpath"/>
   </path>
   
   

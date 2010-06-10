@@ -1,5 +1,16 @@
 <project name="JPS" basedir="." default="build">
 
+  <property environment="env"/>
+  <property file="jps.properties"/>
+
+  <condition property="path.variable.gant_home" value="${env.GANT_HOME}">
+    <not>
+      <isset property="path.variable.gant_home"/>
+    </not>
+  </condition>
+
+  <echo message="${path.variable.gant_home}"/>
+
   <import file="jps.xml"/>
 
   <taskdef name="javac2" classname="com.intellij.ant.Javac2" classpathref="library.javac2.classpath"/>
@@ -7,7 +18,13 @@
 
   <property name="build.dir" value="${basedir}/build"/>
 
-  <target name="init">
+  <target name="check_preconditions" depends="check_gant"/>
+
+  <target name="check_gant" unless="path.variable.gant_home">
+    <fail message="Either GANT_HOME environment variable or path.variable.gant_home property must be defined"/>
+  </target>
+
+  <target name="init" depends="check_preconditions">
     <delete dir="${build.dir}" failonerror="false"/>
   </target>
 
