@@ -110,6 +110,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private final Set<String> myRestoredToolWindowIds = new java.util.HashSet<String>();
   private FileEditorManager myFileEditorManager;
 
+  private Map<String, Balloon> myWindow2Balloon = new HashMap<String, Balloon>();
+
   /**
    * invoked by reflection
    */
@@ -1024,6 +1026,12 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                               @Nullable HyperlinkListener listener) {
     checkId(toolWindowId);
 
+
+    Balloon existing = myWindow2Balloon.get(toolWindowId);
+    if (existing != null) {
+      existing.hide();
+    }
+
     final Stripe stripe = myToolWindowsPane.getStripeFor(toolWindowId);
     final ToolWindowImpl window = getInternalDecorator(toolWindowId).getToolWindow();
     if (!window.isAvailable()) {
@@ -1053,12 +1061,14 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     final Balloon balloon =
       JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(text.replace("\n", "<br>"), actualIcon, type.getPopupBackground(), listener).setHideOnClickOutside(false).setHideOnFrameResize(false)
         .createBalloon();
+    myWindow2Balloon.put(toolWindowId, balloon);
     Disposer.register(balloon, new Disposable() {
       public void dispose() {
         window.setPlaceholderMode(false);
         stripe.updateState();
         stripe.revalidate();
         stripe.repaint();
+        myWindow2Balloon.remove(toolWindowId);
       }
     });
     Disposer.register(getProject(), balloon);
