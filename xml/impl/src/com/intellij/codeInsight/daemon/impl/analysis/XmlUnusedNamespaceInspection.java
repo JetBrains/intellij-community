@@ -16,8 +16,10 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -40,17 +42,6 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
 
   private static final String NAMESPACE_LOCATION_IS_NEVER_USED = "Namespace location is never used";
 
-  private static void removeReferencesOrAttribute(PsiReference[] references, XmlAttribute attribute) {
-    if (references.length > 0 && references[0].getElement().getReferences().length == references.length) {
-      attribute.delete();
-    }
-    else {
-      for (PsiReference reference : references) {
-        RemoveNamespaceDeclarationFix.removeReferenceText(reference);
-      }
-    }
-  }
-
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
@@ -70,6 +61,11 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
         String namespace = attribute.getValue();
         String declaredPrefix = getDeclaredPrefix(attribute);
         if (namespace != null && !refCountHolder.isInUse(declaredPrefix)) {
+
+          ImplicitUsageProvider[] implicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
+          for (ImplicitUsageProvider provider : implicitUsageProviders) {
+            if (provider.isImplicitUsage(attribute)) return;
+          }
 
           XmlAttributeValue value = attribute.getValueElement();
           assert value != null;
@@ -93,6 +89,17 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
         }
       }
     };
+  }
+
+  private static void removeReferencesOrAttribute(PsiReference[] references, XmlAttribute attribute) {
+    if (references.length > 0 && references[0].getElement().getReferences().length == references.length) {
+      attribute.delete();
+    }
+    else {
+      for (PsiReference reference : references) {
+        RemoveNamespaceDeclarationFix.removeReferenceText(reference);
+      }
+    }
   }
 
   private static void checkUnusedLocations(XmlAttribute attribute, ProblemsHolder holder) {
