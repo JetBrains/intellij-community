@@ -536,6 +536,7 @@ public class PluginManager {
   private static void loadDescriptorsFromClassPath(final List<IdeaPluginDescriptorImpl> result) {
     try {
       final Collection<URL> urls = getClassLoaderUrls();
+      final String platformPrefix = System.getProperty("idea.platform.prefix");
       for (URL url : urls) {
         final String protocol = url.getProtocol();
         if ("file".equals(protocol)) {
@@ -544,7 +545,6 @@ public class PluginManager {
           //if (!canonicalPath.startsWith(homePath) || canonicalPath.endsWith(".jar")) continue;
           //if (!canonicalPath.startsWith(homePath)) continue;
 
-          final String platformPrefix = System.getProperty("idea.platform.prefix");
           IdeaPluginDescriptorImpl platformPluginDescriptor = null;
           if (platformPrefix != null) {
             platformPluginDescriptor = loadDescriptor(file, platformPrefix + "Plugin.xml");
