@@ -9,7 +9,7 @@
     </not>
   </condition>
 
-  <echo message="${path.variable.gant_home}"/>
+  <property name="compiler.args" value="-target 1.5"/>
 
   <import file="jps.xml"/>
 
