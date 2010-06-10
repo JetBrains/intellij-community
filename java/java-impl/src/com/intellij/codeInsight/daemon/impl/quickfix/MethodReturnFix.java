@@ -21,16 +21,20 @@ import com.intellij.codeInspection.IntentionAndQuickFixAction;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoUtil;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
+import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
+import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
+import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class MethodReturnFix extends IntentionAndQuickFixAction {
   private final PsiMethod myMethod;
@@ -74,6 +78,8 @@ public class MethodReturnFix extends IntentionAndQuickFixAction {
       if (superMethod != null) {
         final PsiType superReturnType = superMethod.getReturnType();
         if (superReturnType != null && !Comparing.equal(myReturnType, superReturnType)) {
+          final PsiClass psiClass = PsiUtil.resolveClassInType(superReturnType);
+          if (psiClass instanceof PsiTypeParameter && changeClassTypeArgument(project, (PsiTypeParameter)psiClass)) return;
           method = SuperMethodWarningUtil.checkSuperMethod(myMethod, RefactoringBundle.message("to.refactor"));
           if (method == null) return;
         }
@@ -86,15 +92,67 @@ public class MethodReturnFix extends IntentionAndQuickFixAction {
         method.getName(),
         myReturnType,
         RemoveUnusedParameterFix.getNewParametersInfo(method, null));
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      processor.run();
-    }
-    else {
-      processor.run();
-    }
+    processor.run();
     if (method.getContainingFile() != file) {
       UndoUtil.markPsiFileForUndo(file);
     }
+  }
+
+  private boolean changeClassTypeArgument(Project project, PsiTypeParameter typeParameter) {
+    final PsiTypeParameterListOwner owner = typeParameter.getOwner();
+    if (owner instanceof PsiClass) {
+      final PsiClass derivedClass = myMethod.getContainingClass();
+      if (derivedClass == null) return true;
+      PsiType returnType = myReturnType;
+      if (returnType instanceof PsiPrimitiveType) {
+        returnType = ((PsiPrimitiveType)returnType).getBoxedType(derivedClass);
+      }
+      final PsiSubstitutor superClassSubstitutor =
+        TypeConversionUtil.getSuperClassSubstitutor((PsiClass)owner, derivedClass, PsiSubstitutor.EMPTY);
+      final PsiSubstitutor substitutor = superClassSubstitutor.put(typeParameter, returnType);
+      final TypeMigrationRules rules = new TypeMigrationRules(TypeMigrationLabeler.getElementType(derivedClass));
+      rules.setMigrationRootType(JavaPsiFacade.getElementFactory(project).createType(((PsiClass)owner), substitutor));
+      rules.setBoundScope(new LocalSearchScope(derivedClass));
+
+      final PsiReferenceParameterList referenceParameterList = findTypeArgumentsList(owner, derivedClass);
+      if (referenceParameterList == null) return true;
+      final TypeMigrationProcessor processor = new TypeMigrationProcessor(project, referenceParameterList, rules);
+      processor.setPreviewUsages(!ApplicationManager.getApplication().isUnitTestMode());
+      processor.run();
+      return true;
+    }
+    return false;
+  }
+
+  @Nullable
+  private static PsiReferenceParameterList findTypeArgumentsList(final PsiTypeParameterListOwner owner, final PsiClass derivedClass) {
+    PsiReferenceParameterList referenceParameterList = null;
+    if (derivedClass instanceof PsiAnonymousClass) {
+      referenceParameterList = ((PsiAnonymousClass)derivedClass).getBaseClassReference().getParameterList();
+    } else {
+      final PsiReferenceList implementsList = derivedClass.getImplementsList();
+      if (implementsList != null) {
+        referenceParameterList = extractReferenceParameterList(owner, implementsList);
+      }
+      if (referenceParameterList == null) {
+        final PsiReferenceList extendsList = derivedClass.getExtendsList();
+        if (extendsList != null) {
+          referenceParameterList = extractReferenceParameterList(owner, extendsList);
+        }
+      }
+    }
+    return referenceParameterList;
+  }
+
+  @Nullable
+  private static PsiReferenceParameterList extractReferenceParameterList(final PsiTypeParameterListOwner owner,
+                                                                         final PsiReferenceList extendsList) {
+    for (PsiJavaCodeReferenceElement referenceElement : extendsList.getReferenceElements()) {
+      if (referenceElement.resolve() == owner) {
+        return referenceElement.getParameterList();
+      }
+    }
+    return null;
   }
 
 }
