@@ -26,9 +26,12 @@ import com.intellij.openapi.diff.DiffPanel;
 import com.intellij.openapi.diff.ex.DiffPanelEx;
 import com.intellij.openapi.diff.ex.DiffPanelOptions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.WindowManager;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 
 public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
@@ -55,17 +58,22 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
 
   @Override
   protected Dimension getInitialSize() {
-    Dimension ss = Toolkit.getDefaultToolkit().getScreenSize();
-    return new Dimension(ss.width - 40, ss.height - 40);
+    Dimension def = super.getInitialSize();
+    Dimension windowSize = WindowManager.getInstance().getFrame(myProject).getSize();
+    return new Dimension(Math.max(def.width, windowSize.width - 40), Math.max(def.height, windowSize.height - 40));
   }
 
   @Override
-  protected JComponent createDiffPanel() {
+  protected Pair<JComponent, Dimension> createDiffPanel(JPanel root) {
     myDiffPanel = DiffManager.getInstance().createDiffPanel(getFrame(), myProject);
     DiffPanelOptions o = ((DiffPanelEx)myDiffPanel).getOptions();
     o.setRequestFocusOnNewContent(false);
 
-    return myDiffPanel.getComponent();
+    return Pair.create((JComponent)myDiffPanel.getComponent(), null);
+  }
+
+  @Override
+  protected void setDiffBorder(Border border) {
   }
 
   @Override

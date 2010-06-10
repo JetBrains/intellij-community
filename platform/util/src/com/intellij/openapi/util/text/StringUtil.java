@@ -32,6 +32,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.text.DateFormat;
 import java.util.*;
 
 //TeamCity inherits StringUtil: do not add private constructors!!!
@@ -1055,6 +1056,30 @@ public class StringUtil {
     long mbytes = fileSize * 100 / 1024 / 1024;
     final String size = mbytes / 100 + "." + formatMinor(mbytes % 100);
     return CommonBundle.message("file.size.format.mbytes", size);
+  }
+
+  @NotNull public static String formatDate(long timestamp, DateFormat format) {
+    long minDelta = (new Date().getTime() - timestamp) / (1000 * 60);
+
+    if (minDelta < 2) {
+      return "Moments ago";
+    }
+    if (minDelta < 10) {
+      return "Few minutes ago";
+    }
+
+    if (minDelta <= 30) {
+      return "Last 30 minutes";
+    }
+
+    int hoursDelta = Math.round(minDelta / 60f);
+    if (hoursDelta <= 1) {
+      return "Last hour";
+    }
+    if (hoursDelta < 5) {
+      return hoursDelta + " hours ago";
+    }
+    return format.format(timestamp);
   }
 
   @NotNull

@@ -16,7 +16,6 @@
     <orderEntry type="module" module-name="lvcs-api" />
     <orderEntry type="library" scope="TEST" name="EasyMock" level="project" />
     <orderEntry type="library" name="jcip" level="project" />
-    <orderEntry type="library" name="commons-lang" level="project" />
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="platform-impl" />
   </component>

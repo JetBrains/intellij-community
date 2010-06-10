@@ -27,7 +27,6 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import org.apache.commons.lang.time.DateUtils;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -41,6 +40,7 @@ import java.util.*;
 import java.util.List;
 
 public class RevisionsList {
+  public static final int RECENT_PERIOD = 12;
   private final JBTable table;
 
   public RevisionsList(SelectionListener l) {
@@ -90,29 +90,22 @@ public class RevisionsList {
     List<Revision> newRevs = model.getRevisions();
 
     Date today = new Date();
-    Date yesterday = DateUtils.addDays(new Date(), -1);
 
     Map<Revision, Period> periods = new THashMap<Revision, Period>();
-    Date prev = null;
-    Date currentDate = new Date();
-
     List<Integer> indices = new ArrayList<Integer>();
     for (int i = 0; i < newRevs.size(); i++) {
       Revision each = newRevs.get(i);
-      currentDate.setTime(each.getTimestamp());
-      if (prev == null || !DateUtils.isSameDay(currentDate, prev)) {
+      boolean recent = today.getTime() - each.getTimestamp() < 1000 * 60 * 60 * RECENT_PERIOD;
+      if (recent) {
+        if (i == 0) {
+          periods.put(each, Period.RECENT);
+          indices.add(i);
+        }
+      }
+      else {
+        periods.put(each, Period.OLDER);
         indices.add(i);
-        if (DateUtils.isSameDay(currentDate, today)) {
-          periods.put(each, Period.TODAY);
-        }
-        else if (DateUtils.isSameDay(currentDate, yesterday)) {
-          periods.put(each, Period.YESTERDAY);
-        }
-        else {
-          periods.put(each, Period.OLDER);
-          break;
-        }
-        prev = new Date(currentDate.getTime());
+        break;
       }
     }
 
@@ -140,8 +133,7 @@ public class RevisionsList {
   }
 
   private enum Period {
-    TODAY(LocalHistoryBundle.message("revisions.table.period.today")),
-    YESTERDAY(LocalHistoryBundle.message("revisions.table.period.yesterday")),
+    RECENT(LocalHistoryBundle.message("revisions.table.period.recent", RECENT_PERIOD)),
     OLDER(LocalHistoryBundle.message("revisions.table.period.older"));
 
     private final String myDisplayString;
@@ -233,6 +225,8 @@ public class RevisionsList {
     }
 
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+      if (value == null) return myWrapperPanel; // null erroneously comes from JPanel.getAccessibleChild
+
       Revision r = (Revision)value;
       LabelsAndColor labelsAndColor = getLabelsAndColor(r);
 
@@ -247,7 +241,7 @@ public class RevisionsList {
 
       myBorder.set(row == table.getModel().getRowCount() - 1);
 
-      myDateLabel.setText(ensureString(FormatUtil.formatTimestamp(r.getTimestamp())));
+      myDateLabel.setText(ensureString(StringUtil.formatDate(r.getTimestamp(), FormatUtil.FORMAT)));
       String text = ensureString(labelsAndColor.titleText);
       if (r.getChangeSetName() != null) {
         text = "<html><b>" + text + "</b></html>";

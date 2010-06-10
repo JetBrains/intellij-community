@@ -23,9 +23,9 @@ import com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DiffRequest;
-import com.intellij.openapi.diff.ex.DiffStatusBar;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
@@ -38,11 +38,11 @@ import com.intellij.ui.SearchTextFieldWithStoredHistory;
 import com.intellij.util.Consumer;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -51,7 +51,6 @@ import static com.intellij.history.integration.LocalHistoryBundle.message;
 public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialogModel> {
   private ChangesTreeList<Change> myChangesTree;
   private ActionToolbar myToolBar;
-  private SearchTextField mySearchField;
 
   public DirectoryHistoryDialog(Project p, IdeaGateway gw, VirtualFile f) {
     this(p, gw, f, true);
@@ -67,40 +66,38 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
   }
 
   @Override
-  protected Dimension getInitialSize() {
-    return new Dimension(700, 600);
-  }
-
-  @Override
-  protected JComponent createDiffPanel() {
+  protected Pair<JComponent, Dimension> createDiffPanel(JPanel root) {
     initChangesTree();
 
     JPanel p = new JPanel(new BorderLayout());
 
     myToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, createChangesTreeActions(), true);
-    p.add(myToolBar.getComponent(), BorderLayout.NORTH);
-
+    JPanel toolBarPanel = new JPanel(new BorderLayout());
+    toolBarPanel.add(myToolBar.getComponent(), BorderLayout.CENTER);
+    if (showSearchField()) toolBarPanel.add(createSearchBox(root), BorderLayout.EAST);
+    p.add(toolBarPanel, BorderLayout.NORTH);
     p.add(myChangesTree, BorderLayout.CENTER);
 
-    return p;
+    return Pair.create((JComponent)p, toolBarPanel.getPreferredSize());
+  }
+
+  protected boolean showSearchField() {
+    return true;
   }
 
   @Override
-  protected JComponent createRevisionsList() {
-    JPanel result = new JPanel(new BorderLayout());
-    result.add(createSearchBox(), BorderLayout.NORTH);
-    result.add(super.createRevisionsList(), BorderLayout.CENTER);
-    return result;
+  protected void setDiffBorder(Border border) {
+    myChangesTree.setScrollPaneBorder(border);
   }
 
-  private JComponent createSearchBox() {
-    mySearchField = new SearchTextFieldWithStoredHistory(getPropertiesKey() + ".searchHistory");
-    mySearchField.addDocumentListener(new DocumentAdapter() {
+  private JComponent createSearchBox(JPanel root) {
+    final SearchTextField field = new SearchTextFieldWithStoredHistory(getPropertiesKey() + ".searchHistory");
+    field.addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
         scheduleRevisionsUpdate(new Consumer<DirectoryHistoryDialogModel>() {
           public void consume(DirectoryHistoryDialogModel m) {
-            m.setFilter(mySearchField.getText());
+            m.setFilter(field.getText());
           }
         });
       }
@@ -109,11 +106,11 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     new AnAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
-        mySearchField.requestFocusInWindow();
+        field.requestFocusInWindow();
       }
-    }.registerCustomShortcutSet(CommonShortcuts.getFind(), mySplitter, this); // a little hack
+    }.registerCustomShortcutSet(CommonShortcuts.getFind(), root, this);
     
-    return mySearchField;
+    return field;
   }
 
   private void initChangesTree() {

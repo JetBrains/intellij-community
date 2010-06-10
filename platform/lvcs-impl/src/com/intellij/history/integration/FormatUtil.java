@@ -20,8 +20,10 @@ import java.text.DateFormat;
 import java.util.Date;
 
 public class FormatUtil {
+  public static final DateFormat FORMAT = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
+
   public static String formatTimestamp(long t) {
-    DateFormat f = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
+    DateFormat f = FORMAT;
     return f.format(new Date(t));
   }
 }
