@@ -64,7 +64,7 @@ import java.util.Map;
 public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements PsiClass, PsiQualifiedNamedElement, Queryable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiClassImpl");
 
-  private final ClassInnerStuffCache innersCache = new ClassInnerStuffCache(this);
+  private final ClassInnerStuffCache myInnersCache = new ClassInnerStuffCache(this);
 
   private PsiMethod myValuesMethod = null;
   private PsiMethod myValueOfMethod = null;
@@ -97,7 +97,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   }
 
   private void dropCaches() {
-    innersCache.dropCaches();
+    myInnersCache.dropCaches();
     myCachedForLongName = null;
   }
 
@@ -306,17 +306,17 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
   @NotNull
   public PsiField[] getFields() {
-    return getStubOrPsiChildren(Constants.FIELD_BIT_SET, PsiField.ARRAY_FACTORY);
+    return myInnersCache.getFields();
   }
 
   @NotNull
   public PsiMethod[] getMethods() {
-    return getStubOrPsiChildren(Constants.METHOD_BIT_SET, PsiMethod.ARRAY_FACTORY);
+    return myInnersCache.getMethods();
   }
 
   @NotNull
   public PsiMethod[] getConstructors() {
-    return innersCache.getConstructors();
+    return myInnersCache.getConstructors();
   }
 
   @NotNull
@@ -350,7 +350,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   }
 
   public PsiField findFieldByName(String name, boolean checkBases) {
-    return innersCache.findFieldByName(name, checkBases);
+    return myInnersCache.findFieldByName(name, checkBases);
   }
 
   public PsiMethod findMethodBySignature(PsiMethod patternMethod, boolean checkBases) {
@@ -364,7 +364,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
   @NotNull
   public PsiMethod[] findMethodsByName(String name, boolean checkBases) {
-    return innersCache.findMethodsByName(name, checkBases);
+    return myInnersCache.findMethodsByName(name, checkBases);
   }
 
   @NotNull
@@ -378,7 +378,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   }
 
   public PsiClass findInnerClassByName(String name, boolean checkBases) {
-    return innersCache.findInnerClassByName(name, checkBases);
+    return myInnersCache.findInnerClassByName(name, checkBases);
   }
 
   public PsiTypeParameterList getTypeParameterList() {
