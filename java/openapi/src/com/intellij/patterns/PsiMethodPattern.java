@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
@@ -95,22 +96,22 @@ public class PsiMethodPattern extends PsiMemberPattern<PsiMethod,PsiMethodPatter
   }
 
   public PsiMethodPattern definedInClass(final ElementPattern<? extends PsiClass> pattern) {
-    return with(new PatternCondition<PsiMethod>("definedInClass") {
-      public boolean accepts(@NotNull final PsiMethod psiMethod, final ProcessingContext context) {
-        if (pattern.accepts(psiMethod.getContainingClass(), context)) {
-          return true;
-        }
-        final Ref<Boolean> ref = new Ref<Boolean>(Boolean.FALSE);
-        SuperMethodsSearch.search(psiMethod, null, true, false).forEach(new Processor<MethodSignatureBackedByPsiMethod>() {
-          public boolean process(final MethodSignatureBackedByPsiMethod methodSignatureBackedByPsiMethod) {
-            if (pattern.accepts(methodSignatureBackedByPsiMethod.getMethod().getContainingClass())) {
-              ref.set(Boolean.TRUE);
+    return with(new PatternConditionPlus<PsiMethod, PsiClass>("definedInClass", pattern) {
+
+      @Override
+      public boolean processValues(PsiMethod t, final ProcessingContext context, final PairProcessor<PsiClass, ProcessingContext> processor) {
+        if (!processor.process(t.getContainingClass(), context)) return false;
+        final Ref<Boolean> result = Ref.create(Boolean.TRUE);
+        SuperMethodsSearch.search(t, null, true, false).forEach(new Processor<MethodSignatureBackedByPsiMethod>() {
+          public boolean process(final MethodSignatureBackedByPsiMethod signature) {
+            if (!processor.process(signature.getMethod().getContainingClass(), context)) {
+              result.set(Boolean.FALSE);
               return false;
             }
             return true;
           }
         });
-        return ref.get().booleanValue();
+        return result.get();
       }
     });
   }

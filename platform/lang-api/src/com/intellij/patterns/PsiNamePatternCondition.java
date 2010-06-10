@@ -17,22 +17,20 @@ package com.intellij.patterns;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
 */
 public class PsiNamePatternCondition<T extends PsiElement> extends PropertyPatternCondition<T, String> {
-  private final ElementPattern<String> myNamePattern;
 
   public PsiNamePatternCondition(@NonNls String methodName, final ElementPattern<String> namePattern) {
     super(methodName, namePattern);
-    myNamePattern = namePattern;
   }
 
   public ElementPattern<String> getNamePattern() {
-    return myNamePattern;
+    return getValuePattern();
   }
 
   public String getPropertyValue(@NotNull final Object o) {

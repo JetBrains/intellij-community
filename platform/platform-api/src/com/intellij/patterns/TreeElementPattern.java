@@ -15,6 +15,7 @@
  */
 package com.intellij.patterns;
 
+import com.intellij.util.PairProcessor;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,9 +63,12 @@ public abstract class TreeElementPattern<ParentType, T extends ParentType, Self 
   }
 
   public Self withChildren(@NotNull final ElementPattern<Collection<ParentType>> pattern) {
-    return with(new PatternCondition<T>("withChildren") {
-      public boolean accepts(@NotNull final T t, final ProcessingContext context) {
-        return pattern.getCondition().accepts(Arrays.asList(getChildren(t)), context);
+    return with(new PatternConditionPlus<T, Collection<ParentType>>("withChildren", pattern) {
+      @Override
+      public boolean processValues(T t,
+                                   ProcessingContext context,
+                                   PairProcessor<Collection<ParentType>, ProcessingContext> processor) {
+        return processor.process(Arrays.asList(getChildren(t)), context);
       }
     });
   }
@@ -91,14 +95,18 @@ public abstract class TreeElementPattern<ParentType, T extends ParentType, Self 
     return withSuperParent(level, StandardPatterns.instanceOf(aClass));
   }
   public Self withSuperParent(final int level, @NotNull final ElementPattern<? extends ParentType> pattern) {
-    return with(new PatternCondition<T>("withSuperParent") {
-      public boolean accepts(@NotNull final T t, final ProcessingContext context) {
+    return with(new PatternConditionPlus<T, ParentType>("withSuperParent", pattern) {
+
+      @Override
+      public boolean processValues(T t,
+                                   ProcessingContext context,
+                                   PairProcessor<ParentType, ProcessingContext> processor) {
         ParentType parent = t;
         for (int i = 0; i < level; i++) {
           if (parent == null) return false;
           parent = getParent(parent);
         }
-        return pattern.getCondition().accepts(parent, context);
+        return processor.process(parent, context);
       }
     });
   }
@@ -112,14 +120,17 @@ public abstract class TreeElementPattern<ParentType, T extends ParentType, Self 
   }
 
   public Self inside(final boolean strict, @NotNull final ElementPattern<? extends ParentType> pattern) {
-    return with(new PatternCondition<T>("inside") {
-      public boolean accepts(@NotNull final T t, final ProcessingContext context) {
+    return with(new PatternConditionPlus<T, ParentType>("inside", pattern) {
+      @Override
+      public boolean processValues(T t,
+                                   ProcessingContext context,
+                                   PairProcessor<ParentType, ProcessingContext> processor) {
         ParentType element = strict ? getParent(t) : t;
         while (element != null) {
-          if (pattern.getCondition().accepts(element, context)) return true;
+          if (!processor.process(element, context)) return false;
           element = getParent(element);
         }
-        return false;
+        return true;
       }
     });
   }

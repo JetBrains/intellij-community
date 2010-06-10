@@ -19,19 +19,30 @@ package org.intellij.plugins.intelliLang.inject.xml;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.patterns.ElementPattern;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.*;
 import com.intellij.util.PairProcessor;
+import com.intellij.util.PatternValuesIndex;
+import gnu.trove.THashMap;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
-import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
+import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.inject.config.AbstractTagInjection;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
+import org.intellij.plugins.intelliLang.inject.config.InjectionPlace;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -47,10 +58,13 @@ import java.util.*;
  */
 public final class XmlLanguageInjector implements MultiHostInjector {
 
-  private final Configuration myInjectionConfiguration;
+  private final Configuration myConfiguration;
+  private final Project myProject;
+  private CachedValue<Collection<String>> myXmlIndex;
 
-  public XmlLanguageInjector(Configuration configuration) {
-    myInjectionConfiguration = configuration;
+  public XmlLanguageInjector(Configuration configuration, Project project) {
+    myConfiguration = configuration;
+    myProject = project;
   }
 
   @NotNull
@@ -82,7 +96,8 @@ public final class XmlLanguageInjector implements MultiHostInjector {
   void getInjectedLanguage(final PsiElement place, final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor) {
     if (place instanceof XmlTag) {
       final XmlTag xmlTag = (XmlTag)place;
-      for (final BaseInjection injection : myInjectionConfiguration.getInjections(LanguageInjectionSupport.XML_SUPPORT_ID)) {
+      //getXmlAnnotatedElementsValue().contains(xmlTag.getLocalName());
+      for (final BaseInjection injection : myConfiguration.getInjections(LanguageInjectionSupport.XML_SUPPORT_ID)) {
         if (injection.acceptsPsiElement(xmlTag)) {
           final Language language = InjectedLanguage.findLanguageById(injection.getInjectedLanguageId());
           if (language == null) continue;
@@ -145,7 +160,7 @@ public final class XmlLanguageInjector implements MultiHostInjector {
         return;
       }
 
-      for (BaseInjection injection : myInjectionConfiguration.getInjections(LanguageInjectionSupport.XML_SUPPORT_ID)) {
+      for (BaseInjection injection : myConfiguration.getInjections(LanguageInjectionSupport.XML_SUPPORT_ID)) {
         if (injection.acceptsPsiElement(attribute)) {
           final Language language = InjectedLanguage.findLanguageById(injection.getInjectedLanguageId());
           if (language == null) continue;
@@ -172,6 +187,27 @@ public final class XmlLanguageInjector implements MultiHostInjector {
         }
       }
     }
+  }
+
+  private Collection<String> getXmlAnnotatedElementsValue() {
+    if (myXmlIndex == null) {
+      myXmlIndex = CachedValuesManager.getManager(myProject).createCachedValue(new CachedValueProvider<Collection<String>>() {
+        public Result<Collection<String>> compute() {
+          final Map<ElementPattern<?>, BaseInjection> map = new THashMap<ElementPattern<?>, BaseInjection>();
+          for (BaseInjection injection : myConfiguration.getInjections(XmlLanguageInjectionSupport.XML_SUPPORT_ID)) {
+            for (InjectionPlace place : injection.getInjectionPlaces()) {
+              if (!place.isEnabled() || place.getElementPattern() == null) continue;
+              map.put(place.getElementPattern(), injection);
+            }
+          }
+          final Set<String> stringSet = PatternValuesIndex.buildStringIndex(map.keySet());
+          final Result<Collection<String>> r = new Result<Collection<String>>(stringSet, myConfiguration);
+          r.setLockValue(true);
+          return r;
+        }
+      }, false);
+    }
+    return myXmlIndex.getValue();
   }
 
 }

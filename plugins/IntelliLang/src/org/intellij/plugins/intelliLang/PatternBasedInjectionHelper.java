@@ -29,9 +29,12 @@ import com.intellij.util.containers.Stack;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.*;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.*;
 
 /**
@@ -44,6 +47,40 @@ public class PatternBasedInjectionHelper {
 
   public PatternBasedInjectionHelper(final String supportId) {
     mySupportId = supportId;
+  }
+
+  public static StringBuilder appendStringPattern(@NotNull StringBuilder sb, @NotNull String prefix, @NotNull String text, @NotNull String suffix) {
+    sb.append(prefix).append("string().");
+    final String[] parts = text.split("[,|\\s]+");
+    boolean useMatches = false;
+    for (String part : parts) {
+      if (!StringUtil.escapeToRegexp(part).equals(part)) {
+        try {
+          final URL url = new URL(part);
+        }
+        catch (MalformedURLException e) {
+          useMatches = true;
+        }
+      }
+    }
+    if (useMatches) {
+      sb.append("matches(\"").append(text).append("\")");
+    }
+    else if (parts.length > 1) {
+      sb.append("oneOf(");
+      boolean first = true;
+      for (String part : parts) {
+        if (first) first = false;
+        else sb.append(", ");
+        sb.append("\"").append(part).append("\"");
+      }
+      sb.append(")");
+    }
+    else {
+      sb.append("equalTo(\"").append(text).append("\")");
+    }
+    sb.append(suffix);
+    return sb;
   }
 
   private Set<Method> getStaticMethods() {

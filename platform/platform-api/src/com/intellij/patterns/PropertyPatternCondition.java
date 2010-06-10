@@ -15,27 +15,26 @@
  */
 package com.intellij.patterns;
 
+import com.intellij.util.PairProcessor;
+import com.intellij.util.ProcessingContext;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
-import com.intellij.util.ProcessingContext;
 
 /**
  * @author peter
  */
-public abstract class PropertyPatternCondition<T,P> extends PatternCondition<T>{
-  private final ElementPattern<? extends P> myPropertyPattern;
+public abstract class PropertyPatternCondition<T,P> extends PatternConditionPlus<T, P>{
 
-  public PropertyPatternCondition(@NonNls String methodName, final ElementPattern<? extends P> propertyPattern) {
-    super(methodName);
-    myPropertyPattern = propertyPattern;
+  public PropertyPatternCondition(@NonNls String methodName, final ElementPattern propertyPattern) {
+    super(methodName, propertyPattern);
+  }
+
+  @Override
+  public boolean processValues(T t, ProcessingContext context, PairProcessor<P, ProcessingContext> processor) {
+    return processor.process(getPropertyValue(t), context);
   }
 
   @Nullable
   public abstract P getPropertyValue(@NotNull Object o);
-
-  public final boolean accepts(@NotNull final T t, final ProcessingContext context) {
-    final P value = getPropertyValue(t);
-    return myPropertyPattern.getCondition().accepts(value, context);
-  }
 }
