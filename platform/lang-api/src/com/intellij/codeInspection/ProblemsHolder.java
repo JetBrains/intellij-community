@@ -123,10 +123,10 @@ public class ProblemsHolder {
     if (reference instanceof LocalQuickFixProvider) {
       fixes = ((LocalQuickFixProvider)reference).getQuickFixes();
     }
-    registerProblem(reference, highlightType, descriptionTemplate, fixes);
+    registerProblemForReference(reference, highlightType, descriptionTemplate, fixes);
   }
 
-  public void registerProblem(@NotNull PsiReference reference,
+  public void registerProblemForReference(@NotNull PsiReference reference,
                               ProblemHighlightType highlightType,
                               String descriptionTemplate,
                               LocalQuickFix... fixes) {
