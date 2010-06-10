@@ -1046,38 +1046,38 @@ public class StringUtil {
    */
   @NotNull public static String formatFileSize(final long fileSize) {
     if (fileSize < 0x400) {
-      return CommonBundle.message("file.size.format.bytes", fileSize);
+      return CommonBundle.message("format.file.size.bytes", fileSize);
     }
     if (fileSize < 0x100000) {
       long kbytes = fileSize * 100 / 1024;
       final String kbs = kbytes / 100 + "." + formatMinor(kbytes % 100);
-      return CommonBundle.message("file.size.format.kbytes", kbs);
+      return CommonBundle.message("format.file.size.kbytes", kbs);
     }
     long mbytes = fileSize * 100 / 1024 / 1024;
     final String size = mbytes / 100 + "." + formatMinor(mbytes % 100);
-    return CommonBundle.message("file.size.format.mbytes", size);
+    return CommonBundle.message("format.file.size.mbytes", size);
   }
 
   @NotNull public static String formatDate(long timestamp, DateFormat format) {
     long minDelta = (new Date().getTime() - timestamp) / (1000 * 60);
 
     if (minDelta < 2) {
-      return "Moments ago";
+      return CommonBundle.message("format.date.momentsAgo");
     }
     if (minDelta < 10) {
-      return "Few minutes ago";
+      return CommonBundle.message("format.date.fewMinutesAgo");
     }
 
     if (minDelta <= 30) {
-      return "Last 30 minutes";
+      return CommonBundle.message("format.date.last30Minutes");
     }
 
     int hoursDelta = Math.round(minDelta / 60f);
     if (hoursDelta <= 1) {
-      return "Last hour";
+      return CommonBundle.message("format.date.lastHour");
     }
     if (hoursDelta < 5) {
-      return hoursDelta + " hours ago";
+      return CommonBundle.message("format.date.hoursAgo", hoursDelta);
     }
     return format.format(timestamp);
   }
