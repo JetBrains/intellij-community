@@ -46,6 +46,9 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Configura
     settings.setSyncOnFrameActivation(myComponent.myChkSyncOnFrameActivation.isSelected());
     settings.setSaveOnFrameDeactivation(myComponent.myChkSaveOnFrameDeactivation.isSelected());
     settings.setConfirmExit(myComponent.myConfirmExit.isSelected());
+    if (myComponent.myConfirmFrameToOpenCheckBox.isSelected()) {
+      settings.setConfirmOpenNewProject(-1);
+    }
     // AutoSave in inactive
     settings.setAutoSaveIfInactive(myComponent.myChkAutoSaveIfInactive.isSelected());
     try {
@@ -69,6 +72,10 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Configura
     isModified |= settings.isSaveOnFrameDeactivation() != myComponent.myChkSaveOnFrameDeactivation.isSelected();
     isModified |= settings.isAutoSaveIfInactive() != myComponent.myChkAutoSaveIfInactive.isSelected();
     isModified |= settings.isConfirmExit() != myComponent.myConfirmExit.isSelected();
+
+    int openProjectOption = settings.getConfirmOpenNewProject();
+
+    isModified |= (myComponent.myConfirmFrameToOpenCheckBox.isSelected() && openProjectOption >= 0) || (!myComponent.myConfirmFrameToOpenCheckBox.isSelected() == openProjectOption < 0);
 
     int inactiveTimeout = -1;
     try {
@@ -122,6 +129,7 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Configura
     myComponent.myTfInactiveTimeout.setText(Integer.toString(settings.getInactiveTimeout()));
     myComponent.myTfInactiveTimeout.setEditable(settings.isAutoSaveIfInactive());
     myComponent.myConfirmExit.setSelected(settings.isConfirmExit());
+    myComponent.myConfirmFrameToOpenCheckBox.setSelected(settings.getConfirmOpenNewProject() < 0);
   }
 
   public void disposeUIResources() {
@@ -146,6 +154,7 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Configura
     private JTextField myTfInactiveTimeout;
     public JCheckBox myConfirmExit;
     private JPanel myPluginOptionsPanel;
+    private JCheckBox myConfirmFrameToOpenCheckBox;
 
 
     public MyComponent() {

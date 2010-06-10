@@ -35,8 +35,8 @@ public abstract class OptionsDialog extends DialogWrapper  {
       return OptionsDialog.this.isToBeShown();
     }
 
-    public void setToBeShown(boolean value, boolean onOk) {
-      OptionsDialog.this.setToBeShown(value, onOk);
+    public void setToBeShown(boolean value, int exitCode) {
+      OptionsDialog.this.setToBeShown(value, DialogWrapper.CANCEL_EXIT_CODE != exitCode);
     }
 
     public boolean canBeHidden() {
@@ -45,6 +45,10 @@ public abstract class OptionsDialog extends DialogWrapper  {
 
     public boolean shouldSaveOptionsOnCancel() {
       return OptionsDialog.this.shouldSaveOptionsOnCancel();
+    }
+
+    public String getDoNotShowMessage() {
+      return CommonBundle.message("dialog.options.do.not.show");
     }
   }
 
