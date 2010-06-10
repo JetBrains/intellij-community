@@ -350,7 +350,7 @@ public class TagNameReference implements PsiReference {
   }
 
   @Nullable
-  public static TagNameReference create(XmlElement element, ASTNode nameElement, boolean startTagFlag) {
+  public static PsiReference createTagNameReference(XmlElement element, ASTNode nameElement, boolean startTagFlag) {
     final XmlExtension extension = XmlExtension.getExtensionByElement(element);
     return extension == null ? null : extension.createTagNameReference(nameElement, startTagFlag);
   }

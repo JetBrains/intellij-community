@@ -136,14 +136,14 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
         refs.add(new SchemaPrefixReference(this, TextRange.from(startTagName.getStartOffset() - this.getStartOffset(), prefix.length()), prefix));
         refs.add(new SchemaPrefixReference(this, TextRange.from(endTagName.getStartOffset() - this.getStartOffset(), prefix.length()), prefix));
       }
-      refs.add(TagNameReference.create(this, startTagName, true));
-      refs.add(TagNameReference.create(this, endTagName, false));
+      refs.add(TagNameReference.createTagNameReference(this, startTagName, true));
+      refs.add(TagNameReference.createTagNameReference(this, endTagName, false));
     }
     else {
       if (prefix.length() > 0) {
         refs.add(new SchemaPrefixReference(this, TextRange.from(startTagName.getStartOffset() - this.getStartOffset(), prefix.length()), prefix));
       }
-      refs.add(TagNameReference.create(this, startTagName, true));
+      refs.add(TagNameReference.createTagNameReference(this, startTagName, true));
     }
 
     // ArrayList.addAll() makes a clone of the collection
