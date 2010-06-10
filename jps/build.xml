@@ -8,7 +8,7 @@
   <property name="build.dir" value="${basedir}/build"/>
 
   <target name="init">
-    <delete dir="${build.dir}"/>
+    <delete dir="${build.dir}" failonerror="false"/>
   </target>
 
   <target name="build" depends="init, clean, compile.module.antlayout, compile.module.jps">
