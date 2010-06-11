@@ -73,7 +73,7 @@ public class JUnit4TestResultsSender extends RunListener {
     }
     testStarted(description);
       stopMeter(description);
-      prepareIgnoredPacket(description, val).send();
+      prepareIgnoredPacket(description, val).addLimitedString("").addLimitedString("").send();
   }
 
   private void doAddFailure(final Description test, final Throwable assertion) {
