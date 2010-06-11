@@ -65,6 +65,7 @@ public class GitUsersComponent implements ProjectComponent {
   private VcsListener myVcsListener;
   private final GitVcs myVcs;
   private final ProjectLevelVcsManager myManager;
+  private final File myFile;
 
   public GitUsersComponent(final ProjectLevelVcsManager manager) {
     myVcs = (GitVcs) manager.findVcsByName(GitVcs.getKey().getName());
@@ -74,14 +75,8 @@ public class GitUsersComponent implements ProjectComponent {
     final File vcsFile = new File(PathManager.getSystemPath(), "vcs");
     File file = new File(vcsFile, "git_users");
     file.mkdirs();
-    file = new File(file, myVcs.getProject().getLocationHash());
+    myFile = new File(file, myVcs.getProject().getLocationHash());
 
-    try {
-      myState = new PersistentHashMap<String, UsersData>(file, new EnumeratorStringDescriptor(), createExternalizer());
-    }
-    catch (IOException e) {
-      myState = null;
-    }
     myAccessMap = new HashMap<VirtualFile, Pair<String, LowLevelAccess>>();
 
     // every 10 seconds is ok to check
@@ -157,12 +152,27 @@ public class GitUsersComponent implements ProjectComponent {
   }
 
   public void activate() {
+    try {
+      myState = new PersistentHashMap<String, UsersData>(myFile, new EnumeratorStringDescriptor(), createExternalizer());
+    }
+    catch (IOException e) {
+      myState = null;
+    }
+
     myIsActive = true;
     myManager.addVcsListener(myVcsListener);
     myControlledCycle.start();
   }
 
   public void deactivate() {
+    if (myState != null) try {
+      myState.close();
+    }
+    catch (IOException e) {
+      LOG.info(e);
+    }
+    myState = null;
+
     synchronized (myLock) {
       myAccessMap.clear();
     }
