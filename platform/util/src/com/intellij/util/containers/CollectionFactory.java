@@ -19,6 +19,7 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 
 import java.util.*;
+import java.util.Stack;
 
 /**
  * @author peter
@@ -45,6 +46,10 @@ public class CollectionFactory {
 
   public static <T> ArrayList<T> arrayList() {
     return new ArrayList<T>();
+  }
+
+  public static <T> Stack<T> stack() {
+    return new Stack<T>();
   }
 
   public static <T> HashSet<T> hashSet() {
