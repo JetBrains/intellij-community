@@ -289,8 +289,8 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       String newName = entry.getValue();
 
       final RefactoringElementListener elementListener = getTransaction().getElementListener(element);
-      RenameUtil.doRename(element, newName, extractUsagesForElement(element, usages), myProject, elementListener);
       Runnable postRenameCallback = RenamePsiElementProcessor.forElement(element).getPostRenameCallback(element, newName, elementListener);
+      RenameUtil.doRename(element, newName, extractUsagesForElement(element, usages), myProject, elementListener);
       if (postRenameCallback != null) {
         postRenameCallbacks.add(postRenameCallback);
       }

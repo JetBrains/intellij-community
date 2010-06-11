@@ -115,5 +115,8 @@
     <component>
       <implementation-class>git4idea.history.browser.GitProjectLogManager</implementation-class>
     </component>
+    <component>
+      <implementation-class>git4idea.history.GitUsersComponent</implementation-class>
+    </component>
   </project-components>
 </idea-plugin>

@@ -96,7 +96,6 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
 
   private static final @NonNls String TEMPLATES_CONFIG_FOLDER = "templates";
 
-  private final List<TemplateImpl> myAllTemplates = new ArrayList<TemplateImpl>();
   private final MultiMap<String,TemplateImpl> myTemplates = new MultiMap<String,TemplateImpl>();
   private final Map<String,Template> myTemplatesById = new LinkedHashMap<String,Template>();
   private final Map<String,TemplateImpl> myDefaultTemplates = new LinkedHashMap<String, TemplateImpl>();
@@ -303,7 +302,8 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
   }
 
   public TemplateImpl[] getTemplates() {
-    return myAllTemplates.toArray(new TemplateImpl[myAllTemplates.size()]);
+    final Collection<? extends TemplateImpl> all = myTemplates.values();
+    return all.toArray(new TemplateImpl[all.size()]);
   }
 
   public char getDefaultShortcutChar() {
@@ -369,7 +369,6 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     final TemplateImpl templateImpl = (TemplateImpl)template;
     if (getTemplate(templateImpl.getKey(), templateImpl.getGroupName()) == null) {
       myTemplates.putValue(template.getKey(), templateImpl);
-      myAllTemplates.add(templateImpl);
     }
 
     myMaxKeyLength = Math.max(myMaxKeyLength, template.getKey().length());
@@ -390,7 +389,6 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     myTemplates.removeValue(template.getKey(), (TemplateImpl )template);
 
     TemplateImpl templateImpl = (TemplateImpl)template;
-    myAllTemplates.remove(templateImpl);
     String groupName = templateImpl.getGroupName();
     TemplateGroup group = mySchemesManager.findSchemeByName(groupName);
 
@@ -647,7 +645,6 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
 
   public void setTemplates(List<TemplateGroup> newGroups) {
     myTemplates.clear();
-    myAllTemplates.clear();
     myDeletedTemplates.clear();
     for (TemplateImpl template : myDefaultTemplates.values()) {
       myDeletedTemplates.add(TemplateKey.keyOf(template));

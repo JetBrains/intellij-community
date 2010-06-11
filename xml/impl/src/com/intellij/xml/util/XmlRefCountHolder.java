@@ -22,6 +22,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataCache;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.IdReferenceProvider;
+import com.intellij.psi.impl.source.xml.SchemaPrefix;
+import com.intellij.psi.impl.source.xml.SchemaPrefixReference;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -62,7 +64,7 @@ public class XmlRefCountHolder {
   private final List<XmlAttributeValue> myIdReferences = new ArrayList<XmlAttributeValue>();
   private final Set<String> myAdditionallyDeclaredIds = new HashSet<String>();
   private final Set<PsiElement> myDoNotValidateParentsList = new HashSet<PsiElement>();
-  private final Set<String> myUsedNamespaces = new HashSet<String>();
+  private final Set<String> myUsedPrefixes = new HashSet<String>();
 
   @Nullable
   public static XmlRefCountHolder getRefCountHolder(final XmlElement element) {
@@ -128,8 +130,8 @@ public class XmlRefCountHolder {
     myDoNotValidateParentsList.add(parent);
   }
 
-  public boolean isInUse(String namespace) {
-    return myUsedNamespaces.contains(namespace);
+  public boolean isInUse(String prefix) {
+    return myUsedPrefixes.contains(prefix);
   }
 
   private static class IdGatheringRecursiveVisitor extends XmlRecursiveElementVisitor {
@@ -174,13 +176,15 @@ public class XmlRefCountHolder {
 
     @Override
     public void visitXmlTag(XmlTag tag) {
-      myHolder.addNamespace(tag.getNamespace());
+      myHolder.addUsedPrefix(tag.getNamespacePrefix());
       super.visitXmlTag(tag);
     }
 
     @Override
     public void visitXmlAttribute(XmlAttribute attribute) {
-      myHolder.addNamespace(attribute.getNamespace());
+      if (!attribute.isNamespaceDeclaration()) {
+        myHolder.addUsedPrefix(attribute.getNamespacePrefix());
+      }
       super.visitXmlAttribute(attribute);
     }
 
@@ -209,6 +213,12 @@ public class XmlRefCountHolder {
           if (r instanceof IdReferenceProvider.GlobalAttributeValueSelfReference /*&& !r.isSoft()*/) {
             updateMap(attribute, value, r.isSoft());
           }
+          else if (r instanceof SchemaPrefixReference) {
+            SchemaPrefix prefix = ((SchemaPrefixReference)r).resolve();
+            if (prefix != null) {
+              myHolder.addUsedPrefix(prefix.getName());
+            }
+          }
         }
       }
 
@@ -228,7 +238,7 @@ public class XmlRefCountHolder {
     }
   }
 
-  private void addNamespace(String namespace) {
-    myUsedNamespaces.add(namespace);
+  private void addUsedPrefix(String prefix) {
+    myUsedPrefixes.add(prefix);
   }
 }

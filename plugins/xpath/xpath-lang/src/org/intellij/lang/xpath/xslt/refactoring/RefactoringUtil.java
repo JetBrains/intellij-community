@@ -15,7 +15,6 @@
  */
 package org.intellij.lang.xpath.xslt.refactoring;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.XmlRecursiveElementVisitor;
@@ -46,7 +45,7 @@ public class RefactoringUtil {
     }
 
     public static List<XPathVariableReference> collectVariableReferences(PsiElement block) {
-        final VariableReferenceCollector visitor = new VariableReferenceCollector(block.getProject());
+        final VariableReferenceCollector visitor = new VariableReferenceCollector();
         block.accept(visitor);
 
         final List<XPathVariableReference> list = new ArrayList<XPathVariableReference>(visitor.getMatches());
@@ -87,9 +86,8 @@ public class RefactoringUtil {
         return withParamTag;
     }
 
-    // TODO: verify
     static abstract class DeepXPathVistor extends XmlRecursiveElementVisitor {
-        protected DeepXPathVistor(Project project) {
+        protected DeepXPathVistor() {
         }
 
         protected void superVisitElement(PsiElement element) {
@@ -123,8 +121,7 @@ public class RefactoringUtil {
     static class VariableReferenceCollector extends DeepXPathVistor {
         private final Set<XPathVariableReference> myList;
 
-        protected VariableReferenceCollector(Project project) {
-            super(project);
+        protected VariableReferenceCollector() {
             myList = new HashSet<XPathVariableReference>();
         }
 
@@ -144,7 +141,6 @@ public class RefactoringUtil {
         private final Set<XPathExpression> myList;
 
         public ExpressionCollector(XPathExpression expression) {
-            super(expression.getProject());
             myExpression = expression;
             myList = new HashSet<XPathExpression>();
         }
@@ -159,12 +155,12 @@ public class RefactoringUtil {
             }
         }
 
-        private boolean isAccepted(XPathExpression expr) {
+        private static boolean isAccepted(XPathExpression expr) {
             final XmlAttribute attribute = PsiTreeUtil.getContextOfType(expr, XmlAttribute.class, true);
             return attribute != null && !XsltSupport.isPatternAttribute(attribute);
         }
 
-        private boolean isEquivalent(XPathExpression expr, XPathExpression expression) {
+        private static boolean isEquivalent(XPathExpression expr, XPathExpression expression) {
             return XsltCodeInsightUtil.areExpressionsEquivalent(expr, expression);
         }
 

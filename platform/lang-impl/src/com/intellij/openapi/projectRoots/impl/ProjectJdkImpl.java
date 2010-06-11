@@ -25,10 +25,7 @@ import com.intellij.openapi.projectRoots.ex.ProjectRootContainer;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.roots.impl.RootProviderBaseImpl;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -40,7 +37,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class ProjectJdkImpl implements JDOMExternalizable, Sdk, SdkModificator {
+public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternalizable, Sdk, SdkModificator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.ProjectJdkImpl");
   private final ProjectRootContainerImpl myRootContainer;
   private String myName;
@@ -205,7 +202,7 @@ public class ProjectJdkImpl implements JDOMExternalizable, Sdk, SdkModificator {
     }
   }
 
-  public Object clone() throws CloneNotSupportedException {
+  public Object clone() {
     ProjectJdkImpl newJdk = new ProjectJdkImpl("", mySdkType);
     copyTo(newJdk);
     return newJdk;
@@ -295,17 +292,11 @@ public class ProjectJdkImpl implements JDOMExternalizable, Sdk, SdkModificator {
 
   // SdkModificator implementation
   public SdkModificator getSdkModificator() {
-    try {
-      ProjectJdkImpl sdk = (ProjectJdkImpl)clone();
-      sdk.myOrigin = this;
-      sdk.myRootContainer.startChange();
-      sdk.update();
-      return sdk;
-    }
-    catch (CloneNotSupportedException e) {
-      LOG.error(e); // should not happen
-      return null;
-    }
+    ProjectJdkImpl sdk = (ProjectJdkImpl)clone();
+    sdk.myOrigin = this;
+    sdk.myRootContainer.startChange();
+    sdk.update();
+    return sdk;
   }
 
   public void commitChanges() {

@@ -124,7 +124,13 @@ public class ProblemsHolder {
     if (reference instanceof LocalQuickFixProvider) {
       fixes = ((LocalQuickFixProvider)reference).getQuickFixes();
     }
+    registerProblemForReference(reference, highlightType, descriptionTemplate, fixes);
+  }
 
+  public void registerProblemForReference(@NotNull PsiReference reference,
+                              ProblemHighlightType highlightType,
+                              String descriptionTemplate,
+                              LocalQuickFix... fixes) {
     registerProblem(myManager.createProblemDescriptor(reference.getElement(), reference.getRangeInElement(), descriptionTemplate, highlightType,
                                                       myOnTheFly, fixes));
   }

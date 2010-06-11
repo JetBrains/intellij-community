@@ -17,6 +17,7 @@ package git4idea.history.browser;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Pair;
@@ -35,6 +36,7 @@ import com.intellij.util.containers.SLRUCache;
 import git4idea.GitVcs;
 import git4idea.changes.GitChangeUtils;
 import git4idea.config.GitConfigUtil;
+import git4idea.history.GitUsersComponent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,6 +47,7 @@ class GitTreeController implements ManageGitTreeView {
   private final Project myProject;
   private final VirtualFile myRoot;
   private final GitTreeViewI myTreeView;
+  private final GitUsersComponent myGitUsersComponent;
 
   private final LowLevelAccess myAccess;
   private volatile boolean myInitialized;
@@ -80,11 +83,13 @@ class GitTreeController implements ManageGitTreeView {
     }
   };
   private Runnable myRefresher;
+  private String myUsername;
 
-  GitTreeController(final Project project, final VirtualFile root, final GitTreeViewI treeView) {
+  GitTreeController(final Project project, final VirtualFile root, final GitTreeViewI treeView, GitUsersComponent gitUsersComponent) {
     myProject = project;
     myRoot = root;
     myTreeView = treeView;
+    myGitUsersComponent = gitUsersComponent;
     myAccess = new LowLevelAccessImpl(project, root);
 
     myFilterHolder = new MyFiltersStateHolder();
@@ -136,6 +141,23 @@ class GitTreeController implements ManageGitTreeView {
     myFiltering = new MyUpdateStateInterceptor(myFilterRequestsMerger, myFilterHolder, null);
     myHighlighting = new MyUpdateStateInterceptor(myFilterRequestsMerger, myHighlightingHolder, null);
     myFilterHolder.setDirty(true);
+
+    ApplicationManager.getApplication().executeOnPooledThread(new DumbAwareRunnable() {
+      public void run() {
+        initCurrentUser();
+      }
+    });
+  }
+
+  private void initCurrentUser() {
+    final List<Pair<String,String>> value;
+    try {
+      value = GitConfigUtil.getAllValues(myProject, myRoot, "user.name");
+      myUsername = value.size() == 1 ? value.get(0).getSecond() : null;
+    }
+    catch (VcsException e) {
+      //
+    }
   }
 
   private Set<SHAHash> loadIdsToHighlight() throws VcsException {
@@ -172,16 +194,8 @@ class GitTreeController implements ManageGitTreeView {
   @NotNull
   private Portion loadPortion(final Collection<String> startingPoints, final Date beforePoint, final Date afterPoint,
                               final Collection<ChangesFilter.Filter> filtersIn, int maxCnt) throws VcsException {
-    final Collection<ChangesFilter.Filter> filters = new LinkedList<ChangesFilter.Filter>(filtersIn);
-    if (beforePoint != null) {
-      filters.add(new ChangesFilter.BeforeDate(new Date(beforePoint.getTime() - 1)));
-    }
-    if (afterPoint != null) {
-      filters.add(new ChangesFilter.AfterDate(afterPoint));
-    }
-
     final Portion portion = new Portion(null);
-    myAccess.loadCommits(startingPoints, Collections.<String>emptyList(), filters, portion, myBranches.get(), maxCnt);
+    myAccess.loadCommits(startingPoints, beforePoint, afterPoint, filtersIn, portion, maxCnt, myBranches.get());
     return portion;
   }
 
@@ -213,7 +227,7 @@ class GitTreeController implements ManageGitTreeView {
     return "Showing";
   }
 
-  private void loadTagsNBranches(final boolean loadBranches, final boolean loadTags, final boolean loadUsers) {
+  private void loadTagsNBranches(final boolean loadBranches, final boolean loadTags) {
     final List<String> branches = new LinkedList<String>();
     final List<String> tags = new LinkedList<String>();
 
@@ -228,28 +242,6 @@ class GitTreeController implements ManageGitTreeView {
         Collections.sort(tags);
         myTags.set(tags);
       }
-
-      if (loadUsers) {
-        final List<Pair<String,String>> value = GitConfigUtil.getAllValues(myProject, myRoot, "user.name");
-        final String username = value.size() == 1 ? value.get(0).getSecond() : null;
-
-        final Portion p = loadPortion(Collections.<String>emptyList(), null, null, Collections.<ChangesFilter.Filter>emptyList(), 500);
-        final Set<String> users = new HashSet<String>();
-        p.iterateFrom(0, new Processor<GitCommit>() {
-          public boolean process(GitCommit gitCommit) {
-            users.add(gitCommit.getAuthor());
-            users.add(gitCommit.getCommitter());
-            return false;
-          }
-        });
-        final ArrayList<String> usersList = new ArrayList<String>(users);
-        Collections.sort(usersList);
-        if (username != null) {
-          usersList.remove(username);
-          usersList.add(0, username);
-        }
-        myUsers.set(usersList);
-      }
     }
     catch (VcsException e) {
       myTreeView.acceptError(e.getMessage(), e);
@@ -263,13 +255,13 @@ class GitTreeController implements ManageGitTreeView {
     myAlarm.addRequest(new Runnable() {
       public void run() {
         myFilterRequestsMerger.request();
-        loadTagsNBranches(true, true, false);
+        loadTagsNBranches(true, true);
         myInitialized = true;
         myTreeView.controllerReady();
 
         myAlarm.addRequest(new Runnable() {
           public void run() {
-            loadTagsNBranches(false, false, true);
+            loadTagsNBranches(false, false);
           }
         }, 100);
       }
@@ -341,7 +333,7 @@ class GitTreeController implements ManageGitTreeView {
     myAlarm.addRequest(new Runnable() {
       public void run() {
         // todo USERS ARE NOT REFRESHED now! to be fixed after loading them faster
-        loadTagsNBranches(true, true, false);
+        loadTagsNBranches(true, true);
       }
     }, 100);
   }
@@ -380,7 +372,12 @@ class GitTreeController implements ManageGitTreeView {
   }
 
   public List<String> getKnownUsers() {
-    return new ArrayList<String>(myUsers.get());
+    final List<String> list = myGitUsersComponent.getUsersList(myRoot);
+    if (myUsername != null && list != null) {
+      list.remove(myUsername);
+      list.add(0, myUsername);
+    }
+    return list == null ? Collections.<String>emptyList() : list;
   }
 
   @CalledInBackground
