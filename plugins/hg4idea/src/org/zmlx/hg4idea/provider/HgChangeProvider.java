@@ -12,12 +12,10 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider;
 
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
@@ -30,8 +28,8 @@ import java.util.*;
 
 public class HgChangeProvider implements ChangeProvider {
 
-  private final Project project;
-  private final VcsKey vcsKey;
+  private final Project myProject;
+  private final VcsKey myVcsKey;
 
   private static final EnumMap<HgFileStatusEnum, HgChangeProcessor> PROCESSORS =
     new EnumMap<HgFileStatusEnum, HgChangeProcessor>(HgFileStatusEnum.class);
@@ -48,8 +46,8 @@ public class HgChangeProvider implements ChangeProvider {
   }
 
   public HgChangeProvider(Project project, VcsKey vcsKey) {
-    this.project = project;
-    this.vcsKey = vcsKey;
+    this.myProject = project;
+    this.myVcsKey = vcsKey;
   }
 
   public void getChanges(VcsDirtyScope dirtyScope, ChangelistBuilder builder,
@@ -61,6 +59,8 @@ public class HgChangeProvider implements ChangeProvider {
     for (FilePath filePath : dirtyScope.getDirtyFiles()) {
       process(builder, filePath, processedRoots);
     }
+
+    processUnsavedChanges(builder, dirtyScope.getDirtyFilesNoExpand());
   }
 
   public boolean isModifiedDocumentTrackingRequired() {
@@ -72,18 +72,18 @@ public class HgChangeProvider implements ChangeProvider {
 
   private void process(ChangelistBuilder builder,
     FilePath filePath, Set<VirtualFile> processedRoots) {
-    VirtualFile repo = VcsUtil.getVcsRootFor(project, filePath);
+    VirtualFile repo = VcsUtil.getVcsRootFor(myProject, filePath);
     if (repo == null || processedRoots.contains(repo)) {
       return;
     }
-    Set<HgChange> hgChanges = new HgStatusCommand(project).execute(repo);
+    Set<HgChange> hgChanges = new HgStatusCommand(myProject).execute(repo);
     if (hgChanges == null || hgChanges.isEmpty()) {
       return;
     }
     sendChanges(builder, hgChanges,
-      new HgResolveCommand(project).list(repo),
-      new HgWorkingCopyRevisionsCommand(project).identify(repo),
-      new HgWorkingCopyRevisionsCommand(project).firstParent(repo)
+      new HgResolveCommand(myProject).list(repo),
+      new HgWorkingCopyRevisionsCommand(myProject).identify(repo),
+      new HgWorkingCopyRevisionsCommand(myProject).firstParent(repo)
     );
     processedRoots.add(repo);
   }
@@ -100,10 +100,10 @@ public class HgChangeProvider implements ChangeProvider {
         && resolveStatus.get(afterFile) == HgResolveStatusEnum.UNRESOLVED) {
         builder.processChange(
           new Change(
-            new HgContentRevision(project, beforeFile, parentRevision),
+            new HgContentRevision(myProject, beforeFile, parentRevision),
             HgCurrentContentRevision.create(afterFile, workingRevision),
             FileStatus.MERGED_WITH_CONFLICTS
-          ), vcsKey);
+          ), myVcsKey);
         continue;
       }
 
@@ -115,7 +115,7 @@ public class HgChangeProvider implements ChangeProvider {
 
       HgChangeProcessor processor = PROCESSORS.get(status);
       if (processor != null) {
-        processor.process(project, vcsKey, builder,
+        processor.process(myProject, myVcsKey, builder,
           workingRevision, parentRevision, beforeFile, afterFile);
       }
     }
@@ -133,6 +133,26 @@ public class HgChangeProvider implements ChangeProvider {
 
     return false;
   }
+
+  /**
+   * Finds modified but unsaved files in the given list of dirty files and notifies the builder about MODIFIED changes.
+   */
+  public void processUnsavedChanges(ChangelistBuilder builder, Set<FilePath> dirtyFiles) {
+    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+    final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+    for (FilePath filePath : dirtyFiles) {
+      final VirtualFile vf = filePath.getVirtualFile();
+      if (vf != null &&  fileDocumentManager.isFileModifiedAndDocumentUnsaved(vf)) {
+        final VirtualFile root = vcsManager.getVcsRootFor(vf);
+        if (root != null) {
+          final HgRevisionNumber beforeRevisionNumber = new HgWorkingCopyRevisionsCommand(myProject).identify(root);
+          builder.processChange(new Change(new HgContentRevision(myProject, new HgFile(myProject, vf), beforeRevisionNumber),
+                                           CurrentContentRevision.create(filePath), FileStatus.MODIFIED), myVcsKey);
+        }
+      }
+    }
+  }
+
 
   private enum HgChangeProcessor {
     ADDED() {
