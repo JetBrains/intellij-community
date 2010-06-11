@@ -76,7 +76,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
 
   @NotNull
   public PyParameterList getParameterList() {
-    return getRequiredStubOrPsiChild(PyElementTypes.PARAMETER_LIST); 
+    return getRequiredStubOrPsiChild(PyElementTypes.PARAMETER_LIST);
   }
 
   public PyStatementList getStatementList() {
@@ -98,7 +98,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     if (parent instanceof PyStatementList) {
       PsiElement pparent = parent.getParent();
       if (pparent instanceof PyClass) {
-        return (PyClass) pparent;
+        return (PyClass)pparent;
       }
     }
     return null;
@@ -128,8 +128,12 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   }
 
   public PyFunction asMethod() {
-    if (getContainingClass() != null) return this;
-    else return null;
+    if (getContainingClass() != null) {
+      return this;
+    }
+    else {
+      return null;
+    }
   }
 
   public PyType getReturnTypeFromDocString() {
@@ -177,7 +181,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
       String firstLine = lines.get(0);
       int pos = firstLine.lastIndexOf("->");
       if (pos >= 0) {
-        return firstLine.substring(pos+2).trim();
+        return firstLine.substring(pos + 2).trim();
       }
     }
     return null;
@@ -227,7 +231,14 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
         myHasReturns = true;
       }
       else {
-        myResult = PyUnionType.union(myResult, returnType);
+        if (myResult == null) {
+          myResult = returnType;
+        }
+        else {
+          if (returnType != null) {
+            myResult = PyUnionType.union(myResult, returnType);
+          }
+        }
       }
     }
 
@@ -245,8 +256,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
                                      @NotNull ResolveState substitutor,
                                      PsiElement lastParent,
-                                     @NotNull PsiElement place)
-  {
+                                     @NotNull PsiElement place) {
     /*
     if (lastParent != null && lastParent.getParent() == this) {
       final PyNamedParameter[] params = getParameterList().getParameters();
@@ -287,11 +297,11 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   }
 
   public PyElement getElementNamed(final String the_name) {
-    return the_name.equals(getName())? this : null;
+    return the_name.equals(getName()) ? this : null;
   }
 
   public boolean mustResolveOutside() {
-    return false; 
+    return false;
   }
 
   @Override
@@ -301,10 +311,10 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
 
   public void subtreeChanged() {
     super.subtreeChanged();
-    if (myControlFlowRef != null){
+    if (myControlFlowRef != null) {
       myControlFlowRef.clear();
     }
-    if (myScopeRef != null){
+    if (myScopeRef != null) {
       myScopeRef.clear();
     }
   }
@@ -334,7 +344,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   }
 
   @Nullable
-  private static<T> T getRefValue(final SoftReference<T> reference){
+  private static <T> T getRefValue(final SoftReference<T> reference) {
     return reference != null ? reference.get() : null;
   }
 }

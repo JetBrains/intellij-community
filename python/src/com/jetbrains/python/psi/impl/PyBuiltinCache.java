@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.ModuleLibraryOrderEntryImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -68,7 +69,10 @@ public class PyBuiltinCache {
               for (OrderEntry orderEntry : orderEntries) {
                 if (orderEntry instanceof JdkOrderEntry) {
                   sdk = ((JdkOrderEntry) orderEntry).getJdk();
-                }
+                } else
+                  if (orderEntry instanceof ModuleLibraryOrderEntryImpl) {
+                    sdk = PythonSdkType.findPythonSdk(orderEntry.getOwnerModule());
+                  }
               }
             }
           }
@@ -191,7 +195,7 @@ public class PyBuiltinCache {
   private final Map<String,PyClassType> myTypeCache = new HashMap<String, PyClassType>();
   
   /**
-  @return 
+  @return
   */
   @Nullable
   public PyClassType getObjectType(@NonNls String name) {
@@ -205,17 +209,17 @@ public class PyBuiltinCache {
     }
     return val;
   }
-  
+
   @Nullable
   public PyClassType getObjectType() {
     return getObjectType("object");
   }
-  
+
   @Nullable
   public PyClassType getListType() {
     return getObjectType("list");
   }
-  
+
   @Nullable
   public PyClassType getDictType() {
     return getObjectType("dict");
@@ -259,7 +263,7 @@ public class PyBuiltinCache {
 
   /**
    * @param target an element to check.
-   * @return true iff target is inside the __builtins__.py 
+   * @return true iff target is inside the __builtins__.py
    */
   public boolean hasInBuiltins(@Nullable PsiElement target) {
     if (target == null) return false;

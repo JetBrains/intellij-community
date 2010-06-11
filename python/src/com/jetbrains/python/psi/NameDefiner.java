@@ -21,11 +21,11 @@ public interface NameDefiner extends PsiElement {
   Iterable<PyElement> iterateNames();
 
   /**
-   * @param the_name an unqualified name.
+   * @param name an unqualified name.
    * @return an element which is defined under that name in this instance, or null. 
    */
   @Nullable
-  PsiElement getElementNamed(String the_name);
+  PsiElement getElementNamed(String name);
 
   /**
    * @return true if names found inside its children cannot be resolved to names defined by this statement.

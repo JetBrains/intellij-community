@@ -22,7 +22,7 @@ public class PyDefUseUtil {
   private PyDefUseUtil() {}
 
   @NotNull
-  public static PyElement[] getLatestDefs(ScopeOwner block, PyTargetExpression var, PsiElement anchor) {
+  public static PyElement[] getLatestDefs(ScopeOwner block, PyElement var, PsiElement anchor) {
     final ControlFlow controlFlow = block.getControlFlow();
     final Instruction[] instructions = controlFlow.getInstructions();
     final int instr = ControlFlowUtil.findInstructionNumberByElement(instructions, anchor);
@@ -35,7 +35,7 @@ public class PyDefUseUtil {
     return result.toArray(new PyElement[result.size()]);
   }
 
-  private static void getLatestDefs(final PyTargetExpression var,
+  private static void getLatestDefs(final PyElement var,
                                     final Instruction[] instructions,
                                     final int instr,
                                     final boolean[] visited,
@@ -44,8 +44,11 @@ public class PyDefUseUtil {
     visited[instr] = true;
     if (instructions[instr] instanceof ReadWriteInstruction) {
       final ReadWriteInstruction instruction = (ReadWriteInstruction)instructions[instr];
-      final String name = ((PyElement)instruction.getElement()).getName();
+      String name = ((PyElement)instruction.getElement()).getName();
       final ReadWriteInstruction.ACCESS access = instruction.getAccess();
+      if (access == ReadWriteInstruction.ACCESS.WRITETYPE) {
+        name = instruction.getName();
+      }
       if (access.isWriteAccess() && Comparing.strEqual(name, var.getName())) {
         result.add((PyElement) instruction.getElement());
         return;
