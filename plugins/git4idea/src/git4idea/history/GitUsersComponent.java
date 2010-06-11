@@ -163,7 +163,9 @@ public class GitUsersComponent implements ProjectComponent {
   }
 
   public void deactivate() {
-    // todo check that listener will be called to register there're no roots
+    synchronized (myLock) {
+      myAccessMap.clear();
+    }
     myManager.removeVcsListener(myVcsListener);
     myIsActive = false;
   }

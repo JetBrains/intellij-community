@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -233,10 +232,6 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
   public DomAttributeChildDescription getAttributeChildDescription(@NonNls String attributeName, @NonNls String namespace) {
     checkInitialized();
     return myAttributes.getDescription(attributeName, namespace);
-  }
-
-  public Type[] getConcreteInterfaceVariants() {
-    return myStaticGenericInfo.getConcreteInterfaceVariants();
   }
 
   public boolean isTagValueElement() {

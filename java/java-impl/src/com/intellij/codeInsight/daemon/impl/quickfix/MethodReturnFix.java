@@ -21,16 +21,21 @@ import com.intellij.codeInspection.IntentionAndQuickFixAction;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoUtil;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
+import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
+import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
+import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class MethodReturnFix extends IntentionAndQuickFixAction {
   private final PsiMethod myMethod;
@@ -74,6 +79,7 @@ public class MethodReturnFix extends IntentionAndQuickFixAction {
       if (superMethod != null) {
         final PsiType superReturnType = superMethod.getReturnType();
         if (superReturnType != null && !Comparing.equal(myReturnType, superReturnType)) {
+          if (changeClassTypeArgument(project, superReturnType, superMethod.getContainingClass())) return;
           method = SuperMethodWarningUtil.checkSuperMethod(myMethod, RefactoringBundle.message("to.refactor"));
           if (method == null) return;
         }
@@ -86,15 +92,82 @@ public class MethodReturnFix extends IntentionAndQuickFixAction {
         method.getName(),
         myReturnType,
         RemoveUnusedParameterFix.getNewParametersInfo(method, null));
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      processor.run();
-    }
-    else {
-      processor.run();
-    }
+    processor.run();
     if (method.getContainingFile() != file) {
       UndoUtil.markPsiFileForUndo(file);
     }
+  }
+
+  private boolean changeClassTypeArgument(Project project, PsiType superReturnType, PsiClass superClass) {
+    if (superClass == null || !superClass.hasTypeParameters()) return false;
+    final PsiClass superReturnTypeClass = PsiUtil.resolveClassInType(superReturnType);
+    if (superReturnTypeClass == null || !(superReturnTypeClass instanceof PsiTypeParameter || superReturnTypeClass.hasTypeParameters())) return false;
+
+    final PsiClass derivedClass = myMethod.getContainingClass();
+    if (derivedClass == null) return false;
+
+    final PsiReferenceParameterList referenceParameterList = findTypeArgumentsList(superClass, derivedClass);
+    if (referenceParameterList == null) return false;
+
+    final PsiElement resolve = ((PsiJavaCodeReferenceElement)referenceParameterList.getParent()).resolve();
+    if (!(resolve instanceof PsiClass)) return false;
+    final PsiClass baseClass = (PsiClass)resolve;
+
+    PsiType returnType = myReturnType;
+    if (returnType instanceof PsiPrimitiveType) {
+      returnType = ((PsiPrimitiveType)returnType).getBoxedType(derivedClass);
+    }
+
+    final PsiSubstitutor superClassSubstitutor =
+      TypeConversionUtil.getSuperClassSubstitutor(superClass, baseClass, PsiSubstitutor.EMPTY);
+    final PsiType superReturnTypeInBaseClassType = superClassSubstitutor.substitute(superReturnType);
+    final PsiSubstitutor psiSubstitutor = JavaPsiFacade.getInstance(project).getResolveHelper()
+                                                                            .inferTypeArguments(baseClass.getTypeParameters(),
+                                                                                                new PsiType[]{superReturnTypeInBaseClassType},
+                                                                                                new PsiType[]{returnType},
+                                                                                                PsiUtil.getLanguageLevel(superClass));
+
+
+    final TypeMigrationRules rules = new TypeMigrationRules(TypeMigrationLabeler.getElementType(derivedClass));
+    rules.setMigrationRootType(JavaPsiFacade.getElementFactory(project).createType(baseClass, psiSubstitutor));
+    rules.setBoundScope(new LocalSearchScope(derivedClass));
+    final TypeMigrationProcessor processor = new TypeMigrationProcessor(project, referenceParameterList, rules);
+    processor.setPreviewUsages(!ApplicationManager.getApplication().isUnitTestMode());
+    processor.run();
+
+    return true;
+  }
+
+  @Nullable
+  private static PsiReferenceParameterList findTypeArgumentsList(final PsiClass superClass, final PsiClass derivedClass) {
+    PsiReferenceParameterList referenceParameterList = null;
+    if (derivedClass instanceof PsiAnonymousClass) {
+      referenceParameterList = ((PsiAnonymousClass)derivedClass).getBaseClassReference().getParameterList();
+    } else {
+      final PsiReferenceList implementsList = derivedClass.getImplementsList();
+      if (implementsList != null) {
+        referenceParameterList = extractReferenceParameterList(superClass, implementsList);
+      }
+      if (referenceParameterList == null) {
+        final PsiReferenceList extendsList = derivedClass.getExtendsList();
+        if (extendsList != null) {
+          referenceParameterList = extractReferenceParameterList(superClass, extendsList);
+        }
+      }
+    }
+    return referenceParameterList;
+  }
+
+  @Nullable
+  private static PsiReferenceParameterList extractReferenceParameterList(final PsiClass superClass,
+                                                                         final PsiReferenceList extendsList) {
+    for (PsiJavaCodeReferenceElement referenceElement : extendsList.getReferenceElements()) {
+      final PsiElement element = referenceElement.resolve();
+      if (element instanceof PsiClass && InheritanceUtil.isInheritorOrSelf((PsiClass)element, superClass, true)) {
+        return referenceElement.getParameterList();
+      }
+    }
+    return null;
   }
 
 }

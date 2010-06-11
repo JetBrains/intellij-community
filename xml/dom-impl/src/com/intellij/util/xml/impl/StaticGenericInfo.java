@@ -22,8 +22,6 @@ import java.util.*;
  */
 public class StaticGenericInfo extends DomGenericInfoEx {
   private final Class myClass;
-  private final Type myType;
-  private final DomManagerImpl myDomManager;
 
   private final ChildrenDescriptionsHolder<AttributeChildDescriptionImpl> myAttributes = new ChildrenDescriptionsHolder<AttributeChildDescriptionImpl>();
   private final ChildrenDescriptionsHolder<FixedChildDescriptionImpl> myFixed = new ChildrenDescriptionsHolder<FixedChildDescriptionImpl>();
@@ -42,15 +40,13 @@ public class StaticGenericInfo extends DomGenericInfoEx {
   private boolean myInitialized;
   private CustomDomChildrenDescriptionImpl myCustomDescription;
 
-  public StaticGenericInfo(final Type type, final DomManagerImpl domManager) {
-    myType = type;
+  public StaticGenericInfo(final Type type) {
     myClass = ReflectionUtil.getRawType(type);
-    myDomManager = domManager;
   }
 
   public final synchronized boolean buildMethodMaps() {
     if (!myInitialized) {
-      final StaticGenericInfoBuilder builder = new StaticGenericInfoBuilder(myDomManager, myClass, myType);
+      final StaticGenericInfoBuilder builder = new StaticGenericInfoBuilder(myClass);
       final JavaMethod customChildrenGetter = builder.getCustomChildrenGetter();
       if (customChildrenGetter != null) {
         myCustomDescription = new CustomDomChildrenDescriptionImpl(customChildrenGetter);
@@ -114,7 +110,7 @@ public class StaticGenericInfo extends DomGenericInfoEx {
     buildMethodMaps();
 
     final JavaMethodSignature signature = method.getSignature();
-    final PropertyAccessor accessor = signature.findAnnotation(PropertyAccessor.class, myClass);
+    final PropertyAccessor accessor = method.getAnnotation(PropertyAccessor.class);
     if (accessor != null) {
       return new PropertyAccessorInvocation(DomReflectionUtil.getGetterMethods(accessor.value(), myClass));
     }
@@ -271,10 +267,6 @@ public class StaticGenericInfo extends DomGenericInfoEx {
   public List<? extends DomCollectionChildDescription> getCollectionChildrenDescriptions() {
     buildMethodMaps();
     return myCollections.getDescriptions();
-  }
-
-  public final Type[] getConcreteInterfaceVariants() {
-    return myDomManager.getTypeChooserManager().getTypeChooser(myClass).getChooserTypes();
   }
 
   public boolean isTagValueElement() {

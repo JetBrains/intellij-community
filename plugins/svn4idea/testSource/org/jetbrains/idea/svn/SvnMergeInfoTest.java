@@ -45,6 +45,8 @@ public class SvnMergeInfoTest extends SvnTestCase {
     myWCInfo = new WCInfo(myBranchVcsRoot.getAbsolutePath(), SVNURL.parseURIEncoded(myRepoUrl + "/branch"), WorkingCopyFormat.ONE_DOT_SIX,
                                      myRepoUrl, true, null, SVNDepth.INFINITY);
     myOneShotMergeInfoHelper = new OneShotMergeInfoHelper(myProject, myWCInfo, myRepoUrl + "/trunk");
+
+    SvnConfiguration.getInstance(myProject).CHECK_NESTED_FOR_QUICK_MERGE = true;
 //    AbstractVcs vcsFound = myProjectLevelVcsManager.findVcsByName(SvnVcs.VCS_NAME);
 //    Assert.assertEquals(1, myProjectLevelVcsManager.getRootsUnderVcs(vcsFound).length);
   }
@@ -221,7 +223,7 @@ public class SvnMergeInfoTest extends SvnTestCase {
 
     myOneShotMergeInfoHelper.prepare();
     final SvnMergeInfoCache.MergeCheckResult oneShotResult = myOneShotMergeInfoHelper.checkList(changeList);
-    Assert.assertEquals(SvnMergeInfoCache.MergeCheckResult.NOT_MERGED, oneShotResult);
+    Assert.assertEquals(SvnMergeInfoCache.MergeCheckResult.NOT_MERGED, oneShotResult);  // todo
   }
 
   @Test

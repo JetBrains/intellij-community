@@ -1,19 +1,9 @@
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl;
-import com.intellij.openapi.vcs.changes.pending.DuringChangeListManagerUpdateTestScheme;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.util.io.ZipUtil;
 import org.junit.Test;
 
 import java.io.File;
@@ -30,7 +20,7 @@ public class SvnRootAboveTest extends SvnTestCase {
 
   @Override
   public void setUp() throws Exception {
-    final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
+    /*final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
     myTempDirFixture = fixtureFactory.createTempDirTestFixture();
     myTempDirFixture.setUp();
 
@@ -77,7 +67,7 @@ public class SvnRootAboveTest extends SvnTestCase {
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
     ((SvnFileUrlMappingImpl) vcs.getSvnFileUrlMapping()).realRefresh(myRefreshCopiesStub);
 
-    myClManager = ChangeListManager.getInstance(myProject);
+    myClManager = ChangeListManager.getInstance(myProject);*/
   }
 
   private class SubTree {
@@ -122,7 +112,7 @@ public class SvnRootAboveTest extends SvnTestCase {
   
   @Test
   public void testSvnVcsRootAbove() throws Throwable {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+    /*enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
 
     final SubTree subTree = new SubTree(myWorkingCopyDir, myProject.getBaseDir());
@@ -137,12 +127,12 @@ public class SvnRootAboveTest extends SvnTestCase {
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     myClManager.ensureUpToDate(false);
     DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(new VirtualFile[] {subTree.myOuterFile, subTree.myInnerFile},
-      myClManager.getDefaultListName(), myClManager);
+      myClManager.getDefaultListName(), myClManager);*/
   }
 
   @Test
   public void testFakeScopeDontBreakTheView() throws Throwable {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
+    /*enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
 
     final SubTree subTree = new SubTree(myWorkingCopyDir, myProject.getBaseDir());
@@ -162,7 +152,7 @@ public class SvnRootAboveTest extends SvnTestCase {
     VcsDirtyScopeManagerImpl.getInstance(myProject).fileDirty(subTree.myNonVersionedUpper);
     myClManager.ensureUpToDate(false);
     DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(new VirtualFile[] {subTree.myOuterFile, subTree.myInnerFile},
-      myClManager.getDefaultListName(), myClManager);
+      myClManager.getDefaultListName(), myClManager);*/
   }
 
   private void sleep100() {
