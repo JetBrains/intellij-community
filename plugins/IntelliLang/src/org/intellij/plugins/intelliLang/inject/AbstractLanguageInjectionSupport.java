@@ -19,7 +19,6 @@ package org.intellij.plugins.intelliLang.inject;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
@@ -73,7 +72,6 @@ public abstract class AbstractLanguageInjectionSupport extends LanguageInjection
   }
 
   public AnAction[] createAddActions(final Project project, final Consumer<BaseInjection> consumer) {
-    if (!ApplicationManagerEx.getApplicationEx().isInternal()) return AnAction.EMPTY_ARRAY;
     return new AnAction[] { createDefaultAddAction(project, consumer, this) };
   }
 
@@ -85,7 +83,6 @@ public abstract class AbstractLanguageInjectionSupport extends LanguageInjection
     return new AnAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
-        if (!ApplicationManagerEx.getApplicationEx().isInternal()) return;
         final BaseInjection originalInjection = producer.create();
         final BaseInjection newInjection = showDefaultInjectionUI(project, originalInjection.copy());
         if (newInjection != null) {
@@ -114,7 +111,6 @@ public abstract class AbstractLanguageInjectionSupport extends LanguageInjection
 
   @Nullable
   protected static BaseInjection showDefaultInjectionUI(Project project, BaseInjection injection) {
-    if (!ApplicationManagerEx.getApplicationEx().isInternal()) return null;
     final BaseInjectionPanel panel = new BaseInjectionPanel(injection, project);
     panel.reset();
     final DialogBuilder builder = new DialogBuilder(project);
