@@ -696,7 +696,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
       if (wnd != null) { // Can be null if just hidden
         wnd.pack();
       }
-    } else {
+    } else if (myDialog.myPopup != null) {
       myDialog.myPopup.validate();
     }
   }
