@@ -15,15 +15,14 @@
  */
 package com.intellij.util.xml.reflect;
 
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
-import com.intellij.psi.xml.XmlElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.lang.reflect.Type;
 
 /**
  * @author peter
@@ -58,8 +57,6 @@ public interface DomGenericInfo {
 
   @Nullable
   DomAttributeChildDescription getAttributeChildDescription(@NonNls String attributeName, @NonNls String namespaceKey);
-
-  Type[] getConcreteInterfaceVariants();
 
   /**
    * @return true, if there's no children in the element, only tag value accessors

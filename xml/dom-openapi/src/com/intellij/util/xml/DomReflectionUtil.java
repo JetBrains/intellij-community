@@ -46,10 +46,6 @@ public class DomReflectionUtil {
     return null;
   }
 
-  public static <T extends Annotation> T findAnnotationDFS(final Method method, final Class<T> annotationClass) {
-    return JavaMethodSignature.getSignature(method).findAnnotation(annotationClass, method.getDeclaringClass());
-  }
-
   public static boolean canHaveIsPropertyGetterPrefix(final Type type) {
     return boolean.class.equals(type) || Boolean.class.equals(type)
            || Boolean.class.equals(DomUtil.getGenericValueParameter(type));
@@ -83,15 +79,8 @@ public class DomReflectionUtil {
     return canHaveIsPropertyGetterPrefix(javaMethod.getGenericReturnType()) ? javaMethod : null;
   }
 
-  public static Object invokeMethod(final JavaMethodSignature method, final Object object, final Object... args) {
-    return invokeMethod(method.findMethod(object.getClass()), object, args);
-  }
-
   public static Object invokeMethod(final Method method, final Object object, final Object... args) {
     try {
-      //if (object instanceof Factory) {
-      //  return ((net.sf.cglib.proxy.InvocationHandler)((Factory)object).getCallback(0)).invoke(object, method, args);
-      //}
       return method.invoke(object, args);
     }
     catch (IllegalArgumentException e) {

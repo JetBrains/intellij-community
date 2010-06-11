@@ -15,19 +15,17 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.xml.XmlTag;
 
 import java.lang.reflect.Type;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author peter
  */
 public class TypeChooserManager {
-  private final Map<Type, TypeChooser> myClassChoosers = new HashMap<Type, TypeChooser>();
+  private final Map<Type, TypeChooser> myClassChoosers = new ConcurrentHashMap<Type, TypeChooser>();
 
   public TypeChooser getTypeChooser(final Type type) {
     final TypeChooser typeChooser = myClassChoosers.get(type);
@@ -43,15 +41,6 @@ public class TypeChooserManager {
         return new Type[]{type};
       }
     };
-  }
-
-  public void registerTypeChooser(final Type aClass, final TypeChooser typeChooser, Disposable parentDisposable) {
-    registerTypeChooser(aClass, typeChooser);
-    Disposer.register(parentDisposable, new Disposable() {
-      public void dispose() {
-        unregisterTypeChooser(aClass);
-      }
-    });
   }
 
   public void registerTypeChooser(final Type aClass, final TypeChooser typeChooser) {
