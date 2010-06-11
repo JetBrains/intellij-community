@@ -144,10 +144,10 @@ final class ToolWindowsPane extends JLayeredPane {
       myRightStripe.setBounds(size.width - rightSize.width, topSize.height, rightSize.width, size.height - topSize.height - bottomSize.height);
       myBottomStripe.setBounds(0, size.height - bottomSize.height, size.width, bottomSize.height);
 
-      if (myStripesOverlayed) {
+      if (UISettings.getInstance().HIDE_TOOL_STRIPES) {
         myLayeredPane.setBounds(0, 0, size.width, size.height);
       } else {
-        myLayeredPane.setBounds(leftSize.width, topSize.height, size.width - leftSize.width - rightSize.width, size.height - topSize.height - bottomSize.height);        
+        myLayeredPane.setBounds(leftSize.width, topSize.height, size.width - leftSize.width - rightSize.width, size.height - topSize.height - bottomSize.height);
       }
     }
   }
@@ -156,7 +156,7 @@ final class ToolWindowsPane extends JLayeredPane {
   protected void paintChildren(Graphics g) {
     super.paintChildren(g);
 
-    if (myTopStripe.isVisible() && myStripesOverlayed) {
+    if (myTopStripe.isVisible() && myStripesOverlayed && UISettings.getInstance().HIDE_TOOL_STRIPES) {
       Dimension topSize = myTopStripe.getSize();
       Dimension bottomSize = myBottomStripe.getSize();
       Dimension leftSize = myLeftStripe.getSize();
@@ -386,16 +386,18 @@ final class ToolWindowsPane extends JLayeredPane {
   }
 
   private void updateToolStripesVisibility(){
-    final boolean visible = !UISettings.getInstance().HIDE_TOOL_STRIPES;
-    myLeftStripe.setVisible(visible || myStripesOverlayed);
-    myRightStripe.setVisible(visible || myStripesOverlayed);
-    myTopStripe.setVisible(visible || myStripesOverlayed);
-    myBottomStripe.setVisible(visible || myStripesOverlayed);
+    final boolean showButtons = !UISettings.getInstance().HIDE_TOOL_STRIPES;
+    myLeftStripe.setVisible(showButtons || myStripesOverlayed);
+    myRightStripe.setVisible(showButtons || myStripesOverlayed);
+    myTopStripe.setVisible(showButtons || myStripesOverlayed);
+    myBottomStripe.setVisible(showButtons || myStripesOverlayed);
 
-    myLeftStripe.setOverlayed(myStripesOverlayed);
-    myRightStripe.setOverlayed(myStripesOverlayed);
-    myTopStripe.setOverlayed(myStripesOverlayed);
-    myBottomStripe.setOverlayed(myStripesOverlayed);
+    boolean overlayed = !showButtons && myStripesOverlayed;
+
+    myLeftStripe.setOverlayed(overlayed);
+    myRightStripe.setOverlayed(overlayed);
+    myTopStripe.setOverlayed(overlayed);
+    myBottomStripe.setOverlayed(overlayed);
 
     revalidate();
     repaint();
