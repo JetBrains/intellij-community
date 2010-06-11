@@ -31,7 +31,11 @@ public interface LowLevelAccess {
                                                    @NotNull final Collection<String> endPoints,
                                                    @NotNull final Collection<ChangesFilter.Filter> filters,
                                                    int useMaxCnt) throws VcsException;
-  
+
+  void loadCommits(final Collection<String> startingPoints, final Date beforePoint, final Date afterPoint,
+                             final Collection<ChangesFilter.Filter> filtersIn, final Consumer<GitCommit> consumer,
+                             int maxCnt, List<String> branches) throws VcsException;
+
   void loadCommits(final Collection<String> startingPoints, final Collection<String> endPoints, final Collection<ChangesFilter.Filter> filters,
                    final Consumer<GitCommit> consumer, final Collection<String> branches, int useMaxCnt) throws VcsException;
 
