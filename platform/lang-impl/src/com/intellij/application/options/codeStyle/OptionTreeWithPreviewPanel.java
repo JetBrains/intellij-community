@@ -158,6 +158,7 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     Object o = treePath.getLastPathComponent();
     if (o instanceof MyToggleTreeNode) {
       MyToggleTreeNode node = (MyToggleTreeNode)o;
+      if (!node.isEnabled()) return;
       node.setSelected(!node.isSelected());
       int row = myOptionsTree.getRowForPath(treePath);
       myOptionsTree.repaint(myOptionsTree.getRowBounds(row));

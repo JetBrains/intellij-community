@@ -103,6 +103,7 @@ public class XFramesView extends XDebugViewBase {
       builder.dispose();
     }
     myBuilders.clear();
+    mySelectedStack = null;
     XSuspendContext suspendContext = mySession.getSuspendContext();
     if (suspendContext == null) {
       myThreadComboBox.removeAllItems();

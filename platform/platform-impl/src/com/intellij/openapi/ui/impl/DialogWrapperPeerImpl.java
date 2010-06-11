@@ -29,10 +29,7 @@ import com.intellij.openapi.command.CommandProcessorEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.DialogWrapperDialog;
-import com.intellij.openapi.ui.DialogWrapperPeer;
-import com.intellij.openapi.ui.Queryable;
+import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -68,7 +65,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.DialogWrapper");
 
   private DialogWrapper myWrapper;
-  private MyDialog myDialog;
+  private AbstractDialog myDialog;
   private boolean myCanBeParent = true;
   /*
    * Default dialog's actions.
@@ -120,7 +117,11 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       owner = window;
     }
     else {
-      owner = JOptionPane.getRootFrame();
+      if (!isHeadless()) {
+        owner = JOptionPane.getRootFrame();
+      } else {
+        owner = null;
+      }
     }
 
     createDialog(owner, canBeParent);
@@ -128,6 +129,13 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
   protected DialogWrapperPeerImpl(DialogWrapper wrapper, boolean canBeParent) {
     this(wrapper, (Project)null, canBeParent);
+  }
+
+  public boolean isHeadless() {
+    Application app = ApplicationManager.getApplication();
+    if (app == null) return GraphicsEnvironment.isHeadless();
+
+    return app.isUnitTestMode() || app.isHeadlessEnvironment();
   }
 
   /**
@@ -161,8 +169,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     }
     if (UIUtil.hasJdk6Dialogs()) {
       createDialog(null, canBeParent);
-      if (tryToolkitModal) {
-        UIUtil.setToolkitModal(myDialog);
+      if (tryToolkitModal && !isHeadless()) {
+        UIUtil.setToolkitModal((MyDialog)myDialog);
       }
     }
     else {
@@ -187,6 +195,11 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
   }
 
   private void createDialog(Window owner, boolean canBeParent) {
+    if (isHeadless()) {
+      myDialog = new HeadlessDialog();
+      return;
+    }
+
     if (owner instanceof Frame) {
       myDialog = new MyDialog((Frame)owner, myWrapper, myProject, myWindowFocusedCallback, myTypeAheadDone);
     }
@@ -274,7 +287,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
   }
 
   public Window getWindow() {
-    return myDialog;
+    return myDialog.getWindow();
   }
 
   public JRootPane getRootPane() {
@@ -297,7 +310,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
   }
 
   public void setIconImages(final List<Image> image) {
-    UIUtil.updateDialogIcon(myDialog, image);
+    UIUtil.updateDialogIcon(myDialog.getWindow(), image);
   }
 
   public void setAppIcons() {
@@ -363,7 +376,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     });
 
     if (!myCanBeParent && myWindowManager != null) {
-      myWindowManager.doNotSuggestAsParent(myDialog);
+      myWindowManager.doNotSuggestAsParent(myDialog.getWindow());
     }
 
     final CommandProcessorEx commandProcessor =
@@ -458,7 +471,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
   }
 
 
-  private static class MyDialog extends JDialog implements DialogWrapperDialog, DataProvider, FocusTrackback.Provider, Queryable {
+  private static class MyDialog extends JDialog implements DialogWrapperDialog, DataProvider, FocusTrackback.Provider, Queryable, AbstractDialog {
     private final WeakReference<DialogWrapper> myDialogWrapper;
     /**
      * Initial size of the dialog. When the dialog is being closed and
@@ -505,6 +518,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       addWindowListener(myWindowListener);
       myComponentListener = new MyComponentListener();
       addComponentListener(myComponentListener);
+    }
+
+    public JDialog getWindow() {
+      return this;
     }
 
     public void putInfo(Map<String, String> info) {
@@ -650,7 +667,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       super.show();
     }
 
-    private IdeFocusManager getFocusManager() {
+    public IdeFocusManager getFocusManager() {
       if (myProject != null && myProject.get() != null && !myProject.get().isDisposed()) {
         return IdeFocusManager.getInstance(myProject.get());
       } else {
@@ -1017,5 +1034,191 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
   public void centerInParent() {
     myDialog.centerInParent();
+  }
+
+  interface AbstractDialog extends Disposable {
+    void setUndecorated(boolean undecorated);
+
+    void addMouseListener(MouseListener listener);
+
+    void addMouseMotionListener(MouseMotionListener listener);
+
+    void addKeyListener(KeyListener listener);
+
+    void setModal(boolean b);
+
+    void toFront();
+
+    void setContentPane(Container content);
+
+    void centerInParent();
+
+    void toBack();
+
+    JRootPane getRootPane();
+
+    void remove(Component root);
+
+    Container getContentPane();
+
+    void validate();
+
+    void repaint();
+
+    Window getOwner();
+
+    JDialog getWindow();
+
+    Dimension getSize();
+
+    String getTitle();
+
+    void pack();
+
+    Dimension getPreferredSize();
+
+    boolean isVisible();
+
+    boolean isShowing();
+
+    void setSize(int width, int height);
+
+    void setTitle(String title);
+
+    boolean isResizable();
+
+    void setResizable(boolean resizable);
+
+    Point getLocation();
+
+    void setLocation(Point p);
+
+    void setLocation(int x, int y);
+
+    boolean isModal();
+
+    void show();
+
+    IdeFocusManager getFocusManager();
+
+    FocusTrackback getFocusTrackback();
+  }
+
+  class HeadlessDialog implements AbstractDialog {
+    public void setUndecorated(boolean undecorated) {
+    }
+
+    public void addMouseListener(MouseListener listener) {
+    }
+
+    public void addMouseMotionListener(MouseMotionListener listener) {
+    }
+
+    public void addKeyListener(KeyListener listener) {
+    }
+
+    public void setModal(boolean b) {
+    }
+
+    public void toFront() {
+    }
+
+    public void setContentPane(Container content) {
+    }
+
+    public void centerInParent() {
+    }
+
+    public void toBack() {
+    }
+
+    public JRootPane getRootPane() {
+      return null;
+    }
+
+    public void remove(Component root) {
+    }
+
+    public Container getContentPane() {
+      return null;
+    }
+
+    public void validate() {
+    }
+
+    public void repaint() {
+    }
+
+    public Window getOwner() {
+      return null;
+    }
+
+    public JDialog getWindow() {
+      return null;
+    }
+
+    public Dimension getSize() {
+      return null;
+    }
+
+    public String getTitle() {
+      return null;
+    }
+
+    public void pack() {
+    }
+
+    public Dimension getPreferredSize() {
+      return null;
+    }
+
+    public boolean isVisible() {
+      return false;
+    }
+
+    public boolean isShowing() {
+      return false;
+    }
+
+    public void setSize(int width, int height) {
+    }
+
+    public void setTitle(String title) {
+    }
+
+    public boolean isResizable() {
+      return false;
+    }
+
+    public void setResizable(boolean resizable) {
+    }
+
+    public Point getLocation() {
+      return null;
+    }
+
+    public void setLocation(Point p) {
+    }
+
+    public void setLocation(int x, int y) {
+    }
+
+    public boolean isModal() {
+      return false;
+    }
+
+    public void show() {
+    }
+
+    public IdeFocusManager getFocusManager() {
+      return null;
+    }
+
+    public FocusTrackback getFocusTrackback() {
+      return null;
+    }
+
+    public void dispose() {
+    }
   }
 }
