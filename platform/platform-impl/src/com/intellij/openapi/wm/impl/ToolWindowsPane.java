@@ -163,8 +163,26 @@ final class ToolWindowsPane extends JLayeredPane {
       Dimension rightSize = myRightStripe.getSize();
       Dimension size = getSize();
 
+
+      Rectangle rec = new Rectangle(leftSize.width, topSize.height, size.width - leftSize.width - rightSize.width,
+                                    size.height - topSize.height - bottomSize.height);
+
       g.setColor(Color.gray);
-      g.drawRect(leftSize.width, topSize.height, size.width - leftSize.width - rightSize.width, size.height - topSize.height - bottomSize.height);        
+      if (topSize.height> 0) {
+        g.drawLine(rec.x, rec.y, rec.x + rec.width, rec.y);
+      }
+
+      if (leftSize.width > 0) {
+        g.drawLine(rec.x, rec.y, rec.x, rec.y + rec.height);
+      }
+
+      if (bottomSize.height > 0) {
+        g.drawLine(rec.x, rec.y + rec.height, rec.x + rec.width, rec.y + rec.height);
+      }
+
+      if (rightSize.width > 0) {
+        g.drawLine(rec.x + rec.width, rec.y, rec.x + rec.width, rec.y + rec.height);
+      }
     }
   }
 
