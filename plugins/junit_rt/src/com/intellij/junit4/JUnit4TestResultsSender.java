@@ -54,6 +54,12 @@ public class JUnit4TestResultsSender extends RunListener {
     }
   }
 
+  public void testAssumptionFailure(Failure failure) {
+    final Description description = failure.getDescription();
+    stopMeter(description);
+    prepareIgnoredPacket(description, null).addThrowable(failure.getException()).send();
+  }
+
   public synchronized void testIgnored(Description description) throws Exception {
     String val = null;
     try {
