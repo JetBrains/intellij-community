@@ -44,7 +44,7 @@ public abstract class ElementPresentationManager {
     @Nullable
     protected Method create(final Class key) {
       for (final Method method : ReflectionCache.getMethods(key)) {
-      if (DomReflectionUtil.findAnnotationDFS(method, NameValue.class) != null) {
+      if (JavaMethod.getMethod(key, method).getAnnotation(NameValue.class) != null) {
         return method;
       }
     }

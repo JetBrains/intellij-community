@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NonNls;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.util.List;
 
 /**
  * @author peter
@@ -29,23 +30,18 @@ import java.lang.reflect.Type;
 public final class JavaMethod implements AnnotatedElement{
   public static final JavaMethod[] EMPTY_ARRAY = new JavaMethod[0];
 
-  private static final FactoryMap<JavaMethodSignature,FactoryMap<Class,JavaMethod>> ourMethods = new FactoryMap<JavaMethodSignature, FactoryMap<Class, JavaMethod>>() {
-    protected FactoryMap<Class, JavaMethod> create(final JavaMethodSignature signature) {
-      return new FactoryMap<Class, JavaMethod>() {
-        protected JavaMethod create(final Class key) {
-          return new JavaMethod(key, signature);
-        }
-      };
-    }
-  };
-
   private final JavaMethodSignature mySignature;
   private final Class myDeclaringClass;
   private final Method myMethod;
   private final FactoryMap<Class, Annotation> myAnnotationsMap = new ConcurrentFactoryMap<Class, Annotation>() {
-
-    protected Annotation create(Class key) {
-      return mySignature.findAnnotation(key, myDeclaringClass);
+    protected Annotation create(Class annotationClass) {
+      for (Method method : mySignature.getAllMethods(myDeclaringClass)) {
+        final Annotation annotation = method.getAnnotation(annotationClass);
+        if (annotation != null) {
+          return annotation;
+        }
+      }
+      return null;
     }
   };
 
@@ -64,6 +60,14 @@ public final class JavaMethod implements AnnotatedElement{
     return mySignature;
   }
 
+  public final List<Method> getHierarchy() {
+    return mySignature.getAllMethods(myDeclaringClass);
+  }
+
+  public String getMethodName() {
+    return mySignature.getMethodName();
+  }
+
   public final Method getMethod() {
     return myMethod;
   }
@@ -77,13 +81,11 @@ public final class JavaMethod implements AnnotatedElement{
   }
 
   public static JavaMethod getMethod(final Class declaringClass, final JavaMethodSignature signature) {
-    synchronized (ourMethods) {
-      return ourMethods.get(signature).get(declaringClass);
-    }
+    return new JavaMethod(declaringClass, signature);
   }
 
   public static JavaMethod getMethod(final Class declaringClass, final Method method) {
-    return getMethod(declaringClass, JavaMethodSignature.getSignature(method));
+    return getMethod(declaringClass, new JavaMethodSignature(method));
   }
 
   public final Object invoke(final Object o, final Object... args) {

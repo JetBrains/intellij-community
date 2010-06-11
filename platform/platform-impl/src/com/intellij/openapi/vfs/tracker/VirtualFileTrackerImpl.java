@@ -143,12 +143,23 @@ public class VirtualFileTrackerImpl implements VirtualFileTracker {
 
     Disposer.register(parentDisposable, new Disposable() {
       public void dispose() {
-        getSet(fileUrl, myAllTrackers).remove(listener);
+        removeListener(fileUrl, listener, myAllTrackers);
+
         if (!fromRefreshOnly) {
-          getSet(fileUrl, myNonRefreshTrackers).remove(listener);
+          removeListener(fileUrl, listener, myNonRefreshTrackers);
         }
       }
     });
+  }
+
+  private static void removeListener(String fileUrl, VirtualFileListener listener, Map<String, Set<VirtualFileListener>> map) {
+    Set<VirtualFileListener> listeners = map.get(fileUrl);
+    if (listeners == null) return;
+
+    listeners.remove(listener);
+    if (listeners.isEmpty()) {
+      map.remove(fileUrl);
+    }
   }
 
   private static Set<VirtualFileListener> getSet(final String fileUrl, final Map<String, Set<VirtualFileListener>> map) {

@@ -8,12 +8,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
-import com.intellij.util.Query;
 
 import java.util.*;
 
@@ -135,15 +134,15 @@ public class ClassTypeArgumentMigrationProcessor {
    */
   private void prepareMethodsChangeSignature(final PsiClass currentClass, final PsiElement memberToChangeSignature, final PsiType memberType) {
     if (memberToChangeSignature instanceof PsiMethod) {
-      final Query<PsiMethod> methodQuery = OverridingMethodsSearch.search(((PsiMethod)memberToChangeSignature), currentClass.getUseScope(), true);
-      for (PsiMethod method : methodQuery) {
-         myLabeler.addRoot(new TypeMigrationUsageInfo(method), memberType, method, false);
+      final PsiMethod method = MethodSignatureUtil.findMethodBySuperMethod(currentClass, (PsiMethod)memberToChangeSignature, true);
+      if (method.getContainingClass() == currentClass) {
+        myLabeler.addRoot(new TypeMigrationUsageInfo(method), memberType, method, false);
       }
     } else if (memberToChangeSignature instanceof PsiParameter && ((PsiParameter)memberToChangeSignature).getDeclarationScope() instanceof PsiMethod) {
       final PsiMethod superMethod = (PsiMethod)((PsiParameter)memberToChangeSignature).getDeclarationScope();
       final int parameterIndex = superMethod.getParameterList().getParameterIndex((PsiParameter)memberToChangeSignature);
-      final Query<PsiMethod> methodQuery = OverridingMethodsSearch.search(superMethod, currentClass.getUseScope(), true);
-      for (PsiMethod method : methodQuery) {
+      final PsiMethod method = MethodSignatureUtil.findMethodBySuperMethod(currentClass, superMethod, true);
+      if (method.getContainingClass() == currentClass) {
         final PsiParameter parameter = method.getParameterList().getParameters()[parameterIndex];
         myLabeler.addRoot(new TypeMigrationUsageInfo(parameter), memberType, parameter, false);
       }

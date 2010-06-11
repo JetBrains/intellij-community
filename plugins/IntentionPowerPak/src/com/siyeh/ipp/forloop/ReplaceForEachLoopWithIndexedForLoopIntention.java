@@ -18,15 +18,13 @@ package com.siyeh.ipp.forloop;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
 
@@ -44,8 +42,7 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
         if (statement == null) {
             return;
         }
-        final PsiExpression iteratedValue =
-                ParenthesesUtils.stripParentheses(statement.getIteratedValue());
+        final PsiExpression iteratedValue = statement.getIteratedValue();
         if (iteratedValue == null) {
             return;
         }
@@ -57,87 +54,22 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
             return;
         }
         final boolean isArray = iteratedValueType instanceof PsiArrayType;
-        final Project project = statement.getProject();
-        final JavaCodeStyleManager codeStyleManager =
-                JavaCodeStyleManager.getInstance(project);
-        final String indexText =
-                codeStyleManager.suggestUniqueVariableName("i", statement, true);
-        final String variableNameRoot;
-        final CodeStyleSettings codeStyleSettings =
-                CodeStyleSettingsManager.getSettings(project);
-        final String iteratedValueText;
-        if (iteratedValue instanceof PsiMethodCallExpression) {
-            final PsiMethodCallExpression methodCallExpression =
-                    (PsiMethodCallExpression)iteratedValue;
-            final PsiReferenceExpression methodExpression =
-                    methodCallExpression.getMethodExpression();
-            final String name = methodExpression.getReferenceName();
-            if (name == null) {
-                return;
-            }
-            if (name.startsWith("to") && name.length() > 2) {
-                variableNameRoot = StringUtil.decapitalize(name.substring(2));
-            } else if (name.startsWith("get") && name.length() > 3) {
-                variableNameRoot = StringUtil.decapitalize(name.substring(3));
-            } else {
-                variableNameRoot = name;
-            }
-            final String variableName =
-                    codeStyleManager.suggestUniqueVariableName(
-                            variableNameRoot, statement, true);
-            final StringBuilder declaration = new StringBuilder();
-            if (codeStyleSettings.GENERATE_FINAL_LOCALS) {
-                declaration.append("final ");
-            }
-            declaration.append(iteratedValueType.getCanonicalText());
-            declaration.append(' ');
-            declaration.append(variableName);
-            declaration.append('=');
-            declaration.append(iteratedValue.getText());
-            declaration.append(';');
-            final PsiElementFactory elementFactory =
-                    JavaPsiFacade.getElementFactory(project);
-            final PsiStatement declarationStatement =
-                    elementFactory.createStatementFromText(
-                            declaration.toString(), statement);
-            statement.getParent().addBefore(declarationStatement, statement);
-            iteratedValueText = variableName;
-        } else if (iteratedValue instanceof PsiTypeCastExpression) {
-            iteratedValueText = iteratedValue.getText();
-            final PsiTypeCastExpression castExpression =
-                    (PsiTypeCastExpression) iteratedValue;
-            final PsiExpression operand = castExpression.getOperand();
-            final PsiExpression strippedOperand =
-                    ParenthesesUtils.stripParentheses(operand);
-            if (strippedOperand == null) {
-                variableNameRoot = "";
-            } else {
-                variableNameRoot = strippedOperand.getText();
-            }
-        } else if (iteratedValue instanceof PsiJavaCodeReferenceElement) {
-            iteratedValueText = iteratedValue.getText();
-            final PsiJavaCodeReferenceElement referenceElement =
-                    (PsiJavaCodeReferenceElement) iteratedValue;
-            final String referenceName = referenceElement.getReferenceName();
-            if (referenceName == null) {
-                variableNameRoot = iteratedValueText;
-            } else {
-                variableNameRoot = referenceName;
-            }
-        } else {
-            iteratedValueText = iteratedValue.getText();
-            variableNameRoot = iteratedValueText;
-        }
+        final String iteratedValueText =
+                getReferenceToIterate(iteratedValue, statement);
         final String lengthText;
         if (isArray) {
-            lengthText = codeStyleManager.suggestUniqueVariableName(
-                    variableNameRoot + "Length", statement, true);
+            lengthText =
+                    createVariableName(iteratedValueText + "Length",
+                            PsiType.INT, statement);
         } else {
-            lengthText = codeStyleManager.suggestUniqueVariableName(
-                    variableNameRoot + "Size", statement, true);
+            lengthText =
+                    createVariableName(iteratedValueText + "Size",
+                            PsiType.INT, statement);
         }
         @NonNls final StringBuilder newStatement = new StringBuilder();
         newStatement.append("for(int ");
+        final String indexText =
+                createVariableName("i", PsiType.INT, statement);
         newStatement.append(indexText);
         newStatement.append(" = 0, ");
         newStatement.append(lengthText);
@@ -161,6 +93,9 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
         newStatement.append(indexText);
         newStatement.append("++)");
         newStatement.append("{ ");
+        final Project project = statement.getProject();
+        final CodeStyleSettings codeStyleSettings =
+                CodeStyleSettingsManager.getSettings(project);
         if (codeStyleSettings.GENERATE_FINAL_LOCALS) {
             newStatement.append("final ");
         }
@@ -168,13 +103,7 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
         newStatement.append(' ');
         newStatement.append(iterationParameter.getName());
         newStatement.append(" = ");
-        if (iteratedValue instanceof PsiTypeCastExpression) {
-            newStatement.append('(');
-            newStatement.append(iteratedValueText);
-            newStatement.append(')');
-        } else {
-            newStatement.append(iteratedValueText);
-        }
+        newStatement.append(iteratedValueText);
         if (isArray) {
             newStatement.append('[');
             newStatement.append(indexText);
@@ -200,5 +129,133 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
         }
         newStatement.append('}');
         replaceStatementAndShorten(newStatement.toString(), statement);
+    }
+
+    private static String getVariableName(PsiExpression expression) {
+        if (expression instanceof PsiMethodCallExpression) {
+            final PsiMethodCallExpression methodCallExpression =
+                    (PsiMethodCallExpression) expression;
+            final PsiReferenceExpression methodExpression =
+                    methodCallExpression.getMethodExpression();
+            final String name = methodExpression.getReferenceName();
+            if (name == null) {
+                return null;
+            }
+            if (name.startsWith("to") && name.length() > 2) {
+                return StringUtil.decapitalize(name.substring(2));
+            } else if (name.startsWith("get") && name.length() > 3) {
+                return StringUtil.decapitalize(name.substring(3));
+            } else {
+                return name;
+            }
+         } else if (expression instanceof PsiTypeCastExpression) {
+            final PsiTypeCastExpression castExpression =
+                    (PsiTypeCastExpression) expression;
+            final PsiExpression operand = castExpression.getOperand();
+            return getVariableName(operand);
+        } else if (expression instanceof PsiArrayAccessExpression) {
+            final PsiArrayAccessExpression arrayAccessExpression =
+                    (PsiArrayAccessExpression) expression;
+            final PsiExpression arrayExpression =
+                    arrayAccessExpression.getArrayExpression();
+            return StringUtil.unpluralize(getVariableName(arrayExpression));
+        } else if (expression instanceof PsiParenthesizedExpression) {
+            final PsiParenthesizedExpression parenthesizedExpression =
+                    (PsiParenthesizedExpression) expression;
+            final PsiExpression innerExpression =
+                    parenthesizedExpression.getExpression();
+            return getVariableName(innerExpression);
+        } else if (expression instanceof PsiJavaCodeReferenceElement) {
+            final PsiJavaCodeReferenceElement referenceElement =
+                    (PsiJavaCodeReferenceElement) expression;
+            final String referenceName = referenceElement.getReferenceName();
+            if (referenceName == null) {
+                return expression.getText();
+            }
+            return referenceName;
+        }
+        return null;
+    }
+
+    private static String getReferenceToIterate(
+            PsiExpression expression, PsiElement context) {
+        if (expression instanceof PsiMethodCallExpression ||
+                expression instanceof PsiTypeCastExpression ||
+                expression instanceof PsiArrayAccessExpression) {
+            final String variableName = getVariableName(expression);
+            return createVariable(variableName, expression, context);
+        } else if (expression instanceof PsiParenthesizedExpression) {
+            final PsiParenthesizedExpression parenthesizedExpression =
+                    (PsiParenthesizedExpression) expression;
+            final PsiExpression innerExpression =
+                    parenthesizedExpression.getExpression();
+            return getReferenceToIterate(innerExpression, context);
+        } else if (expression instanceof PsiJavaCodeReferenceElement) {
+            final PsiJavaCodeReferenceElement referenceElement =
+                    (PsiJavaCodeReferenceElement) expression;
+            final String variableName = getVariableName(expression);
+            if (referenceElement.isQualified()) {
+                return createVariable(variableName, expression, context);
+            }
+            final PsiElement target = referenceElement.resolve();
+            if (target instanceof PsiLocalVariable) {
+                // maybe should not do this for local variables outside of
+                // anonymous classes
+                return variableName;
+            }
+            return createVariable(variableName, expression, context);
+        }
+        return null;
+    }
+
+    private static String createVariable(String variableNameRoot,
+                                         PsiExpression iteratedValue,
+                                         PsiElement context) {
+        final String variableName =
+                createVariableName(variableNameRoot, iteratedValue);
+        final Project project = context.getProject();
+        final PsiType iteratedValueType = iteratedValue.getType();
+        assert iteratedValueType != null;
+        final PsiElementFactory elementFactory =
+                JavaPsiFacade.getElementFactory(project);
+        final PsiDeclarationStatement declarationStatement =
+                elementFactory.createVariableDeclarationStatement(variableName,
+                        iteratedValueType, iteratedValue);
+        context.getParent().addBefore(declarationStatement, context);
+        return variableName;
+    }
+
+    public static String createVariableName(
+            @Nullable String baseName,
+            @NotNull PsiExpression assignedExpression) {
+        final Project project = assignedExpression.getProject();
+        final JavaCodeStyleManager codeStyleManager =
+                JavaCodeStyleManager.getInstance(project);
+        final SuggestedNameInfo names =
+                codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE,
+                        baseName, assignedExpression, null);
+        if (names.names.length == 0) {
+            return codeStyleManager.suggestUniqueVariableName(baseName,
+                    assignedExpression, true);
+        }
+        return codeStyleManager.suggestUniqueVariableName(names.names[0],
+                assignedExpression, true);
+    }
+
+    public static String createVariableName(@Nullable String baseName,
+                                            @NotNull PsiType type,
+                                            @NotNull PsiElement context) {
+        final Project project = context.getProject();
+        final JavaCodeStyleManager codeStyleManager =
+                JavaCodeStyleManager.getInstance(project);
+        final SuggestedNameInfo names =
+                codeStyleManager.suggestVariableName(
+                        VariableKind.LOCAL_VARIABLE, baseName, null, type);
+        if (names.names.length == 0) {
+            return codeStyleManager.suggestUniqueVariableName(baseName,
+                    context, true);
+        }
+        return codeStyleManager.suggestUniqueVariableName(names.names[0],
+                context, true);
     }
 }

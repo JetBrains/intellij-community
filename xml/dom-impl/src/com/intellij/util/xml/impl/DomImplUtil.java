@@ -55,12 +55,9 @@ public class DomImplUtil {
       return true;
     }
     if ("getValue".equals(method.getName())) {
-      final JavaMethodSignature signature = method.getSignature();
-      final Class<?> declaringClass = method.getDeclaringClass();
-      if (signature.findAnnotation(SubTag.class, declaringClass) != null) return false;
-      if (signature.findAnnotation(SubTagList.class, declaringClass) != null) return false;
-      if (signature.findAnnotation(Convert.class, declaringClass) != null ||
-          signature.findAnnotation(Resolve.class, declaringClass) != null) {
+      if (method.getAnnotation(SubTag.class) != null) return false;
+      if (method.getAnnotation(SubTagList.class) != null) return false;
+      if (method.getAnnotation(Convert.class) != null || method.getAnnotation(Resolve.class) != null) {
         return !ReflectionCache.isAssignable(GenericDomValue.class, method.getReturnType());
       }
       if (ReflectionCache.isAssignable(DomElement.class, method.getReturnType())) return false;
@@ -192,10 +189,10 @@ public class DomImplUtil {
     if (aClass == null) return null;
     String key = getNamespaceKey(aClass);
     if (key == null && javaMethod != null) {
-      for (final Method method : javaMethod.getSignature().getAllMethods(javaMethod.getDeclaringClass())) {
+      for (final Method method : javaMethod.getHierarchy()) {
         final String key1 = getNamespaceKey(method.getDeclaringClass());
         if (key1 != null) {
-          key = key1;
+          return new XmlName(name, key1);
         }
       }
     }

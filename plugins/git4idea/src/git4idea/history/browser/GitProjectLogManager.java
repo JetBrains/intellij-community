@@ -40,6 +40,7 @@ import com.intellij.util.messages.Topic;
 import git4idea.GitBranch;
 import git4idea.GitBranchesSearcher;
 import git4idea.GitVcs;
+import git4idea.history.GitUsersComponent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,6 +54,7 @@ public class GitProjectLogManager implements ProjectComponent {
   private final static Logger LOG = Logger.getInstance("#git4idea.history.browser.GitProjectLogManager");
   private final Project myProject;
   private final ProjectLevelVcsManager myVcsManager;
+  private final GitUsersComponent myGitUsersComponent;
 
   private final AtomicReference<Map<VirtualFile, Content>> myComponentsMap;
   private VcsListener myListener;
@@ -60,9 +62,10 @@ public class GitProjectLogManager implements ProjectComponent {
   public static final Topic<CurrentBranchListener> CHECK_CURRENT_BRANCH =
             new Topic<CurrentBranchListener>("CHECK_CURRENT_BRANCH", CurrentBranchListener.class);
 
-  public GitProjectLogManager(final Project project, final ProjectLevelVcsManager vcsManager) {
+  public GitProjectLogManager(final Project project, final ProjectLevelVcsManager vcsManager, final GitUsersComponent gitUsersComponent) {
     myProject = project;
     myVcsManager = vcsManager;
+    myGitUsersComponent = gitUsersComponent;
     myComponentsMap = new AtomicReference<Map<VirtualFile, Content>>(new HashMap<VirtualFile, Content>());
     myListener = new VcsListener() {
       public void directoryMappingChanged() {
@@ -129,7 +132,7 @@ public class GitProjectLogManager implements ProjectComponent {
     final ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
     for (final VirtualFile root : roots) {
       if (! currentState.containsKey(root)) {
-        final GitLogTree tree = new GitLogTree(myProject, root);
+        final GitLogTree tree = new GitLogTree(myProject, root, myGitUsersComponent);
         tree.setParentDisposable(myProject);
         tree.initView();
         final Content content = contentFactory.createContent(tree.getComponent(), getCaption(baseDir, root), false);

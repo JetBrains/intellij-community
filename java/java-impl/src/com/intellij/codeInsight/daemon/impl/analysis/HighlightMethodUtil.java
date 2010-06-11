@@ -495,6 +495,7 @@ public class HighlightMethodUtil {
     if (methodCandidates.length == 0) {
       QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new StaticImportMethodFix(methodCall), null);
     }
+    VariableTypeFromCallFix.registerQuickFixActions(methodCall, list, highlightInfo);
     QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new ReplaceAddAllArrayToCollectionFix(methodCall), null);
     QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new SurroundWithArrayFix(methodCall), null);
 

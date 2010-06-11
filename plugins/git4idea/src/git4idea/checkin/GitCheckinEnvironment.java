@@ -40,6 +40,7 @@ import git4idea.commands.GitFileUtils;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
+import git4idea.history.GitUsersComponent;
 import git4idea.i18n.GitBundle;
 import git4idea.ui.GitConvertFilesDialog;
 import org.jetbrains.annotations.NonNls;
@@ -121,7 +122,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   @Nullable
   public RefreshableOnComponent createAdditionalOptionsPanel(CheckinProjectPanel panel,
                                                              PairConsumer<Object, Object> additionalDataConsumer) {
-    return new GitCheckinOptions();
+    return new GitCheckinOptions(myProject, panel.getRoots());
   }
 
   /**
@@ -600,8 +601,10 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
     /**
      * A constructor
+     * @param project
+     * @param roots
      */
-    GitCheckinOptions() {
+    GitCheckinOptions(Project project, Collection<VirtualFile> roots) {
       myPanel = new JPanel(new GridBagLayout());
       final Insets insets = new Insets(2, 2, 2, 2);
       GridBagConstraints c = new GridBagConstraints();
@@ -618,13 +621,26 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       c.gridy = 1;
       c.weightx = 1;
       c.fill = GridBagConstraints.HORIZONTAL;
-      myAuthor = new JComboBox(mySettings.getCommitAuthors());
+      final Set<String> authors = getUsersList(project, roots);
+      authors.addAll(Arrays.asList(mySettings.getCommitAuthors()));
+      final ArrayList<String> authorsList = new ArrayList<String>(authors);
+      Collections.sort(authorsList);
+      myAuthor = new JComboBox(authorsList.toArray(new Object[authorsList.size()]));
       myAuthor.insertItemAt("", 0);
       myAuthor.setSelectedItem("");
       myAuthor.setEditable(true);
       authorLabel.setLabelFor(myAuthor);
       myAuthor.setToolTipText(GitBundle.getString("commit.author.tooltip"));
       myPanel.add(myAuthor, c);
+    }
+
+    private Set<String> getUsersList(final Project project, final Collection<VirtualFile> roots) {
+      final GitUsersComponent component = GitUsersComponent.getInstance(project);
+      final Set<String> result = new HashSet<String>();
+      for (VirtualFile root : roots) {
+        result.addAll(component.getUsersList(root));
+      }
+      return result;
     }
 
     /**

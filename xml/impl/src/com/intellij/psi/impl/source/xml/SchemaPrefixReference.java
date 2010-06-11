@@ -53,7 +53,7 @@ public class SchemaPrefixReference extends PsiReferenceBase<XmlElement> {
     }
   }
 
-  public PsiElement resolve() {
+  public SchemaPrefix resolve() {
     return myPrefix;
   }
 

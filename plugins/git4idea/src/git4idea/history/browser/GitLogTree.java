@@ -43,6 +43,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.*;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
+import git4idea.history.GitUsersComponent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,13 +94,13 @@ public class GitLogTree implements GitTreeViewI {
   private RepositoryChangesBrowser myRepositoryChangesBrowser;
   private final static Logger LOG = Logger.getInstance("#git4idea.history.browser.GitLogTree");
 
-  public GitLogTree(final Project project, final VirtualFile root) {
+  public GitLogTree(final Project project, final VirtualFile root, GitUsersComponent gitUsersComponent) {
     myProject = project;
     myWaitAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
     myPanel = new MyPanel(new BorderLayout());
     myListCellRenderer = new MyCompoundCellRenderer();
     myErrorRefresher = new MyErrorRefresher(project);
-    myController = new GitTreeController(project, root, this);
+    myController = new GitTreeController(project, root, this, gitUsersComponent);
     myStateLabel = new JLabel();
 
     myMainSplitter = new Splitter(false, 0.2f);
