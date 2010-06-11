@@ -327,7 +327,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
 
     for (int i = startLineNumber; i < endLineNumber; i++) {
-      int logLine = myEditor.visualToLogicalPosition(new VisualPosition(i, 0)).line;
+      LogicalPosition logicalPosition = myEditor.visualToLogicalPosition(new VisualPosition(i, 0));
+      if (logicalPosition.isOnSoftWrappedLine()) {
+        continue;
+      }
+      int logLine = logicalPosition.line;
       String s = String.valueOf(logLine + 1);
       g.drawString(s,
                    getLineNumberAreaOffset() + getLineNumberAreaWidth() -

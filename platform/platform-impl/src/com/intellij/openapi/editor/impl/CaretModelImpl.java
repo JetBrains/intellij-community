@@ -227,11 +227,21 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
     validateCallContext();
     int column = pos.column;
     int line = pos.line;
+    int softWrapLines = pos.softWrapLines;
+    int linesFromCurrentSoftWrap = pos.linesFromActiveSoftWrap;
+    int softWrapColumns = pos.softWrapColumns;
 
     Document doc = myEditor.getDocument();
 
-    if (column < 0) column = 0;
-    if (line < 0) line = 0;
+    if (column < 0) {
+      column = 0;
+      softWrapColumns = 0;
+    }
+    if (line < 0) {
+      line = 0;
+      softWrapLines = 0;
+      linesFromCurrentSoftWrap = 0;
+    }
 
     int lineCount = doc.getLineCount();
     if (lineCount == 0) {
@@ -239,6 +249,8 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
     }
     else if (line > lineCount - 1) {
       line = lineCount - 1;
+      softWrapLines = 0;
+      linesFromCurrentSoftWrap = 0;
     }
 
     EditorSettings editorSettings = myEditor.getSettings();
@@ -248,6 +260,9 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
       int lineEndColumnNumber = myEditor.offsetToLogicalPosition(lineEndOffset).column;
       if (column > lineEndColumnNumber) {
         column = lineEndColumnNumber;
+        if (softWrapColumns != 0) {
+          softWrapColumns -= column - lineEndColumnNumber;
+        }
       }
     }
 
@@ -257,7 +272,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
 
     LogicalPosition oldCaretPosition = myLogicalCaret;
 
-    myLogicalCaret = new LogicalPosition(line, column);
+    myLogicalCaret = new LogicalPosition(line, column, softWrapLines, linesFromCurrentSoftWrap, softWrapColumns);
 
     final int offset = myEditor.logicalPositionToOffset(myLogicalCaret);
 
