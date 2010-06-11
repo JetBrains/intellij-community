@@ -55,6 +55,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
   @NonNls public static final String TEST_CLASS = "class";
   @NonNls public static final String TEST_PACKAGE = "package";
   @NonNls public static final String TEST_METHOD = "method";
+  @NonNls public static final String TEST_PATTERN = "pattern";
   private final Data myData;
   // See #26522
   @NonNls public static final String JUNIT_START_CLASS = "com.intellij.rt.execution.junit.JUnitStarter";
@@ -102,7 +103,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
   }
 
   public Collection<Module> getValidModules() {
-    if (TEST_PACKAGE.equals(myData.TEST_OBJECT)) {
+    if (TEST_PACKAGE.equals(myData.TEST_OBJECT) || TEST_PATTERN.equals(myData.TEST_OBJECT)) {
       return Arrays.asList(ModuleManager.getInstance(getProject()).getModules());
     }
     try {
@@ -222,7 +223,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
 
   @NotNull
   public Module[] getModules() {
-    if (TEST_PACKAGE.equals(myData.TEST_OBJECT) &&
+    if ((TEST_PACKAGE.equals(myData.TEST_OBJECT) || TEST_PATTERN.equals(myData.TEST_OBJECT)) &&
         getPersistentData().getScope() == TestSearchScope.WHOLE_PROJECT) {
       return Module.EMPTY_ARRAY;
     }
@@ -309,6 +310,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     public String VM_PARAMETERS;
     public String PARAMETERS;
     public String WORKING_DIRECTORY;
+    public String PATTERN;
 
     //iws/ipr compatibility
     public String ENV_VARIABLES;
@@ -326,7 +328,8 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
              Comparing.equal(getMethodName(), second.getMethodName()) &&
              Comparing.equal(getWorkingDirectory(), second.getWorkingDirectory()) &&
              Comparing.equal(VM_PARAMETERS, second.VM_PARAMETERS) &&
-             Comparing.equal(PARAMETERS, second.PARAMETERS);
+             Comparing.equal(PARAMETERS, second.PARAMETERS) &&
+             Comparing.equal(PATTERN, second.PATTERN);
     }
 
     public int hashCode() {
@@ -336,7 +339,8 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
              Comparing.hashcode(getMethodName()) ^
              Comparing.hashcode(getWorkingDirectory()) ^
              Comparing.hashcode(VM_PARAMETERS) ^
-             Comparing.hashcode(PARAMETERS);
+             Comparing.hashcode(PARAMETERS) ^
+             Comparing.hashcode(PATTERN);
     }
 
     public TestSearchScope getScope() {
@@ -412,6 +416,9 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
         }
         return packageName;
       }
+      if (TEST_PATTERN.equals(TEST_OBJECT)) {
+        return getPattern();
+      }
       final String className = JavaExecutionUtil.getPresentableClassName(getMainClassName(), configurationModule);
       if (TEST_METHOD.equals(TEST_OBJECT)) {
         return className + '.' + getMethodName();
@@ -430,6 +437,10 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
 
     public String getMethodName() {
       return METHOD_NAME != null ? METHOD_NAME : "";
+    }
+
+    public String getPattern() {
+      return PATTERN != null ? PATTERN : "";
     }
 
     public TestObject getTestObject(final Project project, final JUnitConfiguration configuration) {

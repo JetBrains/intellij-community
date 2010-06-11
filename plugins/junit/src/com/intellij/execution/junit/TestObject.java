@@ -93,6 +93,9 @@ public abstract class TestObject implements JavaCommandLine {
       return new TestClass(project, configuration, runnerSettings, configurationSettings);
     if (JUnitConfiguration.TEST_PACKAGE.equals(id))
       return new TestPackage(project, configuration, runnerSettings, configurationSettings);
+    if (JUnitConfiguration.TEST_PATTERN.equals(id)) {
+      return new TestsPattern(project, configuration, runnerSettings, configurationSettings);
+    }
     return NOT_CONFIGURED;
   }
 

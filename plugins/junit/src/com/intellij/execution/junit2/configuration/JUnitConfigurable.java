@@ -55,8 +55,10 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
   private JRadioButton myAllInPackageButton;
   private JRadioButton myClassButton;
   private JRadioButton myTestMethodButton;
+  private JRadioButton myTestPatternButton;
   private JComponent myPackagePanel;
   private LabeledComponent<TextFieldWithBrowseButton> myPackage;
+  private LabeledComponent<TextFieldWithBrowseButton> myPattern;
   private LabeledComponent<TextFieldWithBrowseButton> myClass;
   private LabeledComponent<TextFieldWithBrowseButton> myMethod;
 
@@ -71,11 +73,12 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
   private static final ArrayList<TIntArrayList> ourEnabledFields = new ArrayList<TIntArrayList>(Arrays.asList(new TIntArrayList[]{
     new TIntArrayList(new int[]{0}),
     new TIntArrayList(new int[]{1}),
-    new TIntArrayList(new int[]{1, 2})
+    new TIntArrayList(new int[]{1, 2}),
+    new TIntArrayList(new int[]{3})
   }));
   private final ConfigurationModuleSelector myModuleSelector;
-  private final JRadioButton[] myRadioButtons = new JRadioButton[3];
-  private final LabeledComponent[] myTestLocations = new LabeledComponent[3];
+  private final JRadioButton[] myRadioButtons = new JRadioButton[4];
+  private final LabeledComponent[] myTestLocations = new LabeledComponent[4];
   private final JUnitConfigurationModel myModel;
 
   private final BrowseModuleValueActionListener[] myBrowsers;
@@ -92,15 +95,18 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
     myBrowsers = new BrowseModuleValueActionListener[]{
       new PackageChooserActionListener(project),
       new TestClassBrowser(project),
-      new MethodBrowser(project)
+      new MethodBrowser(project),
+      new PackageChooserActionListener(project) //todo
     };
     // Garbage support
     myRadioButtons[JUnitConfigurationModel.ALL_IN_PACKAGE] = myAllInPackageButton;
     myRadioButtons[JUnitConfigurationModel.CLASS] = myClassButton;
     myRadioButtons[JUnitConfigurationModel.METHOD] = myTestMethodButton;
+    myRadioButtons[JUnitConfigurationModel.PATTERN] = myTestPatternButton;
     myTestLocations[JUnitConfigurationModel.ALL_IN_PACKAGE] = myPackage;
     myTestLocations[JUnitConfigurationModel.CLASS] = myClass;
     myTestLocations[JUnitConfigurationModel.METHOD] = myMethod;
+    myTestLocations[JUnitConfigurationModel.PATTERN] = myPattern;
     // Done
 
     myModel.setListener(this);
@@ -170,6 +176,8 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
   private void changePanel () {
     if (myAllInPackageButton.isSelected()) {
       myPackagePanel.setVisible(true);
+      myPackage.setVisible(true);
+      myPattern.setVisible(false);
       myClass.setVisible(false);
       myMethod.setVisible(false);
     }
@@ -178,10 +186,16 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
       myClass.setVisible(true);
       myMethod.setVisible(false);
     }
-    else {
+    else if (myTestMethodButton.isSelected()){
       myPackagePanel.setVisible(false);
       myClass.setVisible(true);
       myMethod.setVisible(true);
+    } else {
+      myPackagePanel.setVisible(true);
+      myPattern.setVisible(true);
+      myPackage.setVisible(false);
+      myClass.setVisible(false);
+      myMethod.setVisible(false);
     }
   }
 
