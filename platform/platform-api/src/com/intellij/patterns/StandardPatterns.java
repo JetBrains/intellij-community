@@ -22,6 +22,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 /**
  * @author peter
  */
@@ -83,7 +87,7 @@ public class StandardPatterns {
   }
 
   public static <E> ElementPattern<E> or(final ElementPattern<? extends E>... patterns) {
-    return new ObjectPattern.Capture<E>(new InitialPatternCondition(Object.class) {
+    return new ObjectPattern.Capture<E>(new InitialPatternConditionPlus(Object.class) {
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         for (final ElementPattern pattern : patterns) {
           if (pattern.getCondition().accepts(o, context)) return true;
@@ -102,11 +106,15 @@ public class StandardPatterns {
         }
       }
 
+      @Override
+      public List<ElementPattern<?>> getPatterns() {
+        return Arrays.<ElementPattern<?>>asList(patterns);
+      }
     });
   }
 
   public static <E> ElementPattern<E> and(final ElementPattern<? extends E>... patterns) {
-    return new ObjectPattern.Capture<E>(new InitialPatternCondition(Object.class) {
+    return new ObjectPattern.Capture<E>(new InitialPatternConditionPlus(Object.class) {
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         for (final ElementPattern pattern : patterns) {
           if (!pattern.getCondition().accepts(o, context)) return false;
@@ -124,11 +132,16 @@ public class StandardPatterns {
           pattern.getCondition().append(builder, indent + "  ");
         }
       }
+
+      @Override
+      public List<ElementPattern<?>> getPatterns() {
+        return Arrays.<ElementPattern<?>>asList(patterns);
+      }
     });
   }
 
   public static <E> ObjectPattern.Capture<E> not(final ElementPattern<E> pattern) {
-    return new ObjectPattern.Capture<E>(new InitialPatternCondition(Object.class) {
+    return new ObjectPattern.Capture<E>(new InitialPatternConditionPlus(Object.class) {
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         return !pattern.getCondition().accepts(o, context);
       }
@@ -136,6 +149,11 @@ public class StandardPatterns {
       public void append(@NonNls final StringBuilder builder, final String indent) {
         pattern.getCondition().append(builder.append("not("), indent + "  ");
         builder.append(")");
+      }
+
+      @Override
+      public List<ElementPattern<?>> getPatterns() {
+        return Collections.<ElementPattern<?>>singletonList(pattern);
       }
     });
   }

@@ -20,6 +20,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
@@ -37,6 +38,7 @@ import com.intellij.util.PairProcessor;
 import com.intellij.util.PatternValuesIndex;
 import gnu.trove.THashMap;
 import org.intellij.plugins.intelliLang.Configuration;
+import org.intellij.plugins.intelliLang.PatternBasedInjectionHelper;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
@@ -46,6 +48,7 @@ import org.intellij.plugins.intelliLang.inject.config.InjectionPlace;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * This is the main part of the injection code. The component registers a language injector, the reference provider that
@@ -60,7 +63,7 @@ public final class XmlLanguageInjector implements MultiHostInjector {
 
   private final Configuration myConfiguration;
   private final Project myProject;
-  private CachedValue<Collection<String>> myXmlIndex;
+  private CachedValue<Pair<Pattern, Collection<String>>> myXmlIndex;
 
   public XmlLanguageInjector(Configuration configuration, Project project) {
     myConfiguration = configuration;
@@ -73,9 +76,11 @@ public final class XmlLanguageInjector implements MultiHostInjector {
   }
 
   public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull PsiElement host) {
+    final XmlElement xmlElement = (XmlElement) host;
+    if (notInIndex(xmlElement)) return;
     final TreeSet<TextRange> ranges = new TreeSet<TextRange>(InjectorUtils.RANGE_COMPARATOR);
-    final PsiFile containingFile = host.getContainingFile();
-    getInjectedLanguage(host, new PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>>() {
+    final PsiFile containingFile = xmlElement.getContainingFile();
+    getInjectedLanguage(xmlElement, new PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>>() {
       public boolean process(final Language language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list) {
         for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : list) {
           if (ranges.contains(trinity.third.shiftRight(trinity.first.getTextRange().getStartOffset()))) return true;
@@ -91,7 +96,6 @@ public final class XmlLanguageInjector implements MultiHostInjector {
       }
     });
   }
-
 
   void getInjectedLanguage(final PsiElement place, final PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor) {
     if (place instanceof XmlTag) {
@@ -189,10 +193,35 @@ public final class XmlLanguageInjector implements MultiHostInjector {
     }
   }
 
-  private Collection<String> getXmlAnnotatedElementsValue() {
+  // NOTE: local name of an xml entity or attribute value should match at least one string in the index 
+  private boolean notInIndex(XmlElement xmlElement) {
+    final Pair<Pattern, Collection<String>> index = getXmlAnnotatedElementsValue();
+    final XmlTag tag;
+    if (xmlElement instanceof XmlAttribute) {
+      final XmlAttribute attribute = (XmlAttribute)xmlElement;
+      if (areThereInjectionsWithText(attribute.getLocalName(), index)) return false;
+      if (areThereInjectionsWithText(attribute.getValue(), index)) return false;
+      //if (areThereInjectionsWithText(attribute.getNamespace(), index)) return false;
+      tag = attribute.getParent();
+    }
+    else tag = (XmlTag)xmlElement;
+    if (areThereInjectionsWithText(tag.getLocalName(), index)) return false;
+    //if (areThereInjectionsWithText(tag.getNamespace(), index)) return false;
+    return true;
+  }
+
+
+  private static boolean areThereInjectionsWithText(final String text, Pair<Pattern, Collection<String>> index) {
+    if (text == null) return false;
+    if (index.second.contains(text)) return true;
+    if (index.first.matcher(text).matches()) return true;
+    return false;
+  }
+
+  private Pair<Pattern, Collection<String>> getXmlAnnotatedElementsValue() {
     if (myXmlIndex == null) {
-      myXmlIndex = CachedValuesManager.getManager(myProject).createCachedValue(new CachedValueProvider<Collection<String>>() {
-        public Result<Collection<String>> compute() {
+      myXmlIndex = CachedValuesManager.getManager(myProject).createCachedValue(new CachedValueProvider<Pair<Pattern, Collection<String>>>() {
+        public Result<Pair<Pattern, Collection<String>>> compute() {
           final Map<ElementPattern<?>, BaseInjection> map = new THashMap<ElementPattern<?>, BaseInjection>();
           for (BaseInjection injection : myConfiguration.getInjections(XmlLanguageInjectionSupport.XML_SUPPORT_ID)) {
             for (InjectionPlace place : injection.getInjectionPlaces()) {
@@ -201,13 +230,24 @@ public final class XmlLanguageInjector implements MultiHostInjector {
             }
           }
           final Set<String> stringSet = PatternValuesIndex.buildStringIndex(map.keySet());
-          final Result<Collection<String>> r = new Result<Collection<String>>(stringSet, myConfiguration);
+          final Result<Pair<Pattern, Collection<String>>> r = new Result<Pair<Pattern, Collection<String>>>(
+            Pair.<Pattern, Collection<String>>create(buildPattern(stringSet), stringSet), myConfiguration);
           r.setLockValue(true);
           return r;
         }
       }, false);
     }
     return myXmlIndex.getValue();
+  }
+
+  private static Pattern buildPattern(Set<String> stringSet) {
+    final StringBuilder sb = new StringBuilder();
+    for (String s : stringSet) {
+      if (!PatternBasedInjectionHelper.isRegexp(s)) continue;
+      if (sb.length() > 0) sb.append('|');
+      sb.append("(?:").append(s).append(")");
+    }
+    return Pattern.compile(sb.toString());
   }
 
 }

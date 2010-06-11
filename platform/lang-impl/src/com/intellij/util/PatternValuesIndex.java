@@ -15,10 +15,7 @@
  */
 package com.intellij.util;
 
-import com.intellij.patterns.ElementPattern;
-import com.intellij.patterns.PatternCondition;
-import com.intellij.patterns.PatternConditionPlus;
-import com.intellij.patterns.ValuePatternCondition;
+import com.intellij.patterns.*;
 import gnu.trove.THashSet;
 
 import java.util.Collection;
@@ -51,7 +48,12 @@ public class PatternValuesIndex {
       stack.add(next);
       while (!stack.isEmpty()) {
         final ElementPattern<?> pattern = stack.removeFirst();
-        for (PatternCondition<?> condition : pattern.getCondition().getConditions()) {
+        final ElementPatternCondition<?> patternCondition = pattern.getCondition();
+        final InitialPatternCondition<?> initialCondition = patternCondition.getInitialCondition();
+        if (initialCondition instanceof InitialPatternConditionPlus) {
+          stack.addAll(((InitialPatternConditionPlus<?>)initialCondition).getPatterns());
+        }
+        for (PatternCondition<?> condition : patternCondition.getConditions()) {
           if (condition instanceof PatternConditionPlus) {
             stack.add(((PatternConditionPlus)condition).getValuePattern());
           }

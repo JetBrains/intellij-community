@@ -54,13 +54,9 @@ public class PatternBasedInjectionHelper {
     final String[] parts = text.split("[,|\\s]+");
     boolean useMatches = false;
     for (String part : parts) {
-      if (!StringUtil.escapeToRegexp(part).equals(part)) {
-        try {
-          final URL url = new URL(part);
-        }
-        catch (MalformedURLException e) {
-          useMatches = true;
-        }
+      if (isRegexp(part)) {
+        useMatches = true;
+        break;
       }
     }
     if (useMatches) {
@@ -81,6 +77,25 @@ public class PatternBasedInjectionHelper {
     }
     sb.append(suffix);
     return sb;
+  }
+
+  public static boolean isRegexp(final String s) {
+    boolean hasReChars = false;
+    for (int i = 0, len = s.length(); i < len; i++) {
+      final char c = s.charAt(i);
+      if (c == ' ' || c == '_' || c == '-' || Character.isLetterOrDigit(c)) continue;
+      hasReChars = true;
+      break;
+    }
+    if (hasReChars) {
+      try {
+        new URL(s);
+      }
+      catch (MalformedURLException e) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private Set<Method> getStaticMethods() {
