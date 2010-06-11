@@ -52,7 +52,7 @@ public class AccessorReferencesSearcher extends SearchRequestor {
 
     final String propertyName = GroovyPropertyUtils.getPropertyName((PsiMethod)target);
     if (propertyName != null) {
-      collector.searchWord(propertyName, PsiUtil.restrictScopeToGroovyFiles(options.searchScope), UsageSearchContext.IN_CODE, true);
+      collector.searchWord(propertyName, PsiUtil.restrictScopeToGroovyFiles(options.searchScope), UsageSearchContext.IN_CODE, true, target);
     }
   }
 

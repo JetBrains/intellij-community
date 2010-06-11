@@ -49,7 +49,7 @@ public class SimpleAccessorReferenceSearcher extends SearchRequestor {
       }
       assert propertyName != null;
       final SearchScope propScope = options.searchScope.intersectWith(method.getUseScope()).intersectWith(additional);
-      collector.searchWord(propertyName, propScope, UsageSearchContext.IN_FOREIGN_LANGUAGES, true);
+      collector.searchWord(propertyName, propScope, UsageSearchContext.IN_FOREIGN_LANGUAGES, true, refElement);
     }
 
   }

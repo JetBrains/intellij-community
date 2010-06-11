@@ -47,11 +47,11 @@ public class MethodLateBoundReferencesSearcher extends SearchRequestor {
     final PsiMethod method = (PsiMethod)target;
     SearchScope searchScope = PsiUtil.restrictScopeToGroovyFiles(options.searchScope.intersectWith(getUseScope(method)));
 
-    orderSearching(searchScope, method.getName(), collector);
+    orderSearching(searchScope, method.getName(), collector, method);
 
     final String propName = PropertyUtil.getPropertyName(method);
     if (propName != null) {
-      orderSearching(searchScope, propName, collector);
+      orderSearching(searchScope, propName, collector, method);
     }
   }
 
@@ -71,8 +71,8 @@ public class MethodLateBoundReferencesSearcher extends SearchRequestor {
 
   private static void orderSearching(SearchScope searchScope,
                                      final String name,
-                                     @NotNull SearchRequestCollector collector) {
-    collector.searchWord(name, searchScope, UsageSearchContext.IN_CODE, true, new SingleTargetRequestResultProcessor(collector.getTarget()) {
+                                     @NotNull SearchRequestCollector collector, PsiMethod method) {
+    collector.searchWord(name, searchScope, UsageSearchContext.IN_CODE, true, new SingleTargetRequestResultProcessor(method) {
       @Override
       public boolean execute(PsiElement element, int offsetInElement, Processor<PsiReference> consumer) {
         if (!(element instanceof GrReferenceExpression)) {

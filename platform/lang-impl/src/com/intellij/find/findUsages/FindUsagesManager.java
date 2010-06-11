@@ -353,7 +353,7 @@ public class FindUsagesManager implements JDOMExternalizable {
             }
           });
 
-        options.fastTrack = new SearchRequestCollector(scopeFile);
+        options.fastTrack = new SearchRequestCollector();
 
         for (final PsiElement element : elements) {
           ApplicationManager.getApplication().runReadAction(new Runnable() {

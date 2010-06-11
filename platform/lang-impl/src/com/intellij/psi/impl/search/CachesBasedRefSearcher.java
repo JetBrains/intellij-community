@@ -33,7 +33,7 @@ public class CachesBasedRefSearcher extends SearchRequestor implements QueryExec
     }
 
     final PsiElement refElement = p.getElementToSearch();
-    final SearchRequestCollector collector = new SearchRequestCollector(refElement);
+    final SearchRequestCollector collector = new SearchRequestCollector();
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
@@ -97,7 +97,7 @@ public class CachesBasedRefSearcher extends SearchRequestor implements QueryExec
     if (StringUtil.isNotEmpty(text)) {
       final SearchScope searchScope = ignoreAccessScope ? scope : refElement.getUseScope().intersectWith(scope);
       assert text != null;
-      collector.searchWord(text, searchScope, refElement.getLanguage().isCaseSensitive());
+      collector.searchWord(text, searchScope, refElement.getLanguage().isCaseSensitive(), refElement);
     }
   }
 }

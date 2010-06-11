@@ -24,7 +24,7 @@ public class MethodUsagesSearcher extends SearchRequestor implements QueryExecut
     }
 
     final PsiMethod method = p.getMethod();
-    final SearchRequestCollector collector = new SearchRequestCollector(method);
+    final SearchRequestCollector collector = new SearchRequestCollector();
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
