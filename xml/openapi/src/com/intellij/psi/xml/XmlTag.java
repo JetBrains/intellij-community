@@ -78,6 +78,10 @@ public interface XmlTag extends XmlElement, PsiNamedElement, PsiMetaOwner, XmlTa
   String[] knownNamespaces();
 
   boolean hasNamespaceDeclarations();
+
+  /**
+   * @return map keys: prefixes values: namespaces
+   */
   @NotNull Map<String, String> getLocalNamespaceDeclarations();
 
   @NotNull XmlTagValue getValue();

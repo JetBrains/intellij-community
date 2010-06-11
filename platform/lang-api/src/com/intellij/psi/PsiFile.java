@@ -77,8 +77,7 @@ public interface PsiFile extends PsiFileSystemItem {
    *
    * @return the array of PSI roots, or a single-element array containing <code>this</code>
    * if the file has only a single language.
-   * @deprecated Use {@link com.intellij.psi.FileViewProvider#getLanguages()} and then
-   *                 {@link com.intellij.psi.FileViewProvider#getPsi(com.intellij.lang.Language)} instead.
+   * @deprecated Use {@link FileViewProvider#getAllFiles()} instead.
    */
   @NotNull PsiFile[] getPsiRoots();
 

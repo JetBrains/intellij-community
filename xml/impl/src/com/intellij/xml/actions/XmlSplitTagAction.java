@@ -92,7 +92,6 @@ public class XmlSplitTagAction implements IntentionAction {
         final PsiElement containingTag = xmlText.getParent();
         if (containingTag instanceof XmlTag) {
           final XmlTag xmlTag = (XmlTag)containingTag;
-          final String name = xmlTag.getName();
 
           final String s = xmlText.getText();
           final String first = s.substring(0, offsetInElement);
@@ -139,9 +138,17 @@ public class XmlSplitTagAction implements IntentionAction {
 
     final StringBuilder sb = new StringBuilder();
     final String name = xmlTag.getName();
-    sb.append("<root><").append(name).append(' ').append(attrs.toString()).append('>');
+    sb.append("<root><").append(name);
+    if (attrs.length() > 0) {
+      sb.append(' ').append(attrs.toString());
+    }
+    sb.append('>');
     sb.append(first);
-    sb.append("</").append(name).append("><").append(name).append(' ').append(attrsWoId.toString()).append('>');
+    sb.append("</").append(name).append("><").append(name);
+    if (attrsWoId.length() > 0) {
+      sb.append(' ').append(attrsWoId.toString());
+    }
+    sb.append('>');
     sb.append(second).append("</").append(name).append("></root>");
 
     return sb.toString();

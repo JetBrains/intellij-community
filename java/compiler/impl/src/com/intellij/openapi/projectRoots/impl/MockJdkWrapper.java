@@ -24,14 +24,15 @@ import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.RootProvider;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * used to override JdkHome location in order to provide correct paths
@@ -68,6 +69,14 @@ public final class MockJdkWrapper implements Sdk {
 
   public RootProvider getRootProvider() {
     return myDelegate.getRootProvider();
+  }
+
+  public <T> T getUserData(@NotNull Key<T> key) {
+    return myDelegate.getUserData(key);
+  }
+
+  public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+    myDelegate.putUserData(key, value);
   }
 
   public Object clone() throws CloneNotSupportedException {
