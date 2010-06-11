@@ -427,7 +427,9 @@ public abstract class DialogWrapper {
     }
     setMargin(button);
     if (action.getValue(DEFAULT_ACTION) != null) {
-      getRootPane().setDefaultButton(button);
+      if (!myPeer.isHeadless()) {
+        getRootPane().setDefaultButton(button);
+      }
     }
     return button;
   }
