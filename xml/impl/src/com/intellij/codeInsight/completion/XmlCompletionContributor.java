@@ -25,10 +25,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.PsiElement;
@@ -141,7 +138,7 @@ public class XmlCompletionContributor extends CompletionContributor {
           return parent.getNamespace();
         }
       });
-      final XmlElementDescriptor parentDescriptor = ApplicationManager.getApplication().runReadAction(new Computable<XmlElementDescriptor>() {
+      final XmlElementDescriptor parentDescriptor = ApplicationManager.getApplication().runReadAction(new NullableComputable<XmlElementDescriptor>() {
         public XmlElementDescriptor compute() {
           return parent.getDescriptor();
         }
@@ -150,7 +147,7 @@ public class XmlCompletionContributor extends CompletionContributor {
       final int pos = prefix.indexOf(':');
       final String namespacePrefix = pos > 0 ? prefix.substring(0, pos) : null;
 
-      final PsiReference reference = ApplicationManager.getApplication().runReadAction(new Computable<PsiReference>() {
+      final PsiReference reference = ApplicationManager.getApplication().runReadAction(new NullableComputable<PsiReference>() {
         public PsiReference compute() {
           return parent.getReference();
         }
@@ -161,7 +158,8 @@ public class XmlCompletionContributor extends CompletionContributor {
         for (final LookupElement item : set) {
           result.addElement(item);
         }
-      } else {
+      }
+      else {
 
         final CompletionResultSet newResult = result.withPrefixMatcher(pos >= 0 ? prefix.substring(pos + 1) : prefix);
 

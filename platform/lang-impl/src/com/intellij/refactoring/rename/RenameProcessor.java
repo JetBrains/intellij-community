@@ -105,9 +105,12 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   public void prepareRenaming() {
-    final RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(myPrimaryElement);
-    processor.prepareRenaming(myPrimaryElement, myNewName, myAllRenames);
-    myForceShowPreview = processor.forcesShowPreview();
+    final List<RenamePsiElementProcessor> processors = RenamePsiElementProcessor.allForElement(myPrimaryElement);
+    myForceShowPreview = false;
+    for (RenamePsiElementProcessor processor : processors) {
+      processor.prepareRenaming(myPrimaryElement, myNewName, myAllRenames);
+      myForceShowPreview |= processor.forcesShowPreview();
+    }
   }
 
   @Nullable
@@ -286,8 +289,8 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       String newName = entry.getValue();
 
       final RefactoringElementListener elementListener = getTransaction().getElementListener(element);
-      RenameUtil.doRename(element, newName, extractUsagesForElement(element, usages), myProject, elementListener);
       Runnable postRenameCallback = RenamePsiElementProcessor.forElement(element).getPostRenameCallback(element, newName, elementListener);
+      RenameUtil.doRename(element, newName, extractUsagesForElement(element, usages), myProject, elementListener);
       if (postRenameCallback != null) {
         postRenameCallbacks.add(postRenameCallback);
       }

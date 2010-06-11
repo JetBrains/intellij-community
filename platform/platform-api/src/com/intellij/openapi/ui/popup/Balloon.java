@@ -17,11 +17,14 @@ package com.intellij.openapi.ui.popup;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ui.PositionTracker;
 
 import javax.swing.*;
 import java.awt.*;
 
 public interface Balloon extends Disposable {
+
+  void show(PositionTracker<Balloon> tracker, Position preferredPosition);
 
   void show(RelativePoint target, Position prefferedPosition);
 

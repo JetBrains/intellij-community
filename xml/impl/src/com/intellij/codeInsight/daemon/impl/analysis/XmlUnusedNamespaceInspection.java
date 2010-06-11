@@ -16,30 +16,31 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlBundle;
+import com.intellij.xml.util.XmlRefCountHolder;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
-import java.util.Set;
-
 /**
  * @author Dmitry Avdeev
  */
 public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool {
+
+  private static final String NAMESPACE_LOCATION_IS_NEVER_USED = "Namespace location is never used";
 
   @NotNull
   @Override
@@ -47,57 +48,125 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
 
     return new XmlElementVisitor() {
 
-      Set<String> descriptorsBuilt;
-
       @Override
       public void visitXmlAttribute(XmlAttribute attribute) {
 
-        if (descriptorsBuilt == null) {
-          descriptorsBuilt = ensureDescriptorsBuilt(attribute);
-        }
-        if (descriptorsBuilt == null) {
+        if (!attribute.isNamespaceDeclaration()) {
+          checkUnusedLocations(attribute, holder);
           return;
         }
-        if (attribute.isNamespaceDeclaration()) {
-          String namespace = attribute.getValue();
-          if (namespace != null && !descriptorsBuilt.contains(namespace)) {
+        XmlRefCountHolder refCountHolder = XmlRefCountHolder.getRefCountHolder(attribute);
+        if (refCountHolder == null) return;
 
-            /*
-            final ImplicitUsageProvider[] implicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
-            for (ImplicitUsageProvider provider : implicitUsageProviders) {
-              if (provider.isImplicitUsage(attribute)) return;
+        String namespace = attribute.getValue();
+        String declaredPrefix = getDeclaredPrefix(attribute);
+        if (namespace != null && !refCountHolder.isInUse(declaredPrefix)) {
+
+          ImplicitUsageProvider[] implicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
+          for (ImplicitUsageProvider provider : implicitUsageProviders) {
+            if (provider.isImplicitUsage(attribute)) return;
+          }
+
+          XmlAttributeValue value = attribute.getValueElement();
+          assert value != null;
+          holder.registerProblem(attribute, "Namespace declaration is never used", ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                                 new RemoveNamespaceDeclarationFix(declaredPrefix));
+
+          XmlTag parent = attribute.getParent();
+          if (declaredPrefix.length() == 0) {
+            XmlAttribute location = getDefaultLocation(parent);
+            if (location != null) {
+              holder.registerProblem(location, NAMESPACE_LOCATION_IS_NEVER_USED, ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                                     new RemoveNamespaceDeclarationFix(declaredPrefix));
             }
-            */
-
-            XmlAttributeValue value = attribute.getValueElement();
-            assert value != null;
-            holder.registerProblem(value, "Namespace declaration is not in use", ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                                   new RemoveNamespaceDeclarationFix());
+          }
+          else {
+            for (PsiReference reference : getLocationReferences(namespace, parent)) {
+              holder.registerProblemForReference(reference, ProblemHighlightType.LIKE_UNUSED_SYMBOL, NAMESPACE_LOCATION_IS_NEVER_USED,
+                                                 new RemoveNamespaceDeclarationFix(declaredPrefix));
+            }
           }
         }
       }
-
-      @Nullable
-      private Set<String> ensureDescriptorsBuilt(XmlAttribute attribute) {
-        XmlDocument document = PsiTreeUtil.getParentOfType(attribute, XmlDocument.class);
-        if (document == null) {
-          return null;
-        }
-        HashSet<String> set = new HashSet<String>();
-        buildDescriptors(document.getRootTag(), set);
-        return set;
-      }
-
-      private void buildDescriptors(XmlTag tag, Set<String> set) {
-        set.add(tag.getNamespace());
-        for (XmlAttribute attribute : tag.getAttributes()) {
-          set.add(attribute.getNamespace());
-        }
-        for (XmlTag subTag : tag.getSubTags()) {
-          buildDescriptors(subTag, set);
-        }
-      }
     };
+  }
+
+  private static void removeReferencesOrAttribute(PsiReference[] references, XmlAttribute attribute) {
+    if (references.length > 0 && references[0].getElement().getReferences().length == references.length) {
+      attribute.delete();
+    }
+    else {
+      for (PsiReference reference : references) {
+        RemoveNamespaceDeclarationFix.removeReferenceText(reference);
+      }
+    }
+  }
+
+  private static void checkUnusedLocations(XmlAttribute attribute, ProblemsHolder holder) {
+    if (XmlUtil.XML_SCHEMA_INSTANCE_URI.equals(attribute.getNamespace())) {
+      if (XmlUtil.NO_NAMESPACE_SCHEMA_LOCATION_ATT.equals(attribute.getLocalName())) {
+        XmlRefCountHolder refCountHolder = XmlRefCountHolder.getRefCountHolder(attribute);
+        if (refCountHolder == null || refCountHolder.isInUse("")) return;
+        holder.registerProblem(attribute, NAMESPACE_LOCATION_IS_NEVER_USED, ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                               new RemoveNamespaceLocationFix(""));
+      }
+      else if (XmlUtil.SCHEMA_LOCATION_ATT.equals(attribute.getLocalName())) {
+        XmlAttributeValue value = attribute.getValueElement();
+        if (value == null) return;
+        PsiReference[] references = value.getReferences();
+        for (int i = 0, referencesLength = references.length; i < referencesLength; i+=2) {
+          PsiReference reference = references[i];
+          String ns = getNamespaceFromReference(reference);
+          if (ArrayUtil.indexOf(attribute.getParent().knownNamespaces(), ns) == -1) {
+            holder.registerProblemForReference(reference, ProblemHighlightType.LIKE_UNUSED_SYMBOL, NAMESPACE_LOCATION_IS_NEVER_USED,
+                                               new RemoveNamespaceLocationFix(ns));
+            if (i + 1 < referencesLength) {
+              holder.registerProblemForReference(references[i + 1], ProblemHighlightType.LIKE_UNUSED_SYMBOL, NAMESPACE_LOCATION_IS_NEVER_USED,
+                                                 new RemoveNamespaceLocationFix(ns));
+            }
+          }
+        }
+      }
+    }
+  }
+
+  public static String getDeclaredPrefix(XmlAttribute attribute) {
+    return attribute.getName().contains(":") ? attribute.getLocalName() : "";
+  }
+
+  @Nullable
+  private static XmlAttribute getDefaultLocation(XmlTag parent) {
+    return parent.getAttribute(XmlUtil.NO_NAMESPACE_SCHEMA_LOCATION_ATT, XmlUtil.XML_SCHEMA_INSTANCE_URI);
+  }
+
+  private static PsiReference[] getLocationReferences(String namespace, XmlTag tag) {
+    XmlAttribute locationAttr = tag.getAttribute(XmlUtil.SCHEMA_LOCATION_ATT, XmlUtil.XML_SCHEMA_INSTANCE_URI);
+    if (locationAttr == null) {
+      return PsiReference.EMPTY_ARRAY;
+    }
+    XmlAttributeValue value = locationAttr.getValueElement();
+    assert value != null;
+    return getLocationReferences(namespace, value);
+  }
+
+  private static PsiReference[] getLocationReferences(String namespace, XmlAttributeValue value) {
+    PsiReference[] references = value.getReferences();
+    for (int i = 0, referencesLength = references.length; i < referencesLength; i++) {
+      PsiReference reference = references[i];
+      if (namespace.equals(getNamespaceFromReference(reference))) {
+        if (i + 1 < referencesLength) {
+          return new PsiReference[] { references[i + 1], reference };
+        }
+        else {
+          return new PsiReference[] { reference };
+        }
+      }
+    }
+    return PsiReference.EMPTY_ARRAY;
+  }
+
+  private static String getNamespaceFromReference(PsiReference reference) {
+    return reference.getRangeInElement().shiftRight(-1).substring(((XmlAttributeValue)reference.getElement()).getValue());
   }
 
   @NotNull
@@ -129,10 +198,19 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
     return "XmlUnusedNamespaceDeclaration";
   }
 
-  private static class RemoveNamespaceDeclarationFix implements LocalQuickFix {
+  public static class RemoveNamespaceDeclarationFix implements LocalQuickFix {
+
+    public static final String NAME = "Remove unused namespace declaration";
+
+    protected final String myPrefix;
+
+    private RemoveNamespaceDeclarationFix(@Nullable String prefix) {
+      myPrefix = prefix;
+    }
+
     @NotNull
     public String getName() {
-      return "Remove namespace declaration";
+      return NAME;
     }
 
     @NotNull
@@ -143,51 +221,46 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
       if (element instanceof XmlAttributeValue) {
-        String namespace = ((XmlAttributeValue)element).getValue();
-        PsiElement attribute = element.getParent();
-        boolean def = !((XmlAttribute)attribute).getName().contains(":");
-        XmlTag parent = (XmlTag)element.getParent().getParent();
-        SmartPsiElementPointer<XmlTag> pointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(parent);
-
-        PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-        Document document = documentManager.getDocument(element.getContainingFile());
-        assert document != null;
-        attribute.delete();
-        if (def) {
-          XmlAttribute locationAttr = parent.getAttribute(XmlUtil.NO_NAMESPACE_SCHEMA_LOCATION_ATT, XmlUtil.XML_SCHEMA_INSTANCE_URI);
-          if (locationAttr != null) {
-            locationAttr.delete();
-          }
-        }
-        else {
-          documentManager.doPostponedOperationsAndUnblockDocument(document);
-          removeLocations(namespace, parent);
-          documentManager.commitDocument(document);
-        }
-        XmlTag tag = pointer.getElement();
-        assert tag != null;
-        CodeStyleManager.getInstance(project).reformat(tag);
+        element = element.getParent();
       }
+      else if (!(element instanceof XmlAttribute)) {
+        return;
+      }
+      XmlAttribute attribute = (XmlAttribute)element;
+      XmlTag parent = attribute.getParent();
+      SmartPsiElementPointer<XmlTag> pointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(parent);
+
+      PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
+      Document document = manager.getDocument(attribute.getContainingFile());
+      
+      doRemove(project, attribute, parent);
+
+      assert document != null;
+      manager.commitDocument(document);
+      XmlTag tag = pointer.getElement();
+      assert tag != null;
+      CodeStyleManager.getInstance(project).reformat(tag);
     }
 
-    private static void removeLocations(String namespace, XmlTag tag) {
-      assert tag != null;
-      XmlAttribute locationAttr = tag.getAttribute(XmlUtil.SCHEMA_LOCATION_ATT, XmlUtil.XML_SCHEMA_INSTANCE_URI);
-      if (locationAttr != null) {
-        String location = locationAttr.getValue();
-        XmlAttributeValue value = locationAttr.getValueElement();
-        assert value != null;
-        PsiReference[] references = value.getReferences();
-        for (int i = 0, referencesLength = references.length; i < referencesLength; i++) {
-          PsiReference reference = references[i];
-          if (namespace.equals(reference.getRangeInElement().shiftRight(-1).substring(location))) {
-            if (i + 1 < referencesLength) {
-              removeReferenceText(references[i + 1]);
-            }
-            removeReferenceText(reference);
-            break;
-          }
+    protected void doRemove(Project project, XmlAttribute attribute, XmlTag parent) {
+      String namespace = attribute.getValue();
+      String prefix = getDeclaredPrefix(attribute);
+
+      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+      Document document = documentManager.getDocument(attribute.getContainingFile());
+      assert document != null;
+      attribute.delete();
+      if (prefix.length() == 0) {
+        XmlAttribute locationAttr = getDefaultLocation(parent);
+        if (locationAttr != null) {
+          locationAttr.delete();
         }
+      }
+      else {
+        documentManager.doPostponedOperationsAndUnblockDocument(document);
+        PsiReference[] references = getLocationReferences(namespace, parent);
+        removeReferencesOrAttribute(references, attribute);
+        documentManager.commitDocument(document);
       }
     }
 
@@ -199,5 +272,36 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
       assert document != null;
       document.deleteString(range.getStartOffset(), range.getEndOffset());
     }
+  }
+
+  public static class RemoveNamespaceLocationFix extends RemoveNamespaceDeclarationFix {
+
+    public static final String NAME = "Remove unused namespace location";
+
+    private RemoveNamespaceLocationFix(String namespace) {
+      super(namespace);
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return NAME;
+    }
+
+    @Override
+    protected void doRemove(Project project, XmlAttribute attribute, XmlTag parent) {
+      if (myPrefix.length() == 0) {
+        attribute.delete();
+      }
+      else {
+        XmlAttributeValue value = attribute.getValueElement();
+        if (value == null) {
+          return;
+        }
+        PsiReference[] references = getLocationReferences(myPrefix, value);
+        removeReferencesOrAttribute(references, attribute);
+      }
+    }
+
   }
 }

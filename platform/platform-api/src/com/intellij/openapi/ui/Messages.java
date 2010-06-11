@@ -122,18 +122,20 @@ public class Messages {
    * @see #showDialog(Project, String, String, String[], int, Icon)
    * @see #showDialog(Component, String, String, String[], int, Icon)
    */
-  public static int showDialog(String message, String title, String[] options, int defaultOptionIndex, Icon icon) {
+  public static int showDialog(String message, String title, String[] options, int defaultOptionIndex, Icon icon, DialogWrapper.DoNotAskOption doNotAskOption) {
     if (isApplicationInUnitTestOrHeadless()) {
       return ourTestImplementation.show(message);
     }
     else {
       //what's it? if (application.isUnitTestMode()) throw new RuntimeException(message);
-      MessageDialog dialog = new MessageDialog(message, title, options, defaultOptionIndex, icon);
+      MessageDialog dialog = new MessageDialog(message, title, options, defaultOptionIndex, icon, doNotAskOption);
       dialog.show();
       return dialog.getExitCode();
     }
+  }
 
-
+  public static int showDialog(String message, String title, String[] options, int defaultOptionIndex, Icon icon) {
+    return showDialog(message, title, options, defaultOptionIndex, icon, null);
   }
 
   /**
@@ -488,26 +490,32 @@ public class Messages {
 
     public MessageDialog(Project project, String message, String title, String[] options, int defaultOptionIndex, Icon icon) {
       super(project, false);
-      _init(title, message, options, defaultOptionIndex, icon);
+      _init(title, message, options, defaultOptionIndex, icon, null);
     }
 
     public MessageDialog(Component parent, String message, String title, String[] options, int defaultOptionIndex, Icon icon) {
       super(parent, false);
-      _init(title, message, options, defaultOptionIndex, icon);
+      _init(title, message, options, defaultOptionIndex, icon, null);
     }
 
     public MessageDialog(String message, String title, String[] options, int defaultOptionIndex, Icon icon) {
       super(false);
-      _init(title, message, options, defaultOptionIndex, icon);
+      _init(title, message, options, defaultOptionIndex, icon, null);
     }
 
-    private void _init(String title, String message, String[] options, int defaultOptionIndex, Icon icon) {
+    public MessageDialog(String message, String title, String[] options, int defaultOptionIndex, Icon icon, DoNotAskOption doNotAskOption) {
+      super(false);
+      _init(title, message, options, defaultOptionIndex, icon, doNotAskOption);
+    }
+
+    private void _init(String title, String message, String[] options, int defaultOptionIndex, Icon icon, DoNotAskOption doNotAskOption) {
       setTitle(title);
       myMessage = message;
       myOptions = options;
       myDefaultOptionIndex = defaultOptionIndex;
       myIcon = icon;
       setButtonsAlignment(SwingUtilities.CENTER);
+      setDoNotAskOption(doNotAskOption);
       init();
     }
 
@@ -518,7 +526,7 @@ public class Messages {
         final int exitCode = i;
         actions[i] = new AbstractAction(option) {
           public void actionPerformed(ActionEvent e) {
-            close(exitCode);
+            close(exitCode, true);
           }
         };
         if (i == myDefaultOptionIndex) {

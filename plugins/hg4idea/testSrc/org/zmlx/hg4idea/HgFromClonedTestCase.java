@@ -34,6 +34,8 @@ public class HgFromClonedTestCase extends AbstractHgTestCase {
 
   @BeforeMethod
   public void setUp() throws Exception {
+    setHGExecutablePath();
+
     remoteRepoDir = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
     projectRepoDir = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
 

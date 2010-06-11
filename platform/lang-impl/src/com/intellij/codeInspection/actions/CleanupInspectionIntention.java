@@ -23,6 +23,9 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -59,12 +62,16 @@ public class CleanupInspectionIntention implements IntentionAction {
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.preparePsiElementForWrite(file)) return;
-    final InspectionManagerEx managerEx = ((InspectionManagerEx)InspectionManagerEx.getInstance(project));
+    final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManagerEx.getInstance(project);
     final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext(false);
     final LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(myTool);
     tool.initialize(context);
     ((RefManagerImpl)context.getRefManager()).inspectionReadActionStarted();
-    tool.processFile(file, true, managerEx, true);
+    ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(new Runnable() {
+      public void run() {
+        tool.processFile(file, true, managerEx, true);
+      }
+    }, new EmptyProgressIndicator());
     final List<CommonProblemDescriptor> descriptions = new ArrayList<CommonProblemDescriptor>(tool.getProblemDescriptors());
     Collections.sort(descriptions, new Comparator<CommonProblemDescriptor>() {
       public int compare(final CommonProblemDescriptor o1, final CommonProblemDescriptor o2) {
@@ -76,7 +83,7 @@ public class CleanupInspectionIntention implements IntentionAction {
     for (CommonProblemDescriptor descriptor : descriptions) {
       final QuickFix[] fixes = descriptor.getFixes();
       if (fixes != null && fixes.length > 0) {
-        for (QuickFix fix : fixes) {
+        for (QuickFix<CommonProblemDescriptor> fix : fixes) {
           if (fix != null && fix.getClass().isAssignableFrom(myQuickfixClass)) {
             final PsiElement element = ((ProblemDescriptor)descriptor).getPsiElement();
             if (element != null && element.isValid()) {

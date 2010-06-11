@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options.codeStyle;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Trinity;
@@ -33,6 +34,7 @@ public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel implements 
   private boolean myShowAllStandardOptions = false;
   private Set<String> myAllowedOptions;
   private MultiMap<String, Trinity<Class<? extends CustomCodeStyleSettings>, String, String>> myCustomOptions;
+  private boolean myUpdateOnly = false;
 
   public CodeStyleSpacesPanel(CodeStyleSettings settings) {
     super(settings);
@@ -41,6 +43,17 @@ public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel implements 
   @Override
   protected LanguageCodeStyleSettingsProvider.SettingsType getSettingsType() {
     return LanguageCodeStyleSettingsProvider.SettingsType.SPACING_SETTINGS;
+  }
+
+  @Override
+  protected void onLanguageChange(Language language) {
+    myUpdateOnly = true;
+    for(LanguageCodeStyleSettingsProvider provider: Extensions.getExtensions(LanguageCodeStyleSettingsProvider.EP_NAME)) {
+      if (provider.getLanguage().is(language)) {
+        provider.customizeSpacingOptions(this);
+      }
+    }
+    updateOptionsTree();
   }
 
   protected void initTables() {
@@ -152,17 +165,25 @@ public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel implements 
 
   public void showAllStandardOptions() {
     myShowAllStandardOptions = true;
+    updateOptions(true);
   }
 
   public void showStandardOptions(String... optionNames) {
-    Collections.addAll(myAllowedOptions, optionNames);
+    if (!myUpdateOnly) {
+      Collections.addAll(myAllowedOptions, optionNames);
+    }
+    updateOptions(false, optionNames);
   }
 
   public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
                                String fieldName,
                                String optionName,
                                String groupName) {
-    myCustomOptions.putValue(groupName,
-                             Trinity.<Class<? extends CustomCodeStyleSettings>, String, String>create(settingsClass, fieldName, optionName));
+    if (!myUpdateOnly) {
+      myCustomOptions.putValue(groupName,
+                               Trinity.<Class<? extends CustomCodeStyleSettings>, String, String>create(settingsClass, fieldName,
+                                                                                                        optionName));
+    }
+    enableOption(fieldName);
   }
 }

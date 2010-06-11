@@ -18,10 +18,7 @@ package com.intellij.testFramework.fixtures.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.util.PathUtil;
@@ -90,7 +87,11 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
     });
   }
 
-  public VirtualFile copyAll(final String dataDir, final String targetDir) {
+  public VirtualFile copyAll(String dataDir, String targetDir) {
+    return copyAll(dataDir, targetDir, VirtualFileFilter.ALL);
+  }
+
+  public VirtualFile copyAll(final String dataDir, final String targetDir, @NotNull final VirtualFileFilter filter) {
     return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
       public VirtualFile compute() {
         final VirtualFile from = LocalFileSystem.getInstance().refreshAndFindFileByPath(dataDir);
@@ -101,7 +102,7 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
             tempDir = findOrCreateChildDir(tempDir, targetDir);
           }
 
-          VfsUtil.copyDirectory(this, from, tempDir, null);
+          VfsUtil.copyDirectory(this, from, tempDir, filter);
           return tempDir;
         }
         catch (IOException e) {

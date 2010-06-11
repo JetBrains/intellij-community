@@ -124,6 +124,8 @@
     <psi.referenceContributor implementation="org.intellij.lang.xpath.xslt.impl.XsltReferenceContributor"/>
     <standardResourceProvider implementation="org.intellij.lang.xpath.xslt.impl.XsltResourceProvider"/>
     <defaultLiveTemplatesProvider implementation="org.intellij.plugins.xpathView.XPathAppComponent" />
+
+    <implicitUsageProvider implementation="org.intellij.lang.xpath.xslt.impl.XsltImplicitUsagesProvider" />
   </extensions>
 
   <extensions defaultExtensionNs="XPathView">

@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -70,6 +71,16 @@ public abstract class RenamePsiElementProcessor {
   }
 
   public void findExistingNameConflicts(final PsiElement element, final String newName, final MultiMap<PsiElement,String> conflicts) {
+  }
+
+  public static List<RenamePsiElementProcessor> allForElement(PsiElement element) {
+    final List<RenamePsiElementProcessor> result = new ArrayList<RenamePsiElementProcessor>();
+    for (RenamePsiElementProcessor processor : EP_NAME.getExtensions()) {
+      if (processor.canProcessElement(element)) {
+        result.add(processor);
+      }
+    }
+    return result;
   }
 
   @NotNull

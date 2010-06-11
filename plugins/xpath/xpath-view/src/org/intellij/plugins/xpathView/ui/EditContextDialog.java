@@ -26,15 +26,14 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlToken;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.ui.Table;
 import org.intellij.lang.xpath.XPathFileType;
 import org.intellij.lang.xpath.context.*;
 import org.intellij.lang.xpath.psi.XPathElement;
-import static org.intellij.plugins.xpathView.util.Copyable.Util.copy;
 import org.intellij.plugins.xpathView.util.MyPsiUtil;
 import org.intellij.plugins.xpathView.util.Namespace;
 import org.intellij.plugins.xpathView.util.Variable;
@@ -49,6 +48,8 @@ import javax.xml.namespace.QName;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+
+import static org.intellij.plugins.xpathView.util.Copyable.Util.copy;
 
 public class EditContextDialog extends DialogWrapper {
     private final DimensionService myDimensionService = DimensionService.getInstance();
@@ -460,7 +461,7 @@ public class EditContextDialog extends DialogWrapper {
         }
 
         @Nullable
-        public XmlToken resolve(String prefix, XmlElement context) {
+        public PsiElement resolve(String prefix, XmlElement context) {
             return null;
         }
 

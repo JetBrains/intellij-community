@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options.codeStyle;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 
@@ -65,6 +66,11 @@ public class WrappingPanel extends OptionTableWithPreviewPanel {
   @Override
   protected LanguageCodeStyleSettingsProvider.SettingsType getSettingsType() {
     return LanguageCodeStyleSettingsProvider.SettingsType.WRAPPING_SETTINGS;
+  }
+
+  @Override
+  protected void onLanguageChange(Language language) {
+    //TODO: IMPLEMENT
   }
 
   protected void initTables() {

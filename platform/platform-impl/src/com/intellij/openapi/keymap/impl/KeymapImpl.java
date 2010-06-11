@@ -134,16 +134,16 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
 
 
   public KeymapImpl deriveKeymap() {
-    if (!canModify()) {
+    if (canModify()) {
+      return copy(false);
+    }
+    else {
       KeymapImpl newKeymap = new KeymapImpl();
 
       newKeymap.myParent = this;
       newKeymap.myName = null;
       newKeymap.myCanModify = canModify();
       return newKeymap;
-    }
-    else {
-      return copy(false);
     }
   }
 

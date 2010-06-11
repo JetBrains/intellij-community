@@ -191,7 +191,7 @@ public class PopupChooserBuilder {
       @Override
       public void mousePressed(MouseEvent e) {
         if (UIUtil.isActionClick(e) && !isSelectionButtonDown(e) && !e.isConsumed()) {
-          closePopup(true, e);
+          closePopup(true, e, true);
         }
       }
     });
@@ -273,17 +273,21 @@ public class PopupChooserBuilder {
         if (!shouldPerformAction && myChooserComponent instanceof ListWithFilter) {
           if (((ListWithFilter)myChooserComponent).resetFilter()) return;
         }
-        closePopup(shouldPerformAction, null);
+        closePopup(shouldPerformAction, null, shouldPerformAction);
       }
     }, keyStroke, JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
   }
 
-  private void closePopup(boolean shouldPerformAction, MouseEvent e) {
+  private void closePopup(boolean shouldPerformAction, MouseEvent e, boolean isOk) {
     if (shouldPerformAction) {
       myPopup.setFinalRunnable(myItemChoosenRunnable);
     }
 
-    myPopup.cancel(e);
+    if (isOk) {
+      myPopup.closeOk(e);
+    } else {
+      myPopup.cancel(e);
+    }
   }
 
   @NotNull

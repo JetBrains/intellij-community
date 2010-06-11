@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options.codeStyle;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -66,6 +67,11 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
   @Override
   protected LanguageCodeStyleSettingsProvider.SettingsType getSettingsType() {
     return LanguageCodeStyleSettingsProvider.SettingsType.BLANK_LINE_SETTINGS;
+  }
+
+  @Override
+  protected void onLanguageChange(Language language) {
+    // TODO: IMPLEMENT
   }
 
   private JPanel createBlankLinesPanel() {

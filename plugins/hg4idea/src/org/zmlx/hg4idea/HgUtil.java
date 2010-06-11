@@ -12,16 +12,19 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vfs.*;
+import com.intellij.vcsUtil.*;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.command.HgRemoveCommand;
 
 import java.io.*;
+import java.util.List;
 
 /**
  * <strong><font color="#FF0000">TODO JavaDoc.</font></strong>
@@ -134,8 +137,7 @@ public abstract class HgUtil {
     try {
       final File file = copyResourceToTempFile(base, ".py");
       final String fileName = file.getName();
-      Runtime.getRuntime().addShutdownHook(new Thread(){
-        @Override
+      ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
         public void run() {
           File[] files = file.getParentFile().listFiles(new FilenameFilter() {
             public boolean accept(File dir, String name) {
@@ -154,4 +156,22 @@ public abstract class HgUtil {
       return null;
     }
   }
+
+  /**
+   * Calls 'hg remove' to remove given files from the VCS.
+   * @param project
+   * @param files files to be removed from the VCS.
+   */
+  public static void removeFilesFromVcs(Project project, List<FilePath> files) {
+    final HgRemoveCommand command = new HgRemoveCommand(project);
+    for (FilePath filePath : files) {
+      final VirtualFile vcsRoot = VcsUtil.getVcsRootFor(project, filePath);
+      if (vcsRoot == null) {
+        continue;
+      }
+      command.execute(new HgFile(vcsRoot, filePath));
+    }
+  }
+
+
 }

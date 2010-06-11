@@ -49,6 +49,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.PositionTracker;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jdom.Element;
@@ -1050,7 +1051,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     Icon actualIcon = icon != null ? icon : type.getDefaultIcon();
 
     final Balloon balloon =
-      JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(text.replace("\n", "<br>"), actualIcon, type.getPopupBackground(), listener)
+      JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(text.replace("\n", "<br>"), actualIcon, type.getPopupBackground(), listener).setHideOnClickOutside(false).setHideOnFrameResize(false)
         .createBalloon();
     Disposer.register(balloon, new Disposable() {
       public void dispose() {
@@ -1060,6 +1061,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         stripe.repaint();
       }
     });
+    Disposer.register(getProject(), balloon);
 
     final StripeButton button = stripe.getButtonFor(toolWindowId);
     if (button == null) return;
@@ -1067,8 +1069,24 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     final Runnable show = new Runnable() {
       public void run() {
         if (button.isShowing()) {
-          final Point point = new Point(button.getBounds().width / 2, button.getHeight() / 2 - 2);
-          balloon.show(new RelativePoint(button, point), position.get());
+          PositionTracker tracker = new PositionTracker<Balloon>(button) {
+            @Override
+            public RelativePoint recalculateLocation(Balloon object) {
+              Stripe twStripe = myToolWindowsPane.getStripeFor(toolWindowId);
+              StripeButton twButton = twStripe != null ? twStripe.getButtonFor(toolWindowId) : null;
+
+              if (twButton == null) return null;
+
+              if (getToolWindow(toolWindowId).getAnchor() != anchor) {
+                object.hide();
+                return null;
+              }
+
+              final Point point = new Point(twButton.getBounds().width / 2, twButton.getHeight() / 2 - 2);
+              return new RelativePoint(twButton, point);
+            }
+          };
+          balloon.show(tracker, position.get());
         }
         else {
           final Rectangle bounds = myToolWindowsPane.getBounds();

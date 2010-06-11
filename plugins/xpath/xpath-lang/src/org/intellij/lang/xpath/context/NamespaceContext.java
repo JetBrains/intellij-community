@@ -15,10 +15,10 @@
  */
 package org.intellij.lang.xpath.context;
 
-import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlToken;
-import com.intellij.psi.PsiReference;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.xml.XmlElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +36,7 @@ public interface NamespaceContext {
 
     /** resolve to NS-Attribute's name-token */
     @Nullable
-    XmlToken resolve(String prefix, XmlElement context);
+    PsiElement resolve(String prefix, XmlElement context);
 
     IntentionAction[] getUnresolvedNamespaceFixes(PsiReference reference, String localName);
 }

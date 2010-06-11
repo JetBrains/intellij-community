@@ -470,7 +470,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   public boolean checkUltimate() {
-    if ("IU".equals(ApplicationInfo.getInstance().getBuild().getProductCode())) return true;
+    if (!ApplicationInfo.getInstance().getVersionName().contains("Community")) return true;
     printIgnoredMessage("Ultimate edition is required");
     return false;
   }
@@ -484,7 +484,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
   private void printIgnoredMessage(String message) {
     String toPrint = "Ignored";
     if (message != null) {
-      toPrint += ", beacuse " + message;
+      toPrint += ", because " + message;
     }
     toPrint += ": " + getClass().getSimpleName() + "." + getName();
     System.out.println(toPrint);

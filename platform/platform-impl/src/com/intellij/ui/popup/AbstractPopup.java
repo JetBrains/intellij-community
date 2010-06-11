@@ -118,6 +118,8 @@ public class AbstractPopup implements JBPopup {
 
   private Runnable myFinalRunnable;
 
+  protected boolean myOk;
+
   protected final SpeedSearch mySpeedSearch = new SpeedSearch() {
     boolean searchFieldShown = false;
     protected void update() {
@@ -460,6 +462,11 @@ public class AbstractPopup implements JBPopup {
     return relativePoint;
   }
 
+  public final void closeOk(@Nullable InputEvent e) {
+    setOk(true);
+    cancel(e);
+  }
+
   public final void cancel() {
     cancel(null);
   }
@@ -505,7 +512,7 @@ public class AbstractPopup implements JBPopup {
 
       if (myListeners != null) {
         for (JBPopupListener each : myListeners) {
-          each.onClosed(new LightweightWindowEvent(this));
+          each.onClosed(new LightweightWindowEvent(this, myOk));
         }
       }
     }
@@ -1252,5 +1259,9 @@ public class AbstractPopup implements JBPopup {
 
   public void setFinalRunnable(Runnable finalRunnable) {
     myFinalRunnable = finalRunnable;
+  }
+
+  public void setOk(boolean ok) {
+    myOk = ok;
   }
 }

@@ -101,7 +101,13 @@ public interface JBPopup extends Disposable, LightweightWindow {
   void showCenteredInCurrentWindow(@NotNull Project project);
 
   /**
-   * Cancels the popup (as if Esc was pressed).
+   * Hides popup as if Enter was pressed or or any other "accept" action
+   */
+
+  void closeOk(@Nullable InputEvent e);
+
+  /**
+   * Cancels the popup as if Esc was pressed or any other "cancel" action
    */
   void cancel();
 

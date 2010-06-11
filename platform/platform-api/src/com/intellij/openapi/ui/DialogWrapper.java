@@ -32,6 +32,7 @@ import com.intellij.ui.UIBundle;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.AwtVisitor;
+import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -101,6 +103,18 @@ public abstract class DialogWrapper {
 
   private Action myYesAction = null;
   private Action myNoAction = null;
+
+  protected JCheckBox myCheckBoxDoNotShowDialog;
+  @Nullable
+  private DoNotAskOption myDoNotAsk;
+
+  protected String getDoNotShowMessage() {
+    return CommonBundle.message("dialog.options.do.not.show");
+  }
+
+  public void setDoNotAskOption(@Nullable DoNotAskOption doNotAsk) {
+    myDoNotAsk = doNotAsk;
+  }
 
   protected final Disposable myDisposable = new Disposable() {
     public String toString() {
@@ -210,12 +224,23 @@ public abstract class DialogWrapper {
    *
    * @throws IllegalStateException if the dialog is invoked not on the event dispatch thread
    */
-  public final void close(int exitCode) {
+  public final void close(int exitCode, boolean isOk) {
     ensureEventDispatchThread();
     if (myClosed) return;
     myClosed = true;
     myExitCode = exitCode;
+
+    if (isOk) {
+      processDoNotAskOnOk(exitCode);
+    } else {
+      processDoNotAskOnCancel();
+    }
+
     Disposer.dispose(myDisposable);
+  }
+
+  public final void close(int exitCode) {
+    close(exitCode, exitCode != CANCEL_EXIT_CODE);
   }
 
   /**
@@ -287,10 +312,48 @@ public abstract class DialogWrapper {
       panel.add(helpButton, BorderLayout.WEST);
     }
 
+
     panel.add(lrButtonsPanel, BorderLayout.CENTER);
+
+    if (myDoNotAsk != null) {
+      myCheckBoxDoNotShowDialog = new JCheckBox(myDoNotAsk.getDoNotShowMessage());
+
+      JComponent southPanel = panel;
+
+      if (!myDoNotAsk.canBeHidden()) {
+        return southPanel;
+      }
+
+      final JPanel withCB = addDoNotShowCheckBox(southPanel, myCheckBoxDoNotShowDialog);
+      myCheckBoxDoNotShowDialog.setSelected(!myDoNotAsk.isToBeShown());
+      DialogUtil.registerMnemonic(myCheckBoxDoNotShowDialog, '&');
+
+      panel = withCB;
+    }
+
     panel.setBorder(IdeBorderFactory.createEmptyBorder(new Insets(8, 0, 0, 0)));
+    
     return panel;
   }
+
+
+  protected boolean toBeShown() {
+    return !myCheckBoxDoNotShowDialog.isSelected();
+  }
+
+  public static JPanel addDoNotShowCheckBox(JComponent southPanel, JCheckBox checkBox) {
+    final JPanel panel = new JPanel(new BorderLayout());
+
+    JPanel wrapper = new JPanel(new GridBagLayout());
+    wrapper.add(checkBox);
+
+    panel.add(wrapper, BorderLayout.WEST);
+    panel.add(southPanel, BorderLayout.EAST);
+    checkBox.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 20));
+
+    return panel;
+  }
+
 
   private JPanel createButtons(Action[] actions, List<JButton> buttons) {
     JPanel buttonsPanel = new JPanel(new GridLayout(1, actions.length, SystemInfo.isMacOSLeopard ? 0 : 5, 0));
@@ -470,8 +533,18 @@ public abstract class DialogWrapper {
    * Note that the method does nothing if "Cancel" action isn't enabled.
    */
   public void doCancelAction() {
+    processDoNotAskOnCancel();
+
     if (getCancelAction().isEnabled()) {
       close(CANCEL_EXIT_CODE);
+    }
+  }
+
+  private void processDoNotAskOnCancel() {
+    if (myDoNotAsk != null) {
+      if (myDoNotAsk.shouldSaveOptionsOnCancel() && myDoNotAsk.canBeHidden()) {
+        myDoNotAsk.setToBeShown(toBeShown(), CANCEL_EXIT_CODE);
+      }
     }
   }
 
@@ -503,8 +576,18 @@ public abstract class DialogWrapper {
    * Note that the method does nothing if "OK" action isn't enabled.
    */
   protected void doOKAction() {
+    processDoNotAskOnOk(OK_EXIT_CODE);
+
     if (getOKAction().isEnabled()) {
       close(OK_EXIT_CODE);
+    }
+  }
+
+  protected void processDoNotAskOnOk(int exitCode) {
+    if (myDoNotAsk != null) {
+      if (myDoNotAsk.canBeHidden()) {
+        myDoNotAsk.setToBeShown(toBeShown(), exitCode);
+      }
     }
   }
 
@@ -1241,5 +1324,18 @@ public abstract class DialogWrapper {
 
   public final Disposable getDisposable() {
     return myDisposable;
+  }
+
+  public interface DoNotAskOption {
+
+    boolean isToBeShown();
+
+    void setToBeShown(boolean value, int exitCode);
+
+    boolean canBeHidden();
+
+    boolean shouldSaveOptionsOnCancel();
+
+    String getDoNotShowMessage();
   }
 }

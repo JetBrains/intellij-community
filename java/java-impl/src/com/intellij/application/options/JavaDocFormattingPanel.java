@@ -146,6 +146,11 @@ private static void setEnabled(JComponent c, boolean enabled) {
     return StdFileTypes.JAVA;
   }
 
+  @Override
+  protected void onLanguageChange(Language language) {
+    // Ignore, JavaDoc does not support languages other than Java
+  }
+
   public void setPanelLanguage(Language language) {
     super.setPanelLanguage(Language.findInstance(JavaLanguage.class));
   }

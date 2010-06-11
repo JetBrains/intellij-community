@@ -557,10 +557,6 @@ public class PsiClassImplUtil {
           if (!processor.execute(field, state)) return false;
         }
       }
-
-      for (PsiField field : PsiAugmentProvider.collectAugments(aClass, PsiField.class)) {
-        if (!processor.execute(field, state)) return false;
-      }
     }
 
     if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclaractionKind.METHOD)) {
@@ -571,10 +567,6 @@ public class PsiClassImplUtil {
           PsiSubstitutor raw = factory.createRawSubstitutor(state.get(PsiSubstitutor.KEY), methodTypeParameters);
           state = state.put(PsiSubstitutor.KEY, raw);
         }
-        if (!processor.execute(method, state)) return false;
-      }
-
-      for (PsiMethod method : PsiAugmentProvider.collectAugments(aClass, PsiMethod.class)) {
         if (!processor.execute(method, state)) return false;
       }
     }

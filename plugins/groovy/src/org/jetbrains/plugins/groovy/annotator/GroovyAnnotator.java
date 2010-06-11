@@ -39,6 +39,7 @@ import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -1033,6 +1034,41 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     checkForWildCards(holder, implementsClause);
 
     checkDuplicateClass(typeDefinition, holder);
+
+    checkCyclicInheritance(holder, typeDefinition);
+  }
+
+  private static void checkCyclicInheritance(AnnotationHolder holder,
+                                             GrTypeDefinition typeDefinition) {
+    final PsiClass psiClass = getCircularClass(typeDefinition, new HashSet<PsiClass>());
+    if (psiClass != null) {
+      holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(),
+                                   GroovyBundle.message("cyclic.inheritance.involving.0", psiClass.getQualifiedName()));
+    }
+  }
+
+  private static PsiClass getCircularClass(PsiClass aClass, Collection<PsiClass> usedClasses) {
+    if (usedClasses.contains(aClass)) {
+      return aClass;
+    }
+    try {
+      usedClasses.add(aClass);
+      PsiClass[] superTypes = aClass.getSupers();
+      for (PsiElement superType : superTypes) {
+        while (superType instanceof PsiClass) {
+          if (!"java.lang.Object".equals(((PsiClass)superType).getQualifiedName())) {
+            PsiClass circularClass = getCircularClass((PsiClass)superType, usedClasses);
+            if (circularClass != null) return circularClass;
+          }
+          // check class qualifier
+          superType = superType.getParent();
+        }
+      }
+    }
+    finally {
+      usedClasses.remove(aClass);
+    }
+    return null;
   }
 
   private static void checkForWildCards(AnnotationHolder holder, @Nullable GrReferenceList clause) {

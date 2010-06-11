@@ -53,6 +53,7 @@ public class TabLabel extends JPanel {
 
   private BufferedImage myInactiveStateImage;
   private Rectangle myLastPaintedInactiveImageBounds;
+  private boolean myStretchedByWidth;
 
   public TabLabel(JBTabsImpl tabs, final TabInfo info) {
     myTabs = tabs;

@@ -48,47 +48,49 @@ public class XmlDuplicatedIdInspection extends LocalInspectionTool {
           return;
         }
         final PsiFile file = value.getContainingFile();
-        if (file instanceof XmlFile) {
-          final XmlRefCountHolder refHolder = XmlRefCountHolder.getInstance((XmlFile)file);
-          if (refHolder == null) return;
+        if (!(file instanceof XmlFile)) {
+          return;
+        }
+        final XmlRefCountHolder refHolder = XmlRefCountHolder.getRefCountHolder(value);
+        if (refHolder == null) return;
 
-          final PsiElement parent = value.getParent();
-          if (!(parent instanceof XmlAttribute)) return;
-          final XmlTag tag = ((XmlAttribute)parent).getParent();
-          if (tag == null) return;
+        final PsiElement parent = value.getParent();
+        if (!(parent instanceof XmlAttribute)) return;
 
-          if (refHolder.isValidatable(tag.getParent()) && refHolder.isDuplicateIdAttributeValue(value)) {
-            holder.registerProblem(value, XmlErrorMessages.message("duplicate.id.reference"), ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+        final XmlTag tag = (XmlTag)parent.getParent();
+        if (tag == null) return;
+
+        if (refHolder.isValidatable(tag.getParent()) && refHolder.isDuplicateIdAttributeValue(value)) {
+          holder.registerProblem(value, XmlErrorMessages.message("duplicate.id.reference"), ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+        }
+
+        String idRef = XmlHighlightVisitor.getUnquotedValue(value, tag);
+
+        if (tag instanceof HtmlTag) {
+          idRef = idRef.toLowerCase();
+        }
+
+        if (XmlUtil.isSimpleXmlAttributeValue(idRef, value) && refHolder.isIdReferenceValue(value)) {
+          boolean hasIdDeclaration = refHolder.hasIdDeclaration(idRef);
+          if (!hasIdDeclaration && tag instanceof HtmlTag) {
+            hasIdDeclaration = refHolder.hasIdDeclaration(StringUtil.stripQuotesAroundValue(value.getText()));
           }
 
-          String idRef = XmlHighlightVisitor.getUnquotedValue(value, tag);
-
-          if (tag instanceof HtmlTag) {
-            idRef = idRef.toLowerCase();
-          }
-
-          if (XmlUtil.isSimpleXmlAttributeValue(idRef, value) && refHolder.isIdReferenceValue(value)) {
-            boolean hasIdDeclaration = refHolder.hasIdDeclaration(idRef);
-            if (!hasIdDeclaration && tag instanceof HtmlTag) {
-              hasIdDeclaration = refHolder.hasIdDeclaration(StringUtil.stripQuotesAroundValue(value.getText()));
+          if (!hasIdDeclaration) {
+            for(XmlIdContributor contributor: Extensions.getExtensions(XmlIdContributor.EP_NAME)) {
+              if (contributor.suppressExistingIdValidation((XmlFile)file)) {
+                return;
+              }
             }
 
-            if (!hasIdDeclaration) {
-              for(XmlIdContributor contributor: Extensions.getExtensions(XmlIdContributor.EP_NAME)) {
-                if (contributor.suppressExistingIdValidation((XmlFile)file)) {
-                  return;
-                }
-              }
+            final FileViewProvider viewProvider = tag.getContainingFile().getViewProvider();
+            if (viewProvider instanceof MultiplePsiFilesPerDocumentFileViewProvider) {
+              holder.registerProblem(value, XmlErrorMessages.message("invalid.id.reference"), ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
+                                     new XmlDeclareIdInCommentAction(idRef));
 
-              final FileViewProvider viewProvider = tag.getContainingFile().getViewProvider();
-              if (viewProvider instanceof MultiplePsiFilesPerDocumentFileViewProvider) {
-                holder.registerProblem(value, XmlErrorMessages.message("invalid.id.reference"), ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
-                                       new XmlDeclareIdInCommentAction(idRef));
-
-              }
-              else {
-                holder.registerProblem(value, XmlErrorMessages.message("invalid.id.reference"), ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
-              }
+            }
+            else {
+              holder.registerProblem(value, XmlErrorMessages.message("invalid.id.reference"), ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
             }
           }
         }

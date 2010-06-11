@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -235,8 +236,21 @@ public abstract class VcsVFSListener implements Disposable {
     }
 
     public void beforeFileDeletion(final VirtualFileEvent event) {
-      if (!isEventIgnored(event)) {
-        addFileToDelete(event.getFile());
+      final VirtualFile file = event.getFile();
+      if (isEventIgnored(event)) { return; }
+      if (!myChangeListManager.isIgnoredFile(file)) {
+        addFileToDelete(file);
+        return;
+      }
+      // files are ignored, directories are handled recursively
+      if (event.getFile().isDirectory()) {
+        final List<VirtualFile> list = new LinkedList<VirtualFile>();
+        VcsUtil.collectFiles(file, list, true, isDirectoryVersioningSupported());
+        for (VirtualFile child : list) {
+          if (!myChangeListManager.isIgnoredFile(child)) {
+            addFileToDelete(child);
+          }
+        }
       }
     }
 

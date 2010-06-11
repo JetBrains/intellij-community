@@ -15,7 +15,7 @@ package org.zmlx.hg4idea;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.testng.annotations.Test;
 
-public class HgAddTestCase extends HgTestCase {
+public class HgAddTestCase extends AbstractHgTestCase {
 
   @Test
   public void testAddFile() throws Exception {
