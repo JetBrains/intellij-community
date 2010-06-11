@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -27,6 +28,7 @@ import java.util.List;
  */
 public class SvnRenameTest extends SvnTestCase {
   @NonNls private static final String LOG_SEPARATOR = "------------------------------------------------------------------------\n";
+  @NonNls private static final String LOG_SEPARATOR_START = "-------------";
 
   @Test
   public void testSimpleRename() throws Exception {
@@ -118,7 +120,13 @@ public class SvnRenameTest extends SvnTestCase {
 
     final ProcessOutput runResult = runSvn("log", "-q", "newchild/a.txt");
     verify(runResult);
-    final List<String> lines = StringUtil.split(runResult.getStdout(), LOG_SEPARATOR);
+    final List<String> lines = StringUtil.split(runResult.getStdout(), "\n");
+    for (Iterator<String> iterator = lines.iterator(); iterator.hasNext();) {
+      final String next = iterator.next();
+      if (next.startsWith(LOG_SEPARATOR_START)) {
+        iterator.remove();
+      }
+    }
     Assert.assertEquals(2, lines.size());
     Assert.assertTrue(lines.get(0).startsWith("r2 |"));
     Assert.assertTrue(lines.get(1).startsWith("r1 |"));
