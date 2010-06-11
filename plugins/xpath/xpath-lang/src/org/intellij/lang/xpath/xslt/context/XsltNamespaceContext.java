@@ -20,9 +20,12 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.XmlElementFactory;
+import com.intellij.psi.impl.source.xml.SchemaPrefix;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
@@ -81,19 +84,29 @@ public class XsltNamespaceContext implements NamespaceContext {
     }
 
     @Nullable
-    public XmlToken resolve(String prefix, XmlElement context) {
+    public PsiElement resolve(String prefix, XmlElement context) {
         return resolvePrefix(prefix, context);
     }
 
     @Nullable
-    public static XmlToken resolvePrefix(String prefix, XmlElement context) {
+    public static PsiElement resolvePrefix(final String prefix, XmlElement context) {
         final String name = "xmlns:" + prefix;
 
         XmlTag parent = PsiTreeUtil.getParentOfType(context, XmlTag.class);
         while (parent != null) {
             final XmlAttribute attribute = parent.getAttribute(name, null);
             if (attribute != null) {
-                return PsiTreeUtil.getChildOfType(attribute, XmlToken.class);
+              final TextRange textRange = TextRange.from("xmlns:".length(), prefix.length());
+              return new SchemaPrefix(attribute, textRange, prefix) {
+                @Override
+                public boolean equals(Object obj) {
+                  if (obj instanceof SchemaPrefix) {
+                    final SchemaPrefix p = (SchemaPrefix)obj;
+                    return prefix.equals(p.getName()) && p.getParent() == attribute;
+                  }
+                  return super.equals(obj);
+                }
+              };
             }
             parent = PsiTreeUtil.getParentOfType(parent, XmlTag.class);
         }

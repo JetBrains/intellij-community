@@ -42,7 +42,6 @@ import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlToken;
 import com.intellij.ui.EditorTextField;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.util.ArrayUtil;
@@ -547,7 +546,7 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
         }
 
         @Nullable
-        public XmlToken resolve(String prefix, XmlElement context) {
+        public PsiElement resolve(String prefix, XmlElement context) {
             return null;
         }
 
