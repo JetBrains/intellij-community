@@ -198,7 +198,7 @@ public class QuickAccessSettings implements ApplicationComponent, SearchableConf
     return mask;
   }
 
-  private Set<Integer> getModifiersVKs(int mask) {
+  public static Set<Integer> getModifiersVKs(int mask) {
     Set<Integer> codes = new HashSet<Integer>();
     if ((mask & KeyEvent.SHIFT_MASK) > 0) {
       codes.add(KeyEvent.VK_SHIFT);
