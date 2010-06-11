@@ -53,10 +53,13 @@ public class PathsList  {
     new Function<String, VirtualFile>() {
       public VirtualFile fun(String s) {
         final FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(s);
-        if (FileTypes.ARCHIVE.equals(fileType)) {
-          return JarFileSystem.getInstance().findFileByPath(s + JarFileSystem.JAR_SEPARATOR);
+        final VirtualFile localFile = PATH_TO_LOCAL_VFILE.fun(s);
+        if (localFile == null) return null;
+        
+        if (FileTypes.ARCHIVE.equals(fileType) && !localFile.isDirectory()) {
+          return JarFileSystem.getInstance().getJarRootForLocalFile(localFile);
         }
-        return PATH_TO_LOCAL_VFILE.fun(s);
+        return localFile;
       }
     };
 
