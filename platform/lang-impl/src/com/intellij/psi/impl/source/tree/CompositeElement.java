@@ -507,19 +507,24 @@ public class CompositeElement extends TreeElement {
     if (wrapper != null) return wrapper;
 
     synchronized (PsiLock.LOCK) {
-      wrapper = myWrapper;
-      if (wrapper != null) return wrapper;
-
-      final Language lang = getElementType().getLanguage();
-      final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
-      if (parserDefinition != null) {
-        myWrapper = wrapper = parserDefinition.createElement(this);
-        //noinspection ConstantConditions
-        LOG.assertTrue(wrapper != null, "ParserDefinition.createElement() may not return null");
-      }
-
-      return wrapper;
+      return getPsiNoLock();
     }
+  }
+
+  PsiElement getPsiNoLock() {
+    PsiElement wrapper = myWrapper;
+    if (wrapper != null) return wrapper;
+
+    final Language lang = getElementType().getLanguage();
+    final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
+    if (parserDefinition != null) {
+      myWrapper = wrapper = parserDefinition.createElement(this);
+      //noinspection ConstantConditions
+      LOG.assertTrue(wrapper != null, "ParserDefinition.createElement() may not return null");
+    }
+
+    //noinspection ConstantConditions
+    return wrapper;
   }
 
   public void setPsi(@NotNull PsiElement psi) {
