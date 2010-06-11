@@ -85,9 +85,9 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
       return converter;
     }
   };
-  private final FactoryMap<JavaMethodSignature, Invocation> myAccessorInvocations = new ConcurrentFactoryMap<JavaMethodSignature, Invocation>() {
+  private final FactoryMap<Method, Invocation> myAccessorInvocations = new ConcurrentFactoryMap<Method, Invocation>() {
     @Override
-    protected Invocation create(JavaMethodSignature signature) {
+    protected Invocation create(Method signature) {
       final JavaMethod method = JavaMethod.getMethod(getRawType(), signature);
 
       if (DomImplUtil.isTagValueGetter(method)) {
@@ -116,8 +116,8 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     myType = narrowType(type);
 
     final Class<?> rawType = getRawType();
-    myInvocationCache = manager.getInvocationCache(rawType);
-    Class<? extends DomElement> implementation = manager.getImplementation(rawType);
+    myInvocationCache = manager.getApplicationComponent().getInvocationCache(rawType);
+    Class<? extends DomElement> implementation = manager.getApplicationComponent().getImplementation(rawType);
     final boolean isInterface = ReflectionCache.isInterface(rawType);
     if (implementation == null && !isInterface) {
       implementation = (Class<? extends DomElement>)rawType;
@@ -408,7 +408,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
   public void accept(final DomElementVisitor visitor) {
     ProgressManager.checkCanceled();
-    myManager.getVisitorDescription(visitor.getClass()).acceptElement(visitor, getProxy());
+    myManager.getApplicationComponent().getVisitorDescription(visitor.getClass()).acceptElement(visitor, getProxy());
   }
 
   public void acceptChildren(DomElementVisitor visitor) {
@@ -568,7 +568,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   @Nullable
   public final Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     try {
-      return doInvoke(JavaMethodSignature.getSignature(method), args);
+      return doInvoke(method, args);
     }
     catch (InvocationTargetException ex) {
       throw ex.getTargetException();
@@ -576,14 +576,13 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   @Nullable
-  private Object doInvoke(final JavaMethodSignature signature, final Object... args) throws Throwable {
-    Invocation invocation = myInvocationCache.getInvocation(signature);
+  private Object doInvoke(final Method method, final Object... args) throws Throwable {
+    Invocation invocation = myInvocationCache.getInvocation(method);
     if (invocation == null) {
-      invocation = myAccessorInvocations.get(signature);
+      invocation = myAccessorInvocations.get(method);
       if (invocation == null) {
-        final JavaMethod javaMethod = JavaMethod.getMethod(getRawType(), signature);
-        invocation = myGenericInfo.createInvocation(javaMethod);
-        myInvocationCache.putInvocation(signature, invocation);
+        invocation = myGenericInfo.createInvocation(JavaMethod.getMethod(getRawType(), method));
+        myInvocationCache.putInvocation(method, invocation);
       }
     }
     return invocation.invoke(this, args);
@@ -646,7 +645,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   private void refreshGenericInfo(final boolean dynamic) {
-    final StaticGenericInfo staticInfo = myManager.getStaticGenericInfo(myType);
+    final StaticGenericInfo staticInfo = myManager.getApplicationComponent().getStaticGenericInfo(myType);
     myGenericInfo = dynamic ? new DynamicGenericInfo(this, staticInfo, myManager.getProject()) : staticInfo;
   }
 

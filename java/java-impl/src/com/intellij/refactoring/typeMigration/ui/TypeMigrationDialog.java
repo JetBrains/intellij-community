@@ -27,6 +27,7 @@ import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
 import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
+import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.ui.EditorComboBox;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
@@ -164,7 +165,7 @@ public class TypeMigrationDialog extends RefactoringDialog {
     FindSettings.getInstance().setDefaultScopeName(myScopeChooserCombo.getSelectedScopeName());
 
     final PsiType rootType = getRootType();
-    final PsiType migrationType = getMigrationType();
+    final PsiType migrationType = CanonicalTypes.createTypeWrapper(getMigrationType()).getType(myRoot, myRoot.getManager());
 
     if (Comparing.equal(rootType, migrationType)){
       close(DialogWrapper.OK_EXIT_CODE);

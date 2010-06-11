@@ -25,6 +25,7 @@ import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.ide.util.EditSourceUtil;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
@@ -52,6 +53,7 @@ import java.util.Collections;
 public class GotoDeclarationAction extends BaseCodeInsightAction implements CodeInsightActionHandler, DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.navigation.actions.GotoDeclarationAction");
   protected CodeInsightActionHandler getHandler() {
+    String s = "/java/lang/Object.class";
     return this;
   }
 
@@ -69,16 +71,13 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     try {
       int offset = editor.getCaretModel().getOffset();
       PsiElement element = findTargetElement(project, editor, offset);
+      FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.declaration");
       if (element == null) {
-        FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.declaration");
         chooseAmbiguousTarget(editor, offset);
         return;
       }
 
-
-      FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.declaration");
       PsiElement navElement = element.getNavigationElement();
-
       navElement = TargetElementUtilBase.getInstance().getGotoDeclarationTarget(element, navElement);
 
       if (navElement instanceof Navigatable) {
@@ -116,8 +115,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   }
 
   // returns true if processor is run or is going to be run after showing popup
-  public static boolean chooseAmbiguousTarget(final Editor editor, int offset, PsiElementProcessor<PsiElement> processor,
-                                              String titlePattern) {
+  public static boolean chooseAmbiguousTarget(final Editor editor, int offset, PsiElementProcessor<PsiElement> processor, String titlePattern) {
     if (TargetElementUtilBase.inVirtualSpace(editor, offset)) {
       return false;
     }
@@ -177,6 +175,14 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     }
 
     int flags = TargetElementUtilBase.getInstance().getAllAccepted() & ~TargetElementUtilBase.ELEMENT_NAME_ACCEPTED;
-    return TargetElementUtilBase.getInstance().findTargetElement(editor, flags, offset);
+    PsiElement element = TargetElementUtilBase.getInstance().findTargetElement(editor, flags, offset);
+    if (element != null) return element;
+
+    // if no references found in injected fragment, try outer document
+    if (editor instanceof EditorWindow) {
+      EditorWindow window = (EditorWindow)editor;
+      return findTargetElementNoVS(project, window.getDelegate(), window.getDocument().injectedToHost(offset));
+    }
+    return null;
   }
 }

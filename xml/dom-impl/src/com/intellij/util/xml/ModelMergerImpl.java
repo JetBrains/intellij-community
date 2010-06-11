@@ -160,7 +160,7 @@ public class ModelMergerImpl implements ModelMerger {
       public Object invokeMethod(final JavaMethod method, final DomElement proxy, final Object[] args, final List<DomElement> implementations)
         throws IllegalAccessException, InvocationTargetException {
         final DomElementVisitor visitor = (DomElementVisitor)args[0];
-        ((DomManagerImpl)implementations.get(0).getManager()).getVisitorDescription(visitor.getClass()).acceptElement(visitor, proxy);
+        ((DomManagerImpl)implementations.get(0).getManager()).getApplicationComponent().getVisitorDescription(visitor.getClass()).acceptElement(visitor, proxy);
         return null;
       }
     });
@@ -319,7 +319,7 @@ public class ModelMergerImpl implements ModelMerger {
 
   @Nullable
   private static Method findPrimaryKeyAnnotatedMethod(final Method method, final Class aClass) {
-    return method.getReturnType() != void.class && method.getParameterTypes().length == 0 ? JavaMethodSignature.getSignature(method)
+    return method.getReturnType() != void.class && method.getParameterTypes().length == 0 ? new JavaMethodSignature(method)
       .findAnnotatedMethod(PrimaryKey.class, aClass) : null;
   }
 

@@ -352,6 +352,8 @@ public class FileUtil {
   }
 
   private static File doCreateTempFile(String prefix, String suffix, final File dir) throws IOException {
+    dir.mkdirs();
+
     if (prefix.length() < 3) {
       prefix = (prefix + "___").substring(0, 3);
     }
