@@ -1,0 +1,15 @@
+public class NotRaw<T> {
+
+}
+
+class Raw extends NotRaw {
+    void foo() {
+        Object result;
+        Object tt = null;
+        if ( null == null) {
+            result = null;
+        }           else
+            result = null;
+        Object o = result;
+    }
+}
