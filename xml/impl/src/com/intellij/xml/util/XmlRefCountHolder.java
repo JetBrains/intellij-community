@@ -22,6 +22,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataCache;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.IdReferenceProvider;
+import com.intellij.psi.impl.source.xml.SchemaPrefix;
+import com.intellij.psi.impl.source.xml.SchemaPrefixReference;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -210,6 +212,12 @@ public class XmlRefCountHolder {
         for (PsiReference r : references) {
           if (r instanceof IdReferenceProvider.GlobalAttributeValueSelfReference /*&& !r.isSoft()*/) {
             updateMap(attribute, value, r.isSoft());
+          }
+          else if (r instanceof SchemaPrefixReference) {
+            SchemaPrefix prefix = ((SchemaPrefixReference)r).resolve();
+            if (prefix != null) {
+              myHolder.addUsedPrefix(prefix.getName());
+            }
           }
         }
       }
