@@ -53,6 +53,8 @@ public class RevisionsList {
     table.setRowMargin(0);
     table.getColumnModel().setColumnMargin(0);
 
+    table.resetDefaultFocusTraversalKeys();
+
     addSelectionListener(l);
   }
 
@@ -252,7 +254,7 @@ public class RevisionsList {
 
       JComponent orig = (JComponent)myTemplate.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
-      Color bg = isSelected ? orig.getBackground() : labelsAndColor.color;
+      Color bg = isSelected ? (hasFocus ? orig.getBackground() : UIUtil.getListUnfocusedSelectionBackground()): labelsAndColor.color;
       Color fg = isSelected ? orig.getForeground() : Color.GRAY;
       myItemPanel.setBackground(bg);
       myDateLabel.setForeground(fg);
@@ -310,7 +312,7 @@ public class RevisionsList {
       private boolean isLast;
 
       private MyBorder() {
-        super(2, 2, 2, 2);
+        super(2, 5, 2, 5);
       }
 
       public void set(boolean isLast) {

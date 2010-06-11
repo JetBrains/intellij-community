@@ -33,6 +33,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesTreeList;
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.ExcludingTraversalPolicy;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.SearchTextFieldWithStoredHistory;
 import com.intellij.util.Consumer;
@@ -66,7 +67,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
   }
 
   @Override
-  protected Pair<JComponent, Dimension> createDiffPanel(JPanel root) {
+  protected Pair<JComponent, Dimension> createDiffPanel(JPanel root, ExcludingTraversalPolicy traversalPolicy) {
     initChangesTree();
 
     JPanel p = new JPanel(new BorderLayout());
@@ -74,7 +75,13 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     myToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, createChangesTreeActions(), true);
     JPanel toolBarPanel = new JPanel(new BorderLayout());
     toolBarPanel.add(myToolBar.getComponent(), BorderLayout.CENTER);
-    if (showSearchField()) toolBarPanel.add(createSearchBox(root), BorderLayout.EAST);
+
+    if (showSearchField()) {
+      SearchTextField search = createSearchBox(root);
+      toolBarPanel.add(search, BorderLayout.EAST);
+      traversalPolicy.exclude(search.getTextEditor());
+    }
+    
     p.add(toolBarPanel, BorderLayout.NORTH);
     p.add(myChangesTree, BorderLayout.CENTER);
 
@@ -90,7 +97,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     myChangesTree.setScrollPaneBorder(border);
   }
 
-  private JComponent createSearchBox(JPanel root) {
+  private SearchTextField createSearchBox(JPanel root) {
     final SearchTextField field = new SearchTextFieldWithStoredHistory(getPropertiesKey() + ".searchHistory");
     field.addDocumentListener(new DocumentAdapter() {
       @Override
@@ -109,7 +116,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
         field.requestFocusInWindow();
       }
     }.registerCustomShortcutSet(CommonShortcuts.getFind(), root, this);
-    
+
     return field;
   }
 
@@ -166,6 +173,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     return new Runnable() {
       public void run() {
         myChangesTree.setChangesToDisplay(changes);
+        if (!changes.isEmpty()) myChangesTree.select(Collections.singletonList(changes.get(0)));
       }
     };
   }

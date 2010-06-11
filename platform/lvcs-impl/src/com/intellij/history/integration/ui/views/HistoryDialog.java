@@ -46,6 +46,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.patch.CreatePatchConfigurationPanel;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ExcludingTraversalPolicy;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
@@ -148,7 +149,11 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   protected JComponent createComponent() {
     JPanel root = new JPanel(new BorderLayout());
 
-    Pair<JComponent, Dimension> diffAndToolbarSize = createDiffPanel(root);
+    ExcludingTraversalPolicy traversalPolicy = new ExcludingTraversalPolicy();
+    root.setFocusTraversalPolicy(traversalPolicy);
+    root.setFocusTraversalPolicyProvider(true);
+
+    Pair<JComponent, Dimension> diffAndToolbarSize = createDiffPanel(root, traversalPolicy);
     myDiffView = new MyDiffContainer(diffAndToolbarSize.first);
     Disposer.register(this, myDiffView);
 
@@ -188,7 +193,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     super.dispose();
   }
 
-  protected abstract Pair<JComponent, Dimension> createDiffPanel(JPanel root);
+  protected abstract Pair<JComponent, Dimension> createDiffPanel(JPanel root, ExcludingTraversalPolicy traversalPolicy);
 
   private JComponent createRevisionsSide(Dimension prefToolBarSize) {
     ActionGroup actions = createRevisionsActions();
@@ -598,7 +603,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     }
   }
 
-  private static class MyDiffContainer extends JComponent implements Disposable {
+  private static class MyDiffContainer extends JLayeredPane implements Disposable {
     private AnimatedIcon myIcon = new AsyncProcessIcon.Big(this.getClass().getName());
 
     private JComponent myContent;
@@ -609,11 +614,10 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
       myContent = content;
       myLoadingPanel = new JPanel(new MyPanelLayout());
       myLoadingPanel.setOpaque(false);
-      myIcon.setBackground(Color.WHITE);
       myLoadingPanel.add(myIcon);
 
       add(myContent);
-      add(myLoadingPanel);
+      add(myLoadingPanel, JLayeredPane.POPUP_LAYER);
 
       finishUpdating();
     }

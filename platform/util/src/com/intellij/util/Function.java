@@ -18,8 +18,8 @@ package com.intellij.util;
 /**
  * @author max
  */
-public interface Function<Dom, Img> {
-  Img fun(Dom dom);
+public interface Function<PARAM, RESULT> {
+  RESULT fun(PARAM param);
 
   Function ID = new Function() {
     public Object fun(final Object o) {

@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.ui.ExcludingTraversalPolicy;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -64,7 +65,7 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   }
 
   @Override
-  protected Pair<JComponent, Dimension> createDiffPanel(JPanel root) {
+  protected Pair<JComponent, Dimension> createDiffPanel(JPanel root, ExcludingTraversalPolicy traversalPolicy) {
     myDiffPanel = DiffManager.getInstance().createDiffPanel(getFrame(), myProject);
     DiffPanelOptions o = ((DiffPanelEx)myDiffPanel).getOptions();
     o.setRequestFocusOnNewContent(false);
