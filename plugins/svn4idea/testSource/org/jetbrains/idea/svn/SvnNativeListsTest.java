@@ -1,6 +1,5 @@
 package org.jetbrains.idea.svn;
 
-import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -44,6 +43,9 @@ public class SvnNativeListsTest extends SvnTestCase {
   @Test
   public void testAdd() throws Throwable {
     final LocalChangeList newL = myChangeListManager.addChangeList("newOne", null);
+    myDirtyScopeManager.markEverythingDirty();
+    myChangeListManager.ensureUpToDate(false);
+
     myChangeListManager.setDefaultChangeList(newL);
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
@@ -60,6 +62,9 @@ public class SvnNativeListsTest extends SvnTestCase {
   @Test
   public void testDeleted() throws Throwable {
     final LocalChangeList newL = myChangeListManager.addChangeList("newOne", null);
+    myDirtyScopeManager.markEverythingDirty();
+    myChangeListManager.ensureUpToDate(false);
+
     myChangeListManager.setDefaultChangeList(newL);
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
@@ -79,6 +84,9 @@ public class SvnNativeListsTest extends SvnTestCase {
   @Test
   public void testEdit() throws Throwable {
     final LocalChangeList newL = myChangeListManager.addChangeList("newOne", null);
+    myDirtyScopeManager.markEverythingDirty();
+    myChangeListManager.ensureUpToDate(false);
+
     myChangeListManager.setDefaultChangeList(newL);
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
@@ -97,6 +105,10 @@ public class SvnNativeListsTest extends SvnTestCase {
   @Test
   public void testEditAndMove() throws Throwable {
     final LocalChangeList newL = myChangeListManager.addChangeList("newOne", null);
+
+    myDirtyScopeManager.markEverythingDirty();
+    myChangeListManager.ensureUpToDate(false);
+
     myChangeListManager.setDefaultChangeList(newL);
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
@@ -124,6 +136,9 @@ public class SvnNativeListsTest extends SvnTestCase {
   @Test
   public void testMove() throws Throwable {
     final LocalChangeList newL = myChangeListManager.addChangeList("newOne", null);
+    myDirtyScopeManager.markEverythingDirty();
+    myChangeListManager.ensureUpToDate(false);
+
     myChangeListManager.setDefaultChangeList(newL);
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
@@ -143,6 +158,9 @@ public class SvnNativeListsTest extends SvnTestCase {
   @Test
   public void testMoveMove() throws Throwable {
     final LocalChangeList newL = myChangeListManager.addChangeList("newOne", null);
+    myDirtyScopeManager.markEverythingDirty();
+    myChangeListManager.ensureUpToDate(false);
+
     myChangeListManager.setDefaultChangeList(newL);
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);

@@ -15,18 +15,18 @@
  */
 package com.intellij.patterns;
 
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Condition;
-import com.intellij.util.ProcessingContext;
+import com.intellij.openapi.util.Key;
 import com.intellij.util.InstanceofCheckerGenerator;
-import gnu.trove.THashSet;
+import com.intellij.util.ProcessingContext;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author peter
@@ -76,21 +76,49 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
   }
 
   public Self equalTo(@NotNull final T o) {
-    return with(new ValuePatternCondition<T>("equalTo", Collections.singleton(o)) {
+    return with(new ValuePatternCondition<T>("equalTo") {
       public boolean accepts(@NotNull final T t, final ProcessingContext context) {
         return t.equals(o);
+      }
+
+      @Override
+      public Collection<T> getValues() {
+        return Collections.singletonList(o);
       }
     });
   }
 
   @NotNull
   public Self oneOf(final T... values) {
-    return oneOf(new THashSet<T>(Arrays.asList(values)));
+    final List<T> list = Arrays.asList(values);
+    return with(new ValuePatternCondition<T>("oneOf") {
+
+      @Override
+      public Collection<T> getValues() {
+        return list;
+      }
+
+      @Override
+      public boolean accepts(@NotNull T t, ProcessingContext context) {
+        return list.contains(t);
+      }
+    });
   }
 
   @NotNull
   public Self oneOf(final Collection<T> set) {
-    return with(new ValuePatternCondition<T>("oneOf", set));
+    return with(new ValuePatternCondition<T>("oneOf") {
+
+      @Override
+      public Collection<T> getValues() {
+        return set;
+      }
+
+      @Override
+      public boolean accepts(@NotNull T t, ProcessingContext context) {
+        return set.contains(t);
+      }
+    });
   }
 
   public Self isNull() {

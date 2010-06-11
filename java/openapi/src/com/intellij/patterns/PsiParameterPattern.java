@@ -18,6 +18,7 @@ package com.intellij.patterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,13 +32,19 @@ public class PsiParameterPattern extends PsiModifierListOwnerPattern<PsiParamete
   }
 
   public PsiParameterPattern ofMethod(final int index, final ElementPattern pattern) {
-    return with(new PatternCondition<PsiParameter>("ofMethod") {
-      public boolean accepts(@NotNull final PsiParameter t, final ProcessingContext context) {
+    return with(new PatternConditionPlus<PsiParameter, PsiMethod>("ofMethod", pattern) {
+      @Override
+      public boolean processValues(PsiParameter t,
+                                   ProcessingContext context,
+                                   PairProcessor<PsiMethod, ProcessingContext> processor) {
         PsiElement scope = t.getDeclarationScope();
-        if (!(scope instanceof PsiMethod)) return false;
-        PsiMethod psiMethod = (PsiMethod)scope;
-        // performance: check method pattern first, esp. name
-        if (!pattern.getCondition().accepts(psiMethod, context)) return false;
+        if (!(scope instanceof PsiMethod)) return true;
+        return processor.process((PsiMethod)scope, context);
+      }
+
+      public boolean accepts(@NotNull final PsiParameter t, final ProcessingContext context) {
+        if (!super.accepts(t, context)) return false;
+        final PsiMethod psiMethod = (PsiMethod)t.getDeclarationScope();
 
         final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
         if (index < 0 || index >= parameters.length || !t.equals(parameters[index])) return false;

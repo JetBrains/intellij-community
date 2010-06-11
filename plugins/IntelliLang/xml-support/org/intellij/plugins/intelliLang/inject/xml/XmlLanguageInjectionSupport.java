@@ -24,9 +24,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.patterns.XmlPatterns;
+import com.intellij.patterns.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -52,9 +51,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author Gregory.Shrago
@@ -136,7 +134,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
   }
 
   @Nullable
-  private static AbstractTagInjection showInjectionUI(final Project project, final BaseInjection xmlInjection) {
+  private static BaseInjection showInjectionUI(final Project project, final BaseInjection xmlInjection) {
     final DialogBuilder builder = new DialogBuilder(project);
     final AbstractInjectionPanel panel;
     if (xmlInjection instanceof XmlTagInjection) {
@@ -161,7 +159,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
     });
     if (builder.show() == DialogWrapper.OK_EXIT_CODE) {
       xmlInjection.initializePlaces(false);
-      return new AbstractTagInjection().copyFrom(xmlInjection);
+      return new BaseInjection(XML_SUPPORT_ID).copyFrom(xmlInjection);
     }
     return null;
   }
@@ -170,60 +168,80 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
   private static BaseInjection createFrom(final BaseInjection injection, final PsiLanguageInjectionHost host) {
     if (injection.getInjectionPlaces().size() > 1) return null;
 
-    final PsiElement element;
     AbstractTagInjection result;
-    if (host instanceof XmlText) {
-      final XmlTag xmlTag = ((XmlText)host).getParentTag();
-      if (xmlTag == null) return null;
-      element = xmlTag;
-      result = new XmlTagInjection().copyFrom(injection);
-    }
-    else if (host instanceof XmlAttributeValue) {
-      final PsiElement parent = host.getParent();
-      if (!(parent instanceof XmlAttribute)) return null;
-      element = parent;
+    final InjectionPlace place = injection.getInjectionPlaces().get(0);
+    final ElementPattern<PsiElement> rootPattern = place.getElementPattern();
+    final ElementPatternCondition<PsiElement> rootCondition = rootPattern.getCondition();
+    final Class<PsiElement> elementClass = rootCondition.getInitialCondition().getAcceptedClass();
+    if (XmlAttribute.class.equals(elementClass)) {
       result = new XmlAttributeInjection().copyFrom(injection);
     }
-    else {
-      result = null;
-      element = null;
+    else if (XmlTag.class.equals(elementClass)) {
+      result = new XmlTagInjection().copyFrom(injection);
     }
-    final Pattern pattern = Pattern.compile("withLocalName[^\"]*\"([^\"]*)\"\\)+(?:\\.withNamespace[^\"]*\"([^\"]*)\")?");
-    for (InjectionPlace place : injection.getInjectionPlaces()) {
-      if (element == null || place.getElementPattern() != null && place.getElementPattern().accepts(element)) {
-        final Matcher matcher = pattern.matcher(place.getText());
-        if (matcher.find()) {
-          final Pair<String, String> pair1 = Pair.create(matcher.group(1), matcher.group(2));
-          final Pair<String, String> pair2;
-          if (matcher.find(Math.max(matcher.end(1), matcher.end(2)))) {
-            pair2 = Pair.create(matcher.group(1), matcher.group(2));
-          }
-          else pair2 = null;
-
-          if (result == null) {
-            if (place.getText().startsWith("xmlTag")) result = new XmlTagInjection().copyFrom(injection);
-            else if (place.getText().startsWith("xmlAttribute")) result = new XmlAttributeInjection().copyFrom(injection);
-            else continue;
-          }
-          if (result instanceof XmlAttributeInjection) {
-            ((XmlAttributeInjection)result).setAttributeName(pair1.first);
-            ((XmlAttributeInjection)result).setAttributeNamespace(StringUtil.notNullize(pair1.second));
-            if (pair2 != null) {
-              result.setTagName(pair2.first);
-              result.setTagNamespace(StringUtil.notNullize(pair2.second));
-            }
-          }
-          else if (result instanceof XmlTagInjection) {
-            result.setTagName(pair1.first);
-            result.setTagNamespace(StringUtil.notNullize(pair1.second));
-          }
-          else continue;
-          break;
+    else return null;
+    result.getInjectionPlaces().clear();
+    for (PatternCondition<? super PsiElement> condition : rootCondition.getConditions()) {
+      final String value = extractValue(condition);
+      if (condition.getDebugMethodName().equals("withLocalName")) {
+        if (value == null) return null;
+        if (result instanceof XmlAttributeInjection) {
+          ((XmlAttributeInjection)result).setAttributeName(value);
+        }
+        else {
+          result.setTagName(value);
         }
       }
+      else if (condition.getDebugMethodName().equals("withNamespace")) {
+        if (value == null) return null;
+        if (result instanceof XmlAttributeInjection) {
+          ((XmlAttributeInjection)result).setAttributeNamespace(value);
+        }
+        else {
+          result.setTagNamespace(value);
+        }
+      }
+      else if (result instanceof XmlAttributeInjection && condition.getDebugMethodName().equals("inside") && condition instanceof PatternConditionPlus) {
+        final ElementPattern<?> insidePattern = ((PatternConditionPlus)condition).getValuePattern();
+        if (!XmlTag.class.equals(insidePattern.getCondition().getInitialCondition().getAcceptedClass())) return null;
+        for (PatternCondition<?> insideCondition : insidePattern.getCondition().getConditions()) {
+          final String tagValue = extractValue(insideCondition);
+          if (tagValue == null) return null;
+          if (insideCondition.getDebugMethodName().equals("withLocalName")) {
+            result.setTagName(tagValue);
+          }
+          else if (insideCondition.getDebugMethodName().equals("withNamespace")) {
+            result.setTagNamespace(tagValue);
+          }
+
+        }
+      }
+      else return null;
     }
-    if (result != null) result.getInjectionPlaces().clear();
     return result;
+  }
+
+  @Nullable
+  private static String extractValue(PatternCondition<?> condition) {
+    if (!(condition instanceof PatternConditionPlus)) return null;
+    final ElementPattern valuePattern = ((PatternConditionPlus)condition).getValuePattern();
+    final ElementPatternCondition<?> rootCondition = valuePattern.getCondition();
+    if (!String.class.equals(rootCondition.getInitialCondition().getAcceptedClass())) return null;
+    if (rootCondition.getConditions().size() != 1) return null;
+    final PatternCondition<?> valueCondition = rootCondition.getConditions().get(0);
+    if (!(valueCondition instanceof ValuePatternCondition<?>)) return null;
+    final Collection values = ((ValuePatternCondition)valueCondition).getValues();
+    if (values.size() == 1) {
+      final Object value = values.iterator().next();
+      return value instanceof String? (String)value : null;
+    }
+    else if (!values.isEmpty()) {
+      for (Object value : values) {
+        if (!(value instanceof String)) return null;
+      }
+      return StringUtil.join(values, "|");
+    }
+    return null;
   }
 
   public BaseInjection createInjection(final Element element) {
@@ -233,7 +251,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
     else if (element.getName().equals(XmlTagInjection.class.getSimpleName())) {
       return new XmlTagInjection();
     }
-    return new AbstractTagInjection();
+    return new BaseInjection(XML_SUPPORT_ID);
   }
 
   public Configurable[] createSettings(final Project project, final Configuration configuration) {
@@ -313,14 +331,14 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
       new AnAction("XML Tag Injection", null, Icons.XML_TAG_ICON) {
         @Override
         public void actionPerformed(final AnActionEvent e) {
-          final AbstractTagInjection newInjection = showInjectionUI(project, new XmlTagInjection());
+          final BaseInjection newInjection = showInjectionUI(project, new XmlTagInjection());
           if (newInjection != null) consumer.consume(newInjection);
         }
       },
       new AnAction("XML Attribute Injection", null, Icons.ANNOTATION_TYPE_ICON) {
         @Override
         public void actionPerformed(final AnActionEvent e) {
-          final AbstractTagInjection injection = showInjectionUI(project, new XmlAttributeInjection());
+          final BaseInjection injection = showInjectionUI(project, new XmlAttributeInjection());
           if (injection != null) consumer.consume(injection);
         }
       }
@@ -335,7 +353,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
         final BaseInjection originalInjection = producer.create();
         final BaseInjection injection = createFrom(originalInjection, null);
         if (injection != null) {
-          final AbstractTagInjection newInjection = showInjectionUI(project, injection);
+          final BaseInjection newInjection = showInjectionUI(project, injection);
           if (newInjection != null) {
             originalInjection.copyFrom(newInjection);
             originalInjection.initializePlaces(true);

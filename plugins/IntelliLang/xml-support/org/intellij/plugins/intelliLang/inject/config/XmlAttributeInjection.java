@@ -20,7 +20,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
-import org.intellij.plugins.intelliLang.PatternBasedInjectionHelper;
 import org.intellij.plugins.intelliLang.util.StringMatcher;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -28,6 +27,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
+
+import static org.intellij.plugins.intelliLang.PatternBasedInjectionHelper.appendStringPattern;
 
 public class XmlAttributeInjection extends AbstractTagInjection {
 
@@ -141,8 +142,8 @@ public class XmlAttributeInjection extends AbstractTagInjection {
     final String name = injection.getAttributeName();
     final String namespace = injection.getAttributeNamespace();
     final StringBuilder result = new StringBuilder("xmlAttribute()");
-    if (StringUtil.isNotEmpty(name)) result.append(".withLocalName(string().matches(\"").append(name).append("\"))");
-    if (StringUtil.isNotEmpty(namespace)) result.append(".withNamespace(string().matches(\"").append(namespace).append("\"))");
+    if (StringUtil.isNotEmpty(name)) appendStringPattern(result, ".withLocalName(", name, ")");
+    if (StringUtil.isNotEmpty(namespace)) appendStringPattern(result, ".withNamespace(", namespace, ")");
     if (StringUtil.isNotEmpty(injection.getTagName()) || StringUtil.isNotEmpty(injection.getTagNamespace())) {
       result.append(".inside(").append(XmlTagInjection.getPatternString(injection)).append(")");
     }
