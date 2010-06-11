@@ -271,7 +271,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   public String getProjectName() {
     if (myScheme == StorageScheme.DIRECTORY_BASED) {
       final VirtualFile baseDir = getProjectBaseDir();
-      assert baseDir != null;
+      assert baseDir != null : "project file: " + (getProjectFile() == null ? "[NULL]" : getProjectFile().getPath());
       return baseDir.getName().replace(":", "");
     }
 
