@@ -29,9 +29,12 @@ import com.intellij.util.containers.Stack;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.*;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.*;
 
 /**
@@ -44,6 +47,55 @@ public class PatternBasedInjectionHelper {
 
   public PatternBasedInjectionHelper(final String supportId) {
     mySupportId = supportId;
+  }
+
+  public static StringBuilder appendStringPattern(@NotNull StringBuilder sb, @NotNull String prefix, @NotNull String text, @NotNull String suffix) {
+    sb.append(prefix).append("string().");
+    final String[] parts = text.split("[,|\\s]+");
+    boolean useMatches = false;
+    for (String part : parts) {
+      if (isRegexp(part)) {
+        useMatches = true;
+        break;
+      }
+    }
+    if (useMatches) {
+      sb.append("matches(\"").append(text).append("\")");
+    }
+    else if (parts.length > 1) {
+      sb.append("oneOf(");
+      boolean first = true;
+      for (String part : parts) {
+        if (first) first = false;
+        else sb.append(", ");
+        sb.append("\"").append(part).append("\"");
+      }
+      sb.append(")");
+    }
+    else {
+      sb.append("equalTo(\"").append(text).append("\")");
+    }
+    sb.append(suffix);
+    return sb;
+  }
+
+  public static boolean isRegexp(final String s) {
+    boolean hasReChars = false;
+    for (int i = 0, len = s.length(); i < len; i++) {
+      final char c = s.charAt(i);
+      if (c == ' ' || c == '_' || c == '-' || Character.isLetterOrDigit(c)) continue;
+      hasReChars = true;
+      break;
+    }
+    if (hasReChars) {
+      try {
+        new URL(s);
+      }
+      catch (MalformedURLException e) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private Set<Method> getStaticMethods() {

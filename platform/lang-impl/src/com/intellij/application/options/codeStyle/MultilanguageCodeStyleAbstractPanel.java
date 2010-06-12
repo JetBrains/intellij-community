@@ -71,6 +71,7 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
   public void setPanelLanguage(Language language) {
     myLanguage = language;
     updatePreviewEditor();
+    onLanguageChange(language);
   }
 
   protected abstract LanguageCodeStyleSettingsProvider.SettingsType getSettingsType();
@@ -221,5 +222,6 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
     return new JLabel("");
   }
 
+  protected abstract void onLanguageChange(Language language);
 
 }

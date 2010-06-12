@@ -16,9 +16,9 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.psi.ExternallyDefinedPsiElement;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -43,7 +43,7 @@ public class ClassInnerStuffCache {
   private CachedValue<PsiMethod[]> myConstructorsCache;
   private CachedValue<PsiField[]> myFieldsCache;
   private CachedValue<PsiMethod[]> myMethodsCache;
-  private CachedValue<Map<String, List<PsiField>>> myFieldsMapCache;
+  private CachedValue<Map<String, PsiField>> myFieldsMapCache;
   private CachedValue<Map<String, List<PsiMethod>>> myMethodsMapCache;
   private CachedValue<Map<String, PsiClass>> myInnerClassesMapCache;
 
@@ -74,12 +74,8 @@ public class ClassInnerStuffCache {
   @Nullable
   public PsiField findFieldByName(final String name, final boolean checkBases) {
     if (!checkBases) {
-      final Map<String, List<PsiField>> cachedFields = myFieldsMapCache.getValue();
-      if (cachedFields != null) {
-        final List<PsiField> fields = cachedFields.get(name);
-        return fields != null ? fields.get(0) : null;
-      }
-      return null;
+      final Map<String, PsiField> cachedFields = myFieldsMapCache.getValue();
+      return cachedFields != null ? cachedFields.get(name) : null;
     }
     return PsiClassImplUtil.findFieldByName(myClass, name, checkBases);
   }
@@ -130,8 +126,8 @@ public class ClassInnerStuffCache {
       }
     }, false);
 
-    myFieldsMapCache = manager.createCachedValue(new CachedValueProvider<Map<String, List<PsiField>>>() {
-      public Result<Map<String, List<PsiField>>> compute() {
+    myFieldsMapCache = manager.createCachedValue(new CachedValueProvider<Map<String, PsiField>>() {
+      public Result<Map<String, PsiField>> compute() {
         return Result.create(getFieldsMap(), dependencies);
       }
     }, false);
@@ -166,28 +162,34 @@ public class ClassInnerStuffCache {
   }
 
   @Nullable
-  private Map<String, List<PsiField>> getFieldsMap() {
-    return getMembersMap(getFields());
+  private Map<String, PsiField> getFieldsMap() {
+    final PsiField[] fields = getFields();
+    if (fields.length == 0) return null;
+
+    final Map<String, PsiField> cachedFields = new THashMap<String, PsiField>();
+    for (final PsiField field : fields) {
+      final String name = field.getName();
+      if (!(field instanceof ExternallyDefinedPsiElement) || !cachedFields.containsKey(name)) {
+        cachedFields.put(name, field);
+      }
+    }
+    return cachedFields;
   }
 
   @Nullable
   private Map<String, List<PsiMethod>> getMethodsMap() {
-    return getMembersMap(getMethods());
-  }
+    final PsiMethod[] methods = getMethods();
+    if (methods.length == 0) return null;
 
-  @Nullable
-  private static <T extends PsiMember> Map<String, List<T>> getMembersMap(final T[] members) {
-    if (members.length == 0) return null;
-
-    final Map<String, List<T>> cachedMembers = new THashMap<String, List<T>>();
-    for (final T member : members) {
-      List<T> list = cachedMembers.get(member.getName());
+    final Map<String, List<PsiMethod>> cachedMethods = new THashMap<String, List<PsiMethod>>();
+    for (final PsiMethod method : methods) {
+      List<PsiMethod> list = cachedMethods.get(method.getName());
       if (list == null) {
-        cachedMembers.put(member.getName(), (list = new ArrayList<T>(1)));
+        cachedMethods.put(method.getName(), (list = new ArrayList<PsiMethod>(1)));
       }
-      list.add(member);
+      list.add(method);
     }
-    return cachedMembers;
+    return cachedMethods;
   }
 
   @Nullable

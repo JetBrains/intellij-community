@@ -18,6 +18,7 @@ package com.intellij.patterns;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -52,9 +53,12 @@ public abstract class XmlNamedElementPattern<T extends XmlElement & PsiNamedElem
   }
 
   public Self withNamespace(final ElementPattern<String> namespace) {
-    return with(new PatternCondition<T>("withNamespace") {
-      public boolean accepts(@NotNull final T s, final ProcessingContext context) {
-        return namespace.accepts(getNamespace(s));
+    return with(new PatternConditionPlus<T, String>("withNamespace", namespace) {
+      @Override
+      public boolean processValues(T t,
+                                   ProcessingContext context,
+                                   PairProcessor<String, ProcessingContext> processor) {
+        return processor.process(getNamespace(t), context);
       }
     });
   }
@@ -77,10 +81,12 @@ public abstract class XmlNamedElementPattern<T extends XmlElement & PsiNamedElem
     }
     
     public XmlAttributePattern withValue(final StringPattern pattern) {
-      return with(new PatternCondition<XmlAttribute>("withValue") {
+      return with(new PatternConditionPlus<XmlAttribute, String>("withValue", pattern) {
         @Override
-        public boolean accepts(@NotNull XmlAttribute xmlAttribute, ProcessingContext context) {
-          return pattern.accepts(xmlAttribute.getValue(), context);
+        public boolean processValues(XmlAttribute t,
+                                     ProcessingContext context,
+                                     PairProcessor<String, ProcessingContext> processor) {
+          return processor.process(t.getValue(), context);
         }
       });
     }

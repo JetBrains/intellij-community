@@ -36,7 +36,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -423,7 +422,8 @@ public class I18nInspection extends BaseLocalInspectionTool {
       Set<PsiModifierListOwner> nonNlsTargets = new HashSet<PsiModifierListOwner>();
       if (canBeI18ned(expression, stringValue, nonNlsTargets)) {
         final String description = CodeInsightBundle.message("inspection.i18n.message.general.with.value",
-                                                             JDOMUtil.escapeText(stringValue));
+                                                             "#ref");
+                                                             //JDOMUtil.escapeText(stringValue));
 
         List<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
         if (ConcatenationToMessageFormatAction.getEnclosingLiteralConcatenation(expression) != null) {

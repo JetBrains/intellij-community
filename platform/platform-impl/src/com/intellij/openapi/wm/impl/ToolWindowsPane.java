@@ -43,7 +43,7 @@ import java.util.Comparator;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-final class ToolWindowsPane extends JPanel{
+final class ToolWindowsPane extends JLayeredPane {
   private static final Logger LOG=Logger.getInstance("#com.intellij.openapi.wm.impl.ToolWindowsPane");
 
   private final IdeFrameImpl myFrame;
@@ -76,9 +76,9 @@ final class ToolWindowsPane extends JPanel{
   private final MyUISettingsListenerImpl myUISettingsListener;
   private final ToolWindowManagerImpl myManager;
 
-  ToolWindowsPane(final IdeFrameImpl frame, ToolWindowManagerImpl manager){
-    super(new BorderLayout());
+  private boolean myStripesOverlayed;
 
+  ToolWindowsPane(final IdeFrameImpl frame, ToolWindowManagerImpl manager){
     myManager = manager;
 
     setOpaque(false);
@@ -117,11 +117,73 @@ final class ToolWindowsPane extends JPanel{
 
     // Compose layout
 
-    add(myTopStripe,BorderLayout.NORTH);
-    add(myLeftStripe,BorderLayout.WEST);
-    add(myBottomStripe,BorderLayout.SOUTH);
-    add(myRightStripe,BorderLayout.EAST);
-    add(myLayeredPane,BorderLayout.CENTER);
+    add(myTopStripe, JLayeredPane.POPUP_LAYER);
+    add(myLeftStripe,  JLayeredPane.POPUP_LAYER);
+    add(myBottomStripe,  JLayeredPane.POPUP_LAYER);
+    add(myRightStripe,  JLayeredPane.POPUP_LAYER);
+    add(myLayeredPane,  JLayeredPane.DEFAULT_LAYER);
+  }
+
+  @Override
+  public void doLayout() {
+    Dimension size = getSize();
+    if (!myTopStripe.isVisible()) {
+      myTopStripe.setBounds(0, 0, 0, 0);
+      myBottomStripe.setBounds(0, 0, 0, 0);
+      myLeftStripe.setBounds(0, 0, 0, 0);
+      myRightStripe.setBounds(0, 0, 0, 0);
+      myLayeredPane.setBounds(0, 0, getWidth(), getHeight());
+    } else {
+      Dimension topSize = myTopStripe.getPreferredSize();
+      Dimension bottomSize = myBottomStripe.getPreferredSize();
+      Dimension leftSize = myLeftStripe.getPreferredSize();
+      Dimension rightSize = myRightStripe.getPreferredSize();
+
+      myTopStripe.setBounds(0, 0, size.width, topSize.height);
+      myLeftStripe.setBounds(0, topSize.height, leftSize.width, size.height - topSize.height - bottomSize.height);
+      myRightStripe.setBounds(size.width - rightSize.width, topSize.height, rightSize.width, size.height - topSize.height - bottomSize.height);
+      myBottomStripe.setBounds(0, size.height - bottomSize.height, size.width, bottomSize.height);
+
+      if (UISettings.getInstance().HIDE_TOOL_STRIPES) {
+        myLayeredPane.setBounds(0, 0, size.width, size.height);
+      } else {
+        myLayeredPane.setBounds(leftSize.width, topSize.height, size.width - leftSize.width - rightSize.width, size.height - topSize.height - bottomSize.height);
+      }
+    }
+  }
+
+  @Override
+  protected void paintChildren(Graphics g) {
+    super.paintChildren(g);
+
+    if (myTopStripe.isVisible() && myStripesOverlayed && UISettings.getInstance().HIDE_TOOL_STRIPES) {
+      Dimension topSize = myTopStripe.getSize();
+      Dimension bottomSize = myBottomStripe.getSize();
+      Dimension leftSize = myLeftStripe.getSize();
+      Dimension rightSize = myRightStripe.getSize();
+      Dimension size = getSize();
+
+
+      Rectangle rec = new Rectangle(leftSize.width, topSize.height, size.width - leftSize.width - rightSize.width,
+                                    size.height - topSize.height - bottomSize.height);
+
+      g.setColor(Color.gray);
+      if (topSize.height> 0) {
+        g.drawLine(rec.x, rec.y, rec.x + rec.width, rec.y);
+      }
+
+      if (leftSize.width > 0) {
+        g.drawLine(rec.x, rec.y, rec.x, rec.y + rec.height);
+      }
+
+      if (bottomSize.height > 0) {
+        g.drawLine(rec.x, rec.y + rec.height, rec.x + rec.width, rec.y + rec.height);
+      }
+
+      if (rightSize.width > 0) {
+        g.drawLine(rec.x + rec.width, rec.y, rec.x + rec.width, rec.y + rec.height);
+      }
+    }
   }
 
   /**
@@ -324,11 +386,21 @@ final class ToolWindowsPane extends JPanel{
   }
 
   private void updateToolStripesVisibility(){
-    final boolean visible = !UISettings.getInstance().HIDE_TOOL_STRIPES;
-    myLeftStripe.setVisible(visible);
-    myRightStripe.setVisible(visible);
-    myTopStripe.setVisible(visible);
-    myBottomStripe.setVisible(visible);
+    final boolean showButtons = !UISettings.getInstance().HIDE_TOOL_STRIPES;
+    myLeftStripe.setVisible(showButtons || myStripesOverlayed);
+    myRightStripe.setVisible(showButtons || myStripesOverlayed);
+    myTopStripe.setVisible(showButtons || myStripesOverlayed);
+    myBottomStripe.setVisible(showButtons || myStripesOverlayed);
+
+    boolean overlayed = !showButtons && myStripesOverlayed;
+
+    myLeftStripe.setOverlayed(overlayed);
+    myRightStripe.setOverlayed(overlayed);
+    myTopStripe.setOverlayed(overlayed);
+    myBottomStripe.setOverlayed(overlayed);
+
+    revalidate();
+    repaint();
   }
 
   Stripe getStripeFor(String id) {
@@ -1079,4 +1151,8 @@ final class ToolWindowsPane extends JPanel{
     return 19;
   }
 
+  public void setStripesOverlayed(boolean stripesOverlayed) {
+    myStripesOverlayed = stripesOverlayed;
+    updateToolStripesVisibility();
+  }
 }

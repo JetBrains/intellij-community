@@ -17,11 +17,12 @@ package org.intellij.plugins.intelliLang.inject.config;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlTag;
-import org.intellij.plugins.intelliLang.PatternBasedInjectionHelper;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
+
+import static org.intellij.plugins.intelliLang.PatternBasedInjectionHelper.appendStringPattern;
 
 public class XmlTagInjection extends AbstractTagInjection {
 
@@ -58,8 +59,8 @@ public class XmlTagInjection extends AbstractTagInjection {
     final String name = injection.getTagName();
     final String namespace = injection.getTagNamespace();
     final StringBuilder result = new StringBuilder("xmlTag()");
-    if (StringUtil.isNotEmpty(name)) result.append(".withLocalName(string().matches(\"").append(name).append("\"))");
-    if (StringUtil.isNotEmpty(namespace)) result.append(".withNamespace(string().matches(\"").append(namespace).append("\"))");
+    if (StringUtil.isNotEmpty(name)) appendStringPattern(result, ".withLocalName(", name, ")");
+    if (StringUtil.isNotEmpty(namespace)) appendStringPattern(result, ".withNamespace(", namespace, ")");
     return result.toString();
   }
 

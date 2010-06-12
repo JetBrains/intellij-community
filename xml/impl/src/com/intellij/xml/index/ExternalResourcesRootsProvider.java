@@ -31,11 +31,11 @@ import java.util.Set;
  * @author Dmitry Avdeev
  */
 public class ExternalResourcesRootsProvider implements IndexedRootsProvider {
+  private static final URL ourRoot = ExternalResourcesRootsProvider.class.getResource(ExternalResourceManagerImpl.STANDARD_SCHEMAS);
 
   @Nullable
-  public static VirtualFile getStandardSchemas() {
-    final URL resource = ExternalResourcesRootsProvider.class.getResource(ExternalResourceManagerImpl.STANDARD_SCHEMAS);
-    return resource == null ? null : VfsUtil.findFileByURL(resource);
+  private static VirtualFile getStandardSchemas() {
+    return ourRoot == null ? null : VfsUtil.findFileByURL(ourRoot);
   }
 
   public Set<String> getRootsToIndex() {

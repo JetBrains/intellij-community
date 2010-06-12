@@ -107,9 +107,6 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
       return null;
     }
 
-    public Type[] getConcreteInterfaceVariants() {
-      return new Class[]{DomFileElement.class};
-    }
   };
 
   private final XmlFile myFile;
@@ -346,7 +343,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
   }
 
   public void accept(final DomElementVisitor visitor) {
-    myManager.getVisitorDescription(visitor.getClass()).acceptElement(visitor, this);
+    myManager.getApplicationComponent().getVisitorDescription(visitor.getClass()).acceptElement(visitor, this);
   }
 
   public void acceptChildren(DomElementVisitor visitor) {

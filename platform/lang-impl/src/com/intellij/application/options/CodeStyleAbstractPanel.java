@@ -335,4 +335,8 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   protected Editor getEditor() {
     return myEditor;
   }
+
+  protected CodeStyleSettings getSettings() {
+    return mySettings;
+  }
 }

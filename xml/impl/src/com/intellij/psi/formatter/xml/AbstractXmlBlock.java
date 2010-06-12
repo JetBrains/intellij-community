@@ -20,9 +20,7 @@ import com.intellij.lang.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.TokenType;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.common.AbstractBlock;
@@ -31,12 +29,10 @@ import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.xml.XmlChildRole;
-import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlElementType;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -392,4 +388,30 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     myXmlFormattingPolicy = xmlFormattingPolicy;
   }
 
+  protected boolean buildInjectedPsiBlocks(List<Block> result, final ASTNode child, Wrap wrap, Alignment alignment, Indent indent) {
+    if (myInjectedBlockBuilder.addInjectedBlocks(result, child, wrap, alignment, indent)) {
+      return true;
+    }
+
+    PsiFile containingFile = child.getPsi().getContainingFile();
+    FileViewProvider fileViewProvider = containingFile.getViewProvider();
+
+    if (fileViewProvider instanceof TemplateLanguageFileViewProvider) {
+      Language templateLanguage = ((TemplateLanguageFileViewProvider)fileViewProvider).getTemplateDataLanguage();
+      PsiElement at = fileViewProvider.findElementAt(child.getStartOffset(), templateLanguage);
+
+      if (at instanceof XmlToken) {
+        at = at.getParent();
+      }
+
+      // TODO: several comments
+      if (at instanceof PsiComment &&
+          at.getTextRange().equals(child.getTextRange()) &&
+          at.getNode() != child) {
+        return buildInjectedPsiBlocks(result, at.getNode(), wrap, alignment, indent);
+      }
+    }
+
+    return false;
+  }
 }

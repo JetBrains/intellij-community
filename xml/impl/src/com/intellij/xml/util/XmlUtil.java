@@ -148,6 +148,7 @@ public class XmlUtil {
   @NonNls public static final String TAG_DIR_NS_PREFIX = "urn:jsptagdir:";
   @NonNls public static final String VALUE_ATTR_NAME = "value";
   @NonNls public static final String ENUMERATION_TAG_NAME = "enumeration";
+  public static final String HTML4_LOOSE_URI = "http://www.w3.org/TR/html4/loose.dtd";
 
 
   private XmlUtil() {
@@ -970,7 +971,12 @@ public class XmlUtil {
       String docType = doctype.getDtdUri();
       if (docType == null && 
           PsiTreeUtil.getParentOfType(doctype, XmlDocument.class) instanceof HtmlDocumentImpl) {
-        docType = HTML5_SCHEMA_LOCATION;
+        
+        final String publicId = doctype.getPublicId();
+        if (publicId != null && publicId.indexOf("-//W3C//DTD HTML") != -1) {
+          return HTML4_LOOSE_URI;
+        }
+        if (publicId == null) docType = HTML5_SCHEMA_LOCATION;
       }
       return docType;
     }

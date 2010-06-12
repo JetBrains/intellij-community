@@ -320,6 +320,11 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
     throw new UnsupportedOperationException("Not implemented in " + getClass().getCanonicalName());
   }
 
+  @Override
+  public boolean isHeadless() {
+    return DialogWrapperPeerImpl.isHeadlessEnv();
+  }
+
   //[kirillk] for now it only deals with the TaskWindow under Mac OS X: modal dialogs are shown behind JBPopup
   //hopefully this whole code will go away
   private void hidePopupsIfNeeded() {

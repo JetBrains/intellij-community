@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.*;
@@ -162,23 +161,26 @@ public class DomUtil {
   }
 
   public static List<? extends DomElement> getIdentitySiblings(DomElement element) {
-    final Method nameValueMethod = ElementPresentationManager.findNameValueMethod(element.getClass());
-    if (nameValueMethod != null) {
-      final NameValue nameValue = DomReflectionUtil.findAnnotationDFS(nameValueMethod, NameValue.class);
-      if (nameValue == null || nameValue.unique()) {
-        final String stringValue = ElementPresentationManager.getElementName(element);
-        if (stringValue != null) {
-          final DomElement parent = element.getManager().getIdentityScope(element);
-          final DomGenericInfo domGenericInfo = parent.getGenericInfo();
-          final String tagName = element.getXmlElementName();
-          final DomCollectionChildDescription childDescription = domGenericInfo.getCollectionChildDescription(tagName, element.getXmlElementNamespaceKey());
-          if (childDescription != null) {
-            final ArrayList<DomElement> list = new ArrayList<DomElement>(childDescription.getValues(parent));
-            list.remove(element);
-            return list;
-          }
-        }
-      }
+    final GenericDomValue nameDomElement = element.getGenericInfo().getNameDomElement(element);
+    if (nameDomElement == null) return Collections.emptyList();
+
+    final NameValue nameValue = nameDomElement.getAnnotation(NameValue.class);
+    if (nameValue == null || !nameValue.unique()) return Collections.emptyList();
+
+    final String stringValue = ElementPresentationManager.getElementName(element);
+    if (stringValue == null) return Collections.emptyList();
+
+    final DomElement scope = element.getManager().getIdentityScope(element);
+    if (scope == null) return Collections.emptyList();
+
+    final DomGenericInfo domGenericInfo = scope.getGenericInfo();
+    final String tagName = element.getXmlElementName();
+    final DomCollectionChildDescription childDescription =
+      domGenericInfo.getCollectionChildDescription(tagName, element.getXmlElementNamespaceKey());
+    if (childDescription != null) {
+      final ArrayList<DomElement> list = new ArrayList<DomElement>(childDescription.getValues(scope));
+      list.remove(element);
+      return list;
     }
     return Collections.emptyList();
   }
@@ -200,7 +202,7 @@ public class DomUtil {
       final SmartList<DomElement> result = new SmartList<DomElement>();
       parent.acceptChildren(new DomElementVisitor() {
         public void visitDomElement(final DomElement element) {
-          if (DomUtil.hasXml(element)) {
+          if (hasXml(element)) {
             result.add(element);
           }
         }

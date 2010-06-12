@@ -131,20 +131,18 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     final ASTNode endTagName = XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(this);
     List<PsiReference> refs = new ArrayList<PsiReference>();
     final String prefix = getNamespacePrefix();
+
+    if (prefix.length() > 0) {
+      refs.add(createPrefixReference(startTagName, prefix));
+      if (endTagName != null) {
+        refs.add(createPrefixReference(endTagName, prefix));
+      }
+    }
+    refs.add(TagNameReference.createTagNameReference(this, startTagName, true));
     if (endTagName != null) {
-      if (prefix.length() > 0) {
-        refs.add(new SchemaPrefixReference(this, TextRange.from(startTagName.getStartOffset() - this.getStartOffset(), prefix.length()), prefix));
-        refs.add(new SchemaPrefixReference(this, TextRange.from(endTagName.getStartOffset() - this.getStartOffset(), prefix.length()), prefix));
-      }
-      refs.add(TagNameReference.create(this, startTagName, true));
-      refs.add(TagNameReference.create(this, endTagName, false));
+      refs.add(TagNameReference.createTagNameReference(this, endTagName, false));
     }
-    else {
-      if (prefix.length() > 0) {
-        refs.add(new SchemaPrefixReference(this, TextRange.from(startTagName.getStartOffset() - this.getStartOffset(), prefix.length()), prefix));
-      }
-      refs.add(TagNameReference.create(this, startTagName, true));
-    }
+
 
     // ArrayList.addAll() makes a clone of the collection
     //noinspection ManualArrayToCollectionCopy
@@ -153,6 +151,10 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     }
 
     return ContainerUtil.toArray(refs, new PsiReference[refs.size()]);
+  }
+
+  private SchemaPrefixReference createPrefixReference(ASTNode startTagName, String prefix) {
+    return new SchemaPrefixReference(this, TextRange.from(startTagName.getStartOffset() - this.getStartOffset(), prefix.length()), prefix);
   }
 
   public XmlNSDescriptor getNSDescriptor(final String namespace, boolean strict) {

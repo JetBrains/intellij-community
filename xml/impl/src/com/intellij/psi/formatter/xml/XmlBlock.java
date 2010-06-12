@@ -30,6 +30,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,6 +76,10 @@ public class XmlBlock extends AbstractXmlBlock {
     }
 
     if (myNode.getElementType() == XmlElementType.XML_COMMENT) {
+      List<Block> result = new SmartList<Block>();
+      if (buildInjectedPsiBlocks(result, myNode, myWrap, null, Indent.getNoneIndent())) {
+        return result;
+      }
       return splitComment();
     }
 

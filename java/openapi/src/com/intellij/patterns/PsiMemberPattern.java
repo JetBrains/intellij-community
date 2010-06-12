@@ -15,7 +15,9 @@
  */
 package com.intellij.patterns;
 
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMember;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -38,9 +40,10 @@ public class PsiMemberPattern<T extends PsiMember, Self extends PsiMemberPattern
   }
 
   public Self inClass(final ElementPattern pattern) {
-    return with(new PatternCondition<T>("inClass") {
-      public boolean accepts(@NotNull final T t, final ProcessingContext context) {
-        return pattern.getCondition().accepts(t.getContainingClass(), context);
+    return with(new PatternConditionPlus<T, PsiClass>("inClass", pattern) {
+      @Override
+      public boolean processValues(T t, ProcessingContext context, PairProcessor<PsiClass, ProcessingContext> processor) {
+        return processor.process(t.getContainingClass(), context);
       }
     });
   }

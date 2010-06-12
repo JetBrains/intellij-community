@@ -107,6 +107,10 @@ public class OneRecursiveShotMergeInfoWorker implements MergeInfoWorker {
       boolean processed = false;
       final boolean self = relativeFileSubpath.equals(myFilePathAsked);
 
+      if (map.isEmpty()) {
+        myMerged = false;
+        return true;
+      }
       for (Map.Entry<String, SVNMergeRangeList> entry : map.entrySet()) {
         String relativeUrl = entry.getKey();
 

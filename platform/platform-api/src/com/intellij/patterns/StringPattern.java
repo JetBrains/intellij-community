@@ -15,12 +15,14 @@
  */
 package com.intellij.patterns;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.regex.Pattern;
 
 /**
@@ -72,10 +74,19 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
 
   @NotNull
   public StringPattern matches(@NonNls @NotNull final String s) {
+    final String escaped = StringUtil.escapeToRegexp(s);
+    if (escaped.equals(s)) {
+      return equalTo(s);
+    }
     final Pattern pattern = Pattern.compile(s);
-    return with(new PatternCondition<String>("matches") {
+    return with(new ValuePatternCondition<String>("matches") {
       public boolean accepts(@NotNull final String str, final ProcessingContext context) {
         return pattern.matcher(str).matches();
+      }
+
+      @Override
+      public Collection<String> getValues() {
+        return Collections.singleton(s);
       }
     });
   }

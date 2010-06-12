@@ -307,8 +307,11 @@ public class RenameUtil {
       return !StringUtil.isEmptyOrSpaces(newName);
     }
 
-    PsiFile f = psiElement.getContainingFile();
-    Language language = f == null ? psiElement.getLanguage() : f.getLanguage();
+    final PsiFile file = psiElement.getContainingFile();
+    final Language elementLanguage = psiElement.getLanguage();
+
+    final Language fileLanguage = file == null ? null : file.getLanguage();
+    Language language = fileLanguage == null ? elementLanguage : fileLanguage.isKindOf(elementLanguage) ? fileLanguage : elementLanguage;
 
     return LanguageNamesValidation.INSTANCE.forLanguage(language).isIdentifier(newName.trim(), project);
   }

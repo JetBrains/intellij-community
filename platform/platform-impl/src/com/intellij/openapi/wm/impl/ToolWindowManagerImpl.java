@@ -19,6 +19,8 @@ import com.intellij.Patches;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -29,6 +31,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.DumbService;
@@ -38,6 +42,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
@@ -46,6 +51,9 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.commands.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.switcher.QuickAccessSettings;
+import com.intellij.ui.switcher.SwitchManager;
+import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.HashMap;
@@ -71,7 +79,7 @@ import java.util.List;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements ProjectComponent, JDOMExternalizable {
+public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements ProjectComponent, JDOMExternalizable, KeyEventDispatcher {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.ToolWindowManagerImpl");
 
   private final Project myProject;
@@ -109,6 +117,22 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   private final Set<String> myRestoredToolWindowIds = new java.util.HashSet<String>();
   private FileEditorManager myFileEditorManager;
+
+  private Map<String, Balloon> myWindow2Balloon = new HashMap<String, Balloon>();
+
+  private KeyState myCurrentState = KeyState.waiting;
+  private Alarm myWaiterForSecondPress = new Alarm();
+  private Runnable mySecondPressRunnable = new Runnable() {
+    public void run() {
+      if (myCurrentState != KeyState.hold) {
+        resetHoldState();
+      }
+    }
+  };
+
+  private enum KeyState {
+    waiting, pressed, released, hold
+  }
 
   /**
    * invoked by reflection
@@ -153,6 +177,96 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       public void selectionChanged(FileEditorManagerEvent event) {
       }
     });
+  }
+
+  public boolean dispatchKeyEvent(KeyEvent e) {
+    if (e.getKeyCode() != KeyEvent.VK_CONTROL && e.getKeyCode() != KeyEvent.VK_ALT && e.getKeyCode() != KeyEvent.VK_SHIFT && e.getKeyCode() != KeyEvent.VK_META) {
+      if (e.getModifiers() == 0) {
+        resetHoldState();
+      }
+      return false;
+    }
+
+    if (e.getID() != KeyEvent.KEY_PRESSED && e.getID() != KeyEvent.KEY_RELEASED) return false;
+
+    Component parent = UIUtil.findUltimateParent(e.getComponent());
+    if (parent instanceof IdeFrame) {
+      if (((IdeFrame)parent).getProject() != myProject) {
+        resetHoldState();
+        return false;
+      }
+    }
+
+    Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
+    Shortcut[] baseShortcut = keymap.getShortcuts("ActivateProjectToolWindow");
+    int baseModifiers = 0;
+    for (Shortcut each : baseShortcut) {
+      if (each instanceof KeyboardShortcut) {
+        KeyStroke keyStroke = ((KeyboardShortcut)each).getFirstKeyStroke();
+        baseModifiers = keyStroke.getModifiers();
+        if (baseModifiers > 0) {
+          break;
+        }
+      }
+    }
+
+    if (baseModifiers == 0) {
+      resetHoldState();
+      return false;
+    }
+
+    Set<Integer> vks = QuickAccessSettings.getModifiersVKs(baseModifiers);
+    if (vks.contains(e.getKeyCode())) {
+      boolean pressed = e.getID() == KeyEvent.KEY_PRESSED;
+      if (SwitchManager.areAllModifiersPressed(e.getModifiers(), vks) || !pressed) {
+        processState(pressed);
+      } else {
+        resetHoldState();
+      }
+    }
+    
+
+    return false;
+  }
+
+  private void resetHoldState() {
+    myCurrentState = KeyState.waiting;
+    processHoldState();
+  }
+
+  private void resetState() {
+    myCurrentState = KeyState.waiting;
+  }
+
+  private void processState(boolean pressed) {
+    if (pressed) {
+      if (myCurrentState == KeyState.waiting) {
+        myCurrentState = KeyState.pressed;
+      } else if (myCurrentState == KeyState.released) {
+        myCurrentState = KeyState.hold;
+        processHoldState();
+      } else {
+        resetHoldState();
+      }
+    } else {
+      if (myCurrentState == KeyState.pressed) {
+        myCurrentState = KeyState.released;
+        restartWaitingForSecondPressAlarm();
+      } else if (myCurrentState == KeyState.hold) {
+        resetHoldState();
+      } else {
+        resetHoldState();
+      }
+    }
+  }
+
+  private void processHoldState() {
+    myToolWindowsPane.setStripesOverlayed(myCurrentState == KeyState.hold);
+  }
+
+  private void restartWaitingForSecondPressAlarm() {
+    myWaiterForSecondPress.cancelAllRequests();
+    myWaiterForSecondPress.addRequest(mySecondPressRunnable, Registry.intValue("actionSystem.keyGestureDblClickTime"));
   }
 
   private boolean hasOpenEditorFiles() {
@@ -234,6 +348,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         }
       }
     });
+
+    KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(this);
   }
 
   private void registerToolWindowsFromBeans() {
@@ -311,6 +427,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     myEditorComponentFocusWatcher.deinstall(editorComponent);
     appendSetEditorComponentCmd(null, commandsList);
     execute(commandsList);
+
+    KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(this);
   }
 
   public void addToolWindowManagerListener(@NotNull final ToolWindowManagerListener l) {
@@ -1024,6 +1142,12 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                               @Nullable HyperlinkListener listener) {
     checkId(toolWindowId);
 
+
+    Balloon existing = myWindow2Balloon.get(toolWindowId);
+    if (existing != null) {
+      existing.hide();
+    }
+
     final Stripe stripe = myToolWindowsPane.getStripeFor(toolWindowId);
     final ToolWindowImpl window = getInternalDecorator(toolWindowId).getToolWindow();
     if (!window.isAvailable()) {
@@ -1053,12 +1177,14 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     final Balloon balloon =
       JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(text.replace("\n", "<br>"), actualIcon, type.getPopupBackground(), listener).setHideOnClickOutside(false).setHideOnFrameResize(false)
         .createBalloon();
+    myWindow2Balloon.put(toolWindowId, balloon);
     Disposer.register(balloon, new Disposable() {
       public void dispose() {
         window.setPlaceholderMode(false);
         stripe.updateState();
         stripe.revalidate();
         stripe.repaint();
+        myWindow2Balloon.remove(toolWindowId);
       }
     });
     Disposer.register(getProject(), balloon);
