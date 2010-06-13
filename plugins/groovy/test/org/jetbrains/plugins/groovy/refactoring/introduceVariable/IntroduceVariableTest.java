@@ -71,11 +71,13 @@ public class IntroduceVariableTest extends LightCodeInsightFixtureTestCase {
   public void testDuplicatesInsideIf() throws Throwable { doTest(); }
   public void testFromGString() throws Throwable { doTest(); }
 
+  public void testCharArray() throws Exception {doTest(true);} 
+
   protected static final String ALL_MARKER = "<all>";
 
   protected boolean replaceAllOccurences = false;
 
-  private String processFile(String fileText) throws IncorrectOperationException, InvalidDataException, IOException {
+  private String processFile(String fileText, boolean explicitType) throws IncorrectOperationException, InvalidDataException, IOException {
     String result = "";
     int startOffset = fileText.indexOf(TestUtils.BEGIN_MARKER);
     if (startOffset < 0) {
@@ -106,7 +108,13 @@ public class IntroduceVariableTest extends LightCodeInsightFixtureTestCase {
 
     PsiElement[] occurences = GroovyRefactoringUtil.getExpressionOccurrences(GroovyRefactoringUtil.getUnparenthesizedExpr(selectedExpr), tempContainer);
     String varName = "preved";
-    final PsiType varType = null;
+    final PsiType varType;
+    if (explicitType) {
+      varType = selectedExpr.getType();
+    }
+    else {
+      varType = null;
+    }
     final GrVariableDeclaration varDecl = GroovyPsiElementFactory.getInstance(getProject()).createVariableDeclaration(new String[0],
         GroovyRefactoringUtil.getUnparenthesizedExpr(selectedExpr), varType, varName);
 
@@ -121,9 +129,13 @@ public class IntroduceVariableTest extends LightCodeInsightFixtureTestCase {
     return result;
   }
 
-  public void doTest() throws Exception {
+  public void doTest(boolean explicitType) throws Exception {
     final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
-    assertEquals(data.get(1), processFile(data.get(0)));
+    assertEquals(data.get(1), processFile(data.get(0), explicitType));
+  }
+
+  public void doTest() throws Exception {
+    doTest(false);
   }
 
   protected static String removeAllMarker(String text) {

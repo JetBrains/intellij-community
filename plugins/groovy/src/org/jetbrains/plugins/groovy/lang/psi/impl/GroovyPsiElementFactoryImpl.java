@@ -59,7 +59,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrConstructorImpl;
-import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.ArrayList;
@@ -148,13 +147,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
         text.append("def ");
       }
       else {
-        char c = typeText.charAt(idx);
-        if (!Character.isLetter(c) || Character.isLowerCase(c) && !GroovyNamesUtil.isKeyword(typeText)) { //primitive type
-          text.append("def ");
-        }
-        else {
-          text.append(typeText).append(" ");
-        }
+        text.append(typeText).append(" ");
       }
     } else {
       text.append("def ");

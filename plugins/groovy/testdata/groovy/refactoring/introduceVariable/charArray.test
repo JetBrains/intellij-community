@@ -1,0 +1,3 @@
+<begin>"abc".toCharArray()<end>
+-----
+char[] array = "abc".toCharArray()
