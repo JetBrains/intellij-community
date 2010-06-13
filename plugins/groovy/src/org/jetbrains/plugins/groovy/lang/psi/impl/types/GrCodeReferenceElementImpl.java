@@ -195,7 +195,14 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
   }
 
   public boolean isReferenceTo(PsiElement element) {
-    return getManager().areElementsEquivalent(element, resolve());
+    final PsiManager manager = getManager();
+    if (element instanceof PsiNamedElement && getParent() instanceof GrImportStatement) {
+      final GroovyResolveResult[] results = multiResolve(false);
+      for (GroovyResolveResult result : results) {
+        if (manager.areElementsEquivalent(result.getElement(), element)) return true;
+      }
+    }
+    return manager.areElementsEquivalent(element, resolve());
   }
 
   @NotNull

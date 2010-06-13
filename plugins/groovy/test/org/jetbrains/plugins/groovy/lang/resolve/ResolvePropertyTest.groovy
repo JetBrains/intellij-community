@@ -497,7 +497,7 @@ set<caret>Bar(2)
 """)
     def ref = findReference()
     def resolved = ref.resolve()
-    assertNull resolved
+    assertInstanceOf resolved, GrAccessorMethod
   }
 
   public void testPropertyInCallExpression() {
@@ -544,5 +544,30 @@ print new X().@f<caret>oo
     def ref = findReference()
     def resolved = ref.resolve()
     assertInstanceOf(resolved, GrField)
+  }
+
+  public void testSetterToAliasedImportedProperty() {
+    myFixture.addFileToProject("a.groovy", """class Foo {
+  static def bar
+}""")
+    myFixture.configureByText("b.groovy", """import static Foo.bar as foo
+set<caret>Foo(2)
+""")
+    def ref = findReference()
+    def resolved = ref.resolve()
+    assertInstanceOf resolved, GrAccessorMethod
+  }
+
+  public void testPhysicalSetterToStaticallyImportedProperty() {
+    myFixture.addFileToProject("a.groovy", """class Foo {
+  static def bar
+  static def setBar(def bar){}
+}""")
+    myFixture.configureByText("b.groovy", """import static Foo.bar as foo
+set<caret>Foo(2)
+""")
+    def ref = findReference()
+    def resolved = ref.resolve()
+    assertInstanceOf resolved, GrMethod
   }
 }
