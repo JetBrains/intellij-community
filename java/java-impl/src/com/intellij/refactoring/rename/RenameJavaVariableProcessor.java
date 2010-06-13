@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.rename;
 
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -133,7 +134,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
   }
 
   public void prepareRenaming(final PsiElement element, final String newName, final Map<PsiElement, String> allRenames) {
-    if (element instanceof PsiField) {
+    if (element instanceof PsiField && StdLanguages.JAVA.equals(element.getLanguage())) {
       prepareFieldRenaming((PsiField)element, newName, allRenames);
     }
   }
