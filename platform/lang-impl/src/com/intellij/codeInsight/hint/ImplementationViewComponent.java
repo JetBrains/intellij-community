@@ -128,7 +128,15 @@ public class ImplementationViewComponent extends JPanel {
     myEditor = factory.createEditor(doc, project);
     PsiFile psiFile = getContainingFile(myElements[myIndex]);
 
-    EditorHighlighter highlighter = HighlighterFactory.createHighlighter(project, psiFile.getVirtualFile());
+    VirtualFile virtualFile = psiFile.getVirtualFile();
+    EditorHighlighter highlighter;
+    if (virtualFile != null)
+      highlighter = HighlighterFactory.createHighlighter(project, virtualFile);
+    else {
+      String fileName = psiFile.getName();  // some artificial psi file, lets do best we can
+      highlighter = HighlighterFactory.createHighlighter(project, fileName);
+    }
+
     ((EditorEx)myEditor).setHighlighter(highlighter);
     ((EditorEx)myEditor).setBackgroundColor(EditorFragmentComponent.getBackgroundColor(myEditor));
 
