@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.findUsages;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NullableComputable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
@@ -26,6 +27,7 @@ import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -60,15 +62,13 @@ public class AccessorReferencesSearcher implements QueryExecutor<PsiReference, M
       }
     };
 
-    return helper.processElementsWithWord(processor,
-                                          searchScope,
-                                          propertyName,
-                                          UsageSearchContext.IN_CODE,
-                                          false);
+    return helper.processElementsWithWord(processor, searchScope, propertyName, UsageSearchContext.IN_CODE, false);
   }
 
-  private String getPropertyName(final PsiMethod method) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+  @Nullable
+  private static String getPropertyName(final PsiMethod method) {
+    return ApplicationManager.getApplication().runReadAction(new NullableComputable<String>() {
+      @Nullable
       public String compute() {
         return GroovyPropertyUtils.getPropertyName(method);
       }

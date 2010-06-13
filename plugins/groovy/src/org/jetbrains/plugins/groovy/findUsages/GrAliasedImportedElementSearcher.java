@@ -17,13 +17,16 @@ package org.jetbrains.plugins.groovy.findUsages;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.psi.*;
-import com.intellij.psi.search.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.TextOccurenceProcessor;
+import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -32,28 +35,16 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
  * @author Maxim.Medvedev
  */
 public class GrAliasedImportedElementSearcher implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters> {
-  private static final Key<Boolean> SEARCHING_FOR_IT = Key.create("SEARCHING_FOR_IT");
+  private static final ThreadLocal<Object> I_WAS_HERE = new ThreadLocal<Object>();
 
   public boolean execute(final ReferencesSearch.SearchParameters parameters, final Processor<PsiReference> consumer) {
     final PsiElement elementToSearch = parameters.getElementToSearch();
     if (!(elementToSearch instanceof PsiMember)) return true;
-    if (elementToSearch.getUserData(SEARCHING_FOR_IT) != null) return true;
+    if (I_WAS_HERE.get() != null) return true;
+
     try {
-      elementToSearch.putUserData(SEARCHING_FOR_IT, Boolean.TRUE);
-      final TextOccurenceProcessor processor = new TextOccurenceProcessor() {
-        public boolean execute(PsiElement element, int offsetInElement) {
-          final PsiReference[] refs = element.getParent().getReferences();
-          for (PsiReference ref : refs) {
-            if (ReferenceRange.containsOffsetInElement(ref, offsetInElement)) {
-              if (ref.isReferenceTo(elementToSearch)) {
-                return consumer.process(ref);
-              }
-            }
-          }
-          return true;
-        }
-      };
-      final PsiSearchHelper helper = PsiManager.getInstance(elementToSearch.getProject()).getSearchHelper();
+      I_WAS_HERE.set(Boolean.TRUE);
+      final TextOccurenceProcessor processor = new MyTextOccurenceProcessor(elementToSearch, consumer);
 
       final SearchScope groovySearchScope = PsiUtil.restrictScopeToGroovyFiles(new Computable<SearchScope>() {
         public SearchScope compute() {
@@ -61,74 +52,107 @@ public class GrAliasedImportedElementSearcher implements QueryExecutor<PsiRefere
         }
       });
 
-      if (!ReferencesSearch.search(elementToSearch, groovySearchScope).forEach(new Processor<PsiReference>() {
-        public boolean process(PsiReference reference) {
-          final PsiElement element = reference.getElement();
-          String alias = ApplicationManager.getApplication().runReadAction(new NullableComputable<String>() {
-            public String compute() {
-              if (!(element.getParent() instanceof GrImportStatement)) return null;
-              final GrImportStatement importStatement = (GrImportStatement)element.getParent();
-              if (!importStatement.isAliasedImport()) return null;
-              return importStatement.getImportedName();
-            }
-          });
-          if (alias == null) return true;
+      if (!ReferencesSearch.search(elementToSearch, groovySearchScope).forEach(new MyProcessor(null, processor))) return false;
 
-          final PsiFile containingFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
-            public PsiFile compute() {
-              return element.getContainingFile();
-            }
-          });
-
-          return helper
-            .processElementsWithWord(processor, GlobalSearchScope.fileScope(containingFile), alias, UsageSearchContext.IN_CODE, false);
-        }
-      })) return false;
-
-      if (elementToSearch instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertyAccessor((PsiMethod)elementToSearch)) {
-        final PsiField field = GroovyPropertyUtils.findFieldForAccessor((PsiMethod)elementToSearch, true);
+      if (elementToSearch instanceof PsiMethod && isAccessor(elementToSearch)) {
+        final PsiField field = ApplicationManager.getApplication().runReadAction(new Computable<PsiField>() {
+          public PsiField compute() {
+            return GroovyPropertyUtils.findFieldForAccessor((PsiMethod)elementToSearch, true);
+          }
+        });
         if (field != null) {
-          try {
-            field.putUserData(SEARCHING_FOR_IT, Boolean.TRUE);
-            if (!ReferencesSearch.search(field, groovySearchScope).forEach(new Processor<PsiReference>() {
-              public boolean process(PsiReference psiReference) {
-                final PsiElement element = psiReference.getElement();
-                String alias = ApplicationManager.getApplication().runReadAction(new NullableComputable<String>() {
-                  public String compute() {
-                    if (!(element.getParent() instanceof GrImportStatement)) return null;
-                    final GrImportStatement importStatement = (GrImportStatement)element.getParent();
-                    if (!importStatement.isAliasedImport()) return null;
-                    return importStatement.getImportedName();
-                  }
-                });
-                if (alias == null) return true;
-                final String prefix = GroovyPropertyUtils.getAccessorPrefix((PsiMethod)elementToSearch);
-                if (prefix == null) return true;
-
-                alias = prefix + alias;
-                final PsiFile containingFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
-                  public PsiFile compute() {
-                    return element.getContainingFile();
-                  }
-                });
-
-                return helper
-                  .processElementsWithWord(processor, GlobalSearchScope.fileScope(containingFile), alias, UsageSearchContext.IN_CODE,
-                                           false);
-              }
-            })) {
-              return false;
+          final String prefix = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+            public String compute() {
+              return GroovyPropertyUtils.getAccessorPrefix((PsiMethod)elementToSearch);
             }
-          }
-          finally {
-            field.putUserData(SEARCHING_FOR_IT, null);
-          }
+          });
+          if (prefix == null) return true;
+          if (!ReferencesSearch.search(field, groovySearchScope).forEach(new MyProcessor(prefix, processor))) return false;
         }
       }
       return true;
     }
     finally {
-      elementToSearch.putUserData(SEARCHING_FOR_IT, null);
+      I_WAS_HERE.set(null);
+    }
+
+  }
+
+  private static Boolean isAccessor(final PsiElement elementToSearch) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      public Boolean compute() {
+        return GroovyPropertyUtils.isSimplePropertyAccessor((PsiMethod)elementToSearch);
+      }
+    });
+  }
+
+  static class MyProcessor implements Processor<PsiReference> {
+    private final String prefix;
+    private final TextOccurenceProcessor processor;
+
+    MyProcessor(@Nullable String prefix, TextOccurenceProcessor processor) {
+      this.prefix = prefix;
+      this.processor = processor;
+    }
+
+    public boolean process(PsiReference psiReference) {
+      final PsiElement element = psiReference.getElement();
+      if (element == null) return true;
+
+      String alias = getAlias(element);
+      if (alias == null) return true;
+
+      final PsiFile containingFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+        public PsiFile compute() {
+          return element.getContainingFile();
+        }
+      });
+
+      if (prefix != null) {
+        if (!PsiManager.getInstance(element.getProject()).getSearchHelper()
+          .processElementsWithWord(processor, GlobalSearchScope.fileScope(containingFile), prefix + GroovyPropertyUtils.capitalize(alias),
+                                   UsageSearchContext.IN_CODE,
+                                   false)) {
+          return false;
+        }
+      }
+
+      return PsiManager.getInstance(element.getProject()).getSearchHelper()
+        .processElementsWithWord(processor, GlobalSearchScope.fileScope(containingFile), alias, UsageSearchContext.IN_CODE, false);
+    }
+
+    private static String getAlias(final PsiElement element) {
+      return ApplicationManager.getApplication().runReadAction(new NullableComputable<String>() {
+        public String compute() {
+          if (!(element.getParent() instanceof GrImportStatement)) return null;
+          final GrImportStatement importStatement = (GrImportStatement)element.getParent();
+          if (!importStatement.isAliasedImport()) return null;
+          return importStatement.getImportedName();
+        }
+      });
+    }
+
+  }
+
+static class MyTextOccurenceProcessor implements TextOccurenceProcessor {
+    private final PsiElement elementToSearch;
+    private final Processor<PsiReference> consumer;
+
+    public MyTextOccurenceProcessor(PsiElement elementToSearch, Processor<PsiReference> consumer) {
+      this.elementToSearch = elementToSearch;
+      this.consumer = consumer;
+    }
+
+    public boolean execute(PsiElement element, int offsetInElement) {
+      final PsiReference[] refs = element.getParent().getReferences();
+      for (PsiReference ref : refs) {
+        if (ReferenceRange.containsOffsetInElement(ref, offsetInElement)) {
+          if (ref.isReferenceTo(elementToSearch)) {
+            return consumer.process(ref);
+          }
+        }
+      }
+      return true;
     }
   }
 }

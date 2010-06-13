@@ -117,6 +117,16 @@ public class FindUsagesTest extends LightGroovyTestCase {
     doTestImpl("A.groovy", 2);
   }
 
+  public void testAliasImportedProperty() throws Throwable {
+    myFixture.addFileToProject("Abc.groovy", "class Abc {static def foo}");
+    doTestImpl("A.groovy", 1);
+  }
+
+  public void testGetterWhenAliasedImportedProperty() throws Throwable {
+    myFixture.addFileToProject("Abc.groovy", "class Abc {static def foo}");
+    doTestImpl("A.groovy", 2);
+  }
+
   public void testForInParameter() throws Throwable {
     doTestImpl("A.groovy", 1);
   }
