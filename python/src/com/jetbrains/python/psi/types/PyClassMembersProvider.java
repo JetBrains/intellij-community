@@ -17,4 +17,6 @@ public interface PyClassMembersProvider {
   Collection<PyDynamicMember> getMembers(PyClass clazz);
   @Nullable
   PsiElement resolveMember(PyClass clazz, String name);
+
+  boolean hasUnderscoreWildCard(String name);
 }

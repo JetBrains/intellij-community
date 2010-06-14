@@ -1,6 +1,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.jetbrains.python.psi.PyConditionalStatementPart;
+import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.PyElementTypes;
 import com.intellij.lang.ASTNode;
@@ -20,5 +21,10 @@ public abstract class PyConditionalStatementPartImpl extends PyStatementPartImpl
       return (PyExpression)n.getPsi();
     }
     return null;
+  }
+
+  @Override
+  protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
+    pyVisitor.visitPyConditionalStatementPart(this);
   }
 }

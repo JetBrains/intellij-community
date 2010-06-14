@@ -7,7 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 * User: dcheryasov
 * Date: Apr 6, 2010 8:06:46 PM
 */
-public interface SdkRootVisitor {
+public interface RootVisitor {
   /**
    * @param root what we're visiting.
    * @return false when visiting must stop.

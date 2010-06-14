@@ -12,7 +12,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
-import com.jetbrains.python.psi.resolve.SdkRootVisitor;
+import com.jetbrains.python.psi.resolve.RootVisitor;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.toolbox.ChainIterable;
@@ -231,7 +231,7 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
     return null;
   }
 
-  private class RootFinder implements SdkRootVisitor {
+  private class RootFinder implements RootVisitor {
     private String myResult;
     private String myPath;
 

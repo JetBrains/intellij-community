@@ -1,6 +1,9 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.completion.PrioritizedLookupElement;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -14,12 +17,15 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyCallExpressionImpl;
+import com.jetbrains.python.psi.impl.PyKeywordArgumentImpl;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -112,6 +118,7 @@ public class PyUtil {
   }
 
   // Poor man's catamorhpism :)
+
   /**
    * Flattens the representation of every element in targets, and puts all results together.
    * Elements of every tuple nested in target item are brought to the top level: (a, (b, (c, d))) -> (a, b, c, d)
@@ -127,6 +134,7 @@ public class PyUtil {
 
   // Poor man's filter
   // TODO: move to a saner place
+
   public static boolean instanceOf(Object obj, Class... possibleClasses) {
     for (Class cls : possibleClasses) {
       if (cls.isInstance(obj)) return true;
@@ -137,7 +145,8 @@ public class PyUtil {
 
   /**
    * Produce a reasonable representation of a PSI element, good for debugging.
-   * @param elt element to represent; nulls and invalid nodes are ok.
+   *
+   * @param elt      element to represent; nulls and invalid nodes are ok.
    * @param cutAtEOL if true, representation stops at nearest EOL inside the element.
    * @return the representation.
    */
@@ -184,6 +193,7 @@ public class PyUtil {
 
   /**
    * Shows an information balloon in a reasonable place at the top right of the window.
+   *
    * @param project     our project
    * @param message     the text, HTML markup allowed
    * @param messageType message type, changes the icon and the background.
@@ -209,12 +219,17 @@ public class PyUtil {
    * Returns a quoted string representation, or "null".
    */
   public static String nvl(Object s) {
-    if (s != null) return "'" + s.toString() + "'";
-    else return "null";
+    if (s != null) {
+      return "'" + s.toString() + "'";
+    }
+    else {
+      return "null";
+    }
   }
 
   /**
-   * Adds an item into a comma-separated list in a PSI tree. E.g. can turn "foo, bar" into "foo, bar, baz", adding commas as needed. 
+   * Adds an item into a comma-separated list in a PSI tree. E.g. can turn "foo, bar" into "foo, bar, baz", adding commas as needed.
+   *
    * @param parent     the element to represent the list; we're adding a child to it.
    * @param newItem    the element we're inserting (the "baz" in the example).
    * @param beforeThis node to mark the insertion point inside the list; must belong to a child of target. Set to null to add first element.
@@ -239,6 +254,7 @@ public class PyUtil {
   /**
    * Removes an element from a a comma-separated list in a PSI tree. E.g. can turn "foo, bar, baz" into "foo, baz",
    * removing commas as needed. It removes a trailing comma if it results from deletion.
+   *
    * @param item what to remove. Its parent is considered the list, and commas must be its peers.
    */
   public static void removeListNode(PsiElement item) {
@@ -250,7 +266,7 @@ public class PyUtil {
     ASTNode binder = parent.getNode();
     assert binder != null : "parent node is null, ensureWritable() lied";
     boolean got_comma_after = eraseWhitespaceAndComma(binder, item, false);
-    if (! got_comma_after) {
+    if (!got_comma_after) {
       // there was not a comma after the item; remove a comma before the item
       eraseWhitespaceAndComma(binder, item, true);
     }
@@ -260,6 +276,7 @@ public class PyUtil {
 
   /**
    * Removes whitespace and comma(s) that are siblings of the item, up to the first non-whitespace and non-comma.
+   *
    * @param parent_node node of the parent of item.
    * @param item        starting point; we erase left or right of it, but not it.
    * @param backwards   true to erase prev siblings, false to erase next siblings.
@@ -274,14 +291,20 @@ public class PyUtil {
     boolean have_skipped_the_item = false;
     while (current != null) {
       candidate = current;
-      current = backwards? current.getTreePrev() : current.getTreeNext();
+      current = backwards ? current.getTreePrev() : current.getTreeNext();
       if (have_skipped_the_item) {
         is_comma = ",".equals(candidate.getText());
         got_comma |= is_comma;
-        if (is_comma || candidate.getElementType() == TokenType.WHITE_SPACE) parent_node.removeChild(candidate);
-        else break;
+        if (is_comma || candidate.getElementType() == TokenType.WHITE_SPACE) {
+          parent_node.removeChild(candidate);
+        }
+        else {
+          break;
+        }
       }
-      else have_skipped_the_item = true;
+      else {
+        have_skipped_the_item = true;
+      }
     }
     return got_comma;
   }
@@ -320,10 +343,12 @@ public class PyUtil {
 
   /**
    * Finds the first identifier AST node under target element, and returns its text.
+   *
    * @param target
    * @return identifier text, or null.
    */
-  public static @Nullable
+  public static
+  @Nullable
   String getIdentifier(PsiElement target) {
     ASTNode node = target.getNode();
     if (node != null) {
@@ -335,13 +360,15 @@ public class PyUtil {
 
 
   // TODO: move to a more proper place?
+
   /**
    * Determine the type of a special attribute. Currently supported: {@code __class__} and {@code __dict__}.
+   *
    * @param ref reference to a possible attribute; only qualified references make sense.
    * @return type, or null (if type cannot be determined, reference is not to a known attribute, etc.)
    */
   @Nullable
-  public static PyType getSpecialAttributeType(PyReferenceExpression ref) {
+  public static PyType getSpecialAttributeType(@Nullable PyReferenceExpression ref) {
     if (ref != null) {
       PyExpression qualifier = ref.getQualifier();
       if (qualifier != null) {
@@ -365,6 +392,7 @@ public class PyUtil {
 
   /**
    * Makes sure that 'thing' is not null; else throws an {@link IncorrectOperationException}.
+   *
    * @param thing what we check.
    * @return thing, if not null.
    */
@@ -376,6 +404,7 @@ public class PyUtil {
 
   /**
    * Makes sure that the 'thing' is true; else throws an {@link IncorrectOperationException}.
+   *
    * @param thing what we check.
    */
   public static void sure(boolean thing) {
@@ -385,10 +414,13 @@ public class PyUtil {
   /**
    * For cases when a function is decorated with only one decorator, and this is a built-in decorator.
    * <br/> <i>TODO: handle multiple decorators sensibly; then rename and move.</i>
+   *
    * @param node the allegedly decorated function
    * @return name of the only built-in decorator, or null (even if there are multiple or non-built-in decorators!)
    */
-  public static @Nullable String getTheOnlyBuiltinDecorator(@NotNull final PyFunction node) {
+  public static
+  @Nullable
+  String getTheOnlyBuiltinDecorator(@NotNull final PyFunction node) {
     PyDecoratorList decolist = node.getDecoratorList();
     if (decolist != null) {
       PyDecorator[] decos = decolist.getDecorators();
@@ -406,6 +438,7 @@ public class PyUtil {
 
   /**
    * Looks for two standard decorators to a function, or a wrapping assignment that closely follows it.
+   *
    * @param function what to analyze
    * @return a set of flags describing what was detected.
    */
@@ -413,13 +446,15 @@ public class PyUtil {
   public static Set<PyFunction.Flag> detectDecorationsAndWrappersOf(PyFunction function) {
     Set<PyFunction.Flag> flags = EnumSet.noneOf(PyFunction.Flag.class);
     String deconame = getTheOnlyBuiltinDecorator(function);
-    if (PyNames.CLASSMETHOD.equals(deconame)) flags.add(CLASSMETHOD);
+    if (PyNames.CLASSMETHOD.equals(deconame)) {
+      flags.add(CLASSMETHOD);
+    }
     else if (PyNames.STATICMETHOD.equals(deconame)) flags.add(STATICMETHOD);
     // implicit classmethod __new__
     PyClass cls = function.getContainingClass();
     if (cls != null && PyNames.NEW.equals(function.getName()) && cls.isNewStyleClass()) flags.add(CLASSMETHOD);
     //
-    if (! flags.contains(CLASSMETHOD) && ! flags.contains(STATICMETHOD)) { // not set by decos, look for reassignment
+    if (!flags.contains(CLASSMETHOD) && !flags.contains(STATICMETHOD)) { // not set by decos, look for reassignment
       String func_name = function.getName();
       if (func_name != null) {
         PyAssignmentStatement assignment = PsiTreeUtil.getNextSiblingOfType(function, PyAssignmentStatement.class);
@@ -434,7 +469,9 @@ public class PyUtil {
                   PyFunction original = interpreted.getSecond();
                   if (original == function) {
                     String wrapper_name = interpreted.getFirst();
-                    if (PyNames.CLASSMETHOD.equals(wrapper_name)) flags.add(CLASSMETHOD);
+                    if (PyNames.CLASSMETHOD.equals(wrapper_name)) {
+                      flags.add(CLASSMETHOD);
+                    }
                     else if (PyNames.STATICMETHOD.equals(wrapper_name)) flags.add(STATICMETHOD);
                     flags.add(WRAPPED);
                   }
@@ -461,7 +498,7 @@ public class PyUtil {
     final ASTNode node = element.getNode();
     if (node != null) {
       final ASTNode[] children = node.getChildren(filter);
-      return (0 <= number && number < children.length) ? children [number].getPsi() : null;
+      return (0 <= number && number < children.length) ? children[number].getPsi() : null;
     }
     return null;
   }
@@ -472,6 +509,7 @@ public class PyUtil {
    * Alas, resolve() and multiResolve() can't return anything but a PyFile or PsiFileImpl.isPsiUpToDate() would fail.
    * This is because isPsiUpToDate() relies on identity of objects returned by FileViewProvider.getPsi().
    * If we ever need to exactly tell a dir from __init__.py, that logic has to change.
+   *
    * @param target a resolve candidate.
    * @return a PsiFile if target was a PsiDirectory, or null, or target unchanged.
    */
@@ -484,19 +522,26 @@ public class PyUtil {
         file.putCopyableUserData(PyFile.KEY_IS_DIRECTORY, Boolean.TRUE);
         return file; // ResolveImportUtil will extract directory part as needed, everyone else are better off with a file.
       }
-      else return null; // dir without __init__.py does not resolve
+      else {
+        return null;
+      } // dir without __init__.py does not resolve
     }
-    else return target; // don't touch non-dirs
+    else {
+      return target;
+    } // don't touch non-dirs
   }
 
   /**
    * Counts initial underscores of an identifier.
+   *
    * @param name identifier
    * @return 0 if no initial underscores found, 1 if there's only one underscore, 2 if there's two or more initial underscores.
    */
   public static int getInitialUnderscores(String name) {
-    int underscores=0;
-    if (name.startsWith("__")) underscores = 2;
+    int underscores = 0;
+    if (name.startsWith("__")) {
+      underscores = 2;
+    }
     else if (name.startsWith("_")) underscores = 1;
     return underscores;
   }
@@ -504,6 +549,7 @@ public class PyUtil {
   /**
    * Tries to find nearest parent that conceals names defined inside it. Such elements are 'class' and 'def':
    * anything defined within it does not seep to the namespace below them, but is concealed within.
+   *
    * @param elt starting point of search.
    * @return 'class' or 'def' element, or null if not found.
    */
@@ -513,7 +559,7 @@ public class PyUtil {
       return null;
     }
     PsiElement parent = elt.getParent();
-    while(parent != null) {
+    while (parent != null) {
       if (parent instanceof PyClass || parent instanceof Callable) {
         return parent;
       }
@@ -533,6 +579,15 @@ public class PyUtil {
     return name.startsWith("__") && !name.endsWith("__");
   }
 
+  public static boolean isPythonIdentifier(String name) {
+    return PyNames.isIdentifier(name);
+  }
+
+  public static LookupElement createNamedParameterLookup(String name) {
+    LookupElementBuilder lookupElementBuilder = LookupElementBuilder.create(name + "=").setIcon(Icons.PARAMETER_ICON);
+    return PrioritizedLookupElement.withGrouping(lookupElementBuilder, 1);
+  }
+
   public static class UnderscoreFilter implements Condition<String> {
     private int myAllowed; // how many starting underscores is allowed: 0 is none, 1 is only one, 2 is two and more.
 
@@ -548,5 +603,18 @@ public class PyUtil {
       if (have_underscores != 0 && name.length() > 1 && name.charAt(1) == '_') have_underscores = 2;
       return myAllowed >= have_underscores;
     }
+  }
+
+  @Nullable
+  public static PyExpression getKeywordArgument(PyCallExpressionImpl expr, String keyword) {
+    for (PyExpression arg : expr.getArguments()) {
+      if (arg instanceof PyKeywordArgumentImpl) {
+        PyKeywordArgumentImpl kwarg = (PyKeywordArgumentImpl)arg;
+        if (keyword.equals(kwarg.getKeyword())) {
+          return kwarg.getValueExpression();
+        }
+      }
+    }
+    return null;
   }
 }

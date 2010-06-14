@@ -10,6 +10,7 @@ import com.intellij.psi.stubs.StringStubIndexExtension;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
 import com.jetbrains.python.psi.PyClass;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -26,7 +27,7 @@ public class PyClassNameIndex extends StringStubIndexExtension<PyClass> {
   }
 
   @Nullable
-  public static PyClass findClass(String qName, Project project, GlobalSearchScope scope) {
+  public static PyClass findClass(@NotNull String qName, Project project, GlobalSearchScope scope) {
     int pos = qName.lastIndexOf(".");
     assert pos > 0;
     String shortName = qName.substring(pos+1);
@@ -39,7 +40,10 @@ public class PyClassNameIndex extends StringStubIndexExtension<PyClass> {
   }
 
   @Nullable
-  public static PyClass findClass(String qName, Project project) {
+  public static PyClass findClass(@Nullable String qName, Project project) {
+    if (qName == null) {
+      return null;
+    }
     return findClass(qName, project, ProjectScope.getAllScope(project));
   }
 }

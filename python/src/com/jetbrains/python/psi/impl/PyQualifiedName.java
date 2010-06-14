@@ -116,4 +116,8 @@ public class PyQualifiedName {
   public String toString() {
     return StringUtil.join(myComponents, ".");
   }
+
+  public static PyQualifiedName fromDottedString(String refName) {
+    return fromComponents(refName.split("\\."));
+  }
 }

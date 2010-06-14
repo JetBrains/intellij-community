@@ -317,8 +317,8 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   private final static Maybe<PyFunction> none = new Maybe<PyFunction>(null); // denotes an explicit None
 
   @Nullable
-  private Property findPropertyLocally(@NotNull String name) {
-    // NOTE: maybe cache the result?
+  private Property findPropertyLocally(@NotNull String name, boolean advanced) {
+    // NOTE: fast enough to be rerun every time
     Maybe<PyFunction> getter = none;
     Maybe<PyFunction> setter = none;
     Maybe<PyFunction> deleter = none;
@@ -334,10 +334,10 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
               if (deco_name.matches("property")) {
                 getter = new Maybe<PyFunction>(method);
               }
-              else if (deco_name.matches(name, "setter")) {
+              else if (advanced && deco_name.matches(name, "setter")) {
                 setter = new Maybe<PyFunction>(method);
               }
-              else if (deco_name.matches(name, "deleter")) {
+              else if (advanced && deco_name.matches(name, "deleter")) {
                 deleter = new Maybe<PyFunction>(method);
               }
             }
@@ -377,10 +377,17 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   public Property findProperty(@NotNull String name) {
-    Property prop = findPropertyLocally(name);
+    LanguageLevel level = LanguageLevel.getDefault();
+    final PsiFile containing_file = getContainingFile();
+    if (containing_file != null) {
+      final VirtualFile vfile = containing_file.getVirtualFile();
+      if (vfile != null) level = LanguageLevel.forFile(vfile);
+    }
+    boolean use_advanced_syntax = level.isAtLeast(LanguageLevel.PYTHON26);
+    Property prop = findPropertyLocally(name, use_advanced_syntax);
     if (prop != null) return prop;
     for (PyClass cls : iterateAncestors()) {
-      prop = ((PyClassImpl)cls).findPropertyLocally(name);
+      prop = ((PyClassImpl)cls).findPropertyLocally(name, use_advanced_syntax);
       if (prop != null) return prop;
     }
     return null;

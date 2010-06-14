@@ -1,6 +1,5 @@
 package com.jetbrains.python.psi;
 
-import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

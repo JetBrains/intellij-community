@@ -1,6 +1,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.ProjectTopics;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -8,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,6 +27,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.*;
 
 /**
@@ -33,6 +37,11 @@ import java.util.*;
 public class PyBuiltinCache {
   public static final @NonNls String BUILTIN_FILE = "__builtin__.py";
   @NonNls public static final String BUILTIN_FILE_3K = "builtins.py";
+
+  /**
+   * Used in cases when a virtual file as absent in test mode; then the project may store its own SDK.
+   */
+  public static final Key<Sdk> TEST_SDK = new Key<Sdk>("test.sdk.instance");
 
 
   /**
@@ -71,6 +80,10 @@ public class PyBuiltinCache {
                 }
               }
             }
+          }
+          else if (ApplicationManager.getApplication().isUnitTestMode()) {
+            // did they store a test SDK for us?
+            sdk = project.getUserData(TEST_SDK);
           }
         }
       }
@@ -271,4 +284,8 @@ public class PyBuiltinCache {
     return myBuiltinsFile == the_file; // files are singletons, no need to compare URIs
   }
 
+  @Override
+  public String toString() {
+    return "Builtins("+ (myBuiltinsFile != null? myBuiltinsFile.toString() : "null") +")";
+  }
 }

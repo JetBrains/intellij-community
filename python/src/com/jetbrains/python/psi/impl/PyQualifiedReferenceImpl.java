@@ -58,13 +58,11 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
       if (ref_elt != null) ret.poke(ref_elt, RatedResolveResult.RATE_NORMAL);
       // enrich the type info with any fields assigned nearby
       if (qualifier instanceof PyQualifiedExpression) {
-        for (PyExpression ex : collectAssignedAttributes((PyQualifiedExpression)qualifier)) {
-          if (referencedName.equals(ex.getName())) {
-            ret.poke(ex, RatedResolveResult.RATE_NORMAL);
-            return ret;
-          }
-        }
+        // enrich the type info with any fields assigned nearby
+        if (addAssignedAttributes(ret, referencedName, qualifier)) return ret;
       }
+      // resolve within the type proper
+      addResolveMember(ret, referencedName, qualifierType, ctx);
     }
     else if (myContext.allowImplicits()) {
       final Collection<PyFunction> functions = PyFunctionNameIndex.find(referencedName, myElement.getProject());
@@ -76,71 +74,49 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
     }
     // special case of __doc__
     if ("__doc__".equals(referencedName)) {
-      PsiElement docstring = null;
-      if (qualifierType instanceof PyClassType) {
-        PyClass qual_class = ((PyClassType)qualifierType).getPyClass();
-        if (qual_class != null) docstring = qual_class.getDocStringExpression();
-      }
-      else if (qualifierType instanceof PyModuleType) {
-        PsiFile qual_module = ((PyModuleType)qualifierType).getModule();
-        if (qual_module instanceof PyDocStringOwner) {
-          docstring = ((PyDocStringOwner)qual_module).getDocStringExpression();
-        }
-      }
-      else if (qualifier instanceof PyReferenceExpression) {
-        PsiElement qual_object = ((PyReferenceExpression)qualifier).getReference(myContext).resolve();
-        if (qual_object instanceof PyDocStringOwner) {
-          docstring = ((PyDocStringOwner)qual_object).getDocStringExpression();
-        }
-      }
-      if (docstring != null) {
-        ret.poke(docstring, RatedResolveResult.RATE_HIGH);
-      }
+      addDocReference(ret, qualifier, qualifierType);
     }
-    /*
-    // case of a field marked as @property_name.{getter,setter,deleter}
-    final PsiFile containing_file = myElement.getContainingFile();
-    if (containing_file != null) {
-      final VirtualFile vfile = containing_file.getVirtualFile();
-      if (vfile != null && LanguageLevel.forFile(vfile).isAtLeast(LanguageLevel.PYTHON26)) {
-        String expected_accessor;
-        if (PsiTreeUtil.getParentOfType(myElement, PyDelStatement.class) != null) expected_accessor = "deleter";
-        else if (PsiTreeUtil.getParentOfType(myElement, PyTargetExpression.class) != null)  expected_accessor = "setter";
-        else expected_accessor = "getter";
-
-        final PsiElement parent = myElement.getParent();
-        PyExpression prev_qualifier = null;
-        if (qualifier instanceof PyQualifiedExpression) {
-          prev_qualifier = ((PyQualifiedExpression)qualifier).getQualifier();
-        }
-        if (prev_qualifier == null && parent instanceof PyDecorator) {
-          if (ArrayUtil.contains(referencedName, PROPERTY_DECO_ATTRIBUTES)) {
-            // find above us a method named as referencedName and marked with @property
-            PyFunction method = ((PyDecorator)parent).getTarget();
-            if (method != null) {
-              final PyClass containing_class = method.getContainingClass();
-              if (containing_class != null) {
-                for (PyFunction a_method : containing_class.getMethods()) { // not treeCrawlUp, use stubs
-                  if (referencedName.equals(a_method.getName()) && "property".equals(PyUtil.getTheOnlyBuiltinDecorator(a_method))) {
-                    // are we textually after that method?
-                    if (a_method.getTextOffset() > method.getTextOffset()) {
-                      ret.poke(a_method, RatedResolveResult.RATE_HIGH);
-                      break;
-                      // NOTE: maybe find the closest, since redefinitions are possible
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    */
     return ret;
   }
 
-  protected final static String[] PROPERTY_DECO_ATTRIBUTES = {"getter", "setter", "deleter"};
+  private static void addResolveMember(ResultList ret, String referencedName, PyType qualifierType, PyType.Context context) {
+    PsiElement ref_elt = PyUtil.turnDirIntoInit((qualifierType.resolveMember(referencedName, context)).valueOrNull());
+    if (ref_elt != null) ret.poke(ref_elt, RatedResolveResult.RATE_NORMAL);
+  }
+
+  private static boolean addAssignedAttributes(ResultList ret, String referencedName, PyExpression qualifier) {
+    List<PyQualifiedExpression> qualifier_path = PyResolveUtil.unwindQualifiers((PyQualifiedExpression)qualifier);
+    if (qualifier_path != null) {
+      for (PyExpression ex : collectAssignedAttributes((PyQualifiedExpression)qualifier)) {
+        if (referencedName.equals(ex.getName())) {
+          ret.poke(ex, RatedResolveResult.RATE_NORMAL);
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private void addDocReference(ResultList ret, PyExpression qualifier, PyType qualifierType) {
+    PsiElement docstring = null;
+    if (qualifierType instanceof PyClassType) {
+      PyClass qual_class = ((PyClassType)qualifierType).getPyClass();
+      if (qual_class != null) docstring = qual_class.getDocStringExpression();
+    }
+    else if (qualifierType instanceof PyModuleType) {
+      PsiFile qual_module = ((PyModuleType)qualifierType).getModule();
+      if (qual_module instanceof PyDocStringOwner) {
+        docstring = ((PyDocStringOwner)qual_module).getDocStringExpression();
+      }
+    }
+    else if (qualifier instanceof PyReferenceExpression) {
+      PsiElement qual_object = ((PyReferenceExpression)qualifier).getReference(myContext).resolve();
+      if (qual_object instanceof PyDocStringOwner) {
+        docstring = ((PyDocStringOwner)qual_object).getDocStringExpression();
+      }
+    }
+    ret.poke(docstring, RatedResolveResult.RATE_HIGH);
+  }
 
   @NotNull
   @Override
@@ -163,7 +139,7 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
             names_already.add(refex.getReferencedName());
           }
           else if (ex instanceof PyTargetExpression) {
-            PyTargetExpression targetExpr = (PyTargetExpression) ex;
+            PyTargetExpression targetExpr = (PyTargetExpression)ex;
             names_already.add(targetExpr.getName());
           }
         }
