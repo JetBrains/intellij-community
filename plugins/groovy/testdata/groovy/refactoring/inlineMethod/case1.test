@@ -18,7 +18,8 @@ int fact(int n) {
 
 def foo(int i) {
     switch (i) {
-      case 42: int result
+      case 42:
+        int result
         if (5 > 0) result = 5 * fact(5 - 1);
         else result = 1
         return result

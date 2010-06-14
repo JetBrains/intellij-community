@@ -35,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrLabel;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -59,7 +60,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrConstructorImpl;
-import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.ArrayList;
@@ -136,28 +136,16 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return (GrExpression) ((GroovyFileBase) file).getTopStatements()[0];
   }
 
-  public GrVariableDeclaration createVariableDeclaration(String[] modifiers, GrExpression initializer, PsiType type, String... identifiers) {
+  public GrVariableDeclaration createVariableDeclaration(String[] modifiers,
+                                                         GrExpression initializer,
+                                                         PsiType type,
+                                                         String... identifiers) {
     StringBuffer text = writeModifiers(modifiers);
-
+    text.append("def ");
     if (type != null) {
       type = TypesUtil.unboxPrimitiveTypeWrapper(type);
       final String typeText = getTypeText(type);
-      int lastDot = typeText.lastIndexOf('.');
-      int idx = 0 < lastDot && lastDot < typeText.length() - 1 ? lastDot + 1 : 0;
-      if (typeText.length() == 0) {
-        text.append("def ");
-      }
-      else {
-        char c = typeText.charAt(idx);
-        if (!Character.isLetter(c) || Character.isLowerCase(c) && !GroovyNamesUtil.isKeyword(typeText)) { //primitive type
-          text.append("def ");
-        }
-        else {
-          text.append(typeText).append(" ");
-        }
-      }
-    } else {
-      text.append("def ");
+      text.append(typeText).append(" ");
     }
 
     for (int i = 0; i < identifiers.length; i++) {
@@ -169,19 +157,25 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
     if (initializer != null) {
       if (initializer instanceof GrApplicationStatement) {
-        expr = createMethodCallByAppCall(((GrApplicationStatement) initializer));
-      } else {
+        expr = createMethodCallByAppCall(((GrApplicationStatement)initializer));
+      }
+      else {
         expr = initializer;
       }
       text.append(" = ").append(expr.getText());
     }
 
     PsiFile file = createGroovyFile(text.toString());
-    GrTopStatement[] topStatements = ((GroovyFileBase) file).getTopStatements();
+    GrTopStatement[] topStatements = ((GroovyFileBase)file).getTopStatements();
     if (topStatements.length == 0 || !(topStatements[0] instanceof GrVariableDeclaration)) {
       throw new RuntimeException("Invalid arguments, text = " + text.toString());
     }
-    return (GrVariableDeclaration) topStatements[0];
+
+    final GrVariableDeclaration declaration = (GrVariableDeclaration)topStatements[0];
+    if (declaration.getTypeElementGroovy() != null) {
+      declaration.getModifierList().setModifierProperty(GrModifier.DEF, false);
+    }
+    return declaration;
   }
 
   @Override

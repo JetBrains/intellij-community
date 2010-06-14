@@ -32,9 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTupleDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -186,44 +184,8 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GroovyBa
   }
 
   public void setType(@Nullable PsiType type) {
-    final GrTypeElement typeElement = getTypeElementGroovy();
-    if (type == null) {
-      if (typeElement == null) return;
-      final ASTNode typeElementNode = typeElement.getNode();
-      final ASTNode parent = typeElementNode.getTreeParent();
-      parent.addLeaf(GroovyTokenTypes.kDEF, GrModifier.DEF, typeElementNode);
-      parent.removeChild(typeElementNode);
-    } else {
-      type = TypesUtil.unboxPrimitiveTypeWrapper(type);
-      GrTypeElement newTypeElement;
-      try {
-        newTypeElement = GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(type);
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-        return;
-      }
-
-      final ASTNode newTypeElementNode = newTypeElement.getNode();
-      if (typeElement == null) {
-        final PsiElement defKeyword = findChildByType(GroovyTokenTypes.kDEF);
-        if (defKeyword != null) {
-          final ASTNode defKeywordNode = defKeyword.getNode();
-          assert defKeywordNode != null;
-          defKeywordNode.getTreeParent().removeChild(defKeywordNode);
-        }
-        final PsiElement nameID = getNameIdentifierGroovy();
-        final ASTNode nameIdNode = nameID.getNode();
-        assert nameIdNode != null;
-        nameIdNode.getTreeParent().addChild(newTypeElementNode);
-      } else {
-        final ASTNode typeElementNode = typeElement.getNode();
-        final ASTNode parent = typeElementNode.getTreeParent();
-        parent.replaceChild(typeElementNode, newTypeElementNode);
-      }
-
-      PsiUtil.shortenReferences(newTypeElement);
-    }
+    final GrVariableDeclaration variableDeclaration = getDeclaration();
+    if (variableDeclaration != null) variableDeclaration.setType(type);
   }
 
   @NotNull
@@ -281,12 +243,8 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GroovyBa
 
   @Nullable
   public GrModifierList getModifierList() {
-    PsiElement parent = getParent();
-    if (parent instanceof GrVariableDeclaration) {
-      return ((GrVariableDeclaration)parent).getModifierList();
-    } else if (parent instanceof GrTupleDeclaration) {
-      return ((GrVariableDeclaration)parent.getParent()).getModifierList();
-    }
+    final GrVariableDeclaration variableDeclaration = getDeclaration();
+    if (variableDeclaration!=null) return variableDeclaration.getModifierList();
     return null;
   }
 
@@ -299,4 +257,16 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GroovyBa
     return getType();
   }
 
+
+  @Nullable
+  private GrVariableDeclaration getDeclaration() {
+    PsiElement parent = getParent();
+    if (parent instanceof GrTupleDeclaration) {
+      parent = parent.getParent();
+    }
+    if (parent instanceof GrVariableDeclaration) {
+      return (GrVariableDeclaration)parent;
+    }
+    return null;
+  }
 }

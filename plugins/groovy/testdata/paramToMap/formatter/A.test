@@ -1,4 +1,4 @@
-def foo(attrs, int aaa, String sss) {
+def foo(Map attrs, int aaa, String sss) {
   println(aaa + attrs.bbb + sss)
 }
 
