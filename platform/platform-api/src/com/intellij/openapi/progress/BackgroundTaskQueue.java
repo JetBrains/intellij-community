@@ -16,9 +16,11 @@
 
 package com.intellij.openapi.progress;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
+import com.intellij.testFramework.UnitTestMode;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedList;
@@ -74,7 +76,7 @@ public class BackgroundTaskQueue {
   }
 
   public void run(Task.Backgroundable task) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (UnitTestMode.getInstance(myProject).isInUnitTestMode(BackgroundTaskQueue.class.getName())) {
       task.run(new EmptyProgressIndicator());
       task.onSuccess();
     }
@@ -88,19 +90,32 @@ public class BackgroundTaskQueue {
         myQueue.offer(task);
         myHasActiveTask = true;
       }
-      if (!hadActiveTask) {
-        if (ApplicationManager.getApplication().isDispatchThread()) {
-          ProgressManager.getInstance().run(myRunnerTask);
+      if (! hadActiveTask) {
+        runRunner();
+      }
+    }
+  }
+
+  private void runRunner() {
+    final Application application = ApplicationManager.getApplication();
+    if (application.isUnitTestMode()) {
+      application.executeOnPooledThread(new Runnable() {
+        public void run() {
+          myRunnerTask.run(new EmptyProgressIndicator());
         }
-        else {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              if (myProject == null || !myProject.isDisposed()) {
-                ProgressManager.getInstance().run(myRunnerTask);
-              }
+      });
+    } else {
+      if (application.isDispatchThread()) {
+        ProgressManager.getInstance().run(myRunnerTask);
+      }
+      else {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            if (myProject == null || !myProject.isDisposed()) {
+              ProgressManager.getInstance().run(myRunnerTask);
             }
-          });
-        }
+          }
+        });
       }
     }
   }

@@ -166,5 +166,9 @@
       <skipForDummyProject/>
       <skipForDefaultProject/>
     </component>
+    <component>
+      <implementation-class>com.intellij.testFramework.UnitTestMode</implementation-class>
+      <skipForDefaultProject/>
+    </component>
   </project-components>
 </components>
