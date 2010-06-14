@@ -79,8 +79,7 @@ public abstract class GrCallExpressionImpl extends GrExpressionImpl implements G
     if (list.getText().trim().length() == 0) {
       final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());
       final GrArgumentList newList = factory.createExpressionArgumentList();
-      getNode().replaceChild(list.getNode(), newList.getNode());
-      list = newList;
+      list = (GrArgumentList)list.replace(newList);
     }
     return list.addNamedArgument(namedArgument);
   }

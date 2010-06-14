@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers;
 
 import com.intellij.lang.PsiBuilder;
-import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
@@ -38,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
  *            | synchronized
  *            | volatile
  *            | srtictfp
+ *            | def
  */
 
 public class Modifier implements GroovyElementTypes {

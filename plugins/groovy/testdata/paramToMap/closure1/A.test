@@ -1,4 +1,4 @@
-def foo = { params, jjj ->
+def foo = {Map params, jjj ->
   println params.iii
 }
 

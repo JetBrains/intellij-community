@@ -38,7 +38,7 @@ public class Modifiers implements GroovyElementTypes {
     boolean endsWithNewLine;
     PsiBuilder.Marker modifiersMarker = builder.mark();
 
-    if (!Annotation.parse(builder, parser) && !Modifier.parse(builder) && !ParserUtils.getToken(builder, kDEF)) {
+    if (!Annotation.parse(builder, parser) && !Modifier.parse(builder)) {
       modifiersMarker.done(MODIFIERS);
       return false;
     }
@@ -49,7 +49,7 @@ public class Modifiers implements GroovyElementTypes {
       newLineMarker = builder.mark();
       endsWithNewLine = ParserUtils.getToken(builder, mNLS);
 
-      if (!Annotation.parse(builder, parser) && !Modifier.parse(builder) && !ParserUtils.getToken(builder, kDEF)) break;
+      if (!Annotation.parse(builder, parser) && !Modifier.parse(builder)) break;
     }
 
     // Do not include last newline

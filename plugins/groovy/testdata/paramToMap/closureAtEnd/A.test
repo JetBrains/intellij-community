@@ -1,4 +1,4 @@
-def test = {attrs, x ->
+def test = {Map attrs, x ->
   attrs.cl.call()
 }
 
