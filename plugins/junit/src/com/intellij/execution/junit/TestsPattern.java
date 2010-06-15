@@ -20,23 +20,23 @@
  */
 package com.intellij.execution.junit;
 
-import com.intellij.execution.CantRunException;
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
-import com.intellij.execution.configurations.RunnerSettings;
-import com.intellij.execution.configurations.RuntimeConfigurationException;
-import com.intellij.execution.configurations.RuntimeConfigurationWarning;
-import com.intellij.openapi.module.Module;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.JavaExecutionUtil;
+import com.intellij.execution.configurations.*;
+import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.regex.Pattern;
+import java.util.Arrays;
 
-public class TestsPattern extends TestPackage {
+public class TestsPattern extends TestObject {
   public TestsPattern(final Project project,
                       final JUnitConfiguration configuration,
                       RunnerSettings runnerSettings,
@@ -45,39 +45,28 @@ public class TestsPattern extends TestPackage {
   }
 
   @Override
-  protected GlobalSearchScope filterScope(JUnitConfiguration.Data data) throws CantRunException {
-    final Pattern pattern = Pattern.compile(data.getPattern());
+  protected void initialize() throws ExecutionException {
+    super.initialize();
+    final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
+    RunConfigurationModule module = myConfiguration.getConfigurationModule();
+    JavaParametersUtil.configureModule(module, myJavaParameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS,
+                                       myConfiguration.isAlternativeJrePathEnabled() ? myConfiguration.getAlternativeJrePath() : null);
 
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(myConfiguration.getProject());
-    final PsiManager manager = PsiManager.getInstance(myConfiguration.getProject());
-    return new GlobalSearchScope() {
-      @Override
-      public boolean contains(VirtualFile file) {
-        if (!file.isDirectory()) {
-          final PsiFile psiFile = manager.findFile(file);
-          if (psiFile instanceof PsiClassOwner) {
-            if (pattern.matcher(((PsiClassOwner)psiFile).getPackageName()).matches()) return true;
-          }
-        }
-
-        return false;
+    final Project project = module.getProject();
+    final String[] classNames = data.getPattern().split("\\|\\|");
+    boolean isJUnit4 = false;
+    for (String className : classNames) {
+      final PsiClass psiClass = JavaExecutionUtil.findMainClass(project, className, GlobalSearchScope.allScope(project));
+      if (JUnitUtil.isJUnit4TestClass(psiClass)) {
+        isJUnit4 = true;
+        break;
       }
-
-      @Override
-      public int compare(VirtualFile file1, VirtualFile file2) {
-        return 0;
+    }
+    addClassesListToJavaParameters(Arrays.asList(classNames), new Function<String, String>() {
+      public String fun(String className) {
+        return className;
       }
-
-      @Override
-      public boolean isSearchInModuleContent(@NotNull Module aModule) {
-        return true;
-      }
-
-      @Override
-      public boolean isSearchInLibraries() {
-        return false;
-      }
-    };
+    }, "", true, isJUnit4);
   }
 
   @Override
@@ -108,7 +97,5 @@ public class TestsPattern extends TestPackage {
     if (data.getPattern().trim().length() == 0) {
       throw new RuntimeConfigurationWarning("No pattern selected");
     }
-
-
   }
 }

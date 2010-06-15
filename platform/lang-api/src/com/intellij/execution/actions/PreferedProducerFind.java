@@ -116,7 +116,8 @@ class PreferedProducerFind {
 
     @Override
     protected RunnerAndConfigurationSettings findExistingByElement(Location location,
-                                                                   @NotNull RunnerAndConfigurationSettings[] existingConfigurations) {
+                                                                   @NotNull RunnerAndConfigurationSettings[] existingConfigurations,
+                                                                   ConfigurationContext context) {
       if (existingConfigurations.length > 0) {
         ConfigurationType type = existingConfigurations[0].getType();
         if (type instanceof LocatableConfigurationType) {

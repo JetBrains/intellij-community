@@ -22,6 +22,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <configurationProducer implementation="com.intellij.execution.junit.AllInPackageConfigurationProducer"/>
+    <configurationProducer implementation="com.intellij.execution.junit.PatternConfigurationProducer"/>
     <configurationProducer implementation="com.intellij.execution.junit.TestClassConfigurationProducer"/>
     <configurationProducer implementation="com.intellij.execution.junit.TestMethodConfigurationProducer"/>
     <deadCode implementation="com.intellij.execution.junit2.inspection.JUnitUnusedCodeExtension"/>

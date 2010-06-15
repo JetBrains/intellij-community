@@ -21,9 +21,9 @@ import junit.textui.TestRunner;
 
 import java.io.*;
 import java.net.InetAddress;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 
@@ -115,6 +115,9 @@ public class JUnitStarter {
         }
         result.addElement(arg);
       }
+    }
+    if (tempFilePath != null && !args.contains(SOCKET)) {
+      isJunit4 = isJUnit4(isJunit4, tempFilePath);
     }
     args.removeAllElements();
     for (int i = 0; i < result.size(); i++) {
