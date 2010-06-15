@@ -32,6 +32,7 @@ import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -47,6 +48,7 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.text.Document;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -60,7 +62,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
   private JRadioButton myTestPatternButton;
   private JComponent myPackagePanel;
   private LabeledComponent<TextFieldWithBrowseButton> myPackage;
-  private LabeledComponent<TextFieldWithBrowseButton> myPattern;
+  private LabeledComponent<JPanel> myPattern;
   private LabeledComponent<TextFieldWithBrowseButton> myClass;
   private LabeledComponent<TextFieldWithBrowseButton> myMethod;
 
@@ -71,6 +73,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
   private JRadioButton myWholeProjectScope;
   private JRadioButton mySingleModuleScope;
   private JRadioButton myModuleWDScope;
+  private TextFieldWithBrowseButton myPatternTextField;
 
   private static final ArrayList<TIntArrayList> ourEnabledFields = new ArrayList<TIntArrayList>(Arrays.asList(new TIntArrayList[]{
     new TIntArrayList(new int[]{0}),
@@ -108,8 +111,20 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
     myTestLocations[JUnitConfigurationModel.ALL_IN_PACKAGE] = myPackage;
     myTestLocations[JUnitConfigurationModel.CLASS] = myClass;
     myTestLocations[JUnitConfigurationModel.METHOD] = myMethod;
+    final JPanel panel = myPattern.getComponent();
+    panel.setLayout(new BorderLayout());
+    myPatternTextField = new TextFieldWithBrowseButton();
+    myPatternTextField.setButtonIcon(Icons.ADD_ICON);
+    panel.add(myPatternTextField, BorderLayout.CENTER);
+    final FixedSizeButton editBtn = new FixedSizeButton();
+    editBtn.setIcon(IconLoader.getIcon("/actions/showViewer.png"));
+    editBtn.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        Messages.showTextAreaDialog(myPatternTextField.getTextField(), "Configure suite tests", "EditParametersPopupWindow");
+      }
+    });
+    panel.add(editBtn, BorderLayout.EAST);
     myTestLocations[JUnitConfigurationModel.PATTERN] = myPattern;
-    myPattern.getComponent().setButtonIcon(Icons.ADD_ICON);
     // Done
 
     myModel.setListener(this);
@@ -210,16 +225,22 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
 
   private void installDocuments() {
     for (int i = 0; i < myTestLocations.length; i++) {
-      final LabeledComponent<TextFieldWithBrowseButton> testLocation = getTestLocation(i);
-      final TextFieldWithBrowseButton field = testLocation.getComponent();
+      final LabeledComponent testLocation = getTestLocation(i);
+      final JComponent component = testLocation.getComponent();
+      final TextFieldWithBrowseButton field;
+      if (component instanceof TextFieldWithBrowseButton) {
+        field = (TextFieldWithBrowseButton)component;
+      } else {
+        field = myPatternTextField;
+      }
       final Document document = myModel.getJUnitDocument(i);
       field.getTextField().setDocument(document);
       myBrowsers[i].setField(field);
     }
   }
 
-  public LabeledComponent<TextFieldWithBrowseButton> getTestLocation(final int index) {
-    return (LabeledComponent<TextFieldWithBrowseButton>)myTestLocations[index];
+  public LabeledComponent getTestLocation(final int index) {
+    return myTestLocations[index];
   }
 
   private static void addRadioButtonsListeners(final JRadioButton[] radioButtons, ChangeListener listener) {
@@ -258,7 +279,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
 
     @Override
     protected void onClassChoosen(PsiClass psiClass) {
-      final JTextField textField = myPattern.getComponent().getTextField();
+      final JTextField textField = myPatternTextField.getTextField();
       final String text = textField.getText();
       textField.setText(text + (text.length() > 0 ? "||" : "") + psiClass.getQualifiedName());
     }
@@ -335,12 +356,12 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
   }
 
   private String getClassName() {
-    return getTestLocation(JUnitConfigurationModel.CLASS).getComponent().getText();
+    return ((LabeledComponent<TextFieldWithBrowseButton>)getTestLocation(JUnitConfigurationModel.CLASS).getComponent()).getText();
   }
 
   private void setPackage(final PsiPackage aPackage) {
     if (aPackage == null) return;
-    getTestLocation(JUnitConfigurationModel.ALL_IN_PACKAGE).getComponent().setText(aPackage.getQualifiedName());
+    ((LabeledComponent<TextFieldWithBrowseButton>)getTestLocation(JUnitConfigurationModel.ALL_IN_PACKAGE).getComponent()).setText(aPackage.getQualifiedName());
   }
 
   @NotNull
