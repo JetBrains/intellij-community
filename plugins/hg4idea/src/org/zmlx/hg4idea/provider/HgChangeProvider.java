@@ -170,8 +170,9 @@ public class HgChangeProvider implements ChangeProvider {
         final VirtualFile root = vcsManager.getVcsRootFor(vf);
         if (root != null) {
           final HgRevisionNumber beforeRevisionNumber = new HgWorkingCopyRevisionsCommand(myProject).identify(root);
-          builder.processChange(new Change(new HgContentRevision(myProject, new HgFile(myProject, vf), beforeRevisionNumber),
-                                           CurrentContentRevision.create(filePath), FileStatus.MODIFIED), myVcsKey);
+          final ContentRevision beforeRevision = (beforeRevisionNumber == null ? null : 
+                                                  new HgContentRevision(myProject, new HgFile(myProject, vf), beforeRevisionNumber));
+          builder.processChange(new Change(beforeRevision, CurrentContentRevision.create(filePath), FileStatus.MODIFIED), myVcsKey);
         }
       }
     }
