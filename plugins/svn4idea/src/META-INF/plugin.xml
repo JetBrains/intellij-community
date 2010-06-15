@@ -83,8 +83,6 @@
       <separator/>
       <reference id="ChangesView.Browse"/>
       <separator/>
-      <action id="Subversion.Map" class="org.jetbrains.idea.svn.actions.ShowSvnMapAction" icon="/icons/ShowWorkingCopies.png"/>
-      <separator/> 
       <add-to-group group-id="SubversionFilePopupGroup" anchor="last"/>
     </group>
     <group id="SubversionUpdateActionGroup" class="org.jetbrains.idea.svn.actions.SubversionGroup">
