@@ -25,10 +25,9 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class CachesBasedRefSearcher extends SearchRequestor implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters> {
-  private static final ThreadLocal<Boolean> ourProcessing = new ThreadLocal<Boolean>();
 
   public boolean execute(final ReferencesSearch.SearchParameters p, final Processor<PsiReference> consumer) {
-    if (ourProcessing.get() != null) {
+    if (p instanceof MySearchParameters) {
       return true;
     }
 
@@ -48,20 +47,14 @@ public class CachesBasedRefSearcher extends SearchRequestor implements QueryExec
 
   @Override
   public void contributeRequests(@NotNull final PsiElement refElement,
-                                      @NotNull FindUsagesOptions options,
-                                      @NotNull SearchRequestCollector collector) {
+                                 @NotNull FindUsagesOptions options,
+                                 @NotNull SearchRequestCollector collector) {
     final boolean ignoreAccessScope = false;
     final SearchScope scope = options.searchScope;
     contributeSearchTargets(refElement, options, collector, ignoreAccessScope, scope);
     collector.searchCustom(new Processor<Processor<PsiReference>>() {
       public boolean process(Processor<PsiReference> consumer) {
-        ourProcessing.set(true);
-        try {
-          return ReferencesSearch.search(refElement, scope, ignoreAccessScope).forEach(consumer);
-        }
-        finally {
-          ourProcessing.set(null);
-        }
+        return ReferencesSearch.search(new MySearchParameters(refElement, scope, ignoreAccessScope)).forEach(consumer);
       }
     });
   }
@@ -98,6 +91,12 @@ public class CachesBasedRefSearcher extends SearchRequestor implements QueryExec
       final SearchScope searchScope = ignoreAccessScope ? scope : refElement.getUseScope().intersectWith(scope);
       assert text != null;
       collector.searchWord(text, searchScope, refElement.getLanguage().isCaseSensitive(), refElement);
+    }
+  }
+
+  private static class MySearchParameters extends ReferencesSearch.SearchParameters {
+    public MySearchParameters(PsiElement refElement, SearchScope scope, boolean ignoreAccessScope) {
+      super(refElement, scope, ignoreAccessScope);
     }
   }
 }

@@ -16,10 +16,9 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class MethodUsagesSearcher extends SearchRequestor implements QueryExecutor<PsiReference, MethodReferencesSearch.SearchParameters> {
-  private static final ThreadLocal<Boolean> ourProcessing = new ThreadLocal<Boolean>();
 
   public boolean execute(final MethodReferencesSearch.SearchParameters p, final Processor<PsiReference> consumer) {
-    if (ourProcessing.get() != null) {
+    if (p instanceof MySearchParameters) {
       return true;
     }
 
@@ -48,13 +47,7 @@ public class MethodUsagesSearcher extends SearchRequestor implements QueryExecut
       contributeSearchTargets(method, options, collector, strictSignatureSearch);
       collector.searchCustom(new Processor<Processor<PsiReference>>() {
         public boolean process(Processor<PsiReference> processor) {
-          ourProcessing.set(true);
-          try {
-            return MethodReferencesSearch.search(method, options.searchScope, strictSignatureSearch).forEach(processor);
-          }
-          finally {
-            ourProcessing.set(null);
-          }
+          return MethodReferencesSearch.search(new MySearchParameters(method, options, strictSignatureSearch)).forEach(processor);
         }
       });
     }
@@ -105,4 +98,9 @@ public class MethodUsagesSearcher extends SearchRequestor implements QueryExecut
     collector.searchWord(textToSearch, restrictedByAccess, searchContext, true, new MethodTextOccurenceProcessor(aClass, strictSignatureSearch, methods));
   }
 
+  private static class MySearchParameters extends MethodReferencesSearch.SearchParameters {
+    public MySearchParameters(PsiMethod method, FindUsagesOptions options, boolean strictSignatureSearch) {
+      super(method, options.searchScope, strictSignatureSearch);
+    }
+  }
 }

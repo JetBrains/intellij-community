@@ -55,8 +55,12 @@ public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference,
   private MethodReferencesSearch() {}
 
   public static Query<PsiReference> search(final PsiMethod method, SearchScope scope, final boolean strictSignatureSearch) {
+    return search(new SearchParameters(method, scope, strictSignatureSearch));
+  }
+
+  public static Query<PsiReference> search(final SearchParameters parameters) {
     //noinspection unchecked
-    return INSTANCE.createUniqueResultsQuery(new SearchParameters(method, scope, strictSignatureSearch), TObjectHashingStrategy.CANONICAL, ReferenceDescriptor.MAPPER);
+    return INSTANCE.createUniqueResultsQuery(parameters, TObjectHashingStrategy.CANONICAL, ReferenceDescriptor.MAPPER);
   }
 
   public static Query<PsiReference> search(final PsiMethod method, final boolean strictSignatureSearch) {
