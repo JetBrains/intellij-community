@@ -198,8 +198,8 @@ public class PythonUnitTestConfigurationProducer extends RuntimeConfigurationPro
 
   @Override
   protected RunnerAndConfigurationSettings findExistingByElement(Location location,
-                                                                     @NotNull RunnerAndConfigurationSettings[] existingConfigurations
-  ) {
+                                                                 @NotNull RunnerAndConfigurationSettings[] existingConfigurations,
+                                                                 ConfigurationContext context) {
     final RunnerAndConfigurationSettings settings = createConfigurationByElement(location, null);
     if (settings != null) {
       final PythonUnitTestRunConfiguration configuration = (PythonUnitTestRunConfiguration)settings.getConfiguration();
