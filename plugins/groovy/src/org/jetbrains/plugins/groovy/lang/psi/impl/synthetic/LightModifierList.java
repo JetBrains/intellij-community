@@ -81,13 +81,10 @@ public class LightModifierList extends LightElement implements PsiModifierList {
   public static Set<String> getModifierSet(int modifiers) {
     assert (modifiers & ~(Modifier.PUBLIC | Modifier.PRIVATE | Modifier.PROTECTED | Modifier.FINAL | Modifier.ABSTRACT | Modifier.STATIC)) == 0;
 
-    if ((modifiers & Modifier.ABSTRACT) != 0) {
-      modifiers = (modifiers & ~Modifier.ABSTRACT) | (1 << 5);
-    }
-
     int visabilityModifierIndex = MODIFIER_MAP[modifiers & 3];
+    modifiers = ((modifiers >>> 3) & 3) + ((modifiers & Modifier.ABSTRACT) >>> 8);
     if (visabilityModifierIndex != -1) {
-      return SET_INSTANCES[(modifiers >> 3) + (visabilityModifierIndex << 3)];
+      return SET_INSTANCES[modifiers + (visabilityModifierIndex << 3)];
     }
 
     Set<String> res = new HashSet<String>();
@@ -95,7 +92,7 @@ public class LightModifierList extends LightElement implements PsiModifierList {
     if ((modifiers & Modifier.PRIVATE) != 0) res.add(PsiModifier.PRIVATE);
     if ((modifiers & Modifier.PROTECTED) != 0) res.add(PsiModifier.PROTECTED);
 
-    res.addAll(SET_INSTANCES[modifiers >> 3]);
+    res.addAll(SET_INSTANCES[modifiers]);
 
     return res;
   }
