@@ -19,66 +19,37 @@ import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.util.Consumer;
 
 /**
  * @author peter
  */
-public class BasicToClassNameDelegator extends CompletionContributor{
+public class BasicToClassNameDelegator extends AbstractBasicToClassNameDelegator {
 
   @Override
-  public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
-    if (parameters.getCompletionType() != CompletionType.BASIC) return;
-
-    final PsiFile file = parameters.getOriginalFile();
+  protected boolean isClassNameCompletionSupported(CompletionResultSet result, PsiFile file, PsiElement position) {
     final boolean isJava = file.getLanguage() == StdLanguages.JAVA;
-    if (!isJava && !(file.getLanguage() instanceof XMLLanguage)) return;
+    if (!isJava && !(file.getLanguage() instanceof XMLLanguage)) return false;
 
-    final PsiElement position = parameters.getPosition();
     if (isJava) {
-      if (!(position.getParent() instanceof PsiJavaCodeReferenceElement)) return;
-      if (((PsiJavaCodeReferenceElement)position.getParent()).getQualifier() != null) return;
+      if (!(position.getParent() instanceof PsiJavaCodeReferenceElement)) return false;
+      if (((PsiJavaCodeReferenceElement)position.getParent()).getQualifier() != null) return false;
     }
 
     final String s = result.getPrefixMatcher().getPrefix();
-    if (StringUtil.isEmpty(s) || !Character.isUpperCase(s.charAt(0))) return;
+    if (StringUtil.isEmpty(s) || !Character.isUpperCase(s.charAt(0))) return false;
+    return true;
+  }
 
-    final Ref<Boolean> empty = Ref.create(true);
-    result.runRemainingContributors(parameters, new Consumer<LookupElement>() {
-          public void consume(final LookupElement lookupElement) {
-            empty.set(false);
-            result.addElement(lookupElement);
-          }
-        });
-
-    final CompletionParameters classParams;
-
-    final int invocationCount = parameters.getInvocationCount();
-    final int offset = parameters.getOffset();
-    if (empty.get().booleanValue()) {
-      classParams = new CompletionParameters(position, file, CompletionType.CLASS_NAME, offset, invocationCount);
+  @Override
+  protected void updateProperties(LookupElement lookupElement) {
+    if (lookupElement instanceof JavaPsiClassReferenceElement) {
+      ((JavaPsiClassReferenceElement)lookupElement).setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
     }
-    else if (invocationCount > 1) {
-      classParams = new CompletionParameters(position, file, CompletionType.CLASS_NAME, offset, invocationCount - 1);
-    } else {
-      return;
-    }
-
-
-    CompletionService.getCompletionService().getVariantsFromContributors(classParams, null, new Consumer<LookupElement>() {
-      public void consume(final LookupElement lookupElement) {
-        if (lookupElement instanceof JavaPsiClassReferenceElement) {
-          ((JavaPsiClassReferenceElement)lookupElement).setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
-        }
-        lookupElement.putUserData(XmlCompletionContributor.WORD_COMPLETION_COMPATIBLE, Boolean.TRUE); //todo think of a less dirty interaction
-        result.addElement(lookupElement);
-      }
-    });
+    lookupElement.putUserData(XmlCompletionContributor.WORD_COMPLETION_COMPATIBLE, Boolean.TRUE); //todo think of a less dirty interaction
   }
 
 }
