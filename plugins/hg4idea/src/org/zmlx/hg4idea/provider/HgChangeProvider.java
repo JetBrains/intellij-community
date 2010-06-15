@@ -17,13 +17,16 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.zmlx.hg4idea.HgContentRevision;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgRevisionNumber;
+import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.command.*;
 
+import java.io.File;
 import java.util.*;
 
 public class HgChangeProvider implements ChangeProvider {
@@ -58,9 +61,21 @@ public class HgChangeProvider implements ChangeProvider {
     }
     for (FilePath filePath : dirtyScope.getDirtyFiles()) {
       process(builder, filePath, processedRoots);
+      loadDirstateFile(filePath);
     }
 
     processUnsavedChanges(builder, dirtyScope.getDirtyFilesNoExpand());
+  }
+
+  /**
+   * Watching the changes from .hg/dirstate to monitor external VCS 
+   * @param filepath file which vcs root is to be monitored.
+   */
+  private void loadDirstateFile(FilePath filepath) {
+    final VirtualFile vcsRoot = VcsUtil.getVcsRootFor(myProject, filepath);
+    if (vcsRoot != null) {
+      LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(vcsRoot.getPath(), HgVcs.DIRSTATE_FILE_PATH));
+    }
   }
 
   public boolean isModifiedDocumentTrackingRequired() {

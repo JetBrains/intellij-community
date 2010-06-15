@@ -56,6 +56,7 @@ public class HgVcs extends AbstractVcs {
   private static final Icon OUTGOING_ICON = IconLoader.getIcon("/actions/moveUp.png");
 
   public static final String VCS_NAME = "hg4idea";
+  public static final String DIRSTATE_FILE_PATH = ".hg/dirstate";
 
   private final HgChangeProvider changeProvider;
   private final HgProjectConfigurable configurable;
@@ -78,6 +79,7 @@ public class HgVcs extends AbstractVcs {
 
   private boolean started = false;
   private HgVFSListener myVFSListener;
+  private VirtualFileListener myDirStateChangeListener;
 
   public HgVcs(Project project,
     HgGlobalSettings globalSettings, HgProjectSettings projectSettings) {
@@ -95,6 +97,7 @@ public class HgVcs extends AbstractVcs {
     integrateEnvironment = new HgIntegrateEnvironment(project);
     commitedChangesProvider = new HgCachingCommitedChangesProvider(project);
     commitExecutor = new HgCommitExecutor(project);
+    myDirStateChangeListener = new HgDirStateChangeListener(myProject);
   }
 
   public String getDisplayName() {
@@ -276,6 +279,8 @@ public class HgVcs extends AbstractVcs {
     );
 
     myVFSListener = new HgVFSListener(myProject, this);
+
+    VirtualFileManager.getInstance().addVirtualFileListener(myDirStateChangeListener);
   }
 
   @Override
@@ -301,6 +306,8 @@ public class HgVcs extends AbstractVcs {
       Disposer.dispose(myVFSListener);
       myVFSListener = null;
     }
+
+    VirtualFileManager.getInstance().removeVirtualFileListener(myDirStateChangeListener);
   }
 
   public static HgVcs getInstance(Project project) {
