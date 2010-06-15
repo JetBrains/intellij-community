@@ -48,6 +48,7 @@ import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.CommandLineState;
 import com.intellij.execution.configurations.RemoteConnection;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.filters.ExceptionFilter;
 import com.intellij.execution.filters.TextConsoleBuilder;
@@ -1738,11 +1739,14 @@ public abstract class DebugProcessImpl implements DebugProcess {
                   // propagate exception only in case we succeded to obtain execution result,
                   // otherwise it the error is induced by the fact that there is nothing to debug, and there is no need to show
                   // this problem to the user
-                  SwingUtilities.invokeLater(new Runnable() {
-                    public void run() {
-                      ExecutionUtil.handleExecutionError(myProject, state.getRunnerSettings().getRunProfile(), e);
-                    }
-                  });
+                  final RunProfile runProfile = state.getRunnerSettings().getRunProfile();
+                  if (runProfile != null) {
+                    SwingUtilities.invokeLater(new Runnable() {
+                      public void run() {
+                        ExecutionUtil.handleExecutionError(myProject, runProfile, e);
+                      }
+                    });
+                  }
                 }
                 break;
               }
