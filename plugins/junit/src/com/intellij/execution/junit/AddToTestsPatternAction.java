@@ -27,38 +27,36 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 public class AddToTestsPatternAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
-    final Set<PsiClass> classes = collectTestClasses(psiElements);
+    final Set<PsiClass> classes = PatternConfigurationProducer.collectTestClasses(psiElements);
 
-    final String classNames = StringUtil.join(classes, new Function<PsiClass, String>() {
-      public String fun(PsiClass psiClass) {
-        return psiClass.getQualifiedName();
-      }
-    }, "||");
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     final List<JUnitConfiguration> patternConfigurations = collectPatternConfigurations(classes, project);
     if (patternConfigurations.size() == 1) {
       final JUnitConfiguration configuration = patternConfigurations.get(0);
-      configuration.getPersistentData().PATTERN += (configuration.getPersistentData().PATTERN.length() > 0 ? "||" : "") + classNames;
+      for (PsiClass aClass : classes) {
+        configuration.getPersistentData().getPatterns().put(aClass.getQualifiedName(), Boolean.TRUE);
+      }
     } else {
       JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<JUnitConfiguration>("Choose suite to add", patternConfigurations) {
         @Override
         public PopupStep onChosen(JUnitConfiguration configuration, boolean finalChoice) {
-          configuration.getPersistentData().PATTERN += (configuration.getPersistentData().PATTERN.length() > 0 ? "||" : "") + classNames;
+          for (PsiClass aClass : classes) {
+            configuration.getPersistentData().getPatterns().put(aClass.getQualifiedName(), Boolean.TRUE);
+          }
           return FINAL_CHOICE;
         }
 
@@ -83,7 +81,7 @@ public class AddToTestsPatternAction extends AnAction {
     final DataContext dataContext = e.getDataContext();
     final PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     if (psiElements != null) {
-      final Set<PsiClass> foundClasses = collectTestClasses(psiElements);
+      final Set<PsiClass> foundClasses = PatternConfigurationProducer.collectTestClasses(psiElements);
       if (foundClasses.isEmpty()) return;
       final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
       if (project != null) {
@@ -91,7 +89,7 @@ public class AddToTestsPatternAction extends AnAction {
         if (!foundConfigurations.isEmpty()) {
           presentation.setVisible(true);
           if (foundConfigurations.size() == 1) {
-            presentation.setText(presentation.getText() + ": " + foundConfigurations.get(0).getName());
+            presentation.setText(presentation.getText() + ": " + foundConfigurations.get(0).getName());//todo
           }
         }
       }
@@ -104,7 +102,7 @@ public class AddToTestsPatternAction extends AnAction {
     for (RunConfiguration configuration : configurations) {
       final JUnitConfiguration.Data data = ((JUnitConfiguration)configuration).getPersistentData();
       if (data.TEST_OBJECT == JUnitConfiguration.TEST_PATTERN) {
-        if (foundClasses.size() > 1 || data.getPattern().indexOf(foundClasses.iterator().next().getQualifiedName()) < 0 ) {
+        if (foundClasses.size() > 1 || !data.getPatterns().containsKey(foundClasses.iterator().next().getQualifiedName()) ) {
           foundConfigurations.add((JUnitConfiguration)configuration);
         }
       }
@@ -112,22 +110,4 @@ public class AddToTestsPatternAction extends AnAction {
     return foundConfigurations;
   }
 
-  private static Set<PsiClass> collectTestClasses(PsiElement[] psiElements) {
-    final Set<PsiClass> foundClasses = new HashSet<PsiClass>();
-    for (PsiElement psiElement : psiElements) {
-      if (psiElement instanceof PsiClassOwner) {
-        final PsiClass[] classes = ((PsiClassOwner)psiElement).getClasses();
-        for (PsiClass aClass : classes) {
-          if (JUnitUtil.isTestClass(aClass)) {
-            foundClasses.add(aClass);
-          }
-        }
-      } else if (psiElement instanceof PsiClass) {
-        if (JUnitUtil.isTestClass((PsiClass)psiElement)) {
-          foundClasses.add((PsiClass)psiElement);
-        }
-      }
-    }
-    return foundClasses;
-  }
 }

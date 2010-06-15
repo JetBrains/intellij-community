@@ -34,7 +34,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 
 public class TestsPattern extends TestObject {
   public TestsPattern(final Project project,
@@ -53,16 +53,18 @@ public class TestsPattern extends TestObject {
                                        myConfiguration.isAlternativeJrePathEnabled() ? myConfiguration.getAlternativeJrePath() : null);
 
     final Project project = module.getProject();
-    final String[] classNames = data.getPattern().split("\\|\\|");
     boolean isJUnit4 = false;
-    for (String className : classNames) {
-      final PsiClass psiClass = JavaExecutionUtil.findMainClass(project, className, GlobalSearchScope.allScope(project));
-      if (JUnitUtil.isJUnit4TestClass(psiClass)) {
-        isJUnit4 = true;
-        break;
+    final ArrayList<String> classNames = new ArrayList<String>();
+    for (String className : data.getPatterns().keySet()) {
+      if (data.getPatterns().get(className)) {
+        classNames.add(className);
+        final PsiClass psiClass = JavaExecutionUtil.findMainClass(project, className, GlobalSearchScope.allScope(project));
+        if (JUnitUtil.isJUnit4TestClass(psiClass)) {
+          isJUnit4 = true;
+        }
       }
     }
-    addClassesListToJavaParameters(Arrays.asList(classNames), new Function<String, String>() {
+    addClassesListToJavaParameters(classNames, new Function<String, String>() {
       public String fun(String className) {
         return className;
       }
@@ -94,7 +96,7 @@ public class TestsPattern extends TestObject {
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
-    if (data.getPattern().trim().length() == 0) {
+    if (data.getPatterns().isEmpty()) {
       throw new RuntimeConfigurationWarning("No pattern selected");
     }
   }

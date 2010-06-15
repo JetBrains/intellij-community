@@ -96,7 +96,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
       new PackageChooserActionListener(project),
       new TestClassBrowser(project),
       new MethodBrowser(project),
-      new PackageChooserActionListener(project) //todo
+      new TestsChooserActionListener(project)
     };
     // Garbage support
     myRadioButtons[JUnitConfigurationModel.ALL_IN_PACKAGE] = myAllInPackageButton;
@@ -233,6 +233,9 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
     final TIntArrayList enabledFields = ourEnabledFields.get(newType);
     for (int i = 0; i < myTestLocations.length; i++)
       getTestLocation(i).setEnabled(enabledFields.contains(i));
+    if (newType == JUnitConfigurationModel.PATTERN) {
+      myPattern.getComponent().getTextField().setEnabled(false);
+    }
     if (newType != JUnitConfigurationModel.ALL_IN_PACKAGE) myModule.setEnabled(true);
     else onScopeChanged();
   }
@@ -245,6 +248,20 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
       dialog.show();
       final PsiPackage aPackage = dialog.getSelectedPackage();
       return aPackage != null ? aPackage.getQualifiedName() : null;
+    }
+  }
+
+  private class TestsChooserActionListener extends BrowseModuleValueActionListener {
+    public TestsChooserActionListener(final Project project) {
+      super(project);
+    }
+
+    protected String showDialog() {
+      final JUnitConfiguration configurationCopy = new JUnitConfiguration(ExecutionBundle.message("default.junit.configuration.name"), getProject(), JUnitConfigurationType.getInstance().getConfigurationFactories()[0]);
+      applyEditorTo(configurationCopy);
+      final TestsConfigDialog dialog = new TestsConfigDialog(myWholePanel, myModel, configurationCopy);
+      dialog.show();
+      return dialog.getPattern();
     }
   }
 
