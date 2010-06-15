@@ -30,7 +30,6 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.OrderPanel;
@@ -42,9 +41,7 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 public class TestsConfigDialog extends DialogWrapper{
@@ -141,13 +138,7 @@ public class TestsConfigDialog extends DialogWrapper{
 
 
   public String getPattern() {
-    final List<String> enabledTests = new ArrayList<String>();
-    for (String testName : myTests.keySet()) {
-      if (myTests.get(testName)) {
-        enabledTests.add(testName);
-      }
-    }
-    return StringUtil.join(enabledTests, "||");
+    return JUnitConfiguration.Data.getPatternPresentation(myTests);
   }
 
   @Override

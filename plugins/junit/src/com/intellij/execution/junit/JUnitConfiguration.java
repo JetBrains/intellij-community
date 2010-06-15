@@ -438,7 +438,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
         return packageName;
       }
       if (TEST_PATTERN.equals(TEST_OBJECT)) {
-        return "temp suite"; //todo
+        return getPatternPresentation();
       }
       final String className = JavaExecutionUtil.getPresentableClassName(getMainClassName(), configurationModule);
       if (TEST_METHOD.equals(TEST_OBJECT)) {
@@ -465,10 +465,14 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     }
 
     public String getPatternPresentation() {
+      return getPatternPresentation(myPattern);
+    }
+
+    public static String getPatternPresentation(final Map<String, Boolean> patterns) {
       final List<String> enabledTests = new ArrayList<String>();
-      for (String pattern : myPattern.keySet()) {
-        if (myPattern.get(pattern)) {
-          enabledTests.add(pattern);
+      for (String pattern : patterns.keySet()) {
+        if (patterns.get(pattern)) {
+          enabledTests.add(StringUtil.getShortName(pattern));
         }
       }
       return StringUtil.join(enabledTests, "||");

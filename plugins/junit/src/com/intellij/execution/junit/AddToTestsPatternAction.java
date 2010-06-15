@@ -89,7 +89,9 @@ public class AddToTestsPatternAction extends AnAction {
         if (!foundConfigurations.isEmpty()) {
           presentation.setVisible(true);
           if (foundConfigurations.size() == 1) {
-            presentation.setText(presentation.getText() + ": " + foundConfigurations.get(0).getName());//todo
+            final String patternPresentation =
+              JUnitConfiguration.Data.getPatternPresentation(foundConfigurations.get(0).getPersistentData().getPatterns());
+            presentation.setText("Add to temp suite: " + patternPresentation);
           }
         }
       }
