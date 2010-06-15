@@ -16,7 +16,9 @@
 package org.intellij.plugins.intelliLang;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.DocumentReference;
@@ -199,14 +201,25 @@ public final class Configuration implements PersistentStateComponent<Element>, M
         }
       }
     }
-    final THashSet<String> visitedUrls = new THashSet<String>();
+    final THashSet<Object> visited = new THashSet<Object>();
     for (IdeaPluginDescriptor pluginDescriptor : PluginManager.getPlugins()) {
+      if (pluginDescriptor instanceof IdeaPluginDescriptorImpl && !((IdeaPluginDescriptorImpl)pluginDescriptor).isEnabled()) continue;
       final ClassLoader loader = pluginDescriptor.getPluginClassLoader();
-      final URL url = loader != null ? loader.getResource("META-INF/languageInjections.xml") : null;
-      if (url == null) continue;
-      if (!visitedUrls.add(url.getFile())) continue; // for DEBUG mode
+      if (!visited.add(loader)) continue;
+      if (loader instanceof PluginClassLoader && ((PluginClassLoader)loader).getUrls().isEmpty()) continue;
       try {
-        cfgList.add(load(url.openStream()));
+        final Enumeration<URL> enumeration = loader.getResources("META-INF/languageInjections.xml");
+        if (enumeration == null) continue;
+        while (enumeration.hasMoreElements()) {
+          URL url = enumeration.nextElement();
+          if (!visited.add(url.getFile())) continue; // for DEBUG mode
+          try {
+            cfgList.add(load(url.openStream()));
+          }
+          catch (Exception e) {
+            LOG.warn(e);
+          }
+        }
       }
       catch (Exception e) {
         LOG.warn(e);

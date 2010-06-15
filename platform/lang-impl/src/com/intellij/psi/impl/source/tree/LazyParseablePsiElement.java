@@ -25,7 +25,6 @@ import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -282,8 +281,8 @@ public class LazyParseablePsiElement extends LazyParseableElement implements Psi
     return this;
   }
 
-  public PsiElement getPsi() {
-    ProgressManager.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
+  @Override
+  protected PsiElement createPsiNoLock() {
     return this;
   }
 

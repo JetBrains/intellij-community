@@ -35,16 +35,15 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
-import javax.swing.event.ListDataListener;
 import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.RoundRectangle2D;
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Enumeration;
+import java.util.List;
 
 /**
  * @author spleaner
@@ -297,7 +296,7 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
     }
 
     public Object getElementAt(final int index) {
-      return myNotifications.get(index);
+      return index < myNotifications.size() ? myNotifications.get(index) : null;
     }
 
     private void rebuildList() {

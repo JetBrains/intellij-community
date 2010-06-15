@@ -40,7 +40,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -427,7 +426,9 @@ public abstract class DialogWrapper {
     }
     setMargin(button);
     if (action.getValue(DEFAULT_ACTION) != null) {
-      getRootPane().setDefaultButton(button);
+      if (myPeer != null && !myPeer.isHeadless()) {
+        getRootPane().setDefaultButton(button);
+      }
     }
     return button;
   }

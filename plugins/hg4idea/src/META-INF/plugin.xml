@@ -27,7 +27,6 @@
     <checkoutProvider implementation="org.zmlx.hg4idea.provider.HgCheckoutProvider"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <applicationConfigurable implementation="org.zmlx.hg4idea.HgIdeConfigurable"/>
-    <checkinHandlerFactory implementation="org.zmlx.hg4idea.HgRemoveCheckinHandlerFactory" />
   </extensions>
 
   <actions>

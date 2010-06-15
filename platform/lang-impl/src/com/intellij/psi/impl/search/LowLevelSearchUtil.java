@@ -108,9 +108,14 @@ public class LowLevelSearchUtil {
       if (contains) {
         if (!ignoreInjectedPsi) {
           Boolean result = processInjectedFile(run, processor, searcher, progress);
-          if (result != null) return result.booleanValue();
+          if (result != null) {
+            return result.booleanValue();
+          }
         }
-        if (!processor.execute(run, start)) return false;
+        if (!processor.execute(run, start)) {
+          processor.execute(run, start);
+          return false;
+        }
       }
       if (useTree) {
         leafNode = leafNode.getTreeParent();

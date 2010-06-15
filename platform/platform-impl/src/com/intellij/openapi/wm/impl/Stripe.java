@@ -330,7 +330,7 @@ final class Stripe extends JPanel{
   public void setOverlayed(boolean overlayed) {
     Color bg = UIManager.getColor("Panel.background");
     if (overlayed) {
-     setBackground(new Color(bg.getRed(), bg.getGreen(), bg.getBlue(), 235));
+     setBackground(new Color(bg.getRed(), bg.getGreen(), bg.getBlue(), 150));
     } else {
       setBackground(bg);
     }

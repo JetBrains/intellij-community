@@ -32,7 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.AccessorResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 /**
@@ -61,86 +60,97 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
     }
 
     ResolveState state = _state.put(ResolverProcessor.RESOLVE_CONTEXT, this);
-    JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
     if (isOnDemand()) {
-      GrCodeReferenceElement ref = getImportReference();
-      if (ref != null) {
-        if (isStatic()) {
-          final PsiElement resolved = ref.resolve();
-          if (resolved instanceof PsiClass) {
-            final PsiClass clazz = (PsiClass)resolved;
-            if (clazz != null) {
-              if (!processAllMembers(processor, clazz)) return false;
+      if (!processDeclarationsForMultipleElements(processor, lastParent, place, state)) return false;
+    }
+    else {
+      if (!processDeclarationsForSingleElement(processor, state)) return false;
+    }
+
+    return true;
+  }
+
+  private boolean processDeclarationsForSingleElement(PsiScopeProcessor processor, ResolveState state) {
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+    String name = getImportedName();
+    if (name == null) return true;
+
+    NameHint nameHint = processor.getHint(NameHint.KEY);
+
+    GrCodeReferenceElement ref = getImportReference();
+    if (ref == null) return true;
+
+    String qName = ref.getCanonicalText();
+    if (qName.indexOf('.') <= 0) return true;
+
+    if (isStatic()) {
+      final int i = qName.lastIndexOf('.');
+      if (i > 0) {
+        final String classQName = qName.substring(0, i);
+        PsiClass clazz = facade.findClass(classQName, getResolveScope());
+        if (clazz != null) {
+          final String refName = ref.getReferenceName();
+          if (nameHint == null || name.equals(nameHint.getName(state))) {
+            final PsiField field = clazz.findFieldByName(refName, false);
+            if (field != null && field.hasModifierProperty(PsiModifier.STATIC)) {
+              if (!processor.execute(field, state)) return false;
+            }
+
+            for (PsiMethod method : clazz.findMethodsByName(refName, false)) {
+              if (method.hasModifierProperty(PsiModifier.STATIC)) {
+                if (!processor.execute(method, state)) return false;
+              }
             }
           }
-        }
-        else {
-          String qName = PsiUtil.getQualifiedReferenceText(ref);
-          if (qName != null) {
-            PsiPackage aPackage = facade.findPackage(qName);
-            if (aPackage != null) {
-              if (!aPackage.processDeclarations(processor, state, lastParent, place)) return false;
-            }
+
+          final PsiMethod getter = GroovyPropertyUtils.findPropertyGetter(clazz, refName, true, true);
+          if (getter != null &&
+              (nameHint == null || name.equals(GroovyPropertyUtils.getPropertyNameByGetterName(nameHint.getName(state), true)))) {
+            if (!processor.execute(getter, state)) return false;
+          }
+
+          final PsiMethod setter = GroovyPropertyUtils.findPropertySetter(clazz, refName, true, true);
+          if (setter != null &&
+              (nameHint == null || name.equals(GroovyPropertyUtils.getPropertyNameBySetterName(nameHint.getName(state))))) {
+            if (!processor.execute(setter, state)) return false;
           }
         }
       }
     }
     else {
-      String name = getImportedName();
-      if (name != null) {
-        NameHint nameHint = processor.getHint(NameHint.KEY);
-        //todo [DIANA] look more carefully
-
-        GrCodeReferenceElement ref = getImportReference();
-        if (ref != null) {
-          String qName = ref.getCanonicalText();
-          if (qName != null && qName.indexOf('.') > 0) {
-            if (!isStatic()) {
-              if (nameHint == null || name.equals(nameHint.getName(state))) {
-                PsiClass clazz = facade.findClass(qName, getResolveScope());
-                if (clazz != null && !processor.execute(clazz, state)) return false;
-              }
-            }
-            else {
-              final int i = qName.lastIndexOf('.');
-              if (i > 0) {
-                final String classQName = qName.substring(0, i);
-                PsiClass clazz = facade.findClass(classQName, getResolveScope());
-                if (clazz != null) {
-                  final String refName = ref.getReferenceName();
-                  if (nameHint == null || name.equals(nameHint.getName(state))) {
-                    final PsiField field = clazz.findFieldByName(refName, false);
-                    if (field != null && field.hasModifierProperty(PsiModifier.STATIC) && !processor.execute(field, state)) {
-                      return false;
-                    }
-
-                    for (PsiMethod method : clazz.findMethodsByName(refName, false)) {
-                      if (method.hasModifierProperty(PsiModifier.STATIC) && !processor.execute(method, state)) return false;
-                    }
-                  }
-
-                  if (processor instanceof AccessorResolverProcessor) {
-                    final PsiMethod getter = GroovyPropertyUtils.findPropertyGetter(clazz, refName, true, true);
-                    if (getter != null &&
-                        (nameHint == null ||
-                         name.equals(GroovyPropertyUtils.getPropertyNameByGetterName(nameHint.getName(state), true)))) {
-                      processor.execute(getter, state);
-                    }
-
-                    final PsiMethod setter = GroovyPropertyUtils.findPropertySetter(clazz, refName, true, true);
-                    if (setter != null &&
-                        (nameHint == null || name.equals(GroovyPropertyUtils.getPropertyNameBySetterName(nameHint.getName(state))))) {
-                      processor.execute(setter, state);
-                    }
-                  }
-                }
-              }
-            }
-          }
+      if (nameHint == null || name.equals(nameHint.getName(state))) {
+        PsiClass clazz = facade.findClass(qName, getResolveScope());
+        if (clazz != null) {
+          if (!processor.execute(clazz, state)) return false;
         }
       }
     }
+    return true;
+  }
 
+  private boolean processDeclarationsForMultipleElements(PsiScopeProcessor processor,
+                                                         PsiElement lastParent,
+                                                         PsiElement place,
+                                                         ResolveState state) {
+    GrCodeReferenceElement ref = getImportReference();
+    if (ref == null) return true;
+
+    if (isStatic()) {
+      final PsiElement resolved = ref.resolve();
+      if (resolved instanceof PsiClass) {
+        final PsiClass clazz = (PsiClass)resolved;
+        if (!processAllMembers(processor, clazz)) return false;
+      }
+    }
+    else {
+      String qName = PsiUtil.getQualifiedReferenceText(ref);
+      if (qName != null) {
+        PsiPackage aPackage = JavaPsiFacade.getInstance(getProject()).findPackage(qName);
+        if (aPackage != null) {
+          if (!aPackage.processDeclarations(processor, state, lastParent, place)) return false;
+        }
+      }
+    }
     return true;
   }
 

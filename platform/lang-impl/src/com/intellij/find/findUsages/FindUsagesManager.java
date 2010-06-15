@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -44,6 +45,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchRequestCollector;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.content.Content;
@@ -52,6 +54,7 @@ import com.intellij.usageView.UsageViewManager;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewManagerImpl;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
@@ -338,29 +341,40 @@ public class FindUsagesManager implements JDOMExternalizable {
         if (scopeFile != null) {
           options.searchScope = new LocalSearchScope(scopeFile);
         }
-        final Processor<UsageInfo> usageInfoProcessorToUsageProcessorAdapter = new Processor<UsageInfo>() {
+        final Processor<UsageInfo> usageInfoProcessor = new CommonProcessors.UniqueProcessor<UsageInfo>(new Processor<UsageInfo>() {
           public boolean process(UsageInfo usageInfo) {
             return processor.process(UsageInfoToUsageConverter.convert(descriptor, usageInfo));
           }
-        };
+        });
         List<? extends PsiElement> elements =
           ApplicationManager.getApplication().runReadAction(new Computable<List<? extends PsiElement>>() {
             public List<? extends PsiElement> compute() {
               return descriptor.getAllElements();
             }
           });
+
+        options.fastTrack = new SearchRequestCollector();
+
         for (final PsiElement element : elements) {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
               LOG.assertTrue(element.isValid());
             }
           });
-          handler.processElementUsages(element, usageInfoProcessorToUsageProcessorAdapter, options);
+          handler.processElementUsages(element, usageInfoProcessor, options);
         }
+
+        PsiManager.getInstance(handler.getProject()).getSearchHelper().processRequests(options.fastTrack, new ReadActionProcessor<PsiReference>() {
+          public boolean processInReadAction(final PsiReference ref) {
+            TextRange rangeInElement = ref.getRangeInElement();
+            return usageInfoProcessor.process(new UsageInfo(ref.getElement(), rangeInElement.getStartOffset(), rangeInElement.getEndOffset(), false));
+          }
+        });
       }
     };
   }
 
+  
   private static PsiElement2UsageTargetAdapter[] convertToUsageTargets(final List<? extends PsiElement> elementsToSearch) {
     final ArrayList<PsiElement2UsageTargetAdapter> targets = new ArrayList<PsiElement2UsageTargetAdapter>(elementsToSearch.size());
     for (PsiElement element : elementsToSearch) {

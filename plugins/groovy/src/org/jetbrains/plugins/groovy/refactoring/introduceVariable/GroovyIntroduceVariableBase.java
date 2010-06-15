@@ -283,7 +283,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
         }, REFACTORING_NAME, null);
   }
 
-  private void resolveLocalConflicts(PsiElement tempContainer, GrVariable varDef) {
+  private static void resolveLocalConflicts(PsiElement tempContainer, GrVariable varDef) {
     for (PsiElement child : tempContainer.getChildren()) {
       if (child instanceof GrReferenceExpression &&
           !child.getText().contains(".")) {
@@ -305,7 +305,8 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     }
   }
 
-  private String getFieldName(PsiElement element) {
+  @Nullable
+  private static String getFieldName(PsiElement element) {
     if (element instanceof GrAccessorMethod) element = ((GrAccessorMethod) element).getProperty();
     return element instanceof GrField ? ((GrField) element).getName() : null;
   }
@@ -336,40 +337,26 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
         varDecl = (GrVariableDeclaration) block.addStatementBefore(varDecl, (GrStatement) anchorElement);
       }
     } else {
-      GrStatement tempStatement = anchorElement;
       // To replace branch body correctly
-      boolean inThenIfBranch = realContainer instanceof GrIfStatement &&
-          anchorElement.equals(((GrIfStatement) realContainer).getThenBranch());
       String refId = varDecl.getVariables()[0].getName();
       GrBlockStatement newBody;
-      if (tempStatement.equals(selectedExpr)) {
+      if (anchorElement.equals(selectedExpr)) {
         newBody = factory.createBlockStatement(varDecl);
       } else {
-        replaceExpressionOccurrencesInStatement(tempStatement, selectedExpr, refId, replaceAllOccurrences);
-        newBody = factory.createBlockStatement(varDecl, tempStatement);
+        replaceExpressionOccurrencesInStatement(anchorElement, selectedExpr, refId, replaceAllOccurrences);
+        newBody = factory.createBlockStatement(varDecl, anchorElement);
       }
 
       varDecl = (GrVariableDeclaration) newBody.getBlock().getStatements()[0];
 
-      GrCodeBlock tempBlock = newBody.getBlock();
-      if (realContainer instanceof GrLoopStatement) {
-        tempBlock = ((GrBlockStatement) ((GrLoopStatement) realContainer).replaceBody(newBody)).getBlock();
-      } else if (realContainer instanceof GrIfStatement) {
-        GrIfStatement ifStatement = ((GrIfStatement) realContainer);
-        if (inThenIfBranch) {
-          tempBlock = ((GrBlockStatement) ifStatement.replaceThenBranch(newBody)).getBlock();
-        } else {
-          tempBlock = ((GrBlockStatement) ifStatement.replaceElseBranch(newBody)).getBlock();
-        }
-      }
-
+      GrCodeBlock tempBlock = ((GrBlockStatement) ((GrLoopStatement) realContainer).replaceBody(newBody)).getBlock();
       refreshPositionMarker(tempBlock.getStatements()[tempBlock.getStatements().length - 1]);
     }
 
     return varDecl.getVariables()[0];
   }
 
-  private void replaceExpressionOccurrencesInStatement(GrStatement stmt, GrExpression expr, String refText, boolean replaceAllOccurrences)
+  private static void replaceExpressionOccurrencesInStatement(GrStatement stmt, GrExpression expr, String refText, boolean replaceAllOccurrences)
       throws IncorrectOperationException {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(stmt.getProject());
     GrReferenceExpression refExpr = factory.createReferenceExpressionFromText(refText);
@@ -392,6 +379,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
   /**
    * Replaces an expression occurrence by appropriate variable declaration
    */
+  @Nullable
   private GrVariable replaceOnlyExpression(@NotNull GrExpression expr,
                                            GrExpression selectedExpr,
                                            @NotNull PsiElement context,

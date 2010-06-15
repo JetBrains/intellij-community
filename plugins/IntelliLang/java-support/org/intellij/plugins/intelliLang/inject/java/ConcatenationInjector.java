@@ -21,6 +21,7 @@ import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -29,10 +30,11 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PatternValuesIndex;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.Configuration;
-import org.intellij.plugins.intelliLang.PatternBasedInjectionHelper;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
@@ -378,32 +380,15 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
     if (myXmlIndex == null) {
       myXmlIndex = CachedValuesManager.getManager(myProject).createCachedValue(new CachedValueProvider<Collection<String>>() {
         public Result<Collection<String>> compute() {
-          final Collection<String> result = new THashSet<String>();
-          final PatternBasedInjectionHelper helper = new PatternBasedInjectionHelper(JavaLanguageInjectionSupport.JAVA_SUPPORT_ID) {
-            @Override
-            protected void preInvoke(Object target, String methodName, Object[] arguments) {
-              if (arguments.length == 1 && arguments[0] instanceof String) {
-                if ("withName".equals(methodName)) {
-                  result.add((String)arguments[0]);
-                }
-                else if ("definedInClass".equals(methodName)) {
-                  result.add(StringUtil.getShortName((Class)arguments[0]));
-                }
-              }
-            }
-          };
+          final Map<ElementPattern<?>, BaseInjection> map = new THashMap<ElementPattern<?>, BaseInjection>();
           for (BaseInjection injection : myConfiguration.getInjections(JavaLanguageInjectionSupport.JAVA_SUPPORT_ID)) {
             for (InjectionPlace place : injection.getInjectionPlaces()) {
-              if (!place.isEnabled()) continue;
-              try {
-                helper.compileElementPattern(place.getText());
-              }
-              catch (Exception e) {
-                // do nothing
-              }
+              if (!place.isEnabled() || place.getElementPattern() == null) continue;
+              map.put(place.getElementPattern(), injection);
             }
           }
-          final Result<Collection<String>> r = new Result<Collection<String>>(result, myConfiguration);
+          final Set<String> stringSet = PatternValuesIndex.buildStringIndex(map.keySet());
+          final Result<Collection<String>> r = new Result<Collection<String>>(stringSet, myConfiguration);
           r.setLockValue(true);
           return r;
         }

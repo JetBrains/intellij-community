@@ -21,7 +21,6 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiLock;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ILazyParseableElementType;
 import com.intellij.util.text.CharArrayUtil;
@@ -30,10 +29,17 @@ import org.jetbrains.annotations.NotNull;
 public class LazyParseableElement extends CompositeElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.LazyParseableElement");
   private static final RecursiveTreeElementWalkingVisitor CREATE_PSI = new RecursiveTreeElementWalkingVisitor(false) {
+
     @Override
-    protected void visitNode(TreeElement element) {
-      element.getPsi();
+    public void visitLeaf(LeafElement leaf) {
     }
+
+    @Override
+    public void visitComposite(CompositeElement composite) {
+      composite.createPsiNoLock();
+      super.visitComposite(composite);
+    }
+
   };
 
   private static class ChameleonLock {
@@ -169,14 +175,8 @@ public class LazyParseableElement extends CompositeElement {
       rawAddChildren((TreeElement)parsedNode);
 
       //ensure PSI is created all at once, to reduce contention of PsiLock in CompositeElement.getPsi()
-      /*
-      synchronized (PsiLock.LOCK) {
-        while (parsedNode != null) {
-          ((TreeElement)parsedNode).acceptTree(CREATE_PSI);
-          parsedNode = parsedNode.getTreeNext();
-        }
-      }
-      */
+        ((TreeElement)parsedNode).acceptTree(CREATE_PSI);
+        parsedNode = parsedNode.getTreeNext();
     }
   }
 

@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,8 +31,8 @@ public class ControlFlowBuilder {
   public int instructionCount;
 
   public ControlFlowBuilder() {
-    instructions = new ArrayList<Instruction>();
-    pending = new ArrayList<Pair<PsiElement, Instruction>>();
+    instructions = CollectionFactory.arrayList();
+    pending = CollectionFactory.arrayList();
     instructionCount = 0;
   }
 
