@@ -40,6 +40,7 @@ public abstract class SvnTestCase extends AbstractVcsTestCase {
   protected String myRepoUrl;
   private ChangeListManagerGate myGate;
   protected AtomicSectionsAware myRefreshCopiesStub;
+  private ChangeListManager myChangeListManager;
 
   protected SvnTestCase() {
     PlatformTestCase.initPlatformLangPrefix();
@@ -92,6 +93,11 @@ public abstract class SvnTestCase extends AbstractVcsTestCase {
     ((StartupManagerImpl) StartupManager.getInstance(myProject)).runPostStartupActivities();
     //vcs.postStartup();
     ((SvnFileUrlMappingImpl) vcs.getSvnFileUrlMapping()).realRefresh(myRefreshCopiesStub);
+
+    // there should be kind-a waiting for after change list manager finds all changes and runs inner refresh of copies in the above method
+    myChangeListManager = ChangeListManager.getInstance(myProject);
+    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
+    myChangeListManager.ensureUpToDate(false);
   }
 
   @After

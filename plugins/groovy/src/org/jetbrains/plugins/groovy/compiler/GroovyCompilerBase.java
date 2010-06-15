@@ -31,6 +31,7 @@ import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.compiler.TranslatingCompiler;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -43,6 +44,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -63,6 +65,8 @@ import org.jetbrains.groovy.compiler.rt.CompilerMessage;
 import org.jetbrains.groovy.compiler.rt.GroovycRunner;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
+import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
@@ -326,13 +330,11 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
       final List<VirtualFile> toCompile = new ArrayList<VirtualFile>();
       final List<VirtualFile> toCompileTests = new ArrayList<VirtualFile>();
       final CompilerConfiguration configuration = CompilerConfiguration.getInstance(myProject);
+      final PsiManager psiManager = PsiManager.getInstance(myProject);
 
       if (GroovyUtils.isAcceptableModuleType(module.getModuleType())) {
         for (final VirtualFile file : moduleFiles) {
-          final boolean shouldCompile = !configuration.isResourceFile(file) &&
-                                        (file.getFileType() == GroovyFileType.GROOVY_FILE_TYPE ||
-                                         file.getFileType() == StdFileTypes.JAVA);
-          if (shouldCompile) {
+          if (shouldCompile(file, configuration, psiManager)) {
             (index.isInTestSourceContent(file) ? toCompileTests : toCompile).add(file);
           }
         }
@@ -347,6 +349,28 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
 
     }
 
+  }
+
+  private static boolean shouldCompile(final VirtualFile file, CompilerConfiguration configuration, final PsiManager manager) {
+    if (configuration.isResourceFile(file)) {
+      return false;
+    }
+
+    final FileType fileType = file.getFileType();
+    if (fileType == GroovyFileType.GROOVY_FILE_TYPE) {
+      return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+        public Boolean compute() {
+          PsiFile psiFile = manager.findFile(file);
+          if (psiFile instanceof GroovyFile && ((GroovyFile)psiFile).isScript()) {
+            final GroovyScriptType scriptType = GroovyScriptType.getScriptType((GroovyFile)psiFile);
+            return scriptType.shouldBeCompiled((GroovyFile)psiFile);
+          }
+          return true;
+        }
+      });
+    }
+
+    return fileType == StdFileTypes.JAVA;
   }
 
   protected abstract void compileFiles(CompileContext compileContext, Module module,

@@ -7,9 +7,8 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.xml.*;
-import com.intellij.util.xml.ui.DomUIFactory;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
@@ -22,7 +21,12 @@ import java.util.Map;
  */
 public class InvocationCache {
   private static final Map<JavaMethodSignature, Invocation> ourCoreInvocations = new HashMap<JavaMethodSignature, Invocation>();
-  private final Map<JavaMethodSignature, Invocation> myInvocations = new ConcurrentHashMap<JavaMethodSignature, Invocation>();
+  private final Map<Method, Invocation> myInvocations = new ConcurrentFactoryMap<Method, Invocation>() {
+    @Override
+    protected Invocation create(Method key) {
+      return ourCoreInvocations.get(new JavaMethodSignature(key));
+    }
+  };
 
   static {
     addCoreInvocations(DomElement.class);
@@ -30,76 +34,71 @@ public class InvocationCache {
     addCoreInvocations(AnnotatedElement.class);
     addCoreInvocations(UserDataHolder.class);
     addCoreInvocations(Object.class);
-    try {
-      ourCoreInvocations.put(JavaMethodSignature.getSignature(DomElement.class.getMethod("getXmlElement")), new Invocation() {
-        public Object invoke(DomInvocationHandler<?> handler, Object[] args) throws Throwable {
-          return handler.getXmlElement();
+    ourCoreInvocations.put(new JavaMethodSignature("getXmlElement"), new Invocation() {
+      public Object invoke(DomInvocationHandler<?> handler, Object[] args) throws Throwable {
+        return handler.getXmlElement();
+      }
+    });
+    ourCoreInvocations.put(new JavaMethodSignature("getXmlTag"), new Invocation() {
+      public Object invoke(DomInvocationHandler<?> handler, Object[] args) throws Throwable {
+        return handler.getXmlTag();
+      }
+    });
+    ourCoreInvocations.put(new JavaMethodSignature("getParent"), new Invocation() {
+      public Object invoke(DomInvocationHandler<?> handler, Object[] args) throws Throwable {
+        return handler.getParent();
+      }
+    });
+    ourCoreInvocations.put(new JavaMethodSignature("accept"), new Invocation() {
+      public Object invoke(DomInvocationHandler<?> handler, Object[] args) throws Throwable {
+        handler.accept((DomElementVisitor)args[0]);
+        return null;
+      }
+    });
+    ourCoreInvocations.put(new JavaMethodSignature("getAnnotation", Class.class), new Invocation() {
+      public Object invoke(DomInvocationHandler<?> handler, Object[] args) throws Throwable {
+        //noinspection unchecked
+        return handler.getAnnotation((Class<Annotation>)args[0]);
+      }
+    });
+    ourCoreInvocations.put(new JavaMethodSignature("getRawText"), new Invocation() {
+      public final Object invoke(final DomInvocationHandler<?> handler, final Object[] args) throws Throwable {
+        return handler.getValue();
+      }
+    });
+    ourCoreInvocations.put(new JavaMethodSignature("getXmlAttribute"), new Invocation() {
+      public final Object invoke(final DomInvocationHandler<?> handler, final Object[] args) throws Throwable {
+        return handler.getXmlElement();
+      }
+    });
+    ourCoreInvocations.put(new JavaMethodSignature("getXmlAttributeValue"), new Invocation() {
+      @Nullable
+      public final Object invoke(final DomInvocationHandler<?> handler, final Object[] args) throws Throwable {
+        final XmlAttribute attribute = (XmlAttribute)handler.getXmlElement();
+        return attribute != null ? attribute.getValueElement() : null;
+      }
+    });
+    final JavaMethod getValue = JavaMethod.getMethod(GenericValue.class, new JavaMethodSignature("getValue"));
+    ourCoreInvocations.put(new JavaMethodSignature("getConverter"), new Invocation() {
+      public final Object invoke(final DomInvocationHandler<?> handler, final Object[] args) throws Throwable {
+        try {
+          return handler.getScalarConverter(getValue);
         }
-      });
-      ourCoreInvocations.put(JavaMethodSignature.getSignature(DomElement.class.getMethod("getXmlTag")), new Invocation() {
-        public Object invoke(DomInvocationHandler<?> handler, Object[] args) throws Throwable {
-          return handler.getXmlTag();
-        }
-      });
-      ourCoreInvocations.put(JavaMethodSignature.getSignature(DomElement.class.getMethod("getParent")), new Invocation() {
-        public Object invoke(DomInvocationHandler<?> handler, Object[] args) throws Throwable {
-          return handler.getParent();
-        }
-      });
-      ourCoreInvocations.put(JavaMethodSignature.getSignature(DomElement.class.getMethod("accept", DomElementVisitor.class)), new Invocation() {
-        public Object invoke(DomInvocationHandler<?> handler, Object[] args) throws Throwable {
-          handler.accept((DomElementVisitor)args[0]);
-          return null;
-        }
-      });
-      ourCoreInvocations.put(JavaMethodSignature.getSignature(AnnotatedElement.class.getMethod("getAnnotation", Class.class)), new Invocation() {
-        public Object invoke(DomInvocationHandler<?> handler, Object[] args) throws Throwable {
-          return handler.getAnnotation((Class<Annotation>)args[0]);
-        }
-      });
-      ourCoreInvocations.put(JavaMethodSignature.getSignature(GenericDomValue.class.getMethod("getRawText")), new Invocation() {
-        public final Object invoke(final DomInvocationHandler<?> handler, final Object[] args) throws Throwable {
-          return handler.getValue();
-        }
-      });
-      ourCoreInvocations.put(JavaMethodSignature.getSignature(GenericAttributeValue.class.getMethod("getXmlAttribute")), new Invocation() {
-        public final Object invoke(final DomInvocationHandler<?> handler, final Object[] args) throws Throwable {
-          return handler.getXmlElement();
-        }
-      });
-      ourCoreInvocations.put(JavaMethodSignature.getSignature(GenericAttributeValue.class.getMethod("getXmlAttributeValue")), new Invocation() {
-        @Nullable
-        public final Object invoke(final DomInvocationHandler<?> handler, final Object[] args) throws Throwable {
-          final XmlAttribute attribute = (XmlAttribute)handler.getXmlElement();
-          return attribute != null ? attribute.getValueElement() : null;
-        }
-      });
-      final JavaMethod javaMethod =
-              JavaMethod.getMethod(GenericValue.class, JavaMethodSignature.getSignature(DomUIFactory.GET_VALUE_METHOD));
-      ourCoreInvocations.put(JavaMethodSignature.getSignature(GenericDomValue.class.getMethod("getConverter")), new Invocation() {
-        public final Object invoke(final DomInvocationHandler<?> handler, final Object[] args) throws Throwable {
-          try {
-            return handler.getScalarConverter(javaMethod);
+        catch (Throwable e) {
+          final Throwable cause = e.getCause();
+          if (cause instanceof ProcessCanceledException) {
+            throw(ProcessCanceledException)cause;
           }
-          catch (Throwable e) {
-            final Throwable cause = e.getCause();
-            if (cause instanceof ProcessCanceledException) {
-              throw(ProcessCanceledException)cause;
-            }
-            throw new RuntimeException(e);
-          }
+          throw new RuntimeException(e);
         }
-      });
-    }
-    catch (NoSuchMethodException e) {
-      throw new AssertionError();
-    }
+      }
+    });
   }
 
   private static void addCoreInvocations(final Class<?> aClass) {
     for (final Method method : aClass.getDeclaredMethods()) {
       if ("equals".equals(method.getName())) {
-        ourCoreInvocations.put(JavaMethodSignature.getSignature(method), new Invocation() {
+        ourCoreInvocations.put(new JavaMethodSignature(method), new Invocation() {
           public Object invoke(DomInvocationHandler<?> handler, Object[] args) throws Throwable {
             final DomElement proxy = handler.getProxy();
             final Object arg = args[0];
@@ -117,14 +116,14 @@ public class InvocationCache {
         });
       }
       else if ("hashCode".equals(method.getName())) {
-        ourCoreInvocations.put(JavaMethodSignature.getSignature(method), new Invocation() {
+        ourCoreInvocations.put(new JavaMethodSignature(method), new Invocation() {
           public Object invoke(DomInvocationHandler<?> handler, Object[] args) throws Throwable {
             return handler.hashCode();
           }
         });
       }
       else {
-        ourCoreInvocations.put(JavaMethodSignature.getSignature(method), new Invocation() {
+        ourCoreInvocations.put(new JavaMethodSignature(method), new Invocation() {
           public Object invoke(DomInvocationHandler<?> handler, Object[] args) throws Throwable {
             return method.invoke(handler, args);
           }
@@ -134,12 +133,12 @@ public class InvocationCache {
   }
 
 
-  public Invocation getInvocation(JavaMethodSignature method) {
-    Invocation invocation = ourCoreInvocations.get(method);
-    return invocation != null ? invocation : myInvocations.get(method);
+  @Nullable
+  public Invocation getInvocation(Method method) {
+    return myInvocations.get(method);
   }
 
-  public void putInvocation(JavaMethodSignature method, Invocation invocation) {
+  public void putInvocation(Method method, Invocation invocation) {
     myInvocations.put(method, invocation);
   }
 

@@ -15,30 +15,18 @@
  */
 package com.intellij.patterns;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Collection;
 
-import com.intellij.util.ProcessingContext;
-
 /**
  * @author peter
  */
-public class ValuePatternCondition<T> extends PatternCondition<T>{
-  private final Collection<T> myValues;
+public abstract class ValuePatternCondition<T> extends PatternCondition<T>{
 
-  protected ValuePatternCondition(@NonNls String methodName, final Collection<T> values) {
+  protected ValuePatternCondition(@NonNls String methodName) {
     super(methodName);
-    myValues = values;
   }
 
-  public Collection<T> getValues() {
-    return myValues;
-  }
-
-  public boolean accepts(@NotNull final T t, final ProcessingContext context) {
-    return myValues.contains(t);
-  }
-
+  public abstract Collection<T> getValues();
 }

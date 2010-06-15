@@ -66,6 +66,40 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
 
   }
 
+  protected void updateOptions(boolean showAllStandardOptions, String... allowedOptions) {
+    for (BooleanOptionKey key : myKeys) {
+      String fieldName = key.field.getName();
+      if (key instanceof CustomBooleanOptionKey) {
+        key.setEnabled(false);
+      }
+      else if (showAllStandardOptions) {
+        key.setEnabled(true);
+      }
+      else {
+        key.setEnabled(false);
+        for (String optionName: allowedOptions) {
+          if (fieldName.equals(optionName)) {
+            key.setEnabled(true);
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  protected void enableOption(String optionName) {
+    for (BooleanOptionKey key : myKeys) {
+      if (key.field.getName().equals(optionName)) {
+        key.setEnabled(true);
+      }
+    }
+  }
+
+  protected void updateOptionsTree() {
+    resetImpl(getSettings());
+    myOptionsTree.repaint();
+  }
+
   protected JTree createOptionsTree() {
     DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode();
     String groupName = "";
@@ -124,6 +158,7 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     Object o = treePath.getLastPathComponent();
     if (o instanceof MyToggleTreeNode) {
       MyToggleTreeNode node = (MyToggleTreeNode)o;
+      if (!node.isEnabled()) return;
       node.setSelected(!node.isSelected());
       int row = myOptionsTree.getRowForPath(treePath);
       myOptionsTree.repaint(myOptionsTree.getRowBounds(row));
@@ -159,6 +194,7 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     try {
       BooleanOptionKey key = (BooleanOptionKey)childNode.getKey();
       childNode.setSelected(key.getValue(settings));
+      childNode.setEnabled(key.isEnabled());
     }
     catch (IllegalArgumentException e) {
       LOG.error(e);
@@ -288,7 +324,7 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
           button.setBackground(UIUtil.getTreeTextBackground());
         }
 
-        button.setEnabled(tree.isEnabled());
+        button.setEnabled(tree.isEnabled() && treeNode.isEnabled());
 
         return button;
       }
@@ -363,6 +399,7 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     final String groupName;
     final String cbName;
     final Field field;
+    private boolean enabled = true;
 
     public BooleanOptionKey(String groupName, String cbName, Field field) {
       this.groupName = groupName;
@@ -391,6 +428,14 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
 
     public boolean getValue(CodeStyleSettings settings) throws IllegalAccessException {
       return field.getBoolean(settings);
+    }
+
+    public void setEnabled(boolean enabled) {
+      this.enabled = enabled;
+    }
+
+    public boolean isEnabled() {
+      return this.enabled;
     }
   }
 
@@ -424,6 +469,7 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     private final Object myKey;
     private final String myText;
     private boolean isSelected;
+    private boolean isEnabled = true;
 
     public MyToggleTreeNode(Object key, String text) {
       myKey = key;
@@ -437,6 +483,10 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     public void setSelected(boolean val) { isSelected = val; }
 
     public boolean isSelected() { return isSelected; }
+
+    public void setEnabled(boolean val) { isEnabled = val; }
+
+    public boolean isEnabled() { return isEnabled; }
   }
 
   public JComponent getInternalPanel() {

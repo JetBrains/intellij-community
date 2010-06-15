@@ -115,7 +115,6 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
   public GrNamedArgument addNamedArgument(final GrNamedArgument namedArgument) {
     final GrNamedArgument[] namedArguments = getNamedArguments();
     final GrExpression[] args = getExpressionArguments();
-    final ASTNode newNode = namedArgument.getNode();
     PsiElement anchor = null;
     final int namedCount = namedArguments.length;
     final int exprCount = args.length;
@@ -133,24 +132,14 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
       anchor = getRightParen();
     }
 
-    if (anchor != null) {
-      final ASTNode astNode = anchor.getNode();
-      getNode().addChild(newNode, astNode);
-    }
-    else {
-      getNode().addChild(newNode);
-    }
-
-    if (namedCount + exprCount > 0) {
-      getNode().addLeaf(mCOMMA, ",", newNode);
-    }
+    addBefore(namedArgument, anchor);
     return namedArgument;
   }
 
   @Override
   public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     if (element instanceof GrNamedArgument || element instanceof GrExpression) {
-      if (anchor == null) anchor=getLastChild();
+      if (anchor == null) anchor = getLastChild();
       if (anchor == null) {
         return super.addBefore(element, anchor);
       }
@@ -182,9 +171,9 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
         else {
           astNode.addLeaf(mCOMMA, ",", result.getNode());
         }
+        CodeStyleManager.getInstance(getManager().getProject()).reformat(this);
       }
 
-      CodeStyleManager.getInstance(getManager().getProject()).reformat(this);
       return result;
     }
     return super.addAfter(element, anchor);

@@ -18,11 +18,9 @@ package com.intellij.util.xml.impl;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xml.*;
 import gnu.trove.THashMap;
@@ -43,7 +41,6 @@ import java.util.*;
 public class StaticGenericInfoBuilder {
   private static final Set ADDER_PARAMETER_TYPES = new THashSet<Class>(Arrays.asList(Class.class, int.class));
   private final Class myClass;
-  private final Type myType;
   private final MultiValuesMap<XmlName, JavaMethod> myCollectionGetters = new MultiValuesMap<XmlName, JavaMethod>();
   private final MultiValuesMap<XmlName, JavaMethod> myCollectionAdders = new MultiValuesMap<XmlName, JavaMethod>();
   private final MultiValuesMap<XmlName, JavaMethod> myCollectionClassAdders = new MultiValuesMap<XmlName, JavaMethod>();
@@ -64,9 +61,8 @@ public class StaticGenericInfoBuilder {
   private JavaMethod myNameValueGetter;
   private JavaMethod myCustomChildrenGetter;
 
-  public StaticGenericInfoBuilder(final DomManagerImpl domManager, final Class aClass, Type type) {
+  public StaticGenericInfoBuilder(final Class aClass) {
     myClass = aClass;
-    myType = type;
 
     final Set<JavaMethod> methods = new THashSet<JavaMethod>();
     for (final Method method : ReflectionCache.getMethods(myClass)) {
@@ -80,12 +76,12 @@ public class StaticGenericInfoBuilder {
     }
 
     {
-      final Class implClass = domManager.getImplementation(myClass);
+      final Class implClass = DomApplicationComponent.getInstance().getImplementation(myClass);
       if (implClass != null) {
         for (Method method : ReflectionCache.getMethods(implClass)) {
           final int modifiers = method.getModifiers();
           if (!Modifier.isAbstract(modifiers) && !Modifier.isVolatile(modifiers)) {
-            final JavaMethodSignature signature = JavaMethodSignature.getSignature(method);
+            final JavaMethodSignature signature = new JavaMethodSignature(method);
             if (signature.findMethod(myClass) != null) {
               methods.remove(JavaMethod.getMethod(myClass, signature));
             }
@@ -131,6 +127,7 @@ public class StaticGenericInfoBuilder {
       }
     }
 
+    //noinspection ConstantIfStatement
     if (false) {
       if (!methods.isEmpty()) {
         StringBuilder sb = new StringBuilder(myClass + " should provide the following implementations:");
@@ -169,15 +166,6 @@ public class StaticGenericInfoBuilder {
     return aClass.equals(int.class) || aClass.equals(Integer.class);
   }
 
-  private static Set<XmlName> getXmlNames(final SubTagsList subTagsList) {
-    return ContainerUtil.map2Set(subTagsList.value(), new Function<String, XmlName>() {
-      public XmlName fun(String s) {
-        return new XmlName(s);
-      }
-    });
-  }
-
-
   private boolean isAddMethod(JavaMethod method) {
     final XmlName tagName = extractTagName(method, "add");
     if (tagName == null) return false;
@@ -215,7 +203,7 @@ public class StaticGenericInfoBuilder {
     final Class returnType = method.getReturnType();
     final boolean isAttributeValueMethod = GenericAttributeValue.class.isAssignableFrom(returnType);
     final JavaMethodSignature signature = method.getSignature();
-    final Attribute annotation = signature.findAnnotation(Attribute.class, myClass);
+    final Attribute annotation = method.getAnnotation(Attribute.class);
     final boolean isAttributeMethod = annotation != null || isAttributeValueMethod;
     if (annotation != null) {
       assert
@@ -224,7 +212,7 @@ public class StaticGenericInfoBuilder {
     }
     if (isAttributeMethod) {
       final String s = annotation == null ? null : annotation.value();
-      String attributeName = StringUtil.isEmpty(s) ? getNameFromMethod(signature, true) : s;
+      String attributeName = StringUtil.isEmpty(s) ? getNameFromMethod(method, true) : s;
       assert attributeName != null && StringUtil.isNotEmpty(attributeName) : "Can't guess attribute name from method name: " + method.getName();
       final XmlName attrName = DomImplUtil.createXmlName(attributeName, method);
       myAttributes.put(signature, new AttributeChildDescriptionImpl(attrName, method));
@@ -232,12 +220,12 @@ public class StaticGenericInfoBuilder {
     }
 
     if (isDomElement(returnType)) {
-      final String qname = getSubTagName(signature);
+      final String qname = getSubTagName(method);
       if (qname != null) {
         final XmlName xmlName = DomImplUtil.createXmlName(qname, method);
         assert !myCollectionChildrenTypes.containsKey(xmlName) : "Collection and fixed children cannot intersect: " + qname;
         int index = 0;
-        final SubTag subTagAnnotation = signature.findAnnotation(SubTag.class, myClass);
+        final SubTag subTagAnnotation = method.getAnnotation(SubTag.class);
         if (subTagAnnotation != null && subTagAnnotation.index() != 0) {
           index = subTagAnnotation.index();
         }
@@ -265,7 +253,7 @@ public class StaticGenericInfoBuilder {
         return true;
       }
 
-      final String qname = getSubTagNameForCollection(signature);
+      final String qname = getSubTagNameForCollection(method);
       if (qname != null) {
         XmlName xmlName = DomImplUtil.createXmlName(qname, type, method);
         assert !myFixedChildrenGetters.containsKey(xmlName) : "Collection and fixed children cannot intersect: " + qname;
@@ -286,8 +274,8 @@ public class StaticGenericInfoBuilder {
   }
 
   @Nullable
-  private String getSubTagName(final JavaMethodSignature method) {
-    final SubTag subTagAnnotation = method.findAnnotation(SubTag.class, myClass);
+  private String getSubTagName(final JavaMethod method) {
+    final SubTag subTagAnnotation = method.getAnnotation(SubTag.class);
     if (subTagAnnotation == null || StringUtil.isEmpty(subTagAnnotation.value())) {
       return getNameFromMethod(method, false);
     }
@@ -295,8 +283,8 @@ public class StaticGenericInfoBuilder {
   }
 
   @Nullable
-  private String getSubTagNameForCollection(final JavaMethodSignature method) {
-    final SubTagList subTagList = method.findAnnotation(SubTagList.class, myClass);
+  private String getSubTagNameForCollection(final JavaMethod method) {
+    final SubTagList subTagList = method.getAnnotation(SubTagList.class);
     if (subTagList == null || StringUtil.isEmpty(subTagList.value())) {
       final String propertyName = getPropertyName(method);
       if (propertyName != null) {
@@ -312,13 +300,13 @@ public class StaticGenericInfoBuilder {
   }
 
   @Nullable
-  private String getNameFromMethod(final JavaMethodSignature method, boolean isAttribute) {
+  private String getNameFromMethod(final JavaMethod method, boolean isAttribute) {
     final String propertyName = getPropertyName(method);
     return propertyName == null ? null : getNameStrategy(isAttribute).convertName(propertyName);
   }
 
   @Nullable
-  private static String getPropertyName(JavaMethodSignature method) {
+  private static String getPropertyName(JavaMethod method) {
     return StringUtil.getPropertyName(method.getMethodName());
   }
 

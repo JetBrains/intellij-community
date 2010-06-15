@@ -47,7 +47,7 @@ public class KeyboardGestureProcessor {
     }
   });
 
-  final Timer myDblClickTimer = new Timer(500, new ActionListener() {
+  final Timer myDblClickTimer = new Timer(Registry.intValue("actionSystem.keyGestureDblClickTime"), new ActionListener() {
     public void actionPerformed(final ActionEvent e) {
       myState.processDblClickTimer();
     }

@@ -4,12 +4,11 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import com.intellij.util.IncorrectOperationException;
+
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -20,4 +19,6 @@ public interface GrVariableDeclaration extends GrStatement, GrMembersDeclaration
   GrTypeElement getTypeElementGroovy();
 
   GrVariable[] getVariables();
+
+  void setType(@Nullable PsiType type);
 }

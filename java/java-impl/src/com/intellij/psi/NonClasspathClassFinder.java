@@ -73,8 +73,8 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
     List<PsiClass> result = new ArrayList<PsiClass>();
     for (final VirtualFile classRoot : classRoots) {
       if (scope.contains(classRoot)) {
-        final String pkgName = psiPackage.getName();
-        final VirtualFile dir = pkgName != null ? classRoot.findFileByRelativePath(pkgName.replace('.', '/')) : classRoot;
+        final String pkgName = psiPackage.getQualifiedName();
+        final VirtualFile dir = classRoot.findFileByRelativePath(pkgName.replace('.', '/'));
         if (dir != null && dir.isDirectory()) {
           for (final VirtualFile file : dir.getChildren()) {
             if (!file.isDirectory()) {
@@ -121,8 +121,8 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
     List<PsiPackage> result = new ArrayList<PsiPackage>();
     for (final VirtualFile classRoot : classRoots) {
       if (scope.contains(classRoot)) {
-        final String pkgName = psiPackage.getName();
-        final VirtualFile dir = pkgName != null ? classRoot.findFileByRelativePath(pkgName.replace('.', '/')) : classRoot;
+        final String pkgName = psiPackage.getQualifiedName();
+        final VirtualFile dir = classRoot.findFileByRelativePath(pkgName.replace('.', '/'));
         if (dir != null && dir.isDirectory()) {
           for (final VirtualFile file : dir.getChildren()) {
             if (file.isDirectory()) {

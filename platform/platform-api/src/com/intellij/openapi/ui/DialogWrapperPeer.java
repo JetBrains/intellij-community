@@ -152,4 +152,6 @@ public abstract class DialogWrapperPeer {
   public abstract void setIconImages(List<Image> image);
 
   public abstract void setAppIcons();
+
+  public abstract boolean isHeadless();
 }

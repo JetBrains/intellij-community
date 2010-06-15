@@ -93,7 +93,7 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnAc
     }
 
     if (myQa.getModiferCodes().contains(e.getKeyCode())) {
-      if (areAllModifiersPressed(e.getModifiers())) {
+      if (areAllModifiersPressed(e.getModifiers(), myQa.getModiferCodes())) {
         myWaitingForAutoInitSession = true;
         myAutoInitSessionEvent = e;
         myInitSessionAlarm.addRequest(new Runnable() {
@@ -136,9 +136,9 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnAc
   }
 
 
-  private boolean areAllModifiersPressed(int modifiers) {
+  public static boolean areAllModifiersPressed(int modifiers, Set<Integer> modifierCodes) {
     int mask = 0;
-    for (Integer each : myQa.getModiferCodes()) {
+    for (Integer each : modifierCodes) {
       if (each == KeyEvent.VK_SHIFT) {
         mask |= KeyEvent.SHIFT_MASK;
       }

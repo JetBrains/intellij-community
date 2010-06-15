@@ -100,8 +100,10 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
       if (myHideOnKey && (event.getID() == KeyEvent.KEY_PRESSED)) {
         final KeyEvent ke = (KeyEvent)event;
-        if (SwingUtilities.isDescendingFrom(ke.getComponent(), myComp) || ke.getComponent() == myComp) return;
-        hide();
+        if (ke.getKeyCode() != KeyEvent.VK_SHIFT && ke.getKeyCode() != KeyEvent.VK_CONTROL && ke.getKeyCode() != KeyEvent.VK_ALT && ke.getKeyCode() != KeyEvent.VK_META) {
+          if (SwingUtilities.isDescendingFrom(ke.getComponent(), myComp) || ke.getComponent() == myComp) return;
+          hide();
+        }
       }
     }
   };

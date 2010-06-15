@@ -15,73 +15,46 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.SmartList;
-import com.intellij.util.containers.ConcurrentHashMap;
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author peter
  */
 public class JavaMethodSignature {
-  private static final Map<Method, JavaMethodSignature> ourSignatures = new ConcurrentHashMap<Method, JavaMethodSignature>();
   private final String myMethodName;
   private final Class[] myMethodParameters;
-  private final Set<Class> myKnownClasses = new THashSet<Class>();
-  private final List<Method> myAllMethods = new SmartList<Method>();
-  private final Map<Class,Method> myMethods = new THashMap<Class, Method>();
 
-  private JavaMethodSignature(final String methodName, final Class[] methodParameters) {
+  public JavaMethodSignature(final String methodName, final Class... methodParameters) {
     myMethodName = methodName;
-    myMethodParameters = methodParameters;
+    myMethodParameters = methodParameters.length == 0 ? ArrayUtil.EMPTY_CLASS_ARRAY : methodParameters;
+  }
+
+  public JavaMethodSignature(Method method) {
+    this(method.getName(), method.getParameterTypes());
   }
 
   public String getMethodName() {
     return myMethodName;
   }
 
-  public Class[] getParameterTypes() {
-    return myMethodParameters;
-  }
-
-  public final Object invoke(final Object instance, final Object... args) throws IllegalAccessException, InvocationTargetException {
-    final Class<?> aClass = instance.getClass();
-    final Method method = findMethod(aClass);
-    assert method != null : "No method " + this + " in " + aClass;
-    return method.invoke(instance, args);
-  }
-
   @Nullable
-  public final synchronized Method findMethod(final Class aClass) {
-    if (myMethods.containsKey(aClass)) {
-      return myMethods.get(aClass);
-    }
+  public final Method findMethod(final Class aClass) {
     Method method = getDeclaredMethod(aClass);
     if (method == null && ReflectionCache.isInterface(aClass)) {
       method = getDeclaredMethod(Object.class);
     }
-    myMethods.put(aClass, method);
     return method;
   }
 
-  private void addMethodsIfNeeded(final Class aClass) {
-    if (!myKnownClasses.contains(aClass)) {
-      addMethodWithSupers(aClass, findMethod(aClass));
-    }
+  private void collectMethods(final Class aClass, List<Method> methods) {
+    addMethodWithSupers(aClass, findMethod(aClass), methods);
   }
 
   @Nullable
@@ -90,63 +63,32 @@ public class JavaMethodSignature {
     return method == null ? ReflectionUtil.getDeclaredMethod(aClass, myMethodName, myMethodParameters) : method;
   }
 
-  private void addMethodWithSupers(final Class aClass, final Method method) {
-    myKnownClasses.add(aClass);
+  private void addMethodWithSupers(final Class aClass, final Method method, List<Method> methods) {
     if (method != null) {
-      myAllMethods.add(method);
+      methods.add(method);
     }
     final Class superClass = aClass.getSuperclass();
     if (superClass != null) {
-      addMethodsIfNeeded(superClass);
+      collectMethods(superClass, methods);
     } else {
       if (aClass.isInterface()) {
-        addMethodsIfNeeded(Object.class);
+        collectMethods(Object.class, methods);
       }
     }
     for (final Class anInterface : aClass.getInterfaces()) {
-      addMethodsIfNeeded(anInterface);
+      collectMethods(anInterface, methods);
     }
   }
 
-  @Nullable
-  public final synchronized <T extends Annotation> T findAnnotation(final Class<T> annotationClass, final Class startFrom) {
-    addMethodsIfNeeded(startFrom);
-    //noinspection ForLoopReplaceableByForEach
-    T result = null;
-    Class bestClass = null;
-
-    final int size = myAllMethods.size();
-    for (int i = 0; i < size; i++) {
-      Method method = myAllMethods.get(i);
-      final T annotation = method.getAnnotation(annotationClass);
-      if (annotation != null) {
-        final Class<?> declaringClass = method.getDeclaringClass();
-        if (ReflectionCache.isAssignable(declaringClass, startFrom) &&
-            (result == null || ReflectionCache.isAssignable(bestClass, declaringClass))) {
-          result = annotation;
-          bestClass = declaringClass;
-        }
-      }
-    }
-    return result;
-  }
-
-  public final synchronized List<Method> getAllMethods(final Class startFrom) {
-    addMethodsIfNeeded(startFrom);
-    final List<Method> list = ContainerUtil.findAll(myAllMethods, new Condition<Method>() {
-      public boolean value(final Method method) {
-        return method.getDeclaringClass().isAssignableFrom(startFrom);
-      }
-    });
-    return list;
+  public final List<Method> getAllMethods(final Class startFrom) {
+    final ArrayList<Method> methods = new ArrayList<Method>();
+    collectMethods(startFrom, methods);
+    return methods;
   }
 
   @Nullable
-  public final synchronized <T extends Annotation> Method findAnnotatedMethod(final Class<T> annotationClass, final Class startFrom) {
-    addMethodsIfNeeded(startFrom);
-    //noinspection ForLoopReplaceableByForEach
-    for (int i = 0; i < myAllMethods.size(); i++) {
-      Method method = myAllMethods.get(i);
+  public final <T extends Annotation> Method findAnnotatedMethod(final Class<T> annotationClass, final Class startFrom) {
+    for (Method method : getAllMethods(startFrom)) {
       final T annotation = method.getAnnotation(annotationClass);
       if (annotation != null && ReflectionCache.isAssignable(method.getDeclaringClass(), startFrom)) {
         return method;
@@ -177,19 +119,6 @@ public class JavaMethodSignature {
     int result = myMethodName.hashCode();
     result = 31 * result + Arrays.hashCode(myMethodParameters);
     return result;
-  }
-
-  public static JavaMethodSignature getSignature(Method method) {
-    JavaMethodSignature signature = ourSignatures.get(method);
-    if (signature != null) return signature;
-
-    Class<?>[] parameters = method.getParameterTypes();
-    ourSignatures.put(method, signature = new JavaMethodSignature(method.getName(), parameters.length == 0 ? ArrayUtil.EMPTY_CLASS_ARRAY : parameters));
-    return signature;
-  }
-
-  public static JavaMethodSignature getSignature(final String name, final Class<?>... parameterTypes) {
-    return new JavaMethodSignature(name, parameterTypes);
   }
 
 }

@@ -34,7 +34,6 @@ import com.intellij.semantic.SemService;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ReflectionAssignabilityCache;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.events.ElementChangedEvent;
@@ -52,7 +51,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author peter
@@ -70,34 +72,10 @@ public final class DomManagerImpl extends DomManager {
   static final SemKey<CollectionElementInvocationHandler> DOM_CUSTOM_HANDLER_KEY = DOM_HANDLER_KEY.subKey("DOM_CUSTOM_HANDLER_KEY");
   static final SemKey<AttributeChildInvocationHandler> DOM_ATTRIBUTE_HANDLER_KEY = DOM_HANDLER_KEY.subKey("DOM_ATTRIBUTE_HANDLER_KEY");
 
-  private final ReflectionAssignabilityCache myAssignabilityCache = new ReflectionAssignabilityCache();
-
-  private final ConcurrentFactoryMap<Type, StaticGenericInfo> myGenericInfos = new ConcurrentFactoryMap<Type, StaticGenericInfo>() {
-    @NotNull
-    protected StaticGenericInfo create(final Type type) {
-      return new StaticGenericInfo(type, DomManagerImpl.this);
-    }
-  };
-  private final ConcurrentFactoryMap<Class, InvocationCache> myInvocationCaches = new ConcurrentFactoryMap<Class, InvocationCache>() {
-    @NotNull
-    protected InvocationCache create(final Class key) {
-      return new InvocationCache();
-    }
-  };
-  private final ConcurrentFactoryMap<Class<? extends DomElementVisitor>, VisitorDescription> myVisitorDescriptions =
-      new ConcurrentFactoryMap<Class<? extends DomElementVisitor>, VisitorDescription>() {
-        @NotNull
-        protected VisitorDescription create(final Class<? extends DomElementVisitor> key) {
-          return new VisitorDescription(key);
-        }
-      };
-
   private final EventDispatcher<DomEventListener> myListeners = EventDispatcher.create(DomEventListener.class);
   private final ConverterManagerImpl myConverterManager;
-  private final ImplementationClassCache myCachedImplementationClasses = new ImplementationClassCache();
 
   private final GenericValueReferenceProvider myGenericValueReferenceProvider = new GenericValueReferenceProvider();
-  private final TypeChooserManager myTypeChooserManager = new TypeChooserManager();
 
   private final Project myProject;
   private final DomApplicationComponent myApplicationComponent;
@@ -300,15 +278,7 @@ public final class DomManagerImpl extends DomManager {
   }
 
   public final DomGenericInfo getGenericInfo(final Type type) {
-    return getStaticGenericInfo(type);
-  }
-
-  public final StaticGenericInfo getStaticGenericInfo(final Type type) {
-    return myGenericInfos.get(type);
-  }
-
-  final InvocationCache getInvocationCache(final Class type) {
-    return myInvocationCaches.get(type);
+    return myApplicationComponent.getStaticGenericInfo(type);
   }
 
   @Nullable
@@ -334,10 +304,8 @@ public final class DomManagerImpl extends DomManager {
     return (StableInvocationHandler)AdvancedProxy.getInvocationHandler(proxy);
   }
 
-  @Nullable
-  final Class<? extends DomElement> getImplementation(final Class concreteInterface) {
-    //noinspection unchecked
-    return myCachedImplementationClasses.get(concreteInterface);
+  public DomApplicationComponent getApplicationComponent() {
+    return myApplicationComponent;
   }
 
   public final Project getProject() {
@@ -396,15 +364,6 @@ public final class DomManagerImpl extends DomManager {
     return oldChanging;
   }
 
-  public final void registerImplementation(Class<? extends DomElement> domElementClass, Class<? extends DomElement> implementationClass,
-                                           final Disposable parentDisposable) {
-    myCachedImplementationClasses.registerImplementation(domElementClass, implementationClass, parentDisposable);
-  }
-
-  public final void clearImplementations() {
-    myCachedImplementationClasses.clear();
-  }
-
   @Nullable
   public final <T extends DomElement> DomFileElementImpl<T> getFileElement(XmlFile file) {
     if (file == null) return null;
@@ -422,7 +381,7 @@ public final class DomManagerImpl extends DomManager {
   @Nullable
   public final <T extends DomElement> DomFileElementImpl<T> getFileElement(XmlFile file, Class<T> domClass) {
     final DomFileDescription description = getDomFileDescription(file);
-    if (description != null && myAssignabilityCache.isAssignable(domClass, description.getRootElementClass())) {
+    if (description != null && myApplicationComponent.assignabilityCache.isAssignable(domClass, description.getRootElementClass())) {
       return getFileElement(file);
     }
     return null;
@@ -534,13 +493,6 @@ public final class DomManagerImpl extends DomManager {
   private void _registerFileDescription(final DomFileDescription description) {
     mySemService.clearCache();
 
-    //noinspection unchecked
-    final Map<Class<? extends DomElement>, Class<? extends DomElement>> implementations = description.getImplementations();
-    for (final Map.Entry<Class<? extends DomElement>, Class<? extends DomElement>> entry : implementations.entrySet()) {
-      registerImplementation(entry.getKey(), entry.getValue(), null);
-    }
-    myTypeChooserManager.copyFrom(description.getTypeChooserManager());
-
     final DomElementsAnnotator annotator = description.createAnnotator();
     if (annotator != null) {
       //noinspection unchecked
@@ -561,11 +513,7 @@ public final class DomManagerImpl extends DomManager {
   }
 
   public TypeChooserManager getTypeChooserManager() {
-    return myTypeChooserManager;
-  }
-
-  public final VisitorDescription getVisitorDescription(Class<? extends DomElementVisitor> aClass) {
-    return myVisitorDescriptions.get(aClass);
+    return myApplicationComponent.getTypeChooserManager();
   }
 
   public long getModificationCount() {

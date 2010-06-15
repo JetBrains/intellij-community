@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options.codeStyle;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -36,6 +37,7 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
   private List<IntOption> myOptions = new ArrayList<IntOption>();
   private Set<String> myAllowedOptions = new HashSet<String>();
   private boolean myAllOptionsAllowed = false;
+  private boolean myUpdateOnly = false;
 
   private final JPanel myPanel = new JPanel(new GridBagLayout());
 
@@ -66,6 +68,16 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
   @Override
   protected LanguageCodeStyleSettingsProvider.SettingsType getSettingsType() {
     return LanguageCodeStyleSettingsProvider.SettingsType.BLANK_LINE_SETTINGS;
+  }
+
+  @Override
+  protected void onLanguageChange(Language language) {
+    myUpdateOnly = true;
+    for(LanguageCodeStyleSettingsProvider provider: Extensions.getExtensions(LanguageCodeStyleSettingsProvider.EP_NAME)) {
+      if (provider.getLanguage().is(language)) {
+        provider.customizeBlankLinesOptions(this);
+      }
+    }
   }
 
   private JPanel createBlankLinesPanel() {
@@ -140,10 +152,24 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
 
   public void showAllStandardOptions() {
     myAllOptionsAllowed = true;
+    for (IntOption option : myOptions) {
+      option.myTextField.setEnabled(true);
+    }
   }
 
   public void showStandardOptions(String... optionNames) {
-    Collections.addAll(myAllowedOptions, optionNames);
+    if (!myUpdateOnly) {
+      Collections.addAll(myAllowedOptions, optionNames);
+    }
+    for (IntOption option : myOptions) {
+      option.myTextField.setEnabled(false);
+      for (String optionName : optionNames) {
+        if (option.myTarget.getName().equals(optionName)) {
+          option.myTextField.setEnabled(true);
+          break;
+        }
+      }
+    }
   }
 
   public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,

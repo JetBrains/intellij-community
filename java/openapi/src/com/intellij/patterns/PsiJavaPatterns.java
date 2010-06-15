@@ -18,8 +18,11 @@ package com.intellij.patterns;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ProcessingContext;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author peter
@@ -55,9 +58,14 @@ public class PsiJavaPatterns extends StandardPatterns{
   }
 
   public static PsiJavaElementPattern.Capture<PsiLiteral> psiLiteral(final ElementPattern value) {
-    return new PsiJavaElementPattern.Capture<PsiLiteral>(new InitialPatternCondition<PsiLiteral>(PsiLiteral.class) {
+    return new PsiJavaElementPattern.Capture<PsiLiteral>(new InitialPatternConditionPlus<PsiLiteral>(PsiLiteral.class) {
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         return o instanceof PsiLiteral && (value == null || value.accepts(((PsiLiteral)o).getValue(), context));
+      }
+
+      @Override
+      public List<ElementPattern<?>> getPatterns() {
+        return Collections.<ElementPattern<?>>singletonList(value);
       }
     });
   }
@@ -78,10 +86,15 @@ public class PsiJavaPatterns extends StandardPatterns{
 
 
   public static PsiJavaElementPattern.Capture<PsiLiteralExpression> literalExpression(final ElementPattern value) {
-    return new PsiJavaElementPattern.Capture<PsiLiteralExpression>(new InitialPatternCondition<PsiLiteralExpression>(PsiLiteralExpression.class) {
+    return new PsiJavaElementPattern.Capture<PsiLiteralExpression>(new InitialPatternConditionPlus<PsiLiteralExpression>(PsiLiteralExpression.class) {
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         return o instanceof PsiLiteralExpression
                && (value == null || value.accepts(((PsiLiteralExpression)o).getValue(), context));
+      }
+
+      @Override
+      public List<ElementPattern<?>> getPatterns() {
+        return Collections.<ElementPattern<?>>singletonList(value);
       }
     });
   }
