@@ -19,12 +19,12 @@ package com.intellij.psi.impl.cache.impl;
 import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -78,6 +78,10 @@ public class IndexCacheManagerImpl implements CacheManager{
     return processor.getResults().isEmpty() ? PsiFile.EMPTY_ARRAY : processor.toArray(PsiFile.EMPTY_ARRAY);
   }
 
+  public static boolean shouldBeFound(VirtualFile virtualFile, ProjectFileIndex index) {
+    return (index.isInContent(virtualFile) || index.isInLibrarySource(virtualFile)) && !virtualFile.getFileType().isBinary();
+  }
+
   public boolean processFilesWithWord(@NotNull final Processor<PsiFile> psiFileProcessor, @NotNull final String word, final short occurrenceMask, @NotNull final GlobalSearchScope scope, final boolean caseSensitively) {
     final Set<VirtualFile> vFiles = new THashSet<VirtualFile>();
     final GlobalSearchScope projectScope = GlobalSearchScope.allScope(myProject);
@@ -100,20 +104,15 @@ public class IndexCacheManagerImpl implements CacheManager{
 
     final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
 
-    final Processor<VirtualFile> virtualFileProcessor = new Processor<VirtualFile>() {
-      public boolean process(final VirtualFile virtualFile) {
+    final Processor<VirtualFile> virtualFileProcessor = new ReadActionProcessor<VirtualFile>() {
+      @Override
+      public boolean processInReadAction(VirtualFile virtualFile) {
         LOG.assertTrue(virtualFile.isValid());
-        return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-          public Boolean compute() {
-            if (virtualFile.isValid() && scope.contains(virtualFile) && (index.isInContent(virtualFile) || index.isInLibrarySource(virtualFile))) {
-              if (virtualFile.getFileType().isBinary()) return Boolean.TRUE;
-
-              final PsiFile psiFile = myPsiManager.findFile(virtualFile);
-              return psiFile == null || psiFileProcessor.process(psiFile);
-            }
-            return Boolean.TRUE;
-          }
-        }).booleanValue();
+        if (virtualFile.isValid() && scope.contains(virtualFile) && shouldBeFound(virtualFile, index)) {
+          final PsiFile psiFile = myPsiManager.findFile(virtualFile);
+          return psiFile == null || psiFileProcessor.process(psiFile);
+        }
+        return true;
       }
     };
 

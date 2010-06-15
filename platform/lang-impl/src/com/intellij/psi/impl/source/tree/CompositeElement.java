@@ -20,6 +20,7 @@ import com.intellij.extapi.psi.ASTDelegatePsiElement;
 import com.intellij.lang.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.pom.tree.events.ChangeInfo;
 import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.pom.tree.events.impl.ChangeInfoImpl;
@@ -502,7 +503,9 @@ public class CompositeElement extends TreeElement {
     }
   }
 
-  public PsiElement getPsi() {
+  public final PsiElement getPsi() {
+    ProgressManager.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
+
     PsiElement wrapper = myWrapper;
     if (wrapper != null) return wrapper;
 
@@ -510,16 +513,19 @@ public class CompositeElement extends TreeElement {
       wrapper = myWrapper;
       if (wrapper != null) return wrapper;
 
-      final Language lang = getElementType().getLanguage();
-      final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
-      if (parserDefinition != null) {
-        myWrapper = wrapper = parserDefinition.createElement(this);
-        //noinspection ConstantConditions
-        LOG.assertTrue(wrapper != null, "ParserDefinition.createElement() may not return null");
-      }
-
-      return wrapper;
+      return myWrapper = createPsiNoLock();
     }
+  }
+
+  protected PsiElement createPsiNoLock() {
+    final Language lang = getElementType().getLanguage();
+    final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
+    if (parserDefinition != null) {
+      return parserDefinition.createElement(this);
+    }
+
+    //noinspection ConstantConditions
+    return null;
   }
 
   public void setPsi(@NotNull PsiElement psi) {
