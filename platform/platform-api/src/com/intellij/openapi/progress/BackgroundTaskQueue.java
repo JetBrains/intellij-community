@@ -20,7 +20,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
-import com.intellij.testFramework.UnitTestMode;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedList;
@@ -35,6 +34,7 @@ public class BackgroundTaskQueue {
   private final Queue<Task> myQueue = new LinkedList<Task>();
   private boolean myHasActiveTask = false;
   private Task.Backgroundable myRunnerTask;
+  private Boolean myForcedTestMode = null;
 
   public BackgroundTaskQueue(String title) {
     this(null, title);
@@ -76,7 +76,7 @@ public class BackgroundTaskQueue {
   }
 
   public void run(Task.Backgroundable task) {
-    if (UnitTestMode.getInstance(myProject).isInUnitTestMode(BackgroundTaskQueue.class.getName())) {
+    if (isInTestMode()) {
       task.run(new EmptyProgressIndicator());
       task.onSuccess();
     }
@@ -95,6 +95,7 @@ public class BackgroundTaskQueue {
       }
     }
   }
+
 
   private void runRunner() {
     final Application application = ApplicationManager.getApplication();
@@ -118,5 +119,14 @@ public class BackgroundTaskQueue {
         });
       }
     }
+  }
+
+  private boolean isInTestMode() {
+    if (myForcedTestMode != null) return myForcedTestMode.booleanValue();
+    return ApplicationManager.getApplication().isUnitTestMode();
+  }
+
+  public void setTestMode(boolean forcedTestMode) {
+    myForcedTestMode = forcedTestMode;
   }
 }
