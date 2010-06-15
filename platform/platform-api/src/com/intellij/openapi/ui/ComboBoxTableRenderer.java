@@ -96,7 +96,7 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
   }
 
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-    customizeComponent((T) value, isSelected);
+    if (value != null) customizeComponent((T) value, isSelected);
     return this;
   }
 

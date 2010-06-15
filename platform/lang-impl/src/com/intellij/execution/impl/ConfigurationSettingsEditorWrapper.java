@@ -108,6 +108,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
         myStoreProjectConfiguration = myCbStoreProjectConfiguration.isSelected();
       }
     });
+    myCbStoreProjectConfiguration.setVisible(!settings.isTemplate());
   }
 
   @NotNull

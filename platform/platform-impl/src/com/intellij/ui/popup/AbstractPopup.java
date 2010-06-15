@@ -142,6 +142,7 @@ public class AbstractPopup implements JBPopup {
 
   private JTextField mySpeedSearchPatternField;
   private boolean myNativePopup;
+  private boolean myMayBeParent;
 
 
   AbstractPopup() {
@@ -179,7 +180,8 @@ public class AbstractPopup implements JBPopup {
                      final boolean headerAlwaysFocusable,
                      @NotNull List<Pair<ActionListener, KeyStroke>> keyboardActions,
                      Component settingsButtons,
-                     @Nullable final Processor<JBPopup> pinCallback) {
+                     @Nullable final Processor<JBPopup> pinCallback,
+                     boolean mayBeParent) {
 
     if (requestFocus && !focusable) {
       assert false : "Incorrect argument combination: requestFocus=" + requestFocus + " focusable=" + focusable;
@@ -190,6 +192,7 @@ public class AbstractPopup implements JBPopup {
     myPopupBorder = PopupBorder.Factory.create(true);
     myShadowed = !movable  && !resizable && Registry.is("ide.popup.dropShadow");
     myContent = createContentPanel(resizable, myPopupBorder, isToDrawMacCorner());
+    myMayBeParent = mayBeParent;
 
     myContent.add(component, BorderLayout.CENTER);
     if (adText != null) {
@@ -683,6 +686,12 @@ public class AbstractPopup implements JBPopup {
 
     if (myWindow instanceof JWindow) {
       ((JWindow)myWindow).getRootPane().putClientProperty(KEY, this);
+    }
+
+    if (myWindow != null) {
+      if (!myMayBeParent) {
+        WindowManager.getInstance().doNotSuggestAsParent(myWindow);  
+      }
     }
 
     SwingUtilities.invokeLater(new Runnable() {

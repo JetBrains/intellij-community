@@ -86,17 +86,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     final Ref<Info> ref = Ref.create(null);
     final Pair<Target, Parameters> key = Pair.create(target, configuration);
     if (!getExistingInfo(ref, key)) {
-      final Runnable runnable = new Runnable() {
-        public void run() {
-          startProcess(target, configuration, key);
-        }
-      };
-      if (ApplicationManager.getApplication().isDispatchThread()) {
-        runnable.run();
-      }
-      else {
-        ApplicationManager.getApplication().invokeLater(runnable);
-      }
+      startProcess(target, configuration, key);
       if (ref.isNull()) {
         try {
           synchronized (ref) {

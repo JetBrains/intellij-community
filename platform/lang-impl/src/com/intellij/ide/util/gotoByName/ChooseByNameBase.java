@@ -75,6 +75,7 @@ public abstract class ChooseByNameBase{
   protected final Project myProject;
   protected final ChooseByNameModel myModel;
   protected final String myInitialText;
+  private boolean myPreselectInitialText;
   private final Reference<PsiElement> myContext;
 
   protected Component myPreviouslyFocusedComponent;
@@ -142,6 +143,14 @@ public abstract class ChooseByNameBase{
     myModel = model;
     myInitialText = initialText;
     myContext = new WeakReference<PsiElement>(context);
+  }
+
+  public boolean isPreselectInitialText() {
+    return myPreselectInitialText;
+  }
+
+  public void setPreselectInitialText(boolean preselectInitialText) {
+    myPreselectInitialText = preselectInitialText;
   }
 
   /**
@@ -318,6 +327,9 @@ public abstract class ChooseByNameBase{
     myFuture = new ArrayList<Pair<String, Integer>>();
     myTextField = new MyTextField();
     myTextField.setText(myInitialText);
+    if (myPreselectInitialText) {
+      myTextField.select(0, myInitialText.length());
+    }
 
     final ActionMap actionMap = new ActionMap();
     actionMap.setParent(myTextField.getActionMap());
