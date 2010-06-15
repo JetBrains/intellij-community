@@ -22,6 +22,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.stubs.StubBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
@@ -249,6 +250,19 @@ public class PsiTreeUtil {
 
   @Nullable public static <T extends PsiElement> T getParentOfType(@Nullable PsiElement element, @NotNull Class<T> aClass) {
     return getParentOfType(element, aClass, true);
+  }
+
+  @Nullable
+  public static <E extends PsiElement> E getStubOrPsiParentOfType(@Nullable PsiElement element, final Class<E> parentClass) {
+    if (element instanceof StubBasedPsiElement) {
+      StubBase stub = (StubBase)((StubBasedPsiElement) element).getStub();
+      if (stub != null) {
+        //noinspection unchecked
+        return (E)stub.getParentStubOfType(parentClass);
+      }
+
+    }
+    return getParentOfType(element, parentClass);
   }
 
   @Nullable public static <T extends PsiElement> T getContextOfType(@Nullable PsiElement element, @NotNull Class<T> aClass, boolean strict) {
