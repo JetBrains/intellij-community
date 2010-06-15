@@ -35,6 +35,7 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Set;
 
 public class TestsPattern extends TestObject {
   public TestsPattern(final Project project,
@@ -56,10 +57,12 @@ public class TestsPattern extends TestObject {
     boolean isJUnit4 = false;
     final ArrayList<String> classNames = new ArrayList<String>();
     for (String className : data.getPatterns()) {
-      classNames.add(className);
       final PsiClass psiClass = JavaExecutionUtil.findMainClass(project, className, GlobalSearchScope.allScope(project));
-      if (JUnitUtil.isJUnit4TestClass(psiClass)) {
-        isJUnit4 = true;
+      if (psiClass != null && JUnitUtil.isTestClass(psiClass)) {
+        classNames.add(className);
+        if (JUnitUtil.isJUnit4TestClass(psiClass)) {
+          isJUnit4 = true;
+        }
       }
     }
     addClassesListToJavaParameters(classNames, new Function<String, String>() {
@@ -94,8 +97,19 @@ public class TestsPattern extends TestObject {
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
-    if (data.getPatterns().isEmpty()) {
+    final Set<String> patterns = data.getPatterns();
+    if (patterns.isEmpty()) {
       throw new RuntimeConfigurationWarning("No pattern selected");
+    }
+    final GlobalSearchScope searchScope = data.getScope().getSourceScope(myConfiguration).getGlobalSearchScope();
+    for (String pattern : patterns) {
+      final PsiClass psiClass = JavaExecutionUtil.findMainClass(myConfiguration.getProject(), pattern, searchScope);
+      if (psiClass == null) {
+        throw new RuntimeConfigurationWarning("Class " + pattern + " not found");
+      }
+      if (!JUnitUtil.isTestClass(psiClass)) {
+        throw new RuntimeConfigurationWarning("Class " + pattern + " not a test");
+      }
     }
   }
 }
