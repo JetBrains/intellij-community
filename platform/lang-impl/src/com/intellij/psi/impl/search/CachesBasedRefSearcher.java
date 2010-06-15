@@ -36,7 +36,7 @@ public class CachesBasedRefSearcher extends SearchRequestor implements QueryExec
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        final FindUsagesOptions options = new FindUsagesOptions(p.getScope());
+        final FindUsagesOptions options = new MyFindUsagesOptions(p);
         options.isUsages = true;
         contributeSearchTargets(refElement, options, collector, p.isIgnoreAccessScope(), options.searchScope);
         SearchRequestor.collectRequests(refElement, options, collector);
@@ -49,6 +49,10 @@ public class CachesBasedRefSearcher extends SearchRequestor implements QueryExec
   public void contributeRequests(@NotNull final PsiElement refElement,
                                  @NotNull FindUsagesOptions options,
                                  @NotNull SearchRequestCollector collector) {
+    if (options instanceof MyFindUsagesOptions) {
+      return;
+    }
+
     final boolean ignoreAccessScope = false;
     final SearchScope scope = options.searchScope;
     contributeSearchTargets(refElement, options, collector, ignoreAccessScope, scope);
@@ -97,6 +101,12 @@ public class CachesBasedRefSearcher extends SearchRequestor implements QueryExec
   private static class MySearchParameters extends ReferencesSearch.SearchParameters {
     public MySearchParameters(PsiElement refElement, SearchScope scope, boolean ignoreAccessScope) {
       super(refElement, scope, ignoreAccessScope);
+    }
+  }
+
+  private static class MyFindUsagesOptions extends FindUsagesOptions {
+    public MyFindUsagesOptions(ReferencesSearch.SearchParameters p) {
+      super(p.getScope());
     }
   }
 }

@@ -27,7 +27,7 @@ public class MethodUsagesSearcher extends SearchRequestor implements QueryExecut
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        final FindUsagesOptions options = new FindUsagesOptions(p.getScope());
+        final FindUsagesOptions options = new MyFindUsagesOptions(p);
         options.isUsages = true;
         contributeSearchTargets(method, options, collector, p.isStrictSignatureSearch());
         SearchRequestor.collectRequests(method, options, collector);
@@ -41,6 +41,10 @@ public class MethodUsagesSearcher extends SearchRequestor implements QueryExecut
   public void contributeRequests(@NotNull PsiElement target,
                                       @NotNull final FindUsagesOptions options,
                                       @NotNull SearchRequestCollector collector) {
+    if (options instanceof MyFindUsagesOptions) {
+      return;
+    }
+
     if (target instanceof PsiMethod) {
       final boolean strictSignatureSearch = !options.isIncludeOverloadUsages;
       final PsiMethod method = (PsiMethod)target;
@@ -101,6 +105,12 @@ public class MethodUsagesSearcher extends SearchRequestor implements QueryExecut
   private static class MySearchParameters extends MethodReferencesSearch.SearchParameters {
     public MySearchParameters(PsiMethod method, FindUsagesOptions options, boolean strictSignatureSearch) {
       super(method, options.searchScope, strictSignatureSearch);
+    }
+  }
+
+  private static class MyFindUsagesOptions extends FindUsagesOptions {
+    public MyFindUsagesOptions(MethodReferencesSearch.SearchParameters p) {
+      super(p.getScope());
     }
   }
 }
