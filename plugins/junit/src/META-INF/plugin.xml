@@ -48,5 +48,9 @@
       <action id="JUnitTesting.SelectInTree" class="com.intellij.execution.junit2.ui.actions.SelectInTreeAction" text="Select in Tree" description="Navigate from tests statistics to tests tree"/>
       <add-to-group anchor="last" group-id="TestStatisticsTablePopupMenu"/>
     </group>
+    <group>
+      <action class="com.intellij.execution.junit.AddToTestsPatternAction" id="AddToISuite" text="Add to temp suite"/>
+      <add-to-group anchor="first" group-id="RunContextGroup"/>
+    </group>
   </actions>
 </idea-plugin>
