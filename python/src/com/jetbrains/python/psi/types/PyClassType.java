@@ -26,8 +26,8 @@ import java.util.*;
  */
 public class PyClassType implements PyType {
 
-  protected PyClass myClass;
-  protected boolean myIsDefinition;
+  protected final PyClass myClass;
+  protected final boolean myIsDefinition;
 
   /**
    * Describes a class-based type. Since everything in Python is an instance of some class, this type pretty much completes
@@ -58,8 +58,9 @@ public class PyClassType implements PyType {
     return myIsDefinition;
   }
 
+  @Nullable
   public String getClassQName() {
-    return myClass.getQualifiedName();
+    return myClass == null ? null : myClass.getQualifiedName();
   }
 
   @Nullable
