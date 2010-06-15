@@ -198,10 +198,10 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     myBuilder.startNode(node);
     final PyIfPart ifPart = node.getIfPart();
     PyExpression condition = ifPart.getCondition();
-    PyConditionEvaluator conditionEvaluator = new PyConditionEvaluator();
+    PyAssertionEvaluator assertionEvaluator = new PyAssertionEvaluator();
     if (condition != null) {
       condition.accept(this);
-      condition.accept(conditionEvaluator);
+      condition.accept(assertionEvaluator);
     }
     // Set the head as the last instruction of condition
     Instruction head = getPrevInstruction(condition);
@@ -209,9 +209,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     final PyStatementList thenStatements = ifPart.getStatementList();
     if (thenStatements != null) {
       myBuilder.startConditionalNode(thenStatements, condition, true);
-      for (Instruction instr : InstructionBuilder.buildInstructions(myBuilder, conditionEvaluator.getDefinitions())) {
-        myBuilder.addNode(instr);
-      }
+      InstructionBuilder.addAssertInstructions(myBuilder, assertionEvaluator);
       thenStatements.accept(this);
       myBuilder.processPending(new ControlFlowBuilder.PendingProcessor() {
         public void process(final PsiElement pendingScope, final Instruction instruction) {
@@ -553,4 +551,12 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       result.accept(this);
     }
   }
+
+  public void visitPyAssertStatement(final PyAssertStatement node) {
+    PyAssertionEvaluator evaluator = new PyAssertionEvaluator();
+    node.acceptChildren(evaluator);
+    InstructionBuilder.addAssertInstructions(myBuilder, evaluator);
+  }
+
+
 }

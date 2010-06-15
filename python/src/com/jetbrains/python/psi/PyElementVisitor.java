@@ -226,4 +226,8 @@ public class PyElementVisitor extends PsiElementVisitor {
   public void visitPyConditionalStatementPart(PyConditionalStatementPart node) {
     visitPyElement(node);
   }
+
+  public void visitPyAssertStatement(final PyAssertStatement node) {
+    visitPyElement(node);
+  }
 }

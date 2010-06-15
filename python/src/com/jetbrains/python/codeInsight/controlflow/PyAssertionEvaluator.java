@@ -10,11 +10,11 @@ import java.util.Stack;
 /**
  * @author traff
  */
-public class PyConditionEvaluator extends PyRecursiveElementVisitor {
+public class PyAssertionEvaluator extends PyRecursiveElementVisitor {
 
-  private Stack<Definition> myStack = CollectionFactory.stack();
+  private Stack<Assertion> myStack = CollectionFactory.stack();
 
-  public PyConditionEvaluator() {
+  public PyAssertionEvaluator() {
   }
 
 
@@ -35,17 +35,17 @@ public class PyConditionEvaluator extends PyRecursiveElementVisitor {
       PyExpression[] args = node.getArguments();
       if (args.length == 2 && args[0] instanceof PyReferenceExpression) {
         PyReferenceExpression target = (PyReferenceExpression)args[0];
-        Definition o = new Definition(target.getName(), args[1]);
+        Assertion o = new Assertion(target.getName(), args[1]);
         myStack.push(o);
       }
     }
   }
 
-  class Definition {
+  class Assertion {
     private final String name;
     private final PyElement element;
 
-    Definition(String name, PyElement element) {
+    Assertion(String name, PyElement element) {
       this.name = name;
       this.element = element;
     }
@@ -59,7 +59,7 @@ public class PyConditionEvaluator extends PyRecursiveElementVisitor {
     }
   }
 
-  public List<Definition> getDefinitions() {
+  public List<Assertion> getDefinitions() {
     return myStack;
   }
 }
