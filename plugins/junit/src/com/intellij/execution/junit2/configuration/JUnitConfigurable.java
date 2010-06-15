@@ -35,9 +35,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
+import com.intellij.util.Icons;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 
@@ -107,6 +109,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
     myTestLocations[JUnitConfigurationModel.CLASS] = myClass;
     myTestLocations[JUnitConfigurationModel.METHOD] = myMethod;
     myTestLocations[JUnitConfigurationModel.PATTERN] = myPattern;
+    myPattern.getComponent().setButtonIcon(Icons.ADD_ICON);
     // Done
 
     myModel.setListener(this);
@@ -233,9 +236,6 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
     final TIntArrayList enabledFields = ourEnabledFields.get(newType);
     for (int i = 0; i < myTestLocations.length; i++)
       getTestLocation(i).setEnabled(enabledFields.contains(i));
-    if (newType == JUnitConfigurationModel.PATTERN) {
-      myPattern.getComponent().getTextField().setEnabled(false);
-    }
     if (newType != JUnitConfigurationModel.ALL_IN_PACKAGE) myModule.setEnabled(true);
     else onScopeChanged();
   }
@@ -251,17 +251,21 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
     }
   }
 
-  private class TestsChooserActionListener extends BrowseModuleValueActionListener {
+  private class TestsChooserActionListener extends TestClassBrowser {
     public TestsChooserActionListener(final Project project) {
       super(project);
     }
 
-    protected String showDialog() {
-      final JUnitConfiguration configurationCopy = new JUnitConfiguration(ExecutionBundle.message("default.junit.configuration.name"), getProject(), JUnitConfigurationType.getInstance().getConfigurationFactories()[0]);
-      applyEditorTo(configurationCopy);
-      final TestsConfigDialog dialog = new TestsConfigDialog(myWholePanel, myModel, configurationCopy);
-      dialog.show();
-      return dialog.getPattern();
+    @Override
+    protected void onClassChoosen(PsiClass psiClass) {
+      final JTextField textField = myPattern.getComponent().getTextField();
+      final String text = textField.getText();
+      textField.setText(text + (text.length() > 0 ? "||" : "") + psiClass.getQualifiedName());
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      showDialog();
     }
   }
 

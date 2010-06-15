@@ -27,8 +27,8 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.PlainDocument;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 
 // Author: dyoma
 
@@ -48,7 +48,6 @@ public class JUnitConfigurationModel {
   private int myType = -1;
   private final Document[] myJUnitDocuments = new Document[4];
   private final Project myProject;
-  private Map<String, Boolean> myPatterns;
 
   public JUnitConfigurationModel(final Project project) {
     for (int i = 0; i < myJUnitDocuments.length; i++) myJUnitDocuments[i] = new PlainDocument();
@@ -99,7 +98,14 @@ public class JUnitConfigurationModel {
         data.PACKAGE_NAME = getJUnitTextValue(ALL_IN_PACKAGE);
       }
       else {
-        data.setPatterns(myPatterns);
+        final LinkedHashSet<String> set = new LinkedHashSet<String>();
+        final String[] patterns = getJUnitTextValue(PATTERN).split("\\|\\|");
+        for (String pattern : patterns) {
+          if (pattern.length() > 0) {
+            set.add(pattern);
+          }
+        }
+        data.setPatterns(set);
       }
       data.MAIN_CLASS_NAME = "";
       data.METHOD_NAME = "";
@@ -131,7 +137,6 @@ public class JUnitConfigurationModel {
     setJUnitTextValue(CLASS, data.getMainClassName());
     setJUnitTextValue(METHOD, data.getMethodName());
     setJUnitTextValue(PATTERN, data.getPatternPresentation());
-    setPatterns(data.getPatterns());
   }
 
   private void setJUnitTextValue(final int index, final String text) {
@@ -151,14 +156,6 @@ public class JUnitConfigurationModel {
 
   private void setTestType(final String testObject) {
     setType(ourTestObjects.indexOf(testObject));
-  }
-
-  public void setPatterns(Map<String, Boolean> patterns) {
-    myPatterns = patterns;
-  }
-
-  public Map<String, Boolean> getPatterns() {
-    return myPatterns;
   }
 }
 

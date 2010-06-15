@@ -30,6 +30,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 
 import java.util.Map;
+import java.util.Set;
 
 public class ExcludeFromRunAction extends AnAction{
   private static final Logger LOG = Logger.getInstance("#" + ExcludeFromRunAction.class.getName());
@@ -41,10 +42,10 @@ public class ExcludeFromRunAction extends AnAction{
     LOG.assertTrue(project != null);
     final JUnitConfiguration configuration = (JUnitConfiguration)RuntimeConfiguration.DATA_KEY.getData(dataContext);
     LOG.assertTrue(configuration != null);
-    final Map<String,Boolean> patterns = configuration.getPersistentData().getPatterns();
+    final Set<String> patterns = configuration.getPersistentData().getPatterns();
     final AbstractTestProxy testProxy = AbstractTestProxy.DATA_KEY.getData(dataContext);
     LOG.assertTrue(testProxy != null);
-    patterns.put(((PsiClass)testProxy.getLocation(project).getPsiElement()).getQualifiedName(), Boolean.FALSE);
+    patterns.remove(((PsiClass)testProxy.getLocation(project).getPsiElement()).getQualifiedName());
   }
 
   @Override
@@ -63,7 +64,7 @@ public class ExcludeFromRunAction extends AnAction{
             final Location location = testProxy.getLocation(project);
             if (location != null) {
               final PsiElement psiElement = location.getPsiElement();
-              if (psiElement instanceof PsiClass && data.getPatterns().containsKey(((PsiClass)psiElement).getQualifiedName())) {
+              if (psiElement instanceof PsiClass && data.getPatterns().contains(((PsiClass)psiElement).getQualifiedName())) {
                 presentation.setVisible(true);
               }
             }

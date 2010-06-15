@@ -57,7 +57,6 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
   @NonNls public static final String TEST_PATTERN = PATTERN_EL_NAME;
 
   @NonNls private static final String TEST_CLASS_ATT_NAME = "testClass";
-  @NonNls private static final String ENABLED_ATT_NAME = "enabled";
   @NonNls private static final String PATTERNS_EL_NAME = "patterns";
 
   private final Data myData;
@@ -284,10 +283,10 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     EnvironmentVariablesComponent.readExternal(element, getPersistentData().getEnvs());
     final Element patternsElement = element.getChild(PATTERNS_EL_NAME);
     if (patternsElement != null) {
-      final LinkedHashMap<String, Boolean> tests = new LinkedHashMap<String, Boolean>();
+      final Set<String> tests = new LinkedHashSet<String>();
       for (Object o : patternsElement.getChildren(PATTERN_EL_NAME)) {
         Element patternElement = (Element)o;
-        tests.put(patternElement.getAttributeValue(TEST_CLASS_ATT_NAME), Boolean.valueOf(patternElement.getAttributeValue(ENABLED_ATT_NAME)));
+        tests.add(patternElement.getAttributeValue(TEST_CLASS_ATT_NAME));
       }
       myData.setPatterns(tests);
     }
@@ -301,10 +300,9 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     DefaultJDOMExternalizer.writeExternal(getPersistentData(), element);
     EnvironmentVariablesComponent.writeExternal(element, getPersistentData().getEnvs());
     final Element patternsElement = new Element(PATTERNS_EL_NAME);
-    for (String o : getPersistentData().getPatterns().keySet()) {
+    for (String o : getPersistentData().getPatterns()) {
       final Element patternElement = new Element(PATTERN_EL_NAME);
       patternElement.setAttribute(TEST_CLASS_ATT_NAME, o);
-      patternElement.setAttribute(ENABLED_ATT_NAME, String.valueOf(getPersistentData().getPatterns().get(o)));
       patternsElement.addContent(patternElement);
     }
     element.addContent(patternsElement);
@@ -331,7 +329,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     public String VM_PARAMETERS;
     public String PARAMETERS;
     public String WORKING_DIRECTORY;
-    private Map<String, Boolean> myPattern = new LinkedHashMap<String, Boolean>();
+    private Set<String> myPattern = new LinkedHashSet<String>();
 
     //iws/ipr compatibility
     public String ENV_VARIABLES;
@@ -440,7 +438,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
       if (TEST_PATTERN.equals(TEST_OBJECT)) {
         final int size = myPattern.size();
         if (size == 0) return "Temp suite";
-        return StringUtil.getShortName(myPattern.keySet().iterator().next()) + (size > 1 ? " and " + (size - 1) + " more" : "");
+        return StringUtil.getShortName(myPattern.iterator().next()) + (size > 1 ? " and " + (size - 1) + " more" : "");
       }
       final String className = JavaExecutionUtil.getPresentableClassName(getMainClassName(), configurationModule);
       if (TEST_METHOD.equals(TEST_OBJECT)) {
@@ -462,25 +460,19 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
       return METHOD_NAME != null ? METHOD_NAME : "";
     }
 
-    public Map<String, Boolean> getPatterns() {
+    public Set<String> getPatterns() {
       return myPattern;
     }
 
     public String getPatternPresentation() {
-      return getPatternPresentation(myPattern);
-    }
-
-    public static String getPatternPresentation(final Map<String, Boolean> patterns) {
       final List<String> enabledTests = new ArrayList<String>();
-      for (String pattern : patterns.keySet()) {
-        if (patterns.get(pattern)) {
-          enabledTests.add(StringUtil.getShortName(pattern));
-        }
+      for (String pattern : myPattern) {
+        enabledTests.add(pattern);
       }
       return StringUtil.join(enabledTests, "||");
     }
 
-    public void setPatterns(Map<String, Boolean> pattern) {
+    public void setPatterns(Set<String> pattern) {
       myPattern = pattern;
     }
 

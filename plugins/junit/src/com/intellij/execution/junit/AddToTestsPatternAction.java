@@ -48,14 +48,14 @@ public class AddToTestsPatternAction extends AnAction {
     if (patternConfigurations.size() == 1) {
       final JUnitConfiguration configuration = patternConfigurations.get(0);
       for (PsiClass aClass : classes) {
-        configuration.getPersistentData().getPatterns().put(aClass.getQualifiedName(), Boolean.TRUE);
+        configuration.getPersistentData().getPatterns().add(aClass.getQualifiedName());
       }
     } else {
       JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<JUnitConfiguration>("Choose suite to add", patternConfigurations) {
         @Override
         public PopupStep onChosen(JUnitConfiguration configuration, boolean finalChoice) {
           for (PsiClass aClass : classes) {
-            configuration.getPersistentData().getPatterns().put(aClass.getQualifiedName(), Boolean.TRUE);
+            configuration.getPersistentData().getPatterns().add(aClass.getQualifiedName());
           }
           return FINAL_CHOICE;
         }
@@ -102,7 +102,7 @@ public class AddToTestsPatternAction extends AnAction {
     for (RunConfiguration configuration : configurations) {
       final JUnitConfiguration.Data data = ((JUnitConfiguration)configuration).getPersistentData();
       if (data.TEST_OBJECT == JUnitConfiguration.TEST_PATTERN) {
-        if (foundClasses.size() > 1 || !data.getPatterns().containsKey(foundClasses.iterator().next().getQualifiedName()) ) {
+        if (foundClasses.size() > 1 || !data.getPatterns().contains(foundClasses.iterator().next().getQualifiedName()) ) {
           foundConfigurations.add((JUnitConfiguration)configuration);
         }
       }

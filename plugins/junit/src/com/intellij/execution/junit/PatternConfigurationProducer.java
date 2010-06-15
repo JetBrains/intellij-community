@@ -26,7 +26,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashSet;
@@ -39,13 +38,13 @@ public class PatternConfigurationProducer extends JUnitConfigurationProducer {
 
   protected RunnerAndConfigurationSettings createConfigurationByElement(final Location location, final ConfigurationContext context) {
     final Project project = location.getProject();
-    final LinkedHashMap<String, Boolean> classes = new LinkedHashMap<String, Boolean>();
+    final LinkedHashSet<String> classes = new LinkedHashSet<String>();
     myElements = collectPatternElements(context, classes);
     if (classes.isEmpty()) return null;
     RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(project, context);
     final JUnitConfiguration configuration = (JUnitConfiguration)settings.getConfiguration();
     final JUnitConfiguration.Data data = configuration.getPersistentData();
-    data.getPatterns().putAll(classes);
+    data.getPatterns().addAll(classes);
     data.TEST_OBJECT = JUnitConfiguration.TEST_PATTERN;
     data.setScope(setupPackageConfiguration(context, project, configuration, data.getScope()));
     configuration.setGeneratedName();
@@ -72,11 +71,11 @@ public class PatternConfigurationProducer extends JUnitConfigurationProducer {
     return foundClasses;
   }
 
-  private static PsiElement[] collectPatternElements(ConfigurationContext context, LinkedHashMap<String, Boolean> classes) {
+  private static PsiElement[] collectPatternElements(ConfigurationContext context, LinkedHashSet<String> classes) {
     PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(context.getDataContext());
     if (elements != null && elements.length > 1) {
       for (PsiClass psiClass : collectTestClasses(elements)) {
-        classes.put(psiClass.getQualifiedName(), Boolean.TRUE);
+        classes.add(psiClass.getQualifiedName());
       }
       return elements;
     }
@@ -91,7 +90,7 @@ public class PatternConfigurationProducer extends JUnitConfigurationProducer {
   protected RunnerAndConfigurationSettings findExistingByElement(@NotNull Location location,
                                                                  @NotNull RunnerAndConfigurationSettings[] existingConfigurations,
                                                                  ConfigurationContext context) {
-    final LinkedHashMap<String, Boolean> classes = new LinkedHashMap<String, Boolean>();
+    final LinkedHashSet<String> classes = new LinkedHashSet<String>();
     collectPatternElements(context, classes);
     for (RunnerAndConfigurationSettings existingConfiguration : existingConfigurations) {
       final JUnitConfiguration unitConfiguration = (JUnitConfiguration)existingConfiguration.getConfiguration();

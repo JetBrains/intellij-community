@@ -55,13 +55,11 @@ public class TestsPattern extends TestObject {
     final Project project = module.getProject();
     boolean isJUnit4 = false;
     final ArrayList<String> classNames = new ArrayList<String>();
-    for (String className : data.getPatterns().keySet()) {
-      if (data.getPatterns().get(className)) {
-        classNames.add(className);
-        final PsiClass psiClass = JavaExecutionUtil.findMainClass(project, className, GlobalSearchScope.allScope(project));
-        if (JUnitUtil.isJUnit4TestClass(psiClass)) {
-          isJUnit4 = true;
-        }
+    for (String className : data.getPatterns()) {
+      classNames.add(className);
+      final PsiClass psiClass = JavaExecutionUtil.findMainClass(project, className, GlobalSearchScope.allScope(project));
+      if (JUnitUtil.isJUnit4TestClass(psiClass)) {
+        isJUnit4 = true;
       }
     }
     addClassesListToJavaParameters(classNames, new Function<String, String>() {
