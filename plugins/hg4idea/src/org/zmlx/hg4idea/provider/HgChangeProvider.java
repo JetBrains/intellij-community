@@ -54,17 +54,18 @@ public class HgChangeProvider implements ChangeProvider {
   }
 
   public void getChanges(VcsDirtyScope dirtyScope, ChangelistBuilder builder,
-    ProgressIndicator progress, ChangeListManagerGate addGate) throws VcsException {
-    Set<VirtualFile> processedRoots = new LinkedHashSet<VirtualFile>();
+                         ProgressIndicator progress, ChangeListManagerGate addGate) throws VcsException {
+    final Set<VirtualFile> processedRoots = new LinkedHashSet<VirtualFile>();
+    final Collection<HgChange> changes = new HashSet<HgChange>();
     for (FilePath filePath : dirtyScope.getRecursivelyDirtyDirectories()) {
-      process(builder, filePath, processedRoots);
+      changes.addAll(process(builder, filePath, processedRoots));
     }
     for (FilePath filePath : dirtyScope.getDirtyFiles()) {
-      process(builder, filePath, processedRoots);
+      changes.addAll(process(builder, filePath, processedRoots));
       loadDirstateFile(filePath);
     }
 
-    processUnsavedChanges(builder, dirtyScope.getDirtyFilesNoExpand());
+    processUnsavedChanges(builder, dirtyScope.getDirtyFilesNoExpand(), changes);
   }
 
   /**
@@ -85,15 +86,15 @@ public class HgChangeProvider implements ChangeProvider {
   public void doCleanup(List<VirtualFile> files) {
   }
 
-  private void process(ChangelistBuilder builder,
+  private Collection<HgChange> process(ChangelistBuilder builder,
     FilePath filePath, Set<VirtualFile> processedRoots) {
     VirtualFile repo = VcsUtil.getVcsRootFor(myProject, filePath);
     if (repo == null || processedRoots.contains(repo)) {
-      return;
+      return new HashSet<HgChange>();
     }
     Set<HgChange> hgChanges = new HgStatusCommand(myProject).execute(repo);
     if (hgChanges == null || hgChanges.isEmpty()) {
-      return;
+      return new HashSet<HgChange>();
     }
     sendChanges(builder, hgChanges,
       new HgResolveCommand(myProject).list(repo),
@@ -101,6 +102,7 @@ public class HgChangeProvider implements ChangeProvider {
       new HgWorkingCopyRevisionsCommand(myProject).firstParent(repo)
     );
     processedRoots.add(repo);
+    return hgChanges;
   }
 
   private void sendChanges(ChangelistBuilder builder, Set<HgChange> changes,
@@ -136,7 +138,7 @@ public class HgChangeProvider implements ChangeProvider {
     }
   }
 
-  private boolean isDeleteOfCopiedFile(HgChange change, Set<HgChange> changes) {
+  private static boolean isDeleteOfCopiedFile(HgChange change, Set<HgChange> changes) {
     if (change.getStatus().equals(HgFileStatusEnum.DELETED)) {
       for (HgChange otherChange : changes) {
         if (otherChange.getStatus().equals(HgFileStatusEnum.COPY) &&
@@ -151,8 +153,15 @@ public class HgChangeProvider implements ChangeProvider {
 
   /**
    * Finds modified but unsaved files in the given list of dirty files and notifies the builder about MODIFIED changes.
+   * Changes contained in <code>alreadyProcessed</code> are skipped - they have already been processed as modified, or else.
    */
-  public void processUnsavedChanges(ChangelistBuilder builder, Set<FilePath> dirtyFiles) {
+  public void processUnsavedChanges(ChangelistBuilder builder, Set<FilePath> dirtyFiles, Collection<HgChange> alreadyProcessed) {
+    // exclude already processed
+    for (HgChange c : alreadyProcessed) {
+      dirtyFiles.remove(c.beforeFile().toFilePath());
+      dirtyFiles.remove(c.afterFile().toFilePath());
+    }
+
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
     for (FilePath filePath : dirtyFiles) {
