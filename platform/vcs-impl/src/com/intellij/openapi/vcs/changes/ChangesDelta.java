@@ -36,12 +36,13 @@ public class ChangesDelta {
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
   }
 
-  public void step(final ChangeListsIndexes was, final ChangeListsIndexes became) {
+  // true -> something changed
+  public boolean step(final ChangeListsIndexes was, final ChangeListsIndexes became) {
     List<Pair<String, VcsKey>> wasAffected = was.getAffectedFilesUnderVcs();
     if (! myInitialized) {
       sendPlus(wasAffected);
       myInitialized = true;
-      return;
+      return true;  //+-
     }
     final List<Pair<String, VcsKey>> becameAffected = became.getAffectedFilesUnderVcs();
 
@@ -54,6 +55,7 @@ public class ChangesDelta {
       }
     }
     sendPlus(toAdd);
+    return toRemove != null || toAdd != null;
   }
 
   private void sendPlus(final Collection<Pair<String, VcsKey>> toAdd) {
