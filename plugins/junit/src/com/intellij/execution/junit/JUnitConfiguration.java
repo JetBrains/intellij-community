@@ -438,7 +438,9 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
         return packageName;
       }
       if (TEST_PATTERN.equals(TEST_OBJECT)) {
-        return getPatternPresentation();
+        final int size = myPattern.size();
+        if (size == 0) return "Temp suite";
+        return StringUtil.getShortName(myPattern.keySet().iterator().next()) + (size > 1 ? " and " + (size - 1) + " more" : "");
       }
       final String className = JavaExecutionUtil.getPresentableClassName(getMainClassName(), configurationModule);
       if (TEST_METHOD.equals(TEST_OBJECT)) {
