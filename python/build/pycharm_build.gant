@@ -22,7 +22,8 @@ setProperty("pluginFilter", [
         "JSInspections",
         "JSIntentionPowerPack",
         "SpellChecker", "spellchecker",
-        "sass"
+        "sass",
+        "hg4idea"
 ])
 
 private List platformImplementationModules() {
