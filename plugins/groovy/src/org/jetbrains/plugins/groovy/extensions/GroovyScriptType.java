@@ -22,22 +22,27 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.runner.DefaultGroovyScriptRunner;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunner;
-import org.jetbrains.plugins.groovy.runner.DefaultGroovyScriptRunner;
 
 import javax.swing.*;
-import java.util.List;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author ilyas
  */
 public abstract class GroovyScriptType {
   public static final ExtensionPointName<GroovyScriptTypeEP> EP_NAME = ExtensionPointName.create("org.intellij.groovy.scriptType");
-  private static final GroovyScriptType DEFAULT_TYPE = new GroovyScriptType() {
+  public static final GroovyScriptType DEFAULT_TYPE = new GroovyScriptType() {
     @Override
     public boolean isSpecificScriptFile(GroovyFile file) {
+      return true;
+    }
+
+    @Override
+    public boolean shouldBeCompiled(GroovyFile script) {
       return true;
     }
 
@@ -85,5 +90,9 @@ public abstract class GroovyScriptType {
 
   public List<String> appendImplicitImports(@NotNull GroovyFile file) {
     return Collections.emptyList();
+  }
+
+  public boolean shouldBeCompiled(GroovyFile script) {
+    return false;
   }
 }

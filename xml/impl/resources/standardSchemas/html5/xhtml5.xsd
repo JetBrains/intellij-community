@@ -1,4 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xs:schema [
+<!ENTITY % HTMLlat1 PUBLIC
+       "-//W3C//ENTITIES Latin 1 for XHTML//EN"
+       "../xhtml-lat1.ent">
+    %HTMLlat1;
+
+    <!ENTITY % HTMLsymbol PUBLIC
+       "-//W3C//ENTITIES Symbols for XHTML//EN"
+       "../xhtml-symbol.ent">
+    %HTMLsymbol;
+
+    <!ENTITY % HTMLspecial PUBLIC
+       "-//W3C//ENTITIES Special for XHTML//EN"
+       "../xhtml-special.ent">
+    %HTMLspecial;
+]>
+
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://www.w3.org/1999/xhtml"
            xmlns:xhtml="http://www.w3.org/1999/xhtml">
 
