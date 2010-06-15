@@ -183,7 +183,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       //add possible inferred types
       if ((uexpr instanceof PyTargetExpression || uexpr instanceof PyNamedParameter) && myElement != null) {
         final ScopeOwner scopeOwner = PsiTreeUtil.getParentOfType(myElement, ScopeOwner.class);
-        if (scopeOwner != null && scopeOwner == PsiTreeUtil.getParentOfType(uexpr, ScopeOwner.class)) {
+        if (scopeOwner != null && scopeOwner == PsiTreeUtil.getStubOrPsiParentOfType(uexpr, ScopeOwner.class)) {
           PyAugAssignmentStatement augAssignment = PsiTreeUtil.getParentOfType(myElement, PyAugAssignmentStatement.class);
           try {
             final PyElement[] defs = PyDefUseUtil.getLatestDefs(scopeOwner, (PyElement)uexpr,
