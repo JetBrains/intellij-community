@@ -30,7 +30,11 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
     final String fullPath = getTestDataPath() + testName + ".txt";
     check(fullPath, flow);
    }
-  
+
+  public void testAssert() throws Exception {
+    doTest();
+  }
+
   public void testFile() throws Exception {
     doTest();
   }
@@ -116,6 +120,10 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
   }
 
   public void testDoubleTry() throws Exception {
+    doTest();
+  }
+
+  public void testIsinstance() throws Exception {
     doTest();
   }
 

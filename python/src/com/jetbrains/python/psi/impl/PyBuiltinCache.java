@@ -27,8 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.*;
 
 /**
@@ -42,7 +40,6 @@ public class PyBuiltinCache {
    * Used in cases when a virtual file as absent in test mode; then the project may store its own SDK.
    */
   public static final Key<Sdk> TEST_SDK = new Key<Sdk>("test.sdk.instance");
-
 
   /**
    * Returns an instance of builtin cache. Instances differ per module and are cached.
@@ -77,7 +74,10 @@ public class PyBuiltinCache {
               for (OrderEntry orderEntry : orderEntries) {
                 if (orderEntry instanceof JdkOrderEntry) {
                   sdk = ((JdkOrderEntry) orderEntry).getJdk();
-                }
+                } else
+                  if (orderEntry instanceof ModuleLibraryOrderEntryImpl) {
+                    sdk = PythonSdkType.findPythonSdk(orderEntry.getOwnerModule());
+                  }
               }
             }
           }
@@ -204,7 +204,7 @@ public class PyBuiltinCache {
   private final Map<String,PyClassType> myTypeCache = new HashMap<String, PyClassType>();
   
   /**
-  @return 
+  @return
   */
   @Nullable
   public PyClassType getObjectType(@NonNls String name) {
@@ -218,17 +218,17 @@ public class PyBuiltinCache {
     }
     return val;
   }
-  
+
   @Nullable
   public PyClassType getObjectType() {
     return getObjectType("object");
   }
-  
+
   @Nullable
   public PyClassType getListType() {
     return getObjectType("list");
   }
-  
+
   @Nullable
   public PyClassType getDictType() {
     return getObjectType("dict");
@@ -272,7 +272,7 @@ public class PyBuiltinCache {
 
   /**
    * @param target an element to check.
-   * @return true iff target is inside the __builtins__.py 
+   * @return true iff target is inside the __builtins__.py
    */
   public boolean hasInBuiltins(@Nullable PsiElement target) {
     if (target == null) return false;
@@ -284,8 +284,4 @@ public class PyBuiltinCache {
     return myBuiltinsFile == the_file; // files are singletons, no need to compare URIs
   }
 
-  @Override
-  public String toString() {
-    return "Builtins("+ (myBuiltinsFile != null? myBuiltinsFile.toString() : "null") +")";
-  }
 }

@@ -148,7 +148,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
                     if (first_class == second_class) {
                       final PyClass[] supers = first_class.getSuperClasses();
                       if (supers.length > 0) {
-                        return new PyClassType(supers [0], false);
+                        return new PyClassType(supers[0], false);
                       }
                     }
                     if (second_class.isSubclass(first_class)) {

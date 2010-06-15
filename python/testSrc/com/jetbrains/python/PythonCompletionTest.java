@@ -91,6 +91,14 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
     doTest();
   }
 
+  public void testSuperInitKwParamsNotOnlySelfAndKwArgs() throws Exception { //PY-1050 
+    doTest();
+  }
+
+  public void testSuperInitKwParamsNoCompletion() throws Exception {
+    doTest();
+  }
+
   public void testImportModule() throws Exception {
     final String testName = "completion/" + getTestName(true);
     myFixture.configureByFiles(testName + ".py", "completion/someModule.py");

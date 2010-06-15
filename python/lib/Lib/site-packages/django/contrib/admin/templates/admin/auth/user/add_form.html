@@ -1,0 +1,11 @@
+{% extends "admin/change_form.html" %}
+{% load i18n %}
+
+{% block form_top %}
+    <p>{% trans "First, enter a username and password. Then, you'll be able to edit more user options." %}</p>
+    <input type="hidden" name="_continue" value="1" />
+{% endblock %}
+
+{% block after_field_sets %}
+<script type="text/javascript">document.getElementById("id_username").focus();</script>
+{% endblock %}

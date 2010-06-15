@@ -49,7 +49,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     if (file != null) {
       // Return special reference
       final PydevConsoleCommunication communication = file.getCopyableUserData(PydevConsoleRunner.CONSOLE_KEY);
-      if (communication != null){
+      if (communication != null) {
         if (qualifier != null) {
           return new PydevConsoleReference(this, communication, qualifier.getText() + ".");
         }
@@ -125,7 +125,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
           }
           else if (assigned_from != null) ret = new QualifiedResolveResultImpl(assigned_from, last_qualifier, false);
         }
-        else if (ret == null && elt instanceof PyElement && target.isValidResult()) { 
+        else if (ret == null && elt instanceof PyElement && target.isValidResult()) {
           // remember this result, but a further reference may be the next resolve result
           ret = new QualifiedResolveResultImpl(target.getElement(), last_qualifier, target instanceof ImplicitResolveResult);
         }
@@ -139,7 +139,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
   @Nullable
   public PyQualifiedName asQualifiedName() {
-    final List<PyReferenceExpression> components = PyResolveUtil.unwindQualifiers((PyReferenceExpression) this);
+    final List<PyReferenceExpression> components = PyResolveUtil.unwindQualifiers((PyReferenceExpression)this);
     if (components == null) {
       return null;
     }
@@ -198,11 +198,17 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
       ResolveResult[] targets = getReference(PyResolveContext.noImplicits()).multiResolve(false);
       if (targets.length == 0) return null;
-      PsiElement target = targets[0].getElement();
-      if (target == this) {
-        return null;
+      for (int i = 0; i < targets.length; i++) {
+        PsiElement target = targets[i].getElement();
+        if (target == this) {
+          continue;
+        }
+        PyType type = getTypeFromTarget(target, context, this);
+        if (type != null) {
+          return type;
+        }
       }
-      return getTypeFromTarget(target, context, this);
+      return null;
     }
     finally {
       TypeEvalStack.evaluated(this);
@@ -211,7 +217,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
   @Nullable
   private PyType getTypeFromProviders(TypeEvalContext context) {
-    for(PyTypeProvider provider: Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+    for (PyTypeProvider provider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
       try {
         final PyType type = provider.getReferenceExpressionType(this, context);
         if (type != null) {
@@ -222,7 +228,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         LOG.info(e);
       }
     }
-    return null;    
+    return null;
   }
 
   @Nullable
@@ -241,22 +247,22 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       }
     }
     if (target instanceof PyFile) {
-      return new PyModuleType((PyFile) target);
+      return new PyModuleType((PyFile)target);
     }
     if (target instanceof PyImportedModule) {
-      return new PyImportedModuleType((PyImportedModule) target);
+      return new PyImportedModuleType((PyImportedModule)target);
     }
-    if (target instanceof PyTargetExpression && context.allowDataFlow() && anchor != null) {
+    if ((target instanceof PyTargetExpression | target instanceof PyNamedParameter) && context.allowDataFlow() && anchor != null) {
       final ScopeOwner scopeOwner = PsiTreeUtil.getParentOfType(anchor, ScopeOwner.class);
       if (scopeOwner != null && scopeOwner == PsiTreeUtil.getParentOfType(target, ScopeOwner.class)) {
         PyAugAssignmentStatement augAssignment = PsiTreeUtil.getParentOfType(anchor, PyAugAssignmentStatement.class);
         try {
-          final PyElement[] defs = PyDefUseUtil.getLatestDefs(scopeOwner, (PyTargetExpression) target,
+          final PyElement[] defs = PyDefUseUtil.getLatestDefs(scopeOwner, (PyElement)target,
                                                               augAssignment != null ? augAssignment : anchor);
           if (defs.length > 0) {
-            PyType type = getTypeIfExpr(defs [0], context);
+            PyType type = getTypeIfExpr(defs[0], context);
             for (int i = 1; i < defs.length; i++) {
-              type = PyUnionType.union(type, getTypeIfExpr(defs [i], context));
+              type = PyUnionType.union(type, getTypeIfExpr(defs[i], context));
             }
             return type;
           }
@@ -267,10 +273,10 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       }
     }
     if (target instanceof PyExpression) {
-      return context.getType((PyExpression) target);
+      return context.getType((PyExpression)target);
     }
     if (target instanceof PyClass) {
-      return new PyClassType((PyClass) target, true);
+      return new PyClassType((PyClass)target, true);
     }
     if (target instanceof PsiDirectory) {
       PsiFile file = ((PsiDirectory)target).findFile(PyNames.INIT_DOT_PY);
@@ -286,7 +292,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
   @Nullable
   public static PyType getReferenceTypeFromProviders(final PsiElement target, TypeEvalContext context) {
-    for(PyTypeProvider provider: Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+    for (PyTypeProvider provider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
       final PyType result = provider.getReferenceType(target, context);
       if (result != null) return result;
     }
@@ -304,7 +310,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     }
 
     QualifiedResolveResultImpl(@NotNull PsiElement element, PyExpression lastQualifier, boolean isImplicit) {
-      super(isImplicit? RATE_LOW : RATE_NORMAL, element);
+      super(isImplicit ? RATE_LOW : RATE_NORMAL, element);
       myLastQualifier = lastQualifier;
       myIsImplicit = isImplicit;
     }
@@ -333,7 +339,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     }
 
     public boolean isImplicit() {
-      return false;  
+      return false;
     }
   }
 

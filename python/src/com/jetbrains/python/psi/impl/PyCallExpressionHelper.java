@@ -32,8 +32,9 @@ public class PyCallExpressionHelper {
 
   /**
    * Tries to interpret a call as a call to built-in {@code classmethod} or {@code staticmethod}.
+   *
    * @param redefining_call the possible call, generally a result of chasing a chain of assignments
-   * @param us any in-project PSI element, used to determine SDK and ultimately builtins module used to check the wrapping functions
+   * @param us              any in-project PSI element, used to determine SDK and ultimately builtins module used to check the wrapping functions
    * @return a pair of wrapper name and wrapped function; for {@code staticmethod(foo)} it would be ("staticmethod", foo).
    */
   @Nullable
@@ -71,10 +72,9 @@ public class PyCallExpressionHelper {
   }
 
   @Nullable
-  public static PyCallExpression.PyMarkedCallee resolveCallee(PyCallExpression us) {
+  public static PyClass resolveCalleeClass(PyCallExpression us) {
     PyExpression callee = us.getCallee();
-    PyFunction.Flag wrapped_flag = null;
-    boolean is_constructor_call = false;
+
     PsiElement resolved;
     QualifiedResolveResult resolveResult = null;
     if (callee instanceof PyReferenceExpression) {
@@ -83,38 +83,73 @@ public class PyCallExpressionHelper {
       resolveResult = ref.followAssignmentsChain();
       resolved = resolveResult.getElement();
     }
-    else resolved = callee;
+    else {
+      resolved = callee;
+    }
+    // analyze
+    if (resolved instanceof PyClass) {
+      return (PyClass)resolved;
+    }
+    else if (resolved instanceof PyFunction) {
+        final PyFunction pyFunction = (PyFunction) resolved;
+        return pyFunction.getContainingClass();
+    }
+
+    return null;
+  }
+
+  @Nullable
+  public static PyCallExpression.PyMarkedCallee resolveCallee(PyCallExpression us) {
+    PyFunction.Flag wrappedFlag = null;
+    boolean isConstructorCall = false;
+
+    PyExpression callee = us.getCallee();
+    PsiElement resolved;
+    QualifiedResolveResult resolveResult = null;
+    if (callee instanceof PyReferenceExpression) {
+      // dereference
+      PyReferenceExpression ref = (PyReferenceExpression)callee;
+      resolveResult = ref.followAssignmentsChain();
+      resolved = resolveResult.getElement();
+    }
+    else {
+      resolved = callee;
+    }
     // analyze
     if (resolved instanceof PyClass) {
       resolved = ((PyClass)resolved).findInitOrNew(true); // class to constructor call
-      is_constructor_call = true;
+      isConstructorCall = true;
     }
     else if (resolved instanceof PyCallExpression) {
       // is it a case of "foo = classmethod(foo)"?
-      PyCallExpression redefining_call = (PyCallExpression)resolved;
-      Pair<String, PyFunction> wrapper_info = interpretAsStaticmethodOrClassmethodWrappingCall(redefining_call, us);
-      if (wrapper_info != null) {
-        resolved = wrapper_info.getSecond();
-        String wrapper_name = wrapper_info.getFirst();
-        if (PyNames.CLASSMETHOD.equals(wrapper_name)) wrapped_flag = PyFunction.Flag.CLASSMETHOD;
-        else if (PyNames.STATICMETHOD.equals(wrapper_name)) wrapped_flag = PyFunction.Flag.STATICMETHOD;
+      PyCallExpression redefiningCall = (PyCallExpression)resolved;
+      Pair<String, PyFunction> wrapperInfo = interpretAsStaticmethodOrClassmethodWrappingCall(redefiningCall, us);
+      if (wrapperInfo != null) {
+        resolved = wrapperInfo.getSecond();
+        String wrapper_name = wrapperInfo.getFirst();
+        if (PyNames.CLASSMETHOD.equals(wrapper_name)) {
+          wrappedFlag = PyFunction.Flag.CLASSMETHOD;
+        }
+        else if (PyNames.STATICMETHOD.equals(wrapper_name)) wrappedFlag = PyFunction.Flag.STATICMETHOD;
       }
     }
     if (resolved instanceof Callable) {
       EnumSet<PyFunction.Flag> flags = EnumSet.noneOf(PyFunction.Flag.class);
-      PyExpression last_qualifier = resolveResult != null? resolveResult.getLastQualifier() : null;
-      final PyExpression call_reference = us.getCallee();
-      boolean is_by_instance = isByInstance(call_reference);
-      if (last_qualifier != null) {
-        PyType qualifier_type = last_qualifier.getType(TypeEvalContext.fast()); // NOTE: ...or slow()?
-        is_by_instance |= (qualifier_type != null && qualifier_type instanceof PyClassType && !((PyClassType)qualifier_type).isDefinition());
+      PyExpression lastQualifier = resolveResult != null ? resolveResult.getLastQualifier() : null;
+      final PyExpression callReference = us.getCallee();
+      boolean is_by_instance = isByInstance(callReference);
+      if (lastQualifier != null) {
+        PyType qualifier_type = lastQualifier.getType(TypeEvalContext.fast()); // NOTE: ...or slow()?
+        is_by_instance |=
+          (qualifier_type != null && qualifier_type instanceof PyClassType && !((PyClassType)qualifier_type).isDefinition());
       }
       final Callable callable = (Callable)resolved;
-      int implicit_offset = getImplicitArgumentCount(call_reference, callable, wrapped_flag, flags, is_by_instance);
-      if (! is_constructor_call && PyNames.NEW.equals(callable.getName())) {
-        implicit_offset = Math.min(implicit_offset-1, 0); // case of Class.__new__
+      int implicitOffset = getImplicitArgumentCount(callReference, callable, wrappedFlag, flags, is_by_instance);
+      if (!isConstructorCall && PyNames.NEW.equals(callable.getName())) {
+        implicitOffset = Math.min(implicitOffset - 1, 0); // case of Class.__new__
       }
-      return new PyCallExpression.PyMarkedCallee(callable, flags, implicit_offset, resolveResult != null? resolveResult.isImplicit() : false);
+      return new PyCallExpression.PyMarkedCallee(callable, flags, implicitOffset,
+                                                 resolveResult != null ? resolveResult.isImplicit() : false);
     }
     return null;
   }
@@ -122,7 +157,8 @@ public class PyCallExpressionHelper {
   /**
    * Calls the {@link #getImplicitArgumentCount(PyExpression, Callable, PyFunction.Flag, EnumSet<PyFunction.Flag>, boolean) full version}
    * with null flags and with isByInstance inferred directly from call site (won't work with reassigned bound methods).
-   * @param callReference the call site, where arguments are given.
+   *
+   * @param callReference       the call site, where arguments are given.
    * @param functionBeingCalled resolved method which is being called; plain functions are OK but make little sense.
    * @return a non-negative number of parameters that are implicit to this call.
    */
@@ -132,13 +168,14 @@ public class PyCallExpressionHelper {
 
   /**
    * Finds how many arguments are implicit in a given call.
+   *
    * @param callReference the call site, where arguments are given.
-   * @param callable resolved method which is being called; other callables are OK but immediately return 0.
-   * @param wrappedFlag value of {@link PyFunction.Flag#WRAPPED} if known.
-   * @param flags set of flags to be <i>updated</i> by this call; wrappedFlag's value ends up here, too.
-   * @param isByInstance true if the call is known to be by instance (not by class).
+   * @param callable      resolved method which is being called; other callables are OK but immediately return 0.
+   * @param wrappedFlag   value of {@link PyFunction.Flag#WRAPPED} if known.
+   * @param flags         set of flags to be <i>updated</i> by this call; wrappedFlag's value ends up here, too.
+   * @param isByInstance  true if the call is known to be by instance (not by class).
    * @return a non-negative number of parameters that are implicit to this call. E.g. for a typical method call 1 is returned
-   * because one parameter ('self') is implicit.
+   *         because one parameter ('self') is implicit.
    */
   private static int getImplicitArgumentCount(final PyExpression callReference,
                                               Callable callable,
@@ -157,15 +194,19 @@ public class PyCallExpressionHelper {
         flags.add(wrappedFlag);
         flags.add(PyFunction.Flag.WRAPPED);
       }
-      if (wrappedFlag == PyFunction.Flag.STATICMETHOD && implicit_offset > 0) implicit_offset -= 1; // might have marked it as implicit 'self'
-      if (wrappedFlag == PyFunction.Flag.CLASSMETHOD && ! isByInstance) implicit_offset += 1; // Both Foo.method() and foo.method() have implicit the first arg
+      if (wrappedFlag == PyFunction.Flag.STATICMETHOD && implicit_offset > 0) {
+        implicit_offset -= 1;
+      } // might have marked it as implicit 'self'
+      if (wrappedFlag == PyFunction.Flag.CLASSMETHOD && !isByInstance) {
+        implicit_offset += 1;
+      } // Both Foo.method() and foo.method() have implicit the first arg
     }
-    if (! isByInstance && PyNames.NEW.equals(method.getName())) implicit_offset += 1; // constructor call
+    if (!isByInstance && PyNames.NEW.equals(method.getName())) implicit_offset += 1; // constructor call
     // decorators?
     if (PyNames.INIT.equals(method.getName())) {
       String refName = callReference instanceof PyReferenceExpression
-        ? ((PyReferenceExpression)callReference).getReferencedName()
-        : null;
+                       ? ((PyReferenceExpression)callReference).getReferencedName()
+                       : null;
       if (!PyNames.INIT.equals(refName)) {   // PY-312
         implicit_offset += 1;
       }
@@ -189,7 +230,7 @@ public class PyCallExpressionHelper {
             if (flags != null) {
               flags.add(PyFunction.Flag.CLASSMETHOD);
             }
-            if (! isByInstance) implicit_offset += 1; // Both Foo.method() and foo.method() have implicit the first arg
+            if (!isByInstance) implicit_offset += 1; // Both Foo.method() and foo.method() have implicit the first arg
           }
           // else could be custom decorator processing
         }

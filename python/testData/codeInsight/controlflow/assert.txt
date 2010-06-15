@@ -1,0 +1,4 @@
+0(1) element: null
+1(2) WRITETYPE ACCESS: s
+2(3) WRITETYPE ACCESS: x
+3() element: null

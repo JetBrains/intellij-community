@@ -7,7 +7,6 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
@@ -15,15 +14,15 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.SortedList;
-import com.jetbrains.appengine.util.PythonUtil;
-import com.jetbrains.appengine.util.StringUtils;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.refactoring.PyDefUseUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -180,6 +179,26 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     }
     if (roof == null) roof = realContext.getContainingFile();
     PsiElement uexpr = PyResolveUtil.treeCrawlUp(processor, false, realContext, roof);
+    if (uexpr != null) {
+      //add possible inferred types
+      if ((uexpr instanceof PyTargetExpression || uexpr instanceof PyNamedParameter) && myElement != null) {
+        final ScopeOwner scopeOwner = PsiTreeUtil.getParentOfType(myElement, ScopeOwner.class);
+        if (scopeOwner != null && scopeOwner == PsiTreeUtil.getStubOrPsiParentOfType(uexpr, ScopeOwner.class)) {
+          PyAugAssignmentStatement augAssignment = PsiTreeUtil.getParentOfType(myElement, PyAugAssignmentStatement.class);
+          try {
+            final PyElement[] defs = PyDefUseUtil.getLatestDefs(scopeOwner, (PyElement)uexpr,
+                                                                augAssignment != null ? augAssignment : myElement);
+            for (PyElement e : defs) {
+              ret.add(new RatedResolveResult(RatedResolveResult.RATE_NORMAL + 1, e));
+            }
+          }
+          catch (PyDefUseUtil.InstructionNotFoundException e) {
+            // ignore
+          }
+        }
+      }
+
+    }
     if ((uexpr != null)) {
       if ((uexpr instanceof PyClass)) {
         // is it a case of the bizarre "class Foo(Foo)" construct?
@@ -213,16 +232,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     if (uexpr != null) {
       ret.add(new ImportedResolveResult(uexpr, getRate(uexpr), processor.getDefiners()));
     }
-    if (uexpr == null) {
-      PyDecorator deco = PsiTreeUtil.getParentOfType(myElement, PyDecorator.class);
-      if (deco != null) {
-        PyClass cls = PsiTreeUtil.getParentOfType(deco, PyClass.class);
-        if (cls != null) {
-          Property prop = cls.findProperty(referencedName);
-          if (prop != null && prop.getGetter().isDefined()) ret.poke(prop.getGetter().value(), RatedResolveResult.RATE_NORMAL);
-        }
-      }
-    }
+
     return ret;
   }
 
@@ -375,15 +385,20 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     final KwArgParameterCollector collector = new KwArgParameterCollector(flags, ret);
     def.getParameterList().acceptChildren(collector);
     if (collector.hasKwArgs()) {
-      def.getStatementList().acceptChildren(new KwArgStatementCallCollector(ret, collector.getKwArgs()));
-    }
-    if (collector.hasOnlySelfAndKwArgs()) {
+      KwArgFromStatementCallCollector fromStatementCallCollector = new KwArgFromStatementCallCollector(ret, collector.getKwArgs());
+      def.getStatementList().acceptChildren(fromStatementCallCollector);
+
+      //if (collector.hasOnlySelfAndKwArgs()) {
       // nothing interesting besides self and **kwargs, let's look at superclass (PY-778)
-      final PsiElement superMethod = PySuperMethodsSearch.search(def).findFirst();
-      if (superMethod instanceof PyFunction) {
-        addKeywordArgumentVariants((PyFunction)superMethod, ret, visited);
+      if (fromStatementCallCollector.isKwArgsTransit()) {
+
+        final PsiElement superMethod = PySuperMethodsSearch.search(def).findFirst();
+        if (superMethod instanceof PyFunction) {
+          addKeywordArgumentVariants((PyFunction)superMethod, ret, visited);
+        }
       }
     }
+//}
   }
 
   private static class KwArgParameterCollector extends PyElementVisitor {
@@ -431,11 +446,12 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     }
   }
 
-  private static class KwArgStatementCallCollector extends PyElementVisitor {
+  private static class KwArgFromStatementCallCollector extends PyElementVisitor {
     private final List<Object> myRet;
     private final PyParameter myKwArgs;
+    private boolean kwArgsTransit = true;
 
-    public KwArgStatementCallCollector(List<Object> ret, @NotNull PyParameter kwArgs) {
+    public KwArgFromStatementCallCollector(List<Object> ret, @NotNull PyParameter kwArgs) {
       myRet = ret;
       this.myKwArgs = kwArgs;
     }
@@ -464,6 +480,18 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
           }
         }
       }
+      else if (callName.equals("__init__")) {
+        kwArgsTransit = false;
+        for (PyExpression e : node.getArguments()) {
+          if (e instanceof PyStarArgument) {
+            PyStarArgument kw = (PyStarArgument)e;
+            if (myKwArgs.getName().equals(kw.getFirstChild().getNextSibling().getText())) {
+              kwArgsTransit = true;
+              break;
+            }
+          }
+        }
+      }
       super.visitPyCallExpression(node);
     }
 
@@ -475,6 +503,14 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
           myRet.add(PyUtil.createNamedParameterLookup(name));
         }
       }
+    }
+
+    /**
+     * is name of kwargs parameter the same as transmitted to __init__ call
+     * @return
+     */
+    public boolean isKwArgsTransit() {
+      return kwArgsTransit;
     }
   }
 

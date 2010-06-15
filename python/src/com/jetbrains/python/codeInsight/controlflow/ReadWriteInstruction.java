@@ -10,6 +10,7 @@ public class ReadWriteInstruction extends InstructionImpl {
   public enum ACCESS {
     READ(true, false),
     WRITE(false, true),
+    WRITETYPE(false, true),
     READWRITE(true, true);
 
     private final boolean isWrite;
@@ -30,7 +31,7 @@ public class ReadWriteInstruction extends InstructionImpl {
   public String myName;
   private final ACCESS myAccess;
 
-  public ReadWriteInstruction(final ControlFlowBuilder builder,
+  private ReadWriteInstruction(final ControlFlowBuilder builder,
                               final PyElement element,
                               final String name,
                               final ACCESS access) {
@@ -45,6 +46,37 @@ public class ReadWriteInstruction extends InstructionImpl {
 
   public ACCESS getAccess() {
     return myAccess;
+  }
+
+  public static ReadWriteInstruction read(final ControlFlowBuilder builder,
+                              final PyElement element,
+                              final String name) {
+    return new ReadWriteInstruction(builder, element, name, ACCESS.READ);
+  }
+
+  public static ReadWriteInstruction write(final ControlFlowBuilder builder,
+                              final PyElement element,
+                              final String name) {
+    return new ReadWriteInstruction(builder, element, name, ACCESS.WRITE);
+  }
+
+  public static ReadWriteInstruction writeType(final ControlFlowBuilder builder,
+                              final PyElement element,
+                              final String name) {
+    return new ReadWriteInstruction(builder, element, name, ACCESS.WRITETYPE);
+  }
+
+  public static ReadWriteInstruction readWrite(final ControlFlowBuilder builder,
+                              final PyElement element,
+                              final String name) {
+    return new ReadWriteInstruction(builder, element, name, ACCESS.READWRITE);
+  }
+
+  public static ReadWriteInstruction newInstruction(final ControlFlowBuilder builder,
+                              final PyElement element,
+                              final String name,
+                              final ACCESS access) {
+    return new ReadWriteInstruction(builder, element, name, access);
   }
 
   @NonNls
