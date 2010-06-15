@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAc
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import javax.swing.*;
-import java.util.LinkedHashSet;
+import java.lang.reflect.Modifier;
 import java.util.Set;
 
 /**
@@ -76,14 +76,12 @@ public class GrAccessorMethodImpl extends GrSyntheticMethod implements GrAccesso
   }
 
   protected Set<String> getModifiers() {
-    LinkedHashSet<String> modifiers = new LinkedHashSet<String>();
-    modifiers.add(PsiModifier.PUBLIC);
+    int modifiers = Modifier.PUBLIC;
     final PsiModifierList original = myProperty.getModifierList();
     assert original != null;
-    if (original.hasExplicitModifier(PsiModifier.STATIC)) modifiers.add(PsiModifier.STATIC);
-    if (original.hasExplicitModifier(PsiModifier.ABSTRACT)) modifiers.add(PsiModifier.ABSTRACT);
-    if (original.hasExplicitModifier(PsiModifier.FINAL)) modifiers.add(PsiModifier.FINAL);
-    return modifiers;
+    if (original.hasExplicitModifier(PsiModifier.STATIC)) modifiers |= Modifier.STATIC;
+    if (original.hasExplicitModifier(PsiModifier.FINAL)) modifiers |= Modifier.FINAL;
+    return LightModifierList.getModifierSet(modifiers);
   }
 
   public PsiClass getContainingClass() {
