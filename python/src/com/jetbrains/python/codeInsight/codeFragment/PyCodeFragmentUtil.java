@@ -92,8 +92,22 @@ public class PyCodeFragmentUtil {
     }
 
     // If we see more than 1 outer instruction, controlflow is interrupted
-    if (outerInstructions.size() > 1){
+    if (outerInstructions.size() > 2){
       throw new CannotCreateCodeFragmentException(PyBundle.message("refactoring.extract.method.error.cannot.perform.refactoring.when.execution.flow.is.interrupted"));
+    }
+    if (outerInstructions.size() == 2){
+      boolean errorFound = true;
+      for (Instruction outerInstruction : outerInstructions) {
+        // Here we check control flow when for statement content is beeing extracted
+        if (outerInstruction instanceof ReadWriteInstruction &&
+            PyForStatementNavigator.getPyForStatementByIterable(outerInstruction.getElement())!=null){
+          errorFound = false;
+          break;
+        }
+      }
+      if (errorFound){
+        throw new CannotCreateCodeFragmentException(PyBundle.message("refactoring.extract.method.error.cannot.perform.refactoring.when.execution.flow.is.interrupted"));
+      }
     }
 
     // Building code fragment
