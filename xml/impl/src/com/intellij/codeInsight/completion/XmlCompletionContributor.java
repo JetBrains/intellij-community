@@ -15,10 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.lookup.InsertHandlerDecorator;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementDecorator;
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -44,6 +41,7 @@ import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.List;
@@ -173,22 +171,22 @@ public class XmlCompletionContributor extends CompletionContributor {
         for (Pair<String, String> pair : names) {
           final String name = pair.getFirst();
           final String ns = pair.getSecond();
-          final LookupItem item = new LookupItem<String>(name, name) {
-            public int hashCode() {
-              final int hashCode = name.hashCode() * 239;
-              return ns == null ? hashCode : hashCode + ns.hashCode();
-            }
-          };
-          final XmlTagInsertHandler insertHandler = new ExtendedTagInsertHandler(name, ns, namespacePrefix);
-          item.setInsertHandler(insertHandler);
-          if (!StringUtil.isEmpty(ns)) {
-            item.setAttribute(LookupItem.TAIL_TEXT_ATTR, " (" + ns + ")");
-            item.setAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR, "");
-          }
+          final LookupElement item = createLookupElement(name, ns, " (" + ns + ")", namespacePrefix);
           newResult.addElement(item);
         }
       }
     }
+  }
+
+  public static LookupElement createLookupElement(final String name,
+                                                  final String namespace,
+                                                  final String tailText, @Nullable String namespacePrefix) {
+    LookupElementBuilder builder =
+      LookupElementBuilder.create(Pair.create(name, namespace), name).setInsertHandler(new ExtendedTagInsertHandler(name, namespace, namespacePrefix));
+    if (!StringUtil.isEmpty(namespace)) {
+      builder = builder.setTailText(tailText, true);
+    }
+    return builder;
   }
 
   public static boolean isXmlNameCompletion(final CompletionParameters parameters) {
