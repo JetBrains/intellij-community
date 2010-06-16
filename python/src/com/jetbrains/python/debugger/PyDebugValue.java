@@ -74,18 +74,18 @@ public class PyDebugValue extends XValue {
   }
 
   // todo: pass StringBuilder to recursive calls
-  public String getQualifiedExpression() {
+  public String getEvaluationExpression() {
     if (myParent == null) {
       return getTempName();
     }
     else if ("list".equals(myParent.getType()) || "tuple".equals(myParent.getType())) {
-      return new StringBuilder().append(myParent.getQualifiedExpression()).append('[').append(myName).append(']').toString();
+      return new StringBuilder().append(myParent.getEvaluationExpression()).append('[').append(myName).append(']').toString();
     }
     else if ("dict".equals(myParent.getType())) {
-      return new StringBuilder().append(myParent.getQualifiedExpression()).append("['").append(myName).append("']").toString();
+      return new StringBuilder().append(myParent.getEvaluationExpression()).append("['").append(myName).append("']").toString();
     }
     else {
-      return new StringBuilder().append(myParent.getQualifiedExpression()).append('.').append(myName).toString();
+      return new StringBuilder().append(myParent.getEvaluationExpression()).append('.').append(myName).toString();
     }
   }
 
