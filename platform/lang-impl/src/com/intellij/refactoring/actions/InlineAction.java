@@ -35,6 +35,10 @@ import org.jetbrains.annotations.Nullable;
 
 public class InlineAction extends BasePlatformRefactoringAction {
 
+  public InlineAction() {
+    setInjectedContext(true);
+  }
+
   public boolean isAvailableInEditorOnly() {
     return false;
   }
