@@ -18,15 +18,20 @@ package com.intellij.junit3;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 public class TestAllInPackage2 extends TestSuite {
   public TestAllInPackage2(JUnit3IdeaTestRunner runner, final String name, String[] classMethodNames) {
     super(name);
     int testClassCount = 0;
-
+    final Set allNames = new HashSet(Arrays.asList(classMethodNames));
     for (int i = 0; i < classMethodNames.length; i++) {
       String classMethodName = classMethodNames[i];
       Test suite = TestRunnerUtil.createClassOrMethodSuite(runner, classMethodName);
       if (suite != null) {
+        if (skipSuite(allNames, suite)) continue;
         if (suite instanceof TestSuite && ((TestSuite)suite).getName() == null) {
           attachSuiteInfo(suite, classMethodName);
         }
@@ -36,6 +41,23 @@ public class TestAllInPackage2 extends TestSuite {
     }
     String message = TestRunnerUtil.testsFoundInPackageMesage(testClassCount, name);
     System.out.println(message);
+  }
+
+  private static boolean skipSuite(Set allNames, Test suite) {
+    if (suite instanceof TestRunnerUtil.SuiteMethodWrapper) {
+      final Test test = ((TestRunnerUtil.SuiteMethodWrapper)suite).getSuite();
+      if (test instanceof TestSuite) {
+        boolean hasAllComponents = true;
+        for (int idx = 0; idx < ((TestSuite)test).testCount(); idx++) {
+          if (!allNames.contains(((TestSuite)test).testAt(idx).toString())) {
+            hasAllComponents = false;
+            break;
+          }
+        }
+        if (hasAllComponents) return true;
+      }
+    }
+    return false;
   }
 
   private static void attachSuiteInfo(Test test, String name) {

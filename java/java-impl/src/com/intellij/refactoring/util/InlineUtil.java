@@ -289,6 +289,9 @@ public class InlineUtil {
           PsiElement resolved = resolveResult.getElement();
           if (resolved instanceof PsiTypeParameter) {
             PsiType newType = resolveResult.getSubstitutor().putAll(substitutor).substitute((PsiTypeParameter)resolved);
+            if (newType == null) {
+              newType = PsiType.getJavaLangObject(resolved.getManager(), resolved.getResolveScope());
+            }
             try {
               typeElement.replace(factory.createTypeElement(newType));
               return;

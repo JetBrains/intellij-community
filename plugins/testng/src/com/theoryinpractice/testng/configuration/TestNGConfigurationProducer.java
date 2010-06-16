@@ -23,6 +23,7 @@ package com.theoryinpractice.testng.configuration;
 import com.intellij.execution.Location;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.junit.JavaRuntimeConfigurationProducerBase;
 import com.intellij.openapi.module.Module;
@@ -39,8 +40,8 @@ public abstract class TestNGConfigurationProducer extends JavaRuntimeConfigurati
 
   @Override
   protected RunnerAndConfigurationSettings findExistingByElement(Location location,
-                                                                     @NotNull RunnerAndConfigurationSettings[] existingConfigurations
-  ) {
+                                                                 @NotNull RunnerAndConfigurationSettings[] existingConfigurations,
+                                                                 ConfigurationContext context) {
     final Module predefinedModule =
       ((TestNGConfiguration)((RunManagerImpl)RunManagerEx.getInstanceEx(location.getProject()))
         .getConfigurationTemplate(getConfigurationFactory())
