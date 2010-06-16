@@ -137,7 +137,7 @@ public class EclipseClasspathWriter {
               srcRelativePath = EPathUtil.collapse2EclipsePath(srcFile, myModel);
               if (eclipseVariablePath != null) {
                 eclipseSrcVariablePath = eclipseModuleManager.getEclipseSrcVariablePath(srcFile);
-                if (eclipseSrcVariablePath == null && !eclipseModuleManager.isEclipseLibSrcUrl(srcFile)) {
+                if (eclipseSrcVariablePath == null) {
                   eclipseSrcVariablePath = "/" + EPathUtil.collapse2EclipseVariabledPath(libraryOrderEntry);
                 }
               }
