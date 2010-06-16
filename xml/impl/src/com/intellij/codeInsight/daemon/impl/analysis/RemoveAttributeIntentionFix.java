@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Maxim.Mossienko
  */
-class RemoveAttributeIntentionFix implements IntentionAction {
+public class RemoveAttributeIntentionFix implements IntentionAction {
   private final String myLocalName;
   private final XmlAttribute myAttribute;
 
