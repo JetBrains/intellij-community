@@ -35,6 +35,7 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
@@ -50,7 +51,6 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.Disposable;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
@@ -488,10 +488,10 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
       return true;
     }
 
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    //if (ApplicationManager.getApplication().isUnitTestMode()) {
       // need this in unit tests to avoid false alarms when comparing actual output with expected output
-      return true; 
-    }
+      //return true;
+    //}
 
     final String version = JdkUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VERSION);
     return version == null    ||
