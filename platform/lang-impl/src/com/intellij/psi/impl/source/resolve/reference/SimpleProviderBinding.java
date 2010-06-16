@@ -16,11 +16,12 @@
 
 package com.intellij.psi.impl.source.resolve.reference;
 
-import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.pom.references.PomReferenceProvider;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReferenceProvider;
+import com.intellij.psi.PsiReferenceService;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -35,19 +36,23 @@ import java.util.List;
  * Time: 16:52:28
  * To change this template use Options | File Templates.
  */
-public class SimpleProviderBinding<PsiReferenceProvider> implements ProviderBinding<PsiReferenceProvider> {
-  private final List<Trinity<PsiReferenceProvider, ElementPattern, Double>> myProviderPairs = ContainerUtil.createEmptyCOWList();
+public class SimpleProviderBinding<Provider> implements ProviderBinding<Provider> {
+  private final List<Trinity<Provider, ElementPattern, Double>> myProviderPairs = ContainerUtil.createEmptyCOWList();
 
-  public void registerProvider(PsiReferenceProvider provider,ElementPattern pattern, double priority){
+  public void registerProvider(Provider provider,ElementPattern pattern, double priority){
     myProviderPairs.add(Trinity.create(provider, pattern, priority));
   }
 
-  public void addAcceptableReferenceProviders(@NotNull PsiElement position, @NotNull List<Trinity<PsiReferenceProvider, ProcessingContext, Double>> list,
-                                              Integer offset) {
-    for(Trinity<PsiReferenceProvider,ElementPattern,Double> trinity:myProviderPairs) {
+  public void addAcceptableReferenceProviders(@NotNull PsiElement position, @NotNull List list,
+                                              PsiReferenceService.Hints hints) {
+    for(Trinity<Provider,ElementPattern,Double> trinity:myProviderPairs) {
+      if (hints != PsiReferenceService.Hints.NO_HINTS && !((PsiReferenceProvider)trinity.first).acceptsHints(position, hints)) {
+        continue;
+      }
+
       final ProcessingContext context = new ProcessingContext();
-      if (offset != null) {
-        context.put(PomReferenceProvider.OFFSET_IN_ELEMENT, offset);
+      if (hints != PsiReferenceService.Hints.NO_HINTS) {
+        context.put(PsiReferenceService.HINTS, hints);
       }
       boolean suitable = false;
       try {
@@ -61,8 +66,8 @@ public class SimpleProviderBinding<PsiReferenceProvider> implements ProviderBind
     }
   }
 
-  public void unregisterProvider(final PsiReferenceProvider provider) {
-    for (final Trinity<PsiReferenceProvider, ElementPattern, Double> trinity : new ArrayList<Trinity<PsiReferenceProvider, ElementPattern, Double>>(myProviderPairs)) {
+  public void unregisterProvider(final Provider provider) {
+    for (final Trinity<Provider, ElementPattern, Double> trinity : new ArrayList<Trinity<Provider, ElementPattern, Double>>(myProviderPairs)) {
       if (trinity.first.equals(provider)) {
         myProviderPairs.remove(trinity);
       }
