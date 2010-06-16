@@ -16,9 +16,8 @@
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.lang.Language;
+import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
 
 /**
  * Maintains programming language selection for code style panels.
@@ -26,7 +25,7 @@ import java.util.ArrayList;
 public class LanguageSelector {
 
   private Language myLanguage;
-  private ArrayList<LanguageSelectorListener> listeners = new ArrayList<LanguageSelectorListener>();
+  private final EventDispatcher<LanguageSelectorListener> myDispatcher = EventDispatcher.create(LanguageSelectorListener.class);
   private Language[] myLanguages = LanguageCodeStyleSettingsProvider.getLanguagesWithCodeStyleSettings(); 
 
   /**
@@ -54,12 +53,10 @@ public class LanguageSelector {
    * @param l The listener to add.
    */
   public void addListener(LanguageSelectorListener l) {
-    listeners.add(l);
+    myDispatcher.addListener(l);
   }
 
   private void notifyListeners(Language lang) {
-    for (LanguageSelectorListener l : listeners) {
-      l.languageChanged(lang);
-    }
+    myDispatcher.getMulticaster().languageChanged(lang);
   }
 }

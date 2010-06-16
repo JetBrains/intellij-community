@@ -196,13 +196,9 @@ public class HgVcs extends AbstractVcs {
 
   @Override
   public boolean isVersionedDirectory(VirtualFile dir) {
-    if (!started) {
-      return false;
-    }
-
     VirtualFile currentDir = dir;
     while (currentDir != null) {
-      if (currentDir.findFileByRelativePath(".hg") != null) {
+      if (currentDir.findChild(".hg") != null) {
         return true;
       }
       currentDir = currentDir.getParent();

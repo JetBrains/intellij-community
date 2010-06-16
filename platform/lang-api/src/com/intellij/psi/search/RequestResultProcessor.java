@@ -13,7 +13,9 @@ public abstract class RequestResultProcessor {
   public boolean execute(PsiElement element, int offsetInElement, final Processor<PsiReference> consumer) {
     for (PsiReference ref : element.getReferences()) {
       if (ReferenceRange.containsOffsetInElement(ref, offsetInElement)) {
-        return processReference(consumer, ref);
+        if (!processReference(consumer, ref)) {
+          return false;
+        }
       }
     }
     return true;

@@ -293,7 +293,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
       getParent().deleteChildRange(this, this);
     }
     else {
-      super.delete();
+      throw new UnsupportedOperationException(getClass().getName() + " under " + (getParent() == null ? "null" : getParent().getClass().getName()));
     }
   }
 

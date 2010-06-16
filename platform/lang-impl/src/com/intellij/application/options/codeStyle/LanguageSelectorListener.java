@@ -17,11 +17,13 @@ package com.intellij.application.options.codeStyle;
 
 import com.intellij.lang.Language;
 
+import java.util.EventListener;
+
 /**
  * Must be implemented by components willing to be notified on current code style language
  * change.
  */
-public interface LanguageSelectorListener {
+public interface LanguageSelectorListener extends EventListener {
 
   void languageChanged(Language lang);
 
