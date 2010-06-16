@@ -19,6 +19,11 @@ public class PythonLanguage extends Language {
     return (PythonLanguage) PythonFileType.INSTANCE.getLanguage();
   }
 
+  @Override
+  public boolean isCaseSensitive() {
+    return true; // http://jetbrains-feed.appspot.com/message/372001
+  }
+
   {
     _annotators.add(AssignTargetAnnotator.class);
     _annotators.add(ParameterListAnnotator.class);
