@@ -381,7 +381,7 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
               }
               if (qtype instanceof PyClassType) {
                 PyClass cls = ((PyClassType)qtype).getPyClass();
-                if (overridesGetAttr(cls)) {
+                if (cls != null && overridesGetAttr(cls)) {
                   return;
                 }
                 if (cls != null && ! PyBuiltinCache.getInstance(node).hasInBuiltins(cls)) {

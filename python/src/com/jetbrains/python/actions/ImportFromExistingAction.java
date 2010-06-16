@@ -77,6 +77,9 @@ public class ImportFromExistingAction implements QuestionAction {
       if (!item.getFile().isValid()) return false;
       if (item.getImportElement() != null && !item.getImportElement().isValid()) return false;
     }
+    if (mySources.isEmpty()) {
+      return false;
+    }
     // act
     if (mySources.size() > 1) {
       selectSourceAndDo();
