@@ -35,7 +35,7 @@ public class TestClassConfigurationProducer extends JUnitConfigurationProducer {
     final Project project = location.getProject();
 
     final PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(context.getDataContext());
-    if (elements != null && elements.length > 1) {
+    if (elements != null && PatternConfigurationProducer.collectTestClasses(elements).size() > 1) {
       return null;
     }
     myTestClass = JUnitUtil.getTestClass(location);
