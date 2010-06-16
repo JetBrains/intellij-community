@@ -39,9 +39,7 @@ public class TypeMigrationVariableTypeFixProvider implements ChangeVariableTypeQ
           final TypeMigrationRules rules = new TypeMigrationRules(TypeMigrationLabeler.getElementType(getVariable()));
           rules.setMigrationRootType(getReturnType());
           rules.setBoundScope(GlobalSearchScope.projectScope(project));
-          final TypeMigrationProcessor processor = new TypeMigrationProcessor(project, getVariable(), rules);
-          processor.setPreviewUsages(true);
-          processor.run();
+          TypeMigrationProcessor.runHighlightingTypeMigration(project, editor, rules, getVariable());
           JavaCodeStyleManager.getInstance(project).shortenClassReferences(getVariable());
           UndoUtil.markPsiFileForUndo(file);
         }
