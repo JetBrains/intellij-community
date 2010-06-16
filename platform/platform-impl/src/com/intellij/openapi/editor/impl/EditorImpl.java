@@ -1271,10 +1271,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myForcedBackground = color;
   }
 
-  public void resetBackgourndColor() {
-    myForcedBackground = null;
-  }
-
   public Color getForegroundColor() {
     return myScheme.getDefaultForeground();
   }
