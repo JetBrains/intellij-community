@@ -20,6 +20,7 @@
  */
 package org.jetbrains.idea.eclipse.conversion;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
@@ -37,6 +38,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class EclipseClasspathWriter {
+  private static final Logger LOG = Logger.getInstance("#" + EclipseClasspathWriter.class.getName());
   private final ModuleRootModel myModel;
   private final Map<String, Element> myOldEntries = new HashMap<String, Element>();
 
@@ -113,11 +115,13 @@ public class EclipseClasspathWriter {
             setExported(orderEntry, libraryOrderEntry);
           }
           else {
+            boolean newVarLibrary = false;
             String eclipseVariablePath = eclipseModuleManager.getEclipseVariablePath(files[0]);
             if (eclipseVariablePath == null && !eclipseModuleManager.isEclipseLibUrl(files[0])) { //new library was added
-              eclipseVariablePath = EPathUtil.collapse2EclipseVariabledPath(libraryOrderEntry);
+              newVarLibrary = true;
+              eclipseVariablePath = EPathUtil.collapse2EclipseVariabledPath(libraryOrderEntry, OrderRootType.CLASSES);
             }
-            final Element orderEntry;
+            Element orderEntry;
             if (eclipseVariablePath != null) {
               orderEntry = addOrderEntry(EclipseXml.VAR_KIND, eclipseVariablePath, classpathRoot);
             }
@@ -128,6 +132,7 @@ public class EclipseClasspathWriter {
             final String srcRelativePath;
             String eclipseSrcVariablePath = null;
 
+            boolean addSrcRoots = true;
             final String[] srcFiles = libraryOrderEntry.getUrls(OrderRootType.SOURCES);
             if (srcFiles.length == 0) {
               srcRelativePath = null;
@@ -138,11 +143,23 @@ public class EclipseClasspathWriter {
               if (eclipseVariablePath != null) {
                 eclipseSrcVariablePath = eclipseModuleManager.getEclipseSrcVariablePath(srcFile);
                 if (eclipseSrcVariablePath == null) {
-                  eclipseSrcVariablePath = "/" + EPathUtil.collapse2EclipseVariabledPath(libraryOrderEntry);
+                  eclipseSrcVariablePath = EPathUtil.collapse2EclipseVariabledPath(libraryOrderEntry, OrderRootType.SOURCES);
+                  if (eclipseSrcVariablePath != null) {
+                    eclipseSrcVariablePath = "/" + eclipseSrcVariablePath;
+                  } else {
+                    if (newVarLibrary) { //new library which cannot be replaced with vars
+                      orderEntry.detach();
+                      orderEntry = addOrderEntry(EclipseXml.LIB_KIND, EPathUtil.collapse2EclipsePath(files[0], myModel), classpathRoot);
+                    }
+                    else {
+                      LOG.info("Added root " + srcRelativePath + " (in existing var library) can't be replaced with any variable; src roots placed in .eml only");
+                      addSrcRoots = false;
+                    }
+                  }
                 }
               }
             }
-            setOrRemoveAttribute(orderEntry, EclipseXml.SOURCEPATH_ATTR, eclipseSrcVariablePath != null ? eclipseSrcVariablePath : srcRelativePath);
+            if (addSrcRoots) setOrRemoveAttribute(orderEntry, EclipseXml.SOURCEPATH_ATTR, eclipseSrcVariablePath != null ? eclipseSrcVariablePath : srcRelativePath);
 
             EJavadocUtil.setupJavadocAttributes(orderEntry, libraryOrderEntry, myModel);
             setExported(orderEntry, libraryOrderEntry);
