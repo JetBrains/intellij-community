@@ -36,7 +36,7 @@ import javax.swing.*;
  */
 public class JavaFileIconPatcher implements FileIconPatcher {
   public Icon patchIcon(final Icon baseIcon, final VirtualFile file, final int flags, final Project project) {
-    if (project == null || file.getFileType() != StdFileTypes.JAVA) {
+    if (project == null) {
       return baseIcon;
     }
 
