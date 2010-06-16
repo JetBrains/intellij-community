@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.util.IncorrectOperationException;
@@ -34,14 +35,14 @@ import java.util.Set;
 public class LightModifierList extends LightElement implements PsiModifierList {
   private static final Set<String>[] SET_INSTANCES = new Set[8 * 4];
 
-  private static final String[] VISABILITY_MODIFIERS = {null, PsiModifier.PUBLIC, PsiModifier.PRIVATE, PsiModifier.PROTECTED};
+  private static final String[] VISIBILITY_MODIFIERS = {null, PsiModifier.PUBLIC, PsiModifier.PRIVATE, PsiModifier.PROTECTED};
 
   private static final int[] MODIFIER_MAP = {0, 1, 2, -1, 3, -1, -1, -1, -1};
 
   static {
     SET_INSTANCES[0] = Collections.emptySet();
     for (int i = 1; i < 4; i++) {
-      SET_INSTANCES[i << 3] = Collections.singleton(VISABILITY_MODIFIERS[i]);
+      SET_INSTANCES[i << 3] = Collections.singleton(VISIBILITY_MODIFIERS[i]);
     }
 
     for (int i = 1; i < 8; i++) {
@@ -58,7 +59,7 @@ public class LightModifierList extends LightElement implements PsiModifierList {
 
       for (int k = 1; k < 4; k++) {
         Set<String> setWithModifier = new LinkedHashSet<String>();
-        setWithModifier.add(VISABILITY_MODIFIERS[k]);
+        setWithModifier.add(VISIBILITY_MODIFIERS[k]);
         setWithModifier.addAll(set);
         assert setWithModifier.size() > 1;
 
@@ -81,10 +82,10 @@ public class LightModifierList extends LightElement implements PsiModifierList {
   public static Set<String> getModifierSet(int modifiers) {
     assert (modifiers & ~(Modifier.PUBLIC | Modifier.PRIVATE | Modifier.PROTECTED | Modifier.FINAL | Modifier.ABSTRACT | Modifier.STATIC)) == 0;
 
-    int visabilityModifierIndex = MODIFIER_MAP[modifiers & 3];
+    int visibilityModifierIndex = MODIFIER_MAP[modifiers & 3];
     modifiers = ((modifiers >>> 3) & 3) + ((modifiers & Modifier.ABSTRACT) >>> 8);
-    if (visabilityModifierIndex != -1) {
-      return SET_INSTANCES[modifiers + (visabilityModifierIndex << 3)];
+    if (visibilityModifierIndex != -1) {
+      return SET_INSTANCES[modifiers + (visibilityModifierIndex << 3)];
     }
 
     Set<String> res = new HashSet<String>();
@@ -135,14 +136,7 @@ public class LightModifierList extends LightElement implements PsiModifierList {
     if (myModifiers.size() == 0) return "";
     if (myModifiers.size() == 1) return myModifiers.iterator().next();
 
-    StringBuilder buffer = new StringBuilder();
-    for (String modifier : myModifiers) {
-      buffer.append(modifier).append(' ');
-    }
-
-    buffer.setLength(buffer.length() - 1);
-
-    return buffer.toString();
+    return StringUtil.join(myModifiers, " ");
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
