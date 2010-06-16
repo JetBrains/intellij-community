@@ -80,6 +80,7 @@ public class VariableTypeFromCallFix implements IntentionAction {
     final PsiSubstitutor substitutor = result.getSubstitutor();
     PsiExpression[] expressions = list.getExpressions();
     if (method == null || method.getParameterList().getParametersCount() != expressions.length) return;
+    final PsiParameter[] parameters = method.getParameterList().getParameters();
     for (int i = 0; i < expressions.length; i++) {
       final PsiExpression expression = expressions[i];
       PsiType expressionType = expression.getType();
@@ -88,7 +89,7 @@ public class VariableTypeFromCallFix implements IntentionAction {
       }
       if (expressionType == null) continue;
 
-      final PsiParameter parameter = method.getParameterList().getParameters()[i];
+      final PsiParameter parameter = parameters[i];
       final PsiType formalParamType = parameter.getType();
       final PsiType parameterType = substitutor.substitute(formalParamType);
       if (parameterType.isAssignableFrom(expressionType)) continue;
@@ -103,10 +104,11 @@ public class VariableTypeFromCallFix implements IntentionAction {
         final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(expression.getProject()).getResolveHelper();
         if (varClass != null) {
           final PsiSubstitutor psiSubstitutor = resolveHelper.inferTypeArguments(varClass.getTypeParameters(),
-                                                                       new PsiParameter[]{parameter},
-                                                                       new PsiExpression[]{expression}, PsiSubstitutor.EMPTY, resolved, false);
+                                                                       parameters,
+                                                                       expressions, PsiSubstitutor.EMPTY, resolved, false);
           final PsiClassType appropriateVarType = JavaPsiFacade.getElementFactory(expression.getProject()).createType(varClass, psiSubstitutor);
           QuickFixAction.registerQuickFixAction(highlightInfo, new VariableTypeFromCallFix(appropriateVarType, (PsiVariable) resolved));
+          break;
         }
       }
     }
