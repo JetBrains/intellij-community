@@ -126,4 +126,9 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
   public void testClass() throws Throwable {
     doTest("context/class.before.py", "bar", "context/class.after.py");
   }
+
+  public void testConditionalReturn() throws Throwable {
+    doTest("conditionalreturn.before.py", "bar", "Cannot perform refactoring when execution flow is interrupted");
+  }
+
 }

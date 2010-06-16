@@ -47,7 +47,7 @@ public class PyExtractMethodUtil {
                                            final CodeFragment fragment,
                                            final PsiElement statement1,
                                            final PsiElement statement2) {
-    if (!fragment.getOutputVariables().isEmpty() && fragment.isReturnInstructonInside()) {
+    if (!fragment.getOutputVariables().isEmpty() && fragment.isReturnInstructionInside()) {
       CommonRefactoringUtil.showErrorHint(project, editor,
                                           "Cannot perform refactoring from expression with local variables modifications and return instructions inside code fragment",
                                           RefactoringBundle.message("error.title"), "refactoring.extractMethod");
@@ -79,7 +79,7 @@ public class PyExtractMethodUtil {
 
               // Generating call element
               final StringBuilder builder = new StringBuilder();
-              if (fragment.isReturnInstructonInside()) {
+              if (fragment.isReturnInstructionInside()) {
                 builder.append("return ");
               }
               if (isMethod){
@@ -157,7 +157,7 @@ public class PyExtractMethodUtil {
       return;
     }
 
-    if (fragment.isReturnInstructonInside()){
+    if (fragment.isReturnInstructionInside()){
       CommonRefactoringUtil.showErrorHint(project, editor,
                                           "Cannot extract method with return instructions inside code fragment",
                                           RefactoringBundle.message("error.title"), "refactoring.extractMethod");
@@ -186,7 +186,7 @@ public class PyExtractMethodUtil {
 
               // Generating call element
               final StringBuilder builder = new StringBuilder();
-              if (fragment.isReturnInstructonInside()) {
+              if (fragment.isReturnInstructionInside()) {
                 builder.append("return ");
               }
               if (isMethod){

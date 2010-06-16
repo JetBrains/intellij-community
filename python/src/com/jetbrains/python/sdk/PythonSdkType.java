@@ -352,6 +352,7 @@ public class PythonSdkType extends SdkType {
       public void run(@NotNull final ProgressIndicator indicator) {
         try {
           final SdkModificator sdkModificator = sdk.getSdkModificator();
+          sdkModificator.removeAllRoots();
           setupSdkPaths(sdkModificator, indicator);
           //sdkModificator.commitChanges() must happen outside, in dispatch thread.
           sdkModificatorRef.set(sdkModificator);

@@ -33,9 +33,6 @@
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PySpecialMethodNamesCompletionContributor"/>
     <lang.tokenSeparatorGenerator language="Python" implementationClass="com.jetbrains.python.PyTokenSeparatorGenerator"/>
     <lang.elementManipulator forClass="com.jetbrains.python.psi.PyReferenceExpression" implementationClass="com.jetbrains.python.psi.impl.PyReferenceExpressionManipulator"/>
-    <!--
-    <com.intellij.inspectionToolsFactory implementation="com.jetbrains.python.inspections.PythonPyInspectionToolProvider"/>
-    -->
 
     <projectService serviceInterface="com.jetbrains.python.psi.PyElementGenerator"
                     serviceImplementation="com.jetbrains.python.psi.impl.PyElementGeneratorImpl"/>
@@ -64,9 +61,6 @@
     <configurationType implementation="com.jetbrains.python.testing.pytest.PyTestRunConfigurationType"/>
     <configurationProducer implementation="com.jetbrains.python.testing.pytest.PyTestConfigurationProducer"/>
 
-    <applicationService serviceInterface="com.jetbrains.python.JythonManager"
-                        serviceImplementation="com.jetbrains.python.JythonManager"/>
-
     <referenceImporter implementation="com.jetbrains.python.validation.PythonReferenceImporter"/>
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.codeInsight.PyLineMarkerProvider"/>
     <definitionsSearch implementation="com.jetbrains.python.psi.search.PyDefinitionsSearch"/>
@@ -74,59 +68,50 @@
 
     <typeHierarchyProvider language="Python" implementationClass="com.jetbrains.python.hierarchy.PyTypeHierachyProvider"/>
     <highlightUsagesHandlerFactory implementation="com.jetbrains.python.codeInsight.highlighting.PyHighlightExitPointsHandlerFactory"/>
-    <intentionAction factoryClass="com.jetbrains.python.PyExtensionFactory"
-                     factoryArgument="intentions/PyDemorganIntention.py">
-      <className>PyDemorganIntention</className>
-      <category>Python</category>
-      <descriptionDirectoryName>PyDemorganIntention</descriptionDirectoryName>
-    </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.ImportToImportFromIntention</className>
       <category>Python</category>
-      <descriptionDirectoryName>ImportToImportFromIntention</descriptionDirectoryName>
     </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.ImportFromToImportIntention</className>
       <category>Python</category>
-      <descriptionDirectoryName>ImportFromToImportIntention</descriptionDirectoryName>
     </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.ImportToggleAliasIntention</className>
       <category>Python</category>
-      <descriptionDirectoryName>ImportToggleAliasIntention</descriptionDirectoryName>
     </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.PySplitIfIntention</className>
       <category>Python</category>
-      <descriptionDirectoryName>PySplitIfIntention</descriptionDirectoryName>
     </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.PyNegateComparisonIntention</className>
       <category>Python</category>
-      <descriptionDirectoryName>PyNegateComparisonIntention</descriptionDirectoryName>
     </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.PyStringConcatenationToFormatIntention</className>
       <category>Python</category>
-      <descriptionDirectoryName>PyStringConcatenationToFormatIntention</descriptionDirectoryName>
     </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.ConvertFormatOperatorToMethodIntention</className>
       <category>Python</category>
-      <descriptionDirectoryName>ConvertFormatOperatorToMethodIntention</descriptionDirectoryName>
     </intentionAction>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.PyFlipComparisonIntention</className>
       <category>Python</category>
-      <descriptionDirectoryName>PyFlipComparisonIntention</descriptionDirectoryName>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.jetbrains.python.codeInsight.intentions.PyDemorganIntention</className>
+      <category>Python</category>
     </intentionAction>
 
     <stubElementTypeHolder class="com.jetbrains.python.PyElementTypes"/>

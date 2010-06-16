@@ -40,6 +40,9 @@ class TeamcityTestResult(TestResult):
         self.messages.testFailed(self.getTestName(test),
             message='Failure', details=err)
 
+    def addSkip(self, test, reason):
+        self.messages.testIgnored(self.getTestName(test), message=reason)
+
     def startTest(self, test):
         setattr(test, "startTime", datetime.datetime.now())
         self.messages.testStarted(self.getTestName(test), location="python_uttestid://" + str(test.id()))
