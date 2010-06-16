@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.ModuleLibraryOrderEntryImpl;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -102,7 +103,7 @@ public class PyBuiltinCache {
       final String[] urls = sdk.getRootProvider().getUrls(PythonSdkType.BUILTIN_ROOT_TYPE);
       for (String url : urls) {
         if (url.contains(PythonSdkType.SKELETON_DIR_NAME)) {
-          final String builtins_url = url + "/" + ((PythonSdkType)sdk.getSdkType()).getBuiltinsFileName(sdk);
+          final String builtins_url = url + "/" + PythonSdkType.getBuiltinsFileName(sdk);
           File builtins = new File(VfsUtil.urlToPath(builtins_url));
           if (builtins.isFile() && builtins.canRead()) {
             VirtualFile builtins_vfile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(builtins);

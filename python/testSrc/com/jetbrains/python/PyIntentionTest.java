@@ -74,7 +74,7 @@ public class PyIntentionTest extends PyLightFixtureTestCase {
     doTest(PyBundle.message("INTN.replace.raise.statement"), LanguageLevel.PYTHON30);
   }
 
-  public void testReplaceBackquoteExpression() throws Exception {
+  public void testReplaceBackQuoteExpression() throws Exception {
     doTest(PyBundle.message("INTN.replace.backquote.expression"), LanguageLevel.PYTHON30);
   }
 
