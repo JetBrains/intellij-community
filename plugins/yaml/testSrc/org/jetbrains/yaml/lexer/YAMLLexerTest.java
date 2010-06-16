@@ -73,9 +73,9 @@ public class YAMLLexerTest extends LexerTestCase {
            "  hello_world: Hello World\n" +
            "  hello_flash: Hello Flash\n" +
            "ru:\n" +
-           "  hello: Привет\n" +
-           "  hello_world: Привет мир\n" +
-           "  hello_flash: Привет флэш");
+           "  hello: \u041f\u0440\u0438\u0432\u0435\u0442\n" +
+           "  hello_world: \u041f\u0440\u0438\u0432\u0435\u0442 \u043c\u0438\u0440\n" +
+           "  hello_flash: \u041f\u0440\u0438\u0432\u0435\u0442 \u0444\u043b\u044d\u0448");
   }
 
   public void testMap_between_seq(){
@@ -141,9 +141,9 @@ public class YAMLLexerTest extends LexerTestCase {
   public void testWrong_string_highlighting(){
     doTest("status:\n" +
            "    draft: \"Brouillon\"  \n" +
-           "    reviewed: \"Révisé\"  \n" +
-           "    hidden: \"Caché\"\n" +
-           "    published: \"Publié\"");
+           "    reviewed: \"R\u00e9vis\u00e9\"  \n" +
+           "    hidden: \"Cach\u00e9\"\n" +
+           "    published: \"Publi\u00e9\"");
   }
 
   public void testValue_injection(){
