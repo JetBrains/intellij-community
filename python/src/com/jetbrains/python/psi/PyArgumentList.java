@@ -54,7 +54,7 @@ public interface PyArgumentList extends PyElement {
     boolean isImplicitlyResolved();
 
     /**
-     * @return A mapping parameter->argument for non-starred parameters (but includes starred argument).
+     * @return A mapping argument->parameter for non-starred parameters (but includes starred argument).
      */
     @NotNull Map<PyExpression, PyNamedParameter> getPlainMappedParams();
 
