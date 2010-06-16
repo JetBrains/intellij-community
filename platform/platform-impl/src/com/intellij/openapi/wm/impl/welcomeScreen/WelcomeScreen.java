@@ -291,7 +291,7 @@ public class WelcomeScreen {
       BufferedImage image = new BufferedImage(CAPTION_IMAGE.getIconWidth(), CAPTION_IMAGE.getIconHeight(), BufferedImage.TYPE_INT_RGB);
       CAPTION_IMAGE.paintIcon(null, image.getGraphics(), 0, 0);
       final int[] pixels = new int[1];
-      final PixelGrabber pixelGrabber = new PixelGrabber(image, CAPTION_IMAGE.getIconWidth() - 1, CAPTION_IMAGE.getIconHeight() - 1, 1, 1, pixels, 0, 1);
+      final PixelGrabber pixelGrabber = new PixelGrabber(image, CAPTION_IMAGE.getIconWidth() - 1, CAPTION_IMAGE.getIconHeight() - 2, 1, 1, pixels, 0, 1);
       try {
         pixelGrabber.grabPixels();
         CAPTION_BACKGROUND = new Color(pixels[0]);
