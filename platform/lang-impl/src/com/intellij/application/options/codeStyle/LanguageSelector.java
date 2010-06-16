@@ -56,6 +56,10 @@ public class LanguageSelector {
     myDispatcher.addListener(l);
   }
 
+  public void removeListener(LanguageSelectorListener l) {
+    myDispatcher.removeListener(l);
+  }
+
   private void notifyListeners(Language lang) {
     myDispatcher.getMulticaster().languageChanged(lang);
   }

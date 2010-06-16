@@ -30,7 +30,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-public class CodeStyleMainPanel extends JPanel {
+public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListener {
   private final CardLayout myLayout = new CardLayout();
   private final JPanel mySettingsPanel = new JPanel(myLayout);
 
@@ -78,11 +78,7 @@ public class CodeStyleMainPanel extends JPanel {
       }
     });
 
-    myLangSelector.addListener(new LanguageSelectorListener(){
-      public void languageChanged(Language lang) {
-        onLanguageChange(lang);
-      }
-    });
+    myLangSelector.addListener(this);
 
     addWaitCard();
 
@@ -206,6 +202,7 @@ public class CodeStyleMainPanel extends JPanel {
   public void disposeUIResources() {
     myAlarm.cancelAllRequests();
     clearPanels();
+    myLangSelector.removeListener(this);
   }
 
   public boolean isModified(final CodeStyleScheme scheme) {
@@ -216,7 +213,7 @@ public class CodeStyleMainPanel extends JPanel {
     return mySettingsPanels.get(scheme.getName()).isModified();
   }
 
-  private void onLanguageChange(Language lang) {
+  public void languageChanged(Language lang) {
     for (NewCodeStyleSettingsPanel panel : mySettingsPanels.values()) {
       panel.setLanguage(lang);
     }
