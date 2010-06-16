@@ -115,7 +115,7 @@ public class ModuleChunkClasspath extends Path {
               // needed for compilation classpath only
               if ((orderEntry instanceof ModuleSourceOrderEntry)) {
                 // this is the entry for outpath of the currently processed module
-                if (dependencyLevel == 0 || chunk.contains(module)) {
+                if (!generateTestClasspath && (dependencyLevel == 0 || chunk.contains(module))) {
                   // the root module is never included
                   continue;
                 }
