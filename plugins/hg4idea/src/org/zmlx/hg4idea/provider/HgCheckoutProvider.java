@@ -17,6 +17,7 @@ package org.zmlx.hg4idea.provider;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -24,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgUtil;
+import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.HgCloneCommand;
 import org.zmlx.hg4idea.command.HgCommandResult;
 import org.zmlx.hg4idea.ui.HgCloneDialog;
@@ -35,6 +37,8 @@ import java.io.File;
  */
 public class HgCheckoutProvider implements CheckoutProvider {
 
+  private HgCommandResult myCloneResult;
+
   /**
    * {@inheritDoc}
    */
@@ -45,7 +49,7 @@ public class HgCheckoutProvider implements CheckoutProvider {
       }
     });
 
-    HgCloneDialog dialog = new HgCloneDialog(project);
+    final HgCloneDialog dialog = new HgCloneDialog(project);
     dialog.show();
     if (!dialog.isOK()) {
       return;
@@ -54,17 +58,21 @@ public class HgCheckoutProvider implements CheckoutProvider {
     if (destinationParent == null) {
       return;
     }
-    String targetDir = destinationParent.getPath() + File.separator + dialog.getDirectoryName();
+    final String targetDir = destinationParent.getPath() + File.separator + dialog.getDirectoryName();
 
-    final String sourceRepositoryURL = dialog.getSourceRepositoryURL();
-    HgCloneCommand clone = new HgCloneCommand(project);
-    clone.setRepositoryURL(sourceRepositoryURL);
-    clone.setDirectory(targetDir);
-    HgCommandResult result = clone.execute();
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      public void run() {
+        HgCloneCommand clone = new HgCloneCommand(project);
+        clone.setRepositoryURL(dialog.getSourceRepositoryURL());
+        clone.setDirectory(targetDir);
+        myCloneResult = clone.execute();
 
-    HgUtil.markDirectoryDirty(project,destinationParent);
+      }
+    }, HgVcsMessages.message("hg4idea.clone.progress", dialog.getSourceRepositoryURL()), false, project);
 
-    if (result.getExitValue() == 0) {
+    HgUtil.markDirectoryDirty(project, destinationParent);
+
+    if (myCloneResult.getExitValue() == 0) {
       if (listener != null) {
         listener.directoryCheckedOut(new File(dialog.getParentDirectory(), dialog.getDirectoryName()));
       }
@@ -72,6 +80,7 @@ public class HgCheckoutProvider implements CheckoutProvider {
     if (listener != null) {
       listener.checkoutCompleted();
     }
+
   }
 
   /**
