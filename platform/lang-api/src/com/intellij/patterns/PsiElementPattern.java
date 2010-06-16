@@ -18,18 +18,20 @@ package com.intellij.patterns;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.vfs.VirtualFile;
-import static com.intellij.patterns.PlatformPatterns.psiElement;
-import static com.intellij.patterns.StandardPatterns.collection;
-import static com.intellij.patterns.StandardPatterns.not;
 import com.intellij.psi.*;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.patterns.PlatformPatterns.psiElement;
+import static com.intellij.patterns.StandardPatterns.collection;
+import static com.intellij.patterns.StandardPatterns.not;
 
 /**
  * @author peter
@@ -206,11 +208,13 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
   }
 
   private PatternCondition<T> _withText(final ElementPattern pattern) {
-    return new PatternCondition<T>("_withText") {
-      public boolean accepts(@NotNull final T t, final ProcessingContext context) {
-        return pattern.getCondition().accepts(t.getText(), context);
+    return new PatternConditionPlus<T, String>("_withText", pattern) {
+      @Override
+      public boolean processValues(T t,
+                                   ProcessingContext context,
+                                   PairProcessor<String, ProcessingContext> processor) {
+        return processor.process(t.getText(), context);
       }
-
     };
   }
 

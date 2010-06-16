@@ -22,10 +22,9 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -45,6 +44,7 @@ import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -53,15 +53,18 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyValidationUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 import static org.jetbrains.plugins.groovy.intentions.style.parameterToEntry.ConvertParameterToMapEntryIntention.FIRST_PARAMETER_KIND.*;
 
@@ -139,7 +142,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
         else {
           //todo add statictics manager
           performRefactoring(element, owner, occurrences, true,
-                             (new GroovyValidationUtil.ParameterNameSuggester("attrs", firstParam)).generateName(), false);
+                             (new GroovyValidationUtil.ParameterNameSuggester("attrs", firstParam)).generateName(), true);
         }
         break;
       }
@@ -170,12 +173,58 @@ public class ConvertParameterToMapEntryIntention extends Intention {
     final Runnable runnable = new Runnable() {
       public void run() {
         final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
+
         final GrParameterList list = owner.getParameterList();
         assert list != null;
         final int index = list.getParameterNumber(param);
-        final int newIndex = createNewFirstParam ? index : index - 1;
         if (!createNewFirstParam && index <= 0) { // bad undo
           return;
+        }
+
+        //Remove old arguments from occurrences
+        //final List<GrCall> calls = getCallOccurrences(occurrences);
+        try {
+          for (PsiElement occurrence : occurrences) {
+            if (occurrence instanceof GrReferenceExpression && occurrence.getParent() instanceof GrCall) {
+              final GrReferenceExpression refExpr = (GrReferenceExpression)occurrence;
+              final GrClosureSignature signature = generateSignature(owner, refExpr);
+              if (signature == null) continue;
+              final GrCall call = (GrCall)refExpr.getParent();
+              final GrArgumentList argumentList = call.getArgumentList();
+              final GrClosableBlock[] closureArguments =
+                call instanceof GrCallExpression ? ((GrCallExpression)call).getClosureArguments() : GrClosableBlock.EMPTY_ARRAY;
+
+              final GrClosureSignatureUtil.ArgInfo[] argInfos =
+                GrClosureSignatureUtil.mapParametersToArguments(signature, argumentList, closureArguments, occurrence.getManager(), owner.getResolveScope());
+              if (argInfos == null) continue;
+              final GrClosureSignatureUtil.ArgInfo argInfo = argInfos[index];
+
+              final GrNamedArgument namedArg;
+              if (argInfo.isMultiArg) {
+                if (argInfo.args.size() == 0) continue;
+                String arg = "[" + StringUtil.join(ContainerUtil.map(argInfo.args, new Function<PsiElement, String>() {
+                  public String fun(PsiElement element) {
+                    return element.getText();
+                  }
+                }), ", ") + "]";
+                for (PsiElement psiElement : argInfo.args) {
+                  psiElement.delete();
+                }
+                namedArg = factory.createNamedArgument(paramName, factory.createExpressionFromText(arg));
+              }
+              else {
+                if (argInfo.args.size() == 0) continue;
+                final PsiElement argument = argInfo.args.iterator().next();
+                assert argument instanceof GrExpression;
+                namedArg = factory.createNamedArgument(paramName, (GrExpression)argument);
+                argument.delete();
+              }
+              ((GrCall)refExpr.getParent()).addNamedArgument(namedArg);
+            }
+          }
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
         }
 
         //Replace of occurrences of old parameter in closure/method
@@ -202,35 +251,6 @@ public class ConvertParameterToMapEntryIntention extends Intention {
 
         //Eliminate obsolete parameter from parameter list
         param.delete();
-
-
-        //Remove old arguments from occurrences
-        final List<GrCall> calls = getCallOccurrences(occurrences);
-        try {
-          for (final GrCall call : calls) {
-            GrExpression expr = call.removeArgument(newIndex);
-            if (expr != null) {
-              GrNamedArgument argument = factory.createNamedArgument(paramName, expr);
-              call.addNamedArgument(argument);
-            }
-          }
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-
-        //reformat code
-        PsiDocumentManager.getInstance(project).commitAllDocuments();
-        try {
-          for (GrCall call : calls) {
-            reformatOwner(call.getArgumentList());
-          }
-          reformatOwner(owner.getParameterList());
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-        //owner.putUserData(hasFirstMapParameter, true);
       }
     };
 
@@ -239,20 +259,6 @@ public class ConvertParameterToMapEntryIntention extends Intention {
         ApplicationManager.getApplication().runWriteAction(runnable);
       }
     }, REFACTORING_NAME, null);
-  }
-
-
-  private static List<GrCall> getCallOccurrences(final Collection<PsiElement> occurrences) {
-    final List<PsiElement> elementList = ContainerUtil.findAll(occurrences, new Condition<PsiElement>() {
-      public boolean value(final PsiElement psiElement) {
-        return psiElement instanceof GrReferenceExpression && psiElement.getParent() instanceof GrCall;
-      }
-    });
-    return ContainerUtil.map(elementList, new Function<PsiElement, GrCall>() {
-      public GrCall fun(final PsiElement psiElement) {
-        return ((GrCall)psiElement.getParent());
-      }
-    });
   }
 
 
@@ -271,6 +277,18 @@ public class ConvertParameterToMapEntryIntention extends Intention {
     return null;
   }
 
+  @Nullable
+  private static GrClosureSignature generateSignature(GrParametersOwner owner, GrReferenceExpression refExpr) {
+    if (owner instanceof PsiMethod) {
+      final GroovyResolveResult resolveResult = refExpr.advancedResolve();
+      final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+      return GrClosureSignatureUtil.createSignature((PsiMethod)owner, substitutor);
+    }
+    else if (owner instanceof GrClosableBlock) {
+      return GrClosureSignatureUtil.createSignature((GrClosableBlock)owner);
+    }
+    return null;
+  }
 
   /**
    * @param owner       Method or closure
@@ -388,18 +406,23 @@ public class ConvertParameterToMapEntryIntention extends Intention {
 
   private static class MyPsiElementPredicate implements PsiElementPredicate {
     public boolean satisfiedBy(final PsiElement element) {
-      GrParametersOwner owner = null;
+      GrParameter parameter = null;
       if (element instanceof GrParameter) {
-        owner = PsiTreeUtil.getParentOfType(element, GrParametersOwner.class);
+        parameter = (GrParameter)element;
       }
       else if (element instanceof GrReferenceExpression) {
         GrReferenceExpression expr = (GrReferenceExpression)element;
         if (expr.getQualifierExpression() != null) return false;
         final PsiElement resolved = expr.resolve();
-        if (!(resolved instanceof GrParameter)) return false;
-        owner = PsiTreeUtil.getParentOfType(resolved, GrParametersOwner.class);
+        if (resolved instanceof GrParameter) {
+          parameter = (GrParameter)resolved;
+        }
       }
-      if (!(owner instanceof GrClosableBlock || owner instanceof GrMethodImpl)) return false;
+      if (parameter == null) return false;
+      if (parameter.isOptional()) return false;
+
+      GrParametersOwner owner = PsiTreeUtil.getParentOfType(element, GrParametersOwner.class);
+      if (!(owner instanceof GrClosableBlock || owner instanceof GrMethod)) return false;
       return checkForMapParameters(owner);
     }
   }
@@ -418,11 +441,6 @@ public class ConvertParameterToMapEntryIntention extends Intention {
 
   private static void showErrorMessage(String message, final Project project) {
     CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, null, project);
-  }
-
-  private static void reformatOwner(PsiElement owner) throws IncorrectOperationException {
-    if (owner == null) return;
-    CodeStyleManager.getInstance(owner.getProject()).reformat(owner);
   }
 
   private static boolean reportConflicts(final MultiMap<PsiElement, String> conflicts, final Project project) {

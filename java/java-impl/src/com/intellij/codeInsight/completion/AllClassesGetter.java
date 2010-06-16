@@ -146,6 +146,17 @@ public class AllClassesGetter {
   public void getClasses(final PsiElement context, final CompletionResultSet set, final int offset, final boolean filterByScope) {
     if (context == null || !context.isValid()) return;
 
+    final boolean lookingForAnnotations = PsiJavaPatterns.psiElement().afterLeaf("@").accepts(context);
+    getClasses(context, set, offset, filterByScope, lookingForAnnotations);
+  }
+
+  public void getClasses(final PsiElement context,
+                         final CompletionResultSet set,
+                         final int offset,
+                         final boolean filterByScope,
+                         final boolean lookingForAnnotations) {
+    if (context == null || !context.isValid()) return;
+
     final String packagePrefix = getPackagePrefix(context, offset);
 
     final Set<String> qnames = new THashSet<String>();
@@ -156,8 +167,6 @@ public class AllClassesGetter {
       }
     });
     final PrefixMatcher prefixMatcher = set.getPrefixMatcher();
-
-    final boolean lookingForAnnotations = PsiJavaPatterns.psiElement().afterLeaf("@").accepts(context);
 
     AllClassesSearch.search(scope, context.getProject(), new Condition<String>() {
       public boolean value(String s) {

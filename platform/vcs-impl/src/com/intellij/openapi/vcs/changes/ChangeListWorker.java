@@ -94,20 +94,22 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     myDefault = defaultList;
   }
 
-  public void takeData(@NotNull final ChangeListWorker worker) {
+  public boolean takeData(@NotNull final ChangeListWorker worker) {
     myMap.clear();
     myMap.putAll(worker.myMap);
     myDefault = worker.myDefault;
 
     myListsToDisappear.clear();
     myListsToDisappear.addAll(worker.myListsToDisappear);
-    
-    myDelta.step(myIdx, worker.myIdx);
+
+    final boolean somethingChanged = myDelta.step(myIdx, worker.myIdx);
     myIdx = new ChangeListsIndexes(worker.myIdx);
     checkForMultipleCopiesNotMove();
-    // todo +-
+    
     myLocallyDeleted.takeFrom(worker.myLocallyDeleted);
     mySwitchedHolder.takeFrom(worker.mySwitchedHolder);
+
+    return somethingChanged;
   }
 
   private void checkForMultipleCopiesNotMove() {

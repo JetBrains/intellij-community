@@ -21,6 +21,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -204,19 +205,32 @@ public class GrClosureSignatureUtil {
                                                             @NotNull GrArgumentList list,
                                                             PsiManager manager,
                                                             GlobalSearchScope scope) {
+    return mapParametersToArguments(signature, list, GrClosableBlock.EMPTY_ARRAY, manager, scope);
+  }
 
-    ArgInfo[] map = map(signature, list, manager, scope);
+  @Nullable
+  public static ArgInfo[] mapParametersToArguments(@NotNull GrClosureSignature signature,
+                                                   @NotNull GrArgumentList list,
+                                                   @NotNull GrClosableBlock[] closureArguments,
+                                                   PsiManager manager,
+                                                   GlobalSearchScope scope) {
+    ArgInfo[] map = map(signature, list, closureArguments, manager, scope);
     if (map != null) return map;
 
     if (signature.isVarargs()) {
-      return new ApplicabilityMapperForVararg(manager, scope, list, signature).map();
+      return new ApplicabilityMapperForVararg(manager, scope, list, closureArguments, signature).map();
     }
     return null;
   }
 
   @Nullable
-  private static ArgInfo[] map(@NotNull GrClosureSignature signature, @NotNull GrArgumentList list, PsiManager manager, GlobalSearchScope scope) {
-    final GrExpression[] args = list.getExpressionArguments();
+  private static ArgInfo[] map(@NotNull GrClosureSignature signature,
+                               @NotNull GrArgumentList list,
+                               GrClosableBlock[] closureArguments,
+                               PsiManager manager,
+                               GlobalSearchScope scope) {
+    final GrExpression[] args = ArrayUtil.mergeArrays(list.getExpressionArguments(), closureArguments, GrExpression.class);
+
     final GrNamedArgument[] namedArgs = list.getNamedArguments();
     boolean hasNamedArgs = namedArgs.length > 0;
 
@@ -275,10 +289,14 @@ public class GrClosureSignatureUtil {
     private GrClosureParameter[] params;
     private PsiType vararg;
 
-    public ApplicabilityMapperForVararg(PsiManager manager, GlobalSearchScope scope, GrArgumentList list, GrClosureSignature signature) {
+    public ApplicabilityMapperForVararg(PsiManager manager,
+                                        GlobalSearchScope scope,
+                                        GrArgumentList list,
+                                        GrClosableBlock[] closureArguments,
+                                        GrClosureSignature signature) {
       this.manager = manager;
       this.scope = scope;
-      args = list.getExpressionArguments();
+      args = ArrayUtil.mergeArrays(list.getExpressionArguments(), closureArguments, GrExpression.class);
       namedArgs = list.getNamedArguments();
       params = signature.getParameters();
       paramLength = params.length - 1;

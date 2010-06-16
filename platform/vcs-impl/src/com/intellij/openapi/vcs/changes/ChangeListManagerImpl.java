@@ -294,6 +294,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     final boolean wasEverythingDirty = invalidated.isEverythingDirty();
     final List<VcsDirtyScope> scopes = invalidated.getScopes();
 
+    boolean somethingChangedInView = false;
     try {
       checkIfDisposed();
 
@@ -314,7 +315,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       if (wasEverythingDirty) {
         changeListWorker.notifyStartProcessingChanges(null);
       }
-      myChangesViewManager.scheduleRefresh();
 
       final ChangeListManagerGate gate = changeListWorker.createSelfGate();
 
@@ -380,11 +380,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         myModifier.clearQueue();
         // update member from copy
         if (takeChanges) {
-          myWorker.takeData(changeListWorker);
+          somethingChangedInView |= myWorker.takeData(changeListWorker);
         }
 
         if (takeChanges && updateUnversionedFiles) {
           boolean statusChanged = !myComposite.equals(composite);
+          somethingChangedInView |= statusChanged;
           myComposite = composite;
           if (statusChanged) {
             myDelayedNotificator.getProxyDispatcher().unchangedFileStatusChanged();
@@ -396,7 +397,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         }
         myShowLocalChangesInvalidated = false;
       }
-      myChangesViewManager.scheduleRefresh();
     }
     catch (DisposedException e) {
       // OK, we're finishing all the stuff now.
@@ -415,6 +415,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       
       synchronized (myDataLock) {
         myDelayedNotificator.getProxyDispatcher().changeListUpdateDone();
+      }
+      if (somethingChangedInView) {
         myChangesViewManager.scheduleRefresh();
       }
     }

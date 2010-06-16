@@ -88,7 +88,7 @@ public class ConstructorDefinition implements GroovyElementTypes {
         return false;
       }
       ParserUtils.getToken(builder, mNLS);
-    } while(Annotation.parse(builder, parser) || Modifier.parse(builder) || ParserUtils.getToken(builder, kDEF));
+    } while(Annotation.parse(builder, parser) || Modifier.parse(builder));
 
     modifiersMarker.done(MODIFIERS);
     return true;

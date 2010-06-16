@@ -34,7 +34,7 @@ import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 
 import javax.swing.*;
-import java.util.LinkedHashSet;
+import java.lang.reflect.Modifier;
 
 /**
  * @author ven
@@ -60,10 +60,7 @@ public class GrGdkMethodImpl extends LightMethod implements GrGdkMethod {
     super(method.getManager(), method, null);
     myMethod = method;
     final PsiManager manager = method.getManager();
-    LinkedHashSet<String> modifiers = new LinkedHashSet<String>();
-    modifiers.add(PsiModifier.PUBLIC);
-    if (isStatic) modifiers.add(PsiModifier.STATIC);
-    myModifierList = new LightModifierList(manager, modifiers);
+    myModifierList = new LightModifierList(manager, Modifier.PUBLIC + (isStatic ? Modifier.STATIC : 0));
 
     final PsiParameter[] originalParameters = method.getParameterList().getParameters();
     final String[] parmNames = new String[originalParameters.length - 1];

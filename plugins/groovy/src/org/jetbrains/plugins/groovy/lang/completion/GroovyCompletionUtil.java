@@ -20,13 +20,18 @@ import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
+import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.util.Function;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -44,10 +49,15 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.*;
+
 /**
  * @author ilyas
  */
-public abstract class GroovyCompletionUtil {
+public class GroovyCompletionUtil {
+
+  private GroovyCompletionUtil() {
+  }
 
   /**
    * Return true if last element of curren statement is expression
@@ -57,7 +67,7 @@ public abstract class GroovyCompletionUtil {
    */
   public static boolean endsWithExpression(PsiElement statement) {
     while (statement != null &&
-        !(statement instanceof GrExpression)) {
+           !(statement instanceof GrExpression)) {
       statement = statement.getLastChild();
     }
     return statement != null;
@@ -67,21 +77,12 @@ public abstract class GroovyCompletionUtil {
   public static PsiElement nearestLeftSibling(PsiElement elem) {
     elem = elem.getPrevSibling();
     while (elem != null &&
-        (elem instanceof PsiWhiteSpace ||
+           (elem instanceof PsiWhiteSpace ||
             elem instanceof PsiComment ||
             GroovyTokenTypes.mNLS.equals(elem.getNode().getElementType()))) {
       elem = elem.getPrevSibling();
     }
     return elem;
-  }
-
-  public static boolean isIncomplete(PsiElement element) {
-    while (element != null) {
-      final PsiElement child = element.getLastChild();
-      if (child instanceof PsiErrorElement) return true;
-      element = child;
-    }
-    return false;
   }
 
   /**
@@ -100,6 +101,7 @@ public abstract class GroovyCompletionUtil {
     return (previousLeaf == null || SEPARATORS.contains(previousLeaf.getNode().getElementType()));
   }
 
+  @Nullable
   public static PsiElement getLeafByOffset(int offset, PsiElement element) {
     if (offset < 0) {
       return null;
@@ -131,40 +133,25 @@ public abstract class GroovyCompletionUtil {
     return variableDeclaration.getVariables()[0] == parent;
   }
 
-  /**
-     * Checks next element after modifier candidate to be appropriate
-     *
-     * @param element
-     * @return
-     */
-  public static boolean canBeModifier(PsiElement element) {
-    PsiElement next = element.getNextSibling();
-    while (next != null && (next instanceof PsiWhiteSpace ||
-        next instanceof PsiComment)) {
-      next = next.getNextSibling();
-    }
-    return (next == null || SEPARATORS.contains(next.getNode().getElementType()));
-  }
-
   private static final TokenSet SEPARATORS = TokenSet.create(GroovyElementTypes.mNLS,
-      GroovyElementTypes.mSEMI);
+                                                             GroovyElementTypes.mSEMI);
 
   public static boolean asSimpleVariable(PsiElement context) {
     return isInTypeDefinitionBody(context) &&
-        isNewStatement(context, true);
+           isNewStatement(context, true);
   }
 
   public static boolean isInTypeDefinitionBody(PsiElement context) {
     return (context.getParent() instanceof GrCodeReferenceElement &&
-        context.getParent().getParent() instanceof GrClassTypeElement &&
-        context.getParent().getParent().getParent() instanceof GrTypeDefinitionBody) ||
-        context.getParent() instanceof GrTypeDefinitionBody;
+            context.getParent().getParent() instanceof GrClassTypeElement &&
+            context.getParent().getParent().getParent() instanceof GrTypeDefinitionBody) ||
+           context.getParent() instanceof GrTypeDefinitionBody;
   }
 
   public static boolean asVariableInBlock(PsiElement context) {
     if (context.getParent() instanceof GrReferenceExpression &&
         (context.getParent().getParent() instanceof GrOpenBlock ||
-            context.getParent().getParent() instanceof GrClosableBlock) &&
+         context.getParent().getParent() instanceof GrClosableBlock) &&
         isNewStatement(context, true)) {
       return true;
     }
@@ -172,46 +159,54 @@ public abstract class GroovyCompletionUtil {
     if (context.getParent() instanceof GrReferenceExpression &&
         context.getParent().getParent() instanceof GrApplicationStatement &&
         (context.getParent().getParent().getParent() instanceof GrOpenBlock ||
-            context.getParent().getParent().getParent() instanceof GrClosableBlock) &&
+         context.getParent().getParent().getParent() instanceof GrClosableBlock) &&
         isNewStatement(context, true)) {
       return true;
     }
 
     return context.getParent() instanceof GrTypeDefinitionBody &&
-        isNewStatement(context, true);
-  }
-
-  public static boolean inMemberDeclaration(PsiElement context) {
-    if (context.getParent() instanceof GrReferenceElement &&
-        context.getParent().getParent() instanceof GrTypeElement) {
-      PsiElement parent = context.getParent().getParent().getParent();
-      if (parent instanceof GrMethod || parent instanceof GrVariableDeclaration) {
-        return parent.getParent() instanceof GrTypeDefinitionBody || parent.getParent() instanceof GroovyFile;
-      }
-    }
-    return false;
+           isNewStatement(context, true);
   }
 
   public static boolean asTypedMethod(PsiElement context) {
     return context.getParent() instanceof GrReferenceElement &&
-        context.getParent().getParent() instanceof GrTypeElement &&
-        context.getParent().getParent().getParent() instanceof GrMethod &&
-        context.getParent().getParent().getParent().getParent() instanceof GrTypeDefinitionBody &&
-        context.getTextRange().getStartOffset() == context.getParent().getParent().getParent().getParent().getTextRange().getStartOffset();
+           context.getParent().getParent() instanceof GrTypeElement &&
+           context.getParent().getParent().getParent() instanceof GrMethod &&
+           context.getParent().getParent().getParent().getParent() instanceof GrTypeDefinitionBody &&
+           context.getTextRange().getStartOffset() ==
+           context.getParent().getParent().getParent().getParent().getTextRange().getStartOffset();
 
   }
 
 
   public static Object[] getCompletionVariants(GroovyResolveResult[] candidates) {
     Object[] result = new Object[candidates.length];
+    Outer:
     for (int i = 0; i < result.length; i++) {
       final PsiElement element = candidates[i].getElement();
       final PsiElement context = candidates[i].getCurrentFileResolveContext();
-      if (context instanceof GrImportStatement) {
-        final String importedName = ((GrImportStatement) context).getImportedName();
-        if (importedName != null && element != null) {
-          result[i] = LookupElementBuilder.create(element, importedName).setPresentableText(importedName);
-          continue;
+      if (context instanceof GrImportStatement && element != null) {
+        final String importedName = ((GrImportStatement)context).getImportedName();
+        if (importedName != null) {
+          final GrCodeReferenceElement importReference = ((GrImportStatement)context).getImportReference();
+          if (importReference != null) {
+            final GroovyResolveResult[] results = importReference.multiResolve(false);
+            for (GroovyResolveResult r : results) {
+              final PsiElement resolved = r.getElement();
+              if (PsiManager.getInstance(context.getProject()).areElementsEquivalent(resolved, element)) {
+                result[i] = generateLookupForImportedElement(candidates[i], importedName);
+                continue Outer;
+              }
+              else {
+                if (resolved instanceof PsiField && element instanceof PsiMethod && isAccessorFor((PsiMethod)element, (PsiField)resolved)) {
+                  result[i] =
+                    generateLookupForImportedElement(candidates[i], getAccessorPrefix((PsiMethod)element) + capitalize(importedName));
+                  continue Outer;
+                }
+              }
+
+            }
+          }
         }
       }
       result[i] = element;
@@ -220,8 +215,75 @@ public abstract class GroovyCompletionUtil {
     return result;
   }
 
-  public static LookupElement setTailTypeForConstructor(PsiClass clazz, LookupElement lookupElement) {
-    return LookupElementDecorator.withInsertHandler(lookupElement, ParenthesesInsertHandler.getInstance(hasConstructorParameters(clazz)));
+  private static LookupElementBuilder generateLookupForImportedElement(GroovyResolveResult resolveResult, String importedName) {
+    final PsiElement element = resolveResult.getElement();
+    assert element != null;
+    final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+    LookupElementBuilder builder = LookupElementBuilder.create(element, importedName).setPresentableText(importedName);
+    return setupLookupBuilder(element, substitutor, builder);
+  }
+
+  public static LookupElement getLookupElement(Object o) {
+    if (o instanceof LookupElement) return (LookupElement)o;
+    if (o instanceof PsiNamedElement) return generateLookupElement((PsiNamedElement)o);
+    if (o instanceof PsiElement) return setupLookupBuilder((PsiElement)o, PsiSubstitutor.EMPTY, LookupElementBuilder.create(o, ((PsiElement)o).getText()));
+    return LookupElementBuilder.create(o, o.toString());
+  }
+  public static LookupElementBuilder generateLookupElement(PsiNamedElement element) {
+    LookupElementBuilder builder = LookupElementBuilder.create(element);
+    return setupLookupBuilder(element, PsiSubstitutor.EMPTY, builder);
+  }
+
+  public static LookupElementBuilder setupLookupBuilder(PsiElement element, PsiSubstitutor substitutor, LookupElementBuilder builder) {
+    builder = builder.setIcon(element.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS))
+      .setInsertHandler(new GroovyInsertHandler());
+    builder = setTailText(element, builder, substitutor);
+    builder = setTypeText(element, builder, substitutor);
+    return builder;
+  }
+
+  private static LookupElementBuilder setTailText(PsiElement element, LookupElementBuilder builder, PsiSubstitutor substitutor) {
+    if (element instanceof PsiMethod) {
+      builder = builder.setTailText(PsiFormatUtil.formatMethod((PsiMethod)element, substitutor, PsiFormatUtil.SHOW_PARAMETERS,
+                                                               PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE));
+    }
+    else if (element instanceof PsiClass) {
+      String tailText = getPackageText((PsiClass)element);
+      final PsiClass psiClass = (PsiClass)element;
+      if ((substitutor == null || substitutor.getSubstitutionMap().size() == 0) && psiClass.getTypeParameters().length > 0) {
+        tailText = "<" + StringUtil.join(psiClass.getTypeParameters(), new Function<PsiTypeParameter, String>() {
+          public String fun(PsiTypeParameter psiTypeParameter) {
+            return psiTypeParameter.getName();
+          }
+        }, "," + (showSpaceAfterComma(psiClass) ? " " : "")) + ">" + tailText;
+      }
+      builder = builder.setTailText(tailText, true);
+    }
+    return builder;
+  }
+
+  private static String getPackageText(PsiClass psiClass) {
+    @NonNls String packageName = PsiFormatUtil.getPackageDisplayName(psiClass);
+    return " (" + packageName + ")";
+  }
+
+
+  private static boolean showSpaceAfterComma(PsiClass element) {
+    return CodeStyleSettingsManager.getSettings(element.getProject()).SPACE_AFTER_COMMA;
+  }
+
+
+  private static LookupElementBuilder setTypeText(PsiElement element, LookupElementBuilder builder, PsiSubstitutor substitutor) {
+    if (element instanceof PsiVariable) {
+      builder = builder.setTypeText(substitutor.substitute(((PsiVariable)element).getType()).getPresentableText());
+    }
+    else if (element instanceof PsiMethod) {
+      final PsiType type = substitutor.substitute(((PsiMethod)element).getReturnType());
+      if (type != null) {
+        builder = builder.setTypeText(type.getPresentableText());
+      }
+    }
+    return builder;
   }
 
   public static boolean hasConstructorParameters(PsiClass clazz) {
@@ -233,5 +295,7 @@ public abstract class GroovyCompletionUtil {
     return false;
   }
 
-
+  public static LookupElement setTailTypeForConstructor(PsiClass clazz, LookupElement lookupElement) {
+    return LookupElementDecorator.withInsertHandler(lookupElement, ParenthesesInsertHandler.getInstance(hasConstructorParameters(clazz)));
+  }
 }

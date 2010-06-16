@@ -77,4 +77,8 @@ public final class HgChange {
       .toHashCode();
   }
 
+  @Override
+  public String toString() {
+    return String.format("HgChange#%s %s => %s", status, beforeFile, afterFile);
+  }
 }

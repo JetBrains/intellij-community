@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.findUsages;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NullableComputable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
@@ -26,52 +27,33 @@ import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
+import org.jetbrains.annotations.Nullable;
+import com.intellij.find.findUsages.FindUsagesOptions;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.search.SearchRequestCollector;
+import com.intellij.psi.search.SearchRequestor;
+import com.intellij.psi.search.UsageSearchContext;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * author ven
  */
-public class AccessorReferencesSearcher implements QueryExecutor<PsiReference, MethodReferencesSearch.SearchParameters> {
+public class AccessorReferencesSearcher extends SearchRequestor {
+  @Override
+  public void contributeRequests(@NotNull PsiElement target,
+                                      @NotNull final FindUsagesOptions options,
+                                      @NotNull SearchRequestCollector collector) {
+    if (!(target instanceof PsiMethod)) {
+      return;
+    }
 
-  public boolean execute(final MethodReferencesSearch.SearchParameters searchParameters, final Processor<PsiReference> consumer) {
-    final PsiMethod method = searchParameters.getMethod();
-    final String propertyName = getPropertyName(method);
-    if (propertyName == null) return true;
-
-    SearchScope searchScope = PsiUtil.restrictScopeToGroovyFiles(new Computable<SearchScope>() {
-      public SearchScope compute() {
-        return searchParameters.getScope();
-      }
-    });
-
-    final PsiSearchHelper helper = PsiManager.getInstance(method.getProject()).getSearchHelper();
-    final TextOccurenceProcessor processor = new TextOccurenceProcessor() {
-      public boolean execute(PsiElement element, int offsetInElement) {
-        final PsiReference[] refs = element.getReferences();
-        for (PsiReference ref : refs) {
-          if (ReferenceRange.containsOffsetInElement(ref, offsetInElement)) {
-            if (ref.isReferenceTo(method)) {
-              return consumer.process(ref);
-            }
-          }
-        }
-        return true;
-      }
-    };
-
-    return helper.processElementsWithWord(processor,
-                                          searchScope,
-                                          propertyName,
-                                          UsageSearchContext.IN_CODE,
-                                          false);
+    final String propertyName = GroovyPropertyUtils.getPropertyName((PsiMethod)target);
+    if (propertyName != null) {
+      collector.searchWord(propertyName, PsiUtil.restrictScopeToGroovyFiles(options.searchScope), UsageSearchContext.IN_CODE, true, target);
+    }
   }
 
-  private String getPropertyName(final PsiMethod method) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      public String compute() {
-        return GroovyPropertyUtils.getPropertyName(method);
-      }
-    });
-  }
 }

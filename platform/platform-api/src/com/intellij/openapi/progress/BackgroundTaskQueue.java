@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.progress;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
@@ -33,6 +34,7 @@ public class BackgroundTaskQueue {
   private final Queue<Task> myQueue = new LinkedList<Task>();
   private boolean myHasActiveTask = false;
   private Task.Backgroundable myRunnerTask;
+  private Boolean myForcedTestMode = null;
 
   public BackgroundTaskQueue(String title) {
     this(null, title);
@@ -74,7 +76,7 @@ public class BackgroundTaskQueue {
   }
 
   public void run(Task.Backgroundable task) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (isInTestMode()) {
       task.run(new EmptyProgressIndicator());
       task.onSuccess();
     }
@@ -88,20 +90,43 @@ public class BackgroundTaskQueue {
         myQueue.offer(task);
         myHasActiveTask = true;
       }
-      if (!hadActiveTask) {
-        if (ApplicationManager.getApplication().isDispatchThread()) {
-          ProgressManager.getInstance().run(myRunnerTask);
-        }
-        else {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              if (myProject == null || !myProject.isDisposed()) {
-                ProgressManager.getInstance().run(myRunnerTask);
-              }
-            }
-          });
-        }
+      if (! hadActiveTask) {
+        runRunner();
       }
     }
+  }
+
+
+  private void runRunner() {
+    final Application application = ApplicationManager.getApplication();
+    if (application.isUnitTestMode()) {
+      application.executeOnPooledThread(new Runnable() {
+        public void run() {
+          myRunnerTask.run(new EmptyProgressIndicator());
+        }
+      });
+    } else {
+      if (application.isDispatchThread()) {
+        ProgressManager.getInstance().run(myRunnerTask);
+      }
+      else {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            if (myProject == null || !myProject.isDisposed()) {
+              ProgressManager.getInstance().run(myRunnerTask);
+            }
+          }
+        });
+      }
+    }
+  }
+
+  private boolean isInTestMode() {
+    if (myForcedTestMode != null) return myForcedTestMode.booleanValue();
+    return ApplicationManager.getApplication().isUnitTestMode();
+  }
+
+  public void setTestMode(boolean forcedTestMode) {
+    myForcedTestMode = forcedTestMode;
   }
 }

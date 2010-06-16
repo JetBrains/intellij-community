@@ -43,6 +43,22 @@ public class MultiMap<K, V> {
     return Collections.emptyList();
   }
 
+  public void putAllValues(MultiMap<? extends K, ? extends V> from) {
+    for (K k : from.keySet()) {
+      //noinspection unchecked
+      putValues(k, ((MultiMap)from).get(k));
+    }
+  }
+
+  public void putValues(K key, Collection<? extends V> values) {
+    Collection<V> list = myMap.get(key);
+    if (list == null) {
+      list = createCollection();
+      myMap.put(key, list);
+    }
+    list.addAll(values);
+  }
+
   public void putValue(K key, V value) {
     Collection<V> list = myMap.get(key);
     if (list == null) {

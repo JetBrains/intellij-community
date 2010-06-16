@@ -17,6 +17,7 @@ package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
@@ -54,5 +55,11 @@ public class JavaCodeInsightTestFixtureImpl extends CodeInsightTestFixtureImpl i
     final PsiFile psiFile = addFileToProject(rootPath, qName.replace('.', '/') + ".java", classText);
     return ((PsiJavaFile)psiFile).getClasses()[0];
   }
-}
 
+  @NotNull
+  public PsiClass findClass(@NotNull @NonNls final String name) {
+    final PsiClass aClass = getJavaFacade().findClass(name, ProjectScope.getProjectScope(getProject()));
+    assertNotNull("Class " + name + " not found", aClass);
+    return aClass;
+  }
+}

@@ -92,13 +92,10 @@ public class GrModifierListImpl extends GroovyBaseElementImpl<GrModifierListStub
     List<PsiElement> modifiers = new ArrayList<PsiElement>();
     PsiElement[] modifiersKeywords = findChildrenByType(TokenSets.MODIFIERS, PsiElement.class);
     GrAnnotation[] modifiersAnnotations = findChildrenByClass(GrAnnotation.class);
-    PsiElement defKeyword = findChildByType(GroovyTokenTypes.kDEF);
 
     if (modifiersKeywords.length != 0) modifiers.addAll(Arrays.asList(modifiersKeywords));
 
     if (modifiersAnnotations.length != 0) modifiers.addAll(Arrays.asList(modifiersAnnotations));
-
-    if (defKeyword != null) modifiers.add(defKeyword);
 
     return modifiers.toArray(new PsiElement[modifiers.size()]);
   }

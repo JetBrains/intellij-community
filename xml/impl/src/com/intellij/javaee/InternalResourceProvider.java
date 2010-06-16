@@ -38,7 +38,7 @@ public class InternalResourceProvider implements StandardResourceProvider{
     impl.addInternalResource("http://www.w3.org/2002/08/xhtml/xhtml1-strict.xsd","xhtml1-strict.xsd");
 
     impl.addInternalResource("http://www.w3.org/TR/html4/strict.dtd","xhtml1-strict.dtd");
-    impl.addInternalResource("http://www.w3.org/TR/html4/loose.dtd","xhtml1-transitional.dtd");
+    impl.addInternalResource(XmlUtil.HTML4_LOOSE_URI,"xhtml1-transitional.dtd");
     impl.addInternalResource("http://www.w3.org/TR/html4/frameset.dtd","xhtml1-frameset.dtd");
     impl.addInternalResource("http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd","xhtml1-strict.dtd");
     impl.addInternalResource("http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd","xhtml1-transitional.dtd");

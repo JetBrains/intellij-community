@@ -37,8 +37,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 public class SurroundWithHandler implements CodeInsightActionHandler{
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler");
@@ -77,7 +77,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler{
 
     final Language baseLanguage = file.getViewProvider().getBaseLanguage();
     final Language l = element1.getParent().getLanguage();
-    List<SurroundDescriptor> surroundDescriptors = new ArrayList<SurroundDescriptor>();
+    final Set<SurroundDescriptor> surroundDescriptors = new HashSet<SurroundDescriptor>();
 
     surroundDescriptors.addAll(LanguageSurrounders.INSTANCE.allForLanguage(l));
     if (l != baseLanguage) surroundDescriptors.addAll(LanguageSurrounders.INSTANCE.allForLanguage(baseLanguage));

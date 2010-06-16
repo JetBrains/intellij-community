@@ -46,7 +46,6 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.containers.SLRUCache;
@@ -172,6 +171,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         while (scopeSrcIterator.hasNext()) {
           final VirtualFile file = scopeSrcIterator.next();
           if (!file.isValid()) {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Skipping invalid file " + file.getPresentableUrl());
+            }
             continue;
           }
           final int fileId = getFileId(file);

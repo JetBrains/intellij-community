@@ -121,15 +121,19 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
     workerRequest.setRequestFuture( ApplicationManager.getApplication().executeOnPooledThread(workerRequest) );
   }
 
-  public void run(WorkerThreadRequest current) {
+  public void run(WorkerThreadRequest threadRequest) {
     while(true) {
       try {
-        if(current.isInterrupted()) {
+        if(threadRequest.isInterrupted()) {
           break;
         }
 
-        if(getCurrentRequest() != current) {
-          LOG.error("Expected " + current + " instead of " + getCurrentRequest());
+        final WorkerThreadRequest currentRequest = getCurrentRequest();
+        if(currentRequest != threadRequest) {
+          LOG.error("Expected " + threadRequest + " instead of " + currentRequest);
+          if (currentRequest != null && !currentRequest.isDone()) {
+            continue; // ensure events are processed by one thread at a time
+          }
         }
 
         processEvent(myEvents.get());

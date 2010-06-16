@@ -34,6 +34,7 @@ import com.intellij.openapi.project.DumbModeAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.util.Function;
@@ -80,13 +81,8 @@ public class TestPackage extends TestObject {
 
   protected void initialize() throws ExecutionException {
     super.initialize();
-    final Project project = myConfiguration.getProject();
-    final PsiManager psiManager = PsiManager.getInstance(project);
     final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
-    final String packageName = data.getPackageName();
-    final PsiPackage aPackage = JavaPsiFacade.getInstance(psiManager.getProject()).findPackage(packageName);
-    if (aPackage == null) throw CantRunException.packageNotFound(packageName);
-    final TestClassFilter filter = getClassFilter(aPackage);
+    final TestClassFilter filter = getClassFilter(data);
     final ExecutionException[] exception = new ExecutionException[1];
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
@@ -130,7 +126,7 @@ public class TestPackage extends TestObject {
                 return null;
               }
             }
-          }, packageName, false, isJunit4);
+          }, data.getPackageName(), false, isJunit4);
         }
       }, filter, serverSocket);
     }
@@ -139,13 +135,22 @@ public class TestPackage extends TestObject {
     }
   }
 
-  private TestClassFilter getClassFilter(final PsiPackage aPackage) throws JUnitUtil.NoJUnitException {
+  private TestClassFilter getClassFilter(final JUnitConfiguration.Data data) throws CantRunException {
     Module module = myConfiguration.getConfigurationModule().getModule();
     if (myConfiguration.getPersistentData().getScope() == TestSearchScope.WHOLE_PROJECT){
       module = null;
     }
     final TestClassFilter classFilter = TestClassFilter.create(getSourceScope(), module);
-    return classFilter.intersectionWith(PackageScope.packageScope(aPackage, true));
+    return classFilter.intersectionWith(filterScope(data));
+  }
+
+  protected GlobalSearchScope filterScope(final JUnitConfiguration.Data data) throws CantRunException {
+    final Project project = myConfiguration.getProject();
+    final String packageName = data.getPackageName();
+    final PsiManager psiManager = PsiManager.getInstance(project);
+    final PsiPackage aPackage = JavaPsiFacade.getInstance(psiManager.getProject()).findPackage(packageName);
+    if (aPackage == null) throw CantRunException.packageNotFound(packageName);
+    return PackageScope.packageScope(aPackage, true);
   }
 
   public String suggestActionName() {

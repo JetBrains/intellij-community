@@ -1,10 +1,20 @@
 package org.jetbrains.plugins.groovy.intentions.style.parameterToEntry;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import junit.framework.Assert;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.formatter.GroovyFormatterTestCase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -21,6 +31,23 @@ public class ParameterToMapEntryTest extends GroovyFormatterTestCase {
   protected String getBasePath() {
     return TestUtils.getTestDataPath() + "paramToMap/" + getTestName(true) + "/";
   }
+
+  public static final DefaultLightProjectDescriptor GROOVY_17_PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
+    @Override
+    public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
+      final Library.ModifiableModel modifiableModel = model.getModuleLibraryTable().createLibrary("GROOVY").getModifiableModel();
+      final VirtualFile groovyJar =
+        JarFileSystem.getInstance().refreshAndFindFileByPath(TestUtils.getMockGroovy1_7LibraryName()+"!/");
+      modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES);
+      modifiableModel.commit();
+    }
+  };
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return GROOVY_17_PROJECT_DESCRIPTOR;
+  }  
 
   /*
   @Override
@@ -57,6 +84,10 @@ public class ParameterToMapEntryTest extends GroovyFormatterTestCase {
     doTestImpl("A.groovy");
   }
 
+  public void testVarArgs() throws Throwable {
+    doTestImpl("A.groovy");
+  }
+
   private void doTestImpl(String filePath) throws Throwable {
     myFixture.configureByFile(filePath);
     int offset = myFixture.getEditor().getCaretModel().getOffset();
@@ -79,7 +110,7 @@ public class ParameterToMapEntryTest extends GroovyFormatterTestCase {
     final String result = file.getText();
     //System.out.println(result);
     String expected = getExpectedResult(filePath);
-    Assert.assertEquals(result, expected);
+    Assert.assertEquals(expected, result);
   }
 
   private String getExpectedResult(final String filePath) {

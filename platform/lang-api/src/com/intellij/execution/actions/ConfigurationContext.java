@@ -106,12 +106,12 @@ public class ConfigurationContext {
     if (producers == null) return null;
     if (myRuntimeConfiguration != null) {
       for (RuntimeConfigurationProducer producer : producers) {
-        final RunnerAndConfigurationSettings configuration = producer.findExistingConfiguration(myLocation);
+        final RunnerAndConfigurationSettings configuration = producer.findExistingConfiguration(myLocation, this);
         if (configuration != null && configuration.getConfiguration() == myRuntimeConfiguration) return configuration;
       }
     }
     for (RuntimeConfigurationProducer producer : producers) {
-      final RunnerAndConfigurationSettings configuration = producer.findExistingConfiguration(myLocation);
+      final RunnerAndConfigurationSettings configuration = producer.findExistingConfiguration(myLocation, this);
       if (configuration != null) return configuration;
     }
     return null;

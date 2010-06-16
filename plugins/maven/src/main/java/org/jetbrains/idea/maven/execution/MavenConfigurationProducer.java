@@ -56,8 +56,8 @@ public class MavenConfigurationProducer extends RuntimeConfigurationProducer{
 
   @Override
   protected RunnerAndConfigurationSettings findExistingByElement(Location location,
-                                                                     @NotNull RunnerAndConfigurationSettings[] existingConfigurations
-  ) {
+                                                                 @NotNull RunnerAndConfigurationSettings[] existingConfigurations,
+                                                                 ConfigurationContext context) {
 
     final MavenRunnerParameters runnerParameters = createBuildParameters(location);
     for (RunnerAndConfigurationSettings existingConfiguration : existingConfigurations) {

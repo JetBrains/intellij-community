@@ -22,6 +22,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <configurationProducer implementation="com.intellij.execution.junit.AllInPackageConfigurationProducer"/>
+    <configurationProducer implementation="com.intellij.execution.junit.PatternConfigurationProducer"/>
     <configurationProducer implementation="com.intellij.execution.junit.TestClassConfigurationProducer"/>
     <configurationProducer implementation="com.intellij.execution.junit.TestMethodConfigurationProducer"/>
     <deadCode implementation="com.intellij.execution.junit2.inspection.JUnitUnusedCodeExtension"/>
@@ -39,6 +40,7 @@
   <actions>
     <group>
       <action class="com.intellij.execution.junit2.ui.actions.ViewAssertEqualsDiffAction" text="View assertEquals Difference" id="openAssertEqualsDiff"/>
+      <action class="com.intellij.execution.junit.ExcludeFromRunAction" text="Exclude from suite" id="excludeFromSuite"/>
       <separator/>
       <add-to-group anchor="first" group-id="TestTreePopupMenu"/>
     </group>
@@ -46,6 +48,10 @@
       <separator/>
       <action id="JUnitTesting.SelectInTree" class="com.intellij.execution.junit2.ui.actions.SelectInTreeAction" text="Select in Tree" description="Navigate from tests statistics to tests tree"/>
       <add-to-group anchor="last" group-id="TestStatisticsTablePopupMenu"/>
+    </group>
+    <group>
+      <action class="com.intellij.execution.junit.AddToTestsPatternAction" id="AddToISuite" text="Add to temp suite"/>
+      <add-to-group anchor="first" group-id="RunContextGroup"/>
     </group>
   </actions>
 </idea-plugin>

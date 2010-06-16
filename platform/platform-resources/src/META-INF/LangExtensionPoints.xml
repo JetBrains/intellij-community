@@ -128,6 +128,8 @@
   <extensionPoint name="referencesSearch" interface="com.intellij.util.QueryExecutor"/>
   <extensionPoint name="definitionsSearch" interface="com.intellij.util.QueryExecutor"/>
 
+  <extensionPoint name="searchRequestor" interface="com.intellij.psi.search.SearchRequestor"/>
+
   <extensionPoint name="gotoClassContributor"
                   interface="com.intellij.navigation.ChooseByNameContributor"/>
   <extensionPoint name="gotoSymbolContributor"
