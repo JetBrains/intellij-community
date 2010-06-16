@@ -100,9 +100,12 @@ public class PyCodeFragmentUtil {
       for (Instruction outerInstruction : outerInstructions) {
         // Here we check control flow when for statement content is beeing extracted
         if (outerInstruction instanceof ReadWriteInstruction &&
-            PyForStatementNavigator.getPyForStatementByIterable(outerInstruction.getElement())!=null){
-          errorFound = false;
-          break;
+            PyForStatementNavigator.getPyForStatementByIterable(outerInstruction.getElement())!=null) {
+          // In case when return instruction is inside
+          if (!returnInstructionInside){
+            errorFound = false;
+            break;
+          }
         }
       }
       if (errorFound){
