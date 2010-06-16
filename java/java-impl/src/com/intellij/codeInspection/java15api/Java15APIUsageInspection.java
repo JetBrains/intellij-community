@@ -46,6 +46,9 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
+import java.util.EnumMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author max
@@ -53,10 +56,9 @@ import java.io.*;
 public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
   @NonNls public static final String SHORT_NAME = "Since15";
 
-  private static final HashMap<LanguageLevel, THashSet<String>> ourForbiddenAPI = new HashMap<LanguageLevel, THashSet<String>>(5);
-  private static final THashSet<String> ourIgnored16ClassesAPI = new THashSet<String>(10);
-  private static final HashMap<LanguageLevel, String> ourAPIPresentationMap = new HashMap<LanguageLevel, String>(5);
-  @NonNls private static final String EFFECTIVE_LL = "effectiveLL";
+  private static final Map<LanguageLevel, Set<String>> ourForbiddenAPI = new EnumMap<LanguageLevel, Set<String>>(LanguageLevel.class);
+  private static final Set<String> ourIgnored16ClassesAPI = new THashSet<String>(10);
+  private static final Map<LanguageLevel, String> ourAPIPresentationMap = new EnumMap<LanguageLevel, String>(LanguageLevel.class);
 
   private LanguageLevel myEffectiveLanguageLevel = null;
 
@@ -76,7 +78,7 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
     initForbiddenApi("ignore16List.txt", ourIgnored16ClassesAPI);
   }
 
-  private static void initForbiddenApi(@NonNls String list, THashSet<String> set) {
+  private static void initForbiddenApi(@NonNls String list, Set<String> set) {
     BufferedReader reader = null;
     try {
       final InputStream stream = Java15APIUsageInspection.class.getResourceAsStream(list);
@@ -243,7 +245,7 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
     return ourAPIPresentationMap.get(languageLevel);
   }
 
-  private class MyVisitor extends JavaElementVisitor {
+  private static class MyVisitor extends JavaElementVisitor {
     private final ProblemsHolder myHolder;
 
     public MyVisitor(final ProblemsHolder holder) {
@@ -293,7 +295,7 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
       }
     }
 
-    private boolean isIgnored(PsiClass psiClass) {
+    private static boolean isIgnored(PsiClass psiClass) {
       final String qualifiedName = psiClass.getQualifiedName();
       return qualifiedName != null && ourIgnored16ClassesAPI.contains(qualifiedName);
     }
@@ -340,11 +342,10 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
   }
 
   private static boolean isForbiddenSignature(PsiMember member, LanguageLevel languageLevel) {
-
-    final THashSet<String> forbiddenApi = ourForbiddenAPI.get(languageLevel);
+    Set<String> forbiddenApi = ourForbiddenAPI.get(languageLevel);
     if (forbiddenApi == null) return false;
     return forbiddenApi.contains(getSignature(member)) ||
-           (languageLevel.compareTo(LanguageLevel.HIGHEST) != 0 && isForbiddenSignature(member, LanguageLevel.values()[languageLevel.ordinal() + 1]));
+           languageLevel.compareTo(LanguageLevel.HIGHEST) != 0 && isForbiddenSignature(member, LanguageLevel.values()[languageLevel.ordinal() + 1]);
   }
 
   public static String getSignature(PsiMember member) {
