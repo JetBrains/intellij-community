@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.search.SearchScope;
@@ -145,7 +146,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     mySetter = null;
 
     if (isProperty() && !hasModifierProperty(PsiModifier.FINAL)) {
-      String name = "set" + GroovyPropertyUtils.capitalize(getName());
+      String name = GroovyPropertyUtils.getSetterName(getName());
       final GrAccessorMethod setter = new GrAccessorMethodImpl(this, true, name);
       final PsiClass clazz = getContainingClass();
       if (!hasContradictingMethods(setter, clazz)) {
@@ -174,7 +175,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     if (isProperty()) {
       String name = getName();
       final PsiClass clazz = getContainingClass();
-      name = GroovyPropertyUtils.capitalize(name);
+      name = StringUtil.capitalize(name);
       GrAccessorMethod getter1 = new GrAccessorMethodImpl(this, false, "get" + name);
       if (!hasContradictingMethods(getter1, clazz)) {
         GrAccessorMethod getter2 = null;
