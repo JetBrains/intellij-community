@@ -881,26 +881,31 @@ public class AbstractTreeUi {
 
   //todo: to make real callback
   public ActionCallback queueUpdate(Object element) {
-    AbstractTreeUpdater updater = getUpdater();
-    if (updater == null) {
+    try {
+      AbstractTreeUpdater updater = getUpdater();
+      if (updater == null) {
+        return new ActionCallback.Rejected();
+      }
+
+      final ActionCallback result = new ActionCallback();
+      DefaultMutableTreeNode node = getNodeForElement(element, false);
+      if (node != null) {
+        addSubtreeToUpdate(node);
+      }
+      else {
+        addSubtreeToUpdate(getRootNode());
+      }
+
+      updater.runAfterUpdate(new Runnable() {
+        public void run() {
+          result.setDone();
+        }
+      });
+      return result;
+    }
+    catch (ProcessCanceledException e) {
       return new ActionCallback.Rejected();
     }
-
-    final ActionCallback result = new ActionCallback();
-    DefaultMutableTreeNode node = getNodeForElement(element, false);
-    if (node != null) {
-      addSubtreeToUpdate(node);
-    }
-    else {
-      addSubtreeToUpdate(getRootNode());
-    }
-
-    updater.runAfterUpdate(new Runnable() {
-      public void run() {
-        result.setDone();
-      }
-    });
-    return result;
   }
 
   public void doUpdateFromRoot() {
