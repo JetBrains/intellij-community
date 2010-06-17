@@ -284,13 +284,14 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
     List<Runnable> postRenameCallbacks = new ArrayList<Runnable>();
 
-    for (Map.Entry<PsiElement, String> entry : myAllRenames.entrySet()) {
-      PsiElement element = entry.getKey();
-      String newName = entry.getValue();
+    final MultiMap<PsiElement, UsageInfo> classified = classifyUsages(myAllRenames.keySet(), usages);
+    for (PsiElement element : myAllRenames.keySet()) {
+      String newName = myAllRenames.get(element);
 
       final RefactoringElementListener elementListener = getTransaction().getElementListener(element);
       Runnable postRenameCallback = RenamePsiElementProcessor.forElement(element).getPostRenameCallback(element, newName, elementListener);
-      RenameUtil.doRename(element, newName, extractUsagesForElement(element, usages), myProject, elementListener);
+      final Collection<UsageInfo> infos = classified.get(element);
+      RenameUtil.doRename(element, newName, infos.toArray(new UsageInfo[infos.size()]), myProject, elementListener);
       if (postRenameCallback != null) {
         postRenameCallbacks.add(postRenameCallback);
       }
@@ -317,8 +318,8 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     return myCommandName;
   }
 
-  public static UsageInfo[] extractUsagesForElement(PsiElement element, UsageInfo[] usages) {
-    final ArrayList<UsageInfo> extractedUsages = new ArrayList<UsageInfo>(usages.length);
+  public static MultiMap<PsiElement, UsageInfo> classifyUsages(Collection<? extends PsiElement> elements, UsageInfo[] usages) {
+    final MultiMap<PsiElement, UsageInfo> result = new MultiMap<PsiElement, UsageInfo>();
     for (UsageInfo usage : usages) {
       LOG.assertTrue(usage instanceof MoveRenameUsageInfo);
       if (usage.getReference() instanceof LightElement) {
@@ -326,18 +327,24 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       }
       MoveRenameUsageInfo usageInfo = (MoveRenameUsageInfo)usage;
       if (usage instanceof RelatedUsageInfo) {
-        if (((RelatedUsageInfo)usage).getRelatedElement() == element) {
-          extractedUsages.add(usageInfo);
+        final PsiElement relatedElement = ((RelatedUsageInfo)usage).getRelatedElement();
+        if (elements.contains(relatedElement)) {
+          result.putValue(relatedElement, usage);
         }
       } else {
-        //todo[yole] this line was not true for groovy implicit accessor methods, which should be added to extractedUsages
         PsiElement referenced = usageInfo.getReferencedElement();
-        if (element.equals(referenced) || referenced != null && element == referenced.getNavigationElement()) {
-          extractedUsages.add(usageInfo);
+        if (elements.contains(referenced)) {
+          result.putValue(referenced, usage);
+        } else if (referenced != null) {
+          PsiElement indirect = referenced.getNavigationElement();
+          if (elements.contains(indirect)) {
+            result.putValue(indirect, usage);
+          }
         }
+
       }
     }
-    return extractedUsages.toArray(new UsageInfo[extractedUsages.size()]);
+    return result;
   }
 
   protected void prepareTestRun() {
