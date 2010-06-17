@@ -805,7 +805,6 @@ public class IdeEventQueue extends EventQueue {
 
     private Robot myRobot;
 
-    @Override
     public boolean dispatch(AWTEvent e) {
       boolean dispatch = true;
       if (e instanceof KeyEvent) {
