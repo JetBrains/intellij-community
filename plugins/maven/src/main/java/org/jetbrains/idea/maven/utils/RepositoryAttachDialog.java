@@ -331,7 +331,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
     }
     else {
       final Pair<MavenArtifactInfo, MavenRepositoryInfo> artifactAndRepo = myCoordinates.get(getCoordinateText());
-      final MavenRepositoryInfo repository = artifactAndRepo.second;
+      final MavenRepositoryInfo repository = artifactAndRepo == null? null : artifactAndRepo.second;
       return repository != null? Collections.singletonList(repository) : ContainerUtil.findAll(myRepositories.values(), Condition.NOT_NULL);
     }
   }
