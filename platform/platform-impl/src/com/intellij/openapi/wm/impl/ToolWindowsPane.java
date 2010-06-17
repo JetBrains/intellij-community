@@ -156,7 +156,8 @@ final class ToolWindowsPane extends JLayeredPane {
   protected void paintChildren(Graphics g) {
     super.paintChildren(g);
 
-    if (myTopStripe.isVisible() && myStripesOverlayed && UISettings.getInstance().HIDE_TOOL_STRIPES) {
+    UISettings settings = UISettings.getInstance();
+    if (myTopStripe.isVisible() && myStripesOverlayed && settings.HIDE_TOOL_STRIPES) {
       Dimension topSize = myTopStripe.getSize();
       Dimension bottomSize = myBottomStripe.getSize();
       Dimension leftSize = myLeftStripe.getSize();
@@ -168,12 +169,18 @@ final class ToolWindowsPane extends JLayeredPane {
                                     size.height - topSize.height - bottomSize.height);
 
       g.setColor(Color.gray);
+
+      boolean strikeoutTop = settings.SHOW_MAIN_TOOLBAR && !settings.SHOW_NAVIGATION_BAR && topSize.height == 0;
+
       if (topSize.height> 0) {
         g.drawLine(rec.x, rec.y, rec.x + rec.width, rec.y);
       }
 
       if (leftSize.width > 0) {
         g.drawLine(rec.x, rec.y, rec.x, rec.y + rec.height);
+        if (strikeoutTop) {
+          g.drawLine(0, rec.y, rec.x, rec.y);
+        }
       }
 
       if (bottomSize.height > 0) {
@@ -182,6 +189,9 @@ final class ToolWindowsPane extends JLayeredPane {
 
       if (rightSize.width > 0) {
         g.drawLine(rec.x + rec.width, rec.y, rec.x + rec.width, rec.y + rec.height);
+        if (strikeoutTop) {
+          g.drawLine(rec.x + rec.width, rec.y, size.width, rec.y);
+        }
       }
     }
   }
