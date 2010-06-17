@@ -35,25 +35,30 @@ import java.util.ArrayList;
  * @author peter
  */
 public class IdRefReference extends BasicAttributeValueReference {
+  private final boolean myIdAttrsOnly;
 
-  public IdRefReference(final PsiElement element, int offset) {
+  public IdRefReference(final PsiElement element, int offset, boolean idAttrsOnly) {
     super(element, offset);
+    myIdAttrsOnly = idAttrsOnly;
   }
 
   public IdRefReference(final PsiElement element) {
     super(element);
+    myIdAttrsOnly = false;
   }
 
   @Nullable
-  protected static PsiElement getIdValueElement(PsiElement element) {
+  protected PsiElement getIdValueElement(PsiElement element) {
     if (element instanceof XmlTag) {
       final XmlTag tag = (XmlTag)element;
       XmlAttribute attribute = tag.getAttribute(IdReferenceProvider.ID_ATTR_NAME, null);
-      if (attribute == null) {
-        attribute = tag.getAttribute(IdReferenceProvider.NAME_ATTR_NAME, null);
-      }
-      if (attribute == null) {
-        attribute = tag.getAttribute(IdReferenceProvider.STYLE_ID_ATTR_NAME, null);
+      if (!myIdAttrsOnly) {
+        if (attribute == null) {
+          attribute = tag.getAttribute(IdReferenceProvider.NAME_ATTR_NAME, null);
+        }
+        if (attribute == null) {
+          attribute = tag.getAttribute(IdReferenceProvider.STYLE_ID_ATTR_NAME, null);
+        }
       }
       return attribute != null ? attribute.getValueElement() : null;
     }
@@ -63,12 +68,14 @@ public class IdRefReference extends BasicAttributeValueReference {
   }
 
   @Nullable
-  protected static String getIdValue(final PsiElement element) {
+  protected String getIdValue(final PsiElement element) {
     if (element instanceof XmlTag) {
       final XmlTag tag = (XmlTag)element;
       String s = tag.getAttributeValue(IdReferenceProvider.ID_ATTR_NAME);
-      if (s == null) s = tag.getAttributeValue(IdReferenceProvider.NAME_ATTR_NAME);
-      if (s == null) s = tag.getAttributeValue(IdReferenceProvider.STYLE_ID_ATTR_NAME);
+      if (!myIdAttrsOnly) {
+        if (s == null) s = tag.getAttributeValue(IdReferenceProvider.NAME_ATTR_NAME);
+        if (s == null) s = tag.getAttributeValue(IdReferenceProvider.STYLE_ID_ATTR_NAME);
+      }
       return s;
     } else if (element instanceof PsiComment) {
       return getImplicitIdValue((PsiComment) element);
@@ -163,7 +170,10 @@ public class IdRefReference extends BasicAttributeValueReference {
 
     process(new PsiElementProcessor<PsiElement>() {
       public boolean execute(final PsiElement element) {
-        result.add(getIdValue(element));
+        String value = getIdValue(element);
+        if (value != null) {
+          result.add(value);
+        }
         return true;
       }
     });
