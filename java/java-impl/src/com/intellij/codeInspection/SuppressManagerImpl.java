@@ -20,6 +20,7 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.actions.SuppressByJavaCommentFix;
@@ -89,7 +90,7 @@ public class SuppressManagerImpl extends SuppressManager {
     Collection<String> suppressedIds = getInspectionIdsSuppressedInAnnotation(modifierList);
     for (String ids : suppressedIds) {
       if (SuppressionUtil.isInspectionToolIdMentioned(ids, inspectionToolID)) {
-        return modifierList != null ? modifierList.findAnnotation(SUPPRESS_INSPECTIONS_ANNOTATION_NAME) : null;
+        return modifierList != null ? AnnotationUtil.findAnnotation(owner, SUPPRESS_INSPECTIONS_ANNOTATION_NAME) : null;
       }
     }
     return null;
@@ -197,7 +198,8 @@ public class SuppressManagerImpl extends SuppressManager {
     if (modifierList == null) {
       return Collections.emptyList();
     }
-    PsiAnnotation annotation = modifierList.findAnnotation(SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
+    final PsiModifierListOwner owner = (PsiModifierListOwner)modifierList.getParent();
+    PsiAnnotation annotation = AnnotationUtil.findAnnotation(owner, SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
     if (annotation == null) {
       return Collections.emptyList();
     }
