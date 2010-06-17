@@ -1,9 +1,4 @@
 <components>
-  <application-components>
-    <component>
-      <implementation-class>com.intellij.profile.codeInspection.InspectionProfileManager</implementation-class>
-    </component>
-  </application-components>
   <project-components>
     <component>
       <implementation-class>com.intellij.profile.codeInspection.InspectionProjectProfileManager</implementation-class>
