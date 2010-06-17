@@ -19,6 +19,7 @@ package com.intellij.ide;
 import com.intellij.Patches;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDManagerImpl;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,6 +31,7 @@ import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SimpleTimer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -158,6 +160,8 @@ public class IdeEventQueue extends EventQueue {
         }
       }
     });
+
+    addDispatcher(new WindowsAltSupressor(), null);
   }
 
 
@@ -791,5 +795,65 @@ public class IdeEventQueue extends EventQueue {
 
   public boolean isPopupActive() {
     return myPopupManager.isPopupActive();
+  }
+
+  private static class WindowsAltSupressor implements EventDispatcher {
+
+    private boolean myPureAltWasPressed;
+    private boolean myWaitingForAltRelease;
+    private boolean myWaiterScheduled;
+
+    private Robot myRobot;
+
+    @Override
+    public boolean dispatch(AWTEvent e) {
+      boolean dispatch = true;
+      if (e instanceof KeyEvent) {
+        KeyEvent ke = ((KeyEvent)e);
+        boolean pureAlt =  ke.getKeyCode() == KeyEvent.VK_ALT && (ke.getModifiers() | KeyEvent.ALT_MASK) == KeyEvent.ALT_MASK;
+        if (!pureAlt) {
+          myPureAltWasPressed = false;
+          myWaitingForAltRelease = false;
+          myWaiterScheduled = false;
+        } else {
+          Application app = ApplicationManager.getApplication();
+          if (app == null || !SystemInfo.isWindows || !Registry.is("actionSystem.win.supressAlt") || !UISettings.getInstance().HIDE_TOOL_STRIPES) {
+            return !dispatch;
+          }
+
+          if (ke.getID() == KeyEvent.KEY_PRESSED) {
+            myPureAltWasPressed = true;
+            dispatch = !myWaitingForAltRelease;
+          } else if (ke.getID() == KeyEvent.KEY_RELEASED) {
+            if (myWaitingForAltRelease) {
+              myPureAltWasPressed = false;
+              myWaitingForAltRelease = false;
+              myWaiterScheduled = false;
+              dispatch = false;
+            } else {
+              myWaiterScheduled = true;
+              SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                  try {
+                    myWaitingForAltRelease = true;
+                    if (myRobot == null) {
+                      myRobot = new Robot();
+                    }
+                    myRobot.keyPress(KeyEvent.VK_ALT);
+                    myRobot.keyRelease(KeyEvent.VK_ALT);
+                  }
+                  catch (AWTException e1) {
+                    LOG.debug(e1);
+                  }
+                }
+              });
+            }
+          }
+        }
+      }
+
+      return !dispatch;
+    }
   }
 }
