@@ -1,10 +1,4 @@
 <idea-plugin>
-  <application-components>
-    <component>
-      <implementation-class>com.intellij.util.xml.impl.DomApplicationComponent</implementation-class>
-    </component>
-  </application-components>
-
   <extensionPoints>
     <extensionPoint name="dom.fileDescription"
                     interface="com.intellij.util.xml.DomFileDescription"/>
@@ -18,6 +12,9 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <fileBasedIndex implementation="com.intellij.util.xml.DomFileIndex"/>
+
+    <applicationService serviceInterface="com.intellij.util.xml.impl.DomApplicationComponent"
+                        serviceImplementation="com.intellij.util.xml.impl.DomApplicationComponent"/>
 
     <applicationService serviceInterface="com.intellij.util.xml.DomService"
                         serviceImplementation="com.intellij.util.xml.impl.DomServiceImpl"/>

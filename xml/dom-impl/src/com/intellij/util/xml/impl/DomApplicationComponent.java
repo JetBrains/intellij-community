@@ -16,16 +16,15 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.meta.MetaDataRegistrar;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ReflectionAssignabilityCache;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomElementVisitor;
+import com.intellij.util.xml.DomFileDescription;
+import com.intellij.util.xml.TypeChooserManager;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,7 +75,7 @@ public class DomApplicationComponent {
   }
 
   public static DomApplicationComponent getInstance() {
-    return ApplicationManager.getApplication().getComponent(DomApplicationComponent.class);
+    return ServiceManager.getService(DomApplicationComponent.class);
   }
 
   public final synchronized Set<DomFileDescription> getFileDescriptions(String rootTagName) {
