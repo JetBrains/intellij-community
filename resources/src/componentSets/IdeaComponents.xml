@@ -39,7 +39,6 @@
   <xi:include href="Misc.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="Debugger.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="Compiler.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="/componentSets/TestFramework.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="/componentSets/Execution.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="/componentSets/VCS.xml" xpointer="xpointer(/components/*)"/>
 

@@ -14,11 +14,15 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.testAssistant.TestDataLineMarkerProvider"/>
     <fileEditorProvider implementation="com.intellij.testAssistant.TestDataGroupEditorProvider"/>
   </extensions>
 
-  <actions>
-  </actions>
+  <project-components>
+    <component>
+      <implementation-class>com.intellij.testAssistant.TestDataHighlightingPassFactory</implementation-class>
+    </component>
+  </project-components>
 </idea-plugin>
 
