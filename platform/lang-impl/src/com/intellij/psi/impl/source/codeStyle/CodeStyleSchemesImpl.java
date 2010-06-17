@@ -17,9 +17,12 @@
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ExportableApplicationComponent;
+import com.intellij.openapi.components.ExportableComponent;
 import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.BaseSchemeProcessor;
+import com.intellij.openapi.options.SchemeProcessor;
+import com.intellij.openapi.options.SchemesManager;
+import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -42,7 +45,7 @@ import java.util.Collection;
  * @author MYakovlev
  *         Date: Jul 16, 2002
  */
-public class CodeStyleSchemesImpl extends CodeStyleSchemes implements ExportableApplicationComponent,JDOMExternalizable {
+public class CodeStyleSchemesImpl extends CodeStyleSchemes implements ExportableComponent, JDOMExternalizable {
   @NonNls private static final String DEFAULT_SCHEME_NAME = "Default";
 
   public String CURRENT_SCHEME_NAME = DEFAULT_SCHEME_NAME;
@@ -72,22 +75,12 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
     };
 
     mySchemesManager = schemesManagerFactory.createSchemesManager(FILE_SPEC, processor, RoamingType.PER_USER);
-  }
 
-  @NotNull
-  public String getComponentName() {
-    return "CodeStyleSchemes";
-  }
-
-  public void initComponent() {
     init();
     addScheme(new CodeStyleSchemeImpl(DEFAULT_SCHEME_NAME, true, null));
     CodeStyleScheme current = findSchemeByName(CURRENT_SCHEME_NAME);
     if (current == null) current = getDefaultScheme();
     setCurrentScheme(current);
-  }
-
-  public void disposeComponent() {
   }
 
   public CodeStyleScheme[] getSchemes() {
