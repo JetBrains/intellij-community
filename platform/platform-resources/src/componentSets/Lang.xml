@@ -7,11 +7,6 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.ide.todo.TodoConfiguration</interface-class>
-      <implementation-class>com.intellij.ide.todo.TodoConfiguration</implementation-class>
-    </component>
-
-    <component>
       <interface-class>com.intellij.openapi.fileEditor.impl.text.TextEditorProvider</interface-class>
       <implementation-class>com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider</implementation-class>
     </component>

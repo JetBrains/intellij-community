@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.search;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,6 +31,8 @@ import java.beans.PropertyChangeListener;
  * @see com.intellij.psi.search.searches.IndexPatternSearch
  */
 public interface IndexPatternProvider {
+  ExtensionPointName<IndexPatternProvider> EP_NAME = ExtensionPointName.create("com.intellij.indexPatternProvider");
+
   /**
    * The property the change of which should be reported to the property change listener
    * when the list of index patterns is changed.

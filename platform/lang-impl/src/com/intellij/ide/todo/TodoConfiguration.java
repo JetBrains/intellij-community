@@ -16,10 +16,8 @@
 
 package com.intellij.ide.todo;
 
-import com.intellij.ExtensionPoints;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
@@ -40,7 +38,7 @@ import java.util.Arrays;
 /**
  * @author Vladimir Kondratyev
  */
-public class TodoConfiguration implements ApplicationComponent, JDOMExternalizable, IndexPatternProvider {
+public class TodoConfiguration implements ApplicationComponent, JDOMExternalizable {
   private TodoPattern[] myTodoPatterns;
   private TodoFilter[] myTodoFilters;
   private IndexPattern[] myIndexPatterns;
@@ -56,7 +54,6 @@ public class TodoConfiguration implements ApplicationComponent, JDOMExternalizab
    * Invoked by reflection
    */
   TodoConfiguration() {
-    Extensions.getRootArea().getExtensionPoint(ExtensionPoints.INDEX_PATTERN_PROVIDER).registerExtension(this);
     resetToDefaultTodoPatterns();
   }
 
@@ -76,7 +73,7 @@ public class TodoConfiguration implements ApplicationComponent, JDOMExternalizab
   }
 
   public static TodoConfiguration getInstance() {
-    return ApplicationManager.getApplication().getComponent(TodoConfiguration.class);
+    return ServiceManager.getService(TodoConfiguration.class);
   }
 
   @NotNull
@@ -111,7 +108,7 @@ public class TodoConfiguration implements ApplicationComponent, JDOMExternalizab
     // only trigger index refresh actual index patterns have changed
     if (shouldNotifyIndices && !Arrays.deepEquals(myIndexPatterns, oldIndexPatterns)) {
       final PropertyChangeListener multicaster = myPropertyChangeMulticaster.getMulticaster();
-      multicaster.propertyChange(new PropertyChangeEvent(this, PROP_INDEX_PATTERNS, oldTodoPatterns, todoPatterns));
+      multicaster.propertyChange(new PropertyChangeEvent(this, IndexPatternProvider.PROP_INDEX_PATTERNS, oldTodoPatterns, todoPatterns));
     }
 
     // only trigger gui and code daemon refresh when either the index patterns or presentation attributes have changed

@@ -18,6 +18,7 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.concurrency.JobUtil;
 import com.intellij.ide.todo.TodoConfiguration;
+import com.intellij.ide.todo.TodoIndexPatternProvider;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.application.ApplicationManager;
@@ -86,7 +87,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   private static TodoItem[] doFindTodoItems(final PsiFile file, final TextRange textRange) {
-    final Collection<IndexPatternOccurrence> occurrences = IndexPatternSearch.search(file, TodoConfiguration.getInstance()).findAll();
+    final Collection<IndexPatternOccurrence> occurrences = IndexPatternSearch.search(file, TodoIndexPatternProvider.getInstance()).findAll();
     if (occurrences.isEmpty()) {
       return EMPTY_TODO_ITEMS;
     }
@@ -114,7 +115,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   public int getTodoItemsCount(@NotNull PsiFile file) {
-    int count = myManager.getCacheManager().getTodoCount(file.getVirtualFile(), TodoConfiguration.getInstance());
+    int count = myManager.getCacheManager().getTodoCount(file.getVirtualFile(), TodoIndexPatternProvider.getInstance());
     if (count != -1) return count;
     return findTodoItems(file).length;
   }

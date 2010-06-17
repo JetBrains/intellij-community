@@ -540,4 +540,8 @@
 
   <definitionsSearch implementation="com.intellij.pom.PomDefinitionSearch"/>
   <gotoTargetRendererProvider implementation="com.intellij.testIntegration.GotoTestRendererProvider"/>
+
+  <applicationService serviceInterface="com.intellij.ide.todo.TodoConfiguration"
+                      serviceImplementation="com.intellij.ide.todo.TodoConfiguration"/>
+  <indexPatternProvider implementation="com.intellij.ide.todo.TodoIndexPatternProvider"/>
 </extensions>
