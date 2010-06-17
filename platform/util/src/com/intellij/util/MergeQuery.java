@@ -26,11 +26,11 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-public class MergeQuery<T, T1 extends T, T2 extends T> implements Query<T>{
-  private final Query<T1> myQuery1;
-  private final Query<T2> myQuery2;
+public class MergeQuery<T> implements Query<T>{
+  private final Query<? extends T> myQuery1;
+  private final Query<? extends T> myQuery2;
 
-  public MergeQuery(final Query<T1> query1, final Query<T2> query2) {
+  public MergeQuery(final Query<? extends T> query1, final Query<? extends T> query2) {
     myQuery1 = query1;
     myQuery2 = query2;
   }
@@ -50,24 +50,15 @@ public class MergeQuery<T, T1 extends T, T2 extends T> implements Query<T>{
   }
 
   public boolean forEach(@NotNull final Processor<T> consumer) {
-    Processor<T1> wrapper1 = new Processor<T1>() {
-      public boolean process(final T1 t) {
+    return processSubQuery(consumer, myQuery1) || processSubQuery(consumer, myQuery2);
+  }
+
+  private <V extends T> boolean processSubQuery(final Processor<T> consumer, Query<V> query1) {
+    return query1.forEach(new Processor<V>() {
+      public boolean process(final V t) {
         return consumer.process(t);
       }
-    };
-    boolean wantMore = myQuery1.forEach(wrapper1);
-
-    if (wantMore) {
-      Processor<T2> wrapper2 = new Processor<T2>() {
-        public boolean process(final T2 t) {
-          return consumer.process(t);
-        }
-      };
-
-      wantMore = myQuery2.forEach(wrapper2);
-    }
-
-    return wantMore;
+    });
   }
 
   public T[] toArray(final T[] a) {
