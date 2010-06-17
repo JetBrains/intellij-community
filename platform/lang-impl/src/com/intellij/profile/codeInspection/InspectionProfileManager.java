@@ -26,6 +26,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
@@ -72,7 +73,7 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
   protected static final Logger LOG = Logger.getInstance("#com.intellij.profile.DefaultProfileManager");
 
   public static InspectionProfileManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(InspectionProfileManager.class);
+    return ServiceManager.getService(InspectionProfileManager.class);
   }
 
   public InspectionProfileManager(InspectionToolRegistrar registrar, SchemesManagerFactory schemesManagerFactory) {
