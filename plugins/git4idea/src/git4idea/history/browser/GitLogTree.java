@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
@@ -549,7 +550,7 @@ public class GitLogTree implements GitTreeViewI {
   // hash, reference name, or comment mask
   private class MyGoto extends AnAction {
     private MyGoto() {
-      super("Goto", "Type commit hash, or reference, or regexp for commit message", IconLoader.getIcon("/general/run.png"));
+      super("Goto", "Type commit hash, or reference, or regexp for commit message", IconLoader.getIcon("/icons/goto.png"));
     }
 
     @Override
@@ -619,7 +620,9 @@ public class GitLogTree implements GitTreeViewI {
       // earliest first!!!
       Collections.reverse(commits);
       if (commits == null) return;
-
+      final int result = Messages.showOkCancelDialog("You are going to cherry-pick changes into current branch. Continue?", "Cherry-pick",
+                                                     Messages.getQuestionIcon());
+      if (result != 0) return;
       for (GitCommit commit : commits) {
         myIdsInProgress.add(commit.getHash());
       }
