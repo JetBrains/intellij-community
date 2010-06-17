@@ -138,4 +138,13 @@ public class GrAccessorMethodImpl extends GrSyntheticMethod implements GrAccesso
   public Icon getIcon(int flags) {
     return GroovyIcons.PROPERTY;
   }
+
+  @Override
+  public boolean isEquivalentTo(PsiElement another) {
+    if (another == this) return true;
+    if (!(another instanceof GrAccessorMethod)) return false;
+
+    if (!((GrAccessorMethod)another).getName().equals(getName())) return false;
+    return getManager().areElementsEquivalent(myProperty, ((GrAccessorMethod)another).getProperty());
+  }
 }

@@ -46,12 +46,21 @@ public class AddAnnotationFix extends PsiElementBaseIntentionAction implements L
   private final String myAnnotation;
   private final PsiModifierListOwner myModifierListOwner;
   private final String[] myAnnotationsToRemove;
+  private final PsiNameValuePair[] myPairs;
   private static final Logger LOG = Logger.getInstance("#" + AddAnnotationFix.class.getName());
 
   public AddAnnotationFix(String fqn, PsiModifierListOwner modifierListOwner, String... annotationsToRemove) {
     myAnnotation = fqn;
     myModifierListOwner = modifierListOwner;
     myAnnotationsToRemove = annotationsToRemove;
+    myPairs = null;
+  }
+
+  public AddAnnotationFix(String fqn, PsiModifierListOwner modifierListOwner, PsiNameValuePair[] values, String... annotationsToRemove) {
+    myAnnotation = fqn;
+    myModifierListOwner = modifierListOwner;
+    myAnnotationsToRemove = annotationsToRemove;
+    myPairs = values;
   }
 
   public AddAnnotationFix(@NonNls final String fqn, @NonNls String... annotationsToRemove) {
@@ -154,7 +163,7 @@ public class AddAnnotationFix extends PsiElementBaseIntentionAction implements L
         for (String fqn : myAnnotationsToRemove) {
           annotationsManager.deannotate(myModifierListOwner, fqn);
         }
-        annotationsManager.annotateExternally(myModifierListOwner, myAnnotation, file);
+        annotationsManager.annotateExternally(myModifierListOwner, myAnnotation, file, myPairs);
       }
       else {
         final PsiFile containingFile = myModifierListOwner.getContainingFile();
@@ -166,7 +175,12 @@ public class AddAnnotationFix extends PsiElementBaseIntentionAction implements L
           }
         }
 
-        PsiElement inserted = modifierList.addAnnotation(myAnnotation);
+        PsiAnnotation inserted = modifierList.addAnnotation(myAnnotation);
+        if (myPairs != null) {
+          for (PsiNameValuePair pair : myPairs) {
+            inserted.setDeclaredAttributeValue(pair.getName(), pair.getValue());
+          }
+        }
         JavaCodeStyleManager.getInstance(project).shortenClassReferences(inserted);
         if (containingFile != file) {
           UndoUtil.markPsiFileForUndo(file);
@@ -175,7 +189,7 @@ public class AddAnnotationFix extends PsiElementBaseIntentionAction implements L
     }
     else {
       final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
-      annotationsManager.annotateExternally(PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class, false), myAnnotation, file);
+      annotationsManager.annotateExternally(PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class, false), myAnnotation, file, null);
     }
   }
 

@@ -74,7 +74,7 @@ public class MavenProjectsManager extends SimpleProjectComponent
 
   private MavenProjectsManagerState myState = new MavenProjectsManagerState();
 
-  private MavenEmbeddersManager myEmbeddersManager;
+  private final MavenEmbeddersManager myEmbeddersManager;
 
   private MavenProjectsTree myProjectsTree;
   private MavenProjectsManagerWatcher myWatcher;
@@ -103,6 +103,7 @@ public class MavenProjectsManager extends SimpleProjectComponent
 
   public MavenProjectsManager(Project project) {
     super(project);
+    myEmbeddersManager = new MavenEmbeddersManager(myProject);
   }
 
   public MavenProjectsManagerState getState() {
@@ -239,8 +240,6 @@ public class MavenProjectsManager extends SimpleProjectComponent
   }
 
   private void initWorkers() {
-    myEmbeddersManager = new MavenEmbeddersManager(myProject);
-
     myReadingProcessor = new MavenProjectsProcessor(myProject, ProjectBundle.message("maven.reading"), false, myEmbeddersManager);
     myResolvingProcessor = new MavenProjectsProcessor(myProject, ProjectBundle.message("maven.resolving"), true, myEmbeddersManager);
     myPluginsResolvingProcessor =
