@@ -20,8 +20,6 @@ import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.IndexPatternProvider;
 import org.jetbrains.annotations.NotNull;
 
-import java.beans.PropertyChangeListener;
-
 /**
  * @author yole
  */
@@ -45,15 +43,5 @@ public class TodoIndexPatternProvider implements IndexPatternProvider {
 
   @NotNull public IndexPattern[] getIndexPatterns() {
     return myConfiguration.getIndexPatterns();
-  }
-
-  @Override
-  public void addPropertyChangeListener(PropertyChangeListener listener) {
-    myConfiguration.addPropertyChangeListener(listener);
-  }
-
-  @Override
-  public void removePropertyChangeListener(PropertyChangeListener listener) {
-    myConfiguration.addPropertyChangeListener(listener);
   }
 }
