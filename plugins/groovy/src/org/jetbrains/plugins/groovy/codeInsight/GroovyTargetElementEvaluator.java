@@ -64,7 +64,7 @@ public class GroovyTargetElementEvaluator implements TargetElementEvaluator {
       return constructor;
     }
 
-    if (sourceElement instanceof GrReferenceElementImpl) {
+    if (sourceElement instanceof GrReferenceElementImpl) { // For Grails tags in GSP pager (e.g. <%  g.link()  %>)
       PsiElement resolve = ((GrReferenceElementImpl)sourceElement).resolve();
       if (resolve != null && !resolve.isPhysical()) {
         PsiElement navigationElement = resolve.getNavigationElement();
