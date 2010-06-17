@@ -105,7 +105,7 @@
 
   <applicationService serviceInterface="com.intellij.psi.codeStyle.CodeStyleSchemes"
                       serviceImplementation="com.intellij.psi.impl.source.codeStyle.CodeStyleSchemesImpl"/>
-  <exportable serviceInterface="com.intellij.psi.impl.source.codeStyle.CodeStyleSchemesImpl"/>
+  <exportable serviceInterface="com.intellij.psi.codeStyle.CodeStyleSchemes"/>
 
   <applicationService serviceInterface="com.intellij.openapi.roots.libraries.LibraryTablesRegistrar"
                       serviceImplementation="com.intellij.openapi.roots.impl.libraries.LibraryTablesRegistrarImpl"/>

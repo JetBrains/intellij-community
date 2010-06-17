@@ -25,11 +25,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
-import com.intellij.openapi.components.ExportableBean;
+import com.intellij.openapi.components.ServiceBean;
 import com.intellij.openapi.components.ExportableComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
@@ -106,32 +104,7 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
 
     final List<ExportableComponent> components = new ArrayList<ExportableComponent>(Arrays.asList(ApplicationManager.getApplication().getComponents(ExportableApplicationComponent.class)));
 
-    final ExportableBean[] exportableBeans = Extensions.getExtensions(ExportableComponent.EXTENSION_POINT);
-    for (ExportableBean exportableBean : exportableBeans) {
-      final String serviceClass = exportableBean.serviceInterface;
-      if (serviceClass == null) {
-        LOG.error("Service interface not specified in " + ExportableComponent.EXTENSION_POINT);
-        continue;
-      }
-      try {
-        final Class<?> aClass = Class.forName(serviceClass, true, exportableBean.getPluginDescriptor().getPluginClassLoader());
-        final Object service = ServiceManager.getService(aClass);
-        if (service == null) {
-          LOG.error("Can't find service: " + serviceClass);
-          continue;
-        }
-        if (!(service instanceof ExportableComponent)) {
-          LOG.error("Service " + serviceClass + " is registered in exportable EP, but doesn't implement ExportableComponent");
-          continue;
-        }
-
-        components.add((ExportableComponent)service);
-      }
-      catch (ClassNotFoundException e) {
-        LOG.error(e);
-      }
-    }
-
+    ServiceBean.loadServicesFromBeans(components, ExportableComponent.EXTENSION_POINT, ExportableComponent.class);
 
     for (ExportableComponent component : components) {
       exportableComponents.add(component);
@@ -147,4 +120,5 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
     }
     return fileToComponents;
   }
+
 }

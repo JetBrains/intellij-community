@@ -35,7 +35,7 @@
   <extensionPoint name="cutElementMarker"
                   interface="com.intellij.openapi.ide.CutElementMarker"/>
 
-  <extensionPoint name="exportable" beanClass="com.intellij.openapi.components.ExportableBean"/>
+  <extensionPoint name="exportable" beanClass="com.intellij.openapi.components.ServiceBean"/>
 
   <extensionPoint name="ideRootPaneNorth" interface="com.intellij.openapi.wm.impl.IdeRootPaneNorthExtension" area="IDEA_PROJECT"/>
 
