@@ -142,10 +142,10 @@ public class GenericInlineHandler {
     final Language language = reference.getElement().getLanguage();
     final InlineHandler.Inliner inliner = inliners.get(language);
     if (inliner != null) {
-      final Map<PsiElement, String> refConflicts = inliner.getConflicts(reference, element);
+      final MultiMap<PsiElement, String> refConflicts = inliner.getConflicts(reference, element);
       if (refConflicts != null) {
         for (PsiElement psiElement : refConflicts.keySet()) {
-          conflicts.putValue(psiElement, refConflicts.get(psiElement));
+          conflicts.putValues(psiElement, refConflicts.get(psiElement));
         }
       }
     }

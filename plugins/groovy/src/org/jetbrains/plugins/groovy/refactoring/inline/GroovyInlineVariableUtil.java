@@ -30,6 +30,7 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageDialog;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -59,13 +60,13 @@ public class GroovyInlineVariableUtil {
     return new InlineHandler.Inliner() {
 
       @Nullable
-      public Map<PsiElement, String> getConflicts(PsiReference reference, PsiElement referenced) {
-        Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
+      public MultiMap<PsiElement, String> getConflicts(PsiReference reference, PsiElement referenced) {
+        MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
         GrExpression expr = (GrExpression) reference.getElement();
         if (expr.getParent() instanceof GrAssignmentExpression) {
           GrAssignmentExpression parent = (GrAssignmentExpression) expr.getParent();
           if (expr.equals(parent.getLValue())) {
-            conflicts.put(expr, GroovyRefactoringBundle.message("local.varaible.is.lvalue"));
+            conflicts.putValue(expr, GroovyRefactoringBundle.message("local.varaible.is.lvalue"));
           }
         }
         return conflicts;

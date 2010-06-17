@@ -21,7 +21,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.Constants;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -34,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class PsiLiteralExpressionImpl extends ExpressionPsiElement implements PsiLiteralExpression,PsiLanguageInjectionHost, Constants {
+public class PsiLiteralExpressionImpl extends ExpressionPsiElement implements PsiLiteralExpression,PsiLanguageInjectionHost, Constants, ContributedReferenceHost {
   @NonNls private static final String QUOT = "&quot;";
   @NonNls private static final String HEXPREFIX = "0x";
   @NonNls private static final String HEXPREFIX2 = "0X";
@@ -446,7 +445,7 @@ public class PsiLiteralExpressionImpl extends ExpressionPsiElement implements Ps
 
   @NotNull
   public PsiReference[] getReferences() {
-    return ReferenceProvidersRegistry.getReferencesFromProviders(this, PsiLiteralExpression.class);
+    return PsiReferenceService.getService().getContributedReferences(this);
   }
 
   @Nullable

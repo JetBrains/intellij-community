@@ -34,10 +34,8 @@ import com.intellij.psi.impl.source.resolve.reference.NamedObjectProviderBinding
 import com.intellij.psi.impl.source.resolve.reference.SimpleProviderBinding;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.util.ArrayUtil;
-import static com.intellij.util.ObjectUtils.assertNotNull;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
-import static com.intellij.util.containers.CollectionFactory.*;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
@@ -45,6 +43,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.util.ObjectUtils.assertNotNull;
+import static com.intellij.util.containers.CollectionFactory.*;
 
 /**
  * @author peter
@@ -95,10 +96,10 @@ public class PomReferenceServiceImpl extends PomReferenceService {
 
       if (ret == null) ret = new SmartList<Trinity<PomReferenceProvider, ProcessingContext, Double>>();
       if (simpleBinding != null) {
-        simpleBinding.addAcceptableReferenceProviders(element, ret, offset);
+        simpleBinding.addAcceptableReferenceProviders(element, ret, new PsiReferenceService.Hints(null, offset));
       }
       if (namedBinding != null) {
-        namedBinding.addAcceptableReferenceProviders(element, ret, offset);
+        namedBinding.addAcceptableReferenceProviders(element, ret, new PsiReferenceService.Hints(null, offset));
       }
     }
     return ret == null ? Collections.<Trinity<PomReferenceProvider, ProcessingContext, Double>>emptyList() : ret;

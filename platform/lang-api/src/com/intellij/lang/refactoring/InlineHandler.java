@@ -21,6 +21,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -81,7 +82,7 @@ public interface InlineHandler {
      * or null if no conflicts detected.
      */
     @Nullable
-    Map<PsiElement, String> getConflicts(PsiReference reference, PsiElement referenced);
+    MultiMap<PsiElement, String> getConflicts(PsiReference reference, PsiElement referenced);
 
     /**
      * Perform actual inline of element to the point where it is referenced

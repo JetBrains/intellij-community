@@ -191,7 +191,7 @@ public class XmlCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static boolean isXmlNameCompletion(final CompletionParameters parameters) {
+  public static boolean isXmlNameCompletion(final CompletionParameters parameters) {
     final ASTNode node = parameters.getPosition().getNode();
     if (node == null || node.getElementType() != XmlTokenType.XML_NAME) {
       return false;

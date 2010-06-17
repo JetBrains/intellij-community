@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.pom.references;
+package com.intellij.psi;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author peter
+ * @author Gregory.Shrago
  */
-public abstract class PomReferenceProvider<T extends PsiElement> {
-
+public interface ContributedReferenceHost extends PsiElement {
+  /**
+   * By contributed reference host contract must always return
+   * {@link com.intellij.psi.PsiReferenceService#getReferences(PsiElement, com.intellij.psi.PsiReferenceService.Hints)}
+   * @return {@link com.intellij.psi.PsiReferenceService#getContributedReferences(PsiElement)}
+   */
   @NotNull
-  public abstract PomReference[] getReferencesByElement(@NotNull T element, @NotNull final ProcessingContext context);
-
-
-
+  PsiReference[] getReferences();
 }
