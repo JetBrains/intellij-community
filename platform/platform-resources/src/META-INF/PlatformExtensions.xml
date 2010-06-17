@@ -111,6 +111,11 @@
   <applicationService serviceInterface="com.intellij.openapi.options.SchemesManagerFactory"
                       serviceImplementation="com.intellij.openapi.options.SchemesManagerFactoryImpl"/>
 
+  <applicationService serviceInterface="com.intellij.openapi.editor.colors.EditorColorsManager"
+                      serviceImplementation="com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl"/>
+  <exportable serviceInterface="com.intellij.openapi.editor.colors.EditorColorsManager"/>
+  <schemeOwner serviceInterface="com.intellij.openapi.editor.colors.EditorColorsManager"/>
+
   <projectService serviceInterface="com.intellij.openapi.vfs.ReadonlyStatusHandler"
                   serviceImplementation="com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl"/>
   <projectService serviceInterface="com.intellij.openapi.startup.StartupManager"
