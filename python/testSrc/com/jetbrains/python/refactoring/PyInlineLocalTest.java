@@ -1,5 +1,6 @@
 package com.jetbrains.python.refactoring;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
 import com.jetbrains.python.psi.PyReferenceExpression;
@@ -30,6 +31,9 @@ public class PyInlineLocalTest extends LightMarkedTestCase {
       if (expectedError != null) fail("expected error: '" + expectedError + "', got none");
     }
     catch (Exception e) {
+      if (!Comparing.equal(e.getMessage(), expectedError)) {
+        e.printStackTrace();
+      }
       assertEquals(expectedError, e.getMessage());
       return;
     }

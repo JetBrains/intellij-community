@@ -343,7 +343,7 @@ def buildTarGz() {
 
 def layoutFull(String target, Set usedJars) {
   def openapiModules = platformApiModules()
-  def implementationModules = [platformImplementationModules(), "python", "python-ide", "python-py", "sass"].flatten()
+  def implementationModules = [platformImplementationModules(), "python", "python-ide", "sass"].flatten()
 
   layout(target) {
     dir("lib") {
