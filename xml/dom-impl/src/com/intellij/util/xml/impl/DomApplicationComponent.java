@@ -73,24 +73,6 @@ public class DomApplicationComponent {
     for (final DomFileDescription description : Extensions.getExtensions(DomFileDescription.EP_NAME)) {
       registerFileDescription(description);
     }
-
-    MetaDataRegistrar.getInstance().registerMetaData(new ElementFilter() {
-      public boolean isAcceptable(Object element, PsiElement context) {
-        if (element instanceof XmlTag) {
-          final XmlTag tag = (XmlTag)element;
-          final DomElement domElement = DomManager.getDomManager(tag.getProject()).getDomElement(tag);
-          if (domElement != null) {
-            return domElement.getGenericInfo().getNameDomElement(domElement) != null;
-          }
-        }
-        return false;
-      }
-
-      public boolean isClassAcceptable(Class hintClass) {
-        return XmlTag.class.isAssignableFrom(hintClass);
-      }
-    }, DomMetaData.class);
-
   }
 
   public static DomApplicationComponent getInstance() {

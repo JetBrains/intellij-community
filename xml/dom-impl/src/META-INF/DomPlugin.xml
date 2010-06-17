@@ -46,6 +46,7 @@
     <projectService serviceInterface="com.intellij.util.xml.actions.generate.DomTemplateRunner"
                     serviceImplementation="com.intellij.util.xml.impl.DomTemplateRunnerImpl"/>
 
+    <metaDataContributor implementation="com.intellij.util.xml.impl.DomMetaDataContributor"/>
     <semContributor implementation="com.intellij.util.xml.impl.DomSemContributor"/>
 
     <annotator language="XML" implementationClass="com.intellij.util.xml.impl.DefaultDomAnnotator"/>
