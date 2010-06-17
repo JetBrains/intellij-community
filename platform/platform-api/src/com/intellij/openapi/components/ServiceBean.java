@@ -23,6 +23,7 @@ import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.util.xmlb.annotations.Attribute;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -35,7 +36,8 @@ public class ServiceBean implements PluginAware {
   public String serviceInterface;
   private PluginDescriptor myPluginDescriptor;
 
-  public static <T> void loadServicesFromBeans(List<T> components, final ExtensionPointName<ServiceBean> epName, Class<T> componentClass) {
+  public static <T> List<T> loadServicesFromBeans(final ExtensionPointName<ServiceBean> epName, Class<T> componentClass) {
+    final List<T> components = new ArrayList<T>();
     final ServiceBean[] exportableBeans = Extensions.getExtensions(epName);
     for (ServiceBean exportableBean : exportableBeans) {
       final String serviceClass = exportableBean.serviceInterface;
@@ -61,6 +63,7 @@ public class ServiceBean implements PluginAware {
         LOG.error(e);
       }
     }
+    return components;
   }
 
   public void setPluginDescriptor(final PluginDescriptor pluginDescriptor) {

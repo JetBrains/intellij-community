@@ -104,7 +104,7 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
 
     final List<ExportableComponent> components = new ArrayList<ExportableComponent>(Arrays.asList(ApplicationManager.getApplication().getComponents(ExportableApplicationComponent.class)));
 
-    ServiceBean.loadServicesFromBeans(components, ExportableComponent.EXTENSION_POINT, ExportableComponent.class);
+    components.addAll(ServiceBean.loadServicesFromBeans(ExportableComponent.EXTENSION_POINT, ExportableComponent.class));
 
     for (ExportableComponent component : components) {
       exportableComponents.add(component);

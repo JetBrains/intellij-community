@@ -16,9 +16,12 @@
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.ServiceBean;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.extensions.ExtensionPointName;
 
 public abstract class SchemesManagerFactory {
+  public static ExtensionPointName<ServiceBean> SCHEME_OWNER = ExtensionPointName.create("com.intellij.schemeOwner");  
 
   public abstract <T extends Scheme, E extends ExternalizableScheme> SchemesManager<T,E> createSchemesManager(String fileSpec, SchemeProcessor<E> processor,
                                                                             RoamingType roamingType);
