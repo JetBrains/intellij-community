@@ -833,7 +833,6 @@ public class IdeEventQueue extends EventQueue {
             } else {
               myWaiterScheduled = true;
               SwingUtilities.invokeLater(new Runnable() {
-                @Override
                 public void run() {
                   try {
                     myWaitingForAltRelease = true;
