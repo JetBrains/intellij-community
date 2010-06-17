@@ -54,11 +54,13 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
 
     Set<Character> usedMnemonicsSet = new HashSet<Character>();
     DefaultActionGroup group = new DefaultActionGroup();
-    for (CustomLiveTemplate customTemplate : customTemplates) {
-      group.add(new WrapWithCustomTemplateAction(customTemplate, editor, file, usedMnemonicsSet));
-    }
+
     for (TemplateImpl template : templates) {
       group.add(new InvokeTemplateAction(template, editor, project, usedMnemonicsSet));
+    }
+
+    for (CustomLiveTemplate customTemplate : customTemplates) {
+      group.add(new WrapWithCustomTemplateAction(customTemplate, editor, file, usedMnemonicsSet));
     }
 
     final ListPopup popup = JBPopupFactory.getInstance()
