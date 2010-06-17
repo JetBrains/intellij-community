@@ -15,8 +15,8 @@
  */
 package com.intellij.openapi.options;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.ServiceManager;
 
 public abstract class SchemesManagerFactory {
 
@@ -24,7 +24,7 @@ public abstract class SchemesManagerFactory {
                                                                             RoamingType roamingType);
 
   public static SchemesManagerFactory getInstance(){
-    return ApplicationManager.getApplication().getComponent(SchemesManagerFactory.class);
+    return ServiceManager.getService(SchemesManagerFactory.class);
   }
 
 
