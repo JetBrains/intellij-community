@@ -1,6 +1,8 @@
 package com.jetbrains.python.psi.search;
 
+import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -15,7 +17,9 @@ import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
+import com.jetbrains.django.lang.template.DjangoTemplateFileType;
 import com.jetbrains.django.lang.template.psi.impl.DjangoTemplateFileImpl;
+import com.jetbrains.django.util.PythonUtil;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFile;
@@ -31,43 +35,14 @@ public class PyStringReferenceSearch implements QueryExecutor<PsiReference, Refe
     if (!(element instanceof PyElement) && !(element instanceof PsiDirectory) && !(element instanceof DjangoTemplateFileImpl)) {
       return true;
     }
-    final String name = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      public String compute() {
-        if (element instanceof PyFile) {
-          return FileUtil.getNameWithoutExtension(((PyFile)element).getName());
-        } else
-          if (element instanceof PsiDirectory) {
-            return ((PsiDirectory) element).getName();
-          }
-          if (element instanceof DjangoTemplateFileImpl) {
-            return ((DjangoTemplateFileImpl) element).getName();
-          }
-        else {
-          return ((PyElement)element).getName();
-        }
-      }
-    });
-    if (StringUtil.isEmpty(name)) {
-      return true;
-    }
+
     SearchScope searchScope = params.getEffectiveSearchScope();
     if (searchScope instanceof GlobalSearchScope) {
-      searchScope = GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope)searchScope, PythonFileType.INSTANCE);
+      searchScope = GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope)searchScope, PythonFileType.INSTANCE, DjangoTemplateFileType.INSTANCE, StdFileTypes.XML, StdFileTypes.XHTML,
+                                                                    HtmlFileType.INSTANCE
+      );
     }
 
-    final TextOccurenceProcessor processor = new TextOccurenceProcessor() {
-      public boolean execute(PsiElement e, int offsetInElement) {
-        final PsiReference[] refs = e.getReferences();
-        for (PsiReference ref : refs) {
-            if (ref.isReferenceTo(element)) {
-              return consumer.process(ref);
-            }
-        }
-        return true;
-      }
-    };
-
-    return PsiManager.getInstance(element.getProject()).getSearchHelper().
-      processElementsWithWord(processor, searchScope, name, UsageSearchContext.IN_STRINGS, true);
+    return PythonUtil.searchElementStringReferences(consumer, element, searchScope);
   }
 }
