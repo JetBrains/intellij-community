@@ -348,14 +348,6 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     }
   }
 
-  public void canApply() throws ConfigurationException {
-    for (ModuleConfigurationEditor editor : myEditors) {
-      if (editor instanceof ModuleElementsEditor) {
-        ((ModuleElementsEditor)editor).canApply();
-      }
-    }
-  }
-
   public String getName() {
     return myName;
   }
