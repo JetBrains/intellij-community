@@ -86,6 +86,7 @@ public class IdRefReference extends BasicAttributeValueReference {
 
   protected static boolean isAcceptableTagType(final XmlTag subTag) {
     return subTag.getAttributeValue(IdReferenceProvider.ID_ATTR_NAME) != null ||
+           subTag.getAttributeValue(IdReferenceProvider.FOR_ATTR_NAME) != null ||
            (subTag.getAttributeValue(IdReferenceProvider.NAME_ATTR_NAME) != null &&
             subTag.getName().indexOf(".directive") == -1);
   }
