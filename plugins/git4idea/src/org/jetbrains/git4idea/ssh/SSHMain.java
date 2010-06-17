@@ -53,7 +53,7 @@ public class SSHMain {
   /**
    * the xml RPC port
    */
-  private final GitSSHIdeaClient myXmlRpcClient;
+  private final GitSSHXmlRcpClient myXmlRpcClient;
   /**
    * the command to run
    */
@@ -116,18 +116,18 @@ public class SSHMain {
   /**
    * A constructor
    *
-   * @param xmlRpcPort a xml RPC port
-   * @param host       a host
-   * @param username   a name of user (from URL)
-   * @param port       a port
-   * @param command    a command
+   * @param host     a host
+   * @param username a name of user (from URL)
+   * @param port     a port
+   * @param command  a command
    * @throws IOException if config file could not be loaded
    */
-  private SSHMain(final int xmlRpcPort, String host, String username, Integer port, String command) throws IOException {
+  private SSHMain(String host, String username, Integer port, String command) throws IOException {
     SSHConfig config = SSHConfig.load();
     myHost = config.lookup(username, host, port);
-    myXmlRpcClient = new GitSSHIdeaClient(xmlRpcPort, myHost.isBatchMode());
-    myHandlerNo = Integer.parseInt(System.getenv(GitSSHService.SSH_HANDLER_ENV));
+    myHandlerNo = Integer.parseInt(System.getenv(GitSSHHandler.SSH_HANDLER_ENV));
+    int xmlRpcPort = Integer.parseInt(System.getenv(GitSSHHandler.SSH_PORT_ENV));
+    myXmlRpcClient = new GitSSHXmlRcpClient(xmlRpcPort, myHost.isBatchMode());
     myCommand = command;
   }
 
@@ -450,12 +450,11 @@ public class SSHMain {
    * @throws IOException if loading configuration file failed
    */
   private static SSHMain parseArguments(String[] args) throws IOException {
-    if (args.length != 3 && args.length != 5) {
+    if (args.length != 2 && args.length != 4) {
       System.err.println(SSHMainBundle.message("sshmain.invalid.amount.of.arguments", Arrays.asList(args)));
       System.exit(1);
     }
     int i = 0;
-    int xmlRpcPort = Integer.parseInt(args[i++]);
     Integer port = null;
     //noinspection HardCodedStringLiteral
     if ("-p".equals(args[i])) {
@@ -473,7 +472,7 @@ public class SSHMain {
       host = host.substring(atIndex + 1);
     }
     String command = args[i];
-    return new SSHMain(xmlRpcPort, host, user, port, command);
+    return new SSHMain(host, user, port, command);
   }
 
 

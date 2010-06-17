@@ -15,6 +15,7 @@
  */
 package org.jetbrains.git4idea.ssh;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Vector;
@@ -23,6 +24,31 @@ import java.util.Vector;
  * An interface for GIT SSH handler
  */
 public interface GitSSHHandler {
+  /**
+   * The prefix of the ssh script name
+   */
+  @NonNls String GIT_SSH_PREFIX = "git-ssh-";
+  /**
+   * Name of environment variable for SSH handler number
+   */
+  @NonNls String SSH_HANDLER_ENV = "GIT4IDEA_SSH_HANDLER";
+  /**
+   * Name of environment variable for SSH handler
+   */
+  @NonNls String SSH_PORT_ENV = "GIT4IDEA_SSH_PORT";
+  /**
+   * Name of environment variable for SSH executable
+   */
+  @NonNls String GIT_SSH_ENV = "GIT_SSH";
+  /**
+   * The string used to indicate missing value
+   */
+  String XML_RPC_NULL_STRING = "\u0000";
+  /**
+   * Name of the handler
+   */
+  @NonNls String HANDLER_NAME = "Git4ideaSSHHandler";
+
   /**
    * Verify server host key
    *
@@ -44,11 +70,11 @@ public interface GitSSHHandler {
   /**
    * Ask passphrase for the key
    *
-   * @param handler   a handler identifier
-   * @param userName  a name of user
-   * @param keyPath   a path for the key
+   * @param handler       a handler identifier
+   * @param userName      a name of user
+   * @param keyPath       a path for the key
    * @param resetPassword a reset password if one was stored in password database
-   * @param lastError a last error (or empty string)
+   * @param lastError     a last error (or empty string)
    * @return the passphrase entered by the user
    */
   @Nullable
@@ -81,10 +107,10 @@ public interface GitSSHHandler {
   /**
    * Ask password for the specified user name
    *
-   * @param handlerNo a handler identifier
-   * @param userName  a name of user to ask password for
+   * @param handlerNo     a handler identifier
+   * @param userName      a name of user to ask password for
    * @param resetPassword a reset password if one was stored in password database
-   * @param lastError a last error
+   * @param lastError     a last error
    * @return the password or null if authentication failed.
    */
   @Nullable

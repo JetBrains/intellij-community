@@ -34,7 +34,7 @@ import git4idea.GitVcs;
 import git4idea.config.GitVcsSettings;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.git4idea.ssh.GitSSHGUIHandler;
+import org.jetbrains.git4idea.ssh.GitSSHHandler;
 import org.jetbrains.git4idea.ssh.GitSSHService;
 
 import java.io.File;
@@ -423,11 +423,12 @@ public abstract class GitHandler {
         log.debug("running git: " + myCommandLine.getCommandLineString() + " in " + myWorkingDirectory);
       }
       if (!myNoSSHFlag && mySettings.isIdeaSsh()) {
-        GitSSHService ssh = GitSSHService.getInstance();
-        myEnv.put(GitSSHService.GIT_SSH_ENV, ssh.getScriptPath().getPath());
+        GitSSHService ssh = GitSSHIdeaService.getInstance();
+        myEnv.put(GitSSHHandler.GIT_SSH_ENV, ssh.getScriptPath().getPath());
         myHandlerNo = ssh.registerHandler(new GitSSHGUIHandler(myProject));
         myEnvironmentCleanedUp = false;
-        myEnv.put(GitSSHService.SSH_HANDLER_ENV, Integer.toString(myHandlerNo));
+        myEnv.put(GitSSHHandler.SSH_HANDLER_ENV, Integer.toString(myHandlerNo));
+        myEnv.put(GitSSHHandler.SSH_PORT_ENV, Integer.toString(ssh.getXmlRcpPort()));
       }
       myCommandLine.setEnvParams(myEnv);
       // start process
@@ -529,7 +530,7 @@ public abstract class GitHandler {
    */
   private synchronized void cleanupEnv() {
     if (!myNoSSHFlag && !myEnvironmentCleanedUp) {
-      GitSSHService ssh = GitSSHService.getInstance();
+      GitSSHService ssh = GitSSHIdeaService.getInstance();
       myEnvironmentCleanedUp = true;
       ssh.unregisterHandler(myHandlerNo);
     }
