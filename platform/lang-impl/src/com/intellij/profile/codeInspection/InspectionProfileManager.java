@@ -69,7 +69,6 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
 
   private final List<ProfileChangeAdapter> myProfileChangeAdapters = new ArrayList<ProfileChangeAdapter>();
 
-  private final String myProfileType;
   protected static final Logger LOG = Logger.getInstance("#com.intellij.profile.DefaultProfileManager");
 
   public static InspectionProfileManager getInstance() {
@@ -77,8 +76,6 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
   }
 
   public InspectionProfileManager(InspectionToolRegistrar registrar, SchemesManagerFactory schemesManagerFactory) {
-    myProfileType = Profile.INSPECTION;
-
     myRegistrar = registrar;
     mySeverityRegistrar = new SeverityRegistrar();
     SchemeProcessor<InspectionProfileImpl> processor = new BaseSchemeProcessor<InspectionProfileImpl>() {
@@ -265,10 +262,6 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
 
   public Profile createProfile() {
     return createSampleProfile();
-  }
-
-  public String getProfileType() {
-    return myProfileType;
   }
 
   public void addProfileChangeListener(final ProfileChangeAdapter listener) {

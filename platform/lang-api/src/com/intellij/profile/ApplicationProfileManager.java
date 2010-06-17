@@ -16,40 +16,15 @@
 package com.intellij.profile;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * User: anna
  * Date: 29-Nov-2005
  */
 public abstract class ApplicationProfileManager implements ProfileManager{
-
-  @Nullable
-  public static ApplicationProfileManager getProfileManager(String type) {
-    final ApplicationProfileManager[] components = ApplicationManager.getApplication().getComponents(ApplicationProfileManager.class);
-    for (ApplicationProfileManager manager : components) {
-      if (manager.getProfileType().compareTo(type) == 0) {
-        return manager;
-      }
-    }
-    return null;
-  }
-
-  public static Set<String> getRegisteredProfileTypes() {
-    final Set<String> result = new HashSet<String>();
-    final ApplicationProfileManager[] components = ApplicationManager.getApplication().getComponents(ApplicationProfileManager.class);
-    for (ApplicationProfileManager manager : components) {
-      result.add(manager.getProfileType());
-    }
-    return result;
-  }
-
   public abstract Profile createProfile();
 
   public abstract void addProfileChangeListener(ProfileChangeAdapter listener);

@@ -63,8 +63,8 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
   private StatusBarEx myStatusBar;
   private TogglePopupHintsPanel myTogglePopupHintsPanel;
 
-  public InspectionProjectProfileManager(final Project project, DependencyValidationManager holder) {
-    super(project, Profile.INSPECTION, holder);
+  public InspectionProjectProfileManager(final Project project, InspectionProfileManager inspectionProfileManager, DependencyValidationManager holder) {
+    super(project, inspectionProfileManager, holder);
     mySeverityRegistrar = new SeverityRegistrar();
   }
 
