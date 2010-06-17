@@ -80,6 +80,111 @@ NewClass c = new NewClass()
     myFixture.checkResult "print new Foo().set(2)"
   }
 
+  public void testProperty() {
+    myFixture.configureByText("a.groovy", """
+class Foo {
+  def p<caret>rop
+
+  def foo() {
+    print prop
+
+    print getProp()
+
+    setProp(2)
+  }
+}""")
+    PsiElement field = myFixture.getElementAtCaret()
+    myFixture.renameElement field, "newName"
+
+    myFixture.checkResult """
+class Foo {
+  def newName
+
+  def foo() {
+    print newName
+
+    print getNewName()
+
+    setNewName(2)
+  }
+}"""
+  }
+
+  public void testPropertyWithLocalCollision() {
+    myFixture.configureByText("a.groovy", """
+class Foo {
+  def p<caret>rop
+
+  def foo() {
+    def newName = a;
+    print prop
+
+    print getProp()
+
+    setProp(2)
+
+    print newName
+  }
+}""")
+    PsiElement field = myFixture.getElementAtCaret()
+    myFixture.renameElement field, "newName"
+
+    myFixture.checkResult """
+class Foo {
+  def newName
+
+  def foo() {
+    def newName = a;
+    print this.newName
+
+    print getNewName()
+
+    setNewName(2)
+
+    print newName
+  }
+}"""
+  }
+
+  public void testPropertyWithFieldCollision() {
+    myFixture.configureByText("a.groovy", """
+class A {
+  String na<caret>me;
+
+  class X {
+
+    String ndame;
+    void foo() {
+      print name
+
+      print getName()
+
+      setName("a")
+    }
+  }
+}""")
+    PsiElement field = myFixture.getElementAtCaret()
+    myFixture.renameElement field, "ndame"
+
+    myFixture.checkResult """
+class A {
+  String ndame;
+
+  class X {
+
+    String ndame;
+    void foo() {
+      print A.this.ndame
+
+      print A.this.getNdame()
+
+      A.this.setNdame("a")
+    }
+  }
+}"""
+  }
+
+
 
   public void doTest() throws Throwable {
     final String testFile = getTestName(true).replace('$', '/') + ".test";
