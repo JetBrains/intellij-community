@@ -367,7 +367,7 @@
         <keyboard-shortcut keymap="Mac OS X" first-keystroke="alt R"/>
         <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt R"/>
         <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta alt R" remove="true"/>
-        <keyboard-shortcut keymap="visual studio" first-keystroke="ctrl alt R" remove="true"/>
+        <keyboard-shortcut keymap="Visual Studio" first-keystroke="ctrl alt R" remove="true"/>
         <keyboard-shortcut keymap="Eclipse" first-keystroke="ctrl alt R" remove="true"/>
       </action>
 
