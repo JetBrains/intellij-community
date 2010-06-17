@@ -104,7 +104,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     PsiReference[] references = new PsiReference[otherReferences.length + 1];
 
     references[0] = this;
-    System.arraycopy(otherReferences, 0, references, 0, otherReferences.length);
+    System.arraycopy(otherReferences, 0, references, 1, otherReferences.length);
 
     return new PsiMultiReference(references, this);
   }
