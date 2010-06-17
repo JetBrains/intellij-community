@@ -36,7 +36,7 @@ public class SSHConfig {
   /**
    * User home directory
    */
-  @NonNls private final static String USER_HOME;
+  @NonNls public final static String USER_HOME;
 
   static {
     String e = System.getenv("HOME");
