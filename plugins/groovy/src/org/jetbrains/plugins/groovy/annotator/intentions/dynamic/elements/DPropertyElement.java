@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.cache.ModifierFlags;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
@@ -49,7 +50,7 @@ public class DPropertyElement extends DItemElement {
     if (myPsi != null) return myPsi;
 
     Boolean isStatic = isStatic();
-    int modifiers = (isStatic != null && isStatic.booleanValue()) ? Modifier.STATIC : 0;
+    int modifiers = (isStatic != null && isStatic.booleanValue()) ? ModifierFlags.STATIC_MASK : 0;
 
     String type = getType();
     if (type == null) {

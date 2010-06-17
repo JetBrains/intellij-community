@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
+import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -48,7 +49,7 @@ public class GrSyntheticMethodImplementation extends GrSyntheticMethod {
   }
 
   protected Set<String> getModifiers() {
-    return LightModifierList.getModifierSet(Modifier.PUBLIC);
+    return RecordUtil.getModifierSet(Modifier.PUBLIC);
   }
 
   public PsiElement copy() {
