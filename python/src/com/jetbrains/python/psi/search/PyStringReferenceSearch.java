@@ -38,8 +38,7 @@ public class PyStringReferenceSearch implements QueryExecutor<PsiReference, Refe
 
     SearchScope searchScope = params.getEffectiveSearchScope();
     if (searchScope instanceof GlobalSearchScope) {
-      searchScope = GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope)searchScope, PythonFileType.INSTANCE, DjangoTemplateFileType.INSTANCE, StdFileTypes.XML, StdFileTypes.XHTML,
-                                                                    HtmlFileType.INSTANCE
+      searchScope = GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope)searchScope, PythonFileType.INSTANCE
       );
     }
 
