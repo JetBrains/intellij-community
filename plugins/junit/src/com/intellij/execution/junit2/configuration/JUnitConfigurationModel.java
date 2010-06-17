@@ -27,6 +27,7 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.PlainDocument;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 // Author: dyoma
@@ -35,16 +36,17 @@ public class JUnitConfigurationModel {
   public static final int ALL_IN_PACKAGE = 0;
   public static final int CLASS = 1;
   public static final int METHOD = 2;
+  public static final int PATTERN = 3;
 
   private static final List<String> ourTestObjects;
   static {
-    ourTestObjects = Arrays.asList(JUnitConfiguration.TEST_PACKAGE, JUnitConfiguration.TEST_CLASS, JUnitConfiguration.TEST_METHOD);
+    ourTestObjects = Arrays.asList(JUnitConfiguration.TEST_PACKAGE, JUnitConfiguration.TEST_CLASS, JUnitConfiguration.TEST_METHOD, JUnitConfiguration.TEST_PATTERN);
   }
 
 
   private JUnitConfigurable myListener;
   private int myType = -1;
-  private final Document[] myJUnitDocuments = new Document[3];
+  private final Document[] myJUnitDocuments = new Document[4];
   private final Project myProject;
 
   public JUnitConfigurationModel(final Project project) {
@@ -81,7 +83,7 @@ public class JUnitConfigurationModel {
     final String testObject = getTestObject();
     final String className = getJUnitTextValue(CLASS);
     data.TEST_OBJECT = testObject;
-    if (testObject != JUnitConfiguration.TEST_PACKAGE) {
+    if (testObject != JUnitConfiguration.TEST_PACKAGE && testObject != JUnitConfiguration.TEST_PATTERN) {
       final PsiClass testClass = JUnitUtil.findPsiClass(className, module, myProject);
       data.METHOD_NAME = getJUnitTextValue(METHOD);
       if (testClass != null && testClass.isValid()) {
@@ -92,7 +94,19 @@ public class JUnitConfigurationModel {
       }
     }
     else {
-      data.PACKAGE_NAME = getJUnitTextValue(ALL_IN_PACKAGE);
+      if (testObject == JUnitConfiguration.TEST_PACKAGE) {
+        data.PACKAGE_NAME = getJUnitTextValue(ALL_IN_PACKAGE);
+      }
+      else {
+        final LinkedHashSet<String> set = new LinkedHashSet<String>();
+        final String[] patterns = getJUnitTextValue(PATTERN).split("\\|\\|");
+        for (String pattern : patterns) {
+          if (pattern.length() > 0) {
+            set.add(pattern);
+          }
+        }
+        data.setPatterns(set);
+      }
       data.MAIN_CLASS_NAME = "";
       data.METHOD_NAME = "";
     }
@@ -122,6 +136,7 @@ public class JUnitConfigurationModel {
     setJUnitTextValue(ALL_IN_PACKAGE, data.getPackageName());
     setJUnitTextValue(CLASS, data.getMainClassName());
     setJUnitTextValue(METHOD, data.getMethodName());
+    setJUnitTextValue(PATTERN, data.getPatternPresentation());
   }
 
   private void setJUnitTextValue(final int index, final String text) {

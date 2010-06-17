@@ -36,7 +36,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -132,18 +131,18 @@ public class HotSwapManager extends AbstractProjectComponent {
 
     swapProgress.setCancelWorker(new Runnable() {
       public void run() {
-        scanClassesCommand.terminate();
+        scanClassesCommand.cancel();
       }
     });
 
-    for (Iterator<DebuggerSession> iterator = sessions.iterator(); iterator.hasNext();) {
-      final DebuggerSession debuggerSession = iterator.next();
-      if(debuggerSession.isAttached()) {
+    for (final DebuggerSession debuggerSession : sessions) {
+      if (debuggerSession.isAttached()) {
         scanClassesCommand.addCommand(debuggerSession.getProcess(), new DebuggerCommandImpl() {
           protected void action() throws Exception {
             swapProgress.setDebuggerSession(debuggerSession);
-            HashMap<String, HotSwapFile> sessionClasses = getInstance(swapProgress.getProject()).getModifiedClasses(debuggerSession, swapProgress);
-            if(!sessionClasses.isEmpty()) {
+            HashMap<String, HotSwapFile> sessionClasses =
+              getInstance(swapProgress.getProject()).getModifiedClasses(debuggerSession, swapProgress);
+            if (!sessionClasses.isEmpty()) {
               modifiedClasses.put(debuggerSession, sessionClasses);
             }
           }
@@ -162,16 +161,17 @@ public class HotSwapManager extends AbstractProjectComponent {
 
     reloadClassesProgress.setCancelWorker(new Runnable() {
       public void run() {
-        reloadClassesCommand.terminate();
+        reloadClassesCommand.cancel();
       }
     });
 
-    for (Iterator<DebuggerSession> iterator = modifiedClasses.keySet().iterator(); iterator.hasNext();) {
-      final DebuggerSession debuggerSession = iterator.next();
+    for (final DebuggerSession debuggerSession : modifiedClasses.keySet()) {
       reloadClassesCommand.addCommand(debuggerSession.getProcess(), new DebuggerCommandImpl() {
         protected void action() throws Exception {
           reloadClassesProgress.setDebuggerSession(debuggerSession);
-          getInstance(reloadClassesProgress.getProject()).reloadClasses(debuggerSession, modifiedClasses.get(debuggerSession), reloadClassesProgress);
+          getInstance(reloadClassesProgress.getProject()).reloadClasses(
+            debuggerSession, modifiedClasses.get(debuggerSession), reloadClassesProgress
+          );
         }
       });
     }

@@ -32,12 +32,15 @@ import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
+import com.intellij.util.Icons;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,6 +48,7 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.text.Document;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -55,8 +59,10 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
   private JRadioButton myAllInPackageButton;
   private JRadioButton myClassButton;
   private JRadioButton myTestMethodButton;
+  private JRadioButton myTestPatternButton;
   private JComponent myPackagePanel;
   private LabeledComponent<TextFieldWithBrowseButton> myPackage;
+  private LabeledComponent<JPanel> myPattern;
   private LabeledComponent<TextFieldWithBrowseButton> myClass;
   private LabeledComponent<TextFieldWithBrowseButton> myMethod;
 
@@ -67,15 +73,17 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
   private JRadioButton myWholeProjectScope;
   private JRadioButton mySingleModuleScope;
   private JRadioButton myModuleWDScope;
+  private TextFieldWithBrowseButton myPatternTextField;
 
   private static final ArrayList<TIntArrayList> ourEnabledFields = new ArrayList<TIntArrayList>(Arrays.asList(new TIntArrayList[]{
     new TIntArrayList(new int[]{0}),
     new TIntArrayList(new int[]{1}),
-    new TIntArrayList(new int[]{1, 2})
+    new TIntArrayList(new int[]{1, 2}),
+    new TIntArrayList(new int[]{3})
   }));
   private final ConfigurationModuleSelector myModuleSelector;
-  private final JRadioButton[] myRadioButtons = new JRadioButton[3];
-  private final LabeledComponent[] myTestLocations = new LabeledComponent[3];
+  private final JRadioButton[] myRadioButtons = new JRadioButton[4];
+  private final LabeledComponent[] myTestLocations = new LabeledComponent[4];
   private final JUnitConfigurationModel myModel;
 
   private final BrowseModuleValueActionListener[] myBrowsers;
@@ -92,15 +100,31 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
     myBrowsers = new BrowseModuleValueActionListener[]{
       new PackageChooserActionListener(project),
       new TestClassBrowser(project),
-      new MethodBrowser(project)
+      new MethodBrowser(project),
+      new TestsChooserActionListener(project)
     };
     // Garbage support
     myRadioButtons[JUnitConfigurationModel.ALL_IN_PACKAGE] = myAllInPackageButton;
     myRadioButtons[JUnitConfigurationModel.CLASS] = myClassButton;
     myRadioButtons[JUnitConfigurationModel.METHOD] = myTestMethodButton;
+    myRadioButtons[JUnitConfigurationModel.PATTERN] = myTestPatternButton;
     myTestLocations[JUnitConfigurationModel.ALL_IN_PACKAGE] = myPackage;
     myTestLocations[JUnitConfigurationModel.CLASS] = myClass;
     myTestLocations[JUnitConfigurationModel.METHOD] = myMethod;
+    final JPanel panel = myPattern.getComponent();
+    panel.setLayout(new BorderLayout());
+    myPatternTextField = new TextFieldWithBrowseButton();
+    myPatternTextField.setButtonIcon(Icons.ADD_ICON);
+    panel.add(myPatternTextField, BorderLayout.CENTER);
+    final FixedSizeButton editBtn = new FixedSizeButton();
+    editBtn.setIcon(IconLoader.getIcon("/actions/showViewer.png"));
+    editBtn.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        Messages.showTextAreaDialog(myPatternTextField.getTextField(), "Configure suite tests", "EditParametersPopupWindow");
+      }
+    });
+    panel.add(editBtn, BorderLayout.EAST);
+    myTestLocations[JUnitConfigurationModel.PATTERN] = myPattern;
     // Done
 
     myModel.setListener(this);
@@ -170,6 +194,8 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
   private void changePanel () {
     if (myAllInPackageButton.isSelected()) {
       myPackagePanel.setVisible(true);
+      myPackage.setVisible(true);
+      myPattern.setVisible(false);
       myClass.setVisible(false);
       myMethod.setVisible(false);
     }
@@ -178,10 +204,16 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
       myClass.setVisible(true);
       myMethod.setVisible(false);
     }
-    else {
+    else if (myTestMethodButton.isSelected()){
       myPackagePanel.setVisible(false);
       myClass.setVisible(true);
       myMethod.setVisible(true);
+    } else {
+      myPackagePanel.setVisible(true);
+      myPattern.setVisible(true);
+      myPackage.setVisible(false);
+      myClass.setVisible(false);
+      myMethod.setVisible(false);
     }
   }
 
@@ -193,16 +225,22 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
 
   private void installDocuments() {
     for (int i = 0; i < myTestLocations.length; i++) {
-      final LabeledComponent<TextFieldWithBrowseButton> testLocation = getTestLocation(i);
-      final TextFieldWithBrowseButton field = testLocation.getComponent();
+      final LabeledComponent testLocation = getTestLocation(i);
+      final JComponent component = testLocation.getComponent();
+      final TextFieldWithBrowseButton field;
+      if (component instanceof TextFieldWithBrowseButton) {
+        field = (TextFieldWithBrowseButton)component;
+      } else {
+        field = myPatternTextField;
+      }
       final Document document = myModel.getJUnitDocument(i);
       field.getTextField().setDocument(document);
       myBrowsers[i].setField(field);
     }
   }
 
-  public LabeledComponent<TextFieldWithBrowseButton> getTestLocation(final int index) {
-    return (LabeledComponent<TextFieldWithBrowseButton>)myTestLocations[index];
+  public LabeledComponent getTestLocation(final int index) {
+    return myTestLocations[index];
   }
 
   private static void addRadioButtonsListeners(final JRadioButton[] radioButtons, ChangeListener listener) {
@@ -231,6 +269,24 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
       dialog.show();
       final PsiPackage aPackage = dialog.getSelectedPackage();
       return aPackage != null ? aPackage.getQualifiedName() : null;
+    }
+  }
+
+  private class TestsChooserActionListener extends TestClassBrowser {
+    public TestsChooserActionListener(final Project project) {
+      super(project);
+    }
+
+    @Override
+    protected void onClassChoosen(PsiClass psiClass) {
+      final JTextField textField = myPatternTextField.getTextField();
+      final String text = textField.getText();
+      textField.setText(text + (text.length() > 0 ? "||" : "") + psiClass.getQualifiedName());
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      showDialog();
     }
   }
 
@@ -300,12 +356,12 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
   }
 
   private String getClassName() {
-    return getTestLocation(JUnitConfigurationModel.CLASS).getComponent().getText();
+    return ((LabeledComponent<TextFieldWithBrowseButton>)getTestLocation(JUnitConfigurationModel.CLASS).getComponent()).getText();
   }
 
   private void setPackage(final PsiPackage aPackage) {
     if (aPackage == null) return;
-    getTestLocation(JUnitConfigurationModel.ALL_IN_PACKAGE).getComponent().setText(aPackage.getQualifiedName());
+    ((LabeledComponent<TextFieldWithBrowseButton>)getTestLocation(JUnitConfigurationModel.ALL_IN_PACKAGE).getComponent()).setText(aPackage.getQualifiedName());
   }
 
   @NotNull

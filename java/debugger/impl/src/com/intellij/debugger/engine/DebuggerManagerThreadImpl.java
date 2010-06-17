@@ -99,42 +99,29 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
     final DebuggerCommandImpl currentCommand = myEvents.getCurrentEvent();
 
     invoke(command);
-    final Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
-    alarm.addRequest(new Runnable() {
-      public void run() {
-        if (currentCommand != null) {
-          terminateCommand(currentCommand);
+
+    if (currentCommand != null) {
+      final Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+      alarm.addRequest(new Runnable() {
+        public void run() {
+          if (currentCommand == myEvents.getCurrentEvent()) {
+            // if current command is still in progress, cancel it
+            getCurrentRequest().interrupt();
+            try {
+              getCurrentRequest().join();
+            }
+            catch (InterruptedException ignored) {
+            }
+            catch (Exception e) {
+              throw new RuntimeException(e);
+            }
+            finally {
+              startNewWorkerThread();
+            }
+          }
         }
-      }
-    }, terminateTimeout);
-  }
-
-  /**
-   * interrupts command in old worker thread and closes old thread.
-   * then starts new worker thread
-   * <p/>
-   * Note: if old thread is working and InterruptedException is not thrown
-   * command will continue execution in old thread simulteniously with
-   * commands in new thread
-   * <p/>
-   * use very carefully!
-   */
-
-  public void terminateCommand(final DebuggerCommandImpl command) {
-    if (command == myEvents.getCurrentEvent()) {
-      getCurrentRequest().interrupt();
-      try {
-        getCurrentRequest().join(RESTART_TIMEOUT);
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-      startNewWorkerThread();
+      }, terminateTimeout);
     }
-  }
-
-  public DebuggerCommandImpl getCurrentCommand() {
-    return myEvents.getCurrentEvent();
   }
 
 

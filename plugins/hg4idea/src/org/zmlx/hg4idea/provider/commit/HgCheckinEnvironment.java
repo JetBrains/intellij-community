@@ -18,7 +18,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
@@ -34,20 +33,16 @@ import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.HgVcsMessages;
-import gnu.trove.THashSet;
-import org.zmlx.hg4idea.*;
-
 import org.zmlx.hg4idea.command.*;
 
 import java.util.*;
-import java.util.List;
 
 public class HgCheckinEnvironment implements CheckinEnvironment {
 
-  private final Project myProject;
+  private final Project project;
 
   public HgCheckinEnvironment(Project project) {
-    this.myProject = project;
+    this.project = project;
   }
 
   public RefreshableOnComponent createAdditionalOptionsPanel(CheckinProjectPanel panel,
@@ -69,36 +64,25 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
 
   @SuppressWarnings({"ThrowableInstanceNeverThrown"})
   public List<VcsException> commit(List<Change> changes, String preparedComment, @NotNull NullableFunction<Object, Object> parametersHolder) {
-    final List<VcsException> exceptions = new LinkedList<VcsException>();
-    final Collection<Change> removedChanges = (Collection<Change>) parametersHolder.fun(HgVcs.getInstance(myProject));
+    List<VcsException> exceptions = new LinkedList<VcsException>();
+    for (Map.Entry<VirtualFile, Set<HgFile>> entry : getFilesByRepository(changes).entrySet()) {
 
-    for (final Map.Entry<VirtualFile, List<Change>> entry : groupChangesByRepository(changes).entrySet()) {
-      // separate commit for each repository
-      final VirtualFile repo = entry.getKey();
-      final HgCommitCommand command = new HgCommitCommand(myProject, repo, preparedComment);
+      VirtualFile repo = entry.getKey();
+      Set<HgFile> selectedFiles = entry.getValue();
 
-      // commit files, except those which were deleted from filesystem, but not from the VCS.
-      // HgRemoveCheckinHandler proposes to remove such files from the VCS before commit.
-      // If some of those weren't removed, it was done intentionally, so just silently ignore them.
-      final Set<HgFile> selectedFiles = new THashSet<HgFile>();
-      for (Change c : entry.getValue()) {
-        if (c.getFileStatus() == FileStatus.DELETED_FROM_FS) {
-          if (removedChanges == null || !removedChanges.contains(c)) { // missing and not removed from vcs via the HgRemoveCheckinHandler
-            continue;
-          }
-        }
-        final FilePath filepath = (c.getAfterRevision() == null ? c.getBeforeRevision().getFile() : c.getAfterRevision().getFile());
-        selectedFiles.add(new HgFile(repo, filepath));
-      }
-
+      HgCommitCommand command = new HgCommitCommand(project, repo, preparedComment);
+      
       if (isMergeCommit(repo)) {
         //partial commits are not allowed during merges
         //verifyResult that all changed files in the repo are selected
         //If so, commit the entire repository
         //If not, abort
 
-        final Set<HgFile> changedFilesNotInCommit = getChangedFilesNotInCommit(repo, selectedFiles);
-        if (!changedFilesNotInCommit.isEmpty()) {
+        Set<HgFile> changedFilesNotInCommit = getChangedFilesNotInCommit(repo, selectedFiles);
+        boolean partial = !changedFilesNotInCommit.isEmpty();
+
+
+        if (partial) {
           final StringBuilder filesNotIncludedString = new StringBuilder();
           for (HgFile hgFile : changedFilesNotInCommit) {
             filesNotIncludedString.append("<li>");
@@ -109,17 +93,12 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
             //abort
             return exceptions;
           }
-          // else : all was included, or it was OK to commit everything,
-          // so no need to set the files on the command, because then mercurial will complain
         }
-      }
-      else {
-        if (selectedFiles.isEmpty()) {  // nothing to commit. Aborting here, because otherwise 'hg commit' without specifying files will commit all files.
-          return exceptions;
-        }
+        // else : all was included, or it was OK to commit everything,
+        // so no need to set the files on the command, because then mercurial will complain
+      } else {
         command.setFiles(selectedFiles);
       }
-
       try {
         command.execute();
       } catch (HgCommandException e) {
@@ -132,13 +111,13 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
   }
 
   private boolean isMergeCommit(VirtualFile repo) {
-    return new HgWorkingCopyRevisionsCommand(myProject).parents(repo).size() > 1;
+    return new HgWorkingCopyRevisionsCommand(project).parents(repo).size() > 1;
   }
 
   private Set<HgFile> getChangedFilesNotInCommit(VirtualFile repo, Set<HgFile> selectedFiles) {
-    List<HgRevisionNumber> parents = new HgWorkingCopyRevisionsCommand(myProject).parents(repo);
+    List<HgRevisionNumber> parents = new HgWorkingCopyRevisionsCommand(project).parents(repo);
 
-    HgStatusCommand statusCommand = new HgStatusCommand(myProject);
+    HgStatusCommand statusCommand = new HgStatusCommand(project);
     statusCommand.setBaseRevision(parents.get(0));
     statusCommand.setIncludeUnknown(false);
     statusCommand.setIncludeIgnored(false);
@@ -163,7 +142,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     Runnable runnable = new Runnable() {
       public void run() {
         choice[0] = Messages.showOkCancelDialog(
-          myProject,
+          project, 
           HgVcsMessages.message("hg4idea.commit.partial.merge.message", filesNotIncludedString),
           HgVcsMessages.message("hg4idea.commit.partial.merge.title"),
           null
@@ -184,14 +163,21 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
   }
 
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {
-    HgUtil.removeFilesFromVcs(myProject, files);
+    HgRemoveCommand command = new HgRemoveCommand(project);
+    for (FilePath filePath : files) {
+      VirtualFile vcsRoot = VcsUtil.getVcsRootFor(project, filePath);
+      if (vcsRoot == null) {
+        continue;
+      }
+      command.execute(new HgFile(vcsRoot, filePath));
+    }
     return null;
   }
 
   public List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files) {
-    HgAddCommand command = new HgAddCommand(myProject);
+    HgAddCommand command = new HgAddCommand(project);
     for (VirtualFile file : files) {
-      VirtualFile vcsRoot = VcsUtil.getVcsRootFor(myProject, file);
+      VirtualFile vcsRoot = VcsUtil.getVcsRootFor(project, file);
       if (vcsRoot == null) {
         continue;
       }
@@ -204,32 +190,39 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     return false;
   }
 
-  /**
-   * Groups the changes by repository roots.
-   * @param changes the list of all changes.
-   * @return Changes grouped by repository roots.
-   */
-  private Map<VirtualFile, List<Change>> groupChangesByRepository(List<Change> changes) {
-    final Map<VirtualFile, List<Change>> result = new HashMap<VirtualFile, List<Change>>();
+  private Map<VirtualFile, Set<HgFile>> getFilesByRepository(List<Change> changes) {
+    Map<VirtualFile, Set<HgFile>> result = new HashMap<VirtualFile, Set<HgFile>>();
     for (Change change : changes) {
-      final ContentRevision afterRevision = change.getAfterRevision();
-      final ContentRevision beforeRevision = change.getBeforeRevision();
-      assert beforeRevision != null || afterRevision != null; // nothing-to-nothing change cannot happen.
-      final FilePath filePath = (afterRevision != null) ? afterRevision.getFile() : beforeRevision.getFile();
+      ContentRevision afterRevision = change.getAfterRevision();
+      ContentRevision beforeRevision = change.getBeforeRevision();
 
-      final VirtualFile repo = VcsUtil.getVcsRootFor(myProject, filePath);
-      if (repo == null || filePath.isDirectory()) {
-        continue;
+      if (afterRevision != null) {
+        addFile(result, afterRevision.getFile());
       }
-
-      List<Change> repoChanges = result.get(repo);
-      if (repoChanges == null) {
-        repoChanges = new ArrayList<Change>();
-        result.put(repo, repoChanges);
+      if (beforeRevision != null) {
+        addFile(result, beforeRevision.getFile());
       }
-      repoChanges.add(change);
     }
     return result;
+  }
+
+  private void addFile(Map<VirtualFile, Set<HgFile>> result, FilePath filePath) {
+    if (filePath == null) {
+      return;
+    }
+
+    VirtualFile repo = VcsUtil.getVcsRootFor(project, filePath);
+    if (repo == null || filePath.isDirectory()) {
+      return;
+    }
+
+    Set<HgFile> hgFiles = result.get(repo);
+    if (hgFiles == null) {
+      hgFiles = new HashSet<HgFile>();
+      result.put(repo, hgFiles);
+    }
+
+    hgFiles.add(new HgFile(repo, filePath));
   }
 
 }

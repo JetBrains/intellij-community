@@ -107,7 +107,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private final ExecutorService ourThreadExecutorsService = new ThreadPoolExecutor(
     3,
     Integer.MAX_VALUE,
-    30 * 60L,
+    5 * 60L,
     TimeUnit.SECONDS,
     new SynchronousQueue<Runnable>(),
     new ThreadFactory() {
@@ -1090,16 +1090,19 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public boolean isRestartCapable() {
-    return SystemInfo.isWindows;
+    return SystemInfo.isWindows || SystemInfo.isMacOSSnowLeopard;
   }
 
   public void restart() {
-   if (SystemInfo.isWindows) {
-     Win32Restarter.restart();
+    if (SystemInfo.isWindows) {
+      Win32Restarter.restart();
+    }
+    else if (SystemInfo.isMacOSSnowLeopard) {
+      MacRestarter.restart();
     }
     else {
-     exit();
-   }
+      exit();
+    }
   }
 
   public boolean isSaving() {

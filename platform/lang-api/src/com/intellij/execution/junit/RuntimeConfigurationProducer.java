@@ -61,7 +61,7 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
         final RunManager runManager = RunManager.getInstance(context.getProject());
         final ConfigurationType type = result.myConfiguration.getType();
         final RunnerAndConfigurationSettings[] configurations = runManager.getConfigurationSettings(type);
-        final RunnerAndConfigurationSettings configuration = findExistingByElement(_location, configurations);
+        final RunnerAndConfigurationSettings configuration = findExistingByElement(_location, configurations, context);
         if (configuration != null) {
           result.myConfiguration = configuration;
         }
@@ -72,10 +72,10 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
   }
 
   @Nullable
-  public RunnerAndConfigurationSettings findExistingConfiguration(@NotNull Location location) {
+  public RunnerAndConfigurationSettings findExistingConfiguration(@NotNull Location location, ConfigurationContext context) {
     final RunManager runManager = RunManager.getInstance(location.getProject());
     final RunnerAndConfigurationSettings[] configurations = runManager.getConfigurationSettings(getConfigurationType());
-    return findExistingByElement(location, configurations);
+    return findExistingByElement(location, configurations, context);
   }
 
   public abstract PsiElement getSourceElement();
@@ -89,7 +89,8 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
 
   @Nullable
   protected RunnerAndConfigurationSettings findExistingByElement(final Location location,
-                                                                 @NotNull final RunnerAndConfigurationSettings[] existingConfigurations) {
+                                                                 @NotNull final RunnerAndConfigurationSettings[] existingConfigurations,
+                                                                 ConfigurationContext context) {
     return null;
   }
 

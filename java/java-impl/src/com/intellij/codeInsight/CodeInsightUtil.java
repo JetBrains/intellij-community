@@ -16,6 +16,7 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
+import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -71,10 +72,11 @@ public class CodeInsightUtil {
 
   @NotNull
   public static PsiElement[] findStatementsInRange(@NotNull PsiFile file, int startOffset, int endOffset) {
+    Language language = findJavaOrLikeLanguage(file);
+    if (language == null) return PsiElement.EMPTY_ARRAY;
     FileViewProvider viewProvider = file.getViewProvider();
-    if (!viewProvider.getLanguages().contains(StdLanguages.JAVA)) return PsiElement.EMPTY_ARRAY;
-    PsiElement element1 = viewProvider.findElementAt(startOffset, StdLanguages.JAVA);
-    PsiElement element2 = viewProvider.findElementAt(endOffset - 1, StdLanguages.JAVA);
+    PsiElement element1 = viewProvider.findElementAt(startOffset, language);
+    PsiElement element2 = viewProvider.findElementAt(endOffset - 1, language);
     if (element1 instanceof PsiWhiteSpace) {
       startOffset = element1.getTextRange().getEndOffset();
       element1 = file.findElementAt(startOffset);
@@ -146,6 +148,18 @@ public class CodeInsightUtil {
     }
 
     return array.toArray(new PsiElement[array.size()]);
+  }
+
+  @Nullable
+  public static Language findJavaOrLikeLanguage(@NotNull final PsiFile file) {
+    final Set<Language> languages = file.getViewProvider().getLanguages();
+    for (final Language language : languages) {
+      if (language == StdLanguages.JAVA) return language;
+    }
+    for (final Language language : languages) {
+      if (language.isKindOf(StdLanguages.JAVA)) return language;
+    }
+    return null;
   }
 
   public static void sortIdenticalShortNameClasses(PsiClass[] classes, @NotNull PsiElement context) {

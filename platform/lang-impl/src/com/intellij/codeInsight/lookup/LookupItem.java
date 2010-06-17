@@ -221,9 +221,14 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
       return type;
     }
 
-    final LookupItem<?> item = (LookupItem)lookupElement;
-    final TailType attr = item.getAttribute(CompletionUtil.TAIL_TYPE_ATTR);
-    return attr != null ? attr : TailType.NONE;
+    if (lookupElement instanceof LookupItem) {
+      final LookupItem<?> item = (LookupItem)lookupElement;
+      final TailType attr = item.getAttribute(CompletionUtil.TAIL_TYPE_ATTR);
+      if (attr != null) {
+        return attr;
+      }
+    }
+    return TailType.NONE;
   }
 
 

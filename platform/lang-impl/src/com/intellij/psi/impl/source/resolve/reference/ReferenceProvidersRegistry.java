@@ -28,11 +28,14 @@ import com.intellij.pom.references.PomReferenceProvider;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.position.FilterPattern;
-import com.intellij.util.*;
-import com.intellij.util.containers.ConcurrentWeakHashMap;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.ProcessingContext;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,10 +50,28 @@ import java.util.concurrent.ConcurrentMap;
  * To change this template use Options | File Templates.
  */
 public class ReferenceProvidersRegistry extends PsiReferenceRegistrar {
-  private final ConcurrentMap<Class, SimpleProviderBinding> myBindingsMap = new ConcurrentWeakHashMap<Class, SimpleProviderBinding>();
-  private final ConcurrentMap<Class, NamedObjectProviderBinding> myNamedBindingsMap =
-    new ConcurrentWeakHashMap<Class, NamedObjectProviderBinding>();
-  private MultiMap<Class, Class> myKnownSupers;
+  private final ConcurrentMap<Class, SimpleProviderBinding> myBindingsMap = new ConcurrentHashMap<Class, SimpleProviderBinding>();
+  private final ConcurrentMap<Class, NamedObjectProviderBinding> myNamedBindingsMap = new ConcurrentHashMap<Class, NamedObjectProviderBinding>();
+  private final FactoryMap<Class, List<Class>> myKnownSupers = new ConcurrentFactoryMap<Class, List<Class>>() {
+    @Override
+    protected List<Class> create(Class key) {
+      final Set<Class> result = new LinkedHashSet<Class>();
+      for (Class candidate : myBindingsMap.keySet()) {
+        if (candidate.isAssignableFrom(key)) {
+          result.add(candidate);
+        }
+      }
+      for (Class candidate : myNamedBindingsMap.keySet()) {
+        if (candidate.isAssignableFrom(key)) {
+          result.add(candidate);
+        }
+      }
+      if (result.isEmpty()) {
+        return Collections.emptyList();
+      }
+      return new ArrayList<Class>(result);
+    }
+  };
 
   private static final Comparator<Trinity<PsiReferenceProvider, ProcessingContext, Double>> PRIORITY_COMPARATOR =
     new Comparator<Trinity<PsiReferenceProvider, ProcessingContext, Double>>() {
@@ -93,7 +114,7 @@ public class ReferenceProvidersRegistry extends PsiReferenceRegistrar {
   public <T extends PsiElement> void registerReferenceProvider(@NotNull ElementPattern<T> pattern,
                                                                @NotNull PsiReferenceProvider provider,
                                                                double priority) {
-    myKnownSupers = null;
+    myKnownSupers.clear();
     final Class scope = pattern.getCondition().getInitialCondition().getAcceptedClass();
     final PsiNamePatternCondition<?> nameCondition =
       ContainerUtil.findInstance(pattern.getCondition().getConditions(), PsiNamePatternCondition.class);
@@ -178,60 +199,38 @@ public class ReferenceProvidersRegistry extends PsiReferenceRegistrar {
     registerReferenceProvider(null, scope, provider);
   }
 
-  @Deprecated
-  public List<PsiReferenceProvider> getProvidersByElement(@NotNull PsiElement element, @NotNull Class clazz) {
-    final List<Trinity<PsiReferenceProvider, ProcessingContext, Double>> list = getPairsByElement(element, clazz);
-    final ArrayList<PsiReferenceProvider> providers = new ArrayList<PsiReferenceProvider>(list.size());
-    for (Trinity<PsiReferenceProvider, ProcessingContext, Double> trinity : list) {
-      providers.add(trinity.getFirst());
-    }
-    return providers;
-  }
-
   @NotNull
   public List<Trinity<PsiReferenceProvider, ProcessingContext, Double>> getPairsByElement(@NotNull PsiElement element,
-                                                                                          @NotNull Class clazz) {
-    assert ReflectionCache.isInstance(element, clazz);
-
-    MultiMap<Class, Class> knownSupers = myKnownSupers;
-    if (knownSupers == null) {
-      knownSupers = new MultiMap<Class, Class>();
-      Set<Class> allClasses = new THashSet<Class>();
-      allClasses.addAll(myBindingsMap.keySet());
-      allClasses.addAll(myNamedBindingsMap.keySet());
-      for (final Class ancestor : allClasses) {
-        for (final Class descendant : allClasses) {
-          if (ancestor.isAssignableFrom(descendant)) {
-            knownSupers.putValue(descendant, ancestor);
-          }
-        }
-      }
-      myKnownSupers = knownSupers;
-    }
-
+                                                                                          @NotNull PsiReferenceService.Hints hints) {
+    final Class<? extends PsiElement> clazz = element.getClass();
     List<Trinity<PsiReferenceProvider, ProcessingContext, Double>> ret = null;
-    for (final Class aClass : knownSupers.get(clazz)) {
+    for (final Class aClass : myKnownSupers.get(clazz)) {
       final SimpleProviderBinding simpleBinding = myBindingsMap.get(aClass);
       final NamedObjectProviderBinding namedBinding = myNamedBindingsMap.get(aClass);
       if (simpleBinding == null && namedBinding == null) continue;
 
       if (ret == null) ret = new SmartList<Trinity<PsiReferenceProvider, ProcessingContext, Double>>();
       if (simpleBinding != null) {
-        simpleBinding.addAcceptableReferenceProviders(element, ret, null);
+        simpleBinding.addAcceptableReferenceProviders(element, ret, hints);
       }
       if (namedBinding != null) {
-        namedBinding.addAcceptableReferenceProviders(element, ret, null);
+        namedBinding.addAcceptableReferenceProviders(element, ret, hints);
       }
     }
     return ret == null ? Collections.<Trinity<PsiReferenceProvider, ProcessingContext, Double>>emptyList() : ret;
   }
 
+  @Deprecated
   public static PsiReference[] getReferencesFromProviders(PsiElement context, @NotNull Class clazz) {
+    return getReferencesFromProviders(context, PsiReferenceService.Hints.NO_HINTS);
+  }
+
+  public static PsiReference[] getReferencesFromProviders(PsiElement context, @NotNull PsiReferenceService.Hints hints) {
     ProgressManager.checkCanceled();
     assert context.isValid() : "Invalid context: " + context;
 
     final List<Trinity<PsiReferenceProvider, ProcessingContext, Double>> providers =
-      getInstance(context.getProject()).getPairsByElement(context, clazz);
+      getInstance(context.getProject()).getPairsByElement(context, hints);
     if (providers.isEmpty()) {
       return PsiReference.EMPTY_ARRAY;
     }

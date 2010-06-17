@@ -32,7 +32,7 @@ public class GitCommitAndPushExecutor implements CommitExecutor {
 
   @Nls
   public String getActionText() {
-    return "Commit and &Push";
+    return "Commit and &Push...";
   }
 
   @NotNull

@@ -13,26 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zmlx.hg4idea;
+package com.intellij.psi;
 
-import com.intellij.openapi.vcs.CheckinProjectPanel;
-import com.intellij.openapi.vcs.checkin.CheckinHandler;
-import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
- * HgRemoveCheckinHandlerFactory provides the {@link CheckinHandler} which scans
- * the changes list for files, which were deleted on the file system, but not from
- * the VCS. 
- *
- * @author Kirill Likhodedov
+ * @author Gregory.Shrago
  */
-public class HgRemoveCheckinHandlerFactory extends CheckinHandlerFactory {
-
-  @NotNull
+public class PsiReferenceServiceImpl extends PsiReferenceService {
   @Override
-  public CheckinHandler createHandler(final CheckinProjectPanel checkinPanel) {
-    return new HgRemoveCheckinHandler(checkinPanel);
+  public List<PsiReference> getReferences(@NotNull PsiElement element, @NotNull Hints hints) {
+    if (element instanceof ContributedReferenceHost) {
+      return Arrays.asList(ReferenceProvidersRegistry.getReferencesFromProviders(element, hints));
+    }
+    else {
+      return Arrays.asList(element.getReferences());
+    }
   }
-
 }

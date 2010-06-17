@@ -393,10 +393,6 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
     myDelegate.setBackgroundColor(color);
   }
 
-  public void resetBackgourndColor() {
-    myDelegate.resetBackgourndColor();
-  }
-
   public Color getBackroundColor() {
     return myDelegate.getBackroundColor();
   }

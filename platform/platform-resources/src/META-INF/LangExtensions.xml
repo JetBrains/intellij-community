@@ -3,6 +3,7 @@
   <appStarter implementation="com.intellij.ide.ui.search.TraverseUIStarter"/>
 
   <referencesSearch implementation="com.intellij.psi.impl.search.CachesBasedRefSearcher"/>
+  <searchRequestor implementation="com.intellij.psi.impl.search.CachesBasedRefSearcher"/>
 
   <applicationService serviceInterface="com.intellij.codeInsight.completion.CompletionService"
                       serviceImplementation="com.intellij.codeInsight.completion.impl.CompletionServiceImpl"/>
@@ -116,6 +117,9 @@
 
   <applicationService serviceInterface="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileInfoManager"
                       serviceImplementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileInfoManager"/>
+
+  <applicationService serviceInterface="com.intellij.psi.PsiReferenceService"
+                      serviceImplementation="com.intellij.psi.PsiReferenceServiceImpl"/>
 
   <projectService serviceInterface="com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager"
                   serviceImplementation="com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager"/>
