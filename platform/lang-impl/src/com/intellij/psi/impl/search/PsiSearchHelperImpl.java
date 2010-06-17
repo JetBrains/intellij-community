@@ -582,25 +582,30 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return commonScope;
   }
 
-  private static MultiMap<VirtualFile, PsiSearchRequest> findFilesWithIndexEntry(IdIndexEntry entry,
+  private static MultiMap<VirtualFile, PsiSearchRequest> findFilesWithIndexEntry(final IdIndexEntry entry,
                                               final ProjectFileIndex index,
                                               final Collection<PsiSearchRequest> data,
-                                              GlobalSearchScope commonScope) {
+                                              final GlobalSearchScope commonScope) {
     final MultiMap<VirtualFile, PsiSearchRequest> local = new MultiMap<VirtualFile, PsiSearchRequest>();
-    FileBasedIndex.getInstance().processValues(IdIndex.NAME, entry, null, new FileBasedIndex.ValueProcessor<Integer>() {
-      public boolean process(VirtualFile file, Integer value) {
-        if (!IndexCacheManagerImpl.shouldBeFound(file, index)) {
-          return true;
-        }
-        int mask = value.intValue();
-        for (PsiSearchRequest single : data) {
-          if ((mask & single.searchContext) != 0 && ((GlobalSearchScope)single.searchScope).contains(file)) {
-            local.putValue(file, single);
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        FileBasedIndex.getInstance().processValues(IdIndex.NAME, entry, null, new FileBasedIndex.ValueProcessor<Integer>() {
+          public boolean process(VirtualFile file, Integer value) {
+            if (!IndexCacheManagerImpl.shouldBeFound(file, index)) {
+              return true;
+            }
+            int mask = value.intValue();
+            for (PsiSearchRequest single : data) {
+              if ((mask & single.searchContext) != 0 && ((GlobalSearchScope)single.searchScope).contains(file)) {
+                local.putValue(file, single);
+              }
+            }
+            return true;
           }
-        }
-        return true;
+        }, commonScope);
       }
-    }, commonScope);
+    });
+
     return local;
   }
 
