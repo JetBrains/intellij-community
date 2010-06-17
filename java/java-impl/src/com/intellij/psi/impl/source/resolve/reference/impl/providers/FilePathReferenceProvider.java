@@ -75,6 +75,11 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
 
   }
 
+  @Override
+  public boolean acceptsTarget(@NotNull PsiElement target) {
+    return target instanceof PsiFileSystemItem;
+  }
+
   protected boolean isPsiElementAccepted(PsiElement element) {
     return !(element instanceof PsiJavaFile && element instanceof PsiCompiledElement);
   }

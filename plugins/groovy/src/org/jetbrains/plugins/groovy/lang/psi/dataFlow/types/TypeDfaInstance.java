@@ -16,10 +16,12 @@
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
 import com.intellij.openapi.util.Computable;
-import com.intellij.psi.*;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
@@ -36,6 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.TypeInferenceHelper;
 
+import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -69,66 +72,67 @@ public class TypeDfaInstance implements DfaInstance<Map<String, PsiType>> {
     }
   }
 
-  private Computable<PsiType> getInitializerTypeComputation(PsiElement element) {
-    GrExpression initializer = null;
+  @Nullable
+  private static Computable<PsiType> getInitializerTypeComputation(final PsiElement element) {
     if (element instanceof GrReferenceExpression && ((GrReferenceExpression) element).getQualifierExpression() == null) {
       final PsiElement parent = element.getParent();
       if (parent instanceof GrAssignmentExpression) {
-        initializer = ((GrAssignmentExpression)parent).getRValue();
-      } else if (parent instanceof GrListOrMap) {
+        final GrExpression initializer = ((GrAssignmentExpression)parent).getRValue();
+        if (initializer != null) {
+          return new Computable<PsiType>() {
+            @Nullable
+            public PsiType compute() {
+              return initializer.getType();
+            }
+          };
+        }
+        return null;
+      }
+
+      if (parent instanceof GrListOrMap) {
         GrListOrMap list = (GrListOrMap)parent;
-        if (list.getParent() instanceof GrAssignmentExpression) {
-          GrAssignmentExpression assignment = (GrAssignmentExpression) list.getParent(); //multiple assignment
-          int idx = -1;
-          GrExpression[] initializers = list.getInitializers();
-          for (int i = 0; i < initializers.length; i++) {
-            if (element == initializers[i]) {
-              idx = i;
-              break;
-            }
-          }
-          if (idx >= 0) {
-            final GrExpression rValue = assignment.getRValue();
-            if (rValue != null) {
-              return getMultipleAssignmentTypeComputation(rValue, idx);
-            }
+        if (list.getParent() instanceof GrAssignmentExpression) { // multiple assignment
+          final GrExpression rValue = ((GrAssignmentExpression) list.getParent()).getRValue();
+          int idx = Arrays.asList(list.getInitializers()).indexOf(element);
+          if (idx >= 0 && rValue != null) {
+            return getMultipleAssignmentTypeComputation(rValue, idx);
           }
         }
       }
-    } else if (element instanceof GrVariable && !(element instanceof GrParameter)) {
-      initializer = ((GrVariable) element).getInitializerGroovy();
+
+      return null;
     }
 
-    final GrExpression initializer1 = initializer;
-    return initializer == null ? null : new Computable<PsiType>() {
-      public PsiType compute() {
-        return initializer1.getType();
-      }
-    };
+    if (element instanceof GrVariable) {
+      return new Computable<PsiType>() {
+        @Nullable
+        public PsiType compute() {
+          GrVariable variable = (GrVariable)element;
+          if (!(variable instanceof GrParameter)) {
+            final GrExpression initializer = variable.getInitializerGroovy();
+            if (initializer != null) {
+              return initializer.getType();
+            }
+          }
+          return variable.getTypeGroovy();
+        }
+      };
+    }
+
+    return null;
   }
 
-  private Computable<PsiType> getMultipleAssignmentTypeComputation(final GrExpression rValue, final int idx) {
+  private static Computable<PsiType> getMultipleAssignmentTypeComputation(final GrExpression rValue, final int idx) {
     return new Computable<PsiType>() {
+      @Nullable
       public PsiType compute() {
         PsiType rType = rValue.getType();
-        if (rType == null) return null;
         if (rType instanceof GrTupleType) {
           PsiType[] componentTypes = ((GrTupleType) rType).getComponentTypes();
           if (idx < componentTypes.length) return componentTypes[idx];
-        } else if (rType instanceof PsiClassType) {
-          PsiClassType.ClassResolveResult result = ((PsiClassType) rType).resolveGenerics();
-          PsiClass clazz = result.getElement();
-          if (clazz != null) {
-            PsiClass listClass = JavaPsiFacade.getInstance(rValue.getProject()).findClass("java.util.List", rValue.getResolveScope());
-            if (listClass != null && listClass.getTypeParameters().length == 1) {
-              PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(listClass, clazz, result.getSubstitutor());
-              if (substitutor != null) {
-                return substitutor.substitute(listClass.getTypeParameters()[0]);
-              }
-            }
-          }
+          return null;
         }
-        return null;
+        return PsiUtil.extractIterableTypeParameter(rType, false);
       }
     };
   }

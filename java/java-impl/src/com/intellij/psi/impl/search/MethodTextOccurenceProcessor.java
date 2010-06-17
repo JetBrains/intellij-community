@@ -23,6 +23,8 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * @author peter
  */
@@ -79,5 +81,9 @@ public class MethodTextOccurenceProcessor extends RequestResultProcessor {
     }
 
     return true;
+  }
+
+  protected List<PsiReference> getReferencesInElement(PsiElement element, int offsetInElement) {
+    return PsiReferenceService.getService().getReferences(element, new PsiReferenceService.Hints(myMethods[0], offsetInElement));
   }
 }

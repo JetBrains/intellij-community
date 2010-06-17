@@ -14,6 +14,7 @@ package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -57,7 +58,7 @@ public final class HgCommandService {
   }
 
   public static HgCommandService getInstance(Project project) {
-    return project.getComponent(HgCommandService.class);
+    return ServiceManager.getService(project, HgCommandService.class);
   }
 
   HgCommandResult execute(VirtualFile repo, String operation, List<String> arguments) {

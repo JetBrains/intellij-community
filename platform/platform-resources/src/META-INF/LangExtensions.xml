@@ -118,6 +118,9 @@
   <applicationService serviceInterface="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileInfoManager"
                       serviceImplementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileInfoManager"/>
 
+  <applicationService serviceInterface="com.intellij.psi.PsiReferenceService"
+                      serviceImplementation="com.intellij.psi.PsiReferenceServiceImpl"/>
+
   <projectService serviceInterface="com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager"
                   serviceImplementation="com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager"/>
 

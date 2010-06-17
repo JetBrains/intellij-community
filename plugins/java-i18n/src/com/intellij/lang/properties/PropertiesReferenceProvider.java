@@ -17,17 +17,17 @@ package com.intellij.lang.properties;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
+import com.intellij.lang.properties.psi.Property;
+import com.intellij.lang.properties.references.PropertyReference;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspXml.JspXmlTagBase;
-import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.xml.util.XmlUtil;
 import com.intellij.util.ProcessingContext;
-import com.intellij.lang.properties.references.PropertyReference;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -47,6 +47,11 @@ public class PropertiesReferenceProvider extends PsiReferenceProvider {
 
   public PropertiesReferenceProvider(final boolean defaultSoft) {
     myDefaultSoft = defaultSoft;
+  }
+
+  @Override
+  public boolean acceptsTarget(@NotNull PsiElement target) {
+    return target instanceof Property;
   }
 
   @NotNull

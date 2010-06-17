@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.psi;
 
-package com.intellij.psi.impl.source.resolve.reference;
-
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReferenceService;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 01.04.2003
- * Time: 16:52:28
- * To change this template use Options | File Templates.
+ * @author Gregory.Shrago
  */
-public interface ProviderBinding<T> {
-  void addAcceptableReferenceProviders(@NotNull PsiElement position, @NotNull List list,
-                                       PsiReferenceService.Hints hints);
-
-  void unregisterProvider(final T provider);
+public class PsiReferenceServiceImpl extends PsiReferenceService {
+  @Override
+  public List<PsiReference> getReferences(@NotNull PsiElement element, @NotNull Hints hints) {
+    if (element instanceof ContributedReferenceHost) {
+      return Arrays.asList(ReferenceProvidersRegistry.getReferencesFromProviders(element, hints));
+    }
+    else {
+      return Arrays.asList(element.getReferences());
+    }
+  }
 }

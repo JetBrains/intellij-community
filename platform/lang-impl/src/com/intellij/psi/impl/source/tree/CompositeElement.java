@@ -513,8 +513,12 @@ public class CompositeElement extends TreeElement {
       wrapper = myWrapper;
       if (wrapper != null) return wrapper;
 
-      return myWrapper = createPsiNoLock();
+      return getPsiNoLock();
     }
+  }
+
+  final PsiElement getPsiNoLock() {
+    return myWrapper = createPsiNoLock();
   }
 
   protected PsiElement createPsiNoLock() {
