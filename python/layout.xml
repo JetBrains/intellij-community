@@ -15,9 +15,6 @@
         <dir name="lib">
           <jar name="python.jar">
             <module name="python"> <patternset refid="resources.excluded"/> </module>
-            <module name="python-py">
-              <patternset refid="classes.excluded"/>
-            </module>
             <module name="python-plugin"/>
           </jar>
           <jar name="resources_en.jar">
