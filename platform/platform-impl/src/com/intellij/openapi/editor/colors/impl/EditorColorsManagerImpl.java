@@ -64,7 +64,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager
 
         mySchemesManager = schemesManagerFactory.createSchemesManager(
         FILE_SPEC,
-        new SchemeProcessor<EditorColorsSchemeImpl>() {
+        new BaseSchemeProcessor<EditorColorsSchemeImpl>() {
           public EditorColorsSchemeImpl readScheme(final Document document)
               throws InvalidDataException, IOException, JDOMException {
 
@@ -90,17 +90,6 @@ public class EditorColorsManagerImpl extends EditorColorsManager
 
           public boolean shouldBeSaved(final EditorColorsSchemeImpl scheme) {
             return !(scheme instanceof ReadOnlyColorsScheme);
-          }
-
-          public void initScheme(final EditorColorsSchemeImpl scheme) {
-            
-          }
-
-          public void onSchemeAdded(final EditorColorsSchemeImpl scheme) {
-
-          }
-
-          public void onSchemeDeleted(final EditorColorsSchemeImpl scheme) {
           }
 
           public void onCurrentSchemeChanged(final Scheme newCurrentScheme) {

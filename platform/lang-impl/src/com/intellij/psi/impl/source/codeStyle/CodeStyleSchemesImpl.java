@@ -19,10 +19,7 @@ package com.intellij.psi.impl.source.codeStyle;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.options.Scheme;
-import com.intellij.openapi.options.SchemeProcessor;
-import com.intellij.openapi.options.SchemesManager;
-import com.intellij.openapi.options.SchemesManagerFactory;
+import com.intellij.openapi.options.*;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -56,7 +53,7 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
   @NonNls private static final String FILE_SPEC = "$ROOT_CONFIG$/" + CODESTYLES_DIRECTORY;
 
   public CodeStyleSchemesImpl(SchemesManagerFactory schemesManagerFactory) {
-    SchemeProcessor<CodeStyleSchemeImpl> processor = new SchemeProcessor<CodeStyleSchemeImpl>() {
+    SchemeProcessor<CodeStyleSchemeImpl> processor = new BaseSchemeProcessor<CodeStyleSchemeImpl>() {
       public CodeStyleSchemeImpl readScheme(final Document schemeContent) throws IOException, JDOMException, InvalidDataException {
         return CodeStyleSchemeImpl.readScheme(schemeContent);
       }
@@ -71,16 +68,6 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
 
       public void initScheme(final CodeStyleSchemeImpl scheme) {
         scheme.init(CodeStyleSchemesImpl.this);
-      }
-
-      public void onSchemeAdded(final CodeStyleSchemeImpl scheme) {
-      }
-
-      public void onSchemeDeleted(final CodeStyleSchemeImpl scheme) {
-      }
-
-      public void onCurrentSchemeChanged(final Scheme newCurrentScheme) {
-
       }
     };
 

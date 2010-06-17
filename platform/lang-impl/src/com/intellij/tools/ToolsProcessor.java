@@ -16,22 +16,21 @@
 
 package com.intellij.tools;
 
-import com.intellij.openapi.options.SchemeProcessor;
-import com.intellij.openapi.options.Scheme;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.application.PathManager;
-import org.jetbrains.annotations.NonNls;
 import org.jdom.Document;
-import org.jdom.JDOMException;
 import org.jdom.Element;
+import org.jdom.JDOMException;
+import org.jetbrains.annotations.NonNls;
 
-import java.io.IOException;
 import java.io.File;
+import java.io.IOException;
 
 
-class ToolsProcessor implements SchemeProcessor<ToolsGroup> {
+class ToolsProcessor extends BaseSchemeProcessor<ToolsGroup> {
   @NonNls private static final String TOOL_SET = "toolSet";
   @NonNls private static final String TOOL = "tool";
   @NonNls private static final String ATTRIBUTE_NAME = "name";
@@ -132,18 +131,6 @@ class ToolsProcessor implements SchemeProcessor<ToolsGroup> {
 
   public boolean shouldBeSaved(final ToolsGroup scheme) {
     return true;
-  }
-
-  public void initScheme(final ToolsGroup scheme) {
-  }
-
-  public void onSchemeAdded(final ToolsGroup scheme) {
-  }
-
-  public void onSchemeDeleted(final ToolsGroup scheme) {
-  }
-
-  public void onCurrentSchemeChanged(final Scheme oldCurrentScheme) {
   }
 
   private void saveTool(Tool tool, Element groupElement) {
