@@ -416,6 +416,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
 
     final Ref<Boolean> cancelled = new Ref<Boolean>(Boolean.FALSE);
+    final GlobalSearchScope finalScope = searchScope;
     for (int i = 0; i < files.length; i++) {
       if (progress != null) progress.checkCanceled();
 
@@ -425,15 +426,16 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         public void run() {
           CharSequence text = psiFile.getViewProvider().getContents();
           for (int index = LowLevelSearchUtil.searchWord(text, 0, text.length(), searcher, progress); index >= 0;) {
-            final int endOffset = index + searcher.getPattern().length();
-            if (originalElement == null || !containsReferenceTo(psiFile, index, endOffset, originalElement)) {
-              if (!processor.process(psiFile, index, endOffset)) {
+            PsiReference referenceAt = psiFile.findReferenceAt(index);
+            if (referenceAt == null || originalElement == null ||
+                !PsiSearchScopeUtil.isInScope(getUseScope(originalElement).intersectWith(finalScope), psiFile)) {
+              if (!processor.process(psiFile, index, index + searcher.getPattern().length())) {
                 cancelled.set(Boolean.TRUE);
                 return;
               }
             }
 
-            index = LowLevelSearchUtil.searchWord(text, endOffset, text.length(), searcher, progress);
+            index = LowLevelSearchUtil.searchWord(text, index + searcher.getPattern().length(), text.length(), searcher, progress);
           }
         }
       });
@@ -446,20 +448,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     if (progress != null) {
       progress.popState();
     }
-  }
-
-  private static boolean containsReferenceTo(@NotNull PsiFile psiFile, int startOffset, int endOffset, @NotNull PsiElement originalElement) {
-    int index = startOffset;
-    while (index < endOffset) {
-      PsiReference referenceAt = psiFile.findReferenceAt(index);
-      if (referenceAt == null) return false;
-      if (referenceAt.isReferenceTo(originalElement)) {
-        return true;
-      }
-      int end = referenceAt.getElement().getTextRange().getStartOffset() + referenceAt.getRangeInElement().getLength();
-      index = Math.max(end, index + 1);
-    }
-    return false;
   }
 
   public void processAllFilesWithWord(@NotNull String word, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiFile> processor, final boolean caseSensitively) {
