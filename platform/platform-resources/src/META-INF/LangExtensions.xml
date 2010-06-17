@@ -232,6 +232,11 @@
 
   <elementDescriptionProvider implementation="com.intellij.psi.impl.DefaultPomTargetDescriptionProvider" order="last" id="pomDefault"/>
 
+  <applicationService serviceInterface="com.intellij.codeInspection.ex.AppInspectionProfilesVisibleTreeState"
+                      serviceImplementation="com.intellij.codeInspection.ex.AppInspectionProfilesVisibleTreeState"/>
+  <projectService serviceInterface="com.intellij.codeInspection.ex.ProjectInspectionProfilesVisibleTreeState"
+                  serviceImplementation="com.intellij.codeInspection.ex.ProjectInspectionProfilesVisibleTreeState"/>
+
   <!-- Editor -->
   <applicationConfigurable implementation="com.intellij.application.options.editor.EditorOptions" id="editor" order="after appearance"/>
 

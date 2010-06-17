@@ -16,11 +16,10 @@
 
 package com.intellij.codeInspection.ex;
 
-import com.intellij.profile.Profile;
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Property;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -29,34 +28,17 @@ public class VisibleTreeStateComponent {
   @MapAnnotation(surroundWithTag=false, surroundKeyWithTag = false, surroundValueWithTag = false)
   public Map<String, VisibleTreeState> myProfileNameToState = new HashMap<String, VisibleTreeState>();
 
-  public VisibleTreeStateComponent() {
+  public void copyFrom(VisibleTreeStateComponent state) {
+    myProfileNameToState.clear();
+    myProfileNameToState.putAll(state.myProfileNameToState);
   }
 
-  public VisibleTreeStateComponent(final Collection<Profile> profiles) {
-    for (Profile profile : profiles) {
-      if (profile instanceof InspectionProfileImpl) {
-        saveState(((InspectionProfileImpl)profile));
-      }
+  public VisibleTreeState getVisibleTreeState(InspectionProfile profile) {
+    VisibleTreeState state = myProfileNameToState.get(profile.getName());
+    if (state == null) {
+      state = new VisibleTreeState();
+      myProfileNameToState.put(profile.getName(), state);
     }
+    return state;
   }
-
-  private void saveState(final InspectionProfileImpl inspectionProfile) {
-    myProfileNameToState.put(inspectionProfile.getName(), inspectionProfile.getVisibleTreeState());
-  }
-
-  public void loadState(final InspectionProfileImpl inspectionProfile) {
-    VisibleTreeState state = myProfileNameToState.get(inspectionProfile.getName());
-    if (state != null) {
-      inspectionProfile.setVisibleTreeState(state);
-    }
-  }
-
-  public void loadState(final Collection<Profile> profiles) {
-    for (Profile profile : profiles) {
-      if (profile instanceof InspectionProfileImpl) {
-        loadState(((InspectionProfileImpl)profile));
-      }
-    }
-  }
-
 }

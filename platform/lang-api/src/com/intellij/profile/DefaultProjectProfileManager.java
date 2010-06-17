@@ -67,6 +67,10 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
     LOG.assertTrue(myApplicationProfileManager != null);
   }
 
+  public Project getProject() {
+    return myProject;
+  }
+
   public Profile getProfile(@NotNull String name, boolean returnRootProfileIfNamedIsAbsent) {
     return myProfiles.containsKey(name) ? myProfiles.get(name) : myApplicationProfileManager.getProfile(name, returnRootProfileIfNamedIsAbsent);
   }
