@@ -470,14 +470,10 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
   private JPanel createKeymapNamePanel() {
     JPanel panel = new JPanel(new GridBagLayout());
     myBaseKeymapLabel = new JLabel(KeyMapBundle.message("parent.keymap.label"));
-    Dimension preferredSize = myBaseKeymapLabel.getPreferredSize();
-    myBaseKeymapLabel.setPreferredSize(new Dimension(preferredSize.width * 2, preferredSize.height));
-    myBaseKeymapLabel.setMinimumSize(new Dimension(preferredSize.width * 2, preferredSize.height));
-    panel.add(myBaseKeymapLabel, new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,new Insets(0, 16, 0, 0),0,0));
-
+    panel.add(myBaseKeymapLabel,
+              new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 16, 0, 0), 0, 0));
     return panel;
   }
-
 
   private JPanel createFilteringPanel() {
     myActionsTree.reset(getSelectedKeymap(), getCurrentQuickListIds());
