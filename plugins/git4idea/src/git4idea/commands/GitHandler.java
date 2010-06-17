@@ -175,7 +175,7 @@ public abstract class GitHandler {
     }
     myWorkingDirectory = directory;
     myCommandLine = new GeneralCommandLine();
-    myCommandLine.setExePath(mySettings.GIT_EXECUTABLE);
+    myCommandLine.setExePath(mySettings.getGitExecutable());
     myCommandLine.setWorkingDirectory(myWorkingDirectory);
     if (command.name().length() > 0) {
       myCommandLine.addParameter(command.name());
@@ -458,7 +458,7 @@ public abstract class GitHandler {
         public void onTextAvailable(final ProcessEvent event, final Key outputType) {
           GitHandler.this.onTextAvailable(event.getText(), outputType);
         }
-      }                           );
+      });
       myHandler.startNotify();
     }
     catch (Throwable t) {

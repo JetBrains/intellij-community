@@ -332,7 +332,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
                                                 GitBundle.getString("commit.partial.merge.title"), null);
 
           }
-        }                       );
+        });
       }
       catch (RuntimeException ex) {
         throw ex;
@@ -491,18 +491,16 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    * @return a simple handler that does the task
    * @throws VcsException in case of git problem
    */
-  private static void commit(Project project,
-                             VirtualFile root,
-                             Collection<FilePath> files,
-                             File message,
-                             final String nextCommitAuthor) throws VcsException {
+  private static void commit(Project project, VirtualFile root, Collection<FilePath> files, File message, final String nextCommitAuthor)
+    throws VcsException {
     boolean isFirst = true;
     for (List<String> paths : GitFileUtils.chunkPaths(root, files)) {
       GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.COMMIT);
       handler.setNoSSH(true);
       if (isFirst) {
         isFirst = false;
-      } else {
+      }
+      else {
         handler.addParameters("--amend");
       }
       handler.addParameters("--only", "-F", message.getAbsolutePath());
@@ -623,7 +621,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       c.gridy = 1;
       c.weightx = 1;
       c.fill = GridBagConstraints.HORIZONTAL;
-      myAuthor = new JComboBox(mySettings.PREVIOUS_COMMIT_AUTHORS);
+      myAuthor = new JComboBox(mySettings.getCommitAuthors());
       myAuthor.insertItemAt("", 0);
       myAuthor.setSelectedItem("");
       myAuthor.setEditable(true);
