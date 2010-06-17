@@ -80,15 +80,17 @@ public class PopupActionChooser {
       applicable.addSeparator("Live templates");
     }
 
-    for (CustomLiveTemplate customTemplate : customTemplates) {
-      applicable.add(new WrapWithCustomTemplateAction(customTemplate, editor, file, usedMnemonicsSet));
-      hasEnabledSurrounders = true;
-    }
     for (TemplateImpl template : templates) {
       applicable.add(new InvokeTemplateAction(template, editor, project, usedMnemonicsSet));
       hasEnabledSurrounders = true;
     }
-    if (!templates.isEmpty()) {
+
+    for (CustomLiveTemplate customTemplate : customTemplates) {
+      applicable.add(new WrapWithCustomTemplateAction(customTemplate, editor, file, usedMnemonicsSet));
+      hasEnabledSurrounders = true;
+    }
+
+    if (!templates.isEmpty() || !customTemplates.isEmpty()) {
       applicable.addSeparator();
       applicable.add(new ConfigureTemplatesAction());
     }
