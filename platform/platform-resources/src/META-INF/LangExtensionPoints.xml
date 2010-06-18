@@ -435,4 +435,6 @@
 
   <extensionPoint name="semContributor"
                   interface="com.intellij.semantic.SemContributor" area="IDEA_PROJECT"/>
+
+  <extensionPoint name="typeName" beanClass="com.intellij.ide.TypeNameEP"/>
 </extensionPoints>
