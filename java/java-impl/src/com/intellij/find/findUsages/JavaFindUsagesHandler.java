@@ -346,6 +346,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
     }
 
     if (!ThrowSearchUtil.isSearchable(element) && options.isSearchForTextOccurences && options.searchScope instanceof GlobalSearchScope) {
+      // todo add to fastTrack
       processUsagesInText(element, processor, (GlobalSearchScope)options.searchScope);
     }
   }
@@ -364,7 +365,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
   private static void addClassesUsages(PsiPackage aPackage, final Processor<UsageInfo> results, final FindUsagesOptions options) {
     final HashSet<PsiFile> filesSet = new HashSet<PsiFile>();
     final ArrayList<PsiFile> files = new ArrayList<PsiFile>();
-    ReferencesSearch.search(aPackage, options.searchScope, false).forEach(new ReadActionProcessor<PsiReference>() {
+    ReferencesSearch.search(new ReferencesSearch.SearchParameters(aPackage, options.searchScope, false, options.fastTrack)).forEach(new ReadActionProcessor<PsiReference>() {
       public boolean processInReadAction(final PsiReference psiReference) {
         PsiElement ref = psiReference.getElement();
         PsiFile file = ref.getContainingFile();
@@ -390,7 +391,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
         if (progress != null) {
           progress.checkCanceled();
         }
-        ReferencesSearch.search(aClass, new LocalSearchScope(file), false).forEach(new ReadActionProcessor<PsiReference>() {
+        ReferencesSearch.search(new ReferencesSearch.SearchParameters(aClass, new LocalSearchScope(file), false, options.fastTrack)).forEach(new ReadActionProcessor<PsiReference>() {
           public boolean processInReadAction(final PsiReference psiReference) {
             return addResult(results, psiReference, options, aClass);
           }
@@ -443,7 +444,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
           }
           else{
             boolean strictSignatureSearch = !options.isIncludeOverloadUsages;
-            MethodReferencesSearch.search(method, options.searchScope, strictSignatureSearch).forEach(new PsiReferenceProcessorAdapter(new PsiReferenceProcessor() {
+            MethodReferencesSearch.search(new MethodReferencesSearch.SearchParameters(method, options.searchScope, strictSignatureSearch, options.fastTrack)).forEach(new PsiReferenceProcessorAdapter(new PsiReferenceProcessor() {
                       public boolean execute(PsiReference reference) {
                         addResultFromReference(reference, methodClass, manager, aClass, results, options, method);
                         return true;
@@ -475,7 +476,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
           addElementUsages(fields[i], results, options);
         }
         else {
-          ReferencesSearch.search(field, options.searchScope, false).forEach(new ReadActionProcessor<PsiReference>() {
+          ReferencesSearch.search(new ReferencesSearch.SearchParameters(field, options.searchScope, false, options.fastTrack)).forEach(new ReadActionProcessor<PsiReference>() {
             public boolean processInReadAction(final PsiReference reference) {
               addResultFromReference(reference, fieldClass, manager, aClass, results, options, field);
               return true;
@@ -606,9 +607,10 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
     }
 
     if (element instanceof PsiMethod) {
-      MethodReferencesSearch.search((PsiMethod)element, searchScope, !options.isIncludeOverloadUsages).forEach(consumer);
+      final boolean strictSignatureSearch = !options.isIncludeOverloadUsages;
+      MethodReferencesSearch.search(new MethodReferencesSearch.SearchParameters((PsiMethod)element, searchScope, strictSignatureSearch, options.fastTrack)).forEach(consumer);
     } else {
-      ReferencesSearch.search(element, searchScope, false).forEach(consumer);
+      ReferencesSearch.search(new ReferencesSearch.SearchParameters(element, searchScope, false, options.fastTrack)).forEach(consumer);
     }
   }
 
@@ -616,7 +618,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
     final PsiClass parentClass = method.getContainingClass();
     if (parentClass == null) return;
 
-    ReferencesSearch.search(method, searchScope, false).forEach(new ReadActionProcessor<PsiReference>() {
+    ReferencesSearch.search(new ReferencesSearch.SearchParameters(method, searchScope, false, options.fastTrack)).forEach(new ReadActionProcessor<PsiReference>() {
       public boolean processInReadAction(final PsiReference ref) {
         return addResult(result, ref, options, parentClass);
       }
