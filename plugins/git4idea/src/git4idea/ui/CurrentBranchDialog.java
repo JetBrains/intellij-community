@@ -137,7 +137,6 @@ public class CurrentBranchDialog extends DialogWrapper {
       }
     }
     myTrackedRepository = current == null ? null : current.getTrackedRemoteName(myProject, root);
-    myTrackedBranch = current == null ? null : current.getTrackedBranchName(myProject, root);
     if (myTrackedRepository == null) {
       myTrackedRepository = REMOTE_NONE;
     }
@@ -146,6 +145,10 @@ public class CurrentBranchDialog extends DialogWrapper {
     }
     if (myTrackedBranch != null && myTrackedBranch.startsWith(GitBranch.REFS_HEADS_PREFIX)) {
       myTrackedBranch = myTrackedBranch.substring(GitBranch.REFS_HEADS_PREFIX.length());
+    }
+    myTrackedBranch = current == null ? null : current.getTrackedBranchName(myProject, root);
+    if (myTrackedBranch == null) {
+      myTrackedBranch = BRANCH_NONE;
     }
     myRepositoryComboBox.setSelectedItem(myTrackedRepository);
     myBranches.clear();
