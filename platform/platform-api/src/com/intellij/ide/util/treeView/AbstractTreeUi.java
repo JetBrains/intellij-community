@@ -1758,6 +1758,7 @@ public class AbstractTreeUi {
            "  hasScheduledUpdates=" + hasSheduledUpdates() + "\n" +
            "  isPostponedMode=" + getUpdater().isInPostponeMode() + "\n" +
            " nodeActions=" + myNodeActions.keySet() + "\n" +
+           " nodeChildrenActions=" + myNodeChildrenActions.keySet() + "\n" +
            "isReleased=" + isReleased() + "\n" +
            " isReleaseRequested=" + isReleaseRequested() + "\n" +
            "isCancelProcessed=" + isCancelProcessed() + "\n" +
@@ -3581,7 +3582,7 @@ public class AbstractTreeUi {
   }
 
   private void checkPathAndMaybeRevalidate(Object element, final Runnable onDone, final boolean parentsOnly, final boolean checkIfInStructure, final boolean canSmartExpand) {
-    boolean toRevalidate = !myRevalidatedObjects.contains(element) && getNodeForElement(element, false) == null && isInStructure(element);
+    boolean toRevalidate = isValid(element) && !myRevalidatedObjects.contains(element) && getNodeForElement(element, false) == null && isInStructure(element);
     if (!toRevalidate) {
       runDone(onDone);
       return;

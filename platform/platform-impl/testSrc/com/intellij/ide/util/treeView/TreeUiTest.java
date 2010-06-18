@@ -1525,6 +1525,45 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "    ide\n");
   }
 
+  public void testNoRevalidationIfInvalid() throws Exception {
+    buildStructure(myRoot);
+
+    final NodeElement intellij = new NodeElement("intellij");
+    buildNode(intellij, true);
+
+    assertTree("-/\n" +
+               " -com\n" +
+               "  +[intellij]\n" +
+               " +jetbrains\n" +
+               " +org\n" +
+               " +xunit\n");
+
+
+    removeFromParentButKeepRef(new NodeElement("intellij"));
+    myValidator = new Validator() {
+      public boolean isValid(Object element) {
+        return !element.equals(intellij);
+      }
+    };
+    final Ref<Object> revalidatedElement = new Ref<Object>();
+    myStructure.setRevalidator(new Revalidator() {
+      public AsyncResult<Object> revalidate(NodeElement element) {
+        revalidatedElement.set(element);
+        return null;
+      }
+    });
+
+    updateFromRoot();
+
+    assertTree("-/\n" +
+               " [com]\n" +
+               " +jetbrains\n" +
+               " +org\n" +
+               " +xunit\n");
+    assertNull(revalidatedElement.get() != null ? revalidatedElement.get().toString() : null, revalidatedElement.get());
+  }
+
+
   private void doTestSelectionOnDelete(boolean keepRef) throws Exception {
     myComparator.setDelegate(new NodeDescriptor.NodeComparator<NodeDescriptor>() {
       public int compare(NodeDescriptor o1, NodeDescriptor o2) {
