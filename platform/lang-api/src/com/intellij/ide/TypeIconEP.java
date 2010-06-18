@@ -13,24 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.xml;
+package com.intellij.ide;
 
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.util.xmlb.annotations.Attribute;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 /**
  * @author yole
  */
-public class ElementIconEP extends AbstractExtensionPointBean {
-  public static ExtensionPointName<ElementIconEP> EP_NAME = ExtensionPointName.create("com.intellij.dom.elementIcon");
+public class TypeIconEP extends AbstractExtensionPointBean {
+  public static ExtensionPointName<TypeIconEP> EP_NAME = ExtensionPointName.create("com.intellij.typeIcon");
 
   @Attribute("className")
   public String className;
@@ -45,24 +42,7 @@ public class ElementIconEP extends AbstractExtensionPointBean {
     }
   };
 
-  private NotNullLazyValue<Class> myClass = new NotNullLazyValue<Class>() {
-    @NotNull
-    @Override
-    protected Class compute() {
-      try {
-        return findClass(className);
-      }
-      catch (ClassNotFoundException e) {
-        throw new RuntimeException(e);
-      }
-    }
-  };
-
-  @Nullable
-  public Icon getIcon(Class aClass) {
-    if (myClass.getValue().isAssignableFrom(aClass)) {
-      return myIcon.getValue();
-    }
-    return null;
+  public NullableLazyValue<Icon> getIcon() {
+    return myIcon;
   }
 }

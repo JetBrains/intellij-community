@@ -18,11 +18,8 @@ package com.intellij.ide;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.util.xmlb.annotations.Attribute;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -45,19 +42,6 @@ public class TypeNameEP extends AbstractExtensionPointBean {
   @Attribute("resourceKey")
   public String resourceKey;
 
-  private NotNullLazyValue<Class> myClass = new NotNullLazyValue<Class>() {
-    @NotNull
-    @Override
-    protected Class compute() {
-      try {
-        return findClass(className);
-      }
-      catch (ClassNotFoundException e) {
-        throw new RuntimeException(e);
-      }
-    }
-  };
-
   private NullableLazyValue<String> myName = new NullableLazyValue<String>() {
     @Override
     protected String compute() {
@@ -78,11 +62,7 @@ public class TypeNameEP extends AbstractExtensionPointBean {
     }
   };
 
-  @Nullable
-  public String getTypeName(Class aClass) {
-    if (myClass.getValue().isAssignableFrom(aClass)) {
-      return myName.getValue();
-    }
-    return null;
+  public NullableLazyValue<String> getTypeName() {
+    return myName;
   }
 }
