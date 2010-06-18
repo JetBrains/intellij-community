@@ -232,6 +232,8 @@
     
     <referencesSearch implementation="com.jetbrains.django.lang.template.ref.DjangoTemplateStringReferenceSearch"/>
 
+    <quoteHandler fileType="DjangoTemplate" className="com.jetbrains.django.lang.template.editor.DjangoTemplateQuoteHandler"/>
+
     <!-- App Engine -->
     <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>
 
