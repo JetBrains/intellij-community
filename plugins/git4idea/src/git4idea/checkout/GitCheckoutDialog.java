@@ -31,6 +31,7 @@ import git4idea.i18n.GitBundle;
 import git4idea.ui.GitReferenceValidator;
 import git4idea.ui.GitUIUtil;
 import git4idea.validators.GitBranchNameValidator;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -110,9 +111,10 @@ public class GitCheckoutDialog extends DialogWrapper {
    * @param roots       the git roots for the project
    * @param defaultRoot the default root
    */
-  public GitCheckoutDialog(Project project, List<VirtualFile> roots, VirtualFile defaultRoot) {
+  public GitCheckoutDialog(@NotNull Project project, @NotNull List<VirtualFile> roots, @Nullable VirtualFile defaultRoot) {
     super(project, true);
     setTitle(GitBundle.getString("checkout.branch"));
+    assert roots.size() > 0;
     myProject = project;
     mySettings = GitVcsSettings.getInstance(myProject);
     GitUIUtil.setupRootChooser(myProject, roots, defaultRoot, myGitRoot, myCurrentBranch);
@@ -312,7 +314,9 @@ public class GitCheckoutDialog extends DialogWrapper {
    * @return a currently selected git root
    */
   public VirtualFile gitRoot() {
-    return (VirtualFile)myGitRoot.getSelectedItem();
+    VirtualFile file = (VirtualFile)myGitRoot.getSelectedItem();
+    assert file != null;
+    return file;
   }
 
   /**
