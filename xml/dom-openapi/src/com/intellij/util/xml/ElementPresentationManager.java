@@ -16,6 +16,7 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Iconable;
@@ -200,6 +201,14 @@ public abstract class ElementPresentationManager {
         }
       }
     }
+
+    for(ElementIconEP ep: Extensions.getExtensions(ElementIconEP.EP_NAME)) {
+      final Icon icon = ep.getIcon(o.getClass());
+      if (icon != null) {
+        return icon;
+      }
+    }
+
     final Icon[] icons = getIconsForClass(o.getClass());
     if (icons != null && icons.length > 0) {
       return icons[0];
