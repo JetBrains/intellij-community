@@ -1,21 +1,23 @@
 package org.zmlx.hg4idea.action;
 
+import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.zmlx.hg4idea.HgUtil;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.HgInitCommand;
+import org.zmlx.hg4idea.ui.HgInitParentDialog;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,37 +41,50 @@ public class HgInit extends DumbAwareAction {
       return;
     }
 
-    // 1. provide window to select the root directory (possibly with an option to select project directory
-    // TODO: dialog: probably the user wants to put the whole project under git, so the root dir of the project is git repo root. No need to select the folder in that case.
-    final FileChooserDescriptor fcd = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+    // provide window to select the root directory (TODO: an option to select the whole project)
+    final FileChooserDescriptor fcd = new FileChooserDescriptor(false, true, false, false, false, false) {
+      public void validateSelectedFiles(VirtualFile[] files) throws Exception {
+        if (HgUtil.isHgRoot(files[0])) {
+          throw new ConfigurationException(HgVcsMessages.message("hg4idea.init.this.is.hg.root", files[0].getPresentableUrl()));
+        }
+      }
+    };
     fcd.setTitle(HgVcsMessages.message("hg4idea.init.destination.directory.title"));
     fcd.setDescription(HgVcsMessages.message("hg4idea.init.destination.directory.description"));
     fcd.setHideIgnored(false);
-    final VirtualFile baseDir = project.getBaseDir();
-    final VirtualFile[] files = FileChooser.chooseFiles(project, fcd, baseDir);
+    final VirtualFile projectDir = project.getBaseDir();
+    final VirtualFile[] files = FileChooser.chooseFiles(project, fcd, projectDir);
     if (files.length == 0) {
       return;
     }
-    final VirtualFile root = files[0];
+    final VirtualFile selectedRoot = files[0];
 
-    // 2. check if it is not yet under mercurial
-    final HgVcs hgVcs = HgVcs.getInstance(project);
-    if (hgVcs.isVersionedDirectory(root)) {
-      Messages.showErrorDialog(project, HgVcsMessages.message("hg4idea.init.error.already.under.hg", root.getPresentableUrl()),
-                               HgVcsMessages.message("hg4idea.init.error.title"));
-      return;
+    // check if it is not yet under mercurial
+    final VirtualFile vcsRoot = HgUtil.getNearestHgRoot(selectedRoot);
+    VirtualFile mapRoot = selectedRoot;
+    if (vcsRoot != null) {
+      final HgInitParentDialog dialog = new HgInitParentDialog(project,
+                                                   selectedRoot.getPresentableUrl(), vcsRoot.getPresentableUrl());
+      dialog.show();
+      if (!dialog.isOK()) {
+        return;
+      }
+
+      if (dialog.getAnswer() == HgInitParentDialog.Answer.CREATE_PROJECT_AT_PARENT) {
+        NewProjectUtil.createNewProject(project, vcsRoot.getPath());
+        return;
+      } else if (dialog.getAnswer() == HgInitParentDialog.Answer.USE_PARENT_REPO_BUT_THIS_PROJECT) {
+        mapRoot = vcsRoot;
+      } else {
+        (new HgInitCommand(project)).execute(selectedRoot);
+      }
     }
 
-
-    // 3. Execute hg init
-    (new HgInitCommand(project)).execute(root);
-    //TODO: handle errors here
-
-    // 4. update vcs directory mappings
-    root.refresh(false, false);
-    final String path = root.equals(baseDir) ? "" : root.getPath();
-    ProjectLevelVcsManager vcs = ProjectLevelVcsManager.getInstance(project);
-    final List<VcsDirectoryMapping> vcsDirectoryMappings = new ArrayList<VcsDirectoryMapping>(vcs.getDirectoryMappings());
+    // update vcs directory mappings
+    mapRoot.refresh(false, false);
+    final String path = mapRoot.equals(projectDir) ? "" : mapRoot.getPath();
+    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    final List<VcsDirectoryMapping> vcsDirectoryMappings = new ArrayList<VcsDirectoryMapping>(vcsManager.getDirectoryMappings());
     VcsDirectoryMapping mapping = new VcsDirectoryMapping(path, HgVcs.VCS_NAME);
     for (int i = 0; i < vcsDirectoryMappings.size(); i++) {
       final VcsDirectoryMapping m = vcsDirectoryMappings.get(i);
@@ -88,8 +103,8 @@ public class HgInit extends DumbAwareAction {
     if (mapping != null) {
       vcsDirectoryMappings.add(mapping);
     }
-    vcs.setDirectoryMappings(vcsDirectoryMappings);
-    vcs.updateActiveVcss();
+    vcsManager.setDirectoryMappings(vcsDirectoryMappings);
+    vcsManager.updateActiveVcss();
   }
 
   @Override
