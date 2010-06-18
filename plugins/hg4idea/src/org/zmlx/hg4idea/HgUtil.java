@@ -174,4 +174,29 @@ public abstract class HgUtil {
   }
 
 
+  /**
+   * Finds the nearest parent directory which is an hg root.
+   * @param dir Directory which parent will be checked.
+   * @return Directory which is the nearest hg root being a parent of this directory,
+   * or <code>null</code> if this directory is not under hg.
+   * @see com.intellij.openapi.vcs.AbstractVcs#isVersionedDirectory(com.intellij.openapi.vfs.VirtualFile)
+   */
+  @Nullable
+  public static VirtualFile getNearestHgRoot(VirtualFile dir) {
+    VirtualFile currentDir = dir;
+    while (currentDir != null) {
+      if (isHgRoot(currentDir)) {
+        return currentDir;
+      }
+      currentDir = currentDir.getParent();
+    }
+    return null;
+  }
+
+  /**
+   * Checks if the given directory is an hg root.
+   */
+  public static boolean isHgRoot(VirtualFile dir) {
+    return dir.findChild(".hg") != null;
+  }
 }
