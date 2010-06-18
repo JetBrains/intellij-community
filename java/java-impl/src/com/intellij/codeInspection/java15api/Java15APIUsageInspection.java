@@ -33,7 +33,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -59,6 +58,7 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
   private static final Map<LanguageLevel, Set<String>> ourForbiddenAPI = new EnumMap<LanguageLevel, Set<String>>(LanguageLevel.class);
   private static final Set<String> ourIgnored16ClassesAPI = new THashSet<String>(10);
   private static final Map<LanguageLevel, String> ourAPIPresentationMap = new EnumMap<LanguageLevel, String>(LanguageLevel.class);
+  @NonNls private static final String EFFECTIVE_LL = "effectiveLL";
 
   private LanguageLevel myEffectiveLanguageLevel = null;
 
@@ -245,7 +245,7 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
     return ourAPIPresentationMap.get(languageLevel);
   }
 
-  private static class MyVisitor extends JavaElementVisitor {
+  private class MyVisitor extends JavaElementVisitor {
     private final ProblemsHolder myHolder;
 
     public MyVisitor(final ProblemsHolder holder) {
@@ -295,7 +295,7 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
       }
     }
 
-    private static boolean isIgnored(PsiClass psiClass) {
+    private boolean isIgnored(PsiClass psiClass) {
       final String qualifiedName = psiClass.getQualifiedName();
       return qualifiedName != null && ourIgnored16ClassesAPI.contains(qualifiedName);
     }
