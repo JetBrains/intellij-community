@@ -72,7 +72,7 @@ public class EclipseClasspathTest extends IdeaTestCase {
     checkModule(path, setUpModule(path, project));
   }
 
-  private static Module setUpModule(final String path, final Project project) throws IOException, JDOMException, ConversionException {
+  static Module setUpModule(final String path, final Project project) throws IOException, JDOMException, ConversionException {
     final File classpathFile = new File(path, EclipseXml.DOT_CLASSPATH_EXT);
     String fileText = new String(FileUtil.loadFileText(classpathFile)).replaceAll("\\$ROOT\\$", project.getBaseDir().getPath());
     if (!SystemInfo.isWindows) {
@@ -95,7 +95,7 @@ public class EclipseClasspathTest extends IdeaTestCase {
     return module;
   }
 
-  private static void checkModule(String path, Module module) throws IOException, JDOMException, ConversionException {
+  static void checkModule(String path, Module module) throws IOException, JDOMException, ConversionException {
     final File classpathFile1 = new File(path, EclipseXml.DOT_CLASSPATH_EXT);
     if (!classpathFile1.exists()) return;
     String fileText1 = new String(FileUtil.loadFileText(classpathFile1)).replaceAll("\\$ROOT\\$", module.getProject().getBaseDir().getPath());

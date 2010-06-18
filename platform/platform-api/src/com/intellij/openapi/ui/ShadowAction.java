@@ -57,6 +57,8 @@ public final class ShadowAction implements Disposable {
     myComponent = component;
     myActionId = ActionManager.getInstance().getId(myCopyFromAction);
 
+    myAction.getTemplatePresentation().copyFrom(copyFromAction.getTemplatePresentation());
+
     myKeymapListener = new Keymap.Listener() {
       public void onShortcutChanged(final String actionId) {
         if (myActionId == null || actionId.equals(myActionId)) {

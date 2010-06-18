@@ -16,9 +16,8 @@
 
 package com.intellij.psi.impl.source.resolve.reference;
 
-import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.ProcessingContext;
+import com.intellij.psi.PsiReferenceService;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -31,8 +30,8 @@ import java.util.List;
  * To change this template use Options | File Templates.
  */
 public interface ProviderBinding<T> {
-  void addAcceptableReferenceProviders(@NotNull PsiElement position, @NotNull List<Trinity<T, ProcessingContext, Double>> list,
-                                       Integer offset);
+  void addAcceptableReferenceProviders(@NotNull PsiElement position, @NotNull List list,
+                                       PsiReferenceService.Hints hints);
 
   void unregisterProvider(final T provider);
 }

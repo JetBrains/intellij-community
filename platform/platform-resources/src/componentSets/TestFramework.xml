@@ -1,7 +1,0 @@
-<components>
-  <project-components>
-    <component>
-      <implementation-class>com.intellij.testFramework.TestDataHighlightingPassFactory</implementation-class>
-    </component>
-  </project-components>
-</components>

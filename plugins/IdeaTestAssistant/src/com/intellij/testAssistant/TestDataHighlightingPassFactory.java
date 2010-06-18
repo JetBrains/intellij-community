@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.testFramework;
+package com.intellij.testAssistant;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
@@ -49,13 +49,7 @@ public class TestDataHighlightingPassFactory extends AbstractProjectComponent im
 
   public TestDataHighlightingPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
     super(project);
-    if (isIdeaProject(project)) {
-      highlightingPassRegistrar.registerTextEditorHighlightingPass(this, null, null, true, -1);
-    }
-  }
-
-  private static boolean isIdeaProject(Project project) {
-    return "IDEA".equals(project.getName());
+    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, null, null, true, -1);
   }
 
   @NonNls

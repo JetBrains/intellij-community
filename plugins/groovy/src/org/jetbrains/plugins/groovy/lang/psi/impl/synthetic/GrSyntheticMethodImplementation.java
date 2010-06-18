@@ -17,13 +17,14 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
+import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 
 import javax.swing.*;
-import java.util.Collections;
+import java.lang.reflect.Modifier;
 import java.util.Set;
 
 /**
@@ -48,7 +49,7 @@ public class GrSyntheticMethodImplementation extends GrSyntheticMethod {
   }
 
   protected Set<String> getModifiers() {
-    return Collections.singleton(PsiModifier.PUBLIC);
+    return RecordUtil.getModifierSet(Modifier.PUBLIC);
   }
 
   public PsiElement copy() {

@@ -15,27 +15,13 @@
  */
 package com.intellij.profile;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizable;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * User: anna
  * Date: 30-Nov-2005
  */
 public abstract class ProjectProfileManager implements ProfileManager, JDOMExternalizable {
-
-  @Nullable
-  public static ProjectProfileManager getProjectProfileManager(Project project, String profileType){
-    final ProjectProfileManager[] components = project.getComponents(ProjectProfileManager.class);
-    for (ProjectProfileManager manager : components) {
-      if (manager.getProfileType().compareTo(profileType) == 0){
-        return manager;
-      }
-    }
-    return null;
-  }
-
   public abstract String getProfileName();
 
   public abstract String getProjectProfile();

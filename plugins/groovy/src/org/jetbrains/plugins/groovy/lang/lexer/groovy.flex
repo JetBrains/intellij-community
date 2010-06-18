@@ -44,8 +44,6 @@ import org.jetbrains.annotations.NotNull;
   private Stack <IElementType> blockStack = new Stack<IElementType>();
 
   private int afterComment = YYINITIAL;
-  private int afterNls = YYINITIAL;
-  private int afterBrace = YYINITIAL;
 
   private void clearStacks(){
     gStringStack.clear();

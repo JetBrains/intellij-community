@@ -1175,7 +1175,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     Icon actualIcon = icon != null ? icon : type.getDefaultIcon();
 
     final Balloon balloon =
-      JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(text.replace("\n", "<br>"), actualIcon, type.getPopupBackground(), listener).setHideOnClickOutside(false).setHideOnFrameResize(false)
+      JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(text.replace("\n", "<br>"), actualIcon, type.getPopupBackground(), listener).setHideOnClickOutside(true).setHideOnFrameResize(false)
         .createBalloon();
     myWindow2Balloon.put(toolWindowId, balloon);
     Disposer.register(balloon, new Disposable() {

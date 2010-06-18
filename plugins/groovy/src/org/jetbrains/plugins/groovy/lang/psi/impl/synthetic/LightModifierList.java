@@ -15,21 +15,31 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
-import java.util.Iterator;
+import java.lang.reflect.Modifier;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
  * @author ven
  */
 public class LightModifierList extends LightElement implements PsiModifierList {
+
   private final Set<String> myModifiers;
+
+  public LightModifierList(PsiManager manager, int modifiers) {
+    this(manager, RecordUtil.getModifierSet(modifiers));
+  }
 
   public LightModifierList(PsiManager manager, Set<String> modifiers) {
     super(manager, GroovyFileType.GROOVY_LANGUAGE);
@@ -71,13 +81,10 @@ public class LightModifierList extends LightElement implements PsiModifierList {
   }
 
   public String getText() {
-    StringBuffer buffer = new StringBuffer();
-    for (Iterator<String> it = myModifiers.iterator(); it.hasNext();) {
-      buffer.append(it.next());
-      if (it.hasNext()) buffer.append(" ");
-    }
+    if (myModifiers.size() == 0) return "";
+    if (myModifiers.size() == 1) return myModifiers.iterator().next();
 
-    return buffer.toString();
+    return StringUtil.join(myModifiers, " ");
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
@@ -87,7 +94,7 @@ public class LightModifierList extends LightElement implements PsiModifierList {
   }
 
   public PsiElement copy() {
-    return null;
+    return new LightModifierList(myManager, myModifiers);
   }
 
   public String toString() {

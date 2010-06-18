@@ -176,6 +176,7 @@
       <group id="ViewMenu" popup="true">
         <action id="ViewToolBar" class="com.intellij.ide.actions.ViewToolbarAction"/>
         <action id="ViewStatusBar" class="com.intellij.ide.actions.ViewStatusBarAction"/>
+        <action id="ViewToolButtons" class="com.intellij.ide.actions.ViewToolWindowButtonsAction"/>
         <reference ref="EditorToggleShowWhitespaces"/>
         <reference ref="EditorToggleShowLineNumbers"/>
         <reference ref="EditorToggleShowIndentLines" />

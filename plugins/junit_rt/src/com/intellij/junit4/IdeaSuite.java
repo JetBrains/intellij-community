@@ -28,7 +28,10 @@ import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.RunnerBuilder;
 
 import java.lang.reflect.Method;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 class IdeaSuite extends Suite {
   private final String myName;
@@ -53,5 +56,41 @@ class IdeaSuite extends Suite {
       e.printStackTrace();
     }
     return description;
+  }
+
+  protected List getChildren() {
+    final List children = super.getChildren();
+    final Set allNames = new HashSet();
+    for (Iterator iterator = children.iterator(); iterator.hasNext();) {
+      final Object child = iterator.next();
+      allNames.add(((Runner)child).getDescription().getDisplayName());
+    }
+    for (Iterator iterator = children.iterator(); iterator.hasNext();) {
+      final Object child = iterator.next();
+      if (child instanceof Suite && skipSuite(allNames, child)) {
+        iterator.remove();
+      }
+    }
+
+    return children;
+  }
+
+  private static boolean skipSuite(Set allNames, Object child) {
+    boolean hasRun = true;
+    try {
+      final Method getChildrenMethod = Suite.class.getDeclaredMethod("getChildren", new Class[0]);
+      getChildrenMethod.setAccessible(true);
+      final List tests = (List)getChildrenMethod.invoke(child, new Object[0]);
+      for (Iterator suiteIterator = tests.iterator(); suiteIterator.hasNext();) {
+        if (!allNames.contains(((Runner)suiteIterator.next()).getDescription().getDisplayName())) {
+          hasRun = false;
+          break;
+        }
+      }
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+    }
+    return hasRun;
   }
 }

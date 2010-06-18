@@ -16,10 +16,9 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class MethodUsagesSearcher extends SearchRequestor implements QueryExecutor<PsiReference, MethodReferencesSearch.SearchParameters> {
-  private static final ThreadLocal<Boolean> ourProcessing = new ThreadLocal<Boolean>();
 
   public boolean execute(final MethodReferencesSearch.SearchParameters p, final Processor<PsiReference> consumer) {
-    if (ourProcessing.get() != null) {
+    if (p instanceof MySearchParameters) {
       return true;
     }
 
@@ -28,7 +27,7 @@ public class MethodUsagesSearcher extends SearchRequestor implements QueryExecut
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        final FindUsagesOptions options = new FindUsagesOptions(p.getScope());
+        final FindUsagesOptions options = new MyFindUsagesOptions(p);
         options.isUsages = true;
         contributeSearchTargets(method, options, collector, p.isStrictSignatureSearch());
         SearchRequestor.collectRequests(method, options, collector);
@@ -42,19 +41,17 @@ public class MethodUsagesSearcher extends SearchRequestor implements QueryExecut
   public void contributeRequests(@NotNull PsiElement target,
                                       @NotNull final FindUsagesOptions options,
                                       @NotNull SearchRequestCollector collector) {
+    if (options instanceof MyFindUsagesOptions) {
+      return;
+    }
+
     if (target instanceof PsiMethod) {
       final boolean strictSignatureSearch = !options.isIncludeOverloadUsages;
       final PsiMethod method = (PsiMethod)target;
       contributeSearchTargets(method, options, collector, strictSignatureSearch);
       collector.searchCustom(new Processor<Processor<PsiReference>>() {
         public boolean process(Processor<PsiReference> processor) {
-          ourProcessing.set(true);
-          try {
-            return MethodReferencesSearch.search(method, options.searchScope, strictSignatureSearch).forEach(processor);
-          }
-          finally {
-            ourProcessing.set(null);
-          }
+          return MethodReferencesSearch.search(new MySearchParameters(method, options, strictSignatureSearch)).forEach(processor);
         }
       });
     }
@@ -105,4 +102,15 @@ public class MethodUsagesSearcher extends SearchRequestor implements QueryExecut
     collector.searchWord(textToSearch, restrictedByAccess, searchContext, true, new MethodTextOccurenceProcessor(aClass, strictSignatureSearch, methods));
   }
 
+  private static class MySearchParameters extends MethodReferencesSearch.SearchParameters {
+    public MySearchParameters(PsiMethod method, FindUsagesOptions options, boolean strictSignatureSearch) {
+      super(method, options.searchScope, strictSignatureSearch);
+    }
+  }
+
+  private static class MyFindUsagesOptions extends FindUsagesOptions {
+    public MyFindUsagesOptions(MethodReferencesSearch.SearchParameters p) {
+      super(p.getScope());
+    }
+  }
 }

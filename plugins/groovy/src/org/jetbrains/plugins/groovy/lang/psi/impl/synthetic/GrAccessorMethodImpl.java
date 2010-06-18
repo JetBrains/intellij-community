@@ -17,6 +17,8 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.cache.ModifierFlags;
+import com.intellij.psi.impl.cache.RecordUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
@@ -26,7 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAc
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import javax.swing.*;
-import java.util.LinkedHashSet;
+import java.lang.reflect.Modifier;
 import java.util.Set;
 
 /**
@@ -76,14 +78,12 @@ public class GrAccessorMethodImpl extends GrSyntheticMethod implements GrAccesso
   }
 
   protected Set<String> getModifiers() {
-    LinkedHashSet<String> modifiers = new LinkedHashSet<String>();
-    modifiers.add(PsiModifier.PUBLIC);
+    int modifiers = ModifierFlags.PUBLIC_MASK;
     final PsiModifierList original = myProperty.getModifierList();
     assert original != null;
-    if (original.hasExplicitModifier(PsiModifier.STATIC)) modifiers.add(PsiModifier.STATIC);
-    if (original.hasExplicitModifier(PsiModifier.ABSTRACT)) modifiers.add(PsiModifier.ABSTRACT);
-    if (original.hasExplicitModifier(PsiModifier.FINAL)) modifiers.add(PsiModifier.FINAL);
-    return modifiers;
+    if (original.hasExplicitModifier(PsiModifier.STATIC)) modifiers |= ModifierFlags.STATIC_MASK;
+    if (original.hasExplicitModifier(PsiModifier.FINAL)) modifiers |= ModifierFlags.FINAL_MASK;
+    return RecordUtil.getModifierSet(modifiers);
   }
 
   public PsiClass getContainingClass() {
@@ -139,5 +139,14 @@ public class GrAccessorMethodImpl extends GrSyntheticMethod implements GrAccesso
   @Override
   public Icon getIcon(int flags) {
     return GroovyIcons.PROPERTY;
+  }
+
+  @Override
+  public boolean isEquivalentTo(PsiElement another) {
+    if (another == this) return true;
+    if (!(another instanceof GrAccessorMethod)) return false;
+
+    if (!((GrAccessorMethod)another).getName().equals(getName())) return false;
+    return getManager().areElementsEquivalent(myProperty, ((GrAccessorMethod)another).getProperty());
   }
 }

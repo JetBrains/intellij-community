@@ -206,10 +206,10 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
-    final CommonProcessors.CollectUniquesProcessor<PsiElement> collector = new CommonProcessors.CollectUniquesProcessor<PsiElement>();
+    final CommonProcessors.CollectUniquesProcessor<PsiFileSystemItem> collector = new CommonProcessors.CollectUniquesProcessor<PsiFileSystemItem>();
     final PsiElementProcessor<PsiFileSystemItem> processor = new PsiElementProcessor<PsiFileSystemItem>() {
       public boolean execute(PsiFileSystemItem fileSystemItem) {
-        return new FilteringProcessor<PsiElement>(myFileReferenceSet.createCondition(), collector).process(getOriginalFile(fileSystemItem));
+        return new FilteringProcessor<PsiFileSystemItem>(myFileReferenceSet.getReferenceCompletionFilter(), collector).process(getOriginalFile(fileSystemItem));
       }
     };
     for (PsiFileSystemItem context : getContexts()) {

@@ -3,17 +3,22 @@
     <action id="ForceRunToCursor">
       <keyboard-shortcut first-keystroke="control alt 9" />
     </action>
-    <action id="ForceStepOver">
+    <action id="QuickEvaluateExpression">
       <keyboard-shortcut first-keystroke="control alt 8" />
-    </action>
-    <action id="Images.EditExternaly">
-      <keyboard-shortcut first-keystroke="control alt 4" />
+      <mouse-shortcut keystroke="alt button1"/>
     </action>
     <action id="ShowUsages">
       <keyboard-shortcut first-keystroke="control alt 7" />
+    </action>
+    <action id="ShowUsagesSettings">
+      <keyboard-shortcut first-keystroke="control shift alt 7"/>
     </action>
     <action id="SwitchCoverage">
       <keyboard-shortcut first-keystroke="control alt 6" />
     </action>
   </keymap>
+
+  <action id="Images.EditExternaly">
+    <keyboard-shortcut first-keystroke="control alt 4" />
+  </action>
 </component>

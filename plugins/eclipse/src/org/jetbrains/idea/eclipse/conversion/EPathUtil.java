@@ -20,6 +20,7 @@
  */
 package org.jetbrains.idea.eclipse.conversion;
 
+import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -29,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -40,6 +42,7 @@ import org.jetbrains.idea.eclipse.importWizard.EclipseProjectFinder;
 
 import java.io.File;
 import java.util.List;
+import java.util.Set;
 
 public class EPathUtil {
   static final Logger LOG = Logger.getInstance("#" + EPathUtil.class.getName());
@@ -244,8 +247,8 @@ public class EPathUtil {
   }
 
   @Nullable
-  static String collapse2EclipseVariabledPath(final LibraryOrderEntry libraryOrderEntry) {
-    final VirtualFile[] virtualFiles = libraryOrderEntry.getFiles(OrderRootType.CLASSES);
+  static String collapse2EclipseVariabledPath(final LibraryOrderEntry libraryOrderEntry, OrderRootType type) {
+    final VirtualFile[] virtualFiles = libraryOrderEntry.getFiles(type);
     if (virtualFiles.length > 0) {
       VirtualFile jarFile = virtualFiles[0];
       if (jarFile.getFileSystem() instanceof JarFileSystem) {
@@ -256,11 +259,24 @@ public class EPathUtil {
       }
       final Project project = libraryOrderEntry.getOwnerModule().getProject();
       final VirtualFile baseDir = project.getBaseDir();
+      final String filePath = jarFile.getPath();
       if (baseDir != null && !VfsUtil.isAncestor(baseDir, jarFile, false)) {
-         final String ideaCollapsed = PathMacroManager.getInstance(project).collapsePath(jarFile.getPath());
-        if (ideaCollapsed.contains("..")) return null;
-         return ideaCollapsed.substring(ideaCollapsed.indexOf('$')).replace("$", "");
-       }
+         final String ideaCollapsed = PathMacroManager.getInstance(project).collapsePath(filePath);
+         if (ideaCollapsed.contains("..")) return null;
+        final int index = ideaCollapsed.indexOf('$');
+        if (index < 0) return null;
+        return ideaCollapsed.substring(index).replace("$", "");
+      } else { //check if existing eclipse variable points inside project
+        final PathMacros pathMacros = PathMacros.getInstance();
+        final Set<String> names = pathMacros.getUserMacroNames();
+        for (String name : names) {
+          final String path = FileUtil.toSystemIndependentName(pathMacros.getValue(name));
+          if (filePath.startsWith(path + "/")) {
+            final String substr = filePath.substring(path.length());
+            return name + (substr.startsWith("/") || substr.length() == 0 ? substr : "/" + substr);
+          }
+        }
+      }
     }
     return null;
   }

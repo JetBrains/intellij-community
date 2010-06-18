@@ -742,6 +742,24 @@ public class PsiUtil {
     }
   }
 
+  public static boolean isClosurePropertyGetter(PsiMethod method) {
+    if (GroovyPropertyUtils.isGetterName(method.getName())) {
+      PsiModifierList modifiers = method.getModifierList();
+
+      if (!modifiers.hasModifierProperty(PsiModifier.STATIC)
+          && !modifiers.hasModifierProperty(PsiModifier.PRIVATE)
+          && !modifiers.hasModifierProperty(PsiModifier.PROTECTED)
+          && method.getParameterList().getParametersCount() == 0) {
+        final PsiType type = getSmartReturnType(method);
+        if (type != null && (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || type.equalsToText(GrClosableBlock.GROOVY_LANG_CLOSURE))) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
   public static boolean isMethodUsage(PsiElement element) {
     if (element instanceof GrEnumConstant) return true;
     if (!(element instanceof GrReferenceElement)) return false;

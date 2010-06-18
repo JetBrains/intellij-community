@@ -26,15 +26,25 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 public class IgnoredState extends ReadableState {
   private TestProxy myPeformedTest;
   private String myIgnoredMessage;
+  private String myMessage;
+  private String myStackTrace;
 
   public void initializeFrom(final ObjectReader reader) {
     myPeformedTest = reader.readObject();
     myIgnoredMessage = reader.readLimitedString();
+    myMessage = reader.readLimitedString();
+    myStackTrace = reader.readLimitedString();
   }
 
   public void printOn(final Printer printer) {
     String parentName = myPeformedTest.getParent() == null ? myPeformedTest.getInfo().getComment() : myPeformedTest.getParent().toString();
     String message = ExecutionBundle.message("junit.runing.info.ignored.console.message", parentName, myPeformedTest.getInfo().getName());
     printer.print(message + (myIgnoredMessage.length() > 0 ? " (" + myIgnoredMessage + ")": "") + PrintableTestProxy.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
+    if (myMessage.length() > 0) {
+      printer.print(myMessage + PrintableTestProxy.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
+    }
+    if (myStackTrace.length() > 0) {
+      printer.print(myStackTrace + PrintableTestProxy.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
+    }
   }
 }

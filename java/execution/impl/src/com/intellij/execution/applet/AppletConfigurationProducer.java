@@ -103,8 +103,8 @@ public class AppletConfigurationProducer extends JavaRuntimeConfigurationProduce
 
   @Override
   protected RunnerAndConfigurationSettings findExistingByElement(Location location,
-                                                                     @NotNull RunnerAndConfigurationSettings[] existingConfigurations
-  ) {
+                                                                 @NotNull RunnerAndConfigurationSettings[] existingConfigurations,
+                                                                 ConfigurationContext context) {
     final PsiClass aClass = getAppletClass(location.getPsiElement(), PsiManager.getInstance(location.getProject()));
     if (aClass != null) {
       for (RunnerAndConfigurationSettings existingConfiguration : existingConfigurations) {

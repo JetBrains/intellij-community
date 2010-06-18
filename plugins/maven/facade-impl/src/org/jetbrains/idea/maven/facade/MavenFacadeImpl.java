@@ -36,6 +36,11 @@ import java.util.Collection;
 import java.util.List;
 
 public class MavenFacadeImpl extends RemoteObject implements MavenFacade {
+  @Override
+  public void ping() throws RemoteException {
+    // no op
+  }
+
   public void set(MavenFacadeLogger logger, MavenFacadeDownloadListener downloadListener) throws RemoteException {
     try {
       MavenFacadeGlobalsManager.set(logger, downloadListener);

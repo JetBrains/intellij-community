@@ -46,7 +46,7 @@ public class TestClassFilter implements TreeClassChooser.ClassFilterWithScope {
 
   public boolean isAccepted(final PsiClass aClass) {
     return ConfigurationUtil.PUBLIC_INSTANTIATABLE_CLASS.value(aClass) &&
-           (aClass.isInheritor(myBase, true) || TestUtil.isTestClass(aClass))
+           (aClass.isInheritor(myBase, true) || JUnitUtil.isTestClass(aClass))
            && !CompilerConfiguration.getInstance(getProject()).isExcludedFromCompilation(PsiUtilBase.getVirtualFile(aClass))
       ;
   }

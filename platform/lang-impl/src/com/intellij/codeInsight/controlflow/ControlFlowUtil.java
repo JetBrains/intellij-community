@@ -17,6 +17,10 @@ package com.intellij.codeInsight.controlflow;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.Consumer;
+import com.intellij.util.Function;
+import com.intellij.util.Processor;
 
 import java.util.Arrays;
 
@@ -101,5 +105,34 @@ public class ControlFlowUtil {
       }
     }
     return -1;
+  }
+
+  // Process control flow in depth first order
+  public static boolean process(final Instruction[] flow, final int start, final Processor<Instruction> processor){
+    final int length = flow.length;
+    boolean[] visited = new boolean[length];
+    Arrays.fill(visited, false);
+
+    final ControlFlowUtil.Stack stack = new ControlFlowUtil.Stack(length);
+    stack.push(start);
+
+    while (!stack.isEmpty()) {
+      final int num = stack.pop();
+      if (num == length - 1){
+        continue;
+      }
+      final Instruction instruction = flow[num];
+      if (!processor.process(instruction)){
+        return false;
+      }
+      for (Instruction succ : instruction.allSucc()) {
+        final int succNum = succ.num();
+        if (!visited[succNum]) {
+          visited[succNum] = true;
+          stack.push(succNum);
+        }
+      }
+    }
+    return true;
   }
 }

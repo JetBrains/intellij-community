@@ -36,7 +36,7 @@ public class LazyParseableElement extends CompositeElement {
 
     @Override
     public void visitComposite(CompositeElement composite) {
-      composite.createPsiNoLock();
+      composite.getPsiNoLock();
       super.visitComposite(composite);
     }
 

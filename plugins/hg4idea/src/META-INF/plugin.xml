@@ -20,13 +20,20 @@
   <version>10.0</version>
   <vendor email="victor.iacoban@gmail.com, willem.verstraeten@gmail.com" logo="/images/mercurial.png" url="http://www.bitbucket.org/willemv/hg4idea">Victor Iacoban and Willem Verstraeten</vendor>
   <depends>com.intellij.modules.vcs</depends>
-  <idea-version since-build="95.66" until-build="95.99" />
+  <idea-version since-build="96.0" until-build="97.0" />
 
   <extensions defaultExtensionNs="com.intellij">
     <vcs name="hg4idea" vcsClass="org.zmlx.hg4idea.HgVcs"/>
     <checkoutProvider implementation="org.zmlx.hg4idea.provider.HgCheckoutProvider"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <applicationConfigurable implementation="org.zmlx.hg4idea.HgIdeConfigurable"/>
+
+    <applicationService serviceInterface="org.zmlx.hg4idea.HgGlobalSettings"
+                        serviceImplementation="org.zmlx.hg4idea.HgGlobalSettings"/>
+    <projectService serviceInterface="org.zmlx.hg4idea.HgProjectSettings"
+                    serviceImplementation="org.zmlx.hg4idea.HgProjectSettings"/>
+    <projectService serviceInterface="org.zmlx.hg4idea.command.HgCommandService"
+                    serviceImplementation="org.zmlx.hg4idea.command.HgCommandService"/>
   </extensions>
 
   <actions>
@@ -65,19 +72,6 @@
     </group>
   </actions>
 
-  <application-components>
-    <component>
-      <implementation-class>org.zmlx.hg4idea.HgGlobalSettings</implementation-class>
-    </component>
-  </application-components>
-  <project-components>
-    <component>
-      <implementation-class>org.zmlx.hg4idea.command.HgCommandService</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.zmlx.hg4idea.HgProjectSettings</implementation-class>
-    </component>
-  </project-components>
   <resource-bundle>org.zmlx.hg4idea.HgVcsMessages</resource-bundle>
   
   <change-notes>

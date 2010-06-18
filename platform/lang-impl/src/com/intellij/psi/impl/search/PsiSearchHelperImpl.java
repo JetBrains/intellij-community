@@ -18,9 +18,12 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.concurrency.JobUtil;
 import com.intellij.ide.todo.TodoConfiguration;
+import com.intellij.ide.todo.TodoIndexPatternProvider;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -62,7 +65,14 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   @NotNull
   public SearchScope getUseScope(@NotNull PsiElement element) {
-    return element.getUseScope();
+    SearchScope scope = element.getUseScope();
+    for (UseScopeEnlarger enlarger : UseScopeEnlarger.EP_NAME.getExtensions()) {
+      final SearchScope additionalScope = enlarger.getAdditionalUseScope(element);
+      if (additionalScope != null) {
+        scope = scope.union(additionalScope);
+      }
+    }
+    return scope;
   }
 
 
@@ -86,7 +96,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   private static TodoItem[] doFindTodoItems(final PsiFile file, final TextRange textRange) {
-    final Collection<IndexPatternOccurrence> occurrences = IndexPatternSearch.search(file, TodoConfiguration.getInstance()).findAll();
+    final Collection<IndexPatternOccurrence> occurrences = IndexPatternSearch.search(file, TodoIndexPatternProvider.getInstance()).findAll();
     if (occurrences.isEmpty()) {
       return EMPTY_TODO_ITEMS;
     }
@@ -114,7 +124,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   public int getTodoItemsCount(@NotNull PsiFile file) {
-    int count = myManager.getCacheManager().getTodoCount(file.getVirtualFile(), TodoConfiguration.getInstance());
+    int count = myManager.getCacheManager().getTodoCount(file.getVirtualFile(), TodoIndexPatternProvider.getInstance());
     if (count != -1) return count;
     return findTodoItems(file).length;
   }
@@ -415,7 +425,16 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       progress.setText(PsiBundle.message("psi.search.in.non.java.files.progress"));
     }
 
+    final SearchScope useScope = new ReadAction<SearchScope>() {
+      protected void run(final Result<SearchScope> result) {
+        if (originalElement != null) {
+          result.setResult(getUseScope(originalElement));
+        }
+      }
+    }.execute().getResultObject();
+
     final Ref<Boolean> cancelled = new Ref<Boolean>(Boolean.FALSE);
+    final GlobalSearchScope finalScope = searchScope;
     for (int i = 0; i < files.length; i++) {
       if (progress != null) progress.checkCanceled();
 
@@ -425,15 +444,16 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         public void run() {
           CharSequence text = psiFile.getViewProvider().getContents();
           for (int index = LowLevelSearchUtil.searchWord(text, 0, text.length(), searcher, progress); index >= 0;) {
-            final int endOffset = index + searcher.getPattern().length();
-            if (originalElement == null || !containsReferenceTo(psiFile, index, endOffset, originalElement)) {
-              if (!processor.process(psiFile, index, endOffset)) {
+            PsiReference referenceAt = psiFile.findReferenceAt(index);
+            if (referenceAt == null || useScope == null ||
+                !PsiSearchScopeUtil.isInScope(useScope.intersectWith(finalScope), psiFile)) {
+              if (!processor.process(psiFile, index, index + searcher.getPattern().length())) {
                 cancelled.set(Boolean.TRUE);
                 return;
               }
             }
 
-            index = LowLevelSearchUtil.searchWord(text, endOffset, text.length(), searcher, progress);
+            index = LowLevelSearchUtil.searchWord(text, index + searcher.getPattern().length(), text.length(), searcher, progress);
           }
         }
       });
@@ -446,20 +466,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     if (progress != null) {
       progress.popState();
     }
-  }
-
-  private static boolean containsReferenceTo(@NotNull PsiFile psiFile, int startOffset, int endOffset, @NotNull PsiElement originalElement) {
-    int index = startOffset;
-    while (index < endOffset) {
-      PsiReference referenceAt = psiFile.findReferenceAt(index);
-      if (referenceAt == null) return false;
-      if (referenceAt.isReferenceTo(originalElement)) {
-        return true;
-      }
-      int end = referenceAt.getElement().getTextRange().getStartOffset() + referenceAt.getRangeInElement().getLength();
-      index = Math.max(end, index + 1);
-    }
-    return false;
   }
 
   public void processAllFilesWithWord(@NotNull String word, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiFile> processor, final boolean caseSensitively) {
@@ -594,25 +600,30 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return commonScope;
   }
 
-  private static MultiMap<VirtualFile, PsiSearchRequest> findFilesWithIndexEntry(IdIndexEntry entry,
+  private static MultiMap<VirtualFile, PsiSearchRequest> findFilesWithIndexEntry(final IdIndexEntry entry,
                                               final ProjectFileIndex index,
                                               final Collection<PsiSearchRequest> data,
-                                              GlobalSearchScope commonScope) {
+                                              final GlobalSearchScope commonScope) {
     final MultiMap<VirtualFile, PsiSearchRequest> local = new MultiMap<VirtualFile, PsiSearchRequest>();
-    FileBasedIndex.getInstance().processValues(IdIndex.NAME, entry, null, new FileBasedIndex.ValueProcessor<Integer>() {
-      public boolean process(VirtualFile file, Integer value) {
-        if (!IndexCacheManagerImpl.shouldBeFound(file, index)) {
-          return true;
-        }
-        int mask = value.intValue();
-        for (PsiSearchRequest single : data) {
-          if ((mask & single.searchContext) != 0 && ((GlobalSearchScope)single.searchScope).contains(file)) {
-            local.putValue(file, single);
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        FileBasedIndex.getInstance().processValues(IdIndex.NAME, entry, null, new FileBasedIndex.ValueProcessor<Integer>() {
+          public boolean process(VirtualFile file, Integer value) {
+            if (!IndexCacheManagerImpl.shouldBeFound(file, index)) {
+              return true;
+            }
+            int mask = value.intValue();
+            for (PsiSearchRequest single : data) {
+              if ((mask & single.searchContext) != 0 && ((GlobalSearchScope)single.searchScope).contains(file)) {
+                local.putValue(file, single);
+              }
+            }
+            return true;
           }
-        }
-        return true;
+        }, commonScope);
       }
-    }, commonScope);
+    });
+
     return local;
   }
 

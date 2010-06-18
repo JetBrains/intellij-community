@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
  * {@link com.intellij.codeInsight.completion.CompletionResultSet}s feed on {@link com.intellij.codeInsight.lookup.LookupElement}s,
  * match them against specified
  * {@link com.intellij.codeInsight.completion.PrefixMatcher} and give them to special {@link com.intellij.util.Consumer}
- * (see {@link CompletionService#createResultSet(CompletionParameters,com.intellij.util.Consumer})
+ * (see {@link CompletionService#createResultSet(CompletionParameters, com.intellij.util.Consumer, CompletionContributor)})
  * for further processing, which usually means
  * they will sooner or later appear in completion list. If they don't, there must be some {@link CompletionContributor}
  * up the invocation stack that filters them out.

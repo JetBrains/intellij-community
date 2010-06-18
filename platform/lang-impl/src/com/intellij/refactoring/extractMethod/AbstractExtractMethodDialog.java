@@ -16,6 +16,7 @@
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.codeFragment.CodeFragment;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -126,9 +127,16 @@ public class AbstractExtractMethodDialog extends DialogWrapper implements Extrac
   @Override
   protected void doOKAction() {
     final String error = myValidator.check(getMethodName());
-    if (error!=null){
-      Messages.showInfoMessage(error, RefactoringBundle.message("error.title"));
-      return;
+    if (error != null){
+      if (ApplicationManager.getApplication().isUnitTestMode()){
+        Messages.showInfoMessage(error, RefactoringBundle.message("error.title"));
+        return;
+      }
+      final StringBuilder builder = new StringBuilder();
+      builder.append(error).append(". ").append(RefactoringBundle.message("do.you.wish.to.continue"));
+      if (Messages.showOkCancelDialog(builder.toString(), RefactoringBundle.message("warning.title"), Messages.getWarningIcon()) != 0){
+        return;
+      }
     }
     super.doOKAction();
   }

@@ -19,7 +19,9 @@ package com.intellij.execution.junit;
 import com.intellij.execution.Location;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
@@ -43,8 +45,12 @@ public abstract class JUnitConfigurationProducer extends JavaRuntimeConfiguratio
 
   @Override
   protected RunnerAndConfigurationSettings findExistingByElement(@NotNull Location location,
-                                                                     @NotNull RunnerAndConfigurationSettings[] existingConfigurations
-  ) {
+                                                                 @NotNull RunnerAndConfigurationSettings[] existingConfigurations,
+                                                                 ConfigurationContext context) {
+    final PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(context.getDataContext());
+    if (elements != null && PatternConfigurationProducer.collectTestClasses(elements).size() > 1) {
+      return null;
+    }
     final Module predefinedModule =
       ((JUnitConfiguration)((RunManagerImpl)RunManagerEx.getInstanceEx(location.getProject()))
         .getConfigurationTemplate(getConfigurationFactory())

@@ -91,15 +91,7 @@ public class EclipseModuleManager {
     myEclipseUrls.add(url);
   }
 
-  public void registerEclipseLibSrcUrl(String srcUrl) {
-    myEclipseUrls.add(SRC_PREFIX + srcUrl);
-  }
-
   public boolean isEclipseLibUrl(String url) {
     return myEclipseUrls.contains(url);
-  }
-
-  public boolean isEclipseLibSrcUrl(String url) {
-    return myEclipseUrls.contains(SRC_PREFIX + url);
   }
 }

@@ -89,8 +89,8 @@ public class ApplicationConfigurationProducer extends JavaRuntimeConfigurationPr
 
   @Override
   protected RunnerAndConfigurationSettings findExistingByElement(Location location,
-                                                                     @NotNull RunnerAndConfigurationSettings[] existingConfigurations
-  ) {
+                                                                 @NotNull RunnerAndConfigurationSettings[] existingConfigurations,
+                                                                 ConfigurationContext context) {
     final PsiClass aClass = ApplicationConfigurationType.getMainClass(location.getPsiElement());
     if (aClass == null) {
       return null;

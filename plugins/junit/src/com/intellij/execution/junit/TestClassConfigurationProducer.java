@@ -21,6 +21,7 @@ import com.intellij.execution.Location;
 import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -33,6 +34,10 @@ public class TestClassConfigurationProducer extends JUnitConfigurationProducer {
     location = JavaExecutionUtil.stepIntoSingleClass(location);
     final Project project = location.getProject();
 
+    final PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(context.getDataContext());
+    if (elements != null && PatternConfigurationProducer.collectTestClasses(elements).size() > 1) {
+      return null;
+    }
     myTestClass = JUnitUtil.getTestClass(location);
     if (myTestClass == null) return null;
     RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(project, context);

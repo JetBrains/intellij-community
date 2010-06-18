@@ -100,11 +100,6 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.openapi.options.SchemesManagerFactory</interface-class>
-      <implementation-class>com.intellij.openapi.options.SchemesManagerFactoryImpl</implementation-class>
-    </component>
-
-    <component>
       <interface-class>com.intellij.ide.XmlRpcServer</interface-class>
       <implementation-class>com.intellij.ide.XmlRpcServerImpl</implementation-class>
     </component>
@@ -164,10 +159,6 @@
     <component>
       <implementation-class>com.intellij.notification.impl.ProjectNotificationsComponent</implementation-class>
       <skipForDummyProject/>
-      <skipForDefaultProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.testFramework.UnitTestMode</implementation-class>
       <skipForDefaultProject/>
     </component>
   </project-components>

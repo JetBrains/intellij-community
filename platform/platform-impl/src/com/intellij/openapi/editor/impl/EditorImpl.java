@@ -1263,11 +1263,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public void setBackgroundColor(Color color) {
-    myForcedBackground = color;
-  }
+    if (getBackgroundIgnoreForced().equals(color)) {
+      myForcedBackground = null;
+      return;
+    }
 
-  public void resetBackgourndColor() {
-    myForcedBackground = null;
+    myForcedBackground = color;
   }
 
   public Color getForegroundColor() {

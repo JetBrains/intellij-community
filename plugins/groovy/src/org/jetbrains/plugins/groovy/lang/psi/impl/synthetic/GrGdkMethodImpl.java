@@ -23,6 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.ElementPresentationUtil;
+import com.intellij.psi.impl.cache.ModifierFlags;
 import com.intellij.psi.impl.light.LightMethod;
 import com.intellij.psi.impl.source.HierarchicalMethodSignatureImpl;
 import com.intellij.psi.util.MethodSignature;
@@ -34,7 +35,7 @@ import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 
 import javax.swing.*;
-import java.util.LinkedHashSet;
+import java.lang.reflect.Modifier;
 
 /**
  * @author ven
@@ -60,10 +61,7 @@ public class GrGdkMethodImpl extends LightMethod implements GrGdkMethod {
     super(method.getManager(), method, null);
     myMethod = method;
     final PsiManager manager = method.getManager();
-    LinkedHashSet<String> modifiers = new LinkedHashSet<String>();
-    modifiers.add(PsiModifier.PUBLIC);
-    if (isStatic) modifiers.add(PsiModifier.STATIC);
-    myModifierList = new LightModifierList(manager, modifiers);
+    myModifierList = new LightModifierList(manager, ModifierFlags.PUBLIC_MASK + (isStatic ? ModifierFlags.STATIC_MASK : 0));
 
     final PsiParameter[] originalParameters = method.getParameterList().getParameters();
     final String[] parmNames = new String[originalParameters.length - 1];

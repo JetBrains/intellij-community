@@ -36,16 +36,14 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule>
   implements CommonJavaRunConfigurationParameters, RefactoringListenerProvider {
@@ -55,6 +53,12 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
   @NonNls public static final String TEST_CLASS = "class";
   @NonNls public static final String TEST_PACKAGE = "package";
   @NonNls public static final String TEST_METHOD = "method";
+  @NonNls private static final String PATTERN_EL_NAME = "pattern";
+  @NonNls public static final String TEST_PATTERN = PATTERN_EL_NAME;
+
+  @NonNls private static final String TEST_CLASS_ATT_NAME = "testClass";
+  @NonNls private static final String PATTERNS_EL_NAME = "patterns";
+
   private final Data myData;
   // See #26522
   @NonNls public static final String JUNIT_START_CLASS = "com.intellij.rt.execution.junit.JUnitStarter";
@@ -102,7 +106,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
   }
 
   public Collection<Module> getValidModules() {
-    if (TEST_PACKAGE.equals(myData.TEST_OBJECT)) {
+    if (TEST_PACKAGE.equals(myData.TEST_OBJECT) || TEST_PATTERN.equals(myData.TEST_OBJECT)) {
       return Arrays.asList(ModuleManager.getInstance(getProject()).getModules());
     }
     try {
@@ -222,7 +226,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
 
   @NotNull
   public Module[] getModules() {
-    if (TEST_PACKAGE.equals(myData.TEST_OBJECT) &&
+    if ((TEST_PACKAGE.equals(myData.TEST_OBJECT) || TEST_PATTERN.equals(myData.TEST_OBJECT)) &&
         getPersistentData().getScope() == TestSearchScope.WHOLE_PROJECT) {
       return Module.EMPTY_ARRAY;
     }
@@ -277,6 +281,15 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     DefaultJDOMExternalizer.readExternal(this, element);
     DefaultJDOMExternalizer.readExternal(getPersistentData(), element);
     EnvironmentVariablesComponent.readExternal(element, getPersistentData().getEnvs());
+    final Element patternsElement = element.getChild(PATTERNS_EL_NAME);
+    if (patternsElement != null) {
+      final Set<String> tests = new LinkedHashSet<String>();
+      for (Object o : patternsElement.getChildren(PATTERN_EL_NAME)) {
+        Element patternElement = (Element)o;
+        tests.add(patternElement.getAttributeValue(TEST_CLASS_ATT_NAME));
+      }
+      myData.setPatterns(tests);
+    }
   }
 
   public void writeExternal(final Element element) throws WriteExternalException {
@@ -286,6 +299,13 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     DefaultJDOMExternalizer.writeExternal(this, element);
     DefaultJDOMExternalizer.writeExternal(getPersistentData(), element);
     EnvironmentVariablesComponent.writeExternal(element, getPersistentData().getEnvs());
+    final Element patternsElement = new Element(PATTERNS_EL_NAME);
+    for (String o : getPersistentData().getPatterns()) {
+      final Element patternElement = new Element(PATTERN_EL_NAME);
+      patternElement.setAttribute(TEST_CLASS_ATT_NAME, o);
+      patternsElement.addContent(patternElement);
+    }
+    element.addContent(patternsElement);
     PathMacroManager.getInstance(getProject()).collapsePathsRecursively(element);
   }
 
@@ -309,6 +329,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     public String VM_PARAMETERS;
     public String PARAMETERS;
     public String WORKING_DIRECTORY;
+    private Set<String> myPattern = new LinkedHashSet<String>();
 
     //iws/ipr compatibility
     public String ENV_VARIABLES;
@@ -326,7 +347,8 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
              Comparing.equal(getMethodName(), second.getMethodName()) &&
              Comparing.equal(getWorkingDirectory(), second.getWorkingDirectory()) &&
              Comparing.equal(VM_PARAMETERS, second.VM_PARAMETERS) &&
-             Comparing.equal(PARAMETERS, second.PARAMETERS);
+             Comparing.equal(PARAMETERS, second.PARAMETERS) &&
+             Comparing.equal(myPattern, second.myPattern);
     }
 
     public int hashCode() {
@@ -336,7 +358,8 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
              Comparing.hashcode(getMethodName()) ^
              Comparing.hashcode(getWorkingDirectory()) ^
              Comparing.hashcode(VM_PARAMETERS) ^
-             Comparing.hashcode(PARAMETERS);
+             Comparing.hashcode(PARAMETERS) ^
+             Comparing.hashcode(myPattern);
     }
 
     public TestSearchScope getScope() {
@@ -412,6 +435,11 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
         }
         return packageName;
       }
+      if (TEST_PATTERN.equals(TEST_OBJECT)) {
+        final int size = myPattern.size();
+        if (size == 0) return "Temp suite";
+        return StringUtil.getShortName(myPattern.iterator().next()) + (size > 1 ? " and " + (size - 1) + " more" : "");
+      }
       final String className = JavaExecutionUtil.getPresentableClassName(getMainClassName(), configurationModule);
       if (TEST_METHOD.equals(TEST_OBJECT)) {
         return className + '.' + getMethodName();
@@ -430,6 +458,22 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
 
     public String getMethodName() {
       return METHOD_NAME != null ? METHOD_NAME : "";
+    }
+
+    public Set<String> getPatterns() {
+      return myPattern;
+    }
+
+    public String getPatternPresentation() {
+      final List<String> enabledTests = new ArrayList<String>();
+      for (String pattern : myPattern) {
+        enabledTests.add(pattern);
+      }
+      return StringUtil.join(enabledTests, "||");
+    }
+
+    public void setPatterns(Set<String> pattern) {
+      myPattern = pattern;
     }
 
     public TestObject getTestObject(final Project project, final JUnitConfiguration configuration) {

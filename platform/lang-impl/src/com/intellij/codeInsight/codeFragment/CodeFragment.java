@@ -8,14 +8,14 @@ import java.util.*;
 public class CodeFragment {
   private final List<String> inputVariables;
   private final List<String> outputVariables;
-  private final boolean returnInstructonInside;
+  private final boolean returnInstructionInside;
 
   public CodeFragment(final Set<String> input, final Set<String> output, final boolean returnInside) {
     inputVariables = new ArrayList<String>(input);
     Collections.sort(inputVariables);
     outputVariables = new ArrayList<String>(output);
     Collections.sort(outputVariables);
-    returnInstructonInside = returnInside;
+    returnInstructionInside = returnInside;
   }
 
   public Collection<String> getInputVariables() {
@@ -26,7 +26,7 @@ public class CodeFragment {
     return outputVariables;
   }
 
-  public boolean isReturnInstructonInside() {
-    return returnInstructonInside;
+  public boolean isReturnInstructionInside() {
+    return returnInstructionInside;
   }
 }

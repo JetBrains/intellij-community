@@ -43,6 +43,14 @@ public class Token<T extends PsiElement> {
     this(element, text, useRename, splitter);
     this.offset = offset;
   }
+  
+  public Token(T element, Splitter splitter) {
+    this(element, element.getText(), false, splitter);
+  }
+  
+  public Token(T element, boolean useRename, Splitter splitter) {
+    this(element, element.getText(), useRename, splitter);
+  }
 
   public String getText() {
     return text;

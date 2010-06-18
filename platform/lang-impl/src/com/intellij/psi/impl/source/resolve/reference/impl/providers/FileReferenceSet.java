@@ -56,6 +56,18 @@ public class FileReferenceSet {
           }
         };
 
+   public static final Condition<PsiFileSystemItem> FILE_FILTER = new Condition<PsiFileSystemItem>() {
+    public boolean value(final PsiFileSystemItem item) {
+      return item instanceof PsiFile;
+    }
+  };
+
+  public static final Condition<PsiFileSystemItem> DIRECTORY_FILTER = new Condition<PsiFileSystemItem>() {
+    public boolean value(final PsiFileSystemItem item) {
+      return item instanceof PsiDirectory;
+    }
+  };
+
   private FileReference[] myReferences;
   private PsiElement myElement;
   private final int myStartInElement;
@@ -371,7 +383,7 @@ public class FileReferenceSet {
     return list;
   }
 
-  protected Condition<PsiElement> createCondition() {
+  protected Condition<PsiFileSystemItem> getReferenceCompletionFilter() {
     return Condition.TRUE;
   }
 

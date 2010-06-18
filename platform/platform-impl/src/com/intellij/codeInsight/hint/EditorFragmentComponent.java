@@ -160,13 +160,14 @@ public class EditorFragmentComponent extends JPanel {
                                                                       int endLine,
                                                                       boolean showFolding, boolean showGutter) {
     final EditorEx editorEx = (EditorEx)editor;
+    final Color old = editorEx.getBackroundColor();
     Color backColor = getBackgroundColor(editor);
     editorEx.setBackgroundColor(backColor);
     EditorFragmentComponent fragmentComponent = new EditorFragmentComponent(editorEx, startLine, endLine,
                                                                             showFolding, showGutter);
     fragmentComponent.setBackground(backColor);
 
-    editorEx.resetBackgourndColor();
+    editorEx.setBackgroundColor(old);
     return fragmentComponent;
   }
 

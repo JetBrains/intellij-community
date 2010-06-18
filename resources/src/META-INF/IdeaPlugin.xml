@@ -1135,6 +1135,11 @@
     <psiViewerExtension implementation="com.intellij.internal.psiView.PsiViewerMethodExtension"/>
     <psiViewerExtension implementation="com.intellij.internal.psiView.PsiViewerCodeFragmentExtension"/>
     <psiViewerExtension implementation="com.intellij.internal.psiView.PsiViewerExpressionExtension"/>
+
+    <applicationService serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"
+                        serviceImplementation="com.intellij.profile.codeInspection.JavaAwareInspectionProfileManager"/>
+    <exportable serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"/>
+    <schemeOwner serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"/>
   </extensions>
 
   <xi:include href="/META-INF/xdebugger.xml" xpointer="xpointer(/root/*)"/>

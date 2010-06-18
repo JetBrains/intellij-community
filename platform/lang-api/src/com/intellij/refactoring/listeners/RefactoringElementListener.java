@@ -19,7 +19,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * {@linkplain RefactoringElementListenerProvider} recieves a notifictaion of what happened
+ * {@linkplain RefactoringElementListenerProvider} receives a notification of what happened
  * to element it have been observing during a refactoring.
  * @author dsl
  */

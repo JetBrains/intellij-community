@@ -26,6 +26,8 @@ import java.util.Collection;
 import java.util.List;
 
 public interface MavenFacade extends Remote {
+  void ping() throws RemoteException;
+
   void set(MavenFacadeLogger logger, MavenFacadeDownloadListener downloadListener) throws RemoteException;
 
   MavenFacadeEmbedder createEmbedder(MavenFacadeSettings settings) throws RemoteException;

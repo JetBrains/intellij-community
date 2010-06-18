@@ -182,7 +182,6 @@ public class EclipseClasspathReader {
       if (sourcePath != null) {
         final String srcUrl = expandEclipsePath2Url(sourcePath, rootModel, myCurrentRoots);
         modifiableModel.addRoot(srcUrl, OrderRootType.SOURCES);
-        eclipseModuleManager.registerEclipseLibSrcUrl(srcUrl);
       }
 
       EJavadocUtil.appendJavadocRoots(element, rootModel, myCurrentRoots, modifiableModel);

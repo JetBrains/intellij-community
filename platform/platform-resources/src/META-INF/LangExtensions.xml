@@ -103,6 +103,11 @@
                       serviceImplementation="com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable"/>
   <exportable serviceInterface="com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable"/>
 
+  <applicationService serviceInterface="com.intellij.psi.codeStyle.CodeStyleSchemes"
+                      serviceImplementation="com.intellij.psi.impl.source.codeStyle.CodeStyleSchemesImpl"/>
+  <exportable serviceInterface="com.intellij.psi.codeStyle.CodeStyleSchemes"/>
+  <schemeOwner serviceInterface="com.intellij.psi.codeStyle.CodeStyleSchemes"/>
+
   <applicationService serviceInterface="com.intellij.openapi.roots.libraries.LibraryTablesRegistrar"
                       serviceImplementation="com.intellij.openapi.roots.impl.libraries.LibraryTablesRegistrarImpl"/>
 
@@ -117,6 +122,9 @@
 
   <applicationService serviceInterface="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileInfoManager"
                       serviceImplementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileInfoManager"/>
+
+  <applicationService serviceInterface="com.intellij.psi.PsiReferenceService"
+                      serviceImplementation="com.intellij.psi.PsiReferenceServiceImpl"/>
 
   <projectService serviceInterface="com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager"
                   serviceImplementation="com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager"/>
@@ -223,6 +231,11 @@
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.CustomColorsPage" id="custom"/>
 
   <elementDescriptionProvider implementation="com.intellij.psi.impl.DefaultPomTargetDescriptionProvider" order="last" id="pomDefault"/>
+
+  <applicationService serviceInterface="com.intellij.codeInspection.ex.AppInspectionProfilesVisibleTreeState"
+                      serviceImplementation="com.intellij.codeInspection.ex.AppInspectionProfilesVisibleTreeState"/>
+  <projectService serviceInterface="com.intellij.codeInspection.ex.ProjectInspectionProfilesVisibleTreeState"
+                  serviceImplementation="com.intellij.codeInspection.ex.ProjectInspectionProfilesVisibleTreeState"/>
 
   <!-- Editor -->
   <applicationConfigurable implementation="com.intellij.application.options.editor.EditorOptions" id="editor" order="after appearance"/>
@@ -537,4 +550,8 @@
 
   <definitionsSearch implementation="com.intellij.pom.PomDefinitionSearch"/>
   <gotoTargetRendererProvider implementation="com.intellij.testIntegration.GotoTestRendererProvider"/>
+
+  <applicationService serviceInterface="com.intellij.ide.todo.TodoConfiguration"
+                      serviceImplementation="com.intellij.ide.todo.TodoConfiguration"/>
+  <indexPatternProvider implementation="com.intellij.ide.todo.TodoIndexPatternProvider"/>
 </extensions>
