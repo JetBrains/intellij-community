@@ -47,6 +47,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
   private final EditorImpl myEditor;
   private final CopyOnWriteArrayList<CaretListener> myCaretListeners = ContainerUtil.createEmptyCOWList();
   private LogicalPosition myLogicalCaret;
+  private VerticalInfo myCaretInfo;
   private VisualPosition myVisibleCaret;
   private int myOffset;
   private int myVisualLineStart;
@@ -58,6 +59,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
     myEditor = editor;
     myLogicalCaret = new LogicalPosition(0, 0);
     myVisibleCaret = new VisualPosition(0, 0);
+    myCaretInfo = new VerticalInfo(0, 0);
     myOffset = 0;
     myVisualLineStart = 0;
     Document doc = editor.getDocument();
@@ -97,13 +99,12 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
       }
     }
 
-    int oldY = myEditor.visibleLineNumberToYPosition(myVisibleCaret.line);
-
     myVisibleCaret = new VisualPosition(line, column);
 
+    VerticalInfo oldInfo = myCaretInfo;
     LogicalPosition oldPosition = myLogicalCaret;
 
-    myLogicalCaret = myEditor.visualToLogicalPosition(myVisibleCaret);
+    setCurrentLogicalCaret(myEditor.visualToLogicalPosition(myVisibleCaret));
     myOffset = myEditor.logicalPositionToOffset(myLogicalCaret);
     LOG.assertTrue(myOffset >= 0 && myOffset <= myEditor.getDocument().getTextLength());
 
@@ -116,7 +117,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
 
     myEditor.setLastColumnNumber(myVisibleCaret.column);
     myEditor.updateCaretCursor();
-    requestRepaint(oldY);
+    requestRepaint(oldInfo);
 
     if (oldPosition.column != myLogicalCaret.column || oldPosition.line != myLogicalCaret.line) {
       CaretEvent event = new CaretEvent(myEditor, oldPosition, myLogicalCaret);
@@ -144,7 +145,8 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
                                   int lineShift,
                                   boolean withSelection,
                                   boolean blockSelection,
-                                  boolean scrollToCaret) {
+                                  boolean scrollToCaret)
+  {
     assertIsDispatchThread();
     SelectionModel selectionModel = myEditor.getSelectionModel();
     int selectionStart = selectionModel.getLeadSelectionOffset();
@@ -268,11 +270,10 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
 
     ((FoldingModelImpl)myEditor.getFoldingModel()).flushCaretPosition();
 
-    int oldY = myEditor.visibleLineNumberToYPosition(myVisibleCaret.line);
-
+    VerticalInfo oldInfo = myCaretInfo;
     LogicalPosition oldCaretPosition = myLogicalCaret;
 
-    myLogicalCaret = new LogicalPosition(line, column, softWrapLines, linesFromCurrentSoftWrap, softWrapColumns);
+    setCurrentLogicalCaret(new LogicalPosition(line, column, softWrapLines, linesFromCurrentSoftWrap, softWrapColumns));
 
     final int offset = myEditor.logicalPositionToOffset(myLogicalCaret);
 
@@ -297,13 +298,17 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
     myOffset = myEditor.logicalPositionToOffset(myLogicalCaret);
     LOG.assertTrue(myOffset >= 0 && myOffset <= myEditor.getDocument().getTextLength());
 
-    myVisualLineStart = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line, 0)));
-    myVisualLineEnd = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line + 1, 0)));
+    int caretOffset = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line, 0)));
+    int caretLine = doc.getLineNumber(caretOffset);
+    myVisualLineStart = doc.getLineStartOffset(caretLine);
+    myVisualLineEnd = doc.getLineEndOffset(caretLine) + 1;
 
     myEditor.updateCaretCursor();
-    requestRepaint(oldY);
+    requestRepaint(oldInfo);
 
-    if (oldCaretPosition.column != myLogicalCaret.column || oldCaretPosition.line != myLogicalCaret.line) {
+    if (oldCaretPosition.column + oldCaretPosition.softWrapColumns != myLogicalCaret.column + myLogicalCaret.softWrapColumns
+        || oldCaretPosition.line + oldCaretPosition.softWrapLines != myLogicalCaret.line + myLogicalCaret.softWrapLines)
+    {
       CaretEvent event = new CaretEvent(myEditor, oldCaretPosition, myLogicalCaret);
       for (CaretListener listener : myCaretListeners) {
         listener.caretPositionChanged(event);
@@ -311,27 +316,25 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
     }
   }
 
-  private void requestRepaint(int oldY) {
-    int newY = myEditor.visibleLineNumberToYPosition(myVisibleCaret.line);
+  private void requestRepaint(VerticalInfo oldCaretInfo) {
     int lineHeight = myEditor.getLineHeight();
-    Rectangle visibleRect = myEditor.getScrollingModel().getVisibleArea();
+    Rectangle visibleArea = myEditor.getScrollingModel().getVisibleArea();
     final EditorGutterComponentEx gutter = myEditor.getGutterComponentEx();
     final EditorComponentImpl content = (EditorComponentImpl)myEditor.getContentComponent();
 
-    int updateWidth = myEditor.getScrollPane().getHorizontalScrollBar().getValue() + visibleRect.width;
-    if (Math.abs(newY - oldY) <= 2 * lineHeight) {
-      int minY = Math.min(oldY, newY);
-      int maxY = Math.max(oldY + lineHeight, newY + lineHeight);
+    int updateWidth = myEditor.getScrollPane().getHorizontalScrollBar().getValue() + visibleArea.width;
+    if (Math.abs(myCaretInfo.y - oldCaretInfo.y) <= 2 * lineHeight) {
+      int minY = Math.min(oldCaretInfo.y, myCaretInfo.y);
+      int maxY = Math.max(oldCaretInfo.y + oldCaretInfo.height, myCaretInfo.y + myCaretInfo.height);
       content.repaintEditorComponent(0, minY, updateWidth, maxY - minY);
       gutter.repaint(0, minY, gutter.getWidth(), maxY - minY);
     }
     else {
-      content.repaintEditorComponent(0, oldY, updateWidth, 2 * lineHeight);
-      gutter.repaint(0, oldY, updateWidth, 2 * lineHeight);
-      content.repaintEditorComponent(0, newY, updateWidth, 2 * lineHeight);
-      gutter.repaint(0, newY, updateWidth, 2 * lineHeight);
+      content.repaintEditorComponent(0, oldCaretInfo.y, updateWidth, oldCaretInfo.height + lineHeight);
+      gutter.repaint(0, oldCaretInfo.y, updateWidth, oldCaretInfo.height + lineHeight);
+      content.repaintEditorComponent(0, myCaretInfo.y, updateWidth, myCaretInfo.height + lineHeight);
+      gutter.repaint(0, myCaretInfo.y, updateWidth, myCaretInfo.height + lineHeight);
     }
-    
   }
 
   public LogicalPosition getLogicalPosition() {
@@ -351,6 +354,18 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
   public int getOffset() {
     validateCallContext();
     return myOffset;
+  }
+
+  /**
+   * There is a possible case that single logical line is spread to more than one visual lines because of soft wraps. This method
+   * allows to receive information about vertical range occupied by the active logical line, i.e. it identifies
+   * <code>'y'</code> coordinate of the first visual line that corresponds to the logical line and total height
+   * of all visual lines that correspond to the active logical line.
+   *
+   * @return    object that encapsulates information about visual vertical range occupied by the current logical line on a screen
+   */
+  public VerticalInfo getVisualCaretInfo() {
+    return myCaretInfo;
   }
 
   public int getVisualLineStart() {
@@ -406,7 +421,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
 
       int newOffset = myOffset;
 
-      if (myOffset > oldEndOffset || myOffset == oldEndOffset && needToShiftWhitespaces(e)) {
+      if (myOffset > oldEndOffset || myOffset == oldEndOffset && needToShiftWhiteSpaces(e)) {
         newOffset += e.getNewLength() - e.getOldLength();
       }
       else if (myOffset >= startOffset && myOffset <= oldEndOffset) {
@@ -428,7 +443,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
     myVisualLineEnd = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line + 1, 0)));
   }
 
-  private boolean needToShiftWhitespaces(final DocumentEvent e) {
+  private boolean needToShiftWhiteSpaces(final DocumentEvent e) {
     if(!CharArrayUtil.containsOnlyWhiteSpaces(e.getNewFragment()) || CharArrayUtil.containLineBreaks(e.getNewFragment()))
       return e.getOldLength() > 0;
     if(e.getOffset() == 0) return false;
@@ -443,5 +458,34 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
 
   public int getPriority() {
     return 3;
+  }
+
+  private void setCurrentLogicalCaret(LogicalPosition position) {
+    myLogicalCaret = position;
+    myCaretInfo = createVerticalInfo(position);
+  }
+
+  private VerticalInfo createVerticalInfo(LogicalPosition position) {
+    Document document = myEditor.getDocument();
+    int line = position.line;
+    int y = myEditor.logicalPositionToXY(myEditor.offsetToLogicalPosition(document.getLineStartOffset(line))).y;
+    int height = myEditor.getLineHeight();
+    if (line < document.getLineCount() - 1) {
+      height = myEditor.logicalPositionToXY(myEditor.offsetToLogicalPosition(document.getLineStartOffset(line + 1))).y - y;
+    }
+    return new VerticalInfo(y, height);
+  }
+
+  /**
+   * Encapsulates information about target vertical range info - its <code>'y'</code> coordinate and height in pixels.
+   */
+  public static class VerticalInfo {
+    public final int y;
+    public final int height;
+
+    private VerticalInfo(int y, int height) {
+      this.y = y;
+      this.height = height;
+    }
   }
 }

@@ -96,8 +96,14 @@ public interface CaretModel {
    */
   void removeCaretListener(CaretListener listener);
 
+  /**
+   * @return    document offset for the start of the logical line where caret is located
+   */
   int getVisualLineStart();
 
+  /**
+   * @return    document offset for the end of the logical line where caret is located
+   */
   int getVisualLineEnd();
 
   TextAttributes getTextAttributes();

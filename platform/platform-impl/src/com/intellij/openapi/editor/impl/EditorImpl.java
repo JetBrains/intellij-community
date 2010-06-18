@@ -424,13 +424,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @NotNull
-  public CaretModel getCaretModel() {
+  public CaretModelImpl getCaretModel() {
     return myCaretModel;
   }
 
   @NotNull
   public ScrollingModel getScrollingModel() {
     return myScrollingModel;
+  }
+
+  @NotNull
+  public SoftWrapModelImpl getSoftWrapModel() {
+    return mySoftWrapModel;
   }
 
   @NotNull
@@ -948,9 +953,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @NotNull
   public LogicalPosition offsetToLogicalPosition(int offset) {
-    int line = calcLogicalLineNumber(offset);
-    int column = calcColumnNumber(offset, line);
-    return new LogicalPosition(line, column);
+    return mySoftWrapModel.offsetToLogicalPosition(offset);
   }
 
   @NotNull
@@ -1105,30 +1108,30 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void repaintToScreenBottom(int startLine) {
-    Rectangle visibleRect = getScrollingModel().getVisibleArea();
+    Rectangle visibleArea = getScrollingModel().getVisibleArea();
     int yStartLine = logicalLineToY(startLine);
-    int yEndLine = visibleRect.y + visibleRect.height;
+    int yEndLine = visibleArea.y + visibleArea.height;
 
-    myEditorComponent.repaintEditorComponent(visibleRect.x, yStartLine, visibleRect.x + visibleRect.width, yEndLine - yStartLine);
+    myEditorComponent.repaintEditorComponent(visibleArea.x, yStartLine, visibleArea.x + visibleArea.width, yEndLine - yStartLine);
     myGutterComponent.repaint(0, yStartLine, myGutterComponent.getWidth(), yEndLine - yStartLine);
   }
 
   public void repaintLines(int startLine, int endLine) {
     if (!isShowing()) return;
 
-    Rectangle visibleRect = getScrollingModel().getVisibleArea();
+    Rectangle visibleArea = getScrollingModel().getVisibleArea();
     int yStartLine = logicalLineToY(startLine);
     int yEndLine = logicalLineToY(endLine) + getLineHeight() + WAVE_HEIGHT;
 
-    myEditorComponent.repaintEditorComponent(visibleRect.x, yStartLine, visibleRect.x + visibleRect.width, yEndLine - yStartLine);
+    myEditorComponent.repaintEditorComponent(visibleArea.x, yStartLine, visibleArea.x + visibleArea.width, yEndLine - yStartLine);
     myGutterComponent.repaint(0, yStartLine, myGutterComponent.getWidth(), yEndLine - yStartLine);
   }
 
   private void beforeChangedUpdate(DocumentEvent e) {
     if (!myDocument.isInBulkUpdate()) {
-      Rectangle viewRect = getScrollingModel().getVisibleArea();
+      Rectangle visibleArea = getScrollingModel().getVisibleArea();
       Point pos = visualPositionToXY(getCaretModel().getVisualPosition());
-      myCaretUpdateVShift = pos.y - viewRect.y;
+      myCaretUpdateVShift = pos.y - visibleArea.y;
     }
     mySizeContainer.beforeChange(e);
   }
@@ -1213,7 +1216,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  void recalcSizeAndRepaint() {
+  void recalculateSizeAndRepaint() {
     mySizeContainer.reset();
     validateSize();
     myEditorComponent.repaintEditorComponent();
@@ -1474,6 +1477,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return width;
   }
 
+  @SuppressWarnings({"StatementWithEmptyBody"})
   private void paintBackgrounds(Graphics g, Rectangle clip) {
     Color defaultBackground = getBackroundColor();
     g.setColor(defaultBackground);
@@ -1514,6 +1518,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int fontType = attributes.getFontType();
     CharSequence text = myDocument.getCharsNoThreadCheck();
     int lastLineIndex = Math.max(0, myDocument.getLineCount() - 1);
+
+    // Holds offset of the first newly introduced soft wrap if any (non-negative value).
+    int newSoftWrapOffset = -1;
+
+    outer:
     while (!iterationState.atEnd() && !lIterator.atEnd()) {
       int hEnd = iterationState.getEndOffset();
       int lEnd = lIterator.getEnd();
@@ -1552,6 +1561,38 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           position.x = drawBackground(g, backColor, collapsedFolderAt.getPlaceholderText(), position, fontType, defaultBackground, clip);
         }
         else {
+          TextChange softWrap = getSoftWrapModel().getSoftWrap(start);
+          if (softWrap == null && getSoftWrapModel().shouldWrap(myDocument.getRawChars(), start, hEnd, position)) {
+            softWrap = getSoftWrapModel().wrap(start);
+            if (newSoftWrapOffset < 0) newSoftWrapOffset = start;
+          }
+          if (softWrap != null) {
+            // Draw soft wrap text background if any.
+            CharSequence softWrapText = softWrap.getText();
+            int softWrapStart = 0;
+            int softWrapEnd = 0;
+            while (softWrapEnd < softWrapText.length()) {
+              for (; softWrapEnd < softWrapText.length() && softWrapText.charAt(softWrapEnd) != '\n'; softWrapEnd++) ;
+              if (softWrapStart >= softWrapText.length() || softWrapEnd >= softWrapText.length()) {
+                position.x = drawBackground(
+                  g, backColor, softWrapText.subSequence(softWrapStart, softWrapText.length()), position, fontType, defaultBackground, clip
+                );
+              }
+              else {
+                if (softWrapEnd > softWrapStart + 1) {
+                  drawBackground(
+                    g, backColor, softWrapText.subSequence(softWrapStart, softWrapEnd - 1), position, fontType, defaultBackground, clip
+                  );
+                }
+                if (position.y > clip.y + clip.height) break outer;
+                position.x = 0;
+                position.y += lineHeight;
+                softWrapStart = softWrapEnd + 1;
+                softWrapEnd = softWrapStart;
+              }
+            }
+          }
+
           if (hEnd > lEnd - lIterator.getSeparatorLength()) {
             position.x = drawBackground(g, backColor, text.subSequence(start, lEnd - lIterator.getSeparatorLength()), position, fontType,
                                         defaultBackground, clip);
@@ -1573,6 +1614,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     if (lIterator.getLineNumber() >= lastLineIndex && position.y <= clip.y + clip.height) {
       paintAfterFileEndBackground(iterationState, g, position, clip, lineHeight, defaultBackground);
+    }
+
+    // Perform additional activity if new soft wrap is introduced during repainting.
+    // Note: this code lives in this method in assumption that background repainting is the very first activity performed
+    //       during whole editor component repaint.
+    if (newSoftWrapOffset >= 0) {
+      // Repaint gutter at all space that is located after active clip in order to ensure that line numbers are correctly redrawn
+      // in accordance with the newly introduced soft wrap(s).
+      myGutterComponent.repaint(0, position.y, myGutterComponent.getWidth(), myGutterComponent.getHeight() - position.y);
+
+      // Ask caret model to update visual caret position.
+      if (getCaretModel().getOffset() >= newSoftWrapOffset) {
+        getCaretModel().moveToOffset(getCaretModel().getOffset());
+      }
     }
   }
 
@@ -1749,9 +1804,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           }
           else {
             boolean breakWholeIteration = false;
-            if (mySoftWrapModel.shouldWrap(chars, start, hEnd, position)) {
-              TextChange softWrap = mySoftWrapModel.wrap(start);
-
+            TextChange softWrap = getSoftWrapModel().getSoftWrap(start);
+            if (softWrap != null) {
               // There is a possible case that soft wrap contains more than one line feed inside and we need to start drawing not
               // from its first line.
               int softWrapLinesToSkip = activeSoftWrapProcessed ? 0 : logicalPosition.linesFromActiveSoftWrap;
@@ -1916,6 +1970,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void paintCaretCursor(Graphics g) {
+    // There is a possible case that visual caret position is changed because of newly added or removed soft wraps.
+    // We check if that's the case and ask caret model to recalculate visual position if necessary.
+    LogicalPosition storedPosition = getCaretModel().getLogicalPosition();
+    LogicalPosition actualPosition = visualToLogicalPosition(getCaretModel().getVisualPosition());
+    if (!storedPosition.equals(actualPosition)) {
+      getCaretModel().moveToLogicalPosition(storedPosition);
+    }
+
     myCaretCursor.paint(g);
   }
 
@@ -2387,7 +2449,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     LOG.assertTrue(line >= 0);
 
-    return new VisualPosition(line + logicalPos.softWrapLines, Math.max(0, column + logicalPos.softWrapColumns));
+    return mySoftWrapModel.adjustVisualPosition(logicalPos, new VisualPosition(line, Math.max(0, column)));
   }
 
   @Nullable
@@ -2482,7 +2544,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     if (column < 0) column = 0;
 
-    return mySoftWrapModel.adjustLogicalPositionIfNecessary(new LogicalPosition(line, column), visiblePos);
+    return mySoftWrapModel.adjustLogicalPosition(new LogicalPosition(line, column), visiblePos);
   }
 
   private int calcLogicalLineNumber(int offset) {
@@ -2493,20 +2555,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       throw new IndexOutOfBoundsException("Wrong offset: " + offset + " textLength: " + textLength);
     }
 
-    int lineIndex = myDocument.getLineNumber(offset);
-
-    LOG.assertTrue(lineIndex >= 0 && lineIndex < myDocument.getLineCount());
-
-    return lineIndex;
+    return mySoftWrapModel.offsetToLogicalPosition(offset).line;
   }
 
   public int calcColumnNumber(int offset, int lineIndex) {
     if (myDocument.getTextLength() == 0) return 0;
 
-    CharSequence text = myDocument.getCharsSequence();
-    int start = myDocument.getLineStartOffset(lineIndex);
-    if (start == offset) return 0;
-    return EditorUtil.calcColumnNumber(this, text, start, offset, EditorUtil.getTabSize(this));
+    return mySoftWrapModel.offsetToLogicalPosition(offset).column;
   }
 
   private void moveCaretToScreenPos(int x, int y) {
@@ -2703,7 +2758,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (SwingUtilities.isRightMouseButton(e)) {
       return;
     }
-    Rectangle rect = getScrollingModel().getVisibleArea();
+    Rectangle visibleArea = getScrollingModel().getVisibleArea();
 
     int x = e.getX();
 
@@ -2712,23 +2767,23 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     int dx = 0;
-    if (x < rect.x && rect.x > 0) {
-      dx = x - rect.x;
+    if (x < visibleArea.x && visibleArea.x > 0) {
+      dx = x - visibleArea.x;
     }
     else {
-      if (x > rect.x + rect.width) {
-        dx = x - rect.x - rect.width;
+      if (x > visibleArea.x + visibleArea.width) {
+        dx = x - visibleArea.x - visibleArea.width;
       }
     }
 
     int dy = 0;
     int y = e.getY();
-    if (y < rect.y && rect.y > 0) {
-      dy = y - rect.y;
+    if (y < visibleArea.y && visibleArea.y > 0) {
+      dy = y - visibleArea.y;
     }
     else {
-      if (y > rect.y + rect.height) {
-        dy = y - rect.y - rect.height;
+      if (y > visibleArea.y + visibleArea.height) {
+        dy = y - visibleArea.y - visibleArea.height;
       }
     }
     if (dx == 0 && dy == 0) {
@@ -3014,8 +3069,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       int lineHeight = getLineHeight();
       int y = myLocation.y;
 
-      Rectangle viewRect = getScrollingModel().getVisibleArea();
-      if (x - viewRect.x < 0) {
+      Rectangle viewRectangle = getScrollingModel().getVisibleArea();
+      if (x - viewRectangle.x < 0) {
         return;
       }
 
@@ -3169,8 +3224,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   class MyScrollBar extends JScrollBar {
-    @NonNls private static final String DECR_BUTTON_FIELD = "decrButton";
-    @NonNls private static final String INCR_BUTTON_FIELD = "incrButton";
+    @NonNls private static final String DECREASE_BUTTON_FIELD = "decrButton";
+    @NonNls private static final String INCREASE_BUTTON_FIELD = "incrButton";
     @NonNls private static final String APPLE_LAF_AQUA_SCROLL_BAR_UI_CLASS = "apple.laf.AquaScrollBarUI";
 
     private MyScrollBar(int orientation) {
@@ -3185,8 +3240,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     /**
-     * This is helper method. It returns height of the top (descrease) scrollbar
-     * button. Please note, that it's possible to return real height only if scrollbar
+     * This is helper method. It returns height of the top (decrease) scroll bar
+     * button. Please note, that it's possible to return real height only if scroll bar
      * is instance of BasicScrollBarUI. Otherwise it returns fake (but good enough :) )
      * value.
      */
@@ -3195,11 +3250,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       Insets insets = getInsets();
       if (barUI instanceof BasicScrollBarUI) {
         try {
-          Field decrButtonField = BasicScrollBarUI.class.getDeclaredField(DECR_BUTTON_FIELD);
-          decrButtonField.setAccessible(true);
-          JButton decrButtonValue = (JButton)decrButtonField.get(barUI);
-          LOG.assertTrue(decrButtonValue != null);
-          return insets.top + decrButtonValue.getHeight();
+          Field decreaseButtonField = BasicScrollBarUI.class.getDeclaredField(DECREASE_BUTTON_FIELD);
+          decreaseButtonField.setAccessible(true);
+          JButton decreaseButtonValue = (JButton)decreaseButtonField.get(barUI);
+          LOG.assertTrue(decreaseButtonValue != null);
+          return insets.top + decreaseButtonValue.getHeight();
         }
         catch (Exception exc) {
           throw new IllegalStateException(exc.getMessage());
@@ -3211,8 +3266,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     /**
-     * This is helper method. It returns height of the bottom (increase) scrollbar
-     * button. Please note, that it's possible to return real height only if scrollbar
+     * This is helper method. It returns height of the bottom (increase) scroll bar
+     * button. Please note, that it's possible to return real height only if scroll bar
      * is instance of BasicScrollBarUI. Otherwise it returns fake (but good enough :) )
      * value.
      */
@@ -3221,11 +3276,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       Insets insets = getInsets();
       if (barUI instanceof BasicScrollBarUI) {
         try {
-          Field incrButtonField = BasicScrollBarUI.class.getDeclaredField(INCR_BUTTON_FIELD);
-          incrButtonField.setAccessible(true);
-          JButton incrButtonValue = (JButton)incrButtonField.get(barUI);
-          LOG.assertTrue(incrButtonValue != null);
-          return insets.bottom + incrButtonValue.getHeight();
+          Field increaseButtonField = BasicScrollBarUI.class.getDeclaredField(INCREASE_BUTTON_FIELD);
+          increaseButtonField.setAccessible(true);
+          JButton increaseButtonValue = (JButton)increaseButtonField.get(barUI);
+          LOG.assertTrue(increaseButtonValue != null);
+          return insets.bottom + increaseButtonValue.getHeight();
         }
         catch (Exception exc) {
           throw new IllegalStateException(exc.getMessage());

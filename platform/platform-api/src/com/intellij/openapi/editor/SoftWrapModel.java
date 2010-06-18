@@ -15,10 +15,7 @@
  */
 package com.intellij.openapi.editor;
 
-import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Collection;
 
 /**
  * Defines contract for the services that bring <code>'soft wrapping'</code> to the editor.
@@ -79,38 +76,6 @@ public interface SoftWrapModel {
   boolean isSoftWrappingEnabled();
 
   /**
-   * Allows to retrieve number of lines feeds from <code>'soft wraps'</code> located <b>before</b> the given visual position.
-   * <p/>
-   * There is a possible case that given visual position points to location <b>inside</b> soft wrap - line feeds of that soft wrap
-   * are not counted then.
-   * <p/>
-   * <b>Example:</b>
-   * <p/>
-   * <pre>
-   *     public class Test {                      | &lt;- right margin
-   *                                              |
-   *         public void baz() {                  |
-   *             foo("test1", "test2", "test3", [p1]
-   *  [p2            "test4", "test5", "test6",   |
-   *                 "test7", "test8", "test8"); [p3]
-   *         }                                    |
-   *                                              |
-   *  [p4]   public void foo(Object ... args) {   |
-   *         }                                    |
-   *     }                                        |
-   *      </pre>
-   * <p/>
-   * Here all <code>'foo()'</code> call arguments are soft wrapped into three lines. However zero is returned for visual position
-   * <code>'p1'</code>-<code>'p3'</code> because they are located <b>inside</b> soft wrap;
-   * <code>'2'</code> is returned for <code>'p4'</code>.
-   *
-   * @param position    target visual position
-   * @return            number of lines feeds from <code>'soft wraps'</code> located <b>before</b> the given visual position if any;
-   *                    <code>0</code> otherwise
-   */
-  int getSoftWrapLineFeedsBefore(VisualPosition position);
-
-  /**
    * Asks current model for the soft wrap registered for the given document offset if any.
    *
    * @param offset      target document offset
@@ -118,6 +83,4 @@ public interface SoftWrapModel {
    */
   @Nullable
   TextChange getSoftWrap(int offset);
-
-  LogicalPosition adjustLogicalPositionIfNecessary(LogicalPosition logical, VisualPosition visual);
 }
