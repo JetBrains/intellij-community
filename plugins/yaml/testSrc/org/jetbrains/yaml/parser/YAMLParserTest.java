@@ -58,13 +58,6 @@ public class YAMLParserTest extends LightPlatformTestCase {
            "  }");
   }
 
-  public void testRu_locale() throws Throwable {
-    doTest("ru:\n" +
-           "  hello: \u041f\u0440\u0438\u0432\u0435\u0442\n" +
-           "  hello_world: \u041f\u0440\u0438\u0432\u0435\u0442 \u041c\u0438\u0440\n" +
-           "  hello_yaml_parser: \"\u041d\u0443 \u0437\u0434\u0440\u0430\u0432\u0441\u0442\u0432\u0443\u0439, \u0439\u0430\u043c\u043b\u044c \u043f\u0430\u0440\u0441\u0435\u0440 :)\"");
-  }
-
   public void testSample_log() throws Throwable {
     doTest("Stack:\n" +
            "  - file: TopClass.py\n" +

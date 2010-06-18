@@ -67,16 +67,6 @@ public class YAMLLexerTest extends LexerTestCase {
            "  0.278 Batting Average");
   }
 
-  public void testLocale(){
-    doTest("en:\n" +
-           "  hello: Hello\n" +
-           "  hello_world: Hello World\n" +
-           "  hello_flash: Hello Flash\n" +
-           "ru:\n" +
-           "  hello: \u041f\u0440\u0438\u0432\u0435\u0442\n" +
-           "  hello_world: \u041f\u0440\u0438\u0432\u0435\u0442 \u043c\u0438\u0440\n" +
-           "  hello_flash: \u041f\u0440\u0438\u0432\u0435\u0442 \u0444\u043b\u044d\u0448");
-  }
 
   public void testMap_between_seq(){
     doTest("? - Detroit Tigers\n" +
@@ -141,9 +131,9 @@ public class YAMLLexerTest extends LexerTestCase {
   public void testWrong_string_highlighting(){
     doTest("status:\n" +
            "    draft: \"Brouillon\"  \n" +
-           "    reviewed: \"R\u00e9vis\u00e9\"  \n" +
-           "    hidden: \"Cach\u00e9\"\n" +
-           "    published: \"Publi\u00e9\"");
+           "    reviewed: \"Revise\"\n" +
+           "    hidden: \"Cache\"\n" +
+           "    published: \"Public\"");
   }
 
   public void testValue_injection(){
