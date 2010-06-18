@@ -6,8 +6,7 @@
     <group id="AddAllToFavorites" class="com.intellij.ide.favoritesTreeView.actions.AddAllToFavoritesActionGroup" popup="true"/>
     <action id="AddNewFavoritesList" class="com.intellij.ide.favoritesTreeView.actions.AddNewFavoritesListAction"/>
     <group id="SendToFavoritesGroup" class="com.intellij.ide.favoritesTreeView.actions.SendToFavoritesGroup" popup="true"/>
-    <group id="MoveModuleToGroup" class="com.intellij.ide.projectView.impl.MoveModuleToGroupTopLevel" popup="true"/>
-
+    
     <action id="RunConfiguration" class="com.intellij.execution.actions.RunConfigurationAction"/>
     <action id="ChooseRunConfiguration" class="com.intellij.execution.actions.ChooseRunConfigurationAction" text="Run..." icon="/general/toolWindowRun.png"/>
     <action id="ChooseDebugConfiguration" class="com.intellij.execution.actions.ChooseDebugConfigurationAction" text="Debug..." icon="/general/debug.png"/>
@@ -392,7 +391,6 @@
     </group>
 
     <group id="ProjectViewPopupMenuSettingsGroup">
-      <reference ref="MoveModuleToGroup"/>
     </group>
 
     <group id="ProjectViewPopupMenu">
