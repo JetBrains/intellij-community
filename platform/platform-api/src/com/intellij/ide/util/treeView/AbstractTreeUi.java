@@ -1285,13 +1285,13 @@ public class AbstractTreeUi {
       }
       expandPath(path, canSmartExpand);
     }
-    else if (myTree.isExpanded(path) || (isLeaf && parent != null && myTree.isExpanded(parent) && !myUnbuiltNodes.contains(last))) {
+    else if (myTree.isExpanded(path) || (isLeaf && parent != null && myTree.isExpanded(parent) && !myUnbuiltNodes.contains(last) && !isCancelled(last))) {
       if (last instanceof DefaultMutableTreeNode) {
         processNodeActionsIfReady((DefaultMutableTreeNode)last);
       }
     }
     else {
-      if (isLeaf && myUnbuiltNodes.contains(last)) {
+      if (isLeaf && (myUnbuiltNodes.contains(last) || isCancelled(last))) {
         insertLoadingNode((DefaultMutableTreeNode)last, true);
         expandPath(path, canSmartExpand);
       }
@@ -1693,6 +1693,14 @@ public class AbstractTreeUi {
 
   public void removeFromCancelled(DefaultMutableTreeNode node) {
     myCancelledBuild.remove(node);
+  }
+
+  public boolean isCancelled(Object node) {
+    if (node instanceof DefaultMutableTreeNode) {
+      return myCancelledBuild.containsKey((DefaultMutableTreeNode)node);
+    } else {
+      return false;
+    }
   }
 
   private void resetIncompleteNode(DefaultMutableTreeNode node) {
@@ -3282,6 +3290,7 @@ public class AbstractTreeUi {
 
     removeFromUpdating(node);
     removeFromUnbuilt(node);
+    removeFromCancelled(node);
 
     if (isLoadingNode(node)) return;
     NodeDescriptor descriptor = getDescriptorFrom(node);

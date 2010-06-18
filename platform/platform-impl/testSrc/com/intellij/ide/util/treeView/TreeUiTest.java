@@ -914,6 +914,41 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     });
   }
 
+  public void testSelectAfterCancelledUpdate() throws Exception {
+    Node intellij = myRoot.addChild("com").addChild("intellij");
+    myRoot.addChild("jetbrains");
+    activate();
+
+    buildNode(new NodeElement("intellij"), false);
+    assertTree("-/\n" +
+               " -com\n" +
+               "  intellij\n" +
+               " jetbrains\n");
+
+
+    intellij.addChild("ide");
+
+    runAndInterrupt(new MyRunnable() {
+      @Override
+      public void runSafe() throws Exception {
+        updateFromRoot();
+      }
+    }, "getChildren", new NodeElement("intellij"), Interruption.invokeCancel);
+
+    assertTree("-/\n" +
+               " -com\n" +
+               "  intellij\n" +
+               " jetbrains\n");
+
+    select(new NodeElement("ide"), false);
+
+    assertTree("-/\n" +
+               " -com\n" +
+               "  -intellij\n" +
+               "   [ide]\n" +
+               " jetbrains\n");
+  }
+
   private void assertInterruption(Interruption cancelled) throws Exception {
     buildStructure(myRoot);
 
@@ -1043,6 +1078,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     action.run();
 
     myCancelRequest = null;
+    myElementUpdateHook = null;
   }
 
   public void testQueryStructure() throws Exception {

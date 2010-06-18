@@ -21,7 +21,11 @@ import javax.swing.tree.DefaultMutableTreeNode;
 
 public class LoadingNode extends DefaultMutableTreeNode {
   public LoadingNode() {
-    this(IdeBundle.message("treenode.loading"));
+    this(getText());
+  }
+
+  public static String getText() {
+    return IdeBundle.message("treenode.loading");
   }
 
   public LoadingNode(String text) {
