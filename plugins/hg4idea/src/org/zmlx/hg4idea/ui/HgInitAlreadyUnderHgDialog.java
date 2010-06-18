@@ -27,7 +27,7 @@ import javax.swing.*;
  * which is already under Mercurial.
  * Provides several options to choose.
  */
-public class HgInitParentDialog extends DialogWrapper {
+public class HgInitAlreadyUnderHgDialog extends DialogWrapper {
   private JPanel contentPane;
   private JRadioButton myCreateNewRepositoryHereRadioButton;
   private JRadioButton myUseParentRepoButThisProjectButton;
@@ -42,7 +42,7 @@ public class HgInitParentDialog extends DialogWrapper {
     CREATE_REPO_HERE
   }
 
-  public HgInitParentDialog(Project project, String selectedRoot, String parentRoot) {
+  public HgInitAlreadyUnderHgDialog(Project project, String selectedRoot, String parentRoot) {
     super(project, false);
     mySelectedRoot = selectedRoot;
     myParentRoot = parentRoot;
