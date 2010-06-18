@@ -16,7 +16,6 @@
 package org.intellij.lang.xpath.xslt.impl;
 
 import com.intellij.ide.projectView.ProjectView;
-import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -28,7 +27,6 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.intellij.lang.xpath.xslt.XsltConfig;
-import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -59,9 +57,6 @@ class XsltConfigImpl extends XsltConfig implements JDOMExternalizable, Applicati
 
       final XsltFormattingModelBuilder builder = new XsltFormattingModelBuilder(LanguageFormatting.INSTANCE.forLanguage(xmlLang));
       LanguageFormatting.INSTANCE.addExplicitExtension(xmlLang, builder);
-
-      final ExternalResourceManagerEx erm = ExternalResourceManagerEx.getInstanceEx();
-      erm.addIgnoredResource(XsltSupport.PLUGIN_EXTENSIONS_NS);
     }
 
     public void disposeComponent() {

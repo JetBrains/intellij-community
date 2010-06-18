@@ -128,6 +128,8 @@
     <implicitUsageProvider implementation="org.intellij.lang.xpath.xslt.impl.XsltImplicitUsagesProvider" />
 
     <renameInputValidator implementation="org.intellij.lang.xpath.xslt.impl.XsltRenameInputValidator"/>
+
+    <standardResourceProvider implementation="org.intellij.lang.xpath.xslt.impl.XsltStandardResourceProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="XPathView">
