@@ -22,7 +22,7 @@ package com.intellij.openapi.editor.colors.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
-import com.intellij.openapi.components.ExportableApplicationComponent;
+import com.intellij.openapi.components.ExportableComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.*;
@@ -42,8 +42,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
-public class EditorColorsManagerImpl extends EditorColorsManager
-    implements NamedJDOMExternalizable, ExportableApplicationComponent {
+public class EditorColorsManagerImpl extends EditorColorsManager implements NamedJDOMExternalizable, ExportableComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl");
 
   private final Collection<EditorColorsListener> myListeners = new ArrayList<EditorColorsListener>();
@@ -62,51 +61,40 @@ public class EditorColorsManagerImpl extends EditorColorsManager
   public EditorColorsManagerImpl(DefaultColorSchemesManager defaultColorSchemesManager, SchemesManagerFactory schemesManagerFactory) {
     myDefaultColorSchemesManager = defaultColorSchemesManager;
 
-        mySchemesManager = schemesManagerFactory.createSchemesManager(
-        FILE_SPEC,
-        new SchemeProcessor<EditorColorsSchemeImpl>() {
-          public EditorColorsSchemeImpl readScheme(final Document document)
-              throws InvalidDataException, IOException, JDOMException {
+    mySchemesManager = schemesManagerFactory.createSchemesManager(
+      FILE_SPEC,
+      new BaseSchemeProcessor<EditorColorsSchemeImpl>() {
+        public EditorColorsSchemeImpl readScheme(final Document document)
+          throws InvalidDataException, IOException, JDOMException {
 
-            return loadSchemeFromDocument(document, true);
+          return loadSchemeFromDocument(document, true);
+        }
+
+        public Document writeScheme(final EditorColorsSchemeImpl scheme) throws WriteExternalException {
+          Element root = new Element(SCHEME_NODE_NAME);
+          try {
+            scheme.writeExternal(root);
+          }
+          catch (WriteExternalException e) {
+            LOG.error(e);
+            return null;
           }
 
-          public Document writeScheme(final EditorColorsSchemeImpl scheme) throws WriteExternalException {
-            Element root = new Element(SCHEME_NODE_NAME);
-            try {
-              scheme.writeExternal(root);
-            }
-            catch (WriteExternalException e) {
-              LOG.error(e);
-              return null;
-            }
+          return new Document(root);
+        }
 
-            return new Document(root);
-          }
+        public void renameScheme(final String name, final EditorColorsScheme scheme) {
+          scheme.setName(name);
+        }
 
-          public void renameScheme(final String name, final EditorColorsScheme scheme) {
-            scheme.setName(name);
-          }
+        public boolean shouldBeSaved(final EditorColorsSchemeImpl scheme) {
+          return !(scheme instanceof ReadOnlyColorsScheme);
+        }
 
-          public boolean shouldBeSaved(final EditorColorsSchemeImpl scheme) {
-            return !(scheme instanceof ReadOnlyColorsScheme);
-          }
-
-          public void initScheme(final EditorColorsSchemeImpl scheme) {
-            
-          }
-
-          public void onSchemeAdded(final EditorColorsSchemeImpl scheme) {
-
-          }
-
-          public void onSchemeDeleted(final EditorColorsSchemeImpl scheme) {
-          }
-
-          public void onCurrentSchemeChanged(final Scheme newCurrentScheme) {
-            fireChanges(mySchemesManager.getCurrentScheme());
-          }
-        }, RoamingType.PER_USER);
+        public void onCurrentSchemeChanged(final Scheme newCurrentScheme) {
+          fireChanges(mySchemesManager.getCurrentScheme());
+        }
+      }, RoamingType.PER_USER);
 
 
     addDefaultSchemes();
@@ -232,16 +220,6 @@ public class EditorColorsManagerImpl extends EditorColorsManager
        : new ReadOnlyColorsSchemeImpl(null, DefaultColorSchemesManager.getInstance());
     scheme.readExternal(root);
     return scheme;
-  }
-
-  // -------------------------------------------------------------------------
-  // ApplicationComponent interface implementation
-  // -------------------------------------------------------------------------
-
-  public void disposeComponent() {
-  }
-
-  public void initComponent() {
   }
 
   // -------------------------------------------------------------------------
@@ -393,10 +371,6 @@ public class EditorColorsManagerImpl extends EditorColorsManager
 
   public boolean isDefaultScheme(EditorColorsScheme scheme) {
     return scheme instanceof DefaultColorsScheme;
-  }
-
-  public String getComponentName() {
-    return "EditorColorsManagerImpl";
   }
 
   public SchemesManager<EditorColorsScheme, EditorColorsSchemeImpl> getSchemesManager() {

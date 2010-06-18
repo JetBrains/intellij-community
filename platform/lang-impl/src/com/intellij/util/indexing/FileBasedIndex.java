@@ -659,8 +659,11 @@ public class FileBasedIndex implements ApplicationComponent {
    * The method is internal to indexing engine end is called internally. The method is public due to implementation details
    */
   public <K> void ensureUpToDate(final ID<K, ?> indexId, @Nullable Project project, @Nullable GlobalSearchScope filter) {
+    if (!needsFileContentLoading(indexId)) {
+      return; //indexed eagerly in foreground while building unindexed file list
+    }
     if (isDumb(project)) {
-      handleDumbMode(indexId, project);
+      handleDumbMode(project);
     }
 
     if (myReentrancyGuard.get().booleanValue()) {
@@ -696,11 +699,7 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   }
 
-  private void handleDumbMode(final ID<?, ?> indexId, @Nullable Project project) {
-    if (myNotRequiringContentIndices.contains(indexId)) {
-      return; //indexed eagerly in foreground while building unindexed file list
-    }
-
+  private static void handleDumbMode(@Nullable Project project) {
     ProgressManager.checkCanceled(); // DumbModeAction.CANCEL
 
     if (project != null) {
@@ -1503,7 +1502,7 @@ public class FileBasedIndex implements ApplicationComponent {
         final boolean isTooLarge = isTooLarge(file);
         for (final ID<?, ?> indexId : myIndices.keySet()) {
           try {
-            if (myNotRequiringContentIndices.contains(indexId)) {
+            if (!needsFileContentLoading(indexId)) {
               if (shouldUpdateIndex(file, indexId)) {
                 updateSingleIndex(indexId, file, null);
               }

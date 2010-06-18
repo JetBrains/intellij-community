@@ -15,8 +15,8 @@
  */
 package com.intellij.openapi.editor.colors.ex;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.DefaultColorsScheme;
 import com.intellij.openapi.util.InvalidDataException;
@@ -24,6 +24,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -33,7 +34,7 @@ import java.util.List;
  * @author max
  */
 public class DefaultColorSchemesManager implements ApplicationComponent, JDOMExternalizable {
-  private final ArrayList mySchemes;
+  private final ArrayList<DefaultColorsScheme> mySchemes;
   @NonNls private static final String SCHEME_ELEMENT = "scheme";
 
   public String getComponentName() {
@@ -41,11 +42,11 @@ public class DefaultColorSchemesManager implements ApplicationComponent, JDOMExt
   }
 
   public DefaultColorSchemesManager() {
-    mySchemes = new ArrayList();
+    mySchemes = new ArrayList<DefaultColorsScheme>();
   }
 
   public static DefaultColorSchemesManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(DefaultColorSchemesManager.class);
+    return ServiceManager.getService(DefaultColorSchemesManager.class);
   }
 
   public void initComponent() { }
@@ -68,12 +69,12 @@ public class DefaultColorSchemesManager implements ApplicationComponent, JDOMExt
   }
 
   public DefaultColorsScheme[] getAllSchemes() {
-    return (DefaultColorsScheme[]) mySchemes.toArray(new DefaultColorsScheme[mySchemes.size()]);
+    return mySchemes.toArray(new DefaultColorsScheme[mySchemes.size()]);
   }
 
+  @Nullable
   public EditorColorsScheme getScheme(String name) {
-    for (int i = 0; i < mySchemes.size(); i++) {
-      DefaultColorsScheme scheme = (DefaultColorsScheme) mySchemes.get(i);
+    for (DefaultColorsScheme scheme : mySchemes) {
       if (name.equals(scheme.getName())) return scheme;
     }
 

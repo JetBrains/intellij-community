@@ -121,7 +121,7 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
       LinkedList<TextWithImports> recents = DebuggerRecents.getInstance(getProject()).getRecents(getRecentsId());
       ArrayList<TextWithImports> singleLine = new ArrayList<TextWithImports>();
       for (TextWithImports evaluationText : recents) {
-        if (evaluationText.getText().indexOf('\n') == -1 && singleLine.indexOf(evaluationText) == -1) {
+        if (evaluationText.getText().indexOf('\n') == -1) {
           singleLine.add(evaluationText);
         }
       }

@@ -159,7 +159,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
     });
     if (builder.show() == DialogWrapper.OK_EXIT_CODE) {
       xmlInjection.initializePlaces(false);
-      return new BaseInjection(XML_SUPPORT_ID).copyFrom(xmlInjection);
+      return new AbstractTagInjection().copyFrom(xmlInjection);
     }
     return null;
   }
@@ -251,7 +251,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
     else if (element.getName().equals(XmlTagInjection.class.getSimpleName())) {
       return new XmlTagInjection();
     }
-    return new BaseInjection(XML_SUPPORT_ID);
+    return new AbstractTagInjection();
   }
 
   public Configurable[] createSettings(final Project project, final Configuration configuration) {

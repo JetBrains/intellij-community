@@ -36,8 +36,8 @@ import java.nio.charset.Charset;
 
 /**
  * @author Eugene Zhuravlev
-*         Date: Mar 28, 2008
-*/
+ *         Date: Mar 28, 2008
+ */
 public final class FileContent extends UserDataHolderBase {
   private final VirtualFile myFile;
   private final String fileName;
@@ -67,7 +67,7 @@ public final class FileContent extends UserDataHolderBase {
       if (project == null) {
         project = ProjectManager.getInstance().getDefaultProject();
       }
-      final Language language = ((LanguageFileType)getFileType()).getLanguage();
+      final Language language = ((LanguageFileType)getFileTypeWithoutSubstitution()).getLanguage();
       final Language substitutedLanguage = LanguageSubstitutors.INSTANCE.substituteLanguage(language, getFile(), project);
       psi = PsiFileFactory.getInstance(project).createFileFromText(getFileName(), substitutedLanguage, getContentAsText(), false, false);
 
@@ -77,7 +77,7 @@ public final class FileContent extends UserDataHolderBase {
     return psi;
   }
 
-  public static class IllegalDataException extends RuntimeException{
+  public static class IllegalDataException extends RuntimeException {
     public IllegalDataException(final String message) {
       super(message);
     }
@@ -86,13 +86,13 @@ public final class FileContent extends UserDataHolderBase {
       super(message, cause);
     }
   }
-  
+
   public FileContent(@NotNull final VirtualFile file, @NotNull final CharSequence contentAsText, final Charset charset) {
     this(file);
     myContentAsText = contentAsText;
     myCharset = charset;
   }
-  
+
   public FileContent(@NotNull final VirtualFile file, @NotNull final byte[] content) {
     this(file);
     myContent = content;
@@ -106,8 +106,38 @@ public final class FileContent extends UserDataHolderBase {
     fileName = file.getName();
   }
 
-  public FileType getFileType() {
+
+
+  FileType substituteFileType(VirtualFile file, FileType fileType) {
+    Project project = getProject();
+    return substituteFileType(file, fileType, project);
+  }
+
+  public static FileType substituteFileType(VirtualFile file, FileType fileType, Project project) {
+    if (project == null) {
+      project = ProjectManager.getInstance().getDefaultProject();
+    }
+    if (fileType instanceof LanguageFileType) {
+      final Language language = ((LanguageFileType)fileType).getLanguage();
+      final Language substitutedLanguage = LanguageSubstitutors.INSTANCE.substituteLanguage(language, file, project);
+      if (substitutedLanguage != null) {
+        return substitutedLanguage.getAssociatedFileType();
+      }
+    }
+
+    return fileType;
+  }
+
+  public FileType getSubstitutedFileType() {
+    return substituteFileType(myFile, myFileType);
+  }
+
+  public FileType getFileTypeWithoutSubstitution() {
     return myFileType;
+  }
+
+  public FileType getFileType() {
+    return getSubstitutedFileType();
   }
 
   public VirtualFile getFile() {
@@ -126,7 +156,7 @@ public final class FileContent extends UserDataHolderBase {
     if (myContent == null) {
       if (myContentAsText != null) {
         try {
-          myContent = myCharset != null? myContentAsText.toString().getBytes(myCharset.name()) : myContentAsText.toString().getBytes();
+          myContent = myCharset != null ? myContentAsText.toString().getBytes(myCharset.name()) : myContentAsText.toString().getBytes();
         }
         catch (UnsupportedEncodingException e) {
           throw new RuntimeException(e);

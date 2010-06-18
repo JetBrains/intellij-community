@@ -36,8 +36,6 @@ public class TypeNameManager {
 
   public static void registerTypeProvider(Function<Class, String> function) { ourTypeProviders.add(function); }
 
-  public static void unregisterTypeProvider(Function<Class, String> function) { ourTypeProviders.remove(function); }
-
   public static String getTypeName(Class aClass) {
     String s = _getTypeName(aClass);
     if (s != null) return s;

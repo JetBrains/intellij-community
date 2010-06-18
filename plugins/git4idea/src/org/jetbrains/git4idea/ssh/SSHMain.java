@@ -67,21 +67,17 @@ public class SSHMain {
    */
   private String myLastError = "";
   /**
-   * user directory
-   */
-  @NonNls private static final String userDir = System.getProperty("user.home");
-  /**
    * Path to known hosts file
    */
-  @NonNls private static final String knownHostPath = userDir + "/.ssh/known_hosts";
+  @NonNls private static final String knownHostPath = SSHConfig.USER_HOME + "/.ssh/known_hosts";
   /**
    * Path to DSA key
    */
-  @NonNls private static final String idDSAPath = userDir + "/.ssh/id_dsa";
+  @NonNls private static final String idDSAPath = SSHConfig.USER_HOME + "/.ssh/id_dsa";
   /**
    * Path to RSA key
    */
-  @NonNls private static final String idRSAPath = userDir + "/.ssh/id_rsa";
+  @NonNls private static final String idRSAPath = SSHConfig.USER_HOME + "/.ssh/id_rsa";
 
   /**
    * database of known hosts

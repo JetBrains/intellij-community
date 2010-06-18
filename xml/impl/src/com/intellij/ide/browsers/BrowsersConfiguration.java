@@ -17,9 +17,8 @@ package com.intellij.ide.browsers;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.browsers.firefox.FirefoxSettings;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.ui.Messages;
@@ -44,7 +43,7 @@ import java.util.Map;
  * @author spleaner
  */
 @State(name = "WebBrowsersConfiguration", storages = {@Storage(id = "other", file = "$APP_CONFIG$/browsers.xml")})
-public class BrowsersConfiguration implements ApplicationComponent, PersistentStateComponent<Element> {
+public class BrowsersConfiguration implements PersistentStateComponent<Element> {
   public static enum BrowserFamily {
     EXPLORER(XmlBundle.message("browsers.explorer"), "iexplore", null, null, IconLoader.getIcon("/xml/browsers/explorer16.png")),
     SAFARI(XmlBundle.message("browsers.safari"), "safari", "safari", "Safari", IconLoader.getIcon("/xml/browsers/safari16.png")),
@@ -170,18 +169,7 @@ public class BrowsersConfiguration implements ApplicationComponent, PersistentSt
   }
 
   public static BrowsersConfiguration getInstance() {
-    return ApplicationManager.getApplication().getComponent(BrowsersConfiguration.class);
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "BrowsersConfiguration";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
+    return ServiceManager.getService(BrowsersConfiguration.class);
   }
 
   public static void launchBrowser(final BrowserFamily family, @NotNull final String url) {

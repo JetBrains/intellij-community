@@ -37,7 +37,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.profile.Profile;
 import com.intellij.profile.ProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -514,25 +513,6 @@ public class AnalysisScope {
         }
       }), result, profileManager);
     }
-  }
-
-  private static void processModule(final Set<String> result, final Module module) {
-    final Project project = module.getProject();
-    final ProjectProfileManager profileManager = ProjectProfileManager.getProjectProfileManager(project, Profile.INSPECTION);
-    LOG.assertTrue(profileManager != null);
-    final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
-    final PsiDirectory[] dirs = new PsiDirectory[files.length];
-    final PsiManager psiManager = PsiManager.getInstance(project);
-    int i = 0;
-    for (final VirtualFile file : files) {
-      dirs[i++] = ApplicationManager.getApplication().runReadAction(new Computable<PsiDirectory>() {
-        @Nullable
-        public PsiDirectory compute() {
-          return psiManager.findDirectory(file);
-        }
-      });
-    }
-    processDirectories(dirs, result, profileManager);
   }
 
   public boolean containsSources(boolean isTest) {

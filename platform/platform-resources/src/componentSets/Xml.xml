@@ -1,9 +1,4 @@
 <components>
-  <application-components>
-    <component>
-      <implementation-class>com.intellij.ide.browsers.BrowsersConfiguration</implementation-class>
-    </component>
-   </application-components>
   <project-components>
     <component>
       <implementation-class>com.intellij.xml.breadcrumbs.BreadcrumbsLoaderComponent</implementation-class>

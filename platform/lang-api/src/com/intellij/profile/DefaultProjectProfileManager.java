@@ -49,8 +49,6 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
 
   protected final Project myProject;
 
-  private final String myProfileType;
-
   public String PROJECT_PROFILE;
   public boolean USE_PROJECT_PROFILE = !isPlatform();
 
@@ -61,12 +59,16 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
   private final List<ProfileChangeAdapter> myProfilesListener = new ArrayList<ProfileChangeAdapter>();
   @NonNls private static final String PROJECT_DEFAULT_PROFILE_NAME = "Project Default";
 
-  public DefaultProjectProfileManager(final Project project, final String profileType, final DependencyValidationManager holder) {
+  public DefaultProjectProfileManager(final Project project, final ApplicationProfileManager applicationProfileManager,
+                                      final DependencyValidationManager holder) {
     myProject = project;
-    myProfileType = profileType;
     myHolder = holder;
-    myApplicationProfileManager = ApplicationProfileManager.getProfileManager(profileType);
+    myApplicationProfileManager = applicationProfileManager;
     LOG.assertTrue(myApplicationProfileManager != null);
+  }
+
+  public Project getProject() {
+    return myProject;
   }
 
   public Profile getProfile(@NotNull String name, boolean returnRootProfileIfNamedIsAbsent) {
@@ -155,10 +157,6 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
 
   public NamedScopesHolder getScopesManager() {
     return myHolder;
-  }
-
-  public String getProfileType() {
-    return myProfileType;
   }
 
   public Collection<Profile> getProfiles() {

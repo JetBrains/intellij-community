@@ -36,10 +36,13 @@ public class HtmlFileType extends XmlLikeFileType {
   @NonNls public static final String DOT_DEFAULT_EXTENSION = ".html";
   private static final Icon ICON = IconLoader.getIcon("/fileTypes/html.png");
 
-  public HtmlFileType() {
+  public final static HtmlFileType INSTANCE = new HtmlFileType();
+
+  private HtmlFileType() {
     super(HTMLLanguage.INSTANCE);
   }
-  public HtmlFileType(Language language) {
+
+  HtmlFileType(Language language) {
     super(language);
   }
 

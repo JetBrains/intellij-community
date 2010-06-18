@@ -114,11 +114,19 @@ public class MavenFacadeManager {
   }
 
   private synchronized MavenFacade getFacade() {
-    if (myFacade == null) {
+    try {
+      myFacade.ping();
+    }
+    catch (Exception ex) {
       try {
+        if (myFacade == null) {
+          UnicastRemoteObject.exportObject(myLogger, 0);
+          UnicastRemoteObject.exportObject(myDownloadListener, 0);
+        }
+        else {
+          // todo [anton] if myFacade != null reinit
+        }
         myFacade = mySupport.acquire(this, "");
-        UnicastRemoteObject.exportObject(myLogger, 0);
-        UnicastRemoteObject.exportObject(myDownloadListener, 0);
         myFacade.set(myLogger, myDownloadListener);
       }
       catch (Exception e) {

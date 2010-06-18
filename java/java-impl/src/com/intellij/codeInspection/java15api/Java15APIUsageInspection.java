@@ -24,6 +24,9 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -31,11 +34,17 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.*;
 
 /**
@@ -47,6 +56,9 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
   private static final HashMap<LanguageLevel, THashSet<String>> ourForbiddenAPI = new HashMap<LanguageLevel, THashSet<String>>(5);
   private static final THashSet<String> ourIgnored16ClassesAPI = new THashSet<String>(10);
   private static final HashMap<LanguageLevel, String> ourAPIPresentationMap = new HashMap<LanguageLevel, String>(5);
+  @NonNls private static final String EFFECTIVE_LL = "effectiveLL";
+
+  private LanguageLevel myEffectiveLanguageLevel = null;
 
   static {
     final THashSet<String> ourForbidden14API = new THashSet<String>(1000);
@@ -122,6 +134,88 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
     return false;
   }
 
+  @Override
+  public void readSettings(Element node) throws InvalidDataException {
+    final Element element = node.getChild(EFFECTIVE_LL);
+    if (element != null) {
+      myEffectiveLanguageLevel = LanguageLevel.valueOf(element.getAttributeValue("value"));
+    }
+  }
+
+  @Override
+  public void writeSettings(Element node) throws WriteExternalException {
+    if (myEffectiveLanguageLevel != null) {
+      final Element llElement = new Element(EFFECTIVE_LL);
+      llElement.setAttribute("value", myEffectiveLanguageLevel.toString());
+      node.addContent(llElement);
+    }
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    final JPanel panel = new JPanel(new VerticalFlowLayout());
+    panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
+    panel.add(new JLabel("Forbid API usages:"));
+
+    final JRadioButton projectRb = new JRadioButton("Respecting to project language level settings");
+    panel.add(projectRb);
+    final JRadioButton customRb = new JRadioButton("Higher than:");
+    panel.add(customRb);
+    final ButtonGroup gr = new ButtonGroup();
+    gr.add(projectRb);
+    gr.add(customRb);
+
+
+    final DefaultComboBoxModel cModel = new DefaultComboBoxModel();
+    final JComboBox llCombo = new JComboBox(cModel){
+      @Override
+      public void setEnabled(boolean b) {
+        if (b == customRb.isSelected()) {
+          super.setEnabled(b);
+        }
+      }
+    };
+    for (LanguageLevel level : LanguageLevel.values()) {
+      cModel.addElement(level);
+    }
+    llCombo.setSelectedItem(myEffectiveLanguageLevel != null ? myEffectiveLanguageLevel : LanguageLevel.JDK_1_3);
+    llCombo.setRenderer(new DefaultListCellRenderer(){
+      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        if (value instanceof LanguageLevel) {
+          setText(((LanguageLevel)value).getPresentableText());
+        }
+        return rendererComponent;
+      }
+    });
+    llCombo.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        myEffectiveLanguageLevel = (LanguageLevel)llCombo.getSelectedItem();
+      }
+    });
+    final JPanel comboPanel = new JPanel(new BorderLayout());
+    comboPanel.setBorder(BorderFactory.createEmptyBorder(5, 20, 5, 5));
+    comboPanel.add(llCombo, BorderLayout.WEST);
+    panel.add(comboPanel);
+
+    final ActionListener actionListener = new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        if (projectRb.isSelected()) {
+          myEffectiveLanguageLevel = null;
+        } else {
+          myEffectiveLanguageLevel = (LanguageLevel)llCombo.getSelectedItem();
+        }
+        UIUtil.setEnabled(comboPanel, !projectRb.isSelected(), true);
+      }
+    };
+    projectRb.addActionListener(actionListener);
+    customRb.addActionListener(actionListener);
+    projectRb.setSelected(myEffectiveLanguageLevel == null);
+    customRb.setSelected(myEffectiveLanguageLevel != null);
+    UIUtil.setEnabled(comboPanel, !projectRb.isSelected(), true);
+    return panel;
+  }
+
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new MyVisitor(holder);
@@ -175,7 +269,7 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
       if (resolved instanceof PsiCompiledElement && resolved instanceof PsiMember) {
         final Module module = ModuleUtil.findModuleForPsiElement(reference.getElement());
         if (module != null) {
-          final LanguageLevel languageLevel = LanguageLevelUtil.getEffectiveLanguageLevel(module);
+          final LanguageLevel languageLevel = getEffectiveLanguageLevel(module);
           if (isForbiddenApiUsage((PsiMember)resolved, languageLevel)) {
             PsiClass psiClass = null;
             final PsiElement qualifier = reference.getQualifier();
@@ -209,13 +303,18 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
       final PsiMethod constructor = expression.resolveConstructor();
       final Module module = ModuleUtil.findModuleForPsiElement(expression);
       if (module != null) {
-        final LanguageLevel languageLevel = LanguageLevelUtil.getEffectiveLanguageLevel(module);
+        final LanguageLevel languageLevel = getEffectiveLanguageLevel(module);
         if (constructor instanceof PsiCompiledElement) {
           if (isForbiddenApiUsage(constructor, languageLevel)) {
             registerError(expression.getClassReference(), languageLevel);
           }
         }
       }
+    }
+
+    private LanguageLevel getEffectiveLanguageLevel(Module module) {
+      if (myEffectiveLanguageLevel != null) return myEffectiveLanguageLevel;
+      return LanguageLevelUtil.getEffectiveLanguageLevel(module);
     }
 
     private void registerError(PsiJavaCodeReferenceElement reference, LanguageLevel api) {

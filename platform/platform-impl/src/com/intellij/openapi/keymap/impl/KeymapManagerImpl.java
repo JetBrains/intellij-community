@@ -22,8 +22,8 @@ import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
+import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.options.Scheme;
-import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.util.InvalidDataException;
@@ -69,7 +69,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
   KeymapManagerImpl(DefaultKeymap defaultKeymap, SchemesManagerFactory factory) {
     mySchemesManager = factory.createSchemesManager(
         "$ROOT_CONFIG$/keymaps",
-        new SchemeProcessor<KeymapImpl>(){
+        new BaseSchemeProcessor<KeymapImpl>(){
           public KeymapImpl readScheme(final Document schemeContent) throws InvalidDataException, IOException, JDOMException {
             return readKeymap(schemeContent);
           }
@@ -80,21 +80,6 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
 
           public boolean shouldBeSaved(final KeymapImpl scheme) {
             return scheme.canModify();
-          }
-
-          public void initScheme(final KeymapImpl scheme) {
-
-          }
-
-          public void onSchemeAdded(final KeymapImpl scheme) {
-
-          }
-
-          public void onSchemeDeleted(final KeymapImpl scheme) {
-          }
-
-          public void onCurrentSchemeChanged(final Scheme newCurrentScheme) {
-
           }
         },
         RoamingType.PER_USER);

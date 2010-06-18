@@ -80,17 +80,7 @@ public interface ExtensionPoints {
 
   @NonNls String INVALID_PROPERTY_KEY_INSPECTION_TOOL = "com.intellij.invalidPropertyKeyInspectionTool";
   @NonNls String I18N_INSPECTION_TOOL = "com.intellij.i18nInspectionTool";
-  @NonNls String FORM_INSPECTION_TOOL = "com.intellij.formInspectionTool";
   @NonNls String JAVA15_INSPECTION_TOOL = "com.intellij.java15InspectionTool";
-
-  /**
-   * This extension allows to index occurrences of arbitrary regular expression patterns in the
-   * text of comments.
-   *
-   * @see com.intellij.psi.search.IndexPatternProvider
-   * @since 5.1
-   */
-  @NonNls String INDEX_PATTERN_PROVIDER = "com.intellij.indexPatternProvider";
 
   @NonNls String INSPECTIONS_GRAPH_ANNOTATOR = "com.intellij.refGraphAnnotator";
 

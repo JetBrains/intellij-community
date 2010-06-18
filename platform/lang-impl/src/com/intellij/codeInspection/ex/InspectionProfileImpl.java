@@ -34,9 +34,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.profile.DefaultProjectProfileManager;
-import com.intellij.profile.ProfileEx;
-import com.intellij.profile.ProfileManager;
+import com.intellij.profile.*;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.psi.PsiElement;
@@ -96,14 +94,11 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   private boolean myModified = false;
   private final AtomicBoolean myInitialized = new AtomicBoolean(false);
 
-  private VisibleTreeState myVisibleTreeState = new VisibleTreeState();
-
   public InspectionProfileImpl(InspectionProfileImpl inspectionProfile) {
     super(inspectionProfile.getName());
 
     myRegistrar = inspectionProfile.myRegistrar;
     myTools = new HashMap<String, ToolsImpl>();
-    myVisibleTreeState = new VisibleTreeState(inspectionProfile.myVisibleTreeState);
     myDeinstalledInspectionsSettings = new LinkedHashMap<String, Element>(inspectionProfile.myDeinstalledInspectionsSettings);
 
     myBaseProfile = inspectionProfile.myBaseProfile;
@@ -162,7 +157,13 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public VisibleTreeState getExpandedNodes() {
-    return myVisibleTreeState;
+    if (myProfileManager instanceof ApplicationProfileManager) {
+      return AppInspectionProfilesVisibleTreeState.getInstance().getVisibleTreeState(this);
+    }
+    else {
+      DefaultProjectProfileManager projectProfileManager = (DefaultProjectProfileManager)myProfileManager;
+      return ProjectInspectionProfilesVisibleTreeState.getInstance(projectProfileManager.getProject()).getVisibleTreeState(this);
+    }
   }
 
   private static boolean toolSettingsAreEqual(String toolName, InspectionProfileImpl profile1, InspectionProfileImpl profile2) {
@@ -620,10 +621,9 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     myLocal = inspectionProfile.myLocal;
     myLockedProfile = inspectionProfile.myLockedProfile;
     myDisplayLevelMap = inspectionProfile.myDisplayLevelMap;
-    myVisibleTreeState = inspectionProfile.myVisibleTreeState;
     myBaseProfile = inspectionProfile.myBaseProfile;
     myTools = inspectionProfile.myTools;
-    myProfileMananger = inspectionProfile.myProfileMananger;
+    myProfileManager = inspectionProfile.myProfileManager;
 
     myExternalInfo.copy(inspectionProfile.getExternalInfo());
 
@@ -649,14 +649,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       return null;
     }
 
-  }
-
-  public VisibleTreeState getVisibleTreeState() {
-    return myVisibleTreeState;
-  }
-
-  public void setVisibleTreeState(final VisibleTreeState state) {
-    myVisibleTreeState = state;
   }
 
   public void convert(Element element) {

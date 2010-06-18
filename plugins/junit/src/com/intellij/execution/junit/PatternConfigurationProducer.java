@@ -20,12 +20,11 @@ import com.intellij.execution.Location;
 import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassOwner;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashSet;
@@ -40,7 +39,7 @@ public class PatternConfigurationProducer extends JUnitConfigurationProducer {
     final Project project = location.getProject();
     final LinkedHashSet<String> classes = new LinkedHashSet<String>();
     myElements = collectPatternElements(context, classes);
-    if (classes.isEmpty()) return null;
+    if (classes.size() <= 1) return null;
     RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(project, context);
     final JUnitConfiguration configuration = (JUnitConfiguration)settings.getConfiguration();
     final JUnitConfiguration.Data data = configuration.getPersistentData();
@@ -72,12 +71,21 @@ public class PatternConfigurationProducer extends JUnitConfigurationProducer {
   }
 
   private static PsiElement[] collectPatternElements(ConfigurationContext context, LinkedHashSet<String> classes) {
-    PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(context.getDataContext());
-    if (elements != null && elements.length > 1) {
+    final DataContext dataContext = context.getDataContext();
+    PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+    if (elements != null) {
       for (PsiClass psiClass : collectTestClasses(elements)) {
         classes.add(psiClass.getQualifiedName());
       }
       return elements;
+    } else {
+      final PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
+      if (file instanceof PsiClassOwner) {
+        for (PsiClass psiClass : collectTestClasses(((PsiClassOwner)file).getClasses())) {
+          classes.add(psiClass.getQualifiedName());
+        }
+        return new PsiElement[]{file};
+      }
     }
     return null;
   }

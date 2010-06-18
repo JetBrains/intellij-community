@@ -139,7 +139,7 @@ public class CompilerCacheManager implements ProjectComponent {
     return description.replaceAll("\\s+", "_").replaceAll("[\\.\\?]", "_").toLowerCase();
   }
   
-  private synchronized void flushCaches() {
+  public synchronized void flushCaches() {
     for (Disposable disposable : myCacheDisposables) {
       try {
         disposable.dispose();

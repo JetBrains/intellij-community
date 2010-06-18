@@ -16,14 +16,12 @@
 
 package com.intellij.psi.impl.cache.impl;
 
-import com.intellij.ExtensionPoints;
 import com.intellij.ide.caches.FileContent;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.util.Key;
@@ -81,8 +79,7 @@ public class CacheUtil {
   }
 
   public static IndexPatternProvider[] getIndexPatternProviders() {
-    ExtensionPoint<IndexPatternProvider> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.INDEX_PATTERN_PROVIDER);
-    return point.getExtensions();
+    return Extensions.getExtensions(IndexPatternProvider.EP_NAME);
   }
 
   public static int getIndexPatternCount() {

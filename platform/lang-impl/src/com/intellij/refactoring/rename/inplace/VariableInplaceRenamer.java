@@ -57,16 +57,14 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.PairProcessor;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Stack;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author ven
@@ -268,12 +266,14 @@ public class VariableInplaceRenamer {
           }
 
           final UsageInfo[] usageInfos = usages.toArray(new UsageInfo[usages.size()]);
+          final MultiMap<PsiElement,UsageInfo> classified = RenameProcessor.classifyUsages(renamer.getElements(), usageInfos);
           for (final PsiNamedElement element : renamer.getElements()) {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
               public void run() {
                 final String newElementName = renamer.getNewName(element);
                 if (newElementName != null) {
-                  RenameUtil.doRenameGenericNamedElement(element, newElementName, RenameProcessor.extractUsagesForElement(element, usageInfos), null);
+                  final Collection<UsageInfo> infos = classified.get(element);
+                  RenameUtil.doRenameGenericNamedElement(element, newElementName, infos.toArray(new UsageInfo[infos.size()]), null);
                 }
               }
             });

@@ -48,7 +48,7 @@ public abstract class JUnitConfigurationProducer extends JavaRuntimeConfiguratio
                                                                  @NotNull RunnerAndConfigurationSettings[] existingConfigurations,
                                                                  ConfigurationContext context) {
     final PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(context.getDataContext());
-    if (elements != null && elements.length > 1) {
+    if (elements != null && PatternConfigurationProducer.collectTestClasses(elements).size() > 1) {
       return null;
     }
     final Module predefinedModule =

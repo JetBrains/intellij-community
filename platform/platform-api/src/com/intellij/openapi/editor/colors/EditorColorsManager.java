@@ -15,12 +15,12 @@
  */
 package com.intellij.openapi.editor.colors;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NonNls;
 
 public abstract class EditorColorsManager {
   public static EditorColorsManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(EditorColorsManager.class);
+    return ServiceManager.getService(EditorColorsManager.class);
   }
 
   public abstract void addColorsScheme(EditorColorsScheme scheme);
