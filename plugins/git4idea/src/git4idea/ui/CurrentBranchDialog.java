@@ -144,8 +144,8 @@ public class CurrentBranchDialog extends DialogWrapper {
     else if (".".equals(myTrackedRepository)) {
       myTrackedRepository = REMOTE_THIS;
     }
-    if (myTrackedBranch != null) {
-      myTrackedBranch = myTrackedBranch.substring("refs/heads/".length());
+    if (myTrackedBranch != null && myTrackedBranch.startsWith(GitBranch.REFS_HEADS_PREFIX)) {
+      myTrackedBranch = myTrackedBranch.substring(GitBranch.REFS_HEADS_PREFIX.length());
     }
     myRepositoryComboBox.setSelectedItem(myTrackedRepository);
     myBranches.clear();
@@ -172,7 +172,7 @@ public class CurrentBranchDialog extends DialogWrapper {
         }
       }
       else {
-        String prefix = "refs/remotes/" + remote + "/";
+        String prefix = GitBranch.REFS_REMOTES_PREFIX + remote + "/";
         for (GitBranch b : myBranches) {
           if (b.isRemote()) {
             String name = b.getFullName();
@@ -207,7 +207,7 @@ public class CurrentBranchDialog extends DialogWrapper {
     }
     GitBranch c = GitBranch.current(myProject, getRoot());
     if (c != null) {
-      c.setTrackedBranch(myProject, getRoot(), remote, "refs/heads/" + branch);
+      c.setTrackedBranch(myProject, getRoot(), remote, GitBranch.REFS_HEADS_PREFIX + branch);
     }
   }
 
