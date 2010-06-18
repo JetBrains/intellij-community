@@ -601,11 +601,6 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
       }
     };
 
-    if (options.fastTrack != null) {
-      SearchRequestor.collectRequests(element, options, options.fastTrack);
-      return;
-    }
-
     if (element instanceof PsiMethod) {
       final boolean strictSignatureSearch = !options.isIncludeOverloadUsages;
       MethodReferencesSearch.search(new MethodReferencesSearch.SearchParameters((PsiMethod)element, searchScope, strictSignatureSearch, options.fastTrack)).forEach(consumer);
