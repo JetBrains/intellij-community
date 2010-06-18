@@ -16,16 +16,15 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.meta.MetaDataRegistrar;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ReflectionAssignabilityCache;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomElementVisitor;
+import com.intellij.util.xml.DomFileDescription;
+import com.intellij.util.xml.TypeChooserManager;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,28 +72,10 @@ public class DomApplicationComponent {
     for (final DomFileDescription description : Extensions.getExtensions(DomFileDescription.EP_NAME)) {
       registerFileDescription(description);
     }
-
-    MetaDataRegistrar.getInstance().registerMetaData(new ElementFilter() {
-      public boolean isAcceptable(Object element, PsiElement context) {
-        if (element instanceof XmlTag) {
-          final XmlTag tag = (XmlTag)element;
-          final DomElement domElement = DomManager.getDomManager(tag.getProject()).getDomElement(tag);
-          if (domElement != null) {
-            return domElement.getGenericInfo().getNameDomElement(domElement) != null;
-          }
-        }
-        return false;
-      }
-
-      public boolean isClassAcceptable(Class hintClass) {
-        return XmlTag.class.isAssignableFrom(hintClass);
-      }
-    }, DomMetaData.class);
-
   }
 
   public static DomApplicationComponent getInstance() {
-    return ApplicationManager.getApplication().getComponent(DomApplicationComponent.class);
+    return ServiceManager.getService(DomApplicationComponent.class);
   }
 
   public final synchronized Set<DomFileDescription> getFileDescriptions(String rootTagName) {

@@ -18,7 +18,6 @@ package com.intellij.profile;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMExternalizable;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -30,8 +29,6 @@ import javax.swing.*;
 public interface Profile extends JDOMExternalizable, Comparable, Scheme {
   Icon LOCAL_PROFILE = IconLoader.getIcon("/general/applicationSettings.png");
   Icon PROJECT_PROFILE = IconLoader.getIcon("/general/projectSettings.png");
-  @NonNls String INSPECTION = "INSPECTION";
-  @NonNls String CODE_STYLE = "CODE_STYLE";
 
   void copyFrom(@NotNull Profile profile);
 

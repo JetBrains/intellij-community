@@ -183,14 +183,6 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
       endOffset = tmp;
     }
 
-    if (!GraphicsEnvironment.isHeadless()) {
-      final Toolkit toolkit = myEditor.getComponent().getToolkit();
-      Clipboard clip = toolkit.getSystemSelection();
-      if (clip != null) {
-        clip.setContents(new StringSelection(getSelectedText()), EmptyClipboardOwner.INSTANCE);
-      }
-    }
-
     int oldSelectionStart;
     int oldSelectionEnd;
 
@@ -210,6 +202,17 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     mySelectionMarker = new MyRangeMarker((DocumentEx)doc, startOffset, endOffset);
 
     fireSelectionChanged(oldSelectionStart, oldSelectionEnd, startOffset, endOffset);
+
+    updateSystemSelection();
+  }
+
+  private void updateSystemSelection() {
+    if (GraphicsEnvironment.isHeadless()) return;
+
+    final Clipboard clip = myEditor.getComponent().getToolkit().getSystemSelection();
+    if (clip != null) {
+      clip.setContents(new StringSelection(getSelectedText()), EmptyClipboardOwner.INSTANCE);
+    }
   }
 
   private void fireSelectionChanged(int oldSelectionStart, int oldSelectionEnd, int startOffset, int endOffset) {
@@ -274,6 +277,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
       mySelectionMarker.release();
       mySelectionMarker = null;
       fireSelectionChanged(startOffset, endOffset, myLastSelectionStart, myLastSelectionStart);
+      updateSystemSelection();
     }
   }
 

@@ -22,11 +22,12 @@ import java.util.List;
 /**
  * @author max
  */
-public final class ExecutorsQuery<Result, Parameter> extends AbstractExecutorsQuery<Result,Parameter> {
+public final class ExecutorsQuery<Result, Parameter> extends AbstractQuery<Result> {
   private final List<QueryExecutor<Result, Parameter>> myExecutors;
+  private final Parameter myParameters;
 
   public ExecutorsQuery(@NotNull final Parameter params, @NotNull List<QueryExecutor<Result, Parameter>> executors) {
-    super(params);
+    myParameters = params;
     myExecutors = executors;
   }
 

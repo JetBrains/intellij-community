@@ -17,7 +17,6 @@
 package com.intellij.psi.impl.cache.impl.todo;
 
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
@@ -33,6 +32,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,12 +51,11 @@ import java.util.Map;
 public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> {
   @NonNls public static final ID<TodoIndexEntry, Integer> NAME = ID.create("TodoIndex");
 
-  public TodoIndex(TodoConfiguration config) {
-    config.addPropertyChangeListener(new PropertyChangeListener() {
-      public void propertyChange(final PropertyChangeEvent evt) {
-        if (IndexPatternProvider.PROP_INDEX_PATTERNS.equals(evt.getPropertyName())) {
-          FileBasedIndex.getInstance().requestRebuild(NAME);
-        }
+  public TodoIndex(MessageBus messageBus) {
+    messageBus.connect().subscribe(IndexPatternProvider.INDEX_PATTERNS_CHANGED, new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        FileBasedIndex.requestRebuild(NAME);
       }
     });
   }

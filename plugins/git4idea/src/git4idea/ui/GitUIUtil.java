@@ -137,9 +137,7 @@ public class GitUIUtil {
       gitRootChooser.addItem(root);
     }
     gitRootChooser.setRenderer(getVirtualFileListCellRenderer());
-    if (defaultRoot != null) {
-      gitRootChooser.setSelectedItem(defaultRoot);
-    }
+    gitRootChooser.setSelectedItem(defaultRoot != null ? defaultRoot : roots.get(0));
     if (currentBranchLabel != null) {
       final ActionListener listener = new ActionListener() {
         public void actionPerformed(final ActionEvent e) {

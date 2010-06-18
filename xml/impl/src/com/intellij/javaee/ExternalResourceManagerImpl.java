@@ -307,6 +307,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   }
 
   public boolean isIgnoredResource(String url) {
+    myStdResources.getValue();  // ensure ignored resources are loaded
     return myIgnoredResources.contains(url) || isImplicitNamespaceDescriptor(url);
   }
 
@@ -319,6 +320,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   }
 
   public String[] getIgnoredResources() {
+    myStdResources.getValue();  // ensure ignored resources are loaded
     return ArrayUtil.toStringArray(myIgnoredResources);
   }
 

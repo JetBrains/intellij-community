@@ -28,10 +28,10 @@ import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.SchemeProcessor;
+import com.intellij.openapi.options.BaseSchemeProcessor;
+import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
-import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
@@ -68,7 +68,7 @@ public class QuickListsManager implements ExportableApplicationComponent, NamedJ
     myActionManager = actionManagerEx;
     mySchemesManager = schemesManagerFactory.createSchemesManager(
         "$ROOT_CONFIG$/quicklists",
-        new SchemeProcessor<QuickList>(){
+        new BaseSchemeProcessor<QuickList>(){
           public QuickList readScheme(final Document schemeContent) throws InvalidDataException, IOException, JDOMException {
             return loadListFromDocument(schemeContent);
           }
@@ -81,20 +81,6 @@ public class QuickListsManager implements ExportableApplicationComponent, NamedJ
 
           public boolean shouldBeSaved(final QuickList scheme) {
             return true;
-          }
-
-          public void initScheme(final QuickList scheme) {
-            
-          }
-
-          public void onSchemeAdded(final QuickList scheme) {
-          }
-
-          public void onSchemeDeleted(final QuickList scheme) {
-          }
-
-          public void onCurrentSchemeChanged(final Scheme newCurrentScheme) {
-            
           }
         },
         RoamingType.PER_USER);

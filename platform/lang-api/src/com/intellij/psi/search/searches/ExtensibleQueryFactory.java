@@ -80,7 +80,7 @@ public class ExtensibleQueryFactory<Result, Parameters> extends QueryFactory<Res
 
   @Override
   @NotNull
-  public List<QueryExecutor<Result, Parameters>> getExecutors() {
+  protected List<QueryExecutor<Result, Parameters>> getExecutors() {
     return myPoint.getValue().getExtensions();
   }
 }

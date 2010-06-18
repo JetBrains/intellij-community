@@ -106,26 +106,9 @@ public final class FileContent extends UserDataHolderBase {
     fileName = file.getName();
   }
 
-
-
-  FileType substituteFileType(VirtualFile file, FileType fileType) {
+  private FileType substituteFileType(VirtualFile file, FileType fileType) {
     Project project = getProject();
-    return substituteFileType(file, fileType, project);
-  }
-
-  public static FileType substituteFileType(VirtualFile file, FileType fileType, Project project) {
-    if (project == null) {
-      project = ProjectManager.getInstance().getDefaultProject();
-    }
-    if (fileType instanceof LanguageFileType) {
-      final Language language = ((LanguageFileType)fileType).getLanguage();
-      final Language substitutedLanguage = LanguageSubstitutors.INSTANCE.substituteLanguage(language, file, project);
-      if (substitutedLanguage != null) {
-        return substitutedLanguage.getAssociatedFileType();
-      }
-    }
-
-    return fileType;
+    return SubstitutedFileType.substituteFileType(file, fileType, project);
   }
 
   public FileType getSubstitutedFileType() {

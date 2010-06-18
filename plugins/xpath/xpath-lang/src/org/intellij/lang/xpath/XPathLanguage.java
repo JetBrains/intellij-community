@@ -52,7 +52,7 @@ public final class XPathLanguage extends Language {
     }
 
   @Override
-  public FileType getAssociatedFileType() {
+  public XPathFileType getAssociatedFileType() {
     return XPathFileType.XPATH;
   }
 

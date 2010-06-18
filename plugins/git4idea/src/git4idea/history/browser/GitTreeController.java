@@ -55,13 +55,11 @@ class GitTreeController implements ManageGitTreeView {
   // guarded by lock
   private final AtomicReference<List<String>> myTags;
   private final AtomicReference<List<String>> myBranches;
-  private final AtomicReference<List<String>> myUsers;
 
   private final MyFiltersStateHolder myFilterHolder;
   private final MyFiltersStateHolder myHighlightingHolder;
 
   private final RequestsMerger myFilterRequestsMerger;
-  //private final RequestsMerger myHighlightingRequestsMerger;
 
   private final MyUpdateStateInterceptor myFiltering;
   private final MyUpdateStateInterceptor myHighlighting;
@@ -97,7 +95,6 @@ class GitTreeController implements ManageGitTreeView {
 
     myTags = new AtomicReference<List<String>>(Collections.<String>emptyList());
     myBranches = new AtomicReference<List<String>>(Collections.<String>emptyList());
-    myUsers = new AtomicReference<List<String>>(Collections.<String>emptyList());
 
     myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, project);
     myRefresher = new Runnable() {
@@ -138,8 +135,8 @@ class GitTreeController implements ManageGitTreeView {
       }
     });
 
-    myFiltering = new MyUpdateStateInterceptor(myFilterRequestsMerger, myFilterHolder, null);
-    myHighlighting = new MyUpdateStateInterceptor(myFilterRequestsMerger, myHighlightingHolder, null);
+    myFiltering = new MyUpdateStateInterceptor(myFilterRequestsMerger, myFilterHolder);
+    myHighlighting = new MyUpdateStateInterceptor(myFilterRequestsMerger, myHighlightingHolder);
     myFilterHolder.setDirty(true);
 
     ApplicationManager.getApplication().executeOnPooledThread(new DumbAwareRunnable() {
@@ -227,21 +224,17 @@ class GitTreeController implements ManageGitTreeView {
     return "Showing";
   }
 
-  private void loadTagsNBranches(final boolean loadBranches, final boolean loadTags) {
+  private void loadTagsNBranches() {
     final List<String> branches = new LinkedList<String>();
     final List<String> tags = new LinkedList<String>();
 
     try {
-      if (loadBranches) {
-        myAccess.loadAllBranches(branches);
-        Collections.sort(branches);
-        myBranches.set(branches);
-      }
-      if (loadTags) {
-        myAccess.loadAllTags(tags);
-        Collections.sort(tags);
-        myTags.set(tags);
-      }
+      myAccess.loadAllBranches(branches);
+      Collections.sort(branches);
+      myBranches.set(branches);
+      myAccess.loadAllTags(tags);
+      Collections.sort(tags);
+      myTags.set(tags);
     }
     catch (VcsException e) {
       myTreeView.acceptError(e.getMessage(), e);
@@ -255,15 +248,9 @@ class GitTreeController implements ManageGitTreeView {
     myAlarm.addRequest(new Runnable() {
       public void run() {
         myFilterRequestsMerger.request();
-        loadTagsNBranches(true, true);
+        loadTagsNBranches();
         myInitialized = true;
         myTreeView.controllerReady();
-
-        myAlarm.addRequest(new Runnable() {
-          public void run() {
-            loadTagsNBranches(false, false);
-          }
-        }, 100);
       }
     }, 100);
   }
@@ -332,12 +319,12 @@ class GitTreeController implements ManageGitTreeView {
     myFilterRequestsMerger.request();
     myAlarm.addRequest(new Runnable() {
       public void run() {
-        // todo USERS ARE NOT REFRESHED now! to be fixed after loading them faster
-        loadTagsNBranches(true, true);
+        loadTagsNBranches();
       }
     }, 100);
   }
 
+  // todo loading indicator, load optimization
   public void getDetails(final Collection<SHAHash> hashes) {
     final Application application = ApplicationManager.getApplication();
     myAlarm.addRequest(new Runnable() {
@@ -400,20 +387,15 @@ class GitTreeController implements ManageGitTreeView {
 
   private static class MyUpdateStateInterceptor implements GitTreeFiltering {
     private final MyFiltersStateHolder myState;
-    @Nullable private final RequestsMerger mySecond;
     private final RequestsMerger myRequestsMerger;
 
-    protected MyUpdateStateInterceptor(RequestsMerger requestsMerger, MyFiltersStateHolder state, final @Nullable RequestsMerger mySecond) {
+    protected MyUpdateStateInterceptor(RequestsMerger requestsMerger, MyFiltersStateHolder state) {
       myRequestsMerger = requestsMerger;
       myState = state;
-      this.mySecond = mySecond;
     }
 
     private void requestRefresh() {
       myRequestsMerger.request();
-      if (mySecond != null) {
-        mySecond.request();
-      }
     }
 
     public void addFilter(ChangesFilter.Filter filter) {

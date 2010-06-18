@@ -39,21 +39,8 @@
   <xi:include href="Misc.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="Debugger.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="Compiler.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="/componentSets/TestFramework.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="/componentSets/Execution.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="/componentSets/VCS.xml" xpointer="xpointer(/components/*)"/>
-
-  <application-components>
-    <component>
-      <interface-class>com.intellij.profile.codeInspection.InspectionProfileManager</interface-class>
-      <implementation-class>com.intellij.profile.codeInspection.JavaAwareInspectionProfileManager</implementation-class>
-    </component>
-    <component>
-      <implementation-class>
-        com.intellij.codeInspection.ex.AppInspectionProfilesVisibleTreeState
-      </implementation-class>
-    </component>
-  </application-components>
 
   <project-components>
     <component>
@@ -65,14 +52,6 @@
       <implementation-class>com.intellij.profile.codeInspection.InspectionProjectProfileManager</implementation-class>
       <skipForDummyProject/>
     </component>
-
-    <component>
-      <implementation-class>
-        com.intellij.codeInspection.ex.ProjectInspectionProfilesVisibleTreeState
-      </implementation-class>
-      <skipForDummyProject/>
-    </component>
-    
   </project-components>
 
   <module-components>

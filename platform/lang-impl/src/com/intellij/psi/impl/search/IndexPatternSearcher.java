@@ -42,6 +42,7 @@ import com.intellij.util.QueryExecutor;
 import com.intellij.util.text.CharSequenceSubSequence;
 import gnu.trove.TIntArrayList;
 
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -58,7 +59,9 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
 
     final CacheManager cacheManager = ((PsiManagerEx)file.getManager()).getCacheManager();
     final IndexPatternProvider patternProvider = queryParameters.getPatternProvider();
-    int count = patternProvider != null ? cacheManager.getTodoCount(virtualFile, patternProvider) : cacheManager.getTodoCount(virtualFile, queryParameters.getPattern());
+    int count = patternProvider != null
+                ? cacheManager.getTodoCount(virtualFile, patternProvider)
+                : cacheManager.getTodoCount(virtualFile, queryParameters.getPattern());
     if (count == 0) return true;
 
     TIntArrayList commentStarts = new TIntArrayList();
@@ -72,14 +75,15 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
       int commentEnd = commentEnds.get(i);
 
       if (patternProvider != null) {
-        for(final IndexPattern pattern: patternProvider.getIndexPatterns()) {
+        for (final IndexPattern pattern : patternProvider.getIndexPatterns()) {
           if (!collectPatternMatches(pattern, chars, commentStart, commentEnd, file, queryParameters.getRange(), consumer)) {
             return false;
           }
         }
       }
       else {
-        if (!collectPatternMatches(queryParameters.getPattern(), chars, commentStart, commentEnd, file, queryParameters.getRange(), consumer)) {
+        if (!collectPatternMatches(queryParameters.getPattern(), chars, commentStart, commentEnd, file, queryParameters.getRange(),
+                                   consumer)) {
           return false;
         }
       }
@@ -89,7 +93,8 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
   }
 
 
-  private static final TokenSet COMMENT_TOKENS = TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT, CustomHighlighterTokenType.MULTI_LINE_COMMENT);
+  private static final TokenSet COMMENT_TOKENS =
+    TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT, CustomHighlighterTokenType.MULTI_LINE_COMMENT);
 
   private static void findCommentTokenRanges(final PsiFile file,
                                              final CharSequence chars,
@@ -112,28 +117,32 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
     else {
       // collect comment offsets to prevent long locks by PsiManagerImpl.LOCK
       synchronized (PsiLock.LOCK) {
-        final Language lang = file.getLanguage();
-        final SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(lang, file.getProject(), file.getVirtualFile());
-        Lexer lexer = syntaxHighlighter.getHighlightingLexer();
-        TokenSet commentTokens = null;
-        IndexPatternBuilder builderForFile = null;
-        for(IndexPatternBuilder builder: Extensions.getExtensions(IndexPatternBuilder.EP_NAME)) {
-          Lexer lexerFromBuilder = builder.getIndexingLexer(file);
-          if (lexerFromBuilder != null) {
-            lexer = lexerFromBuilder;
-            commentTokens = builder.getCommentTokenSet(file);
-            builderForFile = builder;
+        final FileViewProvider viewProvider = file.getViewProvider();
+        final Set<Language> relevantLanguages = viewProvider.getLanguages();
+        for (Language lang : relevantLanguages) {
+          final SyntaxHighlighter syntaxHighlighter =
+            SyntaxHighlighterFactory.getSyntaxHighlighter(lang, file.getProject(), file.getVirtualFile());
+          Lexer lexer = syntaxHighlighter.getHighlightingLexer();
+          TokenSet commentTokens = null;
+          IndexPatternBuilder builderForFile = null;
+          for (IndexPatternBuilder builder : Extensions.getExtensions(IndexPatternBuilder.EP_NAME)) {
+            Lexer lexerFromBuilder = builder.getIndexingLexer(file);
+            if (lexerFromBuilder != null) {
+              lexer = lexerFromBuilder;
+              commentTokens = builder.getCommentTokenSet(file);
+              builderForFile = builder;
+            }
           }
-        }
-        if (builderForFile == null) {
-          final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
-          if (parserDefinition != null) {
-            commentTokens = parserDefinition.getCommentTokens();
+          if (builderForFile == null) {
+            final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
+            if (parserDefinition != null) {
+              commentTokens = parserDefinition.getCommentTokens();
+            }
           }
-        }
 
-        if (commentTokens != null) {
-          findComments(lexer, chars, range, commentTokens, commentStarts, commentEnds, builderForFile);
+          if (commentTokens != null) {
+            findComments(lexer, chars, range, commentTokens, commentStarts, commentEnds, builderForFile);
+          }
         }
       }
     }
@@ -171,8 +180,30 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
 
         int start = lexer.getTokenStart() + startDelta;
         int end = lexer.getTokenEnd() - endDelta;
-        assert start <= end : "Invalid comment range: " + new TextRange(start, end) + "; lexer token range="+new TextRange(lexer.getTokenStart(), lexer.getTokenEnd())+"; delta="+new TextRange(startDelta, endDelta)+"; lexer="+lexer+"; builder="+builderForFile+"; chars length:"+chars.length();
-        assert end <= chars.length(): "Invalid comment end: " + new TextRange(start, end) + "; lexer token range="+new TextRange(lexer.getTokenStart(), lexer.getTokenEnd())+"; delta="+new TextRange(startDelta, endDelta)+"; lexer="+lexer+"; builder="+builderForFile+"; chars length:"+chars.length();
+        assert start <= end : "Invalid comment range: " +
+                              new TextRange(start, end) +
+                              "; lexer token range=" +
+                              new TextRange(lexer.getTokenStart(), lexer.getTokenEnd()) +
+                              "; delta=" +
+                              new TextRange(startDelta, endDelta) +
+                              "; lexer=" +
+                              lexer +
+                              "; builder=" +
+                              builderForFile +
+                              "; chars length:" +
+                              chars.length();
+        assert end <= chars.length() : "Invalid comment end: " +
+                                       new TextRange(start, end) +
+                                       "; lexer token range=" +
+                                       new TextRange(lexer.getTokenStart(), lexer.getTokenEnd()) +
+                                       "; delta=" +
+                                       new TextRange(startDelta, endDelta) +
+                                       "; lexer=" +
+                                       lexer +
+                                       "; builder=" +
+                                       builderForFile +
+                                       "; chars length:" +
+                                       chars.length();
         commentStarts.add(start);
         commentEnds.add(end);
       }

@@ -26,11 +26,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.Scheme;
-import com.intellij.openapi.options.SchemeProcessor;
-import com.intellij.openapi.options.SchemesManager;
-import com.intellij.openapi.options.SchemesManagerFactory;
+import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.*;
@@ -72,19 +70,16 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
 
   private final List<ProfileChangeAdapter> myProfileChangeAdapters = new ArrayList<ProfileChangeAdapter>();
 
-  private final String myProfileType;
   protected static final Logger LOG = Logger.getInstance("#com.intellij.profile.DefaultProfileManager");
 
   public static InspectionProfileManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(InspectionProfileManager.class);
+    return ServiceManager.getService(InspectionProfileManager.class);
   }
 
   public InspectionProfileManager(InspectionToolRegistrar registrar, SchemesManagerFactory schemesManagerFactory) {
-    myProfileType = Profile.INSPECTION;
-
     myRegistrar = registrar;
     mySeverityRegistrar = new SeverityRegistrar();
-    SchemeProcessor<InspectionProfileImpl> processor = new SchemeProcessor<InspectionProfileImpl>() {
+    SchemeProcessor<InspectionProfileImpl> processor = new BaseSchemeProcessor<InspectionProfileImpl>() {
       public InspectionProfileImpl readScheme(final Document document) {
         InspectionProfileImpl profile = new InspectionProfileImpl(getProfileName(document), myRegistrar, InspectionProfileManager.this);
         profile.load(document.getRootElement());
@@ -98,10 +93,6 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
 
       public Document writeScheme(final InspectionProfileImpl scheme) throws WriteExternalException {
         return scheme.saveToDocument();
-      }
-
-      public void initScheme(final InspectionProfileImpl scheme) {
-
       }
 
       public void onSchemeAdded(final InspectionProfileImpl scheme) {
@@ -272,10 +263,6 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
 
   public Profile createProfile() {
     return createSampleProfile();
-  }
-
-  public String getProfileType() {
-    return myProfileType;
   }
 
   public void addProfileChangeListener(final ProfileChangeAdapter listener) {

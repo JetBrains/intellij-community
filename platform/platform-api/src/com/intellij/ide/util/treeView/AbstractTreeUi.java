@@ -1285,13 +1285,13 @@ public class AbstractTreeUi {
       }
       expandPath(path, canSmartExpand);
     }
-    else if (myTree.isExpanded(path) || (isLeaf && parent != null && myTree.isExpanded(parent) && !myUnbuiltNodes.contains(last))) {
+    else if (myTree.isExpanded(path) || (isLeaf && parent != null && myTree.isExpanded(parent) && !myUnbuiltNodes.contains(last) && !isCancelled(last))) {
       if (last instanceof DefaultMutableTreeNode) {
         processNodeActionsIfReady((DefaultMutableTreeNode)last);
       }
     }
     else {
-      if (isLeaf && myUnbuiltNodes.contains(last)) {
+      if (isLeaf && (myUnbuiltNodes.contains(last) || isCancelled(last))) {
         insertLoadingNode((DefaultMutableTreeNode)last, true);
         expandPath(path, canSmartExpand);
       }
@@ -1695,6 +1695,14 @@ public class AbstractTreeUi {
     myCancelledBuild.remove(node);
   }
 
+  public boolean isCancelled(Object node) {
+    if (node instanceof DefaultMutableTreeNode) {
+      return myCancelledBuild.containsKey((DefaultMutableTreeNode)node);
+    } else {
+      return false;
+    }
+  }
+
   private void resetIncompleteNode(DefaultMutableTreeNode node) {
     addToCancelled(node);
 
@@ -1750,6 +1758,7 @@ public class AbstractTreeUi {
            "  hasScheduledUpdates=" + hasSheduledUpdates() + "\n" +
            "  isPostponedMode=" + getUpdater().isInPostponeMode() + "\n" +
            " nodeActions=" + myNodeActions.keySet() + "\n" +
+           " nodeChildrenActions=" + myNodeChildrenActions.keySet() + "\n" +
            "isReleased=" + isReleased() + "\n" +
            " isReleaseRequested=" + isReleaseRequested() + "\n" +
            "isCancelProcessed=" + isCancelProcessed() + "\n" +
@@ -3282,6 +3291,7 @@ public class AbstractTreeUi {
 
     removeFromUpdating(node);
     removeFromUnbuilt(node);
+    removeFromCancelled(node);
 
     if (isLoadingNode(node)) return;
     NodeDescriptor descriptor = getDescriptorFrom(node);
@@ -3572,7 +3582,7 @@ public class AbstractTreeUi {
   }
 
   private void checkPathAndMaybeRevalidate(Object element, final Runnable onDone, final boolean parentsOnly, final boolean checkIfInStructure, final boolean canSmartExpand) {
-    boolean toRevalidate = !myRevalidatedObjects.contains(element) && getNodeForElement(element, false) == null && isInStructure(element);
+    boolean toRevalidate = isValid(element) && !myRevalidatedObjects.contains(element) && getNodeForElement(element, false) == null && isInStructure(element);
     if (!toRevalidate) {
       runDone(onDone);
       return;

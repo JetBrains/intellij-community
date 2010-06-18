@@ -29,8 +29,6 @@ public interface ProfileManager {
   @Nullable
   NamedScopesHolder getScopesManager();
 
-  String getProfileType();
-
   Collection<Profile> getProfiles();
 
   Profile getProfile(@NotNull String name, boolean returnRootProfileIfNamedIsAbsent);

@@ -1,10 +1,4 @@
 <idea-plugin>
-  <application-components>
-    <component>
-      <implementation-class>com.intellij.util.xml.impl.DomApplicationComponent</implementation-class>
-    </component>
-  </application-components>
-
   <extensionPoints>
     <extensionPoint name="dom.fileDescription"
                     interface="com.intellij.util.xml.DomFileDescription"/>
@@ -14,10 +8,14 @@
 
     <extensionPoint name="dom.customAnnotationChecker"
                     interface="com.intellij.util.xml.highlighting.DomCustomAnnotationChecker"/>
+
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
     <fileBasedIndex implementation="com.intellij.util.xml.DomFileIndex"/>
+
+    <applicationService serviceInterface="com.intellij.util.xml.impl.DomApplicationComponent"
+                        serviceImplementation="com.intellij.util.xml.impl.DomApplicationComponent"/>
 
     <applicationService serviceInterface="com.intellij.util.xml.DomService"
                         serviceImplementation="com.intellij.util.xml.impl.DomServiceImpl"/>
@@ -46,6 +44,7 @@
     <projectService serviceInterface="com.intellij.util.xml.actions.generate.DomTemplateRunner"
                     serviceImplementation="com.intellij.util.xml.impl.DomTemplateRunnerImpl"/>
 
+    <metaDataContributor implementation="com.intellij.util.xml.impl.DomMetaDataContributor"/>
     <semContributor implementation="com.intellij.util.xml.impl.DomSemContributor"/>
 
     <annotator language="XML" implementationClass="com.intellij.util.xml.impl.DefaultDomAnnotator"/>

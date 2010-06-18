@@ -19,6 +19,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.ServiceBean;
 import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -93,6 +94,7 @@ public class SchemesManagerFactoryImpl extends SchemesManagerFactory implements 
 
   @Override
   public void updateConfigFilesFromStreamProviders() {
+    ServiceBean.loadServicesFromBeans(SCHEME_OWNER, Object.class);
     for (SchemesManagerImpl registeredManager : myRegisteredManagers) {
       try {
         registeredManager.updateConfigFilesFromStreamProviders();
@@ -104,6 +106,7 @@ public class SchemesManagerFactoryImpl extends SchemesManagerFactory implements 
   }
 
   public void save() {
+    ServiceBean.loadServicesFromBeans(SCHEME_OWNER, Object.class);
     for (SchemesManager registeredManager : myRegisteredManagers) {
       try {
         registeredManager.save();

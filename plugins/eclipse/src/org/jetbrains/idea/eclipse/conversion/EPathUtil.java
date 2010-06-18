@@ -263,7 +263,9 @@ public class EPathUtil {
       if (baseDir != null && !VfsUtil.isAncestor(baseDir, jarFile, false)) {
          final String ideaCollapsed = PathMacroManager.getInstance(project).collapsePath(filePath);
          if (ideaCollapsed.contains("..")) return null;
-         return ideaCollapsed.substring(ideaCollapsed.indexOf('$')).replace("$", "");
+        final int index = ideaCollapsed.indexOf('$');
+        if (index < 0) return null;
+        return ideaCollapsed.substring(index).replace("$", "");
       } else { //check if existing eclipse variable points inside project
         final PathMacros pathMacros = PathMacros.getInstance();
         final Set<String> names = pathMacros.getUserMacroNames();

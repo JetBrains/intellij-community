@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.testFramework;
+package com.intellij.testAssistant;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.openapi.editor.Document;
@@ -65,7 +65,7 @@ public class TestDataHighlightingPass extends TextEditorHighlightingPass {
 
     if (text != null) {
       int ind = -1;
-      while ((ind = text.indexOf(CARET, ind + 1)) > 0) {
+      while ((ind = text.indexOf(CARET, ind + 1)) >= 0) {
         final RangeHighlighter highlighter = model.addRangeHighlighter(ind,
                                                                        ind + CARET.length(),
                                                                        HighlighterLayer.ADDITIONAL_SYNTAX,

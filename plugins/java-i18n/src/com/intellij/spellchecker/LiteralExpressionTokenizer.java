@@ -32,6 +32,6 @@ public class LiteralExpressionTokenizer extends Tokenizer<PsiLiteralExpression> 
   @Override
   @Nullable
   public Token[] tokenize(@NotNull PsiLiteralExpression element) {
-    return new Token[]{new Token<PsiLiteralExpression>(element, element.getText(), false, SplitterFactory.getInstance().getStringLiteralSplitter())};
+    return new Token[]{new Token<PsiLiteralExpression>(element, SplitterFactory.getInstance().getStringLiteralSplitter())};
   }
 }

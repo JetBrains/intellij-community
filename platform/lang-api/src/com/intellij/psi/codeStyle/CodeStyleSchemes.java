@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.codeStyle;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 
 /**
  * @author MYakovlev
@@ -24,7 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 public abstract class CodeStyleSchemes {
 
   public static CodeStyleSchemes getInstance(){
-    return ApplicationManager.getApplication().getComponent(CodeStyleSchemes.class);
+    return ServiceManager.getService(CodeStyleSchemes.class);
   }
 
   public abstract CodeStyleScheme[] getSchemes();
