@@ -295,6 +295,7 @@
   <extensionPoint name="vetoRenameCondition" interface="com.intellij.openapi.util.Condition"/>
   <extensionPoint name="rename.inplace.resolveSnapshotProvider"
                   beanClass="com.intellij.lang.LanguageExtensionPoint" />
+  <extensionPoint name="renameInputValidator" interface="com.intellij.refactoring.rename.RenameInputValidator"/>
 
   <extensionPoint name="findUsagesHandlerFactory" interface="com.intellij.find.findUsages.FindUsagesHandlerFactory" area="IDEA_PROJECT"/>
 

@@ -296,7 +296,7 @@ public class RenameUtil {
     if (newName == null || newName.length() == 0) {
       return false;
     }
-    final Condition<String> inputValidator = RenameInputValidatorRegistry.getInstance().getInputValidator(psiElement);
+    final Condition<String> inputValidator = RenameInputValidatorRegistry.getInputValidator(psiElement);
     if (inputValidator != null) {
       return inputValidator.value(newName);
     }

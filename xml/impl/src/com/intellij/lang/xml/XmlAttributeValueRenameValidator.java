@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.lang.xml;
 
-package com.intellij.refactoring.rename;
-
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.refactoring.rename.RenameInputValidator;
 import com.intellij.util.ProcessingContext;
 
-/**
- * @author Gregory.Shrago
- */
-public interface RenameInputValidator {
-  ExtensionPointName<RenameInputValidator> EP_NAME = ExtensionPointName.create("com.intellij.renameInputValidator");
+import static com.intellij.patterns.PlatformPatterns.psiElement;
 
-  ElementPattern<? extends PsiElement> getPattern();
-  boolean isInputValid(final String newName, final PsiElement element, final ProcessingContext context);
+public class XmlAttributeValueRenameValidator implements RenameInputValidator {
+  @Override
+  public ElementPattern<? extends PsiElement> getPattern() {
+    return psiElement(XmlAttributeValue.class);
+  }
+
+  public boolean isInputValid(final String newName, final PsiElement element, final ProcessingContext context) {
+    return true;
+  }
 }

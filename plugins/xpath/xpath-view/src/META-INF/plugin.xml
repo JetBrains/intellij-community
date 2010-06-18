@@ -126,6 +126,8 @@
     <defaultLiveTemplatesProvider implementation="org.intellij.plugins.xpathView.XPathAppComponent" />
 
     <implicitUsageProvider implementation="org.intellij.lang.xpath.xslt.impl.XsltImplicitUsagesProvider" />
+
+    <renameInputValidator implementation="org.intellij.lang.xpath.xslt.impl.XsltRenameInputValidator"/>
   </extensions>
 
   <extensions defaultExtensionNs="XPathView">
