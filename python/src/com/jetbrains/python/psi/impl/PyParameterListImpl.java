@@ -115,7 +115,7 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
         if (nextParameter.isKeywordContainer() || nextParameter.isPositionalContainer()) {
           ++i;
         }
-        if (nextParameter.isKeywordContainer() && j<anotherParametersLength && anotherParameters[j] instanceof PyNamedParameter) {
+        while (nextParameter.isKeywordContainer() && j<anotherParametersLength && anotherParameters[j].hasDefaultValue()) {
           j++;
         }
       }
@@ -127,7 +127,7 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
         if (nextParameter.isKeywordContainer() || nextParameter.isPositionalContainer()) {
           ++j;
         }
-        if (nextParameter.isKeywordContainer() && i<parametersLength && parameters[i] instanceof PyNamedParameter) {
+        while (nextParameter.isKeywordContainer() && i<parametersLength && parameters[i].hasDefaultValue()) {
           i++;
         }
       }
