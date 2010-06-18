@@ -22,22 +22,23 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.patterns.ElementPattern;
-import static com.intellij.patterns.PlatformPatterns.character;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.patterns.PlatformPatterns.character;
 
 public class CompletionUtil {
   public static final Key<TailType> TAIL_TYPE_ATTR = LookupItem.TAIL_TYPE_ATTR;
@@ -79,9 +80,16 @@ public class CompletionUtil {
     }
   }
 
-  public static CompletionData getCompletionDataByElement(final PsiFile file) {
+  public static CompletionData getCompletionDataByElement(final PsiElement position, PsiFile originalFile) {
+    final FileType fileType = position.getParent().getLanguage().getAssociatedFileType();
+    if (fileType != null) {
+      final CompletionData mainData = getCompletionDataByFileType(fileType);
+      if (mainData != null) {
+        return mainData;
+      }
+    }
 
-    final CompletionData mainData = getCompletionDataByFileType(file.getFileType());
+    final CompletionData mainData = getCompletionDataByFileType(originalFile.getFileType());
     return mainData != null ? mainData : ourGenericCompletionData;
   }
 

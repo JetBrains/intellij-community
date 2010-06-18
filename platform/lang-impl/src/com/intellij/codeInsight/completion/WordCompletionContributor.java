@@ -73,7 +73,7 @@ public class WordCompletionContributor extends CompletionContributor implements 
     }
 
     final PsiFile file = insertedElement.getContainingFile();
-    final CompletionData data = CompletionUtil.getCompletionDataByElement(file);
+    final CompletionData data = CompletionUtil.getCompletionDataByElement(insertedElement, file);
     if (!(data instanceof SyntaxTableCompletionData)) {
       Set<CompletionVariant> toAdd = new HashSet<CompletionVariant>();
       data.addKeywordVariants(toAdd, insertedElement, file);
