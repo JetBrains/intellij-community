@@ -323,7 +323,12 @@ public class OSProcessHandler extends ProcessHandler {
         processRequest(request);
         if (!request.isClosed()) addRequest(request);
 
-        Thread.yield();
+        try {
+          Thread.sleep(1L);
+        }
+        catch (InterruptedException e) {
+          // ignore
+        }
       }
     }
 
