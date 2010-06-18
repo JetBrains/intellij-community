@@ -9,8 +9,9 @@ import org.jetbrains.jps.artifacts.Artifact
  */
 public class IdeaProjectLoader {
   private int libraryCount = 0
-  private Project project
+  Project project
   private String projectBasePath
+  private Map<String, String> pathVariables
 
   public static String guessHome(Script script) {
     File home = new File(script["gant.file"].substring("file:".length()))
@@ -26,12 +27,17 @@ public class IdeaProjectLoader {
     return null
   }
 
-  public static void loadFromPath(Project project, String path) {
-    new IdeaProjectLoader(project).doLoadFromPath(path)
+  public static void loadFromPath(Project project, String path, Map<String, String> pathVariables) {
+    new IdeaProjectLoader(project, pathVariables).doLoadFromPath(path)
   }
 
-  private def IdeaProjectLoader(project) {
+  public static void loadFromPath(Project project, String path) {
+    loadFromPath(project, path, [:])
+  }
+
+  private def IdeaProjectLoader(Project project, Map<String, String> pathVariables) {
     this.project = project;
+    this.pathVariables = pathVariables
   }
 
   private def doLoadFromPath(String path) {
@@ -155,7 +161,7 @@ public class IdeaProjectLoader {
 
   def loadArtifacts(Node artifactsComponent) {
     if (artifactsComponent == null) return;
-    ArtifactLoader artifactLoader = new ArtifactLoader(project, projectBasePath)
+    ArtifactLoader artifactLoader = new ArtifactLoader(this)
     artifactsComponent.artifact.each {Node artifactTag ->
       def artifactName = artifactTag."@name"
       def root = artifactLoader.loadLayoutElement(artifactTag.root.first(), artifactName)
@@ -165,23 +171,27 @@ public class IdeaProjectLoader {
   }
 
   private def loadModules(Node modulesComponent) {
-    modulesComponent?.modules.module.each {Node moduleTag ->
-      loadModule(projectBasePath, expandMacro(moduleTag.@filepath, projectBasePath, null))
+    modulesComponent?.modules?.module?.each {Node moduleTag ->
+      loadModule(projectBasePath, expandMacro(moduleTag.@filepath, null))
     }
   }
 
-  public static String expandMacro(String path, String projectDir, String moduleDir) {
-    String answer = expandProjectMacro(path, projectDir)
+  public String expandMacro(String path, String moduleDir) {
+    String answer = expandProjectMacro(path)
 
     if (moduleDir != null) {
-      answer = path.replace("\$MODULE_DIR\$", moduleDir)
+      answer = answer.replace("\$MODULE_DIR\$", moduleDir)
     }
 
     return answer
   }
 
-  public static String expandProjectMacro(String path, String projectDir) {
-    return path.replace("\$PROJECT_DIR\$", projectDir)
+  public String expandProjectMacro(String path) {
+    path = path.replace("\$PROJECT_DIR\$", projectBasePath)
+    pathVariables.each { name, value ->
+      path = path.replace("\$${name}\$", value)
+    }
+    return path
   }
 
   private Library loadNamedLibrary(Project project, Node libraryTag, String projectBasePath, String moduleBasePath) {
@@ -201,7 +211,7 @@ public class IdeaProjectLoader {
 
       libraryTag.CLASSES.root.each {Node rootTag ->
         def url = rootTag.@url
-        def path = expandMacro(pathFromUrl(url), projectBasePath, moduleBasePath)
+        def path = expandMacro(pathFromUrl(url), moduleBasePath)
         if (url in jarDirs.keySet()) {
           def paths = []
           collectChildJars(path, jarDirs[url], paths)
@@ -215,7 +225,7 @@ public class IdeaProjectLoader {
       }
 
       libraryTag.SOURCES.root.each {Node rootTag ->
-        src expandMacro(rootTag.@url, projectBasePath, moduleBasePath)
+        src expandMacro(rootTag.@url, moduleBasePath)
       }
     }
   }
@@ -337,7 +347,7 @@ public class IdeaProjectLoader {
           }
         }
         componentTag.content.sourceFolder.each {Node folderTag ->
-          String path = expandMacro(pathFromUrl(folderTag.@url), projectBasePath, moduleBasePath)
+          String path = expandMacro(pathFromUrl(folderTag.@url), moduleBasePath)
           String prefix = folderTag.@packagePrefix
 
           if (folderTag.attribute("isTestSource") == "true") {
@@ -352,7 +362,7 @@ public class IdeaProjectLoader {
           }
         }
         componentTag.content.excludeFolder.each {Node exTag ->
-          String path = expandMacro(pathFromUrl(exTag.@url), projectBasePath, moduleBasePath)
+          String path = expandMacro(pathFromUrl(exTag.@url), moduleBasePath)
           exclude path
         }
         def languageLevel = componentTag."@LANGUAGE_LEVEL"
@@ -365,7 +375,7 @@ public class IdeaProjectLoader {
 
       def facetManagerTag = getComponent(root, "FacetManager")
       if (facetManagerTag != null) {
-        def facetLoader = new FacetLoader(project.modules[currentModuleName], projectBasePath, moduleBasePath)
+        def facetLoader = new FacetLoader(this, project.modules[currentModuleName], moduleBasePath)
         facetLoader.loadFacets(facetManagerTag)
       }
     }

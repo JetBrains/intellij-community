@@ -6,9 +6,9 @@ import org.jetbrains.jps.Module
  * @author nik
  */
 class FacetLoader {
-  private final Module module;
-  private final String projectBasePath;
-  private final String moduleBasePath;
+  private final Module module
+  private final String moduleBasePath
+  IdeaProjectLoader loader
   private static final Map<String, String> OUTPUT_PATHS = [
           "web.xml": "WEB-INF",
           "ejb-jar.xml": "META-INF",
@@ -16,10 +16,10 @@ class FacetLoader {
           "context.xml": "META-INF"
   ]
 
-  def FacetLoader(module, projectBasePath, moduleBasePath) {
-    this.module = module;
-    this.projectBasePath = projectBasePath;
-    this.moduleBasePath = moduleBasePath;
+  def FacetLoader(IdeaProjectLoader loader, Module module, String moduleBasePath) {
+    this.loader = loader
+    this.module = module
+    this.moduleBasePath = moduleBasePath
   }
 
 
@@ -46,6 +46,6 @@ class FacetLoader {
   }
 
   def urlToPath(String url) {
-    return IdeaProjectLoader.expandMacro(IdeaProjectLoader.pathFromUrl(url), projectBasePath, moduleBasePath)
+    return loader.expandMacro(IdeaProjectLoader.pathFromUrl(url), moduleBasePath)
   }
 }

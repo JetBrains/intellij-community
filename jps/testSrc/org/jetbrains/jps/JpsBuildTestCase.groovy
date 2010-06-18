@@ -12,10 +12,14 @@ import org.jetbrains.jps.util.FileUtil;
 abstract class JpsBuildTestCase extends TestCase {
   
   def doTest(String projectPath, Closure initProject, Closure expectedOutput) {
+    doTest(projectPath, [:], initProject, expectedOutput)
+  }
+
+  def doTest(String projectPath, Map<String, String> pathVariables, Closure initProject, Closure expectedOutput) {
     def binding = new GantBinding()
     binding.includeTool << Jps
     def project = new Project(binding)
-    IdeaProjectLoader.loadFromPath(project, projectPath)
+    IdeaProjectLoader.loadFromPath(project, projectPath, pathVariables)
     initProject(project)
     def target = FileUtil.createTempDirectory("targetDir")
     project.targetFolder = target.absolutePath

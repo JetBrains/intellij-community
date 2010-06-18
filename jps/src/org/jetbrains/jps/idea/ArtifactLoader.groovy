@@ -7,12 +7,13 @@ import org.jetbrains.jps.artifacts.*
  * @author nik
  */
 class ArtifactLoader {
-  private final Project project;
+  private final Project project
+  private final IdeaProjectLoader loader
   private final String projectBasePath
 
-  def ArtifactLoader(Project project, String projectBasePath) {
-    this.project = project;
-    this.projectBasePath = projectBasePath;
+  def ArtifactLoader(IdeaProjectLoader loader) {
+    this.loader = loader
+    this.project = loader.project
   }
 
   LayoutElement loadLayoutElement(Node tag, String artifactName) {
@@ -27,14 +28,14 @@ class ArtifactLoader {
       case "artifact":
         return new ArtifactLayoutElement(artifactName: tag."@artifact-name")
       case "file-copy":
-        def path = IdeaProjectLoader.expandProjectMacro(tag."@path", projectBasePath)
+        def path = loader.expandProjectMacro(tag."@path")
         if (!new File(path).exists()) {
            project.warning("Error in '$artifactName' artifact: file '$path' doesn't exist")
         }
         return new FileCopyElement(filePath: path,
                                    outputFileName: tag."@output-file-name");
       case "dir-copy":
-        def path = IdeaProjectLoader.expandProjectMacro(tag."@path", projectBasePath)
+        def path = loader.expandProjectMacro(tag."@path")
         if (!new File(path).exists()) {
           project.warning("Error in '$artifactName' artifact: directory '$path' doesn't exist")
         }
