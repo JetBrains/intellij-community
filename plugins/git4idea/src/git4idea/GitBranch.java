@@ -114,11 +114,11 @@ public class GitBranch extends GitReference {
   /**
    * List branches for the git root
    *
-   * @param project  the context project
-   * @param root     the git root
-   * @param remote   if true remote branches are listed
-   * @param local    if true local branches are listed
-   * @param branches the collection used to store branches
+   * @param project          the context project
+   * @param root             the git root
+   * @param remote           if true remote branches are listed
+   * @param local            if true local branches are listed
+   * @param branches         the collection used to store branches
    * @param containingCommit
    * @throws VcsException if there is a problem with running git
    */
@@ -278,7 +278,9 @@ public class GitBranch extends GitReference {
     if (branch == null) {
       return null;
     }
-    branch = branch.substring(REFS_HEADS_PREFIX.length());
+    if (branch.startsWith(REFS_HEADS_PREFIX)) {
+      branch = branch.substring(REFS_HEADS_PREFIX.length());
+    }
     boolean remoteFlag;
     if (!".".equals(remote)) {
       branch = remote + "/" + branch;
