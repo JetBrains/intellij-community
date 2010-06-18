@@ -55,13 +55,11 @@ class GitTreeController implements ManageGitTreeView {
   // guarded by lock
   private final AtomicReference<List<String>> myTags;
   private final AtomicReference<List<String>> myBranches;
-  private final AtomicReference<List<String>> myUsers;
 
   private final MyFiltersStateHolder myFilterHolder;
   private final MyFiltersStateHolder myHighlightingHolder;
 
   private final RequestsMerger myFilterRequestsMerger;
-  //private final RequestsMerger myHighlightingRequestsMerger;
 
   private final MyUpdateStateInterceptor myFiltering;
   private final MyUpdateStateInterceptor myHighlighting;
@@ -97,7 +95,6 @@ class GitTreeController implements ManageGitTreeView {
 
     myTags = new AtomicReference<List<String>>(Collections.<String>emptyList());
     myBranches = new AtomicReference<List<String>>(Collections.<String>emptyList());
-    myUsers = new AtomicReference<List<String>>(Collections.<String>emptyList());
 
     myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, project);
     myRefresher = new Runnable() {
