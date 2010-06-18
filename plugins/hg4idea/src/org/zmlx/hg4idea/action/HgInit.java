@@ -1,6 +1,9 @@
 package org.zmlx.hg4idea.action;
 
 import com.intellij.ide.impl.NewProjectUtil;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -12,6 +15,7 @@ import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.zmlx.hg4idea.HgUtil;
 import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.HgInitCommand;
 import org.zmlx.hg4idea.ui.HgInitAlreadyUnderHgDialog;
 import org.zmlx.hg4idea.ui.HgInitDialog;
@@ -26,20 +30,21 @@ import java.util.List;
 public class HgInit extends DumbAwareAction {
 
   private static final Logger LOG = Logger.getInstance(HgInit.class.getName());
+  private Project myProject;
 
   public HgInit() {
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
-    if (project == null) {
+    myProject = e.getData(PlatformDataKeys.PROJECT);
+    if (myProject == null) {
       LOG.warn("[actionPerformed] project is null");
       return;
     }
 
     // provide window to select the root directory
-    final HgInitDialog hgInitDialog = new HgInitDialog(project);
+    final HgInitDialog hgInitDialog = new HgInitDialog(myProject);
     hgInitDialog.show();
     if (!hgInitDialog.isOK()) {
       return;
@@ -53,7 +58,7 @@ public class HgInit extends DumbAwareAction {
     final VirtualFile vcsRoot = HgUtil.getNearestHgRoot(selectedRoot);
     VirtualFile mapRoot = selectedRoot;
     if (vcsRoot != null) {
-      final HgInitAlreadyUnderHgDialog dialog = new HgInitAlreadyUnderHgDialog(project,
+      final HgInitAlreadyUnderHgDialog dialog = new HgInitAlreadyUnderHgDialog(myProject,
                                                    selectedRoot.getPresentableUrl(), vcsRoot.getPresentableUrl());
       dialog.show();
       if (!dialog.isOK()) {
@@ -61,21 +66,21 @@ public class HgInit extends DumbAwareAction {
       }
 
       if (dialog.getAnswer() == HgInitAlreadyUnderHgDialog.Answer.CREATE_PROJECT_AT_PARENT) {
-        NewProjectUtil.createNewProject(project, vcsRoot.getPath());
+        NewProjectUtil.createNewProject(myProject, vcsRoot.getPath());
         return;
       } else if (dialog.getAnswer() == HgInitAlreadyUnderHgDialog.Answer.USE_PARENT_REPO_BUT_THIS_PROJECT) {
         mapRoot = vcsRoot;
       } else if (dialog.getAnswer() == HgInitAlreadyUnderHgDialog.Answer.CREATE_REPO_HERE) {
-        (new HgInitCommand(project)).execute(selectedRoot);
+        createRepository(selectedRoot);
       }
     } else { // no parent repository => creating the repository here.
-       (new HgInitCommand(project)).execute(selectedRoot);  
+       createRepository(selectedRoot);
     }
 
     // update vcs directory mappings
     mapRoot.refresh(false, false);
-    final String path = mapRoot.equals(project.getBaseDir()) ? "" : mapRoot.getPath();
-    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    final String path = mapRoot.equals(myProject.getBaseDir()) ? "" : mapRoot.getPath();
+    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     final List<VcsDirectoryMapping> vcsDirectoryMappings = new ArrayList<VcsDirectoryMapping>(vcsManager.getDirectoryMappings());
     VcsDirectoryMapping mapping = new VcsDirectoryMapping(path, HgVcs.VCS_NAME);
     for (int i = 0; i < vcsDirectoryMappings.size(); i++) {
@@ -105,6 +110,14 @@ public class HgInit extends DumbAwareAction {
     final Presentation presentation = e.getPresentation();
     presentation.setEnabled(project != null);
     presentation.setVisible(project != null);
+  }
+
+  private void createRepository(VirtualFile selectedRoot) {
+    (new HgInitCommand(myProject)).execute(selectedRoot);
+    Notifications.Bus.notify(new Notification(HgVcs.NOTIFICATION_GROUP_ID,
+                                              HgVcsMessages.message("hg4idea.init.created.notification.title"),
+                                              HgVcsMessages.message("hg4idea.init.created.notification.description", selectedRoot.getPresentableUrl()),
+                                              NotificationType.INFORMATION), myProject);
   }
   
 }

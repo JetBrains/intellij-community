@@ -12,32 +12,49 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.intellij.concurrency.*;
-import com.intellij.openapi.application.*;
-import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.options.*;
-import com.intellij.openapi.project.*;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.annotate.*;
-import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vcs.checkin.*;
-import com.intellij.openapi.vcs.diff.*;
-import com.intellij.openapi.vcs.history.*;
-import com.intellij.openapi.vcs.rollback.*;
-import com.intellij.openapi.vcs.update.*;
-import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.wm.*;
-import com.intellij.util.messages.*;
+import com.intellij.concurrency.JobScheduler;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.CommittedChangesProvider;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.annotate.AnnotationProvider;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangeProvider;
+import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
+import com.intellij.openapi.vcs.diff.DiffProvider;
+import com.intellij.openapi.vcs.history.VcsHistoryProvider;
+import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
+import com.intellij.openapi.vcs.update.UpdateEnvironment;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileListener;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.messages.Topic;
 import org.zmlx.hg4idea.provider.*;
-import org.zmlx.hg4idea.provider.annotate.*;
-import org.zmlx.hg4idea.provider.commit.*;
-import org.zmlx.hg4idea.provider.update.*;
-import org.zmlx.hg4idea.ui.*;
+import org.zmlx.hg4idea.provider.annotate.HgAnnotationProvider;
+import org.zmlx.hg4idea.provider.commit.HgCheckinEnvironment;
+import org.zmlx.hg4idea.provider.commit.HgCommitExecutor;
+import org.zmlx.hg4idea.provider.update.HgIntegrateEnvironment;
+import org.zmlx.hg4idea.provider.update.HgUpdateEnvironment;
+import org.zmlx.hg4idea.ui.HgChangesetStatus;
+import org.zmlx.hg4idea.ui.HgCurrentBranchStatus;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.concurrent.*;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 public class HgVcs extends AbstractVcs {
 
@@ -57,6 +74,7 @@ public class HgVcs extends AbstractVcs {
 
   public static final String VCS_NAME = "hg4idea";
   public static final String DIRSTATE_FILE_PATH = ".hg/dirstate";
+  public static final String NOTIFICATION_GROUP_ID = "Mercurial";
 
   private final HgChangeProvider changeProvider;
   private final HgProjectConfigurable configurable;
