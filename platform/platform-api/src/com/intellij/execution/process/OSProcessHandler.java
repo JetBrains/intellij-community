@@ -229,7 +229,7 @@ public class OSProcessHandler extends ProcessHandler {
     return EncodingManager.getInstance().getDefaultCharset();
   }
 
-  private abstract static class ReadProcessRequest {
+  private abstract class ReadProcessRequest {
     private static final int NOTIFY_TEXT_DELAY = 300;
 
     private final Reader myReader;
@@ -240,6 +240,7 @@ public class OSProcessHandler extends ProcessHandler {
     private boolean myIsClosed = false;
     private boolean myIsProcessTerminated = false;
     private final Semaphore mySemaphore = new Semaphore();
+    private final BlockingQueue<String> myNotificationQueue = new LinkedBlockingQueue<String>();
 
     public ReadProcessRequest(final Reader reader) {
       myReader = reader;
@@ -264,6 +265,25 @@ public class OSProcessHandler extends ProcessHandler {
       }, NOTIFY_TEXT_DELAY);
 
       ourReaderThread.addRequest(this);
+
+      executeOnPooledThread(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            while (true) {
+              final String token = myNotificationQueue.take();
+              if (token.isEmpty()) break;
+              textAvailable(token);
+            }
+          }
+          catch (InterruptedException e) {
+            // Ignore 
+          }
+          finally {
+            mySemaphore.up();
+          }
+        }
+      });
 
       mySemaphore.down();
       return mySemaphore;
@@ -299,7 +319,7 @@ public class OSProcessHandler extends ProcessHandler {
         // because the created string will get StringBuffer's internal char array as a buffer which is possibly too large.
         final String s = myBuffer.substring(0, myBuffer.length());
         myBuffer.setLength(0);
-        textAvailable(s);
+        myNotificationQueue.offer(s);
       }
     }
 
@@ -326,7 +346,8 @@ public class OSProcessHandler extends ProcessHandler {
         // supressed
       }
       checkTextAvailable();
-      mySemaphore.up();
+
+      myNotificationQueue.offer("");
     }
 
     protected abstract void textAvailable(final String s);
