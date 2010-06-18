@@ -135,8 +135,8 @@ class GitTreeController implements ManageGitTreeView {
       }
     });
 
-    myFiltering = new MyUpdateStateInterceptor(myFilterRequestsMerger, myFilterHolder, null);
-    myHighlighting = new MyUpdateStateInterceptor(myFilterRequestsMerger, myHighlightingHolder, null);
+    myFiltering = new MyUpdateStateInterceptor(myFilterRequestsMerger, myFilterHolder);
+    myHighlighting = new MyUpdateStateInterceptor(myFilterRequestsMerger, myHighlightingHolder);
     myFilterHolder.setDirty(true);
 
     ApplicationManager.getApplication().executeOnPooledThread(new DumbAwareRunnable() {
@@ -324,6 +324,7 @@ class GitTreeController implements ManageGitTreeView {
     }, 100);
   }
 
+  // todo loading indicator, load optimization
   public void getDetails(final Collection<SHAHash> hashes) {
     final Application application = ApplicationManager.getApplication();
     myAlarm.addRequest(new Runnable() {
@@ -386,20 +387,15 @@ class GitTreeController implements ManageGitTreeView {
 
   private static class MyUpdateStateInterceptor implements GitTreeFiltering {
     private final MyFiltersStateHolder myState;
-    @Nullable private final RequestsMerger mySecond;
     private final RequestsMerger myRequestsMerger;
 
-    protected MyUpdateStateInterceptor(RequestsMerger requestsMerger, MyFiltersStateHolder state, final @Nullable RequestsMerger mySecond) {
+    protected MyUpdateStateInterceptor(RequestsMerger requestsMerger, MyFiltersStateHolder state) {
       myRequestsMerger = requestsMerger;
       myState = state;
-      this.mySecond = mySecond;
     }
 
     private void requestRefresh() {
       myRequestsMerger.request();
-      if (mySecond != null) {
-        mySecond.request();
-      }
     }
 
     public void addFilter(ChangesFilter.Filter filter) {
