@@ -23,9 +23,13 @@ public class PyInlineLocalTest extends LightMarkedTestCase {
     try {
       PsiElement element = map.values().iterator().next().getParent();
       PyReferenceExpression ref = null;
-      if (element instanceof PyReferenceExpression) {
+      while (element instanceof PyReferenceExpression) {
         ref = (PyReferenceExpression)element;
-        element = ((PyReferenceExpression)element).getReference().resolve();
+        PsiElement newElement = ((PyReferenceExpression)element).getReference().resolve();
+        if (element == newElement) {
+          break;
+        }
+        element = newElement;
       }
       PyInlineLocalHandler.invoke(myFixture.getProject(), myFixture.getEditor(), (PyTargetExpression)element, ref);
       if (expectedError != null) fail("expected error: '" + expectedError + "', got none");
