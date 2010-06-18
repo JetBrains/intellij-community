@@ -224,21 +224,17 @@ class GitTreeController implements ManageGitTreeView {
     return "Showing";
   }
 
-  private void loadTagsNBranches(final boolean loadBranches, final boolean loadTags) {
+  private void loadTagsNBranches() {
     final List<String> branches = new LinkedList<String>();
     final List<String> tags = new LinkedList<String>();
 
     try {
-      if (loadBranches) {
-        myAccess.loadAllBranches(branches);
-        Collections.sort(branches);
-        myBranches.set(branches);
-      }
-      if (loadTags) {
-        myAccess.loadAllTags(tags);
-        Collections.sort(tags);
-        myTags.set(tags);
-      }
+      myAccess.loadAllBranches(branches);
+      Collections.sort(branches);
+      myBranches.set(branches);
+      myAccess.loadAllTags(tags);
+      Collections.sort(tags);
+      myTags.set(tags);
     }
     catch (VcsException e) {
       myTreeView.acceptError(e.getMessage(), e);
@@ -252,15 +248,9 @@ class GitTreeController implements ManageGitTreeView {
     myAlarm.addRequest(new Runnable() {
       public void run() {
         myFilterRequestsMerger.request();
-        loadTagsNBranches(true, true);
+        loadTagsNBranches();
         myInitialized = true;
         myTreeView.controllerReady();
-
-        myAlarm.addRequest(new Runnable() {
-          public void run() {
-            loadTagsNBranches(false, false);
-          }
-        }, 100);
       }
     }, 100);
   }
@@ -329,8 +319,7 @@ class GitTreeController implements ManageGitTreeView {
     myFilterRequestsMerger.request();
     myAlarm.addRequest(new Runnable() {
       public void run() {
-        // todo USERS ARE NOT REFRESHED now! to be fixed after loading them faster
-        loadTagsNBranches(true, true);
+        loadTagsNBranches();
       }
     }, 100);
   }
