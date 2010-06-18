@@ -26,7 +26,10 @@ import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ProjectRootsTraversing;
 import com.intellij.openapi.roots.ProjectClasspathTraversing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.lang.UrlClassLoader;
@@ -107,11 +110,15 @@ public final class LoaderFactory {
 
   private static ClassLoader createClassLoader(final String runClasspath) {
     final ArrayList<URL> urls = new ArrayList<URL>();
+    final VirtualFileManager manager = VirtualFileManager.getInstance();
+    final JarFileSystem fileSystem = JarFileSystem.getInstance();
     final StringTokenizer tokenizer = new StringTokenizer(runClasspath, File.pathSeparator);
     while (tokenizer.hasMoreTokens()) {
       final String s = tokenizer.nextToken();
       try {
-        urls.add(new File(s).toURI().toURL());
+        VirtualFile vFile = manager.findFileByUrl(VfsUtil.pathToUrl(s));
+        VirtualFile jar = fileSystem.getJarRootForLocalFile(vFile);
+        urls.add(new URL(jar.getUrl()));
       }
       catch (Exception e) {
         // ignore ?
