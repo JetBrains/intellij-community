@@ -52,7 +52,7 @@ public class SuppressByJavaCommentFix extends SuppressByCommentFix {
         if (declaredElement instanceof PsiLocalVariable) {
           final PsiModifierList modifierList = ((PsiLocalVariable)declaredElement).getModifierList();
           if (modifierList != null) {
-            SuppressFix.addSuppressAnnotation(project, editor, container, modifierList, myID);
+            SuppressFix.addSuppressAnnotation(project, editor, container, (PsiLocalVariable)declaredElement, myID);
             added = true;
             break;
           }

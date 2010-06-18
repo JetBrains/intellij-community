@@ -15,6 +15,7 @@
  */
 package git4idea.history.browser;
 
+import git4idea.GitUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -271,7 +272,7 @@ public class ChangesFilter {
   }
 
   private static String formatDate(final Date date) {
-    return date.toString();
+    return GitUtil.gitTime(date);
   }
 
   public static class Comment implements Filter {

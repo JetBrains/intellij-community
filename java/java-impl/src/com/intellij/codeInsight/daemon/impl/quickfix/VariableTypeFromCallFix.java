@@ -23,7 +23,6 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -59,14 +58,12 @@ public class VariableTypeFromCallFix implements IntentionAction {
     return true;
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
     final TypeMigrationRules rules = new TypeMigrationRules(TypeMigrationLabeler.getElementType(myVar));
     rules.setMigrationRootType(myExpressionType);
     rules.setBoundScope(myVar.getUseScope());
 
-    final TypeMigrationProcessor processor = new TypeMigrationProcessor(project, myVar, rules);
-    processor.setPreviewUsages(!ApplicationManager.getApplication().isUnitTestMode());
-    processor.run();
+    TypeMigrationProcessor.runHighlightingTypeMigration(project, editor, rules, myVar);
   }
 
   public boolean startInWriteAction() {
@@ -80,6 +77,7 @@ public class VariableTypeFromCallFix implements IntentionAction {
     final PsiSubstitutor substitutor = result.getSubstitutor();
     PsiExpression[] expressions = list.getExpressions();
     if (method == null || method.getParameterList().getParametersCount() != expressions.length) return;
+    final PsiParameter[] parameters = method.getParameterList().getParameters();
     for (int i = 0; i < expressions.length; i++) {
       final PsiExpression expression = expressions[i];
       PsiType expressionType = expression.getType();
@@ -88,7 +86,7 @@ public class VariableTypeFromCallFix implements IntentionAction {
       }
       if (expressionType == null) continue;
 
-      final PsiParameter parameter = method.getParameterList().getParameters()[i];
+      final PsiParameter parameter = parameters[i];
       final PsiType formalParamType = parameter.getType();
       final PsiType parameterType = substitutor.substitute(formalParamType);
       if (parameterType.isAssignableFrom(expressionType)) continue;
@@ -103,10 +101,11 @@ public class VariableTypeFromCallFix implements IntentionAction {
         final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(expression.getProject()).getResolveHelper();
         if (varClass != null) {
           final PsiSubstitutor psiSubstitutor = resolveHelper.inferTypeArguments(varClass.getTypeParameters(),
-                                                                       new PsiParameter[]{parameter},
-                                                                       new PsiExpression[]{expression}, PsiSubstitutor.EMPTY, resolved, false);
+                                                                       parameters,
+                                                                       expressions, PsiSubstitutor.EMPTY, resolved, false);
           final PsiClassType appropriateVarType = JavaPsiFacade.getElementFactory(expression.getProject()).createType(varClass, psiSubstitutor);
           QuickFixAction.registerQuickFixAction(highlightInfo, new VariableTypeFromCallFix(appropriateVarType, (PsiVariable) resolved));
+          break;
         }
       }
     }

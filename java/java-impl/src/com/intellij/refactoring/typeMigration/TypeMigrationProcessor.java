@@ -1,6 +1,7 @@
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -11,6 +12,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.typeMigration.ui.FailedConversionsDialog;
 import com.intellij.refactoring.typeMigration.ui.MigrationPanel;
 import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -35,6 +37,35 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
     super(project);
     myRoot = roots;
     myRules = rules;
+  }
+
+  public static void runHighlightingTypeMigration(final Project project,
+                                                  final Editor editor,
+                                                  final TypeMigrationRules rules,
+                                                  final PsiElement root) {
+    final TypeMigrationProcessor processor = new TypeMigrationProcessor(project, root, rules){
+      @Override
+      public void performRefactoring(final UsageInfo[] usages) {
+        super.performRefactoring(usages);
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            final List<PsiElement> result = new ArrayList<PsiElement>();
+            for (UsageInfo usage : usages) {
+              final PsiElement element = usage.getElement();
+              if (element instanceof PsiMethod) {
+                result.add(((PsiMethod)element).getReturnTypeElement());
+              } else if (element instanceof PsiVariable) {
+                result.add(((PsiVariable)element).getTypeElement());
+              } else if (element != null) {
+                result.add(element);
+              }
+            }
+            RefactoringUtil.highlightAllOccurences(project, result.toArray(new PsiElement[result.size()]), editor);
+          }
+        });
+      }
+    };
+    processor.run();
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {

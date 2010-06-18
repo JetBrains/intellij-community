@@ -15,6 +15,8 @@
  */
 package com.intellij.psi.search;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,6 +32,10 @@ import java.beans.PropertyChangeListener;
  * @see com.intellij.psi.search.searches.IndexPatternSearch
  */
 public interface IndexPatternProvider {
+  ExtensionPointName<IndexPatternProvider> EP_NAME = ExtensionPointName.create("com.intellij.indexPatternProvider");
+
+  Topic<PropertyChangeListener> INDEX_PATTERNS_CHANGED = new Topic<PropertyChangeListener>("index patterns changed", PropertyChangeListener.class);
+
   /**
    * The property the change of which should be reported to the property change listener
    * when the list of index patterns is changed.
@@ -44,21 +50,4 @@ public interface IndexPatternProvider {
    * @return the array of index patterns
    */
   @NotNull IndexPattern[] getIndexPatterns();
-
-  /**
-   * Adds a listener which is notified when the set of index patterns provided by this provider
-   * changes. The property the change of which should be reported is {@link #PROP_INDEX_PATTERNS}.
-   *
-   * @param listener the listener to add.
-   */
-  void addPropertyChangeListener(PropertyChangeListener listener);
-
-  /**
-   * Removes a listener which is notified when the set of index patterns provided by this provider
-   * changes.
-   *
-   * @param listener the listener to remove.
-   */
-  void removePropertyChangeListener(PropertyChangeListener listener);
-
 }

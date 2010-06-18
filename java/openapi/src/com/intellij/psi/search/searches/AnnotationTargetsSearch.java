@@ -54,7 +54,7 @@ public class AnnotationTargetsSearch {
   public static Query<PsiModifierListOwner> search(@NotNull PsiClass annotationClass, @NotNull SearchScope scope) {
     final Query<PsiMember> members = AnnotatedMembersSearch.search(annotationClass, scope);
     final Query<PsiPackage> packages = AnnotatedPackagesSearch.search(annotationClass, scope);
-    return new MergeQuery<PsiModifierListOwner, PsiMember, PsiPackage>(members, packages);
+    return new MergeQuery<PsiModifierListOwner>(members, packages);
   }
 
   public static Query<PsiModifierListOwner> search(@NotNull PsiClass annotationClass) {

@@ -242,6 +242,8 @@
 
     <problemFileHighlightFilter implementation="org.jetbrains.plugins.groovy.GroovyProblemFileHighlightFilter"/>
 
+    <renameInputValidator implementation="org.jetbrains.plugins.groovy.GroovyRenameInputValidator"/>
+
     <!-- Groovy DSL support -->
     <indexedRootsProvider implementation="org.jetbrains.plugins.groovy.dsl.StandardDslIndexedRootsProvider"/>
     <fileBasedIndex implementation="org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex"/>
@@ -424,7 +426,6 @@
 
     <projectService serviceInterface="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper"
                     serviceImplementation="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper"/>
-
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">

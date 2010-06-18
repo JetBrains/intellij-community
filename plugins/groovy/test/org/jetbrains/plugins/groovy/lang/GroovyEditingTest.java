@@ -28,9 +28,9 @@ public class GroovyEditingTest extends LightCodeInsightFixtureTestCase {
   }
 
   private void doTest(final char c) throws Throwable {
-    myFixture.configureByFile(getTestName(true) + ".groovy");
+    myFixture.configureByFile(getTestName(false) + ".groovy");
     myFixture.type(c);
-    myFixture.checkResultByFile(getTestName(true) + "_after.groovy");
+    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
   }
 
   public void testCodeBlockRightBrace() throws Throwable { doTest('{'); }

@@ -17,6 +17,8 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.cache.ModifierFlags;
+import com.intellij.psi.impl.cache.RecordUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
@@ -76,12 +78,12 @@ public class GrAccessorMethodImpl extends GrSyntheticMethod implements GrAccesso
   }
 
   protected Set<String> getModifiers() {
-    int modifiers = Modifier.PUBLIC;
+    int modifiers = ModifierFlags.PUBLIC_MASK;
     final PsiModifierList original = myProperty.getModifierList();
     assert original != null;
-    if (original.hasExplicitModifier(PsiModifier.STATIC)) modifiers |= Modifier.STATIC;
-    if (original.hasExplicitModifier(PsiModifier.FINAL)) modifiers |= Modifier.FINAL;
-    return LightModifierList.getModifierSet(modifiers);
+    if (original.hasExplicitModifier(PsiModifier.STATIC)) modifiers |= ModifierFlags.STATIC_MASK;
+    if (original.hasExplicitModifier(PsiModifier.FINAL)) modifiers |= ModifierFlags.FINAL_MASK;
+    return RecordUtil.getModifierSet(modifiers);
   }
 
   public PsiClass getContainingClass() {

@@ -24,18 +24,8 @@ import java.util.Iterator;
 /**
  * @author peter
  */
-public abstract class AbstractExecutorsQuery<Result, Parameter> implements Query<Result> {
-  protected final Parameter myParameters;
+public abstract class AbstractQuery<Result> implements Query<Result> {
   private boolean myIsProcessing = false;
-
-  public AbstractExecutorsQuery(@NotNull final Parameter params) {
-    myParameters = params;
-  }
-
-  @NotNull
-  public Parameter getParameters() {
-    return myParameters;
-  }
 
   @NotNull
   public Collection<Result> findAll() {

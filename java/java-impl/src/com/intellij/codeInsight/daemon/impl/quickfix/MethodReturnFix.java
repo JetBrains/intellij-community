@@ -19,7 +19,6 @@ import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.IntentionAndQuickFixAction;
 import com.intellij.ide.util.SuperMethodWarningUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -79,7 +78,7 @@ public class MethodReturnFix extends IntentionAndQuickFixAction {
       if (superMethod != null) {
         final PsiType superReturnType = superMethod.getReturnType();
         if (superReturnType != null && !Comparing.equal(myReturnType, superReturnType)) {
-          if (changeClassTypeArgument(project, superReturnType, superMethod.getContainingClass())) return;
+          if (changeClassTypeArgument(project, superReturnType, superMethod.getContainingClass(), editor)) return;
           method = SuperMethodWarningUtil.checkSuperMethod(myMethod, RefactoringBundle.message("to.refactor"));
           if (method == null) return;
         }
@@ -98,7 +97,7 @@ public class MethodReturnFix extends IntentionAndQuickFixAction {
     }
   }
 
-  private boolean changeClassTypeArgument(Project project, PsiType superReturnType, PsiClass superClass) {
+  private boolean changeClassTypeArgument(Project project, PsiType superReturnType, PsiClass superClass, Editor editor) {
     if (superClass == null || !superClass.hasTypeParameters()) return false;
     final PsiClass superReturnTypeClass = PsiUtil.resolveClassInType(superReturnType);
     if (superReturnTypeClass == null || !(superReturnTypeClass instanceof PsiTypeParameter || superReturnTypeClass.hasTypeParameters())) return false;
@@ -131,9 +130,7 @@ public class MethodReturnFix extends IntentionAndQuickFixAction {
     final TypeMigrationRules rules = new TypeMigrationRules(TypeMigrationLabeler.getElementType(derivedClass));
     rules.setMigrationRootType(JavaPsiFacade.getElementFactory(project).createType(baseClass, psiSubstitutor));
     rules.setBoundScope(new LocalSearchScope(derivedClass));
-    final TypeMigrationProcessor processor = new TypeMigrationProcessor(project, referenceParameterList, rules);
-    processor.setPreviewUsages(!ApplicationManager.getApplication().isUnitTestMode());
-    processor.run();
+    TypeMigrationProcessor.runHighlightingTypeMigration(project, editor, rules, referenceParameterList);
 
     return true;
   }

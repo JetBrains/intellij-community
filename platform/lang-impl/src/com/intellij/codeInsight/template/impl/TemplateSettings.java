@@ -23,10 +23,7 @@ import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.options.Scheme;
-import com.intellij.openapi.options.SchemeProcessor;
-import com.intellij.openapi.options.SchemesManager;
-import com.intellij.openapi.options.SchemesManagerFactory;
+import com.intellij.openapi.options.*;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
@@ -150,7 +147,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
   public TemplateSettings(SchemesManagerFactory schemesManagerFactory) {
 
 
-    myProcessor = new SchemeProcessor<TemplateGroup>() {
+    myProcessor = new BaseSchemeProcessor<TemplateGroup>() {
       public TemplateGroup readScheme(final Document schemeContent)
           throws InvalidDataException, IOException, JDOMException {
         return readTemplateFile(schemeContent, schemeContent.getRootElement().getAttributeValue("group"), false, false,
@@ -198,10 +195,6 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
         for (TemplateImpl template : scheme.getElements()) {
           removeTemplate(template);
         }
-      }
-
-      public void onCurrentSchemeChanged(final Scheme newCurrentScheme) {
-
       }
     };
 

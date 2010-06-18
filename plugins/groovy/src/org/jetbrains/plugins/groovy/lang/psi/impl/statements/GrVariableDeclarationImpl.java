@@ -67,6 +67,11 @@ public class GrVariableDeclarationImpl extends GroovyPsiElementImpl implements G
     return list;
   }
 
+  @Override
+  public boolean hasModifierProperty(@NotNull String name) {
+    return getModifierList().hasModifierProperty(name);
+  }
+
   public GrVariable[] getVariables() {
     return findChildrenByClass(GrVariable.class);
   }

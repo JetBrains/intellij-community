@@ -234,7 +234,7 @@ public abstract class ElementPresentationManager {
   }
 
   @Nullable
-  public static Icon[] getIconsForClass(final Class clazz) {
+  private static Icon[] getIconsForClass(final Class clazz) {
     return TypeNameManager.getFromClassMap(ourIcons, clazz);
   }
 

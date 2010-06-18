@@ -23,7 +23,10 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
@@ -414,7 +417,7 @@ public class GitLogTree implements GitTreeViewI {
     }.callMe();
   }
 
-  private class MyOpenCloseFilters extends ToggleAction {
+  private class MyOpenCloseFilters extends ToggleAction implements DumbAware {
     private MyOpenCloseFilters() {
       super("Open Filters", "Open Filters", IconLoader.getIcon("/icons/filter.png"));
     }
@@ -452,7 +455,7 @@ public class GitLogTree implements GitTreeViewI {
     }
   }
 
-  private class MyOpenCloseInheritance extends ToggleAction {
+  private class MyOpenCloseInheritance extends ToggleAction implements DumbAware {
     private MyOpenCloseInheritance() {
       super("Open Emphasize", "Open Emphasize", IconLoader.getIcon("/icons/show.png"));
     }
@@ -489,7 +492,7 @@ public class GitLogTree implements GitTreeViewI {
     }
   }
 
-  private class MyNextAction extends AnAction {
+  private class MyNextAction extends DumbAwareAction {
     private MyNextAction() {
       super("Next Page", "Next Page", IconLoader.getIcon("/actions/nextfile.png"));
     }
@@ -512,7 +515,7 @@ public class GitLogTree implements GitTreeViewI {
     }
   }
 
-  private class MyPreviousAction extends AnAction {
+  private class MyPreviousAction extends DumbAwareAction {
     private MyPreviousAction() {
       super("Previous Page", "Previous Page", IconLoader.getIcon("/actions/prevfile.png"));
     }
@@ -535,7 +538,7 @@ public class GitLogTree implements GitTreeViewI {
     }
   }
 
-  private class MyRefreshAction extends AnAction {
+  private class MyRefreshAction extends DumbAwareAction {
     private MyRefreshAction() {
       super("Refresh", "Refresh", IconLoader.getIcon("/actions/sync.png"));
     }
@@ -547,9 +550,9 @@ public class GitLogTree implements GitTreeViewI {
   }
 
   // hash, reference name, or comment mask
-  private class MyGoto extends AnAction {
+  private class MyGoto extends DumbAwareAction {
     private MyGoto() {
-      super("Goto", "Type commit hash, or reference, or regexp for commit message", IconLoader.getIcon("/general/run.png"));
+      super("Goto", "Type commit hash, or reference, or regexp for commit message", IconLoader.getIcon("/icons/goto.png"));
     }
 
     @Override
@@ -605,7 +608,7 @@ public class GitLogTree implements GitTreeViewI {
     }
   }
 
-  private class MyCherryPick extends AnAction {
+  private class MyCherryPick extends DumbAwareAction {
     private final Set<SHAHash> myIdsInProgress;
 
     private MyCherryPick() {
@@ -619,7 +622,9 @@ public class GitLogTree implements GitTreeViewI {
       // earliest first!!!
       Collections.reverse(commits);
       if (commits == null) return;
-
+      final int result = Messages.showOkCancelDialog("You are going to cherry-pick changes into current branch. Continue?", "Cherry-pick",
+                                                     Messages.getQuestionIcon());
+      if (result != 0) return;
       for (GitCommit commit : commits) {
         myIdsInProgress.add(commit.getHash());
       }

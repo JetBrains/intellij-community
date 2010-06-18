@@ -92,7 +92,7 @@ public class CachesBasedRefSearcher extends SearchRequestor implements QueryExec
       if (metaData != null) text = metaData.getName();
     }
     if (StringUtil.isNotEmpty(text)) {
-      final SearchScope searchScope = ignoreAccessScope ? scope : refElement.getUseScope().intersectWith(scope);
+      final SearchScope searchScope = ignoreAccessScope ? scope : refElement.getManager().getSearchHelper().getUseScope(refElement).intersectWith(scope);
       assert text != null;
       collector.searchWord(text, searchScope, refElement.getLanguage().isCaseSensitive(), refElement);
     }

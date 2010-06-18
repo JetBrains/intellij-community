@@ -1,5 +1,5 @@
 <component>
-  <keymap name="visual studio" parent="$default" version="1" disable-mnemonics="false">
+  <keymap name="Visual Studio" parent="$default" version="1" disable-mnemonics="false">
     <action id="StepOut">
       <keyboard-shortcut first-keystroke="shift F11"/>
       <keyboard-shortcut first-keystroke="shift control F8"/>

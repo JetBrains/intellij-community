@@ -18,9 +18,12 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.concurrency.JobUtil;
 import com.intellij.ide.todo.TodoConfiguration;
+import com.intellij.ide.todo.TodoIndexPatternProvider;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -62,7 +65,14 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   @NotNull
   public SearchScope getUseScope(@NotNull PsiElement element) {
-    return element.getUseScope();
+    SearchScope scope = element.getUseScope();
+    for (UseScopeEnlarger enlarger : UseScopeEnlarger.EP_NAME.getExtensions()) {
+      final SearchScope additionalScope = enlarger.getAdditionalUseScope(element);
+      if (additionalScope != null) {
+        scope = scope.union(additionalScope);
+      }
+    }
+    return scope;
   }
 
 
@@ -86,7 +96,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   private static TodoItem[] doFindTodoItems(final PsiFile file, final TextRange textRange) {
-    final Collection<IndexPatternOccurrence> occurrences = IndexPatternSearch.search(file, TodoConfiguration.getInstance()).findAll();
+    final Collection<IndexPatternOccurrence> occurrences = IndexPatternSearch.search(file, TodoIndexPatternProvider.getInstance()).findAll();
     if (occurrences.isEmpty()) {
       return EMPTY_TODO_ITEMS;
     }
@@ -114,7 +124,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   public int getTodoItemsCount(@NotNull PsiFile file) {
-    int count = myManager.getCacheManager().getTodoCount(file.getVirtualFile(), TodoConfiguration.getInstance());
+    int count = myManager.getCacheManager().getTodoCount(file.getVirtualFile(), TodoIndexPatternProvider.getInstance());
     if (count != -1) return count;
     return findTodoItems(file).length;
   }
@@ -415,6 +425,14 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       progress.setText(PsiBundle.message("psi.search.in.non.java.files.progress"));
     }
 
+    final SearchScope useScope = new ReadAction<SearchScope>() {
+      protected void run(final Result<SearchScope> result) {
+        if (originalElement != null) {
+          result.setResult(getUseScope(originalElement));
+        }
+      }
+    }.execute().getResultObject();
+
     final Ref<Boolean> cancelled = new Ref<Boolean>(Boolean.FALSE);
     final GlobalSearchScope finalScope = searchScope;
     for (int i = 0; i < files.length; i++) {
@@ -427,8 +445,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           CharSequence text = psiFile.getViewProvider().getContents();
           for (int index = LowLevelSearchUtil.searchWord(text, 0, text.length(), searcher, progress); index >= 0;) {
             PsiReference referenceAt = psiFile.findReferenceAt(index);
-            if (referenceAt == null || originalElement == null ||
-                !PsiSearchScopeUtil.isInScope(getUseScope(originalElement).intersectWith(finalScope), psiFile)) {
+            if (referenceAt == null || useScope == null ||
+                !PsiSearchScopeUtil.isInScope(useScope.intersectWith(finalScope), psiFile)) {
               if (!processor.process(psiFile, index, index + searcher.getPattern().length())) {
                 cancelled.set(Boolean.TRUE);
                 return;
@@ -582,25 +600,30 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return commonScope;
   }
 
-  private static MultiMap<VirtualFile, PsiSearchRequest> findFilesWithIndexEntry(IdIndexEntry entry,
+  private static MultiMap<VirtualFile, PsiSearchRequest> findFilesWithIndexEntry(final IdIndexEntry entry,
                                               final ProjectFileIndex index,
                                               final Collection<PsiSearchRequest> data,
-                                              GlobalSearchScope commonScope) {
+                                              final GlobalSearchScope commonScope) {
     final MultiMap<VirtualFile, PsiSearchRequest> local = new MultiMap<VirtualFile, PsiSearchRequest>();
-    FileBasedIndex.getInstance().processValues(IdIndex.NAME, entry, null, new FileBasedIndex.ValueProcessor<Integer>() {
-      public boolean process(VirtualFile file, Integer value) {
-        if (!IndexCacheManagerImpl.shouldBeFound(file, index)) {
-          return true;
-        }
-        int mask = value.intValue();
-        for (PsiSearchRequest single : data) {
-          if ((mask & single.searchContext) != 0 && ((GlobalSearchScope)single.searchScope).contains(file)) {
-            local.putValue(file, single);
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        FileBasedIndex.getInstance().processValues(IdIndex.NAME, entry, null, new FileBasedIndex.ValueProcessor<Integer>() {
+          public boolean process(VirtualFile file, Integer value) {
+            if (!IndexCacheManagerImpl.shouldBeFound(file, index)) {
+              return true;
+            }
+            int mask = value.intValue();
+            for (PsiSearchRequest single : data) {
+              if ((mask & single.searchContext) != 0 && ((GlobalSearchScope)single.searchScope).contains(file)) {
+                local.putValue(file, single);
+              }
+            }
+            return true;
           }
-        }
-        return true;
+        }, commonScope);
       }
-    }, commonScope);
+    });
+
     return local;
   }
 

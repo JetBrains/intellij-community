@@ -196,27 +196,70 @@ public class GroovyPropertyUtils {
   }
 
   public static boolean isGetterName(@NotNull String name) {
-    if (name.startsWith(GET_PREFIX) && name.length() > 3 && isUpperCase(name.charAt(3))) return true;
-    if (name.startsWith(IS_PREFIX) && name.length() > 2 && isUpperCase(name.charAt(2))) return true;
-    return false;
+    int prefixLength;
+    if (name.startsWith(GET_PREFIX)) {
+      prefixLength = 3;
+    }
+    else if (name.startsWith(IS_PREFIX)) {
+      prefixLength = 2;
+    }
+    else {
+      return false;
+    }
+
+    if (name.length() == prefixLength) return false;
+
+    if (isUpperCase(name.charAt(prefixLength))) return true;
+
+    return name.length() > prefixLength + 1 && isUpperCase(name.charAt(prefixLength + 1));
+  }
+
+  public static String getGetterNameNonBoolean(@NotNull String name) {
+    return getAccessorName(GET_PREFIX, name);
+  }
+
+  public static String getGetterNameBoolean(@NotNull String name) {
+    return getAccessorName(IS_PREFIX, name);
+  }
+
+  public static String getSetterName(@NotNull String name) {
+    return getAccessorName("set", name);
+  }
+
+  private static String getAccessorName(String prefix, String name) {
+    if (name.length() == 0) return prefix;
+
+    StringBuilder sb = new StringBuilder();
+    sb.append(prefix);
+    if (name.length() > 1 && isUpperCase(name.charAt(1))) {
+      sb.append(name);
+    }
+    else {
+      sb.append(Character.toUpperCase(name.charAt(0)));
+      sb.append(name, 1, name.length());
+    }
+
+    return sb.toString();
   }
 
   /**
    * Returns getter names in priority order
-   *
    * @param name property name
    * @return getter names
    */
   public static String[] suggestGettersName(@NotNull String name) {
-    return new String[]{IS_PREFIX + capitalize(name), GET_PREFIX + capitalize(name)};
+    return new String[]{getGetterNameBoolean(name), getGetterNameNonBoolean(name)};
   }
 
   public static String[] suggestSettersName(@NotNull String name) {
-    return new String[]{SET_PREFIX + capitalize(name)};
+    return new String[]{getSetterName(name)};
   }
 
   public static boolean isSetterName(String name) {
-    return name != null && name.startsWith(SET_PREFIX) && name.length() > 3 && isUpperCase(name.charAt(3));
+    return name != null
+           && name.startsWith(SET_PREFIX)
+           && name.length() > 3
+           && (isUpperCase(name.charAt(3)) || (name.length() > 4 && isUpperCase(name.charAt(3))));
   }
 
   public static boolean isProperty(@Nullable PsiClass aClass, @Nullable String propertyName, boolean isStatic) {
@@ -247,7 +290,7 @@ public class GroovyPropertyUtils {
   public static String capitalize(String s) {
     if (s.length() == 0) return s;
     if (s.length() == 1) return s.toUpperCase();
-    if (Character.isUpperCase(s.charAt(1))) return s;
+    if (isUpperCase(s.charAt(1))) return s;
     final char[] chars = s.toCharArray();
     chars[0] = Character.toUpperCase(chars[0]);
     return new String(chars);

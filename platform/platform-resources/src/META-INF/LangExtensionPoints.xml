@@ -129,6 +129,7 @@
   <extensionPoint name="definitionsSearch" interface="com.intellij.util.QueryExecutor"/>
 
   <extensionPoint name="searchRequestor" interface="com.intellij.psi.search.SearchRequestor"/>
+  <extensionPoint name="useScopeEnlarger" interface="com.intellij.psi.search.UseScopeEnlarger"/>
 
   <extensionPoint name="gotoClassContributor"
                   interface="com.intellij.navigation.ChooseByNameContributor"/>
@@ -294,6 +295,7 @@
   <extensionPoint name="vetoRenameCondition" interface="com.intellij.openapi.util.Condition"/>
   <extensionPoint name="rename.inplace.resolveSnapshotProvider"
                   beanClass="com.intellij.lang.LanguageExtensionPoint" />
+  <extensionPoint name="renameInputValidator" interface="com.intellij.refactoring.rename.RenameInputValidator"/>
 
   <extensionPoint name="findUsagesHandlerFactory" interface="com.intellij.find.findUsages.FindUsagesHandlerFactory" area="IDEA_PROJECT"/>
 

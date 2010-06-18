@@ -145,7 +145,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     mySetter = null;
 
     if (isProperty() && !hasModifierProperty(PsiModifier.FINAL)) {
-      String name = "set" + GroovyPropertyUtils.capitalize(getName());
+      String name = GroovyPropertyUtils.getSetterName(getName());
       final GrAccessorMethod setter = new GrAccessorMethodImpl(this, true, name);
       final PsiClass clazz = getContainingClass();
       if (!hasContradictingMethods(setter, clazz)) {
@@ -174,12 +174,11 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     if (isProperty()) {
       String name = getName();
       final PsiClass clazz = getContainingClass();
-      name = GroovyPropertyUtils.capitalize(name);
-      GrAccessorMethod getter1 = new GrAccessorMethodImpl(this, false, "get" + name);
+      GrAccessorMethod getter1 = new GrAccessorMethodImpl(this, false, GroovyPropertyUtils.getGetterNameNonBoolean(name));
       if (!hasContradictingMethods(getter1, clazz)) {
         GrAccessorMethod getter2 = null;
         if (PsiType.BOOLEAN.equals(getDeclaredType())) {
-          getter2 = new GrAccessorMethodImpl(this, false, "is" + name);
+          getter2 = new GrAccessorMethodImpl(this, false, GroovyPropertyUtils.getGetterNameBoolean(name));
           if (hasContradictingMethods(getter2, clazz)) getter2 = null;
         }
 

@@ -144,7 +144,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   public FileTypeManagerImpl(MessageBus bus, SchemesManagerFactory schemesManagerFactory) {
     myMessageBus = bus;
-    mySchemesManager = schemesManagerFactory.createSchemesManager(FILE_SPEC, new SchemeProcessor<AbstractFileType>() {
+    mySchemesManager = schemesManagerFactory.createSchemesManager(FILE_SPEC, new BaseSchemeProcessor<AbstractFileType>() {
       public AbstractFileType readScheme(final Document document) throws InvalidDataException {
         if (document == null) {
           throw new InvalidDataException();
@@ -198,10 +198,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
       }
 
-      public void initScheme(final AbstractFileType scheme) {
-
-      }
-
       public void onSchemeAdded(final AbstractFileType scheme) {
         fireBeforeFileTypesChanged();
         if (scheme instanceof ReadFileType) {
@@ -214,10 +210,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
         fireBeforeFileTypesChanged();
         myPatternsTable.removeAllAssociations(scheme);
         fireFileTypesChanged();
-      }
-
-      public void onCurrentSchemeChanged(final Scheme newCurrentScheme) {
-
       }
     }, RoamingType.PER_USER);
     for (final StandardFileType pair : ourStandardFileTypes.values()) {
