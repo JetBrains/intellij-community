@@ -44,8 +44,11 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.text.CharArrayUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Map;
 
 public class CommentByLineCommentHandler implements CodeInsightActionHandler {
   private Project myProject;
@@ -59,6 +62,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
   private int[] myStartOffsets;
   private int[] myEndOffsets;
   private Commenter[] myCommenters;
+  private Map<SelfManagingCommenter, SelfManagingCommenter.CommenterDataHolder> myCommenterStateMap;
   private CodeStyleManager myCodeStyleManager;
 
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
@@ -121,8 +125,19 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     if (startingNewLineComment) {
       final Commenter commenter = myCommenters[0];
       if (commenter != null) {
-        String prefix = commenter.getLineCommentPrefix();
-        if (prefix == null) prefix = commenter.getBlockCommentPrefix();
+        String prefix;
+        if (commenter instanceof SelfManagingCommenter) {
+          prefix = ((SelfManagingCommenter)commenter).getCommentPrefix(
+            myStartLine,
+            myDocument, 
+            myFile, 
+            myCommenterStateMap.get((SelfManagingCommenter)commenter)
+          );
+        } else {
+          prefix = commenter.getLineCommentPrefix();
+          if (prefix == null) prefix = commenter.getBlockCommentPrefix();
+        }
+
         int lineStart = myDocument.getLineStartOffset(myStartLine);
         lineStart = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), lineStart, " \t");
         lineStart += prefix.length();
@@ -169,6 +184,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     myStartOffsets = new int[myEndLine - myStartLine + 1];
     myEndOffsets = new int[myEndLine - myStartLine + 1];
     myCommenters = new Commenter[myEndLine - myStartLine + 1];
+    myCommenterStateMap = new THashMap<SelfManagingCommenter, SelfManagingCommenter.CommenterDataHolder>();
     CharSequence chars = myDocument.getCharsSequence();
 
     boolean singleline = myStartLine == myEndLine;
@@ -208,14 +224,24 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     }
 
     boolean allLineCommented = true;
+    
     for (int line = myStartLine; line <= myEndLine; line++) {
-      final Commenter commenter = blockSuitableCommenter != null ? blockSuitableCommenter : findCommenter(line);
+      Commenter commenter = blockSuitableCommenter != null ? blockSuitableCommenter : findCommenter(line);
       if (commenter == null) return;
-
       if (commenter.getLineCommentPrefix() == null &&
           (commenter.getBlockCommentPrefix() == null || commenter.getBlockCommentSuffix() == null)) {
         return;
       }
+      
+      if (commenter instanceof SelfManagingCommenter && 
+          myCommenterStateMap.get(commenter) == null) {
+        final SelfManagingCommenter selfManagingCommenter = (SelfManagingCommenter)commenter;
+        SelfManagingCommenter.CommenterDataHolder state =
+          selfManagingCommenter.createLineCommentingState(myStartLine, myEndLine, myDocument, myFile);
+        if (state == null) state = SelfManagingCommenter.CommenterDataHolder.EMPTY_STATE;
+        myCommenterStateMap.put(selfManagingCommenter, state);
+      }
+      
       myCommenters[line - myStartLine] = commenter;
       if (!isLineCommented(line, chars, commenter) && (singleline || !isLineEmpty(line))) {
         allLineCommented = false;
@@ -271,38 +297,48 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
   }
 
   private boolean isLineCommented(final int line, final CharSequence chars, final Commenter commenter) {
-    String prefix = commenter.getLineCommentPrefix();
+    boolean commented;
+    int lineEndForBlockCommenting = -1;
     int lineStart = myDocument.getLineStartOffset(line);
     lineStart = CharArrayUtil.shiftForward(chars, lineStart, " \t");
-    boolean commented;
-    if (prefix != null) {
-      commented = CharArrayUtil.regionMatches(chars, lineStart, prefix) ||
-                  prefix.endsWith(" ") && CharArrayUtil.regionMatches(chars, lineStart, prefix.trim()+"\n");
-      if (commented) {
-        myStartOffsets[line - myStartLine] = lineStart;
-        myEndOffsets[line - myStartLine] = -1;
-      }
-    }
-    else {
-      prefix = commenter.getBlockCommentPrefix();
-      String suffix = commenter.getBlockCommentSuffix();
-      final int textLength = myDocument.getTextLength();
-      int lineEnd = myDocument.getLineEndOffset(line);
-      if (lineEnd == textLength) {
-        final int shifted = CharArrayUtil.shiftBackward(chars, textLength - 1, " \t");
-        if (shifted < textLength - 1) lineEnd = shifted;
+
+    if (commenter instanceof SelfManagingCommenter) {
+      final SelfManagingCommenter selfManagingCommenter = (SelfManagingCommenter)commenter;
+      commented = selfManagingCommenter.isCommented(line, lineStart, myDocument, myFile, myCommenterStateMap.get(selfManagingCommenter));
+    } else {
+      String prefix = commenter.getLineCommentPrefix();
+      
+      if (prefix != null) {
+        commented = CharArrayUtil.regionMatches(chars, lineStart, prefix) ||
+                    prefix.endsWith(" ") && CharArrayUtil.regionMatches(chars, lineStart, prefix.trim()+"\n");
+        if (commented) {
+          myStartOffsets[line - myStartLine] = lineStart;
+          myEndOffsets[line - myStartLine] = -1;
+        }
       }
       else {
-        lineEnd = CharArrayUtil.shiftBackward(chars, lineEnd, " \t");
-      }
-      commented = lineStart == lineEnd && myStartLine != myEndLine ||
-                  CharArrayUtil.regionMatches(chars, lineStart, prefix)
-                    && CharArrayUtil.regionMatches(chars, lineEnd - suffix.length(), suffix);
-      if (commented) {
-        myStartOffsets[line - myStartLine] = lineStart;
-        myEndOffsets[line - myStartLine] = lineEnd;
+        prefix = commenter.getBlockCommentPrefix();
+        String suffix = commenter.getBlockCommentSuffix();
+        final int textLength = myDocument.getTextLength();
+        lineEndForBlockCommenting = myDocument.getLineEndOffset(line);
+        if (lineEndForBlockCommenting == textLength) {
+          final int shifted = CharArrayUtil.shiftBackward(chars, textLength - 1, " \t");
+          if (shifted < textLength - 1) lineEndForBlockCommenting = shifted;
+        }
+        else {
+          lineEndForBlockCommenting = CharArrayUtil.shiftBackward(chars, lineEndForBlockCommenting, " \t");
+        }
+        commented = lineStart == lineEndForBlockCommenting && myStartLine != myEndLine ||
+                    CharArrayUtil.regionMatches(chars, lineStart, prefix)
+                      && CharArrayUtil.regionMatches(chars, lineEndForBlockCommenting - suffix.length(), suffix);
       }
     }
+    
+    if (commented) {
+      myStartOffsets[line - myStartLine] = lineStart;
+      myEndOffsets[line - myStartLine] = lineEndForBlockCommenting; 
+    }
+    
     return commented;
   }
 
@@ -414,6 +450,13 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     if (commenter == null) return;
 
     final int startOffset = myStartOffsets[line - myStartLine];
+    
+    if (commenter instanceof SelfManagingCommenter) {
+      final SelfManagingCommenter selfManagingCommenter = (SelfManagingCommenter)commenter;
+      selfManagingCommenter.uncommentLine(line, startOffset, myDocument, myFile, myCommenterStateMap.get(selfManagingCommenter));
+      return;
+    }
+    
     final int endOffset = myEndOffsets[line - myStartLine];
     if (startOffset == endOffset) {
       return;
@@ -471,6 +514,12 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
   private void commentLine(int line, int offset, @Nullable Commenter commenter) {
     if (commenter == null) commenter = findCommenter(line);
     if (commenter == null) return;
+    if (commenter instanceof SelfManagingCommenter) {
+      final SelfManagingCommenter selfManagingCommenter = (SelfManagingCommenter)commenter;
+      selfManagingCommenter.commentLine(line, offset, myDocument, myFile, myCommenterStateMap.get(selfManagingCommenter));
+      return;
+    }
+    
     String prefix = commenter.getLineCommentPrefix();
     if (prefix != null) {
       myDocument.insertString(offset, prefix);

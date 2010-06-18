@@ -123,16 +123,16 @@ public abstract class Language extends UserDataHolderBase {
   }
 
   @Nullable
-  public FileType getAssociatedFileType() {
+  public LanguageFileType getAssociatedFileType() {
     final FileType[] types = FileTypeManager.getInstance().getRegisteredFileTypes();
     for (final FileType fileType : types) {
       if (fileType instanceof LanguageFileType && ((LanguageFileType)fileType).getLanguage() == this) {
-        return fileType;
+        return (LanguageFileType)fileType;
       }
     }
     for (final FileType fileType : types) {
       if (fileType instanceof LanguageFileType && isKindOf(((LanguageFileType)fileType).getLanguage())) {
-        return fileType;
+        return (LanguageFileType) fileType;
       }
     }
     return null;

@@ -18,9 +18,14 @@ package com.intellij.psi.search.searches;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchRequestCollector;
+import com.intellij.psi.search.SearchRequestQuery;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.util.MergeQuery;
 import com.intellij.util.Query;
+import com.intellij.util.UniqueResultsQuery;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
@@ -32,11 +37,19 @@ public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference,
     private final PsiMethod myMethod;
     private final SearchScope myScope;
     private final boolean myStrictSignatureSearch;
+    private final SearchRequestCollector myOptimizer;
+    private final boolean isSharedOptimizer;
+
+    public SearchParameters(PsiMethod method, SearchScope scope, boolean strictSignatureSearch, @Nullable SearchRequestCollector optimizer) {
+      myMethod = method;
+      myScope = scope;
+      myStrictSignatureSearch = strictSignatureSearch;
+      isSharedOptimizer = optimizer != null;
+      myOptimizer = optimizer != null ? optimizer : new SearchRequestCollector();
+    }
 
     public SearchParameters(final PsiMethod aClass, SearchScope scope, final boolean strict) {
-      myMethod = aClass;
-      myScope = scope;
-      myStrictSignatureSearch = strict;
+      this(aClass, scope, strict, null);
     }
 
     public PsiMethod getMethod() {
@@ -45,6 +58,10 @@ public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference,
 
     public boolean isStrictSignatureSearch() {
       return myStrictSignatureSearch;
+    }
+
+    public SearchRequestCollector getOptimizer() {
+      return myOptimizer;
     }
 
     public SearchScope getScope() {
@@ -59,8 +76,14 @@ public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference,
   }
 
   public static Query<PsiReference> search(final SearchParameters parameters) {
-    //noinspection unchecked
-    return INSTANCE.createUniqueResultsQuery(parameters, TObjectHashingStrategy.CANONICAL, ReferenceDescriptor.MAPPER);
+    final Query<PsiReference> result = INSTANCE.createQuery(parameters);
+    if (parameters.isSharedOptimizer) {
+      return uniqueResults(result);
+    }
+
+    final SearchRequestCollector requests = parameters.getOptimizer();
+
+    return uniqueResults(new MergeQuery<PsiReference>(result, new SearchRequestQuery(parameters.getMethod().getProject(), requests)));
   }
 
   public static Query<PsiReference> search(final PsiMethod method, final boolean strictSignatureSearch) {
@@ -70,4 +93,10 @@ public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference,
   public static Query<PsiReference> search(final PsiMethod method) {
     return search(method, true);
   }
+
+  private static UniqueResultsQuery<PsiReference, PsiReference> uniqueResults(Query<PsiReference> composite) {
+    //noinspection unchecked
+    return new UniqueResultsQuery(composite, TObjectHashingStrategy.CANONICAL, ReferenceDescriptor.MAPPER);
+  }
+
 }

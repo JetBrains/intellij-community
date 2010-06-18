@@ -16,11 +16,13 @@
 
 package com.intellij.util.xml;
 
+import com.intellij.ide.TypeNameEP;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.Function;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -69,6 +71,13 @@ public class TypeNameManager {
         return s;
       }
     }
+    for(TypeNameEP typeNameEP: Extensions.getExtensions(TypeNameEP.EP_NAME)) {
+      String s = typeNameEP.getTypeName(aClass);
+      if (s != null) {
+        return s;
+      }
+    }
+
     return getFromClassMap(ourTypeNames, aClass);
   }
 

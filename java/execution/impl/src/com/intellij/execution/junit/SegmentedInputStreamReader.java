@@ -40,11 +40,15 @@ public class SegmentedInputStreamReader extends Reader {
   }
 
   public int read(final char[] cbuf, final int off, final int len) throws IOException {
-    for (int i = 0; i < len; i++) {
+    final int maxBytes = Math.min(len, myStream.available());
+    int bytesRead = 0;
+    while (bytesRead < maxBytes) {
       final int aChar = myStream.read();
-      if (aChar == -1) return i == 0 ? -1 : i;
-      cbuf[off + i] = (char)aChar;
+      if (aChar == -1) {
+        return bytesRead == 0 ? -1 : bytesRead;
+      }
+      cbuf[off + (bytesRead++)] = (char)aChar;
     }
-    return len;
+    return bytesRead;
   }
 }

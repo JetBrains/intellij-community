@@ -178,8 +178,8 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       }
       if (!resolveResult.isStaticsOK() && resolved instanceof PsiModifierListOwner) {
         if (!((PsiModifierListOwner)resolved).hasModifierProperty(GrModifier.STATIC)) {
-          myHolder.createWarningAnnotation(referenceExpression,
-                                           GroovyBundle.message("cannot.reference.nonstatic", referenceExpression.getReferenceName()));
+          myHolder.createErrorAnnotation(referenceExpression,
+                                         GroovyBundle.message("cannot.reference.nonstatic", referenceExpression.getReferenceName()));
         }
       }
     }
@@ -498,7 +498,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   @Override
   public void visitConstructorInvocation(GrConstructorInvocation invocation) {
     final GroovyResolveResult resolveResult = invocation.resolveConstructorGenerics();
-    if (resolveResult != null && resolveResult.getElement() != null) {
+    if (resolveResult.getElement() != null) {
       checkMethodApplicability(resolveResult, invocation, myHolder);
     }
     else {
@@ -668,9 +668,11 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
                                             ? ((GrThisReferenceExpression)expression).getQualifier()
                                             : ((GrSuperReferenceExpression)expression).getQualifier();
     if (qualifier == null) {
-      final GrMethod method = PsiTreeUtil.getParentOfType(expression, GrMethod.class);
-      if (method != null && method.hasModifierProperty(GrModifier.STATIC)) {
-        holder.createErrorAnnotation(expression, GroovyBundle.message("cannot.reference.nonstatic", expression.getText()));
+      if (expression instanceof GrSuperReferenceExpression) { //'this' refers to java.lang.Class<ThisClass> in static context
+        final GrMethod method = PsiTreeUtil.getParentOfType(expression, GrMethod.class);
+        if (method != null && method.hasModifierProperty(GrModifier.STATIC)) {
+          holder.createErrorAnnotation(expression, GroovyBundle.message("cannot.reference.nonstatic", expression.getText()));
+        }
       }
     }
     else {
@@ -680,7 +682,8 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
           if (!PsiUtil.hasEnclosingInstanceInScope((PsiClass)resolved, expression, true)) {
             holder.createErrorAnnotation(expression, GroovyBundle.message("cannot.reference.nonstatic", expression.getText()));
           }
-        } else {
+        }
+        else {
           holder.createErrorAnnotation(expression, GroovyBundle.message("is.not.enclosing.class", ((PsiClass)resolved).getQualifiedName()));
         }
       }
@@ -698,6 +701,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         final PsiElement modifier = findModifierStatic(classMember);
         if (modifier != null) {
           final Annotation annotation = holder.createErrorAnnotation(modifier, GroovyBundle.message("cannot.have.static.declarations"));
+          //noinspection ConstantConditions
           annotation.registerFix(new GrModifierFix(classMember, classMember.getModifierList(), GrModifier.STATIC, true, false));
         }
       }
@@ -1047,6 +1051,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
   }
 
+  @Nullable
   private static PsiClass getCircularClass(PsiClass aClass, Collection<PsiClass> usedClasses) {
     if (usedClasses.contains(aClass)) {
       return aClass;

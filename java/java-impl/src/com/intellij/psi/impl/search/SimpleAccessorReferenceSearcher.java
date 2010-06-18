@@ -15,29 +15,39 @@
  */
 package com.intellij.psi.impl.search;
 
-import com.intellij.find.findUsages.FindUsagesOptions;
+import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.search.*;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchRequestCollector;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.UsageSearchContext;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.Processor;
 
 /**
  * @author ven
  */
-public class SimpleAccessorReferenceSearcher extends SearchRequestor {
+public class SimpleAccessorReferenceSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
+
+  public SimpleAccessorReferenceSearcher() {
+    super(true);
+  }
 
   @Override
-  public void contributeRequests(@NotNull final PsiElement refElement,
-                                      @NotNull FindUsagesOptions options,
-                                      @NotNull SearchRequestCollector collector) {
+  public void processQuery(ReferencesSearch.SearchParameters queryParameters, Processor<PsiReference> consumer) {
+    PsiElement refElement = queryParameters.getElementToSearch();
     if (!(refElement instanceof PsiMethod)) return;
 
-    final PsiMethod method = (PsiMethod)refElement;
+    addPropertyAccessUsages((PsiMethod)refElement, queryParameters.getEffectiveSearchScope(), queryParameters.getOptimizer());
+  }
 
+  static void addPropertyAccessUsages(PsiMethod method, SearchScope scope, SearchRequestCollector collector) {
     final String propertyName = PropertyUtil.getPropertyName(method);
     if (StringUtil.isNotEmpty(propertyName)) {
       SearchScope additional = GlobalSearchScope.getScopeRestrictedByFileTypes(GlobalSearchScope.allScope(method.getProject()),
@@ -48,9 +58,8 @@ public class SimpleAccessorReferenceSearcher extends SearchRequestor {
         additional = additional.union(provider.getScope(method.getProject()));
       }
       assert propertyName != null;
-      final SearchScope propScope = options.searchScope.intersectWith(method.getUseScope()).intersectWith(additional);
-      collector.searchWord(propertyName, propScope, UsageSearchContext.IN_FOREIGN_LANGUAGES, true, refElement);
+      final SearchScope propScope = scope.intersectWith(method.getUseScope()).intersectWith(additional);
+      collector.searchWord(propertyName, propScope, UsageSearchContext.IN_FOREIGN_LANGUAGES, true, method);
     }
-
   }
 }

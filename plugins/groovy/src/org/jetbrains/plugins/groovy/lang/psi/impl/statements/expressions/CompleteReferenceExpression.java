@@ -37,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
@@ -95,6 +96,20 @@ public class CompleteReferenceExpression {
     }
   }
 
+
+
+    private static void processIfJavaLangClass(GrReferenceExpression refExpr, ResolverProcessor consumer, PsiType type) {
+      if (type instanceof PsiClassType) {
+        final PsiClass psiClass = ((PsiClassType)type).resolve();
+        if (psiClass != null && CommonClassNames.JAVA_LANG_CLASS.equals(psiClass.getQualifiedName())) {
+          final PsiType[] params = ((PsiClassType)type).getParameters();
+          if (params.length == 1) {
+            getVariantsFromQualifierType(refExpr, consumer, params[0], refExpr.getProject());
+          }
+        }
+      }
+    }
+
   private static Set<String> processPropertyVariants(Consumer<Object> consumer, GrReferenceExpression refExpr, PsiClass clazz) {
     Set<String> accessedPropertyNames = new THashSet<String>();
     final PsiClass eventListener =
@@ -148,6 +163,13 @@ public class CompleteReferenceExpression {
     else {
       if (refExpr.getDotTokenType() != GroovyTokenTypes.mSPREAD_DOT) {
         getVariantsFromQualifier(refExpr, processor, qualifier);
+
+        if (qualifier instanceof GrReferenceExpression && "class".equals(((GrReferenceExpression)qualifier).getReferenceName())) {
+          processIfJavaLangClass(refExpr, processor, qualifier.getType());
+        }
+        else if (qualifier instanceof GrThisReferenceExpression) {
+          processIfJavaLangClass(refExpr, processor, qualifier.getType());
+        }
       }
       else {
         getVariantsFromQualifierForSpreadOperator(refExpr, processor, qualifier);
