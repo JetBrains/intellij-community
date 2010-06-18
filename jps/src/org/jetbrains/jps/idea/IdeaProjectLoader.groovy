@@ -8,7 +8,9 @@ import org.jetbrains.jps.artifacts.Artifact
  * @author max
  */
 public class IdeaProjectLoader {
-  private int libraryCount = 0;
+  private int libraryCount = 0
+  private Project project
+  private String projectBasePath
 
   public static String guessHome(Script script) {
     File home = new File(script["gant.file"].substring("file:".length()))
@@ -24,11 +26,19 @@ public class IdeaProjectLoader {
     return null
   }
 
-  def loadFromPath(Project project, String path) {
+  public static void loadFromPath(Project project, String path) {
+    new IdeaProjectLoader(project).doLoadFromPath(path)
+  }
+
+  private def IdeaProjectLoader(project) {
+    this.project = project;
+  }
+
+  private def doLoadFromPath(String path) {
     def fileAtPath = new File(path)
 
     if (fileAtPath.isFile() && path.endsWith(".ipr")) {
-      loadFromIpr(project, path)
+      loadFromIpr(path)
       return
     }
     else {
@@ -44,7 +54,7 @@ public class IdeaProjectLoader {
       }
 
       if (directoryBased != null) {
-        loadFromDirectoryBased(project, directoryBased.getCanonicalFile())
+        loadFromDirectoryBased(directoryBased.getCanonicalFile())
         return
       }
     }
@@ -52,40 +62,40 @@ public class IdeaProjectLoader {
     project.error("Cannot find IntelliJ IDEA project files at $path")
   }
 
-  def loadFromIpr(Project project, String path) {
+  def loadFromIpr(String path) {
     def iprFile = new File(path).getAbsoluteFile()
-    def projectBasePath = iprFile.getParentFile().getAbsolutePath()
+    projectBasePath = iprFile.getParentFile().getAbsolutePath()
 
     def root = new XmlParser(false, false).parse(iprFile)
-    loadProjectJdk(root, project)
-    loadCompilerConfiguration(root, project)
-    loadModules(getComponent(root, "ProjectModuleManager"), project, projectBasePath)
-    loadProjectLibraries(getComponent(root, "libraryTable"), project, projectBasePath)
-    loadArtifacts(getComponent(root, "ArtifactManager"), project, projectBasePath)
+    loadProjectJdk(root)
+    loadCompilerConfiguration(root)
+    loadModules(getComponent(root, "ProjectModuleManager"))
+    loadProjectLibraries(getComponent(root, "libraryTable"))
+    loadArtifacts(getComponent(root, "ArtifactManager"))
   }
 
-  def loadFromDirectoryBased(Project project, File dir) {
+  def loadFromDirectoryBased(File dir) {
+    projectBasePath = dir.parentFile.absolutePath
     def modulesXml = new File(dir, "modules.xml")
     if (!modulesXml.exists()) project.error("Cannot find modules.xml in $dir")
 
     def miscXml = new File(dir, "misc.xml")
     if (!miscXml.exists()) project.error("Cannot find misc.xml in $dir")
-    loadProjectJdk(new XmlParser(false, false).parse(miscXml), project)
+    loadProjectJdk(new XmlParser(false, false).parse(miscXml))
 
     def compilerXml = new File(dir, "compiler.xml")
     if (compilerXml.exists()) {
-      loadCompilerConfiguration(new XmlParser(false, false).parse(compilerXml), project)
+      loadCompilerConfiguration(new XmlParser(false, false).parse(compilerXml))
     }
 
     Node modulesXmlRoot = new XmlParser(false, false).parse(modulesXml)
-    def projectBasePath = dir.parentFile.absolutePath
-    loadModules(modulesXmlRoot.component.first(), project, projectBasePath)
+    loadModules(modulesXmlRoot.component.first())
 
     def librariesFolder = new File(dir, "libraries")
     if (librariesFolder.isDirectory()) {
       librariesFolder.eachFile {File file ->
         Node librariesComponent = new XmlParser(false, false).parse(file)
-        loadProjectLibraries(librariesComponent, project, projectBasePath)
+        loadProjectLibraries(librariesComponent)
       }
     }
 
@@ -93,12 +103,12 @@ public class IdeaProjectLoader {
     if (artifactsFolder.isDirectory()) {
       artifactsFolder.eachFile {File file ->
         def artifactsComponent = new XmlParser(false, false).parse(file)
-        loadArtifacts(artifactsComponent, project, projectBasePath)
+        loadArtifacts(artifactsComponent)
       }
     }
   }
 
-  private def loadCompilerConfiguration(Node root, Project project) {
+  private def loadCompilerConfiguration(Node root) {
     def includePatterns = []
     def excludePatterns = []
     def componentTag = getComponent(root, "CompilerConfiguration")
@@ -127,7 +137,7 @@ public class IdeaProjectLoader {
     return pattern
   }
 
-  private def loadProjectJdk(Node root, Project project) {
+  private def loadProjectJdk(Node root) {
     def componentTag = getComponent(root, "ProjectRootManager")
     def sdkName = componentTag."@project-jdk-name"
     def sdk = project.sdks[sdkName]
@@ -137,13 +147,13 @@ public class IdeaProjectLoader {
     project.projectSdk = sdk
   }
 
-  private NodeList loadProjectLibraries(Node librariesComponent, Project project, String projectBasePath) {
+  private NodeList loadProjectLibraries(Node librariesComponent) {
     return librariesComponent?.library?.each {Node libTag ->
       project.createLibrary(libTag."@name", libraryInitializer(libTag, projectBasePath, null))
     }
   }
 
-  def loadArtifacts(Node artifactsComponent, Project project, String projectBasePath) {
+  def loadArtifacts(Node artifactsComponent) {
     if (artifactsComponent == null) return;
     ArtifactLoader artifactLoader = new ArtifactLoader(project, projectBasePath)
     artifactsComponent.artifact.each {Node artifactTag ->
@@ -154,9 +164,9 @@ public class IdeaProjectLoader {
     }
   }
 
-  private def loadModules(Node modulesComponent, Project project, String projectBasePath) {
+  private def loadModules(Node modulesComponent) {
     modulesComponent?.modules.module.each {Node moduleTag ->
-      loadModule(project, projectBasePath, expandMacro(moduleTag.@filepath, projectBasePath, null))
+      loadModule(projectBasePath, expandMacro(moduleTag.@filepath, projectBasePath, null))
     }
   }
 
@@ -224,7 +234,7 @@ public class IdeaProjectLoader {
     }
   }
 
-  Object loadModule(Project project, String projectBasePath, String imlPath) {
+  Object loadModule(String projectBasePath, String imlPath) {
     def moduleFile = new File(imlPath)
     if (!moduleFile.exists()) {
       project.error("Module file $imlPath not found")

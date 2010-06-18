@@ -15,7 +15,7 @@ abstract class JpsBuildTestCase extends TestCase {
     def binding = new GantBinding()
     binding.includeTool << Jps
     def project = new Project(binding)
-    new IdeaProjectLoader().loadFromPath(project, projectPath)
+    IdeaProjectLoader.loadFromPath(project, projectPath)
     initProject(project)
     def target = FileUtil.createTempDirectory("targetDir")
     project.targetFolder = target.absolutePath
