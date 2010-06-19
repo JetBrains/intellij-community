@@ -12,6 +12,8 @@ import com.intellij.util.Icons;
 import com.jetbrains.python.codeInsight.PyClassInsertHandler;
 import com.jetbrains.python.codeInsight.PyFunctionInsertHandler;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -37,10 +39,10 @@ public class VariantsProcessor implements PsiScopeProcessor {
     myNodeFilter = nodefilter;
   }
 
-  public VariantsProcessor(PsiElement context, final Condition<PsiElement> nodefilter, final Condition<String> namefilter) {
+  public VariantsProcessor(PsiElement context, final Condition<PsiElement> nodeFilter, final Condition<String> nameFilter) {
     myContext = context;
-    myNodeFilter = nodefilter;
-    myNameFilter = namefilter;
+    myNodeFilter = nodeFilter;
+    myNameFilter = nameFilter;
   }
 
   public void setNotice(@Nullable String notice) {
@@ -110,18 +112,25 @@ public class VariantsProcessor implements PsiScopeProcessor {
           // things like PyTargetExpression cannot have a general icon, but here we only have variables
           if (icon == null) icon = Icons.VARIABLE_ICON;
           if (nameIsAcceptable(referencedName)) {
-            LookupElementBuilder lookup_item = setupItem(LookupElementBuilder.create(referencedName).setIcon(icon));
+            LookupElementBuilder lookupItem = setupItem(LookupElementBuilder.create(referencedName).setIcon(icon));
             if (definer instanceof PyImportElement) { // set notice to imported module name if needed
-              PsiElement maybe_from_import = definer.getParent();
-              if (maybe_from_import instanceof PyFromImportStatement) {
-                final PyFromImportStatement from_import = (PyFromImportStatement)maybe_from_import;
-                PyReferenceExpression src = from_import.getImportSource();
+              PsiElement maybeFromImport = definer.getParent();
+              if (maybeFromImport instanceof PyFromImportStatement) {
+                final PyFromImportStatement fromImport = (PyFromImportStatement)maybeFromImport;
+                PyReferenceExpression src = fromImport.getImportSource();
                 if (src != null) {
-                  lookup_item = setItemNotice(lookup_item, src.getName());
+                  lookupItem = setItemNotice(lookupItem, src.getName());
                 }
               }
             }
-            myVariants.put(referencedName, lookup_item);
+            if (definer instanceof PyAssignmentStatement) {
+              PyExpression value = ((PyAssignmentStatement)definer).getAssignedValue();
+              PyType type = value.getType(TypeEvalContext.fast());
+              if (type != null) {
+                lookupItem = lookupItem.setTypeText(type.getName());
+              }
+            }
+            myVariants.put(referencedName, lookupItem);
           }
         }
       }

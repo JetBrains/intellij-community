@@ -126,8 +126,8 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
 
     PyType qualifierType = qualifier.getType(TypeEvalContext.slow());
     ProcessingContext ctx = new ProcessingContext();
-    final Set<String> names_already = new HashSet<String>();
-    ctx.put(PyType.CTX_NAMES, names_already);
+    final Set<String> namesAlready = new HashSet<String>();
+    ctx.put(PyType.CTX_NAMES, namesAlready);
     if (qualifierType != null) {
       Collection<Object> variants = new ArrayList<Object>();
       if (qualifier instanceof PyQualifiedExpression) {
@@ -135,12 +135,12 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
         variants.addAll(attrs);
         for (PyExpression ex : attrs) {
           if (ex instanceof PyReferenceExpression) {
-            PyReferenceExpression refex = (PyReferenceExpression)ex;
-            names_already.add(refex.getReferencedName());
+            PyReferenceExpression refExpr = (PyReferenceExpression)ex;
+            namesAlready.add(refExpr.getReferencedName());
           }
           else if (ex instanceof PyTargetExpression) {
             PyTargetExpression targetExpr = (PyTargetExpression)ex;
-            names_already.add(targetExpr.getName());
+            namesAlready.add(targetExpr.getName());
           }
         }
         Collections.addAll(variants, qualifierType.getCompletionVariants(myElement, ctx));

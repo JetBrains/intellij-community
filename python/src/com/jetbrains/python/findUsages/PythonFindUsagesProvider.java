@@ -22,7 +22,7 @@ public class PythonFindUsagesProvider implements FindUsagesProvider {
 
   @NotNull
   public String getType(@NotNull PsiElement element) {
-    if (element instanceof PyNamedParameter) return "parameter";
+    if (element instanceof PyNamedParameter) return "parameter";  //TODO: replace strings to messages
     if (element instanceof PyFunction) {
       if (((PyFunction) element).getContainingClass() != null) {
         return "method";

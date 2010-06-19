@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -344,9 +345,16 @@ public class PyExtractMethodUtil {
       if (name == null){
         name = "foo";
       }
-      final String result = validator.check(name);
-      if (result != null){
-        throw new CommonRefactoringUtil.RefactoringErrorHintException(result);
+      final String error = validator.check(name);
+      if (error != null){
+        if (ApplicationManager.getApplication().isUnitTestMode()){
+          throw new CommonRefactoringUtil.RefactoringErrorHintException(error);
+        }
+        final StringBuilder builder = new StringBuilder();
+        builder.append(error).append(". ").append(RefactoringBundle.message("do.you.wish.to.continue"));
+        if (Messages.showOkCancelDialog(builder.toString(), RefactoringBundle.message("warning.title"), Messages.getWarningIcon()) != 0){
+          throw new CommonRefactoringUtil.RefactoringErrorHintException(error);
+        }
       }
       final List<AbstractVariableData> data = new ArrayList<AbstractVariableData>();
       for (String in : fragment.getInputVariables()) {

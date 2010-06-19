@@ -12,6 +12,8 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -20,10 +22,14 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.source.codeStyle.Helper;
+import com.intellij.psi.impl.source.codeStyle.HelperFactory;
 import com.intellij.util.PathUtil;
 import com.intellij.util.net.NetUtils;
 import com.jetbrains.django.run.Runner;
 import com.jetbrains.django.util.DjangoUtil;
+import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.pydev.ICallback;
 import com.jetbrains.python.console.pydev.InterpreterResponse;
@@ -46,6 +52,8 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
   private PydevConsoleCommunication myPydevConsoleCommunication;
   public static Key<PydevConsoleCommunication> CONSOLE_KEY = new Key<PydevConsoleCommunication>("PYDEV_CONSOLE_KEY");
   private static final String PYTHON_ENV_COMMAND = "import sys; print('Python %s on %s' % (sys.version, sys.platform))\n";
+  private Helper myHelper;
+  private int currentPythonIndentSize;
 
   protected PydevConsoleRunner(@NotNull final Project project,
                                @NotNull final String consoleTitle,
@@ -54,6 +62,8 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
                                int[] ports) {
     super(project, consoleTitle, provider, workingDir);
     myPorts = ports;
+    myHelper = HelperFactory.createHelper(PythonFileType.INSTANCE, myProject);
+    currentPythonIndentSize = CodeStyleSettingsManager.getSettings(myProject).getIndentSize(PythonFileType.INSTANCE);
   }
 
   public static void run(@NotNull final Project project,
@@ -198,6 +208,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
 
   @Override
   public void sendInput(final String input) {
+
     if (myPydevConsoleCommunication != null){
       myPydevConsoleCommunication.execInterpreter(input, new ICallback<Object, InterpreterResponse>() {
         public Object call(final InterpreterResponse interpreterResponse) {
@@ -206,6 +217,9 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
           if (interpreterResponse.more){
             if (!PyConsoleHighlightingUtil.INDENT_PROMPT.equals(console.getPrompt())){
               console.setPrompt(PyConsoleHighlightingUtil.INDENT_PROMPT);
+              // In this case we can insert indent automatically
+              final int indent = myHelper.getIndent(input, false);
+              EditorModificationUtil.insertStringAtCaret(console.getConsoleEditor(), myHelper.fillIndent(indent + currentPythonIndentSize));
             }
           } else {
             if (!PyConsoleHighlightingUtil.ORDINARY_PROMPT.equals(console.getPrompt())){

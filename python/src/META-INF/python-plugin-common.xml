@@ -152,12 +152,15 @@
                               order="last, before default"/>
     <readWriteAccessDetector implementation="com.jetbrains.python.findUsages.PyReadWriteAccessDetector"/>
 
-    <renamePsiElementProcessor implementation="com.jetbrains.python.refactoring.RenamePyFunctionProcessor" order="last" />
+    <renamePsiElementProcessor implementation="com.jetbrains.python.refactoring.RenamePyFunctionProcessor" order="last"/>
 
     <lang.importOptimizer language="Python" implementationClass="com.jetbrains.python.codeInsight.PyImportOptimizer"/>
 
     <codeStyleSettingsProvider implementation="com.jetbrains.python.formatter.PyCodeStyleSettingsProvider"/>
     <langCodeStyleSettingsProvider implementation="com.jetbrains.python.configuration.PyLanguageCodeStyleSettingsProvider"/>
+
+    <lang.elementManipulator forClass="com.jetbrains.python.psi.PyStringLiteralExpression"
+                             implementationClass="com.jetbrains.python.psi.impl.PyStringLiteralExpressionManipulator"/>
 
     <!-- Django -->
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.django.annotator.ViewMethodLineMarkerProvider"/>
@@ -165,9 +168,9 @@
     <configurationType implementation="com.jetbrains.django.testRunner.DjangoTestsConfigurationType"/>
     <configurationProducer implementation="com.jetbrains.django.testRunner.DjangoTestsConfigurationProducer"/>
 
-    <lang.substitutor language="XHTML" implementationClass="com.jetbrains.django.lang.template.DjangoTemplateLanguageProvider"/>
-    <lang.substitutor language="HTML" implementationClass="com.jetbrains.django.lang.template.DjangoTemplateLanguageProvider"/>
-    <lang.substitutor language="XML" implementationClass="com.jetbrains.django.lang.template.DjangoTemplateLanguageProvider"/>
+    <lang.substitutor language="XHTML" implementationClass="com.jetbrains.django.lang.template.DjangoTemplateLanguageSubstitutor"/>
+    <lang.substitutor language="HTML" implementationClass="com.jetbrains.django.lang.template.DjangoTemplateLanguageSubstitutor"/>
+    <lang.substitutor language="XML" implementationClass="com.jetbrains.django.lang.template.DjangoTemplateLanguageSubstitutor"/>
     <highlightErrorFilter implementation="com.jetbrains.django.inspection.DjangoErrorFilter"/>
 
     <lang.parserDefinition language="DjangoTemplate"
@@ -202,33 +205,44 @@
     <colorSettingsPage implementation="com.jetbrains.django.lang.template.highlighting.DjangoTemplateColorsPage"/>
 
     <lang.commenter language="DjangoTemplate" implementationClass="com.jetbrains.django.editor.DjangoTemplateCommenter"/>
-    
+
     <basicWordSelectionFilter implementation="com.jetbrains.django.editor.DjangoTemplateWordSelectionFilter"/>
     <extendWordSelectionHandler implementation="com.jetbrains.django.editor.DjangoTemplateTagSelectionHandler"/>
     <extendWordSelectionHandler implementation="com.jetbrains.django.editor.DjangoTemplateTagNameSelectionHandler"/>
 
     <lang.namesValidator language="DjangoTemplate" implementationClass="com.jetbrains.django.inspection.DjangoTemplateNamesValidator"/>
 
-    <renamePsiElementProcessor implementation="com.jetbrains.django.refactoring.RenameDjangoNamedExpressionProcessor" order="last" />
+    <renamePsiElementProcessor implementation="com.jetbrains.django.refactoring.RenameDjangoNamedExpressionProcessor" order="last"/>
 
     <projectService serviceInterface="com.jetbrains.django.model.DjangoElementGenerator"
                     serviceImplementation="com.jetbrains.django.model.DjangoElementGenerator"/>
 
     <lang.refactoringSupport language="DjangoTemplate" implementationClass="com.jetbrains.django.refactoring.DjangoRefactoringProvider"/>
 
-    <lang.surroundDescriptor language="DjangoTemplate" implementationClass="com.jetbrains.django.surround.DjangoTemplateSurroundDescriptor" order="first"/>
+    <lang.surroundDescriptor language="DjangoTemplate" implementationClass="com.jetbrains.django.surround.DjangoTemplateSurroundDescriptor"
+                             order="first"/>
     <lang.surroundDescriptor language="HTML" implementationClass="com.jetbrains.django.surround.DjangoXmlSurroundDescriptor" order="first"/>
     <lang.surroundDescriptor language="XML" implementationClass="com.jetbrains.django.surround.DjangoXmlSurroundDescriptor" order="first"/>
+
+    <lang.elementManipulator forClass="com.jetbrains.django.lang.template.psi.impl.DjangoStringLiteralImpl"
+                             implementationClass="com.jetbrains.django.lang.template.ref.DjangoStringLiteralManipulator"/>
+
+    <lang.findUsagesProvider language="DjangoTemplate"
+                             implementationClass="com.jetbrains.django.lang.template.ref.DjangoTemplateFindUsagesProvider"/>
+    
+    <referencesSearch implementation="com.jetbrains.django.lang.template.ref.DjangoTemplateStringReferenceSearch"/>
+
+    <quoteHandler fileType="DjangoTemplate" className="com.jetbrains.django.lang.template.editor.DjangoTemplateQuoteHandler"/>
 
     <!-- App Engine -->
     <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>
 
     <configurationType implementation="com.jetbrains.appengine.run.AppEngineServerRunConfigurationType"/>
 
-    <lang.parserDefinition language="GQL" implementationClass="com.jetbrains.appengine.lang.gql.parsing.GqlParserDefinition" />
+    <lang.parserDefinition language="GQL" implementationClass="com.jetbrains.appengine.lang.gql.parsing.GqlParserDefinition"/>
     <multiHostInjector implementation="com.jetbrains.appengine.lang.gql.GqlLanguageInjector"/>
     <lang.syntaxHighlighterFactory key="GQL"
-                                     implementationClass="com.jetbrains.appengine.lang.gql.highlighting.GqlHighlighterFactory"/>
+                                   implementationClass="com.jetbrains.appengine.lang.gql.highlighting.GqlHighlighterFactory"/>
 
     <completion.contributor language="Python" implementationClass="com.jetbrains.appengine.model.ModelAttributeCompletionContributor"/>
     <completion.contributor language="yaml" implementationClass="com.jetbrains.appengine.completion.AppYamlKeyCompletionContributor"/>
@@ -248,7 +262,8 @@
     <extensionPoint qualifiedName="Pythonid.pyOverridingMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint qualifiedName="Pythonid.runnableScriptFilter" interface="com.jetbrains.python.run.RunnableScriptFilter"/>
     <extensionPoint qualifiedName="Pythonid.runnableUnitTestFilter" interface="com.jetbrains.python.testing.RunnableUnitTestFilter"/>
-    <extensionPoint qualifiedName="Pythonid.unresolvedReferenceQuickFixProvider" interface="com.jetbrains.python.inspections.PyUnresolvedReferenceQuickFixProvider"/>
+    <extensionPoint qualifiedName="Pythonid.unresolvedReferenceQuickFixProvider"
+                    interface="com.jetbrains.python.inspections.PyUnresolvedReferenceQuickFixProvider"/>
     <extensionPoint qualifiedName="Pythonid.dumbAnnotator" interface="com.jetbrains.python.validation.PyAnnotator"/>
   </extensionPoints>
 
@@ -289,7 +304,8 @@
       <add-to-group group-id="ToolsMenu" anchor="after" relative-to-action="Macros"/>
     </action>
 
-    <action id="Devmode.AnalyzeReturns" class="com.jetbrains.python.devmode.AnalyzeReturnsAction" text="Analyze return types" internal="true">
+    <action id="Devmode.AnalyzeReturns" class="com.jetbrains.python.devmode.AnalyzeReturnsAction" text="Analyze return types"
+            internal="true">
       <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
     </action>
 
@@ -353,11 +369,11 @@
         <keyboard-shortcut keymap="Mac OS X" first-keystroke="alt R"/>
         <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt R"/>
         <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta alt R" remove="true"/>
-        <keyboard-shortcut keymap="visual studio" first-keystroke="ctrl alt R" remove="true"/>
+        <keyboard-shortcut keymap="Visual Studio" first-keystroke="ctrl alt R" remove="true"/>
         <keyboard-shortcut keymap="Eclipse" first-keystroke="ctrl alt R" remove="true"/>
       </action>
 
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
-    </actions>
+  </actions>
 </idea-plugin>
