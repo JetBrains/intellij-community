@@ -30,8 +30,8 @@ public class PyResolveUtil {
 
   /**
    * Returns closest previous node of given class, as input file would have it.
-   * @param elt node from which to look for a previous atatement.
-   * @param classes which class of the previous nodes to find.
+   * @param elt node from which to look for a previous statement.
+   * @param condition determines where a node is considered found. 
    * @return previous statement, or null.
    */
   @Nullable
