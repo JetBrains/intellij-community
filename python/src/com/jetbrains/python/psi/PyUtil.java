@@ -559,11 +559,17 @@ public class PyUtil {
       return null;
     }
     PsiElement parent = elt.getParent();
+    boolean jump_over = false;
     while (parent != null) {
       if (parent instanceof PyClass || parent instanceof Callable) {
-        return parent;
+        if (jump_over) jump_over = false;
+        else return parent;
       }
-      if (parent instanceof PsiFile) {
+      else if (parent instanceof PyDecoratorList) {
+        // decorators PSI is inside decorated things but their namespace is outside
+        jump_over = true;
+      }
+      else if (parent instanceof PsiFile) {
         break;
       }
       parent = parent.getParent();
