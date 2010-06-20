@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.light;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
@@ -46,6 +47,10 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
   private volatile PsiElement myNavigationElement = this;
   private volatile Icon myBaseIcon;
 
+  public LightMethodBuilder(PsiManager manager, String name) {
+    this(manager, StdLanguages.JAVA, name);
+  }
+  
   public LightMethodBuilder(PsiManager manager, Language language, String name) {
     super(manager, language);
     myName = name;
@@ -127,13 +132,17 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
     return myParameterList;
   }
 
+  public LightMethodBuilder addParameter(LightParameter parameter) {
+    myParameterList.addParameter(parameter);
+    return this;
+  }
+
   public LightMethodBuilder addParameter(String name, String type) {
     return addParameter(name, JavaPsiFacade.getElementFactory(getProject()).createTypeFromText(type, this));
   }
   
   public LightMethodBuilder addParameter(String name, PsiType type) {
-    myParameterList.addParameter(new LightParameter(getManager(), name, null, type, this));
-    return this;
+    return addParameter(new LightParameter(getManager(), name, null, type, this));
   }
 
   @NotNull

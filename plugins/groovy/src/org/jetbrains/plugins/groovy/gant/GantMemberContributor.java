@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.gant;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -27,7 +26,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import javax.swing.*;
-import java.util.Map;
 
 /**
  * @author peter
@@ -61,17 +59,15 @@ public class GantMemberContributor implements NonCodeMembersProcessor {
   }
 
   private static boolean processAntTasks(PsiScopeProcessor processor, PsiElement place) {
-    final Map<String,PsiClass> map = AntTasksProvider.getInstance(place.getProject()).getAntTasks();
-    for (String taskName : map.keySet()) {
-      final String name = StringUtil.decapitalize(taskName);
-      if (!ResolveUtil.processElement(processor, gantMethod(name, map.get(taskName), GantIcons.ANT_TASK))) {
+    for (LightMethodBuilder task : AntTasksProvider.getInstance(place.getProject()).getAntTasks()) {
+      if (!ResolveUtil.processElement(processor, task)) {
         return false;
       }
     }
     return true;
   }
 
-  private static LightMethodBuilder gantMethod(String name, PsiElement navigation, Icon baseIcon) {
+  static LightMethodBuilder gantMethod(String name, PsiElement navigation, Icon baseIcon) {
     return new LightMethodBuilder(navigation.getManager(), GroovyFileType.GROOVY_LANGUAGE, name).
       setModifiers(PsiModifier.PUBLIC).
       addParameter("args", CommonClassNames.JAVA_UTIL_MAP).

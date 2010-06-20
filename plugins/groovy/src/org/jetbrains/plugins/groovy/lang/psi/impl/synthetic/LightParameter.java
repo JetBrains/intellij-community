@@ -32,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
  */
 public class LightParameter extends com.intellij.psi.impl.light.LightParameter implements GrParameter {
   public static final LightParameter[] EMPTY_ARRAY = new LightParameter[0];
+  private volatile boolean myOptional;
 
   public LightParameter(PsiManager manager, String name, PsiIdentifier nameIdentifier, @NotNull PsiType type, PsiElement scope) {
     super(manager, name, nameIdentifier, type, scope);
@@ -45,8 +46,13 @@ public class LightParameter extends com.intellij.psi.impl.light.LightParameter i
     return null;
   }
 
+  public LightParameter setOptional(boolean optional) {
+    myOptional = optional;
+    return this;
+  }
+
   public boolean isOptional() {
-    return false;
+    return myOptional;
   }
 
   public GrExpression getInitializerGroovy() {

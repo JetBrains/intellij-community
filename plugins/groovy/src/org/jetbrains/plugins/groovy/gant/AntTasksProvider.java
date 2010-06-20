@@ -18,21 +18,25 @@ package org.jetbrains.plugins.groovy.gant;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.refactoring.psi.SearchUtils;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.LightParameter;
 
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author ilyas
@@ -42,7 +46,7 @@ public class AntTasksProvider {
   @NonNls public static final String ANT_TASK_CLASS = "org.apache.tools.ant.Task";
 
   private final Project myProject;
-  private final CachedValue<Map<String, PsiClass>> myCachedValue;
+  private final CachedValue<Set<LightMethodBuilder>> myCachedValue;
 
   public static AntTasksProvider getInstance(Project project) {
     return ServiceManager.getService(project, AntTasksProvider.class);
@@ -51,32 +55,38 @@ public class AntTasksProvider {
   public AntTasksProvider(Project project) {
     myProject = project;
     final CachedValuesManager manager = CachedValuesManager.getManager(myProject);
-    myCachedValue = manager.createCachedValue(new CachedValueProvider<Map<String, PsiClass>>() {
-      public Result<Map<String, PsiClass>> compute() {
-        final Map<String, PsiClass> set = findAntTasks(myProject);
+    myCachedValue = manager.createCachedValue(new CachedValueProvider<Set<LightMethodBuilder>>() {
+      public Result<Set<LightMethodBuilder>> compute() {
+        final Set<LightMethodBuilder> set = findAntTasks(myProject);
         return Result.create(set, ProjectRootManager.getInstance(myProject), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
       }
     }, false);
   }
   
-  public Map<String, PsiClass> getAntTasks() {
+  public Set<LightMethodBuilder> getAntTasks() {
     return myCachedValue.getValue();
   }
 
-  private static Map<String, PsiClass> findAntTasks(Project project) {
+  private static Set<LightMethodBuilder> findAntTasks(Project project) {
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     final PsiClass taskClass = facade.findClass(ANT_TASK_CLASS, GlobalSearchScope.allScope(project));
 
     if (taskClass != null) {
-      final Map<String, PsiClass> classNames = new HashMap<String, PsiClass>();
+      final Set<LightMethodBuilder> classNames = new HashSet<LightMethodBuilder>();
       for (PsiClass inheritor : SearchUtils.findClassInheritors(taskClass, true)) {
         if (!inheritor.hasModifierProperty(PsiModifier.ABSTRACT) && !inheritor.hasModifierProperty(PsiModifier.PRIVATE)) {
-          ContainerUtil.putIfNotNull(inheritor.getName(), inheritor, classNames);
+          final String name = inheritor.getName();
+          if (name != null) {
+            final LightMethodBuilder taskMethod = GantMemberContributor.gantMethod(StringUtil.decapitalize(name), inheritor, GantIcons.ANT_TASK);
+            final PsiType closureType = JavaPsiFacade.getElementFactory(project).createTypeFromText(GrClosableBlock.GROOVY_LANG_CLOSURE, taskMethod);
+            final LightParameter bodyParameter = new LightParameter(taskMethod.getManager(), "body", null, closureType, taskMethod);
+            classNames.add(taskMethod.addParameter(bodyParameter.setOptional(true)));
+          }
         }
       }
       return classNames;
     }
 
-    return Collections.emptyMap();
+    return Collections.emptySet();
   }
 }
