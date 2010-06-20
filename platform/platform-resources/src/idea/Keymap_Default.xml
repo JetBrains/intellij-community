@@ -918,7 +918,6 @@
   </action>
 
   <action id="Jdbc.OpenConsole"><keyboard-shortcut first-keystroke="control shift F10"/></action>
-  <action id="Hibernate.OpenConsole"><keyboard-shortcut first-keystroke="control shift F10"/></action>
   <action id="Jpa.OpenConsole"><keyboard-shortcut first-keystroke="control shift F10"/></action>
 
   <action id="Console.TableResult.PreviousPage"><keyboard-shortcut first-keystroke="control alt UP"/></action>

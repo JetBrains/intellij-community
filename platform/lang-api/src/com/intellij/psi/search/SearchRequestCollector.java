@@ -25,6 +25,10 @@ public class SearchRequestCollector {
   }
 
   public void searchWord(@NotNull String word, @NotNull SearchScope searchScope, short searchContext, boolean caseSensitive, @NotNull RequestResultProcessor processor) {
+    if (searchScope instanceof LocalSearchScope && ((LocalSearchScope)searchScope).getScope().length == 0) {
+      return;
+    }
+
     myRequests.add(new PsiSearchRequest(searchScope, word, searchContext, caseSensitive, processor));
   }
 

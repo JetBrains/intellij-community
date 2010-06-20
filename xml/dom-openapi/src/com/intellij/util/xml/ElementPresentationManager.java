@@ -202,11 +202,6 @@ public abstract class ElementPresentationManager {
       }
     }
 
-    final Icon icon = TypePresentationService.getService().getTypeIcon(o.getClass());
-    if (icon != null) {
-      return icon;
-    }
-
     final Icon[] icons = getIconsForClass(o.getClass());
     if (icons != null && icons.length > 0) {
       return icons[0];
@@ -242,6 +237,11 @@ public abstract class ElementPresentationManager {
 
   @Nullable
   private static Icon[] getIconsForClass(final Class clazz) {
+    final Icon icon = TypePresentationService.getService().getTypeIcon(clazz);
+    if (icon != null) {
+      return new Icon[]{icon};
+    }
+
     return TypeNameManager.getFromClassMap(ourIcons, clazz);
   }
 
