@@ -137,14 +137,6 @@ public abstract class GrSyntheticMethod extends LightElement implements PsiMetho
     return PsiSuperMethodImplUtil.getHierarchicalMethodSignature(this);
   }
 
-  @NonNls
-  public String getText() {
-    return null;
-  }
-
-  public void accept(@NotNull PsiElementVisitor visitor) {
-  }
-
   public TextRange getTextRange() {
     return null;
   }

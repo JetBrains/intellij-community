@@ -150,18 +150,6 @@ public class GroovyScriptMethod extends LightElement implements PsiMethod {
     return myScriptClass;
   }
 
-  @NonNls
-  public String getText() {
-    return null;
-  }
-
-  public void accept(@NotNull PsiElementVisitor visitor) {
-  }
-
-  public PsiElement copy() {
-    return null;
-  }
-
   public PsiFile getContainingFile() {
     return myScriptClass.getContainingFile();
   }

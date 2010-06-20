@@ -20,11 +20,11 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.light.LightElement;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
 /**
+ * todo us LightParameterListBuilder
  * @author ven
  */
 public class LightParameterList extends LightElement implements PsiParameterList {
@@ -39,19 +39,10 @@ public class LightParameterList extends LightElement implements PsiParameterList
     myParametersComputation = parametersComputation;
   }
 
-  @NonNls
-  public String getText() {
-    return null;
-  }
-
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor) visitor).visitParameterList(this);
     }
-  }
-
-  public PsiElement copy() {
-    return null;
   }
 
   @NotNull

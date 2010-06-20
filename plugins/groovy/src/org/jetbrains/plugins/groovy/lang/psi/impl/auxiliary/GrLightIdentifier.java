@@ -45,9 +45,6 @@ public class GrLightIdentifier extends LightElement {
     return myText;
   }
 
-  public void accept(@NotNull PsiElementVisitor visitor) {
-  }
-
   public PsiElement copy() {
     return new GrLightIdentifier(getManager(), myText);
   }
