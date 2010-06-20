@@ -17,7 +17,6 @@ package com.intellij.psi.impl.light;
 
 import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -45,6 +44,7 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
   private volatile LightModifierList myModifierList;
   private volatile LightParameterListBuilder myParameterList;
   private volatile PsiElement myNavigationElement = this;
+  private volatile Icon myBaseIcon;
 
   public LightMethodBuilder(PsiManager manager, Language language, String name) {
     super(manager, language);
@@ -221,9 +221,15 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
   }
 
   public Icon getElementIcon(final int flags) {
-    Icon methodIcon = hasModifierProperty(PsiModifier.ABSTRACT) ? Icons.ABSTRACT_METHOD_ICON : Icons.METHOD_ICON;
+    Icon methodIcon = myBaseIcon != null ? myBaseIcon :
+                      hasModifierProperty(PsiModifier.ABSTRACT) ? Icons.ABSTRACT_METHOD_ICON : Icons.METHOD_ICON;
     RowIcon baseIcon = createLayeredIcon(methodIcon, ElementPresentationUtil.getFlags(this, false));
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
+  }
+
+  public LightMethodBuilder setBaseIcon(Icon baseIcon) {
+    myBaseIcon = baseIcon;
+    return this;
   }
 
   @Override
