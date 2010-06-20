@@ -21,17 +21,18 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.refactoring.psi.SearchUtils;
-import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.Set;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author ilyas
@@ -41,7 +42,7 @@ public class AntTasksProvider {
   @NonNls public static final String ANT_TASK_CLASS = "org.apache.tools.ant.Task";
 
   private final Project myProject;
-  private final CachedValue<Set<String>> myCachedValue;
+  private final CachedValue<Map<String, PsiClass>> myCachedValue;
 
   public static AntTasksProvider getInstance(Project project) {
     return ServiceManager.getService(project, AntTasksProvider.class);
@@ -50,33 +51,32 @@ public class AntTasksProvider {
   public AntTasksProvider(Project project) {
     myProject = project;
     final CachedValuesManager manager = CachedValuesManager.getManager(myProject);
-    myCachedValue = manager.createCachedValue(new CachedValueProvider<Set<String>>() {
-      public Result<Set<String>> compute() {
-        final Set<String> set = findAntTasks(myProject);
+    myCachedValue = manager.createCachedValue(new CachedValueProvider<Map<String, PsiClass>>() {
+      public Result<Map<String, PsiClass>> compute() {
+        final Map<String, PsiClass> set = findAntTasks(myProject);
         return Result.create(set, ProjectRootManager.getInstance(myProject), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
       }
     }, false);
   }
   
-  public Set<String> getAntTasks() {
+  public Map<String, PsiClass> getAntTasks() {
     return myCachedValue.getValue();
   }
 
-  private static HashSet<String> findAntTasks(Project project) {
+  private static Map<String, PsiClass> findAntTasks(Project project) {
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     final PsiClass taskClass = facade.findClass(ANT_TASK_CLASS, GlobalSearchScope.allScope(project));
 
     if (taskClass != null) {
-      final Iterable<PsiClass> inheritors = SearchUtils.findClassInheritors(taskClass, true);
-      final HashSet<String> classNames = new HashSet<String>();
-      for (PsiClass inheritor : inheritors) {
+      final Map<String, PsiClass> classNames = new HashMap<String, PsiClass>();
+      for (PsiClass inheritor : SearchUtils.findClassInheritors(taskClass, true)) {
         if (!inheritor.hasModifierProperty(PsiModifier.ABSTRACT) && !inheritor.hasModifierProperty(PsiModifier.PRIVATE)) {
-          classNames.add(inheritor.getName());
+          ContainerUtil.putIfNotNull(inheritor.getName(), inheritor, classNames);
         }
       }
       return classNames;
     }
 
-    return new HashSet<String>(0);
+    return Collections.emptyMap();
   }
 }

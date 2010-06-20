@@ -95,15 +95,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
   @NotNull
   public PsiReference getReference() {
-    PsiReference[] otherReferences = ReferenceProvidersRegistry.getReferencesFromProviders(this, GrReferenceExpression.class);
-    if (otherReferences.length == 0) return this;
-
-    PsiReference[] references = new PsiReference[otherReferences.length + 1];
-
-    references[0] = this;
-    System.arraycopy(otherReferences, 0, references, 1, otherReferences.length);
-
-    return new PsiMultiReference(references, this);
+    return this;
   }
 
   @Nullable
