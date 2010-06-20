@@ -66,7 +66,7 @@ public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, Method
     final SearchScope restrictedByAccess = searchScope.intersectWith(accessScope);
 
     short searchContext = UsageSearchContext.IN_CODE | UsageSearchContext.IN_COMMENTS | UsageSearchContext.IN_FOREIGN_LANGUAGES;
-    collector.searchWord(textToSearch, restrictedByAccess, searchContext, true, new MethodTextOccurenceProcessor(aClass, strictSignatureSearch, methods));
+    collector.searchWord(textToSearch, restrictedByAccess, searchContext, true, new MethodTextOccurrenceProcessor(aClass, strictSignatureSearch, methods));
 
     SimpleAccessorReferenceSearcher.addPropertyAccessUsages(method, restrictedByAccess, collector);
   }

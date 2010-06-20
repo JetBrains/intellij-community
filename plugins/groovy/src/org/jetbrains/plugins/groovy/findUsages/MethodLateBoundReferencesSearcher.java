@@ -47,11 +47,11 @@ public class MethodLateBoundReferencesSearcher extends QueryExecutorBase<PsiRefe
     final PsiMethod method = queryParameters.getMethod();
     SearchScope searchScope = PsiUtil.restrictScopeToGroovyFiles(queryParameters.getScope()).intersectWith(getUseScope(method));
 
-    orderSearching(searchScope, method.getName(), queryParameters.getOptimizer(), method);
+    orderSearching(searchScope, method.getName(), queryParameters.getOptimizer());
 
     final String propName = PropertyUtil.getPropertyName(method);
     if (propName != null) {
-      orderSearching(searchScope, propName, queryParameters.getOptimizer(), method);
+      orderSearching(searchScope, propName, queryParameters.getOptimizer());
     }
   }
 
@@ -69,12 +69,10 @@ public class MethodLateBoundReferencesSearcher extends QueryExecutorBase<PsiRefe
   }
 
 
-  private static void orderSearching(SearchScope searchScope,
-                                     final String name,
-                                     @NotNull SearchRequestCollector collector, PsiMethod method) {
-    collector.searchWord(name, searchScope, UsageSearchContext.IN_CODE, true, new SingleTargetRequestResultProcessor(method) {
+  private static void orderSearching(SearchScope searchScope, final String name, @NotNull SearchRequestCollector collector) {
+    collector.searchWord(name, searchScope, UsageSearchContext.IN_CODE, true, new RequestResultProcessor() {
       @Override
-      public boolean execute(PsiElement element, int offsetInElement, Processor<PsiReference> consumer) {
+      public boolean processTextOccurrence(PsiElement element, int offsetInElement, Processor<PsiReference> consumer) {
         if (!(element instanceof GrReferenceExpression)) {
           return true;
         }
