@@ -487,9 +487,6 @@
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.gant.GantLoader</implementation-class>
     </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.groovy.extensions.completion.InsertHandlerRegistry</implementation-class>
-    </component>
   </application-components>
 
   <project-components>
