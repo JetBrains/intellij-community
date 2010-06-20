@@ -15,9 +15,10 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.light.LightVariableBase;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,37 +30,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 /**
  * @author ven
  */
-public class LightParameter extends LightVariableBase implements GrParameter {
+public class LightParameter extends com.intellij.psi.impl.light.LightParameter implements GrParameter {
   public static final LightParameter[] EMPTY_ARRAY = new LightParameter[0];
-  private final String myName;
 
   public LightParameter(PsiManager manager, String name, PsiIdentifier nameIdentifier, @NotNull PsiType type, PsiElement scope) {
-    super(manager, nameIdentifier, type, false, scope);
-    myName = name;
-  }
-
-  public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof JavaElementVisitor) {
-      ((JavaElementVisitor)visitor).visitParameter(this);
-    }
-  }
-
-  public String toString() {
-    return "Light Parameter";
-  }
-
-  public boolean isVarArgs() {
-    return false;
-  }
-
-  @NotNull
-  public PsiAnnotation[] getAnnotations() {
-    return PsiAnnotation.EMPTY_ARRAY;
-  }
-
-  @NotNull
-  public String getName() {
-    return StringUtil.notNullize(myName);
+    super(manager, name, nameIdentifier, type, scope);
   }
 
   public GrTypeElement getTypeElementGroovy() {
