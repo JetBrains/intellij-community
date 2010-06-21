@@ -65,8 +65,6 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     methodAndOverriders.add(method);
     containingClasses.add(method.getContainingClass());
 
-    findCollisionsAgainstNewName(method, newName, staticImportHides);
-
     // do actual rename of overriding/implementing methods and of references to all them
     for (UsageInfo usage : usages) {
       PsiElement element = usage.getElement();
