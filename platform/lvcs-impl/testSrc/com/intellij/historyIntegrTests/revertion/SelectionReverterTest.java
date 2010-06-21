@@ -76,8 +76,8 @@ public class SelectionReverterTest extends IntegrationTestCase {
     revertToPreviousRevision(0, 0);
 
     List<Revision> rr = getRevisionsFor(f);
-    assertEquals(4, rr.size());
-    assertEquals("Revert of selection to 11.02.01 12:30", rr.get(0).getChangeSetName());
+    assertEquals(5, rr.size());
+    assertEquals("Revert of selection to 11.02.01 12:30", rr.get(1).getChangeSetName());
   }
 
   public void testAskingForReadOnlyStatusClearingOnlyForTheSpecifiedFile() throws Exception {

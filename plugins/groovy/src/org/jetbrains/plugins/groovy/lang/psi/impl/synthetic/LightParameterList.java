@@ -20,38 +20,29 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.light.LightElement;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
 /**
+ * todo us LightParameterListBuilder
  * @author ven
  */
 public class LightParameterList extends LightElement implements PsiParameterList {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.LightParameterList");
 
-  private final Computable<LightParameter[]> myParametersComputation;
-  private LightParameter[] myParameters = null;
+  private final Computable<GrLightParameter[]> myParametersComputation;
+  private GrLightParameter[] myParameters = null;
   private final Object myParametersLock = new String("LightParametersListLock");
 
-  protected LightParameterList(PsiManager manager, Computable<LightParameter[]> parametersComputation) {
+  protected LightParameterList(PsiManager manager, Computable<GrLightParameter[]> parametersComputation) {
     super(manager, GroovyFileType.GROOVY_LANGUAGE);
     myParametersComputation = parametersComputation;
-  }
-
-  @NonNls
-  public String getText() {
-    return null;
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor) visitor).visitParameterList(this);
     }
-  }
-
-  public PsiElement copy() {
-    return null;
   }
 
   @NotNull

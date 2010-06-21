@@ -99,10 +99,6 @@ public abstract class LightVariableBase extends LightElement implements PsiVaria
     return myNameIdentifier.getText();
   }
 
-  public PsiElement copy() {
-    return null;
-  }
-
   public Object computeConstantValue() {
     return null;
   }

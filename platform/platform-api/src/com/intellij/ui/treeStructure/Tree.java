@@ -69,10 +69,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, Autoscroll, Q
     myEmptyTextHelper = new EmptyTextHelper(this) {
       @Override
       protected boolean isEmpty() {
-        TreeModel model = getModel();
-        if (model == null) return true;
-        if (model.getRoot() == null) return true;
-        return !isRootVisible() && model.getChildCount(model.getRoot()) == 0;
+        return Tree.this.isEmpty();
       }
     };
 
@@ -94,6 +91,13 @@ public class Tree extends JTree implements ComponentWithEmptyText, Autoscroll, Q
     }
 
     super.setUI(actualUI);
+  }
+
+  public boolean isEmpty() {
+    TreeModel model = getModel();
+    if (model == null) return true;
+    if (model.getRoot() == null) return true;
+    return !isRootVisible() && model.getChildCount(model.getRoot()) == 0;
   }
 
   protected boolean isCustomUI() {

@@ -16,6 +16,7 @@
 package com.intellij.openapi.command.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -39,8 +40,11 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -379,26 +383,26 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
       }
     };
 
+    String name = getUndoOrRedoActionNameAndDescription(editor, isUndoInProgress()).second;
     CommandProcessor.getInstance()
-      .executeCommand(myProject, executeUndoOrRedoAction, isUndoInProgress() ? CommonBundle.message("undo.command.name") : CommonBundle
-        .message("redo.command.name"), null, myMerger.getUndoConfirmationPolicy());
+      .executeCommand(myProject, executeUndoOrRedoAction, name, null, myMerger.getUndoConfirmationPolicy());
     if (exception[0] != null) throw exception[0];
   }
 
   public boolean isUndoAvailable(@Nullable FileEditor editor) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-    Collection<DocumentReference> refs = getDocRefs(editor);
-    if (refs == null) return false;
-    return isUndoOrRedoAvailable(refs, true);
+    return isUndoOrRedoAvailable(editor, true);
   }
 
   public boolean isRedoAvailable(@Nullable FileEditor editor) {
+    return isUndoOrRedoAvailable(editor, false);
+  }
+
+  private boolean isUndoOrRedoAvailable(@Nullable FileEditor editor, boolean undo) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     Collection<DocumentReference> refs = getDocRefs(editor);
     if (refs == null) return false;
-    return isUndoOrRedoAvailable(refs, false);
+    return isUndoOrRedoAvailable(refs, undo);
   }
 
   private static Collection<DocumentReference> getDocRefs(FileEditor editor) {
@@ -421,18 +425,32 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     return isUndo ? myUndoStacksHolder : myRedoStacksHolder;
   }
 
-  @Override
-  @Nullable
-  public String formatAvailableUndoAction(FileEditor editor) {
-    return doFormatAvailableUndoRedoAction(editor, true);
+  public Pair<String, String> getUndoActionNameAndDescription(FileEditor editor) {
+    return getUndoOrRedoActionNameAndDescription(editor, true);
   }
 
-  @Override
-  @Nullable
-  public String formatAvailableRedoAction(FileEditor editor) {
-    return doFormatAvailableUndoRedoAction(editor, false);
+  public Pair<String, String> getRedoActionNameAndDescription(FileEditor editor) {
+    return getUndoOrRedoActionNameAndDescription(editor, false);
   }
 
+  private Pair<String, String> getUndoOrRedoActionNameAndDescription(FileEditor editor, boolean undo) {
+    String desc = isUndoOrRedoAvailable(editor, undo) ? doFormatAvailableUndoRedoAction(editor, undo) : null;
+    if (desc == null) desc = "";
+    String shortActionName = StringUtil.first(desc, 30, true);
+
+    if (desc.length() == 0) {
+      desc = undo
+             ? ActionsBundle.message("action.undo.description.empty")
+             : ActionsBundle.message("action.redo.description.empty");
+    }
+
+    return Pair.create((undo ? ActionsBundle.message("action.undo.text", shortActionName)
+                             : ActionsBundle.message("action.redo.text", shortActionName)).trim(),
+                       (undo ? ActionsBundle.message("action.undo.description", desc)
+                             : ActionsBundle.message("action.redo.description", desc)).trim());
+  }
+
+  @Nullable
   private String doFormatAvailableUndoRedoAction(FileEditor editor, boolean isUndo) {
     Collection<DocumentReference> refs = getDocRefs(editor);
     if (refs == null) return null;

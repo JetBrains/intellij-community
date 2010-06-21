@@ -15,8 +15,10 @@
  */
 package com.intellij.history.core;
 
+import com.intellij.history.core.changes.ChangeSet;
+import com.intellij.util.Consumer;
+
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class InMemoryChangeListStorage implements ChangeListStorage {
@@ -46,7 +48,7 @@ public class InMemoryChangeListStorage implements ChangeListStorage {
     block.id = myBlocks.size() - 1;
   }
 
-  public List<ChangeSetBlock> purge(long period, int intervalBetweenActivities) {
+  public void purge(long period, int intervalBetweenActivities, Consumer<ChangeSet> processor) {
     throw new UnsupportedOperationException();
   }
 

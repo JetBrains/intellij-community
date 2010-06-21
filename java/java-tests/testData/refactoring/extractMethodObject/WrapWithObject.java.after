@@ -10,4 +10,5 @@ class Test {
           }
       }.InnerClass(i, j);
   }
+
 }

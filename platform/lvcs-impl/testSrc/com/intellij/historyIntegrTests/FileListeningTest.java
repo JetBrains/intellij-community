@@ -36,12 +36,12 @@ import java.util.*;
 public class FileListeningTest extends IntegrationTestCase {
   public void testCreatingFiles() throws Exception {
     VirtualFile f = createFile("file.txt");
-    assertEquals(1, getRevisionsFor(f).size());
+    assertEquals(2, getRevisionsFor(f).size());
   }
 
   public void testCreatingDirectories() throws Exception {
     VirtualFile f = createDirectory("dir");
-    assertEquals(1, getRevisionsFor(f).size());
+    assertEquals(2, getRevisionsFor(f).size());
   }
 
   public void testIgnoringFilteredFileTypes() throws Exception {
@@ -87,21 +87,21 @@ public class FileListeningTest extends IntegrationTestCase {
 
   public void testChangingFileContent() throws Exception {
     VirtualFile f = createFile("file.txt");
-    assertEquals(1, getRevisionsFor(f).size());
-
-    f.setBinaryContent(new byte[]{1});
     assertEquals(2, getRevisionsFor(f).size());
 
-    f.setBinaryContent(new byte[]{2});
+    f.setBinaryContent(new byte[]{1});
     assertEquals(3, getRevisionsFor(f).size());
+
+    f.setBinaryContent(new byte[]{2});
+    assertEquals(4, getRevisionsFor(f).size());
   }
 
   public void testRenamingFile() throws Exception {
     VirtualFile f = createFile("file.txt");
-    assertEquals(1, getRevisionsFor(f).size());
+    assertEquals(2, getRevisionsFor(f).size());
 
     f.rename(null, "file2.txt");
-    assertEquals(2, getRevisionsFor(f).size());
+    assertEquals(3, getRevisionsFor(f).size());
   }
 
   public void testRenamingFileOnlyAfterRenamedEvent() throws Exception {
@@ -118,7 +118,7 @@ public class FileListeningTest extends IntegrationTestCase {
       }
     };
 
-    assertEquals(1, getRevisionsFor(f).size());
+    assertEquals(2, getRevisionsFor(f).size());
 
     addFileListenerDuring(l, new RunnableAdapter() {
       @Override
@@ -127,8 +127,8 @@ public class FileListeningTest extends IntegrationTestCase {
       }
     });
 
-    assertEquals(1, log[0]);
-    assertEquals(2, log[1]);
+    assertEquals(2, log[0]);
+    assertEquals(3, log[1]);
   }
 
   public void testRenamingFilteredFileToNonFiltered() throws Exception {
@@ -177,13 +177,13 @@ public class FileListeningTest extends IntegrationTestCase {
 
   public void testChangingROStatusForFile() throws Exception {
     VirtualFile f = createFile("f.txt");
-    assertEquals(1, getRevisionsFor(f).size());
-
-    ReadOnlyAttributeUtil.setReadOnlyAttribute(f, true);
     assertEquals(2, getRevisionsFor(f).size());
 
-    ReadOnlyAttributeUtil.setReadOnlyAttribute(f, false);
+    ReadOnlyAttributeUtil.setReadOnlyAttribute(f, true);
     assertEquals(3, getRevisionsFor(f).size());
+
+    ReadOnlyAttributeUtil.setReadOnlyAttribute(f, false);
+    assertEquals(4, getRevisionsFor(f).size());
   }
 
   public void testIgnoringROStstusChangeForUnversionedFiles() throws Exception {
@@ -256,10 +256,10 @@ public class FileListeningTest extends IntegrationTestCase {
 
     List<Revision> revs = getRevisionsFor(myRoot);
     assertEquals(4, revs.size());
-    assertNotNull(revs.get(0).getEntry().findEntry("dir/subDir/file.txt"));
-    assertNull(revs.get(1).getEntry().findEntry("dir/subDir/file.txt"));
-    assertNotNull(revs.get(2).getEntry().findEntry("dir/subDir/file.txt"));
-    assertNull(revs.get(3).getEntry().findEntry("dir/subDir/file.txt"));
+    assertNotNull(revs.get(0).findEntry().findEntry("dir/subDir/file.txt"));
+    assertNull(revs.get(1).findEntry().findEntry("dir/subDir/file.txt"));
+    assertNotNull(revs.get(2).findEntry().findEntry("dir/subDir/file.txt"));
+    assertNull(revs.get(3).findEntry().findEntry("dir/subDir/file.txt"));
   }
 
   public void testCreationAndDeletionOfFileUnderUnversionedDir() throws IOException {
@@ -279,10 +279,10 @@ public class FileListeningTest extends IntegrationTestCase {
 
     List<Revision> revs = getRevisionsFor(myRoot);
     assertEquals(4, revs.size());
-    assertNotNull(revs.get(0).getEntry().findEntry("dir/subDir/file.txt"));
-    assertNull(revs.get(1).getEntry().findEntry("dir/subDir"));
-    assertNotNull(revs.get(2).getEntry().findEntry("dir/subDir/file.txt"));
-    assertNull(revs.get(3).getEntry().findEntry("dir/subDir"));
+    assertNotNull(revs.get(0).findEntry().findEntry("dir/subDir/file.txt"));
+    assertNull(revs.get(1).findEntry().findEntry("dir/subDir"));
+    assertNotNull(revs.get(2).findEntry().findEntry("dir/subDir/file.txt"));
+    assertNull(revs.get(3).findEntry().findEntry("dir/subDir"));
   }
 
   private static void sortEntries(final List<Entry> entries) {

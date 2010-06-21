@@ -64,6 +64,8 @@
     <psiEnhancerCategory implementation="org.jetbrains.plugins.groovy.dsl.psi.PsiExpressionCategory"/>
 
     <variableEnhancer implementation="org.jetbrains.plugins.groovy.lang.psi.ClosureParameterEnhancer"/>
+
+    <nonCodeProcessor implementation="org.jetbrains.plugins.groovy.gant.GantMemberContributor"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -178,8 +180,8 @@
     <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyGStringSelectioner" order="before wordSelectioner"/>
     <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyParameterListSelectioner"/>
 
-    <searchRequestor implementation="org.jetbrains.plugins.groovy.findUsages.AccessorReferencesSearcher"/>
-    <searchRequestor implementation="org.jetbrains.plugins.groovy.findUsages.MethodLateBoundReferencesSearcher"/>
+    <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.AccessorReferencesSearcher"/>
+    <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.MethodLateBoundReferencesSearcher"/>
     <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.GroovyConstructorUsagesSearcher"/>
     <annotatedElementsSearch implementation="org.jetbrains.plugins.groovy.findUsages.AnnotatedMembersSearcher"/>
     <superMethodsSearch implementation="org.jetbrains.plugins.groovy.findUsages.GDKSuperMethodSearcher"/>
@@ -224,7 +226,6 @@
     <projectService serviceInterface="org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker"
                     serviceImplementation="org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker"/>
 
-    <psi.referenceContributor implementation="org.jetbrains.plugins.groovy.gant.GantReferenceContributor"/>
     <psi.referenceContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.providers.GroovyReferenceContributor"/>
 
     <projectService serviceInterface="org.jetbrains.plugins.groovy.gant.AntTasksProvider"
@@ -241,6 +242,8 @@
     <inspectionToolProvider implementation="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionProvider"/>
 
     <problemFileHighlightFilter implementation="org.jetbrains.plugins.groovy.GroovyProblemFileHighlightFilter"/>
+
+    <renameInputValidator implementation="org.jetbrains.plugins.groovy.GroovyRenameInputValidator"/>
 
     <!-- Groovy DSL support -->
     <indexedRootsProvider implementation="org.jetbrains.plugins.groovy.dsl.StandardDslIndexedRootsProvider"/>
@@ -424,7 +427,6 @@
 
     <projectService serviceInterface="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper"
                     serviceImplementation="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper"/>
-
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">
@@ -484,9 +486,6 @@
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.gant.GantLoader</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.groovy.extensions.completion.InsertHandlerRegistry</implementation-class>
     </component>
   </application-components>
 

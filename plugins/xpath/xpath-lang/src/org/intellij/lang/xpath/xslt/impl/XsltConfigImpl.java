@@ -16,10 +16,8 @@
 package org.intellij.lang.xpath.xslt.impl;
 
 import com.intellij.ide.projectView.ProjectView;
-import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageFormatting;
-import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -28,14 +26,7 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.rename.RenameInputValidator;
-import com.intellij.refactoring.rename.RenameInputValidatorRegistry;
-import com.intellij.util.ProcessingContext;
-import org.intellij.lang.xpath.XPathFileType;
 import org.intellij.lang.xpath.xslt.XsltConfig;
-import org.intellij.lang.xpath.xslt.XsltSupport;
-import org.intellij.lang.xpath.xslt.psi.impl.XsltLanguage;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -44,8 +35,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-
-import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 class XsltConfigImpl extends XsltConfig implements JDOMExternalizable, ApplicationComponent {
 
@@ -63,21 +52,11 @@ class XsltConfigImpl extends XsltConfig implements JDOMExternalizable, Applicati
     public void initComponent() {
       final Language xmlLang = StdFileTypes.XML.getLanguage();
 
-      RenameInputValidatorRegistry.getInstance()
-        .registerInputValidator(psiElement().withLanguage(XsltLanguage.INSTANCE), new RenameInputValidator() {
-          public boolean isInputValid(String newName, PsiElement element, ProcessingContext context) {
-            return LanguageNamesValidation.INSTANCE.forLanguage(XPathFileType.XPATH.getLanguage())
-              .isIdentifier(newName, element.getProject());
-          }
-        });
 //            intentionManager.addAction(new DeleteUnusedParameterFix());
 //            intentionManager.addAction(new DeleteUnusedVariableFix());
 
       final XsltFormattingModelBuilder builder = new XsltFormattingModelBuilder(LanguageFormatting.INSTANCE.forLanguage(xmlLang));
       LanguageFormatting.INSTANCE.addExplicitExtension(xmlLang, builder);
-
-      final ExternalResourceManagerEx erm = ExternalResourceManagerEx.getInstanceEx();
-      erm.addIgnoredResource(XsltSupport.PLUGIN_EXTENSIONS_NS);
     }
 
     public void disposeComponent() {
@@ -170,4 +149,5 @@ class XsltConfigImpl extends XsltConfig implements JDOMExternalizable, Applicati
           return null;
         }
     }
+
 }

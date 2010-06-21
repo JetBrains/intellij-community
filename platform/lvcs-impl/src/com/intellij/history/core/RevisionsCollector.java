@@ -47,6 +47,12 @@ public class RevisionsCollector extends ChangeSetsProcessor {
   }
 
   @Override
+  protected void process() {
+    myResult.add(new CurrentRevision(myRoot, myPath));
+    super.process();
+  }
+
+  @Override
   protected Pair<String, List<ChangeSet>> collectChanges() {
     // todo optimize to not collect all change sets + do not process changes twice
     ChangeCollectingVisitor v = new ChangeCollectingVisitor(myPath, myProjectId, myPattern);
@@ -56,16 +62,10 @@ public class RevisionsCollector extends ChangeSetsProcessor {
 
   @Override
   protected void nothingToVisit() {
-    myResult.add(new CurrentRevision(myRoot, myPath));
   }
 
   @Override
   protected void visit(ChangeSet changeSet) {
-    myResult.add(new RevisionAfterChange(myFacade, myRoot, myPath, changeSet));
-  }
-
-  @Override
-  protected void visitFirstAvailableNonCreational(ChangeSet changeSet) {
-    myResult.add(new RevisionBeforeChange(myFacade, myRoot, myPath, changeSet));
+    myResult.add(new ChangeRevision(myFacade, myRoot, myPath, changeSet, true));
   }
 }

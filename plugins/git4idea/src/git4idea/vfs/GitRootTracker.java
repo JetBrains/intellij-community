@@ -350,7 +350,6 @@ public class GitRootTracker implements VcsListener {
     final HashSet<String> removed = new HashSet<String>();
     final HashSet<String> added = new HashSet<String>();
     final VirtualFile baseDir = myProject.getBaseDir();
-    assert baseDir != null;
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         for (Iterator<VcsDirectoryMapping> i = vcsDirectoryMappings.iterator(); i.hasNext();) {
@@ -360,7 +359,7 @@ public class GitRootTracker implements VcsListener {
             continue;
           }
           String path = m.getDirectory();
-          if (path.length() == 0) {
+          if (path.length() == 0 && baseDir != null) {
             path = baseDir.getPath();
           }
           VirtualFile file = lookupFile(path);
@@ -418,7 +417,7 @@ public class GitRootTracker implements VcsListener {
     for (Iterator<VcsDirectoryMapping> i = vcsDirectoryMappings.iterator(); i.hasNext();) {
       VcsDirectoryMapping m = i.next();
       String path = m.getDirectory();
-      if (removed.contains(path) || (path.length() == 0 && removed.contains(baseDir.getPath()))) {
+      if (removed.contains(path) || (path.length() == 0 && baseDir != null && removed.contains(baseDir.getPath()))) {
         i.remove();
       }
     }

@@ -8,6 +8,7 @@
 
     <extensionPoint name="dom.customAnnotationChecker"
                     interface="com.intellij.util.xml.highlighting.DomCustomAnnotationChecker"/>
+
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

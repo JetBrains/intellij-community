@@ -278,7 +278,7 @@ public class DirectoryEntryTest extends LocalHistoryTestCase {
     DirectoryEntry e1 = new DirectoryEntry("name");
     DirectoryEntry e2 = new DirectoryEntry("name");
 
-    assertTrue(e1.getDifferencesWith(e2).isEmpty());
+    assertTrue(Entry.getDifferencesBetween(e1, e2).isEmpty());
   }
 
   @Test
@@ -286,7 +286,7 @@ public class DirectoryEntryTest extends LocalHistoryTestCase {
     DirectoryEntry e1 = new DirectoryEntry("name");
     DirectoryEntry e2 = new DirectoryEntry("another name");
 
-    List<Difference> dd = e1.getDifferencesWith(e2);
+    List<Difference> dd = Entry.getDifferencesBetween(e1, e2);
     assertEquals(1, dd.size());
     assertDirDifference(dd.get(0), e1, e2);
   }
@@ -297,10 +297,10 @@ public class DirectoryEntryTest extends LocalHistoryTestCase {
     DirectoryEntry e2 = new DirectoryEntry("NAME");
 
     Paths.setCaseSensitive(false);
-    assertEquals(1, e1.getDifferencesWith(e2).size());
+    assertEquals(1, Entry.getDifferencesBetween(e1, e2).size());
 
     Paths.setCaseSensitive(true);
-    assertEquals(1, e1.getDifferencesWith(e2).size());
+    assertEquals(1, Entry.getDifferencesBetween(e1, e2).size());
   }
 
   @Test
@@ -311,7 +311,7 @@ public class DirectoryEntryTest extends LocalHistoryTestCase {
     Entry child = new FileEntry("name", c("content"), -1, false);
     e2.addChild(child);
 
-    List<Difference> dd = e1.getDifferencesWith(e2);
+    List<Difference> dd = Entry.getDifferencesBetween(e1, e2);
     assertEquals(1, dd.size());
     assertFileDifference(dd.get(0), null, child);
   }
@@ -327,7 +327,7 @@ public class DirectoryEntryTest extends LocalHistoryTestCase {
     dir2.addChild(subDir);
     subDir.addChild(subSubFile);
 
-    List<Difference> dd = dir1.getDifferencesWith(dir2);
+    List<Difference> dd = Entry.getDifferencesBetween(dir1, dir2);
     assertEquals(2, dd.size());
     assertDirDifference(dd.get(0), null, subDir);
     assertFileDifference(dd.get(1), null, subSubFile);
@@ -344,7 +344,7 @@ public class DirectoryEntryTest extends LocalHistoryTestCase {
     dir1.addChild(subDir);
     subDir.addChild(subSubFile);
 
-    List<Difference> dd = dir1.getDifferencesWith(dir2);
+    List<Difference> dd = Entry.getDifferencesBetween(dir1, dir2);
     assertEquals(2, dd.size());
     assertDirDifference(dd.get(0), subDir, null);
     assertFileDifference(dd.get(1), subSubFile, null);
@@ -361,7 +361,7 @@ public class DirectoryEntryTest extends LocalHistoryTestCase {
     e1.addChild(child1);
     e2.addChild(child2);
 
-    List<Difference> dd = e1.getDifferencesWith(e2);
+    List<Difference> dd = Entry.getDifferencesBetween(e1, e2);
     assertEquals(1, dd.size());
     assertFileDifference(dd.get(0), child1, child2);
   }
@@ -376,7 +376,7 @@ public class DirectoryEntryTest extends LocalHistoryTestCase {
 
     e2.addChild(new FileEntry("name", c("content"), -1, false));
 
-    List<Difference> dd = e1.getDifferencesWith(e2);
+    List<Difference> dd = Entry.getDifferencesBetween(e1, e2);
     assertEquals("another name", dd.get(0).getLeft().getName());
     assertEquals(null, dd.get(0).getRight());
   }
@@ -389,7 +389,7 @@ public class DirectoryEntryTest extends LocalHistoryTestCase {
     e1.addChild(new FileEntry("name", c("content"), -1, false));
     e2.addChild(new FileEntry("name", c("content"), -1, false));
 
-    assertTrue(e1.getDifferencesWith(e2).isEmpty());
+    assertTrue(Entry.getDifferencesBetween(e1, e2).isEmpty());
   }
 
   @Test
@@ -403,7 +403,7 @@ public class DirectoryEntryTest extends LocalHistoryTestCase {
     e1.addChild(child1);
     e2.addChild(child2);
 
-    List<Difference> dd = e1.getDifferencesWith(e2);
+    List<Difference> dd = Entry.getDifferencesBetween(e1, e2);
     assertEquals(2, dd.size());
 
     assertDirDifference(dd.get(0), e1, e2);
@@ -426,7 +426,7 @@ public class DirectoryEntryTest extends LocalHistoryTestCase {
     subDir1.addChild(child1);
     subDir2.addChild(child2);
 
-    List<Difference> dd = dir1.getDifferencesWith(dir2);
+    List<Difference> dd = Entry.getDifferencesBetween(dir1, dir2);
     assertEquals(3, dd.size());
 
     assertDirDifference(dd.get(0), dir1, dir2);

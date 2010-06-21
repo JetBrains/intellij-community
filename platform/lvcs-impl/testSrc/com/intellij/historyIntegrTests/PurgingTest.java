@@ -116,8 +116,8 @@ public class PurgingTest extends IntegrationTestCase {
     getVcs().getChangeListInTests().purgeObsolete(1);
 
     List<Revision> rr = getRevisionsFor(file);
-    assertEquals(1, rr.size());
-    assertEquals("1", rr.get(0).getLabel());
+    assertEquals(2, rr.size());
+    assertEquals("1", rr.get(1).getLabel());
   }
 
   private void createChangesWithTimestamps(long... tt) {

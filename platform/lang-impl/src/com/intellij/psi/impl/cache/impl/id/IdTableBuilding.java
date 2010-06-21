@@ -46,11 +46,11 @@ import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.Processor;
-import com.intellij.util.indexing.DataIndexer;
-import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.FileContent;
-import com.intellij.util.indexing.IdDataConsumer;
+import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.indexing.*;
 import com.intellij.util.text.CharArrayUtil;
+import gnu.trove.THashMap;
+import org.apache.commons.collections.CollectionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,7 +73,7 @@ public class IdTableBuilding {
     public Map<IdIndexEntry, Integer> map(final FileContent inputData) {
       final IdDataConsumer consumer = new IdDataConsumer();
       final CharSequence chars = inputData.getContentAsText();
-      scanWords(new ScanWordProcessor(){
+      scanWords(new ScanWordProcessor() {
         public void run(final CharSequence chars11, final int start, final int end) {
           consumer.addOccurrence(chars11, start, end, (int)UsageSearchContext.IN_PLAIN_TEXT);
         }
@@ -116,11 +116,12 @@ public class IdTableBuilding {
 
   }
 
-  private static final HashMap<FileType,FileTypeIdIndexer> ourIdIndexers = new HashMap<FileType, FileTypeIdIndexer>();
-  private static final HashMap<FileType,DataIndexer<TodoIndexEntry, Integer, FileContent>> ourTodoIndexers = new HashMap<FileType, DataIndexer<TodoIndexEntry, Integer, FileContent>>();
+  private static final HashMap<FileType, FileTypeIdIndexer> ourIdIndexers = new HashMap<FileType, FileTypeIdIndexer>();
+  private static final HashMap<FileType, DataIndexer<TodoIndexEntry, Integer, FileContent>> ourTodoIndexers =
+    new HashMap<FileType, DataIndexer<TodoIndexEntry, Integer, FileContent>>();
 
   @Deprecated
-  public static void registerIdIndexer(FileType fileType,FileTypeIdIndexer indexer) {
+  public static void registerIdIndexer(FileType fileType, FileTypeIdIndexer indexer) {
     ourIdIndexers.put(fileType, indexer);
   }
 
@@ -136,10 +137,10 @@ public class IdTableBuilding {
   public static boolean isTodoIndexerRegistered(FileType fileType) {
     return ourIdIndexers.containsKey(fileType) || TodoIndexers.INSTANCE.forFileType(fileType) != null;
   }
-  
+
   static {
-    registerIdIndexer(FileTypes.PLAIN_TEXT,new PlainTextIndexer());
-    registerTodoIndexer(FileTypes.PLAIN_TEXT,new PlainTextTodoIndexer());
+    registerIdIndexer(FileTypes.PLAIN_TEXT, new PlainTextIndexer());
+    registerTodoIndexer(FileTypes.PLAIN_TEXT, new PlainTextTodoIndexer());
 
     registerIdIndexer(StdFileTypes.IDEA_MODULE, null);
     registerIdIndexer(StdFileTypes.IDEA_WORKSPACE, null);
@@ -194,7 +195,9 @@ public class IdTableBuilding {
 
   }
 
-  private static final TokenSet ABSTRACT_FILE_COMMENT_TOKENS = TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT, CustomHighlighterTokenType.MULTI_LINE_COMMENT);
+  private static final TokenSet ABSTRACT_FILE_COMMENT_TOKENS =
+    TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT, CustomHighlighterTokenType.MULTI_LINE_COMMENT);
+
   @Nullable
   public static DataIndexer<TodoIndexEntry, Integer, FileContent> getTodoIndexer(FileType fileType, final VirtualFile virtualFile) {
     final DataIndexer<TodoIndexEntry, Integer, FileContent> indexer = ourTodoIndexers.get(fileType);
@@ -203,7 +206,15 @@ public class IdTableBuilding {
       return indexer;
     }
 
-    final DataIndexer<TodoIndexEntry, Integer, FileContent> extIndexer = TodoIndexers.INSTANCE.forFileType(fileType);
+    final DataIndexer<TodoIndexEntry, Integer, FileContent> extIndexer;
+    if (fileType instanceof SubstitutedFileType) {
+      SubstitutedFileType sft = (SubstitutedFileType)fileType;
+      extIndexer =
+        new CompositeTodoIndexer(getTodoIndexer(sft.getOriginalFileType(), virtualFile), getTodoIndexer(sft.getFileType(), virtualFile));
+    }
+    else {
+      extIndexer = TodoIndexers.INSTANCE.forFileType(fileType);
+    }
     if (extIndexer != null) {
       return extIndexer;
     }
@@ -230,7 +241,7 @@ public class IdTableBuilding {
     public WordsScannerFileTypeIdIndexerAdapter(@NotNull final WordsScanner scanner) {
       myScanner = scanner;
     }
-    
+
     @NotNull
     public Map<IdIndexEntry, Integer> map(final FileContent inputData) {
       final CharSequence chars = inputData.getContentAsText();
@@ -238,11 +249,11 @@ public class IdTableBuilding {
       final IdDataConsumer consumer = new IdDataConsumer();
       myScanner.processWords(chars, new Processor<WordOccurrence>() {
         public boolean process(final WordOccurrence t) {
-          if(charsArray != null && t.getBaseText() == chars) {
-            consumer.addOccurrence(charsArray, t.getStart(),t.getEnd(),convertToMask(t.getKind()));
-          } 
+          if (charsArray != null && t.getBaseText() == chars) {
+            consumer.addOccurrence(charsArray, t.getStart(), t.getEnd(), convertToMask(t.getKind()));
+          }
           else {
-            consumer.addOccurrence(t.getBaseText(), t.getStart(),t.getEnd(),convertToMask(t.getKind()));
+            consumer.addOccurrence(t.getBaseText(), t.getStart(), t.getEnd(), convertToMask(t.getKind()));
           }
           return true;
         }
@@ -259,8 +270,34 @@ public class IdTableBuilding {
       return consumer.getResult();
     }
   }
-  
-  private static class TokenSetTodoIndexer implements DataIndexer<TodoIndexEntry, Integer, FileContent>{
+
+  private static class CompositeTodoIndexer implements DataIndexer<TodoIndexEntry, Integer, FileContent> {
+
+    private final DataIndexer<TodoIndexEntry, Integer, FileContent>[] indexers;
+
+    public CompositeTodoIndexer(DataIndexer<TodoIndexEntry, Integer, FileContent>... indexers) {
+      this.indexers = indexers;
+    }
+
+    @NotNull
+    @Override
+    public Map<TodoIndexEntry, Integer> map(FileContent inputData) {
+      Map<TodoIndexEntry, Integer> result = CollectionFactory.newTroveMap();
+      for (DataIndexer<TodoIndexEntry, Integer, FileContent> indexer : indexers) {
+        for (Map.Entry<TodoIndexEntry, Integer> entry : indexer.map(inputData).entrySet()) {
+          TodoIndexEntry key = entry.getKey();
+          if (result.containsKey(key)) {
+            result.put(key, result.get(key) + entry.getValue());
+          } else {
+            result.put(key, entry.getValue());
+          }
+        }
+      }
+      return result;
+    }
+  }
+
+  private static class TokenSetTodoIndexer implements DataIndexer<TodoIndexEntry, Integer, FileContent> {
     @NotNull private final TokenSet myCommentTokens;
     private final VirtualFile myFile;
 
@@ -270,7 +307,7 @@ public class IdTableBuilding {
     }
 
     @NotNull
-    public Map<TodoIndexEntry,Integer> map(final FileContent inputData) {
+    public Map<TodoIndexEntry, Integer> map(final FileContent inputData) {
       if (CacheUtil.getIndexPatternCount() > 0) {
         final CharSequence chars = inputData.getContentAsText();
         final TodoOccurrenceConsumer occurrenceConsumer = new TodoOccurrenceConsumer();
@@ -279,7 +316,8 @@ public class IdTableBuilding {
         final EditorHighlighter editorHighlighter = inputData.getUserData(FileBasedIndex.EDITOR_HIGHLIGHTER);
         if (editorHighlighter != null && checkCanUseCachedEditorHighlighter(chars, editorHighlighter)) {
           highlighter = editorHighlighter;
-        } else {
+        }
+        else {
           highlighter = HighlighterFactory.createHighlighter(null, myFile);
           highlighter.setText(chars);
         }
@@ -287,7 +325,7 @@ public class IdTableBuilding {
         final int documentLength = chars.length();
         BaseFilterLexer.TodoScanningData[] todoScanningDatas = null;
         final HighlighterIterator iterator = highlighter.createIterator(0);
-        
+
         while (!iterator.atEnd()) {
           final IElementType token = iterator.getTokenType();
 
@@ -296,13 +334,14 @@ public class IdTableBuilding {
             int end = iterator.getEnd();
 
             if (start >= documentLength || end > documentLength) {
-              Logger.getInstance(getClass().getName()).error("Lexer editor highlighter produces tokens out of range:"+documentLength+",("+start + "," + end + ")");
+              Logger.getInstance(getClass().getName())
+                .error("Lexer editor highlighter produces tokens out of range:" + documentLength + ",(" + start + "," + end + ")");
             }
             todoScanningDatas = BaseFilterLexer.advanceTodoItemsCount(chars.subSequence(start, end), occurrenceConsumer, todoScanningDatas);
           }
           iterator.advance();
         }
-        final Map<TodoIndexEntry,Integer> map = new HashMap<TodoIndexEntry, Integer>();
+        final Map<TodoIndexEntry, Integer> map = new HashMap<TodoIndexEntry, Integer>();
         for (IndexPattern pattern : CacheUtil.getIndexPatterns()) {
           final int count = occurrenceConsumer.getOccurrenceCount(pattern);
           if (count > 0) {
@@ -329,34 +368,42 @@ public class IdTableBuilding {
     scanWords(processor, chars, CharArrayUtil.fromSequenceWithoutCopying(chars), startOffset, endOffset, false);
   }
 
-  public static void scanWords(final ScanWordProcessor processor, final CharSequence chars, @Nullable final char[] charArray, final int startOffset,
+  public static void scanWords(final ScanWordProcessor processor,
+                               final CharSequence chars,
+                               @Nullable final char[] charArray,
+                               final int startOffset,
                                final int endOffset,
                                final boolean mayHaveEscapes) {
     int index = startOffset;
     final boolean hasArray = charArray != null;
 
     ScanWordsLoop:
-      while(true){
-        while(true){
-          if (index >= endOffset) break ScanWordsLoop;
-          final char c = hasArray ? charArray[index]:chars.charAt(index);
+    while (true) {
+      while (true) {
+        if (index >= endOffset) break ScanWordsLoop;
+        final char c = hasArray ? charArray[index] : chars.charAt(index);
 
-          if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || (Character.isJavaIdentifierStart(c) && c != '$')) break;
-          index++;
-          if (mayHaveEscapes && c == '\\') index++; //the next symbol is for escaping
+        if ((c >= 'a' && c <= 'z') ||
+            (c >= 'A' && c <= 'Z') ||
+            (c >= '0' && c <= '9') ||
+            (Character.isJavaIdentifierStart(c) && c != '$')) {
+          break;
         }
-        int index1 = index;
-        while(true){
-          index++;
-          if (index >= endOffset) break;
-          final char c = hasArray ? charArray[index]:chars.charAt(index);
-          if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) continue;
-          if (!Character.isJavaIdentifierPart(c) || c == '$') break;
-        }
-        if (index - index1 > 100) continue; // Strange limit but we should have some!
-
-        processor.run(chars, index1, index);
+        index++;
+        if (mayHaveEscapes && c == '\\') index++; //the next symbol is for escaping
       }
+      int index1 = index;
+      while (true) {
+        index++;
+        if (index >= endOffset) break;
+        final char c = hasArray ? charArray[index] : chars.charAt(index);
+        if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) continue;
+        if (!Character.isJavaIdentifierPart(c) || c == '$') break;
+      }
+      if (index - index1 > 100) continue; // Strange limit but we should have some!
+
+      processor.run(chars, index1, index);
+    }
   }
 
 }

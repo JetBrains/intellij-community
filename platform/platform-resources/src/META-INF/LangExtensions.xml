@@ -3,7 +3,6 @@
   <appStarter implementation="com.intellij.ide.ui.search.TraverseUIStarter"/>
 
   <referencesSearch implementation="com.intellij.psi.impl.search.CachesBasedRefSearcher"/>
-  <searchRequestor implementation="com.intellij.psi.impl.search.CachesBasedRefSearcher"/>
 
   <applicationService serviceInterface="com.intellij.codeInsight.completion.CompletionService"
                       serviceImplementation="com.intellij.codeInsight.completion.impl.CompletionServiceImpl"/>

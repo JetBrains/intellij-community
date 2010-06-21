@@ -28,11 +28,13 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.Convertor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -167,15 +169,15 @@ public class ShowDiffAction extends AnAction implements DumbAware {
     JComponent createBottomComponent();
   }
 
-  public static void showDiffForChange(final Iterable<Change> changes, final NotNullFunction<Change, Boolean> selectionChecker,
-                                       final Project project, @Nullable DiffExtendUIFactory actionsFactory, final boolean showFrame) {
+  public static void showDiffForChange(final Iterable<Change> changes, final Condition<Change> selectionChecker,
+                                       final Project project, @NotNull DiffExtendUIFactory actionsFactory, final boolean showFrame) {
     int cnt = 0;
     int newIndex = -1;
     final List<Change> changeList = new ArrayList<Change>();
     for (Change change : changes) {
       if (! directoryOrBinary(change)) {
         changeList.add(change);
-        if ((newIndex == -1) && selectionChecker.fun(change)) {
+        if ((newIndex == -1) && selectionChecker.value(change)) {
           newIndex = cnt;
         }
         ++ cnt;
@@ -196,7 +198,7 @@ public class ShowDiffAction extends AnAction implements DumbAware {
             }), newIndex, actionsFactory, showFrame);
   }
 
-  public static void showDiffForChange(Change[] changes, int index, final Project project, @Nullable DiffExtendUIFactory actionsFactory,
+  public static void showDiffForChange(Change[] changes, int index, final Project project, @NotNull DiffExtendUIFactory actionsFactory,
                                        final boolean showFrame) {
     Change selectedChange = changes [index];
     final List<Change> changeList = filterDirectoryAndBinaryChanges(changes);

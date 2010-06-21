@@ -50,7 +50,7 @@ public class MergeQuery<T> implements Query<T>{
   }
 
   public boolean forEach(@NotNull final Processor<T> consumer) {
-    return processSubQuery(consumer, myQuery1) || processSubQuery(consumer, myQuery2);
+    return processSubQuery(consumer, myQuery1) && processSubQuery(consumer, myQuery2);
   }
 
   private <V extends T> boolean processSubQuery(final Processor<T> consumer, Query<V> query1) {

@@ -1,4 +1,0 @@
-target(aaa: "") {
-    foo.jav<caret>
-}
------

@@ -48,10 +48,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
@@ -98,15 +95,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
   @NotNull
   public PsiReference getReference() {
-    PsiReference[] otherReferences = ReferenceProvidersRegistry.getReferencesFromProviders(this, GrReferenceExpression.class);
-    if (otherReferences.length == 0) return this;
-
-    PsiReference[] references = new PsiReference[otherReferences.length + 1];
-
-    references[0] = this;
-    System.arraycopy(otherReferences, 0, references, 1, otherReferences.length);
-
-    return new PsiMultiReference(references, this);
+    return this;
   }
 
   @Nullable
@@ -555,6 +544,24 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
           processQualifier(refExpr, processor, qualifier);
         } else {
           processQualifierForSpreadDot(refExpr, processor, qualifier);
+        }
+
+        if (qualifier instanceof GrReferenceExpression && "class".equals(((GrReferenceExpression)qualifier).getReferenceName())) {
+          processIfJavaLangClass(refExpr, processor, qualifier.getType());
+        } else if (qualifier instanceof GrThisReferenceExpression) {
+          processIfJavaLangClass(refExpr, processor, qualifier.getType());
+        }
+      }
+    }
+
+    private static void processIfJavaLangClass(GrReferenceExpressionImpl refExpr, ResolverProcessor processor, PsiType type) {
+      if (type instanceof PsiClassType) {
+        final PsiClass psiClass = ((PsiClassType)type).resolve();
+        if (psiClass != null && CommonClassNames.JAVA_LANG_CLASS.equals(psiClass.getQualifiedName())) {
+          final PsiType[] params = ((PsiClassType)type).getParameters();
+          if (params.length == 1) {
+            processClassQualifierType(refExpr, processor, params[0]);
+          }
         }
       }
     }

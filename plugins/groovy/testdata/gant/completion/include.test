@@ -1,9 +1,0 @@
-inc<caret>
-
-target(aaa: "") {
-
-}
------
-include
-includeTargets
-includeTool

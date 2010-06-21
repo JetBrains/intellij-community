@@ -86,7 +86,7 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
       if (outputBuffer.indexOf(GroovycRunner.COMPILED_START) != -1) {
         unparsedOutput.setLength(0);
 
-        if (!(outputBuffer.indexOf(GroovycRunner.COMPILED_END) != -1)) {
+        if (outputBuffer.indexOf(GroovycRunner.COMPILED_END) == -1) {
           return;
         }
 
@@ -192,15 +192,17 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
     }
   }
 
-  private String handleOutputBuffer(String START_MARKER, String END_MARKER) {
+  private String handleOutputBuffer(String startMarker, String endMarker) {
     String text;
-    text = outputBuffer.substring(
-        outputBuffer.indexOf(START_MARKER) + START_MARKER.length(),
-        outputBuffer.indexOf(END_MARKER));
+    final int start = outputBuffer.indexOf(startMarker);
+    final int end = outputBuffer.indexOf(endMarker);
+    if (start > end) {
+      throw new AssertionError("Malformed Groovyc output: " + outputBuffer.toString());
+    }
 
-    outputBuffer.delete(
-        outputBuffer.indexOf(START_MARKER),
-        outputBuffer.indexOf(END_MARKER) + END_MARKER.length());
+    text = outputBuffer.substring(start + startMarker.length(), end);
+
+    outputBuffer.delete(start, end + endMarker.length());
 
     return text.trim();
   }

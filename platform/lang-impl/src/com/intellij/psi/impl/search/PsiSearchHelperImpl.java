@@ -553,11 +553,12 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                        final Processor<PsiReference> consumer) {
     final SearchScope searchScope = singleRequest.searchScope;
     final boolean ignoreInjectedPsi = searchScope instanceof LocalSearchScope && ((LocalSearchScope)searchScope).isIgnoreInjectedPsi();
+    final RequestResultProcessor wrapped = singleRequest.processor;
     return new TextOccurenceProcessor() {
       public boolean execute(PsiElement element, int offsetInElement) {
         if (ignoreInjectedPsi && element instanceof PsiLanguageInjectionHost) return true;
 
-        return singleRequest.processor.execute(element, offsetInElement, consumer);
+        return wrapped.processTextOccurrence(element, offsetInElement, consumer);
       }
     };
   }

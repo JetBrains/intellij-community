@@ -6,7 +6,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -18,6 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author ilyas
@@ -40,17 +40,16 @@ public class GrThisReferenceExpressionImpl extends GrExpressionImpl implements G
     if (qualifier == null) {
       GroovyPsiElement context = PsiTreeUtil.getParentOfType(this, GrTypeDefinition.class, GroovyFile.class);
       if (context instanceof GrTypeDefinition) {
-        return JavaPsiFacade.getInstance(getProject()).getElementFactory().createType((PsiClass)context);
+        return createType((PsiClass)context);
       }
       else if (context instanceof GroovyFile) {
-        final PsiClass scriptClass = ((GroovyFile)context).getScriptClass();
-        if (scriptClass != null) return JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(scriptClass);
+        return createType(((GroovyFile)context).getScriptClass());
       }
     }
     else {
       final PsiElement resolved = qualifier.resolve();
       if (resolved instanceof PsiClass) {
-        return new PsiImmediateClassType((PsiClass)resolved, PsiSubstitutor.EMPTY);
+        return JavaPsiFacade.getElementFactory(getProject()).createType((PsiClass)resolved);
       }
       else {
         try {
@@ -63,6 +62,15 @@ public class GrThisReferenceExpressionImpl extends GrExpressionImpl implements G
     }
 
     return null;
+  }
+
+  private PsiType createType(PsiClass context) {
+    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+    if (PsiUtil.isThisReferenceInStaticContext(this)) {
+      return elementFactory.createTypeFromText(CommonClassNames.JAVA_LANG_CLASS + "<" + context.getName() + ">", this);
+      //in case of anonymous class this code don't matter because anonymous classes can't have static methods
+    }
+    return elementFactory.createType(context);
   }
 
   @Nullable

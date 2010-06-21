@@ -6,6 +6,7 @@ package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.extractMethodObject.ExtractMethodObjectProcessor;
@@ -41,6 +42,7 @@ public class ExtractMethodObjectTest extends LightCodeInsightTestCase {
       processor.moveUsedMethodsToInner();
     }
     DuplicatesImpl.processDuplicates(extractProcessor, getProject(), getEditor());
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     processor.getMethod().delete();
     checkResultByFile("/refactoring/extractMethodObject/" + testName + ".java" + ".after");
   }

@@ -23,13 +23,16 @@ import java.util.ArrayList;
  * @author ven
  * @noinspection HardCodedStringLiteral
  */
-public class NotNullVerifyingInstrumenter extends ClassAdapter {
-
+public class NotNullVerifyingInstrumenter extends ClassAdapter implements Opcodes {
   private boolean myIsModification = false;
   private boolean myIsNotStaticInner = false;
   private String myClassName;
   private String mySuperName;
+  public static final String NOT_NULL = "org/jetbrains/annotations/NotNull";
+  public static final String NOT_NULL_ANNO = "L"+ NOT_NULL + ";";
   private static final String ENUM_CLASS_NAME = "java/lang/Enum";
+  public static final String IAE_CLASS_NAME = "java/lang/IllegalArgumentException";
+  public static final String ISE_CLASS_NAME = "java/lang/IllegalStateException";
   private static final String CONSTRUCTOR_NAME = "<init>";
 
   public NotNullVerifyingInstrumenter(final ClassVisitor classVisitor) {
@@ -54,7 +57,7 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
   public void visitInnerClass(final String name, final String outerName, final String innerName, final int access) {
     super.visitInnerClass(name, outerName, innerName, access);
     if (myClassName.equals(name)) {
-      myIsNotStaticInner = (access & Opcodes.ACC_STATIC) == 0;
+      myIsNotStaticInner = (access & ACC_STATIC) == 0;
     }
   }
 
@@ -76,7 +79,9 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
 
       private final ArrayList myNotNullParams = new ArrayList();
       private boolean myIsNotNull = false;
+      //private boolean myIsUnmodifiable = false;
       public Label myThrowLabel;
+      //public Label myWrapLabel;
       private Label myStartGeneratedCodeLabel;
 
       public AnnotationVisitor visitParameterAnnotation(
@@ -88,7 +93,7 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
                                          anno,
                                          visible);
         if (isReferenceType(args[parameter]) &&
-            anno.equals("Lorg/jetbrains/annotations/NotNull;")) {
+            anno.equals(NOT_NULL_ANNO)) {
           myNotNullParams.add(new Integer(parameter));
         }
         return av;
@@ -98,7 +103,7 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
                                                boolean isRuntime) {
         final AnnotationVisitor av = mv.visitAnnotation(anno, isRuntime);
         if (isReferenceType(returnType) &&
-            anno.equals("Lorg/jetbrains/annotations/NotNull;")) {
+            anno.equals(NOT_NULL_ANNO)) {
           myIsNotNull = true;
         }
 
@@ -111,43 +116,45 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
           mv.visitLabel(myStartGeneratedCodeLabel);
         }
         for (int p = 0; p < myNotNullParams.size(); ++p) {
-          int var = ((access & Opcodes.ACC_STATIC) == 0) ? 1 : 0;
+          int var = ((access & ACC_STATIC) == 0) ? 1 : 0;
           int param = ((Integer)myNotNullParams.get(p)).intValue();
           for (int i = 0; i < param + startParameter; ++i) {
             var += args[i].getSize();
           }
-          mv.visitVarInsn(Opcodes.ALOAD, var);
+          mv.visitVarInsn(ALOAD, var);
 
           Label end = new Label();
-          mv.visitJumpInsn(Opcodes.IFNONNULL, end);
+          mv.visitJumpInsn(IFNONNULL, end);
 
-          generateThrow("java/lang/IllegalArgumentException",
+          generateThrow(IAE_CLASS_NAME,
                         "Argument " + param + " for @NotNull parameter of " + myClassName + "." + name + " must not be null", end);
         }
       }
 
       public void visitLocalVariable(final String name, final String desc, final String signature, final Label start, final Label end,
                                      final int index) {
-        final boolean isStatic = (access & Opcodes.ACC_STATIC) != 0;
+        final boolean isStatic = (access & ACC_STATIC) != 0;
         final boolean isParameter = isStatic ? index < args.length : index <= args.length;
         mv.visitLocalVariable(name, desc, signature, (isParameter && myStartGeneratedCodeLabel != null) ? myStartGeneratedCodeLabel : start, end, index);
       }
 
       public void visitInsn(int opcode) {
-        if (opcode == Opcodes.ARETURN && myIsNotNull) {
-          mv.visitInsn(Opcodes.DUP);
-          /*generateConditionalThrow("@NotNull method " + myClassName + "." + name + " must not return null",
-                                   "java/lang/IllegalStateException");*/
-          if (myThrowLabel == null) {
-            Label skipLabel = new Label();
-            mv.visitJumpInsn(Opcodes.IFNONNULL, skipLabel);
-            myThrowLabel = new Label();
-            mv.visitLabel(myThrowLabel);            
-            generateThrow("java/lang/IllegalStateException", "@NotNull method " + myClassName + "." + name + " must not return null",
-                          skipLabel);
-          }
-          else {
-            mv.visitJumpInsn(Opcodes.IFNULL, myThrowLabel);
+        if (opcode == ARETURN) {
+          if (myIsNotNull) {
+            mv.visitInsn(DUP);
+            /*generateConditionalThrow("@NotNull method " + myClassName + "." + name + " must not return null",
+              "java/lang/IllegalStateException");*/
+            if (myThrowLabel == null) {
+              Label skipLabel = new Label();
+              mv.visitJumpInsn(IFNONNULL, skipLabel);
+              myThrowLabel = new Label();
+              mv.visitLabel(myThrowLabel);
+              generateThrow(ISE_CLASS_NAME, "@NotNull method " + myClassName + "." + name + " must not return null",
+                            skipLabel);
+            }
+            else {
+              mv.visitJumpInsn(IFNULL, myThrowLabel);
+            }
           }
         }
 
@@ -156,14 +163,14 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
 
       private void generateThrow(final String exceptionClass, final String descr, final Label end) {
         String exceptionParamClass = "(Ljava/lang/String;)V";
-        mv.visitTypeInsn(Opcodes.NEW, exceptionClass);
-        mv.visitInsn(Opcodes.DUP);
+        mv.visitTypeInsn(NEW, exceptionClass);
+        mv.visitInsn(DUP);
         mv.visitLdcInsn(descr);
-        mv.visitMethodInsn(Opcodes.INVOKESPECIAL,
+        mv.visitMethodInsn(INVOKESPECIAL,
                            exceptionClass,
                            CONSTRUCTOR_NAME,
                            exceptionParamClass);
-        mv.visitInsn(Opcodes.ATHROW);
+        mv.visitInsn(ATHROW);
         mv.visitLabel(end);
 
         myIsModification = true;

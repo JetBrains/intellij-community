@@ -15,20 +15,21 @@
  */
 package com.intellij.util.xml;
 
+import com.intellij.ide.IconProvider;
+import com.intellij.ide.TypePresentationService;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.ide.IconProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -200,6 +201,7 @@ public abstract class ElementPresentationManager {
         }
       }
     }
+
     final Icon[] icons = getIconsForClass(o.getClass());
     if (icons != null && icons.length > 0) {
       return icons[0];
@@ -235,6 +237,11 @@ public abstract class ElementPresentationManager {
 
   @Nullable
   private static Icon[] getIconsForClass(final Class clazz) {
+    final Icon icon = TypePresentationService.getService().getTypeIcon(clazz);
+    if (icon != null) {
+      return new Icon[]{icon};
+    }
+
     return TypeNameManager.getFromClassMap(ourIcons, clazz);
   }
 

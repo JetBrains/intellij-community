@@ -180,7 +180,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     }
   }
 
-  public void setName(@NotNull String name) {
+  public void setName(String name) {
     LOG.assertTrue(isWritable());
     myName = name;
   }

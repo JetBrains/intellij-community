@@ -35,7 +35,6 @@ import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 
 import javax.swing.*;
-import java.lang.reflect.Modifier;
 
 /**
  * @author ven
@@ -96,13 +95,13 @@ public class GrGdkMethodImpl extends LightMethod implements GrGdkMethod {
       parmNames[i - 1] = name;
     }
 
-    myParameterList = new LightParameterList(manager, new Computable<LightParameter[]>() {
-      public LightParameter[] compute() {
-        LightParameter[] result = new LightParameter[parmNames.length];
+    myParameterList = new LightParameterList(manager, new Computable<GrLightParameter[]>() {
+      public GrLightParameter[] compute() {
+        GrLightParameter[] result = new GrLightParameter[parmNames.length];
         for (int i = 0; i < result.length; i++) {
           final PsiParameter parameter = originalParameters[i + 1];
           LOG.assertTrue(parameter.isValid());
-          result[i] = new LightParameter(manager, parmNames[i], null, parameter.getType(), GrGdkMethodImpl.this);
+          result[i] = new GrLightParameter(parmNames[i], parameter.getType(), GrGdkMethodImpl.this);
 
         }
         return result;

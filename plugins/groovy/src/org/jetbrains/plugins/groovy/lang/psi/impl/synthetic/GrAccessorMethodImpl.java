@@ -28,7 +28,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAc
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import javax.swing.*;
-import java.lang.reflect.Modifier;
 import java.util.Set;
 
 /**
@@ -59,17 +58,17 @@ public class GrAccessorMethodImpl extends GrSyntheticMethod implements GrAccesso
   }
 
 
-  protected LightParameter[] getParameters() {
+  protected GrLightParameter[] getParameters() {
     if (myIsSetter) {
       PsiType type = myProperty.getDeclaredType();
       if (type == null) {
         type = TypesUtil.getJavaLangObject(myProperty);
       }
       //return LightParameter.EMPTY_ARRAY;
-      return new LightParameter[]{new LightParameter(getManager(), myProperty.getName(), null, type, this)};
+      return new GrLightParameter[]{new GrLightParameter(myProperty.getName(), type, this)};
     }
 
-    return LightParameter.EMPTY_ARRAY;
+    return GrLightParameter.EMPTY_ARRAY;
   }
 
   @Nullable

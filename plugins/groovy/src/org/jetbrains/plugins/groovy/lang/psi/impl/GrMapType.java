@@ -19,7 +19,10 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +33,8 @@ import java.util.*;
  * @author peter
  */
 public class GrMapType extends GrLiteralClassType {
+  private static final PsiType[] RAW_PARAMETERS = new PsiType[]{null, null};
+  
   private final Map<String, PsiType> myStringEntries;
   private final List<Pair<PsiType, PsiType>> myOtherEntries;
   @NonNls
@@ -92,7 +97,7 @@ public class GrMapType extends GrLiteralClassType {
     final PsiType[] keyTypes = getAllKeyTypes();
     final PsiType[] valueTypes = getAllValueTypes();
     if (keyTypes.length == 0 && valueTypes.length == 0) {
-      return PsiType.EMPTY_ARRAY;
+      return RAW_PARAMETERS;
     }
 
     return new PsiType[]{getLeastUpperBound(keyTypes), getLeastUpperBound(valueTypes)};

@@ -26,24 +26,15 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
-import static com.intellij.patterns.PlatformPatterns.psiElement;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.ChangeUtil;
-import com.intellij.refactoring.rename.RenameInputValidator;
-import com.intellij.refactoring.rename.RenameInputValidatorRegistry;
 import com.intellij.util.Function;
-import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory;
 import org.jetbrains.plugins.groovy.debugger.GroovyPositionManager;
-import org.jetbrains.plugins.groovy.extensions.completion.InsertHandlerRegistry;
 import org.jetbrains.plugins.groovy.lang.GroovyChangeUtilSupport;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
 import org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEditorActionsManager;
 import org.jetbrains.plugins.groovy.lang.groovydoc.completion.GroovyDocCompletionData;
-import org.jetbrains.plugins.groovy.lang.groovydoc.completion.handlers.GroovyDocMethodHandler;
-import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 /**
  * Main application component, that loads Groovy language support
@@ -74,24 +65,9 @@ public class GroovyLoader implements ApplicationComponent {
 
       }
     });
-
-
-    registerNameValidators();
-  }
-
-  private static void registerNameValidators() {
-    RenameInputValidator validator = new RenameInputValidator() {
-      public boolean isInputValid(String newName, PsiElement element, ProcessingContext context) {
-        return !GroovyRefactoringUtil.KEYWORDS.contains(newName);
-      }
-    };
-    RenameInputValidatorRegistry.getInstance().registerInputValidator(psiElement(GrNamedElement.class), validator);
   }
 
   private static void setupCompletion() {
-    InsertHandlerRegistry handlerRegistry = InsertHandlerRegistry.getInstance();
-    handlerRegistry.registerSpecificInsertHandler(new GroovyDocMethodHandler());
-
     CompositeCompletionData compositeCompletionData = new CompositeCompletionData(new GroovyCompletionData(), new GroovyDocCompletionData());
     CompletionUtil.registerCompletionData(GroovyFileType.GROOVY_FILE_TYPE, compositeCompletionData);
   }

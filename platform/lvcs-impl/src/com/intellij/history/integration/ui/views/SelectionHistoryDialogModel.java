@@ -23,8 +23,13 @@ import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.history.integration.revertion.SelectionReverter;
 import com.intellij.history.integration.ui.models.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class SelectionHistoryDialogModel extends FileHistoryDialogModel {
@@ -39,7 +44,7 @@ public class SelectionHistoryDialogModel extends FileHistoryDialogModel {
   }
 
   @Override
-  protected List<Revision> calcRevisionsCache() {
+  protected Pair<Revision, List<RevisionItem>> calcRevisionsCache() {
     myCalculatorCache = null;
     return super.calcRevisionsCache();
   }
@@ -58,7 +63,16 @@ public class SelectionHistoryDialogModel extends FileHistoryDialogModel {
 
   private SelectionCalculator getCalculator() {
     if (myCalculatorCache == null) {
-      myCalculatorCache = new SelectionCalculator(myGateway, getRevisions(), myFrom, myTo);
+      List<Revision> revisionList = new ArrayList<Revision>();
+      revisionList.add(getCurrentRevision());
+      
+      revisionList.addAll(ContainerUtil.map(getRevisions(), new Function<RevisionItem, Revision>() {
+        @Override
+        public Revision fun(RevisionItem revisionItem) {
+          return revisionItem.revision;
+        }
+      }));
+      myCalculatorCache = new SelectionCalculator(myGateway, revisionList, myFrom, myTo);
     }
     return myCalculatorCache;
   }

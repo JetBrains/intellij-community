@@ -33,7 +33,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -46,6 +45,9 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
+import java.util.EnumMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author max
@@ -53,9 +55,9 @@ import java.io.*;
 public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
   @NonNls public static final String SHORT_NAME = "Since15";
 
-  private static final HashMap<LanguageLevel, THashSet<String>> ourForbiddenAPI = new HashMap<LanguageLevel, THashSet<String>>(5);
-  private static final THashSet<String> ourIgnored16ClassesAPI = new THashSet<String>(10);
-  private static final HashMap<LanguageLevel, String> ourAPIPresentationMap = new HashMap<LanguageLevel, String>(5);
+  private static final Map<LanguageLevel, Set<String>> ourForbiddenAPI = new EnumMap<LanguageLevel, Set<String>>(LanguageLevel.class);
+  private static final Set<String> ourIgnored16ClassesAPI = new THashSet<String>(10);
+  private static final Map<LanguageLevel, String> ourAPIPresentationMap = new EnumMap<LanguageLevel, String>(LanguageLevel.class);
   @NonNls private static final String EFFECTIVE_LL = "effectiveLL";
 
   private LanguageLevel myEffectiveLanguageLevel = null;
@@ -76,7 +78,7 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
     initForbiddenApi("ignore16List.txt", ourIgnored16ClassesAPI);
   }
 
-  private static void initForbiddenApi(@NonNls String list, THashSet<String> set) {
+  private static void initForbiddenApi(@NonNls String list, Set<String> set) {
     BufferedReader reader = null;
     try {
       final InputStream stream = Java15APIUsageInspection.class.getResourceAsStream(list);
@@ -340,11 +342,10 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
   }
 
   private static boolean isForbiddenSignature(PsiMember member, LanguageLevel languageLevel) {
-
-    final THashSet<String> forbiddenApi = ourForbiddenAPI.get(languageLevel);
+    Set<String> forbiddenApi = ourForbiddenAPI.get(languageLevel);
     if (forbiddenApi == null) return false;
     return forbiddenApi.contains(getSignature(member)) ||
-           (languageLevel.compareTo(LanguageLevel.HIGHEST) != 0 && isForbiddenSignature(member, LanguageLevel.values()[languageLevel.ordinal() + 1]));
+           languageLevel.compareTo(LanguageLevel.HIGHEST) != 0 && isForbiddenSignature(member, LanguageLevel.values()[languageLevel.ordinal() + 1]);
   }
 
   public static String getSignature(PsiMember member) {

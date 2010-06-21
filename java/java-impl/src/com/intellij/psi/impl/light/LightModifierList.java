@@ -15,23 +15,34 @@
  */
 package com.intellij.psi.impl.light;
 
+import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
+import java.util.Set;
+
 public class LightModifierList extends LightElement implements PsiModifierList{
+  private final Set<String> myModifiers;
+
   public LightModifierList(PsiManager manager){
-    super(manager, StdFileTypes.JAVA.getLanguage());
+    this(manager, StdLanguages.JAVA);
+  }
+
+  public LightModifierList(PsiManager manager, final Language language, String... modifiers){
+    super(manager, language);
+    myModifiers = CollectionFactory.newTroveSet(modifiers);
   }
 
   public boolean hasModifierProperty(@NotNull String name){
-    return false;
+    return myModifiers.contains(name);
   }
 
   public boolean hasExplicitModifier(@NotNull String name) {
-    return false;
+    return myModifiers.contains(name);
   }
 
   public void setModifierProperty(@NotNull String name, boolean value) throws IncorrectOperationException{
@@ -44,6 +55,7 @@ public class LightModifierList extends LightElement implements PsiModifierList{
 
   @NotNull
   public PsiAnnotation[] getAnnotations() {
+    //todo
     return PsiAnnotation.EMPTY_ARRAY;
   }
 
@@ -61,10 +73,6 @@ public class LightModifierList extends LightElement implements PsiModifierList{
     throw new UnsupportedOperationException("Method addAnnotation is not yet implemented in " + getClass().getName());
   }
 
-  public String getText(){
-    return "";
-  }
-
   public void accept(@NotNull PsiElementVisitor visitor){
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitModifierList(this);
@@ -72,10 +80,6 @@ public class LightModifierList extends LightElement implements PsiModifierList{
     else {
       visitor.visitElement(this);
     }
-  }
-
-  public PsiElement copy(){
-    return null;
   }
 
   public String toString(){

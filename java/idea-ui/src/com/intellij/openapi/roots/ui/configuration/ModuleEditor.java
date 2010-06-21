@@ -328,12 +328,6 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
   public ModifiableRootModel apply() throws ConfigurationException {
     try {
       for (ModuleConfigurationEditor editor : myEditors) {
-        if (editor instanceof ModuleElementsEditor) {
-          ((ModuleElementsEditor)editor).canApply();
-        }
-      }
-
-      for (ModuleConfigurationEditor editor : myEditors) {
         editor.saveData();
         editor.apply();
       }
@@ -343,6 +337,14 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     finally {
       myModifiableRootModel = null;
       myModifiableRootModelProxy = null;
+    }
+  }
+
+  public void canApply() throws ConfigurationException {
+    for (ModuleConfigurationEditor editor : myEditors) {
+      if (editor instanceof ModuleElementsEditor) {
+        ((ModuleElementsEditor)editor).canApply();
+      }
     }
   }
 

@@ -389,36 +389,45 @@ public class AbstractTreeUi {
   }
 
   private void releaseNow() {
-    myTree.removeTreeExpansionListener(myExpansionListener);
-    myTree.removeTreeSelectionListener(mySelectionListener);
-    myTree.removeFocusListener(myFocusListener);
+    try {
+      myStateLock.writeLock().acquire();
 
-    disposeNode(getRootNode());
-    myElementToNodeMap.clear();
-    getUpdater().cancelAllRequests();
-    if (myWorker != null) {
-      myWorker.dispose(true);
-      clearWorkerTasks();
+      myTree.removeTreeExpansionListener(myExpansionListener);
+      myTree.removeTreeSelectionListener(mySelectionListener);
+      myTree.removeFocusListener(myFocusListener);
+
+      disposeNode(getRootNode());
+      myElementToNodeMap.clear();
+      getUpdater().cancelAllRequests();
+      if (myWorker != null) {
+        myWorker.dispose(true);
+        clearWorkerTasks();
+      }
+      TREE_NODE_WRAPPER.setValue(null);
+      if (myProgress != null) {
+        myProgress.cancel();
+      }
+
+      cancelCurrentCleanupTask();
+
+      myTree = null;
+      setUpdater(null);
+      myWorker = null;
+      myTreeStructure = null;
+      myBuilder.releaseUi();
+      myBuilder = null;
+
+      clearNodeActions();
+
+      myDeferredSelections.clear();
+      myDeferredExpansions.clear();
+      myYeildingDoneRunnables.clear();
     }
-    TREE_NODE_WRAPPER.setValue(null);
-    if (myProgress != null) {
-      myProgress.cancel();
+    catch (InterruptedException e) {
+      LOG.info(e);
+    } finally {
+      myStateLock.writeLock().release();
     }
-
-    cancelCurrentCleanupTask();
-
-    myTree = null;
-    setUpdater(null);
-    myWorker = null;
-    myTreeStructure = null;
-    myBuilder.releaseUi();
-    myBuilder = null;
-
-    clearNodeActions();
-
-    myDeferredSelections.clear();
-    myDeferredExpansions.clear();
-    myYeildingDoneRunnables.clear();
   }
 
   public boolean isReleased() {
@@ -1285,13 +1294,13 @@ public class AbstractTreeUi {
       }
       expandPath(path, canSmartExpand);
     }
-    else if (myTree.isExpanded(path) || (isLeaf && parent != null && myTree.isExpanded(parent) && !myUnbuiltNodes.contains(last))) {
+    else if (myTree.isExpanded(path) || (isLeaf && parent != null && myTree.isExpanded(parent) && !myUnbuiltNodes.contains(last) && !isCancelled(last))) {
       if (last instanceof DefaultMutableTreeNode) {
         processNodeActionsIfReady((DefaultMutableTreeNode)last);
       }
     }
     else {
-      if (isLeaf && myUnbuiltNodes.contains(last)) {
+      if (isLeaf && (myUnbuiltNodes.contains(last) || isCancelled(last))) {
         insertLoadingNode((DefaultMutableTreeNode)last, true);
         expandPath(path, canSmartExpand);
       }
@@ -1695,6 +1704,14 @@ public class AbstractTreeUi {
     myCancelledBuild.remove(node);
   }
 
+  public boolean isCancelled(Object node) {
+    if (node instanceof DefaultMutableTreeNode) {
+      return myCancelledBuild.containsKey((DefaultMutableTreeNode)node);
+    } else {
+      return false;
+    }
+  }
+
   private void resetIncompleteNode(DefaultMutableTreeNode node) {
     addToCancelled(node);
 
@@ -1734,7 +1751,16 @@ public class AbstractTreeUi {
   }
 
   public boolean isReady() {
-    return isIdle() && !hasPendingWork() && !isNodeActionsPending();
+    try {
+      myStateLock.readLock().acquire();
+      return isIdle() && !hasPendingWork() && !isNodeActionsPending();
+    }
+    catch (InterruptedException e) {
+      LOG.info(e);
+      return false;
+    } finally {
+      myStateLock.readLock().release();
+    }
   }
 
   public String getStatus() {
@@ -1750,6 +1776,7 @@ public class AbstractTreeUi {
            "  hasScheduledUpdates=" + hasSheduledUpdates() + "\n" +
            "  isPostponedMode=" + getUpdater().isInPostponeMode() + "\n" +
            " nodeActions=" + myNodeActions.keySet() + "\n" +
+           " nodeChildrenActions=" + myNodeChildrenActions.keySet() + "\n" +
            "isReleased=" + isReleased() + "\n" +
            " isReleaseRequested=" + isReleaseRequested() + "\n" +
            "isCancelProcessed=" + isCancelProcessed() + "\n" +
@@ -2317,6 +2344,8 @@ public class AbstractTreeUi {
       public void run() {
         invokeLaterIfNeeded(new Runnable() {
           public void run() {
+            if (isReleased()) return;
+
             removeLoading(node, true);
             removeFromLoadedInBackground(elementFromDescriptor.get());
             removeFromLoadedInBackground(oldElementFromDescriptor);
@@ -3282,6 +3311,7 @@ public class AbstractTreeUi {
 
     removeFromUpdating(node);
     removeFromUnbuilt(node);
+    removeFromCancelled(node);
 
     if (isLoadingNode(node)) return;
     NodeDescriptor descriptor = getDescriptorFrom(node);
@@ -3572,7 +3602,7 @@ public class AbstractTreeUi {
   }
 
   private void checkPathAndMaybeRevalidate(Object element, final Runnable onDone, final boolean parentsOnly, final boolean checkIfInStructure, final boolean canSmartExpand) {
-    boolean toRevalidate = !myRevalidatedObjects.contains(element) && getNodeForElement(element, false) == null && isInStructure(element);
+    boolean toRevalidate = isValid(element) && !myRevalidatedObjects.contains(element) && getNodeForElement(element, false) == null && isInStructure(element);
     if (!toRevalidate) {
       runDone(onDone);
       return;

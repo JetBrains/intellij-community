@@ -40,6 +40,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
   final Set<StructureElement> myAlwaysShowPlus = new HashSet<StructureElement>();
   boolean mySmartExpand;
   private Thread myTestThread;
+  protected Validator myValidator;
 
   protected BaseTreeTestCase(boolean passthrougth) {
     this(false, false);
@@ -207,7 +208,10 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
       _runBackgroundLoading(runnable);
     }
 
-
+    @Override
+    protected boolean validateNode(Object child) {
+      return myValidator != null ? myValidator.isValid(child) : super.validateNode(child);
+    }
 
     @Override
     public void cleanUp() {
@@ -318,6 +322,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    myValidator = null;
     myCancelRequest = null;
     myReadyRequest = false;
     mySmartExpand = false;
@@ -484,6 +489,10 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
     public void setForcedParent(NodeElement forcedParent) {
       myForcedParent = forcedParent;
     }
+  }
+
+  protected interface Validator {
+    boolean isValid(Object element);
   }
 
 }
