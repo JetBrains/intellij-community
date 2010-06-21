@@ -110,7 +110,7 @@ public final class TreeToolTipHandler extends AbstractToolTipHandler<Integer, JT
         rComponent.setBackground(UIUtil.getTreeSelectionBackground());
       } else if (myComponent.getUI() instanceof UIUtil.MacTreeUI) {
         ((JComponent)rComponent).setOpaque(true);
-        rComponent.setBackground(UIUtil.MacTreeUI.UNFOCUSED_SELECTION_COLOR);
+        rComponent.setBackground(UIUtil.getListUnfocusedSelectionBackground());
       }
     }
 

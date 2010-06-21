@@ -15,9 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.light.LightVariableBase;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.impl.light.LightParameter;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,37 +29,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 /**
  * @author ven
  */
-public class LightParameter extends LightVariableBase implements GrParameter {
-  public static final LightParameter[] EMPTY_ARRAY = new LightParameter[0];
-  private final String myName;
+public class GrLightParameter extends LightParameter implements GrParameter {
+  public static final GrLightParameter[] EMPTY_ARRAY = new GrLightParameter[0];
+  private volatile boolean myOptional;
 
-  public LightParameter(PsiManager manager, String name, PsiIdentifier nameIdentifier, @NotNull PsiType type, PsiElement scope) {
-    super(manager, nameIdentifier, type, false, scope);
-    myName = name;
-  }
-
-  public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof JavaElementVisitor) {
-      ((JavaElementVisitor)visitor).visitParameter(this);
-    }
-  }
-
-  public String toString() {
-    return "Light Parameter";
-  }
-
-  public boolean isVarArgs() {
-    return false;
-  }
-
-  @NotNull
-  public PsiAnnotation[] getAnnotations() {
-    return PsiAnnotation.EMPTY_ARRAY;
-  }
-
-  @NotNull
-  public String getName() {
-    return StringUtil.notNullize(myName);
+  public GrLightParameter(@NotNull String name, @NotNull PsiType type, PsiElement scope) {
+    super(name, type, scope);
   }
 
   public GrTypeElement getTypeElementGroovy() {
@@ -70,8 +45,13 @@ public class LightParameter extends LightVariableBase implements GrParameter {
     return null;
   }
 
+  public GrLightParameter setOptional(boolean optional) {
+    myOptional = optional;
+    return this;
+  }
+
   public boolean isOptional() {
-    return false;
+    return myOptional;
   }
 
   public GrExpression getInitializerGroovy() {
@@ -83,7 +63,7 @@ public class LightParameter extends LightVariableBase implements GrParameter {
 
   @NotNull
   public PsiElement getNameIdentifierGroovy() {
-    return myNameIdentifier;
+    return null;
   }
 
   public PsiType getTypeGroovy() {

@@ -23,16 +23,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 
 public class DirectoryChangeModel {
-  private final Project myProject;
   private final Difference myDiff;
   private final IdeaGateway myGateway;
-  private final boolean isRightContentEditable;
 
-  public DirectoryChangeModel(Project p, Difference d, IdeaGateway gw, boolean editableRightContent) {
-    myProject = p;
+  public DirectoryChangeModel(Difference d, IdeaGateway gw) {
     myDiff = d;
     myGateway = gw;
-    isRightContentEditable = editableRightContent;
   }
 
   public Difference getDifference() {
@@ -50,10 +46,6 @@ public class DirectoryChangeModel {
 
   public Entry getEntry(int i) {
     return i == 0 ? myDiff.getLeft() : myDiff.getRight();
-  }
-
-  public FileDifferenceModel getFileDifferenceModel() {
-    return new EntireFileDifferenceModel(myProject, myGateway, myDiff.getLeft(), myDiff.getRight(), isRightContentEditable);
   }
 
   public boolean canShowFileDifference() {

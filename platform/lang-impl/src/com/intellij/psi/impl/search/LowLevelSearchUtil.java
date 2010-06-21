@@ -113,7 +113,6 @@ public class LowLevelSearchUtil {
           }
         }
         if (!processor.execute(run, start)) {
-          processor.execute(run, start);
           return false;
         }
       }

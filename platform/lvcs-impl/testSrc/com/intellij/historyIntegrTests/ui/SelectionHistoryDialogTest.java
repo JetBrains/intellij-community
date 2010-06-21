@@ -56,7 +56,7 @@ public class SelectionHistoryDialogTest extends LocalHistoryUITestCase {
     f.rename(null, "ff.txt");
     f.setBinaryContent(new byte[0]);
 
-    initModelOnSecondLineAndSelectRevisions(1, 2);
+    initModelOnSecondLineAndSelectRevisions(0, 1);
 
     assertEquals(FileUtil.toSystemDependentName(f.getPath()), dm.getTitle());
     assertTrue(dm.getLeftTitle(new NullRevisionsProgress()), dm.getLeftTitle(new NullRevisionsProgress()).endsWith(" - f.txt"));
@@ -64,7 +64,7 @@ public class SelectionHistoryDialogTest extends LocalHistoryUITestCase {
   }
 
   public void testCalculationProgress() {
-    initModelOnSecondLineAndSelectRevisions(3, 3);
+    initModelOnSecondLineAndSelectRevisions(2, 2);
 
     RevisionProcessingProgress p = createMock(RevisionProcessingProgress.class);
     p.processed(25);
@@ -85,7 +85,7 @@ public class SelectionHistoryDialogTest extends LocalHistoryUITestCase {
   }
 
   public void testDiffContents() throws IOException {
-    initModelOnSecondLineAndSelectRevisions(1, 2);
+    initModelOnSecondLineAndSelectRevisions(0, 1);
 
     DiffContent left = dm.getLeftDiffContent(new NullRevisionsProgress());
     DiffContent right = dm.getRightDiffContent(new NullRevisionsProgress());
@@ -105,8 +105,20 @@ public class SelectionHistoryDialogTest extends LocalHistoryUITestCase {
     assertTrue(right instanceof FragmentContent);
   }
 
+  public void testDiffForDeletedAndRecreatedFile() throws Exception {
+    byte[] bytes = f.contentsToByteArray();
+    f.delete(this);
+
+    f = createFile(f.getName(), new String(bytes));
+
+    initModelOnSecondLineAndSelectRevisions(3, 3);
+
+    assertEquals("b", new String(dm.getLeftDiffContent(new NullRevisionsProgress()).getBytes()));
+    assertEquals("bcd", new String(dm.getRightDiffContent(new NullRevisionsProgress()).getBytes()));
+  }
+
   public void testRevert() throws IOException {
-    initModelOnSecondLineAndSelectRevisions(1, 1);
+    initModelOnSecondLineAndSelectRevisions(0, 0);
     Reverter r = m.createReverter();
     r.revert();
 

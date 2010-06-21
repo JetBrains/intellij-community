@@ -36,12 +36,12 @@ public class DirectoryHistoryDialogModel extends HistoryDialogModel {
 
   @Override
   protected DirectoryChange createChange(Difference d) {
-    return new DirectoryChange(new DirectoryChangeModel(myProject, d, myGateway, isCurrentRevisionSelected()));
+    return new DirectoryChange(new DirectoryChangeModel(d, myGateway));
   }
 
   @Override
   public Reverter createReverter() {
-    return createRevisionReverter(getLeftRevision().getDifferencesWith(getRightRevision()));
+    return createRevisionReverter(getDifferences());
   }
 
   public Reverter createRevisionReverter(List<Difference> diffs) {

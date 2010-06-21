@@ -54,6 +54,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
   private Editor myEditor;
   private PsiFile myFile;
   private Document myDocument;
+  private CommenterDataHolder mySelfManagedCommenterData;
 
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     myProject = project;
@@ -68,11 +69,40 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.comment.block");
     final Commenter commenter = findCommenter(myFile, myEditor);
     if (commenter == null) return;
-
+    
     final SelectionModel selectionModel = myEditor.getSelectionModel();
+    
+    final String prefix;
+    final String suffix;
+    
+    if (commenter instanceof SelfManagingCommenter) {
+      final SelfManagingCommenter selfManagingCommenter = (SelfManagingCommenter)commenter;
+      mySelfManagedCommenterData = selfManagingCommenter.createBlockCommentingState(
+        selectionModel.getSelectionStart(),
+        selectionModel.getSelectionEnd(),
+        myDocument,
+        myFile
+      );
 
-    final String prefix = commenter.getBlockCommentPrefix();
-    final String suffix = commenter.getBlockCommentSuffix();
+      if (mySelfManagedCommenterData == null) {
+        mySelfManagedCommenterData = SelfManagingCommenter.EMPTY_STATE;
+      }
+
+      prefix = selfManagingCommenter.getBlockCommentPrefix(
+        selectionModel.getSelectionStart(), 
+        myDocument, 
+        mySelfManagedCommenterData
+      );
+      suffix = selfManagingCommenter.getBlockCommentSuffix(
+        selectionModel.getSelectionEnd(), 
+        myDocument, 
+        mySelfManagedCommenterData
+      );
+    } else {
+      prefix = commenter.getBlockCommentPrefix();
+      suffix = commenter.getBlockCommentSuffix();
+    }
+
     if (prefix == null || suffix == null) return;
 
     TextRange commentedRange = findCommentedRange(commenter);
@@ -167,8 +197,27 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
       return null;
     }
 
-    final String prefix = trim(commenter.getBlockCommentPrefix());
-    final String suffix = trim(commenter.getBlockCommentSuffix());
+    final String prefix;
+    final String suffix;
+
+    final SelectionModel selectionModel = myEditor.getSelectionModel();
+    if (commenter instanceof SelfManagingCommenter) {
+      SelfManagingCommenter selfManagingCommenter = (SelfManagingCommenter)commenter;
+      
+      prefix = selfManagingCommenter.getBlockCommentPrefix(
+        selectionModel.getSelectionStart(), 
+        myDocument, 
+        mySelfManagedCommenterData
+      );
+      suffix = selfManagingCommenter.getBlockCommentSuffix(
+        selectionModel.getSelectionEnd(), 
+        myDocument, 
+        mySelfManagedCommenterData
+      );
+    } else {
+      prefix = trim(commenter.getBlockCommentPrefix());
+      suffix = trim(commenter.getBlockCommentSuffix());
+    }
     if (prefix == null || suffix == null) return null;
 
     if (!testSelectionForNonComments()) {
@@ -322,6 +371,16 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
   }
 
   private TextRange insertNestedComments(CharSequence chars, int startOffset, int endOffset, String commentPrefix, String commentSuffix, Commenter commenter) {
+    if (commenter instanceof SelfManagingCommenter) {
+      final SelfManagingCommenter selfManagingCommenter = (SelfManagingCommenter)commenter;
+      return selfManagingCommenter.insertBlockComment(
+        startOffset, 
+        endOffset, 
+        myDocument, 
+        mySelfManagedCommenterData
+      );
+    }
+
     String normalizedPrefix = commentPrefix.trim();
     String normalizedSuffix = commentSuffix.trim();
     IntArrayList nestedCommentPrefixes = new IntArrayList();
@@ -485,6 +544,17 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
   }
 
   public void uncommentRange(TextRange range, String commentPrefix, String commentSuffix, Commenter commenter) {
+    if (commenter instanceof SelfManagingCommenter) {
+      final SelfManagingCommenter selfManagingCommenter = (SelfManagingCommenter)commenter;
+      selfManagingCommenter.uncommentBlockComment(
+        range.getStartOffset(), 
+        range.getEndOffset(), 
+        myDocument, 
+        mySelfManagedCommenterData
+      );
+      return;
+    }
+    
     String text = myDocument.getCharsSequence().subSequence(range.getStartOffset(), range.getEndOffset()).toString();
     int startOffset = range.getStartOffset();
     //boolean endsProperly = CharArrayUtil.regionMatches(chars, range.getEndOffset() - commentSuffix.length(), commentSuffix);

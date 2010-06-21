@@ -15,16 +15,19 @@
  */
 package com.intellij.refactoring;
 
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.containers.HashSet;
 
+import java.util.Collection;
 import java.util.Set;
 
 public class OptimizeImportsRefactoringHelper implements RefactoringHelper<Set<PsiJavaFile>> {
@@ -45,16 +48,54 @@ public class OptimizeImportsRefactoringHelper implements RefactoringHelper<Set<P
   }
 
   public void performOperation(final Project project, final Set<PsiJavaFile> javaFiles) {
-    final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
-    for (PsiJavaFile file : javaFiles) {
-      try {
-        if (file.isValid() && file.getVirtualFile() != null) {
-          styleManager.removeRedundantImports(file);
+    final Set<SmartPsiElementPointer<PsiImportStatementBase>> redundants = new HashSet<SmartPsiElementPointer<PsiImportStatementBase>>();
+    final Runnable findRedundantImports = new Runnable() {
+      public void run() {
+        final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
+        final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+        final SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
+        PsiDocumentManager.getInstance(project).commitAllDocuments();
+        for (PsiJavaFile file : javaFiles) {
+          if (file.isValid()) {
+            final VirtualFile virtualFile = file.getVirtualFile();
+            if (virtualFile != null) {
+              if (progressIndicator != null) {
+                progressIndicator.setText2(virtualFile.getPresentableUrl());
+              }
+              final Collection<PsiImportStatementBase> perFile = styleManager.findRedundantImports(file);
+              if (perFile != null) {
+                for (PsiImportStatementBase redundant : perFile) {
+                  redundants.add(pointerManager.createSmartPsiElementPointer(redundant));
+                }
+              }
+            }
+          }
         }
       }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
+    };
+
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(findRedundantImports, "Removing redundant imports", false, project)) return;
+
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        try {
+          for (final SmartPsiElementPointer<PsiImportStatementBase> pointer : redundants) {
+            final PsiImportStatementBase importStatement = pointer.getElement();
+            if (importStatement != null && importStatement.isValid()) {
+              final PsiJavaCodeReferenceElement ref = importStatement.getImportReference();
+              //Do not remove non-resolving refs
+              if (ref == null || ref.resolve() == null) {
+                continue;
+              }
+
+              importStatement.delete();
+            }
+          }
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
       }
-    }
+    });
   }
 }

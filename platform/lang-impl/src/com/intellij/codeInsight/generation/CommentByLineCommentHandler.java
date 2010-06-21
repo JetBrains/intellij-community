@@ -62,7 +62,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
   private int[] myStartOffsets;
   private int[] myEndOffsets;
   private Commenter[] myCommenters;
-  private Map<SelfManagingCommenter, SelfManagingCommenter.CommenterDataHolder> myCommenterStateMap;
+  private Map<SelfManagingCommenter, CommenterDataHolder> myCommenterStateMap;
   private CodeStyleManager myCodeStyleManager;
 
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
@@ -129,10 +129,10 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
         if (commenter instanceof SelfManagingCommenter) {
           prefix = ((SelfManagingCommenter)commenter).getCommentPrefix(
             myStartLine,
-            myDocument, 
-            myFile, 
+            myDocument,
             myCommenterStateMap.get((SelfManagingCommenter)commenter)
           );
+          if (prefix == null) prefix = ""; // TODO
         } else {
           prefix = commenter.getLineCommentPrefix();
           if (prefix == null) prefix = commenter.getBlockCommentPrefix();
@@ -184,7 +184,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     myStartOffsets = new int[myEndLine - myStartLine + 1];
     myEndOffsets = new int[myEndLine - myStartLine + 1];
     myCommenters = new Commenter[myEndLine - myStartLine + 1];
-    myCommenterStateMap = new THashMap<SelfManagingCommenter, SelfManagingCommenter.CommenterDataHolder>();
+    myCommenterStateMap = new THashMap<SelfManagingCommenter, CommenterDataHolder>();
     CharSequence chars = myDocument.getCharsSequence();
 
     boolean singleline = myStartLine == myEndLine;
@@ -236,9 +236,9 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
       if (commenter instanceof SelfManagingCommenter && 
           myCommenterStateMap.get(commenter) == null) {
         final SelfManagingCommenter selfManagingCommenter = (SelfManagingCommenter)commenter;
-        SelfManagingCommenter.CommenterDataHolder state =
+        CommenterDataHolder state =
           selfManagingCommenter.createLineCommentingState(myStartLine, myEndLine, myDocument, myFile);
-        if (state == null) state = SelfManagingCommenter.CommenterDataHolder.EMPTY_STATE;
+        if (state == null) state = SelfManagingCommenter.EMPTY_STATE;
         myCommenterStateMap.put(selfManagingCommenter, state);
       }
       
@@ -304,7 +304,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
 
     if (commenter instanceof SelfManagingCommenter) {
       final SelfManagingCommenter selfManagingCommenter = (SelfManagingCommenter)commenter;
-      commented = selfManagingCommenter.isCommented(line, lineStart, myDocument, myFile, myCommenterStateMap.get(selfManagingCommenter));
+      commented = selfManagingCommenter.isLineCommented(line, lineStart, myDocument, myCommenterStateMap.get(selfManagingCommenter));
     } else {
       String prefix = commenter.getLineCommentPrefix();
       
@@ -453,7 +453,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     
     if (commenter instanceof SelfManagingCommenter) {
       final SelfManagingCommenter selfManagingCommenter = (SelfManagingCommenter)commenter;
-      selfManagingCommenter.uncommentLine(line, startOffset, myDocument, myFile, myCommenterStateMap.get(selfManagingCommenter));
+      selfManagingCommenter.uncommentLine(line, startOffset, myDocument, myCommenterStateMap.get(selfManagingCommenter));
       return;
     }
     
@@ -516,7 +516,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     if (commenter == null) return;
     if (commenter instanceof SelfManagingCommenter) {
       final SelfManagingCommenter selfManagingCommenter = (SelfManagingCommenter)commenter;
-      selfManagingCommenter.commentLine(line, offset, myDocument, myFile, myCommenterStateMap.get(selfManagingCommenter));
+      selfManagingCommenter.commentLine(line, offset, myDocument, myCommenterStateMap.get(selfManagingCommenter));
       return;
     }
     

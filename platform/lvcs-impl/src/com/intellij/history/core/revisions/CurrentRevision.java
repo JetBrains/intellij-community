@@ -30,11 +30,11 @@ public class CurrentRevision extends Revision {
 
   @Override
   public long getTimestamp() {
-    return getEntry().getTimestamp();
+    return findEntry().getTimestamp();
   }
 
   @Override
-  public Entry getEntry() {
+  public Entry findEntry() {
     return myRoot.getEntry(myPath);
   }
 }

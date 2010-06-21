@@ -31,12 +31,10 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory;
 import org.jetbrains.plugins.groovy.debugger.GroovyPositionManager;
-import org.jetbrains.plugins.groovy.extensions.completion.InsertHandlerRegistry;
 import org.jetbrains.plugins.groovy.lang.GroovyChangeUtilSupport;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
 import org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEditorActionsManager;
 import org.jetbrains.plugins.groovy.lang.groovydoc.completion.GroovyDocCompletionData;
-import org.jetbrains.plugins.groovy.lang.groovydoc.completion.handlers.GroovyDocMethodHandler;
 
 /**
  * Main application component, that loads Groovy language support
@@ -70,9 +68,6 @@ public class GroovyLoader implements ApplicationComponent {
   }
 
   private static void setupCompletion() {
-    InsertHandlerRegistry handlerRegistry = InsertHandlerRegistry.getInstance();
-    handlerRegistry.registerSpecificInsertHandler(new GroovyDocMethodHandler());
-
     CompositeCompletionData compositeCompletionData = new CompositeCompletionData(new GroovyCompletionData(), new GroovyDocCompletionData());
     CompletionUtil.registerCompletionData(GroovyFileType.GROOVY_FILE_TYPE, compositeCompletionData);
   }

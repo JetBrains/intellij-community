@@ -16,32 +16,31 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.navigation.NavigationItem;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiIntersectionType;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrVariableEnhancer;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 /**
  * @author ven
  */
-public class ClosureSyntheticParameter extends LightParameter implements NavigationItem, GrVariableBase {
+public class ClosureSyntheticParameter extends GrLightParameter implements NavigationItem, GrVariableBase {
   private final GrClosableBlock myClosure;
 
-  public ClosureSyntheticParameter(PsiManager manager, GrClosableBlock closure) {
-    super(manager, GrClosableBlock.IT_PARAMETER_NAME, null,
-          JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName("java.lang.Object",
-                                                                                                      closure.getResolveScope()), closure);
+  public ClosureSyntheticParameter(GrClosableBlock closure) {
+    super(GrClosableBlock.IT_PARAMETER_NAME, PsiType.getJavaLangObject(closure.getManager(), closure.getResolveScope()), closure);
     myClosure = closure;
+    setOptional(true);
   }
 
   public PsiElement setName(@NotNull String newName) throws IncorrectOperationException {
@@ -66,14 +65,8 @@ public class ClosureSyntheticParameter extends LightParameter implements Navigat
     return null;
   }
 
-  public void accept(GroovyElementVisitor visitor) {
-  }
-
   public boolean isWritable() {
     return true;
-  }
-
-  public void acceptChildren(GroovyElementVisitor visitor) {
   }
 
   @NotNull
@@ -85,20 +78,9 @@ public class ClosureSyntheticParameter extends LightParameter implements Navigat
     return myClosure;
   }
 
-  @NotNull
-  @Override
-  public PsiType getType() {
-    return TypesUtil.getJavaLangObject(this);
-  }
-
   @Override
   public PsiElement getContext() {
     return myClosure;
-  }
-
-  @Override
-  public boolean isOptional() {
-    return true;
   }
 
   @Override

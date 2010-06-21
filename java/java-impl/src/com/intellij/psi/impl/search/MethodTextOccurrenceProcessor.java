@@ -23,24 +23,32 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
 /**
  * @author peter
  */
-public class MethodTextOccurenceProcessor extends RequestResultProcessor {
+public class MethodTextOccurrenceProcessor extends RequestResultProcessor {
+  private static final PsiReferenceService ourReferenceService = PsiReferenceService.getService();
   private final PsiMethod[] myMethods;
   private final PsiClass myContainingClass;
   private final boolean myStrictSignatureSearch;
 
-  public MethodTextOccurenceProcessor(@NotNull final PsiClass aClass, final boolean strictSignatureSearch, final PsiMethod... methods) {
+  public MethodTextOccurrenceProcessor(@NotNull final PsiClass aClass, final boolean strictSignatureSearch, final PsiMethod... methods) {
     myMethods = methods;
     myContainingClass = aClass;
     myStrictSignatureSearch = strictSignatureSearch;
   }
 
-  @Override
-  protected boolean processReference(Processor<PsiReference> consumer, PsiReference ref) {
+  public boolean processTextOccurrence(PsiElement element, int offsetInElement, final Processor<PsiReference> consumer) {
+    for (PsiReference ref : ourReferenceService.getReferences(element, new PsiReferenceService.Hints(myMethods[0], offsetInElement))) {
+      if (ReferenceRange.containsOffsetInElement(ref, offsetInElement) && !processReference(consumer, ref)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+
+  private boolean processReference(Processor<PsiReference> consumer, PsiReference ref) {
     for (PsiMethod method : myMethods) {
       if (!method.isValid()) {
         continue;
@@ -83,7 +91,4 @@ public class MethodTextOccurenceProcessor extends RequestResultProcessor {
     return true;
   }
 
-  protected List<PsiReference> getReferencesInElement(PsiElement element, int offsetInElement) {
-    return PsiReferenceService.getService().getReferences(element, new PsiReferenceService.Hints(myMethods[0], offsetInElement));
-  }
 }

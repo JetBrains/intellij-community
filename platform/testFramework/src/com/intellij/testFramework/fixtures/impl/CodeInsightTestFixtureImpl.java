@@ -967,23 +967,25 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         }
       }.execute();
     }
+    final String fileName = "aaa." + extension;
+    return configureByText(fileName, text);
+  }
+
+  public PsiFile configureByText(String fileName, @NonNls String text) throws IOException {
+    assertInitialized();
     final VirtualFile vFile;
     if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
       final VirtualFile root = LightPlatformTestCase.getSourceRoot();
       root.refresh(false, false);
-      vFile = root.findOrCreateChildData(this, "aaa." + extension);
+      vFile = root.findOrCreateChildData(this, fileName);
     }
     else{
-      final File tempFile = File.createTempFile("aaa", "." + extension, new File(getTempDirPath()));
+      final File tempFile = File.createTempFile(StringUtil.getPackageName(fileName), "." + StringUtil.getShortName(fileName), new File(getTempDirPath()));
       vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile);
     }
     VfsUtil.saveText(vFile, text);
     configureInner(vFile, SelectionAndCaretMarkupLoader.fromFile(vFile, getProject()));
     return myFile;
-  }
-
-  public PsiFile configureByText(String fileName, @NonNls String text) throws IOException {
-    return configureByText(FileTypeManager.getInstance().getFileTypeByFileName(fileName), text);
   }
 
   public Document getDocument(final PsiFile file) {

@@ -24,8 +24,8 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,8 +38,6 @@ public abstract class UndoRedoAction extends DumbAwareAction {
     DataContext dataContext = e.getDataContext();
     FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(dataContext);
     UndoManager undoManager = getUndoManager(editor, dataContext);
-    Project project = getProject(editor, dataContext);
-
     perform(editor, undoManager);
   }
 
@@ -58,15 +56,12 @@ public abstract class UndoRedoAction extends DumbAwareAction {
     }
 
     UndoManager undoManager = getUndoManager(editor, dataContext);
-    boolean available = isAvailable(editor, undoManager);
-    presentation.setEnabled(available);
-    String actionName = available ? formatAction(editor, undoManager) : null;
-    if (actionName == null) actionName = "";
-    String shortActionName = StringUtil.first(actionName, 30, true);
-    if (actionName.length() == 0) actionName = ActionsBundle.message(getActionDescriptionEmptyMessageKey());
+    presentation.setEnabled(isAvailable(editor, undoManager));
 
-    presentation.setText(ActionsBundle.message(getActionMessageKey(), shortActionName).trim());
-    presentation.setDescription(ActionsBundle.message(getActionDescriptionMessageKey(), actionName).trim());
+    Pair<String, String> pair = getActionNameAndDescription(editor, undoManager);
+
+    presentation.setText(pair.first);
+    presentation.setDescription(pair.second);
   }
 
   private static UndoManager getUndoManager(FileEditor editor, DataContext dataContext) {
@@ -85,16 +80,9 @@ public abstract class UndoRedoAction extends DumbAwareAction {
     return project;
   }
 
-  protected abstract boolean isAvailable(FileEditor editor, UndoManager undoManager);
-
   protected abstract void perform(FileEditor editor, UndoManager undoManager);
 
-  protected abstract String getActionMessageKey();
+  protected abstract boolean isAvailable(FileEditor editor, UndoManager undoManager);
 
-  protected abstract String getActionDescriptionMessageKey();
-
-  protected abstract String getActionDescriptionEmptyMessageKey();
-
-  @Nullable
-  protected abstract String formatAction(FileEditor editor, UndoManager undoManager);
+  protected abstract Pair<String, String> getActionNameAndDescription(FileEditor editor, UndoManager undoManager);
 }

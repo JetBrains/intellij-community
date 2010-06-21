@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiElementBase;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 public abstract class LightElement extends PsiElementBase {
   protected final PsiManager myManager;
   private final Language myLanguage;
+  protected volatile PsiElement myNavigationElement = this;
 
   protected LightElement(PsiManager manager, final Language language) {
     myManager = manager;
@@ -94,7 +96,11 @@ public abstract class LightElement extends PsiElementBase {
     return -1;
   }
 
-  public boolean isValid(){
+  public boolean isValid() {
+    if (myNavigationElement != this) {
+      return myNavigationElement.isValid();
+    }
+
     return true;
   }
 
@@ -139,4 +145,29 @@ public abstract class LightElement extends PsiElementBase {
   public ASTNode getNode() {
     return null;
   }
+
+  @Override
+  public String getText() {
+    return null;
+  }
+
+  @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+  }
+
+  @Override
+  public PsiElement copy() {
+    return null;
+  }
+
+  @NotNull
+  @Override
+  public PsiElement getNavigationElement() {
+    return myNavigationElement;
+  }
+  public LightElement setNavigationElement(PsiElement navigationElement) {
+    myNavigationElement = navigationElement;
+    return this;
+  }
+  
 }

@@ -33,10 +33,6 @@ public class DirectoryChange extends Change {
     return myModel;
   }
 
-  public FileDifferenceModel getFileDifferenceModel() {
-    return myModel.getFileDifferenceModel();
-  }
-
   public boolean canShowFileDifference() {
     return myModel.canShowFileDifference();
   }

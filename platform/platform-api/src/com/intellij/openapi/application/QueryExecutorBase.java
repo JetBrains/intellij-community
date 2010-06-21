@@ -1,8 +1,9 @@
 package com.intellij.openapi.application;
 
-import com.intellij.openapi.util.Ref;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author peter
@@ -20,7 +21,7 @@ public abstract class QueryExecutorBase<Result, Params> implements QueryExecutor
 
   @Override
   public final boolean execute(final Params queryParameters, final Processor<Result> consumer) {
-    final Ref<Boolean> toContinue = Ref.create(true);
+    final AtomicBoolean toContinue = new AtomicBoolean(true);
     final Processor<Result> wrapper = new Processor<Result>() {
       @Override
       public boolean process(Result result) {
@@ -28,9 +29,11 @@ public abstract class QueryExecutorBase<Result, Params> implements QueryExecutor
           return false;
         }
 
-        final boolean wantMore = consumer.process(result);
-        toContinue.set(wantMore);
-        return wantMore;
+        if (!consumer.process(result)) {
+          toContinue.set(false);
+          return false;
+        }
+        return true;
       }
     };
 

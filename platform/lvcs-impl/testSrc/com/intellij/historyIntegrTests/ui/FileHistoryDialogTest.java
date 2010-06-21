@@ -50,7 +50,7 @@ public class FileHistoryDialogTest extends LocalHistoryUITestCase {
 
     f.setBinaryContent(new byte[0]); // to create current content to skip.
 
-    FileHistoryDialogModel m = createFileModelAndSelectRevisions(f, 1, 3);
+    FileHistoryDialogModel m = createFileModelAndSelectRevisions(f, 0, 2);
     assertEquals(FileUtil.toSystemDependentName(f.getPath()), m.getDifferenceModel().getTitle());
 
     assertEquals("03.02.01 12:00 - old.txt", m.getDifferenceModel().getLeftTitle(new NullRevisionsProgress()));
@@ -63,7 +63,7 @@ public class FileHistoryDialogTest extends LocalHistoryUITestCase {
     f.setBinaryContent("new".getBytes());
     f.setBinaryContent("current".getBytes());
 
-    FileHistoryDialogModel m = createFileModelAndSelectRevisions(f, 1, 2);
+    FileHistoryDialogModel m = createFileModelAndSelectRevisions(f, 0, 1);
 
     assertDiffContents("old", "new", m);
   }
@@ -73,7 +73,7 @@ public class FileHistoryDialogTest extends LocalHistoryUITestCase {
     f.setBinaryContent("old".getBytes());
     f.setBinaryContent("new".getBytes());
 
-    FileHistoryDialogModel m = createFileModelAndSelectRevisions(f, 1, 1);
+    FileHistoryDialogModel m = createFileModelAndSelectRevisions(f, 0, 0);
 
     assertDiffContents("old", "new", m);
   }
@@ -83,7 +83,7 @@ public class FileHistoryDialogTest extends LocalHistoryUITestCase {
     f.setBinaryContent("old".getBytes());
     f.setBinaryContent("current".getBytes());
 
-    FileHistoryDialogModel m = createFileModelAndSelectRevisions(f, 0, 1);
+    FileHistoryDialogModel m = createFileModelAndSelectRevisions(f, 0, 0);
 
     assertDiffContents("old", "current", m);
     assertEquals(DocumentContent.class, getRightDiffContent(m).getClass());
@@ -95,7 +95,7 @@ public class FileHistoryDialogTest extends LocalHistoryUITestCase {
     f.rename(null, "new.txt");
     dir.rename(null, "newDir");
 
-    FileHistoryDialogModel m = createFileModelAndSelectRevisions(f, 2, 2);
+    FileHistoryDialogModel m = createFileModelAndSelectRevisions(f, 1, 1);
     m.createReverter().revert();
 
     assertEquals("old.txt", f.getName());

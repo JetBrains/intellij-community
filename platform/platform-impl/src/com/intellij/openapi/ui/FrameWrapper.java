@@ -28,6 +28,8 @@ import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.HashMap;
@@ -104,7 +106,7 @@ public class FrameWrapper implements Disposable {
     frame.getContentPane().add(myComponent, BorderLayout.CENTER);
     frame.setTitle(myTitle);
     frame.setIconImage(myImage);
-    loadFrameState(myDimensionKey, frame);
+    loadFrameState(myProject, myDimensionKey, frame);
 
     myFocusWatcher = new FocusWatcher() {
       protected void focusLostImpl(final FocusEvent e) {
@@ -150,7 +152,7 @@ public class FrameWrapper implements Disposable {
 
   public JFrame getFrame() {
     assert !isDisposed : "Already disposed!";
-    
+
     if (myFrame == null) {
       myFrame = new MyJFrame();
     }
@@ -173,7 +175,7 @@ public class FrameWrapper implements Disposable {
     myImage = image;
   }
 
-  private static void loadFrameState(String dimensionKey, JFrame frame) {
+  private static void loadFrameState(Project project, String dimensionKey, JFrame frame) {
     final Point location;
     final Dimension size;
     final int extendedState;
@@ -189,17 +191,14 @@ public class FrameWrapper implements Disposable {
       extendedState = dimensionService.getExtendedState(dimensionKey);
     }
 
-    if (size != null) {
-      if (location != null) frame.setLocation(location);
+    if (size != null && location != null) {
+      frame.setLocation(location);
       frame.setSize(size);
       frame.getRootPane().revalidate();
     }
     else {
-      Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
       frame.pack();
-      int height = Math.min(screenSize.height - 40, frame.getHeight());
-      int width = Math.min(screenSize.width - 20, frame.getWidth());
-      frame.setBounds(10, 10, width, height);
+      frame.setBounds(WindowManagerEx.getInstanceEx().getIdeFrame(project).suggestChildFrameBounds());
     }
 
     if (extendedState == Frame.ICONIFIED || extendedState == Frame.MAXIMIZED_BOTH) {
