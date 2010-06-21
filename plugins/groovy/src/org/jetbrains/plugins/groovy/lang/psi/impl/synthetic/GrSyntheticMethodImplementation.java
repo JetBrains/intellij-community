@@ -15,73 +15,27 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.ElementPresentationUtil;
-import com.intellij.psi.impl.cache.RecordUtil;
-import com.intellij.ui.RowIcon;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.plugins.groovy.GroovyIcons;
-
-import javax.swing.*;
-import java.lang.reflect.Modifier;
-import java.util.Set;
 
 /**
  * @author peter
  */
 public class GrSyntheticMethodImplementation extends GrSyntheticMethod {
   private final PsiMethod myInterfaceMethod;
-  private final PsiClass myContainingClass;
 
   public GrSyntheticMethodImplementation(PsiMethod interfaceMethod, PsiClass containingClass) {
     super(interfaceMethod.getManager(), interfaceMethod.getName());
     myInterfaceMethod = interfaceMethod;
-    myContainingClass = containingClass;
+    setContainingClass(containingClass);
+    setNavigationElement(interfaceMethod);
+    for (PsiParameter psiParameter : myInterfaceMethod.getParameterList().getParameters()) {
+      addParameter(psiParameter);
+    }
+    setReturnType(myInterfaceMethod.getReturnType());
+    setModifiers(PsiModifier.PUBLIC);
+    setBaseIcon(GroovyIcons.METHOD);
   }
-
-  protected GrLightParameter[] getParameters() {
-    return ContainerUtil.map2Array(myInterfaceMethod.getParameterList().getParameters(), GrLightParameter.class, new Function<PsiParameter, GrLightParameter>() {
-      public GrLightParameter fun(PsiParameter psiParameter) {
-        return new GrLightParameter(StringUtil.notNullize(psiParameter.getName()), psiParameter.getType(), myInterfaceMethod);
-      }
-    });
-  }
-
-  protected Set<String> getModifiers() {
-    return RecordUtil.getModifierSet(Modifier.PUBLIC);
-  }
-
-  public PsiElement copy() {
-    return new GrSyntheticMethodImplementation(myInterfaceMethod, myContainingClass);
-  }
-
-  public PsiType getReturnType() {
-    return myInterfaceMethod.getReturnType();
-  }
-
-  public PsiIdentifier getNameIdentifier() {
-    return myInterfaceMethod.getNameIdentifier();
-  }
-
-  public PsiClass getContainingClass() {
-    return myContainingClass;
-  }
-
-  public PsiFile getContainingFile() {
-    return myContainingClass.getContainingFile();
-  }
-
-  public int getTextOffset() {
-    return myInterfaceMethod.getTextOffset();
-  }
-
-  @Override
-  public PsiElement getNavigationElement() {
-    return myInterfaceMethod;
-  }
-
 
   public String toString() {
     return "SyntheticMethodImplementation";
@@ -92,9 +46,4 @@ public class GrSyntheticMethodImplementation extends GrSyntheticMethod {
     return myInterfaceMethod;
   }
 
-  @Override
-  public Icon getIcon(int flags) {
-    RowIcon baseIcon = createLayeredIcon(GroovyIcons.METHOD, ElementPresentationUtil.getFlags(this, false));
-    return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
-  }
 }

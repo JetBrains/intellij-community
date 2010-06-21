@@ -17,8 +17,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.cache.ModifierFlags;
-import com.intellij.psi.impl.cache.RecordUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
@@ -26,9 +24,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-
-import javax.swing.*;
-import java.util.Set;
 
 /**
  * @author ven
@@ -43,12 +38,29 @@ public class GrAccessorMethodImpl extends GrSyntheticMethod implements GrAccesso
     super(property.getManager(), name);
     myProperty = property;
     myIsSetter = isSetter;
-  }
 
-  @Nullable
-  public PsiType getReturnType() {
-    if (myIsSetter) return PsiType.VOID;
-    return myProperty.getType();
+    if (myIsSetter) {
+      PsiType type = myProperty.getDeclaredType();
+      if (type == null) {
+        type = TypesUtil.getJavaLangObject(myProperty);
+      }
+      addParameter(myProperty.getName(), type);
+    }
+
+    setReturnType(myIsSetter ? PsiType.VOID : myProperty.getType());
+
+    addModifier(PsiModifier.PUBLIC);
+    if (myProperty.hasModifierProperty(PsiModifier.STATIC)) {
+      addModifier(PsiModifier.STATIC);
+    }
+    if (myProperty.hasModifierProperty(PsiModifier.FINAL)) {
+      addModifier(PsiModifier.FINAL);
+    }
+
+    setNavigationElement(property);
+    setBaseIcon(GroovyIcons.PROPERTY);
+
+    setContainingClass(myProperty.getContainingClass());
   }
 
   @Nullable
@@ -57,41 +69,6 @@ public class GrAccessorMethodImpl extends GrSyntheticMethod implements GrAccesso
     return myProperty.getTypeGroovy();
   }
 
-
-  protected GrLightParameter[] getParameters() {
-    if (myIsSetter) {
-      PsiType type = myProperty.getDeclaredType();
-      if (type == null) {
-        type = TypesUtil.getJavaLangObject(myProperty);
-      }
-      //return LightParameter.EMPTY_ARRAY;
-      return new GrLightParameter[]{new GrLightParameter(myProperty.getName(), type, this)};
-    }
-
-    return GrLightParameter.EMPTY_ARRAY;
-  }
-
-  @Nullable
-  public PsiIdentifier getNameIdentifier() {
-    return myProperty.getNameIdentifier();
-  }
-
-  protected Set<String> getModifiers() {
-    int modifiers = ModifierFlags.PUBLIC_MASK;
-    final PsiModifierList original = myProperty.getModifierList();
-    assert original != null;
-    if (original.hasExplicitModifier(PsiModifier.STATIC)) modifiers |= ModifierFlags.STATIC_MASK;
-    if (original.hasExplicitModifier(PsiModifier.FINAL)) modifiers |= ModifierFlags.FINAL_MASK;
-    return RecordUtil.getModifierSet(modifiers);
-  }
-
-  public PsiClass getContainingClass() {
-    return myProperty.getContainingClass();
-  }
-
-  public int getTextOffset() {
-    return myProperty.getTextOffset();
-  }
 
   public PsiElement copy() {
     //return new GrAccessorMethodImpl(myProperty, myIsSetter, getName());
@@ -107,22 +84,8 @@ public class GrAccessorMethodImpl extends GrSyntheticMethod implements GrAccesso
     return GroovyPsiElementFactory.getInstance(getProject()).createMethodFromText(modifiers+" "+getName()+params+"{}");
   }
 
-  public PsiFile getContainingFile() {
-    return myProperty.getContainingFile();
-  }
-
-  @NotNull
-  @Override
-  public PsiElement getNavigationElement() {
-    return myProperty;
-  }
-
   public String toString() {
     return "AccessorMethod";
-  }
-
-  public boolean isValid() {
-    return myProperty.isValid();
   }
 
   @NotNull
@@ -133,11 +96,6 @@ public class GrAccessorMethodImpl extends GrSyntheticMethod implements GrAccesso
   @Override
   public PsiElement getContext() {
     return myProperty;
-  }
-
-  @Override
-  public Icon getIcon(int flags) {
-    return GroovyIcons.PROPERTY;
   }
 
   @Override

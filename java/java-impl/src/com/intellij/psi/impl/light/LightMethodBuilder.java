@@ -18,6 +18,7 @@ package com.intellij.psi.impl.light;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -41,10 +42,11 @@ import java.util.List;
  */
 public class LightMethodBuilder extends LightElement implements PsiMethod {
   private final String myName;
-  private volatile PsiType myReturnType;
+  private volatile Computable<PsiType> myReturnType;
   private volatile LightModifierList myModifierList;
   private volatile LightParameterListBuilder myParameterList;
   private volatile Icon myBaseIcon;
+  private volatile PsiClass myContainingClass;
 
   public LightMethodBuilder(PsiManager manager, String name) {
     this(manager, StdLanguages.JAVA, name);
@@ -108,18 +110,39 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
     return myModifierList;
   }
 
+  public LightMethodBuilder addModifiers(String... modifiers) {
+    for (String modifier : modifiers) {
+      addModifier(modifier);
+    }
+    return this;
+  }
+
+  public void addModifier(String modifier) {
+    myModifierList.addModifier(modifier);
+  }
+
   public LightMethodBuilder setModifiers(String... modifiers) {
-    myModifierList = new LightModifierList(getManager(), getLanguage(), modifiers);
+    myModifierList.clearModifiers();
+    addModifiers(modifiers);
     return this;
   }
 
   public PsiType getReturnType() {
-    return myReturnType;
+    return myReturnType == null ? null : myReturnType.compute();
   }
 
-  public LightMethodBuilder setReturnType(PsiType returnType) {
+  public LightMethodBuilder setReturnType(Computable<PsiType> returnType) {
     myReturnType = returnType;
     return this;
+  }
+
+  public LightMethodBuilder setReturnType(final PsiType returnType) {
+    return setReturnType(new Computable<PsiType>() {
+      @Override
+      public PsiType compute() {
+        return returnType;
+      }
+    });
   }
 
   public PsiTypeElement getReturnTypeElement() {
@@ -131,7 +154,7 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
     return myParameterList;
   }
 
-  public LightMethodBuilder addParameter(LightParameter parameter) {
+  public LightMethodBuilder addParameter(PsiParameter parameter) {
     myParameterList.addParameter(parameter);
     return this;
   }
@@ -214,8 +237,12 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
   }
 
   public PsiClass getContainingClass() {
-    //todo
-    return null;
+    return myContainingClass;
+  }
+
+  public LightMethodBuilder setContainingClass(PsiClass containingClass) {
+    myContainingClass = containingClass;
+    return this;
   }
 
   public String toString() {
@@ -242,6 +269,12 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
   @NotNull
   public SearchScope getUseScope() {
     return PsiImplUtil.getMemberUseScope(this);
+  }
+
+  @Override
+  public PsiFile getContainingFile() {
+    final PsiClass containingClass = getContainingClass();
+    return containingClass == null ? null : containingClass.getContainingFile();
   }
 
   @Override
