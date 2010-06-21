@@ -65,7 +65,7 @@ public class GrAccessorMethodImpl extends GrSyntheticMethod implements GrAccesso
         type = TypesUtil.getJavaLangObject(myProperty);
       }
       //return LightParameter.EMPTY_ARRAY;
-      return new GrLightParameter[]{new GrLightParameter(getManager(), myProperty.getName(), null, type, this)};
+      return new GrLightParameter[]{new GrLightParameter(myProperty.getName(), type, this)};
     }
 
     return GrLightParameter.EMPTY_ARRAY;

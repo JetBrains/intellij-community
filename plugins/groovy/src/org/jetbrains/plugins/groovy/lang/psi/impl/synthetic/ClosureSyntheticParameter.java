@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIntersectionType;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -38,8 +37,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 public class ClosureSyntheticParameter extends GrLightParameter implements NavigationItem, GrVariableBase {
   private final GrClosableBlock myClosure;
 
-  public ClosureSyntheticParameter(PsiManager manager, GrClosableBlock closure) {
-    super(manager, GrClosableBlock.IT_PARAMETER_NAME, null, PsiType.getJavaLangObject(manager, closure.getResolveScope()), closure);
+  public ClosureSyntheticParameter(GrClosableBlock closure) {
+    super(GrClosableBlock.IT_PARAMETER_NAME, PsiType.getJavaLangObject(closure.getManager(), closure.getResolveScope()), closure);
     myClosure = closure;
     setOptional(true);
   }

@@ -81,7 +81,7 @@ public class AntTasksProvider {
                 addParameter("args", CommonClassNames.JAVA_UTIL_MAP).
                 setNavigationElement(inheritor).setBaseIcon(GantIcons.ANT_TASK);
             final PsiType closureType = JavaPsiFacade.getElementFactory(project).createTypeFromText(GrClosableBlock.GROOVY_LANG_CLOSURE, taskMethod);
-            final GrLightParameter bodyParameter = new GrLightParameter(taskMethod.getManager(), "body", null, closureType, taskMethod);
+            final GrLightParameter bodyParameter = new GrLightParameter("body", closureType, taskMethod);
             classNames.add(taskMethod.addParameter(bodyParameter.setOptional(true)));
           }
         }

@@ -44,7 +44,7 @@ public class GrSyntheticMethodImplementation extends GrSyntheticMethod {
   protected GrLightParameter[] getParameters() {
     return ContainerUtil.map2Array(myInterfaceMethod.getParameterList().getParameters(), GrLightParameter.class, new Function<PsiParameter, GrLightParameter>() {
       public GrLightParameter fun(PsiParameter psiParameter) {
-        return new GrLightParameter(myManager, StringUtil.notNullize(psiParameter.getName()), psiParameter.getNameIdentifier(), psiParameter.getType(), myInterfaceMethod);
+        return new GrLightParameter(StringUtil.notNullize(psiParameter.getName()), psiParameter.getType(), myInterfaceMethod);
       }
     });
   }

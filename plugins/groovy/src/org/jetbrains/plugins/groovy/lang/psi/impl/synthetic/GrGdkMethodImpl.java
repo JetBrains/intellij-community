@@ -101,7 +101,7 @@ public class GrGdkMethodImpl extends LightMethod implements GrGdkMethod {
         for (int i = 0; i < result.length; i++) {
           final PsiParameter parameter = originalParameters[i + 1];
           LOG.assertTrue(parameter.isValid());
-          result[i] = new GrLightParameter(manager, parmNames[i], null, parameter.getType(), GrGdkMethodImpl.this);
+          result[i] = new GrLightParameter(parmNames[i], parameter.getType(), GrGdkMethodImpl.this);
 
         }
         return result;
