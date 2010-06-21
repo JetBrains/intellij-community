@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -147,22 +147,18 @@ public abstract class BaseRefactoringProcessor {
 
     final Runnable findUsagesRunnable = new Runnable() {
       public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            try {
-              refUsages.set(findUsages());
-            }
-            catch (UnknownReferenceTypeException e) {
-              refErrorLanguage.set(e.getElementLanguage());
-            }
-            catch (ProcessCanceledException e) {
-              refProcessCanceled.set(Boolean.TRUE);
-            }
-            catch (IndexNotReadyException e) {
-              dumbModeOccured.set(Boolean.TRUE);
-            }
-          }
-        });
+        try {
+          refUsages.set(findUsages());
+        }
+        catch (UnknownReferenceTypeException e) {
+          refErrorLanguage.set(e.getElementLanguage());
+        }
+        catch (ProcessCanceledException e) {
+          refProcessCanceled.set(Boolean.TRUE);
+        }
+        catch (IndexNotReadyException e) {
+          dumbModeOccured.set(Boolean.TRUE);
+        }
       }
     };
 
@@ -259,13 +255,9 @@ public abstract class BaseRefactoringProcessor {
   protected void execute(final UsageInfo[] usages) {
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            Collection<UsageInfo> usageInfos = new HashSet<UsageInfo>(Arrays.asList(usages));
-            doRefactoring(usageInfos);
-            if (isGlobalUndoAction()) CommandProcessor.getInstance().markCurrentCommandAsGlobal(myProject);
-          }
-        });
+        Collection<UsageInfo> usageInfos = new HashSet<UsageInfo>(Arrays.asList(usages));
+        doRefactoring(usageInfos);
+        if (isGlobalUndoAction()) CommandProcessor.getInstance().markCurrentCommandAsGlobal(myProject);
       }
     }, getCommandName(), null, getUndoConfirmationPolicy());
   }
@@ -324,14 +316,10 @@ public abstract class BaseRefactoringProcessor {
 
     final Runnable refactoringRunnable = new Runnable() {
       public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            Set<UsageInfo> usagesToRefactor = getUsageInfosToRefactor(usageView);
-            if (ensureElementsWritable(usagesToRefactor.toArray(new UsageInfo[usagesToRefactor.size()]), viewDescriptor)) {
-              doRefactoring(usagesToRefactor);
-            }
-          }
-        });
+        Set<UsageInfo> usagesToRefactor = getUsageInfosToRefactor(usageView);
+        if (ensureElementsWritable(usagesToRefactor.toArray(new UsageInfo[usagesToRefactor.size()]), viewDescriptor)) {
+          doRefactoring(usagesToRefactor);
+        }
       }
     };
 
@@ -354,9 +342,7 @@ public abstract class BaseRefactoringProcessor {
   }
 
   private void doRefactoring(@NotNull Collection<UsageInfo> usageInfoSet) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
-
-    for (Iterator<UsageInfo> iterator = usageInfoSet.iterator(); iterator.hasNext();) {
+   for (Iterator<UsageInfo> iterator = usageInfoSet.iterator(); iterator.hasNext();) {
       UsageInfo usageInfo = iterator.next();
       final PsiElement element = usageInfo.getElement();
       if (element == null || !element.isWritable()) {
@@ -371,17 +357,34 @@ public abstract class BaseRefactoringProcessor {
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
       RefactoringListenerManagerImpl listenerManager = (RefactoringListenerManagerImpl)RefactoringListenerManager.getInstance(myProject);
       myTransaction = listenerManager.startTransaction();
-      Map<RefactoringHelper, Object> preparedData = new HashMap<RefactoringHelper, Object>();
-      for(RefactoringHelper helper: Extensions.getExtensions(RefactoringHelper.EP_NAME)) {
-        preparedData.put(helper, helper.prepareOperation(writableUsageInfos));
-      }
-      performRefactoring(writableUsageInfos);
+      final Map<RefactoringHelper, Object> preparedData = new HashMap<RefactoringHelper, Object>();
+      final Runnable prepareHelpersRunnable = new Runnable() {
+        public void run() {
+          for (RefactoringHelper helper : Extensions.getExtensions(RefactoringHelper.EP_NAME)) {
+            preparedData.put(helper, helper.prepareOperation(writableUsageInfos));
+          }
+        }
+      };
+
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(prepareHelpersRunnable, "Prepare ...", false, myProject);
+
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          ApplicationManager.getApplication().assertWriteAccessAllowed();
+          performRefactoring(writableUsageInfos);
+        }
+      });
+
       for(Map.Entry<RefactoringHelper, Object> e: preparedData.entrySet()) {
         //noinspection unchecked
         e.getKey().performOperation(myProject, e.getValue());
       }
       myTransaction.commit();
-      performPsiSpoilingRefactoring();
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          performPsiSpoilingRefactoring();
+        }
+      });
     }
     finally {
       action.finish();

@@ -109,10 +109,26 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   }
 
   public void removeRedundantImports(@NotNull final PsiJavaFile file) throws IncorrectOperationException {
+    final Collection<PsiImportStatementBase> redundants = findRedundantImports(file);
+    if (redundants == null) return;
+
+    for (final PsiImportStatementBase importStatement : redundants) {
+      final PsiJavaCodeReferenceElement ref = importStatement.getImportReference();
+      //Do not remove non-resolving refs
+      if (ref == null || ref.resolve() == null) {
+        continue;
+      }
+
+      importStatement.delete();
+    }
+  }
+
+  @Nullable
+  public Collection<PsiImportStatementBase> findRedundantImports(final PsiJavaFile file) {
     final PsiImportList importList = file.getImportList();
-    if (importList == null) return;
+    if (importList == null) return null;
     final PsiImportStatementBase[] imports = importList.getAllImportStatements();
-    if( imports.length == 0 ) return;
+    if( imports.length == 0 ) return null;
 
     Set<PsiImportStatementBase> allImports = new THashSet<PsiImportStatementBase>(Arrays.asList(imports));
     final Collection<PsiImportStatementBase> redundants;
@@ -158,16 +174,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
         });
       }
     }
-
-    for (final PsiImportStatementBase importStatement : redundants) {
-      final PsiJavaCodeReferenceElement ref = importStatement.getImportReference();
-      //Do not remove non-resolving refs
-      if (ref == null || ref.resolve() == null) {
-        continue;
-      }
-
-      importStatement.delete();
-    }
+    return redundants;
   }
 
   public int findEntryIndex(@NotNull PsiImportStatementBase statement) {

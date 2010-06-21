@@ -39,10 +39,17 @@ public class ChangeContextUtil {
   private ChangeContextUtil() {}
 
   public static void encodeContextInfo(PsiElement scope, boolean includeRefClasses) {
-    encodeContextInfo(scope, scope, includeRefClasses);
+    encodeContextInfo(scope, scope, includeRefClasses, true);
   }
 
-  private static void encodeContextInfo(PsiElement scope, PsiElement topLevelScope, boolean includeRefClasses) {
+  public static void encodeContextInfo(PsiElement scope, boolean includeRefClasses, boolean canChangeQualifier) {
+    encodeContextInfo(scope, scope, includeRefClasses, true);
+  }
+
+  private static void encodeContextInfo(PsiElement scope,
+                                        PsiElement topLevelScope,
+                                        boolean includeRefClasses,
+                                        boolean canChangeQualifier) {
     if (scope instanceof PsiThisExpression){
       scope.putCopyableUserData(ENCODED_KEY, "");
 
@@ -84,7 +91,7 @@ public class ChangeContextUtil {
           }
         }
       }
-      else{
+      else if (canChangeQualifier) {
         refExpr.putCopyableUserData(CAN_REMOVE_QUALIFIER_KEY, canRemoveQualifier(refExpr) ? Boolean.TRUE : Boolean.FALSE);
       }
     }
@@ -101,7 +108,7 @@ public class ChangeContextUtil {
     }
 
     for(PsiElement child = scope.getFirstChild(); child != null; child = child.getNextSibling()){
-      encodeContextInfo(child, topLevelScope, includeRefClasses);
+      encodeContextInfo(child, topLevelScope, includeRefClasses, canChangeQualifier);
     }
   }
 
