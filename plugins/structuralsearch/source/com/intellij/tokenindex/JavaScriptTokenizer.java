@@ -10,10 +10,6 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
 /**
  * @author Eugene.Kudelevsky
  */
@@ -22,25 +18,31 @@ public class JavaScriptTokenizer implements Tokenizer {
   private static final byte IDENTIFIER_TYPE = 1;
   private static final byte PARAM_LIST_TYPE = 2;
 
-  @NotNull
-  public List<Token> tokenize(Collection<? extends PsiElement> roots) {
-    ArrayList<Token> tokens = new ArrayList<Token>();
-    for (PsiElement root : roots) {
-      root.accept(new MyVisitor(tokens));
-    }
-    return tokens;
+  private final MyVisitor myVisitor = new MyVisitor();
+
+  public boolean visit(@NotNull PsiElement node, RecursiveTokenizingVisitor globalVisitor) {
+    myVisitor.myGlobalVisitor = globalVisitor;
+    myVisitor.myToVisitChildren = false;
+    node.accept(myVisitor);
+    return myVisitor.myToVisitChildren;
   }
 
-  private static class MyVisitor extends JSRecursiveWalkingElementVisitor {
-    private final List<Token> myTokens;
-
-    private MyVisitor(List<Token> tokens) {
-      myTokens = tokens;
+  public void elementFinished(@NotNull PsiElement element, RecursiveTokenizingVisitor globalVisitor) {
+    if (element instanceof JSStatement) {
+      PsiElement parent = element.getParent();
+      if (parent instanceof JSIfStatement || parent instanceof JSLoopStatement) {
+        globalVisitor.addToken(new IndentToken(-1, globalVisitor.getBaseOffset() + element.getTextRange().getEndOffset()));
+      }
     }
+  }
+
+  private static class MyVisitor extends JSElementVisitor {
+    private RecursiveTokenizingVisitor myGlobalVisitor;
+    private boolean myToVisitChildren;
 
     @Override
     public void visitElement(PsiElement element) {
-      super.visitElement(element);
+      myToVisitChildren = true;
       if (element instanceof LeafPsiElement && !(element instanceof PsiWhiteSpace) && !(element instanceof PsiComment)) {
         visitLeafElement((LeafPsiElement)element);
       }
@@ -49,23 +51,15 @@ public class JavaScriptTokenizer implements Tokenizer {
     @Override
     public void visitJSExpression(JSExpression expression) {
       TextRange range = expression.getTextRange();
-      myTokens.add(new AnonymToken(EXPRESSION_TYPE, range.getStartOffset(), range.getEndOffset()));
-    }
-
-    @Override
-    protected void elementFinished(@NotNull PsiElement element) {
-      if (element instanceof JSStatement) {
-        PsiElement parent = element.getParent();
-        if (parent instanceof JSIfStatement || parent instanceof JSLoopStatement) {
-          myTokens.add(new IndentToken(-1, element.getTextRange().getEndOffset()));
-        }
-      }
+      myGlobalVisitor.getTokens().add(new AnonymToken(EXPRESSION_TYPE, myGlobalVisitor.getBaseOffset() + range.getStartOffset(),
+                                                      myGlobalVisitor.getBaseOffset() + range.getEndOffset()));
     }
 
     @Override
     public void visitJSParameterList(JSParameterList node) {
       TextRange range = node.getTextRange();
-      myTokens.add(new AnonymToken(PARAM_LIST_TYPE, range.getStartOffset(), range.getEndOffset()));
+      myGlobalVisitor.addToken(new AnonymToken(PARAM_LIST_TYPE, myGlobalVisitor.getBaseOffset() + range.getStartOffset(),
+                                               myGlobalVisitor.getBaseOffset() + range.getEndOffset()));
     }
 
     private void visitLeafElement(LeafPsiElement element) {
@@ -75,7 +69,8 @@ public class JavaScriptTokenizer implements Tokenizer {
       IElementType type = element.getElementType();
       if (type == JSTokenTypes.IDENTIFIER) {
         TextRange range = element.getTextRange();
-        myTokens.add(new AnonymToken(IDENTIFIER_TYPE, range.getStartOffset(), range.getEndOffset()));
+        myGlobalVisitor.addToken(new AnonymToken(IDENTIFIER_TYPE, myGlobalVisitor.getBaseOffset() + range.getStartOffset(),
+                                                 myGlobalVisitor.getBaseOffset() + range.getEndOffset()));
         return;
       }
       if (type == JSTokenTypes.LBRACE || type == JSTokenTypes.RBRACE) {
@@ -91,7 +86,8 @@ public class JavaScriptTokenizer implements Tokenizer {
         }
       }
       TextRange range = element.getTextRange();
-      myTokens.add(new TextToken(element.getText().hashCode(), range.getStartOffset(), range.getEndOffset()));
+      myGlobalVisitor.addToken(new TextToken(element.getText().hashCode(), myGlobalVisitor.getBaseOffset() + range.getStartOffset(),
+                                             myGlobalVisitor.getBaseOffset() + range.getEndOffset()));
     }
   }
 }

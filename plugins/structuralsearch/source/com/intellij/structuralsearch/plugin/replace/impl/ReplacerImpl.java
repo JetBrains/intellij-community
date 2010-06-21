@@ -21,6 +21,7 @@ import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -42,10 +43,12 @@ public class ReplacerImpl {
   }
 
   protected String testReplace(String in, String what, String by, ReplaceOptions options,boolean filePattern) {
-    return testReplace(in, what, by, options, filePattern, false);
+    FileType type = options.getMatchOptions().getFileType();
+    return testReplace(in, what, by, options, filePattern, false, type, type.getDefaultExtension());
   }
 
-  protected String testReplace(String in, String what, String by, ReplaceOptions options,boolean filePattern, boolean createPhysicalFile) {
+  protected String testReplace(String in, String what, String by, ReplaceOptions options,boolean filePattern, boolean createPhysicalFile, 
+                               FileType sourceFileType, String sourceExtension) {
     this.options = options;
     this.options.getMatchOptions().setSearchPattern(what);
     this.options.setReplacement(by);
@@ -66,7 +69,7 @@ public class ReplacerImpl {
         PsiElement[] elements = MatcherImplUtil.createTreeFromText(
           in,
           filePattern ? PatternTreeContext.File : PatternTreeContext.Block,
-           this.options.getMatchOptions().getFileType(),
+          sourceFileType, sourceExtension,
           project,
           createPhysicalFile
         );
@@ -152,6 +155,7 @@ public class ReplacerImpl {
     reformatAndShortenRefs(doReplace(info));
   }
 
+  @Nullable
   private PsiElement doReplace(final ReplacementInfo info) {
     final ReplacementInfoImpl replacementInfo = (ReplacementInfoImpl)info;
     final PsiElement element = replacementInfo.matchesPtrList.get(0).getElement();
@@ -178,6 +182,10 @@ public class ReplacerImpl {
       "ssreplace",
       "test"
     );
+
+    if (!elementParent.isValid() || !elementParent.isWritable()) {
+      return null;
+    }
 
     return elementParent;
   }

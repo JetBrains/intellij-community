@@ -3,8 +3,6 @@ package com.intellij.tokenindex;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiFile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.indexing.*;
@@ -16,7 +14,6 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -29,7 +26,7 @@ public class TokenIndex extends FileBasedIndexExtension<TokenIndexKey, List<Toke
   public static final ID<TokenIndexKey, List<Token>> ID = new ID<TokenIndexKey, List<Token>>("token.index") {
   };
 
-  private static final int VERSION = 2;
+  private static final int VERSION = 3;
 
   private final KeyDescriptor<TokenIndexKey> myKeyDescriptor = new TokenIndexKeyDescriptor();
 
@@ -123,23 +120,15 @@ public class TokenIndex extends FileBasedIndexExtension<TokenIndexKey, List<Toke
     return new DataIndexer<TokenIndexKey, List<Token>, FileContent>() {
       @NotNull
       public Map<TokenIndexKey, List<Token>> map(FileContent inputData) {
-        PsiFile psiFile = inputData.getPsiFile();
-        FileViewProvider viewProvider = psiFile.getViewProvider();
         Map<TokenIndexKey, List<Token>> result = new HashMap<TokenIndexKey, List<Token>>(1);
-        for (Language language : viewProvider.getLanguages()) {
-          Tokenizer tokenizer = StructuralSearchUtil.getTokenizerForLanguage(language);
-          if (tokenizer != null) {
-            PsiFile f = viewProvider.getPsi(language);
-            if (f != null) {
-              List<Token> tokens = tokenizer.tokenize(Arrays.asList(f));
-              if (tokens.size() > 0) {
-                String path = inputData.getFile().getPath();
-                tokens.add(new PathMarkerToken(path));
-                TokenIndexKey key = new TokenIndexKey(language.getID(), getBlockId(path));
-                result.put(key, tokens);
-              }
-            }
-          }
+        RecursiveTokenizingVisitor visitor = new RecursiveTokenizingVisitor();
+        inputData.getPsiFile().accept(visitor);
+        List<Token> tokens = visitor.getTokens();
+        if (tokens.size() > 0) {
+          String path = inputData.getFile().getPath();
+          tokens.add(new PathMarkerToken(path));
+          TokenIndexKey key = new TokenIndexKey(visitor.getLanguages(), getBlockId(path));
+          result.put(key, tokens);
         }
         return result;
       }

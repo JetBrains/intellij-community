@@ -9,6 +9,7 @@ import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -27,6 +28,7 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
   private boolean caseSensitiveMatch;
   private boolean resultIsContextMatch = false;
   private FileType myFileType = StructuralSearchUtil.DEFAULT_FILE_TYPE;
+  private String myFileExtension = null;
   private int maxMatches = DEFAULT_MAX_MATCHES_COUNT;
   public static final int DEFAULT_MAX_MATCHES_COUNT = 1000;
 
@@ -42,6 +44,7 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
   //private static final String SCOPE_ATTRIBUTE_NAME = "scope";
   @NonNls private static final String CONSTRAINT_TAG_NAME = "constraint";
   @NonNls private static final String FILE_TYPE_ATTR_NAME = "type";
+  @NonNls private static final String FILE_EXTENSION_ATTR_NAME = "extension";
   @NonNls public static final String INSTANCE_MODIFIER_NAME = "Instance";
   @NonNls public static final String MODIFIER_ANNOTATION_NAME = "Modifier";
   @NonNls public static final String PACKAGE_LOCAL_MODIFIER_NAME = PsiModifier.PACKAGE_LOCAL;
@@ -180,8 +183,10 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
     //@TODO serialize scope!
 
     //if (myFileType != StdFileTypes.JAVA) {
-      element.setAttribute(FILE_TYPE_ATTR_NAME,myFileType.getName());
+      element.setAttribute(FILE_TYPE_ATTR_NAME, myFileType.getName());
     //}
+
+    element.setAttribute(FILE_EXTENSION_ATTR_NAME, myFileExtension);
 
     if (variableConstraints!=null) {
       for (final MatchVariableConstraint matchVariableConstraint : variableConstraints.values()) {
@@ -229,6 +234,11 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
       myFileType = getFileTypeByName(value);
     }
 
+    attr = element.getAttribute(FILE_EXTENSION_ATTR_NAME);
+    if (attr != null) {
+      myFileExtension = attr.getValue();
+    }
+
     // @TODO deserialize scope
 
     List elements = element.getChildren(CONSTRAINT_TAG_NAME);
@@ -272,8 +282,14 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
                                                                                                       null) {
       return false;
     }
+    if (myFileType != matchOptions.myFileType) {
+      return false;
+    }
+    if (myFileExtension == null) {
+      return matchOptions.getFileExtension() == null;
+    }
 
-    return myFileType == matchOptions.myFileType;
+    return myFileExtension.equals(matchOptions.getFileExtension());
   }
 
   public int hashCode() {
@@ -288,6 +304,7 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
     result = 29 * result + (searchCriteria != null ? searchCriteria.hashCode() : 0);
     result = 29 * result + (variableConstraints != null ? variableConstraints.hashCode() : 0);
     if (myFileType != null) result = 29 * result + myFileType.hashCode();
+    if (myFileExtension != null) result = 29 * result + myFileExtension.hashCode();
     return result;
   }
 
@@ -297,6 +314,21 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
 
   public FileType getFileType() {
     return myFileType;
+  }
+
+  @Nullable
+  public String getFileExtension() {
+    if (myFileExtension != null) {
+      return myFileExtension;
+    }
+    if (myFileType != null) {
+      return myFileType.getDefaultExtension();
+    }
+    return null;
+  }
+
+  public void setFileExtension(String fileExtension) {
+    myFileExtension = fileExtension;
   }
 
   public MatchOptions clone() {

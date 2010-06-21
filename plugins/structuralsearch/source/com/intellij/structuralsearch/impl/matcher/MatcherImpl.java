@@ -5,6 +5,7 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -270,7 +271,7 @@ public class MatcherImpl {
     scheduler.init();
     progress = matchContext.getSink().getProgressIndicator();
 
-    if (TokenBasedSearcher.canProcess(compiledPattern, options.getScope())) {
+    if (TokenBasedSearcher.canProcess(compiledPattern)) {
       TokenBasedSearcher searcher = new TokenBasedSearcher(this);
       searcher.search(compiledPattern);
       if (isTesting) {
@@ -485,28 +486,38 @@ public class MatcherImpl {
    * @throws MalformedPatternException
    * @throws UnsupportedPatternException
    */
-  protected List testFindMatches(String source,String pattern, MatchOptions options, boolean filePattern)
+  protected List testFindMatches(String source,
+                                 String pattern,
+                                 MatchOptions options,
+                                 boolean filePattern,
+                                 FileType sourceFileType,
+                                 String sourceFileExtension,
+                                 boolean physicalSourceFile)
     throws MalformedPatternException, UnsupportedPatternException {
 
     CollectingMatchResultSink sink = new CollectingMatchResultSink();
 
     try {
-      PsiElement[] elements = MatcherImplUtil.createTreeFromText(
-        source,
-        filePattern ? PatternTreeContext.File : PatternTreeContext.Block,
-        options.getFileType(),
-        project
-      );
+      PsiElement[] elements = MatcherImplUtil.createTreeFromText(source,
+                                                                 filePattern ? PatternTreeContext.File : PatternTreeContext.Block,
+                                                                 sourceFileType,
+                                                                 sourceFileExtension,
+                                                                 project, physicalSourceFile);
 
       options.setSearchPattern(pattern);
-      options.setScope( new LocalSearchScope(elements) );
-      testFindMatches(sink,options);
-    } catch (IncorrectOperationException e) {
+      options.setScope(new LocalSearchScope(elements));
+      testFindMatches(sink, options);
+    }
+    catch (IncorrectOperationException e) {
       e.printStackTrace();
       throw new MalformedPatternException();
     }
 
     return sink.getMatches();
+  }
+
+  protected List testFindMatches(String source, String pattern, MatchOptions options, boolean filePattern) {
+    return testFindMatches(source, pattern, options, filePattern, options.getFileType(), options.getFileType().getDefaultExtension(), false);
   }
 
   class TaskScheduler implements MatchingProcess {

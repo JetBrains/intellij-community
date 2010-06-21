@@ -1,5 +1,6 @@
 package com.intellij.structuralsearch.plugin.replace;
 
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacerImpl;
@@ -27,9 +28,10 @@ public class Replacer extends ReplacerImpl {
     return super.testReplace(in, what, by, options, filePattern);
   }
 
-  public String testReplace(String in, String what, String by, ReplaceOptions options, boolean filePattern, boolean createPhysicalFile)
+  public String testReplace(String in, String what, String by, ReplaceOptions options, boolean filePattern, boolean createPhysicalFile,
+                            FileType sourceFileType, String sourceExtension)
     throws IncorrectOperationException {
-    return super.testReplace(in, what, by, options, filePattern, createPhysicalFile);
+    return super.testReplace(in, what, by, options, filePattern, createPhysicalFile, sourceFileType, sourceExtension);
   }
 
   public void replaceAll(final List<ReplacementInfo> resultPtrList) {

@@ -232,7 +232,8 @@ public class PatternCompiler {
       PsiElement[] matchStatements;
 
       try {
-        matchStatements = MatcherImplUtil.createTreeFromText(buf.toString(), PatternTreeContext.Block, options.getFileType(), project);
+        matchStatements = MatcherImplUtil
+          .createTreeFromText(buf.toString(), PatternTreeContext.Block, options.getFileType(), options.getFileExtension(), project, false);
         if (matchStatements.length==0) throw new MalformedPatternException();
         patternNode = matchStatements[0].getParent();
       } catch (IncorrectOperationException e) {

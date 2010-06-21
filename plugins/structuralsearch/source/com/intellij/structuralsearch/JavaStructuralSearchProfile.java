@@ -3,7 +3,6 @@ package com.intellij.structuralsearch;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -44,8 +43,8 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @NotNull
-  public LanguageFileType[] getFileTypes() {
-    return new LanguageFileType[]{StdFileTypes.JAVA};
+  public FileType[] getFileTypes() {
+    return new FileType[] {StdFileTypes.JAVA};
   }
 
   public boolean isMyLanguage(@NotNull Language language) {
@@ -62,6 +61,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   public PsiElement[] createPatternTree(@NotNull String text,
                                         @NotNull PatternTreeContext context,
                                         @NotNull FileType fileType,
+                                        @NotNull String extension,
                                         @NotNull Project project,
                                         boolean physical) {
     if (physical) {

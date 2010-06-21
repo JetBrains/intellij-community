@@ -2,16 +2,18 @@ package com.intellij.structuralsearch;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.lang.javascript.JSLanguageDialect;
 import com.intellij.lang.javascript.JSTokenTypes;
 import com.intellij.lang.javascript.JavaScriptSupportLoader;
 import com.intellij.lang.javascript.JavascriptLanguage;
 import com.intellij.lang.javascript.psi.*;
+import com.intellij.lang.javascript.psi.ecmal4.JSAttributeList;
+import com.intellij.lang.javascript.psi.ecmal4.JSClass;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
@@ -25,14 +27,15 @@ import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
-import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene.Kudelevsky
  */
 public class JSStructuralSearchProfile extends TokenBasedProfile {
   private static final String TYPED_VAR_PREFIX = "__$_";
+  private static String AS_SEARCH_VARIANT = "actionscript";
 
   @Override
   public void compile(PsiElement element, @NotNull GlobalCompilingVisitor globalVisitor) {
@@ -110,44 +113,100 @@ public class JSStructuralSearchProfile extends TokenBasedProfile {
 
   @NotNull
   @Override
-  public LanguageFileType[] getFileTypes() {
-    LanguageFileType jsFileType = JavaScriptSupportLoader.JAVASCRIPT;
-    if (jsFileType != null) {
-      return new LanguageFileType[]{jsFileType};
-    }
-    return new LanguageFileType[0];
-  }
-
-  @Override
-  public boolean isMyLanguage(@NotNull Language language) {
-    return language instanceof JavascriptLanguage;
+  public String[] getFileTypeSearchVariants() {
+    return new String[]{getTypeName(JavaScriptSupportLoader.JAVASCRIPT), AS_SEARCH_VARIANT};
   }
 
   @NotNull
   @Override
-  public PsiElement[] createPatternTree(@NotNull String text,
-                                        @NotNull PatternTreeContext context,
-                                        @NotNull FileType fileType,
-                                        @NotNull Project project,
-                                        boolean physical) {
-    return PsiFileFactory.getInstance(project)
-      .createFileFromText("__dummy.js", fileType, text, LocalTimeCounter.currentTime(), physical, true).getChildren();
+  public FileType[] getFileTypes() {
+    return new FileType[]{JavaScriptSupportLoader.JAVASCRIPT};
+  }
+
+  @Override
+  public String getFileExtensionBySearchVariant(@NotNull String searchVariant) {
+    if (searchVariant.equals(AS_SEARCH_VARIANT)) {
+      return JavaScriptSupportLoader.ECMA_SCRIPT_L4_FILE_EXTENSION;
+    }
+    return JavaScriptSupportLoader.JAVASCRIPT.getDefaultExtension();
+  }
+
+  @Override
+  public String getSearchVariant(@NotNull FileType fileType, @Nullable String extension) {
+    if (JavaScriptSupportLoader.ECMA_SCRIPT_L4_FILE_EXTENSION.equals(extension)) {
+      return AS_SEARCH_VARIANT;
+    }
+    return super.getSearchVariant(fileType, extension);
+  }
+
+  @Override
+  public boolean isMyLanguage(@NotNull Language language) {
+    return language instanceof JavascriptLanguage || language instanceof JSLanguageDialect;
+  }
+
+  private boolean containsFunctionOrClass(PsiElement[] elements) {
+    for (PsiElement element : elements) {
+      if (element instanceof JSFunction || element instanceof JSClass) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
   public void checkReplacementPattern(Project project, ReplaceOptions options) {
     MatchOptions matchOptions = options.getMatchOptions();
     FileType fileType = matchOptions.getFileType();
-    PsiElement[] elements = createPatternTree(matchOptions.getSearchPattern(), PatternTreeContext.File, fileType, project, false);
+    String pattern = matchOptions.getSearchPattern();
+    PsiElement[] elements = createPatternTree(pattern, PatternTreeContext.File, fileType, project, false);
 
     for (PsiElement element : elements) {
-      if (element instanceof JSExpressionStatement){
+      if (element instanceof JSExpressionStatement) {
         PsiElement lastChild = element.getLastChild();
         if (!(lastChild instanceof LeafPsiElement && ((LeafPsiElement)lastChild).getElementType() == JSTokenTypes.SEMICOLON)) {
           throw new UnsupportedPatternException(SSRBundle.message("replacement.template.expression.not.supported", fileType.getName()));
         }
       }
     }
+  }
+
+  /*@NotNull
+  @Override
+  public PsiElement[] createPatternTree(@NotNull String text,
+                                        @NotNull PatternTreeContext context,
+                                        @NotNull FileType fileType,
+                                        @NotNull String extension,
+                                        @NotNull Project project,
+                                        boolean physical) {
+    if (context == PatternTreeContext.Block) {
+      text = "function f() {" + text + "}";
+      PsiElement[] elements = super.createPatternTree(text, context, fileType, extension, project, physical);
+      for (PsiElement element : elements) {
+        if (element instanceof JSFunction) {
+          JSSourceElement[] sourceElements = ((JSFunction)element).getBody();
+          if (sourceElements.length == 1 && sourceElements[0] instanceof JSBlockStatement) {
+            return ((JSBlockStatement)sourceElements[0]).getStatements();
+          }
+        }
+      }
+      assert false;
+    }
+    return super.createPatternTree(text, context, fileType, extension, project, physical);
+  }*/
+
+  @NotNull
+  @Override
+  public Language getLanguage(PsiElement element) {
+    if (element.getLanguage() instanceof JavascriptLanguage && !(element instanceof JSFile)) {
+      PsiFile file = element.getContainingFile();
+      if (file instanceof JSFile) {
+        Language fileLanguage = file.getLanguage();
+        if (fileLanguage instanceof JSLanguageDialect) {
+          return fileLanguage;
+        }
+      }
+    }
+    return element.getLanguage();
   }
 
   private class MyJsMatchingVisitor extends JSElementVisitor {
@@ -178,9 +237,26 @@ public class JSStructuralSearchProfile extends TokenBasedProfile {
 
       myGlobalVisitor.setResult(f1.getKind() == f2.getKind() &&
                                 myGlobalVisitor.match(f1.getNameIdentifier(), f2.getNameIdentifier()) &&
+                                myGlobalVisitor.matchSonsOptionally(f1.getAttributeList(), f2.getAttributeList()) &&
                                 myGlobalVisitor.matchSons(f1.getParameterList(), f2.getParameterList()) &&
-                                myGlobalVisitor.match(f1.getReturnTypeElement(), f2.getReturnTypeElement()) &&
+                                myGlobalVisitor.matchOptionally(f1.getReturnTypeElement(), f2.getReturnTypeElement()) &&
                                 myGlobalVisitor.matchOptionally(f1.getBody(), f2.getBody()));
+    }
+
+    @Override
+    public void visitJSVarStatement(JSVarStatement vs1) {
+      JSVarStatement vs2 = (JSVarStatement)myGlobalVisitor.getElement();
+
+      PsiElement firstChild1 = vs1.getFirstChild();
+      PsiElement firstChild2 = vs2.getFirstChild();
+
+      boolean result = true;
+
+      if (firstChild1 instanceof JSAttributeList && firstChild1.getTextLength() > 0) {
+        result = firstChild2 instanceof JSAttributeList ? myGlobalVisitor.match(firstChild1, firstChild2) : false;
+      }
+
+      myGlobalVisitor.setResult(result && myGlobalVisitor.matchSequentially(vs1.getVariables(), vs2.getVariables()));
     }
 
     @Override

@@ -32,19 +32,20 @@ public class MatcherImplUtil {
 
   public static PsiElement[] createTreeFromText(String text, PatternTreeContext context, FileType fileType, Project project)
     throws IncorrectOperationException {
-    return createTreeFromText(text, context, fileType, project, false);
+    return createTreeFromText(text, context, fileType, fileType.getDefaultExtension(), project, false);
   }
 
   public static PsiElement[] createTreeFromText(String text,
                                                 PatternTreeContext context,
                                                 FileType fileType,
+                                                String extension,
                                                 Project project,
                                                 boolean physical) throws IncorrectOperationException {
     if (fileType instanceof LanguageFileType) {
       Language language = ((LanguageFileType)fileType).getLanguage();
       StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(language);
       if (profile != null) {
-        return profile.createPatternTree(text, context, fileType, project, physical);
+        return profile.createPatternTree(text, context, fileType, extension, project, physical);
       }
     }
     return PsiElement.EMPTY_ARRAY;

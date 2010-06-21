@@ -1,9 +1,14 @@
 package com.intellij.structuralsearch;
 
 import com.intellij.lang.javascript.JavaScriptSupportLoader;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.TokenBasedSearcher;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
+
+import java.io.IOException;
 
 /**
  * @author Eugene.Kudelevsky
@@ -14,9 +19,9 @@ public class JSStructuralSearchTest extends StructuralSearchTestCase {
     String s = "location.host.indexOf(\"name\");\n" +
                "host.indexOf(\"name\") ;\n" +
                "object.indexOf( \"text\" );\n";
+    doTest(s, "host.indexOf( \"name\" )", 1, 3);
     doTest(s, "location.host.$method$($arg$) ;", 1, 3);
     doTest(s, "$var$.indexOf($arg$);\n$var1$.indexOf($arg1$);", 1, 2);
-    doTest(s, "host.indexOf( \"name\" )", 1, 3);
     doTest(s, "host.indexOf(\"name\");", 1, 3);
     doTest(s, "location.$var$.indexOf( $arg$ )", 1, 3);
     doTest(s, "$var$.indexOf($arg$);$var1$.indexOf($arg$);", 1, 2);
@@ -75,7 +80,8 @@ public class JSStructuralSearchTest extends StructuralSearchTestCase {
 
   public void test8() {
     String s = "var a = 10;\n" +
-               "var b = 10;";
+               "var b = 10;\n";
+    //doTest(s, "a", 1, 2);
     doTest(s, "var a = 10", 1, 2);
   }
 
@@ -162,6 +168,7 @@ public class JSStructuralSearchTest extends StructuralSearchTestCase {
                "  doc.print(i);\n" +
                "  i++;\n" +
                "}";
+    doTest(s, "var $i$ = $value$", 2, 2);
     doTest(s, "for (var $var$ = $start$; $var$ < $end$; $var$++)\n" +
               "  $exp$;", 1, 1);
     doTest(s, "for each(var $var$ in $list$){\n" +
@@ -227,10 +234,90 @@ public class JSStructuralSearchTest extends StructuralSearchTestCase {
     doTest(s, "function '_T('_T1*) {}", 4, 4);
   }
 
-  public void doTest(String source, String pattern, int expectedOccurences, int expectedLexicalOccurences) {
-    assertEquals(expectedOccurences, findMatches(source, pattern, true, JavaScriptSupportLoader.JAVASCRIPT).size());
+  public void testInHtml() throws IOException {
+    doTestByFile("script.html", "for (var $i$ = 0; $i$ < n ; $i$++)", 2, 2);
+    doTestByFile("script.html", "for (var i = 0; i < n ; i++)", 1, 2);
+    doTestByFile("script.html", "$func$();", 2, 4);
+    /*doTestByFile("script.html", "<script type=\"text/javascript\">\n" +
+                                "   for (var i = 0; i < n; i++) {}\n" +
+                                "   for (var j = 0; j < n; j++) {}\n" +
+                                "</script>", 1, 1, StdFileTypes.HTML);*/
+  }
+
+  /*public void testInMxml() throws IOException {
+    doTestByFile("script.mxml", "var $i$ = $val$", 2, 2, JavaScriptSupportLoader.JAVASCRIPT, "as");
+    doTestByFile("script.mxml", "for (var i = 0; i < n; i++)", 1, 2, JavaScriptSupportLoader.JAVASCRIPT, "as");
+    doTestByFile("script.mxml", "for (var $i$ = 0; $i$ < n; $i$++)", 2, 2, JavaScriptSupportLoader.JAVASCRIPT, "as");
+    doTestByFile("script.mxml", "$func$();", 1, 3, JavaScriptSupportLoader.JAVASCRIPT, "as");
+
+    // todo: test AS in XML attribute values
+  }*/
+
+  public void testAsFunc() throws IOException {
+    doTestByFile("class.as", "function $name$('_param*)", 2, 2, JavaScriptSupportLoader.JAVASCRIPT, "as");
+    doTestByFile("class.as", "$a$+$b$", 0, 0);
+    doTestByFile("class.as", "$a$+$b$", 1, 5, JavaScriptSupportLoader.JAVASCRIPT, "as");
+    doTestByFile("class.as", "public static function sum('_param*)", 0, 0);
+    doTestByFile("class.as", "public static function sum('_param*)", 1, 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
+    doTestByFile("class.as", "function sum('_param*)", 1, 2, JavaScriptSupportLoader.JAVASCRIPT, "as");
+    doTestByFile("class.as", "private static function sum('_param*)", 0, 0, JavaScriptSupportLoader.JAVASCRIPT, "as");
+  }
+
+  private void doTestByFile(String fileName, String pattern, int expectedOccurences, int expectedLexicalOccurences) throws IOException {
+    doTestByFile(fileName, pattern, expectedOccurences, expectedLexicalOccurences, JavaScriptSupportLoader.JAVASCRIPT, "js");
+  }
+
+  private void doTestByFile(String fileName,
+                            String pattern,
+                            int expectedOccurences,
+                            int expectedLexicalOccurences,
+                            FileType patternFileType,
+                            String patternFileExtension) throws IOException {
+    String extension = FileUtil.getExtension(fileName);
+    doTest(TestUtils.loadFile(fileName), pattern, expectedOccurences, expectedLexicalOccurences, patternFileType, patternFileExtension,
+           FileTypeManager.getInstance().getFileTypeByExtension(extension), extension, true);
+  }
+
+  private void doTest(String source, String pattern, int expectedOccurences, int expectedLexicalOccurences) {
+    doTest(source, pattern, expectedOccurences, expectedLexicalOccurences, JavaScriptSupportLoader.JAVASCRIPT, "js");
+    doTest(source, pattern, expectedOccurences, expectedLexicalOccurences, JavaScriptSupportLoader.JAVASCRIPT, "as");
+  }
+
+  private void doTest(String source,
+                      String pattern,
+                      int expectedOccurences,
+                      int expectedLexicalOccurences,
+                      FileType fileType,
+                      String extension) {
+    doTest(source, pattern, expectedOccurences, expectedLexicalOccurences, fileType, extension, fileType, extension);
+  }
+
+  private void doTest(String source,
+                      String pattern,
+                      int expectedOccurences,
+                      int expectedLexicalOccurences,
+                      FileType patternFileType,
+                      String patternFileExtension,
+                      FileType sourceFileType,
+                      String sourceFileExtension) {
+    doTest(source, pattern, expectedOccurences, expectedLexicalOccurences, patternFileType, patternFileExtension, sourceFileType,
+           sourceFileExtension, false);
+  }
+
+  private void doTest(String source,
+                      String pattern,
+                      int expectedOccurences,
+                      int expectedLexicalOccurences,
+                      FileType patternFileType,
+                      String patternFileExtension,
+                      FileType sourceFileType,
+                      String sourceFileExtension,
+                      boolean physicalSourceFile) {
+    assertEquals(expectedOccurences,
+                 findMatches(source, pattern, true, patternFileType, patternFileExtension, sourceFileType, sourceFileExtension,
+                             physicalSourceFile).size());
     CompiledPattern compiledPattern = PatternCompiler.compilePattern(myProject, options);
-    assertTrue(TokenBasedSearcher.canProcess(compiledPattern, options.getScope()));
+    assertTrue(TokenBasedSearcher.canProcess(compiledPattern));
     TokenBasedSearcher searcher = new TokenBasedSearcher(testMatcher);
     int lexicalOccurences = searcher.search(compiledPattern);
     assertEquals(expectedLexicalOccurences, lexicalOccurences);

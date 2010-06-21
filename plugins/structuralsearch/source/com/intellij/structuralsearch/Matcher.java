@@ -1,5 +1,6 @@
 package com.intellij.structuralsearch;
 
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.impl.matcher.MatcherImpl;
@@ -39,10 +40,20 @@ public class Matcher extends MatcherImpl {
    * @throws MalformedPatternException
    * @throws UnsupportedPatternException
    */
-  public List testFindMatches(String source,String pattern, MatchOptions options, boolean filePattern)
+  public List testFindMatches(String source,
+                              String pattern,
+                              MatchOptions options,
+                              boolean filePattern,
+                              FileType sourceFileType,
+                              String sourceFileExtension,
+                              boolean physicalSourceFile)
     throws MalformedPatternException, UnsupportedPatternException {
+    return super.testFindMatches(source, pattern, options, filePattern, sourceFileType, sourceFileExtension, physicalSourceFile);
+  }
 
-    return super.testFindMatches(source,pattern,options,filePattern);
+  public List testFindMatches(String source, String pattern, MatchOptions options, boolean filePattern)
+    throws MalformedPatternException, UnsupportedPatternException {
+    return super.testFindMatches(source, pattern, options, filePattern);
   }
 
   /**

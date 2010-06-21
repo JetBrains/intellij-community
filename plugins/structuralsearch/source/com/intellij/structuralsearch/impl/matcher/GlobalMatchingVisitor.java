@@ -210,6 +210,11 @@ public class GlobalMatchingVisitor {
     return matchSequentially(new FilteringNodeIterator(el1), new FilteringNodeIterator(el2));
   }
 
+  private boolean matchSequentiallyOptionally(PsiElement el1, PsiElement el2) {
+    return (el1 == null && matchContext.getOptions().isLooseMatching()) ||
+           matchSequentially(new FilteringNodeIterator(el1), new FilteringNodeIterator(el2));
+  }
+
   /**
    * Descents the tree in depth finding matches
    *
@@ -338,8 +343,13 @@ public class GlobalMatchingVisitor {
   }
 
   public boolean matchSonsOptionally(final PsiElement element, final PsiElement element2) {
-    return (element == null && matchContext.getOptions().isLooseMatching()) ||
-           matchSons(element, element2);
+    if (element == null && matchContext.getOptions().isLooseMatching()) {
+      return true;
+    }
+    if (element == null || element2 == null) {
+      return element == element2;
+    }
+    return matchSequentiallyOptionally(element.getFirstChild(), element2.getFirstChild());
   }
 
   public boolean matchOptionally(@NotNull PsiElement[] elements1, @NotNull PsiElement[] elements2) {

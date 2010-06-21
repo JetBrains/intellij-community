@@ -35,15 +35,28 @@ abstract class StructuralSearchTestCase extends IdeaTestCase {
     return findMatches(in,pattern,filePattern, fileType).size();
   }
 
-  protected List<MatchResult> findMatches(String in, String pattern, boolean filePattern, FileType fileType) {
+  protected List<MatchResult> findMatches(String in,
+                                          String pattern,
+                                          boolean filePattern,
+                                          FileType patternFileType,
+                                          String patternFileExtension,
+                                          FileType sourceFileType,
+                                          String sourceFileExtension,
+                                          boolean physicalSourceFile) {
     options.clearVariableConstraints();
     options.setSearchPattern(pattern);
     MatcherImplUtil.transform(options);
     pattern = options.getSearchPattern();
-    options.setFileType(fileType);
+    options.setFileType(patternFileType);
+    options.setFileExtension(patternFileExtension);
 
     MatcherImpl.validate(myProject, options);
-    return testMatcher.testFindMatches(in,pattern,options,filePattern);
+    return testMatcher.testFindMatches(in, pattern, options, filePattern, sourceFileType, sourceFileExtension, physicalSourceFile);
+  }
+
+  protected List<MatchResult> findMatches(String in, String pattern, boolean filePattern, FileType patternFileType) {
+    String ext = patternFileType.getDefaultExtension();
+    return findMatches(in, pattern, filePattern, patternFileType, ext, patternFileType, ext, false);
   }
 
   protected int findMatchesCount(String in, String pattern, boolean filePattern) {
