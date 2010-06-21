@@ -1,5 +1,0 @@
-target(aaa: "") {
-    ant.dep<caret>
-}
------
-dependSet

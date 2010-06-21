@@ -53,7 +53,7 @@ public abstract class GroovyResolveTestCase extends LightGroovyTestCase {
     fileText = fileText.substring(0, offset) + fileText.substring(offset + MARKER.length());
 
     if (newFilePath == null) {
-      myFixture.configureByText(vFile.getName(), fileText);
+      myFixture.configureByText("aaa." + vFile.getExtension(), fileText);
     }
     else {
       myFixture.configureByText(newFilePath, fileText);
