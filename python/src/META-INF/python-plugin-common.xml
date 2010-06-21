@@ -219,10 +219,12 @@
 
     <lang.refactoringSupport language="DjangoTemplate" implementationClass="com.jetbrains.django.refactoring.DjangoRefactoringProvider"/>
 
-    <lang.surroundDescriptor language="DjangoTemplate" implementationClass="com.jetbrains.django.surround.DjangoTemplateSurroundDescriptor"
+    <lang.surroundDescriptor language="DjangoTemplate" implementationClass="com.jetbrains.django.surround.DjangoTemplateTagSurroundDescriptor"
                              order="first"/>
-    <lang.surroundDescriptor language="HTML" implementationClass="com.jetbrains.django.surround.DjangoXmlSurroundDescriptor" order="first"/>
-    <lang.surroundDescriptor language="XML" implementationClass="com.jetbrains.django.surround.DjangoXmlSurroundDescriptor" order="first"/>
+    <lang.surroundDescriptor language="HTML" implementationClass="com.jetbrains.django.surround.DjangoXmlSurroundDescriptor" order="after djangoHtmlSurround"/>
+    <lang.surroundDescriptor language="XML" implementationClass="com.jetbrains.django.surround.DjangoXmlSurroundDescriptor" order="after djangoXmlSurround"/>
+    <lang.surroundDescriptor language="HTML" implementationClass="com.jetbrains.django.surround.DjangoTemplateVariableSurroundDescriptor" order="first" id="djangoHtmlSurround"/>
+    <lang.surroundDescriptor language="XML" implementationClass="com.jetbrains.django.surround.DjangoTemplateVariableSurroundDescriptor" order="first" id="djangoXmlSurround"/>
 
     <lang.elementManipulator forClass="com.jetbrains.django.lang.template.psi.impl.DjangoStringLiteralImpl"
                              implementationClass="com.jetbrains.django.lang.template.ref.DjangoStringLiteralManipulator"/>

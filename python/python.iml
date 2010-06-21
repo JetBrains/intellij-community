@@ -38,6 +38,7 @@
     <orderEntry type="module" module-name="yaml" />
     <orderEntry type="library" name="microba" level="project" />
     <orderEntry type="library" name="XmlRPC" level="project" />
+    <orderEntry type="library" name="commons-lang" level="project" />
   </component>
   <component name="copyright">
     <Base>
