@@ -851,9 +851,9 @@ public class StringUtil {
 
   @NotNull
   public static String repeatSymbol(final char aChar, final int count) {
-    final StringBuilder buffer = new StringBuilder(count);
-    repeatSymbol(buffer, aChar, count);
-    return buffer.toString();
+    char[] buffer = new char[count];
+    Arrays.fill(buffer, aChar);
+    return new String(buffer);
   }
 
   @NotNull
@@ -1158,9 +1158,9 @@ public class StringUtil {
 
     if (uppedFirstChar == firstChar) return displayString;
 
-    StringBuilder builder = new StringBuilder(displayString);
-    builder.setCharAt(0, uppedFirstChar);
-    return builder.toString();
+    char[] buffer = displayString.toCharArray();
+    buffer[0] = uppedFirstChar;
+    return new String(buffer);
   }
 
   /**
@@ -1449,7 +1449,7 @@ public class StringUtil {
       try {
         if (!first) result.append('\n');
         if (line.length > 0 || shiftEmptyLines) {
-          result.append(repeatSymbol(' ', i));
+          repeatSymbol(result, ' ', i);
         }
         result.append(new String(line));
       }
