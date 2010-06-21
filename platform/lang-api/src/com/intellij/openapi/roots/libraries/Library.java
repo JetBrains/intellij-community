@@ -49,7 +49,7 @@ public interface Library extends JDOMExternalizable, Disposable {
   interface ModifiableModel extends Disposable {
     @NotNull String[] getUrls(@NotNull OrderRootType rootType);
 
-    void setName(@NotNull String name);
+    void setName(String name);
 
     String getName();
 
