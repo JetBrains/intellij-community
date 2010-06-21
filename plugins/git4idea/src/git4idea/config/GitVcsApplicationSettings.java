@@ -44,7 +44,7 @@ public class GitVcsApplicationSettings implements PersistentStateComponent<GitVc
   /**
    * Default UNIX paths
    */
-  @NonNls static final String[] DEFAULT_UNIX_PATHS = {"/usr/local/bin", "/usr/bin", "/opt/local/bin", "/opt/bin"};
+  @NonNls static final String[] DEFAULT_UNIX_PATHS = {"/usr/local/bin", "/usr/bin", "/opt/local/bin", "/opt/bin", "/usr/local/git/bin"};
   /**
    * UNIX executable name
    */

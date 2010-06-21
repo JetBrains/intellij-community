@@ -19,23 +19,21 @@ package org.jetbrains.plugins.groovy.lang.completion;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
-import org.jetbrains.plugins.groovy.extensions.completion.ContextSpecificInsertHandler;
-import org.jetbrains.plugins.groovy.extensions.completion.InsertHandlerRegistry;
+import org.jetbrains.plugins.groovy.lang.groovydoc.completion.handlers.GroovyDocMethodHandler;
 
 /**
  * @author ilyas
  */
 public class GroovyInsertHandlerAdapter implements InsertHandler {
-
   private final GroovyInsertHandler myGroovyInsertHandler = new GroovyInsertHandler();
+  private final GroovyDocMethodHandler myGroovyDocMethodHandler = new GroovyDocMethodHandler();
 
   public void handleInsert(InsertionContext context, LookupElement item) {
-    for (ContextSpecificInsertHandler handler : InsertHandlerRegistry.getInstance().getSpecificInsertHandlers()) {
-      if (handler.isAcceptable(context, context.getStartOffset(), item)) {
-        handler.handleInsert(context, context.getStartOffset(), item);
-        return;
-      }
+    if (myGroovyDocMethodHandler.isAcceptable(context, context.getStartOffset(), item)) {
+      myGroovyDocMethodHandler.handleInsert(context, context.getStartOffset(), item);
+      return;
     }
+
     myGroovyInsertHandler.handleInsert(context, item);
   }
 }

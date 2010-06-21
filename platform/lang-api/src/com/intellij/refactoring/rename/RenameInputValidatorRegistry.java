@@ -19,41 +19,24 @@
  */
 package com.intellij.refactoring.rename;
 
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
-import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class RenameInputValidatorRegistry {
-  private static final RenameInputValidatorRegistry ourInstance = new RenameInputValidatorRegistry();
-
-  public static RenameInputValidatorRegistry getInstance() {
-    return ourInstance;
-  }
-
-  private final List<Pair<ElementPattern<? extends PsiElement>,RenameInputValidator>> myValidators = new ArrayList<Pair<ElementPattern<? extends PsiElement>, RenameInputValidator>>();
-
   private RenameInputValidatorRegistry() {
   }
 
-  public void registerInputValidator(@NotNull final ElementPattern<? extends PsiElement> pattern, @NotNull final RenameInputValidator validator) {
-    myValidators.add(Pair.<ElementPattern<? extends PsiElement>, RenameInputValidator>create(pattern, validator));
-  }
-
   @Nullable
-  public Condition<String> getInputValidator(final PsiElement element) {
-    for (final Pair<ElementPattern<? extends PsiElement>, RenameInputValidator> pair: myValidators) {
+  public static Condition<String> getInputValidator(final PsiElement element) {
+    for(final RenameInputValidator validator: Extensions.getExtensions(RenameInputValidator.EP_NAME)) {
       final ProcessingContext context = new ProcessingContext();
-      if (pair.first.accepts(element, context)) {
+      if (validator.getPattern().accepts(element, context)) {
         return new Condition<String>() {
           public boolean value(final String s) {
-            return pair.getSecond().isInputValid(s, element, context);
+            return validator.isInputValid(s, element, context);
           }
         };
       }

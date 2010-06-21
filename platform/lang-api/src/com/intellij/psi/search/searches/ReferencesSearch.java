@@ -18,10 +18,13 @@ package com.intellij.psi.search.searches;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchRequestCollector;
+import com.intellij.psi.search.SearchRequestQuery;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.util.Query;
+import com.intellij.util.*;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
@@ -36,11 +39,19 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
     private final PsiElement myElementToSearch;
     private final SearchScope myScope;
     private final boolean myIgnoreAccessScope;
+    private final SearchRequestCollector myOptimizer;
+    private final boolean isSharedOptimizer;
 
-    public SearchParameters(final PsiElement elementToSearch, final SearchScope scope, final boolean ignoreAccessScope) {
+    public SearchParameters(PsiElement elementToSearch, SearchScope scope, boolean ignoreAccessScope, @Nullable SearchRequestCollector optimizer) {
       myElementToSearch = elementToSearch;
       myScope = scope;
       myIgnoreAccessScope = ignoreAccessScope;
+      isSharedOptimizer = optimizer != null;
+      myOptimizer = optimizer == null ? new SearchRequestCollector() : optimizer;
+    }
+
+    public SearchParameters(final PsiElement elementToSearch, final SearchScope scope, final boolean ignoreAccessScope) {
+      this(elementToSearch, scope, ignoreAccessScope, null);
     }
 
     public PsiElement getElementToSearch() {
@@ -55,9 +66,13 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
       return myIgnoreAccessScope;
     }
 
+    public SearchRequestCollector getOptimizer() {
+      return myOptimizer;
+    }
+
     public SearchScope getEffectiveSearchScope () {
       if (!myIgnoreAccessScope) {
-        SearchScope accessScope = myElementToSearch.getUseScope();
+        SearchScope accessScope = myElementToSearch.getManager().getSearchHelper().getUseScope(myElementToSearch);
         return myScope.intersectWith(accessScope);
       }
       else {
@@ -78,8 +93,22 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
     return search(new SearchParameters(element, searchScope, ignoreAccessScope));
   }
 
-  public static Query<PsiReference> search(@NotNull SearchParameters parameters) {
-    //noinspection unchecked
-    return INSTANCE.createUniqueResultsQuery(parameters, TObjectHashingStrategy.CANONICAL, ReferenceDescriptor.MAPPER);
+  public static Query<PsiReference> search(@NotNull final SearchParameters parameters) {
+    final Query<PsiReference> result = INSTANCE.createQuery(parameters);
+    if (parameters.isSharedOptimizer) {
+      return uniqueResults(result);
+    }
+
+    final SearchRequestCollector requests = parameters.getOptimizer();
+
+    final PsiElement element = parameters.getElementToSearch();
+
+    return uniqueResults(new MergeQuery<PsiReference>(result, new SearchRequestQuery(element.getProject(), requests)));
   }
+
+  private static UniqueResultsQuery<PsiReference, PsiReference> uniqueResults(Query<PsiReference> composite) {
+    //noinspection unchecked
+    return new UniqueResultsQuery(composite, TObjectHashingStrategy.CANONICAL, ReferenceDescriptor.MAPPER);
+  }
+
 }

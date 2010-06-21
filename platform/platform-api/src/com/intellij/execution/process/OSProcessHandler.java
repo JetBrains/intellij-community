@@ -19,7 +19,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
-import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.Nullable;
@@ -229,109 +228,83 @@ public class OSProcessHandler extends ProcessHandler {
     return EncodingManager.getInstance().getDefaultCharset();
   }
 
-  private abstract static class ReadProcessRequest {
-    private static final int NOTIFY_TEXT_DELAY = 300;
-
+  private abstract class ReadProcessRequest {
     private final Reader myReader;
 
-    private final StringBuffer myBuffer = new StringBuffer();
-    private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
-
     private boolean myIsClosed = false;
-    private boolean myIsProcessTerminated = false;
+    volatile private boolean myIsProcessTerminated = false;
     private final Semaphore mySemaphore = new Semaphore();
+    private final BlockingQueue<String> myNotificationQueue = new LinkedBlockingQueue<String>();
 
     public ReadProcessRequest(final Reader reader) {
       myReader = reader;
     }
 
-    public synchronized boolean isProcessTerminated() {
+    public boolean isProcessTerminated() {
       return myIsProcessTerminated;
     }
 
-    public synchronized void setProcessTerminated(boolean isProcessTerminated) {
+    public void setProcessTerminated(boolean isProcessTerminated) {
       myIsProcessTerminated = isProcessTerminated;
     }
 
     public Semaphore schedule() {
-      myAlarm.addRequest(new Runnable() {
+      ourReaderThread.addRequest(this);
+
+      executeOnPooledThread(new Runnable() {
+        @Override
         public void run() {
-          if(!isClosed()) {
-            myAlarm.addRequest(this, NOTIFY_TEXT_DELAY);
-            checkTextAvailable();
+          try {
+            while (true) {
+              final String token = myNotificationQueue.take();
+              if (token.isEmpty()) break;
+              textAvailable(token);
+            }
+          }
+          catch (InterruptedException e) {
+            // Ignore 
+          }
+          finally {
+            mySemaphore.up();
           }
         }
-      }, NOTIFY_TEXT_DELAY);
-
-      ourReaderThread.addRequest(this);
+      });
 
       mySemaphore.down();
       return mySemaphore;
     }
 
     public void readAvailable(char[] buffer) throws IOException {
-      if (!isClosed()) {
-        if (myReader.ready()) {
-          int n = myReader.read(buffer);
-          if (n > 0) {
-            final boolean hasLineFeed;
-            synchronized (myBuffer) {
-              myBuffer.append(buffer, 0, n);
-              hasLineFeed = myBuffer.indexOf("\n") >= 0;
-            }
-
-            if (hasLineFeed) {
-              checkTextAvailable();
-            }
-          }
-        }
-
-        if (isProcessTerminated()) {
-          close();
+      while (myReader.ready()) {
+        int n = myReader.read(buffer);
+        if (n > 0) {
+          myNotificationQueue.offer(new String(buffer, 0, n));
         }
       }
-    }
 
-    private void checkTextAvailable() {
-      synchronized (myBuffer) {
-        if (myBuffer.length() == 0) return;
-        // warning! Since myBuffer is reused, do not use myBuffer.toString() to fetch the string
-        // because the created string will get StringBuffer's internal char array as a buffer which is possibly too large.
-        final String s = myBuffer.substring(0, myBuffer.length());
-        myBuffer.setLength(0);
-        textAvailable(s);
+      if (isProcessTerminated()) {
+        close();
       }
     }
 
     private void close() {
-      synchronized (this) {
-        if (isClosed()) {
-          return;
-        }
-        myIsClosed = true;
-      }
-      //try {
-      //  if(Thread.currentThread() != this) {
-      //    join(0);
-      //  }
-      //}
-      //catch (InterruptedException e) {
-      //}
-      // must close after the thread finished its execution, cause otherwise
-      // the thread will try to read from the closed (and nulled) stream
+      LOG.assertTrue(!myIsClosed);
+      myIsClosed = true;
+
       try {
         myReader.close();
       }
       catch (IOException e1) {
         // supressed
       }
-      checkTextAvailable();
-      mySemaphore.up();
+      finally {
+        myNotificationQueue.offer("");
+      }
     }
 
     protected abstract void textAvailable(final String s);
 
-    private synchronized boolean isClosed() {
+    private boolean isClosed() {
       return myIsClosed;
     }
   }
@@ -350,7 +323,12 @@ public class OSProcessHandler extends ProcessHandler {
         processRequest(request);
         if (!request.isClosed()) addRequest(request);
 
-        Thread.yield();
+        try {
+          Thread.sleep(1L);
+        }
+        catch (InterruptedException e) {
+          // ignore
+        }
       }
     }
 

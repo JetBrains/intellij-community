@@ -16,7 +16,7 @@
 
 package org.jetbrains.plugins.groovy.findUsages;
 
-import com.intellij.find.findUsages.FindUsagesOptions;
+import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,6 +25,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.*;
+import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
@@ -35,23 +36,22 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 /**
  * @author ven
  */
-public class MethodLateBoundReferencesSearcher extends SearchRequestor {
+public class MethodLateBoundReferencesSearcher extends QueryExecutorBase<PsiReference, MethodReferencesSearch.SearchParameters> {
+
+  public MethodLateBoundReferencesSearcher() {
+    super(true);
+  }
+
   @Override
-  public void contributeRequests(@NotNull PsiElement target,
-                                      @NotNull FindUsagesOptions options,
-                                      @NotNull SearchRequestCollector collector) {
-    if (!(target instanceof PsiMethod)) {
-      return;
-    }
+  public void processQuery(MethodReferencesSearch.SearchParameters queryParameters, Processor<PsiReference> consumer) {
+    final PsiMethod method = queryParameters.getMethod();
+    SearchScope searchScope = PsiUtil.restrictScopeToGroovyFiles(queryParameters.getScope()).intersectWith(getUseScope(method));
 
-    final PsiMethod method = (PsiMethod)target;
-    SearchScope searchScope = PsiUtil.restrictScopeToGroovyFiles(options.searchScope.intersectWith(getUseScope(method)));
-
-    orderSearching(searchScope, method.getName(), collector, method);
+    orderSearching(searchScope, method.getName(), queryParameters.getOptimizer());
 
     final String propName = PropertyUtil.getPropertyName(method);
     if (propName != null) {
-      orderSearching(searchScope, propName, collector, method);
+      orderSearching(searchScope, propName, queryParameters.getOptimizer());
     }
   }
 
@@ -69,12 +69,10 @@ public class MethodLateBoundReferencesSearcher extends SearchRequestor {
   }
 
 
-  private static void orderSearching(SearchScope searchScope,
-                                     final String name,
-                                     @NotNull SearchRequestCollector collector, PsiMethod method) {
-    collector.searchWord(name, searchScope, UsageSearchContext.IN_CODE, true, new SingleTargetRequestResultProcessor(method) {
+  private static void orderSearching(SearchScope searchScope, final String name, @NotNull SearchRequestCollector collector) {
+    collector.searchWord(name, searchScope, UsageSearchContext.IN_CODE, true, new RequestResultProcessor() {
       @Override
-      public boolean execute(PsiElement element, int offsetInElement, Processor<PsiReference> consumer) {
+      public boolean processTextOccurrence(PsiElement element, int offsetInElement, Processor<PsiReference> consumer) {
         if (!(element instanceof GrReferenceExpression)) {
           return true;
         }

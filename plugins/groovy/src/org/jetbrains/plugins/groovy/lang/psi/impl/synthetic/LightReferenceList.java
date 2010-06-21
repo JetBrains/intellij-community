@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
@@ -29,19 +28,10 @@ public class LightReferenceList extends LightElement implements PsiReferenceList
     super(manager, GroovyFileType.GROOVY_LANGUAGE);
   }
 
-  @NonNls
-  public String getText() {
-    return null;
-  }
-
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor) visitor).visitReferenceList(this);
     }
-  }
-
-  public PsiElement copy() {
-    return null;
   }
 
   @NotNull

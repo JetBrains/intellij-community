@@ -121,6 +121,8 @@
   <extensionPoint name="fileType.fileViewProviderFactory" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint"/>
   <extensionPoint name="multiLangCommenter"
                   interface="com.intellij.psi.templateLanguages.MultipleLangCommentProvider"/>
+  <extensionPoint name="selfManagingCommenter"
+                  interface="com.intellij.codeInsight.generation.SelfManagingCommenter"/>
 
   <extensionPoint name="cacheBuilder"
                   beanClass="com.intellij.lang.cacheBuilder.CacheBuilderEP"/>
@@ -128,7 +130,7 @@
   <extensionPoint name="referencesSearch" interface="com.intellij.util.QueryExecutor"/>
   <extensionPoint name="definitionsSearch" interface="com.intellij.util.QueryExecutor"/>
 
-  <extensionPoint name="searchRequestor" interface="com.intellij.psi.search.SearchRequestor"/>
+  <extensionPoint name="useScopeEnlarger" interface="com.intellij.psi.search.UseScopeEnlarger"/>
 
   <extensionPoint name="gotoClassContributor"
                   interface="com.intellij.navigation.ChooseByNameContributor"/>
@@ -294,6 +296,7 @@
   <extensionPoint name="vetoRenameCondition" interface="com.intellij.openapi.util.Condition"/>
   <extensionPoint name="rename.inplace.resolveSnapshotProvider"
                   beanClass="com.intellij.lang.LanguageExtensionPoint" />
+  <extensionPoint name="renameInputValidator" interface="com.intellij.refactoring.rename.RenameInputValidator"/>
 
   <extensionPoint name="findUsagesHandlerFactory" interface="com.intellij.find.findUsages.FindUsagesHandlerFactory" area="IDEA_PROJECT"/>
 
@@ -431,4 +434,8 @@
 
   <extensionPoint name="semContributor"
                   interface="com.intellij.semantic.SemContributor" area="IDEA_PROJECT"/>
+
+  <extensionPoint name="typeName" beanClass="com.intellij.ide.TypeNameEP"/>
+
+  <extensionPoint name="typeIcon" beanClass="com.intellij.ide.TypeIconEP"/>
 </extensionPoints>

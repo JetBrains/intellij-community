@@ -64,9 +64,9 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
       }
 
       @Override
-      protected Condition<PsiElement> createCondition() {
-        return new Condition<PsiElement>() {
-          public boolean value(final PsiElement element) {
+      protected Condition<PsiFileSystemItem> getReferenceCompletionFilter() {
+        return new Condition<PsiFileSystemItem>() {
+          public boolean value(final PsiFileSystemItem element) {
             return isPsiElementAccepted(element);
           }
         };

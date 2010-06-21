@@ -52,22 +52,13 @@ public class LegacyCompletionContributor extends CompletionContributor {
         final PsiElement insertedElement = parameters.getPosition();
         CompletionData completionData = ApplicationManager.getApplication().runReadAction(new Computable<CompletionData>() {
           public CompletionData compute() {
-            return CompletionUtil.getCompletionDataByElement(file);
+            return CompletionUtil.getCompletionDataByElement(insertedElement, file);
           }
         });
-        final CompletionResultSet result = _result.withPrefixMatcher(completionData == null
-                                                                     ? CompletionData.findPrefixStatic(insertedElement, startOffset)
-                                                                     : completionData.findPrefix(insertedElement, startOffset));
-        if (completionData == null) {
-          // some completion data may depend on prefix
-          completionData = ApplicationManager.getApplication().runReadAction(new Computable<CompletionData>() {
-            public CompletionData compute() {
-              return CompletionUtil.getCompletionDataByElement(file);
-            }
-          });
-        }
-
         if (completionData == null) return;
+
+        final CompletionResultSet result = _result.withPrefixMatcher(completionData.findPrefix(insertedElement, startOffset));
+
 
         completeReference(parameters, result, completionData);
 
@@ -75,7 +66,7 @@ public class LegacyCompletionContributor extends CompletionContributor {
         final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
         completionData.addKeywordVariants(keywordVariants, insertedElement, parameters.getOriginalFile());
         completionData
-          .completeKeywordsBySet(lookupSet, keywordVariants, insertedElement, result.getPrefixMatcher(), parameters.getOriginalFile());
+          .completeKeywordsBySet(lookupSet, keywordVariants, insertedElement, result.getPrefixMatcher(), file);
         for (final LookupElement item : lookupSet) {
           result.addElement(item);
         }

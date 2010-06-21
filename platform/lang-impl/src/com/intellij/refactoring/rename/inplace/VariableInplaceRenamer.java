@@ -130,7 +130,7 @@ public class VariableInplaceRenamer {
     final HighlightManager highlightManager = HighlightManager.getInstance(myProject);
 
     PsiElement scope = null;
-    final SearchScope searchScope = myElementToRename.getUseScope();
+    final SearchScope searchScope = myElementToRename.getManager().getSearchHelper().getUseScope(myElementToRename);
     if (searchScope instanceof LocalSearchScope) {
       final PsiElement[] elements = ((LocalSearchScope)searchScope).getScope();
       scope = PsiTreeUtil.findCommonParent(elements);

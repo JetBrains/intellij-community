@@ -914,6 +914,41 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     });
   }
 
+  public void testSelectAfterCancelledUpdate() throws Exception {
+    Node intellij = myRoot.addChild("com").addChild("intellij");
+    myRoot.addChild("jetbrains");
+    activate();
+
+    buildNode(new NodeElement("intellij"), false);
+    assertTree("-/\n" +
+               " -com\n" +
+               "  intellij\n" +
+               " jetbrains\n");
+
+
+    intellij.addChild("ide");
+
+    runAndInterrupt(new MyRunnable() {
+      @Override
+      public void runSafe() throws Exception {
+        updateFromRoot();
+      }
+    }, "getChildren", new NodeElement("intellij"), Interruption.invokeCancel);
+
+    assertTree("-/\n" +
+               " -com\n" +
+               "  intellij\n" +
+               " jetbrains\n");
+
+    select(new NodeElement("ide"), false);
+
+    assertTree("-/\n" +
+               " -com\n" +
+               "  -intellij\n" +
+               "   [ide]\n" +
+               " jetbrains\n");
+  }
+
   private void assertInterruption(Interruption cancelled) throws Exception {
     buildStructure(myRoot);
 
@@ -1043,6 +1078,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     action.run();
 
     myCancelRequest = null;
+    myElementUpdateHook = null;
   }
 
   public void testQueryStructure() throws Exception {
@@ -1488,6 +1524,45 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "   -fabrique\n" +
                "    ide\n");
   }
+
+  public void testNoRevalidationIfInvalid() throws Exception {
+    buildStructure(myRoot);
+
+    final NodeElement intellij = new NodeElement("intellij");
+    buildNode(intellij, true);
+
+    assertTree("-/\n" +
+               " -com\n" +
+               "  +[intellij]\n" +
+               " +jetbrains\n" +
+               " +org\n" +
+               " +xunit\n");
+
+
+    removeFromParentButKeepRef(new NodeElement("intellij"));
+    myValidator = new Validator() {
+      public boolean isValid(Object element) {
+        return !element.equals(intellij);
+      }
+    };
+    final Ref<Object> revalidatedElement = new Ref<Object>();
+    myStructure.setRevalidator(new Revalidator() {
+      public AsyncResult<Object> revalidate(NodeElement element) {
+        revalidatedElement.set(element);
+        return null;
+      }
+    });
+
+    updateFromRoot();
+
+    assertTree("-/\n" +
+               " [com]\n" +
+               " +jetbrains\n" +
+               " +org\n" +
+               " +xunit\n");
+    assertNull(revalidatedElement.get() != null ? revalidatedElement.get().toString() : null, revalidatedElement.get());
+  }
+
 
   private void doTestSelectionOnDelete(boolean keepRef) throws Exception {
     myComparator.setDelegate(new NodeDescriptor.NodeComparator<NodeDescriptor>() {

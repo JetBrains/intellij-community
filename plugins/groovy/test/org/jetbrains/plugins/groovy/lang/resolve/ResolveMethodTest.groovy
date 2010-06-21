@@ -16,18 +16,19 @@
 
 package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.psi.*;
-import com.intellij.psi.util.PropertyUtil;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
-import org.jetbrains.plugins.groovy.util.TestUtils;
+
+import com.intellij.psi.util.PropertyUtil
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl
+import org.jetbrains.plugins.groovy.util.TestUtils
+import com.intellij.psi.*
 
 /**
  * @author ven
@@ -573,5 +574,19 @@ class Zoo {
     final PsiReference ref = configureByFile("localVariableVsGetter/A.groovy");
     final PsiElement element = ref.resolve();
     assertInstanceOf(element, GrVariable.class);
+  }
+
+  public void testInvokeMethodViaThisInStaticContext() {
+    final PsiReference ref = configureByFile("invokeMethodViaThisInStaticContext/A.groovy");
+    final PsiElement element = ref.resolve();
+    assertInstanceOf(element, PsiMethod.class);
+    assertEquals "Class", element.getContainingClass().getName()
+  }
+
+  public void testInvokeMethodViaClassInStaticContext() {
+    final PsiReference ref = configureByFile("invokeMethodViaClassInStaticContext/A.groovy");
+    final PsiElement element = ref.resolve();
+    assertInstanceOf(element, PsiMethod.class);
+    assertEquals "Foo", element.getContainingClass().getName()
   }
 }

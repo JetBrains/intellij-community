@@ -20,6 +20,7 @@ public class GantReferenceCompletionTest extends CompletionTestBase {
   }
 
   public void testDep() throws Throwable { doTest(); }
+  public void testAntDep() throws Throwable { doTest(); }
   public void testInclude() throws Throwable { doTest(); }
   public void testAntJavacTarget() throws Throwable { doTest(); }
   public void testMutual() throws Throwable { doTest(); }

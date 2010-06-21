@@ -28,13 +28,13 @@ public class GroovyGenerateMembersTest extends LightCodeInsightFixtureTestCase {
   }
 
   private void doTest() throws Throwable {
-    myFixture.configureByFile(getTestName(true) + ".groovy");
+    myFixture.configureByFile(getTestName(false) + ".groovy");
     new WriteCommandAction(getProject()) {
       protected void run(Result result) throws Throwable {
         new ConstructorGenerateHandler().invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
       }
     }.execute();
-    myFixture.checkResultByFile(getTestName(true) + "_after.groovy");
+    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
   }
 
   @Override

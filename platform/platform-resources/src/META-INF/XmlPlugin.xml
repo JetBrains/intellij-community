@@ -314,6 +314,9 @@
     <elementSignatureProvider implementation="com.intellij.codeInsight.folding.impl.XmlElementSignatureProvider"/>
 
     <vcsSelectionProvider implementation="com.intellij.vcsUtil.XmlVcsSelectionProvider"/>
+
+    <renameInputValidator implementation="com.intellij.lang.xml.XmlElementRenameValidator"/>
+    <renameInputValidator implementation="com.intellij.lang.xml.XmlAttributeValueRenameValidator"/>
   </extensions>
 
   <actions>

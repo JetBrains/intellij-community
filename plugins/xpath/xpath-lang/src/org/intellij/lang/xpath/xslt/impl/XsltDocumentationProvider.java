@@ -258,14 +258,6 @@ public class XsltDocumentationProvider implements DocumentationProvider {
             return "DocElement";
         }
 
-        @SuppressWarnings({"ConstantConditions"})
-        public String getText() {
-            return null;
-        }
-
-        public void accept(@NotNull PsiElementVisitor visitor) {
-        }
-
         public PsiElement copy() {
             return this;
         }

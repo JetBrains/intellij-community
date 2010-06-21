@@ -16,11 +16,12 @@
 
 package com.intellij.util.xml;
 
+import com.intellij.ide.TypePresentationService;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.Function;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -69,6 +70,12 @@ public class TypeNameManager {
         return s;
       }
     }
+
+    final String name = TypePresentationService.getService().getTypePresentableName(aClass);
+    if (name != null) {
+      return name;
+    }
+
     return getFromClassMap(ourTypeNames, aClass);
   }
 
