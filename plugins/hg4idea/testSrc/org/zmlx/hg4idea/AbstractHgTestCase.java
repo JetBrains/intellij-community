@@ -192,6 +192,10 @@ public abstract class AbstractHgTestCase extends AbstractVcsTestCase {
     return "M " + path(path);
   }
 
+  public static String missing(String... path) {
+    return "! " + path(path);
+  }
+
   public static String path(String... line) {
     StringBuilder builder = new StringBuilder();
 
