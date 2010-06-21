@@ -400,10 +400,11 @@ class ExtractedClassBuilder {
     }
 
     public void visitReferenceExpression(PsiReferenceExpression expression) {
-
+      final JavaResolveResult resolveResult = expression.advancedResolve(true);
+      final boolean staticImported = resolveResult.getCurrentFileResolveScope() instanceof PsiImportStaticStatement;
       final PsiElement qualifier = expression.getQualifier();
       if (qualifier == null || qualifier instanceof PsiThisExpression) {
-        final PsiElement referent = expression.resolve();
+        final PsiElement referent = resolveResult.getElement();
         if (referent instanceof PsiField) {
           final PsiField field = (PsiField)referent;
 
@@ -421,7 +422,13 @@ class ExtractedClassBuilder {
           }
           else {
             if (field.hasModifierProperty(PsiModifier.STATIC)) {
-              out.append(originalClassName + '.' + field.getName());
+              if (staticImported) {
+                final PsiImportStaticStatement importStaticStatement = (PsiImportStaticStatement)resolveResult.getCurrentFileResolveScope();
+                final PsiClass targetClass = importStaticStatement.resolveTargetClass();
+                out.append(targetClass != null ? targetClass.getQualifiedName() : "").append(".").append(field.getName());
+              } else {
+                out.append(originalClassName + '.' + field.getName());
+              }
             }
             else {
               out.append(backPointerName + '.' + PropertyUtil.suggestGetterName(field.getProject(), field) + "()");
@@ -546,13 +553,20 @@ class ExtractedClassBuilder {
 
     public void visitMethodCallExpression(PsiMethodCallExpression call) {
       final PsiReferenceExpression expression = call.getMethodExpression();
+      final JavaResolveResult resolveResult = expression.advancedResolve(false);
       final PsiElement qualifier = expression.getQualifier();
       if (qualifier == null || qualifier instanceof PsiThisExpression) {
         final PsiMethod method = call.resolveMethod();
         if (method != null && !isCompletelyMoved(method)) {
           final String methodName = method.getName();
           if (method.hasModifierProperty(PsiModifier.STATIC)) {
-            out.append(originalClassName + '.' + methodName);
+            final PsiElement resolveScope = resolveResult.getCurrentFileResolveScope();
+            if (resolveScope instanceof PsiImportStaticStatement) {
+              final PsiClass targetClass = ((PsiImportStaticStatement)resolveScope).resolveTargetClass();
+              out.append(targetClass != null ? targetClass.getQualifiedName() : "").append('.').append(methodName);
+            } else {
+              out.append(originalClassName + '.' + methodName);
+            }
           }
           else {
             out.append(backPointerName + '.' + methodName);
