@@ -30,6 +30,8 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
+import com.intellij.openapi.vfs.impl.jar.JarHandler;
 import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.lang.UrlClassLoader;
@@ -111,14 +113,14 @@ public final class LoaderFactory {
   private static ClassLoader createClassLoader(final String runClasspath) {
     final ArrayList<URL> urls = new ArrayList<URL>();
     final VirtualFileManager manager = VirtualFileManager.getInstance();
-    final JarFileSystem fileSystem = JarFileSystem.getInstance();
+    final JarFileSystemImpl fileSystem = (JarFileSystemImpl)JarFileSystem.getInstance();
     final StringTokenizer tokenizer = new StringTokenizer(runClasspath, File.pathSeparator);
     while (tokenizer.hasMoreTokens()) {
       final String s = tokenizer.nextToken();
       try {
         VirtualFile vFile = manager.findFileByUrl(VfsUtil.pathToUrl(s));
-        VirtualFile jar = fileSystem.getJarRootForLocalFile(vFile);
-        urls.add(new URL(jar.getUrl()));
+        final File realFile = fileSystem.getMirroredFile(vFile);
+        urls.add(realFile != null ? realFile.toURI().toURL() : new File(s).toURI().toURL());
       }
       catch (Exception e) {
         // ignore ?

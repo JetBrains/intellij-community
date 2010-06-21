@@ -165,6 +165,13 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     return handler.getZip();
   }
 
+  @Nullable
+  public File getMirroredFile(VirtualFile vFile) {
+    VirtualFile jar = getJarRootForLocalFile(vFile);
+    final JarHandler handler = jar != null ? getHandler(jar) : null;
+    return handler != null ? handler.getMirrorFile(new File(vFile.getPath())) : null;
+  }
+
   private JarHandler getHandler(final VirtualFile entryVFile) {
     final String jarRootPath = extractRootPath(entryVFile.getPath());
 
