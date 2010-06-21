@@ -243,8 +243,8 @@ public class MethodResolverProcessor extends ResolverProcessor {
             PsiMethod method = (PsiMethod) element;
             if (dominated(currentMethod, array[i].getSubstitutor(), method, otherResolveResult.getSubstitutor(), manager, scope)) {
               continue Outer;
-            } else
-            if (dominated(method, otherResolveResult.getSubstitutor(), currentMethod, array[i].getSubstitutor(), manager, scope)) {
+            }
+            else if (dominated(method, otherResolveResult.getSubstitutor(), currentMethod, array[i].getSubstitutor(), manager, scope)) {
               iterator.remove();
             }
           }
@@ -269,6 +269,11 @@ public class MethodResolverProcessor extends ResolverProcessor {
       method1 = ((GrGdkMethod)method1).getStaticMethod();
       method2 = ((GrGdkMethod)method2).getStaticMethod();
     }
+    if (myIsConstructor && myArgumentTypes != null && myArgumentTypes.length == 1) {
+      if (method1.getParameterList().getParametersCount() == 0) return true;
+      if (method2.getParameterList().getParametersCount() == 0) return false;
+    }
+
     PsiParameter[] params1 = method1.getParameterList().getParameters();
     PsiParameter[] params2 = method2.getParameterList().getParameters();
     if (myArgumentTypes == null && params1.length != params2.length) return false;
