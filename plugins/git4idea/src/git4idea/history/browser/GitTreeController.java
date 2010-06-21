@@ -67,8 +67,6 @@ class GitTreeController implements ManageGitTreeView {
   private final MyUpdateStateInterceptor myHighlighting;
   private Alarm myAlarm;
 
-  private SHAHash myJumpTarget;
-
   private final SLRUCache<SHAHash, CommittedChangeList> myListsCache = new SLRUCache<SHAHash, CommittedChangeList>(128, 64) {
     @NotNull
     @Override
@@ -103,16 +101,13 @@ class GitTreeController implements ManageGitTreeView {
       public void run() {
         try {
           if (myFilterHolder.isDirty()) {
-            final SHAHash target = myJumpTarget;
-            myJumpTarget = null;
-
             final CommitsLoader loader = new CommitsLoader();
             loader.loadCommitsUsingMemoryAndNativeFilters(myFilterHolder.getStartingPoints(), myFilterHolder.getCurrentPoint(), null,
                                                  myFilterHolder.getFilters(), PageSizes.LOAD_SIZE);
             final List<GitCommit> commitList = loader.getCommitList();
             myTravelDate = commitList.isEmpty() ? null : commitList.get(commitList.size() - 1).getDate();
             final SHAHash lastHash = commitList.isEmpty() ? null : commitList.get(commitList.size() - 1).getHash();
-            myTreeView.refreshView(commitList, new TravelTicket(loader.isStartFound(), myTravelDate, lastHash), target);
+            myTreeView.refreshView(commitList, new TravelTicket(loader.isStartFound(), myTravelDate, lastHash), null);
 
             myFilterHolder.setDirty(false);
           }
@@ -387,8 +382,10 @@ class GitTreeController implements ManageGitTreeView {
                 for (Pair<Date, SHAHash> date : wayList) {
                   myFilterHolder.addContinuationPoint(date);
                 }
-                myJumpTarget = finalHash;
-                myFilterHolder.setDirty(true);
+
+                final GitCommit lastCommit = commits.get(commits.size() - 1);
+                myTreeView.refreshView(commits, new TravelTicket(loader.isStartFound(), lastCommit.getDate(), lastCommit.getHash()), finalHash);
+                myFilterHolder.setDirty(false);
                 myRefresher.run();
                 return;
               }
