@@ -17,8 +17,10 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightMethodBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -28,14 +30,14 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 /**
  * @author ven
  */
-public class GrAccessorMethodImpl extends GrSyntheticMethod implements GrAccessorMethod {
+public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccessorMethod {
   public static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrAccessorMethodImpl");
   @NotNull private final GrField myProperty;
 
   private final boolean myIsSetter;
 
   public GrAccessorMethodImpl(@NotNull GrField property, boolean isSetter, String name) {
-    super(property.getManager(), name);
+    super(property.getManager(), GroovyFileType.GROOVY_LANGUAGE, name);
     myProperty = property;
     myIsSetter = isSetter;
 
@@ -61,6 +63,7 @@ public class GrAccessorMethodImpl extends GrSyntheticMethod implements GrAccesso
     setBaseIcon(GroovyIcons.PROPERTY);
 
     setContainingClass(myProperty.getContainingClass());
+    setMethodKind("AccessorMethod");
   }
 
   @Nullable
@@ -84,17 +87,8 @@ public class GrAccessorMethodImpl extends GrSyntheticMethod implements GrAccesso
     return GroovyPsiElementFactory.getInstance(getProject()).createMethodFromText(modifiers+" "+getName()+params+"{}");
   }
 
-  public String toString() {
-    return "AccessorMethod";
-  }
-
   @NotNull
   public GrField getProperty() {
-    return myProperty;
-  }
-
-  @Override
-  public PsiElement getContext() {
     return myProperty;
   }
 

@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
+import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -32,11 +33,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -46,9 +45,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGd
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrTypeDefinitionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrSyntheticMethodImplementation;
 import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
@@ -64,6 +61,7 @@ public class GrClassImplUtil {
       return psiClassType.equalsToText(GrTypeDefinition.DEFAULT_BASE_CLASS_NAME);
     }
   };
+  public static final String SYNTHETIC_METHOD_IMPLEMENTATION = "GroovySyntheticMethodImplementation";
 
   private GrClassImplUtil() {
   }
@@ -172,10 +170,25 @@ public class GrClassImplUtil {
         JavaPsiFacade.getInstance(clazz.getProject()).findClass(GrTypeDefinition.DEFAULT_BASE_CLASS_NAME, clazz.getResolveScope());
       if (groovyObject != null) {
         for (final PsiMethod method : groovyObject.getMethods()) {
-          allMethods.add(new GrSyntheticMethodImplementation(method, clazz));
+          allMethods.add(createSyntheticMethodImplementation(clazz, method));
         }
       }
     }
+  }
+
+  private static LightMethodBuilder createSyntheticMethodImplementation(PsiClass containingClass, PsiMethod interfaceMethod) {
+    final LightMethodBuilder result =
+      new LightMethodBuilder(interfaceMethod.getManager(), GroovyFileType.GROOVY_LANGUAGE, interfaceMethod.getName()).
+        setContainingClass(containingClass).
+        setNavigationElement(interfaceMethod).
+        setReturnType(interfaceMethod.getReturnType()).
+        setModifiers(PsiModifier.PUBLIC).
+        setBaseIcon(GroovyIcons.METHOD).
+        setMethodKind(SYNTHETIC_METHOD_IMPLEMENTATION);
+    for (PsiParameter psiParameter : interfaceMethod.getParameterList().getParameters()) {
+      result.addParameter(psiParameter);
+    }
+    return result;
   }
 
 

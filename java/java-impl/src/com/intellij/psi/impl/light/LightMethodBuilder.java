@@ -47,6 +47,14 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
   private volatile LightParameterListBuilder myParameterList;
   private volatile Icon myBaseIcon;
   private volatile PsiClass myContainingClass;
+  private volatile boolean myConstructor;
+  private volatile String myMethodKind = "LightMethodBuilder";
+
+  public LightMethodBuilder(PsiClass constructedClass) {
+    this(constructedClass.getManager(), constructedClass.getName());
+    setContainingClass(constructedClass);
+    myConstructor = true;
+  }
 
   public LightMethodBuilder(PsiManager manager, String name) {
     this(manager, StdLanguages.JAVA, name);
@@ -178,8 +186,7 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
   }
 
   public boolean isConstructor() {
-    //todo
-    return false;
+    return myConstructor;
   }
 
   public boolean isVarArgs() {
@@ -245,8 +252,17 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
     return this;
   }
 
+  public LightMethodBuilder setMethodKind(String debugKindName) {
+    myMethodKind = debugKindName;
+    return this;
+  }
+
+  public static boolean isLightMethod(PsiMethod method, String kind) {
+    return method instanceof LightMethodBuilder && ((LightMethodBuilder)method).myMethodKind.equals(kind);
+  }
+
   public String toString() {
-    return "LightMethodBuilder:" + getName();
+    return myMethodKind + ":" + getName();
   }
 
   public Icon getElementIcon(final int flags) {
@@ -279,7 +295,17 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
 
   @Override
   public PsiElement getContext() {
-    return getContainingClass();
+    final PsiElement navElement = getNavigationElement();
+    if (navElement != this) {
+      return navElement;
+    }
+
+    final PsiClass cls = getContainingClass();
+    if (cls != null) {
+      return cls;
+    }
+
+    return getContainingFile();
   }
 
   public PsiMethodReceiver getMethodReceiver() {
