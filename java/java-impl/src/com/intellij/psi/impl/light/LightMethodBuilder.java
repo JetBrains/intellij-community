@@ -43,7 +43,7 @@ import java.util.List;
 public class LightMethodBuilder extends LightElement implements PsiMethod {
   private final String myName;
   private volatile Computable<PsiType> myReturnType;
-  private volatile LightModifierList myModifierList;
+  private final LightModifierList myModifierList;
   private volatile LightParameterListBuilder myParameterList;
   private volatile Icon myBaseIcon;
   private volatile PsiClass myContainingClass;
@@ -322,9 +322,12 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
 
     LightMethodBuilder that = (LightMethodBuilder)o;
 
+    if (myConstructor != that.myConstructor) return false;
+    if (myBaseIcon != null ? !myBaseIcon.equals(that.myBaseIcon) : that.myBaseIcon != null) return false;
+    if (myContainingClass != null ? !myContainingClass.equals(that.myContainingClass) : that.myContainingClass != null) return false;
+    if (!myMethodKind.equals(that.myMethodKind)) return false;
     if (!myModifierList.equals(that.myModifierList)) return false;
     if (!myName.equals(that.myName)) return false;
-    if (!myNavigationElement.equals(that.myNavigationElement)) return false;
     if (!myParameterList.equals(that.myParameterList)) return false;
     if (myReturnType != null ? !myReturnType.equals(that.myReturnType) : that.myReturnType != null) return false;
 
@@ -337,7 +340,10 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
     result = 31 * result + (myReturnType != null ? myReturnType.hashCode() : 0);
     result = 31 * result + myModifierList.hashCode();
     result = 31 * result + myParameterList.hashCode();
-    result = 31 * result + myNavigationElement.hashCode();
+    result = 31 * result + (myBaseIcon != null ? myBaseIcon.hashCode() : 0);
+    result = 31 * result + (myContainingClass != null ? myContainingClass.hashCode() : 0);
+    result = 31 * result + (myConstructor ? 1 : 0);
+    result = 31 * result + myMethodKind.hashCode();
     return result;
   }
 }
