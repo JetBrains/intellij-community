@@ -48,14 +48,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author max
  */
 public class InspectionProfileImpl extends ProfileEx implements ModifiableModel, InspectionProfile, ExternalizableScheme {
-  @NonNls private static InspectionProfileImpl DEFAULT_PROFILE;
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionProfileImpl");
   @NonNls private static final String VALID_VERSION = "1.0";
 
@@ -85,14 +82,12 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   static final String NAME = "name";
   public static boolean INIT_INSPECTIONS = false;
 
-//private String myBaseProfileName;
-
   public void setModified(final boolean modified) {
     myModified = modified;
   }
 
   private boolean myModified = false;
-  private final AtomicBoolean myInitialized = new AtomicBoolean(false);
+  private volatile boolean myInitialized;
 
   public InspectionProfileImpl(InspectionProfileImpl inspectionProfile) {
     super(inspectionProfile.getName());
@@ -170,13 +165,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     final ToolsImpl toolList1 = profile1.myTools.get(toolName);
     final ToolsImpl toolList2 = profile2.myTools.get(toolName);
 
-    if (toolList1 == null && toolList2 == null) {
-      return true;
-    }
-    if (toolList1 != null && toolList2 != null) {
-      return toolList1.equalTo(toolList2);
-    }
-    return false;
+    return toolList1 == null && toolList2 == null || toolList1 != null && toolList2 != null && toolList1.equalTo(toolList2);
   }
 
   public boolean isProperSetting(HighlightDisplayKey key) {
@@ -195,6 +184,8 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public void resetToBase() {
+    initInspectionTools();
+    
     copyToolsConfigurations(myBaseProfile);
     myDisplayLevelMap = null;
   }
@@ -252,7 +243,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public Set<HighlightSeverity> getUsedSeverities() {
-    LOG.assertTrue(myInitialized.get());
+    LOG.assertTrue(myInitialized);
     final Set<HighlightSeverity> result = new HashSet<HighlightSeverity>();
     for (ToolsImpl tools : myTools.values()) {
       for (ScopeToolState state : tools.getTools()) {
@@ -268,7 +259,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     element.setAttribute(VERSION_TAG, VALID_VERSION);
     element.setAttribute(IS_LOCKED, String.valueOf(myLockedProfile));
 
-    if (!myInitialized.get()) {
+    if (!myInitialized) {
       for (Element el : myDeinstalledInspectionsSettings.values()) {
         element.addContent((Element)el.clone());
       }
@@ -428,60 +419,62 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public boolean wasInitialized() {
-    return myInitialized.get();
+    return myInitialized;
   }
 
   public void initInspectionTools() {
-    if (ApplicationManager.getApplication().isUnitTestMode() && !INIT_INSPECTIONS) {
-      return;
+    if (ApplicationManager.getApplication().isUnitTestMode() && !INIT_INSPECTIONS) return;
+    if (myInitialized) return;
+    synchronized (myExternalInfo) {
+      if (myInitialized) return;
+      myInitialized = initialize();
     }
-    synchronized (myInitialized) {
-      if (!myInitialized.getAndSet(true)) {
-        if (myBaseProfile != null) {
-          myBaseProfile.initInspectionTools();
-        }
+  }
 
-        final InspectionTool[] tools;
-        try {
-          tools = myRegistrar.createTools();
-        }
-        catch (ProcessCanceledException e) {
-          myInitialized.set(false);
-          return;
-        }
-        for (InspectionTool tool : tools) {
-          final String shortName = tool.getShortName();
-          HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
-          if (key == null) {
-            if (tool instanceof LocalInspectionToolWrapper) {
-              key = HighlightDisplayKey.register(shortName, tool.getDisplayName(), ((LocalInspectionToolWrapper)tool).getTool().getID(),
-                                                 ((LocalInspectionToolWrapper)tool).getTool().getAlternativeID());
-            }
-            else {
-              key = HighlightDisplayKey.register(shortName);
-            }
-          }
+  private boolean initialize() {
+    if (myBaseProfile != null) {
+      myBaseProfile.initInspectionTools();
+    }
 
-          LOG.assertTrue(key != null, shortName + " ; number of initialized tools: " + myTools.size());
-          final ToolsImpl toolsList =
-            new ToolsImpl(tool, myBaseProfile != null ? myBaseProfile.getErrorLevel(key) : tool.getDefaultLevel(),
-                          !myLockedProfile && (myBaseProfile != null ? myBaseProfile.isToolEnabled(key) : tool.isEnabledByDefault()));
-          final Element element = myDeinstalledInspectionsSettings.remove(tool.getShortName());
-          if (element != null) {
-            try {
-              toolsList.readExternal(element, this);
-            }
-            catch (InvalidDataException e) {
-              LOG.error(e);
-            }
-          }
-          myTools.put(tool.getShortName(), toolsList);
+    final InspectionTool[] tools;
+    try {
+      tools = myRegistrar.createTools();
+    }
+    catch (ProcessCanceledException e) {
+      return false;
+    }
+    for (InspectionTool tool : tools) {
+      final String shortName = tool.getShortName();
+      HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
+      if (key == null) {
+        if (tool instanceof LocalInspectionToolWrapper) {
+          key = HighlightDisplayKey.register(shortName, tool.getDisplayName(), ((LocalInspectionToolWrapper)tool).getTool().getID(),
+                                             ((LocalInspectionToolWrapper)tool).getTool().getAlternativeID());
         }
-        if (mySource != null) {
-          copyToolsConfigurations(mySource);
+        else {
+          key = HighlightDisplayKey.register(shortName);
         }
       }
+
+      LOG.assertTrue(key != null, shortName + " ; number of initialized tools: " + myTools.size());
+      final ToolsImpl toolsList =
+        new ToolsImpl(tool, myBaseProfile != null ? myBaseProfile.getErrorLevel(key) : tool.getDefaultLevel(),
+                      !myLockedProfile && (myBaseProfile != null ? myBaseProfile.isToolEnabled(key) : tool.isEnabledByDefault()));
+      final Element element = myDeinstalledInspectionsSettings.remove(tool.getShortName());
+      if (element != null) {
+        try {
+          toolsList.readExternal(element, this);
+        }
+        catch (InvalidDataException e) {
+          LOG.error(e);
+        }
+      }
+      myTools.put(tool.getShortName(), toolsList);
     }
+    if (mySource != null) {
+      copyToolsConfigurations(mySource);
+    }
+    return true;
   }
 
   private HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey key) {
@@ -503,9 +496,8 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     myBaseProfile = inspectionProfile.myBaseProfile;
   }
 
-  public void copyToolsConfigurations(InspectionProfileImpl profile) {
+  private void copyToolsConfigurations(InspectionProfileImpl profile) {
     try {
-      initInspectionTools();
       for (ToolsImpl toolList : profile.myTools.values()) {
         final ToolsImpl tools = myTools.get(toolList.getShortName());
         final ScopeToolState defaultState = toolList.getDefaultState();
@@ -630,11 +622,12 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     InspectionProfileManager.getInstance().fireProfileChanged(inspectionProfile);
   }
 
-  public static synchronized InspectionProfileImpl getDefaultProfile() {
-    if (DEFAULT_PROFILE == null) {
-      DEFAULT_PROFILE = new InspectionProfileImpl("Default");
-    }
-    return DEFAULT_PROFILE;
+  private static class InspectionProfileImplHolder {
+    private static final InspectionProfileImpl DEFAULT_PROFILE = new InspectionProfileImpl("Default");
+  }
+
+  public static InspectionProfileImpl getDefaultProfile() {
+    return InspectionProfileImplHolder.DEFAULT_PROFILE;
   }
 
   public Document saveToDocument() throws WriteExternalException {

@@ -396,11 +396,14 @@ final class ToolWindowsPane extends JLayeredPane {
   }
 
   private void updateToolStripesVisibility(){
+    boolean oldVisible = myLeftStripe.isVisible();
+
     final boolean showButtons = !UISettings.getInstance().HIDE_TOOL_STRIPES;
-    myLeftStripe.setVisible(showButtons || myStripesOverlayed);
-    myRightStripe.setVisible(showButtons || myStripesOverlayed);
-    myTopStripe.setVisible(showButtons || myStripesOverlayed);
-    myBottomStripe.setVisible(showButtons || myStripesOverlayed);
+    boolean visible = showButtons || myStripesOverlayed;
+    myLeftStripe.setVisible(visible);
+    myRightStripe.setVisible(visible);
+    myTopStripe.setVisible(visible);
+    myBottomStripe.setVisible(visible);
 
     boolean overlayed = !showButtons && myStripesOverlayed;
 
@@ -409,8 +412,11 @@ final class ToolWindowsPane extends JLayeredPane {
     myTopStripe.setOverlayed(overlayed);
     myBottomStripe.setOverlayed(overlayed);
 
-    revalidate();
-    repaint();
+
+    if (oldVisible != visible) {
+     revalidate();
+     repaint();
+    }
   }
 
   Stripe getStripeFor(String id) {
