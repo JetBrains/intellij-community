@@ -31,13 +31,6 @@ module("antLayout") {
   src "${projectHome}/antLayout/src"
 }
 
-module("gantLauncher") {
-  targetLevel = "1.5"
-  classpath ANT
-  classpath gant
-  src "${projectHome}/gantLauncher/src"
-}
-
 target('default' : 'Default target') {
   project.clean()
   project.makeAll()
@@ -49,10 +42,6 @@ target('default' : 'Default target') {
       zipfileset(src: "${projectHome}/lib/javac2-all.jar") {
         exclude (name: "JDOM*.class")
       }
-    }
-
-    jar("gant_patches.jar") {
-      module("gantLauncher")
     }
 
     jar("jps-sources.zip") {

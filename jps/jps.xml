@@ -21,6 +21,10 @@
     <exclude name="**/rcs/**"/>
     <exclude name="**/.DS_Store/**"/>
     <exclude name="**/.svn/**"/>
+    <exclude name="**/vssver.scc/**"/>
+    <exclude name="**/vssver2.scc/**"/>
+    <exclude name="**/.sbas/**"/>
+    <exclude name="**/.IJI.*/**"/>
     <exclude name="**/.pyc/**"/>
     <exclude name="**/.pyo/**"/>
     <exclude name="**/*.pyc/**"/>
@@ -75,13 +79,13 @@
     <pathelement location="${path.variable.gant_home}/lib/groovy-all-1.7.1.jar"/>
   </path>
   
-  
+
   <!-- Application Server Libraries -->
-  
+
   <!-- Custom Compiler Taskdefs -->
   <property name="grooovyc.task.sdk" value="library.gant.classpath"/>
   <taskdef name="groovyc" classname="org.codehaus.groovy.ant.Groovyc" classpathref="${grooovyc.task.sdk}"/>
-  
+
   <!-- Modules -->
   
   
@@ -100,7 +104,17 @@
     <!-- Paths to be included in compilation bootclasspath -->
   </path>
   
+  <path id="antlayout.module.production.classpath">
+    <path refid="library.ant.classpath"/>
+  </path>
+  
+  <path id="antlayout.runtime.production.module.classpath">
+    <pathelement location="${antlayout.output.dir}"/>
+    <path refid="library.ant.classpath"/>
+  </path>
+  
   <path id="antlayout.module.classpath">
+    <pathelement location="${antlayout.output.dir}"/>
     <path refid="library.ant.classpath"/>
   </path>
   
@@ -154,77 +168,6 @@
   </target>
   
   
-  <!-- Module gantLauncher -->
-  
-  <dirname property="module.gantlauncher.basedir" file="${ant.file}"/>
-  
-  
-  
-  <property name="compiler.args.gantlauncher" value="${compiler.args}"/>
-  
-  <property name="gantlauncher.output.dir" value="${module.gantlauncher.basedir}/out/production/gantLauncher"/>
-  <property name="gantlauncher.testoutput.dir" value="${module.gantlauncher.basedir}/out/test/gantLauncher"/>
-  
-  <path id="gantlauncher.module.bootclasspath">
-    <!-- Paths to be included in compilation bootclasspath -->
-  </path>
-  
-  <path id="gantlauncher.module.classpath">
-    <path refid="library.ant.classpath"/>
-    <path refid="library.gant.classpath"/>
-  </path>
-  
-  <path id="gantlauncher.runtime.module.classpath">
-    <pathelement location="${gantlauncher.output.dir}"/>
-    <pathelement location="${gantlauncher.testoutput.dir}"/>
-    <path refid="library.ant.classpath"/>
-    <path refid="library.gant.classpath"/>
-  </path>
-  
-  
-  <patternset id="excluded.from.module.gantlauncher">
-    <patternset refid="ignored.files"/>
-  </patternset>
-  
-  <patternset id="excluded.from.compilation.gantlauncher">
-    <patternset refid="excluded.from.module.gantlauncher"/>
-  </patternset>
-  
-  <path id="gantlauncher.module.sourcepath">
-    <dirset dir="${module.gantlauncher.basedir}/gantLauncher">
-      <include name="src"/>
-    </dirset>
-  </path>
-  
-  
-  <target name="compile.module.gantlauncher" depends="compile.module.gantlauncher.production,compile.module.gantlauncher.tests" description="Compile module gantLauncher"/>
-  
-  <target name="compile.module.gantlauncher.production" description="Compile module gantLauncher; production classes">
-    <mkdir dir="${gantlauncher.output.dir}"/>
-    <javac2 destdir="${gantlauncher.output.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" memorymaximumsize="${compiler.max.memory}" fork="true">
-      <compilerarg line="${compiler.args.gantlauncher}"/>
-      <bootclasspath refid="gantlauncher.module.bootclasspath"/>
-      <classpath refid="gantlauncher.module.classpath"/>
-      <src refid="gantlauncher.module.sourcepath"/>
-      <patternset refid="excluded.from.compilation.gantlauncher"/>
-    </javac2>
-    
-    <copy todir="${gantlauncher.output.dir}">
-      <fileset dir="${module.gantlauncher.basedir}/gantLauncher/src">
-        <patternset refid="compiler.resources"/>
-        <type type="file"/>
-      </fileset>
-    </copy>
-  </target>
-  
-  <target name="compile.module.gantlauncher.tests" depends="compile.module.gantlauncher.production" description="compile module gantLauncher; test classes" unless="skip.tests"/>
-  
-  <target name="clean.module.gantlauncher" description="cleanup module">
-    <delete dir="${gantlauncher.output.dir}"/>
-    <delete dir="${gantlauncher.testoutput.dir}"/>
-  </target>
-  
-  
   <!-- Module jps -->
   
   <dirname property="module.jps.basedir" file="${ant.file}"/>
@@ -240,7 +183,23 @@
     <!-- Paths to be included in compilation bootclasspath -->
   </path>
   
+  <path id="jps.module.production.classpath">
+    <path refid="library.ant.classpath"/>
+    <path refid="library.javac2.classpath"/>
+    <pathelement location="${antlayout.output.dir}"/>
+    <path refid="library.gant.classpath"/>
+  </path>
+  
+  <path id="jps.runtime.production.module.classpath">
+    <pathelement location="${jps.output.dir}"/>
+    <path refid="library.ant.classpath"/>
+    <path refid="library.javac2.classpath"/>
+    <path refid="antlayout.runtime.production.module.classpath"/>
+    <path refid="library.gant.classpath"/>
+  </path>
+  
   <path id="jps.module.classpath">
+    <pathelement location="${jps.output.dir}"/>
     <path refid="library.ant.classpath"/>
     <path refid="library.javac2.classpath"/>
     <pathelement location="${antlayout.output.dir}"/>
@@ -254,8 +213,7 @@
     <pathelement location="${jps.testoutput.dir}"/>
     <path refid="library.ant.classpath"/>
     <path refid="library.javac2.classpath"/>
-    <pathelement location="${antlayout.output.dir}"/>
-    <pathelement location="${antlayout.testoutput.dir}"/>
+    <path refid="antlayout.runtime.module.classpath"/>
     <path refid="library.junit.classpath"/>
     <path refid="library.gant.classpath"/>
   </path>
@@ -288,7 +246,7 @@
     <mkdir dir="${jps.output.dir}"/>
     <groovyc destdir="${jps.output.dir}" fork="yes">
       <src refid="jps.module.sourcepath"/>
-      <classpath refid="jps.module.classpath"/>
+      <classpath refid="jps.module.production.classpath"/>
       <patternset refid="excluded.from.compilation.jps"/>
       <javac debug="${compiler.debug}">
         <compilerarg line="${compiler.args.jps}"/>
@@ -315,10 +273,7 @@
 
     <groovyc destdir="${jps.testoutput.dir}" fork="yes">
       <src refid="jps.module.test.sourcepath"/>
-      <classpath>
-        <path refid="jps.module.classpath"/>
-        <pathelement location="${jps.output.dir}"/>
-      </classpath>
+      <classpath refid="jps.module.classpath"/>
       <patternset refid="excluded.from.compilation.jps"/>
       <javac debug="${compiler.debug}">
         <compilerarg line="${compiler.args.jps}"/>
@@ -352,9 +307,9 @@
     <!-- Perform any build initialization in this target -->
   </target>
   
-  <target name="clean" depends="clean.module.antlayout, clean.module.gantlauncher, clean.module.jps" description="cleanup all"/>
+  <target name="clean" depends="clean.module.antlayout, clean.module.jps" description="cleanup all"/>
   
-  <target name="build.modules" depends="init, clean, compile.module.antlayout, compile.module.gantlauncher, compile.module.jps" description="build all modules"/>
+  <target name="build.modules" depends="init, clean, compile.module.antlayout, compile.module.jps" description="build all modules"/>
   
   <target name="all" depends="build.modules" description="build all"/>
 </project>
