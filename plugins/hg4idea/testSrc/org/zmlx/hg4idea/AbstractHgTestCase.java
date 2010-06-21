@@ -12,18 +12,18 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vfs.*;
-import com.intellij.testFramework.*;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsShowConfirmationOption;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.AbstractVcsTestCase;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
-import com.intellij.vcsUtil.*;
-import org.junit.Before;
-import org.testng.Assert;
+import com.intellij.vcsUtil.VcsUtil;
 import org.testng.annotations.BeforeMethod;
 
 import java.io.*;
@@ -46,8 +46,7 @@ public abstract class AbstractHgTestCase extends AbstractVcsTestCase {
 
     myTempDirTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
     myTempDirTestFixture.setUp();
-    myProjectRepo = new File(myTempDirTestFixture.getTempDirPath(), "repo");
-    Assert.assertTrue(myProjectRepo.mkdir());
+    myProjectRepo = new File(myTempDirTestFixture.getTempDirPath());
 
     ProcessOutput processOutput = runHg(myProjectRepo, "init");
     verify(processOutput);
@@ -69,7 +68,7 @@ public abstract class AbstractHgTestCase extends AbstractVcsTestCase {
     if (exec == null || !myClientBinaryPath.exists()) {
       System.out.println("Using checked in");
       File pluginRoot = new File(PluginPathManager.getPluginHomePath(HgVcs.VCS_NAME));
-      myClientBinaryPath = new File(pluginRoot, "testData/hg/bin");
+      myClientBinaryPath = new File(pluginRoot, "testData/bin");
     }
 
     HgVcs.setTestHgExecutablePath(myClientBinaryPath.getPath());
