@@ -37,67 +37,10 @@ public class DirectoryHistoryDialogTest extends LocalHistoryUITestCase {
     Disposer.dispose(d);
   }
 
-  public void testFileDifference() throws IOException {
-    VirtualFile f = myRoot.createChildData(null, "f.txt");
-    f.setBinaryContent("old".getBytes());
-    f.setBinaryContent("new".getBytes());
-    f.setBinaryContent("current".getBytes());
-
-    HistoryDialogModel m = createModelAndSelectRevisions(1, 2);
-    DirectoryChange c = (DirectoryChange)m.getChanges().get(0);
-
-    DiffContent left = c.getFileDifferenceModel().getLeftDiffContent(new NullRevisionsProgress());
-    DiffContent right = c.getFileDifferenceModel().getRightDiffContent(new NullRevisionsProgress());
-    
-    assertEquals("old", new String(left.getBytes()));
-    assertEquals("new", new String(right.getBytes()));
-
-    m.selectRevisions(0, 1);
-
-    c = (DirectoryChange)m.getChanges().get(0);
-    right = c.getFileDifferenceModel().getRightDiffContent(new NullRevisionsProgress());
-    assertEquals("current", new String(right.getBytes()));
-
-    assertTrue(right instanceof DocumentContent);
-  }
-
-  @Test
-  public void testFileDifferenceModelWhenOneOfTheEntryIsNull() throws IOException {
-    myRoot.createChildData(null, "dummy.txt");
-
-    getVcs().beginChangeSet();
-    VirtualFile f = myRoot.createChildData(null, "f.txt");
-    f.setBinaryContent("content".getBytes(), -1, 123);
-    getVcs().endChangeSet(null);
-
-    f.delete(null);
-
-    HistoryDialogModel dm = createModelAndSelectRevisions(0, 1);
-    FileDifferenceModel m = ((DirectoryChange)dm.getChanges().get(0)).getFileDifferenceModel();
-
-    assertTrue(m.getTitle(), m.getTitle().endsWith("f.txt"));
-    assertTrue(m.getLeftTitle(new NullRevisionsProgress()).endsWith("f.txt"));
-    assertEquals("File does not exist", m.getRightTitle(new NullRevisionsProgress()));
-    assertContents(m, "content", "");
-
-    dm.selectRevisions(1, 2);
-    m = ((DirectoryChange)dm.getChanges().get(0)).getFileDifferenceModel();
-
-    assertTrue(m.getTitle(), m.getTitle().endsWith("f.txt"));
-    assertEquals("File does not exist", m.getLeftTitle(new NullRevisionsProgress()));
-    assertTrue(m.getRightTitle(new NullRevisionsProgress()).endsWith("f.txt"));
-    assertContents(m, "", "content");
-  }
-
-  private void assertContents(FileDifferenceModel m, String expectedLeft, String expectedRight) throws IOException {
-    assertEquals(expectedLeft, new String(m.getLeftDiffContent(new NullRevisionsProgress()).getBytes()));
-    assertEquals(expectedRight, new String(m.getRightDiffContent(new NullRevisionsProgress()).getBytes()));
-  }
-
   public void testRevertion() throws Exception {
     myRoot.createChildData(null, "f.txt");
 
-    HistoryDialogModel m = createModelAndSelectRevision(1);
+    HistoryDialogModel m = createModelAndSelectRevision(0);
     m.createReverter().revert();
 
     assertNull(myRoot.findChild("f.txt"));
@@ -107,7 +50,7 @@ public class DirectoryHistoryDialogTest extends LocalHistoryUITestCase {
     myRoot.createChildData(null, "f1.txt");
     myRoot.createChildData(null, "f2.txt");
 
-    DirectoryHistoryDialogModel m = createModelAndSelectRevision(2);
+    DirectoryHistoryDialogModel m = createModelAndSelectRevision(1);
     DirectoryChange c = (DirectoryChange)m.getChanges().get(0);
     m.createRevisionReverter(Collections.singletonList(c.getDifference())).revert();
 

@@ -24,9 +24,11 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.ChangesTreeList;
@@ -37,6 +39,8 @@ import com.intellij.ui.ExcludingTraversalPolicy;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.SearchTextFieldWithStoredHistory;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -46,6 +50,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.history.integration.LocalHistoryBundle.message;
 
@@ -173,7 +178,6 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     return new Runnable() {
       public void run() {
         myChangesTree.setChangesToDisplay(changes);
-        if (!changes.isEmpty()) myChangesTree.select(Collections.singletonList(changes.get(0)));
       }
     };
   }
@@ -181,6 +185,10 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
   @Override
   protected String getHelpId() {
     return "reference.dialogs.localHistory.show.folder";
+  }
+
+  private List<DirectoryChange> getChanges() {
+    return (List)myChangesTree.getChanges();
   }
 
   private List<DirectoryChange> getSelectedChanges() {
@@ -193,19 +201,26 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     }
 
     @Override
-    protected void doPerform(DirectoryHistoryDialogModel model, List<DirectoryChange> changes) {
-      DiffRequest r = createDifference(getFirstChange(changes).getFileDifferenceModel());
-      DiffManager.getInstance().getDiffTool().show(r);
+    protected void doPerform(DirectoryHistoryDialogModel model, List<DirectoryChange> selected) {
+      final Set<DirectoryChange> selectedSet = new THashSet<DirectoryChange>(selected);
+      ShowDiffAction.showDiffForChange((Iterable)iterFileChanges(), new Condition<Change>() {
+        public boolean value(Change change) {
+          return selectedSet.contains(change);
+        }
+      }, myProject, ShowDiffAction.DiffExtendUIFactory.NONE, true);
+    }
+
+    private Iterable<DirectoryChange> iterFileChanges() {
+      return ContainerUtil.iterate(getChanges(), new Condition<DirectoryChange>() {
+        public boolean value(DirectoryChange each) {
+          return each.canShowFileDifference();
+        }
+      });
     }
 
     @Override
     protected boolean isEnabledFor(DirectoryHistoryDialogModel model, List<DirectoryChange> changes) {
-      DirectoryChange c = getFirstChange(changes);
-      return c != null && c.canShowFileDifference();
-    }
-
-    private DirectoryChange getFirstChange(List<DirectoryChange> changes) {
-      return changes.isEmpty() ? null : changes.get(0);
+      return iterFileChanges().iterator().hasNext();
     }
   }
 
@@ -215,9 +230,9 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     }
 
     @Override
-    protected void doPerform(DirectoryHistoryDialogModel model, List<DirectoryChange> changes) {
+    protected void doPerform(DirectoryHistoryDialogModel model, List<DirectoryChange> selected) {
       List<Difference> diffs = new ArrayList<Difference>();
-      for (DirectoryChange each : changes) {
+      for (DirectoryChange each : selected) {
         diffs.add(each.getModel().getDifference());
       }
       revert(model.createRevisionReverter(diffs));
@@ -239,7 +254,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
       doPerform(model, getSelectedChanges());
     }
 
-    protected abstract void doPerform(DirectoryHistoryDialogModel model, List<DirectoryChange> changes);
+    protected abstract void doPerform(DirectoryHistoryDialogModel model, List<DirectoryChange> selected);
 
 
     @Override

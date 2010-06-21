@@ -84,12 +84,13 @@ public class ChangeCollectingVisitor extends ChangeVisitor {
   public void visit(DeleteChange c) throws StopVisitingException {
     if (skippedDueToNonexistence(c)) {
       if (c.isDeletionOf(myPath)) {
+        addIfAffectsAndRevert(c);
         myExists = true;
         myDoNotAddAnythingElseFromCurrentChangeSet = true;
       }
-      return;
+    } else {
+      addIfAffectsAndRevert(c);
     }
-    addIfAffectsAndRevert(c);
   }
 
   private void addIfAffectsAndRevert(Change c) {

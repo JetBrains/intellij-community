@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,28 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.history.integration.ui.models;
 
-package com.intellij.history.core.revisions;
+import com.intellij.history.core.revisions.Revision;
 
-import com.intellij.history.core.tree.Entry;
-import com.intellij.history.core.tree.RootEntry;
+import java.util.LinkedList;
 
-public class CurrentRevision extends Revision {
-  private final RootEntry myRoot;
-  private final String myPath;
+public class RevisionItem {
+  public final Revision revision;
+  public final LinkedList<Revision> labels = new LinkedList<Revision>();
 
-  public CurrentRevision(RootEntry root, String path) {
-    myRoot = root;
-    myPath = path;
-  }
-
-  @Override
-  public long getTimestamp() {
-    return findEntry().getTimestamp();
-  }
-
-  @Override
-  public Entry findEntry() {
-    return myRoot.getEntry(myPath);
+  public RevisionItem(Revision revision) {
+    this.revision = revision;
   }
 }

@@ -88,11 +88,6 @@ public class ByteContentRetriever extends ChangeSetsProcessor {
     recordContentAndTimestamp(changeSet);
   }
 
-  @Override
-  protected void visitFirstAvailableNonCreational(ChangeSet changeSet) {
-    checkCurrentRevision();
-  }
-
   private void checkCurrentRevision() {
     if (myComparator.isSuitable(myCurrentFileTimestamp)) {
       throw new ContentFoundException();

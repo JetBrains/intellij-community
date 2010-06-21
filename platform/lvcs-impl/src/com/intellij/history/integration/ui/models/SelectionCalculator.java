@@ -22,12 +22,15 @@ import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.storage.Content;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class SelectionCalculator {
+  private static final Block EMPTY_BLOCK = new Block("", 0, 0);
+  
   private final IdeaGateway myGateway;
   private final List<Revision> myRevisions;
   private final int myFromLine;
@@ -68,11 +71,18 @@ public class SelectionCalculator {
     p.processed(((totalRevisions - revisionIndex) * 100) / totalRevisions);
 
     Block result;
-    if (revisionIndex == 0) {
+    if (content == null) {
+      result = EMPTY_BLOCK; 
+    } else  if (revisionIndex == 0) {
       result = new Block(content, myFromLine, myToLine);
     }
     else {
-      Block prev = getSelectionFor(revisionIndex - 1, totalRevisions, p);
+      Block prev = EMPTY_BLOCK;
+      int i = revisionIndex;
+      while(prev == EMPTY_BLOCK && i > 0) {
+        i--;
+        prev = getSelectionFor(i, totalRevisions, p);
+      }
       result = new FindBlock(content, prev).getBlockInThePrevVersion();
     }
 
@@ -81,8 +91,10 @@ public class SelectionCalculator {
     return result;
   }
 
+  @Nullable
   private String getRevisionContent(Revision r) {
-    Entry e = r.getEntry();
+    Entry e = r.findEntry();
+    if (e == null) return null;
     Content c = e.getContent();
     if (!c.isAvailable()) throw new ContentIsUnavailableException();
     return c.getString(e, myGateway);

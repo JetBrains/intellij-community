@@ -16,12 +16,15 @@
 
 package com.intellij.history.core.revisions;
 
+import com.intellij.history.core.InMemoryLocalHistoryFacade;
+import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.core.LocalHistoryTestCase;
 import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.history.core.changes.CreateFileChange;
+import com.intellij.history.core.tree.RootEntry;
 import org.junit.Test;
 
-public class RevisionsCauseChangesTest extends LocalHistoryTestCase {
+public class RevisionsTest extends LocalHistoryTestCase {
   ChangeSet cs = cs("Action", new CreateFileChange(nextId(), "f"));
 
   @Test
@@ -32,16 +35,25 @@ public class RevisionsCauseChangesTest extends LocalHistoryTestCase {
   }
 
   @Test
-  public void testRevisionBeforeChangeIsBefore() {
-    Revision r = new RevisionBeforeChange(null, null, null, cs);
-    assertNull(r.getChangeSetName());
-    assertNull(r.getChangeSetId());
+  public void testRevisionAfterChangeIsBefore() {
+    Revision r = new ChangeRevision(null, null, null, cs, false);
+    assertEquals("Action", r.getChangeSetName());
+    assertEquals(cs.getId(), r.getChangeSetId().intValue());
   }
 
   @Test
-  public void testRevisionAfterChangeIsBefore() {
-    Revision r = new RevisionAfterChange(null, null, null, cs);
-    assertEquals("Action", r.getChangeSetName());
-    assertEquals(cs.getId(), r.getChangeSetId().intValue());
+  public void testAfterRevisionForRootEntry() {
+    RootEntry root = new RootEntry();
+    LocalHistoryFacade facade = new InMemoryLocalHistoryFacade();
+
+    ChangeSet cs = addChangeSet(facade, createFile(root, "f1"));
+    addChangeSet(facade, createFile(root, "f2"));
+
+    Revision r = new ChangeRevision(facade, root, "", cs, false);
+    RootEntry e = (RootEntry)r.findEntry();
+
+    assertEquals(e.getClass(), RootEntry.class);
+    assertNotNull(e.findEntry("f1"));
+    assertNull(e.findEntry("f2"));
   }
 }

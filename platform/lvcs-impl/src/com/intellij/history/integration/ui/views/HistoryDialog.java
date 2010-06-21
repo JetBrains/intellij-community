@@ -163,7 +163,6 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
       mySplitter.setFirstComponent(createRevisionsSide(diffAndToolbarSize.second));
       mySplitter.setSecondComponent(myDiffView);
 
-      mySplitter.setPreferredSize(getInitialSize());
       restoreSplitterProportion();
 
       root.add(mySplitter);
@@ -182,10 +181,6 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   }
 
   protected abstract void setDiffBorder(Border border);
-
-  protected Dimension getInitialSize() {
-    return new Dimension(800, 600);
-  }
 
   @Override
   public void dispose() {

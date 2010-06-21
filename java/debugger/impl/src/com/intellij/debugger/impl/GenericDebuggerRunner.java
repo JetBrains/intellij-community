@@ -47,15 +47,6 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
     return createContentDescriptor(project, executor, state, contentToReuse, env);
   }
 
-  @Override
-  protected String getLocalHistoryLabel(RunProfile profile, RunProfileState state) {
-    final String name = profile.getName();
-    return state instanceof RemoteState
-                         ? DebuggerBundle.message("debugger.runner.vcs.label.remote.debug", name)
-                         : DebuggerBundle.message("debugger.runner.vcs.label.debugging", name);
-
-  }
-
   @Nullable
   protected RunContentDescriptor createContentDescriptor(Project project, Executor executor, RunProfileState state,
                                                          RunContentDescriptor contentToReuse,

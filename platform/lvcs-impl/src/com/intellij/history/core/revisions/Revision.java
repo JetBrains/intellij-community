@@ -16,8 +16,6 @@
 
 package com.intellij.history.core.revisions;
 
-import com.intellij.history.core.changes.Change;
-import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.Nullable;
@@ -47,15 +45,17 @@ public abstract class Revision {
     return null;
   }
 
+  public boolean isLabel() {
+    return getAffectedFileNames().first.isEmpty();
+  }
+
   public Pair<List<String>, Integer> getAffectedFileNames() {
     return Pair.create(Collections.<String>emptyList(), 0);
   }
 
-  public abstract Entry getEntry();
+  public abstract Entry findEntry();
 
   public List<Difference> getDifferencesWith(Revision right) {
-    Entry leftEntry = getEntry();
-    Entry rightEntry = right.getEntry();
-    return leftEntry.getDifferencesWith(rightEntry);
+    return Entry.getDifferencesBetween(findEntry(), right.findEntry());
   }
 }

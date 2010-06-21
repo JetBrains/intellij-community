@@ -50,12 +50,12 @@ public class SelectionDifferenceModel extends FileDifferenceModel {
 
   @Override
   protected Entry getLeftEntry() {
-    return myLeftRevision.getEntry();
+    return myLeftRevision.findEntry();
   }
 
   @Override
   protected Entry getRightEntry() {
-    return myRightRevision.getEntry();
+    return myRightRevision.findEntry();
   }
 
   @Override
@@ -89,7 +89,7 @@ public class SelectionDifferenceModel extends FileDifferenceModel {
   }
 
   private SimpleContent getDiffContent(Revision r, RevisionProcessingProgress p) {
-    return createSimpleDiffContent(getContentOf(r, p), r.getEntry());
+    return createSimpleDiffContent(getContentOf(r, p), r.findEntry());
   }
 
   private String getContentOf(Revision r, RevisionProcessingProgress p) {

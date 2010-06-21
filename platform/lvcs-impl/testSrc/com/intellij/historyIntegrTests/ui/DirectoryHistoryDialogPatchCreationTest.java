@@ -26,7 +26,9 @@ public class DirectoryHistoryDialogPatchCreationTest extends PatchingTestCase {
     myRoot.createChildData(null, "f3.txt");
 
     DirectoryHistoryDialogModel m = new DirectoryHistoryDialogModel(myProject, myGateway, getVcs(), myRoot);
-    m.selectRevisions(1, 3);
+    assertSize(3, m.getRevisions());
+
+    m.selectRevisions(0, 2);
     m.createPatch(patchFilePath, false);
     clearRoot();
 

@@ -21,8 +21,10 @@ import com.intellij.history.core.revisions.RecentChange;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class RecentChangeDialogModel extends DirectoryHistoryDialogModel {
@@ -35,11 +37,9 @@ public class RecentChangeDialogModel extends DirectoryHistoryDialogModel {
   }
 
   @Override
-  protected List<Revision> calcRevisionsCache() {
-    final List<Revision> result = new ArrayList<Revision>();
-    result.add(myChange.getRevisionAfter());
-    result.add(myChange.getRevisionBefore());
-    return result;
+  protected Pair<Revision, List<RevisionItem>> calcRevisionsCache() {
+    return Pair.create(myChange.getRevisionAfter(),
+                       Collections.singletonList(new RevisionItem(myChange.getRevisionBefore())));
   }
 
   @Override
@@ -49,6 +49,6 @@ public class RecentChangeDialogModel extends DirectoryHistoryDialogModel {
 
   @Override
   public void resetSelection() {
-    selectRevisions(0, 1);
+    selectRevisions(0, 0);
   }
 }

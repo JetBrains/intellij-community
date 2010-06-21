@@ -28,7 +28,6 @@ import com.intellij.openapi.diff.ex.DiffPanelOptions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ExcludingTraversalPolicy;
 
 import javax.swing.*;
@@ -55,13 +54,6 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   @Override
   protected FileHistoryDialogModel createModel(LocalHistoryFacade vcs) {
     return new EntireFileHistoryDialogModel(myProject, myGateway, vcs, myFile);
-  }
-
-  @Override
-  protected Dimension getInitialSize() {
-    Dimension def = super.getInitialSize();
-    Dimension windowSize = WindowManager.getInstance().getFrame(myProject).getSize();
-    return new Dimension(Math.max(def.width, windowSize.width - 40), Math.max(def.height, windowSize.height - 40));
   }
 
   @Override

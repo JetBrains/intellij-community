@@ -21,21 +21,25 @@ import com.intellij.history.core.RevisionsCollector;
 import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
+import com.intellij.history.core.tree.RootEntry;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.patches.PatchCreator;
 import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 public abstract class HistoryDialogModel {
@@ -44,13 +48,14 @@ public abstract class HistoryDialogModel {
   protected VirtualFile myFile;
   protected IdeaGateway myGateway;
   private String myFilter;
-  private List<Revision> myRevisionsCache;
+  private List<RevisionItem> myRevisionsCache;
+  private Revision myCurrentRevisionCache;
   private int myRightRevisionIndex;
   private int myLeftRevisionIndex;
   private Entry[] myLeftEntryCache;
   private Entry[] myRightEntryCache;
 
-  public HistoryDialogModel(Project p,  IdeaGateway gw, LocalHistoryFacade vcs, VirtualFile f) {
+  public HistoryDialogModel(Project p, IdeaGateway gw, LocalHistoryFacade vcs, VirtualFile f) {
     myProject = p;
     myVcs = vcs;
     myFile = f;
@@ -61,22 +66,47 @@ public abstract class HistoryDialogModel {
     return FileUtil.toSystemDependentName(myFile.getPath());
   }
 
-  public List<Revision> getRevisions() {
+
+  public List<RevisionItem> getRevisions() {
     if (myRevisionsCache == null) {
-      myRevisionsCache = calcRevisionsCache();
+      Pair<Revision, List<RevisionItem>> revs = calcRevisionsCache();
+      myCurrentRevisionCache = revs.first;
+      myRevisionsCache = revs.second;
     }
     return myRevisionsCache;
   }
 
-  protected List<Revision> calcRevisionsCache() {
-    return ApplicationManager.getApplication().runReadAction(new Computable<List<Revision>>() {
-      public List<Revision> compute() {
+  public Revision getCurrentRevision() {
+    getRevisions();
+    return myCurrentRevisionCache;
+  }
+
+  protected Pair<Revision, List<RevisionItem>> calcRevisionsCache() {
+    return ApplicationManager.getApplication().runReadAction(new Computable<Pair<Revision, List<RevisionItem>>>() {
+      public Pair<Revision, List<RevisionItem>> compute() {
         myGateway.registerUnsavedDocuments(myVcs);
-        RevisionsCollector collector = new RevisionsCollector(myVcs, myGateway.createTransientRootEntry(), 
-                                                              myFile.getPath(), myProject.getLocationHash(), myFilter);
-        return collector.getResult();
+        String path = myFile.getPath();
+        RootEntry root = myGateway.createTransientRootEntry();
+        RevisionsCollector collector = new RevisionsCollector(myVcs, root, path, myProject.getLocationHash(), myFilter);
+
+        List<Revision> all = collector.getResult();
+        return Pair.create(all.get(0), groupRevisions(all.subList(1, all.size())));
       }
     });
+  }
+
+  private List<RevisionItem> groupRevisions(List<Revision> revs) {
+    LinkedList<RevisionItem> result = new LinkedList<RevisionItem>();
+
+    for (Revision each : ContainerUtil.iterateBackward(revs)) {
+      if (each.isLabel() && !result.isEmpty()) {
+        result.getFirst().labels.addFirst(each);
+      } else {
+        result.addFirst(new RevisionItem(each));
+      }
+    }
+
+    return result;
   }
 
   public void setFilter(@Nullable String filter) {
@@ -95,17 +125,21 @@ public abstract class HistoryDialogModel {
   }
 
   public Revision getLeftRevision() {
-    return getRevisions().get(myLeftRevisionIndex);
+    if (getRevisions().isEmpty()) return getCurrentRevision();
+    return getRevisions().get(myLeftRevisionIndex).revision;
   }
 
   public Revision getRightRevision() {
-    return getRevisions().get(myRightRevisionIndex);
+    if (isCurrentRevisionSelected() || getRevisions().isEmpty()) {
+      return getCurrentRevision();
+    }
+    return getRevisions().get(myRightRevisionIndex).revision;
   }
 
   protected Entry getLeftEntry() {
     if (myLeftEntryCache == null) {
       // array is used because entry itself can be null
-      myLeftEntryCache = new Entry[]{getLeftRevision().getEntry()};
+      myLeftEntryCache = new Entry[]{getLeftRevision().findEntry()};
     }
     return myLeftEntryCache[0];
   }
@@ -113,25 +147,21 @@ public abstract class HistoryDialogModel {
   protected Entry getRightEntry() {
     if (myRightEntryCache == null) {
       // array is used because entry itself can be null
-      myRightEntryCache = new Entry[]{getRightRevision().getEntry()};
+      myRightEntryCache = new Entry[]{getRightRevision().findEntry()};
     }
     return myRightEntryCache[0];
   }
 
   public void selectRevisions(int first, int second) {
-    doSelect(first, second);
-    resetEntriesCache();
-  }
-
-  private void doSelect(int first, int second) {
     if (first == second) {
-      myRightRevisionIndex = 0;
+      myRightRevisionIndex = -1;
       myLeftRevisionIndex = first == -1 ? 0 : first;
     }
     else {
       myRightRevisionIndex = first;
       myLeftRevisionIndex = second;
     }
+    resetEntriesCache();
   }
 
   public void resetSelection() {
@@ -139,11 +169,11 @@ public abstract class HistoryDialogModel {
   }
 
   public boolean isCurrentRevisionSelected() {
-    return myRightRevisionIndex == 0;
+    return myRightRevisionIndex == -1;
   }
 
   public List<Change> getChanges() {
-    List<Difference> dd = getLeftRevision().getDifferencesWith(getRightRevision());
+    List<Difference> dd = getDifferences();
 
     List<Change> result = new ArrayList<Change>();
     for (Difference d : dd) {
@@ -151,6 +181,10 @@ public abstract class HistoryDialogModel {
     }
 
     return result;
+  }
+
+  protected List<Difference> getDifferences() {
+    return getLeftRevision().getDifferencesWith(getRightRevision());
   }
 
   protected Change createChange(Difference d) {

@@ -65,7 +65,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
   public void testChangeSetName() throws Exception {
     createFileExternally("f.txt");
     refreshVFS();
-    Revision r = getRevisionsFor(myRoot).get(0);
+    Revision r = getRevisionsFor(myRoot).get(1);
     assertEquals("External change", r.getChangeSetName());
   }
 
