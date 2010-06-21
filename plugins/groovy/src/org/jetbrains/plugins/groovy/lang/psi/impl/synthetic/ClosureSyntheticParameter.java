@@ -35,7 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 /**
  * @author ven
  */
-public class ClosureSyntheticParameter extends LightParameter implements NavigationItem, GrVariableBase {
+public class ClosureSyntheticParameter extends GrLightParameter implements NavigationItem, GrVariableBase {
   private final GrClosableBlock myClosure;
 
   public ClosureSyntheticParameter(PsiManager manager, GrClosableBlock closure) {

@@ -30,11 +30,11 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 public class LightParameterList extends LightElement implements PsiParameterList {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.LightParameterList");
 
-  private final Computable<LightParameter[]> myParametersComputation;
-  private LightParameter[] myParameters = null;
+  private final Computable<GrLightParameter[]> myParametersComputation;
+  private GrLightParameter[] myParameters = null;
   private final Object myParametersLock = new String("LightParametersListLock");
 
-  protected LightParameterList(PsiManager manager, Computable<LightParameter[]> parametersComputation) {
+  protected LightParameterList(PsiManager manager, Computable<GrLightParameter[]> parametersComputation) {
     super(manager, GroovyFileType.GROOVY_LANGUAGE);
     myParametersComputation = parametersComputation;
   }

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.cache.RecordUtil;
@@ -40,10 +41,10 @@ public class GrSyntheticMethodImplementation extends GrSyntheticMethod {
     myContainingClass = containingClass;
   }
 
-  protected LightParameter[] getParameters() {
-    return ContainerUtil.map2Array(myInterfaceMethod.getParameterList().getParameters(), LightParameter.class, new Function<PsiParameter, LightParameter>() {
-      public LightParameter fun(PsiParameter psiParameter) {
-        return new LightParameter(myManager, psiParameter.getName(), psiParameter.getNameIdentifier(), psiParameter.getType(), myInterfaceMethod);
+  protected GrLightParameter[] getParameters() {
+    return ContainerUtil.map2Array(myInterfaceMethod.getParameterList().getParameters(), GrLightParameter.class, new Function<PsiParameter, GrLightParameter>() {
+      public GrLightParameter fun(PsiParameter psiParameter) {
+        return new GrLightParameter(myManager, StringUtil.notNullize(psiParameter.getName()), psiParameter.getNameIdentifier(), psiParameter.getType(), myInterfaceMethod);
       }
     });
   }

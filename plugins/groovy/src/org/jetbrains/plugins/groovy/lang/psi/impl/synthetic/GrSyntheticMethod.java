@@ -53,14 +53,14 @@ public abstract class GrSyntheticMethod extends LightElement implements PsiMetho
     return null;
   }
 
-  protected abstract LightParameter[] getParameters();
+  protected abstract GrLightParameter[] getParameters();
 
   @NotNull
   public PsiParameterList getParameterList() {
     final PsiManager manager = getManager();
     if (myParameterList == null) {
-      myParameterList = new LightParameterList(manager, new Computable<LightParameter[]>() {
-        public LightParameter[] compute() {
+      myParameterList = new LightParameterList(manager, new Computable<GrLightParameter[]>() {
+        public GrLightParameter[] compute() {
           return getParameters();
         }
       });

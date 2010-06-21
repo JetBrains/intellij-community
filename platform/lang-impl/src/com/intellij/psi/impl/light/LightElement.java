@@ -98,7 +98,7 @@ public abstract class LightElement extends PsiElementBase {
 
   public boolean isValid() {
     if (myNavigationElement != this) {
-      //return myNavigationElement.isValid();
+      return myNavigationElement.isValid();
     }
 
     return true;
@@ -160,13 +160,11 @@ public abstract class LightElement extends PsiElementBase {
     return null;
   }
 
-  /*
   @NotNull
   @Override
   public PsiElement getNavigationElement() {
     return myNavigationElement;
   }
-                                   */
   public LightElement setNavigationElement(PsiElement navigationElement) {
     myNavigationElement = navigationElement;
     return this;

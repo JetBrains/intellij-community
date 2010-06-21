@@ -44,7 +44,6 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
   private volatile PsiType myReturnType;
   private volatile LightModifierList myModifierList;
   private volatile LightParameterListBuilder myParameterList;
-  private volatile PsiElement myNavigationElement = this;
   private volatile Icon myBaseIcon;
 
   public LightMethodBuilder(PsiManager manager, String name) {
@@ -209,14 +208,8 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
     }
   }
 
-  @NotNull
-  @Override
-  public PsiElement getNavigationElement() {
-    return myNavigationElement;
-  }
-
   public LightMethodBuilder setNavigationElement(PsiElement navigationElement) {
-    myNavigationElement = navigationElement;
+    super.setNavigationElement(navigationElement);
     return this;
   }
 

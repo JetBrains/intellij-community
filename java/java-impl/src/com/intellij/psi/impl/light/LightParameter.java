@@ -1,6 +1,5 @@
 package com.intellij.psi.impl.light;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,7 +10,7 @@ public class LightParameter extends LightVariableBase implements PsiParameter {
   public static final LightParameter[] EMPTY_ARRAY = new LightParameter[0];
   private final String myName;
 
-  public LightParameter(PsiManager manager, String name, PsiIdentifier nameIdentifier, @NotNull PsiType type, PsiElement scope) {
+  public LightParameter(PsiManager manager, @NotNull String name, PsiIdentifier nameIdentifier, @NotNull PsiType type, PsiElement scope) {
     super(manager, nameIdentifier, type, false, scope);
     myName = name;
   }
@@ -37,7 +36,7 @@ public class LightParameter extends LightVariableBase implements PsiParameter {
 
   @NotNull
   public String getName() {
-    return StringUtil.notNullize(myName);
+    return myName;
   }
 
 }

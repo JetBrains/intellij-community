@@ -19,6 +19,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.impl.light.LightParameter;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,11 +31,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 /**
  * @author ven
  */
-public class LightParameter extends com.intellij.psi.impl.light.LightParameter implements GrParameter {
-  public static final LightParameter[] EMPTY_ARRAY = new LightParameter[0];
+public class GrLightParameter extends LightParameter implements GrParameter {
+  public static final GrLightParameter[] EMPTY_ARRAY = new GrLightParameter[0];
   private volatile boolean myOptional;
 
-  public LightParameter(PsiManager manager, String name, PsiIdentifier nameIdentifier, @NotNull PsiType type, PsiElement scope) {
+  public GrLightParameter(PsiManager manager, @NotNull String name, PsiIdentifier nameIdentifier, @NotNull PsiType type, PsiElement scope) {
     super(manager, name, nameIdentifier, type, scope);
   }
 
@@ -46,7 +47,7 @@ public class LightParameter extends com.intellij.psi.impl.light.LightParameter i
     return null;
   }
 
-  public LightParameter setOptional(boolean optional) {
+  public GrLightParameter setOptional(boolean optional) {
     myOptional = optional;
     return this;
   }
