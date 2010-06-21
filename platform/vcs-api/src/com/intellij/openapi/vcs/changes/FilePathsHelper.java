@@ -16,6 +16,19 @@ public class FilePathsHelper {
   public static String convertPath(final FilePath fp) {
     return convertPath(fp.getPath());
   }
+  
+  public static String convertWithLastSeparator(final VirtualFile vf) {
+    return convertWithLastSeparatorImpl(vf.getPath(), vf.isDirectory());
+  }
+
+  public static String convertWithLastSeparator(final FilePath fp) {
+    return convertWithLastSeparatorImpl(fp.getPath(), fp.isDirectory());
+  }
+
+  private static String convertWithLastSeparatorImpl(final String initPath, final boolean isDir) {
+    final String path = isDir ? (initPath.endsWith("/") || initPath.endsWith("\\") ? initPath : initPath + "/") : initPath;
+    return convertPath(path);
+  }
 
   public static String convertPath(final String s) {
     String result = FileUtil.toSystemIndependentName(s);

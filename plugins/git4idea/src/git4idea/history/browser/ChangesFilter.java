@@ -15,7 +15,14 @@
  */
 package git4idea.history.browser;
 
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vcs.AreaMap;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.changes.FilePathsHelper;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PairProcessor;
 import git4idea.GitUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -77,13 +84,13 @@ public class ChangesFilter {
     for (Filter filter : filters) {
       boolean taken = false;
       for (Merger combiner : mergers) {
-        if (combiner.accept(filter)) {
+        if (combiner.accept(filter.getMemoryFilter())) {
           taken = true;
           break;
         }
       }
       if (! taken) {
-        result.add(filter);
+        result.add(filter.getMemoryFilter());
       }
     }
     for (Merger combiner : mergers) {
@@ -115,41 +122,45 @@ public class ChangesFilter {
     boolean applyInMemory(final GitCommit commit);
   }
 
-  public interface Filter extends MemoryFilter {
+  public interface CommandParametersFilter {
     void applyToCommandLine(final List<String> sink);
   }
 
-  public static class Branch implements Filter {
-    // todo decode into hash
-    private Collection<String> myCommitNames;
-
-    public boolean applyInMemory(final GitCommit commit) {
-      for (String commitName : myCommitNames) {
-        //if (commit.getHash().startsWith(commitName) || )
-      }
-      return false;
-    }
-
-    public void applyToCommandLine(List<String> sink) {
-      //To change body of implemented methods use File | Settings | File Templates.
-    }
+  public interface Filter {
+    @NotNull
+    MemoryFilter getMemoryFilter();
+    @Nullable
+    CommandParametersFilter getCommandParametersFilter();
   }
 
   public static class Author implements Filter {
     private final String myRegexp;
     private Pattern myPattern;
+    private CommandParametersFilter myCommandParametersFilter;
+    private MemoryFilter myMemoryFilter;
 
     public Author(String regexp) {
       myRegexp = regexp;
       myPattern = Pattern.compile(myRegexp);
+      myCommandParametersFilter = new CommandParametersFilter() {
+        public void applyToCommandLine(List<String> sink) {
+          sink.add("--author=" + myRegexp);
+        }
+      };
+      myMemoryFilter = new MemoryFilter() {
+        public boolean applyInMemory(GitCommit commit) {
+          return myPattern.matcher(commit.getAuthor()).matches();
+        }
+      };
     }
 
-    public boolean applyInMemory(GitCommit commit) {
-      return myPattern.matcher(commit.getAuthor()).matches();
+    public CommandParametersFilter getCommandParametersFilter() {
+      return myCommandParametersFilter;
     }
 
-    public void applyToCommandLine(List<String> sink) {
-      sink.add("--author=" + myRegexp);
+    @NotNull
+    public MemoryFilter getMemoryFilter() {
+      return myMemoryFilter;
     }
 
     @Override
@@ -173,18 +184,31 @@ public class ChangesFilter {
   public static class Committer implements Filter {
     private final String myRegexp;
     private Pattern myPattern;
+    private MemoryFilter myMemoryFilter;
+    private CommandParametersFilter myCommandParametersFilter;
 
     public Committer(String regexp) {
       myRegexp = regexp;
       myPattern = Pattern.compile(myRegexp);
+      myCommandParametersFilter = new CommandParametersFilter() {
+        public void applyToCommandLine(List<String> sink) {
+          sink.add("--committer=" + myRegexp);
+        }
+      };
+      myMemoryFilter = new MemoryFilter() {
+        public boolean applyInMemory(GitCommit commit) {
+          return myPattern.matcher(commit.getCommitter()).matches();
+        }
+      };
     }
 
-    public boolean applyInMemory(GitCommit commit) {
-      return myPattern.matcher(commit.getCommitter()).matches();
+    public CommandParametersFilter getCommandParametersFilter() {
+      return myCommandParametersFilter;
     }
 
-    public void applyToCommandLine(List<String> sink) {
-      sink.add("--committer=" + myRegexp);
+    @NotNull
+    public MemoryFilter getMemoryFilter() {
+      return myMemoryFilter;
     }
 
     @Override
@@ -207,17 +231,30 @@ public class ChangesFilter {
 
   public static class BeforeDate implements Filter {
     private final Date myDate;
+    private CommandParametersFilter myCommandParametersFilter;
+    private MemoryFilter myMemoryFilter;
 
     public BeforeDate(final Date date) {
-      myDate = date;
+      myDate = new Date(date.getTime() + 1);
+      myCommandParametersFilter = new CommandParametersFilter() {
+        public void applyToCommandLine(List<String> sink) {
+          sink.add("--before=" + formatDate(myDate));
+        }
+      };
+      myMemoryFilter = new MemoryFilter() {
+        public boolean applyInMemory(GitCommit commit) {
+          return commit.getDate().before(myDate);
+        }
+      };
     }
 
-    public boolean applyInMemory(GitCommit commit) {
-      return commit.getDate().before(myDate);
+    public CommandParametersFilter getCommandParametersFilter() {
+      return myCommandParametersFilter;
     }
 
-    public void applyToCommandLine(List<String> sink) {
-      sink.add("--before=" + formatDate(myDate));
+    @NotNull
+    public MemoryFilter getMemoryFilter() {
+      return myMemoryFilter;
     }
 
     @Override
@@ -240,17 +277,30 @@ public class ChangesFilter {
 
   public static class AfterDate implements Filter {
     private final Date myDate;
+    private CommandParametersFilter myCommandParametersFilter;
+    private MemoryFilter myMemoryFilter;
 
     public AfterDate(final Date date) {
-      myDate = date;
+      myDate = new Date(date.getTime() - 1);
+      myCommandParametersFilter = new CommandParametersFilter() {
+        public void applyToCommandLine(List<String> sink) {
+          sink.add("--after=" + formatDate(myDate));
+        }
+      };
+      myMemoryFilter = new MemoryFilter() {
+        public boolean applyInMemory(GitCommit commit) {
+          return commit.getDate().after(myDate);
+        }
+      };
     }
 
-    public boolean applyInMemory(final GitCommit commit) {
-      return commit.getDate().after(myDate);
+    public CommandParametersFilter getCommandParametersFilter() {
+      return myCommandParametersFilter;
     }
 
-    public void applyToCommandLine(final List<String> sink) {
-      sink.add("--after=" + formatDate(myDate));
+    @NotNull
+    public MemoryFilter getMemoryFilter() {
+      return myMemoryFilter;
     }
 
     @Override
@@ -275,22 +325,90 @@ public class ChangesFilter {
     return GitUtil.gitTime(date);
   }
 
+  public static class StructureFilter implements Filter {
+    private final AreaMap<String, VirtualFile> myMap;
+    private MemoryFilter myMemoryFilter;
+
+    public StructureFilter() {
+      myMap = new AreaMap<String, VirtualFile>(new PairProcessor<String, String>() {
+        public boolean process(final String candidate, final String key) {
+          return key.startsWith(candidate);
+        }
+      });
+      myMemoryFilter = new MemoryFilter() {
+        public boolean applyInMemory(GitCommit commit) {
+          if (myMap.isEmpty()) return true;
+          
+          final List<FilePath> pathList = commit.getPathsList();
+          final Ref<Boolean> found = new Ref<Boolean>();
+
+          for (FilePath filePath : pathList) {
+            myMap.getSimiliar(FilePathsHelper.convertWithLastSeparator(filePath), new PairProcessor<String, VirtualFile>() {
+              public boolean process(String s, VirtualFile virtualFile) {
+                found.set(true);
+                // take only first.. should be only first
+                return true;
+              }
+            });
+            if (Boolean.TRUE.equals(found.get())) break;
+          }
+          return Boolean.TRUE.equals(found.get());
+        }
+      };
+    }
+
+    public void addPath(final VirtualFile vf) {
+      myMap.put(FilePathsHelper.convertWithLastSeparator(vf), vf);
+    }
+
+    public void removePath(final VirtualFile vf) {
+      myMap.removeByValue(vf);
+    }
+
+    public boolean isEmpty() {
+      return myMap.isEmpty();
+    }
+
+    // can be applied only in memory
+    public CommandParametersFilter getCommandParametersFilter() {
+      return null;
+    }
+
+    @NotNull
+    public MemoryFilter getMemoryFilter() {
+      return myMemoryFilter;
+    }
+  }
+
   public static class Comment implements Filter {
     private final String myRegexp;
     private Pattern myPattern;
+    private CommandParametersFilter myCommandParametersFilter;
+    private MemoryFilter myMemoryFilter;
 
     public Comment(final String regexp) {
       myRegexp = regexp;
       myPattern = Pattern.compile(myRegexp);
+      myCommandParametersFilter = new CommandParametersFilter() {
+        public void applyToCommandLine(List<String> sink) {
+          sink.add("--grep=" + myRegexp);
+        }
+      };
+      myMemoryFilter = new MemoryFilter() {
+        public boolean applyInMemory(GitCommit commit) {
+          return myPattern.matcher(commit.getDescription()).matches() || myPattern.matcher(commit.getCommitter()).matches() ||
+                 myPattern.matcher(commit.getAuthor()).matches();
+        }
+      };
     }
 
-    public boolean applyInMemory(final GitCommit commit) {
-      return myPattern.matcher(commit.getDescription()).matches() || myPattern.matcher(commit.getCommitter()).matches() ||
-             myPattern.matcher(commit.getAuthor()).matches();
+    public CommandParametersFilter getCommandParametersFilter() {
+      return myCommandParametersFilter;
     }
 
-    public void applyToCommandLine(final List<String> sink) {
-      sink.add("--grep=" + myRegexp);
+    @NotNull
+    public MemoryFilter getMemoryFilter() {
+      return myMemoryFilter;
     }
 
     @Override

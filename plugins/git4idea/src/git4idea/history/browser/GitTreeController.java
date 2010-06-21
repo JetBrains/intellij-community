@@ -20,7 +20,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.CalledInBackground;
 import com.intellij.openapi.vcs.RequestsMerger;
 import com.intellij.openapi.vcs.VcsException;
@@ -64,7 +66,6 @@ class GitTreeController implements ManageGitTreeView {
   private final MyUpdateStateInterceptor myFiltering;
   private final MyUpdateStateInterceptor myHighlighting;
   private Alarm myAlarm;
-  private Portion myFiltered;
 
   private SHAHash myJumpTarget;
 
@@ -82,6 +83,7 @@ class GitTreeController implements ManageGitTreeView {
   };
   private Runnable myRefresher;
   private String myUsername;
+  private Date myTravelDate;
 
   GitTreeController(final Project project, final VirtualFile root, final GitTreeViewI treeView, GitUsersComponent gitUsersComponent) {
     myProject = project;
@@ -103,12 +105,14 @@ class GitTreeController implements ManageGitTreeView {
           if (myFilterHolder.isDirty()) {
             final SHAHash target = myJumpTarget;
             myJumpTarget = null;
-            final Portion filtered = loadPortion(myFilterHolder.getStartingPoints(), myFilterHolder.getCurrentPoint(), null,
-                                                 myFilterHolder.getFilters(), PageSizes.LOAD_SIZE);
 
-            final List<GitCommit> commitList = filtered.getXFrom(0, PageSizes.VISIBLE_PAGE_SIZE);
-            myFiltered = filtered;
-            myTreeView.refreshView(commitList, new TravelTicket(filtered.isStartFound(), filtered.getLast().getDate()), target);
+            final CommitsLoader loader = new CommitsLoader();
+            loader.loadCommitsUsingMemoryAndNativeFilters(myFilterHolder.getStartingPoints(), myFilterHolder.getCurrentPoint(), null,
+                                                 myFilterHolder.getFilters(), PageSizes.LOAD_SIZE);
+            final List<GitCommit> commitList = loader.getCommitList();
+            myTravelDate = commitList.isEmpty() ? null : commitList.get(commitList.size() - 1).getDate();
+            final SHAHash lastHash = commitList.isEmpty() ? null : commitList.get(commitList.size() - 1).getHash();
+            myTreeView.refreshView(commitList, new TravelTicket(loader.isStartFound(), myTravelDate, lastHash), target);
 
             myFilterHolder.setDirty(false);
           }
@@ -146,6 +150,99 @@ class GitTreeController implements ManageGitTreeView {
     });
   }
 
+  private class CommitsLoader {
+    private boolean myStartFound;
+    private final List<GitCommit> myCommitList;
+    private GitCommit myLastCommit;
+
+    private CommitsLoader() {
+      myCommitList = new ArrayList<GitCommit>(PageSizes.LOAD_SIZE);
+    }
+
+    // todo refactor more; mechanically
+    private void loadCommitsUsingMemoryAndNativeFilters(final Collection<String> startingPoints, final Pair<Date, SHAHash> beforePoint,
+                                    final Date afterPoint, final Collection<ChangesFilter.Filter> filters, final int maxCnt) throws VcsException {
+      assert maxCnt > 0;
+      final List<ChangesFilter.MemoryFilter> memoryFilters = new LinkedList<ChangesFilter.MemoryFilter>();
+      final List<ChangesFilter.Filter> commandFilters = new LinkedList<ChangesFilter.Filter>();
+      for (ChangesFilter.Filter filter : filters) {
+        final ChangesFilter.CommandParametersFilter commandFilter = filter.getCommandParametersFilter();
+        if (commandFilter == null) {
+          memoryFilters.add(filter.getMemoryFilter());
+        } else {
+          commandFilters.add(filter);
+        }
+      }
+
+      int requestMaxCnt = maxCnt;
+      Pair<Date, SHAHash> runningBeforePoint = beforePoint;
+      while (myCommitList.size() < maxCnt) {
+        final Date lastDate = runningBeforePoint == null ? null : runningBeforePoint.getFirst();
+        final SHAHash lastHash = runningBeforePoint == null ? null : runningBeforePoint.getSecond();
+
+        final List<GitCommit> newList = loadPiece(startingPoints, afterPoint, commandFilters, requestMaxCnt, lastDate, lastHash);
+
+        for (GitCommit gitCommit : newList) {
+          boolean add = true;
+          for (ChangesFilter.MemoryFilter memoryFilter : memoryFilters) {
+            if (! memoryFilter.applyInMemory(gitCommit)) {
+              add = false;
+              break;
+            }
+          }
+          if (add) {
+            myCommitList.add(gitCommit);
+            if (myCommitList.size() >= maxCnt) break;
+          }
+        }
+        if (myLastCommit == null || myLastCommit.getParentsHashes().isEmpty()) {
+          myStartFound = true;
+          break;
+        }
+        if (Comparing.equal(lastDate, myLastCommit.getDate())) {
+          requestMaxCnt = 2 * maxCnt;
+        }
+        runningBeforePoint = new Pair<Date, SHAHash>(myLastCommit.getDate(), myLastCommit.getHash());
+      }
+    }
+
+    private List<GitCommit> loadPiece(Collection<String> startingPoints,
+                                      Date afterPoint,
+                                      List<ChangesFilter.Filter> commandFilters,
+                                      int requestMaxCnt, final Date lastDate, final SHAHash lastHash) throws VcsException {
+      final List<GitCommit> newList = new ArrayList<GitCommit>(PageSizes.LOAD_SIZE);
+      final Ref<Boolean> oldPointPassed = new Ref<Boolean>();
+
+      myAccess.loadCommits(startingPoints, lastDate, afterPoint, commandFilters, new Consumer<GitCommit>() {
+        @Override
+        public void consume(GitCommit gitCommit) {
+          myLastCommit = gitCommit;
+
+          if (! Boolean.TRUE.equals(oldPointPassed.get())) {
+            if (lastDate != null && gitCommit.getDate().before(lastDate)) {
+              oldPointPassed.set(true);
+              // can continue adding
+            } else if (gitCommit.getHash().equals(lastHash)) {
+              newList.clear();
+              oldPointPassed.set(true);
+              return; // ignore everything before and current point
+            }
+          }
+          newList.add(gitCommit);
+        }
+      }, requestMaxCnt, myBranches.get());
+      return newList;
+    }
+
+    public List<GitCommit> getCommitList() {
+      return myCommitList;
+    }
+
+    public boolean isStartFound() {
+      return myStartFound;
+    }
+  }
+
   private void initCurrentUser() {
     final List<Pair<String,String>> value;
     try {
@@ -159,13 +256,15 @@ class GitTreeController implements ManageGitTreeView {
 
   private Set<SHAHash> loadIdsToHighlight() throws VcsException {
     final Portion highlighted;
-    if (myFiltered == null) {
+    // we can ignore extra commit loaded for the same date (boundary), it's easier
+    // commits refer to highlighted stuff, so everything will be correct
+    if (myTravelDate == null) {
       // todo rewrite when dates are introduced
-      highlighted = loadPortion(myHighlightingHolder.getStartingPoints(), myFilterHolder.getCurrentPoint(),
+      highlighted = loadPortion(myHighlightingHolder.getStartingPoints(), myFilterHolder.getCurrentPoint().getFirst(),
                                               null, Collections.<ChangesFilter.Filter>emptyList(), -1);
     } else {
-      highlighted = loadPortion(myHighlightingHolder.getStartingPoints(), myFilterHolder.getCurrentPoint(),
-                                              myFiltered.getLast().getDate(), Collections.<ChangesFilter.Filter>emptyList(), -1);
+      highlighted = loadPortion(myHighlightingHolder.getStartingPoints(), myFilterHolder.getCurrentPoint().getFirst(),
+                                              myTravelDate, Collections.<ChangesFilter.Filter>emptyList(), -1);
     }
 
     final Collection<ChangesFilter.Filter> filters = myHighlightingHolder.getFilters();
@@ -194,25 +293,6 @@ class GitTreeController implements ManageGitTreeView {
     final Portion portion = new Portion(null);
     myAccess.loadCommits(startingPoints, beforePoint, afterPoint, filtersIn, portion, maxCnt, myBranches.get());
     return portion;
-  }
-
-  private List<Pair<SHAHash, Date>> loadLine(final Collection<String> startingPoints, final Date beforePoint, final Date afterPoint,
-                              final Collection<ChangesFilter.Filter> filtersIn, int maxCnt) {
-    final Collection<ChangesFilter.Filter> filters = new LinkedList<ChangesFilter.Filter>(filtersIn);
-    if (beforePoint != null) {
-      filters.add(new ChangesFilter.BeforeDate(new Date(beforePoint.getTime() - 1)));
-    }
-    if (afterPoint != null) {
-      filters.add(new ChangesFilter.AfterDate(afterPoint));
-    }
-
-    try {
-      return myAccess.loadCommitHashes(startingPoints, Collections.<String>emptyList(), filters, maxCnt);
-    }
-    catch (VcsException e) {
-      myTreeView.acceptError(e.getMessage(), e);
-      return null;
-    }
   }
 
   public SHAHash commitExists(String reference) {
@@ -264,7 +344,7 @@ class GitTreeController implements ManageGitTreeView {
   }
 
   public void next(final TravelTicket ticket) {
-    myFilterHolder.addContinuationPoint(ticket.getLatestDate());
+    myFilterHolder.addContinuationPoint(new Pair<Date, SHAHash>(ticket.getLatestDate(), ticket.getLastHash()));
     myFilterRequestsMerger.request();
   }
 
@@ -285,20 +365,26 @@ class GitTreeController implements ManageGitTreeView {
       myAlarm.addRequest(new Runnable() {
         public void run() {
           // start from beginning
-          final List<Date> wayList = new LinkedList<Date>();
+          final List<Pair<Date, SHAHash>> wayList = new LinkedList<Pair<Date, SHAHash>>();
 
           while (true) {
-            final Date startFrom = wayList.isEmpty() ? null : wayList.get(wayList.size() - 1);
-            final List<Pair<SHAHash, Date>> pairs =
-              loadLine(myFilterHolder.getStartingPoints(), startFrom, null, myFilterHolder.getFilters(), PageSizes.LOAD_SIZE);
-            if (pairs.isEmpty()) return;
-            for (Pair<SHAHash, Date> pair : pairs) {
-              if (finalHash.equals(pair.getFirst())) {
+            final Pair<Date, SHAHash> startFrom = wayList.isEmpty() ? null : wayList.get(wayList.size() - 1);
+            final CommitsLoader loader = new CommitsLoader();
+            try {
+              loader.loadCommitsUsingMemoryAndNativeFilters(myFilterHolder.getStartingPoints(), startFrom, null, myFilterHolder.getFilters(), PageSizes.LOAD_SIZE);
+            }
+            catch (VcsException e) {
+              myTreeView.acceptError(e.getMessage(), e);
+              return;
+            }
+            final List<GitCommit> commits = loader.getCommitList(); // todo! push contents!!!
+            for (GitCommit commit : commits) {
+              if (finalHash.equals(commit.getHash())) {
                 // select this page
                 while (myFilterHolder.getCurrentPoint() != null) {
                   myFilterHolder.popContinuationPoint();
                 }
-                for (Date date : wayList) {
+                for (Pair<Date, SHAHash> date : wayList) {
                   myFilterHolder.addContinuationPoint(date);
                 }
                 myJumpTarget = finalHash;
@@ -307,7 +393,12 @@ class GitTreeController implements ManageGitTreeView {
                 return;
               }
             }
-            wayList.add(pairs.get(pairs.size() - 1).getSecond());
+            if (! commits.isEmpty()) {
+              final GitCommit commit = commits.get(commits.size() - 1);
+              wayList.add(new Pair<Date, SHAHash>(commit.getDate(), commit.getHash()));
+            }
+            // no object
+            if (loader.isStartFound()) return;
           }
         }
       }, 10);
@@ -423,6 +514,12 @@ class GitTreeController implements ManageGitTreeView {
       requestRefresh();
     }
 
+    @Override
+    public void markDirty() {
+      myState.markDirty();
+      requestRefresh();
+    }
+
     public Collection<String> getStartingPoints() {
       return myState.getStartingPoints();
     }
@@ -441,7 +538,7 @@ class GitTreeController implements ManageGitTreeView {
     private final Set<String> myStartingPoints;
     private boolean myDirty;
 
-    private final List<Date> myContinuationPoints;
+    private final List<Pair<Date, SHAHash>> myContinuationPoints;
 
     @Nullable
     private List<String> myExcludePoints;
@@ -451,7 +548,7 @@ class GitTreeController implements ManageGitTreeView {
       myLock = new Object();
       myStartingPoints = new HashSet<String>();
       myFilters = new HashSet<ChangesFilter.Filter>();
-      myContinuationPoints = new LinkedList<Date>();
+      myContinuationPoints = new LinkedList<Pair<Date, SHAHash>>();
     }
 
     public boolean isDirty() {
@@ -474,23 +571,23 @@ class GitTreeController implements ManageGitTreeView {
     }
 
     // page starts
-    public void addContinuationPoint(final Date point) {
+    public void addContinuationPoint(final Pair<Date, SHAHash> hashPair) {
       synchronized (myLock) {
-        if ((! myContinuationPoints.isEmpty()) && myContinuationPoints.get(myContinuationPoints.size() - 1).equals(point)) return;
+        if ((! myContinuationPoints.isEmpty()) && myContinuationPoints.get(myContinuationPoints.size() - 1).equals(hashPair)) return;
         myDirty = true;
-        myContinuationPoints.add(point);
+        myContinuationPoints.add(hashPair);
       }
     }
 
     @Nullable
-    public Date popContinuationPoint() {
+    public Pair<Date, SHAHash> popContinuationPoint() {
       synchronized (myLock) {
         myDirty = true;
         return myContinuationPoints.isEmpty() ? null : myContinuationPoints.remove(myContinuationPoints.size() - 1);
       }
     }
 
-    public Date getCurrentPoint() {
+    public Pair<Date, SHAHash> getCurrentPoint() {
       synchronized (myLock) {
         return myContinuationPoints.isEmpty() ? null : myContinuationPoints.get(myContinuationPoints.size() - 1);
       }
@@ -533,6 +630,13 @@ class GitTreeController implements ManageGitTreeView {
         myDirty = true;
         myExcludePoints = points;
         myContinuationPoints.clear();
+      }
+    }
+
+    @Override
+    public void markDirty() {
+      synchronized (myLock) {
+        myDirty = true;
       }
     }
 
