@@ -43,7 +43,7 @@ public class ChangeContextUtil {
   }
 
   public static void encodeContextInfo(PsiElement scope, boolean includeRefClasses, boolean canChangeQualifier) {
-    encodeContextInfo(scope, scope, includeRefClasses, true);
+    encodeContextInfo(scope, scope, includeRefClasses, canChangeQualifier);
   }
 
   private static void encodeContextInfo(PsiElement scope,
