@@ -389,36 +389,45 @@ public class AbstractTreeUi {
   }
 
   private void releaseNow() {
-    myTree.removeTreeExpansionListener(myExpansionListener);
-    myTree.removeTreeSelectionListener(mySelectionListener);
-    myTree.removeFocusListener(myFocusListener);
+    try {
+      myStateLock.writeLock().acquire();
 
-    disposeNode(getRootNode());
-    myElementToNodeMap.clear();
-    getUpdater().cancelAllRequests();
-    if (myWorker != null) {
-      myWorker.dispose(true);
-      clearWorkerTasks();
+      myTree.removeTreeExpansionListener(myExpansionListener);
+      myTree.removeTreeSelectionListener(mySelectionListener);
+      myTree.removeFocusListener(myFocusListener);
+
+      disposeNode(getRootNode());
+      myElementToNodeMap.clear();
+      getUpdater().cancelAllRequests();
+      if (myWorker != null) {
+        myWorker.dispose(true);
+        clearWorkerTasks();
+      }
+      TREE_NODE_WRAPPER.setValue(null);
+      if (myProgress != null) {
+        myProgress.cancel();
+      }
+
+      cancelCurrentCleanupTask();
+
+      myTree = null;
+      setUpdater(null);
+      myWorker = null;
+      myTreeStructure = null;
+      myBuilder.releaseUi();
+      myBuilder = null;
+
+      clearNodeActions();
+
+      myDeferredSelections.clear();
+      myDeferredExpansions.clear();
+      myYeildingDoneRunnables.clear();
     }
-    TREE_NODE_WRAPPER.setValue(null);
-    if (myProgress != null) {
-      myProgress.cancel();
+    catch (InterruptedException e) {
+      LOG.info(e);
+    } finally {
+      myStateLock.writeLock().release();
     }
-
-    cancelCurrentCleanupTask();
-
-    myTree = null;
-    setUpdater(null);
-    myWorker = null;
-    myTreeStructure = null;
-    myBuilder.releaseUi();
-    myBuilder = null;
-
-    clearNodeActions();
-
-    myDeferredSelections.clear();
-    myDeferredExpansions.clear();
-    myYeildingDoneRunnables.clear();
   }
 
   public boolean isReleased() {
@@ -1742,7 +1751,16 @@ public class AbstractTreeUi {
   }
 
   public boolean isReady() {
-    return isIdle() && !hasPendingWork() && !isNodeActionsPending();
+    try {
+      myStateLock.readLock().acquire();
+      return isIdle() && !hasPendingWork() && !isNodeActionsPending();
+    }
+    catch (InterruptedException e) {
+      LOG.info(e);
+      return false;
+    } finally {
+      myStateLock.readLock().release();
+    }
   }
 
   public String getStatus() {
@@ -2326,6 +2344,8 @@ public class AbstractTreeUi {
       public void run() {
         invokeLaterIfNeeded(new Runnable() {
           public void run() {
+            if (isReleased()) return;
+
             removeLoading(node, true);
             removeFromLoadedInBackground(elementFromDescriptor.get());
             removeFromLoadedInBackground(oldElementFromDescriptor);
