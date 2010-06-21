@@ -73,7 +73,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   private final ActionGroup myActionGroup;
   private final String myPlace;
   @SuppressWarnings({"FieldCanBeLocal"}) private final MyKeymapManagerListener myKeymapManagerListener;
-  @SuppressWarnings({"FieldCanBeLocal"}) private final MyTimerListener myTimerListener;
   private ArrayList<AnAction> myNewVisibleActions;
   protected ArrayList<AnAction> myVisibleActions;
   private final PresentationFactory myPresentationFactory;
@@ -100,6 +99,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   private JComponent myTargetComponent;
 
   private boolean myReservePlaceAutoPopupIcon = true;
+  private WeakTimerListener myWeakTimerListener;
+  private ActionToolbarImpl.MyTimerListener myTimerListener;
 
   public ActionToolbarImpl(final String place,
                            final ActionGroup actionGroup,
@@ -127,7 +128,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     myActionGroup = actionGroup;
     myPresentationFactory = new PresentationFactory();
     myKeymapManagerListener = new MyKeymapManagerListener();
-    myTimerListener = new MyTimerListener();
     myVisibleActions = new ArrayList<AnAction>();
     myNewVisibleActions = new ArrayList<AnAction>();
     myDataManager = dataManager;
@@ -138,15 +138,30 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     mySecondaryActions.getTemplatePresentation().setIcon(mySecondaryGroupIcon);
     mySecondaryActions.setPopup(true);
 
-    updateActions(updateActionsNow);
+    updateActions(updateActionsNow, false);
 
     //
     keymapManager.addKeymapManagerListener(new WeakKeymapManagerListener(keymapManager, myKeymapManagerListener));
-    actionManager.addTimerListener(500, new WeakTimerListener(actionManager, myTimerListener));
+    myTimerListener = new MyTimerListener();
+    myWeakTimerListener = new WeakTimerListener(actionManager, myTimerListener);
     // If the panel doesn't handle mouse event then it will be passed to its parent.
     // It means that if the panel is in slidindg mode then the focus goes to the editor
     // and panel will be automatically hidden.
-    enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK);
+    enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK | AWTEvent.COMPONENT_EVENT_MASK | AWTEvent.CONTAINER_EVENT_MASK);
+  }
+
+  @Override
+  public void addNotify() {
+    super.addNotify();
+    myActionManager.addTimerListener(500, myWeakTimerListener);
+    myActionManager.addTransparrentTimerListener(500, myWeakTimerListener);
+  }
+
+  @Override
+  public void removeNotify() {
+    super.removeNotify();
+    myActionManager.removeTimerListener(myWeakTimerListener);
+    myActionManager.removeTransparrentTimerListener(myWeakTimerListener);
   }
 
   public JComponent getComponent() {
@@ -656,6 +671,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   }
 
   private final class MyTimerListener implements TimerListener {
+
     public ModalityState getModalityState() {
       return ModalityState.stateForComponent(ActionToolbarImpl.this);
     }
@@ -682,7 +698,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
         }
       }
 
-      updateActions(false);
+      updateActions(false, myActionManager.isTransparrentOnlyActionsUpdateNow());
     }
   }
 
@@ -715,16 +731,16 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
   public void updateActionsImmediately() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    updateActions(true);
+    updateActions(true, false);
   }
 
-  private void updateActions(boolean now) {
+  private void updateActions(boolean now, final boolean transparrentOnly) {
     final Runnable updateRunnable = new Runnable() {
       public void run() {
         myNewVisibleActions.clear();
         final DataContext dataContext = getDataContext();
 
-        Utils.expandActionGroup(myActionGroup, myNewVisibleActions, myPresentationFactory, dataContext, myPlace, myActionManager);
+        Utils.expandActionGroup(myActionGroup, myNewVisibleActions, myPresentationFactory, dataContext, myPlace, myActionManager, transparrentOnly);
 
         if (!myNewVisibleActions.equals(myVisibleActions)) {
           // should rebuild UI
@@ -781,7 +797,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     if (myTargetComponent != null && myTargetComponent.isVisible()) {
       ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
         public void run() {
-          updateActions(false);
+          updateActions(false, false);
         }
       }, ModalityState.stateForComponent(myTargetComponent));
     }
@@ -927,7 +943,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     Disposer.dispose(myPopup);
     myPopup = null;
 
-    updateActions(false);
+    updateActions(false, false);
   }
 
   abstract static class PopupToolbar extends ActionToolbarImpl implements AnActionListener, Disposable {

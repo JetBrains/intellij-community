@@ -80,6 +80,17 @@ public class Utils{
                                        PresentationFactory presentationFactory,
                                        DataContext context,
                                        String place, ActionManager actionManager){
+    expandActionGroup(group, list, presentationFactory, context, place, actionManager, false);
+  }
+  /**
+   * @param actionManager manager
+   * @param list this list contains expanded actions.
+   */
+  public static void expandActionGroup(@NotNull ActionGroup group,
+                                       ArrayList<AnAction> list,
+                                       PresentationFactory presentationFactory,
+                                       DataContext context,
+                                       String place, ActionManager actionManager, boolean transparrentOnly){
     Presentation presentation = presentationFactory.getPresentation(group);
     AnActionEvent e = new AnActionEvent(
       null,
@@ -106,7 +117,11 @@ public class Utils{
       presentation = presentationFactory.getPresentation(child);
       AnActionEvent e1 = new AnActionEvent(null, context, place, presentation, actionManager, 0);
       e1.setInjectedContext(child.isInInjectedContext());
-      if (!doUpdate(child, e1, presentation)) continue;
+
+      if ((transparrentOnly && child.isTransparentUpdate()) || !transparrentOnly) {
+        if (!doUpdate(child, e1, presentation)) continue;
+      }
+
       if (!presentation.isVisible()) { // don't create invisible items in the menu
         continue;
       }

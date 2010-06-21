@@ -29,6 +29,7 @@ public abstract class XDebuggerActionBase extends AnAction {
 
   protected XDebuggerActionBase() {
     this(false);
+    setTransparentUpdate(true);
   }
 
   protected XDebuggerActionBase(final boolean hideDisabledInPopup) {

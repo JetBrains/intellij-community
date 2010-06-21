@@ -120,6 +120,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   private final Map<AnAction, AnActionEvent> myQueuedNotificationsEvents = new LinkedHashMap<AnAction, AnActionEvent>();
 
   private Runnable myPreloadActionsRunnable;
+  private boolean myTransparrentOnlyUpdate;
 
   ActionManagerImpl(KeymapManager keymapManager, DataManager dataManager) {
     myId2Action = new THashMap<String, Object>();
@@ -145,20 +146,39 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   }
 
   public void addTimerListener(int delay, final TimerListener listener) {
+    _addTimerListener(delay, listener, false);
+  }
+
+  public void removeTimerListener(TimerListener listener) {
+    _removeTimerListener(listener, false);
+  }
+
+  @Override
+  public void addTransparrentTimerListener(int delay, TimerListener listener) {
+    _addTimerListener(delay, listener, true);
+  }
+
+  @Override
+  public void removeTransparrentTimerListener(TimerListener listener) {
+    _removeTimerListener(listener, true);
+  }
+
+
+  private void _addTimerListener(int delay, final TimerListener listener, boolean transparrent) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     if (myTimer == null) {
       myTimer = new MyTimer();
       myTimer.start();
     }
 
-    myTimer.addTimerListener(listener);
+    myTimer.addTimerListener(listener, transparrent);
   }
 
-  public void removeTimerListener(TimerListener listener) {
+  private void _removeTimerListener(TimerListener listener, boolean transparrent) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     LOG.assertTrue(myTimer != null);
 
-    myTimer.removeTimerListener(listener);
+    myTimer.removeTimerListener(listener, transparrent);
   }
 
   public ActionPopupMenu createActionPopupMenu(String place, @NotNull ActionGroup group, @Nullable PresentationFactory presentationFactory) {
@@ -975,6 +995,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     return myPopups.isEmpty();
   }
 
+  @Override
+  public boolean isTransparrentOnlyActionsUpdateNow() {
+    return myTransparrentOnlyUpdate;
+  }
+
   private void flushActionPerformed() {
     final Set<AnAction> actions = myQueuedNotifications.keySet();
     for (final AnAction eachAction : actions) {
@@ -1147,6 +1172,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
 
   private class MyTimer extends Timer implements ActionListener {
     private final List<TimerListener> myTimerListeners = Collections.synchronizedList(new ArrayList<TimerListener>());
+    private final List<TimerListener> myTransparrentTimerListeners = Collections.synchronizedList(new ArrayList<TimerListener>());
     private int myLastTimePerformed;
 
     MyTimer() {
@@ -1155,12 +1181,20 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
       setRepeats(true);
      }
 
-    public void addTimerListener(TimerListener listener){
-      myTimerListeners.add(listener);
+    public void addTimerListener(TimerListener listener, boolean transparent){
+      if (transparent) {
+        myTransparrentTimerListeners.add(listener);
+      } else {
+        myTimerListeners.add(listener);
+      }
     }
 
-    public void removeTimerListener(TimerListener listener){
-      myTimerListeners.remove(listener);
+    public void removeTimerListener(TimerListener listener, boolean transparent){
+      if (transparent) {
+       myTransparrentTimerListeners.remove(listener);
+      } else {
+        myTimerListeners.remove(listener);
+      }
     }
 
     public void actionPerformed(ActionEvent e) {
@@ -1171,16 +1205,34 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
       final int lastEventCount = myLastTimePerformed;
       myLastTimePerformed = ActivityTracker.getInstance().getCount();
 
-      if (myLastTimePerformed == lastEventCount) {
-        return;
-      }
+      boolean transparentOnly = myLastTimePerformed == lastEventCount;
 
-      final TimerListener[] listeners = myTimerListeners.toArray(new TimerListener[myTimerListeners.size()]);
+      try {
+        HashSet<TimerListener> notified = new HashSet<TimerListener>();
+        myTransparrentOnlyUpdate = transparentOnly;
+        notifyListeners(myTransparrentTimerListeners, notified);
+
+        if (transparentOnly) {
+          return;
+        }
+
+        notifyListeners(myTimerListeners, notified);
+      }
+      finally {
+        myTransparrentOnlyUpdate = false;
+      }
+    }
+
+    private void notifyListeners(final List<TimerListener> timerListeners, final Set<TimerListener> notified) {
+      final TimerListener[] listeners = timerListeners.toArray(new TimerListener[timerListeners.size()]);
       IdeFocusManager.getInstance(null).doWhenFocusSettlesDown(new Runnable() {
         public void run() {
           for (TimerListener listener : listeners) {
-            if (myTimerListeners.contains(listener)) {
-              runListenerAction(listener);
+            if (timerListeners.contains(listener)) {
+              if (!notified.contains(listener)) {
+                notified.add(listener);
+                runListenerAction(listener);
+              }
             }
           }
         }
