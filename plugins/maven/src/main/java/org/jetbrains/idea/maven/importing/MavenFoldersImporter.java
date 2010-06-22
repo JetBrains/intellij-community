@@ -21,6 +21,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ProjectRootManager;
+import gnu.trove.THashMap;
 import org.jetbrains.idea.maven.model.MavenResource;
 import org.jetbrains.idea.maven.project.MavenImportingSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -29,6 +30,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class MavenFoldersImporter {
   private final MavenProject myMavenProject;
@@ -122,15 +124,18 @@ public class MavenFoldersImporter {
 
   private void configExcludedFolders() {
     File targetDir = new File(myMavenProject.getBuildDirectory());
-    File generatedDir = new File(myMavenProject.getGeneratedSourcesDirectory());
+    Map<File, Boolean> generatedDirs = new THashMap<File, Boolean>();
+    generatedDirs.put(new File(myMavenProject.getGeneratedSourcesDirectory(true)), true);
+    generatedDirs.put(new File(myMavenProject.getGeneratedSourcesDirectory(false)), false);
 
     myModel.unregisterAll(targetDir.getPath(), true, false);
 
     for (File f : getChildren(targetDir)) {
       if (!f.isDirectory()) continue;
 
-      if (f.equals(generatedDir)) {
-        addAllSubDirsAsSources(f);
+      Boolean isGeneratedTestSources = generatedDirs.get(f);
+      if (isGeneratedTestSources != null) {
+        addAllSubDirsAsSources(f, isGeneratedTestSources);
       }
       else {
         if (myModel.hasRegisteredSourceSubfolder(f)) continue;
@@ -153,11 +158,11 @@ public class MavenFoldersImporter {
     }
   }
 
-  private void addAllSubDirsAsSources(File dir) {
+  private void addAllSubDirsAsSources(File dir, boolean isTestSources) {
     for (File f : getChildren(dir)) {
       if (!f.isDirectory()) continue;
       if (myModel.hasRegisteredSourceSubfolder(f)) continue;
-      myModel.addSourceFolder(f.getPath(), false);
+      myModel.addSourceFolder(f.getPath(), isTestSources);
     }
   }
 

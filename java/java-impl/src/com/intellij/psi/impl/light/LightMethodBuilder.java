@@ -18,6 +18,7 @@ package com.intellij.psi.impl.light;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -41,10 +42,19 @@ import java.util.List;
  */
 public class LightMethodBuilder extends LightElement implements PsiMethod {
   private final String myName;
-  private volatile PsiType myReturnType;
-  private volatile LightModifierList myModifierList;
+  private volatile Computable<PsiType> myReturnType;
+  private final LightModifierList myModifierList;
   private volatile LightParameterListBuilder myParameterList;
   private volatile Icon myBaseIcon;
+  private volatile PsiClass myContainingClass;
+  private volatile boolean myConstructor;
+  private volatile String myMethodKind = "LightMethodBuilder";
+
+  public LightMethodBuilder(PsiClass constructedClass) {
+    this(constructedClass.getManager(), constructedClass.getName());
+    setContainingClass(constructedClass);
+    myConstructor = true;
+  }
 
   public LightMethodBuilder(PsiManager manager, String name) {
     this(manager, StdLanguages.JAVA, name);
@@ -108,18 +118,39 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
     return myModifierList;
   }
 
+  public LightMethodBuilder addModifiers(String... modifiers) {
+    for (String modifier : modifiers) {
+      addModifier(modifier);
+    }
+    return this;
+  }
+
+  public void addModifier(String modifier) {
+    myModifierList.addModifier(modifier);
+  }
+
   public LightMethodBuilder setModifiers(String... modifiers) {
-    myModifierList = new LightModifierList(getManager(), getLanguage(), modifiers);
+    myModifierList.clearModifiers();
+    addModifiers(modifiers);
     return this;
   }
 
   public PsiType getReturnType() {
-    return myReturnType;
+    return myReturnType == null ? null : myReturnType.compute();
   }
 
-  public LightMethodBuilder setReturnType(PsiType returnType) {
+  public LightMethodBuilder setReturnType(Computable<PsiType> returnType) {
     myReturnType = returnType;
     return this;
+  }
+
+  public LightMethodBuilder setReturnType(final PsiType returnType) {
+    return setReturnType(new Computable<PsiType>() {
+      @Override
+      public PsiType compute() {
+        return returnType;
+      }
+    });
   }
 
   public PsiTypeElement getReturnTypeElement() {
@@ -131,7 +162,7 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
     return myParameterList;
   }
 
-  public LightMethodBuilder addParameter(LightParameter parameter) {
+  public LightMethodBuilder addParameter(PsiParameter parameter) {
     myParameterList.addParameter(parameter);
     return this;
   }
@@ -155,8 +186,7 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
   }
 
   public boolean isConstructor() {
-    //todo
-    return false;
+    return myConstructor;
   }
 
   public boolean isVarArgs() {
@@ -214,12 +244,25 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
   }
 
   public PsiClass getContainingClass() {
-    //todo
-    return null;
+    return myContainingClass;
+  }
+
+  public LightMethodBuilder setContainingClass(PsiClass containingClass) {
+    myContainingClass = containingClass;
+    return this;
+  }
+
+  public LightMethodBuilder setMethodKind(String debugKindName) {
+    myMethodKind = debugKindName;
+    return this;
+  }
+
+  public static boolean isLightMethod(PsiMethod method, String kind) {
+    return method instanceof LightMethodBuilder && ((LightMethodBuilder)method).myMethodKind.equals(kind);
   }
 
   public String toString() {
-    return "LightMethodBuilder:" + getName();
+    return myMethodKind + ":" + getName();
   }
 
   public Icon getElementIcon(final int flags) {
@@ -245,8 +288,24 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
   }
 
   @Override
+  public PsiFile getContainingFile() {
+    final PsiClass containingClass = getContainingClass();
+    return containingClass == null ? null : containingClass.getContainingFile();
+  }
+
+  @Override
   public PsiElement getContext() {
-    return getContainingClass();
+    final PsiElement navElement = getNavigationElement();
+    if (navElement != this) {
+      return navElement;
+    }
+
+    final PsiClass cls = getContainingClass();
+    if (cls != null) {
+      return cls;
+    }
+
+    return getContainingFile();
   }
 
   public PsiMethodReceiver getMethodReceiver() {
@@ -263,9 +322,12 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
 
     LightMethodBuilder that = (LightMethodBuilder)o;
 
+    if (myConstructor != that.myConstructor) return false;
+    if (myBaseIcon != null ? !myBaseIcon.equals(that.myBaseIcon) : that.myBaseIcon != null) return false;
+    if (myContainingClass != null ? !myContainingClass.equals(that.myContainingClass) : that.myContainingClass != null) return false;
+    if (!myMethodKind.equals(that.myMethodKind)) return false;
     if (!myModifierList.equals(that.myModifierList)) return false;
     if (!myName.equals(that.myName)) return false;
-    if (!myNavigationElement.equals(that.myNavigationElement)) return false;
     if (!myParameterList.equals(that.myParameterList)) return false;
     if (myReturnType != null ? !myReturnType.equals(that.myReturnType) : that.myReturnType != null) return false;
 
@@ -278,7 +340,10 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
     result = 31 * result + (myReturnType != null ? myReturnType.hashCode() : 0);
     result = 31 * result + myModifierList.hashCode();
     result = 31 * result + myParameterList.hashCode();
-    result = 31 * result + myNavigationElement.hashCode();
+    result = 31 * result + (myBaseIcon != null ? myBaseIcon.hashCode() : 0);
+    result = 31 * result + (myContainingClass != null ? myContainingClass.hashCode() : 0);
+    result = 31 * result + (myConstructor ? 1 : 0);
+    result = 31 * result + myMethodKind.hashCode();
     return result;
   }
 }

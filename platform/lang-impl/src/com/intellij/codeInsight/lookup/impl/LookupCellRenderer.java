@@ -223,6 +223,9 @@ public class LookupCellRenderer implements ListCellRenderer {
     if (presentation.isStrikeout()) {
       style |= SimpleTextAttributes.STYLE_STRIKEOUT;
     }
+    if (presentation.isItemTextUnderlined()) {
+      style |= SimpleTextAttributes.STYLE_UNDERLINE;
+    }
 
     final FontMetrics metrics = bold ? myBoldMetrics : myNormalMetrics;
     final String name = trimLabelText(presentation.getItemText(), allowedWidth, metrics);

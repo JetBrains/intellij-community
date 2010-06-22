@@ -56,6 +56,11 @@ public class TreeTableTree extends Tree {
     }
   }
 
+  @Override
+  protected final boolean isMacWideSelection() {
+    return false;
+  }
+
   public void setRowHeight(int rowHeight) {
     if (rowHeight > 0) {
       super.setRowHeight(rowHeight);

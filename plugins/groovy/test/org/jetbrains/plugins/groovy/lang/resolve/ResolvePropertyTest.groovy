@@ -484,7 +484,6 @@ ba<caret>r = 2
 """)
     def ref = findReference()
     def resolved = ref.resolve()
-    print resolved.class
     assertInstanceOf resolved, GrAccessorMethod.class
   }
 

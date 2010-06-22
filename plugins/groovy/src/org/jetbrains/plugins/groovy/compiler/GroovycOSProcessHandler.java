@@ -40,7 +40,7 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
   private final List<TranslatingCompiler.OutputItem> myCompiledItems = new ArrayList<TranslatingCompiler.OutputItem>();
   private final Set<File> toRecompileFiles = new HashSet<File>();
   private final List<CompilerMessage> compilerMessages = new ArrayList<CompilerMessage>();
-  private final StringBuffer unparsedOutput = new StringBuffer();
+  private final StringBuffer stdErr = new StringBuffer();
   private final CompileContext myContext;
 
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.compiler.GroovycOSProcessHandler");
@@ -53,7 +53,6 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
 
   public void notifyTextAvailable(final String text, final Key outputType) {
     super.notifyTextAvailable(text, outputType);
-//    System.out.println("text: " + text);
 
     parseOutput(text, outputType == ProcessOutputTypes.STDERR);
   }
@@ -65,8 +64,13 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
       LOG.debug("Received from groovyc: " + text);
     }
 
-    final String trimmed = text.trim();
+    if (error) {
+      stdErr.append(StringUtil.convertLineSeparators(text));
+      return;
+    }
 
+
+    final String trimmed = text.trim();
 
     if (trimmed.startsWith(GroovycRunner.PRESENTABLE_MESSAGE)) {
       myContext.getProgressIndicator().setText(trimmed.substring(GroovycRunner.PRESENTABLE_MESSAGE.length()));
@@ -84,7 +88,6 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
 
       //compiled start marker have to be in the beginning on each string
       if (outputBuffer.indexOf(GroovycRunner.COMPILED_START) != -1) {
-        unparsedOutput.setLength(0);
 
         if (outputBuffer.indexOf(GroovycRunner.COMPILED_END) == -1) {
           return;
@@ -99,12 +102,10 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
           /*
           * output path
           * source file
-          * output root directory
           */
 
           String outputPath = "";
           String sourceFile = "";
-          String outputRootDirectory = "";
 
           if (tokenizer.hasMoreTokens()) {
             token = tokenizer.nextToken();
@@ -125,7 +126,6 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
 
       }
       else if (outputBuffer.indexOf(GroovycRunner.TO_RECOMPILE_START) != -1) {
-        unparsedOutput.setLength(0);
         if (!(outputBuffer.indexOf(GroovycRunner.TO_RECOMPILE_END) != -1)) {
           return;
         }
@@ -133,7 +133,6 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
         if (outputBuffer.indexOf(GroovycRunner.TO_RECOMPILE_END) != -1) {
           text = handleOutputBuffer(GroovycRunner.TO_RECOMPILE_START, GroovycRunner.TO_RECOMPILE_END);
 
-          myContext.getProgressIndicator().setText(text);
           toRecompileFiles.add(new File(text));
         }
       }
@@ -146,7 +145,6 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
       */
 
       else if (outputBuffer.indexOf(GroovycRunner.MESSAGES_START) != -1) {
-        unparsedOutput.setLength(0);
         if (!(outputBuffer.indexOf(GroovycRunner.MESSAGES_END) != -1)) {
           return;
         }
@@ -181,26 +179,19 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
           colomnnumInt = 0;
         }
 
-        myContext.getProgressIndicator().setText(url);
-
         compilerMessages.add(new CompilerMessage(category, message, url, linenumInt, colomnnumInt));
-      }
-      else {
-        if (error) unparsedOutput.append(outputBuffer).append("\n");
-        outputBuffer.setLength(0);
       }
     }
   }
 
   private String handleOutputBuffer(String startMarker, String endMarker) {
-    String text;
     final int start = outputBuffer.indexOf(startMarker);
     final int end = outputBuffer.indexOf(endMarker);
     if (start > end) {
       throw new AssertionError("Malformed Groovyc output: " + outputBuffer.toString());
     }
 
-    text = outputBuffer.substring(start + startMarker.length(), end);
+    String text = outputBuffer.substring(start + startMarker.length(), end);
 
     outputBuffer.delete(start, end + endMarker.length());
 
@@ -236,7 +227,7 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
     return compilerMessages;
   }
 
-  public StringBuffer getUnparsedOutput() {
-    return unparsedOutput;
+  public StringBuffer getStdErr() {
+    return stdErr;
   }
 }

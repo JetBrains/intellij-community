@@ -12,13 +12,13 @@ import java.util.List;
  * @author peter
  */
 public class LightParameterListBuilder extends LightElement implements PsiParameterList {
-  private final List<LightParameter> myParameters = Collections.synchronizedList(new ArrayList<LightParameter>());
+  private final List<PsiParameter> myParameters = Collections.synchronizedList(new ArrayList<PsiParameter>());
 
   public LightParameterListBuilder(PsiManager manager, Language language) {
     super(manager, language);
   }
 
-  public void addParameter(LightParameter parameter) {
+  public void addParameter(PsiParameter parameter) {
     myParameters.add(parameter);
   }
 
@@ -30,7 +30,7 @@ public class LightParameterListBuilder extends LightElement implements PsiParame
   @NotNull
   @Override
   public PsiParameter[] getParameters() {
-    return myParameters.toArray(new LightParameter[myParameters.size()]);
+    return myParameters.toArray(new PsiParameter[myParameters.size()]);
   }
 
   @Override

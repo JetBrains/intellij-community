@@ -20,6 +20,7 @@ import com.intellij.util.ui.UIUtil;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.plaf.TreeUI;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
@@ -89,17 +90,20 @@ public final class TreeToolTipHandler extends AbstractToolTipHandler<Integer, JT
 
   @Override
   protected BufferedImage createImage(int height, int width) {
-    return super.createImage(myComponent.getUI() instanceof UIUtil.MacTreeUI ? height - 1 : height, width);
+    final TreeUI ui = myComponent.getUI();
+    return super.createImage(ui instanceof UIUtil.MacTreeUI && ((UIUtil.MacTreeUI)ui).isWideSelection() ? height - 1 : height, width);
   }
 
   @Override
   protected void doFillBackground(final int height, final int width, final Graphics2D g) {
-    super.doFillBackground(myComponent.getUI() instanceof UIUtil.MacTreeUI ? height - 1 : height, width, g);
+    final TreeUI ui = myComponent.getUI();
+    super.doFillBackground(ui instanceof UIUtil.MacTreeUI && ((UIUtil.MacTreeUI)ui).isWideSelection()? height - 1 : height, width, g);
   }
 
   @Override
   protected boolean doPaintBorder(final Integer row) {
-    return !(myComponent.getUI() instanceof UIUtil.MacTreeUI) || !myComponent.isRowSelected(row);
+    final TreeUI ui = myComponent.getUI();
+    return (!(ui instanceof UIUtil.MacTreeUI) || !((UIUtil.MacTreeUI)ui).isWideSelection()) || !myComponent.isRowSelected(row);
   }
 
   @Override
@@ -108,7 +112,7 @@ public final class TreeToolTipHandler extends AbstractToolTipHandler<Integer, JT
       if (myComponent.hasFocus()) {
         ((JComponent)rComponent).setOpaque(true);
         rComponent.setBackground(UIUtil.getTreeSelectionBackground());
-      } else if (myComponent.getUI() instanceof UIUtil.MacTreeUI) {
+      } else if (myComponent.getUI() instanceof UIUtil.MacTreeUI && ((UIUtil.MacTreeUI)myComponent.getUI()).isWideSelection()) {
         ((JComponent)rComponent).setOpaque(true);
         rComponent.setBackground(UIUtil.getListUnfocusedSelectionBackground());
       }
