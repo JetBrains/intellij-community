@@ -486,6 +486,10 @@
       <separator/>
       <reference ref="VersionControlsGroup"/>
       <reference ref="SynchronizeCurrentFile"/>
+      <separator/>
+      <reference ref="RevealIn"/>
+      <reference ref="ShowFilePath"/>
+      <separator/>
       <reference ref="CompareTwoFiles"/>
       <reference ref="CompareFileWithEditor"/>
       <separator/>
