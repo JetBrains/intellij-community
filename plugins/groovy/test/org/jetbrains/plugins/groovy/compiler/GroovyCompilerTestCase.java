@@ -81,6 +81,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
     final String root = version17 ? TestUtils.getRealGroovy1_7LibraryHome() : PathManager.getHomePath() + "/community/lib/";
     final File[] groovyJars = GroovyUtils.getFilesInDirectoryByPattern(root, GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN);
     assert groovyJars.length == 1;
+    System.out.println("groovyJars[0] = " + groovyJars[0].getName());
     PsiTestUtil.addLibrary(to, "groovy", root, groovyJars[0].getName());
   }
 
