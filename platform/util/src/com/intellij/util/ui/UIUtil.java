@@ -41,7 +41,6 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.FontRenderContext;
-import java.awt.geom.Rectangle2D;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -1106,6 +1105,17 @@ public class UIUtil {
     private static final Border LIST_SELECTION_BACKGROUND_PAINTER = (Border) UIManager.get("List.sourceListSelectionBackgroundPainter");
     private static final Border LIST_FOCUSED_SELECTION_BACKGROUND_PAINTER = (Border) UIManager.get("List.sourceListFocusedSelectionBackgroundPainter");
 
+    private boolean myWideSelection;
+
+    public MacTreeUI() {
+      this(true);
+    }
+
+
+    public MacTreeUI(final boolean wideSelection) {
+      myWideSelection = wideSelection;
+    }
+
     private MouseListener mySelectionListener = new MouseAdapter() {
       @Override
       public void mousePressed(@NotNull final MouseEvent e) {
@@ -1144,7 +1154,7 @@ public class UIUtil {
     protected void completeUIInstall() {
       super.completeUIInstall();
 
-      tree.setOpaque(false);
+      if (myWideSelection) tree.setOpaque(true);
       tree.setShowsRootHandles(true);
 
       tree.addMouseListener(mySelectionListener);
@@ -1209,6 +1219,10 @@ public class UIUtil {
     protected void paintHorizontalLine(Graphics g, JComponent c, int y, int left, int right) {
     }
 
+    public boolean isWideSelection() {
+      return myWideSelection;
+    }
+
     @Override
     protected void paintRow(final Graphics g,
                             final Rectangle clipBounds,
@@ -1222,13 +1236,10 @@ public class UIUtil {
       final int containerWidth = tree.getParent() instanceof JViewport ? tree.getParent().getWidth() : tree.getWidth();
       final int xOffset = tree.getParent() instanceof JViewport ? ((JViewport)tree.getParent()).getViewPosition().x : 0;
 
-      if (path != null) {
+      if (path != null && myWideSelection) {
         boolean selected = tree.isPathSelected(path);
         Graphics2D rowGraphics = (Graphics2D)g.create();
-        Rectangle visible = tree.getVisibleRect();
-        Rectangle2D union = visible.createIntersection(bounds);
-        Rectangle clip = new Rectangle(visible.x, (int)union.getY(), visible.width, (int)union.getHeight());
-        rowGraphics.setClip(clip);
+        rowGraphics.setClip(clipBounds);
 
         final Object sourceList = tree.getClientProperty(SOURCE_LIST_CLIENT_PROPERTY);
         if (sourceList != null && ((Boolean)sourceList)) {
@@ -1257,9 +1268,8 @@ public class UIUtil {
           paintExpandControl(rowGraphics, bounds, insets, bounds, path, row, isExpanded, hasBeenExpanded, isLeaf);
         }
 
-        super.paintRow(rowGraphics, clip, insets, bounds, path, row, isExpanded, hasBeenExpanded, isLeaf);
+        super.paintRow(rowGraphics, clipBounds, insets, bounds, path, row, isExpanded, hasBeenExpanded, isLeaf);
         rowGraphics.dispose();
-
       } else {
         super.paintRow(g, clipBounds, insets, bounds, path, row, isExpanded, hasBeenExpanded, isLeaf);
       }
@@ -1267,17 +1277,19 @@ public class UIUtil {
 
     @Override
     public void paint(Graphics g, JComponent c) {
-      final int containerWidth = tree.getParent() instanceof JViewport ? tree.getParent().getWidth() : tree.getWidth();
-      final int xOffset = tree.getParent() instanceof JViewport ? ((JViewport)tree.getParent()).getViewPosition().x : 0;
-      final Rectangle bounds = g.getClipBounds();
+      if (myWideSelection) {
+        final int containerWidth = tree.getParent() instanceof JViewport ? tree.getParent().getWidth() : tree.getWidth();
+        final int xOffset = tree.getParent() instanceof JViewport ? ((JViewport)tree.getParent()).getViewPosition().x : 0;
+        final Rectangle bounds = g.getClipBounds();
 
-      // draw background for the given clip bounds
-      final Object sourceList = tree.getClientProperty(SOURCE_LIST_CLIENT_PROPERTY);
-      if (sourceList != null && ((Boolean)sourceList)) {
-        Graphics2D backgroundGraphics = (Graphics2D) g.create();
-        backgroundGraphics.setClip(xOffset, bounds.y, containerWidth, bounds.height);
-        LIST_BACKGROUND_PAINTER.paintBorder(tree, backgroundGraphics, xOffset, bounds.y, containerWidth, bounds.height);
-        backgroundGraphics.dispose();
+        // draw background for the given clip bounds
+        final Object sourceList = tree.getClientProperty(SOURCE_LIST_CLIENT_PROPERTY);
+        if (sourceList != null && ((Boolean)sourceList)) {
+          Graphics2D backgroundGraphics = (Graphics2D)g.create();
+          backgroundGraphics.setClip(xOffset, bounds.y, containerWidth, bounds.height);
+          LIST_BACKGROUND_PAINTER.paintBorder(tree, backgroundGraphics, xOffset, bounds.y, containerWidth, bounds.height);
+          backgroundGraphics.dispose();
+        }
       }
 
       super.paint(g, c);
@@ -1288,9 +1300,9 @@ public class UIUtil {
       return new CellRendererPane() {
         @Override
         public void paintComponent(Graphics g, Component c, Container p, int x, int y, int w, int h, boolean shouldValidate) {
-          if (c instanceof JComponent) {
+          if (c instanceof JComponent && myWideSelection) {
+            ((JComponent)c).setOpaque(false);
           }
-          ((JComponent)c).setOpaque(false);
 
           super.paintComponent(g, c, p, x, y, w, h, shouldValidate);
         }
