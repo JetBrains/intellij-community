@@ -23,6 +23,7 @@ import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
 
@@ -66,14 +67,19 @@ public class GroovyTargetElementEvaluator implements TargetElementEvaluator {
 
     if (sourceElement instanceof GrReferenceElementImpl) { // For Grails tags in GSP pager (e.g. <%  g.link()  %>)
       PsiElement resolve = ((GrReferenceElementImpl)sourceElement).resolve();
-      if (resolve != null && !resolve.isPhysical()) {
-        PsiElement navigationElement = resolve.getNavigationElement();
-        if (navigationElement != resolve) {
-          return navigationElement;
-        }
+      if (resolve != null) {
+        return correctSearchTargets(resolve);
       }
     }
     
     return null;
+  }
+
+  @NotNull
+  public static PsiElement correctSearchTargets(@NotNull PsiElement resolve) {
+    if (!(resolve instanceof GrAccessorMethod) && !resolve.isPhysical()) {
+      return resolve.getNavigationElement();
+    }
+    return resolve;
   }
 }
