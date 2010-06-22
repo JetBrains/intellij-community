@@ -64,6 +64,7 @@ public class TemplateImpl extends Template implements SchemeElement {
     for (Variable variable : myVariables) {
       if (template.myVariables.indexOf(variable) < 0) return false;
     }
+    if (isDeactivated != template.isDeactivated) return false;
 
     return true;
   }
