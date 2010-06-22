@@ -15,8 +15,8 @@ public class HgInitCommand {
     myProject = project;
   }
 
-  public void execute(@NotNull VirtualFile repositoryRoot) {
-    HgCommandService.getInstance(myProject).execute(repositoryRoot, "init", null);
+  public boolean execute(@NotNull VirtualFile repositoryRoot) {
+    return HgCommandService.getInstance(myProject).execute(repositoryRoot, "init", null) != null;
   }
 
 }
