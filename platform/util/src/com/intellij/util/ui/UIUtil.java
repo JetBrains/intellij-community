@@ -680,11 +680,11 @@ public class UIUtil {
                                         final Color bgColor,
                                         final Color fgColor,
                                         final boolean opaque) {
-     //if (SystemInfo.isMac) {
-     //  drawAppleDottedLine(g, startX, endX, lineY, bgColor, fgColor, opaque);
-     //} else {
-       drawBoringDottedLine(g, startX, endX, lineY + 1, bgColor, fgColor, opaque);
-     //}
+     if (SystemInfo.isMac) {
+       drawAppleDottedLine(g, startX, endX, lineY, bgColor, fgColor, opaque);
+     } else {
+       drawBoringDottedLine(g, startX, endX, lineY, bgColor, fgColor, opaque);
+     }
   }
 
   private static void drawBoringDottedLine(final Graphics2D g,
