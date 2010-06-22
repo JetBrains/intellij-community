@@ -127,7 +127,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       public void defaultListChanged(final ChangeList oldDefaultList, ChangeList newDefaultList) {
         if (!ApplicationManager.getApplication().isUnitTestMode() &&
           oldDefaultList instanceof LocalChangeList &&
-          oldDefaultList.getChanges().isEmpty()) {
+          oldDefaultList.getChanges().isEmpty() &&
+          !((LocalChangeList)oldDefaultList).isReadOnly()) {
 
           invokeAfterUpdate(new Runnable() {
             public void run() {
