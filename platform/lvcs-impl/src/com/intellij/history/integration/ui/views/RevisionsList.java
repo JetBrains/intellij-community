@@ -23,6 +23,7 @@ import com.intellij.history.integration.ui.models.HistoryDialogModel;
 import com.intellij.history.integration.ui.models.RevisionItem;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.AbstractLayoutManager;
@@ -56,6 +57,8 @@ public class RevisionsList {
     table.getColumnModel().setColumnMargin(0);
 
     table.resetDefaultFocusTraversalKeys();
+
+    table.setEmptyText(VcsBundle.message("history.empty"));
 
     addSelectionListener(l);
   }

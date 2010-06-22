@@ -59,7 +59,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.im.InputContext;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -331,6 +331,10 @@ public final class IdeKeyEventDispatcher implements Disposable {
     return inInitState();
   }
 
+  private static final Set<String> ALT_GR_LAYOUTS = new HashSet<String>(Arrays.asList(
+    "pl", "de", "fi", "fr", "no", "da", "se", "pt", "nl", "tr", "sl", "hu", "bs", "hr", "sr", "sl"
+  ));
+
   private boolean inInitState() {
     Component focusOwner = myContext.getFocusOwner();
     boolean isModalContext = myContext.isModalContext();
@@ -342,18 +346,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       final InputContext inputContext = focusOwner.getInputContext();
       if (inputContext != null) {
         @NonNls final String language = inputContext.getLocale().getLanguage();
-        if (language.equals("pl") ||
-            language.equals("de") ||
-            language.equals("fi") ||
-            language.equals("fr") ||
-            language.equals("no") ||
-            language.equals("da") ||
-            language.equals("se") ||
-            language.equals("pt") ||
-            language.equals("nl") ||
-            language.equals("tr") ||
-            language.equals("sl") ||
-            language.equals("hu")) {
+        if (ALT_GR_LAYOUTS.contains(language)) {
           // don't search for shortcuts
           return false;
         }

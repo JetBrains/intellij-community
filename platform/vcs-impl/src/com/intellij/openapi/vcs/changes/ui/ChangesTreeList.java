@@ -254,7 +254,6 @@ public abstract class ChangesTreeList<T> extends JPanel {
   }
 
   public void setChangesToDisplay(final List<T> changes) {
-    final DefaultListModel listModel = (DefaultListModel)myList.getModel();
     final List<T> sortedChanges = new ArrayList<T>(changes);
     Collections.sort(sortedChanges, new Comparator<T>() {
       public int compare(final T o1, final T o2) {
@@ -262,10 +261,17 @@ public abstract class ChangesTreeList<T> extends JPanel {
       }
     });
 
-    listModel.removeAllElements();
-    for (T change : sortedChanges) {
-      listModel.addElement(change);
-    }
+    myList.setModel(new AbstractListModel() {
+      @Override
+      public int getSize() {
+        return sortedChanges.size();
+      }
+
+      @Override
+      public Object getElementAt(int index) {
+        return sortedChanges.get(index);
+      }
+    });
 
     final DefaultTreeModel model = buildTreeModel(changes, myChangeDecorator);
     myTree.setModel(model);
