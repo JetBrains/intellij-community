@@ -16,6 +16,7 @@
 
 package com.intellij.util.ui;
 
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.Alarm;
 
 import javax.swing.*;
@@ -85,6 +86,9 @@ public abstract class BaseButtonBehavior {
   }
 
   private class MyMouseListener extends MouseAdapter {
+
+    private boolean myWasPressedOnFocusTransfer;
+
     public void mouseEntered(MouseEvent e) {
       myMouseDeadzone.reEnter();
 
@@ -100,7 +104,10 @@ public abstract class BaseButtonBehavior {
     }
 
     public void mousePressed(MouseEvent e) {
-      if (passIfNeeded(e)) return;
+      Component owner = IdeFocusManager.getInstance(null).getFocusOwner();
+      myWasPressedOnFocusTransfer = owner == null;
+
+      if (passIfNeeded(e, !myWasPressedOnFocusTransfer)) return;
 
       setPressedByMouse(true);
 
@@ -109,23 +116,28 @@ public abstract class BaseButtonBehavior {
 
 
     public void mouseReleased(MouseEvent e) {
-      if (passIfNeeded(e)) return;
+      try {
+        if (passIfNeeded(e, !myWasPressedOnFocusTransfer)) return;
 
-      setPressedByMouse(false);
+        setPressedByMouse(false);
 
-      Point point = e.getPoint();
-      if (point.x < 0 || point.x > myComponent.getWidth()) return;
-      if (point.y < 0 || point.y > myComponent.getHeight()) return;
+        Point point = e.getPoint();
+        if (point.x < 0 || point.x > myComponent.getWidth()) return;
+        if (point.y < 0 || point.y > myComponent.getHeight()) return;
 
-      repaintComponent();
+        repaintComponent();
 
-      execute(e);
+        execute(e);
+      }
+      finally {
+        myWasPressedOnFocusTransfer = false;
+      }
     }
 
-    private boolean passIfNeeded(final MouseEvent e) {
+    private boolean passIfNeeded(final MouseEvent e, boolean considerDeadzone) {
       final boolean actionClick = UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED) || UIUtil.isActionClick(e, MouseEvent.MOUSE_PRESSED);
 
-      if (!actionClick || myMouseDeadzone.isWithin()) {
+      if (!actionClick || (considerDeadzone && myMouseDeadzone.isWithin())) {
         pass(e);
         return true;
       }
