@@ -673,6 +673,123 @@ public class UIUtil {
     }
   }
 
+  public static void drawBoldDottedLine(final Graphics2D g,
+                                        final int startX,
+                                        final int endX,
+                                        final int lineY,
+                                        final Color bgColor,
+                                        final Color fgColor,
+                                        final boolean opaque) {
+     //if (SystemInfo.isMac) {
+     //  drawAppleDottedLine(g, startX, endX, lineY, bgColor, fgColor, opaque);
+     //} else {
+       drawBoringDottedLine(g, startX, endX, lineY + 1, bgColor, fgColor, opaque);
+     //}
+  }
+
+  private static void drawBoringDottedLine(final Graphics2D g,
+                                           final int startX,
+                                           final int endX,
+                                           final int lineY,
+                                           final Color bgColor,
+                                           final Color fgColor,
+                                           final boolean opaque) {
+    final Color oldColor = g.getColor();
+
+    // Fill 2 lines with background color
+    if (opaque && bgColor != null) {
+      g.setColor(bgColor);
+
+      drawLine(g, startX, lineY, endX, lineY);
+      drawLine(g, startX, lineY+1, endX, lineY+1);
+    }
+
+    // Draw dotted line:
+    //
+    // CCC CCC CCC ...
+    // CCC CCC CCC ...
+    //
+    // (where "C" - colored pixel, " " - white pixel)
+
+    final int step = 4;
+    final int startPosCorrection = startX % step < 3 ? 0 : 1;
+
+    g.setColor(fgColor != null ? fgColor : oldColor);
+    // Now draw bold line segments
+    for (int dotXi = (startX / step + startPosCorrection) * step; dotXi < endX; dotXi += step) {
+      g.drawLine(dotXi, lineY, dotXi + 1, lineY);
+      g.drawLine(dotXi, lineY + 1, dotXi + 1, lineY + 1);
+    }
+
+    // restore color
+    g.setColor(oldColor);
+  }
+
+  private static void drawAppleDottedLine(final Graphics2D g,
+                                          final int startX,
+                                          final int endX,
+                                          final int lineY,
+                                          final Color bgColor,
+                                          final Color fgColor,
+                                          final boolean opaque) {
+    final Color oldColor = g.getColor();
+
+    // Fill 3 lines with background color
+    if (opaque && bgColor != null) {
+      g.setColor(bgColor);
+
+      drawLine(g, startX, lineY, endX, lineY);
+      drawLine(g, startX, lineY+1, endX, lineY+1);
+      drawLine(g, startX, lineY+2, endX, lineY+2);
+    }
+
+    // Draw apple like dotted line:
+    //
+    // CCC CCC CCC ...
+    // CCC CCC CCC ...
+    // CCC CCC CCC ...
+    //
+    // (where "C" - colored pixel, " " - white pixel)
+    //
+    // Each dot:
+    // | 20%  | 50%  | 20% |
+    // | 100% | 100% | 100%|
+    // | 50%  | 100% | 50% |
+
+    g.setColor(fgColor != null ? fgColor : oldColor);
+
+    final int step = 4;
+    final int startPosCorrection = startX % step < 3 ? 0 : 1;
+
+    final int dotX0  = (startX / step + startPosCorrection) * step;
+
+    // draw one dot by pixel:
+    final Composite oldComposite = g.getComposite();
+    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, .2f));
+    g.drawLine(dotX0, lineY, dotX0,  lineY);
+    g.drawLine(dotX0+2, lineY, dotX0+2,  lineY);
+
+    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
+    g.drawLine(dotX0, lineY+1, dotX0+2,  lineY+1);
+    g.drawLine(dotX0+1, lineY+2, dotX0+1,  lineY+2);
+
+    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, .5f));
+    g.drawLine(dotX0+1, lineY, dotX0+1,  lineY);
+    g.drawLine(dotX0, lineY+2, dotX0,  lineY+2);
+    g.drawLine(dotX0+2, lineY+2, dotX0+2,  lineY+2);
+
+    // restore previous settings
+    g.setComposite(oldComposite);
+
+    // Now copy our dot several times
+    for (int dotXi = dotX0 + step; dotXi < endX; dotXi += step) {
+      g.copyArea(dotX0, lineY, 3, 3, dotXi - dotX0, 0);
+    }
+
+    // restore color
+    g.setColor(oldColor);
+  }
+
   public static void applyRenderingHints(final Graphics g) {
     Toolkit tk = Toolkit.getDefaultToolkit();
     //noinspection HardCodedStringLiteral

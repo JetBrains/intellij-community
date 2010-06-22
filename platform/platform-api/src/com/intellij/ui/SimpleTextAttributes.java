@@ -33,6 +33,7 @@ public final class SimpleTextAttributes {
   public static final int STYLE_STRIKEOUT = STYLE_ITALIC << 1;
   public static final int STYLE_WAVED = STYLE_STRIKEOUT << 1;
   public static final int STYLE_UNDERLINE = STYLE_WAVED << 1;
+  public static final int STYLE_BOLD_DOTTED_LINE = STYLE_UNDERLINE << 1;
 
   private final Color myBgColor;
   private final Color myFgColor;
@@ -67,7 +68,7 @@ public final class SimpleTextAttributes {
   }
 
   public SimpleTextAttributes(final Color bgColor, final Color fgColor, final Color waveColor, final int style) {
-    if((~(STYLE_PLAIN | STYLE_BOLD | STYLE_ITALIC | STYLE_STRIKEOUT | STYLE_WAVED | STYLE_UNDERLINE) & style) != 0){
+    if((~(STYLE_PLAIN | STYLE_BOLD | STYLE_ITALIC | STYLE_STRIKEOUT | STYLE_WAVED | STYLE_UNDERLINE | STYLE_BOLD_DOTTED_LINE) & style) != 0){
       throw new IllegalArgumentException("wrong style: "+style);
     }
     myFgColor = fgColor;
@@ -125,6 +126,10 @@ public final class SimpleTextAttributes {
     return (myStyle & STYLE_UNDERLINE) != 0;
   }
 
+  public boolean isBoldDottedLine() {
+    return (myStyle & STYLE_BOLD_DOTTED_LINE) != 0;
+  }
+
   public static SimpleTextAttributes fromTextAttributes(TextAttributes attributes) {
     if (attributes == null) return REGULAR_ATTRIBUTES;
 
@@ -141,6 +146,9 @@ public final class SimpleTextAttributes {
         style |= STYLE_WAVED;
       }
       else if (effectType == EffectType.LINE_UNDERSCORE || effectType == EffectType.BOLD_LINE_UNDERSCORE) {
+        style |= STYLE_UNDERLINE;
+      }
+      else if (effectType == EffectType.BOLD_DOTTED_LINE) {
         style |= STYLE_UNDERLINE;
       }
       else{
@@ -163,6 +171,10 @@ public final class SimpleTextAttributes {
     else if (isUnderline()) {
       effectColor = myWaveColor;
       effectType = EffectType.LINE_UNDERSCORE;
+    }
+    else if (isBoldDottedLine()) {
+      effectColor = myWaveColor;
+      effectType = EffectType.BOLD_DOTTED_LINE;
     }
     else{
       effectColor = null;
