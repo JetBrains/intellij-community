@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.wizards;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
@@ -24,6 +25,7 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
@@ -230,7 +232,12 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
   }
 
   private MavenWorkspaceSettings getDirectProjectsSettings() {
-    return getProject().getComponent(MavenWorkspaceSettingsComponent.class).getState();
+    return ApplicationManager.getApplication().runReadAction(new Computable<MavenWorkspaceSettings>() {
+      @Override
+      public MavenWorkspaceSettings compute() {
+        return getProject().getComponent(MavenWorkspaceSettingsComponent.class).getState();
+      }
+    });
   }
 
   @NotNull
