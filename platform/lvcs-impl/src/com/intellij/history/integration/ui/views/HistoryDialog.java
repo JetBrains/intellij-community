@@ -113,6 +113,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     setPreferredFocusedComponent(showRevisionsList() ? myRevisionsList.getComponent() : myDiffView);
 
     myUpdateQueue = new MergingUpdateQueue(getClass() + ".revisionsUpdate", 500, true, root, this, null, false);
+    myUpdateQueue.setRestartTimerOnAdd(true);
 
     facade.addListener(new LocalHistoryFacade.Listener() {
       public void changeSetFinished() {
