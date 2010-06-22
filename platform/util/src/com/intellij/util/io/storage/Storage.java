@@ -44,7 +44,7 @@ public class Storage extends AbstractStorage {
     }
   }
 
-  public void deleteRecord(int record) {
+  public void deleteRecord(int record) throws IOException {
     assert record > 0;
     synchronized (myLock) {
       doDeleteRecord(record);

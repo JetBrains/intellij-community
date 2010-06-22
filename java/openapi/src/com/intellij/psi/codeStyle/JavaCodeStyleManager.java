@@ -27,6 +27,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+
 public abstract class JavaCodeStyleManager {
   public static JavaCodeStyleManager getInstance(Project project) {
     return ServiceManager.getService(project, JavaCodeStyleManager.class);
@@ -167,4 +169,7 @@ public abstract class JavaCodeStyleManager {
    *                                     the file is read-only).
    */
   public abstract void removeRedundantImports(@NotNull PsiJavaFile file) throws IncorrectOperationException;
+
+  @Nullable
+  public abstract Collection<PsiImportStatementBase> findRedundantImports(PsiJavaFile file);
 }

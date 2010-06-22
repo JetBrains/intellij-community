@@ -82,7 +82,7 @@ public class FileEntryTest extends LocalHistoryTestCase {
     FileEntry e1 = new FileEntry("name", c("content"), -1, false);
     FileEntry e2 = new FileEntry("name", c("content"), -1, false);
 
-    assertTrue(e1.getDifferencesWith(e2).isEmpty());
+    assertTrue(Entry.getDifferencesBetween(e1, e2).isEmpty());
   }
 
   @Test
@@ -90,7 +90,7 @@ public class FileEntryTest extends LocalHistoryTestCase {
     Entry e1 = new FileEntry("name", c("content"), -1, false);
     Entry e2 = new FileEntry("another name", c("content"), -1, false);
 
-    List<Difference> dd = e1.getDifferencesWith(e2);
+    List<Difference> dd = Entry.getDifferencesBetween(e1, e2);
     assertDifference(dd, e1, e2);
   }
 
@@ -100,10 +100,10 @@ public class FileEntryTest extends LocalHistoryTestCase {
     Entry e2 = new FileEntry("NAME", c(""), -1, false);
 
     Paths.setCaseSensitive(false);
-    assertEquals(1, e1.getDifferencesWith(e2).size());
+    assertEquals(1, Entry.getDifferencesBetween(e1, e2).size());
 
     Paths.setCaseSensitive(true);
-    assertEquals(1, e1.getDifferencesWith(e2).size());
+    assertEquals(1, Entry.getDifferencesBetween(e1, e2).size());
   }
 
   @Test
@@ -111,7 +111,7 @@ public class FileEntryTest extends LocalHistoryTestCase {
     FileEntry e1 = new FileEntry("name", c("content"), -1, false);
     FileEntry e2 = new FileEntry("name", c("another content"), -1, false);
 
-    List<Difference> dd = e1.getDifferencesWith(e2);
+    List<Difference> dd = Entry.getDifferencesBetween(e1, e2);
     assertDifference(dd, e1, e2);
   }
   
@@ -120,26 +120,20 @@ public class FileEntryTest extends LocalHistoryTestCase {
     FileEntry e1 = new FileEntry("name", c("content"), -1, true);
     FileEntry e2 = new FileEntry("name", c("content"), -1, false);
 
-    List<Difference> dd = e1.getDifferencesWith(e2);
+    List<Difference> dd = Entry.getDifferencesBetween(e1, e2);
     assertDifference(dd, e1, e2);
   }
 
   @Test
   public void testAsCreatedDifference() {
     FileEntry e = new FileEntry(null, null, -1, false);
-
-    ArrayList<Difference> dd = new ArrayList<Difference>();
-    e.collectCreatedDifferences(dd);
-    assertDifference(dd, null, e);
+    assertDifference(Entry.getDifferencesBetween(null, e), null, e);
   }
 
   @Test
   public void testAsDeletedDifference() {
     FileEntry e = new FileEntry(null, null, -1, false);
-
-    ArrayList<Difference> dd = new ArrayList<Difference>();
-    e.collectDeletedDifferences(dd);
-    assertDifference(dd, e, null);
+    assertDifference(Entry.getDifferencesBetween(e, null), e, null);
   }
 
   private void assertDifference(List<Difference> dd, Entry left, Entry right) {

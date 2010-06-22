@@ -19,10 +19,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValue;
@@ -31,8 +28,9 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.refactoring.psi.SearchUtils;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.LightParameter;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -77,9 +75,13 @@ public class AntTasksProvider {
         if (!inheritor.hasModifierProperty(PsiModifier.ABSTRACT) && !inheritor.hasModifierProperty(PsiModifier.PRIVATE)) {
           final String name = inheritor.getName();
           if (name != null) {
-            final LightMethodBuilder taskMethod = GantMemberContributor.gantMethod(StringUtil.decapitalize(name), inheritor, GantIcons.ANT_TASK);
+            final LightMethodBuilder taskMethod =
+              new LightMethodBuilder(inheritor.getManager(), GroovyFileType.GROOVY_LANGUAGE, StringUtil.decapitalize(name)).
+                setModifiers(PsiModifier.PUBLIC).
+                addParameter("args", CommonClassNames.JAVA_UTIL_MAP).
+                setNavigationElement(inheritor).setBaseIcon(GantIcons.ANT_TASK);
             final PsiType closureType = JavaPsiFacade.getElementFactory(project).createTypeFromText(GrClosableBlock.GROOVY_LANG_CLOSURE, taskMethod);
-            final LightParameter bodyParameter = new LightParameter(taskMethod.getManager(), "body", null, closureType, taskMethod);
+            final GrLightParameter bodyParameter = new GrLightParameter("body", closureType, taskMethod);
             classNames.add(taskMethod.addParameter(bodyParameter.setOptional(true)));
           }
         }
@@ -89,4 +91,5 @@ public class AntTasksProvider {
 
     return Collections.emptySet();
   }
+
 }

@@ -666,10 +666,7 @@ public class PsiUtil {
       final PsiClass returnClass = ((PsiClassType)type).resolve();
       if (returnClass instanceof PsiTypeParameter) {
         final PsiTypeParameter typeParameter = (PsiTypeParameter)returnClass;
-        final PsiType substitutedType = substitutor.substitute(typeParameter);
-        if (substitutedType == null) {
-          return true;
-        }
+        return substitutor.substitute(typeParameter) == null;
       }
     }
     return false;

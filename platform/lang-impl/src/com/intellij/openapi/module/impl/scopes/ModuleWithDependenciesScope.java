@@ -75,8 +75,11 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
         continue;
       }
       if (orderEntry instanceof ModuleOrderEntry && ((ModuleOrderEntry)orderEntry).isExported()) {
-        if (!myIncludeTests && ((ModuleOrderEntry)orderEntry).getScope() == DependencyScope.TEST) {
-          continue;
+        if (!myIncludeTests) {
+          final DependencyScope scope = ((ModuleOrderEntry)orderEntry).getScope();
+          if (!scope.isForProductionCompile() && !scope.isForProductionRuntime()) {
+            continue;
+          }
         }
         Module exportedModule = ((ModuleOrderEntry)orderEntry).getModule();
         if (!myModules.contains(exportedModule)) { //could be true in case of circular dependencies
@@ -108,7 +111,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
         }
         if (orderEntry instanceof ExportableOrderEntry) {
           DependencyScope scope = ((ExportableOrderEntry)orderEntry).getScope();
-          if (!myIncludeTests && (scope == DependencyScope.TEST || scope == DependencyScope.RUNTIME)) {
+          if (!myIncludeTests && !scope.isForProductionCompile()) {
             continue;
           }
         }

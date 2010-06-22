@@ -33,6 +33,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Arrays;
 import java.util.EventObject;
 
 /**
@@ -89,6 +90,16 @@ public class JBTable extends JTable implements ComponentWithEmptyText {
         return component;
       }
     };
+  }
+
+  public void resetDefaultFocusTraversalKeys() {
+    KeyboardFocusManager m = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+    for (Integer each : Arrays.asList(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS,
+                                  KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS,
+                                  KeyboardFocusManager.UP_CYCLE_TRAVERSAL_KEYS,
+                                  KeyboardFocusManager.DOWN_CYCLE_TRAVERSAL_KEYS)) {
+      setFocusTraversalKeys(each, m.getDefaultFocusTraversalKeys(each));
+    }
   }
 
   public String getEmptyText() {

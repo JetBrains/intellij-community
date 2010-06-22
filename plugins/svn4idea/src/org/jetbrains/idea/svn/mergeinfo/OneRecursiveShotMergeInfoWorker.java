@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.mergeinfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.AreaMap;
 import com.intellij.util.PairProcessor;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;

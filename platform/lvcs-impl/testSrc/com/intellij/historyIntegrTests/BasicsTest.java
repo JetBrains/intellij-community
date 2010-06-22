@@ -45,7 +45,7 @@ public class BasicsTest extends IntegrationTestCase {
       }
     }, "name", null);
 
-    assertEquals(1, getRevisionsFor(f[0]).size());
+    assertEquals(2, getRevisionsFor(f[0]).size());
   }
 
   public void testPuttingUserLabel() throws Exception {
@@ -53,34 +53,34 @@ public class BasicsTest extends IntegrationTestCase {
 
     LocalHistory.getInstance().putUserLabel(myProject, "global");
 
-    assertEquals(2, getRevisionsFor(f).size());
+    assertEquals(3, getRevisionsFor(f).size());
     assertEquals(3, getRevisionsFor(myRoot).size());
 
     LocalHistory.getInstance().putUserLabel(myProject, "file");
 
     List<Revision> rr = getRevisionsFor(f);
-    assertEquals(3, rr.size());
-    assertEquals("file", rr.get(0).getLabel());
-    assertEquals(-1, rr.get(0).getLabelColor());
-    assertEquals("global", rr.get(1).getLabel());
+    assertEquals(4, rr.size());
+    assertEquals("file", rr.get(1).getLabel());
     assertEquals(-1, rr.get(1).getLabelColor());
+    assertEquals("global", rr.get(2).getLabel());
+    assertEquals(-1, rr.get(2).getLabelColor());
   }
 
   public void testPuttingSystemLabel() throws IOException {
     VirtualFile f = myRoot.createChildData(null, "file.txt");
 
-    assertEquals(1, getRevisionsFor(f).size());
+    assertEquals(2, getRevisionsFor(f).size());
     assertEquals(2, getRevisionsFor(myRoot).size());
 
     LocalHistory.getInstance().putSystemLabel(myProject, "label");
 
     List<Revision> rr = getRevisionsFor(f);
-    assertEquals(2, rr.size());
-    assertEquals("label", rr.get(0).getLabel());
+    assertEquals(3, rr.size());
+    assertEquals("label", rr.get(1).getLabel());
 
     rr = getRevisionsFor(myRoot);
     assertEquals(3, rr.size());
-    assertEquals("label", rr.get(0).getLabel());
+    assertEquals("label", rr.get(1).getLabel());
   }
 
   public void testPuttingLabelWithUnsavedDocuments() throws Exception {
@@ -97,15 +97,15 @@ public class BasicsTest extends IntegrationTestCase {
     LocalHistory.getInstance().putUserLabel(myProject, "label");
 
     List<Revision> rr = getRevisionsFor(f);
-    assertEquals(8, rr.size()); // 5 changes + 3 labels
-    assertEquals("4", new String(rr.get(0).getEntry().getContent().getBytes()));
-    assertEquals("4", new String(rr.get(1).getEntry().getContent().getBytes()));
-    assertEquals("3", new String(rr.get(2).getEntry().getContent().getBytes()));
-    assertEquals("3", new String(rr.get(3).getEntry().getContent().getBytes()));
-    assertEquals("2", new String(rr.get(4).getEntry().getContent().getBytes()));
-    assertEquals("2", new String(rr.get(5).getEntry().getContent().getBytes()));
-    assertEquals("1", new String(rr.get(6).getEntry().getContent().getBytes()));
-    assertEquals("", new String(rr.get(7).getEntry().getContent().getBytes()));
+    assertEquals(9, rr.size()); // 5 changes + 3 labels
+    assertEquals("4", new String(rr.get(0).findEntry().getContent().getBytes()));
+    assertEquals("4", new String(rr.get(1).findEntry().getContent().getBytes()));
+    assertEquals("3", new String(rr.get(2).findEntry().getContent().getBytes()));
+    assertEquals("3", new String(rr.get(3).findEntry().getContent().getBytes()));
+    assertEquals("2", new String(rr.get(4).findEntry().getContent().getBytes()));
+    assertEquals("2", new String(rr.get(5).findEntry().getContent().getBytes()));
+    assertEquals("1", new String(rr.get(6).findEntry().getContent().getBytes()));
+    assertEquals("", new String(rr.get(7).findEntry().getContent().getBytes()));
   }
 
   public void testDoNotRegisterSameUnsavedDocumentContentTwice() throws Exception {
@@ -117,12 +117,12 @@ public class BasicsTest extends IntegrationTestCase {
     LocalHistory.getInstance().putUserLabel(myProject, "label");
 
     List<Revision> rr = getRevisionsFor(f);
-    assertEquals(5, rr.size()); // 3 changes + 2 labels
-    assertEquals("2", new String(rr.get(0).getEntry().getContent().getBytes()));
-    assertEquals("2", new String(rr.get(1).getEntry().getContent().getBytes()));
-    assertEquals("2", new String(rr.get(2).getEntry().getContent().getBytes()));
-    assertEquals("1", new String(rr.get(3).getEntry().getContent().getBytes()));
-    assertEquals("", new String(rr.get(4).getEntry().getContent().getBytes()));
+    assertEquals(6, rr.size()); // 3 changes + 2 labels
+    assertEquals("2", new String(rr.get(0).findEntry().getContent().getBytes()));
+    assertEquals("2", new String(rr.get(1).findEntry().getContent().getBytes()));
+    assertEquals("2", new String(rr.get(2).findEntry().getContent().getBytes()));
+    assertEquals("1", new String(rr.get(3).findEntry().getContent().getBytes()));
+    assertEquals("", new String(rr.get(4).findEntry().getContent().getBytes()));
   }
 
   public void testIsUnderControl() throws Exception {

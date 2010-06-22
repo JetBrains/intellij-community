@@ -92,8 +92,6 @@ public abstract class GenericProgramRunner<Settings extends JDOMExternalizable> 
           if (callback != null) callback.processStarted(descriptor);
 
           if (descriptor != null) {
-            LocalHistory.getInstance().putSystemLabel(project, getLocalHistoryLabel(profile, state));
-
             ExecutionManager.getInstance(project).getContentManager().showRunContent(executor, descriptor);
             final ProcessHandler processHandler = descriptor.getProcessHandler();
             if (processHandler != null) processHandler.startNotify();
@@ -116,8 +114,4 @@ public abstract class GenericProgramRunner<Settings extends JDOMExternalizable> 
   protected abstract RunContentDescriptor doExecute(final Project project, final Executor executor, final RunProfileState state,
                                         final RunContentDescriptor contentToReuse,
                                         final ExecutionEnvironment env) throws ExecutionException;
-
-  protected String getLocalHistoryLabel(RunProfile profile, RunProfileState state) {
-    return ExecutionBundle.message("default.runner.start.action.label", profile.getName());
-  }
 }

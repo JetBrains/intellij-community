@@ -21,7 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.ErrorTreeView;
 
 public interface ErrorViewFactory {
-  ErrorTreeView createErrorTreeView(Project project, String string, boolean createExitAction, AnAction[] extraPopupMenuActions,
+  ErrorTreeView createErrorTreeView(Project project, String helpId, boolean createExitAction, AnAction[] extraPopupMenuActions,
                                     AnAction[] extraRightToolbarGroupActions, ContentManagerProvider contentManagerProvider);
 
 

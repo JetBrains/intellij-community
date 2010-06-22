@@ -76,10 +76,10 @@ public class RefCountingStorage extends AbstractStorage {
     }
   }
 
-  public void releaseRecord(int record) {
+  public void releaseRecord(int record) throws IOException {
     synchronized (myLock) {
       if (((RefCountingRecordsTable)myRecordsTable).decRefCount(record)) {
-        myRecordsTable.deleteRecord(record);
+        doDeleteRecord(record);
       }
     }
   }

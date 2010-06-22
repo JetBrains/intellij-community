@@ -61,6 +61,7 @@ public class UIUtil {
   @NonNls public static final String ARIAL_FONT_NAME = "Arial";
   @NonNls public static final String TABLE_FOCUS_CELL_BACKGROUND_PROPERTY = "Table.focusCellBackground";
 
+  private static final Color UNFOCUSED_SELECTION_COLOR = new Color(212, 212, 212);
 
   private static final Color ACTIVE_COLOR = new Color(160, 186, 213);
   private static final Color INACTIVE_COLOR = new Color(128, 128, 128);
@@ -401,6 +402,10 @@ public class UIUtil {
       return UIManager.getColor("List[Selected].textBackground");  // Nimbus
     }
     return color;
+  }
+
+  public static Color getListUnfocusedSelectionBackground() {
+    return UNFOCUSED_SELECTION_COLOR;
   }
 
   public static Color getTextFieldForeground() {
@@ -1092,8 +1097,6 @@ public class UIUtil {
   public static class MacTreeUI extends BasicTreeUI {
     public static final String SOURCE_LIST_CLIENT_PROPERTY = "mac.ui.source.list";
 
-    public static final Color UNFOCUSED_SELECTION_COLOR = new Color(212, 212, 212);
-
     private static final Icon TREE_COLLAPSED_ICON = (Icon) UIManager.get("Tree.collapsedIcon");
     private static final Icon TREE_EXPANDED_ICON = (Icon) UIManager.get("Tree.expandedIcon");
     private static final Icon TREE_SELECTED_COLLAPSED_ICON = IconLoader.getIcon("/mac/tree_white_right_arrow.png");
@@ -1241,7 +1244,7 @@ public class UIUtil {
             rowGraphics.fillRect(xOffset, bounds.y, containerWidth, bounds.height);
           }
         } else {
-          Color bg = tree.hasFocus() ? getTreeSelectionBackground() : UNFOCUSED_SELECTION_COLOR;
+          Color bg = tree.hasFocus() ? getTreeSelectionBackground() : getListUnfocusedSelectionBackground();
           if (!selected) {
             bg = tree.getBackground();
           }

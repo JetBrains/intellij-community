@@ -40,12 +40,12 @@ public class ActionsTest extends IntegrationTestCase {
     a.finish();
 
     List<Revision> rr = getRevisionsFor(f);
-    assertEquals(4, rr.size());
-    assertEquals("name", rr.get(0).getChangeSetName());
-    assertContent("doc2", rr.get(0).getEntry());
-    assertContent("doc1", rr.get(1).getEntry());
-    assertContent("file2", rr.get(2).getEntry());
-    assertContent("file1", rr.get(3).getEntry());
+    assertEquals(5, rr.size());
+    assertContent("doc2", rr.get(0).findEntry());
+    assertEquals("name", rr.get(1).getChangeSetName());
+    assertContent("doc1", rr.get(1).findEntry());
+    assertContent("file2", rr.get(2).findEntry());
+    assertContent("file1", rr.get(3).findEntry());
   }
 
   public void testActionInsideCommand() throws Exception {
@@ -65,13 +65,12 @@ public class ActionsTest extends IntegrationTestCase {
     }, "command", null);
 
     List<Revision> rr = getRevisionsFor(f);
-    assertEquals(4, rr.size());
-    assertEquals("command", rr.get(0).getChangeSetName());
-
-    assertContent("doc2", rr.get(0).getEntry());
-    assertContent("doc1", rr.get(1).getEntry());
-    assertContent("file", rr.get(2).getEntry());
-    assertContent("", rr.get(3).getEntry());
+    assertEquals(5, rr.size());
+    assertContent("doc2", rr.get(0).findEntry());
+    assertEquals("command", rr.get(1).getChangeSetName());
+    assertContent("doc1", rr.get(1).findEntry());
+    assertContent("file", rr.get(2).findEntry());
+    assertContent("", rr.get(3).findEntry());
   }
 
   public void testActionInsideCommandSurroundedWithSomeChanges() throws Exception {
@@ -94,14 +93,14 @@ public class ActionsTest extends IntegrationTestCase {
     }, "command", null);
 
     List<Revision> rr = getRevisionsFor(f);
-    assertEquals(3, rr.size());
+    assertEquals(4, rr.size());
 
-    assertContent("doc3", rr.get(0).getEntry());
-    assertContent("doc1", rr.get(1).getEntry());
-    assertContent("", rr.get(2).getEntry());
+    assertContent("doc3", rr.get(0).findEntry());
+    assertContent("doc1", rr.get(1).findEntry());
+    assertContent("", rr.get(2).findEntry());
 
-    assertEquals("command", rr.get(0).getChangeSetName());
-    assertNull(rr.get(1).getChangeSetName());
+    assertEquals("command", rr.get(1).getChangeSetName());
+    assertNull(rr.get(2).getChangeSetName());
   }
 
   private void saveDocument(VirtualFile f) {

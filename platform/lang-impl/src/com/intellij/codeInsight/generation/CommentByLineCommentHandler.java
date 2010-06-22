@@ -311,10 +311,6 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
       if (prefix != null) {
         commented = CharArrayUtil.regionMatches(chars, lineStart, prefix) ||
                     prefix.endsWith(" ") && CharArrayUtil.regionMatches(chars, lineStart, prefix.trim()+"\n");
-        if (commented) {
-          myStartOffsets[line - myStartLine] = lineStart;
-          myEndOffsets[line - myStartLine] = -1;
-        }
       }
       else {
         prefix = commenter.getBlockCommentPrefix();

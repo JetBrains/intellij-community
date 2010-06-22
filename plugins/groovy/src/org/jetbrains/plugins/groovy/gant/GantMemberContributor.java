@@ -15,17 +15,20 @@
  */
 package org.jetbrains.plugins.groovy.gant;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.light.LightMethodBuilder;
+import com.intellij.psi.impl.light.LightVariableBuilder;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-
-import javax.swing.*;
 
 /**
  * @author peter
@@ -47,10 +50,19 @@ public class GantMemberContributor implements NonCodeMembersProcessor {
       return true;
     }
 
+    final GrClosableBlock closure = PsiTreeUtil.getContextOfType(place, GrClosableBlock.class, true);
+    if (closure == null) {
+      return true;
+    }
+
     for (GrArgumentLabel label : GantUtils.getScriptTargets((GroovyFile)file)) {
       final String targetName = label.getName();
-      if (targetName != null && !ResolveUtil.processElement(processor, gantMethod(targetName, label, GantIcons.GANT_TARGET))) {
-        return false;
+      if (targetName != null) {
+        final PsiNamedElement variable = new LightVariableBuilder(targetName, GrClosableBlock.GROOVY_LANG_CLOSURE, label).
+          setBaseIcon(GantIcons.GANT_TARGET);
+        if (!ResolveUtil.processElement(processor, variable)) {
+          return false;
+        }
       }
     }
 
@@ -65,13 +77,6 @@ public class GantMemberContributor implements NonCodeMembersProcessor {
       }
     }
     return true;
-  }
-
-  static LightMethodBuilder gantMethod(String name, PsiElement navigation, Icon baseIcon) {
-    return new LightMethodBuilder(navigation.getManager(), GroovyFileType.GROOVY_LANGUAGE, name).
-      setModifiers(PsiModifier.PUBLIC).
-      addParameter("args", CommonClassNames.JAVA_UTIL_MAP).
-      setNavigationElement(navigation).setBaseIcon(baseIcon);
   }
 
 }

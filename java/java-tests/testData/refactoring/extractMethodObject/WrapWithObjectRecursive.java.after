@@ -7,4 +7,5 @@ class Test {
           }
       }.InnerClass(i);
   }
+
 }

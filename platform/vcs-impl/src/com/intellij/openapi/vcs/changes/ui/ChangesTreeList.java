@@ -275,8 +275,9 @@ public abstract class ChangesTreeList<T> extends JPanel {
         if (myProject.isDisposed()) return;
         TreeUtil.expandAll(myTree);
 
+        int listSelection = 0;
+        int scrollRow = 0;
         if (myIncludedChanges.size() > 0) {
-          int listSelection = 0;
           int count = 0;
           for (T change : changes) {
             if (myIncludedChanges.contains(change)) {
@@ -298,7 +299,6 @@ public abstract class ChangesTreeList<T> extends JPanel {
           }
 
           enumeration = root.depthFirstEnumeration();
-          int scrollRow = 0;
           while (enumeration.hasMoreElements()) {
             ChangesBrowserNode node = (ChangesBrowserNode)enumeration.nextElement();
             final CheckboxTree.NodeState state = getNodeStatus(node);
@@ -308,13 +308,13 @@ public abstract class ChangesTreeList<T> extends JPanel {
             }
           }
 
-          if (changes.size() > 0) {
-            myList.setSelectedIndex(listSelection);
-            myList.ensureIndexIsVisible(listSelection);
+        }
+        if (changes.size() > 0) {
+          myList.setSelectedIndex(listSelection);
+          myList.ensureIndexIsVisible(listSelection);
 
-            myTree.setSelectionRow(scrollRow);
-            TreeUtil.showRowCentered(myTree, scrollRow, false);
-          }
+          myTree.setSelectionRow(scrollRow);
+          TreeUtil.showRowCentered(myTree, scrollRow, false);
         }
       }
     };
@@ -361,6 +361,29 @@ public abstract class ChangesTreeList<T> extends JPanel {
     }
     notifyInclusionListener();
     repaint();
+  }
+
+  public List<T> getChanges() {
+    if (myShowFlatten) {
+      ListModel m = myList.getModel();
+      int size = m.getSize();
+      List result = new ArrayList(size);
+      for (int i = 0; i < size; i++) {
+        result.add(m.getElementAt(i));
+      }
+      return result;
+    }
+    else {
+      final LinkedHashSet result = new LinkedHashSet();
+      TreeUtil.traverseDepth((ChangesBrowserNode)myTree.getModel().getRoot(), new TreeUtil.Traverse() {
+        public boolean accept(Object node) {
+          ChangesBrowserNode changeNode = (ChangesBrowserNode)node;
+          if (changeNode.isLeaf()) result.addAll(changeNode.getAllChangesUnder());
+          return true;
+        }
+      });
+      return new ArrayList<T>(result);
+    }
   }
 
   public int getSelectionCount() {

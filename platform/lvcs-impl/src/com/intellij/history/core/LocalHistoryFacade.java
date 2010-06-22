@@ -20,8 +20,7 @@ import com.intellij.history.ByteContent;
 import com.intellij.history.core.changes.*;
 import com.intellij.history.core.revisions.RecentChange;
 import com.intellij.history.core.revisions.Revision;
-import com.intellij.history.core.revisions.RevisionAfterChange;
-import com.intellij.history.core.revisions.RevisionBeforeChange;
+import com.intellij.history.core.revisions.ChangeRevision;
 import com.intellij.history.core.storage.Content;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
@@ -140,8 +139,8 @@ public class LocalHistoryFacade {
       if (c.isLabelOnly()) continue;
       if (c.getName() == null) continue;
 
-      Revision before = new RevisionBeforeChange(this, root, "", c);
-      Revision after = new RevisionAfterChange(this, root, "", c);
+      Revision before = new ChangeRevision(this, root, "", c, true);
+      Revision after = new ChangeRevision(this, root, "", c, false);
       result.add(new RecentChange(before, after));
       if (result.size() >= 20) break;
     }

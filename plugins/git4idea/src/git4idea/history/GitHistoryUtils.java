@@ -366,11 +366,15 @@ public class GitHistoryUtils {
         final String message = tk2.nextToken("\u0000").trim();
 
         final List<FilePath> pathsList = new LinkedList<FilePath>();
-      tk2.reset("\u0000\n");
-        while (tk2.hasMoreTokens()) {
-          final FilePath revisionPath = VcsUtil.getFilePathForDeletedFile(prefix + GitUtil.unescapePath(tk2.nextToken()), false);
+      if (tk2.hasMoreTokens()) {
+        final String paths = tk2.nextToken();
+        StringTokenizer tkPaths = new StringTokenizer(paths, "\n", false);
+        while (tkPaths.hasMoreTokens()) {
+          final String subPath = GitUtil.unescapePath(tkPaths.nextToken());
+          final FilePath revisionPath = VcsUtil.getFilePathForDeletedFile(prefix + subPath, false);
           pathsList.add(revisionPath);
         }
+      }
       // todo parse revisions... patches?
         rc.add(new GitCommit(new SHAHash(hash), authorName, committerName, date, message, parentsHashes, pathsList, authorEmail,
                              committerEmail, tags, branches));

@@ -40,11 +40,6 @@ public abstract class ChangeSetsProcessor {
     for (ChangeSet c : changes) {
       visit(c);
     }
-
-    ChangeSet lastChange = changes.get(changes.size() - 1);
-    if (!lastChange.isLabelOnly() && !lastChange.isCreationalFor(pathAndChanges.first)) {
-      visitFirstAvailableNonCreational(lastChange);
-    }
   }
 
   protected abstract Pair<String, List<ChangeSet>> collectChanges();
@@ -52,6 +47,4 @@ public abstract class ChangeSetsProcessor {
   protected abstract void nothingToVisit();
 
   protected abstract void visit(ChangeSet changeSet);
-
-  protected abstract void visitFirstAvailableNonCreational(ChangeSet changeSet);
 }

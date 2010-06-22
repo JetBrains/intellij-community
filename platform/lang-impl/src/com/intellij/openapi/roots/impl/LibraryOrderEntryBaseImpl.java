@@ -55,7 +55,7 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
       return getRootFiles(OrderRootType.CLASSES);
     }
     else if (type == OrderRootType.PRODUCTION_COMPILATION_CLASSES) {
-      if (myScope == DependencyScope.RUNTIME || myScope == DependencyScope.TEST) {
+      if (!myScope.isForProductionCompile()) {
         return VirtualFile.EMPTY_ARRAY;
       }
       return getRootFiles(OrderRootType.CLASSES);
@@ -75,7 +75,7 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
       return rootProvider.getUrls(OrderRootType.CLASSES);
     }
     else if (type == OrderRootType.PRODUCTION_COMPILATION_CLASSES) {
-      if (myScope == DependencyScope.RUNTIME || myScope == DependencyScope.TEST) {
+      if (!myScope.isForProductionCompile()) {
         return ArrayUtil.EMPTY_STRING_ARRAY;
       }
       return rootProvider.getUrls(OrderRootType.CLASSES);

@@ -32,8 +32,8 @@ public class LinkedRecordsTable extends AbstractRecordsTable {
   private static final int HEADER_SIZE = FS_TIMESTAMP_OFFSET + 8;
 
   private static final int PREV_RECORD_OFFSET = DEFAULT_RECORD_SIZE;
-  private static final int NEXT_RECORD_OFFSET = DEFAULT_RECORD_SIZE + 4;
-  private static final int TIMESTAMP_OFFSET = DEFAULT_RECORD_SIZE + 8;
+  private static final int NEXT_RECORD_OFFSET = PREV_RECORD_OFFSET + 4;
+  private static final int TIMESTAMP_OFFSET = NEXT_RECORD_OFFSET + 4;
 
   private static final int RECORD_SIZE = TIMESTAMP_OFFSET + 8;
   private static final byte[] ZEROS = new byte[RECORD_SIZE];
