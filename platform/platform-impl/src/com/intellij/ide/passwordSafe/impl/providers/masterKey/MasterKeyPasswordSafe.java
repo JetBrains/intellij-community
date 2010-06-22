@@ -27,7 +27,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.UIUtil;
 
-import javax.crypto.SecretKey;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
@@ -52,7 +51,7 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
   /**
    * The key to use to encrypt data
    */
-  private transient final AtomicReference<SecretKey> key = new AtomicReference<SecretKey>();
+  private transient final AtomicReference<byte[]> key = new AtomicReference<byte[]>();
 
   /**
    * The constructor
@@ -100,7 +99,7 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
    * @return true, if password is a correct one
    */
   boolean setMasterPassword(String password) {
-    SecretKey savedKey = this.key.get();
+    byte[] savedKey = this.key.get();
     this.key.set(EncryptionUtil.genPasswordKey(password));
     String rc;
     try {
@@ -131,8 +130,8 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
     if (!setMasterPassword(oldPassword)) {
       return false;
     }
-    SecretKey oldKey = key.get();
-    SecretKey newKey = EncryptionUtil.genPasswordKey(newPassword);
+    byte[] oldKey = key.get();
+    byte[] newKey = EncryptionUtil.genPasswordKey(newPassword);
     ByteArrayWrapper testKey = new ByteArrayWrapper(EncryptionUtil.dbKey(oldKey, MasterKeyPasswordSafe.class, testKey(oldPassword)));
     HashMap<ByteArrayWrapper, byte[]> oldDb = new HashMap<ByteArrayWrapper, byte[]>();
     database.copyTo(oldDb);
@@ -167,7 +166,7 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
    * {@inheritDoc}
    */
   @Override
-  protected SecretKey key(final Project project) throws PasswordSafeException {
+  protected byte[] key(final Project project) throws PasswordSafeException {
     if (!isTestMode() && ApplicationManager.getApplication().isHeadlessEnvironment()) {
       throw new MasterPasswordUnavailableException("The provider is not available in headless environment");
     }
