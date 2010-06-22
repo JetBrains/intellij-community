@@ -13,20 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * User: anna
- * Date: 28-May-2007
- */
-package com.intellij.codeInsight;
+package com.intellij.testIntegration;
 
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.util.IncorrectOperationException;
 
-public interface TestFramework {
-  boolean isTestKlass(PsiClass psiClass);
-  PsiMethod findSetUpMethod(PsiClass psiClass) throws IncorrectOperationException;
+public class GenerateTearDownMethodAction extends BaseGenerateTestSupportMethodAction {
+  public GenerateTearDownMethodAction() {
+    super(TestIntegrationUtils.MethodKind.TEAR_DOWN);
+  }
 
-  boolean isTestMethodOrConfig(PsiMethod psiMethod);
+  @Override
+  protected boolean isValidFor(PsiClass targetClass, TestFramework framework) {
+    return super.isValidFor(targetClass, framework) && framework.findTearDownMethod(targetClass) == null;
+  }
 }

@@ -425,7 +425,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
   private void addInitializationToSetUp(final PsiExpression initializer,
                                         final PsiField field,
                                         final OccurenceManager occurenceManager, final boolean replaceAll) throws IncorrectOperationException {
-    final PsiMethod setupMethod = TestUtil.findSetUpMethod(myParentClass);
+    final PsiMethod setupMethod = TestUtil.findOrCreateSetUpMethod(myParentClass);
 
     assert setupMethod != null;
 

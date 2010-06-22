@@ -11,14 +11,13 @@
         <configurationProducer implementation="com.theoryinpractice.testng.configuration.TestNGInClassConfigurationProducer"/>
         <configurationProducer implementation="com.theoryinpractice.testng.configuration.TestNGPackageConfigurationProducer"/>
         <configurationProducer implementation="com.theoryinpractice.testng.configuration.TestNGSuiteConfigurationProducer"/>
-        <testFramework implementation="com.theoryinpractice.testng.util.TestNGUtil"/>
         <inspectionToolProvider implementation="com.theoryinpractice.testng.inspection.TestNGInspectionsToolProvider"/>
         <configurationType implementation="com.theoryinpractice.testng.configuration.TestNGConfigurationType"/>
        <psi.referenceContributor implementation="com.theoryinpractice.testng.TestNGReferenceContributor"/>
         <intentionAction>
           <className>com.theoryinpractice.testng.intention.TestNGOrderEntryFix</className>
         </intentionAction>
-        <testFrameworkDescriptor implementation="com.theoryinpractice.testng.TestNGFrameworkDescriptor"/>
+        <testFramework implementation="com.theoryinpractice.testng.TestNGFramework"/>
       <standardResourceProvider implementation="com.theoryinpractice.testng.TestNGPlugin"/>
       <overrideImplementsAnnotationsHandler implementation="com.theoryinpractice.testng.intention.OverrideImplementsTestNGAnnotationsHandler"/>
     </extensions>

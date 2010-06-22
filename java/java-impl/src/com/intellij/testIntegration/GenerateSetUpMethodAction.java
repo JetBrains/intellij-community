@@ -15,8 +15,15 @@
  */
 package com.intellij.testIntegration;
 
-public class GenerateTestMethodAction extends BaseGenerateTestSupportMethodAction {
-  public GenerateTestMethodAction() {
-    super(TestIntegrationUtils.MethodKind.TEST);
+import com.intellij.psi.PsiClass;
+
+public class GenerateSetUpMethodAction extends BaseGenerateTestSupportMethodAction {
+  public GenerateSetUpMethodAction() {
+    super(TestIntegrationUtils.MethodKind.SET_UP);
+  }
+
+  @Override
+  protected boolean isValidFor(PsiClass targetClass, TestFramework framework) {
+    return super.isValidFor(targetClass, framework) && framework.findSetUpMethod(targetClass) == null;
   }
 }
