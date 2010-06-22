@@ -222,7 +222,7 @@ public class CoverageEnabledConfiguration implements JDOMExternalizable{
     if (myCoverageFilePath == null || !isMergeWithPreviousResults()) {
       @NonNls final String coverageRootPath = PathManager.getSystemPath() + File.separator + "coverage";
       myCoverageFilePath =
-          coverageRootPath + File.separator + myProject.getName() + '$' + FileUtil.sanitizeFileName(myConfiguration.getName()) + "." +
+          coverageRootPath + File.separator + FileUtil.sanitizeFileName(myProject.getName()) + '$' + FileUtil.sanitizeFileName(myConfiguration.getName()) + "." +
           (myCoverageRunner != null ? myCoverageRunner.getDataFileExtension() : CoverageRunner.getInstance(IDEACoverageRunner.class).getDataFileExtension());
       new File(coverageRootPath).mkdirs();
     }
