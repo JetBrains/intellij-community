@@ -15,18 +15,10 @@ package org.zmlx.hg4idea;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.testng.annotations.Test;
 
-import java.io.File;
-
 /**
  * Tests adding files to the Mercurial repository.
  */
 public class HgAddTestCase extends AbstractHgTestCase {
-
-  private static final String AFILE = "a.txt";
-  private static final String BDIR = "b";
-  private static final String BFILE = "b.txt";
-  private static final String BFILE_PATH = BDIR + File.separator + BFILE;
-  private static final String FILE_CONTENT = "Sample file content.";
 
   /**
    * 1. Create a file in the file system.
@@ -36,9 +28,9 @@ public class HgAddTestCase extends AbstractHgTestCase {
   @Test
   public void fileAddedViaChangeListShouldBeAddedToHg() throws Exception {
     final VirtualFile vf = myTempDirTestFixture.createFile(AFILE);
-    addUnversionedFilesToChangeList(vf);
+    myChangeListManager.addUnversionedFilesToVcs(vf);
     verifyStatus(added(AFILE));
-    checkFilesAreInList(true, vf);
+    myChangeListManager.checkFilesAreInList(true, vf);
   }
 
   /**
@@ -49,7 +41,7 @@ public class HgAddTestCase extends AbstractHgTestCase {
   @Test
   public void fileAddedViaHgShouldBeAddedInChangeList() throws Exception {
     final VirtualFile vf = createFileInCommand(AFILE, FILE_CONTENT);
-    checkFilesAreInList(true, vf);
+    myChangeListManager.checkFilesAreInList(true, vf);
   }
 
   /**
@@ -62,9 +54,9 @@ public class HgAddTestCase extends AbstractHgTestCase {
     final VirtualFile afile = myTempDirTestFixture.createFile(AFILE);
     final VirtualFile bdir = myTempDirTestFixture.findOrCreateDir(BDIR);
     final VirtualFile bfile = myTempDirTestFixture.createFile(BFILE_PATH);
-    addUnversionedFilesToChangeList(afile, bdir, bfile);
+    myChangeListManager.addUnversionedFilesToVcs(afile, bdir, bfile);
     verifyStatus(added(AFILE), added(BFILE_PATH));
-    checkFilesAreInList(true, afile, bfile);
+    myChangeListManager.checkFilesAreInList(true, afile, bfile);
   }
 
   /**
@@ -78,7 +70,7 @@ public class HgAddTestCase extends AbstractHgTestCase {
     final VirtualFile bdir = createDirInCommand(myWorkingCopyDir, BDIR);
     final VirtualFile bfile = createFileInCommand(bdir, BFILE, FILE_CONTENT);
     verifyStatus(added(AFILE), added(BFILE_PATH));
-    checkFilesAreInList(true, afile, bfile);
+    myChangeListManager.checkFilesAreInList(true, afile, bfile);
   }
 
 }

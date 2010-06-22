@@ -113,11 +113,12 @@ public class HgInit extends DumbAwareAction {
   }
 
   private void createRepository(VirtualFile selectedRoot) {
-    (new HgInitCommand(myProject)).execute(selectedRoot);
-    Notifications.Bus.notify(new Notification(HgVcs.NOTIFICATION_GROUP_ID,
+    if ((new HgInitCommand(myProject)).execute(selectedRoot)) {
+      Notifications.Bus.notify(new Notification(HgVcs.NOTIFICATION_GROUP_ID,
                                               HgVcsMessages.message("hg4idea.init.created.notification.title"),
                                               HgVcsMessages.message("hg4idea.init.created.notification.description", selectedRoot.getPresentableUrl()),
                                               NotificationType.INFORMATION), myProject);
+    }
   }
   
 }

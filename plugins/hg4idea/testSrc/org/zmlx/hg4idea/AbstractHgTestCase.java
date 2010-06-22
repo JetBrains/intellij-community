@@ -17,22 +17,17 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.AbstractVcsTestCase;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
-import com.intellij.util.containers.HashSet;
 import com.intellij.vcsUtil.VcsUtil;
-import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
+import org.zmlx.hg4idea.org.zmlx.hg4idea.test.TestChangeListManager;
 
 import java.io.*;
-import java.util.Arrays;
-import java.util.Collection;
 
 import static org.testng.Assert.assertTrue;
 
@@ -45,7 +40,15 @@ public abstract class AbstractHgTestCase extends AbstractVcsTestCase {
 
   protected File myProjectRepo;
   protected TempDirTestFixture myTempDirTestFixture;
-  protected ChangeListManagerImpl myChangeListManager;
+  protected TestChangeListManager myChangeListManager;
+
+  // some shortcuts to use in tests
+  protected static final String AFILE = "a.txt";
+  protected static final String BDIR = "b";
+  protected static final String BFILE = "b.txt";
+  protected static final String BFILE_PATH = BDIR + File.separator + BFILE;
+  protected static final String FILE_CONTENT = "Sample file content.";
+  protected static final String FILE_CONTENT_2 = "some other file content";
 
   @BeforeMethod
   protected void setUp() throws Exception {
@@ -60,7 +63,7 @@ public abstract class AbstractHgTestCase extends AbstractVcsTestCase {
     initProject(myProjectRepo);
     activateVCS(HgVcs.VCS_NAME);
 
-    myChangeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
+    myChangeListManager = new TestChangeListManager(myProject);
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
@@ -83,8 +86,26 @@ public abstract class AbstractHgTestCase extends AbstractVcsTestCase {
     HgVcs.setTestHgExecutablePath(myClientBinaryPath.getPath());
   }
 
+  /**
+   * Runs the hg command.
+   * @param commandLine the name of the command and its arguments.
+   */
   protected ProcessOutput runHgOnProjectRepo(String... commandLine) throws IOException {
     return runHg(myProjectRepo, commandLine);
+  }
+
+  /**
+   * Calls "hg add ." to add everything to the index.
+   */
+  protected ProcessOutput addAll() throws IOException {
+    return runHgOnProjectRepo("add", ".");
+  }
+
+  /**
+   * Calls "hg commit -m &lt;commitMessage&gt;" to commit the index.
+   */
+  protected ProcessOutput commitAll(String commitMessage) throws IOException {
+    return runHgOnProjectRepo("commit", "-m", commitMessage);
   }
 
   protected HgFile getHgFile(String... filepath) {
@@ -135,36 +156,6 @@ public abstract class AbstractHgTestCase extends AbstractVcsTestCase {
     printer.close();
 
     return outputFile;
-  }
-
-  /**
-   * Adds the specified unversioned files to the default change list.
-   * Shortcut for ChangeListManagerImpl.addUnversionedFiles().
-   */
-  protected void addUnversionedFilesToChangeList(VirtualFile... files) {
-    myChangeListManager.addUnversionedFiles(myChangeListManager.getDefaultChangeList(), Arrays.asList(files));
-  }
-
-  /**
-   * Updates the change list manager and checks that the given files are in the default change list.
-   * @param only Set this to true if you want ONLY the specified files to be in the change list.
-   *             If set to false, the change list may contain some other files apart from the given ones.
-   * @param files Files to be checked.
-   */
-  protected void checkFilesAreInList(boolean only, VirtualFile... files) {
-    myChangeListManager.ensureUpToDate(false);
-
-    final Collection<Change> changes = myChangeListManager.getDefaultChangeList().getChanges();
-    if (only) {
-      Assert.assertEquals(changes.size(), files.length);
-    }
-    final Collection<VirtualFile> filesInChangeList = new HashSet<VirtualFile>();
-    for (Change c : changes) {
-      filesInChangeList.add(c.getVirtualFile());
-    }
-    for (VirtualFile f : files) {
-      Assert.assertTrue(filesInChangeList.contains(f));
-    }
   }
 
   /**
