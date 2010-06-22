@@ -61,10 +61,6 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
     List<MemberHidesOuterMemberUsageInfo> outerHides = new ArrayList<MemberHidesOuterMemberUsageInfo>();
     List<MemberHidesStaticImportUsageInfo> staticImportHides = new ArrayList<MemberHidesStaticImportUsageInfo>();
 
-    if (variable instanceof PsiField) {
-      findCollisionsAgainstNewName((PsiField) variable, newName, staticImportHides);
-    }
-
     List<PsiElement> occurrencesToCheckForConflict = new ArrayList<PsiElement>();
     // rename all references
     for (UsageInfo usage : usages) {

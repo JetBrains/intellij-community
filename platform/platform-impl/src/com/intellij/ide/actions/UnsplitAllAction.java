@@ -25,9 +25,15 @@ import com.intellij.openapi.project.Project;
  */
 public final class UnsplitAllAction extends SplitterActionBase {
   public void actionPerformed(final AnActionEvent event) {
-    final Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());
+    final Project project = event.getData(PlatformDataKeys.PROJECT);
     final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
     //VirtualFile file = fileEditorManager.getSelectedFiles()[0];
     fileEditorManager.unsplitAllWindow();
+  }
+
+  @Override
+  protected boolean isActionEnabled(Project project) {
+    final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
+    return fileEditorManager.getWindowSplitCount() > 2;
   }
 }

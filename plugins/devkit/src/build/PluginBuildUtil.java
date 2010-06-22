@@ -90,7 +90,7 @@ public class PluginBuildUtil {
         LibraryOrderEntry libEntry = (LibraryOrderEntry)orderEntry;
         Library lib = libEntry.getLibrary();
         final DependencyScope scope = libEntry.getScope();
-        if (lib == null || (scope != DependencyScope.COMPILE && scope != DependencyScope.RUNTIME)) continue;
+        if (lib == null || !scope.isForProductionRuntime()) continue;
         libs.add(lib);
       }
     }

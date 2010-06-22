@@ -194,7 +194,7 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
     ChangeSet cs4 = addChangeSet(facade, createFile(r, "file"));
     ChangeSet cs5 = addChangeSet(facade, changeContent(r, "file", "aaa"));
 
-    assertEquals(array(cs5, cs4, cs2, cs1), getChangesFor("file"));
+    assertEquals(array(cs5, cs4, cs3, cs2, cs1), getChangesFor("file"));
   }
 
   @Test
@@ -205,7 +205,7 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
     ChangeSet cs4 = addChangeSet(facade, delete(r, "file"));
     ChangeSet cs5 = addChangeSet(facade, createFile(r, "file"));
 
-    assertEquals(array(cs5, cs3, cs1), getChangesFor("file"));
+    assertEquals(array(cs5, cs4, cs3, cs2, cs1), getChangesFor("file"));
   }
 
   @Test
@@ -214,7 +214,7 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
     ChangeSet cs2 = addChangeSet(facade, delete(r, "dir"));
     ChangeSet cs3 = addChangeSet(facade, createDirectory(r, "dir"));
 
-    assertEquals(array(cs3, cs1), getChangesFor("dir"));
+    assertEquals(array(cs3, cs2, cs1), getChangesFor("dir"));
   }
 
   @Test
@@ -225,8 +225,8 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
     ChangeSet cs4 = addChangeSet(facade, createDirectory(r, "dir"));
     ChangeSet cs5 = addChangeSet(facade, createFile(r, "dir/file"));
 
-    assertEquals(array(cs5, cs4, cs2, cs1), getChangesFor("dir"));
-    assertEquals(array(cs5, cs2), getChangesFor("dir/file"));
+    assertEquals(array(cs5, cs4, cs3, cs2, cs1), getChangesFor("dir"));
+    assertEquals(array(cs5, cs3, cs2), getChangesFor("dir/file"));
   }
 
   @Test
@@ -245,7 +245,7 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
     ChangeSet cs3 = addChangeSet(facade, createFile(r, "f"), delete(r, "f"));
     ChangeSet cs4 = addChangeSet(facade, createFile(r, "f"));
 
-    assertEquals(array(cs4, cs1), getChangesFor("f"));
+    assertEquals(array(cs4, cs3, cs2, cs1), getChangesFor("f"));
   }
 
   @Test
@@ -272,7 +272,7 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
     ChangeSet cs3 = addChangeSet(facade, new PutLabelChange(nextId(), "", "project"));
     ChangeSet cs4 = addChangeSet(facade, createFile(r, "file"));
 
-    assertEquals(array(cs4, cs1), getChangesFor("file"));
+    assertEquals(array(cs4, cs2, cs1), getChangesFor("file"));
   }
 
   @Test
@@ -298,9 +298,9 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
                                  createDirectory(r, "dir1/dir2"),
                                  createFile(r, "dir1/dir2/file"));
 
-    assertEquals(array(cs7, cs3), getChangesFor("dir1/dir2/file"));
-    assertEquals(array(cs7, cs4, cs3, cs2), getChangesFor("dir1/dir2"));
-    assertEquals(array(cs7, cs5, cs4, cs3, cs2, cs1), getChangesFor("dir1"));
+    assertEquals(array(cs7, cs4, cs3), getChangesFor("dir1/dir2/file"));
+    assertEquals(array(cs7, cs5, cs4, cs3, cs2), getChangesFor("dir1/dir2"));
+    assertEquals(array(cs7, cs6, cs5, cs4, cs3, cs2, cs1), getChangesFor("dir1"));
   }
 
   @Test
@@ -319,8 +319,8 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
     ChangeSet cs4 = addChangeSet(facade, createDirectory(r, "dir"),
                                  createFile(r, "dir/file"));
 
-    assertEquals(array(cs4, cs1), getChangesFor("dir/file"));
-    assertEquals(array(cs4, cs1), getChangesFor("dir"));
+    assertEquals(array(cs4, cs3, cs2, cs1), getChangesFor("dir/file"));
+    assertEquals(array(cs4, cs3, cs2, cs1), getChangesFor("dir"));
   }
 
   @Test

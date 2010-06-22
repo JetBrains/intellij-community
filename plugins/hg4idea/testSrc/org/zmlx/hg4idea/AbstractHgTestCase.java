@@ -12,21 +12,27 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vfs.*;
-import com.intellij.testFramework.*;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsShowConfirmationOption;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.AbstractVcsTestCase;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
-import com.intellij.vcsUtil.*;
-import org.junit.Before;
+import com.intellij.util.containers.HashSet;
+import com.intellij.vcsUtil.VcsUtil;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 
 import java.io.*;
+import java.util.Arrays;
+import java.util.Collection;
 
 import static org.testng.Assert.assertTrue;
 
@@ -38,7 +44,8 @@ public abstract class AbstractHgTestCase extends AbstractVcsTestCase {
   public static final String HG_EXECUTABLE_PATH = "IDEA_TEST_HG_EXECUTABLE_PATH";
 
   protected File myProjectRepo;
-  private TempDirTestFixture myTempDirTestFixture;
+  protected TempDirTestFixture myTempDirTestFixture;
+  protected ChangeListManagerImpl myChangeListManager;
 
   @BeforeMethod
   protected void setUp() throws Exception {
@@ -46,13 +53,14 @@ public abstract class AbstractHgTestCase extends AbstractVcsTestCase {
 
     myTempDirTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
     myTempDirTestFixture.setUp();
-    myProjectRepo = new File(myTempDirTestFixture.getTempDirPath(), "repo");
-    Assert.assertTrue(myProjectRepo.mkdir());
+    myProjectRepo = new File(myTempDirTestFixture.getTempDirPath());
 
     ProcessOutput processOutput = runHg(myProjectRepo, "init");
     verify(processOutput);
     initProject(myProjectRepo);
     activateVCS(HgVcs.VCS_NAME);
+
+    myChangeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
@@ -69,7 +77,7 @@ public abstract class AbstractHgTestCase extends AbstractVcsTestCase {
     if (exec == null || !myClientBinaryPath.exists()) {
       System.out.println("Using checked in");
       File pluginRoot = new File(PluginPathManager.getPluginHomePath(HgVcs.VCS_NAME));
-      myClientBinaryPath = new File(pluginRoot, "testData/hg/bin");
+      myClientBinaryPath = new File(pluginRoot, "testData/bin");
     }
 
     HgVcs.setTestHgExecutablePath(myClientBinaryPath.getPath());
@@ -129,6 +137,45 @@ public abstract class AbstractHgTestCase extends AbstractVcsTestCase {
     return outputFile;
   }
 
+  /**
+   * Adds the specified unversioned files to the default change list.
+   * Shortcut for ChangeListManagerImpl.addUnversionedFiles().
+   */
+  protected void addUnversionedFilesToChangeList(VirtualFile... files) {
+    myChangeListManager.addUnversionedFiles(myChangeListManager.getDefaultChangeList(), Arrays.asList(files));
+  }
+
+  /**
+   * Updates the change list manager and checks that the given files are in the default change list.
+   * @param only Set this to true if you want ONLY the specified files to be in the change list.
+   *             If set to false, the change list may contain some other files apart from the given ones.
+   * @param files Files to be checked.
+   */
+  protected void checkFilesAreInList(boolean only, VirtualFile... files) {
+    myChangeListManager.ensureUpToDate(false);
+
+    final Collection<Change> changes = myChangeListManager.getDefaultChangeList().getChanges();
+    if (only) {
+      Assert.assertEquals(changes.size(), files.length);
+    }
+    final Collection<VirtualFile> filesInChangeList = new HashSet<VirtualFile>();
+    for (Change c : changes) {
+      filesInChangeList.add(c.getVirtualFile());
+    }
+    for (VirtualFile f : files) {
+      Assert.assertTrue(filesInChangeList.contains(f));
+    }
+  }
+
+  /**
+   * Verifies the status of the file calling native 'hg status' command.
+   * @param status status as returned by {@link #added(java.lang.String)} and other methods.
+   * @throws IOException
+   */
+  protected void verifyStatus(String... status) throws IOException {
+    verify(runHgOnProjectRepo("status"), status);
+  }
+
   public static String added(String... path) {
     return "A " + path(path);
   }
@@ -143,6 +190,10 @@ public abstract class AbstractHgTestCase extends AbstractVcsTestCase {
 
   public static String modified(String... path) {
     return "M " + path(path);
+  }
+
+  public static String missing(String... path) {
+    return "! " + path(path);
   }
 
   public static String path(String... line) {

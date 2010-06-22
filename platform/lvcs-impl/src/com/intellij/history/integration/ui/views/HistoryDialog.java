@@ -46,6 +46,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.patch.CreatePatchConfigurationPanel;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ExcludingTraversalPolicy;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.awt.RelativePoint;
@@ -60,6 +62,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -75,8 +78,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   protected final Project myProject;
   protected final IdeaGateway myGateway;
   protected final VirtualFile myFile;
-  private JComponent myComponent;
-  protected Splitter mySplitter;
+  private Splitter mySplitter;
   private RevisionsList myRevisionsList;
   private MyDiffContainer myDiffView;
   private ActionToolbar myToolBar;
@@ -105,12 +107,13 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
 
     myModel = createModel(facade);
     setTitle(myModel.getTitle());
-    myComponent = createComponent();
-    setComponent(myComponent);
+    JComponent root = createComponent();
+    setComponent(root);
 
     setPreferredFocusedComponent(showRevisionsList() ? myRevisionsList.getComponent() : myDiffView);
 
-    myUpdateQueue = new MergingUpdateQueue(getClass() + ".revisionsUpdate", 500, true, myComponent, this, null, false);
+    myUpdateQueue = new MergingUpdateQueue(getClass() + ".revisionsUpdate", 500, true, root, this, null, false);
+    myUpdateQueue.setRestartTimerOnAdd(true);
 
     facade.addListener(new LocalHistoryFacade.Listener() {
       public void changeSetFinished() {
@@ -124,18 +127,14 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   protected void scheduleRevisionsUpdate(@Nullable final Consumer<T> configRunnable) {
     doScheduleUpdate(UPDATE_REVS, new Computable<Runnable>() {
       public Runnable compute() {
-        if (showRevisionsList()) {
-          synchronized (myModel) {
-            if (configRunnable != null) configRunnable.consume(myModel);
-            myModel.clearRevisions();
-            myModel.getRevisions();// force load
-          }
+        synchronized (myModel) {
+          if (configRunnable != null) configRunnable.consume(myModel);
+          myModel.clearRevisions();
+          myModel.getRevisions();// force load
         }
         return new Runnable() {
           public void run() {
-            if (showRevisionsList()) {
-              myRevisionsList.updateData(myModel);
-            }
+            myRevisionsList.updateData(myModel);
           }
         };
       }
@@ -145,29 +144,42 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   protected abstract T createModel(LocalHistoryFacade vcs);
 
   protected JComponent createComponent() {
-    myDiffView = new MyDiffContainer(createDiffPanel());
+    JPanel root = new JPanel(new BorderLayout());
+
+    ExcludingTraversalPolicy traversalPolicy = new ExcludingTraversalPolicy();
+    root.setFocusTraversalPolicy(traversalPolicy);
+    root.setFocusTraversalPolicyProvider(true);
+
+    Pair<JComponent, Dimension> diffAndToolbarSize = createDiffPanel(root, traversalPolicy);
+    myDiffView = new MyDiffContainer(diffAndToolbarSize.first);
     Disposer.register(this, myDiffView);
+
+    JComponent revisionsSide = createRevisionsSide(diffAndToolbarSize.second);
 
     if (showRevisionsList()) {
       mySplitter = new Splitter(false, 0.3f);
 
-      mySplitter.setFirstComponent(createRevisionsSide());
+      mySplitter.setFirstComponent(revisionsSide);
       mySplitter.setSecondComponent(myDiffView);
 
-      mySplitter.setPreferredSize(getInitialSize());
       restoreSplitterProportion();
-      return mySplitter;
+
+      root.add(mySplitter);
+      setDiffBorder(IdeBorderFactory.createSimpleBorder(1, 1, 0, 0));
     }
     else {
-      return myDiffView;
+      setDiffBorder(IdeBorderFactory.createSimpleBorder(1, 0, 1, 0));
+      root.add(myDiffView);
     }
+
+    return root;
   }
 
   protected boolean showRevisionsList() {
     return true;
   }
 
-  protected abstract Dimension getInitialSize();
+  protected abstract void setDiffBorder(Border border);
 
   @Override
   public void dispose() {
@@ -175,9 +187,9 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     super.dispose();
   }
 
-  protected abstract JComponent createDiffPanel();
+  protected abstract Pair<JComponent, Dimension> createDiffPanel(JPanel root, ExcludingTraversalPolicy traversalPolicy);
 
-  private JComponent createRevisionsSide() {
+  private JComponent createRevisionsSide(Dimension prefToolBarSize) {
     ActionGroup actions = createRevisionsActions();
 
     myToolBar = createRevisionsToolbar(actions);
@@ -190,14 +202,17 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
 
 
     JPanel result = new JPanel(new BorderLayout());
-    result.add(myToolBar.getComponent(), BorderLayout.NORTH);
-    result.add(createRevisionsList(), BorderLayout.CENTER);
+    JPanel toolBarPanel = new JPanel(new BorderLayout());
+    toolBarPanel.add(myToolBar.getComponent());
+    if (prefToolBarSize != null) {
+      toolBarPanel.setPreferredSize(new Dimension(1, prefToolBarSize.height));
+    }
+    result.add(toolBarPanel, BorderLayout.NORTH);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myRevisionsList.getComponent());
+    scrollPane.setBorder(IdeBorderFactory.createSimpleBorder(1, 0, 0, 1));
+    result.add(scrollPane, BorderLayout.CENTER);
 
     return result;
-  }
-
-  protected JComponent createRevisionsList() {
-    return ScrollPaneFactory.createScrollPane(myRevisionsList.getComponent());
   }
 
   private ActionToolbar createRevisionsToolbar(ActionGroup actions) {
@@ -582,7 +597,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     }
   }
 
-  private static class MyDiffContainer extends JComponent implements Disposable {
+  private static class MyDiffContainer extends JLayeredPane implements Disposable {
     private AnimatedIcon myIcon = new AsyncProcessIcon.Big(this.getClass().getName());
 
     private JComponent myContent;
@@ -593,11 +608,10 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
       myContent = content;
       myLoadingPanel = new JPanel(new MyPanelLayout());
       myLoadingPanel.setOpaque(false);
-      myIcon.setBackground(Color.WHITE);
       myLoadingPanel.add(myIcon);
 
       add(myContent);
-      add(myLoadingPanel);
+      add(myLoadingPanel, JLayeredPane.POPUP_LAYER);
 
       finishUpdating();
     }

@@ -64,6 +64,10 @@ public class GroovyImportOptimizer implements ImportOptimizer {
     new MyProcessor(file, true).run();
   }
 
+  public List<GrImportStatement> findUnusedImports(GroovyFile file, Set<GrImportStatement> usedImports) {
+    return new MyProcessor(file, true).findUnusedImports(new HashSet<String>(), new HashSet<String>(),usedImports, new HashSet<String>());
+  }
+
   public boolean supports(PsiFile file) {
     return file instanceof GroovyFile;
   }
@@ -86,6 +90,46 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       final Set<String> staticallyImportedMembers = new LinkedHashSet<String>();
       final Set<GrImportStatement> usedImports = new HashSet<GrImportStatement>();
       final Set<String> implicitlyImported = new LinkedHashSet<String>();
+      final List<GrImportStatement> oldImports =
+        findUnusedImports(importedClasses, staticallyImportedMembers, usedImports, implicitlyImported);
+      if (myRemoveUnusedOnly) {
+        for (GrImportStatement oldImport : oldImports) {
+          if (!usedImports.contains(oldImport)) {
+            myFile.removeImport(oldImport);
+          }
+        }
+        return;
+      }
+
+      // Getting aliased imports
+      GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myFile.getProject());
+      ArrayList<GrImportStatement> aliased = new ArrayList<GrImportStatement>();
+      for (GrImportStatement oldImport : oldImports) {
+        if (oldImport.isAliasedImport() && usedImports.contains(oldImport)) {
+          aliased.add(factory.createImportStatementFromText(oldImport.getText()));
+        }
+      }
+
+      // Add new import statements
+      GrImportStatement[] newImports = prepare(importedClasses, staticallyImportedMembers, implicitlyImported);
+      for (GrImportStatement aliasedImport : aliased) {
+        myFile.addImport(aliasedImport);
+      }
+      for (GrImportStatement newImport : newImports) {
+        myFile.addImport(newImport);
+      }
+
+      myFile.removeImport(myFile.addImport(factory.createImportStatementFromText("import xxxx"))); //to remove trailing whitespaces
+
+      for (GrImportStatement importStatement : oldImports) {
+        myFile.removeImport(importStatement);
+      }
+    }
+
+    public List<GrImportStatement> findUnusedImports(final Set<String> importedClasses,
+                                                     final Set<String> staticallyImportedMembers,
+                                                     final Set<GrImportStatement> usedImports,
+                                                     final Set<String> implicitlyImported) {
       myFile.accept(new GroovyRecursiveElementVisitor() {
         public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
           visitRefElement(refElement);
@@ -163,38 +207,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
           oldImports.add(statement);
         }
       }
-      if (myRemoveUnusedOnly) {
-        for (GrImportStatement oldImport : oldImports) {
-          if (!usedImports.contains(oldImport)) {
-            myFile.removeImport(oldImport);
-          }
-        }
-        return;
-      }
-
-      // Getting aliased imports
-      GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myFile.getProject());
-      ArrayList<GrImportStatement> aliased = new ArrayList<GrImportStatement>();
-      for (GrImportStatement oldImport : oldImports) {
-        if (oldImport.isAliasedImport() && usedImports.contains(oldImport)) {
-          aliased.add(factory.createImportStatementFromText(oldImport.getText()));
-        }
-      }
-
-      // Add new import statements
-      GrImportStatement[] newImports = prepare(importedClasses, staticallyImportedMembers, implicitlyImported);
-      for (GrImportStatement aliasedImport : aliased) {
-        myFile.addImport(aliasedImport);
-      }
-      for (GrImportStatement newImport : newImports) {
-        myFile.addImport(newImport);
-      }
-
-      myFile.removeImport(myFile.addImport(factory.createImportStatementFromText("import xxxx"))); //to remove trailing whitespaces
-
-      for (GrImportStatement importStatement : oldImports) {
-        myFile.removeImport(importStatement);
-      }
+      return oldImports;
     }
 
     @Nullable private String getTargetQualifiedName(PsiElement element) {

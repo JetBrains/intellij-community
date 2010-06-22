@@ -18,24 +18,39 @@ package com.intellij.history.core.revisions;
 
 import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.core.Paths;
+import com.intellij.history.core.changes.Change;
 import com.intellij.history.core.changes.ChangeSet;
+import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.SmartList;
 
 import java.util.List;
 
-public class RevisionAfterChange extends RevisionBeforeChange {
+public class ChangeRevision extends Revision {
+  private final LocalHistoryFacade myFacade;
+  private final RootEntry myRoot;
+  private final String myEntryPath;
+  private final long myTimestamp;
+  private final Change myChangeToRevert;
+
+  private final boolean myBefore;
+
   private final long myId;
   private final String myName;
   private final String myLabel;
   private final int myLabelColor;
   private final Pair<List<String>, Integer> myAffectedFiles;
 
-  public RevisionAfterChange(LocalHistoryFacade facade, RootEntry r, String entryPath, ChangeSet changeSet) {
-    super(facade, r, entryPath, changeSet);
+  public ChangeRevision(LocalHistoryFacade facade, RootEntry r, String entryPath, ChangeSet changeSet, boolean before) {
+    myFacade = facade;
+    myRoot = r;
+    myEntryPath = entryPath;
+    myBefore = before;
 
-    // do not store changeSet to prevent huge memory consumption
+    myTimestamp = changeSet.getTimestamp();
+    myChangeToRevert = before ? changeSet.getFirstChange() : changeSet.getLastChange();
+
     myId = changeSet.getId();
     myLabel = changeSet.getLabel();
     myLabelColor = changeSet.getLabelColor();
@@ -47,6 +62,21 @@ public class RevisionAfterChange extends RevisionBeforeChange {
       someAffectedFiles.add(Paths.getNameOf(each));
     }
     myAffectedFiles = Pair.create(someAffectedFiles, allAffectedFiles.size());
+  }
+
+  @Override
+  public long getTimestamp() {
+    return myTimestamp;
+  }
+
+  @Override
+  public Entry findEntry() {
+    RootEntry rootCopy = myRoot.copy();
+
+    boolean revertThis = myBefore;
+    String path = myFacade.revertUpTo(rootCopy, myEntryPath, null, myChangeToRevert, revertThis);
+
+    return rootCopy.findEntry(path);
   }
 
   @Override
@@ -74,8 +104,7 @@ public class RevisionAfterChange extends RevisionBeforeChange {
     return myAffectedFiles;
   }
 
-  @Override
-  protected boolean revertThisChangeSet() {
-    return false;
+  public String toString() {
+    return getClass().getSimpleName() + ": " + myChangeToRevert;
   }
 }

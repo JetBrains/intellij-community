@@ -216,8 +216,8 @@ public class FileBasedIndex implements ApplicationComponent {
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       public void before(List<? extends VFileEvent> events) {
         for (VFileEvent event : events) {
-          if (event.getRequestor() instanceof FileDocumentManager) {
-            cleanupMemoryStorage();
+          if (event.getRequestor() != null) {
+            cleanupMemoryStorage(); // the event was originated from inside IDEA
             break;
           }
         }

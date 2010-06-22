@@ -144,7 +144,7 @@ public abstract class DomManager implements ModificationTracker {
    * @param element reference element
    * @return element that represents the resolve scope for the given reference. {@link com.intellij.util.xml.DomResolveConverter} uses
    * this method to resolve DOM references. This result's subtree will be traversed recursively searching for the reference target. See
-   * {@link com.intellij.util.xml.Resolve} annotaion.
+   * {@link com.intellij.util.xml.Resolve} annotation.
    */
   @NotNull
   public abstract DomElement getResolvingScope(GenericDomValue element);

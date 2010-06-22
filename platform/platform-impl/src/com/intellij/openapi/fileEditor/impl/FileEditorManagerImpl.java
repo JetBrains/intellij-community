@@ -249,6 +249,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     }
   }
 
+  @Override
+  public int getWindowSplitCount() {
+    return getSplitters().getSplitCount();
+  }
+
   @NotNull
   public EditorWindow[] getWindows() {
     return getSplitters().getWindows();

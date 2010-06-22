@@ -23,6 +23,7 @@ import com.intellij.history.core.changes.ChangeVisitor;
 import com.intellij.history.core.storage.Content;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.TestOnly;
 
@@ -186,18 +187,13 @@ public class ChangeList {
   }
 
   public synchronized void purgeObsolete(long period) {
-    List<Content> contentsToPurge = new ArrayList<Content>();
-
-    List<ChangeSetBlock> blocks = myStorage.purge(period, myIntervalBetweenActivities);
-    for (ChangeSetBlock each : blocks) {
-      for (ChangeSet changeSet : each.changes) {
-        contentsToPurge.addAll(changeSet.getContentsToPurge());
+    myStorage.purge(period, myIntervalBetweenActivities, new Consumer<ChangeSet>() {
+      public void consume(ChangeSet changeSet) {
+        for (Content each : changeSet.getContentsToPurge()) {
+          each.release();
+        }
       }
-    }
-
-    for (Content each : contentsToPurge) {
-      each.release();
-    }
+    });
   }
 
   @TestOnly

@@ -34,7 +34,7 @@ public class LocalVcsChangeSetsTest extends LocalHistoryTestCase {
     vcs.created("dir/two", false);
     vcs.endChangeSet(null);
 
-    assertEquals(1, collectRevisions(vcs, null, "dir", null, null).size());
+    assertEquals(2, collectRevisions(vcs, null, "dir", null, null).size());
   }
 
   @Test
@@ -49,7 +49,7 @@ public class LocalVcsChangeSetsTest extends LocalHistoryTestCase {
     vcs.created("dir/three", false);
     vcs.created("dir/four", false);
 
-    assertEquals(5, collectRevisions(vcs, null, "dir", null, null).size());
+    assertEquals(6, collectRevisions(vcs, null, "dir", null, null).size());
   }
 
   @Test
@@ -63,8 +63,8 @@ public class LocalVcsChangeSetsTest extends LocalHistoryTestCase {
     vcs.endChangeSet("outer");
 
     List<Revision> rr = collectRevisions(vcs, null, "dir", null, null);
-    assertEquals(1, rr.size());
-    assertEquals("outer", rr.get(0).getChangeSetName());
+    assertEquals(2, rr.size());
+    assertEquals("outer", rr.get(1).getChangeSetName());
   }
 
   @Test

@@ -21,6 +21,7 @@ import com.intellij.history.utils.LocalHistoryLog;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.util.Consumer;
 import com.intellij.util.io.storage.AbstractStorage;
 
 import java.io.DataInputStream;
@@ -139,20 +140,20 @@ public class ChangeListStorageImpl implements ChangeListStorage {
     }
   }
 
-  public synchronized List<ChangeSetBlock> purge(long period, int intervalBetweenActivities) {
-    List<ChangeSetBlock> result = new ArrayList<ChangeSetBlock>(); // todo : do not collect changesets
-    int each = findFirstObsoleteBlock(period, intervalBetweenActivities);
+  public synchronized void purge(long period, int intervalBetweenActivities, Consumer<ChangeSet> processor) {
+    int eachBlockId = findFirstObsoleteBlock(period, intervalBetweenActivities);
     try {
-      while(each != 0) {
-        result.add(doReadBlock(each));
-        myStorage.deleteRecord(each);
-        each = myStorage.getPrevRecord(each);
+      while(eachBlockId != 0) {
+        for (ChangeSet eachChangeSet : doReadBlock(eachBlockId).changes) {
+          processor.consume(eachChangeSet);
+        }
+        myStorage.deleteRecord(eachBlockId);
+        eachBlockId = myStorage.getPrevRecord(eachBlockId);
       }
     }
     catch (IOException e) {
       throw handleError(e);
     }
-    return result;
   }
 
   private int findFirstObsoleteBlock(long period, int intervalBetweenActivities) {

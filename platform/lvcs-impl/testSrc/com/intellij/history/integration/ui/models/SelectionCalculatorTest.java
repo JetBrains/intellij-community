@@ -20,13 +20,17 @@ import com.intellij.diff.Block;
 import com.intellij.history.core.InMemoryLocalHistoryFacade;
 import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.core.LocalHistoryTestCase;
+import com.intellij.history.core.revisions.CurrentRevision;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.RootEntry;
 import com.intellij.history.integration.IdeaGateway;
 
 import static org.easymock.classextension.EasyMock.*;
+
+import com.intellij.util.containers.ContainerUtil;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class SelectionCalculatorTest extends LocalHistoryTestCase {

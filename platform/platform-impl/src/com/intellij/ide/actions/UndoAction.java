@@ -17,6 +17,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.util.Pair;
 
 public class UndoAction extends UndoRedoAction {
   @Override
@@ -30,21 +31,7 @@ public class UndoAction extends UndoRedoAction {
   }
 
   @Override
-  protected String formatAction(FileEditor editor, UndoManager undoManager) {
-    return undoManager.formatAvailableUndoAction(editor);
-  }
-
-  protected String getActionMessageKey() {
-    return "action.$Undo.text";
-  }
-
-  @Override
-  protected String getActionDescriptionMessageKey() {
-    return "action.$Undo.description";
-  }
-
-  @Override
-  protected String getActionDescriptionEmptyMessageKey() {
-    return "action.$Undo.description.empty";
+  protected Pair<String, String> getActionNameAndDescription(FileEditor editor, UndoManager undoManager) {
+    return undoManager.getUndoActionNameAndDescription(editor);
   }
 }

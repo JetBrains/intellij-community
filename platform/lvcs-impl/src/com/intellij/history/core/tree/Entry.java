@@ -20,6 +20,7 @@ import com.intellij.history.core.Paths;
 import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.core.storage.Content;
 import com.intellij.history.core.storage.StreamUtil;
+import com.intellij.util.SmartList;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -165,15 +166,18 @@ public abstract class Entry {
 
   public void setContent(Content newContent, long timestamp) {
     throw new UnsupportedOperationException(formatPath());
-  }           
+  }
 
-  public List<Difference> getDifferencesWith(Entry e) {
-    List<Difference> result = new ArrayList<Difference>();
-    collectDifferencesWith(e, result);
+  public static List<Difference> getDifferencesBetween(Entry left, Entry right) {
+    List<Difference> result = new SmartList<Difference>();
+
+    if (left == null) right.collectCreatedDifferences(result);
+    else if (right == null) left.collectDeletedDifferences(result);
+    else left.collectDifferencesWith(right, result);
     return result;
   }
 
-  public abstract void collectDifferencesWith(Entry e, List<Difference> result);
+  protected abstract void collectDifferencesWith(Entry e, List<Difference> result);
 
   protected abstract void collectCreatedDifferences(List<Difference> result);
 

@@ -21,9 +21,6 @@ import java.util.Collection;
 import java.util.List;
 
 public interface GitTreeFiltering {
-//  void updateFilter(final Collection<ChangesFilter.Filter> filters);
-//  void updateStartingPoints(final List<String> points);
-
   void addFilter(final ChangesFilter.Filter filter);
   void removeFilter(final ChangesFilter.Filter filter);
 
@@ -31,6 +28,8 @@ public interface GitTreeFiltering {
   void removeStartingPoint(final String ref);
 
   void updateExcludePoints(final List<String> points);
+
+  void markDirty();
 
   // todo COPIES!
   @Nullable

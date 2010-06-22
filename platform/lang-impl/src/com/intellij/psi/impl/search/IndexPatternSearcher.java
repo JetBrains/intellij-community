@@ -120,6 +120,9 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
         final FileViewProvider viewProvider = file.getViewProvider();
         final Set<Language> relevantLanguages = viewProvider.getLanguages();
         for (Language lang : relevantLanguages) {
+          final TIntArrayList commentStartsList = new TIntArrayList();
+          final TIntArrayList commentEndsList = new TIntArrayList();
+
           final SyntaxHighlighter syntaxHighlighter =
             SyntaxHighlighterFactory.getSyntaxHighlighter(lang, file.getProject(), file.getVirtualFile());
           Lexer lexer = syntaxHighlighter.getHighlightingLexer();
@@ -141,9 +144,29 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
           }
 
           if (commentTokens != null) {
-            findComments(lexer, chars, range, commentTokens, commentStarts, commentEnds, builderForFile);
+            findComments(lexer, chars, range, commentTokens, commentStartsList, commentEndsList, builderForFile);
+            mergeCommentLists(commentStarts, commentEnds, commentStartsList, commentEndsList);
           }
         }
+      }
+    }
+  }
+
+  private static void mergeCommentLists(TIntArrayList commentStarts,
+                                       TIntArrayList commentEnds,
+                                       TIntArrayList commentStartsList,
+                                       TIntArrayList commentEndsList) {
+    for (int i = 0; i < commentStartsList.size(); i++) {
+      boolean found = false;
+      for (int j = 0; j < commentStarts.size(); j++) {
+        if (commentStarts.get(j) == commentStartsList.get(i) && commentEnds.get(j) == commentEndsList.get(i)) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        commentStarts.add(commentStartsList.get(i));
+        commentEnds.add(commentEndsList.get(i));
       }
     }
   }

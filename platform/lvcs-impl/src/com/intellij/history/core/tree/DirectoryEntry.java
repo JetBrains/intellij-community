@@ -19,7 +19,6 @@ package com.intellij.history.core.tree;
 import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.core.storage.StreamUtil;
 import com.intellij.history.utils.LocalHistoryLog;
-import com.intellij.util.SmartList;
 
 import java.io.DataInput;
 import java.io.DataOutput;

@@ -36,11 +36,11 @@ public class DirectoryHistoryDialogModelTest extends LocalHistoryUITestCase {
 
   public void testNoDifference() throws IOException {
     VirtualFile dir = createDirectory("dir");
+
+    getVcs().getChangeListInTests().purgeObsolete(0);
     initModelFor(dir);
 
-    assertEquals(1, m.getRevisions().size());
-
-    m.selectRevisions(0, 0);
+    assertSize(0, m.getRevisions());
     assertTrue(m.getChanges().isEmpty());
   }
 
@@ -52,10 +52,11 @@ public class DirectoryHistoryDialogModelTest extends LocalHistoryUITestCase {
 
     assertEquals(2, m.getRevisions().size());
 
-    m.selectRevisions(0, 1);
+    m.selectRevisions(1, 1);
     List<Change> cc = m.getChanges();
-    assertEquals(1, cc.size());
-    assertEquals("file.txt", ((DirectoryChange)cc.get(0)).getModel().getEntryName(1));
+    assertEquals(2, cc.size());
+    assertEquals("dir", ((DirectoryChange)cc.get(0)).getModel().getEntryName(1));
+    assertEquals("file.txt", ((DirectoryChange)cc.get(1)).getModel().getEntryName(1));
   }
 
   private void initModelFor(VirtualFile dir) {

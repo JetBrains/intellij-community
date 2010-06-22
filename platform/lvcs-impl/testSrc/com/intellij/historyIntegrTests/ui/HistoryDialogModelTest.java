@@ -19,6 +19,7 @@ package com.intellij.historyIntegrTests.ui;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.history.integration.ui.models.HistoryDialogModel;
+import com.intellij.history.integration.ui.models.RevisionItem;
 import com.intellij.historyIntegrTests.IntegrationTestCase;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Test;
@@ -50,12 +51,12 @@ public class HistoryDialogModelTest extends IntegrationTestCase {
 
   @Test
   public void testRevisionsList() {
-    List<Revision> rr = m.getRevisions();
+    List<RevisionItem> rr = m.getRevisions();
 
     assertEquals(3, rr.size());
-    assertEquals("3", rr.get(0).getChangeSetName());
-    assertEquals("2", rr.get(1).getChangeSetName());
-    assertEquals("1", rr.get(2).getChangeSetName());
+    assertEquals("3", rr.get(0).revision.getChangeSetName());
+    assertEquals("2", rr.get(1).revision.getChangeSetName());
+    assertEquals("1", rr.get(2).revision.getChangeSetName());
   }
 
   @Test
@@ -70,14 +71,12 @@ public class HistoryDialogModelTest extends IntegrationTestCase {
   public void testRegisteringUnsavedDocumentsBeforeBuildingRevisionsList() {
     setDocumentTextFor(f, "unsaved");
     initModelFor();
+    
+    m.getRevisions();
 
-    List<Revision> rr = m.getRevisions();
-    assertEquals(4, rr.size());
-    assertContent("unsaved", rr.get(0).getEntry());
-
-    rr = getRevisionsFor(f);
-    assertEquals(4, rr.size());
-    assertContent("unsaved", rr.get(0).getEntry());
+    List<Revision> rr = getRevisionsFor(f);
+    assertEquals(5, rr.size());
+    assertContent("unsaved", rr.get(0).findEntry());
   }
 
   @Test
@@ -90,10 +89,10 @@ public class HistoryDialogModelTest extends IntegrationTestCase {
   @Test
   public void testSelectingOnlyOneRevisionSetsRightToLastOne() {
     m.selectRevisions(0, 0);
-    assertSelectedRevisins("3", "3");
+    assertSelectedRevisins("3", null);
 
     m.selectRevisions(1, 1);
-    assertSelectedRevisins("2", "3");
+    assertSelectedRevisins("2", null);
   }
 
   @Test
@@ -108,7 +107,7 @@ public class HistoryDialogModelTest extends IntegrationTestCase {
   @Test
   public void testClearingSelectionSetsRevisionsToLastOnes() {
     m.selectRevisions(-1, -1);
-    assertSelectedRevisins("3", "3");
+    assertSelectedRevisins("3", null);
   }
 
   @Test

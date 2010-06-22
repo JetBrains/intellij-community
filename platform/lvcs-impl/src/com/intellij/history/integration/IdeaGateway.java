@@ -147,6 +147,12 @@ public class IdeaGateway {
   }
 
   @Nullable
+  public Entry createTransientEntry(VirtualFile file) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    return doCreateEntry(file, false);
+  }
+
+  @Nullable
   public Entry createEntryForDeletion(VirtualFile file) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     return doCreateEntry(file, true);

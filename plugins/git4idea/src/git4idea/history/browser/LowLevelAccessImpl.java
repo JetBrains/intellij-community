@@ -44,6 +44,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
     return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
+  // todo command filters
   public List<Pair<SHAHash,Date>> loadCommitHashes(final @NotNull Collection<String> startingPoints,
                                                    @NotNull final Collection<String> endPoints,
                                                    @NotNull final Collection<ChangesFilter.Filter> filters,
@@ -54,7 +55,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
     }
 
     for (ChangesFilter.Filter filter : filters) {
-      filter.applyToCommandLine(parameters);
+      filter.getCommandParametersFilter().applyToCommandLine(parameters);
     }
 
     if (! startingPoints.isEmpty()) {
@@ -97,7 +98,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
     }
 
     for (ChangesFilter.Filter filter : filters) {
-      filter.applyToCommandLine(parameters);
+      filter.getCommandParametersFilter().applyToCommandLine(parameters);
     }
     
     if (! startingPoints.isEmpty()) {

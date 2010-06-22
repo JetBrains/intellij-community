@@ -70,7 +70,7 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
     }
 
     // do actual rename
-    ChangeContextUtil.encodeContextInfo(aClass, true);
+    ChangeContextUtil.encodeContextInfo(aClass, true, false);
     aClass.setName(newName);
 
     for (UsageInfo usage : usages) {

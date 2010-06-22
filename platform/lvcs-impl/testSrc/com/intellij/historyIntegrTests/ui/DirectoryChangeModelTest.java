@@ -21,8 +21,6 @@ import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.DirectoryEntry;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.ui.models.DirectoryChangeModel;
-import com.intellij.history.integration.ui.models.FileDifferenceModel;
-import com.intellij.history.integration.ui.models.NullRevisionsProgress;
 import com.intellij.historyIntegrTests.IntegrationTestCase;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -37,7 +35,7 @@ public class DirectoryChangeModelTest extends IntegrationTestCase {
 
     List<Revision> revs = getRevisionsFor(f);
 
-    Difference d = new Difference(false, revs.get(0).getEntry(), revs.get(1).getEntry());
+    Difference d = new Difference(false, revs.get(0).findEntry(), revs.get(1).findEntry());
     DirectoryChangeModel m = createModelOn(d);
 
     assertEquals("bar", m.getEntryName(0));
@@ -52,29 +50,15 @@ public class DirectoryChangeModelTest extends IntegrationTestCase {
     assertEquals("", m.getEntryName(1));
   }
 
-  public void testFileDifferenceModel() throws IOException {
-    VirtualFile f = createFile("foo.txt");
-    f.rename(this, "bar.txt");
-
-    List<Revision> revs = getRevisionsFor(f);
-
-    Difference d = new Difference(false, revs.get(0).getEntry(), revs.get(1).getEntry());
-    DirectoryChangeModel dm = createModelOn(d);
-    FileDifferenceModel m = dm.getFileDifferenceModel();
-
-    assertTrue(m.getLeftTitle(new NullRevisionsProgress()).endsWith("bar.txt"));
-    assertTrue(m.getRightTitle(new NullRevisionsProgress()).endsWith("foo.txt"));
-  }
-
   public void testCanShowFileDifference() throws IOException {
     VirtualFile f = createFile("foo.txt");
     setContent(f, "xxx");
 
     List<Revision> revs = getRevisionsFor(f);
 
-    Difference d1 = new Difference(true, revs.get(0).getEntry(), revs.get(1).getEntry());
-    Difference d2 = new Difference(true, null, revs.get(1).getEntry());
-    Difference d3 = new Difference(true, revs.get(1).getEntry(), null);
+    Difference d1 = new Difference(true, revs.get(0).findEntry(), revs.get(1).findEntry());
+    Difference d2 = new Difference(true, null, revs.get(1).findEntry());
+    Difference d3 = new Difference(true, revs.get(1).findEntry(), null);
 
     assertTrue(createModelOn(d1).canShowFileDifference());
     assertTrue(createModelOn(d2).canShowFileDifference());
@@ -90,6 +74,6 @@ public class DirectoryChangeModelTest extends IntegrationTestCase {
   }
 
   private DirectoryChangeModel createModelOn(Difference d) {
-    return new DirectoryChangeModel(myProject, d, myGateway, false);
+    return new DirectoryChangeModel(d, myGateway);
   }
 }

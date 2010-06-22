@@ -357,6 +357,11 @@ import java.util.Map;
     return null;
   }
 
+  @Override
+  public int getWindowSplitCount() {
+    return 0;
+  }
+
   @NotNull
   public String getComponentName() {
     return "TestEditorManager";

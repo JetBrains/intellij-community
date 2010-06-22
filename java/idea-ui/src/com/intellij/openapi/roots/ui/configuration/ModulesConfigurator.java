@@ -283,28 +283,25 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     }
 
     final ProjectRootManagerImpl projectRootManager = ProjectRootManagerImpl.getInstanceImpl(myProject);
-
-    final ConfigurationException[] ex = new ConfigurationException[1];
+    myFacetsConfigurator.applyEditors();
+    final List<ModifiableRootModel> models = new ArrayList<ModifiableRootModel>(myModuleEditors.size());
+    for (ModuleEditor moduleEditor : myModuleEditors) {
+      moduleEditor.canApply();
+    }
+    for (final ModuleEditor moduleEditor : myModuleEditors) {
+      final ModifiableRootModel model = moduleEditor.apply();
+      if (model != null) {
+        models.add(model);
+      }
+    }
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         try {
-          myFacetsConfigurator.applyEditors();
-          final List<ModifiableRootModel> models = new ArrayList<ModifiableRootModel>(myModuleEditors.size());
-          for (final ModuleEditor moduleEditor : myModuleEditors) {
-            final ModifiableRootModel model = moduleEditor.apply();
-            if (model != null) {
-              models.add(model);
-            }
-          }
-
           final ModifiableRootModel[] rootModels = models.toArray(new ModifiableRootModel[models.size()]);
           projectRootManager.multiCommit(myModuleModel, rootModels);
           myFacetsConfigurator.commitFacets();
 
-        }
-        catch (ConfigurationException e) {
-          ex[0] = e;
         }
         finally {
           ModuleStructureConfigurable.getInstance(myProject).getFacetEditorFacade().clearMaps(false);
@@ -329,10 +326,6 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         }
       }
     });
-
-    if (ex[0] != null) {
-      throw ex[0];
-    }
 
     myModified = false;
   }

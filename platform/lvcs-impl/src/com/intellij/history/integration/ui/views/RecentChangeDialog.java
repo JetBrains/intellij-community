@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 
@@ -53,6 +54,11 @@ public class RecentChangeDialog extends DirectoryHistoryDialog {
 
   @Override
   protected boolean showRevisionsList() {
+    return false;
+  }
+
+  @Override
+  protected boolean showSearchField() {
     return false;
   }
 

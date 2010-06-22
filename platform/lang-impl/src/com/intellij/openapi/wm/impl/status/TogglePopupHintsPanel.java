@@ -48,6 +48,7 @@ import java.awt.event.MouseEvent;
 public class TogglePopupHintsPanel implements StatusBarWidget, StatusBarWidget.IconPresentation {
   private static final Icon INSPECTIONS_ICON = IconLoader.getIcon("/ide/hectorOn.png");
   private static final Icon INSPECTIONS_OFF_ICON = IconLoader.getIcon("/ide/hectorOff.png");
+  private static final Icon SYNTAX_ONLY_ICON = IconLoader.getIcon("/ide/hectorSyntax.png");
   private static final Icon EMPTY_ICON = IconLoader.getIcon("/ide/hectorNo.png");
 
   private Icon myCurrentIcon;
@@ -132,14 +133,15 @@ public class TogglePopupHintsPanel implements StatusBarWidget, StatusBarWidget.I
       if (HighlightLevelUtil.shouldInspect(file)) {
         myCurrentIcon = INSPECTIONS_ICON;
         myToolTipText =  "Current inspection profile: " + InspectionProjectProfileManager.getInstance(file.getProject()).getInspectionProfile().getName() + ". ";
-      }
-      else {
+      } else if (HighlightLevelUtil.shouldHighlight(file)) {
+        myCurrentIcon = SYNTAX_ONLY_ICON;
+        myToolTipText = "Highlighting level is: Syntax. ";        
+      } else {
         myCurrentIcon = INSPECTIONS_OFF_ICON;
         myToolTipText = "Inspections are off. ";
       }
       myToolTipText += UIBundle.message("popup.hints.panel.click.to.configure.highlighting.tooltip.text");
-    }
-    else {
+    } else {
       myCurrentIcon = EMPTY_ICON;
       myToolTipText = null;
     }

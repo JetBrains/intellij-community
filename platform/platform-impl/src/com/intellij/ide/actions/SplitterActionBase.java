@@ -32,8 +32,7 @@ public abstract class SplitterActionBase extends AnAction implements DumbAware {
       enabled = false;
     }
     else {
-      final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
-      enabled = fileEditorManager.isInSplitter();
+      enabled = isActionEnabled(project);
     }
     if (ActionPlaces.isPopupPlace(event.getPlace())) {
       presentation.setVisible(enabled);
@@ -41,5 +40,10 @@ public abstract class SplitterActionBase extends AnAction implements DumbAware {
     else {
       presentation.setEnabled(enabled);
     }
+  }
+
+  protected boolean isActionEnabled(Project project) {
+    final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
+    return fileEditorManager.isInSplitter();
   }
 }

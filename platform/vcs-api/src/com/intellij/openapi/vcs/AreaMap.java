@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.mergeinfo;
+package com.intellij.openapi.vcs;
 
 import com.intellij.util.PairProcessor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -54,6 +55,18 @@ public class AreaMap<Key extends Comparable<Key>, Val> {
     return myMap.get(key);
   }
 
+  public void removeByValue(@NotNull final Val val) {
+    for (Iterator<Key> iterator = myKeys.iterator(); iterator.hasNext();) {
+      final Key key = iterator.next();
+      final Val current = myMap.get(key);
+      if (val.equals(current)) {
+        iterator.remove();
+        myMap.remove(key);
+        return;
+      }
+    }
+  }
+
   public void getSimiliar(final Key key, final PairProcessor<Key, Val> consumer) {
     final int idx = Collections.binarySearch(myKeys, key);
     if (idx < 0) {
@@ -70,5 +83,9 @@ public class AreaMap<Key extends Comparable<Key>, Val> {
     } else {
       consumer.process(key, myMap.get(key));
     }
+  }
+  
+  public boolean isEmpty() {
+    return myKeys.isEmpty();
   }
 }

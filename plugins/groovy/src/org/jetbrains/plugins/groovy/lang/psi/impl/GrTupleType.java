@@ -18,7 +18,10 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
  * @author ven
  */
 public class GrTupleType extends GrLiteralClassType {
+  private static final PsiType[] RAW_PARAMETERS = new PsiType[]{null};
   private final PsiType[] myComponentTypes;
 
   public GrTupleType(PsiType[] componentTypes, JavaPsiFacade facade, GlobalSearchScope scope) {
@@ -47,7 +51,7 @@ public class GrTupleType extends GrLiteralClassType {
 
   @NotNull
   public PsiType[] getParameters() {
-    if (myComponentTypes.length == 0) return PsiType.EMPTY_ARRAY;
+    if (myComponentTypes.length == 0) return RAW_PARAMETERS;
     return new PsiType[]{getLeastUpperBound(myComponentTypes)};
   }
 

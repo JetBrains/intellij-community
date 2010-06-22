@@ -214,7 +214,10 @@ public class ProjectRootsTraversing {
 
     public static final Visit<OrderEntry> ADD_CLASSES_WITHOUT_TESTS = new Visit<OrderEntry>() {
       public void visit(OrderEntry orderEntry, TraverseState state, RootPolicy<TraverseState> policy) {
-        if (orderEntry instanceof ExportableOrderEntry && ((ExportableOrderEntry)orderEntry).getScope() == DependencyScope.TEST) return;
+        if (orderEntry instanceof ExportableOrderEntry) {
+          final DependencyScope scope = ((ExportableOrderEntry)orderEntry).getScope();
+          if (!scope.isForProductionCompile() && !scope.isForProductionRuntime()) return;
+        }
         state.addAllUrls(orderEntry.getUrls(OrderRootType.CLASSES));
       }
     };
@@ -259,7 +262,8 @@ public class ProjectRootsTraversing {
       }
 
       public void visit(ModuleOrderEntry moduleOrderEntry, TraverseState state, RootPolicy<TraverseState> policy) {
-        if (!myIncludeTests && moduleOrderEntry.getScope() == DependencyScope.TEST) return;
+        final DependencyScope scope = moduleOrderEntry.getScope();
+        if (!myIncludeTests && !scope.isForProductionCompile() && !scope.isForProductionRuntime()) return;
         Module module = moduleOrderEntry.getModule();
         if (module == null) return;
         ModuleRootManager moduleRootManager = state.getCurrentModuleManager();

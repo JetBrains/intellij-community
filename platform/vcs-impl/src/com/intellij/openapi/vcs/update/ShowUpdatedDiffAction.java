@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
@@ -93,7 +94,7 @@ public class ShowUpdatedDiffAction extends AnAction implements DumbAware {
                                      project, ShowDiffAction.DiffExtendUIFactory.NONE, true);
   }
 
-  private static class MySelectionMarker implements NotNullFunction<Change, Boolean> {
+  private static class MySelectionMarker implements Condition<Change> {
     private final String mySelectedPath;
     private boolean myFirstSelected;
 
@@ -101,8 +102,7 @@ public class ShowUpdatedDiffAction extends AnAction implements DumbAware {
       mySelectedPath = selectedPath;
     }
 
-    @NotNull
-    public Boolean fun(Change change) {
+    public boolean value(Change change) {
       if (mySelectedPath == null) {
         if (myFirstSelected) {
           myFirstSelected = true;

@@ -26,6 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.*;
@@ -37,6 +38,7 @@ import com.intellij.openapi.vcs.changes.committed.AbstractCalledLater;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.committed.RepositoryChangesBrowser;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ColoredListCellRenderer;
@@ -73,6 +75,7 @@ public class GitLogTree implements GitTreeViewI {
 
   private final MyErrorRefresher myErrorRefresher;
   private final Project myProject;
+  private final VirtualFile myRoot;
   private Disposable myParentDisposable;
 
   private final Splitter myMainSplitter;
@@ -99,6 +102,7 @@ public class GitLogTree implements GitTreeViewI {
 
   public GitLogTree(final Project project, final VirtualFile root, GitUsersComponent gitUsersComponent) {
     myProject = project;
+    myRoot = root;
     myWaitAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
     myPanel = new MyPanel(new BorderLayout());
     myListCellRenderer = new MyCompoundCellRenderer();
@@ -300,13 +304,13 @@ public class GitLogTree implements GitTreeViewI {
     final JPanel filtersPanel = new JPanel(new BorderLayout());
     
     final MyFiltersTree filterControl =
-      new MyFiltersTree(myProject, myController.getFiltering(), myController, myParentDisposable, "Filter", null, myCommitsList);
+      new MyFiltersTree(myProject, myController.getFiltering(), myController, myParentDisposable, "Filter", null, myCommitsList, myRoot);
     filtersPanel.add(filterControl.getComponent(), BorderLayout.CENTER);
 
     myFiltersPane = filtersPanel;
     final JPanel inheritancePanel = new JPanel(new BorderLayout());
     final MyFiltersTree showControl =
-      new MyFiltersTree(myProject, myController.getHighlighting(), myController, myParentDisposable, "Emphasize", null, myCommitsList);
+      new MyFiltersTree(myProject, myController.getHighlighting(), myController, myParentDisposable, "Emphasize", null, myCommitsList, myRoot);
     inheritancePanel.add(showControl.getComponent(), BorderLayout.CENTER);
     myInheritancePane = inheritancePanel;
     
@@ -966,9 +970,14 @@ public class GitLogTree implements GitTreeViewI {
     private AbstractTreeBuilder myAtb;
     private final Icon myChildrenIcon;
     private final JList myRefreshComponent;
+    private final VirtualFile myRootFile;
 
     private MyFiltersTree(final Project project, final GitTreeFiltering filtering, final RepositoryCommonData commonData,
-                          final Disposable parentDisposable, String title, Icon childrenIcon, final JList refreshComponent) {
+                          final Disposable parentDisposable,
+                          String title,
+                          Icon childrenIcon,
+                          final JList refreshComponent,
+                          VirtualFile rootFile) {
       myProject = project;
       myFiltering = filtering;
       myCommonData = commonData;
@@ -976,6 +985,7 @@ public class GitLogTree implements GitTreeViewI {
       myTitle = title;
       myChildrenIcon = childrenIcon;
       myRefreshComponent = refreshComponent;
+      myRootFile = rootFile;
       myPanel = new JPanel(new BorderLayout());
       initView(childrenIcon);
     }
@@ -992,11 +1002,12 @@ public class GitLogTree implements GitTreeViewI {
       private final MyRootNode myRoot;
 
       private MyTreeStructure(final RepositoryCommonData commonData, final GitTreeFiltering filtering, final Project project,
-                              final Icon childrenIcon) {
+                              final Icon childrenIcon, final VirtualFile rootFile) {
         myRoot = new MyRootNode(project);
         myRoot.addChild(new BranchHeader(commonData, filtering, project, myRoot, childrenIcon));
         myRoot.addChild(new TagHeader(commonData, filtering, project, myRoot, childrenIcon));
         myRoot.addChild(new UserHeader(commonData, filtering, project, myRoot, childrenIcon));
+        myRoot.addChild(new StructureHeader(commonData, filtering, project, myRoot, rootFile));
       }
 
       @Override
@@ -1037,7 +1048,7 @@ public class GitLogTree implements GitTreeViewI {
     }
 
     private void initView(Icon childrenIcon) {
-      myStructure = new MyTreeStructure(myCommonData, myFiltering, myProject, childrenIcon);
+      myStructure = new MyTreeStructure(myCommonData, myFiltering, myProject, childrenIcon, myRootFile);
       myTree = new JTree();
 
       myAtb = new AbstractTreeBuilder(myTree, new DefaultTreeModel(new DefaultMutableTreeNode()), myStructure, null);
@@ -1483,6 +1494,109 @@ public class GitLogTree implements GitTreeViewI {
       }
     }
 
+    private static class StructureHeader extends MyAbstractNode<MyRootNode, StructureNode> {
+      private final VirtualFile myRoot;
+      private final ChangesFilter.StructureFilter myFilter;
+
+      private StructureHeader(final RepositoryCommonData commonData, final GitTreeFiltering filtering,
+                              final Project project, final MyRootNode parent, final VirtualFile root) {
+        super(true, commonData, filtering, project, null, parent, "Structure", NodeType.structureHead, null);
+        myRoot = root;
+        myFilter = new ChangesFilter.StructureFilter();
+      }
+      @Override
+      boolean canBeDeleted() {
+        return false;
+      }                                               
+      @Override
+      boolean canInsert() {
+        return true;
+      }
+      @Override
+      void onInsert(DataContext dc, Consumer<Object> after) {
+        final VirtualFile[] files = selectFiles(myProject, myRoot);
+
+        addFiles(files, after);
+      }
+
+      protected void addFiles(final VirtualFile[] files, Consumer<Object> after) {
+        final boolean wasEmpty = myFilter.isEmpty();
+        if (files != null) {
+          for (VirtualFile file : files) {
+            final StructureNode node = new StructureNode(myCommonData, myFiltering, myProject, this, file);
+            addChild(node);
+            myFilter.addPath(file);
+          }
+          if (wasEmpty) {
+            myFiltering.addFilter(myFilter);
+          } else {
+            myFiltering.markDirty();
+          }
+          after.consume(this);
+        }
+      }
+
+      protected void removeFiles(final VirtualFile[] files) {
+        for (VirtualFile file : files) {
+          myFilter.removePath(file);
+          myFiltering.markDirty();
+        }
+        if (myFilter.isEmpty()) {
+          myFiltering.removeFilter(myFilter);
+        }
+      }
+
+      @Override
+      void onDelete(Runnable after) {
+      }
+
+      public VirtualFile getRoot() {
+        return myRoot;
+      }
+    }
+
+    private static class StructureNode extends MyAbstractNode<StructureHeader, Object> {
+      private final VirtualFile myFile;
+
+      private StructureNode(RepositoryCommonData commonData,
+                            GitTreeFiltering filtering,
+                            Project project,
+                            StructureHeader structureHeader,
+                            final VirtualFile file) {
+        super(false, commonData, filtering, project, null, structureHeader, VfsUtil.getRelativePath(file, structureHeader.getRoot(), '/'), NodeType.structure, null);
+        myFile = file;
+      }
+      @Override
+      boolean canBeDeleted() {
+        return true;
+      }
+      @Override
+      boolean canInsert() {
+        return true;
+      }
+      @Override
+      void onInsert(DataContext dc, Consumer<Object> after) {
+        final VirtualFile[] files = selectFiles(myProject, myParent.getRoot());
+        getParent().addFiles(files, after);
+      }
+      @Override
+      void onDelete(Runnable after) {
+        getParent().removeChild(this);
+        getParent().removeFiles(new VirtualFile[] {myFile});
+        after.run();
+      }
+    }
+
+    @Nullable
+    private static VirtualFile[] selectFiles(final Project project, final VirtualFile root) {
+      final GitLogTreeFileSelector dialog = new GitLogTreeFileSelector(project, root);
+      dialog.show();
+      if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
+        return dialog.getSelectedFiles();
+      }
+      return null;
+    }
+
     private static abstract class MyAbstractNode<Parent extends MyAbstractNode, Child> {
       protected final Project myProject;
       protected final GitTreeFiltering myFiltering;
@@ -1629,6 +1743,8 @@ public class GitLogTree implements GitTreeViewI {
       user,
       before,
       after,
+      structureHead,
+      structure,
       selectedHeader,
       selectedNode
     }

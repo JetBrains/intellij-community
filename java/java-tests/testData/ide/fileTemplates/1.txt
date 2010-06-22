@@ -1,0 +1,9 @@
+ /*
+ * \$Author$
+ * $Id$
+ * @author $Author
+ * @version $Revision$
+*/
+package ${PACKAGE_NAME};
+public class ${Name} {
+}
