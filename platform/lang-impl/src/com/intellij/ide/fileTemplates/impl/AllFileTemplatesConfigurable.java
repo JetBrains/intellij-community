@@ -369,6 +369,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
       }
       if (selectedValue == null) {
         myEditor.setTemplate(null, FileTemplateManagerImpl.getInstanceImpl().getDefaultTemplateDescription());
+        myEditorComponent.repaint();
       }
       else {
         selectTemplate(selectedValue);
