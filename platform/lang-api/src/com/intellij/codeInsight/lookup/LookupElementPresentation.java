@@ -34,6 +34,7 @@ public class LookupElementPresentation {
   private boolean myTailGrayed;
   private Color myTailForeground;
   private boolean myItemTextBold;
+  private boolean myItemTextUnderlined;
 
   public void setIcon(@Nullable Icon icon) {
     myIcon = icon;
@@ -124,6 +125,14 @@ public class LookupElementPresentation {
 
   public boolean isItemTextBold() {
     return myItemTextBold;
+  }
+
+  public boolean isItemTextUnderlined() {
+    return myItemTextUnderlined;
+  }
+
+  public void setItemTextUnderlined(boolean itemTextUnderlined) {
+    myItemTextUnderlined = itemTextUnderlined;
   }
 
   public void copyFrom(@NotNull LookupElementPresentation presentation) {
