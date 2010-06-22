@@ -50,6 +50,8 @@ public abstract class AppIcon {
 
   public abstract void requestAttention(boolean critical);
 
+  public abstract void requestFocus(IdeFrame frame);
+
   public static AppIcon getInstance() {
     if (ourMacImpl == null) {
       ourMacImpl = new MacAppIcon();
@@ -183,6 +185,21 @@ public abstract class AppIcon {
 
       try {
         getAppMethod("setDockIconBadge", String.class).invoke(getApp(), text);
+      }
+      catch (NoSuchMethodException e) {
+        return;
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    }
+
+    @Override
+    public void requestFocus(IdeFrame frame) {
+      assertIsDispatchThread();
+
+      try {
+        getAppMethod("requestForeground", boolean.class).invoke(getApp(), true);
       }
       catch (NoSuchMethodException e) {
         return;
@@ -352,6 +369,10 @@ public abstract class AppIcon {
     @Override
     public void _requestAttention(boolean critical) {
     }
+
+    @Override
+    public void requestFocus(IdeFrame frame) {
+    }
   }
 
   private static class EmptyIcon extends AppIcon {
@@ -375,6 +396,10 @@ public abstract class AppIcon {
 
     @Override
     public void requestAttention(boolean critical) {
+    }
+
+    @Override
+    public void requestFocus(IdeFrame frame) {
     }
   }
 
