@@ -31,6 +31,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.util.ArrayUtil;
@@ -58,8 +59,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrSyntheticMethodImplementation;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.util.containers.CharTrie;
 
@@ -412,7 +413,7 @@ public class GroovyToJavaGenerator {
 
 
     for (PsiMethod method : methods) {
-      if (method instanceof GrSyntheticMethodImplementation) {
+      if (LightMethodBuilder.isLightMethod(method, GrClassImplUtil.SYNTHETIC_METHOD_IMPLEMENTATION)) {
         continue;
       }
 

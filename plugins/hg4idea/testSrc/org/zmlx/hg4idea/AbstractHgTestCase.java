@@ -12,19 +12,20 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vfs.*;
-import com.intellij.testFramework.*;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsShowConfirmationOption;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.AbstractVcsTestCase;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
-import com.intellij.vcsUtil.*;
-import org.junit.Before;
-import org.testng.Assert;
+import com.intellij.vcsUtil.VcsUtil;
 import org.testng.annotations.BeforeMethod;
+import org.zmlx.hg4idea.org.zmlx.hg4idea.test.TestChangeListManager;
 
 import java.io.*;
 
@@ -38,7 +39,16 @@ public abstract class AbstractHgTestCase extends AbstractVcsTestCase {
   public static final String HG_EXECUTABLE_PATH = "IDEA_TEST_HG_EXECUTABLE_PATH";
 
   protected File myProjectRepo;
-  private TempDirTestFixture myTempDirTestFixture;
+  protected TempDirTestFixture myTempDirTestFixture;
+  protected TestChangeListManager myChangeListManager;
+
+  // some shortcuts to use in tests
+  protected static final String AFILE = "a.txt";
+  protected static final String BDIR = "b";
+  protected static final String BFILE = "b.txt";
+  protected static final String BFILE_PATH = BDIR + File.separator + BFILE;
+  protected static final String FILE_CONTENT = "Sample file content.";
+  protected static final String FILE_CONTENT_2 = "some other file content";
 
   @BeforeMethod
   protected void setUp() throws Exception {
@@ -46,13 +56,14 @@ public abstract class AbstractHgTestCase extends AbstractVcsTestCase {
 
     myTempDirTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
     myTempDirTestFixture.setUp();
-    myProjectRepo = new File(myTempDirTestFixture.getTempDirPath(), "repo");
-    Assert.assertTrue(myProjectRepo.mkdir());
+    myProjectRepo = new File(myTempDirTestFixture.getTempDirPath());
 
     ProcessOutput processOutput = runHg(myProjectRepo, "init");
     verify(processOutput);
     initProject(myProjectRepo);
     activateVCS(HgVcs.VCS_NAME);
+
+    myChangeListManager = new TestChangeListManager(myProject);
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
@@ -69,14 +80,32 @@ public abstract class AbstractHgTestCase extends AbstractVcsTestCase {
     if (exec == null || !myClientBinaryPath.exists()) {
       System.out.println("Using checked in");
       File pluginRoot = new File(PluginPathManager.getPluginHomePath(HgVcs.VCS_NAME));
-      myClientBinaryPath = new File(pluginRoot, "testData/hg/bin");
+      myClientBinaryPath = new File(pluginRoot, "testData/bin");
     }
 
     HgVcs.setTestHgExecutablePath(myClientBinaryPath.getPath());
   }
 
+  /**
+   * Runs the hg command.
+   * @param commandLine the name of the command and its arguments.
+   */
   protected ProcessOutput runHgOnProjectRepo(String... commandLine) throws IOException {
     return runHg(myProjectRepo, commandLine);
+  }
+
+  /**
+   * Calls "hg add ." to add everything to the index.
+   */
+  protected ProcessOutput addAll() throws IOException {
+    return runHgOnProjectRepo("add", ".");
+  }
+
+  /**
+   * Calls "hg commit -m &lt;commitMessage&gt;" to commit the index.
+   */
+  protected ProcessOutput commitAll(String commitMessage) throws IOException {
+    return runHgOnProjectRepo("commit", "-m", commitMessage);
   }
 
   protected HgFile getHgFile(String... filepath) {
@@ -129,6 +158,15 @@ public abstract class AbstractHgTestCase extends AbstractVcsTestCase {
     return outputFile;
   }
 
+  /**
+   * Verifies the status of the file calling native 'hg status' command.
+   * @param status status as returned by {@link #added(java.lang.String)} and other methods.
+   * @throws IOException
+   */
+  protected void verifyStatus(String... status) throws IOException {
+    verify(runHgOnProjectRepo("status"), status);
+  }
+
   public static String added(String... path) {
     return "A " + path(path);
   }
@@ -143,6 +181,10 @@ public abstract class AbstractHgTestCase extends AbstractVcsTestCase {
 
   public static String modified(String... path) {
     return "M " + path(path);
+  }
+
+  public static String missing(String... path) {
+    return "! " + path(path);
   }
 
   public static String path(String... line) {

@@ -39,8 +39,10 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.projectImport.ProjectOpenProcessor;
+import com.intellij.ui.AppIcon;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -236,6 +238,7 @@ public class ProjectUtil {
     };
 
     if (executeIfAppInactive) {
+      AppIcon.getInstance().requestFocus((IdeFrame)WindowManager.getInstance().getFrame(p));
       cmd.run();
     } else {
       IdeFocusManager.getInstance(p).requestFocus(cmd, false);

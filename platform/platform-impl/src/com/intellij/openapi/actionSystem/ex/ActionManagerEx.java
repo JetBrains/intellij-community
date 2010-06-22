@@ -144,5 +144,6 @@ public abstract class ActionManagerEx extends ActionManager{
 
   public abstract boolean isActionPopupStackEmpty();
 
+  public abstract boolean isTransparrentOnlyActionsUpdateNow();
 }
 

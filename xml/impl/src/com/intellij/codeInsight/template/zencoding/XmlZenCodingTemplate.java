@@ -21,10 +21,12 @@ import com.intellij.codeInsight.template.TemplateInvokationListener;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -261,6 +263,10 @@ public class XmlZenCodingTemplate extends ZenCodingTemplate {
   static XmlTag parseXmlTagInTemplate(String templateString, CustomTemplateCallback callback, boolean createPhysicalFile) {
     XmlFile xmlFile = (XmlFile)PsiFileFactory.getInstance(callback.getProject())
       .createFileFromText("dummy.xml", StdFileTypes.XML, templateString, LocalTimeCounter.currentTime(), createPhysicalFile);
+    VirtualFile vFile = xmlFile.getVirtualFile();
+    if (vFile != null) {
+      vFile.putUserData(UndoManager.DONT_RECORD_UNDO, Boolean.TRUE);
+    }
     XmlDocument document = xmlFile.getDocument();
     return document == null ? null : document.getRootTag();
   }

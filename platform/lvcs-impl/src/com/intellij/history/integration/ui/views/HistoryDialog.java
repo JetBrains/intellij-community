@@ -113,6 +113,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     setPreferredFocusedComponent(showRevisionsList() ? myRevisionsList.getComponent() : myDiffView);
 
     myUpdateQueue = new MergingUpdateQueue(getClass() + ".revisionsUpdate", 500, true, root, this, null, false);
+    myUpdateQueue.setRestartTimerOnAdd(true);
 
     facade.addListener(new LocalHistoryFacade.Listener() {
       public void changeSetFinished() {
@@ -126,18 +127,14 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   protected void scheduleRevisionsUpdate(@Nullable final Consumer<T> configRunnable) {
     doScheduleUpdate(UPDATE_REVS, new Computable<Runnable>() {
       public Runnable compute() {
-        if (showRevisionsList()) {
-          synchronized (myModel) {
-            if (configRunnable != null) configRunnable.consume(myModel);
-            myModel.clearRevisions();
-            myModel.getRevisions();// force load
-          }
+        synchronized (myModel) {
+          if (configRunnable != null) configRunnable.consume(myModel);
+          myModel.clearRevisions();
+          myModel.getRevisions();// force load
         }
         return new Runnable() {
           public void run() {
-            if (showRevisionsList()) {
-              myRevisionsList.updateData(myModel);
-            }
+            myRevisionsList.updateData(myModel);
           }
         };
       }
@@ -157,10 +154,12 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     myDiffView = new MyDiffContainer(diffAndToolbarSize.first);
     Disposer.register(this, myDiffView);
 
+    JComponent revisionsSide = createRevisionsSide(diffAndToolbarSize.second);
+
     if (showRevisionsList()) {
       mySplitter = new Splitter(false, 0.3f);
 
-      mySplitter.setFirstComponent(createRevisionsSide(diffAndToolbarSize.second));
+      mySplitter.setFirstComponent(revisionsSide);
       mySplitter.setSecondComponent(myDiffView);
 
       restoreSplitterProportion();

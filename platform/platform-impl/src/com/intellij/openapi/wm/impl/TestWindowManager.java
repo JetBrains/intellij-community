@@ -70,6 +70,14 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
   }
 
   private static final class DummyStatusBar implements StatusBarEx {
+    public Dimension getSize() {
+      return new Dimension(0, 0);
+    }
+
+    public boolean isVisible() {
+      return false;
+    }
+
     public final void setInfo(final String s) {}
 
     public void addCustomIndicationComponent(@NotNull JComponent c) {

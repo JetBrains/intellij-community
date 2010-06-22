@@ -674,6 +674,7 @@ public class AbstractPopup implements JBPopup {
       listener.beforeShown(new LightweightWindowEvent(this));
     }
 
+    myPopup.setRequestFocus(myRequestFocus);
     myPopup.show();
 
     final Window window = SwingUtilities.getWindowAncestor(myContent);

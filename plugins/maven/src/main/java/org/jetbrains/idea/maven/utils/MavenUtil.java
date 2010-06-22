@@ -538,7 +538,8 @@ public class MavenUtil {
     if (StringUtil.isEmptyOrSpaces(text)) return text;
     Properties props = MavenFacadeUtil.collectSystemProperties();
     for (Map.Entry<Object, Object> each : props.entrySet()) {
-      text = text.replace("${" + each.getKey() + "}", (CharSequence)each.getValue());
+      Object val = each.getValue();
+      text = text.replace("${" + each.getKey() + "}", val instanceof CharSequence ? (CharSequence)val : val.toString());
     }
     return text;
   }

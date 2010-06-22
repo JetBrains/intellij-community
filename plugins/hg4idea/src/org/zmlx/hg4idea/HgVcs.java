@@ -75,6 +75,7 @@ public class HgVcs extends AbstractVcs {
   public static final String VCS_NAME = "hg4idea";
   public static final String DIRSTATE_FILE_PATH = ".hg/dirstate";
   public static final String NOTIFICATION_GROUP_ID = "Mercurial";
+  public static final String HG_EXECUTABLE_FILE_NAME = (SystemInfo.isWindows ? "hg.exe" : "hg");
 
   private final HgChangeProvider changeProvider;
   private final HgProjectConfigurable configurable;
@@ -337,7 +338,7 @@ public class HgVcs extends AbstractVcs {
    */
   public String getHgExecutable() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return (new File(ourTestHgExecutablePath, SystemInfo.isWindows ? "hg.exe" : "hg")).getPath();
+      return (new File(ourTestHgExecutablePath, HG_EXECUTABLE_FILE_NAME)).getPath();
     }
     return globalSettings.getHgExecutable();
   }

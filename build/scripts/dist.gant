@@ -69,7 +69,7 @@ target('default': 'The default target') {
   layoutAll(
           buildNumber: "IC-90.SNAPSHOT",
           version: "Maia",
-          system_selector: "IntelliJIdeaCE90",
+          system_selector: "IntelliJIdeaCE10",
           jdk_req: "1.6*",
           vmoptions: "-Xms128m -Xmx512m -XX:MaxPermSize=250m -ea",
           home, out)

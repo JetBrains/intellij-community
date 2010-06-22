@@ -226,7 +226,10 @@
 
       <group id="WindowMenu" popup="true">
         <group id="ToolWindowsGroup" class="com.intellij.ide.actions.ToolWindowsGroup" popup="true"/>
-        <action id="ShowProcessWindow" class="com.intellij.openapi.wm.impl.status.ShowProcessWindowAction"/>
+        <group id="BackgroundTasks" popup="true">
+          <action id="ShowProcessWindow" class="com.intellij.openapi.wm.impl.status.ShowProcessWindowAction"/>
+          <action id="AutoShowProcessWindow" class="com.intellij.openapi.wm.impl.status.AutoShowProcessPopupAction"/>
+        </group>
         <separator/>
         <action id="StoreDefaultLayout" class="com.intellij.ide.actions.StoreDefaultLayoutAction"/>
         <action id="RestoreDefaultLayout" class="com.intellij.ide.actions.RestoreDefaultLayoutAction"/>

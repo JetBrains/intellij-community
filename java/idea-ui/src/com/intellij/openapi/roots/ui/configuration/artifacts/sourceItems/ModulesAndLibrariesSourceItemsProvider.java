@@ -66,7 +66,7 @@ public class ModulesAndLibrariesSourceItemsProvider extends PackagingSourceItems
         final LibraryOrderEntry libraryEntry = (LibraryOrderEntry)orderEntry;
         final Library library = libraryEntry.getLibrary();
         final DependencyScope scope = libraryEntry.getScope();
-        if (library != null && scope != DependencyScope.TEST && scope != DependencyScope.PROVIDED) {
+        if (library != null && scope.isForProductionRuntime()) {
           libraries.add(library);
         }
       }

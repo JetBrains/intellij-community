@@ -38,6 +38,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ExcludingTraversalPolicy;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.SearchTextFieldWithStoredHistory;
+import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -73,11 +74,11 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
 
   @Override
   protected Pair<JComponent, Dimension> createDiffPanel(JPanel root, ExcludingTraversalPolicy traversalPolicy) {
-    initChangesTree();
+    initChangesTree(root);
 
     JPanel p = new JPanel(new BorderLayout());
 
-    myToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, createChangesTreeActions(), true);
+    myToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, createChangesTreeActions(root), true);
     JPanel toolBarPanel = new JPanel(new BorderLayout());
     toolBarPanel.add(myToolBar.getComponent(), BorderLayout.CENTER);
 
@@ -125,14 +126,14 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     return field;
   }
 
-  private void initChangesTree() {
+  private void initChangesTree(JComponent root) {
     myChangesTree = createChangesTree();
     myChangesTree.setDoubleClickHandler(new Runnable() {
       public void run() {
         new ShowDifferenceAction().performIfEnabled();
       }
     });
-    myChangesTree.installPopupHandler(createChangesTreeActions());
+    myChangesTree.installPopupHandler(createChangesTreeActions(root));
   }
 
   private ChangesTreeList<Change> createChangesTree() {
@@ -157,12 +158,14 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     };
   }
 
-  private ActionGroup createChangesTreeActions() {
+  private ActionGroup createChangesTreeActions(JComponent root) {
     DefaultActionGroup result = new DefaultActionGroup();
     ShowDifferenceAction a = new ShowDifferenceAction();
-    a.registerCustomShortcutSet(CommonShortcuts.getDiff(), myChangesTree);
+    a.registerCustomShortcutSet(CommonShortcuts.getDiff(), root);
     result.add(a);
     result.add(new RevertSelectionAction());
+    result.addSeparator();
+    result.addAll(myChangesTree.getTreeActions());
     return result;
   }
 

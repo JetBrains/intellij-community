@@ -980,7 +980,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       vFile = root.findOrCreateChildData(this, fileName);
     }
     else{
-      final File tempFile = File.createTempFile(StringUtil.getPackageName(fileName), "." + StringUtil.getShortName(fileName), new File(getTempDirPath()));
+      String prefix = StringUtil.getPackageName(fileName);
+      if (prefix.length() < 3) {
+        prefix += "___";
+      }
+      final File tempFile = File.createTempFile(prefix, "." + StringUtil.getShortName(fileName), new File(getTempDirPath()));
       vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile);
     }
     VfsUtil.saveText(vFile, text);

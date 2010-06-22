@@ -24,6 +24,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.ActiveRunnable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.FocusCommand;
@@ -450,9 +451,9 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
     final Content[] old = getSelectedContents();
 
-    Runnable selection = new Runnable() {
-      public void run() {
-        if (myDisposed || getIndexOfContent(content) == -1) return;
+    final ActiveRunnable selection = new ActiveRunnable() {
+      public ActionCallback run() {
+        if (myDisposed || getIndexOfContent(content) == -1) return new ActionCallback.Rejected();
 
         for (Content each : old) {
           removeFromSelection(each);
@@ -461,17 +462,28 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
         addSelectedContent(content);
 
         if (requestFocus) {
-          requestFocus(content, forcedFocus);
+          return requestFocus(content, forcedFocus);
+        } else {
+          return new ActionCallback.Done();
         }
       }
     };
 
+    final ActionCallback result = new ActionCallback();
+    boolean enabledFocus = getFocusManager().isFocusTransferEnabled();
     if (focused || requestFocus) {
-      return getFocusManager().requestFocus(myFocusProxy, true).doWhenProcessed(selection);
+      if (enabledFocus) {
+        return getFocusManager().requestFocus(myFocusProxy, true).doWhenProcessed(new Runnable() {
+          public void run() {
+            selection.run().notify(result);
+          }
+        });
+      } else {
+        return selection.run().notify(result);
+      }
     }
     else {
-      selection.run();
-      return new ActionCallback.Done();
+      return selection.run().notify(result);
     }
   }
 

@@ -129,6 +129,9 @@ public class TestIntegrationUtils {
                                            String name,
                                            boolean automatic) {
     Template template = createTestMethodTemplate(methodKind, descriptor, targetClass, name, automatic);
+    template.setToIndent(true);
+    template.setToReformat(true);
+    template.setToShortenLongNames(true);
 
     final TextRange range = method.getTextRange();
     editor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), "");

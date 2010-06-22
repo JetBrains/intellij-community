@@ -331,8 +331,8 @@ public class MavenProject {
     return myState.myBuildDirectory;
   }
 
-  public String getGeneratedSourcesDirectory() {
-    return getBuildDirectory() + "/generated-sources";
+  public String getGeneratedSourcesDirectory(boolean testSources) {
+    return getBuildDirectory() + (testSources ? "/generated-test-sources" : "/generated-sources");
   }
 
   public String getOutputDirectory() {

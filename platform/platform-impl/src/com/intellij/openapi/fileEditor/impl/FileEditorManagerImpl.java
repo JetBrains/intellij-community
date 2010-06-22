@@ -249,6 +249,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     }
   }
 
+  @Override
+  public int getWindowSplitCount() {
+    return getSplitters().getSplitCount();
+  }
+
   @NotNull
   public EditorWindow[] getWindows() {
     return getSplitters().getWindows();
@@ -279,13 +284,13 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   public void createSplitter(final int orientation, @Nullable final EditorWindow window) {
     // window was available from action event, for example when invoked from the tab menu of an editor that is not the 'current'
     if (window != null) {
-      window.split(orientation);
+      window.split(orientation, true, null, false);
     }
     // otherwise we'll split the current window, if any
     else {
       final EditorWindow currentWindow = getSplitters().getCurrentWindow();
       if (currentWindow != null) {
-        currentWindow.split(orientation);
+        currentWindow.split(orientation, true, null, false);
       }
     }
   }
