@@ -19,9 +19,12 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.MinimizeButton;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -128,11 +131,33 @@ public class ProcessPopup  {
     builder.setCancelOnClickOutside(false);
     builder.setRequestFocus(true);
     builder.setBelongsToGlobalPopupStack(false);
+    builder.setLocateByContent(true);
 
     builder.setCancelButton(new MinimizeButton("Hide"));
 
-    myPopup = builder.createPopup();
-    myPopup.showInCenterOf(myProgressPanel.getRootPane());
+    JFrame frame = (JFrame)UIUtil.findUltimateParent(myProgressPanel);
+    Dimension contentSize = myRootContent.getPreferredSize();
+    if (frame != null) {
+      Rectangle bounds = frame.getBounds();
+      int width = Math.max(bounds.width / 4, contentSize.width);
+      int height = Math.min(bounds.height / 4, contentSize.height);
+
+      int x = (int)(bounds.getMaxX() - width);
+      int y = (int)(bounds.getMaxY() - height);
+      builder.setMinSize(new Dimension(width, height));
+      myPopup = builder.createPopup();
+
+      StatusBarEx sb = (StatusBarEx)((IdeFrame)frame).getStatusBar();
+      if (sb.isVisible()) {
+        y -= sb.getSize().height;
+      }
+
+
+      myPopup.showInScreenCoordinates(myProgressPanel.getRootPane(), new Point(x - 5, y - 5));
+    } else {
+      myPopup = builder.createPopup();
+      myPopup.showInCenterOf(myProgressPanel.getRootPane());
+    }
   }
 
   private void buildActiveContent() {

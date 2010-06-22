@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
+import java.awt.*;
 
 /**
  * @author spleaner
@@ -46,4 +47,7 @@ public interface StatusBarEx extends StatusBar, Disposable {
 
   @Deprecated
   void removeCustomIndicationComponents();
+
+  Dimension getSize();
+  boolean isVisible();
 }

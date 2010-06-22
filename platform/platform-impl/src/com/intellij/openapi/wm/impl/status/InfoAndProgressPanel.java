@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.progress.TaskInfo;
@@ -27,6 +28,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
@@ -104,11 +106,11 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     myProgressIcon.addMouseListener(new MouseAdapter() {
       @Override
       public void mousePressed(MouseEvent e) {
-        if (!myPopup.isShowing()) {
-          openProcessPopup();
-        } else {
-          hideProcessPopup();
-        }
+        handle(e);
+      }
+      @Override
+      public void mouseReleased(MouseEvent e) {
+        handle(e);
       }
     });
 
@@ -120,6 +122,19 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     myPopup = new ProcessPopup(this);
 
     restoreEmptyStatus();
+  }
+
+  private void handle(MouseEvent e) {
+    if (UIUtil.isActionClick(e, MouseEvent.MOUSE_PRESSED)) {
+      if (!myPopup.isShowing()) {
+        openProcessPopup();
+      } else {
+        hideProcessPopup();
+      }
+    } else if (e.isPopupTrigger()) {
+      ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction("BackgroundTasks");
+      ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group).getComponent().show(e.getComponent(), e.getX(), e.getY());
+    }
   }
 
   @NotNull
@@ -160,6 +175,9 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       }
       else {
         buildInProcessCount();
+        if (myInfos.size() > 1 && Registry.is("ide.windowSystem.autoShowProcessPopup")) {
+          openProcessPopup();
+        }
       }
 
       runQuery();
@@ -412,9 +430,12 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       inline.getComponent().addMouseListener(new MouseAdapter() {
         @Override
         public void mousePressed(MouseEvent e) {
-          if (!myPopup.isShowing()) {
-            openProcessPopup();
-          }
+          handle(e);
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent e) {
+          handle(e);
         }
       });
     }
