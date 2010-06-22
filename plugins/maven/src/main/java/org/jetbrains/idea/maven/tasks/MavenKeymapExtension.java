@@ -96,11 +96,6 @@ public class MavenKeymapExtension implements KeymapExtension {
     return result;
   }
 
-  public static void updateActions(Project project) {
-    clearActions(project);
-    doUpdateActions(project, MavenProjectsManager.getInstance(project).getNonIgnoredProjects());
-  }
-
   public static void updateActions(Project project, List<MavenProject> mavenProjects) {
     clearActions(project, mavenProjects);
     doUpdateActions(project, mavenProjects);
