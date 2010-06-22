@@ -87,7 +87,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, Autoscroll, Q
   public void setUI(final TreeUI ui) {
     TreeUI actualUI = ui;
     if (SystemInfo.isMac && !isCustomUI() && UIUtil.isUnderAquaLookAndFeel() && !(ui instanceof UIUtil.MacTreeUI)) {
-      actualUI = new UIUtil.MacTreeUI();
+      actualUI = new UIUtil.MacTreeUI(isMacWideSelection());
     }
 
     super.setUI(actualUI);
@@ -102,6 +102,10 @@ public class Tree extends JTree implements ComponentWithEmptyText, Autoscroll, Q
 
   protected boolean isCustomUI() {
     return false;
+  }
+
+  protected boolean isMacWideSelection() {
+    return true;
   }
 
   public String getEmptyText() {
