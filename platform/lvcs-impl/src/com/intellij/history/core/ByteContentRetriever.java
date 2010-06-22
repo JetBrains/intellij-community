@@ -24,7 +24,9 @@ import com.intellij.history.core.changes.ContentChange;
 import com.intellij.history.core.storage.Content;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
+import com.intellij.history.integration.IdeaGateway;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,14 +42,14 @@ public class ByteContentRetriever extends ChangeSetsProcessor {
   private long myCurrentFileTimestamp;
   private Content myCurrentFileContent;
 
-  public ByteContentRetriever(LocalHistoryFacade vcs, RootEntry root, String path, FileRevisionTimestampComparator c) {
-    super(path);
+  public ByteContentRetriever(IdeaGateway gateway, LocalHistoryFacade vcs, VirtualFile file, FileRevisionTimestampComparator c) {
+    super(file.getPath());
     myVcs = vcs;
     myComparator = c;
 
-    Entry entry = root.getEntry(path);
-    myCurrentFileContent = entry.getContent();
-    myCurrentFileTimestamp = entry.getTimestamp();
+    Entry e = gateway.createTransientEntry(file);
+    myCurrentFileContent = e.getContent();
+    myCurrentFileTimestamp = e.getTimestamp();
   }
 
   public byte[] getResult() {

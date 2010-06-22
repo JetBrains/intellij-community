@@ -145,4 +145,7 @@ public abstract class IdeFocusManager {
     return fm;
   }
 
+  public Component getFocusOwner() {
+    return isFocusBeingTransferred() ? null : KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+  }
 }

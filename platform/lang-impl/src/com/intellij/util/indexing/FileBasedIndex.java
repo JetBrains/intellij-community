@@ -48,7 +48,10 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLock;
+import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.EverythingGlobalScope;
@@ -213,9 +216,8 @@ public class FileBasedIndex implements ApplicationComponent {
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       public void before(List<? extends VFileEvent> events) {
         for (VFileEvent event : events) {
-          final Object requestor = event.getRequestor();
-          if (requestor instanceof FileDocumentManager || requestor instanceof PsiManager) {
-            cleanupMemoryStorage();
+          if (event.getRequestor() != null) {
+            cleanupMemoryStorage(); // the event was originated from inside IDEA
             break;
           }
         }

@@ -71,7 +71,7 @@ public class StoredContent extends Content {
     //todo handle unavailable content 
     //if (!isAvailable()) throw new RuntimeException("content is not available");
     try {
-      if (myContentId ==UNAVAILABLE) return ArrayUtil.EMPTY_BYTE_ARRAY;
+      if (myContentId == UNAVAILABLE) return ArrayUtil.EMPTY_BYTE_ARRAY;
       return getFS().contentsToByteArray(myContentId);
     }
     catch (IOException e) {

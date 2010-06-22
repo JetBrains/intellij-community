@@ -159,6 +159,10 @@ public abstract class ActionManager implements ApplicationComponent {
 
   public abstract void removeTimerListener(TimerListener listener);
 
+  public abstract void addTransparrentTimerListener(int delay, TimerListener listener);
+
+  public abstract void removeTransparrentTimerListener(TimerListener listener);
+
   public abstract ActionCallback tryToExecute(@NotNull AnAction action, @NotNull InputEvent inputEvent, @Nullable Component contextComponent,
                                               @Nullable String place, boolean now);
 
