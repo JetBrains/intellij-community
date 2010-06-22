@@ -242,9 +242,14 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
 
   @NotNull
   private Project getProject() {
-    Project result = isUpdate() ? getProjectToUpdate() : null;
-    if (result == null) result = ProjectManager.getInstance().getDefaultProject();
-    return result;
+    return ApplicationManager.getApplication().runReadAction(new Computable<Project>() {
+      @Override
+      public Project compute() {
+        Project result = isUpdate() ? getProjectToUpdate() : null;
+        if (result == null || result.isDisposed()) result = ProjectManager.getInstance().getDefaultProject();
+        return result;
+      }
+    });
   }
 
   public void setFiles(List<VirtualFile> files) {
