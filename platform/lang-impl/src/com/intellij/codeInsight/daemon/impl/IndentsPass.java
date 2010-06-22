@@ -140,7 +140,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
 
     List<IndentGuideDescriptor> descriptors = buildDescriptors();
 
-    List<TextRange> ranges = new ArrayList<TextRange>();
+    List<TextRange> ranges = new ArrayList<TextRange>(descriptors.size());
     for (IndentGuideDescriptor descriptor : descriptors) {
       int endOffset =
         descriptor.endLine < myDocument.getLineCount() ? myDocument.getLineStartOffset(descriptor.endLine) : myDocument.getTextLength();
