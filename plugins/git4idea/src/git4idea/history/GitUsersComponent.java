@@ -17,7 +17,7 @@ package git4idea.history;
 
 import com.intellij.lifecycle.AtomicSectionsAware;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -39,7 +39,6 @@ import git4idea.history.browser.ChangesFilter;
 import git4idea.history.browser.GitCommit;
 import git4idea.history.browser.LowLevelAccess;
 import git4idea.history.browser.LowLevelAccessImpl;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
@@ -48,7 +47,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-public class GitUsersComponent implements ProjectComponent {
+public class GitUsersComponent {
   private final static int ourPackSize = 50;
   private static final int ourBackInterval = 60 * 1000;
   private static final int ourForwardInterval = 100 * 60 * 1000;
@@ -96,7 +95,7 @@ public class GitUsersComponent implements ProjectComponent {
   }
 
   public static GitUsersComponent getInstance(final Project project) {
-    return project.getComponent(GitUsersComponent.class);
+    return ServiceManager.getService(project, GitUsersComponent.class);
   }
 
   @Nullable
@@ -219,23 +218,6 @@ public class GitUsersComponent implements ProjectComponent {
         return data;
       }
     };
-  }
-
-  public void projectClosed() {
-  }
-
-  public void projectOpened() {
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return getClass().getName();
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 
   private class UsersData {
