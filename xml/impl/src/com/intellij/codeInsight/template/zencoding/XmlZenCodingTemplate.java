@@ -20,10 +20,13 @@ import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.TemplateInvokationListener;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -191,7 +194,7 @@ public class XmlZenCodingTemplate extends ZenCodingTemplate {
     if (template == null && !isXML11ValidQName(prefix)) {
       return null;
     }
-    XmlTemplateToken token = parseSelectors(key);
+    final XmlTemplateToken token = parseSelectors(key);
     if (token == null) {
       return null;
     }
@@ -203,13 +206,17 @@ public class XmlZenCodingTemplate extends ZenCodingTemplate {
     }
     assert prefix.equals(token.getKey());
     token.setTemplate(template);
-    XmlTag tag = parseXmlTagInTemplate(template.getString(), callback, true);
+    final XmlTag tag = parseXmlTagInTemplate(template.getString(), callback, true);
     if (token.getAttribute2Value().size() > 0 && tag == null) {
       return null;
     }
     if (tag != null) {
       if (!XmlZenCodingInterpreter.containsAttrsVar(template) && token.getAttribute2Value().size() > 0) {
-        addMissingAttributes(tag, token.getAttribute2Value());
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            addMissingAttributes(tag, token.getAttribute2Value());
+          }
+        });
       }
       token.setTag(tag);
     }
@@ -256,6 +263,10 @@ public class XmlZenCodingTemplate extends ZenCodingTemplate {
   static XmlTag parseXmlTagInTemplate(String templateString, CustomTemplateCallback callback, boolean createPhysicalFile) {
     XmlFile xmlFile = (XmlFile)PsiFileFactory.getInstance(callback.getProject())
       .createFileFromText("dummy.xml", StdFileTypes.XML, templateString, LocalTimeCounter.currentTime(), createPhysicalFile);
+    VirtualFile vFile = xmlFile.getVirtualFile();
+    if (vFile != null) {
+      vFile.putUserData(UndoManager.DONT_RECORD_UNDO, Boolean.TRUE);
+    }
     XmlDocument document = xmlFile.getDocument();
     return document == null ? null : document.getRootTag();
   }
