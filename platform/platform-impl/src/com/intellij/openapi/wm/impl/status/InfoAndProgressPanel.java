@@ -127,7 +127,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   private void handle(MouseEvent e) {
     if (UIUtil.isActionClick(e, MouseEvent.MOUSE_PRESSED)) {
       if (!myPopup.isShowing()) {
-        openProcessPopup();
+        openProcessPopup(true);
       } else {
         hideProcessPopup();
       }
@@ -176,7 +176,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       else {
         buildInProcessCount();
         if (myInfos.size() > 1 && Registry.is("ide.windowSystem.autoShowProcessPopup")) {
-          openProcessPopup();
+          openProcessPopup(false);
         }
       }
 
@@ -233,7 +233,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     return original;
   }
 
-  private void openProcessPopup() {
+  private void openProcessPopup(boolean requestFocus) {
     synchronized (myOriginals) {
       if (myPopup.isShowing()) return;
       if (!myOriginals.isEmpty()) {
@@ -244,7 +244,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
         myShouldClosePopupAndOnProcessFinish = false;
         restoreEmptyStatus();
       }
-      myPopup.show();
+      myPopup.show(requestFocus);
     }
   }
 
@@ -448,7 +448,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       hideProcessPopup();
     }
     else {
-      openProcessPopup();
+      openProcessPopup(true);
     }
   }
 
@@ -504,7 +504,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
   public void setProcessWindowOpen(final boolean open) {
     if (open) {
-      openProcessPopup();
+      openProcessPopup(true);
     }
     else {
       hideProcessPopup();

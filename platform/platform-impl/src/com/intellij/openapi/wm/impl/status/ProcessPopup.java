@@ -114,7 +114,7 @@ public class ProcessPopup  {
     myProcessBox.remove(indicator.getComponent());
   }
 
-  public void show() {
+  public void show(boolean requestFocus) {
     JComponent toFocus = myRootContent.getTargetComponent() == myActiveContentComponent ? myActiveFocusedContent : myInactiveContentComponent;
 
     final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(myRootContent, toFocus);
@@ -129,7 +129,7 @@ public class ProcessPopup  {
     builder.setDimensionServiceKey(null, "ProcessPopupWindow", true);
     builder.setMinSize(getMinSize());
     builder.setCancelOnClickOutside(false);
-    builder.setRequestFocus(true);
+    builder.setRequestFocus(requestFocus);
     builder.setBelongsToGlobalPopupStack(false);
     builder.setLocateByContent(true);
 
