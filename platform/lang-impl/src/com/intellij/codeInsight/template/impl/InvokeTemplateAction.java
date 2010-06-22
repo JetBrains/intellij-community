@@ -57,6 +57,9 @@ public class InvokeTemplateAction extends AnAction {
     return caption + " ";
   }
 
+  public TemplateImpl getTemplate() {
+    return myTemplate;
+  }
 
   public void actionPerformed(AnActionEvent e) {
     final Document document = myEditor.getDocument();
