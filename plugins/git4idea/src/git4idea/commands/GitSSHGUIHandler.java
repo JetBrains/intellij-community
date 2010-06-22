@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.git4idea.ssh;
+package git4idea.commands;
 
 import com.intellij.ide.passwordSafe.ui.PasswordSafePromptDialog;
 import com.intellij.openapi.project.Project;
@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.util.ui.UIUtil;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.git4idea.ssh.GitSSHService;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
@@ -78,10 +79,9 @@ public class GitSSHGUIHandler implements GitSSHService.Handler {
    */
   public String askPassphrase(final String username, final String keyPath, boolean resetPassword, final String lastError) {
     String error = processLastError(resetPassword, lastError);
-    String p = PasswordSafePromptDialog.askPassphrase(myProject, GitBundle.getString("ssh.ask.passphrase.title"),
-                                                      GitBundle.message("ssh.askPassphrase.message", keyPath, username),
-                                                      GitSSHGUIHandler.class, "PASSPHRASE:" + keyPath, resetPassword, error);
-    return p == null ? "" : p;
+    return PasswordSafePromptDialog.askPassphrase(myProject, GitBundle.getString("ssh.ask.passphrase.title"),
+                                                  GitBundle.message("ssh.askPassphrase.message", keyPath, username),
+                                                  GitSSHGUIHandler.class, "PASSPHRASE:" + keyPath, resetPassword, error);
   }
 
   /**
@@ -155,10 +155,9 @@ public class GitSSHGUIHandler implements GitSSHService.Handler {
 
   public String askPassword(final String username, boolean resetPassword, final String lastError) {
     String error = processLastError(resetPassword, lastError);
-    String p = PasswordSafePromptDialog
+    return PasswordSafePromptDialog
       .askPassword(myProject, GitBundle.getString("ssh.password.title"), GitBundle.message("ssh.password.message", username),
                    GitSSHGUIHandler.class, "PASSWORD:" + username, resetPassword, error);
-    return p == null ? "" : p;
   }
 
   /**

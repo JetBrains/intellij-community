@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,15 +27,7 @@ import java.util.Vector;
  * Client for IDEA SSH GUI event handler
  */
 @SuppressWarnings({"UseOfObsoleteCollectionType"})
-public class GitSSHIdeaClient implements GitSSHHandler {
-  /**
-   * The string used to indicate missing value
-   */
-  private static final String XML_RPC_NULL_STRING = "\u0000";
-  /**
-   * Name of the handler
-   */
-  @NonNls private static final String HANDLER_NAME = "Git4ideaSSHHandler";
+public class GitSSHXmlRcpClient implements GitSSHHandler {
   /**
    * XML RPC client
    */
@@ -48,7 +40,7 @@ public class GitSSHIdeaClient implements GitSSHHandler {
    * @param batchMode if true, the client is run in the batch mode, so nothing should be prompted
    * @throws IOException if there is IO problem
    */
-  GitSSHIdeaClient(final int port, final boolean batchMode) throws IOException {
+  GitSSHXmlRcpClient(final int port, final boolean batchMode) throws IOException {
     //noinspection HardCodedStringLiteral
     myClient = batchMode ? null : new XmlRpcClientLite("localhost", port);
   }
@@ -99,7 +91,11 @@ public class GitSSHIdeaClient implements GitSSHHandler {
    */
   @Nullable
   @SuppressWarnings("unchecked")
-  public String askPassphrase(final int handler, final String username, final String keyPath, final boolean resetPassword, final String lastError) {
+  public String askPassphrase(final int handler,
+                              final String username,
+                              final String keyPath,
+                              final boolean resetPassword,
+                              final String lastError) {
     if (myClient == null) {
       return null;
     }
@@ -183,14 +179,14 @@ public class GitSSHIdeaClient implements GitSSHHandler {
 
   /**
    * Since XML RPC client does not understand null values, the value should be
-   * adjusted. This is done by replacing string {@code "\u0000"} with null.
+   * adjusted (The password is {@code "-"} if null, {@code "+"+s) if non-null).
    *
    * @param s a value to adjust
    * @return adjusted value.
    */
   @Nullable
   private static String adjustNull(final String s) {
-    return XML_RPC_NULL_STRING.equals(s) ? null : s;
+    return s.charAt(0) == '-' ? null : s.substring(1);
   }
 
   /**

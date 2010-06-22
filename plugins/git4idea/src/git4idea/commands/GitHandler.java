@@ -34,7 +34,7 @@ import git4idea.GitVcs;
 import git4idea.config.GitVcsSettings;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.git4idea.ssh.GitSSHGUIHandler;
+import org.jetbrains.git4idea.ssh.GitSSHHandler;
 import org.jetbrains.git4idea.ssh.GitSSHService;
 
 import java.io.File;
@@ -175,7 +175,7 @@ public abstract class GitHandler {
     }
     myWorkingDirectory = directory;
     myCommandLine = new GeneralCommandLine();
-    myCommandLine.setExePath(mySettings.GIT_EXECUTABLE);
+    myCommandLine.setExePath(mySettings.getGitExecutable());
     myCommandLine.setWorkingDirectory(myWorkingDirectory);
     if (command.name().length() > 0) {
       myCommandLine.addParameter(command.name());
@@ -301,6 +301,16 @@ public abstract class GitHandler {
   }
 
   /**
+   * Add parameters from the list
+   *
+   * @param parameters the parameters to add
+   */
+  public void addParameters(List<String> parameters) {
+    checkNotStarted();
+    myCommandLine.addParameters(parameters);
+  }
+
+  /**
    * Add file path parameters. The parameters are made relative to the working directory
    *
    * @param parameters a parameters to add
@@ -413,11 +423,12 @@ public abstract class GitHandler {
         log.debug("running git: " + myCommandLine.getCommandLineString() + " in " + myWorkingDirectory);
       }
       if (!myNoSSHFlag && mySettings.isIdeaSsh()) {
-        GitSSHService ssh = GitSSHService.getInstance();
-        myEnv.put(GitSSHService.GIT_SSH_ENV, ssh.getScriptPath().getPath());
+        GitSSHService ssh = GitSSHIdeaService.getInstance();
+        myEnv.put(GitSSHHandler.GIT_SSH_ENV, ssh.getScriptPath().getPath());
         myHandlerNo = ssh.registerHandler(new GitSSHGUIHandler(myProject));
         myEnvironmentCleanedUp = false;
-        myEnv.put(GitSSHService.SSH_HANDLER_ENV, Integer.toString(myHandlerNo));
+        myEnv.put(GitSSHHandler.SSH_HANDLER_ENV, Integer.toString(myHandlerNo));
+        myEnv.put(GitSSHHandler.SSH_PORT_ENV, Integer.toString(ssh.getXmlRcpPort()));
       }
       myCommandLine.setEnvParams(myEnv);
       // start process
@@ -519,7 +530,7 @@ public abstract class GitHandler {
    */
   private synchronized void cleanupEnv() {
     if (!myNoSSHFlag && !myEnvironmentCleanedUp) {
-      GitSSHService ssh = GitSSHService.getInstance();
+      GitSSHService ssh = GitSSHIdeaService.getInstance();
       myEnvironmentCleanedUp = true;
       ssh.unregisterHandler(myHandlerNo);
     }
@@ -651,5 +662,13 @@ public abstract class GitHandler {
   public synchronized void resumeWriteLock() {
     assert mySuspendAction != null;
     myResumeAction.run();
+  }
+
+
+  /**
+   * @return true if the command line is too big
+   */
+  public boolean isLargeCommandLine() {
+    return myCommandLine.getCommandLineString().length() > GitFileUtils.FILE_PATH_LIMIT;
   }
 }

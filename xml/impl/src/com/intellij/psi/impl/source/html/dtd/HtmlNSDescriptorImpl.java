@@ -83,7 +83,7 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware {
   }
 
   public XmlElementDescriptor getElementDescriptor(@NotNull XmlTag tag) {
-    String name = tag.getName();
+    String name = tag.getLocalName();
     if (!myCaseSensitive) name = name.toLowerCase();
 
     XmlElementDescriptor xmlElementDescriptor = buildDeclarationMap().get(name);

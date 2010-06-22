@@ -127,7 +127,13 @@ public class EditorColorsManagerImpl extends EditorColorsManager
 
     //Get color scheme from EPs
     for (BundledColorSchemesProvider provider : BundledColorSchemesProvider.EP_NAME.getExtensions()) {
-      final String extensionPath = provider.getDefaultSchemaExtensionPath();
+      final String extensionPath;
+      try {
+        extensionPath = provider.getDefaultSchemaExtensionPath();
+      }
+      catch (AbstractMethodError e) {
+        continue;
+      }
       if (extensionPath == null) {
         continue;
       }

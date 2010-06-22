@@ -15,10 +15,16 @@
  */
 package git4idea.rebase;
 
+import com.intellij.openapi.diagnostic.Logger;
+
 /**
  * The entry for rebase editor
  */
 class GitRebaseEntry {
+  /**
+   * the logger
+   */
+  private static final Logger log = Logger.getInstance(GitRebaseEntry.class.getName());
   /**
    * The commit hash
    */
@@ -68,7 +74,12 @@ class GitRebaseEntry {
    * @param action a new action to set
    */
   public void setAction(final Action action) {
-    myAction = action;
+    if (action == null) {
+      log.assertTrue(false, "The action must not be null");
+    }
+    else {
+      myAction = action;
+    }
   }
 
 
@@ -91,5 +102,6 @@ class GitRebaseEntry {
     /**
      * the squash action (for two or more commits)
      */
-    squash, }
+    squash,
+  }
 }

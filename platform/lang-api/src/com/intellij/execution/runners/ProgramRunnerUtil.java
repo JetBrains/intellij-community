@@ -38,11 +38,15 @@ public class ProgramRunnerUtil {
   }
 
   public static void handleExecutionError(final Project project, final RunProfile runProfile, final ExecutionException e) {
+    handleExecutionError(project, runProfile != null? runProfile.getName() : "Run profile", e);
+  }
+
+  public static void handleExecutionError(final Project project, final String runProfileName, final ExecutionException e) {
     if (e instanceof RunCanceledByUserException) {
       return;
     }
 
-    String message = ExecutionBundle.message("error.running.configuration.with.error.error.message", runProfile != null? runProfile.getName() : "Run profile", e.getMessage());
+    String message = ExecutionBundle.message("error.running.configuration.with.error.error.message", runProfileName, e.getMessage());
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       LOG.error(message);
     }

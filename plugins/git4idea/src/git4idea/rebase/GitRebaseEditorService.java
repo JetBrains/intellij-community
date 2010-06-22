@@ -21,12 +21,12 @@ import com.intellij.openapi.components.ServiceManager;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitLineHandler;
-import git4idea.commands.ScriptGenerator;
 import gnu.trove.THashMap;
 import org.apache.commons.codec.DecoderException;
 import org.apache.xmlrpc.XmlRpcClientLite;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.git4idea.util.ScriptGenerator;
 
 import java.util.Map;
 import java.util.Random;

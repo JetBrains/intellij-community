@@ -68,13 +68,15 @@ public class GitUpdateOptionsPanel {
 
   /**
    * Check if the panel is modified relatively to settings
+   *
    * @param settings the settings to compare to
    * @return true if the UI modified the settings
    */
   public boolean isModified(GitVcsSettings settings) {
     UpdateType type = getUpdateType();
-    return type != settings.UPDATE_TYPE || myStashChangesCheckBox.isSelected() != settings.UPDATE_STASH;
+    return type != settings.getUpdateType() || myStashChangesCheckBox.isSelected() != settings.isStashOnUpdate();
   }
+
 
   /**
    * @return get the currently selected update type
@@ -87,7 +89,8 @@ public class GitUpdateOptionsPanel {
     }
     else if (MERGE.equals(typeVal)) {
       type = UpdateType.MERGE;
-    } else if(DEFAULT.equals(typeVal)) {
+    }
+    else if (DEFAULT.equals(typeVal)) {
       type = UpdateType.BRANCH_DEFAULT;
     }
     assert type != null;
@@ -96,21 +99,23 @@ public class GitUpdateOptionsPanel {
 
   /**
    * Save configuration to settings object
+   *
    * @param settings the settings to save to
    */
   public void applyTo(GitVcsSettings settings) {
-    settings.UPDATE_TYPE = getUpdateType();
-    settings.UPDATE_STASH = myStashChangesCheckBox.isSelected();
+    settings.setUpdateType(getUpdateType());
+    settings.setUpdateStash(myStashChangesCheckBox.isSelected());
   }
 
   /**
    * Update panel according to settings
+   *
    * @param settings the settings to use
    */
   public void updateFrom(GitVcsSettings settings) {
-    myStashChangesCheckBox.setSelected(settings.UPDATE_STASH);
+    myStashChangesCheckBox.setSelected(settings.isStashOnUpdate());
     String value = null;
-    switch(settings.UPDATE_TYPE) {
+    switch (settings.getUpdateType()) {
       case REBASE:
         value = REBASE;
         break;
@@ -121,7 +126,7 @@ public class GitUpdateOptionsPanel {
         value = DEFAULT;
         break;
       default:
-        assert false : "Unknown value of update type: "+settings.UPDATE_TYPE;
+        assert false : "Unknown value of update type: " + settings.getUpdateType();
     }
     myTypeComboBox.setSelectedItem(value);
   }

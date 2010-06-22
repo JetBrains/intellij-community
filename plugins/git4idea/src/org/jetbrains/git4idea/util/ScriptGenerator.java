@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.commands;
+package org.jetbrains.git4idea.util;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -56,6 +57,10 @@ public class ScriptGenerator {
    */
   private final Class myMainClass;
   /**
+   * The temporary directory to use or null, if system directory should be used
+   */
+  @Nullable private final File myTempDir;
+  /**
    * The class paths for the script
    */
   private final ArrayList<String> myPaths = new ArrayList<String>();
@@ -69,11 +74,23 @@ public class ScriptGenerator {
    *
    * @param prefix    the script prefix
    * @param mainClass the script main class
+   * @param tempDir   the temporary directory to use. if null, system default is used.
    */
-  public ScriptGenerator(final String prefix, final Class mainClass) {
+  public ScriptGenerator(final String prefix, final Class mainClass, File tempDir) {
     myPrefix = prefix;
     myMainClass = mainClass;
+    myTempDir = tempDir;
     addClasses(myMainClass);
+  }
+
+  /**
+   * A constructor
+   *
+   * @param prefix    the script prefix
+   * @param mainClass the script main class
+   */
+  public ScriptGenerator(final String prefix, final Class mainClass) {
+    this(prefix, mainClass, null);
   }
 
   /**
@@ -132,7 +149,7 @@ public class ScriptGenerator {
    */
   @SuppressWarnings({"HardCodedStringLiteral"})
   public File generate() throws IOException {
-    File scriptPath = File.createTempFile(myPrefix, SCRIPT_EXT);
+    File scriptPath = myTempDir != null ? File.createTempFile(myPrefix, SCRIPT_EXT, myTempDir) : File.createTempFile(myPrefix, SCRIPT_EXT);
     scriptPath.deleteOnExit();
     PrintWriter out = new PrintWriter(new FileWriter(scriptPath));
     try {
@@ -144,7 +161,7 @@ public class ScriptGenerator {
       }
       String line = commandLine();
       if (SystemInfo.isWindows) {
-        line += " %1 %2 %3 %4 %5 %6 %7 %8 %9";
+        line += " %*";
       }
       else {
         line += " \"$@\"";

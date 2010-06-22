@@ -79,7 +79,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   /**
    * the file name prefix for commit message file
    */
-  @NonNls private static final String GIT_COMMIT_MSG_FILE_PREFIX = "git-comit-msg-";
+  @NonNls private static final String GIT_COMMIT_MSG_FILE_PREFIX = "git-commit-msg-";
   /**
    * the file extension for commit message file
    */
@@ -167,6 +167,11 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    */
   public List<VcsException> commit(@NotNull List<Change> changes, @NotNull String message) {
     List<VcsException> exceptions = new ArrayList<VcsException>();
+    if (message.length() == 0) {
+      //noinspection ThrowableInstanceNeverThrown
+      exceptions.add(new VcsException("Empty commit message is not supported for the Git"));
+      return exceptions;
+    }
     Map<VirtualFile, List<Change>> sortedChanges = sortChangesByGitRoot(changes, exceptions);
     if (GitConvertFilesDialog.showDialogIfNeeded(myProject, mySettings, sortedChanges, exceptions)) {
       for (Map.Entry<VirtualFile, List<Change>> entry : sortedChanges.entrySet()) {
@@ -199,7 +204,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
                 try {
                   files.addAll(added);
                   files.addAll(removed);
-                  commit(myProject, root, files, messageFile, myNextCommitAuthor).run();
+                  commit(myProject, root, files, messageFile, myNextCommitAuthor);
                 }
                 catch (VcsException ex) {
                   if (!isMergeCommit(ex)) {
@@ -416,12 +421,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
     if (!removed.isEmpty()) {
       try {
-        GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.RM);
-        handler.addParameters("--ignore-unmatch");
-        handler.endOptions();
-        handler.addRelativePaths(removed);
-        handler.setNoSSH(true);
-        handler.run();
+        GitFileUtils.delete(project, root, removed, "--ignore-unmatch");
       }
       catch (VcsException ex) {
         exceptions.add(ex);
@@ -489,21 +489,28 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    * @param message          a message file to use
    * @param nextCommitAuthor a author for the next commit
    * @return a simple handler that does the task
+   * @throws VcsException in case of git problem
    */
-  private static GitSimpleHandler commit(Project project,
-                                         VirtualFile root,
-                                         Collection<FilePath> files,
-                                         File message,
-                                         final String nextCommitAuthor) {
-    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.COMMIT);
-    handler.setNoSSH(true);
-    handler.addParameters("--only", "-F", message.getAbsolutePath());
-    if (nextCommitAuthor != null) {
-      handler.addParameters("--author=" + nextCommitAuthor);
+  private static void commit(Project project, VirtualFile root, Collection<FilePath> files, File message, final String nextCommitAuthor)
+    throws VcsException {
+    boolean isFirst = true;
+    for (List<String> paths : GitFileUtils.chunkPaths(root, files)) {
+      GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.COMMIT);
+      handler.setNoSSH(true);
+      if (isFirst) {
+        isFirst = false;
+      }
+      else {
+        handler.addParameters("--amend");
+      }
+      handler.addParameters("--only", "-F", message.getAbsolutePath());
+      if (nextCommitAuthor != null) {
+        handler.addParameters("--author=" + nextCommitAuthor);
+      }
+      handler.endOptions();
+      handler.addParameters(paths);
+      handler.run();
     }
-    handler.endOptions();
-    handler.addRelativePaths(files);
-    return handler;
   }
 
 
@@ -614,7 +621,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       c.gridy = 1;
       c.weightx = 1;
       c.fill = GridBagConstraints.HORIZONTAL;
-      myAuthor = new JComboBox(mySettings.PREVIOUS_COMMIT_AUTHORS);
+      myAuthor = new JComboBox(mySettings.getCommitAuthors());
       myAuthor.insertItemAt("", 0);
       myAuthor.setSelectedItem("");
       myAuthor.setEditable(true);

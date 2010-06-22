@@ -23,14 +23,10 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.xmlb.XmlSerializerUtil;
-import org.jetbrains.annotations.NonNls;
 
-import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Git VCS settings
@@ -40,37 +36,23 @@ import java.util.LinkedList;
   storages = {@Storage(
     id = "ws",
     file = "$WORKSPACE_FILE$")})
-public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings> {
+public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.State> {
   /**
    * Default SSH policy
    */
   private static final SshExecutable DEFAULT_SSH = SshExecutable.IDEA_SSH;
   /**
-   * the default cygwin executable
+   * The git application settings
    */
-  @NonNls private static final String[] DEFAULT_WINDOWS_PATHS =
-    {"C:\\cygwin\\bin", "C:\\Program Files\\Git\\bin", "C:\\Program Files (x86)\\Git\\bin"};
-  /**
-   * Windows executable name
-   */
-  @NonNls private static final String DEFAULT_WINDOWS_GIT = "git.exe";
-  /**
-   * Default UNIX paths
-   */
-  @NonNls private static final String[] DEFAULT_UNIX_PATHS = {"/usr/local/bin", "/usr/bin", "/opt/local/bin", "/opt/bin"};
-  /**
-   * UNIX executable name
-   */
-  @NonNls private static final String DEFAULT_UNIX_GIT = "git";
-
+  private final GitVcsApplicationSettings myAppSettings;
   /**
    * The default executable for GIT
    */
-  public String GIT_EXECUTABLE = defaultGit();
+  private String myGitExecutable;
   /**
    * The previously entered authors of the commit (up to {@value #PREVIOUS_COMMIT_AUTHORS_LIMIT})
    */
-  public String[] PREVIOUS_COMMIT_AUTHORS = {};
+  private List<String> myCommitAuthors = new ArrayList<String>();
   /**
    * Limit for previous commit authors
    */
@@ -78,27 +60,137 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings> 
   /**
    * Checkout includes tags
    */
-  public Boolean CHECKOUT_INCLUDE_TAGS;
+  private boolean myCheckoutIncludesTags = false;
   /**
    * IDEA SSH should be used instead of native SSH.
    */
-  public SshExecutable SSH_EXECUTABLE = DEFAULT_SSH;
+  private SshExecutable mySshExecutable = DEFAULT_SSH;
   /**
-   * True if stash/unstash operation should be performed before update.
+   * The policy that specifies how files are saved before update or rebase
    */
   public boolean UPDATE_STASH = true;
   /**
    * The type of update operation to perform
    */
-  public UpdateType UPDATE_TYPE = UpdateType.BRANCH_DEFAULT;
+  private UpdateType myUpdateType = UpdateType.BRANCH_DEFAULT;
   /**
    * The crlf conversion policy
    */
-  public ConversionPolicy LINE_SEPARATORS_CONVERSION = ConversionPolicy.PROJECT_LINE_SEPARATORS;
+  private ConversionPolicy myLineSeparatorsConversion = ConversionPolicy.PROJECT_LINE_SEPARATORS;
   /**
    * If true, the dialog is shown with conversion options
    */
-  public boolean LINE_SEPARATORS_CONVERSION_ASK = true;
+  private boolean myAskBeforeLineSeparatorConversion = true;
+
+  /**
+   * The constructor
+   *
+   * @param appSettings the application settings instance
+   */
+  public GitVcsSettings(GitVcsApplicationSettings appSettings) {
+    myAppSettings = appSettings;
+    myGitExecutable = myAppSettings.defaultGit();
+  }
+
+  /**
+   * @return save policy for push active branches dialog
+   */
+  public boolean isStashOnUpdate() {
+    return UPDATE_STASH;
+  }
+
+  /**
+   * Change save policy for push active branches dialog
+   *
+   * @param value the new policy value
+   */
+  public void setUpdateStash(boolean value) {
+    UPDATE_STASH = value;
+  }
+
+  /**
+   * @return true if before converting line separators user is asked
+   */
+  public boolean askBeforeLineSeparatorConversion() {
+    return myAskBeforeLineSeparatorConversion;
+  }
+
+  /**
+   * Modify user notification policy about line separators
+   *
+   * @param askBeforeLineSeparatorConversion
+   *         a new policy value
+   */
+  public void setAskBeforeLineSeparatorConversion(boolean askBeforeLineSeparatorConversion) {
+    myAskBeforeLineSeparatorConversion = askBeforeLineSeparatorConversion;
+  }
+
+  /**
+   * @return policy for converting line separators
+   */
+  public ConversionPolicy getLineSeparatorsConversion() {
+    return myLineSeparatorsConversion;
+  }
+
+  /**
+   * Modify line separators policy
+   *
+   * @param lineSeparatorsConversion the new policy value
+   */
+  public void setLineSeparatorsConversion(ConversionPolicy lineSeparatorsConversion) {
+    myLineSeparatorsConversion = lineSeparatorsConversion;
+  }
+
+  /**
+   * @return update type
+   */
+  public UpdateType getUpdateType() {
+    return myUpdateType;
+  }
+
+  /**
+   * Set update type
+   *
+   * @param updateType the update type to set
+   */
+  public void setUpdateType(UpdateType updateType) {
+    myUpdateType = updateType;
+  }
+
+  /**
+   * @return true if drop down in checkout dialog includes tags
+   */
+  public boolean isCheckoutIncludesTags() {
+    return myCheckoutIncludesTags;
+  }
+
+  /**
+   * Record whether checkout dialog option included tags last time
+   *
+   * @param value the value to record
+   */
+  public void setCheckoutIncludesTags(boolean value) {
+    myCheckoutIncludesTags = value;
+  }
+
+
+  /**
+   * Set git executable path
+   *
+   * @param path the path to git
+   */
+  public void setGitExecutable(String path) {
+    myGitExecutable = path;
+    myAppSettings.setPathToGit(path);
+  }
+
+  /**
+   * @return the path to git executable
+   */
+  public String getGitExecutable() {
+    return myGitExecutable;
+  }
+
 
   /**
    * Save an author of the commit and make it the first one. If amount of authors exceeds the limit, remove least recently selected author.
@@ -106,27 +198,49 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings> 
    * @param author an author to save
    */
   public void saveCommitAuthor(String author) {
-    LinkedList<String> authors = new LinkedList<String>(Arrays.asList(PREVIOUS_COMMIT_AUTHORS));
-    authors.remove(author);
-    while (authors.size() >= PREVIOUS_COMMIT_AUTHORS_LIMIT) {
-      authors.removeLast();
+    myCommitAuthors.remove(author);
+    while (myCommitAuthors.size() >= PREVIOUS_COMMIT_AUTHORS_LIMIT) {
+      myCommitAuthors.remove(myCommitAuthors.size() - 1);
     }
-    authors.addFirst(author);
-    PREVIOUS_COMMIT_AUTHORS = ArrayUtil.toStringArray(authors);
+    myCommitAuthors.add(0, author);
+  }
+
+  /**
+   * @return array for commit authors
+   */
+  public String[] getCommitAuthors() {
+    return myCommitAuthors.toArray(new String[myCommitAuthors.size()]);
   }
 
   /**
    * {@inheritDoc}
    */
-  public GitVcsSettings getState() {
-    return this;
+  public State getState() {
+    State s = new State();
+    s.CHECKOUT_INCLUDE_TAGS = myCheckoutIncludesTags;
+    s.GIT_EXECUTABLE = myGitExecutable;
+    s.LINE_SEPARATORS_CONVERSION = myLineSeparatorsConversion;
+    s.LINE_SEPARATORS_CONVERSION_ASK = myAskBeforeLineSeparatorConversion;
+    s.PREVIOUS_COMMIT_AUTHORS = getCommitAuthors();
+    s.SSH_EXECUTABLE = mySshExecutable;
+    s.UPDATE_STASH = UPDATE_STASH;
+    s.UPDATE_TYPE = myUpdateType;
+    return s;
   }
 
   /**
    * {@inheritDoc}
    */
-  public void loadState(GitVcsSettings gitVcsSettings) {
-    XmlSerializerUtil.copyBean(gitVcsSettings, this);
+  public void loadState(State s) {
+    myCheckoutIncludesTags = s.CHECKOUT_INCLUDE_TAGS == null ? false : s.CHECKOUT_INCLUDE_TAGS;
+    myGitExecutable = s.GIT_EXECUTABLE == null ? myAppSettings.defaultGit() : s.GIT_EXECUTABLE;
+    myLineSeparatorsConversion = s.LINE_SEPARATORS_CONVERSION;
+    myAskBeforeLineSeparatorConversion = s.LINE_SEPARATORS_CONVERSION_ASK;
+    myCommitAuthors.clear();
+    myCommitAuthors.addAll(Arrays.asList(s.PREVIOUS_COMMIT_AUTHORS));
+    UPDATE_STASH = s.UPDATE_STASH;
+    mySshExecutable = s.SSH_EXECUTABLE;
+    myUpdateType = s.UPDATE_TYPE;
   }
 
   /**
@@ -155,33 +269,10 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings> 
   }
 
   /**
-   * @return the default executable name depending on the platform
-   */
-  private static String defaultGit() {
-    String[] paths;
-    String program;
-    if (SystemInfo.isWindows) {
-      program = DEFAULT_WINDOWS_GIT;
-      paths = DEFAULT_WINDOWS_PATHS;
-    }
-    else {
-      program = DEFAULT_UNIX_GIT;
-      paths = DEFAULT_UNIX_PATHS;
-    }
-    for (String p : paths) {
-      File f = new File(p, program);
-      if (f.exists()) {
-        return f.getAbsolutePath();
-      }
-    }
-    return program;     // otherwise, hope it's in $PATH
-  }
-
-  /**
    * @return true if IDEA ssh should be used
    */
   public boolean isIdeaSsh() {
-    return (SSH_EXECUTABLE == null ? DEFAULT_SSH : SSH_EXECUTABLE) == SshExecutable.IDEA_SSH;
+    return (mySshExecutable == null ? DEFAULT_SSH : mySshExecutable) == SshExecutable.IDEA_SSH;
   }
 
   /**
@@ -197,7 +288,46 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings> 
    * @param value the value to set
    */
   public void setIdeaSsh(boolean value) {
-    SSH_EXECUTABLE = value ? SshExecutable.IDEA_SSH : SshExecutable.NATIVE_SSH;
+    mySshExecutable = value ? SshExecutable.IDEA_SSH : SshExecutable.NATIVE_SSH;
+  }
+
+  /**
+   * The state fo the settings
+   */
+  public static class State {
+
+    /**
+     * The default executable for GIT. Do not set this field directly. Use {@link #setGitExecutable(String)} method instead.
+     */
+    public String GIT_EXECUTABLE;
+    /**
+     * The previously entered authors of the commit (up to {@value #PREVIOUS_COMMIT_AUTHORS_LIMIT})
+     */
+    public String[] PREVIOUS_COMMIT_AUTHORS = {};
+    /**
+     * Checkout includes tags
+     */
+    public Boolean CHECKOUT_INCLUDE_TAGS;
+    /**
+     * IDEA SSH should be used instead of native SSH.
+     */
+    public SshExecutable SSH_EXECUTABLE = DEFAULT_SSH;
+    /**
+     * True if stash/unstash operation should be performed before update (Obsolete option)
+     */
+    public boolean UPDATE_STASH = true;
+    /**
+     * The type of update operation to perform
+     */
+    public UpdateType UPDATE_TYPE = UpdateType.BRANCH_DEFAULT;
+    /**
+     * The crlf conversion policy
+     */
+    public ConversionPolicy LINE_SEPARATORS_CONVERSION = ConversionPolicy.PROJECT_LINE_SEPARATORS;
+    /**
+     * If true, the dialog is shown with conversion options
+     */
+    public boolean LINE_SEPARATORS_CONVERSION_ASK = true;
   }
 
   /**
@@ -217,11 +347,17 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings> 
    * The type of update to perform
    */
   public enum UpdateType {
-    /** Use default specified in the config file for the branch */
+    /**
+     * Use default specified in the config file for the branch
+     */
     BRANCH_DEFAULT,
-    /** Merge fetched commits with local branch */
+    /**
+     * Merge fetched commits with local branch
+     */
     MERGE,
-    /** Rebase local commits upon the fetched branch*/
+    /**
+     * Rebase local commits upon the fetched branch
+     */
     REBASE
   }
 

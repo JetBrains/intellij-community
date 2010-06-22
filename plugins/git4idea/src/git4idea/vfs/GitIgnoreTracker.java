@@ -213,7 +213,7 @@ public class GitIgnoreTracker {
         return String.valueOf(file.charAt(1)) + ":" + file.substring(2);
       }
       // otherwise the path is relative to "bin/git.exe"
-      File gitDir = new File(myVcs.getSettings().GIT_EXECUTABLE).getParentFile();
+      File gitDir = new File(myVcs.getSettings().getGitExecutable()).getParentFile();
       if (gitDir != null) {
         gitDir = gitDir.getParentFile();
       }

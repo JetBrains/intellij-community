@@ -346,6 +346,7 @@
     </group>
 
     <action id="ModuleSettings" class="com.intellij.ide.actions.ShowModulePropertiesAction"/>
+    <group id="MoveModuleToGroup" class="com.intellij.ide.projectView.impl.MoveModuleToGroupTopLevel" popup="true"/>
 
     <reference ref="AnalyzeMenu">
       <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
@@ -382,6 +383,10 @@
     </action>
 
 
+    <reference ref="MoveModuleToGroup">
+      <add-to-group group-id="ProjectViewPopupMenuSettingsGroup" anchor="first"/>
+    </reference>
+    
     <reference ref="ModuleSettings">
       <add-to-group group-id="ProjectViewPopupMenuSettingsGroup" anchor="first"/>
     </reference>
