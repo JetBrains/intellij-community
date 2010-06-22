@@ -71,6 +71,11 @@ public class IdeFocusManagerImpl extends IdeFocusManager {
   }
 
   @Override
+  public boolean isFocusTransferEnabled() {
+    return getGlobalInstance().isFocusTransferEnabled();
+  }
+
+  @Override
   public Expirable getTimestamp(boolean trackOnlyForcedCommands) {
     return getGlobalInstance().getTimestamp(trackOnlyForcedCommands);
   }

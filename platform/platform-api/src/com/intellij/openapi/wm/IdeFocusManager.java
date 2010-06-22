@@ -73,6 +73,8 @@ public abstract class IdeFocusManager {
 
   public abstract ActionCallback requestDefaultFocus(boolean forced);
 
+  public abstract boolean isFocusTransferEnabled();
+
   public static IdeFocusManager getInstance(@Nullable Project project) {
     if (project == null) return getGlobalInstance();
 
