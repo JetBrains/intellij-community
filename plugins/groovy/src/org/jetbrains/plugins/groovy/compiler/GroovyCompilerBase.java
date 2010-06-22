@@ -188,7 +188,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
 
       boolean hasMessages = !messages.isEmpty();
 
-      StringBuffer unparsedBuffer = processHandler.getUnparsedOutput();
+      StringBuffer unparsedBuffer = processHandler.getStdErr();
       if (unparsedBuffer.length() != 0) {
         compileContext.addMessage(CompilerMessageCategory.ERROR, unparsedBuffer.toString(), null, -1, -1);
         hasMessages = true;
