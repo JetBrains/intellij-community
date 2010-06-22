@@ -162,10 +162,10 @@ public class FoldersImportingTest extends MavenImportingTestCase {
     assertModules("project", "m");
     assertContentRoots("m",
                        getProjectPath() + "/m");
-                       //getProjectPath() + "/src",
-                       //getProjectPath() + "/test",
-                       //getProjectPath() + "/res",
-                       //getProjectPath() + "/testRes");
+    //getProjectPath() + "/src",
+    //getProjectPath() + "/test",
+    //getProjectPath() + "/res",
+    //getProjectPath() + "/testRes");
   }
 
   public void testPluginSources() throws Exception {
@@ -462,7 +462,9 @@ public class FoldersImportingTest extends MavenImportingTestCase {
   public void testAddingExistingGeneratedSources() throws Exception {
     createStdProjectFolders();
     createProjectSubDirs("target/generated-sources/src1",
-                         "target/generated-sources/src2");
+                         "target/generated-sources/src2",
+                         "target/generated-test-sources/test1",
+                         "target/generated-test-sources/test2");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -473,12 +475,18 @@ public class FoldersImportingTest extends MavenImportingTestCase {
                   "src/main/resources",
                   "target/generated-sources/src1",
                   "target/generated-sources/src2");
+
+    assertTestSources("project",
+                      "src/test/java",
+                      "src/test/resources",
+                      "target/generated-test-sources/test1",
+                      "target/generated-test-sources/test2");
   }
 
   public void testAddingExistingGeneratedSourcesWithCustomTargetDir() throws Exception {
     createStdProjectFolders();
-    createProjectSubDirs("targetCustom/generated-sources/src1",
-                         "targetCustom/generated-sources/src2");
+    createProjectSubDirs("targetCustom/generated-sources/src",
+                         "targetCustom/generated-test-sources/test");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -491,13 +499,18 @@ public class FoldersImportingTest extends MavenImportingTestCase {
     assertSources("project",
                   "src/main/java",
                   "src/main/resources",
-                  "targetCustom/generated-sources/src1",
-                  "targetCustom/generated-sources/src2");
+                  "targetCustom/generated-sources/src");
+
+    assertTestSources("project",
+                      "src/test/java",
+                      "src/test/resources",
+                      "targetCustom/generated-test-sources/test");
   }
 
   public void testDoesNotAddAlreadyRegisteredSourcesUnderGeneratedDir() throws Exception {
     createStdProjectFolders();
-    createProjectSubDir("target/generated-sources/main/src");
+    createProjectSubDirs("target/generated-sources/main/src",
+                         "target/generated-test-sources/test/src");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -511,7 +524,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
                   "      <version>1.3</version>" +
                   "      <executions>" +
                   "        <execution>" +
-                  "          <id>id</id>" +
+                  "          <id>id1</id>" +
                   "          <phase>generate-sources</phase>" +
                   "          <goals>" +
                   "            <goal>add-source</goal>" +
@@ -519,6 +532,18 @@ public class FoldersImportingTest extends MavenImportingTestCase {
                   "          <configuration>" +
                   "            <sources>" +
                   "              <source>target/generated-sources/main/src</source>" +
+                  "            </sources>" +
+                  "          </configuration>" +
+                  "        </execution>" +
+                  "        <execution>" +
+                  "          <id>id2</id>" +
+                  "          <phase>generate-sources</phase>" +
+                  "          <goals>" +
+                  "            <goal>add-test-source</goal>" +
+                  "          </goals>" +
+                  "          <configuration>" +
+                  "            <sources>" +
+                  "              <source>target/generated-test-sources/test/src</source>" +
                   "            </sources>" +
                   "          </configuration>" +
                   "        </execution>" +
@@ -532,17 +557,24 @@ public class FoldersImportingTest extends MavenImportingTestCase {
                   "src/main/java",
                   "src/main/resources",
                   "target/generated-sources/main/src");
+
+    assertTestSources("project",
+                      "src/test/java",
+                      "src/test/resources",
+                      "target/generated-test-sources/test/src");
   }
 
   public void testIgnoringFilesRightUnderGeneratedSources() throws Exception {
     createStdProjectFolders();
     createProjectSubFile("target/generated-sources/f.txt");
+    createProjectSubFile("target/generated-test-sources/f.txt");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
     assertSources("project", "src/main/java", "src/main/resources");
+    assertTestSources("project", "src/test/java", "src/test/resources");
   }
 
   public void testExcludingOutputDirectories() throws Exception {
@@ -649,7 +681,8 @@ public class FoldersImportingTest extends MavenImportingTestCase {
     createStdProjectFolders();
     createProjectSubDirs("target/foo",
                          "target/bar",
-                         "target/generated-sources/baz");
+                         "target/generated-sources/baz",
+                         "target/generated-test-sources/bazz");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -661,6 +694,11 @@ public class FoldersImportingTest extends MavenImportingTestCase {
                   "src/main/java",
                   "src/main/resources",
                   "target/generated-sources/baz");
+
+    assertTestSources("project",
+                      "src/test/java",
+                      "src/test/resources",
+                      "target/generated-test-sources/bazz");
   }
 
   public void testDoesNotExcludeSourcesUnderTargetDir() throws Exception {
