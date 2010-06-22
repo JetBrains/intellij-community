@@ -92,7 +92,7 @@ public class ModuleSourceItemGroup extends PackagingSourceItem {
         final ModuleOrderEntry moduleEntry = (ModuleOrderEntry)entry;
         final Module dependency = moduleEntry.getModule();
         final DependencyScope scope = moduleEntry.getScope();
-        if (dependency != null && scope != DependencyScope.TEST && scope != DependencyScope.PROVIDED) {
+        if (dependency != null && scope.isForProductionRuntime()) {
           collectDependentModules(dependency, modules, context);
         }
       }

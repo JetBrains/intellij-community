@@ -32,32 +32,37 @@ import org.jdom.Element;
  * <tr><td>Test<br/>Output</td>       <td> </td><td> </td><td> </td><td>*</td></tr>
  * </tbody>
  * </table>
+ * <br>
+ * 
+ * In order to check whether a dependency should be included in a classpath use one of <code>isFor</code>
+ * methods instead of direct comparison with the enum constants
  *
  * @author yole
  */
 public enum DependencyScope {
-  COMPILE {
-    @Override
-    public String toString() {
-      return "Compile";
-    }},
-  TEST {
-    @Override
-    public String toString() {
-      return "Test";
-    }},
-  RUNTIME {
-    @Override
-    public String toString() {
-      return "Runtime";
-    }},
-  PROVIDED {
-    @Override
-    public String toString() {
-      return "Provided";
-    }};
+  COMPILE("Compile", true, true, true, true),
+  TEST("Test", false, false, true, true),
+  RUNTIME("Runtime", false, true, false, true),
+  PROVIDED("Provided", true, false, true, true);
+  private final String myDisplayName;
+  private final boolean myForProductionCompile;
+  private final boolean myForProductionRuntime;
+  private final boolean myForTestCompile;
+  private final boolean myForTestRuntime;
 
   private static final String SCOPE_ATTR = "scope";
+
+  DependencyScope(String displayName,
+                  boolean forProductionCompile,
+                  boolean forProductionRuntime,
+                  boolean forTestCompile,
+                  boolean forTestRuntime) {
+    myDisplayName = displayName;
+    myForProductionCompile = forProductionCompile;
+    myForProductionRuntime = forProductionRuntime;
+    myForTestCompile = forTestCompile;
+    myForTestRuntime = forTestRuntime;
+  }
 
   public static DependencyScope readExternal(Element element) {
     String scope = element.getAttributeValue(SCOPE_ATTR);
@@ -78,5 +83,30 @@ public enum DependencyScope {
     if (this != COMPILE) {
       element.setAttribute(SCOPE_ATTR, name());
     }
+  }
+
+  public String getDisplayName() {
+    return myDisplayName;
+  }
+
+  public boolean isForProductionCompile() {
+    return myForProductionCompile;
+  }
+
+  public boolean isForProductionRuntime() {
+    return myForProductionRuntime;
+  }
+
+  public boolean isForTestCompile() {
+    return myForTestCompile;
+  }
+
+  public boolean isForTestRuntime() {
+    return myForTestRuntime;
+  }
+
+  @Override
+  public String toString() {
+    return myDisplayName;
   }
 }

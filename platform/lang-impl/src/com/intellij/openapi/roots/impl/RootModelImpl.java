@@ -988,7 +988,8 @@ public class RootModelImpl implements ModifiableRootModel {
     for (OrderEntry entry : getOrderEntries()) {
       if (entry instanceof ModuleOrderEntry) {
         ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)entry;
-        if (!includeTests && moduleOrderEntry.getScope() == DependencyScope.TEST) {
+        final DependencyScope scope = moduleOrderEntry.getScope();
+        if (!includeTests && !scope.isForProductionCompile() && !scope.isForProductionRuntime()) {
           continue;
         }
         final Module module1 = moduleOrderEntry.getModule();
