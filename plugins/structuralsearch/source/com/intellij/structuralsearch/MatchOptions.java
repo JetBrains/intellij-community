@@ -186,7 +186,9 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
       element.setAttribute(FILE_TYPE_ATTR_NAME, myFileType.getName());
     //}
 
-    element.setAttribute(FILE_EXTENSION_ATTR_NAME, myFileExtension);
+    if (myFileExtension != null) {
+      element.setAttribute(FILE_EXTENSION_ATTR_NAME, myFileExtension);
+    }
 
     if (variableConstraints!=null) {
       for (final MatchVariableConstraint matchVariableConstraint : variableConstraints.values()) {
