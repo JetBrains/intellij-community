@@ -101,7 +101,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
   };
     
   private final Map<String,Template> myTemplatesById = new LinkedHashMap<String,Template>();
-  private final Map<String,TemplateImpl> myDefaultTemplates = new LinkedHashMap<String, TemplateImpl>();
+  private final Map<TemplateKey,TemplateImpl> myDefaultTemplates = new LinkedHashMap<TemplateKey, TemplateImpl>();
 
   private int myMaxKeyLength = 0;
   private char myDefaultShortcutChar = TAB_CHAR;
@@ -204,7 +204,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
   }
 
   private boolean differsFromDefault(TemplateImpl t) {
-    TemplateImpl def = myDefaultTemplates.get(t.getKey());
+    TemplateImpl def = myDefaultTemplates.get(TemplateKey.keyOf(t));
     if (def == null) return true;
     return !t.equals(def) || !t.contextsEqual(def);
   }
@@ -365,6 +365,10 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
   }
 
   private void addTemplateImpl(Template template) {
+    addTemplateImpl(template, false);
+  }
+
+  private void addTemplateImpl(Template template, boolean overwrite) {
     final TemplateImpl templateImpl = (TemplateImpl)template;
     if (getTemplate(templateImpl.getKey(), templateImpl.getGroupName()) == null) {
       myTemplates.putValue(template.getKey(), templateImpl);
@@ -415,7 +419,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
       template.setShortcutChar(DEFAULT_CHAR);
     }
     if (isDefault) {
-      myDefaultTemplates.put(key, template);
+      myDefaultTemplates.put(TemplateKey.keyOf(template), template);
     }
     return template;
   }
@@ -439,18 +443,19 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
   }
 
   private void loadTemplates() {
-
     Collection<TemplateGroup> loaded = mySchemesManager.loadSchemes();
     for (TemplateGroup group : loaded) {
       Collection<TemplateImpl> templates = group.getElements();
 
       for (TemplateImpl template : templates) {
-        addTemplateImpl(template);
+        addTemplateImpl(template, true);
       }
-
     }
 
+    loadDefaultLiveTemplates();
+  }
 
+  private void loadDefaultLiveTemplates() {
     try {
       for(DefaultLiveTemplatesProvider provider: Extensions.getExtensions(DefaultLiveTemplatesProvider.EP_NAME)) {
         for (String defTemplate : provider.getDefaultLiveTemplateFiles()) {
@@ -504,9 +509,11 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
       Element element = (Element)o1;
 
       TemplateImpl template = readTemplateFromElement(isDefault, groupName, element, classLoader);
-      boolean doNotRegister = isDefault && (myDeletedTemplates.contains(TemplateKey.keyOf(template)) || myTemplatesById.containsKey(template.getId()));
+      boolean defaultTemplateModified = isDefault && (myDeletedTemplates.contains(TemplateKey.keyOf(template)) ||
+                                                      myTemplatesById.containsKey(template.getId()) ||
+                                                      getTemplate(template.getKey(), template.getGroupName()) != null);
 
-      if(!doNotRegister) {
+      if(!defaultTemplateModified) {
         created.put(template.getKey(), template);
       }
     }
