@@ -425,10 +425,19 @@ public class EditorWindow {
     return getTabCount() >= 1;
   }
 
-  public void split(final int orientation) {
+  @Nullable
+  public EditorWindow split(final int orientation, boolean forceSplit, @Nullable VirtualFile virtualFile, boolean focusNew) {
     checkConsistency();
     final FileEditorManagerImpl fileEditorManager = myOwner.getManager();
     if (splitAvailable()) {
+      if (!forceSplit && inSplitter()) {
+        final EditorWindow[] siblings = findSiblings();
+        final EditorWindow target = siblings[0];
+        if (virtualFile != null) {
+          fileEditorManager.openFileImpl3(target, virtualFile, focusNew, null, true);
+        }
+        return target;
+      }
       final JPanel panel = myPanel;
       final int tabCount = getTabCount();
       if (tabCount != 0) {
@@ -453,12 +462,13 @@ public class EditorWindow {
           */
           // open only selected file in the new splitter instead of opening all tabs
           final VirtualFile file = selectedEditor.getFile();
-          fileEditorManager.openFileImpl3(res, file, false, null, true);
-          res.setFilePinned (file, isFilePinned (file));
-
-          res.setSelectedEditor(selectedEditor, true);
-          selectedEditor.getComponent().requestFocus();
-
+          final VirtualFile nextFile = virtualFile == null ? file : virtualFile;
+          fileEditorManager.openFileImpl3(res, nextFile, false, null, true);
+          res.setFilePinned (nextFile, isFilePinned (file));
+          if (!focusNew) {
+            res.setSelectedEditor(selectedEditor, true);
+            selectedEditor.getComponent().requestFocus();
+          }
           panel.revalidate();
         }
         else {
@@ -467,12 +477,15 @@ public class EditorWindow {
           splitter.setFirstComponent(myPanel);
           splitter.setSecondComponent(res.myPanel);
           panel.revalidate();
-          final VirtualFile file = firstEC.getFile();
-          fileEditorManager.openFileImpl3(this, file, true, null, true);
-          fileEditorManager.openFileImpl3(res, file, false, null, true);
+          final VirtualFile firstFile = firstEC.getFile();
+          final VirtualFile nextFile = virtualFile == null ? firstFile : virtualFile;
+          fileEditorManager.openFileImpl3(this, firstFile, !focusNew, null, true);
+          fileEditorManager.openFileImpl3(res, nextFile, focusNew, null, true);
         }
+        return res;
       }
     }
+    return null;
   }
 
 
