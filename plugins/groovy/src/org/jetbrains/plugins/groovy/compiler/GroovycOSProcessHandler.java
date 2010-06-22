@@ -38,6 +38,7 @@ import java.util.*;
  * @date: 16.04.2007
  */
 public class GroovycOSProcessHandler extends OSProcessHandler {
+  public static boolean ourDebug = false;
   private final List<TranslatingCompiler.OutputItem> myCompiledItems = new ArrayList<TranslatingCompiler.OutputItem>();
   private final Set<File> toRecompileFiles = new HashSet<File>();
   private final List<CompilerMessage> compilerMessages = new ArrayList<CompilerMessage>();
@@ -63,6 +64,9 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
   private void parseOutput(String text, boolean error) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Received from groovyc: " + text);
+    }
+    if (ourDebug) {
+      System.out.println("Received from groovyc: " + text);
     }
 
     if (error) {
