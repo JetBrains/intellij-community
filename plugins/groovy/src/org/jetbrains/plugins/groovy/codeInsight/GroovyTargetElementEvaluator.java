@@ -21,11 +21,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
 
 /**
  * @author Maxim.Medvedev
@@ -65,21 +66,18 @@ public class GroovyTargetElementEvaluator implements TargetElementEvaluator {
       return constructor;
     }
 
-    if (sourceElement instanceof GrReferenceElementImpl) { // For Grails tags in GSP pager (e.g. <%  g.link()  %>)
-      PsiElement resolve = ((GrReferenceElementImpl)sourceElement).resolve();
-      if (resolve != null) {
-        return correctSearchTargets(resolve);
-      }
+    if (sourceElement instanceof GrReferenceExpression) { // For Grails tags in GSP pager (e.g. <%  g.link()  %>)
+      return correctSearchTargets(((GrReferenceExpression)sourceElement).resolve());
     }
     
     return null;
   }
 
-  @NotNull
-  public static PsiElement correctSearchTargets(@NotNull PsiElement resolve) {
-    if (!(resolve instanceof GrAccessorMethod) && !resolve.isPhysical()) {
-      return resolve.getNavigationElement();
+  @Nullable
+  public static PsiElement correctSearchTargets(@Nullable PsiElement target) {
+    if (target != null && !(target instanceof GrAccessorMethod) && !target.isPhysical()) {
+      return target.getNavigationElement();
     }
-    return resolve;
+    return target;
   }
 }
