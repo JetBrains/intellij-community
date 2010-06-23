@@ -32,6 +32,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.KeyedLazyInstanceEP;
 import com.intellij.util.StringSetSpinAllocator;
+import com.intellij.util.containers.WeakHashMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -279,12 +280,21 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     return "DataManager";
   }
 
+  public <T> void saveInDataContext(DataContext dataContext, DataKey<T> dataKey, T data) {
+    ((MyDataContext)dataContext).save(dataKey, data);
+  }
+
+  public <T> T loadFromDataContext(DataContext dataContext, DataKey<T> dataKey) {
+    return ((MyDataContext)dataContext).load(dataKey);
+  }
+
   public class MyDataContext implements DataContext {
     private int myEventCount;
     // To prevent memory leak we have to wrap passed component into
     // the weak reference. For example, Swing often remembers menu items
     // that have DataContext as a field.
     private final WeakReference<Component> myRef;
+    private WeakHashMap<DataKey, Object> mySavedData;
 
     public MyDataContext(final Component component) {
       myEventCount = -1;
@@ -346,6 +356,22 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     @NonNls
     public String toString() {
       return "component=" + String.valueOf(myRef.get());
+    }
+
+    public <T> void save(DataKey<T> dataKey, T data) {
+      getOrCreateMap().put(dataKey, data);
+    }
+
+
+    private WeakHashMap<DataKey, Object> getOrCreateMap() {
+      if (mySavedData == null) {
+        mySavedData = new WeakHashMap<DataKey, Object>();
+      }
+      return mySavedData;
+    }
+
+    public <T> T load(DataKey<T> dataKey) {
+      return (T)getOrCreateMap().get(dataKey);
     }
   }
 

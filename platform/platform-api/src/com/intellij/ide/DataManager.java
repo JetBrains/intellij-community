@@ -16,6 +16,7 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.AsyncResult;
 import org.jetbrains.annotations.NonNls;
@@ -52,4 +53,7 @@ public abstract class DataManager {
    * component's bounds
    */
   public abstract DataContext getDataContext(@NotNull Component component, int x, int y);
+
+  public abstract <T> void saveInDataContext(DataContext dataContext, DataKey<T> dataKey, T data);
+  public abstract <T> T loadFromDataContext(DataContext dataContext, DataKey<T> dataKey);
 }
