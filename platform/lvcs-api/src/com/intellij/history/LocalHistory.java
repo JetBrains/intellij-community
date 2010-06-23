@@ -22,6 +22,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public abstract class LocalHistory {
+  public static final Object VFS_EVENT_REQUESTOR = new Object();
+
   public static LocalHistory getInstance() {
     return ApplicationManager.getApplication().getComponent(LocalHistory.class);
   }
