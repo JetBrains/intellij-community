@@ -25,7 +25,6 @@ import com.intellij.execution.configurations.RuntimeConfiguration;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,6 +32,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -53,7 +53,7 @@ public class ConfigurationContext {
   private final RuntimeConfiguration myRuntimeConfiguration;
   private final Component myContextComponent;
 
-  public static DataKey<ConfigurationContext> SHARED_CONTEXT = DataKey.create("SHARED_CONTEXT");
+  public static Key<ConfigurationContext> SHARED_CONTEXT = Key.create("SHARED_CONTEXT");
   private List<RuntimeConfigurationProducer> myPreferredProducers;
 
   public static ConfigurationContext getFromContext(DataContext dataContext) {
