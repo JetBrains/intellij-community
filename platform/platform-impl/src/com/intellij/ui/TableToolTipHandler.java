@@ -16,12 +16,23 @@
 package com.intellij.ui;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableModel;
 import java.awt.*;
 
 public class TableToolTipHandler extends AbstractToolTipHandler<TableCellKey, JTable> {
   protected TableToolTipHandler(JTable table) {
     super(table);
+
+    ListSelectionListener l = new ListSelectionListener() {
+      @Override
+      public void valueChanged(ListSelectionEvent e) {
+        repaintHint();
+      }
+    };
+    table.getSelectionModel().addListSelectionListener(l);
+    table.getColumnModel().getSelectionModel().addListSelectionListener(l);
   }
 
   public static void install(JTable table) {

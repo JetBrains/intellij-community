@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.SeparatorWithText;
+import com.intellij.ui.TableToolTipHandler;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.UIUtil;
@@ -39,6 +40,8 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.util.*;
 import java.util.List;
 
@@ -50,13 +53,21 @@ public class RevisionsList {
     table = new JBTable();
     table.setModel(new MyModel(Collections.EMPTY_LIST, Collections.EMPTY_MAP));
 
-    table.setDefaultRenderer(Object.class, new MyCellRenderer(table));
+    final MyCellRenderer renderer = new MyCellRenderer(table);
+    table.setDefaultRenderer(Object.class, renderer);
     table.setTableHeader(null);
     table.setShowGrid(false);
     table.setRowMargin(0);
     table.getColumnModel().setColumnMargin(0);
 
     table.resetDefaultFocusTraversalKeys();
+    table.addMouseMotionListener(new MouseMotionAdapter() {
+      @Override
+      public void mouseMoved(MouseEvent e) {
+        renderer.myHoveredRow = table.rowAtPoint(e.getPoint());
+      }
+    });
+    TableToolTipHandler.install(table);
 
     table.setEmptyText(VcsBundle.message("history.empty"));
 
@@ -194,10 +205,10 @@ public class RevisionsList {
     private final MyLabelContainer myLabelContainer = new MyLabelContainer();
     private final JLabel myLabelLabel = new JLabel();
 
+    private boolean isMouseOver;
+    private int myHoveredRow;
 
     public MyCellRenderer(JTable table) {
-      myWrapperPanel.setLayout(new BorderLayout());
-
       JPanel headersPanel = new JPanel(new BorderLayout());
       headersPanel.setOpaque(false);
       headersPanel.add(myPeriodLabel, BorderLayout.NORTH);
@@ -232,8 +243,31 @@ public class RevisionsList {
       myLabelPanel.setOpaque(false);
       myLabelPanel.add(myLabelContainer);
 
-      myWrapperPanel.add(headersPanel, BorderLayout.NORTH);
-      myWrapperPanel.add(myItemPanel, BorderLayout.CENTER);
+      final JPanel layoutPanel = new JPanel(new BorderLayout());
+      layoutPanel.setOpaque(false);
+
+      layoutPanel.add(headersPanel, BorderLayout.NORTH);
+      layoutPanel.add(myItemPanel, BorderLayout.CENTER);
+
+      myWrapperPanel.add(layoutPanel);
+      myWrapperPanel.setLayout(new AbstractLayoutManager() {
+        @Override
+        public Dimension preferredLayoutSize(Container parent) {
+          return layoutPanel.getPreferredSize();
+        }
+
+        @Override
+        public void layoutContainer(Container parent) {
+          Dimension size = parent.getSize();
+          Insets i = parent.getInsets();
+          Dimension pref = layoutPanel.getPreferredSize();
+          if (isMouseOver) {
+            layoutPanel.setBounds(i.left, i.top, Math.max(pref.width, size.width - i.left - i.right), pref.height);
+          } else {
+            layoutPanel.setBounds(i.left, i.top, size.width - i.left - i.right, pref.height);
+          }
+        }
+      });
 
       myItemPanel.setBorder(myBorder);
       myItemPanel.setLayout(new BorderLayout());
@@ -287,7 +321,6 @@ public class RevisionsList {
 
       myTitleLabel.setFont(myTitleLabel.getFont().deriveFont(labelsAndColor.isNamed ? Font.BOLD : Font.PLAIN));
       myTitleLabel.setText(ensureString(labelsAndColor.title));
-      //myTitleLabel.setToolTipText(myTitleLabel.getText());
 
       JComponent orig = (JComponent)myTemplate.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
@@ -299,7 +332,6 @@ public class RevisionsList {
         myLabelLabel.setBackground(labelsAndColor.label.second);
         myLabelContainer.set(labelsAndColor.label.second);
         myLabelLabel.setText(ensureString(labelsAndColor.label.first));
-        //myLabelPanel.setToolTipText(myLabelLabel.getText());
       }
 
       Color fg = orig.getForeground();
@@ -310,6 +342,8 @@ public class RevisionsList {
       myTitleLabel.setForeground(isSelected || labelsAndColor.isNamed ? fg : Color.DARK_GRAY);
 
       myItemPanel.setBackground(bg);
+
+      isMouseOver = myHoveredRow == row;
 
       myWrapperPanel.doLayout();
       table.setRowHeight(row, myWrapperPanel.getPreferredSize().height);
