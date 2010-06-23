@@ -70,6 +70,7 @@ import javax.swing.event.EventListenerList;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
@@ -218,10 +219,15 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     Set<Integer> vks = QuickAccessSettings.getModifiersVKs(baseModifiers);
     if (vks.contains(e.getKeyCode())) {
       boolean pressed = e.getID() == KeyEvent.KEY_PRESSED;
-      if (SwitchManager.areAllModifiersPressed(e.getModifiers(), vks) || !pressed) {
-        processState(pressed);
-      } else {
-        resetHoldState();
+      int modifiers = e.getModifiers();
+
+      int mouseMask = MouseEvent.BUTTON1_DOWN_MASK | MouseEvent.BUTTON2_DOWN_MASK | MouseEvent.BUTTON3_DOWN_MASK;
+      if ((e.getModifiersEx() & mouseMask) == 0) {
+        if (SwitchManager.areAllModifiersPressed(modifiers, vks) || !pressed) {
+          processState(pressed);
+        } else {
+          resetHoldState();
+        }
       }
     }
     
@@ -245,9 +251,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       } else if (myCurrentState == KeyState.released) {
         myCurrentState = KeyState.hold;
         processHoldState();
-      } else {
-        resetHoldState();
-      }
+      } 
     } else {
       if (myCurrentState == KeyState.pressed) {
         myCurrentState = KeyState.released;

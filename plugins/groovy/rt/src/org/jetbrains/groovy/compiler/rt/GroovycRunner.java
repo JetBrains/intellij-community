@@ -24,7 +24,6 @@ import org.codehaus.groovy.tools.javac.JavaAwareResolveVisitor;
 import org.codehaus.groovy.tools.javac.JavaStubGenerator;
 
 import java.io.*;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -343,7 +342,7 @@ public class GroovycRunner {
           final ArrayList list = Collections.list(resources);
           for (Iterator iterator = list.iterator(); iterator.hasNext();) {
             final String file = ((URL)iterator.next()).getFile();
-            if (file.contains(finalOutput)) {
+            if (file.startsWith(finalOutput)) {
               iterator.remove();
             }
           }

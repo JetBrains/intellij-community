@@ -1223,6 +1223,7 @@ public class UIUtil {
     private static final Border LIST_FOCUSED_SELECTION_BACKGROUND_PAINTER = (Border) UIManager.get("List.sourceListFocusedSelectionBackgroundPainter");
 
     private boolean myWideSelection;
+    private boolean myOldRepaintAllRowValue;
 
     public MacTreeUI() {
       this(true);
@@ -1271,10 +1272,19 @@ public class UIUtil {
     protected void completeUIInstall() {
       super.completeUIInstall();
 
-      if (myWideSelection) tree.setOpaque(true);
-      tree.setShowsRootHandles(true);
+      myOldRepaintAllRowValue = UIManager.getBoolean("Tree.repaintWholeRow");
+      UIManager.put("Tree.repaintWholeRow", true);
 
+      tree.setShowsRootHandles(true);
       tree.addMouseListener(mySelectionListener);
+    }
+
+    @Override
+    public void uninstallUI(JComponent c) {
+      super.uninstallUI(c);
+
+      UIManager.put("Tree.repaintWholeRow", myOldRepaintAllRowValue);
+      c.removeMouseListener(mySelectionListener);
     }
 
     @Override
@@ -1424,13 +1434,6 @@ public class UIUtil {
           super.paintComponent(g, c, p, x, y, w, h, shouldValidate);
         }
       };
-    }
-
-    @Override
-    public void uninstallUI(JComponent c) {
-      super.uninstallUI(c);
-
-      c.removeMouseListener(mySelectionListener);
     }
 
     @Override
