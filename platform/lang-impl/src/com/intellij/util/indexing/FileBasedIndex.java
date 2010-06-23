@@ -18,6 +18,7 @@ package com.intellij.util.indexing;
 
 import com.intellij.AppTopics;
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.history.LocalHistory;
 import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.Application;
@@ -214,7 +215,7 @@ public class FileBasedIndex implements ApplicationComponent {
       public void before(List<? extends VFileEvent> events) {
         for (VFileEvent event : events) {
           final Object requestor = event.getRequestor();
-          if (requestor instanceof FileDocumentManager || requestor instanceof PsiManager) {
+          if (requestor instanceof FileDocumentManager || requestor instanceof PsiManager || requestor == LocalHistory.VFS_EVENT_REQUESTOR) {
             cleanupMemoryStorage();
             break;
           }
