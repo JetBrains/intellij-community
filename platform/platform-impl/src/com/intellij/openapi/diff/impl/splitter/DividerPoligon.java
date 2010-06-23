@@ -36,11 +36,15 @@ class DividerPoligon {
   private final int myEnd2;
 
   public DividerPoligon(int start1, int start2, int end1, int end2, Color color) {
-    myStart1 = start1;
-    myStart2 = start2;
-    myEnd1 = end1;
-    myEnd2 = end2;
+    myStart1 = advance(start1);
+    myStart2 = advance(start2);
+    myEnd1 = advance(end1);
+    myEnd2 = advance(end2);
     myColor = color;
+  }
+
+  private int advance(int y) {
+    return y == 0 ? y : y + 1;
   }
 
   private void paint(Graphics2D g, int width) {
@@ -68,9 +72,13 @@ class DividerPoligon {
     return "<" + myStart1 + ", " + myEnd1 + " : " + myStart2 + ", " + myEnd2 + "> " + myColor;
   }
 
-  Color getColor() { return myColor; }
+  Color getColor() {
+    return myColor;
+  }
 
   public static void paintPoligons(ArrayList<DividerPoligon> poligons, Graphics2D g, int width) {
+    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
     //Composite composite = g.getComposite();
     //g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 0.4f));
     for (Iterator<DividerPoligon> iterator = poligons.iterator(); iterator.hasNext();) {
@@ -88,7 +96,7 @@ class DividerPoligon {
                                           getVisibleInterval(editor2));
     Interval indecies = lineBlocks.getVisibleIndecies(visibleArea);
     Transformation[] transformations = new Transformation[]{getTransformation(editor1),
-                                                            getTransformation(editor2)};
+      getTransformation(editor2)};
     ArrayList<DividerPoligon> poligons = new ArrayList<DividerPoligon>();
     for (int i = indecies.getStart(); i < indecies.getEnd(); i++) {
       Trapezium trapezium = lineBlocks.getTrapezium(i);

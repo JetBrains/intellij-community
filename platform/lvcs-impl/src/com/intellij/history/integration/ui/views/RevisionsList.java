@@ -248,8 +248,8 @@ public class RevisionsList {
       myItemPanel.add(north, BorderLayout.NORTH);
       myItemPanel.add(south, BorderLayout.SOUTH);
 
-      myLabelLabel.setBorder(new EmptyBorder(0, 5, 0, 5));
-      myLabelPanel.setBorder(new MyBorder(new Insets(4, 1, 3, 1)));
+      myLabelLabel.setBorder(new EmptyBorder(0, 5, 1, 5));
+      myLabelPanel.setBorder(new MyBorder(new Insets(4, 20, 3, 1)));
 
       myWrapperPanel.setOpaque(false);
       myItemPanel.setOpaque(true);
@@ -287,6 +287,7 @@ public class RevisionsList {
 
       myTitleLabel.setFont(myTitleLabel.getFont().deriveFont(labelsAndColor.isNamed ? Font.BOLD : Font.PLAIN));
       myTitleLabel.setText(ensureString(labelsAndColor.title));
+      //myTitleLabel.setToolTipText(myTitleLabel.getText());
 
       JComponent orig = (JComponent)myTemplate.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
@@ -298,6 +299,7 @@ public class RevisionsList {
         myLabelLabel.setBackground(labelsAndColor.label.second);
         myLabelContainer.set(labelsAndColor.label.second);
         myLabelLabel.setText(ensureString(labelsAndColor.label.first));
+        //myLabelPanel.setToolTipText(myLabelLabel.getText());
       }
 
       Color fg = orig.getForeground();
