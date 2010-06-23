@@ -259,6 +259,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
   }
 
   private String serialize(PsiType type) {
+    if (PsiUtil.resolveClassInType(type) instanceof PsiTypeParameter) return type.getCanonicalText();
     return TypeConversionUtil.erasure(type).getCanonicalText();
   }
 
