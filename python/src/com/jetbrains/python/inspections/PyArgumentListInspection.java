@@ -72,7 +72,7 @@ public class PyArgumentListInspection  extends LocalInspectionTool {
         if (! deco.hasArgumentList()) {
           // empty arglist; deco function must have a non-kwarg first arg
           PyCallExpression.PyMarkedCallee mkfunc = deco.resolveCallee();
-          if (mkfunc != null) {
+          if (mkfunc != null && !mkfunc.isImplicitlyResolved()) {
             Callable callable = mkfunc.getCallable();
             int first_param_offset =  mkfunc.getImplicitOffset();
             PyParameter[] params = callable.getParameterList().getParameters();
