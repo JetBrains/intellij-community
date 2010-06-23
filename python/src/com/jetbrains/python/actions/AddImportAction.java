@@ -33,11 +33,9 @@ import org.jetbrains.annotations.Nullable;
 
 public class AddImportAction implements HintAction, QuestionAction, LocalQuickFix {
   private final PsiReference myReference;
-  // private final Project myProject;
 
   public AddImportAction(final PsiReference reference) {
     myReference = reference;
-    // myProject = reference.getElement().getProject();
   }
 
   @NotNull
@@ -113,65 +111,11 @@ public class AddImportAction implements HintAction, QuestionAction, LocalQuickFi
     }
   }
 
-  /*
-  private PsiFile[] getRefFiles(final String referenceName) {
-    return getRefFiles(referenceName, myProject);
-  }
-
-  private static PsiFile[] getRefFiles(final String referenceName, Project project) {
-    PsiFile[] files = FilenameIndex.getFilesByName(project, referenceName + DOT_PY, GlobalSearchScope.allScope(project));
-    if (files == null) files = PsiFile.EMPTY_ARRAY;
-    return files;
-  }
-  */
-
-  /**
-   * @param ref a reference to something potentially importable.
-   * @return true if the referred name can actually be made resolvable by adding an import statement.
-   */
-  public static boolean isAvailableAt(PsiReference ref) {
-    if (ref == null) return false;
-    final PsiElement element = ref.getElement();
-    // not within import
-    if (PsiTreeUtil.getParentOfType(element, PyImportStatement.class) != null) return false;
-    if (PsiTreeUtil.getParentOfType(element, PyFromImportStatement.class) != null) return false;
-    // don't propose to import unknown fields, etc qualified things
-    if (ref instanceof PyReferenceExpression) {
-      final PyExpression qual = ((PyReferenceExpression)ref).getQualifier();
-      if (qual != null) return false;
-    }
-    // don't propose to import unimportable
-    if (
-      !(ref instanceof PyReferenceExpression)  ||
-      (ResolveImportUtil.resolvePythonImport2((PyReferenceExpression)ref, null) == null)
-    ) return false;
-
-    final String referenceName = getRefName(ref);
-    /*
-    // don't propose to import what's already imported, under different name or unsuccessfully for any reason
-    ImportLookupProcessor ilp = new ImportLookupProcessor(referenceName);
-    PyResolveUtil.treeCrawlUp(ilp, element);
-    if (ilp.getFound() != null) return false; // we found such an import already
-    */
-
-    // see if there's something to import
-    return (ResolveImportUtil.resolveInRoots(element, referenceName) != null);
-  }
-
-  /**
-   * @param ref supposed reference to a module
-   * @return true if a module with the referenced name is already imported, maybe under a different alias.
-   */
-  public static boolean isAlreadyImportedDifferently(PsiReference ref) {
-    if (ref == null) return false;
-    final PsiElement element = ref.getElement();
-    final String referenceName = getRefName(ref);
-    ImportLookupProcessor ilp = new ImportLookupProcessor(referenceName);
-    PyResolveUtil.treeCrawlUp(ilp, element);
-    return (ilp.getFound() != null);
-  }
-
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
+    return hasSomethingToImport(file);
+  }
+
+  public boolean hasSomethingToImport(PsiFile file) {
     final PsiElement element = myReference.getElement();
     // not within import
     if (PsiTreeUtil.getParentOfType(element, PyImportStatement.class) != null) return false;

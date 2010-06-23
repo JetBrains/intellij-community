@@ -404,7 +404,10 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
           description_buf.append(PyBundle.message("INSP.unresolved.ref.$0", ref_text));
           // add import hint; the rest of action will fend for itself.
           if (ref_element != null && ref_is_importable && hint_action == null) {
-            actions.add(new AddImportAction(reference));
+            final AddImportAction addImportAction = new AddImportAction(reference);
+            if (addImportAction.hasSomethingToImport(ref_element.getContainingFile())) {
+              actions.add(addImportAction);
+            }
           }
           if (ref_text.length() > 2 && Character.isUpperCase(ref_text.charAt(0)) && !Character.isUpperCase(ref_text.charAt(1))) {
             actions.add(new CreateClassQuickFix(ref_text, reference.getElement()));
