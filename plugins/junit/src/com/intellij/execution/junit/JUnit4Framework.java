@@ -79,10 +79,13 @@ public class JUnit4Framework extends JavaTestFramework {
   @Override
   @Nullable
   protected PsiMethod findOrCreateSetUpMethod(PsiClass clazz) throws IncorrectOperationException {
+    PsiMethod method = findSetUpMethod(clazz);
+    if (method != null) return method;
+
     PsiManager manager = clazz.getManager();
     PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
 
-    PsiMethod method = factory.createMethodFromText("@org.junit.Before public void setUp() throws Exception {\n}", null);
+    method = factory.createMethodFromText("@org.junit.Before public void setUp() throws Exception {\n}", null);
     method = (PsiMethod)clazz.add(method);
     JavaCodeStyleManager.getInstance(manager.getProject()).shortenClassReferences(method);
 
