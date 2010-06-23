@@ -38,6 +38,7 @@ import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunner;
 
 import javax.swing.*;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -95,29 +96,28 @@ public class GantScriptType extends GroovyScriptType {
     return null;
   }
 
-  @Override
-  public GlobalSearchScope patchResolveScope(@NotNull GroovyFile file, @NotNull GlobalSearchScope baseScope) {
+  public static List<VirtualFile> additionalScopeFiles(@NotNull GroovyFile file) {
     final Module module = ModuleUtil.findModuleForPsiElement(file);
     if (module != null) {
       final String sdkHome = GantUtils.getSdkHomeFromClasspath(module);
       if (sdkHome != null) {
-        return baseScope;
+        return Collections.emptyList();
       }
     }
 
     final GantSettings gantSettings = GantSettings.getInstance(file.getProject());
     final VirtualFile home = gantSettings.getSdkHome();
     if (home == null) {
-      return baseScope;
+      return Collections.emptyList();
     }
 
-    final List<VirtualFile> files = gantSettings.getClassRoots();
-    if (files.isEmpty()) {
-      return baseScope;
-    }
+    return gantSettings.getClassRoots();
+  }
 
+  @Override
+  public GlobalSearchScope patchResolveScope(@NotNull GroovyFile file, @NotNull GlobalSearchScope baseScope) {
     GlobalSearchScope result = baseScope;
-    for (final VirtualFile root : files) {
+    for (final VirtualFile root : additionalScopeFiles(file)) {
       result = result.uniteWith(new NonClasspathDirectoryScope(root));
     }
     return result;

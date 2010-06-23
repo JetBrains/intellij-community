@@ -71,7 +71,11 @@ public class GantMemberContributor implements NonCodeMembersProcessor {
   }
 
   private static boolean processAntTasks(PsiScopeProcessor processor, PsiElement place) {
-    for (LightMethodBuilder task : AntTasksProvider.getInstance(place.getProject()).getAntTasks()) {
+    if (!AntTasksProvider.antAvailable) {
+      return true;
+    }
+
+    for (LightMethodBuilder task : AntTasksProvider.getAntTasks(place)) {
       if (!ResolveUtil.processElement(processor, task)) {
         return false;
       }

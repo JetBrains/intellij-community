@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
@@ -52,13 +52,13 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
         parentElementIntrospector = getIntrospector(reflected.getTargetClass());
       }
       else {
-        final Hashtable tasks = reflected.getTaskDefinitions();
+        final Map<String, Class> tasks = reflected.getTaskDefinitions();
         final Class taskClass = (Class)tasks.get(tagName);
         if (taskClass != null) {
           parentElementIntrospector = getIntrospector(taskClass);
         }
         else {
-          final Hashtable dataTypes = reflected.getDataTypeDefinitions();
+          final Map<String, Class> dataTypes = reflected.getDataTypeDefinitions();
           final Class dataClass = (Class)dataTypes.get(tagName);
           if (dataClass != null) {
             parentElementIntrospector = getIntrospector(dataClass);
