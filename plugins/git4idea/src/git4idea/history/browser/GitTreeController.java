@@ -190,7 +190,7 @@ class GitTreeController implements ManageGitTreeView {
             if (myCommitList.size() >= maxCnt) break;
           }
         }
-        if (myLastCommit == null || myLastCommit.getParentsHashes().isEmpty()) {
+        if (myLastCommit == null || myLastCommit.getParentsHashes().isEmpty() || myLastCommit.getHash().equals(lastHash)) {
           myStartFound = true;
           break;
         }
