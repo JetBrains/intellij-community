@@ -128,6 +128,10 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
       classPathBuilder.add(PathManager.findFileInLibDirectory("yjp-controller-api-redist.jar").getAbsolutePath());
     }
 
+    if (GroovycOSProcessHandler.ourDebug) {
+      System.out.println("classpath = " + classPathBuilder.getPathsString());
+    }
+
     parameters.getVMParametersList().add("-Xmx" + GroovyCompilerConfiguration.getInstance(myProject).getHeapSize() + "m");
     if (profileGroovyc) {
       parameters.getVMParametersList().add("-XX:+HeapDumpOnOutOfMemoryError");
