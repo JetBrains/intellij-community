@@ -38,6 +38,7 @@ import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
@@ -72,6 +73,11 @@ public class PositionPanel implements StatusBarWidget, StatusBarWidget.TextPrese
   @NotNull
   public String getMaxPossibleText() {
     return "#############";
+  }
+
+  @Override
+  public float getAlignment() {
+    return JComponent.CENTER_ALIGNMENT;
   }
 
   public String getTooltipText() {
