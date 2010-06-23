@@ -97,7 +97,8 @@ spellchecking
 Holdability
 permalink
 serializable
-mutex, mutexes
+mutex
+mutexes
 arity
 unhandled
 trinary
@@ -110,3 +111,5 @@ charset
 vertices
 commandline
 cmdline
+Petersburg
+
