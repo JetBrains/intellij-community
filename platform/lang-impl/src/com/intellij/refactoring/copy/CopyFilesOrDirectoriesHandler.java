@@ -16,6 +16,7 @@
 
 package com.intellij.refactoring.copy;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -28,6 +29,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,6 +78,16 @@ public class CopyFilesOrDirectoriesHandler implements CopyHandlerDelegate {
     CopyFilesOrDirectoriesDialog dialog = new CopyFilesOrDirectoriesDialog(elements, defaultTargetDirectory, project, false);
     dialog.show();
     if (dialog.isOK()) {
+      final PsiManager psiManager = PsiManager.getInstance(project);
+      try {
+        for (PsiElement element : elements) {
+          psiManager.checkMove(element, dialog.getTargetDirectory());
+        }
+      }
+      catch (IncorrectOperationException e) {
+        CommonRefactoringUtil.showErrorHint(project, null, e.getMessage(), CommonBundle.getErrorTitle(), null);
+        return;
+      }
       String newName = elements.length == 1 ? dialog.getNewName() : null;
       copyImpl(elements, newName, dialog.getTargetDirectory(), false);
     }
