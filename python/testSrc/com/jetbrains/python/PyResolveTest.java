@@ -9,6 +9,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.fixtures.PyResolveTestCase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.resolve.ImportedResolveResult;
 
 public class PyResolveTest extends PyResolveTestCase {
   private PsiElement resolve() {
@@ -299,5 +300,13 @@ public class PyResolveTest extends PyResolveTestCase {
   public void testClassNameEqualsMethodName() {
     PsiElement targetElement = resolve();
     assertInstanceOf(targetElement, PyFunction.class);
+  }
+
+  public void testUnresolvedImport() {
+    final ResolveResult[] results = multiResolve();
+    assertEquals(1, results.length);
+    assertTrue(results [0] instanceof ImportedResolveResult);
+    ImportedResolveResult result = (ImportedResolveResult) results [0];
+    assertNull(result.getElement());
   }
 }

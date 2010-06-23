@@ -7,6 +7,7 @@ import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -19,7 +20,7 @@ public interface PyTypeProvider {
   PyType getReferenceExpressionType(PyReferenceExpression referenceExpression, TypeEvalContext context);
   
   @Nullable
-  PyType getReferenceType(PsiElement referenceTarget, TypeEvalContext context);
+  PyType getReferenceType(@NotNull PsiElement referenceTarget, TypeEvalContext context);
 
   @Nullable
   PyType getParameterType(PyNamedParameter param, final PyFunction func, TypeEvalContext context);

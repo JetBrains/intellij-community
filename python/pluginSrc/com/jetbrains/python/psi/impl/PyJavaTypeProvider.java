@@ -9,6 +9,7 @@ import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -23,7 +24,7 @@ public class PyJavaTypeProvider implements PyTypeProvider {
   }
 
   @Nullable
-  public PyType getReferenceType(final PsiElement referenceTarget, TypeEvalContext context) {
+  public PyType getReferenceType(@NotNull final PsiElement referenceTarget, TypeEvalContext context) {
     if (referenceTarget instanceof PsiClass) {
       return new PyJavaClassType((PsiClass) referenceTarget);
     }

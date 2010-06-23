@@ -9,6 +9,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyImportedModule;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -85,6 +86,20 @@ public class ResolveProcessor implements PyAsScopeProcessor {
         // direct imports always take precedence over imported modules
         if (!(myResult instanceof PyImportedModule)) {
           return false;
+        }
+      }
+      else if (element instanceof PyImportElement) {
+        // name is resolved to unresolved import (PY-956)
+        final PyImportElement importElement = (PyImportElement) element;
+        String definedName = importElement.getAsName();
+        if (definedName == null) {
+          final PyQualifiedName qName = importElement.getImportedQName();
+          if (qName != null && qName.getComponentCount() == 1) {
+            definedName = qName.getComponents().get(0);
+          }
+        }
+        if (myName.equals(definedName)) {
+          addNameDefiner(importElement);
         }
       }
     }

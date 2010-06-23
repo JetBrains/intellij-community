@@ -213,6 +213,9 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         ret.poke(hit, getRate(hit));
       }
     }
+    else if (!processor.getDefiners().isEmpty()) {
+      ret.add(new ImportedResolveResult(null, RatedResolveResult.RATE_LOW-1, processor.getDefiners()));
+    }
     if (uexpr == null) {
       // ...as a part of current module
       PyType otype = PyBuiltinCache.getInstance(realContext).getObjectType(); // "object" as a closest kin to "module"

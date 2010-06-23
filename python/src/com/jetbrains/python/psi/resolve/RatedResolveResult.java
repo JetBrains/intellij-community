@@ -24,7 +24,7 @@ public class RatedResolveResult implements ResolveResult {
   }
 
   public boolean isValidResult() {
-    return true;
+    return myWhat != null;
   }
 
   /**
