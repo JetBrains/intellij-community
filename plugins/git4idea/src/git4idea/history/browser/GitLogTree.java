@@ -1122,7 +1122,7 @@ public class GitLogTree implements GitTreeViewI {
       return true;
     }
 
-    private class MyAddAction extends AnAction {
+    private class MyAddAction extends DumbAwareAction {
       private final Consumer<Object> myAfterAction;
       //private TreeState myState;
 
@@ -1162,7 +1162,7 @@ public class GitLogTree implements GitTreeViewI {
       }
     }
 
-    private class MyRemoveAction extends AnAction {
+    private class MyRemoveAction extends DumbAwareAction {
       private final Runnable myAfterAction;
 
       private MyRemoveAction() {
