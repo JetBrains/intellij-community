@@ -29,7 +29,6 @@ public class StaticMembersWeigher extends CompletionWeigher {
     if (loc.getCompletionType() != CompletionType.BASIC) return 0;
 
     final PsiElement position = loc.getCompletionParameters().getPosition();
-    if (!position.isValid()) return 0;
 
     // cheap weigher applicability goes first
     final Object o = element.getObject();
