@@ -50,6 +50,10 @@ public class AreaMap<Key extends Comparable<Key>, Val> {
     }
   }
 
+  public Collection<Val> values() {
+    return Collections.unmodifiableCollection(myMap.values());
+  }
+
   @Nullable
   public Val getExact(final Key key) {
     return myMap.get(key);
