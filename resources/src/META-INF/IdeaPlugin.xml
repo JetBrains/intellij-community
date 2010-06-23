@@ -119,9 +119,6 @@
     <extensionPoint name="javaExpressionSurrounder"
                     interface="com.intellij.codeInsight.generation.surroundWith.JavaExpressionSurrounder"/>
 
-    <extensionPoint name="testFramework"
-                    interface="com.intellij.codeInsight.TestFramework"/>
-
     <extensionPoint name="frameworkSupport" interface="com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider"/>
 
     <!--new project wizard-->
@@ -133,7 +130,7 @@
 
     <extensionPoint name="customPropertyScopeProvider" interface="com.intellij.psi.impl.search.CustomPropertyScopeProvider"/>
 
-    <extensionPoint name="testFrameworkDescriptor" interface="com.intellij.testIntegration.TestFrameworkDescriptor"/>
+    <extensionPoint name="testFramework" interface="com.intellij.testIntegration.TestFramework"/>
 
     <extensionPoint name="unscrambleSupport" interface="com.intellij.unscramble.UnscrambleSupport"/>
 

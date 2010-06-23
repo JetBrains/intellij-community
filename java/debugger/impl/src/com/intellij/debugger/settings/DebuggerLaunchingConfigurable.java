@@ -18,10 +18,13 @@ package com.intellij.debugger.settings;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.StateRestoringCheckBox;
+import com.intellij.ui.components.panels.VerticalBox;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 public class DebuggerLaunchingConfigurable implements Configurable{
@@ -30,6 +33,7 @@ public class DebuggerLaunchingConfigurable implements Configurable{
   private JCheckBox myHideDebuggerCheckBox;
   private StateRestoringCheckBox myCbForceClassicVM;
   private JCheckBox myCbDisableJIT;
+  private JCheckBox myFocusAppCheckBox;
 
   public void reset() {
     final DebuggerSettings settings = DebuggerSettings.getInstance();
@@ -49,6 +53,7 @@ public class DebuggerLaunchingConfigurable implements Configurable{
     myHideDebuggerCheckBox.setSelected(settings.HIDE_DEBUGGER_ON_PROCESS_TERMINATION);
     myCbForceClassicVM.setSelected(settings.FORCE_CLASSIC_VM);
     myCbDisableJIT.setSelected(settings.DISABLE_JIT);
+    myFocusAppCheckBox.setSelected(Registry.is("debugger.mayBringFrameToFrontOnBreakpoint"));
   }
 
   public void apply() {
@@ -65,13 +70,14 @@ public class DebuggerLaunchingConfigurable implements Configurable{
     settings.HIDE_DEBUGGER_ON_PROCESS_TERMINATION = myHideDebuggerCheckBox.isSelected();
     settings.FORCE_CLASSIC_VM = myCbForceClassicVM.isSelectedWhenSelectable();
     settings.DISABLE_JIT = myCbDisableJIT.isSelected();
+    Registry.get("debugger.mayBringFrameToFrontOnBreakpoint").setValue(myFocusAppCheckBox.isSelected());
   }
 
   public boolean isModified() {
     final DebuggerSettings currentSettings = DebuggerSettings.getInstance();
     final DebuggerSettings debuggerSettings = currentSettings.clone();
     getSettingsTo(debuggerSettings);
-    return !debuggerSettings.equals(currentSettings);
+    return !debuggerSettings.equals(currentSettings) && Registry.is("debugger.mayBringFrameToFrontOnBreakpoint") != myFocusAppCheckBox.isSelected();
   }
 
   public String getDisplayName() {
@@ -87,13 +93,12 @@ public class DebuggerLaunchingConfigurable implements Configurable{
   }
 
   public JComponent createComponent() {
-    final JPanel panel = new JPanel(new GridBagLayout());
-
     myCbForceClassicVM = new StateRestoringCheckBox(DebuggerBundle.message("label.debugger.launching.configurable.force.classic.vm"));
     myCbDisableJIT = new JCheckBox(DebuggerBundle.message("label.debugger.launching.configurable.disable.jit"));
     myHideDebuggerCheckBox = new JCheckBox(DebuggerBundle.message("label.debugger.launching.configurable.hide.window"));
     myRbSocket = new JRadioButton(DebuggerBundle.message("label.debugger.launching.configurable.socket"));
     myRbShmem = new JRadioButton(DebuggerBundle.message("label.debugger.launching.configurable.shmem"));
+    myFocusAppCheckBox = new JCheckBox(DebuggerBundle.message("label.debugger.focusAppOnBreakpoint"));
 
     int cbLeftOffset = 0;
     final Border border = myCbForceClassicVM.getBorder();
@@ -113,12 +118,21 @@ public class DebuggerLaunchingConfigurable implements Configurable{
     final JPanel transportPanel = new JPanel(new BorderLayout());
     transportPanel.add(new JLabel(DebuggerBundle.message("label.debugger.launching.configurable.debugger.transport")), BorderLayout.WEST);
     transportPanel.add(box, BorderLayout.CENTER);
-    panel.add(transportPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(4, cbLeftOffset, 0, 0), 0, 0));
 
-    panel.add(myCbForceClassicVM, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 0), 0, 0));
-    panel.add(myCbDisableJIT, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 0), 0, 0));
-    panel.add(myHideDebuggerCheckBox, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 0), 0, 0));
-    return panel;
+    VerticalBox panel = new VerticalBox();
+    panel.setOpaque(false);
+    panel.add(transportPanel);
+    panel.add(myCbForceClassicVM);
+    panel.add(myCbDisableJIT);
+    panel.add(myHideDebuggerCheckBox);
+    panel.add(myFocusAppCheckBox);
+
+    JPanel result = new JPanel(new BorderLayout());
+    result.add(panel, BorderLayout.NORTH);
+
+    result.setBorder(new EmptyBorder(4, 4, 0, 0));
+
+    return result;
   }
 
 

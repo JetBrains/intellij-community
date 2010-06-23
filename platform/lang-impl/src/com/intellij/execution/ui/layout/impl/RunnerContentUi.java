@@ -29,6 +29,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.ui.AppIcon;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.*;
@@ -289,6 +290,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     if (getSelectedGrid() != grid) {
       tab.setAlertIcon(content.getAlertIcon());
       if (activate) {
+        AppIcon.getInstance().requestAttention(false);
         tab.fireAlert();
       } else {
         tab.stopAlerting();

@@ -172,7 +172,7 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
     if (!myGateway.areContentChangesVersioned(f)) return null;
     return ApplicationManager.getApplication().runReadAction(new Computable<byte[]>() {
       public byte[] compute() {
-        return new ByteContentRetriever(myVcs, myGateway.createTransientRootEntry(), f.getPath(), c).getResult();
+        return new ByteContentRetriever(myGateway, myVcs, f, c).getResult();
       }
     });
   }

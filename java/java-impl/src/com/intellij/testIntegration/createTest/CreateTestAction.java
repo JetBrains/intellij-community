@@ -35,7 +35,7 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
-import com.intellij.testIntegration.TestFrameworkDescriptor;
+import com.intellij.testIntegration.TestFramework;
 import com.intellij.testIntegration.TestIntegrationUtils;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -54,7 +54,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    if (Extensions.getExtensions(TestFrameworkDescriptor.EXTENSION_NAME).length == 0) return false;
+    if (Extensions.getExtensions(TestFramework.EXTENSION_NAME).length == 0) return false;
 
     if (!isAvailableForElement(element)) return false;
 
@@ -177,7 +177,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
 
   private void addTestMethods(Editor editor,
                               PsiClass targetClass,
-                              TestFrameworkDescriptor descriptor,
+                              TestFramework descriptor,
                               Collection<MemberInfo> methods,
                               boolean generateBefore,
                               boolean generateAfter) throws IncorrectOperationException {
@@ -185,14 +185,14 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
       generateMethod(TestIntegrationUtils.MethodKind.SET_UP, descriptor, targetClass, editor, "setUp");
     }
     if (generateAfter) {
-      generateMethod(TestIntegrationUtils.MethodKind.TEAR_DOWN, descriptor, targetClass, editor, "tearUp");
+      generateMethod(TestIntegrationUtils.MethodKind.TEAR_DOWN, descriptor, targetClass, editor, "tearDown");
     }
     for (MemberInfo m : methods) {
       generateMethod(TestIntegrationUtils.MethodKind.TEST, descriptor, targetClass, editor, m.getMember().getName());
     }
   }
 
-  private void generateMethod(TestIntegrationUtils.MethodKind methodKind, TestFrameworkDescriptor descriptor, PsiClass targetClass, Editor editor, String name) {
+  private void generateMethod(TestIntegrationUtils.MethodKind methodKind, TestFramework descriptor, PsiClass targetClass, Editor editor, String name) {
     PsiMethod method = (PsiMethod)targetClass.add(TestIntegrationUtils.createDummyMethod(targetClass.getProject()));
     PsiDocumentManager.getInstance(targetClass.getProject()).doPostponedOperationsAndUnblockDocument(editor.getDocument());
     TestIntegrationUtils.runTestMethodTemplate(methodKind, descriptor, editor, targetClass, method, name, true);

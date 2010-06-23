@@ -19,10 +19,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
-import org.zmlx.hg4idea.HgGlobalSettings;
-import org.zmlx.hg4idea.HgUtil;
-import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.HgVcsMessages;
+import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -46,36 +44,46 @@ public final class HgCommandService {
     "--config", "ui.merge=internal:merge"
   );
 
-  private final Project project;
-  private final HgGlobalSettings settings;
+  private final Project myProject;
+  private final HgGlobalSettings mySettings;
+  private HgExecutableValidator validator;
 
   public HgCommandService(Project project, HgGlobalSettings settings) {
-    this.project = project;
-    this.settings = settings;
+    myProject = project;
+    mySettings = settings;
     if (PROMPT_HOOKS_PLUGIN == null) {
       PROMPT_HOOKS_PLUGIN = HgUtil.getTemporaryPythonFile("prompthooks");
     }
+    validator = new HgExecutableValidator(myProject);
   }
 
   public static HgCommandService getInstance(Project project) {
     return ServiceManager.getService(project, HgCommandService.class);
   }
 
+  @Nullable
   HgCommandResult execute(VirtualFile repo, String operation, List<String> arguments) {
     return execute(
       repo, DEFAULT_OPTIONS, operation, arguments, Charset.defaultCharset()
     );
   }
 
+  @Nullable
   HgCommandResult execute(VirtualFile repo, List<String> hgOptions,
     String operation, List<String> arguments) {
     return execute(repo, hgOptions, operation, arguments, Charset.defaultCharset());
   }
 
+  @Nullable
   HgCommandResult execute(VirtualFile repo, List<String> hgOptions,
     String operation, List<String> arguments, Charset charset) {
+
+    if (!validator.check(mySettings)) {
+      return null;
+    }
+
     List<String> cmdLine = new LinkedList<String>();
-    cmdLine.add(HgVcs.getInstance(project).getHgExecutable());
+    cmdLine.add(HgVcs.getInstance(myProject).getHgExecutable());
     if (repo != null) {
       cmdLine.add("--repository");
       cmdLine.add(repo.getPath());
@@ -101,7 +109,9 @@ public final class HgCommandService {
       cmdLine.add("--config");
       cmdLine.add("extensions.mq=");
     } catch (IOException e) {
-      throw new RuntimeException(e); //TODO implement catch clause
+      showError(e);
+      LOG.error("IOException during preparing command", e);
+      return null;
     }
     cmdLine.addAll(hgOptions);
     cmdLine.add(operation);
@@ -117,7 +127,7 @@ public final class HgCommandService {
     } catch (ShellCommandException e) {
       showError(e);
       LOG.error(e.getMessage(), e);
-      result = HgCommandResult.EMPTY;
+      return null;
     } finally {
       promptServer.stop();
       warningServer.stop();
@@ -131,13 +141,13 @@ public final class HgCommandService {
   private void showError(Exception e) {
     StringBuilder message = new StringBuilder();
     message.append(HgVcsMessages.message("hg4idea.command.executable.error",
-      HgVcs.getInstance(project).getHgExecutable()))
+      HgVcs.getInstance(myProject).getHgExecutable()))
       .append("\n")
       .append("Original Error:\n")
       .append(e.getMessage());
 
     VcsUtil.showErrorMessage(
-      project,
+      myProject,
       message.toString(),
       HgVcsMessages.message("hg4idea.error")
     );

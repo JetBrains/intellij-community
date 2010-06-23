@@ -22,17 +22,22 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.Nullable;
 
 public class JavaEditorFileSwapper implements EditorFileSwapper {
   public VirtualFile getFileToSwapTo(Project project, VirtualFile original) {
     return findSourceFile(project, original);
   }
 
+  @Nullable
   public static VirtualFile findSourceFile(Project project, VirtualFile eachFile) {
     PsiFile psiFile = PsiManager.getInstance(project).findFile(eachFile);
     if (!(psiFile instanceof ClsFileImpl)) return null;
 
-    PsiClass clsClass = JavaPsiFacade.getInstance(project).findClass(getFQN(psiFile), GlobalSearchScope.allScope(project));
+    String fqn = getFQN(psiFile);
+    if (fqn == null) return null;
+
+    PsiClass clsClass = JavaPsiFacade.getInstance(project).findClass(fqn, GlobalSearchScope.allScope(project));
     if (!(clsClass instanceof ClsClassImpl)) return null;
 
     PsiClass sourceClass = ((ClsClassImpl)clsClass).getSourceMirrorClass();
@@ -43,6 +48,7 @@ public class JavaEditorFileSwapper implements EditorFileSwapper {
     return result;
   }
 
+  @Nullable
   public static String getFQN(PsiFile psiFile) {
     if (!(psiFile instanceof PsiJavaFile)) return null;
     PsiClass[] classes = ((PsiJavaFile)psiFile).getClasses();

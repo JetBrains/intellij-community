@@ -95,10 +95,7 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
     Module myModule = myModulePointer.getModule();
     if (myModule != null && !processed.contains(myModule) && !myModule.isDisposed()) {
       processed.add(myModule);
-      if (myScope == DependencyScope.RUNTIME && type == OrderRootType.PRODUCTION_COMPILATION_CLASSES) {
-        return VirtualFile.EMPTY_ARRAY;
-      }
-      if (myScope == DependencyScope.TEST && type == OrderRootType.PRODUCTION_COMPILATION_CLASSES) {
+      if (!myScope.isForProductionCompile() && type == OrderRootType.PRODUCTION_COMPILATION_CLASSES) {
         return VirtualFile.EMPTY_ARRAY;
       }
       if (myScope == DependencyScope.PROVIDED && type == OrderRootType.CLASSES_AND_OUTPUT) {
@@ -122,10 +119,7 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
     if (myModule != null && !myModule.isDisposed() && (processed == null || !processed.contains(myModule))) {
       if (processed == null) processed = new THashSet<Module>();
       processed.add(myModule);
-      if (myScope == DependencyScope.RUNTIME && rootType == OrderRootType.PRODUCTION_COMPILATION_CLASSES) {
-        return Collections.emptyList();
-      }
-      if (myScope == DependencyScope.TEST && rootType == OrderRootType.PRODUCTION_COMPILATION_CLASSES) {
+      if (!myScope.isForProductionCompile() && rootType == OrderRootType.PRODUCTION_COMPILATION_CLASSES) {
         return Collections.emptyList();
       }
       if (myScope == DependencyScope.PROVIDED && rootType == OrderRootType.CLASSES_AND_OUTPUT) {

@@ -13,6 +13,7 @@
 package org.zmlx.hg4idea.command;
 
 import org.apache.commons.lang.StringUtils;
+import org.zmlx.hg4idea.HgVcs;
 
 import java.nio.charset.Charset;
 import java.util.Arrays;
@@ -21,7 +22,7 @@ public class HgVersionCommand {
 
   public boolean isValid(String executable) {
     String hgExecutable = StringUtils.trim(executable);
-    if (!hgExecutable.endsWith("hg")) {
+    if (!hgExecutable.endsWith(HgVcs.HG_EXECUTABLE_FILE_NAME)) {
       return false;
     }
     ShellCommand shellCommand = new ShellCommand();

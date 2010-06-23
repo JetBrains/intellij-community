@@ -1917,6 +1917,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         drawWave(g, xStart, xEnd, y + 1);
         g.setColor(savedColor);
       }
+      else if (effectType == EffectType.BOLD_DOTTED_LINE) {
+        final Color bgColor = getBackroundColor();
+        final int dottedAt = SystemInfo.isMac ? y : y + 1;
+        UIUtil.drawBoldDottedLine((Graphics2D)g, xStart, xEnd, dottedAt, bgColor, effectColor, true);
+      }
     }
 
     return x;

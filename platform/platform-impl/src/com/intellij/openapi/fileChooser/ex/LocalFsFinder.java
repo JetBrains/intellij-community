@@ -17,12 +17,14 @@ package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.Icons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.FileFilter;
 import java.util.ArrayList;
@@ -142,6 +144,11 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
 
     public boolean exists() {
       return myFile.exists();
+    }
+
+    @Nullable
+    public Icon getIcon() {
+      return myFile != null ? (myFile.isDirectory() ? Icons.DIRECTORY_CLOSED_ICON : myFile.getIcon()) : null;
     }
 
     public boolean equals(final Object o) {

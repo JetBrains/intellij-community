@@ -32,6 +32,8 @@ public interface PopupComponent {
 
   Window getWindow();
 
+  void setRequestFocus(boolean requestFocus);
+
   interface Factory {
     PopupComponent getPopup(Component owner, Component content, int x, int y);
 
@@ -80,6 +82,11 @@ public interface PopupComponent {
 
   class DialogPopupWrapper implements PopupComponent {
     private final JDialog myDialog;
+    private boolean myRequestFocus = true;
+
+    public void setRequestFocus(boolean requestFocus) {
+      myRequestFocus = requestFocus;
+    }
 
     public DialogPopupWrapper(Component owner, Component content, int x, int y) {
       if (!owner.isShowing()) {
@@ -113,7 +120,15 @@ public interface PopupComponent {
     }
 
     public void show() {
+      if (!myRequestFocus) {
+        myDialog.setFocusableWindowState(false);
+      }
       myDialog.setVisible(true);
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          myDialog.setFocusableWindowState(true);
+        }
+      });
     }
   }
 
@@ -136,6 +151,9 @@ public interface PopupComponent {
     public Window getWindow() {
       final Component c = (Component)ReflectionUtil.getField(Popup.class, myPopup, Component.class, "component");
       return c instanceof JWindow ? (JWindow)c : null;
+    }
+
+    public void setRequestFocus(boolean requestFocus) {
     }
   }
 

@@ -15,11 +15,14 @@
  */
 package com.intellij.compiler.impl.javaCompiler.jikes;
 
+import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.OutputParser;
 import com.intellij.compiler.impl.CompilerUtil;
+import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.impl.javaCompiler.ExternalCompiler;
 import com.intellij.compiler.impl.javaCompiler.ModuleChunk;
-import com.intellij.compiler.options.CompilerConfigurable;
+import com.intellij.compiler.options.JavaCompilersTab;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
@@ -31,6 +34,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ArrayUtil;
@@ -43,6 +47,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -57,7 +62,7 @@ public class JikesCompiler extends ExternalCompiler {
 
   public boolean checkCompiler(final CompileScope scope) {
     String compilerPath = getCompilerPath();
-    if (compilerPath == null) {
+    if (StringUtil.isEmpty(compilerPath)) {
       Messages.showMessageDialog(
         myProject,
         CompilerBundle.message("jikes.error.path.to.compiler.unspecified"), CompilerBundle.message("compiler.jikes.name"),
@@ -65,7 +70,7 @@ public class JikesCompiler extends ExternalCompiler {
       );
       openConfigurationDialog();
       compilerPath = getCompilerPath(); // update path
-      if (compilerPath == null) {
+      if (StringUtil.isEmpty(compilerPath)) {
         return false;
       }
     }
@@ -80,7 +85,7 @@ public class JikesCompiler extends ExternalCompiler {
       );
       openConfigurationDialog();
       compilerPath = getCompilerPath(); // update path
-      if (compilerPath == null) {
+      if (StringUtil.isEmpty(compilerPath)) {
         return false;
       }
       if (!new File(compilerPath).exists()) {
@@ -92,7 +97,12 @@ public class JikesCompiler extends ExternalCompiler {
   }
 
   private void openConfigurationDialog() {
-    ShowSettingsUtil.getInstance().editConfigurable(myProject, CompilerConfigurable.getInstance(myProject));
+    final CompilerConfigurationImpl configuration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
+    final Collection<BackendCompiler> compilers = configuration.getRegisteredJavaCompilers();
+    final BackendCompiler defaultCompiler = configuration.getDefaultCompiler();
+    final JavaCompilersTab compilersTab = new JavaCompilersTab(myProject, compilers, defaultCompiler);
+
+    ShowSettingsUtil.getInstance().editConfigurable(myProject, compilersTab);
   }
 
   private String getCompilerPath() {

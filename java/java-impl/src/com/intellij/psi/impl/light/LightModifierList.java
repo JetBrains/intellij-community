@@ -20,9 +20,10 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.CollectionFactory;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.Set;
 
 public class LightModifierList extends LightElement implements PsiModifierList{
@@ -34,7 +35,15 @@ public class LightModifierList extends LightElement implements PsiModifierList{
 
   public LightModifierList(PsiManager manager, final Language language, String... modifiers){
     super(manager, language);
-    myModifiers = CollectionFactory.newTroveSet(modifiers);
+    myModifiers = Collections.synchronizedSet(CollectionFactory.newTroveSet(modifiers));
+  }
+
+  public void addModifier(String modifier) {
+    myModifiers.add(modifier);
+  }
+
+  public void clearModifiers() {
+    myModifiers.clear();
   }
 
   public boolean hasModifierProperty(@NotNull String name){

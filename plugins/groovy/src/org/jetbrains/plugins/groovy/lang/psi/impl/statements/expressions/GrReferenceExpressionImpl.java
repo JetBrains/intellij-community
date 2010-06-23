@@ -24,8 +24,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -37,6 +35,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.codeInsight.GroovyTargetElementEvaluator;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -696,7 +695,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
   public boolean isReferenceTo(PsiElement element) {
     if (element instanceof PsiNamedElement) {
-      return getManager().areElementsEquivalent(element, resolve());
+      return getManager().areElementsEquivalent(element, GroovyTargetElementEvaluator.correctSearchTargets(resolve()));
     }
     return false;
   }

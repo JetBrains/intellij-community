@@ -41,7 +41,6 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.FontRenderContext;
-import java.awt.geom.Rectangle2D;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -674,6 +673,123 @@ public class UIUtil {
     }
   }
 
+  public static void drawBoldDottedLine(final Graphics2D g,
+                                        final int startX,
+                                        final int endX,
+                                        final int lineY,
+                                        final Color bgColor,
+                                        final Color fgColor,
+                                        final boolean opaque) {
+     if (SystemInfo.isMac) {
+       drawAppleDottedLine(g, startX, endX, lineY, bgColor, fgColor, opaque);
+     } else {
+       drawBoringDottedLine(g, startX, endX, lineY, bgColor, fgColor, opaque);
+     }
+  }
+
+  private static void drawBoringDottedLine(final Graphics2D g,
+                                           final int startX,
+                                           final int endX,
+                                           final int lineY,
+                                           final Color bgColor,
+                                           final Color fgColor,
+                                           final boolean opaque) {
+    final Color oldColor = g.getColor();
+
+    // Fill 2 lines with background color
+    if (opaque && bgColor != null) {
+      g.setColor(bgColor);
+
+      drawLine(g, startX, lineY, endX, lineY);
+      drawLine(g, startX, lineY+1, endX, lineY+1);
+    }
+
+    // Draw dotted line:
+    //
+    // CCC CCC CCC ...
+    // CCC CCC CCC ...
+    //
+    // (where "C" - colored pixel, " " - white pixel)
+
+    final int step = 4;
+    final int startPosCorrection = startX % step < 3 ? 0 : 1;
+
+    g.setColor(fgColor != null ? fgColor : oldColor);
+    // Now draw bold line segments
+    for (int dotXi = (startX / step + startPosCorrection) * step; dotXi < endX; dotXi += step) {
+      g.drawLine(dotXi, lineY, dotXi + 1, lineY);
+      g.drawLine(dotXi, lineY + 1, dotXi + 1, lineY + 1);
+    }
+
+    // restore color
+    g.setColor(oldColor);
+  }
+
+  private static void drawAppleDottedLine(final Graphics2D g,
+                                          final int startX,
+                                          final int endX,
+                                          final int lineY,
+                                          final Color bgColor,
+                                          final Color fgColor,
+                                          final boolean opaque) {
+    final Color oldColor = g.getColor();
+
+    // Fill 3 lines with background color
+    if (opaque && bgColor != null) {
+      g.setColor(bgColor);
+
+      drawLine(g, startX, lineY, endX, lineY);
+      drawLine(g, startX, lineY+1, endX, lineY+1);
+      drawLine(g, startX, lineY+2, endX, lineY+2);
+    }
+
+    // Draw apple like dotted line:
+    //
+    // CCC CCC CCC ...
+    // CCC CCC CCC ...
+    // CCC CCC CCC ...
+    //
+    // (where "C" - colored pixel, " " - white pixel)
+    //
+    // Each dot:
+    // | 20%  | 50%  | 20% |
+    // | 100% | 100% | 100%|
+    // | 50%  | 100% | 50% |
+
+    g.setColor(fgColor != null ? fgColor : oldColor);
+
+    final int step = 4;
+    final int startPosCorrection = startX % step < 3 ? 0 : 1;
+
+    final int dotX0  = (startX / step + startPosCorrection) * step;
+
+    // draw one dot by pixel:
+    final Composite oldComposite = g.getComposite();
+    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, .2f));
+    g.drawLine(dotX0, lineY, dotX0,  lineY);
+    g.drawLine(dotX0+2, lineY, dotX0+2,  lineY);
+
+    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
+    g.drawLine(dotX0, lineY+1, dotX0+2,  lineY+1);
+    g.drawLine(dotX0+1, lineY+2, dotX0+1,  lineY+2);
+
+    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, .5f));
+    g.drawLine(dotX0+1, lineY, dotX0+1,  lineY);
+    g.drawLine(dotX0, lineY+2, dotX0,  lineY+2);
+    g.drawLine(dotX0+2, lineY+2, dotX0+2,  lineY+2);
+
+    // restore previous settings
+    g.setComposite(oldComposite);
+
+    // Now copy our dot several times
+    for (int dotXi = dotX0 + step; dotXi < endX; dotXi += step) {
+      g.copyArea(dotX0, lineY, 3, 3, dotXi - dotX0, 0);
+    }
+
+    // restore color
+    g.setColor(oldColor);
+  }
+
   public static void applyRenderingHints(final Graphics g) {
     Toolkit tk = Toolkit.getDefaultToolkit();
     //noinspection HardCodedStringLiteral
@@ -1106,6 +1222,17 @@ public class UIUtil {
     private static final Border LIST_SELECTION_BACKGROUND_PAINTER = (Border) UIManager.get("List.sourceListSelectionBackgroundPainter");
     private static final Border LIST_FOCUSED_SELECTION_BACKGROUND_PAINTER = (Border) UIManager.get("List.sourceListFocusedSelectionBackgroundPainter");
 
+    private boolean myWideSelection;
+
+    public MacTreeUI() {
+      this(true);
+    }
+
+
+    public MacTreeUI(final boolean wideSelection) {
+      myWideSelection = wideSelection;
+    }
+
     private MouseListener mySelectionListener = new MouseAdapter() {
       @Override
       public void mousePressed(@NotNull final MouseEvent e) {
@@ -1144,7 +1271,7 @@ public class UIUtil {
     protected void completeUIInstall() {
       super.completeUIInstall();
 
-      tree.setOpaque(false);
+      if (myWideSelection) tree.setOpaque(true);
       tree.setShowsRootHandles(true);
 
       tree.addMouseListener(mySelectionListener);
@@ -1209,6 +1336,10 @@ public class UIUtil {
     protected void paintHorizontalLine(Graphics g, JComponent c, int y, int left, int right) {
     }
 
+    public boolean isWideSelection() {
+      return myWideSelection;
+    }
+
     @Override
     protected void paintRow(final Graphics g,
                             final Rectangle clipBounds,
@@ -1222,13 +1353,10 @@ public class UIUtil {
       final int containerWidth = tree.getParent() instanceof JViewport ? tree.getParent().getWidth() : tree.getWidth();
       final int xOffset = tree.getParent() instanceof JViewport ? ((JViewport)tree.getParent()).getViewPosition().x : 0;
 
-      if (path != null) {
+      if (path != null && myWideSelection) {
         boolean selected = tree.isPathSelected(path);
         Graphics2D rowGraphics = (Graphics2D)g.create();
-        Rectangle visible = tree.getVisibleRect();
-        Rectangle2D union = visible.createIntersection(bounds);
-        Rectangle clip = new Rectangle(visible.x, (int)union.getY(), visible.width, (int)union.getHeight());
-        rowGraphics.setClip(clip);
+        rowGraphics.setClip(clipBounds);
 
         final Object sourceList = tree.getClientProperty(SOURCE_LIST_CLIENT_PROPERTY);
         if (sourceList != null && ((Boolean)sourceList)) {
@@ -1257,9 +1385,8 @@ public class UIUtil {
           paintExpandControl(rowGraphics, bounds, insets, bounds, path, row, isExpanded, hasBeenExpanded, isLeaf);
         }
 
-        super.paintRow(rowGraphics, clip, insets, bounds, path, row, isExpanded, hasBeenExpanded, isLeaf);
+        super.paintRow(rowGraphics, clipBounds, insets, bounds, path, row, isExpanded, hasBeenExpanded, isLeaf);
         rowGraphics.dispose();
-
       } else {
         super.paintRow(g, clipBounds, insets, bounds, path, row, isExpanded, hasBeenExpanded, isLeaf);
       }
@@ -1267,17 +1394,19 @@ public class UIUtil {
 
     @Override
     public void paint(Graphics g, JComponent c) {
-      final int containerWidth = tree.getParent() instanceof JViewport ? tree.getParent().getWidth() : tree.getWidth();
-      final int xOffset = tree.getParent() instanceof JViewport ? ((JViewport)tree.getParent()).getViewPosition().x : 0;
-      final Rectangle bounds = g.getClipBounds();
+      if (myWideSelection) {
+        final int containerWidth = tree.getParent() instanceof JViewport ? tree.getParent().getWidth() : tree.getWidth();
+        final int xOffset = tree.getParent() instanceof JViewport ? ((JViewport)tree.getParent()).getViewPosition().x : 0;
+        final Rectangle bounds = g.getClipBounds();
 
-      // draw background for the given clip bounds
-      final Object sourceList = tree.getClientProperty(SOURCE_LIST_CLIENT_PROPERTY);
-      if (sourceList != null && ((Boolean)sourceList)) {
-        Graphics2D backgroundGraphics = (Graphics2D) g.create();
-        backgroundGraphics.setClip(xOffset, bounds.y, containerWidth, bounds.height);
-        LIST_BACKGROUND_PAINTER.paintBorder(tree, backgroundGraphics, xOffset, bounds.y, containerWidth, bounds.height);
-        backgroundGraphics.dispose();
+        // draw background for the given clip bounds
+        final Object sourceList = tree.getClientProperty(SOURCE_LIST_CLIENT_PROPERTY);
+        if (sourceList != null && ((Boolean)sourceList)) {
+          Graphics2D backgroundGraphics = (Graphics2D)g.create();
+          backgroundGraphics.setClip(xOffset, bounds.y, containerWidth, bounds.height);
+          LIST_BACKGROUND_PAINTER.paintBorder(tree, backgroundGraphics, xOffset, bounds.y, containerWidth, bounds.height);
+          backgroundGraphics.dispose();
+        }
       }
 
       super.paint(g, c);
@@ -1288,9 +1417,9 @@ public class UIUtil {
       return new CellRendererPane() {
         @Override
         public void paintComponent(Graphics g, Component c, Container p, int x, int y, int w, int h, boolean shouldValidate) {
-          if (c instanceof JComponent) {
+          if (c instanceof JComponent && myWideSelection) {
+            ((JComponent)c).setOpaque(false);
           }
-          ((JComponent)c).setOpaque(false);
 
           super.paintComponent(g, c, p, x, y, w, h, shouldValidate);
         }

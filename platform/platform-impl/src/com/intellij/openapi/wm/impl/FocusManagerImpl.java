@@ -589,4 +589,9 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   public ActionCallback requestDefaultFocus(boolean forced) {
     return new ActionCallback.Done();
   }
+
+  @Override
+  public boolean isFocusTransferEnabled() {
+    return myApp.isActive() || !Registry.is("actionSystem.suspendFocusTransferIfApplicationInactive");
+  }
 }

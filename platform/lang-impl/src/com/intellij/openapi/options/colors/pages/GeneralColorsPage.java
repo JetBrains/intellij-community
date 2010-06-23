@@ -17,12 +17,15 @@ package com.intellij.openapi.options.colors.pages;
 
 import com.intellij.application.options.colors.FontEditorPreview;
 import com.intellij.application.options.colors.InspectionColorSettingsPage;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.SeveritiesProvider;
 import com.intellij.codeInsight.template.impl.TemplateColors;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -61,6 +64,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     "  <wrong_ref>Unknown symbol</wrong_ref>\n" +
     "  <server_error>Problem from server</server_error>\n" +
     "  <server_duplicate>Duplicate from server</server_duplicate>\n" +
+    getCustomSeveritiesDemoText() +
     "\n" +
     "Console:\n" +
     "<stdsys>C:\\command.com</stdsys>\n" +
@@ -148,6 +152,12 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("info", CodeInsightColors.INFO_ATTRIBUTES);
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("server_error", CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING);
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("server_duplicate", CodeInsightColors.DUPLICATE_FROM_SERVER);
+    for (SeveritiesProvider provider : Extensions.getExtensions(SeveritiesProvider.EP_NAME)) {
+      for (HighlightInfoType highlightInfoType : provider.getSeveritiesHighlightInfoTypes()) {
+        ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put(getHighlightDescTagName(highlightInfoType),
+                                             highlightInfoType.getAttributesKey());
+      }
+    }
   }
 
   @NotNull
@@ -181,5 +191,24 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
 
   public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
     return ADDITIONAL_HIGHLIGHT_DESCRIPTORS;
+  }
+
+  private static String getCustomSeveritiesDemoText() {
+    final StringBuilder buff = new StringBuilder();
+
+    for (SeveritiesProvider provider : Extensions.getExtensions(SeveritiesProvider.EP_NAME)) {
+       for (HighlightInfoType highlightInfoType : provider.getSeveritiesHighlightInfoTypes()) {
+         final String tag = getHighlightDescTagName(highlightInfoType);
+         buff.append("  <").append(tag).append(">");
+         buff.append(tag.toLowerCase());
+         buff.append("</").append(tag).append(">");
+       }
+     }
+
+    return buff.toString();
+  }
+
+  private static String getHighlightDescTagName(HighlightInfoType highlightInfoType) {
+    return highlightInfoType.getSeverity(null).myName;
   }
 }

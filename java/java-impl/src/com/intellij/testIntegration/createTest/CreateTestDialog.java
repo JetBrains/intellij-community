@@ -18,7 +18,10 @@ package com.intellij.testIntegration.createTest;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
-import com.intellij.ide.util.*;
+import com.intellij.ide.util.PackageUtil;
+import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.ide.util.TreeClassChooser;
+import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
@@ -46,7 +49,7 @@ import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
-import com.intellij.testIntegration.TestFrameworkDescriptor;
+import com.intellij.testIntegration.TestFramework;
 import com.intellij.testIntegration.TestIntegrationUtils;
 import com.intellij.ui.*;
 import com.intellij.util.IncorrectOperationException;
@@ -72,7 +75,7 @@ public class CreateTestDialog extends DialogWrapper {
   private final Module myTargetModule;
 
   private PsiDirectory myTargetDirectory;
-  private TestFrameworkDescriptor mySelectedTestDescriptor;
+  private TestFramework mySelectedFramework;
 
   private final List<JRadioButton> myLibraryButtons = new ArrayList<JRadioButton>();
   private JTextField myTargetClassNameField;
@@ -112,7 +115,7 @@ public class CreateTestDialog extends DialogWrapper {
     Map<String, JRadioButton> nameToButtonMap = new HashMap<String, JRadioButton>();
     List<Pair<String, JRadioButton>> attachedLibraries = new ArrayList<Pair<String, JRadioButton>>();
 
-    for (final TestFrameworkDescriptor descriptor : Extensions.getExtensions(TestFrameworkDescriptor.EXTENSION_NAME)) {
+    for (final TestFramework descriptor : Extensions.getExtensions(TestFramework.EXTENSION_NAME)) {
       final JRadioButton b = new JRadioButton(descriptor.getName());
       myLibraryButtons.add(b);
       group.add(b);
@@ -156,7 +159,7 @@ public class CreateTestDialog extends DialogWrapper {
       public void actionPerformed(ActionEvent e) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            OrderEntryFix.addJarToRoots(mySelectedTestDescriptor.getLibraryPath(), myTargetModule, null);
+            OrderEntryFix.addJarToRoots(mySelectedFramework.getLibraryPath(), myTargetModule, null);
           }
         });
         myFixLibraryPanel.setVisible(false);
@@ -199,14 +202,14 @@ public class CreateTestDialog extends DialogWrapper {
     updateMethodsTable();
   }
 
-  private void onLibrarySelected(TestFrameworkDescriptor descriptor) {
+  private void onLibrarySelected(TestFramework descriptor) {
     String text = CodeInsightBundle.message("intention.create.test.dialog.library.not.found", descriptor.getName());
     myFixLibraryLabel.setText(text);
     myFixLibraryPanel.setVisible(!descriptor.isLibraryAttached(myTargetModule));
 
     String superClass = descriptor.getDefaultSuperClass();
     mySuperClassField.setText(superClass == null ? "" : superClass);
-    mySelectedTestDescriptor = descriptor;
+    mySelectedFramework = descriptor;
   }
 
   private void setPreferredSize(JTextField field) {
@@ -236,7 +239,7 @@ public class CreateTestDialog extends DialogWrapper {
   }
 
   private void saveDefaultLibraryName() {
-    getProperties().setValue(DEFAULT_LIBRARY_NAME_PROPERTY, mySelectedTestDescriptor.getName());
+    getProperties().setValue(DEFAULT_LIBRARY_NAME_PROPERTY, mySelectedFramework.getName());
   }
 
   private void restoreShowInheritedMembersStatus() {
@@ -410,8 +413,8 @@ public class CreateTestDialog extends DialogWrapper {
     return myGenerateBeforeBox.isSelected();
   }
 
-  public TestFrameworkDescriptor getSelectedTestFrameworkDescriptor() {
-    return mySelectedTestDescriptor;
+  public TestFramework getSelectedTestFrameworkDescriptor() {
+    return mySelectedFramework;
   }
 
   protected void doOKAction() {

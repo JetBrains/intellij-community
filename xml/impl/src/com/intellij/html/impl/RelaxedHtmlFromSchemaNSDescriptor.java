@@ -15,8 +15,6 @@
  */
 package com.intellij.html.impl;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
@@ -32,8 +30,13 @@ public class RelaxedHtmlFromSchemaNSDescriptor extends XmlNSDescriptorImpl {
   public XmlElementDescriptor getElementDescriptor(@NotNull XmlTag tag) {
     XmlElementDescriptor elementDescriptor = super.getElementDescriptor(tag);
 
-    if (elementDescriptor == null && !tag.getNamespace().equals(XmlUtil.XHTML_URI)) {
-      return new AnyXmlElementDescriptor(null, tag.getNSDescriptor(tag.getNamespace(), true));
+    String namespace;
+    if (elementDescriptor == null && 
+        !((namespace = tag.getNamespace()).equals(XmlUtil.XHTML_URI))) {
+      return new AnyXmlElementDescriptor(
+        null, 
+        XmlUtil.HTML_URI.equals(namespace) ? this : tag.getNSDescriptor(tag.getNamespace(), true)
+      );
     }
 
     return elementDescriptor;

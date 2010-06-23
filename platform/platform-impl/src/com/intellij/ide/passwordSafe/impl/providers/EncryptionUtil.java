@@ -16,14 +16,11 @@
 package com.intellij.ide.passwordSafe.impl.providers;
 
 import javax.crypto.Cipher;
-import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 
 /**
  * Utilities used to encrypt/decrypt passwords in case of Java-based implementation of PasswordSafe.
@@ -50,6 +47,10 @@ public class EncryptionUtil {
    * The secret key size (available for international encryption)
    */
   private static final int SECRET_KEY_SIZE = 128;
+  /**
+   * The secret key size (available for international encryption)
+   */
+  public static final int SECRET_KEY_SIZE_BYTES = SECRET_KEY_SIZE / 8;
 
   /**
    * 128 bits salt for AES-CBC with for data values (stable non-secret value)
@@ -84,18 +85,15 @@ public class EncryptionUtil {
   /**
    * Generate key based on secure random
    *
-   * @param random the random to use
+   * @param keyBytes the key to use
    * @return the generated key
    */
-  public static SecretKey genKey(SecureRandom random) {
-    try {
-      KeyGenerator key = KeyGenerator.getInstance(SECRET_KEY_ALGORITHM);
-      key.init(SECRET_KEY_SIZE, random);
-      return key.generateKey();
+  public static byte[] genKey(byte[] keyBytes) {
+    byte[] key = new byte[SECRET_KEY_SIZE_BYTES];
+    for (int i = 0; i < keyBytes.length; i++) {
+      key[i % SECRET_KEY_SIZE_BYTES] ^= keyBytes[i];
     }
-    catch (NoSuchAlgorithmException e) {
-      throw new IllegalStateException(SECRET_KEY_ALGORITHM + " is not available", e);
-    }
+    return key;
   }
 
   /**
@@ -104,8 +102,8 @@ public class EncryptionUtil {
    * @param password the password to use
    * @return the generated key
    */
-  public static SecretKey genPasswordKey(String password) {
-    return genKey(new SecureRandom(hash(getUTF8Bytes(password))));
+  public static byte[] genPasswordKey(String password) {
+    return genKey(hash(getUTF8Bytes(password)));
   }
 
 
@@ -116,10 +114,10 @@ public class EncryptionUtil {
    * @param rawKey   the raw key to encrypt
    * @return the encrypted key
    */
-  public static byte[] encryptKey(SecretKey password, byte[] rawKey) {
+  public static byte[] encryptKey(byte[] password, byte[] rawKey) {
     try {
       Cipher c = Cipher.getInstance(ENCRYPT_KEY_ALGORITHM);
-      c.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(password.getEncoded(), password.getAlgorithm()), CBC_SALT_KEY);
+      c.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(password, SECRET_KEY_ALGORITHM), CBC_SALT_KEY);
       return c.doFinal(rawKey);
     }
     catch (Exception e) {
@@ -130,12 +128,12 @@ public class EncryptionUtil {
   /**
    * Create encrypted db key
    *
-   * @param password  the password to protect the kye
+   * @param password  the password to protect the key
    * @param requester the requester for the key
    * @param key       the key within requester
    * @return the key to use in the database
    */
-  public static byte[] dbKey(SecretKey password, Class requester, String key) {
+  public static byte[] dbKey(byte[] password, Class requester, String key) {
     return encryptKey(password, rawKey(requester, key));
   }
 
@@ -147,10 +145,10 @@ public class EncryptionUtil {
    * @param encryptedKey the key to decrypt
    * @return the decrypted key
    */
-  public static byte[] decryptKey(SecretKey password, byte[] encryptedKey) {
+  public static byte[] decryptKey(byte[] password, byte[] encryptedKey) {
     try {
       Cipher c = Cipher.getInstance(ENCRYPT_KEY_ALGORITHM);
-      c.init(Cipher.DECRYPT_MODE, new SecretKeySpec(password.getEncoded(), password.getAlgorithm()), CBC_SALT_KEY);
+      c.init(Cipher.DECRYPT_MODE, new SecretKeySpec(password, SECRET_KEY_ALGORITHM), CBC_SALT_KEY);
       return c.doFinal(encryptedKey);
     }
     catch (Exception e) {
@@ -166,10 +164,10 @@ public class EncryptionUtil {
    * @param data     the data to encrypt
    * @return the encrypted data
    */
-  static byte[] encryptData(SecretKey password, int size, byte[] data) {
+  static byte[] encryptData(byte[] password, int size, byte[] data) {
     try {
       Cipher c = Cipher.getInstance(ENCRYPT_DATA_ALGORITHM);
-      c.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(password.getEncoded(), password.getAlgorithm()), CBC_SALT_DATA);
+      c.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(password, SECRET_KEY_ALGORITHM), CBC_SALT_DATA);
       c.update(new byte[]{(byte)(size >> 24), (byte)(size >> 16), (byte)(size >> 8), (byte)(size)});
       return c.doFinal(data);
     }
@@ -185,7 +183,7 @@ public class EncryptionUtil {
    * @param text     the text to encrypt
    * @return encrypted text
    */
-  public static byte[] encryptText(SecretKey password, String text) {
+  public static byte[] encryptText(byte[] password, String text) {
     byte[] data = getUTF8Bytes(text);
     return encryptData(password, data.length, data);
   }
@@ -198,10 +196,10 @@ public class EncryptionUtil {
    * @param encryptedData the data to decrypt
    * @return the decrypted data (the first four bytes is real data length in Big Endian)
    */
-  static byte[] decryptData(SecretKey password, byte[] encryptedData) {
+  static byte[] decryptData(byte[] password, byte[] encryptedData) {
     try {
       Cipher c = Cipher.getInstance(ENCRYPT_DATA_ALGORITHM);
-      c.init(Cipher.DECRYPT_MODE, new SecretKeySpec(password.getEncoded(), password.getAlgorithm()), CBC_SALT_DATA);
+      c.init(Cipher.DECRYPT_MODE, new SecretKeySpec(password, SECRET_KEY_ALGORITHM), CBC_SALT_DATA);
       return c.doFinal(encryptedData);
     }
     catch (Exception e) {
@@ -217,7 +215,7 @@ public class EncryptionUtil {
    * @param data     the bytes to decrypt
    * @return encrypted text
    */
-  public static String decryptText(SecretKey password, byte[] data) {
+  public static String decryptText(byte[] password, byte[] data) {
     byte[] plain = decryptData(password, data);
     int len = ((plain[0] & 0xff) << 24) + ((plain[1] & 0xff) << 16) + ((plain[2] & 0xff) << 8) + (plain[3] & 0xff);
     if (len < 0 || len > plain.length - 4) {
@@ -252,7 +250,7 @@ public class EncryptionUtil {
    * @param data the data to hash
    * @return the digest value
    */
-  private static byte[] hash(byte[]... data) {
+  public static byte[] hash(byte[]... data) {
     try {
       MessageDigest h = MessageDigest.getInstance(HASH_ALGORITHM);
       for (byte[] d : data) {

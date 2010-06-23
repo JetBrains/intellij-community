@@ -20,21 +20,41 @@ import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface TestFrameworkDescriptor {
-  ExtensionPointName<TestFrameworkDescriptor> EXTENSION_NAME = ExtensionPointName.create("com.intellij.testFrameworkDescriptor");
+import javax.swing.*;
 
+public interface TestFramework {
+  ExtensionPointName<TestFramework> EXTENSION_NAME = ExtensionPointName.create("com.intellij.testFramework");
+
+  @NotNull
   String getName();
 
-  boolean isLibraryAttached(Module m);
+  @NotNull
+  Icon getIcon();
 
+  boolean isLibraryAttached(@NotNull Module module);
+
+  @NotNull
   String getLibraryPath();
 
   @Nullable
   String getDefaultSuperClass();
 
-  boolean isTestClass(PsiElement element);
+  boolean isTestClass(@NotNull PsiElement clazz);
+
+  boolean isPotentialTestClass(@NotNull PsiElement clazz);
+
+  @Nullable
+  PsiElement findSetUpMethod(@NotNull PsiElement clazz);
+
+  @Nullable
+  PsiElement findTearDownMethod(@NotNull PsiElement clazz);
+
+  @Nullable
+  PsiElement findOrCreateSetUpMethod(@NotNull PsiElement clazz) throws IncorrectOperationException;
 
   FileTemplateDescriptor getSetUpMethodFileTemplateDescriptor();
 

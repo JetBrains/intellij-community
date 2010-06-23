@@ -16,158 +16,53 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
-import com.intellij.lang.Language;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.impl.ElementPresentationUtil;
-import com.intellij.psi.impl.cache.ModifierFlags;
-import com.intellij.psi.impl.light.LightMethod;
-import com.intellij.psi.impl.source.HierarchicalMethodSignatureImpl;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.ui.RowIcon;
+import com.intellij.psi.impl.light.LightMethodBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 
-import javax.swing.*;
-
 /**
  * @author ven
  */
-public class GrGdkMethodImpl extends LightMethod implements GrGdkMethod {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl");
+public class GrGdkMethodImpl extends LightMethodBuilder implements GrGdkMethod {
   private final PsiMethod myMethod;
 
-  private LightParameterList myParameterList = null;
-
-  private final LightModifierList myModifierList;
-
-  @NotNull
-  public Language getLanguage() {
-    return GroovyFileType.GROOVY_FILE_TYPE.getLanguage();
-  }
-
-  public boolean isValid() {
-    return true;
-  }
-
   public GrGdkMethodImpl(PsiMethod method, boolean isStatic) {
-    super(method.getManager(), method, null);
+    super(method.getManager(), GroovyFileType.GROOVY_LANGUAGE, method.getName());
     myMethod = method;
-    final PsiManager manager = method.getManager();
-    myModifierList = new LightModifierList(manager, ModifierFlags.PUBLIC_MASK + (isStatic ? ModifierFlags.STATIC_MASK : 0));
 
-    final PsiParameter[] originalParameters = method.getParameterList().getParameters();
-    final String[] parmNames = new String[originalParameters.length - 1];
-    for (int i = 1; i < originalParameters.length; i++) {
-      PsiParameter originalParameter = originalParameters[i];
-      String baseName;
-      final PsiType type = originalParameter.getType();
-      String[] nameSuggestions = JavaCodeStyleManager.getInstance(getProject()).suggestVariableName(VariableKind.PARAMETER, null,
-          null, type).names;
-      if (nameSuggestions.length > 0) {
-        baseName = nameSuggestions[0];
-      } else {
-        baseName = "p";
-      }
-
-      int postfix = 1;
-
-      String name = baseName;
-      NextName:
-      do {
-        for (int j = 1; j < i; j++) {
-          if (name.equals(parmNames[j - 1])) {
-            name = baseName + postfix;
-            postfix++;
-            continue NextName;
-          }
-        }
-
-        break;
-      } while (true);
-
-      parmNames[i - 1] = name;
+    addModifier(PsiModifier.PUBLIC);
+    if (isStatic) {
+      addModifier(PsiModifier.STATIC);
     }
 
-    myParameterList = new LightParameterList(manager, new Computable<GrLightParameter[]>() {
-      public GrLightParameter[] compute() {
-        GrLightParameter[] result = new GrLightParameter[parmNames.length];
-        for (int i = 0; i < result.length; i++) {
-          final PsiParameter parameter = originalParameters[i + 1];
-          LOG.assertTrue(parameter.isValid());
-          result[i] = new GrLightParameter(parmNames[i], parameter.getType(), GrGdkMethodImpl.this);
+    final PsiParameter[] originalParameters = method.getParameterList().getParameters();
+    for (int i = 1; i < originalParameters.length; i++) {
+      addParameter(originalParameters[i]);
+    }
 
-        }
-        return result;
-      }
-    });
-  }
-
-  @NotNull
-  @Override
-  public HierarchicalMethodSignature getHierarchicalMethodSignature() {
-    return new HierarchicalMethodSignatureImpl((MethodSignatureBackedByPsiMethod)getSignature(PsiSubstitutor.EMPTY));
-  }
-
-  @NotNull
-  public MethodSignature getSignature(@NotNull PsiSubstitutor substitutor) {
-    /*final PsiParameter[] parameters = getParameterList().getParameters();
-    PsiType[] parameterTypes = new PsiType[parameters.length];
-    for (int i = 0; i < parameterTypes.length; i++) {
-      parameterTypes[i] = parameters[i].getType();
-    }*/
-
-    return MethodSignatureBackedByPsiMethod.create(this, substitutor); //todo
+    setReturnType(method.getReturnType());
+    setBaseIcon(GroovyIcons.METHOD);
+    setMethodKind("GrGdkMethod");
+    setNavigationElement(method);
   }
 
   public PsiMethod getStaticMethod() {
     return myMethod;
   }
 
-  @NotNull
-  public PsiParameterList getParameterList() {
-    return myParameterList;
+  public boolean hasTypeParameters() {
+    return myMethod.hasTypeParameters();
   }
 
   @NotNull
-  public PsiModifierList getModifierList() {
-    return myModifierList;
+  public PsiTypeParameter[] getTypeParameters() {
+    return myMethod.getTypeParameters();
   }
 
-  public boolean hasModifierProperty(@NotNull String name) {
-    return myModifierList.hasModifierProperty(name);
-  }
-
-  public boolean canNavigate() {
-    return myMethod.canNavigate();
-  }
-
-  @Override
-  public boolean isConstructor() {
-    return false;
-  }
-
-  @NotNull
-  public PsiElement getNavigationElement() {
-    return myMethod.getNavigationElement();
-  }
-
-  public void navigate(boolean requestFocus) {
-    myMethod.navigate(requestFocus);
-  }
-  public PsiMethodReceiver getMethodReceiver() {
-    return null;
-  }
-
-  @Override
-  public Icon getIcon(int flags) {
-    RowIcon baseIcon = createLayeredIcon(GroovyIcons.METHOD, ElementPresentationUtil.getFlags(this, false));
-    return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
+  public PsiTypeParameterList getTypeParameterList() {
+    return myMethod.getTypeParameterList();
   }
 }

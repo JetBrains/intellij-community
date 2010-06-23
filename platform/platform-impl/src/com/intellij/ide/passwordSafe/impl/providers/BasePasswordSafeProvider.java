@@ -15,12 +15,10 @@
  */
 package com.intellij.ide.passwordSafe.impl.providers;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.ide.passwordSafe.PasswordSafeException;
 import com.intellij.ide.passwordSafe.impl.PasswordSafeProvider;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
-
-import javax.crypto.SecretKey;
 
 /**
  * Base Java-based provider for password safe that assumes a simple key-value storage.
@@ -33,7 +31,7 @@ public abstract class BasePasswordSafeProvider extends PasswordSafeProvider {
    * @param project the project to use
    * @return the secret key to use
    */
-  protected abstract SecretKey key(Project project) throws PasswordSafeException;
+  protected abstract byte[] key(Project project) throws PasswordSafeException;
 
   /**
    * {@inheritDoc}

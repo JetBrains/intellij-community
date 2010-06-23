@@ -74,6 +74,8 @@ public abstract class FileEditorManagerEx extends FileEditorManager {
 
   public abstract void unsplitAllWindow();
 
+  public abstract int getWindowSplitCount();
+
   @NotNull
   public abstract EditorWindow[] getWindows();
 

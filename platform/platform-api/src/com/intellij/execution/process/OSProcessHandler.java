@@ -278,7 +278,14 @@ public class OSProcessHandler extends ProcessHandler {
       while (myReader.ready()) {
         int n = myReader.read(buffer);
         if (n > 0) {
-          myNotificationQueue.offer(new String(buffer, 0, n));
+          int start = 0;
+          int end = 0;
+          while (start < n) {
+            while (end < n && buffer[end++] != '\n');
+
+            myNotificationQueue.offer(new String(buffer, start, end - start));
+            start = end;
+          }
         }
       }
 

@@ -58,7 +58,7 @@ public abstract class GroovyImporter extends MavenImporter {
     String testStubsDir = findGoalConfigValue(mavenProject, "generateTestStubs", "outputDirectory");
 
     // exclude common parent of /groovy-stubs/main and /groovy-stubs/test
-    String defaultStubsDir = mavenProject.getGeneratedSourcesDirectory() + "/groovy-stubs";
+    String defaultStubsDir = mavenProject.getGeneratedSourcesDirectory(false) + "/groovy-stubs";
 
     result.add(stubsDir == null ? defaultStubsDir : stubsDir);
     result.add(testStubsDir == null ? defaultStubsDir : testStubsDir);

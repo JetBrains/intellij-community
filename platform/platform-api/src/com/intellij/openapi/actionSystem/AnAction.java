@@ -70,7 +70,9 @@ public abstract class AnAction {
   private static final ShortcutSet ourEmptyShortcutSet = new CustomShortcutSet(new Shortcut[0]);
   private boolean myIsDefaultIcon = true;
   private boolean myWorksInInjected;
-                                       
+
+
+  private boolean myTransparentUpdate = false;
   /**
    * Creates a new action with its text, description and icon set to <code>null</code>.
    */
@@ -287,5 +289,13 @@ public abstract class AnAction {
 
   public boolean isInInjectedContext() {
     return myWorksInInjected;
+  }
+
+  public boolean isTransparentUpdate() {
+    return myTransparentUpdate;
+  }
+
+  public void setTransparentUpdate(boolean transparentUpdate) {
+    myTransparentUpdate = transparentUpdate;
   }
 }

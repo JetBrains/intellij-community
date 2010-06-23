@@ -22,11 +22,9 @@ import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.fileEditor.impl.text.FileDropHandler;
-import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
@@ -42,8 +40,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
 import java.util.*;
 import java.util.List;
 
@@ -409,6 +407,26 @@ public final class EditorsSplitters extends JPanel {
     for (int i = 0; i != windows.length; ++ i) {
       windows [i].updateFileBackgroundColor(file);
     }
+  }
+
+  public int getSplitCount() {
+    if (getComponentCount() > 0) {
+      JPanel panel = (JPanel) getComponent(0);
+      return getSplitCount(panel);
+    }
+    return 0;    
+  }
+
+  private static int getSplitCount(JComponent component) {
+    if (component.getComponentCount() > 0) {
+      final JComponent firstChild = (JComponent)component.getComponent(0);
+      if (firstChild instanceof Splitter) {
+        final Splitter splitter = (Splitter)firstChild;
+        return getSplitCount(splitter.getFirstComponent()) + getSplitCount(splitter.getSecondComponent());
+      }
+      return 1;
+    }
+    return 0;
   }
 
   private final class MyFocusTraversalPolicy extends IdeFocusTraversalPolicy {

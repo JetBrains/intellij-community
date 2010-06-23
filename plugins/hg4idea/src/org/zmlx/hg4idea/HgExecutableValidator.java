@@ -16,7 +16,7 @@ import com.intellij.openapi.project.Project;
 import org.zmlx.hg4idea.command.HgVersionCommand;
 import org.zmlx.hg4idea.ui.HgSetExecutableDialog;
 
-class HgExecutableValidator {
+public class HgExecutableValidator {
 
   private final Project project;
 

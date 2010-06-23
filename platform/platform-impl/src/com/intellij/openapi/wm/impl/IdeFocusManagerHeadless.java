@@ -69,6 +69,11 @@ public class IdeFocusManagerHeadless extends IdeFocusManager {
   }
 
   @Override
+  public boolean isFocusTransferEnabled() {
+    return true;
+  }
+
+  @Override
   public Expirable getTimestamp(boolean trackOnlyForcedCommands) {
     return new Expirable() {
       public boolean isExpired() {

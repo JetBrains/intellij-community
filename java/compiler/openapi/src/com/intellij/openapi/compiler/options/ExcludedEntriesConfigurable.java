@@ -47,7 +47,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
   private final ArrayList<ExcludeEntryDescription> myExcludeEntryDescriptions = new ArrayList<ExcludeEntryDescription>();
   private final FileChooserDescriptor myDescriptor;
   private final ExcludedEntriesConfiguration myConfiguration;
-  private ExcludedEntriesConfigurable.ExcludedEntriesPanel myExcludedEntriesPanel;
+  private ExcludedEntriesPanel myExcludedEntriesPanel;
 
   public ExcludedEntriesConfigurable(Project project, FileChooserDescriptor descriptor, final ExcludedEntriesConfiguration configuration) {
     myDescriptor = descriptor;
@@ -343,24 +343,17 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
     }
   }
 
-  private static class MyObjectRenderer extends DefaultTableCellRenderer {
+  private class MyObjectRenderer extends DefaultTableCellRenderer {
     public MyObjectRenderer() {
       setUI(new RightAlignedLabelUI());
     }
 
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-      if (value instanceof ExcludeEntryDescription) {
-        ExcludeEntryDescription description = (ExcludeEntryDescription)value;
-        setText(description.getPresentableUrl());
-        setForeground(description.isValid()? table.getForeground() : Color.RED);
-      }
-
-      if (!isSelected) {
-        setBackground(table.getBackground());
-      }
+      final Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+      final ExcludeEntryDescription description = myExcludeEntryDescriptions.get(row);
+      component.setForeground(!description.isValid() ? Color.RED : isSelected ? table.getSelectionForeground() : table.getForeground());
+      component.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
       return component;
     }
   }
-
 }

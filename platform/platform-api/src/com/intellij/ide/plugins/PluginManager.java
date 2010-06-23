@@ -634,9 +634,13 @@ public class PluginManager {
             }
             pluginDescriptor.setEnabled(false);
             disabledPluginIds.add(pluginDescriptor.getPluginId().getIdString());
+            final String name = pluginDescriptor.getName();
+            final IdeaPluginDescriptorImpl descriptor = idToDescriptorMap.get(pluginId);            
+            String pluginName = descriptor == null ? pluginId.getIdString() : descriptor.getName();
+            
             message.append(getDisabledPlugins().contains(pluginId.getIdString())
-                           ? IdeBundle.message("error.required.plugin.disabled", pluginDescriptor.getPluginId(), pluginId)
-                           : IdeBundle.message("error.required.plugin.not.installed", pluginDescriptor.getPluginId(), pluginId));
+                           ? IdeBundle.message("error.required.plugin.disabled", name, pluginName)
+                           : IdeBundle.message("error.required.plugin.not.installed", name, pluginName));
             it.remove();
             return false;
           }

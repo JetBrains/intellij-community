@@ -226,7 +226,7 @@ public abstract class LocalToFieldHandler {
 
   private void addInitializationToSetUp(final PsiLocalVariable local, final PsiField field, final PsiElementFactory factory)
                                                                                                                              throws IncorrectOperationException {
-    PsiMethod inClass = TestUtil.findSetUpMethod(field.getContainingClass());
+    PsiMethod inClass = TestUtil.findOrCreateSetUpMethod(field.getContainingClass());
     assert inClass != null;
     PsiStatement assignment = createAssignment(local, field.getName(), factory);
     final PsiCodeBlock body = inClass.getBody();

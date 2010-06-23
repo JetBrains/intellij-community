@@ -128,6 +128,10 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
       classPathBuilder.add(PathManager.findFileInLibDirectory("yjp-controller-api-redist.jar").getAbsolutePath());
     }
 
+    if (GroovycOSProcessHandler.ourDebug) {
+      System.out.println("classpath = " + classPathBuilder.getPathsString());
+    }
+
     parameters.getVMParametersList().add("-Xmx" + GroovyCompilerConfiguration.getInstance(myProject).getHeapSize() + "m");
     if (profileGroovyc) {
       parameters.getVMParametersList().add("-XX:+HeapDumpOnOutOfMemoryError");
@@ -150,6 +154,10 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
       final VirtualFile finalOutputDir = getMainOutput(compileContext, module, tests);
       LOG.assertTrue(finalOutputDir != null, "No output directory for module " + module.getName() + (tests ? " tests" : " production"));
       fillFileWithGroovycParameters(toCompile, fileWithParameters, outputDir, patchers, finalOutputDir);
+
+      if (GroovycOSProcessHandler.ourDebug) {
+        System.out.println("Groovyc parameters:\n" + new String(FileUtil.loadFileText(fileWithParameters)));
+      }
 
       parameters.getProgramParametersList().add(forStubs ? "stubs" : "groovyc");
       parameters.getProgramParametersList().add(fileWithParameters.getPath());
@@ -188,7 +196,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
 
       boolean hasMessages = !messages.isEmpty();
 
-      StringBuffer unparsedBuffer = processHandler.getUnparsedOutput();
+      StringBuffer unparsedBuffer = processHandler.getStdErr();
       if (unparsedBuffer.length() != 0) {
         compileContext.addMessage(CompilerMessageCategory.ERROR, unparsedBuffer.toString(), null, -1, -1);
         hasMessages = true;
@@ -263,7 +271,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
 
     for (final VirtualFile item : virtualFiles) {
       printer.println(GroovycRunner.SRC_FILE);
-      printer.println(item.getPath());
+      printer.println(FileUtil.toSystemDependentName(item.getPath()));
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
           final PsiFile file = PsiManager.getInstance(myProject).findFile(item);
@@ -295,7 +303,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     printer.println(PathUtil.getLocalPath(outputDir));
 
     printer.println(GroovycRunner.FINAL_OUTPUTPATH);
-    printer.println(finalOutputDir.getPath());
+    printer.println(FileUtil.toSystemDependentName(finalOutputDir.getPath()));
 
 
     printer.close();

@@ -32,6 +32,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.AppIcon;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
@@ -172,7 +173,7 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutSta
 
   public ActionCallback selectAndFocus(@Nullable final Content content, boolean requestFocus, final boolean forced, boolean implicit) {
     if (content == null) return new ActionCallback.Rejected();
-
+    AppIcon.getInstance().requestAttention(false);
     return getContentManager().setSelectedContent(content, requestFocus || shouldRequestFocus(), forced, implicit);
   }
 

@@ -370,6 +370,18 @@ public class HighlightClassUtil {
     return null;
   }
 
+  static HighlightInfo checkExtendsAllowed(PsiReferenceList list) {
+    if (list.getParent() instanceof PsiClass) {
+      PsiClass aClass = (PsiClass)list.getParent();
+      if (aClass.isEnum()) {
+        boolean isExtends = list.equals(aClass.getExtendsList());
+        if (isExtends) {
+          return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, list, JavaErrorMessages.message("extends.after.enum"));
+        }
+      }
+    }
+    return null;
+  }
 
   static HighlightInfo checkImplementsAllowed(PsiReferenceList list) {
     if (list.getParent() instanceof PsiClass) {

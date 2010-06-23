@@ -292,7 +292,8 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
         }
 
         public Icon getIconFor(final Object value) {
-          return null;
+          final LookupFile file = (LookupFile)value;
+          return file.getIcon();
         }
 
         private Separator getSeparatorAboveOf(Object value) {

@@ -349,7 +349,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
     return names;
   }
 
-  private SchemesManager<Keymap,KeymapImpl> getSchemesManager() {
+  private static SchemesManager<Keymap,KeymapImpl> getSchemesManager() {
     return ((KeymapManagerEx)KeymapManager.getInstance()).getSchemesManager();
   }
 
@@ -866,15 +866,6 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
     return "<html><body>" + (myFilterComponent != null ? SearchUtil.markup(description, myFilterComponent.getFilter()) : description) + "</body></html>";
   }
 
-  public void disposeUI() {
-    if (myPopup != null && myPopup.isVisible()){
-      myPopup.cancel();
-    }
-    if (myFilterComponent != null){
-      myFilterComponent.dispose();
-    }
-  }
-
   private static final class MyKeymapRenderer extends ColoredListCellRenderer {
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
       Keymap keymap = (Keymap)value;
@@ -923,6 +914,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
   }
 
   public void apply() throws ConfigurationException{
+    ensureNonEmptyKeymapNames();
     ensureUniqueKeymapNames();
     final KeymapManagerImpl keymapManager = (KeymapManagerImpl)KeymapManager.getInstance();
     keymapManager.removeAllKeymapsExceptUnmodifiable();
@@ -934,6 +926,15 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
       }
     }
     keymapManager.setActiveKeymap(mySelectedKeymap);
+  }
+
+  private void ensureNonEmptyKeymapNames() throws ConfigurationException {
+    for(int i = 0; i < myKeymapListModel.getSize(); i++){
+      final Keymap modelKeymap = (Keymap)myKeymapListModel.getElementAt(i);
+      if (StringUtil.isEmptyOrSpaces(modelKeymap.getName())) {
+        throw new ConfigurationException(KeyMapBundle.message("configuration.all.keymaps.should.have.non.empty.names.error.message"));
+      }
+    }
   }
 
   private void ensureUniqueKeymapNames() throws ConfigurationException {
@@ -1025,5 +1026,11 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
   }
 
   public void disposeUIResources() {
+    if (myPopup != null && myPopup.isVisible()) {
+      myPopup.cancel();
+    }
+    if (myFilterComponent != null) {
+      myFilterComponent.dispose();
+    }
   }
 }

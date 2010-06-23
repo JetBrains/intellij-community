@@ -13,23 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.testIntegration;
 
-package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
-
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiClass;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 28.04.2009
- */
-public class GrSyntheticConstructor extends GrSyntheticMethodImplementation {
-  public GrSyntheticConstructor(PsiMethod interfaceMethod, PsiClass containingClass) {
-    super(interfaceMethod, containingClass);
+public class GenerateSetUpMethodAction extends BaseGenerateTestSupportMethodAction {
+  public GenerateSetUpMethodAction() {
+    super(TestIntegrationUtils.MethodKind.SET_UP);
   }
 
   @Override
-  public boolean isConstructor() {
-    return true;
+  protected boolean isValidFor(PsiClass targetClass, TestFramework framework) {
+    return super.isValidFor(targetClass, framework) && framework.findSetUpMethod(targetClass) == null;
   }
 }

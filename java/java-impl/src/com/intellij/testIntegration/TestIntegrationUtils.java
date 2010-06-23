@@ -47,19 +47,19 @@ public class TestIntegrationUtils {
 
   public enum MethodKind {
     SET_UP {
-      public FileTemplateDescriptor getFileTemplateDescriptor(TestFrameworkDescriptor frameworkDescriptor) {
-        return frameworkDescriptor.getSetUpMethodFileTemplateDescriptor();
+      public FileTemplateDescriptor getFileTemplateDescriptor(TestFramework framework) {
+        return framework.getSetUpMethodFileTemplateDescriptor();
       }},
     TEAR_DOWN {
-      public FileTemplateDescriptor getFileTemplateDescriptor(TestFrameworkDescriptor frameworkDescriptor) {
-        return frameworkDescriptor.getTearDownMethodFileTemplateDescriptor();
+      public FileTemplateDescriptor getFileTemplateDescriptor(TestFramework framework) {
+        return framework.getTearDownMethodFileTemplateDescriptor();
       }},
     TEST {
-      public FileTemplateDescriptor getFileTemplateDescriptor(TestFrameworkDescriptor frameworkDescriptor) {
-        return frameworkDescriptor.getTestMethodFileTemplateDescriptor();
+      public FileTemplateDescriptor getFileTemplateDescriptor(TestFramework framework) {
+        return framework.getTestMethodFileTemplateDescriptor();
       }};
 
-    public abstract FileTemplateDescriptor getFileTemplateDescriptor(TestFrameworkDescriptor frameworkDescriptor);
+    public abstract FileTemplateDescriptor getFileTemplateDescriptor(TestFramework framework);
   }
 
   public static boolean isTest(PsiElement element) {
@@ -122,13 +122,16 @@ public class TestIntegrationUtils {
   }
 
   public static void runTestMethodTemplate(MethodKind methodKind,
-                                           TestFrameworkDescriptor descriptor,
+                                           TestFramework framework,
                                            final Editor editor,
                                            PsiClass targetClass,
                                            final PsiMethod method,
                                            String name,
                                            boolean automatic) {
-    Template template = createTestMethodTemplate(methodKind, descriptor, targetClass, name, automatic);
+    Template template = createTestMethodTemplate(methodKind, framework, targetClass, name, automatic);
+    template.setToIndent(true);
+    template.setToReformat(true);
+    template.setToShortenLongNames(true);
 
     final TextRange range = method.getTextRange();
     editor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), "");
@@ -165,7 +168,7 @@ public class TestIntegrationUtils {
   }
 
   private static Template createTestMethodTemplate(MethodKind methodKind,
-                                                   TestFrameworkDescriptor descriptor,
+                                                   TestFramework descriptor,
                                                    PsiClass targetClass,
                                                    String name,
                                                    boolean automatic) {
