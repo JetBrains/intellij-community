@@ -151,6 +151,10 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
       LOG.assertTrue(finalOutputDir != null, "No output directory for module " + module.getName() + (tests ? " tests" : " production"));
       fillFileWithGroovycParameters(toCompile, fileWithParameters, outputDir, patchers, finalOutputDir);
 
+      if (GroovycOSProcessHandler.ourDebug) {
+        System.out.println("Groovyc parameters:\n" + new String(FileUtil.loadFileText(fileWithParameters)));
+      }
+
       parameters.getProgramParametersList().add(forStubs ? "stubs" : "groovyc");
       parameters.getProgramParametersList().add(fileWithParameters.getPath());
     }

@@ -56,25 +56,30 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
   public void notifyTextAvailable(final String text, final Key outputType) {
     super.notifyTextAvailable(text, outputType);
 
-    parseOutput(text, outputType == ProcessOutputTypes.STDERR);
-  }
-
-  private final StringBuffer outputBuffer = new StringBuffer();
-
-  private void parseOutput(String text, boolean error) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Received from groovyc: " + text);
     }
+
     if (ourDebug) {
-      System.out.println("Received from groovyc: " + text);
+      System.out.println("Received from groovyc: " + text.trim());
     }
 
-    if (error) {
+    if (outputType == ProcessOutputTypes.SYSTEM) {
+      return;
+    }
+
+    if (outputType == ProcessOutputTypes.STDERR) {
       stdErr.append(StringUtil.convertLineSeparators(text));
       return;
     }
 
 
+    parseOutput(text);
+  }
+
+  private final StringBuffer outputBuffer = new StringBuffer();
+
+  private void parseOutput(String text) {
     final String trimmed = text.trim();
 
     if (trimmed.startsWith(GroovycRunner.PRESENTABLE_MESSAGE)) {
