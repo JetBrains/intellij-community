@@ -342,6 +342,7 @@ public class GroovycRunner {
           final ArrayList list = Collections.list(resources);
           for (Iterator iterator = list.iterator(); iterator.hasNext();) {
             final String file = ((URL)iterator.next()).getFile();
+            System.out.println("Enumerated:" + file);
             if (file.startsWith(finalOutput)) {
               iterator.remove();
             }
