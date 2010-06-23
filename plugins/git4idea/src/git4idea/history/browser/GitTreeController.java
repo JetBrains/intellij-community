@@ -190,7 +190,7 @@ class GitTreeController implements ManageGitTreeView {
             if (myCommitList.size() >= maxCnt) break;
           }
         }
-        if (myLastCommit == null || myLastCommit.getParentsHashes().isEmpty()) {
+        if (myLastCommit == null || myLastCommit.getParentsHashes().isEmpty() || myLastCommit.getHash().equals(lastHash)) {
           myStartFound = true;
           break;
         }
@@ -253,14 +253,9 @@ class GitTreeController implements ManageGitTreeView {
     final Portion highlighted;
     // we can ignore extra commit loaded for the same date (boundary), it's easier
     // commits refer to highlighted stuff, so everything will be correct
-    if (myTravelDate == null) {
-      // todo rewrite when dates are introduced
-      highlighted = loadPortion(myHighlightingHolder.getStartingPoints(), myFilterHolder.getCurrentPoint().getFirst(),
-                                              null, Collections.<ChangesFilter.Filter>emptyList(), -1);
-    } else {
-      highlighted = loadPortion(myHighlightingHolder.getStartingPoints(), myFilterHolder.getCurrentPoint().getFirst(),
-                                              myTravelDate, Collections.<ChangesFilter.Filter>emptyList(), -1);
-    }
+    final Date point = myFilterHolder.getCurrentPoint() == null ? null : myFilterHolder.getCurrentPoint().getFirst();
+    // todo rewrite when dates are introduced
+    highlighted = loadPortion(myHighlightingHolder.getStartingPoints(), point, myTravelDate, Collections.<ChangesFilter.Filter>emptyList(), -1);
 
     final Collection<ChangesFilter.Filter> filters = myHighlightingHolder.getFilters();
     final List<ChangesFilter.MemoryFilter> combined = ChangesFilter.combineFilters(filters);

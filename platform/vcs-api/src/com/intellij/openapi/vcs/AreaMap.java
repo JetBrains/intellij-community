@@ -50,6 +50,10 @@ public class AreaMap<Key extends Comparable<Key>, Val> {
     }
   }
 
+  public Collection<Val> values() {
+    return Collections.unmodifiableCollection(myMap.values());
+  }
+
   @Nullable
   public Val getExact(final Key key) {
     return myMap.get(key);
@@ -67,6 +71,10 @@ public class AreaMap<Key extends Comparable<Key>, Val> {
     }
   }
 
+  public boolean contains(final Key key) {
+    return myKeys.contains(key);
+  }
+
   public void getSimiliar(final Key key, final PairProcessor<Key, Val> consumer) {
     final int idx = Collections.binarySearch(myKeys, key);
     if (idx < 0) {
@@ -76,7 +84,7 @@ public class AreaMap<Key extends Comparable<Key>, Val> {
       if (itemBeforeIdx >= 0) {
         for (int i = itemBeforeIdx; i >= 0; -- i) {
           final Key candidate = myKeys.get(i);
-          if (! myKeysResemblance.process(candidate, key)) break;
+          if (! myKeysResemblance.process(candidate, key)) continue;
           if (consumer.process(candidate, myMap.get(candidate))) break;     // if need only a part of keys
         }
       }

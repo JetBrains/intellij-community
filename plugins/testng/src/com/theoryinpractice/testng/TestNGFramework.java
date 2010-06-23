@@ -87,6 +87,9 @@ public class TestNGFramework extends JavaTestFramework {
 
   @Override
   protected PsiMethod findOrCreateSetUpMethod(PsiClass clazz) throws IncorrectOperationException {
+    PsiMethod method = findSetUpMethod(clazz);
+    if (method != null) return method;
+
     final PsiManager manager = clazz.getManager();
     final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     PsiMethod patternMethod =

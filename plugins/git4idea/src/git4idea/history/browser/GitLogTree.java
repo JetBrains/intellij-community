@@ -1122,7 +1122,7 @@ public class GitLogTree implements GitTreeViewI {
       return true;
     }
 
-    private class MyAddAction extends AnAction {
+    private class MyAddAction extends DumbAwareAction {
       private final Consumer<Object> myAfterAction;
       //private TreeState myState;
 
@@ -1162,7 +1162,7 @@ public class GitLogTree implements GitTreeViewI {
       }
     }
 
-    private class MyRemoveAction extends AnAction {
+    private class MyRemoveAction extends DumbAwareAction {
       private final Runnable myAfterAction;
 
       private MyRemoveAction() {
@@ -1522,14 +1522,27 @@ public class GitLogTree implements GitTreeViewI {
       protected void addFiles(final VirtualFile[] files, Consumer<Object> after) {
         final boolean wasEmpty = myFilter.isEmpty();
         if (files != null) {
+          boolean somethingChanged = false;
           for (VirtualFile file : files) {
+            if (! myFilter.addPath(file)) continue;
+            somethingChanged = true;
             final StructureNode node = new StructureNode(myCommonData, myFiltering, myProject, this, file);
             addChild(node);
-            myFilter.addPath(file);
           }
+          if (! somethingChanged) return;
           if (wasEmpty) {
             myFiltering.addFilter(myFilter);
           } else {
+            final List<StructureNode> toRemove = new LinkedList<StructureNode>();
+            for (StructureNode child : getChildren()) {
+              final VirtualFile file = child.getFile();
+              if (! myFilter.containsFile(file)) {
+                toRemove.add(child);
+              }
+            }
+            for (StructureNode node : toRemove) {
+              removeChild(node);
+            }
             myFiltering.markDirty();
           }
           after.consume(this);
@@ -1584,6 +1597,9 @@ public class GitLogTree implements GitTreeViewI {
         getParent().removeChild(this);
         getParent().removeFiles(new VirtualFile[] {myFile});
         after.run();
+      }
+      public VirtualFile getFile() {
+        return myFile;
       }
     }
 

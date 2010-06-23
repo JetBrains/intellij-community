@@ -108,6 +108,6 @@ class SvnContentRevision implements ContentRevision {
 
   @NonNls
   public String toString() {
-    return "SvnContentRevision:" + myFile.toString();
+    return myFile.getPath();
   }
 }
