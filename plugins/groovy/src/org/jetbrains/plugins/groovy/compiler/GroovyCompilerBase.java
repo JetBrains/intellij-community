@@ -271,7 +271,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
 
     for (final VirtualFile item : virtualFiles) {
       printer.println(GroovycRunner.SRC_FILE);
-      printer.println(item.getPath());
+      printer.println(FileUtil.toSystemDependentName(item.getPath()));
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
           final PsiFile file = PsiManager.getInstance(myProject).findFile(item);
@@ -303,7 +303,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     printer.println(PathUtil.getLocalPath(outputDir));
 
     printer.println(GroovycRunner.FINAL_OUTPUTPATH);
-    printer.println(finalOutputDir.getPath());
+    printer.println(FileUtil.toSystemDependentName(finalOutputDir.getPath()));
 
 
     printer.close();

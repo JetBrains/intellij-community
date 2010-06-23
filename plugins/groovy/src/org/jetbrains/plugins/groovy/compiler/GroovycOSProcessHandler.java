@@ -61,7 +61,7 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
     }
 
     if (ourDebug) {
-      System.out.println("Received from groovyc: " + text.trim());
+      System.out.println("Received from groovyc: '''" + text.trim() + "'''");
     }
 
     if (outputType == ProcessOutputTypes.SYSTEM) {
