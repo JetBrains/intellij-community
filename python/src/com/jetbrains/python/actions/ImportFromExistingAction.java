@@ -10,17 +10,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -49,12 +46,6 @@ public class ImportFromExistingAction implements QuestionAction {
     myName = name;
     myEditor = editor;
     myUseQualifiedImport = useQualified;
-  }
-
-  public ImportFromExistingAction(@NotNull PyElement target, PsiNamedElement source, Editor editor, boolean useQualified) {
-    this(target, Collections.singletonList(new ImportCandidateHolder(source, source.getContainingFile(), null,
-                                                                     ResolveImportUtil.findShortestImportableName(target, source.getContainingFile().getVirtualFile()), null)),
-         source.getName(), editor, useQualified);
   }
 
   public void onDone(Runnable callback) {
@@ -120,7 +111,7 @@ public class ImportFromExistingAction implements QuestionAction {
       PsiElement parent = src.getParent();
       if (parent instanceof PyFromImportStatement) {
         // add another import element right after the one we got
-        PsiElement new_elt = gen.createFromText(PyImportElement.class, "from foo import " + myName, new int[]{0, 6});
+        PsiElement new_elt = gen.createImportElement(myName);
         PyUtil.addListNode(parent, new_elt, null, false, true);
       }
       else { // just 'import'

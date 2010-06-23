@@ -2,12 +2,10 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyTokenTypes;
@@ -192,6 +190,11 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
   public PyImportStatement createImportStatementFromText(final String text) {
     final PsiFile dummyFile = createDummyFile(text);
     return (PyImportStatement)dummyFile.getFirstChild();
+  }
+
+  @Override
+  public PyImportElement createImportElement(String name) {
+    return createFromText(PyImportElement.class, "from foo import " + name, new int[]{0, 6});
   }
 
   static final int[] FROM_ROOT = new int[]{0};

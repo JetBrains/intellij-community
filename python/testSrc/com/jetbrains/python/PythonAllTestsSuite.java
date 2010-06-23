@@ -54,7 +54,8 @@ public class PythonAllTestsSuite {
     PyOptimizeImportsTest.class,
     PySmartEnterTest.class,
     PyStatementMoverTest.class,
-    PyIntroduceVariableTest.class
+    PyIntroduceVariableTest.class,
+    PyClassNameCompletionTest.class
   };
 
   public static TestSuite suite() {

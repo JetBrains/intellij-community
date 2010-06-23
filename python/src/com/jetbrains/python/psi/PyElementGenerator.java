@@ -5,7 +5,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,6 +45,8 @@ public abstract class PyElementGenerator {
   public abstract PyCallExpression createCallExpression(String functionName);
 
   public abstract PyImportStatement createImportStatementFromText(String text);
+
+  public abstract PyImportElement createImportElement(String name);
 
   public abstract <T> T createFromText(Class<T> aClass, final String text);
 

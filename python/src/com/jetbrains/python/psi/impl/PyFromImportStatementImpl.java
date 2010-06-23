@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayFactory;
@@ -138,6 +139,23 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
       }
     }
     return true;
+  }
+
+  @Override
+  public ASTNode addInternal(ASTNode first, ASTNode last, ASTNode anchor, Boolean before) {
+    final ASTNode result = super.addInternal(first, last, anchor, before);
+    ASTNode prevNode = result;
+    do {
+      prevNode = prevNode.getTreePrev();
+    } while(prevNode != null && prevNode.getElementType() == TokenType.WHITE_SPACE);
+
+    if (prevNode != null && prevNode.getElementType() == PyElementTypes.IMPORT_ELEMENT &&
+        result.getElementType() == PyElementTypes.IMPORT_ELEMENT) {
+      ASTNode comma = PyElementGenerator.getInstance(getProject()).createComma();
+      super.addInternal(comma, comma, prevNode, false);
+    }
+    
+    return result;
   }
 
   @Override
