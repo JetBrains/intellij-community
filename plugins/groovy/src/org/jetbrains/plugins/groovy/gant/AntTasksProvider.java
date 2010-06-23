@@ -48,8 +48,8 @@ import java.util.*;
  */
 public class AntTasksProvider {
   public static final boolean antAvailable;
-  private static final Key<CachedValue<Set<LightMethodBuilder>>> ANT_OBJECTS = Key.create("antObjects");
-  private static final Key<CachedValue<ClassLoader>> CLASS_LOADER = Key.create("gantClassLoader");
+  private static final Key<CachedValue<Set<LightMethodBuilder>>> GANT_METHODS = Key.create("gantMethods");
+  private static final Key<CachedValue<Map<String, Class>>> ANT_OBJECTS = Key.create("antObjects");
 
   private AntTasksProvider() {
   }
@@ -71,30 +71,46 @@ public class AntTasksProvider {
       return Collections.emptySet();
     }
 
-    return CachedValuesManager.getManager(file.getProject()).getCachedValue(file, ANT_OBJECTS, new CachedValueProvider<Set<LightMethodBuilder>>() {
+    return CachedValuesManager.getManager(file.getProject()).getCachedValue(file, GANT_METHODS, new CachedValueProvider<Set<LightMethodBuilder>>() {
       @Override
       public Result<Set<LightMethodBuilder>> compute() {
-        return Result.create(findAntTasks((GroovyFile)file), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, ProjectRootManager.getInstance(file.getProject()));
+        Map<String, Class> antObjects = getAntObjects((GroovyFile)file);
+
+        final Set<LightMethodBuilder> result = new HashSet<LightMethodBuilder>();
+
+        final Project project = file.getProject();
+        final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+        final GlobalSearchScope scope = file.getResolveScope();
+
+        final PsiType closureType = JavaPsiFacade.getElementFactory(project).createTypeFromText(GrClosableBlock.GROOVY_LANG_CLOSURE,
+                                                                                                file);
+
+        for (String name : antObjects.keySet()) {
+          final PsiClass psiClass = facade.findClass(antObjects.get(name).getName(), scope);
+
+          final LightMethodBuilder tdMethod =
+            new LightMethodBuilder(PsiManager.getInstance(project), GroovyFileType.GROOVY_LANGUAGE, name).
+              setModifiers(PsiModifier.PUBLIC).
+              addParameter("args", CommonClassNames.JAVA_UTIL_MAP).
+              setBaseIcon(GantIcons.ANT_TASK);
+
+          tdMethod.addParameter(new GrLightParameter("body", closureType, tdMethod).setOptional(true));
+
+          if (psiClass != null) {
+            tdMethod.setNavigationElement(psiClass);
+          }
+          result.add(tdMethod);
+        }
+        return Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, ProjectRootManager.getInstance(file.getProject()));
       }
     }, false);
   }
 
-  private static Set<LightMethodBuilder> findAntTasks(final GroovyFile groovyFile) {
-    ClassLoader classLoader = getAntClassLoader(groovyFile);
-
-    final Set<LightMethodBuilder> result = new HashSet<LightMethodBuilder>();
-    final ReflectedProject antProject = ReflectedProject.getProject(classLoader);
-
-    mapAntObjectsToGant(groovyFile, antProject.getDataTypeDefinitions(), result);
-    mapAntObjectsToGant(groovyFile, antProject.getTaskDefinitions(), result);
-    return result;
-  }
-
-  private static ClassLoader getAntClassLoader(final GroovyFile groovyFile) {
+  private static Map<String, Class> getAntObjects(final GroovyFile groovyFile) {
     return CachedValuesManager
-      .getManager(groovyFile.getProject()).getCachedValue(groovyFile, CLASS_LOADER, new CachedValueProvider<ClassLoader>() {
+      .getManager(groovyFile.getProject()).getCachedValue(groovyFile, ANT_OBJECTS, new CachedValueProvider<Map<String, Class>>() {
         @Override
-        public Result<ClassLoader> compute() {
+        public Result<Map<String, Class>> compute() {
           final Module module = ModuleUtil.findModuleForPsiElement(groovyFile);
           Set<VirtualFile> jars = new HashSet<VirtualFile>();
           if (module != null) {
@@ -110,35 +126,15 @@ public class AntTasksProvider {
             urls.add(VfsUtil.convertToURL(PathUtil.getLocalFile(jar).getUrl()));
           }
           final ClassLoader loader = new UrlClassLoader(urls, null);
-          return Result.create(loader, ProjectRootManager.getInstance(groovyFile.getProject()));
+          final ReflectedProject antProject = ReflectedProject.getProject(loader);
+
+          final Map<String, Class> result = new HashMap<String, Class>();
+          result.putAll(antProject.getTaskDefinitions());
+          result.putAll(antProject.getDataTypeDefinitions());
+          return Result.create(result, ProjectRootManager.getInstance(groovyFile.getProject()));
         }
 
       }, false);
-  }
-
-  private static void mapAntObjectsToGant(PsiElement place, Map<String, Class> antObjects, Set<LightMethodBuilder> result) {
-    final Project project = place.getProject();
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-    final GlobalSearchScope scope = place.getResolveScope();
-
-    final PsiType closureType = JavaPsiFacade.getElementFactory(project).createTypeFromText(GrClosableBlock.GROOVY_LANG_CLOSURE, place);
-    
-    for (String name : antObjects.keySet()) {
-      final PsiClass psiClass = facade.findClass(antObjects.get(name).getName(), scope);
-
-      final LightMethodBuilder tdMethod =
-        new LightMethodBuilder(PsiManager.getInstance(project), GroovyFileType.GROOVY_LANGUAGE, name).
-          setModifiers(PsiModifier.PUBLIC).
-          addParameter("args", CommonClassNames.JAVA_UTIL_MAP).
-          setBaseIcon(GantIcons.ANT_TASK);
-
-      tdMethod.addParameter(new GrLightParameter("body", closureType, tdMethod).setOptional(true));
-
-      if (psiClass != null) {
-        tdMethod.setNavigationElement(psiClass);
-      }
-      result.add(tdMethod);
-    }
   }
 
 }
