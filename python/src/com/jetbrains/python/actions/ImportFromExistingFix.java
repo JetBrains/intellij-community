@@ -6,8 +6,6 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInspection.HintAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -108,7 +106,7 @@ public class ImportFromExistingFix implements HintAction, LocalQuickFix {
       myImports.size() > 1, 
       ImportCandidateHolder.getQualifiedName(myName, myImports.get(0).getPath(), myImports.get(0).getImportElement())
     );
-    final ImportFromExistingAction action = new ImportFromExistingAction(myNode, myImports, myName, editor, myUseQualifiedImport);
+    final ImportFromExistingAction action = new ImportFromExistingAction(myNode, myImports, myName, myUseQualifiedImport);
     action.onDone(new Runnable() {
       public void run() {
         myExpended = true;
@@ -126,10 +124,7 @@ public class ImportFromExistingFix implements HintAction, LocalQuickFix {
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    Editor editor = (Editor)DataManager.getInstance().getDataContext().getData(DataConstants.EDITOR);
-    if (editor != null) {
-      invoke(project, editor, descriptor.getPsiElement().getContainingFile());
-    }
+    invoke(project, null, descriptor.getPsiElement().getContainingFile());
     myExpended = true;
   }
 
@@ -137,7 +132,7 @@ public class ImportFromExistingFix implements HintAction, LocalQuickFix {
     // make sure file is committed, writable, etc
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     // act
-    ImportFromExistingAction action = new ImportFromExistingAction(myNode, myImports, myName, editor, myUseQualifiedImport);
+    ImportFromExistingAction action = new ImportFromExistingAction(myNode, myImports, myName, myUseQualifiedImport);
     action.execute(); // assume that action runs in WriteAction on its own behalf
     myExpended = true;
   }

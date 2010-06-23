@@ -1,13 +1,15 @@
 package com.jetbrains.python.actions;
 
 import com.intellij.codeInsight.hint.QuestionAction;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.util.AsyncResult;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.SimpleColoredComponent;
@@ -28,7 +30,6 @@ import java.util.List;
 public class ImportFromExistingAction implements QuestionAction {
   PyElement myTarget;
   List<ImportCandidateHolder> mySources; // list of <import, imported_item>
-  Editor myEditor;
   String myName;
   boolean myUseQualifiedImport;
   private Runnable myOnDoneCallback;
@@ -37,14 +38,13 @@ public class ImportFromExistingAction implements QuestionAction {
    * @param target element to become qualified as imported.
    * @param sources clauses of import to be used.
    * @param name relevant name ot the target element (e.g. of identifier in an expression).
-   * @param editor target's editor.
    * @param useQualified if True, use qualified "import modulename" instead of "from modulename import ...".
    */
-  public ImportFromExistingAction(@NotNull PyElement target, @NotNull List<ImportCandidateHolder> sources, String name, Editor editor, boolean useQualified) {
+  public ImportFromExistingAction(@NotNull PyElement target, @NotNull List<ImportCandidateHolder> sources, String name,
+                                  boolean useQualified) {
     myTarget = target;
     mySources = sources;
     myName = name;
-    myEditor = editor;
     myUseQualifiedImport = useQualified;
   }
 
@@ -85,7 +85,7 @@ public class ImportFromExistingAction implements QuestionAction {
     final JList list = new JList(items);
     list.setCellRenderer(new CellRenderer(myName));
 
-    Runnable runnable = new Runnable() {
+    final Runnable runnable = new Runnable() {
       public void run() {
         int index = list.getSelectedIndex();
         if (index < 0) return;
@@ -94,12 +94,16 @@ public class ImportFromExistingAction implements QuestionAction {
       }
     };
 
-    new PopupChooserBuilder(list).
-      setTitle(myUseQualifiedImport? PyBundle.message("ACT.qualify.with.module") : PyBundle.message("ACT.from.some.module.import")).
-      setItemChoosenCallback(runnable).
-      createPopup().
-      showInBestPositionFor(myEditor)
-    ;
+    DataManager.getInstance().getDataContextFromFocus().doWhenDone(new AsyncResult.Handler<DataContext>() {
+      @Override
+      public void run(DataContext dataContext) {
+        new PopupChooserBuilder(list).
+          setTitle(myUseQualifiedImport? PyBundle.message("ACT.qualify.with.module") : PyBundle.message("ACT.from.some.module.import")).
+          setItemChoosenCallback(runnable).
+          createPopup().
+          showInBestPositionFor(dataContext);
+      }
+    });
   }
 
   private void doIt(final ImportCandidateHolder item) {
