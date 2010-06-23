@@ -302,6 +302,7 @@ public class PackageAnnotator {
     if (content == null) return false;
     ClassReader reader = new ClassReader(content, 0, content.length);
     final CoverageSuiteImpl coverageSuite = (CoverageSuiteImpl)CoverageDataManager.getInstance(myProject).getCurrentSuite();
+    if (coverageSuite == null) return false;
     SourceLineCounter counter = new SourceLineCounter(new EmptyVisitor(), classData, coverageSuite.getRunner() instanceof IDEACoverageRunner && coverageSuite.isTracingEnabled());
     reader.accept(counter, 0);
     classCoverageInfo.totalLineCount += counter.getNSourceLines();
