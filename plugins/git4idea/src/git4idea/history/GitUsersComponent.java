@@ -124,13 +124,15 @@ public class GitUsersComponent {
 
           final Map<String, UsersData> toUpdate = new HashMap<String, UsersData>();
           for (Pair<String, LowLevelAccess> pair : copy.values()) {
+            atomicSectionsAware.checkShouldExit();
+
             final String key = pair.getFirst();
             UsersData data = myState.get(key);
             if (data == null) {
               data = new UsersData();
               data.forceUpdate();
             }
-            if (data.load(pair.getSecond())) {
+            if (data.load(pair.getSecond(), atomicSectionsAware)) {
               toUpdate.put(key, data);
             }
           }
@@ -270,7 +272,7 @@ public class GitUsersComponent {
       myUsers.addAll(users);
     }
 
-    public boolean load(final LowLevelAccess lowLevelAccess) {
+    public boolean load(final LowLevelAccess lowLevelAccess, final AtomicSectionsAware atomicSectionsAware) {
       if (HeavyProcessLatch.INSTANCE.isRunning()) return false;
 
       HeavyProcessLatch.INSTANCE.processStarted();
@@ -279,11 +281,11 @@ public class GitUsersComponent {
         boolean result = false;
         if ((! myStartReached) && (myForceUpdate || myEarlierDate.isTimeToUpdate(ourBackInterval))) {
           result = true;
-          lookBack(lowLevelAccess, newData);
+          lookBack(lowLevelAccess, newData, atomicSectionsAware);
         }
         if (myForceUpdate || myCloserDate.isTimeToUpdate(ourForwardInterval)) {
           result = true;
-          lookForward(lowLevelAccess, newData);
+          lookForward(lowLevelAccess, newData, atomicSectionsAware);
         }
         myForceUpdate = false;
         
@@ -302,23 +304,29 @@ public class GitUsersComponent {
       Collections.sort(myUsers);
     }
 
-    private void lookForward(LowLevelAccess lowLevelAccess, Set<String> newData) {
+    private void lookForward(LowLevelAccess lowLevelAccess, Set<String> newData, AtomicSectionsAware atomicSectionsAware) {
       myCloserDate.updateTs();
-      loadImpl(lowLevelAccess, newData, null, new Date(myCloserDate.getT()));
+      loadImpl(lowLevelAccess, newData, null, new Date(myCloserDate.getT()), atomicSectionsAware);
     }
 
-    private void lookBack(LowLevelAccess lowLevelAccess, Set<String> newData) {
+    private void lookBack(LowLevelAccess lowLevelAccess, Set<String> newData, AtomicSectionsAware atomicSectionsAware) {
       myEarlierDate.updateTs();
-      loadImpl(lowLevelAccess, newData, new Date(myEarlierDate.getT()), null);
+      loadImpl(lowLevelAccess, newData, new Date(myEarlierDate.getT()), null, atomicSectionsAware);
     }
 
-    private void loadImpl(LowLevelAccess lowLevelAccess, final Set<String> newData, @Nullable final Date before, @Nullable final Date after) {
+    private void loadImpl(LowLevelAccess lowLevelAccess,
+                          final Set<String> newData,
+                          @Nullable final Date before,
+                          @Nullable final Date after,
+                          final AtomicSectionsAware atomicSectionsAware) {
       try {
         final Ref<Long> beforeTick = new Ref<Long>(Long.MAX_VALUE); // min
         final Ref<Long> afterTick = new Ref<Long>(-1L);  // max
         lowLevelAccess.loadCommits(Collections.<String>emptyList(), before, after, Collections.<ChangesFilter.Filter>emptyList(),
                                    new Consumer<GitCommit>() {
                                      public void consume(GitCommit gitCommit) {
+                                       atomicSectionsAware.checkShouldExit();
+
                                        final long time = gitCommit.getDate().getTime();
                                        beforeTick.set(Math.min(beforeTick.get(), time));
                                        afterTick.set(Math.max(afterTick.get(), time));
