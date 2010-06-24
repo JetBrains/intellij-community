@@ -31,6 +31,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -137,25 +138,31 @@ public class ReplaceImplementsWithStaticImportAction extends PsiElementBaseInten
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
           final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-          for (PsiField field : targetClass.getAllFields()) {
-            final String fieldName = field.getName();
-            if (progressIndicator != null) {
-              progressIndicator.setText2(fieldName);
-            }
-            for (PsiReference reference : ReferencesSearch.search(field)) {
-              final PsiFile psiFile = reference.getElement().getContainingFile();
-              if (psiFile instanceof PsiJavaFile) {
-                Map<PsiField, Set<PsiReference>> references = refs.get(psiFile);
-                if (references == null) {
-                  references = new HashMap<PsiField, Set<PsiReference>>();
-                  refs.put(psiFile, references);
+          for (PsiClass psiClass : ClassInheritorsSearch.search(targetClass)) {
+            final PsiFile psiFile = psiClass.getContainingFile();
+            if (psiFile instanceof PsiJavaFile) {
+              for (PsiField field : targetClass.getAllFields()) {
+                final String fieldName = field.getName();
+                if (progressIndicator != null) {
+                  progressIndicator.setText2(fieldName);
                 }
-                Set<PsiReference> fieldsRefs = references.get(field);
-                if (fieldsRefs == null) {
-                  fieldsRefs = new HashSet<PsiReference>();
-                  references.put(field, fieldsRefs);
+                for (PsiReference reference : ReferencesSearch.search(field, new LocalSearchScope(psiClass))) {
+                  if (reference == null) {
+                    continue;
+                  }
+
+                  Map<PsiField, Set<PsiReference>> references = refs.get(psiFile);
+                  if (references == null) {
+                    references = new HashMap<PsiField, Set<PsiReference>>();
+                    refs.put(psiFile, references);
+                  }
+                  Set<PsiReference> fieldsRefs = references.get(field);
+                  if (fieldsRefs == null) {
+                    fieldsRefs = new HashSet<PsiReference>();
+                    references.put(field, fieldsRefs);
+                  }
+                  fieldsRefs.add(reference);
                 }
-                fieldsRefs.add(reference);
               }
             }
           }
@@ -182,20 +189,23 @@ public class ReplaceImplementsWithStaticImportAction extends PsiElementBaseInten
 
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
+          for (PsiJavaCodeReferenceElement referenceElement : refs2Unimplement) {
+            referenceElement.delete();
+          }
+
           for (PsiFile psiFile : refs.keySet()) {
             final Map<PsiField, Set<PsiReference>> map = refs.get(psiFile);
             for (PsiField psiField : map.keySet()) {
               final PsiClass containingClass = psiField.getContainingClass();
               final String fieldName = psiField.getName();
               for (PsiReference reference : map.get(psiField)) {
-                ((PsiReferenceExpressionImpl)reference)
-                .bindToElementViaStaticImport(containingClass, fieldName, ((PsiJavaFile)psiFile).getImportList());
+                if (reference instanceof PsiReferenceExpressionImpl) {
+                  ((PsiReferenceExpressionImpl)reference).bindToElementViaStaticImport(containingClass, fieldName, ((PsiJavaFile)psiFile).getImportList());
+                } else {
+                  reference.bindToElement(psiField);
+                }
               }
             }
-          }
-
-          for (PsiJavaCodeReferenceElement referenceElement : refs2Unimplement) {
-            referenceElement.delete();
           }
 
           for (PsiFile psiFile : refs.keySet()) {
