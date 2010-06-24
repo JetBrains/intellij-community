@@ -304,7 +304,6 @@ class XmlZenCodingInterpreter {
     return new XmlZenCodingFilterImpl().buildAttributesString(attribute2value, numberInIteration);
   }
 
-
   private static void invokeTemplate(TemplateToken token,
                                      final CustomTemplateCallback callback,
                                      final int numberInIteration,
