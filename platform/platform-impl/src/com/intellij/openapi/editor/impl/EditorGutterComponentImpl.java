@@ -121,14 +121,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     myBackgroundColor = null;
     repaint();
   }
-
-  //TODO den remove
-  @Override
-  public void repaint(long tm, int x, int y, int width, int height) {
-    System.out.printf("EditorGutterComponentImpl.repaint(): (%d; %d) - [%d; %d]%n", x, y, width, height);
-    super.repaint(tm, x, y, width, height);
-  }
-
+  
   public void paint(Graphics g) {
     ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintStart();
 

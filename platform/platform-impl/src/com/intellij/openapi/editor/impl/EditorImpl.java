@@ -1995,13 +1995,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private void paintCaretCursor(Graphics g) {
     // There is a possible case that visual caret position is changed because of newly added or removed soft wraps.
     // We check if that's the case and ask caret model to recalculate visual position if necessary.
-    //TODO den check
-    //LogicalPosition storedPosition = getCaretModel().getLogicalPosition();
-    //LogicalPosition actualPosition = visualToLogicalPosition(getCaretModel().getVisualPosition());
-    //if (!storedPosition.equals(actualPosition)) {
-    //  getCaretModel().moveToLogicalPosition(storedPosition);
-    //}
-
+    
     myCaretCursor.paint(g);
   }
 

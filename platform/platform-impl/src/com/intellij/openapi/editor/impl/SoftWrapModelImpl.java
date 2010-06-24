@@ -454,7 +454,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
 
   @NotNull
   public LogicalPosition offsetToLogicalPosition(int offset) {
-    if (myActive > 0) {
+    if (myActive > 0 || !isSoftWrappingEnabled()) {
       return myEditor.offsetToLogicalPosition(offset, false);
     }
 
