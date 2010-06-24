@@ -53,10 +53,6 @@ public class GrClosureSignatureImpl implements GrClosureSignature {
     this(parameters, returnType, PsiSubstitutor.EMPTY);
   }
 
-  public GrClosureSignatureImpl(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
-    this(method.getParameterList().getParameters(), PsiUtil.getSmartReturnType(method), substitutor);
-  }
-
   GrClosureSignatureImpl(@NotNull GrClosureParameter[] params, @Nullable PsiType returnType, boolean isVarArgs) {
     myParameters = params;
     myReturnType = returnType;

@@ -35,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -57,8 +58,13 @@ public class GrClosureSignatureUtil {
     };
   }
 
-  public static GrClosureSignature createSignature(PsiMethod method, PsiSubstitutor substitutor) {
-    return new GrClosureSignatureImpl(method, substitutor);
+  public static GrClosureSignature createSignature(final PsiMethod method, PsiSubstitutor substitutor) {
+    return new GrClosureSignatureImpl(method.getParameterList().getParameters(), null, substitutor) {
+      @Override
+      public PsiType getReturnType() {
+        return PsiUtil.getSmartReturnType(method);
+      }
+    };
   }
 
   public static GrClosureSignature createSignature(PsiParameter[] parameters, PsiType returnType) {
