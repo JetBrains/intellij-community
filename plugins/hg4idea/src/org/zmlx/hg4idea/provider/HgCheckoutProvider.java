@@ -24,7 +24,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.HgUtil;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.HgCloneCommand;
 import org.zmlx.hg4idea.command.HgCommandResult;
@@ -69,8 +68,6 @@ public class HgCheckoutProvider implements CheckoutProvider {
 
       }
     }, HgVcsMessages.message("hg4idea.clone.progress", dialog.getSourceRepositoryURL()), false, project);
-
-    HgUtil.markDirectoryDirty(project, destinationParent);
 
     if (myCloneResult.getExitValue() == 0) {
       if (listener != null) {
