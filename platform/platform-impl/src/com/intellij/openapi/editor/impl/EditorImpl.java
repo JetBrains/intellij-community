@@ -64,6 +64,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.EmptyClipboardOwner;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -3021,6 +3022,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       super(orientation);
       setFocusable(false);
       putClientProperty("JScrollBar.fastWheelScrolling", Boolean.TRUE); // fast scrolling for JDK 6
+    }
+
+    @Override
+    public void updateUI() {
+      setUI(ButtonlessScrollBarUI.createNormal());
     }
 
     /**
