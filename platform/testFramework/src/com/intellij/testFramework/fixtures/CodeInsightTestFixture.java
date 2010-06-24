@@ -17,6 +17,7 @@
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -146,6 +147,12 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   long testHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, VirtualFile file) throws Exception;
 
   void testInspection(String testDir, InspectionTool tool) throws Exception;
+
+  /**
+   * @return all highlightings for current file
+   */
+  @NotNull
+  List<HighlightInfo> doHighlighting();
 
   /**
    * Finds the reference in position marked by {@link #CARET_MARKER}.
@@ -346,5 +353,4 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
                              boolean searchTextOccurrences) throws Exception;
 
   <T extends PsiElement> T findElementByText(String text, Class<T> elementClass);
-
 }
