@@ -7,7 +7,6 @@ import com.intellij.psi.StubBasedPsiElement;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import com.jetbrains.python.psi.types.PyType;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -69,4 +68,12 @@ extends
      */
     WRAPPED,
   }
+
+  /**
+   * Returns a property for which this function is a getter, setter or deleter.
+   *
+   * @return the corresponding property, or null if there isn't any.
+   */
+  @Nullable
+  Property getProperty();
 }

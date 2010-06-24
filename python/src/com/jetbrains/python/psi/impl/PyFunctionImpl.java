@@ -347,4 +347,14 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   private static <T> T getRefValue(final SoftReference<T> reference) {
     return reference != null ? reference.get() : null;
   }
+
+  public Property getProperty() {
+    final PyClass containingClass = getContainingClass();
+    final String name = getName();
+    if (containingClass != null && name != null) {
+      // TODO find property which uses property call, rather than annotation (function name will be different in that case)
+      return containingClass.findProperty(name); 
+    }
+    return null;
+  }
 }
