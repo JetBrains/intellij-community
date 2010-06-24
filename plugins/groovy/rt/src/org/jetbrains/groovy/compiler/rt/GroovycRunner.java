@@ -351,7 +351,7 @@ public class GroovycRunner {
                 iterator.remove();
               }
             }
-            catch (URISyntaxException ignored) {
+            catch (Exception ignored) {
               System.out.println("Invalid URI syntax: " + url.toString());
             }
           }
