@@ -22,6 +22,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -54,10 +55,19 @@ public class CustomTemplateCallback {
   private int myOffset = 0;
 
   public CustomTemplateCallback(Editor editor, PsiFile file) {
-    myEditor = editor;
-    myFile = file;
     myProject = file.getProject();
     myTemplateManager = TemplateManagerImpl.getInstance(myProject);
+
+    int caretOffset = editor.getCaretModel().getOffset();
+
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    PsiElement element = InjectedLanguageUtil.findElementAtNoCommit(file, caretOffset);
+
+    myFile = element != null ? element.getContainingFile() : file;
+
+    myEditor = InjectedLanguageManager.getInstance(myProject).isInjectedFragment(myFile) ? InjectedLanguageUtil
+      .getEditorForInjectedLanguageNoCommit(editor, file) : editor;
+
     fixInitialState();
   }
 
