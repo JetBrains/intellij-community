@@ -14,7 +14,6 @@ package org.zmlx.hg4idea;
 
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
@@ -136,8 +135,7 @@ public abstract class AbstractHgTestCase extends AbstractVcsTestCase {
   }
 
   protected ProcessOutput runHg(File aHgRepository, String... commandLine) throws IOException {
-    String exe = SystemInfo.isWindows ? "hg.exe" : "hg";
-    return runClient(exe, null, aHgRepository, commandLine);
+    return runClient(HgVcs.HG_EXECUTABLE_FILE_NAME, null, aHgRepository, commandLine);
   }
 
   protected File fillFile(File aParentDir, String[] filePath, String fileContents) throws FileNotFoundException {
