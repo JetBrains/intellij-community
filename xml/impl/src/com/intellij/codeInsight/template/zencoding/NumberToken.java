@@ -28,4 +28,9 @@ public class NumberToken extends Token {
   public int getNumber() {
     return myNumber;
   }
+
+  @Override
+  public String toString() {
+    return Integer.toString(myNumber);
+  }
 }

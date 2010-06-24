@@ -39,4 +39,9 @@ public class TemplateToken extends Token {
   public TemplateImpl getTemplate() {
     return myTemplate;
   }
+
+  @Override
+  public String toString() {
+    return "TEMPLATE";
+  }
 }
