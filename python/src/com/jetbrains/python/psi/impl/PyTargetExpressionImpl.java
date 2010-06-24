@@ -127,7 +127,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
             final ResolveResult[] resolveResult = refex.getReference(PyResolveContext.noImplicits()).multiResolve(false);
             if (resolveResult.length == 1) {
               PsiElement target = resolveResult [0].getElement();
-              if (target == this) {
+              if (target == this || target == null) {
                 return null;  // fix SOE on "a = a"
               }
               return PyReferenceExpressionImpl.getTypeFromTarget(target, context, null);
