@@ -18,8 +18,10 @@ package com.intellij.ide;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.AsyncResult;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -52,4 +54,19 @@ public abstract class DataManager {
    * component's bounds
    */
   public abstract DataContext getDataContext(@NotNull Component component, int x, int y);
+
+  /**
+   * @param dataContext should be instance of {@link com.intellij.openapi.util.UserDataHolder}
+   * @param dataKey key to store value
+   * @param data value to store
+   */
+  public abstract <T> void saveInDataContext(DataContext dataContext, Key<T> dataKey, T data);
+
+  /**
+   * @param dataContext find by key if instance of {@link com.intellij.openapi.util.UserDataHolder}
+   * @param dataKey key to find value by
+   * @return value stored by {@link #saveInDataContext(com.intellij.openapi.actionSystem.DataContext, com.intellij.openapi.util.Key, Object)}
+   */
+  @Nullable
+  public abstract <T> T loadFromDataContext(DataContext dataContext, Key<T> dataKey);
 }

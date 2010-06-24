@@ -17,23 +17,33 @@ package com.intellij.psi.util.proximity;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.util.NullableLazyKey;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.util.ProximityLocation;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
 */
 public class SamePackageWeigher extends ProximityWeigher {
+  private static final NullableLazyKey<PsiPackage, ProximityLocation> PLACE_PACKAGE = NullableLazyKey.create("placPackage", new NullableFunction<ProximityLocation, PsiPackage>() {
+    @Override
+    public PsiPackage fun(ProximityLocation location) {
+      return PsiTreeUtil.getContextOfType(location.getPosition(), PsiPackage.class, false);
+    }
+  });
 
   public Comparable weigh(@NotNull final PsiElement element, final ProximityLocation location) {
-    Module elementModule = ModuleUtil.findModuleForPsiElement(element);
-    if (location.getPositionModule() == elementModule) {
-      final PsiPackage psiPackage = PsiTreeUtil.getContextOfType(location.getPosition(), PsiPackage.class, false);
-      if (psiPackage != null && psiPackage.equals(PsiTreeUtil.getContextOfType(element, PsiPackage.class, false))) return true;
+    final PsiPackage placePackage = PLACE_PACKAGE.getValue(location);
+    if (placePackage == null) {
+      return false;
     }
-    return false;
+
+    Module elementModule = ModuleUtil.findModuleForPsiElement(element);
+    return location.getPositionModule() == elementModule &&
+           placePackage.equals(PsiTreeUtil.getContextOfType(element, PsiPackage.class, false));
   }
 }

@@ -487,6 +487,8 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
       myPresentation = presentation;
       myClickConsumer = myPresentation.getClickConsumer();
 
+      setTextAlignment(presentation.getAlignment());
+
       addMouseListener(new MouseAdapter() {
         @Override
         public void mousePressed(final MouseEvent e) {

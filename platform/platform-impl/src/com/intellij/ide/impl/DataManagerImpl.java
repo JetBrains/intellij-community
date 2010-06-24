@@ -27,11 +27,14 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AsyncResult;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.KeyedLazyInstanceEP;
 import com.intellij.util.StringSetSpinAllocator;
+import com.intellij.util.containers.WeakHashMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -279,12 +282,24 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     return "DataManager";
   }
 
-  public class MyDataContext implements DataContext {
+  public <T> void saveInDataContext(DataContext dataContext, Key<T> dataKey, T data) {
+    if (dataContext instanceof UserDataHolder) {
+      ((UserDataHolder)dataContext).putUserData(dataKey, data);
+    }
+  }
+
+  @Nullable
+  public <T> T loadFromDataContext(DataContext dataContext, Key<T> dataKey) {
+    return dataContext instanceof UserDataHolder ? ((UserDataHolder)dataContext).getUserData(dataKey) : null;
+  }
+
+  public class MyDataContext implements DataContext, UserDataHolder {
     private int myEventCount;
     // To prevent memory leak we have to wrap passed component into
     // the weak reference. For example, Swing often remembers menu items
     // that have DataContext as a field.
     private final WeakReference<Component> myRef;
+    private WeakHashMap<Key, Object> mySavedData;
 
     public MyDataContext(final Component component) {
       myEventCount = -1;
@@ -346,6 +361,23 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     @NonNls
     public String toString() {
       return "component=" + String.valueOf(myRef.get());
+    }
+
+    @Override
+    public <T> T getUserData(@NotNull Key<T> key) {
+      return (T)getOrCreateMap().get(key);
+    }
+
+    @Override
+    public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+      getOrCreateMap().put(key, value);
+    }
+
+    private WeakHashMap<Key, Object> getOrCreateMap() {
+      if (mySavedData == null) {
+        mySavedData = new WeakHashMap<Key, Object>();
+      }
+      return mySavedData;
     }
   }
 

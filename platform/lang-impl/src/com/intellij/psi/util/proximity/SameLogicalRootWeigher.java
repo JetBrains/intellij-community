@@ -15,12 +15,14 @@
  */
 package com.intellij.psi.util.proximity;
 
+import com.intellij.openapi.util.NullableLazyKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.ProximityLocation;
 import com.intellij.util.LogicalRoot;
 import com.intellij.util.LogicalRootsManager;
+import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,11 +30,20 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
 */
 public class SameLogicalRootWeigher extends ProximityWeigher {
+  private static final NullableLazyKey<LogicalRoot, ProximityLocation> LOGICAL_ROOT_KEY = NullableLazyKey.create("logicalRoot", new NullableFunction<ProximityLocation, LogicalRoot>() {
+    @Override
+    public LogicalRoot fun(ProximityLocation proximityLocation) {
+      return findLogicalRoot(proximityLocation.getPosition());
+    }
+  });
 
   public Comparable weigh(@NotNull final PsiElement element, final ProximityLocation location) {
-    final LogicalRoot elementRoot = findLogicalRoot(element);
-    final LogicalRoot contextRoot = findLogicalRoot(location.getPosition());
-    return elementRoot != null && contextRoot != null && elementRoot.equals(contextRoot);
+    final LogicalRoot contextRoot = LOGICAL_ROOT_KEY.getValue(location);
+    if (contextRoot == null) {
+      return false;
+    }
+
+    return contextRoot.equals(findLogicalRoot(element));
   }
 
   @Nullable

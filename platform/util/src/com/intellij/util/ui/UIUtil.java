@@ -680,7 +680,7 @@ public class UIUtil {
                                         final Color bgColor,
                                         final Color fgColor,
                                         final boolean opaque) {
-     if (SystemInfo.isMac) {
+     if (SystemInfo.isMac || SystemInfo.isLinux) {
        drawAppleDottedLine(g, startX, endX, lineY, bgColor, fgColor, opaque);
      } else {
        drawBoringDottedLine(g, startX, endX, lineY, bgColor, fgColor, opaque);

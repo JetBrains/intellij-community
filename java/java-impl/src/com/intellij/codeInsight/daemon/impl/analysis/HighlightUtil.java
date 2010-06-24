@@ -872,7 +872,7 @@ public class HighlightUtil {
     HighlightInfo errorResult = null;
     if (expression != null && expression.getType() != null) {
       PsiType type = expression.getType();
-      if (!isValidTypeForSwitchSelector(type)) {
+      if (!isValidTypeForSwitchSelector(type, expression)) {
         String message =
           JavaErrorMessages.message("incompatible.types", JavaErrorMessages.message("valid.switch.selector.types"), formatType(type));
         errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, message);
@@ -884,13 +884,16 @@ public class HighlightUtil {
     return errorResult;
   }
 
-  private static boolean isValidTypeForSwitchSelector(PsiType type) {
+  private static boolean isValidTypeForSwitchSelector(PsiType type, PsiExpression expression) {
     if (TypeConversionUtil.getTypeRank(type) <= TypeConversionUtil.INT_RANK) return true;
     if (type instanceof PsiClassType) {
       PsiClass psiClass = ((PsiClassType)type).resolve();
       if (psiClass == null) return false;
       if (psiClass.isEnum()) {
         return true;
+      }
+      if (PsiUtil.isLanguageLevel7OrHigher(expression)) {
+        return Comparing.strEqual(psiClass.getQualifiedName(), CommonClassNames.JAVA_LANG_STRING);
       }
     }
     return false;

@@ -15,9 +15,11 @@
  */
 package com.intellij.psi.util.proximity;
 
+import com.intellij.openapi.util.NullableLazyKey;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ProximityLocation;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,29 +28,25 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
 */
 public class JavaInheritanceWeigher extends ProximityWeigher {
+  private static final NullableLazyKey<PsiClass, ProximityLocation> PLACE_CLASS = NullableLazyKey.create("PLACE_CLASS", new NullableFunction<ProximityLocation, PsiClass>() {
+    @Override
+    public PsiClass fun(ProximityLocation location) {
+      return PsiTreeUtil.getContextOfType(location.getPosition(), PsiClass.class, false);
+    }
+  });
 
   public Comparable weigh(@NotNull final PsiElement element, final ProximityLocation location) {
     if (element instanceof PsiClass && isTooGeneral((PsiClass)element)) return false;
     if (element instanceof PsiMethod && isTooGeneral(((PsiMethod)element).getContainingClass())) return false;
-    
-    final PsiElement position = location.getPosition();
-    PsiClass placeClass = PsiTreeUtil.getContextOfType(element, PsiClass.class, false);
-    if (position.getParent() instanceof PsiReferenceExpression) {
-      final PsiExpression qualifierExpression = ((PsiReferenceExpression)position.getParent()).getQualifierExpression();
-      if (qualifierExpression != null) {
-        final PsiType type = qualifierExpression.getType();
-        if (type instanceof PsiClassType) {
-          final PsiClass psiClass = ((PsiClassType)type).resolve();
-          if (psiClass != null) {
-            placeClass = psiClass;
-          }
-        }
-      }
+
+    PsiClass contextClass = PLACE_CLASS.getValue(location);
+    if (contextClass == null) {
+      return false;
     }
 
+    PsiClass placeClass = findPlaceClass(element, location.getPosition());
     if (placeClass == null) return false;
-    
-    PsiClass contextClass = PsiTreeUtil.getContextOfType(position, PsiClass.class, false);
+
     while (contextClass != null) {
       PsiClass elementClass = placeClass;
       while (elementClass != null) {
@@ -58,6 +56,23 @@ public class JavaInheritanceWeigher extends ProximityWeigher {
       contextClass = contextClass.getContainingClass();
     }
     return false;
+  }
+
+  @Nullable
+  private static PsiClass findPlaceClass(PsiElement element, PsiElement position) {
+    if (position.getParent() instanceof PsiReferenceExpression) {
+      final PsiExpression qualifierExpression = ((PsiReferenceExpression)position.getParent()).getQualifierExpression();
+      if (qualifierExpression != null) {
+        final PsiType type = qualifierExpression.getType();
+        if (type instanceof PsiClassType) {
+          final PsiClass psiClass = ((PsiClassType)type).resolve();
+          if (psiClass != null) {
+            return psiClass;
+          }
+        }
+      }
+    }
+    return PsiTreeUtil.getContextOfType(element, PsiClass.class, false);
   }
 
   private static boolean isTooGeneral(@Nullable final PsiClass element) {

@@ -22,23 +22,31 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Icons;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class DirectoryChooser extends DialogWrapper {
+  @NonNls private static final String FILTER_NON_EXISTING = "filter_non_existing";
   private final DirectoryChooserView myView;
+  private boolean myFilterExisting;
+  private List<ItemWrapper> myItems = new ArrayList<ItemWrapper>();
 
   public DirectoryChooser(Project project){
     this(project, new DirectoryChooserModuleTreeView(project));
@@ -47,9 +55,57 @@ public class DirectoryChooser extends DialogWrapper {
   public DirectoryChooser(Project project, DirectoryChooserView view){
     super(project, true);
     myView = view;
+    final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
+    myFilterExisting = propertiesComponent.isValueSet(FILTER_NON_EXISTING) && propertiesComponent.isTrueValue(FILTER_NON_EXISTING);
     init();
   }
 
+  @Override
+  protected void doOKAction() {
+    PropertiesComponent.getInstance().setValue(FILTER_NON_EXISTING, String.valueOf(myFilterExisting));
+    super.doOKAction();
+  }
+
+  @Override
+  protected JComponent createSouthPanel() {
+    final JComponent southPanel = super.createSouthPanel();
+    final JPanel panel = new JPanel(new BorderLayout());
+    final JCheckBox checkBox = new JCheckBox(RefactoringBundle.message("directory.chooser.hide.non.existent.checkBox.text"), myFilterExisting);
+    checkBox.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        myFilterExisting = checkBox.isSelected();
+        final ItemWrapper selectedItem = myView.getSelectedItem();
+        myView.clearItems();
+        int idx = 0;
+        int selectionId = -1;
+        for (ItemWrapper item : myItems) {
+          if (myFilterExisting) {
+            if (item.myPostfix != null &&
+                item.getDirectory().getVirtualFile().findFileByRelativePath(StringUtil.trimStart(item.myPostfix, File.separator)) == null) {
+              continue;
+            }
+          }
+          if (item == selectedItem) {
+            selectionId = idx;
+          }
+          idx++;
+          myView.addItem(item);
+        }
+        buildFragments();
+        myView.listFilled();
+        if (selectionId < 0) {
+          myView.clearSelection();
+        } else {
+          myView.selectItemByIndex(selectionId);
+        }
+        enableButtons();
+        myView.getComponent().repaint();
+      }
+    });
+    panel.add(checkBox, BorderLayout.EAST);
+    panel.add(southPanel, BorderLayout.SOUTH);
+    return panel;
+  }
 
   protected JComponent createCenterPanel(){
     final Runnable runnable = new Runnable() {
@@ -298,6 +354,7 @@ public class DirectoryChooser extends DialogWrapper {
       }
     }
 
+    int existingIdx = 0;
     for(int i = 0; i < directories.length; i++){
       PsiDirectory directory = directories[i];
       final String postfixForDirectory;
@@ -308,10 +365,19 @@ public class DirectoryChooser extends DialogWrapper {
         postfixForDirectory = postfixes.get(directory);
       }
       final ItemWrapper itemWrapper = new ItemWrapper(directory, postfixForDirectory);
+      myItems.add(itemWrapper);
+      if (myFilterExisting) {
+        if (selectionIndex == i) selectionIndex = -1;
+        if (postfixForDirectory != null && directory.getVirtualFile().findFileByRelativePath(StringUtil.trimStart(postfixForDirectory, File.separator)) == null) {
+          continue;
+        }
+      }
+
       myView.addItem(itemWrapper);
       if (selectionIndex < 0 && isParent(directory, defaultSelection)) {
-        selectionIndex = i;
+        selectionIndex = existingIdx;
       }
+      existingIdx++;
     }
     buildFragments();
     myView.listFilled();

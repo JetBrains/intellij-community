@@ -1920,7 +1920,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       else if (effectType == EffectType.BOLD_DOTTED_LINE) {
         final Color bgColor = getBackroundColor();
         final int dottedAt = SystemInfo.isMac ? y : y + 1;
-        UIUtil.drawBoldDottedLine((Graphics2D)g, xStart, xEnd, dottedAt, bgColor, effectColor, true);
+        UIUtil.drawBoldDottedLine((Graphics2D)g, xStart, xEnd, dottedAt, bgColor, effectColor, false);
       }
     }
 

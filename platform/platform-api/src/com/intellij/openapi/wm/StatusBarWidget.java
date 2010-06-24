@@ -56,6 +56,8 @@ public interface StatusBarWidget extends Disposable {
 
     @NotNull
     String getMaxPossibleText();
+
+    float getAlignment();
   }
 
   interface MultipleTextValuesPresentation extends WidgetPresentation {

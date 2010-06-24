@@ -5,7 +5,8 @@
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/build/lib/gant/src.zip!/main/groovy" />
+      <root url="jar://$PROJECT_DIR$/build/lib/gant/src.zip!/groovy" />
+      <root url="jar://$PROJECT_DIR$/build/lib/gant/jps-sources.zip!/" />
     </SOURCES>
     <jarDirectory url="file://$PROJECT_DIR$/build/lib/gant/lib" recursive="false" />
   </library>

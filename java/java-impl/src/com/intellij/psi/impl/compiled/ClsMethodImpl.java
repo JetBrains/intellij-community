@@ -341,7 +341,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
     if (sourceClassMirror == null) return this;
     final PsiMethod[] methodsByName = sourceClassMirror.findMethodsByName(getName(), false);
     for (PsiMethod sourceMethod : methodsByName) {
-      if (MethodSignatureUtil.areParametersErasureEqual(this, sourceMethod)) {
+      if (MethodSignatureUtil.areParametersErasureEqual(this, sourceMethod) && sourceMethod != this) {
         return sourceMethod.getNavigationElement();
       }
     }

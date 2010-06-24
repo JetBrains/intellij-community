@@ -28,6 +28,7 @@ public class TextPanel extends JComponent {
   private Dimension myPrefSize;
 
   private boolean myDecorate = true;
+  private float myAlignment;
 
   TextPanel() {
     this(null);
@@ -67,15 +68,25 @@ public class TextPanel extends JComponent {
 
       UIUtil.applyRenderingHints(g2);
 
+      int x = insets.left;
+      if (myAlignment == JComponent.CENTER_ALIGNMENT || myAlignment == JComponent.RIGHT_ALIGNMENT) {
+        final int sWidth = g2.getFontMetrics().stringWidth(s);
+        x = myAlignment == JComponent.CENTER_ALIGNMENT ? (bounds.width - sWidth) / 2 : bounds.width - insets.right - sWidth;
+      }
+
       final int y = UIUtil.getStringY(s, bounds, g2);
       if (SystemInfo.isMac && myDecorate) {
         g2.setColor(new Color(215, 215, 215));
-        g2.drawString(s, insets.left, y+1);
+        g2.drawString(s, x, y+1);
       }
 
       g2.setColor(getForeground());
-      g2.drawString(s, insets.left, y);
+      g2.drawString(s, x, y);
     }
+  }
+
+  public void setTextAlignment(final float alignment) {
+    myAlignment = alignment;
   }
 
   private static String splitText(final JLabel label, final String text, final int widthLimit){

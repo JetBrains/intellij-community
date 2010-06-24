@@ -494,7 +494,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
   @NotNull
   public PsiElement getNavigationElement() {
     PsiClass aClass = getSourceMirrorClass();
-    return aClass != null ? aClass.getNavigationElement() : this;
+    return aClass != null && aClass != this ? aClass.getNavigationElement() : this;
   }
 
   public ItemPresentation getPresentation() {

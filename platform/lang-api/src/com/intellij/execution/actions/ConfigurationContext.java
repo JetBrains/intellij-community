@@ -32,6 +32,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -46,11 +48,26 @@ public class ConfigurationContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.actions.ConfigurationContext");
   private final Location<PsiElement> myLocation;
   private RunnerAndConfigurationSettings myConfiguration;
+  private Ref<RunnerAndConfigurationSettings> myExistingConfiguration;
   private final Module myModule;
   private final RuntimeConfiguration myRuntimeConfiguration;
   private final Component myContextComponent;
 
-  public ConfigurationContext(final DataContext dataContext) {
+  public static Key<ConfigurationContext> SHARED_CONTEXT = Key.create("SHARED_CONTEXT");
+  private List<RuntimeConfigurationProducer> myPreferredProducers;
+
+  public static ConfigurationContext getFromContext(DataContext dataContext) {
+    final ConfigurationContext context = new ConfigurationContext(dataContext);
+    final DataManager dataManager = DataManager.getInstance();
+    ConfigurationContext sharedContext = dataManager.loadFromDataContext(dataContext, SHARED_CONTEXT);
+    if (sharedContext == null || !Comparing.equal(sharedContext.getLocation().getPsiElement(), context.getLocation().getPsiElement())) {
+      sharedContext = context;
+      dataManager.saveInDataContext(dataContext, SHARED_CONTEXT, sharedContext);
+    }
+    return sharedContext;
+  }
+
+  private ConfigurationContext(final DataContext dataContext) {
     myRuntimeConfiguration = RuntimeConfiguration.DATA_KEY.getData(dataContext);
     myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     myModule = LangDataKeys.MODULE.getData(dataContext);
@@ -98,23 +115,29 @@ public class ConfigurationContext {
 
   @Nullable
   public RunnerAndConfigurationSettings findExisting() {
+    if (myExistingConfiguration != null) return myExistingConfiguration.get();
+    myExistingConfiguration = new Ref<RunnerAndConfigurationSettings>();
     if (myLocation == null) {
       return null;
     }
 
-    final List<RuntimeConfigurationProducer> producers = PreferedProducerFind.findPreferredProducers(myLocation, this, true);
+    final List<RuntimeConfigurationProducer> producers = findPreferredProducers();
     if (producers == null) return null;
     if (myRuntimeConfiguration != null) {
       for (RuntimeConfigurationProducer producer : producers) {
         final RunnerAndConfigurationSettings configuration = producer.findExistingConfiguration(myLocation, this);
-        if (configuration != null && configuration.getConfiguration() == myRuntimeConfiguration) return configuration;
+        if (configuration != null && configuration.getConfiguration() == myRuntimeConfiguration) {
+          myExistingConfiguration.set(configuration);
+        }
       }
     }
     for (RuntimeConfigurationProducer producer : producers) {
       final RunnerAndConfigurationSettings configuration = producer.findExistingConfiguration(myLocation, this);
-      if (configuration != null) return configuration;
+      if (configuration != null) {
+        myExistingConfiguration.set(configuration);
+      }
     }
-    return null;
+    return myExistingConfiguration.get();
   }
 
   @Nullable
@@ -156,5 +179,13 @@ public class ConfigurationContext {
   @Nullable
   public RuntimeConfiguration getOriginalConfiguration(final ConfigurationType type) {
     return myRuntimeConfiguration != null && Comparing.strEqual(type.getId(), myRuntimeConfiguration.getType().getId()) ? myRuntimeConfiguration : null;
+  }
+
+  @Nullable
+  public List<RuntimeConfigurationProducer> findPreferredProducers() {
+    if (myPreferredProducers == null) {
+      myPreferredProducers = PreferedProducerFind.findPreferredProducers(myLocation, this, true);
+    }
+    return myPreferredProducers;
   }
 }

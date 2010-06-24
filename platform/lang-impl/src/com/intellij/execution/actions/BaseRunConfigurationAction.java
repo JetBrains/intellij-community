@@ -59,7 +59,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
   }
 
   private AnAction[] getChildren(DataContext dataContext) {
-    final ConfigurationContext context = new ConfigurationContext(dataContext);
+    final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
     final RunnerAndConfigurationSettings existing = context.findExisting();
     if (existing == null) {
       final List<RuntimeConfigurationProducer> producers = getEnabledProducers(context);
@@ -87,7 +87,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
 
   @NotNull
   private List<RuntimeConfigurationProducer> getEnabledProducers(ConfigurationContext context) {
-    final List<RuntimeConfigurationProducer> preferred = PreferedProducerFind.findPreferredProducers(context.getLocation(), context, true);
+    final List<RuntimeConfigurationProducer> preferred = context.findPreferredProducers();
     if (preferred == null) {
       return Collections.emptyList();
     }
@@ -107,7 +107,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
 
   @Override
   public boolean canBePerformed(DataContext dataContext) {
-    final ConfigurationContext context = new ConfigurationContext(dataContext);
+    final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
     final RunnerAndConfigurationSettings existing = context.findExisting();
     if (existing == null) {
       final List<RuntimeConfigurationProducer> producers = getEnabledProducers(context);
@@ -118,11 +118,11 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
 
   public void actionPerformed(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final ConfigurationContext context = new ConfigurationContext(dataContext);
+    final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
     final RunnerAndConfigurationSettings existing = context.findExisting();
     if (existing == null) {
-      final List<RuntimeConfigurationProducer> producers = PreferedProducerFind.findPreferredProducers(context.getLocation(), context, true);
-      if (producers == null) return;
+      final List<RuntimeConfigurationProducer> producers = getEnabledProducers(context);
+      if (producers.isEmpty()) return;
       if (producers.size() > 1) {
         final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
         Collections.sort(producers, new Comparator<RuntimeConfigurationProducer>() {
@@ -173,7 +173,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
   protected abstract void perform(ConfigurationContext context);
 
   public void update(final AnActionEvent event){
-    final ConfigurationContext context = new ConfigurationContext(event.getDataContext());
+    final ConfigurationContext context = ConfigurationContext.getFromContext(event.getDataContext());
     final Presentation presentation = event.getPresentation();
     RunnerAndConfigurationSettings configuration;
     try {

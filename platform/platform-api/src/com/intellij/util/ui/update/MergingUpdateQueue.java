@@ -18,6 +18,7 @@ package com.intellij.util.ui.update;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
@@ -118,7 +119,12 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   public void cancelAllUpdates() {
     synchronized (myScheduledUpdates) {
       for (Update each : myScheduledUpdates.keySet()) {
-        each.setRejected();
+        try {
+          each.setRejected();
+        }
+        catch (ProcessCanceledException e) {
+          continue;
+        }
       }
       myScheduledUpdates.clear();
     }
