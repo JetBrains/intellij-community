@@ -15,14 +15,12 @@ import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.SortedList;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.refactoring.PyDefUseUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -179,26 +177,6 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     }
     if (roof == null) roof = realContext.getContainingFile();
     PsiElement uexpr = PyResolveUtil.treeCrawlUp(processor, false, realContext, roof);
-    if (uexpr != null) {
-      //add possible inferred types
-      if ((uexpr instanceof PyTargetExpression || uexpr instanceof PyNamedParameter) && myElement != null) {
-        final ScopeOwner scopeOwner = PsiTreeUtil.getParentOfType(myElement, ScopeOwner.class);
-        if (scopeOwner != null && scopeOwner == PsiTreeUtil.getStubOrPsiParentOfType(uexpr, ScopeOwner.class)) {
-          PyAugAssignmentStatement augAssignment = PsiTreeUtil.getParentOfType(myElement, PyAugAssignmentStatement.class);
-          try {
-            final PyElement[] defs = PyDefUseUtil.getLatestDefs(scopeOwner, (PyElement)uexpr,
-                                                                augAssignment != null ? augAssignment : myElement);
-            for (PyElement e : defs) {
-              ret.add(new RatedResolveResult(RatedResolveResult.RATE_NORMAL + 1, e));
-            }
-          }
-          catch (PyDefUseUtil.InstructionNotFoundException e) {
-            // ignore
-          }
-        }
-      }
-
-    }
     if ((uexpr != null)) {
       if ((uexpr instanceof PyClass)) {
         // is it a case of the bizarre "class Foo(Foo)" construct?

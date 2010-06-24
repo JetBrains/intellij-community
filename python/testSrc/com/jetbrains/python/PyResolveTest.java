@@ -309,4 +309,9 @@ public class PyResolveTest extends PyResolveTestCase {
     ImportedResolveResult result = (ImportedResolveResult) results [0];
     assertNull(result.getElement());
   }
+
+  public void testIsInstance() {  // PY-1133
+    PsiElement targetElement = resolve();
+    assertInstanceOf(targetElement, PyNamedParameter.class);
+  }
 }

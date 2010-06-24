@@ -252,7 +252,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     if (target instanceof PyImportedModule) {
       return new PyImportedModuleType((PyImportedModule)target);
     }
-    if ((target instanceof PyTargetExpression | target instanceof PyNamedParameter) && context.allowDataFlow() && anchor != null) {
+    if ((target instanceof PyTargetExpression || target instanceof PyNamedParameter) && context.allowDataFlow() && anchor != null) {
       final ScopeOwner scopeOwner = PsiTreeUtil.getParentOfType(anchor, ScopeOwner.class);
       if (scopeOwner != null && scopeOwner == PsiTreeUtil.getParentOfType(target, ScopeOwner.class)) {
         PyAugAssignmentStatement augAssignment = PsiTreeUtil.getParentOfType(anchor, PyAugAssignmentStatement.class);

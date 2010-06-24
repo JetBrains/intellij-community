@@ -37,7 +37,7 @@ public abstract class LightMarkedTestCase extends PyLightFixtureTestCase {
    * @return a mapping of markers to PSI elements
    * @throws Exception
    */
-  protected Map<String, PsiElement> configureByFile(@NonNls String filePath) throws Exception {
+  protected Map<String, PsiElement> configureByFile(@TestDataFile @NonNls String filePath) throws Exception {
     return configureByFile(filePath, MARKER);
   }
 

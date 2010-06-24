@@ -26,7 +26,7 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
   private void doTest() throws Exception {
     final String testName = getTestName(false).toLowerCase();
     configureByFile(testName + ".py");
-   final ControlFlow flow = ((PyFile)myFile).getControlFlow();
+    final ControlFlow flow = ((PyFile)myFile).getControlFlow();
     final String fullPath = getTestDataPath() + testName + ".txt";
     check(fullPath, flow);
    }
@@ -38,7 +38,7 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
   public void testFile() throws Exception {
     doTest();
   }
-  
+
   public void testIf() throws Exception {
     doTest();
   }
@@ -152,7 +152,7 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
     check(fullPath, flow);
   }
 
-  private void check(final String fullPath, final ControlFlow flow) throws IOException {
+  private static void check(final String fullPath, final ControlFlow flow) throws IOException {
     final StringBuffer buffer = new StringBuffer();
     final Instruction[] instructions = flow.getInstructions();
     for (Instruction instruction : instructions) {
