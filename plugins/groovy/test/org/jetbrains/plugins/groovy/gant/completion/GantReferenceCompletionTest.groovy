@@ -149,7 +149,7 @@ class GantProjectDescriptor implements LightProjectDescriptor {
       modifiableModel.addRoot(fs.findFileByPath("$TestUtils.mockGroovyLibraryHome/$TestUtils.GROOVY_JAR!/"), OrderRootType.CLASSES);
 
       GantReferenceCompletionTest.GANT_JARS.each {
-        modifiableModel.addRoot(fs.findFileByPath("${TestUtils.absoluteTestDataPath}mockGantLib/$it!/"), OrderRootType.CLASSES);
+        modifiableModel.addRoot(fs.findFileByPath("${TestUtils.absoluteTestDataPath}mockGantLib/lib/$it!/"), OrderRootType.CLASSES);
       }
       modifiableModel.commit();
     }
