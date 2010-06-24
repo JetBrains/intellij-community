@@ -638,7 +638,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       final GitUsersComponent component = GitUsersComponent.getInstance(project);
       final Set<String> result = new HashSet<String>();
       for (VirtualFile root : roots) {
-        result.addAll(component.getUsersList(root));
+        final List<String> list = component.getUsersList(root);
+        if (list == null) continue;
+        result.addAll(list);
       }
       return result;
     }
