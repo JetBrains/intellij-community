@@ -344,16 +344,15 @@ public class GroovycRunner {
           final ArrayList list = Collections.list(resources);
           for (Iterator iterator = list.iterator(); iterator.hasNext();) {
             final URL url = (URL)iterator.next();
-            if ("file".equals(url.getProtocol())) {
-              try {
-                final String file = new File(new URI(url.toString())).getCanonicalPath();
-                System.out.println("Enumerated:" + file);
-                if (file.startsWith(finalOutput) || file.startsWith("/" + finalOutput)) {
-                  iterator.remove();
-                }
+            try {
+              final String file = new File(new URI(url.toString())).getCanonicalPath();
+              System.out.println("Enumerated:" + file);
+              if (file.startsWith(finalOutput) || file.startsWith("/" + finalOutput)) {
+                iterator.remove();
               }
-              catch (URISyntaxException ignored) {
-              }
+            }
+            catch (URISyntaxException ignored) {
+              System.out.println("Invalid URI syntax: " + url.toString());
             }
           }
           return Collections.enumeration(list);
