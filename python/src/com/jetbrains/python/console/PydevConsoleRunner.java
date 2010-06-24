@@ -8,27 +8,23 @@ import com.intellij.execution.console.LanguageConsoleViewImpl;
 import com.intellij.execution.process.CommandLineArgumentsProvider;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory;
-import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.codeStyle.Helper;
 import com.intellij.psi.impl.source.codeStyle.HelperFactory;
-import com.intellij.util.PathUtil;
 import com.intellij.util.net.NetUtils;
 import com.jetbrains.django.run.Runner;
-import com.jetbrains.django.util.DjangoUtil;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.pydev.ICallback;
@@ -219,7 +215,12 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
               console.setPrompt(PyConsoleHighlightingUtil.INDENT_PROMPT);
               // In this case we can insert indent automatically
               final int indent = myHelper.getIndent(input, false);
-              EditorModificationUtil.insertStringAtCaret(console.getConsoleEditor(), myHelper.fillIndent(indent + currentPythonIndentSize));
+              new WriteCommandAction(myProject) {
+                @Override
+                protected void run(Result result) throws Throwable {
+                  EditorModificationUtil.insertStringAtCaret(console.getConsoleEditor(), myHelper.fillIndent(indent + currentPythonIndentSize));
+                }
+              }.execute();
             }
           } else {
             if (!PyConsoleHighlightingUtil.ORDINARY_PROMPT.equals(console.getPrompt())){
