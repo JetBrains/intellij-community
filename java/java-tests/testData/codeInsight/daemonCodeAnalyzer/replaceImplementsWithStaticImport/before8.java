@@ -1,16 +1,12 @@
 // "Replace Implements with Static Import" "true"
-
-import static I.FOO;
-import static I1.BAZZ;
-
-public class X {
+public class X implements II {
   void bar() {
     System.out.println(FOO);
     System.out.println(BAZZ);
   }
 }
 
-interface I extends I1{
+interface I<caret>I extends I1{
   String FOO = "foo";
 }
 

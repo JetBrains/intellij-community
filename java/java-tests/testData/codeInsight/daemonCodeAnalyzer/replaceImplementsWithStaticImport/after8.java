@@ -1,7 +1,7 @@
 // "Replace Implements with Static Import" "true"
 
-import static I.FOO;
 import static I1.BAZZ;
+import static II.FOO;
 
 public class X {
   void bar() {
@@ -10,7 +10,7 @@ public class X {
   }
 }
 
-interface I extends I1{
+interface II extends I1{
   String FOO = "foo";
 }
 
