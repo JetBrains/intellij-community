@@ -78,13 +78,18 @@ public class CopyFilesOrDirectoriesHandler implements CopyHandlerDelegate {
     CopyFilesOrDirectoriesDialog dialog = new CopyFilesOrDirectoriesDialog(elements, defaultTargetDirectory, project, false);
     dialog.show();
     if (dialog.isOK()) {
-      String newName = elements.length == 1 ? dialog.getNewName() : null;
+      final String newName = elements.length == 1 ? dialog.getNewName() : null;
       final PsiManager psiManager = PsiManager.getInstance(project);
       try {
         for (PsiElement element : elements) {
-          final PsiFileSystemItem psiElement = (PsiFileSystemItem)element.copy();
+          PsiFileSystemItem psiElement = (PsiFileSystemItem)element;
           if (newName != null) {
-            psiElement.setName(newName);
+            if (!psiElement.isDirectory()) {
+              psiElement = (PsiFileSystemItem)psiElement.copy();
+              psiElement.setName(newName);
+            } else {
+              dialog.getTargetDirectory().checkCreateSubdirectory(newName);
+            }
           }
           psiManager.checkMove(psiElement, dialog.getTargetDirectory());
         }
