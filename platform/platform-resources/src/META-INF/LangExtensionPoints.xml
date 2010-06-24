@@ -436,4 +436,6 @@
   <extensionPoint name="typeName" beanClass="com.intellij.ide.TypeNameEP"/>
 
   <extensionPoint name="typeIcon" beanClass="com.intellij.ide.TypeIconEP"/>
+
+  <extensionPoint name="analyzeStacktraceFilter" interface="com.intellij.execution.filters.Filter" area="IDEA_PROJECT"/>
 </extensionPoints>
