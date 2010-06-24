@@ -25,10 +25,7 @@ import com.jetbrains.python.sdk.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author yole
@@ -67,7 +64,7 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
     envs.put(PYTHONUNBUFFERED, "1");
     cmd.setEnvParams(envs);
 
-    List<String> pythonPathList = buildPythonPath();
+    Collection<String> pythonPathList = buildPythonPath();
     String pythonPath = StringUtil.join(pythonPathList, File.pathSeparator);
     final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(myConfiguration.getInterpreterPath());
     if (flavor != null) {
@@ -82,15 +79,15 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
     return cmd;
   }
 
-  protected List<String> buildPythonPath() {
-    List<String> pythonPathList = new ArrayList<String>();
+  protected Collection<String> buildPythonPath() {
+    Collection<String> pythonPathList = new LinkedHashSet<String>();
     pythonPathList.add(PythonHelpersLocator.getHelpersRoot().getPath());
     final Module module = myConfiguration.getModule();
     if (module != null) {
-      final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
-      for (VirtualFile contentRoot : contentRoots) {
-        pythonPathList.add(FileUtil.toSystemDependentName(contentRoot.getPath()));
-      }
+      final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+      addRoots(pythonPathList, moduleRootManager.getContentRoots());
+      addRoots(pythonPathList, moduleRootManager.getSourceRoots());
+
       final Facet[] facets = FacetManager.getInstance(module).getAllFacets();
       for (Facet facet : facets) {
         if (facet instanceof PythonPathContributingFacet) {
@@ -99,6 +96,12 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
       }
     }
     return pythonPathList;
+  }
+
+  private static void addRoots(Collection<String> pythonPathList, VirtualFile[] roots) {
+    for (VirtualFile root : roots) {
+      pythonPathList.add(FileUtil.toSystemDependentName(root.getPath()));
+    }
   }
 
   protected abstract void addTestRunnerParameters(GeneralCommandLine cmd);
