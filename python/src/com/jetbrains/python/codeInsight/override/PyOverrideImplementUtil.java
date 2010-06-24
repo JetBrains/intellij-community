@@ -39,7 +39,7 @@ public class PyOverrideImplementUtil {
     if (element == null) {
       // are we in whitespace after last class? PY-440
       final PsiElement lastChild = file.getLastChild();
-      if (lastChild instanceof PsiWhiteSpace &&
+      if (lastChild != null &&
           offset >= lastChild.getTextRange().getStartOffset() &&
           offset <= lastChild.getTextRange().getEndOffset()) {
         element = lastChild;
