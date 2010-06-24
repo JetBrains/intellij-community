@@ -18,7 +18,7 @@ package com.intellij.codeInsight.template.zencoding;
 /**
  * @author Eugene.Kudelevsky
  */
-class OperationToken extends Token {
+public class OperationToken extends Token {
   private final char mySign;
 
   OperationToken(char sign) {
