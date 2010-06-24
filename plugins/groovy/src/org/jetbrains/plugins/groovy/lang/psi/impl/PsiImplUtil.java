@@ -39,7 +39,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.bitwise.GrAndExpressionImpl;
@@ -137,18 +136,17 @@ public class PsiImplUtil {
     if (qualifier == null) {
       GrClosableBlock closure = PsiTreeUtil.getParentOfType(refExpr, GrClosableBlock.class);
       while (closure != null) {
-        GrExpression funExpr = null;
         PsiElement parent = closure.getParent();
-        if (parent instanceof GrApplicationStatement) {
-          funExpr = ((GrApplicationStatement) parent).getFunExpression();
-        } else if (parent instanceof GrMethodCallExpression) {
-          funExpr = ((GrMethodCallExpression) parent).getInvokedExpression();
+        if (parent instanceof GrMethodCall) {
+          GrExpression funExpr = ((GrMethodCall)parent).getInvokedExpression();
+          if (funExpr instanceof GrReferenceExpression) {
+            qualifier = ((GrReferenceExpression) funExpr).getQualifierExpression();
+            if (qualifier != null) {
+              return qualifier;
+            }
+          }
         }
 
-        if (funExpr instanceof GrReferenceExpression) {
-          qualifier = ((GrReferenceExpression) funExpr).getQualifierExpression();
-          if (qualifier != null) break;
-        }
 
         closure = PsiTreeUtil.getParentOfType(closure, GrClosableBlock.class);
       }
@@ -353,5 +351,15 @@ public class PsiImplUtil {
   public static boolean isMainMethod(GrMethod method) {
     return method.getName().equals(MAIN_METHOD) &&
         method.hasModifierProperty(PsiModifier.STATIC);
+  }
+
+  public static PsiMethod resolveMethod(GrMethodCall expression) {
+    final GrExpression methodExpr = expression.getInvokedExpression();
+    if (methodExpr instanceof GrReferenceExpression) {
+      final PsiElement resolved = ((GrReferenceExpression) methodExpr).resolve();
+      return resolved instanceof PsiMethod ? (PsiMethod) resolved : null;
+    }
+
+    return null;
   }
 }

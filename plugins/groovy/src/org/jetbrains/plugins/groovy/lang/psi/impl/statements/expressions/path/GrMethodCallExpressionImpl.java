@@ -35,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -181,13 +182,7 @@ public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements 
   }
 
   public PsiMethod resolveMethod() {
-    final GrExpression methodExpr = getInvokedExpression();
-    if (methodExpr instanceof GrReferenceExpression) {
-      final PsiElement resolved = ((GrReferenceExpression) methodExpr).resolve();
-      return resolved instanceof PsiMethod ? (PsiMethod) resolved : null;
-    }
-
-    return null;
+    return PsiImplUtil.resolveMethod(this);
   }
 
   @NotNull
