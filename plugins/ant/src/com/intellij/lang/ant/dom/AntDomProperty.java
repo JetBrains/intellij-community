@@ -22,7 +22,10 @@ import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.Attribute;
+import com.intellij.util.xml.Convert;
+import com.intellij.util.xml.DomTarget;
+import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,12 +37,8 @@ import java.util.Map;
  * @author Eugene Zhuravlev
  *         Date: Apr 21, 2010
  */
-public abstract class AntDomProperty extends AntDomPropertyDefiningElement{
+public abstract class AntDomProperty extends AntDomNamedElement implements PropertiesProvider{
   private volatile Map<String, String> myCachedPreperties;
-
-  @Attribute("name")
-  @NameValue
-  public abstract GenericAttributeValue<String> getName();
 
   @Attribute("value")
   @Convert(value = AntDomPropertyValueConverter.class)

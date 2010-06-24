@@ -15,9 +15,21 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.util.xml.AbstractDomDeclarationSearcher;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomTarget;
+import com.intellij.util.xml.GenericDomValue;
+
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 21, 2010
+ *         Date: Jun 24, 2010
  */
-public abstract class AntDomPropertyDefiningElement extends AntDomElement implements PropertiesProvider{
+public class AntDomIdDeclarationSearcher extends AbstractDomDeclarationSearcher {
+
+  protected DomTarget createDomTarget(DomElement parent, DomElement nameElement) {
+    if (parent instanceof AntDomElement && nameElement.equals(((AntDomElement)parent).getId())) { // id attrib is defined
+      return DomTarget.getTarget(parent, (GenericDomValue)nameElement);
+    }
+    return null;
+  }
 }

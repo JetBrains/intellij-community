@@ -16,72 +16,83 @@
 package com.intellij.lang.ant.dom;
 
 import com.intellij.lang.ant.AntSupport;
-import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.pom.references.PomService;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceBase;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: Apr 16, 2010
  */
-public class AntDomRefIdConverter extends ResolvingConverter<XmlAttributeValue>{
-  // TODO: convert to ant dom element instead of XmlAttributeValue!
-
-  @NotNull
-  public Collection<? extends XmlAttributeValue> getVariants(ConvertContext context) {
-    // todo: should we add imported files support?
-    final AntDomElement element = AntSupport.getInvocationAntDomElement(context);
-    if (element != null) {
-      final List<XmlAttributeValue> variants = new ArrayList<XmlAttributeValue>();
-      element.getAntProject().accept(new DomElementVisitor() {
-        public void visitDomElement(DomElement element) {
-        }
-        public void visitAntDomElement(AntDomElement element) {
-          final GenericAttributeValue<String> idValue = element.getId();
-          if (idValue != null) {
-            final XmlAttributeValue xmlAttribValue = idValue.getXmlAttributeValue();
-            if (xmlAttribValue != null) {
-              variants.add(xmlAttribValue);
-            }
-          }
-          for (AntDomElement child : element.getAntChildren()) {
-            child.accept(this);
-          }
-        }
-      });
-      return variants;
-    }
-    return Collections.emptyList();
-  }
-
-  @Nullable
-  public XmlAttributeValue fromString(@Nullable @NonNls String s, ConvertContext context) {
-    final AntDomElement element = AntSupport.getInvocationAntDomElement(context);
-    if (element != null) {
-      final AntDomElement resolved = findElementById(element.getAntProject(), s);
-      if (resolved == null)  {
-        return null;
+public class AntDomRefIdConverter extends Converter<AntDomElement> implements CustomReferenceConverter<AntDomElement>{
+  public AntDomElement fromString(@Nullable @NonNls String s, ConvertContext context) {
+    if (s != null) {
+      final AntDomElement element = AntSupport.getInvocationAntDomElement(context);
+      if (element != null) {
+        return findElementById(getContextProject(element), s);
       }
-
-      return resolved.getId().getXmlAttributeValue();
     }
     return null;
   }
 
+  public String toString(@Nullable AntDomElement antDomElement, ConvertContext context) {
+    return antDomElement != null? antDomElement.getId().getRawText() : null;
+  }
+
+  @NotNull
+  public PsiReference[] createReferences(final GenericDomValue<AntDomElement> genericDomValue, final PsiElement element, ConvertContext context) {
+    final AntDomElement invocationElement = AntSupport.getInvocationAntDomElement(context);
+    return new PsiReference[] {new PsiReferenceBase<PsiElement>(element, true) {
+      public PsiElement resolve() {
+        final AntDomElement value = genericDomValue.getValue();
+        if (value == null) {
+          return null;
+        }
+        final DomTarget target = DomTarget.getTarget(value, value.getId());
+        if (target == null) {
+          return null;
+        }
+        return PomService.convertToPsi(element.getProject(), target);
+      }
+      @NotNull 
+      public Object[] getVariants() {
+        if (invocationElement == null) {
+          return ArrayUtil.EMPTY_OBJECT_ARRAY;
+        }
+        final Set<String> variants = new LinkedHashSet<String>();
+        getContextProject(invocationElement).accept(new AntDomRecursiveVisitor() {
+          public void visitAntDomElement(AntDomElement element) {
+            final String variant = element.getId().getRawText();
+            if (variant != null) {
+              variants.add(variant);
+            }
+            super.visitAntDomElement(element);
+          }
+        });
+        return variants.size() > 0? variants.toArray(new Object[variants.size()]) : ArrayUtil.EMPTY_OBJECT_ARRAY;
+      }
+    }};
+  }
+
+  private AntDomProject getContextProject(AntDomElement element) {
+    // todo: correct project
+    return element.getAntProject();
+  }
+
+
   @Nullable
   private static AntDomElement findElementById(AntDomElement from, final String id) {
-    final GenericAttributeValue<String> idValue = from.getId();
-    if (idValue != null) {
-      if (id.equals(idValue.getRawText())) {
-        return from;
-      }
+    if (id.equals(from.getId().getRawText())) {
+      return from;
     }
     for (AntDomElement child : from.getAntChildren()) {
       final AntDomElement result = findElementById(child, id);
@@ -90,12 +101,5 @@ public class AntDomRefIdConverter extends ResolvingConverter<XmlAttributeValue>{
       }
     }
     return null;
-  }
-
-  public String toString(@Nullable XmlAttributeValue attribValue, ConvertContext context) {
-    if (attribValue == null) {
-      return null;
-    }
-    return attribValue.getValue();
   }
 }

@@ -15,24 +15,21 @@
  */
 package com.intellij.lang.ant.dom;
 
-import com.intellij.util.xml.Attribute;
-import com.intellij.util.xml.Convert;
-import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.lang.ant.psi.AntFilesProvider;
+import org.jetbrains.annotations.NotNull;
+
+import java.io.File;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 6, 2010
+ *         Date: Jun 22, 2010
  */
-@SuppressWarnings({"AbstractClassNeverImplemented"})
-public abstract class AntDomTarget extends AntDomNamedElement{
-
-  @Attribute("if")
-  public abstract GenericAttributeValue<String> getIfPropertyName();
-
-  @Attribute("unless")
-  public abstract GenericAttributeValue<String> getUnlessPropertyName();
-
-  @Attribute("depends")
-  @Convert(value = AntDomTargetDependsListConverter.class)
-  public abstract GenericAttributeValue<TargetResolver.Result> getDependsList();
+public abstract class AntDomDirSet extends AntDomFilesProviderImpl{
+  @NotNull
+  public List<File> getFiles(Set<AntFilesProvider> processed) {
+    return Collections.emptyList(); // todo
+  }
 }
