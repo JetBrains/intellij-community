@@ -205,7 +205,12 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     }
 
     builder.advanceLexer();
-    builder.error("statement expected, found " + firstToken.toString());
+    if (firstToken == PyTokenTypes.INCONSISTENT_DEDENT) {
+      builder.error("unindent does not match any outer indentation level");
+    }
+    else {
+      builder.error("statement expected, found " + firstToken.toString());
+    }
   }
 
   private boolean hasPrintStatement() {

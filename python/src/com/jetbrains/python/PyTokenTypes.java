@@ -16,7 +16,7 @@ public class PyTokenTypes {
   public static final PyElementType TAB = new PyElementType("TAB");
   public static final PyElementType FORMFEED = new PyElementType("FORMFEED");
   public static final IElementType BAD_CHARACTER = TokenType.BAD_CHARACTER;
-  public static final IElementType INCONSISTENT_DEDENT = TokenType.BAD_CHARACTER;
+  public static final PyElementType INCONSISTENT_DEDENT = new PyElementType("INCONSISTENT_DEDENT");
 
   public static final PyElementType END_OF_LINE_COMMENT = new PyElementType("END_OF_LINE_COMMENT");
 

@@ -206,6 +206,10 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  public void testInconsistentDedent() throws Exception { // PY-1131
+    doTest();
+  }
+
   public void doTest() throws Exception {
     doTest(LanguageLevel.PYTHON25);
   }
