@@ -197,6 +197,5 @@
   <projectConfigurable implementation="com.intellij.javaee.ExternalResourceConfigurable"/>
 
   <bundledKeymapProvider implementation="com.intellij.openapi.keymap.impl.DefaultBundledKeymaps"/>
-  <bundledColorSchemesProvider implementation="com.intellij.openapi.editor.colors.impl.MacOSDefaultColorSchemeExtension"/>
   <!-- <checkinHandlerFactory implementation="com.intellij.openapi.vcs.CheckRemoteStatusCheckinHandlerFactory"/> -->
 </extensions>
