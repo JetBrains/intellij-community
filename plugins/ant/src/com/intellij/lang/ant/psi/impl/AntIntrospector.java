@@ -99,7 +99,7 @@ public final class AntIntrospector {
     return types;
   }
   
-  public Enumeration getNestedElements() {
+  public Enumeration<String> getNestedElements() {
     return invokeMethod("getNestedElements", false);
   }
   

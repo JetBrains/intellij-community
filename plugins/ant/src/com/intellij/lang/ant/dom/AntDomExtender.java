@@ -53,13 +53,13 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
       }
       else {
         final Map<String, Class> tasks = reflected.getTaskDefinitions();
-        final Class taskClass = (Class)tasks.get(tagName);
+        final Class taskClass = tasks.get(tagName);
         if (taskClass != null) {
           parentElementIntrospector = getIntrospector(taskClass);
         }
         else {
           final Map<String, Class> dataTypes = reflected.getDataTypeDefinitions();
-          final Class dataClass = (Class)dataTypes.get(tagName);
+          final Class dataClass = dataTypes.get(tagName);
           if (dataClass != null) {
             parentElementIntrospector = getIntrospector(dataClass);
           }
@@ -83,9 +83,9 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
           }
         }
         else {
-          final Enumeration nested = parentElementIntrospector.getNestedElements();
+          final Enumeration<String> nested = parentElementIntrospector.getNestedElements();
           while (nested.hasMoreElements()) {
-            registerChild(registrar, genericInfo, (String)nested.nextElement());
+            registerChild(registrar, genericInfo, nested.nextElement());
           }
         }
       }
@@ -113,7 +113,7 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
   }
 
   @Nullable
-  private static AntIntrospector getIntrospector(Class c) {
+  public static AntIntrospector getIntrospector(Class c) {
     try {
       return AntIntrospector.getInstance(c);
     }

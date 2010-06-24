@@ -106,6 +106,29 @@ def foo() {
     checkVariants "ant.patt<caret>t", "patternset"
   }
 
+  public void testTagsInsideTags() throws Exception {
+    myFixture.configureByText "a.groovy", """
+AntBuilder ant
+ant.zip {
+  patternset {
+    includ<caret>
+  }
+}"""
+    myFixture.completeBasic()
+    assertSameElements myFixture.lookupElementStrings, "include", "includesfile"
+  }
+  
+  public void testTagsInsideTagsInGantTarget() throws Exception {
+    checkVariants """
+target(aaa: "") {
+  zip {
+    patternset {
+      includ<caret>
+    }
+  }
+}""", "include", "includesfile", "includeTargets", "includeTool"
+  }
+
   static final def GANT_JARS = ["gant.jar", "ant.jar", "ant-junit.jar", "ant-launcher.jar", "commons.jar"]
 
 }
