@@ -81,6 +81,9 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
         ResolveResult[] targets = ((PyReferenceExpression)callee).getReference(PyResolveContext.noImplicits()).multiResolve(false);
         if (targets.length > 0) {
           PsiElement target = targets[0].getElement();
+          if (target == null) {
+            return null;
+          }
           if (target instanceof PyClass) {
             return new PyClassType((PyClass)target, false); // we call a class name, that is, the constructor, we get an instance.
           }
