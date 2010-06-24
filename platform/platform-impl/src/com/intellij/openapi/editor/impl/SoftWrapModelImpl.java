@@ -21,22 +21,37 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.SoftWrapModelEx;
-import com.intellij.openapi.editor.TextChange;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.text.CharArrayUtil;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntObjectHashMap;
+import gnu.trove.TIntHashSet;
+import gnu.trove.TIntIterator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.nio.CharBuffer;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * Default {@link SoftWrapModelEx} implementation.
+ * <p/>
+ * Design principles:
+ * <ul>
+ *    <li>
+ *      remembers width of the visible area used last time; drops all of registered soft wraps on offset/position
+ *      recalculation/adjustment request (e.g. {@link #adjustLogicalPosition(LogicalPosition, VisualPosition)}) if current
+ *      visible area width differs from the one used last time;
+ *    </li>
+ *    <li>
+ *      performs {@code 'soft wrap' -> 'hard wrap'} conversion if the document is change in a soft wrap-introduced
+ *      virtual space (e.g. user start typing inside soft wrap-introduced indent). There is a dedicated method that
+ *      does that if necessary - {@link #beforeDocumentChange(VisualPosition)};
+ *    </li>
+ * </ul>
  * <p/>
  * Not thread-safe.
  *
@@ -45,23 +60,30 @@ import java.util.Map;
  */
 public class SoftWrapModelImpl implements SoftWrapModelEx {
 
+  private static final Comparator<TextChange> SOFT_WRAPS_BY_OFFSET_COMPARATOR = new Comparator<TextChange>() {
+    public int compare(TextChange c1, TextChange c2) {
+      return c1.getStart() - c2.getEnd();
+    }
+  };
+
   private final CharBuffer myCharBuffer = CharBuffer.allocate(1);
 
-  /** Holds mappings like {@code 'soft wrap start offset at document' -> 'soft wrap indent spaces'}. */
-  private final TIntObjectHashMap<TextChange> myWraps = new TIntObjectHashMap<TextChange>();
+  /**
+   * Holds lines where soft wraps should be removed.
+   * <p/>
+   * The general idea is to do the following:
+   * <ul>
+   *   <li>listen for document changes, mark all soft wraps that belong to modified logical line as <code>'dirty'</code>;</li>
+   *   <li>remove soft wraps marked as 'dirty' on repaint;</li>
+   * </ul>
+   */
+  private final TIntHashSet myDirtyLines = new TIntHashSet();
 
-  /** Holds soft wraps offsets in ascending order. */
-  private final TIntArrayList myWrapOffsets = new TIntArrayList();
-
-  /** Caches soft wrap-aware logical positions by offset. */
-  private final TIntObjectHashMap<LogicalPosition> myLogicalPositionsByOffsets = new TIntObjectHashMap<LogicalPosition>();
-
-  private final Map<VisualPosition, LogicalPosition> myLogicalPositionsByVisual = new HashMap<VisualPosition, LogicalPosition>();
+  /** Holds registered soft wraps sorted by offsets in ascending order. */
+  private final List<TextChange> myWraps = new ArrayList<TextChange>();
+  private final List<TextChange> myWrapsView = Collections.unmodifiableList(myWraps);
 
   private final EditorImpl myEditor;
-  private Rectangle myLastVisibleArea;
-  private VisualPosition myFirstLineVisualPosition = new VisualPosition(0, 0);
-  private LogicalPosition myFirstLineLogicalPosition = new LogicalPosition(0, 0);
   private int myRightEdgeLocation = -1;
   private boolean myInitialized;
 
@@ -87,7 +109,47 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
 
   @Nullable
   public TextChange getSoftWrap(int offset) {
-    return myWraps.get(offset);
+    if (myActive <= 0) {
+      dropDataIfNecessary();
+    }
+    int i = getSoftWrapIndex(offset);
+    return i >= 0 ? myWraps.get(i) : null;
+  }
+
+  /**
+   * Tries to find index of the target soft wrap stored at {@link #myWraps} collection. <code>'Target'</code> soft wrap is the one
+   * that starts at the given offset.
+   *
+   * @param offset    target offset
+   * @return          index that conforms to {@link Collections#binarySearch(List, Object)} contract, i.e. non-negative returned
+   *                  index points to soft wrap that starts at the given offset; <code>'-(negative value) - 1'</code> points
+   *                  to position at {@link #myWraps} collection where soft wrap for the given index should be inserted
+   */
+  private int getSoftWrapIndex(int offset) {
+    TextChange searchKey = new TextChange("", offset);
+    return Collections.binarySearch(myWraps, searchKey, SOFT_WRAPS_BY_OFFSET_COMPARATOR);
+  }
+
+  private boolean hasSoftWrapAt(int offset) {
+    return getSoftWrapIndex(offset) >= 0;
+  }
+
+  /**
+   * Inserts given soft wrap to {@link #myWraps} collection at the given index.
+   *
+   * @param softWrap    soft wrap to store
+   * @return            previous soft wrap object stored for the same offset if any; <code>null</code> otherwise
+   */
+  @Nullable
+  private TextChange storeSoftWrap(TextChange softWrap) {
+    int i = Collections.binarySearch(myWraps, softWrap, SOFT_WRAPS_BY_OFFSET_COMPARATOR);
+    if (i >= 0) {
+      return myWraps.set(i, softWrap);
+    }
+
+    i = -i - 1;
+    myWraps.add(i, softWrap);
+    return null;
   }
 
   /**
@@ -101,13 +163,13 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
    * @return            <code>true</code> if target symbols sub-sequence should be soft-wrapped; <code>false</code> otherwise
    */
   public boolean shouldWrap(char[] chars, int start, int end, Point position) {
-    if (!isSoftWrappingEnabled() || containsOnlyWhiteSpaces(chars, start, end)) {
+    if (!isSoftWrappingEnabled()) {
       return false;
     }
     initIfNecessary();
     dropDataIfNecessary();
 
-    if (myWraps.contains(start)) {
+    if (hasSoftWrapAt(start)) {
       return true;
     }
 
@@ -126,84 +188,67 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
   }
 
   /**
-   * Asks current model to register soft wrap at the current offset of the active editor document.
+   * Asks current model to perform soft wrapping for the characters sub-sequent identified by the given parameters.
    *
-   * @param offset      target offset of the editor document where soft wrap should be registered
+   * @param chars       symbols holder
+   * @param start       target symbols sub-sequence start within the given char array (inclusive)
+   * @param end         target symbols sub-sequence end within the given char array (exclusive)
    * @return            soft wrap registered for the given offset
    */
-  public TextChange wrap(int offset) {
-    TextChange result = myWraps.get(offset);
+  public TextChange wrap(char[] chars, int start, int end) {
+    TextChange result = getSoftWrap(start);
     if (result != null) {
       return result;
     }
 
     dropDataIfNecessary();
-    result = new TextChange("\n    ", offset); //TODO den implement indent calculation on formatting options basis.
-    myWraps.put(offset, result);
-
-    int i = myWrapOffsets.binarySearch(offset);
-    if (i < 0) {
-      i = -i - 1;
-
-    }
-    if (i < myWrapOffsets.size()) {
-      myWrapOffsets.insert(i, offset);
-    } else {
-      myWrapOffsets.add(offset);
-    }
-
-    updateCachesOnNewSoftWrapAddition(result);
+    //TODO den implement indent calculation on formatting options
+    result = containsOnlyWhiteSpaces(chars, start, end) ? new TextChange("\n", start) : new TextChange("\n    ", start);
+    storeSoftWrap(result);
     return result;
   }
 
-  private void updateCachesOnNewSoftWrapAddition(TextChange softWrap) {
-    int lineFeedsAtNewWrap = StringUtil.countNewLines(softWrap.getText());
-    if (lineFeedsAtNewWrap <= 0) {
-      return;
-    }
-
-    Map<VisualPosition, LogicalPosition> updated = new HashMap<VisualPosition, LogicalPosition>();
-    boolean shouldUpdate = false;
-    for (Map.Entry<VisualPosition, LogicalPosition> entry : myLogicalPositionsByVisual.entrySet()) {
-      if (myEditor.logicalPositionToOffset(entry.getValue()) <= softWrap.getStart()) {
-        updated.put(entry.getKey(), entry.getValue());
-        continue;
-      }
-      shouldUpdate = true;
-      VisualPosition oldVisual = entry.getKey();
-      LogicalPosition oldLogical = entry.getValue();
-
-      VisualPosition newVisual = new VisualPosition(oldVisual.line + lineFeedsAtNewWrap, oldVisual.column);
-      LogicalPosition newLogical = new LogicalPosition(
-        oldLogical.line, oldLogical.column, oldLogical.softWrapLines + lineFeedsAtNewWrap,
-        oldLogical.linesFromActiveSoftWrap, oldLogical.softWrapColumns
-      );
-      updated.put(newVisual, newLogical);
-    }
-
-    if (shouldUpdate) {
-      myLogicalPositionsByVisual.clear();
-      myLogicalPositionsByVisual.putAll(updated);
-    }
+  public List<TextChange> getRegisteredSoftWraps() {
+    return myWrapsView;
   }
-
 
   /**
    * Drops information about registered soft wraps if they are marked as <code>'dirty'</code>.
+   * //TODO den add doc about editor repainting
    *
    * @see #myDataIsDirty
    */
   private void dropDataIfNecessary() {
+    if (!myEditor.isUnderRepainting()) {
+      return;
+    }
+    Document document = myEditor.getDocument();
+    for (TIntIterator it = myDirtyLines.iterator(); it.hasNext();) {
+      int line = it.next();
+      int start = document.getLineStartOffset(line);
+      int end = document.getLineEndOffset(line);
+
+      int startIndex = getSoftWrapIndex(start);
+      if (startIndex < 0) {
+        startIndex = -startIndex - 1;
+      }
+      int endIndex = startIndex;
+      for (; endIndex < myWraps.size(); endIndex++) {
+        TextChange softWrap = myWraps.get(endIndex);
+        if (softWrap.getStart() >= end) {
+          break;
+        }
+      }
+      myWraps.subList(startIndex, endIndex).clear();
+    }
+    myDirtyLines.clear();
+
     if (!myDataIsDirty) {
       return;
 
     }
-
     myDataIsDirty = false;
     myWraps.clear();
-    myWrapOffsets.clear();
-    myLogicalPositionsByOffsets.clear();
-    myLogicalPositionsByVisual.clear();
   }
 
   @NotNull
@@ -212,10 +257,10 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
       return defaultLogical;
     }
 
-    LogicalPosition cached = myLogicalPositionsByVisual.get(visual);
-    if (cached != null) {
-      return cached;
-    }
+    //TODO den check
+    //if (defaultLogical.softWrapAware) {
+    //  return defaultLogical;
+    //}
 
     updateVisibleAreaIfNecessary();
     myActive++;
@@ -227,123 +272,202 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
     }
   }
 
-  @SuppressWarnings({"AssignmentToForLoopParameter"})
   private LogicalPosition doAdjustLogicalPosition(LogicalPosition defaultLogical, VisualPosition visual) {
-    Context context = new Context();
     DocumentImpl document = (DocumentImpl)myEditor.getDocument();
-    CharSequence chars = document.getCharsNoThreadCheck();
+    int maxOffset = document.getLineEndOffset(Math.min(defaultLogical.line, document.getLineCount() - 1));
+
+    // This index points to registered soft wrap that is guaranteed to be located after the target visual line.
+    int endIndex = getSoftWrapIndex(maxOffset + 1);
+    if (endIndex < 0) {
+      endIndex = -endIndex - 1;
+    }
+
+    int softWrapIntroducedLineFeeds = 0;
+
     FoldingModel foldingModel = myEditor.getFoldingModel();
-
-    // There is a possible case that first line of current visible area points to the line that is soft wrapped.
-    // Example:
-    //     foo("xxx1", "xxx2", "xxx3", <- soft wrap
-    //         "xxx4")                 <- first visible line
-    // We start processing from the start of the logical line that corresponds to the first visible line ('foo()' call in our example),
-    // hence, we need to skip document and soft wrap symbols that are located outside the visible area.
-    // This variable with value over than zero defines that all document and soft wrap symbols should be skipped until necessary
-    // number of soft wrap line feeds are encountered.
-    int softWrapLinesToSkip = myFirstLineLogicalPosition.linesFromActiveSoftWrap;
-
-    int start = document.getLineStartOffset(myFirstLineLogicalPosition.line);
-    for (int i = start, max = chars.length(); i < max && getCurrentVisualLine(context) <= visual.line; i++) {
-      if (getCurrentVisualLine(context) == visual.line && context.symbolsOnCurrentVisibleLine >= visual.column) {
-        int softWrapColumns = context.softWrapsSymbolsOnCurrentVisibleLine > 0
-                              ? context.symbolsOnCurrentVisibleLine - context.symbolsOnCurrentLogicalLine : 0;
-        return context.buildLogicalPosition(softWrapColumns);
-      }
-
-      FoldRegion region = foldingModel.getCollapsedRegionAtOffset(i);
-      if (region != null && !region.isExpanded()) {
-        // Assuming that folded region placeholder doesn't contain line feed symbols.
-        i = region.getEndOffset();
+    int i = 0;
+    int max = Math.min(myWraps.size(), endIndex);
+    for (; i < max; i++) {
+      TextChange softWrap = myWraps.get(i);
+      if (foldingModel.isOffsetCollapsed(softWrap.getStart())) {
         continue;
       }
 
-      TextChange softWrap = myWraps.get(i);
-      if (softWrap != null) {
-        CharSequence softWrapText = softWrap.getText();
-        for (int j = 0; j < softWrapText.length(); j++) {
-          if (getCurrentVisualLine(context) == visual.line && context.symbolsOnCurrentVisibleLine >= visual.column) {
-            return context.buildLogicalPosition(context.softWrapsSymbolsOnCurrentVisibleLine - context.symbolsOnCurrentLogicalLine);
-          }
+      int currentSoftWrapLineFeeds = StringUtil.countNewLines(softWrap.getText());
+      int softWrapLine = document.getLineNumber(softWrap.getStart());
+      int visualLineBeforeSoftWrapAppliance
+        = myEditor.logicalToVisualPosition(new LogicalPosition(softWrapLine, 0)).line + softWrapIntroducedLineFeeds;
+      if (visualLineBeforeSoftWrapAppliance > visual.line) {
+        int logicalLine = defaultLogical.line - softWrapIntroducedLineFeeds;
+        LogicalPosition foldingUnawarePosition
+          = new LogicalPosition(logicalLine, defaultLogical.column, softWrapIntroducedLineFeeds, 0, 0, 0, 0);
+        return adjustFoldingData(foldingModel, foldingUnawarePosition);
+      }
 
-          if (softWrapText.charAt(j) == '\n') {
-            if (softWrapLinesToSkip-- > 0) {
-              continue;
-            }
-            if (getCurrentVisualLine(context) == visual.line) {
-              return context.buildLogicalPosition(visual.column - context.symbolsOnCurrentLogicalLine);
-            }
-            else {
-              context.onLineFeedInsideSoftWrap();
-              updateLogicalByVisualCache(context);
+      int visualLineAfterSoftWrapAppliance = visualLineBeforeSoftWrapAppliance + currentSoftWrapLineFeeds;
+      if (visualLineAfterSoftWrapAppliance < visual.line) {
+        softWrapIntroducedLineFeeds += currentSoftWrapLineFeeds;
+        continue;
+      }
+
+      // If we're here that means that current soft wrap affects logical line that is matched to the given visual line.
+      // We iterate from the logical line start then in order to calculate resulting logical position.
+      Context context = new Context(defaultLogical, visual, softWrapIntroducedLineFeeds, visualLineBeforeSoftWrapAppliance, foldingModel);
+      int startLineOffset = document.getLineStartOffset(softWrapLine);
+      int endLineOffset = document.getLineEndOffset(softWrapLine);
+      CharSequence documentText = document.getCharsNoThreadCheck();
+      for (int j = startLineOffset; j < endLineOffset; j++) {
+
+        // Process soft wrap at the current offset if any.
+        if (j == softWrap.getStart()) {
+          CharSequence softWrapText = softWrap.getText();
+          for (int k = 0; k < softWrapText.length(); k++) {
+            LogicalPosition result = context.onSoftWrapSymbol(softWrapText.charAt(k));
+            if (result != null) {
+              return result;
             }
           }
-          else {
-            context.onNonLineFeedInsideSoftWrap(softWrapText.charAt(j));
-          }
+        }
+
+        // Process document symbol.
+        LogicalPosition result = context.onNonSoftWrapSymbol(documentText.charAt(j));
+        if (result != null) {
+          return result;
         }
       }
 
-      if (softWrapLinesToSkip > 0) {
-        continue;
-      }
-
-      if (getCurrentVisualLine(context) == visual.line && context.symbolsOnCurrentVisibleLine >= visual.column) {
-        return context.buildLogicalPosition(context.softWrapsSymbolsOnCurrentVisibleLine - context.symbolsOnCurrentLogicalLine);
-      }
-
-      char c = chars.charAt(i);
-
-      // Check if there is a line break at the document.
-      if (c != '\n') {
-        context.onNonLineFeedOutsideSoftWrap(c);
-        continue;
-
-      }
-
-      if (getCurrentVisualLine(context) != visual.line) {
-        context.onLineFeedOutsideSoftWrap();
-        updateLogicalByVisualCache(context);
-        continue;
-      }
-
-      int column = context.symbolsOnCurrentLogicalLine;
-      int columnDiff = visual.column - context.symbolsOnCurrentVisibleLine;
-      if (columnDiff > 0) {
-        column += columnDiff;
-      }
-      LogicalPosition result = new LogicalPosition(
-        myFirstLineLogicalPosition.line + context.visualLineOnCurrentScreen - context.softWrapIntroducedLines,
-        column,
-        context.softWrapIntroducedLines + myFirstLineLogicalPosition.softWrapLines,
-        context.linesFromCurrentSoftWrap,
-        visual.column - column
+      // If we are here that means that target visual position is located at virtual space after the line end.
+      int logicalLine = defaultLogical.line - softWrapIntroducedLineFeeds - context.lineFeedsFromCurrentSoftWrap;
+      int logicalColumn = context.symbolsOnCurrentLogicalLine + visual.column - context.symbolsOnCurrentVisualLine;
+      int softWrapColumnDiff = visual.column - logicalColumn;
+      LogicalPosition foldingUnawarePosition = new LogicalPosition(
+        logicalLine, logicalColumn, softWrapIntroducedLineFeeds + context.lineFeedsFromCurrentSoftWrap,
+        context.lineFeedsFromCurrentSoftWrap, softWrapColumnDiff, 0, 0
       );
-      if (visual.column == 0) {
-        myLogicalPositionsByVisual.put(visual, result);
+      return adjustFoldingData(foldingModel, foldingUnawarePosition);
+    }
+
+    // If we are here that means that there is no soft wrap on a logical line that corresponds to the target visual line.
+    int logicalLine = defaultLogical.line - softWrapIntroducedLineFeeds;
+    LogicalPosition foldingUnaware = new LogicalPosition(logicalLine, defaultLogical.column, softWrapIntroducedLineFeeds, 0, 0, 0, 0);
+    return adjustFoldingData(foldingModel, foldingUnaware);
+  }
+
+  /**
+   * Builds folding-aware logical position on the basis of the given folding-unaware position and folding model
+   *
+   * @param foldingModel    folding model to use for retrieving information about folding
+   * @param position        folding-unaware logical position
+   * @return                folding-aware logical position
+   */
+  private LogicalPosition adjustFoldingData(FoldingModel foldingModel, LogicalPosition position) {
+    int offset = myEditor.logicalPositionToOffset(position);
+    int foldedLines = 0;
+    int foldColumnDiff = 0;
+    int softWrapColumnDiff = position.softWrapColumnDiff;
+    DocumentImpl document = (DocumentImpl)myEditor.getDocument();
+    CharSequence text = document.getCharsNoThreadCheck();
+    for (FoldRegion foldRegion : foldingModel.getAllFoldRegions()) {
+      if (foldRegion.getStartOffset() >= offset) {
+        break;
       }
-      return result;
+
+      if (foldRegion.isExpanded() || !foldRegion.isValid()) {
+        continue;
+      }
+
+      int foldingStartLine = document.getLineNumber(foldRegion.getStartOffset());
+      int foldingEndLine = document.getLineNumber(foldRegion.getEndOffset());
+      foldedLines += foldingEndLine - foldingStartLine;
+
+      // Process situation when target offset is located inside the folded region.
+      if (offset >= foldRegion.getStartOffset() && offset < foldRegion.getEndOffset()) {
+        // Our purpose is to define folding data in order to point to the visual folding start.
+        int visualFoldingStartColumn = calculateVisualFoldingStartColumn(foldRegion);
+        foldColumnDiff = visualFoldingStartColumn - position.column - softWrapColumnDiff;
+        break;
+      }
+
+      if (foldingEndLine != position.line) {
+        continue;
+      }
+
+      // We know here that offset is at the same line where folding ends and is located after it. Hence, we process that as follows:
+      //   1. Check if the folding is single-line;
+      //   2.1. Process as follows if the folding is single-line:
+      //     3.1. Calculate column difference introduced by the folding;
+      //   2.2. Process as follows if the folding is multi-line:
+      //     3.2. Calculate visual column of folding start;
+      //     4.2. Calculate number of columns between target offset and folding end;
+      //     5.1. Calculate folding placeholder width in columns;
+      //     6.1. Calculate resulting offset visual column;
+      //     7.1. Calculate resulting folding column diff;
+
+      if (foldingStartLine == foldingEndLine) {
+        foldColumnDiff = toVisualColumnSymbolsNumber(foldRegion.getPlaceholderText())
+                         - toVisualColumnSymbolsNumber(text, foldRegion.getStartOffset(), foldRegion.getEndOffset());
+      }
+      else {
+        int endOffsetOfLineWithFoldingEnd = document.getLineEndOffset(foldingEndLine);
+        int columnsBetweenFoldingEndAndOffset = toVisualColumnSymbolsNumber(text, foldRegion.getEndOffset(), endOffsetOfLineWithFoldingEnd);
+        if (position.column > endOffsetOfLineWithFoldingEnd) {
+          columnsBetweenFoldingEndAndOffset += position.column - endOffsetOfLineWithFoldingEnd;
+        }
+        int visualFoldingStartColumn = calculateVisualFoldingStartColumn(foldRegion);
+        int foldingPlaceholderWidth = toVisualColumnSymbolsNumber(foldRegion.getPlaceholderText());
+        int visual = columnsBetweenFoldingEndAndOffset + visualFoldingStartColumn + foldingPlaceholderWidth;
+        foldColumnDiff = visual - position.column;
+        break;
+      }
     }
-    return defaultLogical;
+
+    return new LogicalPosition(
+      position.line, position.column, position.softWrapLines, position.linesFromActiveSoftWrap,
+      softWrapColumnDiff, foldedLines, foldColumnDiff
+    );
   }
 
-  private int getCurrentVisualLine(Context context) {
-    return myFirstLineVisualPosition.line + context.visualLineOnCurrentScreen;
+  private int calculateVisualFoldingStartColumn(FoldRegion region) {
+    DocumentImpl document = (DocumentImpl)myEditor.getDocument();
+    int foldingStartOffset = region.getStartOffset();
+    int logicalLine = document.getLineNumber(foldingStartOffset);
+    int logicalLineStartOffset = document.getLineStartOffset(logicalLine);
+
+    int softWrapIndex = getSoftWrapIndex(logicalLineStartOffset);
+    if (softWrapIndex < 0) {
+      softWrapIndex = -softWrapIndex - 1;
+    }
+
+    int startOffsetOfVisualLineWithFoldingStart = logicalLineStartOffset;
+    for (; softWrapIndex < myWraps.size(); softWrapIndex++) {
+      TextChange softWrap = myWraps.get(softWrapIndex);
+      if (softWrap.getStart() >= foldingStartOffset) {
+        break;
+      }
+
+      startOffsetOfVisualLineWithFoldingStart = softWrap.getStart();
+    }
+
+    assert startOffsetOfVisualLineWithFoldingStart <= foldingStartOffset;
+    return toVisualColumnSymbolsNumber(document.getCharsNoThreadCheck(), startOffsetOfVisualLineWithFoldingStart, foldingStartOffset);
   }
 
-  private void updateLogicalByVisualCache(Context context) {
-    VisualPosition visual = new VisualPosition(getCurrentVisualLine(context), context.symbolsOnCurrentVisibleLine);
-    LogicalPosition logical = context.buildLogicalPosition(context.symbolsOnCurrentVisibleLine - context.symbolsOnCurrentLogicalLine);
-    if (myLogicalPositionsByVisual.containsKey(visual)) {
-      return;
+  @NotNull
+  public LogicalPosition offsetToLogicalPosition(int offset) {
+    if (myActive > 0) {
+      return myEditor.offsetToLogicalPosition(offset, false);
     }
-    myLogicalPositionsByVisual.put(visual, logical);
+
+    myActive++;
+    try {
+      return doOffsetToLogicalPosition(offset);
+    } finally {
+      myActive--;
+    }
   }
 
   @SuppressWarnings({"AssignmentToForLoopParameter"})
-  @NotNull
-  public LogicalPosition offsetToLogicalPosition(int offset) {
+  private LogicalPosition doOffsetToLogicalPosition(int offset) {
     DocumentImpl document = (DocumentImpl)myEditor.getDocument();
     CharSequence chars = document.getCharsNoThreadCheck();
 
@@ -352,50 +476,51 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
 
     updateVisibleAreaIfNecessary();
 
-    // Return eagerly if the result is already cached.
-    LogicalPosition cached = myLogicalPositionsByOffsets.get(offset);
-    if (cached != null) {
-      return cached;
-    }
-
     int softWrapIntroducedLines = 0;
     int linesFromCurrentSoftWrap = 0;
     int symbolsOnCurrentLogicalLine = 0;
     int symbolsOnCurrentVisibleLine = 0;
 
     // Retrieve information about logical position that is soft-wraps unaware.
-    int rawColumn = toVisualColumnSymbolsNumber(chars, targetLineStartOffset, offset);
-    LogicalPosition rawLineStartLogicalPosition = new LogicalPosition(targetLine, rawColumn);
+    LogicalPosition rawLineStartLogicalPosition = myEditor.offsetToLogicalPosition(targetLineStartOffset, false);
 
     // Calculate number of soft wrap-introduced lines before the line that holds target offset.
-    int index = myWrapOffsets.binarySearch(targetLineStartOffset);
+    int index = getSoftWrapIndex(targetLineStartOffset);
     if (index < 0) {
       index = -index - 1;
     }
-    int max = Math.min(index, myWrapOffsets.size());
+    int max = Math.min(index, myWraps.size());
     for (int j = 0; j < max; j++) {
-      softWrapIntroducedLines += StringUtil.countNewLines(myWraps.get(myWrapOffsets.get(j)).getText());
+      softWrapIntroducedLines += StringUtil.countNewLines(myWraps.get(j).getText());
     }
 
-    // Return eagerly if there is no soft wraps before the target offset on a line that contains it.
-    if (max >= myWrapOffsets.size() || myWrapOffsets.get(max) > offset) {
-      return new LogicalPosition(rawLineStartLogicalPosition.line, rawLineStartLogicalPosition.column, softWrapIntroducedLines, 0, 0);
+    FoldingModel foldingModel = myEditor.getFoldingModel();
+
+    // Return eagerly if there are no soft wraps before the target offset on a line that contains it.
+    if (max >= myWraps.size() || myWraps.get(max).getStart() > offset) {
+      LogicalPosition foldingUnawarePosition = new LogicalPosition(
+        rawLineStartLogicalPosition.line, offset - targetLineStartOffset, softWrapIntroducedLines, 0, 0, 0, 0
+      );
+      return adjustFoldingData(foldingModel, foldingUnawarePosition);
     }
 
     // Calculate number of lines and columns introduced by soft wrap located at the line that holds target offset if any.
-    FoldingModel foldingModel = myEditor.getFoldingModel();
-    max = Math.min(chars.length(), offset);
+
+
+    // We add '1' here in order to correctly process situation when there is soft wrap at target offset (it impacts resulting logical
+    // position but document symbol at that offset should not be count).
+    max = Math.min(chars.length(), offset + 1);
+
     for (int i = targetLineStartOffset; i < max; i++) {
       FoldRegion region = foldingModel.getCollapsedRegionAtOffset(i);
-      if (region != null && !region.isExpanded()) {
+      if (region != null) {
         // Assuming that folded region placeholder doesn't contain line feed symbols.
         i = region.getEndOffset();
-        symbolsOnCurrentLogicalLine += region.getEndOffset() - region.getStartOffset();
         symbolsOnCurrentVisibleLine += region.getPlaceholderText().length();
         continue;
       }
 
-      TextChange softWrap = myWraps.get(i);
+      TextChange softWrap = getSoftWrap(i);
       if (softWrap != null) {
         CharSequence softWrapText = softWrap.getText();
         for (int j = 0; j < softWrapText.length(); j++) {
@@ -410,16 +535,21 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
         }
       }
 
+      // We don't want to count symbol at target offset.
+      if (i == offset) {
+        break;
+      }
+
       // Assuming that no line feed is contained before target offset on a line that holds it.
       symbolsOnCurrentLogicalLine++;
       symbolsOnCurrentVisibleLine++;
     }
-    LogicalPosition result = new LogicalPosition(
+
+    LogicalPosition foldingUnawarePosition = new LogicalPosition(
       rawLineStartLogicalPosition.line, symbolsOnCurrentLogicalLine, softWrapIntroducedLines, linesFromCurrentSoftWrap,
-      symbolsOnCurrentVisibleLine - symbolsOnCurrentLogicalLine
+      symbolsOnCurrentVisibleLine - symbolsOnCurrentLogicalLine, 0, 0
     );
-    myLogicalPositionsByOffsets.put(offset, result);
-    return result;
+    return adjustFoldingData(foldingModel, foldingUnawarePosition);
   }
 
   @NotNull
@@ -428,9 +558,9 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
       return defaultVisual;
     }
 
-    if (isSoftWrapAware(logical)) {
+    if (logical.visualPositionAware) {
       // We don't need to recalculate logical position adjustments because given object already has them.
-      return new VisualPosition(logical.line + logical.softWrapLines, logical.column + logical.softWrapColumns);
+      return logical.toVisualPosition();
     }
 
     updateVisibleAreaIfNecessary();
@@ -447,14 +577,14 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
   private VisualPosition doAdjustVisualPosition(LogicalPosition logical, VisualPosition visual) {
     // Check if there are registered soft wraps before the target logical position.
     int maxOffset = myEditor.logicalPositionToOffset(logical);
-    int endIndex = myWrapOffsets.binarySearch(maxOffset);
+    int endIndex = getSoftWrapIndex(maxOffset);
     if (endIndex < 0) {
       endIndex = -endIndex - 2; // We subtract '2' instead of '1' here in order to point to offset of the first soft wrap the
                                 // is located before the given logical position.
     } 
 
     // Return eagerly if no soft wraps are registered before the target offset.
-    if (endIndex < 0 || endIndex >= myWrapOffsets.size()) {
+    if (endIndex < 0 || endIndex >= myWraps.size()) {
       return visual;
     }
 
@@ -464,14 +594,13 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
     FoldingModel foldingModel = myEditor.getFoldingModel();
     int targetLogicalLineStartOffset = myEditor.logicalPositionToOffset(new LogicalPosition(logical.line, 0));
     for (int i = endIndex; i >= 0; i--) {
-      int offset = myWrapOffsets.get(i);
-
-      if (foldingModel.isOffsetCollapsed(offset)) {
-        continue;
-      }
-      TextChange softWrap = myWraps.get(offset);
+      TextChange softWrap = myWraps.get(i);
       if (softWrap == null) {
         assert false;
+        continue;
+      }
+
+      if (foldingModel.isOffsetCollapsed(softWrap.getStart())) {
         continue;
       }
 
@@ -483,10 +612,10 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
       lineDiff += softWrapLines;
 
       // Count soft wrap column offset only if it's located at the same line as the target offset.
-      if (softWrapLines > 0 && offset >= targetLogicalLineStartOffset) {
+      if (softWrapLines > 0 && softWrap.getStart() >= targetLogicalLineStartOffset) {
         for (int j = softWrapText.length() - 1; j >= 0; j--) {
           if (softWrapText.charAt(j) == '\n') {
-            column = maxOffset - offset - j + 1;
+            column = maxOffset - softWrap.getStart() - j + 1;
             break;
           }
         }
@@ -495,6 +624,62 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
 
     int columnToUse = column >= 0 ? column : visual.column;
     return new VisualPosition(visual.line + lineDiff, columnToUse);
+  }
+
+  public void beforeDocumentChange(@NotNull VisualPosition visualPosition) {
+    LogicalPosition logicalPosition = myEditor.visualToLogicalPosition(visualPosition);
+    int offset = myEditor.logicalPositionToOffset(logicalPosition);
+    int i = getSoftWrapIndex(offset);
+    if (i < 0 || i >= myWraps.size()) {
+      return;
+    }
+
+    TextChange softWrap = myWraps.get(i);
+
+    VisualPosition visualCaretPosition = myEditor.getCaretModel().getVisualPosition();
+
+    // Consider given visual position to belong to soft wrap-introduced virtual space if visual position for the target offset
+    // differs from the given.
+    if (!visualPosition.equals(myEditor.offsetToVisualPosition(offset))) {
+      myEditor.getDocument().replaceString(softWrap.getStart(), softWrap.getEnd(), softWrap.getText());
+    }
+
+    // Restore caret position.
+    myEditor.getCaretModel().moveToVisualPosition(visualCaretPosition);
+    myWraps.remove(i);
+  }
+
+  /**
+   * //TODO den add doc
+   *
+   * @param change    change introduced to the document
+   */
+  private void updateRegisteredSoftWraps(TextChange change) {
+    int softWrapIndex = getSoftWrapIndex(change.getStart());
+    if (softWrapIndex < 0) {
+      softWrapIndex = -softWrapIndex - 1;
+    }
+
+    if (softWrapIndex >= myWraps.size()) {
+      return;
+    }
+
+    Document document = myEditor.getDocument();
+    int firstChangedLine = document.getLineNumber(change.getStart());
+    int lastChangedLine = Math.max(document.getLineNumber(change.getEnd()), firstChangedLine + StringUtil.countNewLines(change.getText()));
+    for (int i = firstChangedLine; i <= lastChangedLine; i++) {
+      myDirtyLines.add(i);
+    }
+
+    // Collect soft wraps which offsets should be modified.
+    List<TextChange> modified = myWraps.subList(softWrapIndex, myWraps.size());
+    List<TextChange> toModify = new ArrayList<TextChange>(modified);
+    modified.clear();
+
+    // Add modified soft wraps.
+    for (TextChange softWrap : toModify) {
+      myWraps.add(softWrap.advance(change.getDiff()));
+    }
   }
 
   private void initIfNecessary() {
@@ -512,64 +697,29 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
     });
     updateVisibleAreaIfNecessary(scrollingModel.getVisibleArea());
 
-    // Subscribe for document change updates.
+    // Subscribe for document change events.
     myEditor.getDocument().addDocumentListener(new DocumentListener() {
       public void beforeDocumentChange(DocumentEvent event) {
-        //// Drop offset-logical position mappings.
-        //myLogicalPositionsByOffsets.clear();
-        //
-        //// Drop all soft wraps from logical line that is being changed.
-        //TIntArrayList indices = getSoftWrapIndicesForLogicalLine(event.getOffset());
-        //if (indices.isEmpty()) {
-        //  return;
-        //}
-        //for (int i = 0; i < indices.size(); i++) {
-        //  myWraps.remove(myWrapOffsets.get(indices.get(i)));
-        //}
-        //myWrapOffsets.remove(indices.get(0), indices.size());
       }
 
       public void documentChanged(DocumentEvent event) {
+        myActive++;
+        try {
+          updateRegisteredSoftWraps(new TextChange(event.getNewFragment(), event.getOffset(), event.getOffset() + event.getOldLength()));
+        }
+        finally {
+          myActive--;
+        }
       }
     });
-  }
-
-  /**
-   * Allows to ask for indices that are used to store soft wraps offsets at {@link #myWrapOffsets} for the line that holds given
-   * document offset.
-   *
-   * @param offset    target document offset
-   * @return          collection that contains indices of soft wrap offsets at {@link #myWrapOffsets} collection for the line
-   *                  that contains document text at given offset
-   */
-  private TIntArrayList getSoftWrapIndicesForLogicalLine(int offset) {
-    TIntArrayList result = new TIntArrayList();
-
-    Document document = myEditor.getDocument();
-    int targetLine = document.getLineNumber(offset);
-    int start = document.getLineStartOffset(targetLine);
-    int end = document.getLineEndOffset(targetLine);
-
-    int i = myWrapOffsets.binarySearch(start);
-    if (i < 0) {
-      i = -i - 1;
-    }
-
-    for (; i < myWrapOffsets.size(); i++) {
-      if (i >= end) {
-        break;
-      }
-      result.add(i);
-    }
-    return result;
-  }
+  }  
 
   private void updateVisibleAreaIfNecessary() {
     updateVisibleAreaIfNecessary(myEditor.getScrollingModel().getVisibleArea());
   }
 
   private void updateVisibleAreaIfNecessary(@Nullable Rectangle visibleArea) {
-    if (visibleArea == null || myActive > 0 || !isSoftWrappingEnabled() || visibleArea.equals(myLastVisibleArea)) {
+    if (visibleArea == null || myActive > 0 || !isSoftWrappingEnabled()) {
       return;
     }
     myActive++;
@@ -579,7 +729,6 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
     finally {
       myActive--;
     }
-    myLastVisibleArea = visibleArea;
   }
 
   /**
@@ -590,13 +739,6 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
    * @param visibleArea   current visible area of the editor managed by the current model
    */
   private void doUpdateVisibleAreaChange(@NotNull Rectangle visibleArea) {
-    // Update information about the first visible line.
-    myFirstLineVisualPosition = myEditor.xyToVisualPosition(visibleArea.getLocation());
-    myFirstLineLogicalPosition = myLogicalPositionsByVisual.get(myFirstLineVisualPosition);
-    if (myFirstLineLogicalPosition == null) {
-      myFirstLineLogicalPosition = myEditor.visualToLogicalPosition(myFirstLineVisualPosition);
-    }
-
     // Update right edge.
     int currentRightEdgeLocation = visibleArea.x + visibleArea.width;
     if (myRightEdgeLocation != currentRightEdgeLocation) {
@@ -612,54 +754,129 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
     return toVisualColumnSymbolsNumber(myCharBuffer, 0, 1);
   }
 
+  private int toVisualColumnSymbolsNumber(CharSequence text) {
+    return toVisualColumnSymbolsNumber(text, 0, text.length());
+  }
+
   private int toVisualColumnSymbolsNumber(CharSequence text, int start, int end) {
     return EditorUtil.calcColumnNumber(myEditor, text, start, end, EditorUtil.getTabSize(myEditor));
   }
 
-  private static boolean isSoftWrapAware(LogicalPosition position) {
-    return position.softWrapLines != 0 || position.softWrapColumns != 0;
-  }
-
   private class Context {
 
-    public int softWrapIntroducedLines;
-    public int linesFromCurrentSoftWrap;
-    public int visualLineOnCurrentScreen;
+    public final FoldingModel foldingModel;
+    public final LogicalPosition softWrapUnawareLogicalPosition;
+    public final VisualPosition targetVisualPosition;
+    public final int softWrapIntroducedLines;
+    public final int visualLineBeforeSoftWrapAppliance;
+    public int lineFeedsFromCurrentSoftWrap;
     public int symbolsOnCurrentLogicalLine;
-    public int symbolsOnCurrentVisibleLine;
-    public int softWrapsSymbolsOnCurrentVisibleLine;
+    public int symbolsOnCurrentVisualLine;
 
-    public void onNonLineFeedInsideSoftWrap(char c) {
-      symbolsOnCurrentVisibleLine++;
-      softWrapsSymbolsOnCurrentVisibleLine += toVisualColumnSymbolsNumber(c);
+    Context(LogicalPosition softWrapUnawareLogicalPosition, VisualPosition targetVisualPosition, int softWrapIntroducedLines,
+                    int visualLineBeforeSoftWrapAppliance, FoldingModel foldingModel)
+    {
+      this.softWrapUnawareLogicalPosition = softWrapUnawareLogicalPosition;
+      this.targetVisualPosition = targetVisualPosition;
+      this.softWrapIntroducedLines = softWrapIntroducedLines;
+      this.visualLineBeforeSoftWrapAppliance = visualLineBeforeSoftWrapAppliance;
+      this.foldingModel = foldingModel;
     }
 
-    public void onLineFeedInsideSoftWrap() {
-      softWrapIntroducedLines++;
-      linesFromCurrentSoftWrap++;
-      visualLineOnCurrentScreen++;
-      symbolsOnCurrentVisibleLine = 0;
-      softWrapsSymbolsOnCurrentVisibleLine = 0;
+    /**
+     * Updates current context within the soft wrap symbol.
+     *
+     * @param c   soft wrap symbol to process
+     * @return    logical position that matches target visual position if given symbol processing makes it possible to calculate it;
+     *            <code>null</code> otherwise
+     */
+    @Nullable
+    public LogicalPosition onSoftWrapSymbol(char c) {
+      // Process line feed inside soft wrap.
+      if (c == '\n') {
+        if (targetVisualPosition.line == visualLineBeforeSoftWrapAppliance + lineFeedsFromCurrentSoftWrap) {
+          return build(targetVisualPosition.column - symbolsOnCurrentLogicalLine);
+        }
+        else {
+          lineFeedsFromCurrentSoftWrap++;
+          symbolsOnCurrentVisualLine = 0;
+          return null;
+        }
+      }
+
+      // Just update information about tracked symbols number if current visual line is too low.
+      if (targetVisualPosition.line > visualLineBeforeSoftWrapAppliance + lineFeedsFromCurrentSoftWrap) {
+        symbolsOnCurrentVisualLine += toVisualColumnSymbolsNumber(c);
+      }
+
+      // There is a possible case that, for example, target visual column is zero and it points to the soft-wrapped line,
+      // i.e. soft wrap are. We shouldn't count symbols then. Hence, we perform this preliminary examination with eager
+      // return if necessary.
+      if (targetVisualPosition.column <= symbolsOnCurrentVisualLine) {
+        return build();
+      }
+
+      // Process non-line feed inside soft wrap.
+      symbolsOnCurrentVisualLine += toVisualColumnSymbolsNumber(c);
+      if (targetVisualPosition.column <= symbolsOnCurrentVisualLine) {
+        return build();
+      }
+      else {
+        return null;
+      }
     }
 
-    public void onNonLineFeedOutsideSoftWrap(char c) {
+    /**
+     * Updates current context within the non-soft wrap symbol.
+     *
+     * @param c   soft wrap symbol to process
+     * @return    logical position that matches target visual position if given symbol processing makes it possible to calculate it;
+     *            <code>null</code> otherwise
+     */
+    @Nullable
+    public LogicalPosition onNonSoftWrapSymbol(char c) {
+      // Don't expect line feed symbol to be delivered to this method in assumption that we process only one logical line here.
+      if (c == '\n') {
+        assert false;
+        return null;
+      }
+
+      // Just update information about tracked symbols number if current visual line is too low.
+      if (targetVisualPosition.line > visualLineBeforeSoftWrapAppliance + lineFeedsFromCurrentSoftWrap) {
+        symbolsOnCurrentVisualLine += toVisualColumnSymbolsNumber(c);
+        symbolsOnCurrentLogicalLine++;
+        return null;
+      }
+
+      // There is a possible case that, for example, target visual column is zero. We shouldn't count symbols then.
+      // Hence, we perform this preliminary examination with eager return if necessary.
+      if (targetVisualPosition.column <= symbolsOnCurrentVisualLine) {
+        return build();
+      }
+
+      symbolsOnCurrentVisualLine += toVisualColumnSymbolsNumber(c);
       symbolsOnCurrentLogicalLine++;
-      symbolsOnCurrentVisibleLine += toVisualColumnSymbolsNumber(c);
+
+      
+      if (targetVisualPosition.column <= symbolsOnCurrentVisualLine) {
+        return build();
+      }
+      else {
+        return null;
+      }
     }
 
-    public void onLineFeedOutsideSoftWrap() {
-      visualLineOnCurrentScreen++;
-      linesFromCurrentSoftWrap = 0;
-      symbolsOnCurrentVisibleLine = 0;
-      symbolsOnCurrentLogicalLine = 0;
-      softWrapsSymbolsOnCurrentVisibleLine = 0;
+    private LogicalPosition build() {
+      return build(symbolsOnCurrentVisualLine - symbolsOnCurrentLogicalLine);
     }
 
-    public LogicalPosition buildLogicalPosition(int softWrapColumns) {
-      return new LogicalPosition(
-        myFirstLineLogicalPosition.line + visualLineOnCurrentScreen - softWrapIntroducedLines, symbolsOnCurrentLogicalLine,
-        softWrapIntroducedLines + myFirstLineLogicalPosition.softWrapLines, linesFromCurrentSoftWrap, softWrapColumns
+    private LogicalPosition build(int softWrapColumnDiff) {
+      int logicalLine = softWrapUnawareLogicalPosition.line - softWrapIntroducedLines - lineFeedsFromCurrentSoftWrap;
+      LogicalPosition foldingUnawareResult = new LogicalPosition(
+        logicalLine, symbolsOnCurrentLogicalLine, softWrapIntroducedLines + lineFeedsFromCurrentSoftWrap, lineFeedsFromCurrentSoftWrap,
+        softWrapColumnDiff, 0, 0
       );
+      return adjustFoldingData(foldingModel, foldingUnawareResult);
     }
   }
 }

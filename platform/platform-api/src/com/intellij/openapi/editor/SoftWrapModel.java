@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -83,4 +84,14 @@ public interface SoftWrapModel {
    */
   @Nullable
   TextChange getSoftWrap(int offset);
+
+  /**
+   * Notifies current model that target document is about to be changed at location identified by the given visual position.
+   * <p/>
+   * Primary purpose of this method is to perform {@code 'soft wrap' -> 'hard wrap'} conversion if the user types in virtual
+   * soft wraps-introduced space.
+   *
+   * @param position    position where the document is to be modified
+   */
+  void beforeDocumentChange(@NotNull VisualPosition position);
 }

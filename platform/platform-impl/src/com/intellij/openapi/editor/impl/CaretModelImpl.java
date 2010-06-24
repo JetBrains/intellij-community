@@ -108,10 +108,8 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
     myOffset = myEditor.logicalPositionToOffset(myLogicalCaret);
     LOG.assertTrue(myOffset >= 0 && myOffset <= myEditor.getDocument().getTextLength());
 
-    myVisualLineStart =
-    myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line, 0)));
-    myVisualLineEnd =
-    myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line + 1, 0)));
+    myVisualLineStart = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line, 0)));
+    myVisualLineEnd = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line + 1, 0)));
 
     ((FoldingModelImpl)myEditor.getFoldingModel()).flushCaretPosition();
 
@@ -231,7 +229,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
     int line = pos.line;
     int softWrapLines = pos.softWrapLines;
     int linesFromCurrentSoftWrap = pos.linesFromActiveSoftWrap;
-    int softWrapColumns = pos.softWrapColumns;
+    int softWrapColumns = pos.softWrapColumnDiff;
 
     Document doc = myEditor.getDocument();
 
@@ -273,7 +271,9 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
     VerticalInfo oldInfo = myCaretInfo;
     LogicalPosition oldCaretPosition = myLogicalCaret;
 
-    setCurrentLogicalCaret(new LogicalPosition(line, column, softWrapLines, linesFromCurrentSoftWrap, softWrapColumns));
+    setCurrentLogicalCaret(new LogicalPosition(
+      line, column, softWrapLines, linesFromCurrentSoftWrap, softWrapColumns, pos.foldedLines, pos.foldingColumnDiff
+    ));
 
     final int offset = myEditor.logicalPositionToOffset(myLogicalCaret);
 
@@ -306,7 +306,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
     myEditor.updateCaretCursor();
     requestRepaint(oldInfo);
 
-    if (oldCaretPosition.column + oldCaretPosition.softWrapColumns != myLogicalCaret.column + myLogicalCaret.softWrapColumns
+    if (oldCaretPosition.column + oldCaretPosition.softWrapColumnDiff != myLogicalCaret.column + myLogicalCaret.softWrapColumnDiff
         || oldCaretPosition.line + oldCaretPosition.softWrapLines != myLogicalCaret.line + myLogicalCaret.softWrapLines)
     {
       CaretEvent event = new CaretEvent(myEditor, oldCaretPosition, myLogicalCaret);
@@ -468,10 +468,22 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
   private VerticalInfo createVerticalInfo(LogicalPosition position) {
     Document document = myEditor.getDocument();
     int line = position.line;
+
+    // There is a possible case that active logical line is represented on multiple lines due to soft wraps processing.
+    // We want to highlight those visual lines as 'active' then, so, we calculate 'y' position for the logical line start
+    // and height in accordance with the number of occupied visual lines.
     int y = myEditor.logicalPositionToXY(myEditor.offsetToLogicalPosition(document.getLineStartOffset(line))).y;
     int height = myEditor.getLineHeight();
     if (line < document.getLineCount() - 1) {
-      height = myEditor.logicalPositionToXY(myEditor.offsetToLogicalPosition(document.getLineStartOffset(line + 1))).y - y;
+      int nextLineY = myEditor.logicalPositionToXY(myEditor.offsetToLogicalPosition(document.getLineStartOffset(line + 1))).y;
+      int heightCandidate = nextLineY - y;
+
+      // There is a possible case that active line is the one that ends with folding, so, 'y' position
+      // of its next logical line is the same as the previous. We explicitly check that in order to use non-standard
+      // line height only in case of visible soft-wrapped line.
+      if (heightCandidate > height) {
+        height = heightCandidate;
+      }
     }
     return new VerticalInfo(y, height);
   }

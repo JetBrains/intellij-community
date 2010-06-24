@@ -17,8 +17,11 @@ package com.intellij.openapi.editor.ex;
 
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.SoftWrapModel;
+import com.intellij.openapi.editor.TextChange;
 import com.intellij.openapi.editor.VisualPosition;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * Extends {@link SoftWrapModel} in order to define implementation-specific contract.
@@ -31,8 +34,7 @@ public interface SoftWrapModelEx extends SoftWrapModel {
   /**
    * Asks current model to adjust logical position for the given visual position if necessary.
    * <p/>
-   * Given logical position is allowed to be non-soft wrap aware, it's primary purpose is to be returned if
-   * {@code visual -> logical} transformation is not affected by soft wraps.
+   * Given logical position is allowed to be non-soft wrap aware, i.e. the one calculated as there are no soft wraps at the moment.
    *
    * @param defaultLogical    default logical position that corresponds to the given visual position
    * @param visual            target visual position for which logical position should be adjusted if necessary
@@ -61,4 +63,9 @@ public interface SoftWrapModelEx extends SoftWrapModel {
    */
   @NotNull
   LogicalPosition offsetToLogicalPosition(int offset);
+
+  /**
+   * @return    unmodifiable collection of soft wraps currently registered within the current model
+   */
+  List<TextChange> getRegisteredSoftWraps();
 }

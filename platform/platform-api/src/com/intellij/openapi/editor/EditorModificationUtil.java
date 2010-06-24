@@ -83,9 +83,12 @@ public class EditorModificationUtil {
       editor.getCaretModel().moveToOffset(selectionModel.getSelectionStart());
     }
 
+    // There is a possible case that particular soft wraps become hard wraps if the caret is located at soft wrap-introduced virtual
+    // space, hence, we need to give editor a chance to react accordingly.
+    editor.getSoftWrapModel().beforeDocumentChange(editor.getCaretModel().getVisualPosition());
     int oldOffset = editor.getCaretModel().getOffset();
 
-    String filler = calcStringToFillVitualSpace(editor);
+    String filler = calcStringToFillVirtualSpace(editor);
     if (filler.length() > 0) {
       s = filler + s;
     }
@@ -231,7 +234,7 @@ public class EditorModificationUtil {
     return columnNumber - lineEndColumnNumber;
   }
 
-  public static String calcStringToFillVitualSpace(Editor editor) {
+  public static String calcStringToFillVirtualSpace(Editor editor) {
     int afterLineEnd = calcAfterLineEnd(editor);
     if (afterLineEnd > 0) {
       final Project project = editor.getProject();
