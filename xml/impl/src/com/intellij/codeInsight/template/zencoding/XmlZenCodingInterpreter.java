@@ -372,7 +372,7 @@ class XmlZenCodingInterpreter {
     return new XmlZenCodingFilterImpl().toString(tag, context);
   }
 
-  private static void fail() {
-    LOG.error("Input string was checked incorrectly during isApplicable() invokation");
+  private void fail() {
+    LOG.error("Input string was checked incorrectly during isApplicable() invokation: " + myTokens.toString());
   }
 }
