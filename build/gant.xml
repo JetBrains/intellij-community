@@ -4,7 +4,6 @@
   <property name="gant.home" value="${project.home}/build/lib/gant"/>
 
   <path id="gant.classpath">
-    <pathelement location="${project.home}/build/lib/gant_patches.jar"/>
     <fileset dir="${gant.home}/lib">
       <include name="*.jar"/>
     </fileset>
