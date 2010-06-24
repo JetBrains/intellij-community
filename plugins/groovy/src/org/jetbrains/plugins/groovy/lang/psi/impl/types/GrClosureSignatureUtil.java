@@ -48,8 +48,13 @@ public class GrClosureSignatureUtil {
   private GrClosureSignatureUtil() {
   }
 
-  public static GrClosureSignature createSignature(GrClosableBlock block) {
-    return new GrClosureSignatureImpl(block);
+  public static GrClosureSignature createSignature(final GrClosableBlock block) {
+    return new GrClosureSignatureImpl(block.getAllParameters(), null) {
+      @Override
+      public PsiType getReturnType() {
+        return block.getReturnType();
+      }
+    };
   }
 
   public static GrClosureSignature createSignature(PsiMethod method, PsiSubstitutor substitutor) {
