@@ -359,9 +359,8 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
   @Nullable
   private HighlightInfo processField(final PsiField field, final PsiIdentifier identifier, ProgressIndicator progress) {
-    if (isImplicitUsage(field, progress)) return null;
     if (field.hasModifierProperty(PsiModifier.PRIVATE)) {
-      if (!myRefCountHolder.isReferenced(field)) {
+      if (!myRefCountHolder.isReferenced(field) && !isImplicitUsage(field, progress)) {
         if (HighlightUtil.isSerializationImplicitlyUsedField(field)) {
           return null;
         }
