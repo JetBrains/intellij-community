@@ -98,6 +98,9 @@
     <projectService
         serviceInterface="git4idea.config.GitVcsSettings"
         serviceImplementation="git4idea.config.GitVcsSettings"/>
+    <projectService
+      serviceInterface="git4idea.history.GitUsersComponent"
+      serviceImplementation="git4idea.history.GitUsersComponent"/>
     <applicationService
         serviceInterface="git4idea.config.GitVcsApplicationSettings"
         serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>
@@ -114,9 +117,6 @@
   <project-components>
     <component>
       <implementation-class>git4idea.history.browser.GitProjectLogManager</implementation-class>
-    </component>
-    <component>
-      <implementation-class>git4idea.history.GitUsersComponent</implementation-class>
     </component>
   </project-components>
 </idea-plugin>

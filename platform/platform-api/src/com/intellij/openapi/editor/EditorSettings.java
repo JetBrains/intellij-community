@@ -96,6 +96,8 @@ public interface EditorSettings {
   void setRefrainFromScrolling(boolean b);
 
   boolean isIndentGuidesShown();
-
   void setIndentGuidesShown(boolean val);
+
+  boolean isUseSoftWraps();
+  void setUseSoftWraps(boolean use);
 }

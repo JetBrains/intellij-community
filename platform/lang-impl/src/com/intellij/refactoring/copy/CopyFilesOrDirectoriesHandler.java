@@ -78,17 +78,26 @@ public class CopyFilesOrDirectoriesHandler implements CopyHandlerDelegate {
     CopyFilesOrDirectoriesDialog dialog = new CopyFilesOrDirectoriesDialog(elements, defaultTargetDirectory, project, false);
     dialog.show();
     if (dialog.isOK()) {
+      final String newName = elements.length == 1 ? dialog.getNewName() : null;
       final PsiManager psiManager = PsiManager.getInstance(project);
       try {
         for (PsiElement element : elements) {
-          psiManager.checkMove(element, dialog.getTargetDirectory());
+          PsiFileSystemItem psiElement = (PsiFileSystemItem)element;
+          if (newName != null) {
+            if (!psiElement.isDirectory()) {
+              psiElement = (PsiFileSystemItem)psiElement.copy();
+              psiElement.setName(newName);
+            } else {
+              dialog.getTargetDirectory().checkCreateSubdirectory(newName);
+            }
+          }
+          psiManager.checkMove(psiElement, dialog.getTargetDirectory());
         }
       }
       catch (IncorrectOperationException e) {
         CommonRefactoringUtil.showErrorHint(project, null, e.getMessage(), CommonBundle.getErrorTitle(), null);
         return;
       }
-      String newName = elements.length == 1 ? dialog.getNewName() : null;
       copyImpl(elements, newName, dialog.getTargetDirectory(), false);
     }
   }

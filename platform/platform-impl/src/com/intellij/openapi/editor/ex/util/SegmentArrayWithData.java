@@ -15,6 +15,12 @@
  */
 package com.intellij.openapi.editor.ex.util;
 
+/**
+ * Expands {@link SegmentArray} contract in providing ability to attach additional <code>'short'</code> variable to target segment,
+ * i.e. holds mappings like {@code 'index <-> (data, (start; end))'}.
+ * <p/>
+ * Not thread-safe.
+ */
 public class SegmentArrayWithData extends SegmentArray {
   private short[] myData;
 

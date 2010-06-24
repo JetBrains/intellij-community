@@ -62,6 +62,10 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
     doTest(false);
   }
 
+  public void testNonWriteUnaryExpression() throws Exception {
+    doTest(true);
+  }
+
   public void testNewExpression() throws Exception {
     doTest(false);
   }

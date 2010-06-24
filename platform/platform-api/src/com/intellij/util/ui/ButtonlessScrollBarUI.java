@@ -1,0 +1,210 @@
+/*
+ * Copyright 2000-2010 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+ * @author max
+ */
+package com.intellij.util.ui;
+
+import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.LightColors;
+
+import javax.swing.*;
+import javax.swing.plaf.basic.BasicScrollBarUI;
+import java.awt.*;
+import java.awt.event.AdjustmentEvent;
+import java.awt.event.AdjustmentListener;
+
+public class ButtonlessScrollBarUI extends BasicScrollBarUI {
+
+  private static final Color GRADIENT_LIGHT = new SameColor(0xfb);
+  private static final Color GRADIENT_DARK = new SameColor(0xd7);
+  private static final Color GRADIENT_THUMB_BORDER = new SameColor(0xc9);
+  private static final Color PLAIN_THUMB_FILL = new SameColor(0xe5);
+  private static final Color PLAIN_THUMB_BORDER = new SameColor(0xd0);
+  private static final Color TRACK_BACKGROUND = LightColors.SLIGHTLY_GRAY;
+  private static final Color TRACK_BORDER = new SameColor(230);
+
+  private final boolean myIsMini;
+  private final AdjustmentListener myAdjustmentListener;
+  private final Animator myAnimator;
+
+  private int myAnimationColorShift = 0;
+
+  private ButtonlessScrollBarUI(boolean isMini) {
+    myIsMini = isMini;
+    myAdjustmentListener = new AdjustmentListener() {
+      @Override
+      public void adjustmentValueChanged(AdjustmentEvent e) {
+        myAnimator.reset();
+        myAnimator.resume();
+      }
+    };
+
+    myAnimator = new Animator("Adjustment fadeout", myIsMini ? 5 : 10, myIsMini ? 300 : 500, false, 1, 0) {
+      @Override
+      public void paintNow(float frame, float totalFrames, float cycle) {
+        myAnimationColorShift = (int)((totalFrames - frame) * 3);
+        scrollbar.repaint();
+      }
+    };
+  }
+
+  public static BasicScrollBarUI createNormal() {
+    return new ButtonlessScrollBarUI(false);
+  }
+
+  public static BasicScrollBarUI createMini() {
+    return new ButtonlessScrollBarUI(true);
+  }
+
+  @Override
+  public void installUI(JComponent c) {
+    if (myIsMini) {
+      c.putClientProperty("JComponent.sizeVariant", "mini");
+    }
+
+    super.installUI(c);
+  }
+
+  @Override
+  protected void installListeners() {
+    super.installListeners();
+    scrollbar.addAdjustmentListener(myAdjustmentListener);
+  }
+
+  @Override
+  protected void uninstallListeners() {
+    super.uninstallListeners();
+    scrollbar.removeAdjustmentListener(myAdjustmentListener);
+    Disposer.dispose(myAnimator);
+  }
+
+  @Override
+  protected void paintTrack(Graphics g, JComponent c, Rectangle trackBounds) {
+    g.setColor(TRACK_BACKGROUND);
+    g.fillRect(trackBounds.x, trackBounds.y, trackBounds.width, trackBounds.height);
+
+    g.setColor(TRACK_BORDER);
+    if (isVertical()) {
+      g.drawLine(trackBounds.x, trackBounds.y, trackBounds.x, trackBounds.y + trackBounds.height);
+    }
+    else {
+      g.drawLine(trackBounds.x, trackBounds.y, trackBounds.x + trackBounds.width, trackBounds.y);
+    }
+  }
+
+  @Override
+  protected Dimension getMinimumThumbSize() {
+    final int thickness = myIsMini ? 10 : 18;
+    return isVertical() ? new Dimension(thickness, thickness * 2) : new Dimension(thickness * 2, thickness);
+  }
+
+
+  @Override
+  protected void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
+    if (thumbBounds.isEmpty() || !scrollbar.isEnabled()) {
+      return;
+    }
+
+
+    g.translate(thumbBounds.x, thumbBounds.y);
+
+    if (myIsMini) {
+      paintMiniThumb(g, thumbBounds);
+    }
+    else {
+      paintMaxiThumb(g, thumbBounds);
+    }
+
+    g.translate(-thumbBounds.x, -thumbBounds.y);
+
+  }
+
+  private void paintMaxiThumb(Graphics g, Rectangle thumbBounds) {
+    final int gap = 3;
+
+    int w = thumbBounds.width - gap * 2;
+    int h = thumbBounds.height - gap * 2;
+
+    final GradientPaint paint;
+    final Color start = adjustColor(GRADIENT_LIGHT);
+    final Color end = adjustColor(GRADIENT_DARK);
+
+    if (isVertical()) {
+      paint = new GradientPaint(1, 0, start, w + 1, 0, end);
+    }
+    else {
+      paint = new GradientPaint(0, 1, start, 0, h + 1, end);
+    }
+
+    ((Graphics2D)g).setPaint(paint);
+    g.fillRoundRect(gap, gap, w, h, 4, 4);
+
+    g.setColor(GRADIENT_THUMB_BORDER);
+    g.drawRoundRect(gap, gap, w, h, 4, 4);
+  }
+
+  private Color adjustColor(Color c) {
+    if (myAnimationColorShift == 0) return c;
+    return new SameColor(c.getRed() - myAnimationColorShift);
+  }
+
+  private void paintMiniThumb(Graphics g, Rectangle thumbBounds) {
+    final int gap = 2;
+
+    int w = thumbBounds.width - gap * 2;
+    int h = thumbBounds.height - gap * 2;
+
+    g.setColor(adjustColor(PLAIN_THUMB_FILL));
+    g.fillRect(gap, gap, w, h);
+
+    g.setColor(PLAIN_THUMB_BORDER);
+    g.drawRect(gap, gap, w, h);
+  }
+
+
+  private boolean isVertical() {
+    return scrollbar.getOrientation() == JScrollBar.VERTICAL;
+  }
+
+  @Override
+  protected JButton createIncreaseButton(int orientation) {
+    return new EmptyButton();
+  }
+
+  @Override
+  protected JButton createDecreaseButton(int orientation) {
+    return new EmptyButton();
+  }
+
+  private static class EmptyButton extends JButton {
+    @Override
+    public Dimension getMaximumSize() {
+      return new Dimension(0, 0);
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      return getMaximumSize();
+    }
+
+    @Override
+    public Dimension getMinimumSize() {
+      return getMaximumSize();
+    }
+  }
+}

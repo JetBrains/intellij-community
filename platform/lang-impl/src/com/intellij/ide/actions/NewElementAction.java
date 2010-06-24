@@ -19,50 +19,87 @@ package com.intellij.ide.actions;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeView;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.Condition;
+import org.jetbrains.annotations.Nullable;
 
-public class NewElementAction extends AnAction implements DumbAware {
-
-  public void actionPerformed(final AnActionEvent e) {
-    showPopup(e.getDataContext());
+/**
+ * @author Konstantin Bulenkov
+ */
+@SuppressWarnings({"MethodMayBeStatic"})
+public class NewElementAction extends AnAction  implements DumbAware {
+  public void actionPerformed(final AnActionEvent event) {
+    showPopup(event.getDataContext());
   }
 
-  protected void showPopup(DataContext dataContext) {
-    final ListPopup popup = JBPopupFactory.getInstance()
-      .createActionGroupPopup(getPopupTitle(),
-                              getGroup(),
-                              dataContext,
-                              false, false, false,
-                              null, -1, LangDataKeys.PRESELECT_NEW_ACTION_CONDITION.getData(dataContext));
+  protected void showPopup(DataContext context) {
+    createPopup(context).showInBestPositionFor(context);
+  }
 
-    popup.showInBestPositionFor(dataContext);
+  protected ListPopup createPopup(DataContext dataContext) {
+    return JBPopupFactory.getInstance()
+      .createActionGroupPopup(getPopupTitle(),
+                              getGroup(dataContext),
+                              dataContext,
+                              isShowNumbers(),
+                              isShowDisabledActions(),
+                              isHonorActionMnemonics(),
+                              getDisposeCallback(),
+                              getMaxRowCount(),
+                              getPreselectActionCondition(dataContext));
+  }
+
+  protected int getMaxRowCount() {
+    return -1;
+  }
+
+  @Nullable
+  protected Condition<AnAction> getPreselectActionCondition(DataContext dataContext) {
+    return LangDataKeys.PRESELECT_NEW_ACTION_CONDITION.getData(dataContext);
+  }
+
+  @Nullable
+  protected Runnable getDisposeCallback() {
+    return null;
+  }
+
+  protected boolean isHonorActionMnemonics() {
+    return false;
+  }
+
+  protected boolean isShowDisabledActions() {
+    return false;
+  }
+
+  protected boolean isShowNumbers() {
+    return false;
   }
 
   protected String getPopupTitle() {
     return IdeBundle.message("title.popup.new.element");
   }
 
-  public void update(AnActionEvent event){
-    Presentation presentation = event.getPresentation();
-    DataContext dataContext = event.getDataContext();
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+  public void update(AnActionEvent e){
+    final Presentation presentation = e.getPresentation();
+    final DataContext context = e.getDataContext();
+    final Project project = PlatformDataKeys.PROJECT.getData(context);
     if (project == null) {
       presentation.setEnabled(false);
       return;
     }
-    IdeView ideView = LangDataKeys.IDE_VIEW.getData(dataContext);
+    final IdeView ideView = LangDataKeys.IDE_VIEW.getData(context);
     if (ideView == null) {
       presentation.setEnabled(false);
       return;
     }
 
-    presentation.setEnabled(!ActionGroupUtil.isGroupEmpty(getGroup(), event));
+    presentation.setEnabled(!ActionGroupUtil.isGroupEmpty(getGroup(context), e));
   }
 
-  private static ActionGroup getGroup() {
+  protected ActionGroup getGroup(DataContext dataContext) {
     return (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WEIGHING_NEW);
   }
 }

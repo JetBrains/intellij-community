@@ -13,29 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.editor.colors.impl;
+package com.intellij.openapi.editor.textarea;
 
-import com.intellij.openapi.util.SystemInfo;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.editor.SoftWrapModel;
+import com.intellij.openapi.editor.TextChange;
+import com.intellij.openapi.editor.VisualPosition;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * @author Roman.Chernyatchik
+ * @author Denis Zhdanov
+ * @since Jun 22, 2010 5:56:23 PM
  */
-public class MacOSDefaultColorSchemeExtension implements BundledColorSchemesProvider{
-  @Override
-  @Nullable
-  public String[] getBundledSchemesRelativePaths() {
+public class TextComponentSoftWrapModel implements SoftWrapModel {
+
+  public boolean isSoftWrappingEnabled() {
+    return false;
+  }
+
+  public TextChange getSoftWrap(int offset) {
     return null;
   }
 
-  @Override
-  @Nullable
-  public String getDefaultSchemaExtensionPath() {
-
-    // Extends default color scheme settings on MacOS
-    if (!SystemInfo.isMac) {
-      return null;
-    }
-    return "colorSchemes/MacOSDefaultExt";
+  public void beforeDocumentChange(@NotNull VisualPosition position) {
   }
 }
