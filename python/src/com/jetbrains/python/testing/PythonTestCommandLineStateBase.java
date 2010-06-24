@@ -7,6 +7,8 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.facet.Facet;
+import com.intellij.facet.FacetManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -15,6 +17,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.facet.PythonPathContributingFacet;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonTracebackFilter;
@@ -87,6 +90,12 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
       final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
       for (VirtualFile contentRoot : contentRoots) {
         pythonPathList.add(FileUtil.toSystemDependentName(contentRoot.getPath()));
+      }
+      final Facet[] facets = FacetManager.getInstance(module).getAllFacets();
+      for (Facet facet : facets) {
+        if (facet instanceof PythonPathContributingFacet) {
+          pythonPathList.addAll(((PythonPathContributingFacet) facet).getAdditionalPythonPath());
+        }
       }
     }
     return pythonPathList;
