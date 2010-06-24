@@ -21,39 +21,60 @@ import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
-public final class ListToolTipHandler extends AbstractToolTipHandler<Integer, JList>{
+public class ListToolTipHandler extends AbstractToolTipHandler<Integer, JList>{
+  public static ListToolTipHandler install(JList list) {
+    return new ListToolTipHandler(list);
+  }
 
-  protected ListToolTipHandler(JList list) {
+  protected ListToolTipHandler(final JList list) {
     super(list);
 
     list.getSelectionModel().addListSelectionListener(
       new ListSelectionListener() {
         public void valueChanged(ListSelectionEvent e) {
-          repaintHint();
+          if (e.getValueIsAdjusting()) return;
+
+          updateSelection(list);
         }
       }
     );
 
-    list.getModel().addListDataListener(
-      new ListDataListener() {
-        public void intervalAdded(ListDataEvent e) {
-          hideHint();
-        }
+    final ListDataListener l = new ListDataListener() {
+      public void intervalAdded(ListDataEvent e) {
+        updateSelection(list);
+      }
 
-        public void intervalRemoved(ListDataEvent e) {
-          hideHint();
-        }
+      public void intervalRemoved(ListDataEvent e) {
+        updateSelection(list);
+      }
 
-        public void contentsChanged(ListDataEvent e) {
-          hideHint();
+      public void contentsChanged(ListDataEvent e) {
+        updateSelection(list);
+      }
+    };
+
+    list.getModel().addListDataListener(l);
+    list.addPropertyChangeListener("model", new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        updateSelection(list);
+
+        if (evt.getOldValue() != null) {
+          ((ListModel)evt.getOldValue()).removeListDataListener(l);
+        }
+        if (evt.getNewValue() != null) {
+          ((ListModel)evt.getNewValue()).addListDataListener(l);
         }
       }
-    );
+    });
   }
 
-  public static void install(JList list) {
-    new ListToolTipHandler(list);
+  private void updateSelection(JList list) {
+    int selection = list.getSelectedIndex();
+    handleSelectionChange(selection == -1 ? null : new Integer(selection));
   }
 
   /**

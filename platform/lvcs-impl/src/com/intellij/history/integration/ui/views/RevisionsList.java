@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.SeparatorWithText;
+import com.intellij.ui.TableCellKey;
 import com.intellij.ui.TableToolTipHandler;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.AbstractLayoutManager;
@@ -53,21 +54,15 @@ public class RevisionsList {
     table = new JBTable();
     table.setModel(new MyModel(Collections.EMPTY_LIST, Collections.EMPTY_MAP));
 
-    final MyCellRenderer renderer = new MyCellRenderer(table);
-    table.setDefaultRenderer(Object.class, renderer);
     table.setTableHeader(null);
     table.setShowGrid(false);
     table.setRowMargin(0);
     table.getColumnModel().setColumnMargin(0);
 
     table.resetDefaultFocusTraversalKeys();
-    table.addMouseMotionListener(new MouseMotionAdapter() {
-      @Override
-      public void mouseMoved(MouseEvent e) {
-        renderer.myHoveredRow = table.rowAtPoint(e.getPoint());
-      }
-    });
-    TableToolTipHandler.install(table);
+
+    TableToolTipHandler toolTipHandler = TableToolTipHandler.install(table);
+    table.setDefaultRenderer(Object.class, new MyCellRenderer(table, toolTipHandler));
 
     table.setEmptyText(VcsBundle.message("history.empty"));
 
@@ -205,10 +200,11 @@ public class RevisionsList {
     private final MyLabelContainer myLabelContainer = new MyLabelContainer();
     private final JLabel myLabelLabel = new JLabel();
 
-    private boolean isMouseOver;
-    private int myHoveredRow;
+    private final TableToolTipHandler myToolTipHandler;
+    private boolean isToolTipShown;
 
-    public MyCellRenderer(JTable table) {
+    public MyCellRenderer(JTable table, TableToolTipHandler toolTipHandler) {
+      myToolTipHandler = toolTipHandler;
       JPanel headersPanel = new JPanel(new BorderLayout());
       headersPanel.setOpaque(false);
       headersPanel.add(myPeriodLabel, BorderLayout.NORTH);
@@ -261,7 +257,7 @@ public class RevisionsList {
           Dimension size = parent.getSize();
           Insets i = parent.getInsets();
           Dimension pref = layoutPanel.getPreferredSize();
-          if (isMouseOver) {
+          if (isToolTipShown) {
             layoutPanel.setBounds(i.left, i.top, Math.max(pref.width, size.width - i.left - i.right), pref.height);
           } else {
             layoutPanel.setBounds(i.left, i.top, size.width - i.left - i.right, pref.height);
@@ -343,7 +339,7 @@ public class RevisionsList {
 
       myItemPanel.setBackground(bg);
 
-      isMouseOver = myHoveredRow == row;
+      isToolTipShown = new TableCellKey(row, column).equals(myToolTipHandler.getCurrentCellKey());
 
       myWrapperPanel.doLayout();
       table.setRowHeight(row, myWrapperPanel.getPreferredSize().height);

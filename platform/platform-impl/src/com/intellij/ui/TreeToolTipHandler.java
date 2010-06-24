@@ -18,22 +18,31 @@ package com.intellij.ui;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import javax.swing.event.TreeModelEvent;
+import javax.swing.event.TreeModelListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.plaf.TreeUI;
 import javax.swing.tree.TreeCellRenderer;
+import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
-public final class TreeToolTipHandler extends AbstractToolTipHandler<Integer, JTree> {
-  protected TreeToolTipHandler(JTree tree) {
+public class TreeToolTipHandler extends AbstractToolTipHandler<Integer, JTree> {
+  public static TreeToolTipHandler install(JTree tree) {
+    return new TreeToolTipHandler(tree);
+  }
+
+  protected TreeToolTipHandler(final JTree tree) {
     super(tree);
     tree.getSelectionModel().addTreeSelectionListener(
       new TreeSelectionListener() {
         public void valueChanged(TreeSelectionEvent e) {
           try {
-            repaintHint();
+            updateSelection(tree);
           }
           catch (Exception e1) {
             // Workaround for some race conditions in Swing, see
@@ -42,10 +51,48 @@ public final class TreeToolTipHandler extends AbstractToolTipHandler<Integer, JT
         }
       }
     );
+
+    final TreeModelListener l = new TreeModelListener() {
+      @Override
+      public void treeNodesChanged(TreeModelEvent e) {
+        updateSelection(tree);
+      }
+
+      @Override
+      public void treeNodesInserted(TreeModelEvent e) {
+        updateSelection(tree);
+      }
+
+      @Override
+      public void treeNodesRemoved(TreeModelEvent e) {
+        updateSelection(tree);
+      }
+
+      @Override
+      public void treeStructureChanged(TreeModelEvent e) {
+        updateSelection(tree);
+      }
+    };
+    
+    tree.getModel().addTreeModelListener(l);
+    tree.addPropertyChangeListener("model", new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        updateSelection(tree);
+
+        if (evt.getOldValue() != null) {
+          ((TreeModel)evt.getOldValue()).removeTreeModelListener(l);
+        }
+        if (evt.getNewValue() != null) {
+          ((TreeModel)evt.getNewValue()).addTreeModelListener(l);
+        }
+      }
+    });
   }
 
-  public static void install(JTree tree) {
-    new TreeToolTipHandler(tree);
+  private void updateSelection(JTree tree) {
+    int selection = tree.getSelectionModel().getLeadSelectionRow();
+    handleSelectionChange(selection == -1 ? null : new Integer(selection));
   }
 
   protected Integer getCellKeyForPoint(Point point) {

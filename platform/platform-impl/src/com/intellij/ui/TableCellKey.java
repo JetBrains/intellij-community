@@ -18,7 +18,7 @@ package com.intellij.ui;
 /**
  * (rowIndex, columnIndex) is a unique key to identify cell inside JTable
  */
-final class TableCellKey{
+public final class TableCellKey{
   public final int myRowIndex;
   public final int myColumnIndex;
 

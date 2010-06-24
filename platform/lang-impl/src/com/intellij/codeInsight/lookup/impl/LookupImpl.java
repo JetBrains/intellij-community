@@ -934,8 +934,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       }
 
       Point point = calculatePosition();
-      Dimension preferredSize = getComponent().getPreferredSize();
-      setBounds(point.x,point.y,preferredSize.width,preferredSize.height);
+      updateBounds(point.x,point.y);
 
       HintManagerImpl.adjustEditorHintPosition(this, myEditor, point);
     }

@@ -41,7 +41,6 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
@@ -571,9 +570,8 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     myModel.setSelectedIndex(myList.size() - 1);
 
     if (myHint != null) {
-      final Dimension dimension = getPreferredSize();
-      final Rectangle bounds = myHint.getBounds();
-      myHint.setBounds(bounds.x, bounds.y, dimension.width, dimension.height);
+      Rectangle bounds = myHint.getBounds();
+      myHint.updateBounds(bounds.x, bounds.y);
     }
 
     if (myModel.hasChildren(object)) {

@@ -16,6 +16,8 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -32,10 +34,7 @@ public class HeavyweightHint implements Hint {
   private final EventListenerList myListenerList;
 
   private JWindow myWindow;
-
-  public HeavyweightHint(final JComponent component) {
-    this(component, true);
-  }
+  private JComponent myParentComponent;
 
   public HeavyweightHint(@NotNull final JComponent component, final boolean focusableWindowState) {
     myComponent = component;
@@ -47,8 +46,7 @@ public class HeavyweightHint implements Hint {
    * Shows the hint as the window
    */
   public void show(@NotNull JComponent parentComponent, int x, int y, JComponent focusBackComponent) {
-    Dimension preferredSize = myComponent.getPreferredSize();
-
+    myParentComponent = parentComponent;
     LOG.assertTrue(parentComponent.isShowing());
 
     Window windowAncestor = SwingUtilities.getWindowAncestor(parentComponent);
@@ -56,13 +54,12 @@ public class HeavyweightHint implements Hint {
 
     myWindow = new JWindow(windowAncestor);
     myWindow.setFocusableWindowState(myFocusableWindowState);
-
-    Point locationOnScreen = parentComponent.getLocationOnScreen();
+    WindowManagerEx.getInstanceEx().setWindowShadow(myWindow, WindowManagerEx.WindowShadowMode.DISABLED);
 
     myWindow.getContentPane().setLayout(new BorderLayout());
     myWindow.getContentPane().add(myComponent, BorderLayout.CENTER);
-    myWindow.setBounds(locationOnScreen.x + x, locationOnScreen.y + y, preferredSize.width, preferredSize.height);
-    myWindow.pack();
+
+    updateBounds(x, y);
     myWindow.setVisible(true);
   }
 
@@ -95,6 +92,26 @@ public class HeavyweightHint implements Hint {
       myWindow = null;
     }
     fireHintHidden();
+  }
+
+  @Override
+  public void updateBounds() {
+    updateBounds(-1, -1, false);
+  }
+
+  @Override
+  public void updateBounds(int x, int y) {
+    updateBounds(x, y, true);
+  }
+
+  private void updateBounds(int x, int y, boolean updateLocation) {
+    if (myWindow != null) {
+      if (updateLocation) {
+        Point locationOnScreen = myParentComponent.getLocationOnScreen();
+        myWindow.setLocation(locationOnScreen.x + x, locationOnScreen.y + y);
+      }
+      myWindow.setSize(getPreferredSize());
+    }
   }
 
   public void addHintListener(HintListener listener) {

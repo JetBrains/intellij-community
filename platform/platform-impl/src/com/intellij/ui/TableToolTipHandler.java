@@ -18,25 +18,59 @@ package com.intellij.ui;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 import java.awt.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 public class TableToolTipHandler extends AbstractToolTipHandler<TableCellKey, JTable> {
-  protected TableToolTipHandler(JTable table) {
+  public static TableToolTipHandler install(JTable table) {
+    return new TableToolTipHandler(table);
+  }
+
+  protected TableToolTipHandler(final JTable table) {
     super(table);
 
     ListSelectionListener l = new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
-        repaintHint();
+        if (e.getValueIsAdjusting()) return;
+        updateSelection(table);
       }
     };
     table.getSelectionModel().addListSelectionListener(l);
     table.getColumnModel().getSelectionModel().addListSelectionListener(l);
+
+
+    final TableModelListener modelListener = new TableModelListener() {
+      @Override
+      public void tableChanged(TableModelEvent e) {
+        updateSelection(table);
+      }
+    };
+
+    table.getModel().addTableModelListener(modelListener);
+    table.addPropertyChangeListener("model", new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        updateSelection(table);
+
+        if (evt.getOldValue() != null) {
+          ((TableModel)evt.getOldValue()).removeTableModelListener(modelListener);
+        }
+        if (evt.getNewValue() != null) {
+          ((TableModel)evt.getNewValue()).addTableModelListener(modelListener);
+        }
+      }
+    });
   }
 
-  public static void install(JTable table) {
-    new TableToolTipHandler(table);
+  private void updateSelection(JTable table) {
+    int row = table.getSelectedRow();
+    int column = table.getSelectedColumn();
+    handleSelectionChange((row == -1  || column == -1) ? null : new TableCellKey(row, column));
   }
 
   public Rectangle getCellBounds(TableCellKey tableCellKey, Component rendererComponent) {

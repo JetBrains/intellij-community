@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -86,7 +87,7 @@ abstract public class AbstractToolTipHandler <KeyType, ComponentType extends JCo
         }
 
         public void focusGained(FocusEvent e) {
-          repaintHint();
+          handleSelectionChange(myKey);
         }
       }
     );
@@ -98,7 +99,7 @@ abstract public class AbstractToolTipHandler <KeyType, ComponentType extends JCo
         }
 
         public void componentMoved(ComponentEvent e) {
-          hideHint();
+          handleSelectionChange(myKey);
         }
       }
     );
@@ -137,6 +138,10 @@ abstract public class AbstractToolTipHandler <KeyType, ComponentType extends JCo
    */
   protected abstract KeyType getCellKeyForPoint(Point point);
 
+  public KeyType getCurrentCellKey() {
+    return myKey;
+  }
+
   /**
    * Hides tool tip
    */
@@ -148,8 +153,12 @@ abstract public class AbstractToolTipHandler <KeyType, ComponentType extends JCo
   }
 
   private void handleMouseEvent(MouseEvent e){
+    handleSelectionChange(getCellKeyForPoint(e.getPoint()));
+  }
+
+  protected void handleSelectionChange(KeyType selected){
     Object oldKey = myKey;
-    myKey = getCellKeyForPoint(e.getPoint());
+    myKey = selected;
     if(myKey == null || !myComponent.isShowing()){
       hideHint();
       return;
@@ -166,6 +175,8 @@ abstract public class AbstractToolTipHandler <KeyType, ComponentType extends JCo
     else if (!Comparing.equal(oldKey, myKey)){
       hideHint();
       show(location);
+    } else {
+      repaintHint(location);
     }
   }
 
@@ -193,19 +204,15 @@ abstract public class AbstractToolTipHandler <KeyType, ComponentType extends JCo
     myHint.show(myComponent, location.x, location.y, myComponent);
   }
 
-  protected void repaintHint() {
+  private void repaintHint(Point location) {
     if (myHint != null && myKey != null && myComponent.isShowing()) {
-      createToolTipImage(myKey);
+      myHint.updateBounds(location.x, location.y);
       myTipComponent.repaint();
     }
   }
 
-  /**
-   * @return point (in myComponent coordinates) for the cell which is specified
-   * by <code>key</code>. The method can return <code>null</code> in case if
-   * <code>key</code> does not define any valid cell.
-   */
-  protected Point createToolTipImage(@NotNull KeyType key) {
+  @Nullable
+  private Point createToolTipImage(@NotNull KeyType key) {
     Component rComponent;
     rComponent = getRendererComponent(key);
 
@@ -215,28 +222,26 @@ abstract public class AbstractToolTipHandler <KeyType, ComponentType extends JCo
 
     Rectangle cellBounds = getCellBounds(key, rComponent);
     if (cellBounds == null) return null;
-    Point cellLocation = cellBounds.getLocation();
+    
     Rectangle visibleRect = getVisibleRect(key);
+
+    int width = cellBounds.x + cellBounds.width - (visibleRect.x + visibleRect.width);
     int height = cellBounds.height;
 
-    if (visibleRect.contains(cellLocation.x + cellBounds.width, cellLocation.y + height)) return null;
-
-    Point visibleRightTop = new Point(visibleRect.x + visibleRect.width, cellLocation.y);
-    int rightLimit = cellLocation.x + cellBounds.width;
-    int width = rightLimit - visibleRightTop.x;
     if (width <= 0 || height <= 0) return null;
+    if (cellBounds.y < visibleRect.y) return null;
+    if (cellBounds.y + cellBounds.height > visibleRect.y + visibleRect.height) return null;
 
     myImage = createImage(height, width);
 
     Graphics2D g = myImage.createGraphics();
     g.setClip(null);
     doFillBackground(height, width, g);
-    g.translate(-(visibleRect.x + visibleRect.width - cellLocation.x), 0);
-    //rComponent.paint(g);
+    g.translate(-(visibleRect.x + visibleRect.width - cellBounds.x), 0);
     doPaintTooltipImage(rComponent, cellBounds, height, g, key);
 
     if (doPaintBorder(key)) {
-      g.translate((visibleRect.x + visibleRect.width - cellLocation.x), 0);
+      g.translate((visibleRect.x + visibleRect.width - cellBounds.x), 0);
       g.setColor(Color.GRAY);
       int rightX = myImage.getWidth() - 1;
       final int h = myImage.getHeight();
@@ -249,7 +254,7 @@ abstract public class AbstractToolTipHandler <KeyType, ComponentType extends JCo
 
     myComponent.remove(rComponent);
 
-    return visibleRightTop;
+    return new Point(visibleRect.x + visibleRect.width, cellBounds.y);
   }
 
   protected BufferedImage createImage(final int height, final int width) {
