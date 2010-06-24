@@ -77,7 +77,7 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
       @Override
       public void visitPyCallExpression(PyCallExpression node) {
         super.visitPyCallExpression(node);
-        if (node.isCalleeText("AddReference") || node.isCalleeText("AddReferenceByPartialName")) {
+        if (node.isCalleeText("AddReference", "AddReferenceByPartialName")) {
           final PyExpression[] args = node.getArguments();
           if (args.length == 1 && args [0] instanceof PyStringLiteralExpression) {
             result.add(((PyStringLiteralExpression) args [0]).getStringValue());

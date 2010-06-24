@@ -450,8 +450,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
     @Override
     public void visitPyCallExpression(PyCallExpression node) {
-      String callName = node.getCallee().getName();
-      if (callName.equals("pop") || callName.equals("get") || callName.equals("getattr")) {
+      if (node.isCalleeText("pop", "get", "getattr")) {
         PyReferenceExpression child = PsiTreeUtil.getChildOfType(node.getCallee(), PyReferenceExpression.class);
         if (child != null) {
           String operandName = child.getName();
@@ -461,12 +460,12 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
           }
         }
       }
-      else if (callName.equals("__init__")) {
+      else if (node.isCalleeText("__init__")) {
         kwArgsTransit = false;
         for (PyExpression e : node.getArguments()) {
           if (e instanceof PyStarArgument) {
             PyStarArgument kw = (PyStarArgument)e;
-            if (myKwArgs.getName().equals(kw.getFirstChild().getNextSibling().getText())) {
+            if (Comparing.equal(myKwArgs.getName(), kw.getFirstChild().getNextSibling().getText())) {
               kwArgsTransit = true;
               break;
             }
@@ -477,7 +476,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     }
 
     private void processGet(String operandName, PyExpression argument) {
-      if (myKwArgs.getName().equals(operandName) &&
+      if (Comparing.equal(myKwArgs.getName(), operandName) &&
           argument instanceof PyStringLiteralExpression) {
         String name = ((PyStringLiteralExpression)argument).getStringValue();
         if (PyUtil.isPythonIdentifier(name)) {

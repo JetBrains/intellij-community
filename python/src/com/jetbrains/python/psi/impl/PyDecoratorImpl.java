@@ -16,7 +16,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -116,12 +115,8 @@ public class PyDecoratorImpl extends PyPresentableElementImpl<PyDecoratorStub> i
     return callee;
   }
 
-  public boolean isCalleeText(@NotNull String name) {
-    final PyExpression callee = getCallee();
-    if (!(callee instanceof PyReferenceExpression)) {
-      return false;
-    }
-    return name.equals(((PyReferenceExpression)callee).getReferencedName());
+  public boolean isCalleeText(@NotNull String... nameCandidates) {
+    return PyCallExpressionHelper.isCalleeText(this, nameCandidates);
   }
 
   @Override

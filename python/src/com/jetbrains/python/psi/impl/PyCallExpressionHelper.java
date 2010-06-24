@@ -289,6 +289,19 @@ public class PyCallExpressionHelper {
     return null;
   }
 
+  static boolean isCalleeText(PyCallExpression pyCallExpression, String[] nameCandidates) {
+    final PyExpression callee = pyCallExpression.getCallee();
+    if (!(callee instanceof PyReferenceExpression)) {
+      return false;
+    }
+    for (String name : nameCandidates) {
+      if (name.equals(((PyReferenceExpression)callee).getReferencedName())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
 
   static class MyParamVisitor extends PyElementVisitor {
     private final Iterator<PyExpression> myArgIterator;

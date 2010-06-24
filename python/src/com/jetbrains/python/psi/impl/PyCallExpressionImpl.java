@@ -54,12 +54,8 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
     return PyCallExpressionHelper.resolveCallee(this);
   }
 
-  public boolean isCalleeText(@NotNull String name) {
-    final PyExpression callee = getCallee();
-    if (!(callee instanceof PyReferenceExpression)) {
-      return false;
-    }
-    return name.equals(((PyReferenceExpression)callee).getReferencedName());
+  public boolean isCalleeText(@NotNull String... nameCandidates) {
+    return PyCallExpressionHelper.isCalleeText(this, nameCandidates); 
   }
 
   @Override

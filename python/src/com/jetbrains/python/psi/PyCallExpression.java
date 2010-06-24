@@ -39,12 +39,12 @@ public interface PyCallExpression extends PyExpression {
   PyMarkedCallee resolveCallee();
 
   /**
-   * Checks if the unqualified name of the callee matches the specified text.
+   * Checks if the unqualified name of the callee matches any of the specified names
    *
-   * @param name the text to check
+   * @param nameCandidates the names to check
    * @return true if matches, false otherwise
    */
-  boolean isCalleeText(@NotNull String name);
+  boolean isCalleeText(@NotNull String... nameCandidates);
 
   /**
    * Couples function with a flag describing the way it is called.
