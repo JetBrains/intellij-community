@@ -553,6 +553,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   public void visitPyAssertStatement(final PyAssertStatement node) {
+    super.visitPyAssertStatement(node);
     PyAssertionEvaluator evaluator = new PyAssertionEvaluator();
     node.acceptChildren(evaluator);
     InstructionBuilder.addAssertInstructions(myBuilder, evaluator);
