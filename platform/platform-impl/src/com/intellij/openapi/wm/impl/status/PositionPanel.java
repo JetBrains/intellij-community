@@ -141,7 +141,8 @@ public class PositionPanel implements StatusBarWidget, StatusBarWidget.TextPrese
 
   public void caretPositionChanged(final CaretEvent e) {
     final Editor editor = e.getEditor();
-    if (FileEditorManager.getInstance(editor.getProject()).getSelectedTextEditor() == e.getEditor()) {
+    Project project = editor.getProject();
+    if (project != null && FileEditorManager.getInstance(project).getSelectedTextEditor() == e.getEditor()) {
        updatePosition(editor);
     }
   }

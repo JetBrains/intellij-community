@@ -12,41 +12,59 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.GuiUtils;
 import org.zmlx.hg4idea.command.HgVersionCommand;
 import org.zmlx.hg4idea.ui.HgSetExecutableDialog;
 
+import java.lang.reflect.InvocationTargetException;
+
 public class HgExecutableValidator {
 
+  private static final Logger LOG = Logger.getInstance(HgExecutableValidator.class.getName());
   private final Project project;
+  private boolean myValidHgExecutable;
 
   public HgExecutableValidator(Project project) {
     this.project = project;
   }
 
-  public boolean check(HgGlobalSettings globalSettings) {
-    HgVersionCommand command = new HgVersionCommand();
+  public boolean check(final HgGlobalSettings globalSettings) {
+    final HgVersionCommand command = new HgVersionCommand();
     if (command.isValid(globalSettings.getHgExecutable())) {
       return true;
     }
 
-    String previousHgPath = globalSettings.getHgExecutable();
-    boolean validHgExecutable;
-    HgSetExecutableDialog dialog;
-    do {
-      dialog = new HgSetExecutableDialog(project);
-      dialog.setBadHgPath(previousHgPath);
-      dialog.show();
-      validHgExecutable = dialog.isOK() && command.isValid(dialog.getNewHgPath());
-      previousHgPath = dialog.getNewHgPath();
-    } while (!validHgExecutable && dialog.isOK());
-
-    if (validHgExecutable) {
-      globalSettings.setHgExecutable(dialog.getNewHgPath());
-      return true;
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return false;
     }
+    myValidHgExecutable = false;
 
-    return false;
+    try {
+      GuiUtils.runOrInvokeAndWait(new Runnable() {
+        public void run() {
+          String previousHgPath = globalSettings.getHgExecutable();
+          HgSetExecutableDialog dialog;
+          do {
+            dialog = new HgSetExecutableDialog(project);
+            dialog.setBadHgPath(previousHgPath);
+            dialog.show();
+            myValidHgExecutable = dialog.isOK() && command.isValid(dialog.getNewHgPath());
+            previousHgPath = dialog.getNewHgPath();
+          } while (!myValidHgExecutable && dialog.isOK());
+          if (myValidHgExecutable) {
+            globalSettings.setHgExecutable(dialog.getNewHgPath());
+          }
+        }
+      });
+    } catch (InvocationTargetException e) {
+      LOG.error(e);
+    } catch (InterruptedException e) {
+      LOG.error(e);
+    }
+    return myValidHgExecutable;
   }
 
 }

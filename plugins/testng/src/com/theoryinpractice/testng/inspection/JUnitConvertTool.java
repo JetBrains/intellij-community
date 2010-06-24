@@ -16,7 +16,6 @@
 package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -196,7 +195,7 @@ public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
             element.delete();
           }
         }
-        new OptimizeImportsProcessor(project, javaFile).run(); //delete unused imports
+        JavaCodeStyleManager.getInstance(project).optimizeImports(javaFile);//delete unused imports
       }
       catch (IncorrectOperationException e) {
         LOG.error("Error converting testcase", e);

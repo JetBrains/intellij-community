@@ -396,6 +396,9 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         return info;
       }
     }
+    else if (isImplicitUsage(field, progress)) {
+      return null;
+    }
     else if (!myRefCountHolder.isReferenced(field) && weAreSureThereAreNoUsages(field, progress)) {
       return formatUnusedSymbolHighlightInfo("field.is.not.used", field, "fields", myDeadCodeKey, myDeadCodeInfoType);
     }
