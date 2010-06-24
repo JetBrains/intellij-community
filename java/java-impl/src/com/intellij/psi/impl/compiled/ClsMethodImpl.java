@@ -336,16 +336,21 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
   }
 
   @NotNull
-  public PsiElement getNavigationElement() {
+  public PsiMethod getSourceMirrorMethod() {
     PsiClass sourceClassMirror = ((ClsClassImpl)getParent()).getSourceMirrorClass();
     if (sourceClassMirror == null) return this;
-    final PsiMethod[] methodsByName = sourceClassMirror.findMethodsByName(getName(), false);
-    for (PsiMethod sourceMethod : methodsByName) {
-      if (MethodSignatureUtil.areParametersErasureEqual(this, sourceMethod) && sourceMethod != this) {
-        return sourceMethod.getNavigationElement();
+    for (PsiMethod sourceMethod : sourceClassMirror.findMethodsByName(getName(), false)) {
+      if (MethodSignatureUtil.areParametersErasureEqual(this, sourceMethod)) {
+        return sourceMethod;
       }
     }
     return this;
+  }
+
+  @NotNull
+  public PsiElement getNavigationElement() {
+    final PsiMethod method = getSourceMirrorMethod();
+    return method != this ? method.getNavigationElement() : this;
   }
 
   public PsiTypeParameterList getTypeParameterList() {
