@@ -804,7 +804,7 @@ public class GitLogTree implements GitTreeViewI {
 
     @Override
     protected int getParentWidth(JList list) {
-      return list.getParent().getWidth() - myLeftPartWidth;
+      return list.getParent().getWidth() - myLeftPartWidth - 8;
     }
 
     @Override

@@ -461,10 +461,12 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
         UIUtil.drawBoldDottedLine((Graphics2D)g, xOffset, xOffset + fragmentWidth, dottedAt, bgColor, lineColor, isOpaque());
       }
 
-      xOffset += fragmentWidth;
       final Integer fixedWidth = myAligns.get(i);
-      if (fixedWidth != null && xOffset < fixedWidth.intValue()) {
-        xOffset = fixedWidth.intValue();
+      if (fixedWidth != null && fragmentWidth < fixedWidth.intValue()) {
+      //if (fixedWidth != null) {
+        xOffset += fixedWidth.intValue();
+      } else {
+        xOffset += fragmentWidth;
       }
     }
 

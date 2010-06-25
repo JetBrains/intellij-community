@@ -86,7 +86,7 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
 
   public void renderChangeList(JComponent tree, CommittedChangeList changeList) {
     final Container parent = tree.getParent();
-    int parentWidth = parent == null ? 100 : parent.getWidth() - 44;
+    int parentWidth = parent == null ? 100 : parent.getWidth() - 74;
     String date = ", " + getDateOfChangeList(changeList.getCommitDate());
     final FontMetrics fontMetrics = tree.getFontMetrics(tree.getFont());
     final FontMetrics boldMetrics = tree.getFontMetrics(tree.getFont().deriveFont(Font.BOLD));
@@ -143,9 +143,11 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
       description = truncateDescription(description, fontMetrics, (descMaxWidth - moreWidth - numberWidth));
       myRenderer.appendTextWithLinks(description);
       // we don't have place for changelist number in this case
+      final int addWidth = fontMetrics.stringWidth(description + " ");
       append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
       append(moreMarker, LINK_ATTRIBUTES, new CommittedChangesTreeBrowser.MoreLauncher(myProject, changeList));
-      appendAlign(parentWidth - size);
+      // align value is for the latest added piece
+      appendAlign(parentWidth - size - addWidth);
     }
 
     append(changeList.getCommitterName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
