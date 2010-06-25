@@ -48,6 +48,7 @@ import git4idea.ui.GitConvertFilesDialog;
 import git4idea.ui.GitUIUtil;
 import git4idea.vfs.GitVFSListener;
 
+import javax.swing.event.ChangeEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -430,6 +431,7 @@ public abstract class GitBaseRebaseProcess {
         try {
           myProgressIndicator.setText(GitBundle.getString("update.shelving.changes"));
           myShelvedChangeList = myShelveManager.shelveChanges(changes, myStashMessage);
+          myProject.getMessageBus().syncPublisher(ShelveChangesManager.SHELF_TOPIC).stateChanged(new ChangeEvent(this));
         }
         catch (IOException e) {
           //noinspection ThrowableInstanceNeverThrown
