@@ -88,7 +88,7 @@ public class HighlightDisplayLevel {
     return new Icon() {
       public void paintIcon(Component c, Graphics g, int x, int y) {
         Graphics2D g2 = (Graphics2D)g;
-        g2.drawImage(ImageHolder.ourErrorMaskImage, 1, 2, renderColor, null);
+        g2.drawImage(ImageHolder.ourErrorMaskImage, x, y, renderColor, null);
       }
 
 
