@@ -355,6 +355,7 @@ public class TestAll implements Test {
     myTestCaseLoader.addClassIfTestCase(Class.forName("_FirstInSuiteTest"));
 
     for (String classRoot : classRoots) {
+      System.out.println("Loading tests from class root " + classRoot);
       ClassFinder classFinder = new ClassFinder(new File(classRoot), packageRoot);
       myTestCaseLoader.loadTestCases(classFinder.getClasses());
     }
