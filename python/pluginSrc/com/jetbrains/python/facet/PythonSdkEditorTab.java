@@ -37,7 +37,7 @@ public class PythonSdkEditorTab extends FacetEditorTab {
     return ((PythonFacetConfiguration) myEditorContext.getFacet().getConfiguration());
   }
 
-  public void apply() throws ConfigurationException {
+  public void apply() {
     getFacetConfiguration().setSdk(mySdkComboBox.getSelectedSdk());
   }
 
