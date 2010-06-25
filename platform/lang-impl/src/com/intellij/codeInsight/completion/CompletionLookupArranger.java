@@ -141,10 +141,11 @@ public class CompletionLookupArranger extends LookupArranger {
 
   @Override
   public LookupItemWeightComparable getRelevance(LookupElement item) {
-    if (item.getUserData(RELEVANCE_KEY) != null) return item.getUserData(RELEVANCE_KEY);
+    LookupItemWeightComparable result = item.getUserData(RELEVANCE_KEY);
+    if (result != null) return result;
 
     final double priority = item instanceof LookupItem ? ((LookupItem)item).getPriority() : 0;
-    final LookupItemWeightComparable result = new LookupItemWeightComparable(priority, getRelevanceWeight(item));
+    result = new LookupItemWeightComparable(priority, getRelevanceWeight(item));
 
     item.putUserData(RELEVANCE_KEY, result);
 
