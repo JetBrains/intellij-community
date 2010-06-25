@@ -20,7 +20,6 @@ import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.facet.ui.FacetEditorTab;
 import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Condition;
@@ -69,7 +68,7 @@ public class GroovyFacetTab extends FacetEditorTab {
     return false;
   }
 
-  public void apply() throws ConfigurationException {
+  public void apply() {
   }
 
   public void reset() {
