@@ -77,7 +77,7 @@ public class CustomMembersGenerator implements GdslMembersHolderConsumer {
   public CustomMembersHolder getMembersHolder() {
     // Add non-code members holder
     if (myClassText.length() > 0) {
-      addMemberHolder(NonCodeMembersHolder.fromText(myClassText.toString(), myProject));
+      addMemberHolder(NonCodeMembersHolder.fromText(myClassText.toString(), myPlace.containingFile));
     }
     return myDepot;
   }

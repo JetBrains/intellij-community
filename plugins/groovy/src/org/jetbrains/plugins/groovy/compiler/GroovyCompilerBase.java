@@ -71,7 +71,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
 import java.io.*;
-import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.*;
 
@@ -304,9 +303,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     printer.println(PathUtil.getLocalPath(outputDir));
 
     printer.println(GroovycRunner.FINAL_OUTPUTPATH);
-    final URL finalUrl = VfsUtil.convertToURL(finalOutputDir.getUrl());
-    LOG.assertTrue(finalUrl != null, finalOutputDir.getPath());
-    printer.println(finalUrl.getFile());
+    printer.println(FileUtil.toSystemDependentName(finalOutputDir.getPath()));
 
 
     printer.close();

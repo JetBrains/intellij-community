@@ -26,6 +26,7 @@ import com.intellij.testFramework.ParsingTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.IOException;
 
 public class CustomTypesTest extends ParsingTestCase {
 
@@ -63,7 +64,7 @@ public class CustomTypesTest extends ParsingTestCase {
     return result;
   }
 
-  protected String loadFile(String name) throws Exception {
+  protected String loadFile(String name) throws IOException {
     String fullName = getTestDataPath() + File.separatorChar + name;
     String text = new String(FileUtil.loadFileText(new File(fullName))).trim();
     text = StringUtil.convertLineSeparators(text);

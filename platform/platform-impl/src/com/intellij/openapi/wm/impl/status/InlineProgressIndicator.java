@@ -86,6 +86,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       textAndProgress.add(myText, BorderLayout.CENTER);
 
       final NonOpaquePanel progressWrapper = new NonOpaquePanel(new GridBagLayout());
+      progressWrapper.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
       final GridBagConstraints c = new GridBagConstraints();
       c.weightx = 1;
       c.weighty = 1;
