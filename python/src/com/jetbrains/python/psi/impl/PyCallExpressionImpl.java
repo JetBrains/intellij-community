@@ -121,7 +121,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
             return new PyClassType(classType.getPyClass(), false);
           }
         }
-        return type;
+        return null;
       }
     }
     finally {
