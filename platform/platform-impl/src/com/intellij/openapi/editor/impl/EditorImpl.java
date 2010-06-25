@@ -49,7 +49,6 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.impl.event.MarkupModelEvent;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
-import com.intellij.openapi.editor.TextChange;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
@@ -69,7 +68,7 @@ import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.EmptyClipboardOwner;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import gnu.trove.*;
+import gnu.trove.TIntArrayList;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -3506,10 +3505,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   MyScrollBar getVerticalScrollBar() {
     return myVerticalScrollBar;
-  }
-
-  JPanel getPanel() {
-    return myPanel;
   }
 
   private int getMouseSelectionState() {

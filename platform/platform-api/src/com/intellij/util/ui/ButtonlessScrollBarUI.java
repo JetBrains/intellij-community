@@ -30,13 +30,13 @@ import java.awt.event.AdjustmentListener;
 
 public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
-  private static final Color GRADIENT_LIGHT = new SameColor(0xfb);
-  private static final Color GRADIENT_DARK = new SameColor(0xd7);
-  private static final Color GRADIENT_THUMB_BORDER = new SameColor(0xc9);
-  private static final Color PLAIN_THUMB_FILL = new SameColor(0xe5);
-  private static final Color PLAIN_THUMB_BORDER = new SameColor(0xd0);
-  private static final Color TRACK_BACKGROUND = LightColors.SLIGHTLY_GRAY;
-  private static final Color TRACK_BORDER = new SameColor(230);
+  public static final Color GRADIENT_LIGHT = new SameColor(0xfb);
+  public static final Color GRADIENT_DARK = new SameColor(0xd7);
+  public static final Color GRADIENT_THUMB_BORDER = new SameColor(0xc9);
+  public static final Color PLAIN_THUMB_FILL = new SameColor(0xe5);
+  public static final Color PLAIN_THUMB_BORDER = new SameColor(0xd0);
+  public static final Color TRACK_BACKGROUND = LightColors.SLIGHTLY_GRAY;
+  public static final Color TRACK_BORDER = new SameColor(230);
 
   private final boolean myIsMini;
   private final AdjustmentListener myAdjustmentListener;
@@ -44,7 +44,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
   private int myAnimationColorShift = 0;
 
-  private ButtonlessScrollBarUI(boolean isMini) {
+  protected ButtonlessScrollBarUI(boolean isMini) {
     myIsMini = isMini;
     myAdjustmentListener = new AdjustmentListener() {
       @Override
@@ -58,7 +58,9 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       @Override
       public void paintNow(float frame, float totalFrames, float cycle) {
         myAnimationColorShift = (int)((totalFrames - frame) * 3);
-        scrollbar.repaint();
+        if (scrollbar != null) {
+          scrollbar.repaint();
+        }
       }
     };
   }
@@ -94,16 +96,16 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   }
 
   @Override
-  protected void paintTrack(Graphics g, JComponent c, Rectangle trackBounds) {
+  protected void paintTrack(Graphics g, JComponent c, Rectangle bounds) {
     g.setColor(TRACK_BACKGROUND);
-    g.fillRect(trackBounds.x, trackBounds.y, trackBounds.width, trackBounds.height);
+    g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
 
     g.setColor(TRACK_BORDER);
     if (isVertical()) {
-      g.drawLine(trackBounds.x, trackBounds.y, trackBounds.x, trackBounds.y + trackBounds.height);
+      g.drawLine(bounds.x, bounds.y, bounds.x, bounds.y + bounds.height);
     }
     else {
-      g.drawLine(trackBounds.x, trackBounds.y, trackBounds.x + trackBounds.width, trackBounds.y);
+      g.drawLine(bounds.x, bounds.y, bounds.x + bounds.width, bounds.y);
     }
   }
 
@@ -131,13 +133,12 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     }
 
     g.translate(-thumbBounds.x, -thumbBounds.y);
-
   }
 
   private void paintMaxiThumb(Graphics g, Rectangle thumbBounds) {
     final int gap = 3;
 
-    int w = thumbBounds.width - gap * 2;
+    int w = adjustThumbWidth(thumbBounds.width - gap * 2);
     int h = thumbBounds.height - gap * 2;
 
     final GradientPaint paint;
@@ -152,13 +153,17 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     }
 
     ((Graphics2D)g).setPaint(paint);
-    g.fillRoundRect(gap, gap, w, h, 4, 4);
+    g.fillRoundRect(gap, gap, w + 1, h + 1, 4, 4);
 
     g.setColor(GRADIENT_THUMB_BORDER);
     g.drawRoundRect(gap, gap, w, h, 4, 4);
   }
 
-  private Color adjustColor(Color c) {
+  protected int adjustThumbWidth(int width) {
+    return width;
+  }
+
+  protected Color adjustColor(Color c) {
     if (myAnimationColorShift == 0) return c;
     return new SameColor(c.getRed() - myAnimationColorShift);
   }

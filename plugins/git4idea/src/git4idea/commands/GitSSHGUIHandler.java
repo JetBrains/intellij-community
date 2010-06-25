@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.ui.UIUtil;
+import git4idea.config.SSHConnectionSettings;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.git4idea.ssh.GitSSHService;
@@ -158,6 +159,32 @@ public class GitSSHGUIHandler implements GitSSHService.Handler {
     return PasswordSafePromptDialog
       .askPassword(myProject, GitBundle.getString("ssh.password.title"), GitBundle.message("ssh.password.message", username),
                    GitSSHGUIHandler.class, "PASSWORD:" + username, resetPassword, error);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public String getLastSuccessful(String userName) {
+    SSHConnectionSettings s = SSHConnectionSettings.getInstance();
+    String rc = s.getLastSuccessful(userName);
+    return rc == null ? "" : rc;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void setLastSuccessful(String userName, String method, final String error) {
+    SSHConnectionSettings s = SSHConnectionSettings.getInstance();
+    s.setLastSuccessful(userName, method);
+    if (error != null && error.length() != 0) {
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        public void run() {
+          showError(error);
+        }
+      });
+    }
   }
 
   /**
