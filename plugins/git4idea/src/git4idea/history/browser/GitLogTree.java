@@ -363,15 +363,32 @@ public class GitLogTree implements GitTreeViewI {
       }
       if (! myPeer.isOn()) {
         myMainSplitter.setFirstComponent(myFiltersSplitter);
-        myMainSplitter.doLayout();
       }
-      myFiltersSplitter.doLayout();
+      recalculateProportions(true);
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           IdeFocusManager.getInstance(myProject).requestFocus(myFocusTarget, true);
         }
       });
       myState = true;
+    }
+
+    private void recalculateProportions(final boolean turningOn) {
+      final int firstComponentSize = turningOn ? (myComponent.getPreferredSize().width) : 0;
+      int componentSize = firstComponentSize;
+      final Dimension all = myMainSplitter.getSize();
+
+      final JComponent another = myIsFirst ? myFiltersSplitter.getSecondComponent() : myFiltersSplitter.getFirstComponent();
+      final int anotherWidth = (another == null) ? 0 : another.getPreferredSize().width;
+      if (another != null) {
+        componentSize += anotherWidth + 3;
+      }
+      myMainSplitter.setProportion(((float) (componentSize + 3)/ all.width));
+      myMainSplitter.doLayout();
+      if (another != null) {
+        myFiltersSplitter.setProportion((float) ((myIsFirst ? firstComponentSize : anotherWidth) + 3) / (firstComponentSize + anotherWidth + 3));
+      }
+      myFiltersSplitter.doLayout();
     }
 
     public void off() {
@@ -382,12 +399,11 @@ public class GitLogTree implements GitTreeViewI {
       } else {
         myFiltersSplitter.setSecondComponent(null);
       }
-      myFiltersSplitter.doLayout();
       myState = false;
       if (! myPeer.isOn()) {
         myMainSplitter.setFirstComponent(null);
-        myMainSplitter.doLayout();
       }
+      recalculateProportions(false);
     }
   }
 
