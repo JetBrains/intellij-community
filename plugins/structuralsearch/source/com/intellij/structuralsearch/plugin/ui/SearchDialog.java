@@ -42,7 +42,6 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -97,13 +96,10 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     this(searchContext, true, true);
   }
 
-  @NotNull
-  private static String getPresentableName(FileType fileType) {
-    return fileType.getName().toLowerCase();
-  }
-
   public SearchDialog(SearchContext searchContext, boolean showScope, boolean runFindActionOnClose) {
     super(searchContext.getProject(), true);
+    
+    if (showScope) setModal(false);
     myShowScopePanel = showScope;
     myRunFindActionOnClose = runFindActionOnClose;
     this.searchContext = (SearchContext)searchContext.clone();
