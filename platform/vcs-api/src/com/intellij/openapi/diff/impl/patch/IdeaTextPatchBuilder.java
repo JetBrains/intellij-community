@@ -67,8 +67,8 @@ public class IdeaTextPatchBuilder {
         }
       }, root.path);
 
-      changes.removeAll(outGoingOnly);
-      addConvertChanges(changes, result);
+      rootChanges.removeAll(outGoingOnly);
+      addConvertChanges(rootChanges, result);
 
       for (Change change : outGoingOnly) {
         result.add(new BeforeAfter<AirContentRevision>(convertRevision(change.getBeforeRevision(), provider),
