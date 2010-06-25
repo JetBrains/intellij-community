@@ -14,6 +14,7 @@
     <orderEntry type="module" module-name="execution-impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="platform-api" />
     <orderEntry type="library" name="Velocity" level="project" />
+    <orderEntry type="module" module-name="java-i18n" />
   </component>
 </module>
 
