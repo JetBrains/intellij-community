@@ -21,7 +21,6 @@ import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -61,27 +60,24 @@ public class UniqueResultsQuery<T, M> implements Query<T> {
   }
 
   public boolean forEach(@NotNull final Processor<T> consumer) {
-    Collection<M> collection = process(consumer);
-    return collection != null;
+    return process(consumer, new ConcurrentHashSet<M>(myHashingStrategy));
   }
 
-  // returns null if canceled
-  private Collection<M> process(final Processor<T> consumer) {
-    final Set<M> processedElements = new ConcurrentHashSet<M>(myHashingStrategy);
-    boolean success = myOriginal.forEach(new Processor<T>() {
+  private boolean process(final Processor<T> consumer, final Set<M> processedElements) {
+    return myOriginal.forEach(new Processor<T>() {
       public boolean process(final T t) {
         return !processedElements.add(myMapper.fun(t)) || consumer.process(t);
       }
     });
-    return success ? processedElements : null;
   }
 
   @NotNull
   public Collection<T> findAll() {
     if (myMapper == ID) {
-      Collection<M> collection = process(CommonProcessors.<T>alwaysTrue());
+      ConcurrentHashSet<M> collection = new ConcurrentHashSet<M>(myHashingStrategy);
+      process(CommonProcessors.<T>alwaysTrue(), collection);
       //noinspection unchecked
-      return collection == null ? Collections.<T>emptyList() : (Collection<T>)collection;
+      return (Collection<T>)collection;
     }
     else {
       final CommonProcessors.CollectProcessor<T> processor = new CommonProcessors.CollectProcessor<T>(new CopyOnWriteArrayList<T>());

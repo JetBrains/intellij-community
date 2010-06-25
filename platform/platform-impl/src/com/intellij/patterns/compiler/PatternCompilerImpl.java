@@ -14,93 +14,41 @@
  * limitations under the License.
  */
 
-package org.intellij.plugins.intelliLang;
+package com.intellij.patterns.compiler;
 
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.*;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.*;
 
 /**
  * @author Gregory.Shrago
  */
-public class PatternBasedInjectionHelper {
+public class PatternCompilerImpl<T> implements PatternCompiler<T> {
 
-  private final String mySupportId;
+  private static final Logger LOG = Logger.getInstance(PatternCompilerImpl.class.getName());
+
+  private final Class[] myPatternClasses;
   private Set<Method> myStaticMethods;
 
-  public PatternBasedInjectionHelper(final String supportId) {
-    mySupportId = supportId;
-  }
-
-  public static StringBuilder appendStringPattern(@NotNull StringBuilder sb, @NotNull String prefix, @NotNull String text, @NotNull String suffix) {
-    sb.append(prefix).append("string().");
-    final String[] parts = text.split("[,|\\s]+");
-    boolean useMatches = false;
-    for (String part : parts) {
-      if (isRegexp(part)) {
-        useMatches = true;
-        break;
-      }
-    }
-    if (useMatches) {
-      sb.append("matches(\"").append(text).append("\")");
-    }
-    else if (parts.length > 1) {
-      sb.append("oneOf(");
-      boolean first = true;
-      for (String part : parts) {
-        if (first) first = false;
-        else sb.append(", ");
-        sb.append("\"").append(part).append("\"");
-      }
-      sb.append(")");
-    }
-    else {
-      sb.append("equalTo(\"").append(text).append("\")");
-    }
-    sb.append(suffix);
-    return sb;
-  }
-
-  public static boolean isRegexp(final String s) {
-    boolean hasReChars = false;
-    for (int i = 0, len = s.length(); i < len; i++) {
-      final char c = s.charAt(i);
-      if (c == ' ' || c == '_' || c == '-' || Character.isLetterOrDigit(c)) continue;
-      hasReChars = true;
-      break;
-    }
-    if (hasReChars) {
-      try {
-        new URL(s);
-      }
-      catch (MalformedURLException e) {
-        return true;
-      }
-    }
-    return false;
+  public PatternCompilerImpl(final Class[] patternClasses) {
+    myPatternClasses = patternClasses;
   }
 
   private Set<Method> getStaticMethods() {
     if (myStaticMethods == null) {
-      myStaticMethods = getStaticMethods(mySupportId);
+      myStaticMethods = getStaticMethods(myPatternClasses);
     }
     return myStaticMethods;
   }
@@ -108,19 +56,21 @@ public class PatternBasedInjectionHelper {
   protected void preInvoke(Object target, String methodName, Object[] arguments) {
   }
 
+  @Override
   @Nullable
-  public ElementPattern<PsiElement> createElementPattern(final String text, final String displayName) {
+  public ElementPattern<T> createElementPattern(final String text, final String displayName) {
     try {
       return compileElementPattern(text);
     }
     catch (Exception ex) {
       final Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
-      Configuration.LOG.warn("error processing place: " + displayName + " [" + text + "]", cause);
+      LOG.warn("error processing place: " + displayName + " [" + text + "]", cause);
       return null;
     }
   }
 
-  public ElementPattern<PsiElement> compileElementPattern(final String text) {
+  @Override
+  public ElementPattern<T> compileElementPattern(final String text) {
     final Set<Method> staticMethods = getStaticMethods();
     return processElementPatternText(text, new Function<Frame, Object>() {
       public Object fun(final Frame frame) {
@@ -136,18 +86,7 @@ public class PatternBasedInjectionHelper {
     });
   }
 
-  private static Class[] getPatternClasses(final String supportId) {
-    final ArrayList<Class> patternClasses = new ArrayList<Class>();
-    for (LanguageInjectionSupport support : Extensions.getExtensions(LanguageInjectionSupport.EP_NAME)) {
-      if (supportId == null || supportId.equals(support.getId())) {
-        patternClasses.addAll(Arrays.asList(support.getPatternClasses()));
-      }
-    }
-    return patternClasses.toArray(new Class[patternClasses.size()]);
-  }
-
-  private static Set<Method> getStaticMethods(String supportId) {
-    final Class[] patternClasses = getPatternClasses(supportId);
+  private static Set<Method> getStaticMethods(Class[] patternClasses) {
     return new THashSet<Method>(ContainerUtil.concat(patternClasses, new Function<Class, Collection<? extends Method>>() {
       public Collection<Method> fun(final Class aClass) {
         return ContainerUtil.findAll(ReflectionCache.getMethods(aClass), new Condition<Method>() {
@@ -394,8 +333,9 @@ public class PatternBasedInjectionHelper {
     return null;
   }
 
-  public static String dumpContextDeclarations(String injectorId) {
-    final Set<Method> methods = getStaticMethods(injectorId);
+  @Override
+  public String dumpContextDeclarations() {
+    final Set<Method> methods = getStaticMethods();
     final StringBuilder sb = new StringBuilder();
     final THashMap<Class, Collection<Class>> classes = new THashMap<Class, Collection<Class>>();
     final THashSet<Class> missingClasses = new THashSet<Class>();

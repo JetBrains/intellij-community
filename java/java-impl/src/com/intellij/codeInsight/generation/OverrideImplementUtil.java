@@ -228,7 +228,8 @@ public class OverrideImplementUtil {
   }
 
   public static boolean isInsertOverride(PsiMethod superMethod, PsiClass targetClass) {
-    if (!CodeStyleSettingsManager.getSettings(targetClass.getProject()).INSERT_OVERRIDE_ANNOTATION || !PsiUtil.isLanguageLevel5OrHigher(targetClass)) {
+    if (!CodeStyleSettingsManager.getSettings(targetClass.getProject()).INSERT_OVERRIDE_ANNOTATION
+        || !PsiUtil.isLanguageLevel5OrHigher(targetClass)) {
       return false;
     }
     if (PsiUtil.isLanguageLevel6OrHigher(targetClass)) return true;
@@ -242,7 +243,7 @@ public class OverrideImplementUtil {
                                                        PsiMethod method,
                                                        PsiSubstitutor substitutor,
                                                        boolean toCopyJavaDoc,
-                                                       boolean insertAtOverrideIfPossible) throws IncorrectOperationException {
+                                                       boolean insertOverrideIfPossible) throws IncorrectOperationException {
     if (!method.isValid() || !substitutor.isValid()) return Collections.emptyList();
 
     List<PsiMethod> results = new ArrayList<PsiMethod>();
@@ -280,19 +281,8 @@ public class OverrideImplementUtil {
         }
       }
 
-      if (insertAtOverrideIfPossible && isInsertOverride(method, aClass) && !method.isConstructor()) {
-        annotate(result, "java.lang.Override");
-      }
-
-      for (OverrideImplementsAnnotationsHandler annotationsHandler : Extensions
-        .getExtensions(OverrideImplementsAnnotationsHandler.EP_NAME)) {
-        for (String annotationFQName : annotationsHandler.getAnnotations()) {
-          if (AnnotationUtil.isAnnotated(method, annotationFQName, false)) {
-            annotate(result, annotationFQName, annotationsHandler.annotationsToRemove(annotationFQName));
-          }
-        }
-      }
-
+      annotateOnOverrideImplement(result, aClass, method, insertOverrideIfPossible);
+      
       final PsiCodeBlock body = JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createCodeBlockFromText("{}", null);
       PsiCodeBlock oldbody = result.getBody();
       if (oldbody != null){
@@ -322,7 +312,25 @@ public class OverrideImplementUtil {
     return results;
   }
 
-  private static void annotate(final PsiMethod result, String fqn, String... annosToRemove) throws IncorrectOperationException {
+  public static void annotateOnOverrideImplement(PsiMethod method, PsiClass targetClass, PsiMethod overridden) {
+    annotateOnOverrideImplement(method, targetClass, overridden,
+                                CodeStyleSettingsManager.getSettings(method.getProject()).INSERT_OVERRIDE_ANNOTATION);
+  }
+
+  public static void annotateOnOverrideImplement(PsiMethod method, PsiClass targetClass, PsiMethod overridden, boolean insertOverride) {
+    if (insertOverride && !overridden.isConstructor() && isInsertOverride(overridden, targetClass)) {
+      annotate(method, Override.class.getName());
+    }
+    for (OverrideImplementsAnnotationsHandler each : Extensions.getExtensions(OverrideImplementsAnnotationsHandler.EP_NAME)) {
+      for (String annotation : each.getAnnotations()) {
+        if (AnnotationUtil.isAnnotated(overridden, annotation, false)) {
+          annotate(method, annotation, each.annotationsToRemove(annotation));
+        }
+      }
+    }
+  }
+
+  public static void annotate(PsiMethod result, String fqn, String... annosToRemove) throws IncorrectOperationException {
     Project project = result.getProject();
     AddAnnotationFix fix = new AddAnnotationFix(fqn, result, annosToRemove);
     if (fix.isAvailable(project, null, result.getContainingFile())) {
@@ -374,7 +382,7 @@ public class OverrideImplementUtil {
   }
 
   @NotNull
-  private static String callSuper (PsiMethod superMethod, PsiMethod overriding) {
+  public static String callSuper (PsiMethod superMethod, PsiMethod overriding) {
     @NonNls StringBuilder buffer = new StringBuilder();
     if (!superMethod.isConstructor() && superMethod.getReturnType() != PsiType.VOID) {
       buffer.append("return ");

@@ -23,6 +23,8 @@ import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.patterns.compiler.PatternCompiler;
+import com.intellij.patterns.compiler.PatternCompilerFactory;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.LiteralTextEscaper;
 import com.intellij.psi.PsiElement;
@@ -31,7 +33,7 @@ import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.RegExp;
-import org.intellij.plugins.intelliLang.PatternBasedInjectionHelper;
+import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.jdom.CDATA;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -252,7 +254,8 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   }
 
   public void initializePlaces(final boolean compile) {
-    final PatternBasedInjectionHelper helper = new PatternBasedInjectionHelper(getSupportId());
+    final PatternCompiler<PsiElement> helper =
+      PatternCompilerFactory.getFactory().getPatternCompiler(InjectorUtils.findInjectionSupport(getSupportId()).getPatternClasses());
     if (myPlaces.isEmpty()) {
       for (String text : generatePlaces()) {
         myPlaces.add(new InjectionPlace(text, compile? helper.createElementPattern(text, getDisplayName()) : null, true));

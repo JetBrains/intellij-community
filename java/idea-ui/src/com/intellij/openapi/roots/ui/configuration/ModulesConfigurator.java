@@ -283,7 +283,6 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     }
 
     final ProjectRootManagerImpl projectRootManager = ProjectRootManagerImpl.getInstanceImpl(myProject);
-    myFacetsConfigurator.applyEditors();
     final List<ModifiableRootModel> models = new ArrayList<ModifiableRootModel>(myModuleEditors.size());
     for (ModuleEditor moduleEditor : myModuleEditors) {
       moduleEditor.canApply();
@@ -294,6 +293,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         models.add(model);
       }
     }
+    myFacetsConfigurator.applyEditors();
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {

@@ -38,7 +38,6 @@ import com.intellij.util.PairProcessor;
 import com.intellij.util.PatternValuesIndex;
 import gnu.trove.THashMap;
 import org.intellij.plugins.intelliLang.Configuration;
-import org.intellij.plugins.intelliLang.PatternBasedInjectionHelper;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
@@ -243,7 +242,7 @@ public final class XmlLanguageInjector implements MultiHostInjector {
   private static Pattern buildPattern(Set<String> stringSet) {
     final StringBuilder sb = new StringBuilder();
     for (String s : stringSet) {
-      if (!PatternBasedInjectionHelper.isRegexp(s)) continue;
+      if (!InjectorUtils.isRegexp(s)) continue;
       if (sb.length() > 0) sb.append('|');
       sb.append("(?:").append(s).append(")");
     }

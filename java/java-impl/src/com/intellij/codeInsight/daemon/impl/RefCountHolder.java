@@ -187,7 +187,7 @@ public class RefCountHolder {
     if (array == null) return false;
     for (PsiReference ref : array) {
       PsiElement refElement = ref.getElement();
-      if (!(refElement instanceof PsiExpression)) { // possible with uncomplete code
+      if (!(refElement instanceof PsiExpression)) { // possible with incomplete code
         return true;
       }
       if (PsiUtil.isAccessedForReading((PsiExpression)refElement)) {
@@ -209,7 +209,7 @@ public class RefCountHolder {
     if (array == null) return false;
     for (PsiReference ref : array) {
       final PsiElement refElement = ref.getElement();
-      if (!(refElement instanceof PsiExpression)) { // possible with uncomplete code
+      if (!(refElement instanceof PsiExpression)) { // possible with incomplete code
         return true;
       }
       if (PsiUtil.isAccessedForWriting((PsiExpression)refElement)) {

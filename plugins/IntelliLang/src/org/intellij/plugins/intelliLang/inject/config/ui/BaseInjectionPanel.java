@@ -23,11 +23,14 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.patterns.compiler.PatternCompiler;
+import com.intellij.patterns.compiler.PatternCompilerFactory;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.ui.EditorTextField;
-import org.intellij.plugins.intelliLang.PatternBasedInjectionHelper;
+import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.config.InjectionPlace;
 
@@ -49,12 +52,12 @@ public class BaseInjectionPanel extends AbstractInjectionPanel<BaseInjection> {
 
   private JPanel myRoot;
   private JTextField myNameTextField;
-  private PatternBasedInjectionHelper myHelper;
+  private PatternCompiler<PsiElement> myHelper;
 
   public BaseInjectionPanel(BaseInjection injection, Project project) {
     super(injection, project);
     $$$setupUI$$$(); // see IDEA-9987
-    myHelper = new PatternBasedInjectionHelper(injection.getSupportId());
+    myHelper = PatternCompilerFactory.getFactory().getPatternCompiler(InjectorUtils.findInjectionSupport(injection.getSupportId()).getPatternClasses());
     final FileType groovy = FileTypeManager.getInstance().getFileTypeByExtension("groovy");
     final FileType realFileType = groovy == UnknownFileType.INSTANCE ? FileTypes.PLAIN_TEXT : groovy;
     final PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText("injection." + realFileType.getDefaultExtension(), realFileType, "", 0, true);

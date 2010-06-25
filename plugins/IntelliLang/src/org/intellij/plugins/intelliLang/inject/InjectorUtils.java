@@ -21,16 +21,17 @@ import com.intellij.lang.LanguageLiteralEscapers;
 import com.intellij.lang.LiteralEscaper;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -151,12 +152,63 @@ public class InjectorUtils {
     return Extensions.getExtensions(LanguageInjectionSupport.EP_NAME);
   }
 
-  @Nullable
+  @NotNull
   public static LanguageInjectionSupport findInjectionSupport(final String id) {
-    return ContainerUtil.find(getActiveInjectionSupports(), new Condition<LanguageInjectionSupport>() {
+    final LanguageInjectionSupport result = ContainerUtil.find(getActiveInjectionSupports(), new Condition<LanguageInjectionSupport>() {
       public boolean value(final LanguageInjectionSupport support) {
         return support.getId().equals(id);
       }
     });
+    assert result != null: id+" injector not found";
+    return result;
+  }
+
+  public static StringBuilder appendStringPattern(@NotNull StringBuilder sb, @NotNull String prefix, @NotNull String text, @NotNull String suffix) {
+    sb.append(prefix).append("string().");
+    final String[] parts = text.split("[,|\\s]+");
+    boolean useMatches = false;
+    for (String part : parts) {
+      if (isRegexp(part)) {
+        useMatches = true;
+        break;
+      }
+    }
+    if (useMatches) {
+      sb.append("matches(\"").append(text).append("\")");
+    }
+    else if (parts.length > 1) {
+      sb.append("oneOf(");
+      boolean first = true;
+      for (String part : parts) {
+        if (first) first = false;
+        else sb.append(", ");
+        sb.append("\"").append(part).append("\"");
+      }
+      sb.append(")");
+    }
+    else {
+      sb.append("equalTo(\"").append(text).append("\")");
+    }
+    sb.append(suffix);
+    return sb;
+  }
+
+  public static boolean isRegexp(final String s) {
+    boolean hasReChars = false;
+    for (int i = 0, len = s.length(); i < len; i++) {
+      final char c = s.charAt(i);
+      if (c == ' ' || c == '_' || c == '-' || Character.isLetterOrDigit(c)) continue;
+      hasReChars = true;
+      break;
+    }
+    if (hasReChars) {
+      try {
+        new URL(s);
+      }
+      catch (MalformedURLException e) {
+        return true;
+      }
+    }
+    return false;
   }
 }

@@ -125,6 +125,9 @@
   <applicationService serviceInterface="com.intellij.psi.PsiReferenceService"
                       serviceImplementation="com.intellij.psi.PsiReferenceServiceImpl"/>
 
+  <applicationService serviceInterface="com.intellij.patterns.compiler.PatternCompilerFactory"
+                      serviceImplementation="com.intellij.patterns.compiler.PatternCompilerFactoryImpl"/>
+
   <projectService serviceInterface="com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager"
                   serviceImplementation="com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager"/>
 
