@@ -23,29 +23,11 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author oleg
  */
-public class PyUnboundLocalVariableInspection extends LocalInspectionTool {
-
-  @Nls
-  @NotNull
-  @Override
-  public String getGroupDisplayName() {
-    return PyBundle.message("INSP.GROUP.python");
-  }
-
+public class PyUnboundLocalVariableInspection extends PyInspection {
   @NotNull
   @Nls
   public String getDisplayName() {
     return PyBundle.message("INSP.NAME.unbound");
-  }
-
-  @NotNull
-  @NonNls
-  public String getShortName() {
-    return "PyUnboundLocalVariableInspection";
-  }
-
-  public boolean isEnabledByDefault() {
-    return true;
   }
 
   @NotNull
@@ -120,10 +102,4 @@ public class PyUnboundLocalVariableInspection extends LocalInspectionTool {
       }
     };
   }
-
-  @NotNull
-  public HighlightDisplayLevel getDefaultLevel() {
-    return HighlightDisplayLevel.WARNING;
-  }
-
 }

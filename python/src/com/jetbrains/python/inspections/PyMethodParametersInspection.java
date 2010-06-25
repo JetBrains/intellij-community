@@ -24,30 +24,13 @@ import static com.jetbrains.python.psi.PyFunction.Flag.STATICMETHOD;
 
 /**
  * Looks for the 'self' or its equivalents.
- * User: dcheryasov
- * Date: Nov 17, 2008
+ * @author dcheryasov
  */
-public class PyMethodParametersInspection extends LocalInspectionTool {
-  @Nls
-  @NotNull
-  public String getGroupDisplayName() {
-    return PyBundle.message("INSP.GROUP.python");
-  }
-
+public class PyMethodParametersInspection extends PyInspection {
   @Nls
   @NotNull
   public String getDisplayName() {
     return PyBundle.message("INSP.NAME.problematic.first.parameter");
-  }
-
-  @NotNull
-  public String getShortName() {
-    return "PyMethodParametersInspection";
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
   }
 
   @NotNull

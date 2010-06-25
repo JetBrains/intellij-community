@@ -13,35 +13,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: 26.02.2010
- * Time: 18:34:31
+ * @author Alexey.Ivanov
  */
-public class PyExceptClausesOrderInspection extends LocalInspectionTool{
-  @Nls
-  @NotNull
-  @Override
-  public String getGroupDisplayName() {
-    return PyBundle.message("INSP.GROUP.python");
-  }
-
+public class PyExceptClausesOrderInspection extends PyInspection {
   @Nls
   @NotNull
   @Override
   public String getDisplayName() {
     return PyBundle.message("INSP.NAME.bad.except.clauses.order");
-  }
-
-  @NotNull
-  @Override
-  public String getShortName() {
-    return "PyExceptClausesOrderInspection";
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
   }
 
   @NotNull

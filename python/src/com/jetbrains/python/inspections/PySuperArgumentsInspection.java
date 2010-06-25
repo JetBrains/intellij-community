@@ -13,35 +13,14 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- * Author: Alexey.Ivanov
- * Date:   01.04.2010
- * Time:   16:59:41
+ * @author Alexey.Ivanov
  */
-public class PySuperArgumentsInspection extends LocalInspectionTool {
-  @Nls
-  @NotNull
-  @Override
-  public String getGroupDisplayName() {
-    return PyBundle.message("INSP.GROUP.python");
-  }
-
+public class PySuperArgumentsInspection extends PyInspection {
   @Nls
   @NotNull
   @Override
   public String getDisplayName() {
     return PyBundle.message("INSP.NAME.wrong.super.arguments");
-  }
-
-  @NotNull
-  @Override
-  public String getShortName() {
-    return "PySuperArgumentsInspection";
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
   }
 
   @NotNull

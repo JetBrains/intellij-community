@@ -19,32 +19,16 @@ import org.jetbrains.annotations.NotNull;
  * User: dcheryasov
  * Date: Nov 14, 2008
  */
-public class PyRedeclarationInspection extends LocalInspectionTool {
-  @Nls
-  @NotNull
-  public String getGroupDisplayName() {
-    return PyBundle.message("INSP.GROUP.python");
-  }
-
+public class PyRedeclarationInspection extends PyInspection {
   @Nls
   @NotNull
   public String getDisplayName() {
     return PyBundle.message("INSP.NAME.redeclaration");
   }
 
-  @NotNull
-  public String getShortName() {
-    return "PyRedeclarationInspection";
-  }
-
   @Override
   public boolean isEnabledByDefault() {
     return false; // too immature yet
-  }
-
-  @NotNull
-  public HighlightDisplayLevel getDefaultLevel() {
-    return HighlightDisplayLevel.WARNING;
   }
 
   @NotNull

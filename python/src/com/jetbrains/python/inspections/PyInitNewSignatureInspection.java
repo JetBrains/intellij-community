@@ -16,31 +16,13 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * TODO: Add description
- * User: dcheryasov
- * Date: Mar 31, 2010 5:48:46 PM
+ * @author dcheryasov
  */
-public class PyInitNewSignatureInspection extends LocalInspectionTool {
-
-  @Nls
-  @NotNull
-  public String getGroupDisplayName() {
-    return PyBundle.message("INSP.GROUP.python");
-  }
-
+public class PyInitNewSignatureInspection extends PyInspection {
   @Nls
   @NotNull
   public String getDisplayName() {
     return PyBundle.message("INSP.NAME.new.init.signature");
-  }
-
-  @NotNull
-  public String getShortName() {
-    return "PyInitNewSignatureInspection";
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
   }
 
   @NotNull

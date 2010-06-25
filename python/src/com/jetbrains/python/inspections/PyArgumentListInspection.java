@@ -1,7 +1,5 @@
 package com.jetbrains.python.inspections;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElementVisitor;
@@ -16,37 +14,15 @@ import java.util.Map;
 
 /**
  * Looks at argument lists.
- * User: dcheryasov
- * Date: Nov 14, 2008
+ * @author dcheryasov
  */
-public class PyArgumentListInspection  extends LocalInspectionTool {
-  @Nls
-  @NotNull
-  public String getGroupDisplayName() {
-    return PyBundle.message("INSP.GROUP.python");
-  }
-
+public class PyArgumentListInspection extends PyInspection {
   @Nls
   @NotNull
   public String getDisplayName() {
     return PyBundle.message("INSP.NAME.incorrect.call.arguments");
   }
 
-  @NotNull
-  public String getShortName() {
-    return "PyArgumentListInspection";
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  @NotNull
-  public HighlightDisplayLevel getDefaultLevel() {
-    return HighlightDisplayLevel.WARNING;
-  }
-  
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {

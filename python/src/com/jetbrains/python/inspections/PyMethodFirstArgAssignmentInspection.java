@@ -18,30 +18,13 @@ import java.util.Set;
 
 /**
  * Reports assignment to 'self' or 'cls'.
- * User: dcheryasov
- * Date: Jun 12, 2009 6:45:16 AM
+ * @author dcheryasov
  */
-public class PyMethodFirstArgAssignmentInspection  extends LocalInspectionTool {
-  @Nls
-  @NotNull
-  public String getGroupDisplayName() {
-    return PyBundle.message("INSP.GROUP.python");
-  }
-
+public class PyMethodFirstArgAssignmentInspection extends PyInspection {
   @Nls
   @NotNull
   public String getDisplayName() {
     return PyBundle.message("INSP.NAME.first.arg.assign");
-  }
-
-  @NotNull
-  public String getShortName() {
-    return "PyMethodFirstArgAssignmentInspection";
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
   }
 
   @NotNull

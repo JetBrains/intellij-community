@@ -22,27 +22,11 @@ import java.util.Collection;
  * User: dcheryasov
  * Date: Nov 12, 2009 10:20:49 PM
  */
-public class PyReturnFromInitInspection extends LocalInspectionTool {
-
-  @Nls
-  @NotNull
-  public String getGroupDisplayName() {
-    return PyBundle.message("INSP.GROUP.python");
-  }
-
+public class PyReturnFromInitInspection extends PyInspection {
   @Nls
   @NotNull
   public String getDisplayName() {
     return PyBundle.message("INSP.NAME.init.return");
-  }
-
-  @NotNull
-  public String getShortName() {
-    return "PyReturnFromInitInspection";
-  }
-
-  public boolean isEnabledByDefault() {
-    return true;
   }
 
   @NotNull

@@ -15,35 +15,14 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- * Author: Alexey.Ivanov
- * Date:   24.03.2010
- * Time:   21:33:51
+ * @author Alexey.Ivanov
  */
-public class PyComparisonWithNoneInspection extends LocalInspectionTool {
-  @Nls
-  @NotNull
-  @Override
-  public String getGroupDisplayName() {
-    return PyBundle.message("INSP.GROUP.python");
-  }
-
+public class PyComparisonWithNoneInspection extends PyInspection {
   @Nls
   @NotNull
   @Override
   public String getDisplayName() {
     return PyBundle.message("INSP.NAME.comparison.with.none");
-  }
-
-  @NotNull
-  @Override
-  public String getShortName() {
-    return "PyComparisonWithNoneInspection";
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
   }
 
   @NotNull

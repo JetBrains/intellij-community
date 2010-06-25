@@ -39,34 +39,12 @@ import java.util.*;
  * User: dcheryasov
  * Date: Nov 15, 2008
  */
-public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
+public class PyUnresolvedReferencesInspection extends PyInspection {
   private final ThreadLocal<Visitor> myLastVisitor = new ThreadLocal<Visitor>();
-
-  @Nls
-  @NotNull
-  public String getGroupDisplayName() {
-    return PyBundle.message("INSP.GROUP.python");
-  }
-
   @Nls
   @NotNull
   public String getDisplayName() {
     return PyBundle.message("INSP.NAME.unresolved.refs");
-  }
-
-  @NotNull
-  public String getShortName() {
-    return "PyUnresolvedReferencesInspection";
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  @NotNull
-  public HighlightDisplayLevel getDefaultLevel() {
-    return HighlightDisplayLevel.WARNING;
   }
 
   private static Condition<PsiElement> IS_IMPORT_STATEMENT = new Condition<PsiElement>() {
