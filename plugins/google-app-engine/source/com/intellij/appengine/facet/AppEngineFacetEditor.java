@@ -6,7 +6,6 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.ui.*;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -134,7 +133,7 @@ public class AppEngineFacetEditor extends FacetEditorTab {
     return files;
   }
 
-  public void apply() throws ConfigurationException {
+  public void apply() {
     myFacetConfiguration.setSdkHomePath(mySdkEditor.getPath());
     myFacetConfiguration.setRunEnhancerOnMake(myRunEnhancerOnMakeCheckBox.isSelected());
     myFacetConfiguration.setFilesToEnhance(getConfiguredFiles());
