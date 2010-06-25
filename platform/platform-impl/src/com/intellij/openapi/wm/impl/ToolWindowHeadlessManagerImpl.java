@@ -176,6 +176,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
   @NonNls private static final ContentManager MOCK_CONTENT_MANAGER = new ContentManager() {
     public void addContent(@NotNull final Content content) { }
+    public void addContent(@NotNull Content content, int order) { }
     public void addContent(@NotNull final Content content, final Object constraints) { }
     public void addContentManagerListener(@NotNull final ContentManagerListener l) { }
     public void addDataProvider(@NotNull final DataProvider provider) { }
