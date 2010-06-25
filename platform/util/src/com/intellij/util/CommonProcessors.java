@@ -127,9 +127,18 @@ public class CommonProcessors {
       return false;
     }
   };
+  private static final Processor TRUE = new Processor<Object>() {
+    public boolean process(Object t) {
+      return true;
+    }
+  };
 
   @SuppressWarnings({"unchecked"})
   public static <T> Processor<T> alwaysFalse() {
     return FALSE;
+  }
+  @SuppressWarnings({"unchecked"})
+  public static <T> Processor<T> alwaysTrue() {
+    return TRUE;
   }
 }

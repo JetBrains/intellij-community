@@ -32,7 +32,7 @@ public abstract class AntDomElement implements DomElement {
 
   @Attribute("refid")
   @Convert(value = AntDomRefIdConverter.class)
-  public abstract GenericAttributeValue<String> getRefId();
+  public abstract GenericAttributeValue<AntDomElement> getRefId();
 
   public final AntDomProject getAntProject() {
     return getParentOfType(AntDomProject.class, false);

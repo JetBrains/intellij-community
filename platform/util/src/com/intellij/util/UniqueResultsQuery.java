@@ -21,8 +21,10 @@ import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author max
@@ -32,7 +34,7 @@ public class UniqueResultsQuery<T, M> implements Query<T> {
   private final TObjectHashingStrategy<M> myHashingStrategy;
   private final Function<T, M> myMapper;
 
-  public final static Function ID = new Function() {
+  public static final Function ID = new Function() {
     public Object fun(Object o) {
       return o;
     }
@@ -59,19 +61,33 @@ public class UniqueResultsQuery<T, M> implements Query<T> {
   }
 
   public boolean forEach(@NotNull final Processor<T> consumer) {
+    Collection<M> collection = process(consumer);
+    return collection != null;
+  }
+
+  // returns null if canceled
+  private Collection<M> process(final Processor<T> consumer) {
     final Set<M> processedElements = new ConcurrentHashSet<M>(myHashingStrategy);
-    return myOriginal.forEach(new Processor<T>() {
+    boolean success = myOriginal.forEach(new Processor<T>() {
       public boolean process(final T t) {
         return !processedElements.add(myMapper.fun(t)) || consumer.process(t);
       }
     });
+    return success ? processedElements : null;
   }
 
   @NotNull
   public Collection<T> findAll() {
-    final CommonProcessors.CollectProcessor<T> processor = new CommonProcessors.CollectProcessor<T>();
-    forEach(processor);
-    return processor.getResults();
+    if (myMapper == ID) {
+      Collection<M> collection = process(CommonProcessors.<T>alwaysTrue());
+      //noinspection unchecked
+      return collection == null ? Collections.<T>emptyList() : (Collection<T>)collection;
+    }
+    else {
+      final CommonProcessors.CollectProcessor<T> processor = new CommonProcessors.CollectProcessor<T>(new CopyOnWriteArrayList<T>());
+      forEach(processor);
+      return processor.getResults();
+    }
   }
 
   public T[] toArray(final T[] a) {

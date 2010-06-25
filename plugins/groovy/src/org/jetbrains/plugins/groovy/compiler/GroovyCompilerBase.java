@@ -104,7 +104,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
 
     final Library[] libraries = GroovyConfigUtils.getInstance().getSDKLibrariesByModule(module);
     if (libraries.length > 0) {
-      classPathBuilder.addVirtualFiles(Arrays.asList(libraries[0].getFiles(OrderRootType.COMPILATION_CLASSES)));
+      classPathBuilder.addVirtualFiles(Arrays.asList(libraries[0].getFiles(OrderRootType.CLASSES)));
     }
 
     classPathBuilder.addVirtualFiles(chunk.getCompilationBootClasspathFiles());
