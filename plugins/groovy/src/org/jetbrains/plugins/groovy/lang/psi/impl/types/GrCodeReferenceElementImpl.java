@@ -292,7 +292,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
             }
             if (kind == CLASS) return;
 
-            PsiPackage[] subpackages = aPackage.getSubPackages();
+            PsiPackage[] subpackages = aPackage.getSubPackages(getResolveScope());
             for (PsiPackage subpackage : subpackages) {
               consumer.consume(subpackage);
             }
@@ -385,7 +385,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
               }
 
               if (kind == CLASS_OR_PACKAGE) {
-                for (final PsiPackage subpackage : ((PsiPackage) qualifierResolved).getSubPackages()) {
+                for (final PsiPackage subpackage : ((PsiPackage) qualifierResolved).getSubPackages(ref.getResolveScope())) {
                   if (refName.equals(subpackage.getName()))
                     return new GroovyResolveResult[]{new GroovyResolveResultImpl(subpackage, true)};
                 }
@@ -410,7 +410,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
             if (kind == CLASS_OR_PACKAGE) {
               PsiPackage defaultPackage = JavaPsiFacade.getInstance(ref.getProject()).findPackage("");
               if (defaultPackage != null) {
-                for (final PsiPackage subpackage : defaultPackage.getSubPackages()) {
+                for (final PsiPackage subpackage : defaultPackage.getSubPackages(ref.getResolveScope())) {
                   if (refName.equals(subpackage.getName()))
                     return new GroovyResolveResult[]{new GroovyResolveResultImpl(subpackage, true)};
                 }

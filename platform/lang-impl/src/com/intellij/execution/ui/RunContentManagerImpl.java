@@ -392,7 +392,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     }
   }
 
-  private static RunContentDescriptor getRunContentDescriptorByContent(final Content content) {
+  public static RunContentDescriptor getRunContentDescriptorByContent(final Content content) {
     return content.getUserData(DESCRIPTOR_KEY);
   }
 

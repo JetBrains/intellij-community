@@ -126,7 +126,7 @@ public class CompletionLookupArranger extends LookupArranger {
 
     for (int i = 0; i < weight1.length; i++) {
       final Comparable w1 = weight1[i];
-      final Comparable w2 = weight2[i];
+      final Comparable w2 = i < weight2.length ? weight2[i]:null;
       if (w1 != null || w2 != null) {
         if (w1 == null) return 1;
         if (w2 == null) return -1;

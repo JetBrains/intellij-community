@@ -24,7 +24,6 @@ package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -36,7 +35,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ScheduleForAdditionAction extends AnAction implements DumbAware {
@@ -45,46 +44,44 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
   }
 
   public void update(AnActionEvent e) {
-    List<VirtualFile> files = e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY);
-    boolean enabled = files != null && !files.isEmpty();
-    if (!enabled) {
-      final DataContext dataContext = e.getDataContext();
-      enabled = getUnversionedFile(dataContext) != null;
-    }
+    final boolean enabled = e.getData(PlatformDataKeys.PROJECT) != null && (getUnversionedFiles(e) != null);
     e.getPresentation().setEnabled(enabled);
     e.getPresentation().setVisible(enabled);
   }
 
   public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
-
-    final List<VirtualFile> files;
-    final List<VirtualFile> unversionedFiles = e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY);
-    if (unversionedFiles == null || unversionedFiles.isEmpty()) {
-      final VirtualFile unversionedFile = getUnversionedFile(e.getDataContext());
-      if (unversionedFile == null) {
-        return;
-      }
-      files = Collections.singletonList(unversionedFile);
-    } else {
-      files = unversionedFiles;
+    final List<VirtualFile> unversionedFiles = getUnversionedFiles(e);
+    if (unversionedFiles == null) {
+      return;
     }
-
-    final ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(project);
-    changeListManager.addUnversionedFiles(changeListManager.getDefaultChangeList(), files);
+    final ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(e.getData(PlatformDataKeys.PROJECT));
+    changeListManager.addUnversionedFiles(changeListManager.getDefaultChangeList(), unversionedFiles);
   }
 
   @Nullable
-  private VirtualFile getUnversionedFile(final DataContext dataContext) {
-    if (dataContext == null) {
+  private static List<VirtualFile> getUnversionedFiles(final AnActionEvent e) {
+    // first get from the ChangeListView
+    List<VirtualFile> unversionedFiles = e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY);
+    if (unversionedFiles != null && !unversionedFiles.isEmpty()) {
+      return unversionedFiles;
+    }
+
+    // then get from selection    
+    final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(e.getDataContext());
+    if (files == null) {
       return null;
     }
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    final VirtualFile file = project == null ? null : PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
-    if (file != null && FileStatusManager.getInstance(project).getStatus(file) == FileStatus.UNKNOWN) {
-      return file;
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    if (project == null) {
+      return null;
     }
-    return null;
+    unversionedFiles = new ArrayList<VirtualFile>(files.length);
+    for (VirtualFile file : files) {
+      if (file != null && FileStatusManager.getInstance(project).getStatus(file) == FileStatus.UNKNOWN) {
+        unversionedFiles.add(file);
+      }
+    }
+    return unversionedFiles.isEmpty() ? null : unversionedFiles;
   }
 
 }

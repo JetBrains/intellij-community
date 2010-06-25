@@ -468,6 +468,11 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     }
   };
   public GlobalSearchScope getFileResolveScope() {
+    final PsiElement context = getContext();
+    if (context instanceof GroovyFile) {
+      return context.getResolveScope();
+    }
+
     final VirtualFile vFile = getOriginalFile().getVirtualFile();                                        
     if (vFile == null) {
       return GlobalSearchScope.allScope(getProject());

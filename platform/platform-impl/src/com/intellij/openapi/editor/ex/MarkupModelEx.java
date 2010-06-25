@@ -30,7 +30,8 @@ public interface MarkupModelEx extends MarkupModel {
 
   @Nullable
   HighlighterList getHighlighterList();
-  
+
+  @Nullable
   RangeHighlighter addPersistentLineHighlighter(int lineNumber, int layer, TextAttributes textAttributes);
   boolean containsHighlighter(RangeHighlighter highlighter);
 

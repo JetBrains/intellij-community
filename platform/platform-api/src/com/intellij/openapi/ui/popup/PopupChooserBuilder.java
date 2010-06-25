@@ -25,6 +25,7 @@ import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.util.Function;
+import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nls;
@@ -185,7 +186,6 @@ public class PopupChooserBuilder {
       }
     }
 
-    myChooserComponent.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
     (list != null ? list : myChooserComponent).addMouseListener(new MouseAdapter() {
       @Override
@@ -217,6 +217,9 @@ public class PopupChooserBuilder {
     }
 
     scrollPane.getViewport().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    ((JComponent)scrollPane.getViewport().getView()).setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
+    scrollPane.getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createMini());
 
     if (myChooserComponent instanceof ListWithFilter) {
       contentPane.add(myChooserComponent, BorderLayout.CENTER);

@@ -199,6 +199,11 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
     final RestartAction restartAction = new RestartAction(myExecutor, myRunner, getProcessHandler(), myRerunIcon, contentDescriptor, myEnvironment);
     restartAction.registerShortcut(component);
     actionGroup.add(restartAction);
+    contentDescriptor.setRestarter(new Runnable() {
+      public void run() {
+        restartAction.restart();
+      }
+    });
 
     if (myExecutionResult instanceof DefaultExecutionResult) {
       final AnAction[] actions = ((DefaultExecutionResult)myExecutionResult).getRestartActions();

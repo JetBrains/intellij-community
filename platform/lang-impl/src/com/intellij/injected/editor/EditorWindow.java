@@ -204,6 +204,11 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
   }
 
   @NotNull
+  public SoftWrapModel getSoftWrapModel() {
+    return myDelegate.getSoftWrapModel();
+  }
+
+  @NotNull
   public EditorSettings getSettings() {
     return myDelegate.getSettings();
   }

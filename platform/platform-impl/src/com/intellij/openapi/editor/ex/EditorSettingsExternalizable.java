@@ -40,6 +40,7 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
   //Q: make it interface?
   public static class OptionSet implements Cloneable {
     public String LINE_SEPARATOR;
+    public boolean USE_SOFT_WRAPS = false;
     public boolean IS_VIRTUAL_SPACE = true;
     public boolean IS_CARET_INSIDE_TABS;
     @NonNls public String STRIP_TRAILING_SPACES = "Changed";
@@ -209,6 +210,14 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
 
   public void setSmartHome(boolean val) {
     myOptions.SMART_HOME = val;
+  }
+
+  public boolean isUseSoftWraps() {
+    return myOptions.USE_SOFT_WRAPS;
+  }
+
+  public void setUseSoftWraps(boolean use) {
+    myOptions.USE_SOFT_WRAPS = use;
   }
 
   public boolean isVirtualSpace() {

@@ -22,6 +22,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -48,16 +49,27 @@ public class CustomTemplateCallback {
   private LiveTemplateBuilder.Marker myEndOffsetMarker;
   private final Map<Object, LiveTemplateBuilder.Marker> myCheckpoints = new HashMap<Object, LiveTemplateBuilder.Marker>();
 
+  private final boolean myInInjectedFragment;
+
   private FileType myFileType;
 
   private LiveTemplateBuilder myBuilder = new LiveTemplateBuilder();
   private int myOffset = 0;
 
   public CustomTemplateCallback(Editor editor, PsiFile file) {
-    myEditor = editor;
-    myFile = file;
     myProject = file.getProject();
     myTemplateManager = TemplateManagerImpl.getInstance(myProject);
+
+    int caretOffset = editor.getCaretModel().getOffset();
+
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    PsiElement element = InjectedLanguageUtil.findElementAtNoCommit(file, caretOffset);
+
+    myFile = element != null ? element.getContainingFile() : file;
+
+    myInInjectedFragment = InjectedLanguageManager.getInstance(myProject).isInjectedFragment(myFile);
+    myEditor = myInInjectedFragment ? InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file) : editor;
+
     fixInitialState();
   }
 
@@ -151,11 +163,6 @@ public class CustomTemplateCallback {
   }
 
   public void startAllExpandedTemplates() {
-    /*myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    final CodeStyleManager style = CodeStyleManager.getInstance(myProject);
-    if (myGlobalMarker != null) {
-      style.reformatText(myFile, myGlobalMarker.getStartOffset(), myGlobalMarker.getEndOffset());
-    }*/
     if (myBuilder.getText().length() == 0) {
       return;
     }
@@ -164,6 +171,7 @@ public class CustomTemplateCallback {
       myBuilder.insertVariableSegment(myOffset, TemplateImpl.END);
     }
     TemplateImpl template = myBuilder.buildTemplate();
+    template.setToReformat(!myInInjectedFragment);
     myTemplateManager.startTemplate(myEditor, template, false, myBuilder.getPredefinedValues(), null);
     myBuilder = new LiveTemplateBuilder();
     myEndOffsetMarker = null;

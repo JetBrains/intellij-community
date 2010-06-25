@@ -27,7 +27,6 @@ import com.intellij.openapi.vcs.CommittedChangesProvider;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
@@ -45,7 +44,6 @@ import com.intellij.util.messages.Topic;
 import org.zmlx.hg4idea.provider.*;
 import org.zmlx.hg4idea.provider.annotate.HgAnnotationProvider;
 import org.zmlx.hg4idea.provider.commit.HgCheckinEnvironment;
-import org.zmlx.hg4idea.provider.commit.HgCommitExecutor;
 import org.zmlx.hg4idea.provider.update.HgIntegrateEnvironment;
 import org.zmlx.hg4idea.provider.update.HgUpdateEnvironment;
 import org.zmlx.hg4idea.ui.HgChangesetStatus;
@@ -87,7 +85,6 @@ public class HgVcs extends AbstractVcs {
   private final HgUpdateEnvironment updateEnvironment;
   private final HgIntegrateEnvironment integrateEnvironment;
   private final HgCachingCommitedChangesProvider commitedChangesProvider;
-  private final HgCommitExecutor commitExecutor;
   private final HgCurrentBranchStatus hgCurrentBranchStatus = new HgCurrentBranchStatus();
   private final HgChangesetStatus incomingChangesStatus = new HgChangesetStatus(INCOMING_ICON);
   private final HgChangesetStatus outgoingChangesStatus = new HgChangesetStatus(OUTGOING_ICON);
@@ -115,7 +112,6 @@ public class HgVcs extends AbstractVcs {
     updateEnvironment = new HgUpdateEnvironment(project);
     integrateEnvironment = new HgIntegrateEnvironment(project);
     commitedChangesProvider = new HgCachingCommitedChangesProvider(project);
-    commitExecutor = new HgCommitExecutor(project);
     myDirStateChangeListener = new HgDirStateChangeListener(myProject);
   }
 
@@ -239,8 +235,6 @@ public class HgVcs extends AbstractVcs {
     if (!started) {
       return;
     }
-
-    ChangeListManager.getInstance(myProject).registerCommitExecutor(commitExecutor);
 
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
     if (statusBar != null) {

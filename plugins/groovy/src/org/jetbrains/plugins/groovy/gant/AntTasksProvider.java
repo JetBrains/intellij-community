@@ -27,18 +27,15 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.PathUtil;
 import com.intellij.util.lang.UrlClassLoader;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 
 import java.net.URL;
 import java.util.*;
@@ -79,29 +76,12 @@ public class AntTasksProvider {
         final Set<LightMethodBuilder> result = new HashSet<LightMethodBuilder>();
 
         final Project project = file.getProject();
-        final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-        final GlobalSearchScope scope = file.getResolveScope();
-
-        final PsiType closureType = JavaPsiFacade.getElementFactory(project).createTypeFromText(GrClosableBlock.GROOVY_LANG_CLOSURE,
-                                                                                                file);
+        final PsiType closureType = JavaPsiFacade.getElementFactory(project).createTypeFromText(GrClosableBlock.GROOVY_LANG_CLOSURE, file);
 
         for (String name : antObjects.keySet()) {
-          final PsiClass psiClass = facade.findClass(antObjects.get(name).getName(), scope);
-
-          final LightMethodBuilder tdMethod =
-            new LightMethodBuilder(PsiManager.getInstance(project), GroovyFileType.GROOVY_LANGUAGE, name).
-              setModifiers(PsiModifier.PUBLIC).
-              addParameter("args", CommonClassNames.JAVA_UTIL_MAP).
-              setBaseIcon(GantIcons.ANT_TASK);
-
-          tdMethod.addParameter(new GrLightParameter("body", closureType, tdMethod).setOptional(true));
-
-          if (psiClass != null) {
-            tdMethod.setNavigationElement(psiClass);
-          }
-          result.add(tdMethod);
+          result.add(new AntBuilderMethod(file, name, closureType, antObjects.get(name)));
         }
-        return Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, ProjectRootManager.getInstance(file.getProject()));
+        return Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, ProjectRootManager.getInstance(project));
       }
     }, false);
   }

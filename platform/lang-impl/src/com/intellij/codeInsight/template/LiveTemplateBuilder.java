@@ -74,7 +74,6 @@ public class LiveTemplateBuilder {
       last = occurence.myOffset;
     }
     template.addTextSegment(myText.substring(last));
-    template.setToReformat(true);
     return template;
   }
 

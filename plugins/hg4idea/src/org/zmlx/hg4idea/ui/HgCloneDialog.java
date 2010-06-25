@@ -20,9 +20,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.core.GridLayoutManager;
-import com.intellij.uiDesigner.core.Spacer;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.HgCommandResult;
 import org.zmlx.hg4idea.command.HgIdentifyCommand;
@@ -30,13 +27,11 @@ import org.zmlx.hg4idea.command.HgIdentifyCommand;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ResourceBundle;
 
 /**
  * A dialog for the mercurial clone options
@@ -346,11 +341,10 @@ public class HgCloneDialog extends DialogWrapper {
   }
 
   private static boolean testRepository(Project project, final String repositoryUrl) {
-    HgIdentifyCommand identifyCommand = new HgIdentifyCommand(project);
+    final HgIdentifyCommand identifyCommand = new HgIdentifyCommand(project);
     identifyCommand.setSource(repositoryUrl);
-    HgCommandResult result = identifyCommand.execute();
-
-    return result.getExitValue() == 0;
+    final HgCommandResult result = identifyCommand.execute();
+    return result != null && result.getExitValue() == 0;
   }
 
 }

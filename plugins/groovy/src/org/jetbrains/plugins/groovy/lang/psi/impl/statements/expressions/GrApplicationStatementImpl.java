@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -26,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplic
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 /**
  * @author ilyas
@@ -45,13 +47,22 @@ public class GrApplicationStatementImpl extends GrExpressionImpl implements GrAp
   }
 
   public GrExpression getFunExpression() {
-    return findChildByClass(GrExpression.class);
+    return getInvokedExpression();
   }
 
   public GrExpression[] getArguments() {
     final GrCommandArgumentList list = getArgumentList();
     if (list == null) return GrExpression.EMPTY_ARRAY;
     return list.getExpressionArguments();
+  }
+
+  public PsiMethod resolveMethod() {
+    return PsiImplUtil.resolveMethod(this);
+  }
+
+  @Override
+  public GrExpression getInvokedExpression() {
+    return findNotNullChildByClass(GrExpression.class);
   }
 
   public GrCommandArgumentList getArgumentList() {

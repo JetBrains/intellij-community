@@ -40,6 +40,9 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   private ChooseByNamePopup(final Project project, final ChooseByNameModel model, final ChooseByNamePopup oldPopup,
                             final PsiElement context, @Nullable final String predefinedText) {
     super(project, model, oldPopup != null ? oldPopup.getEnteredText() : predefinedText, context);
+    if (oldPopup == null && predefinedText != null) {
+      setPreselectInitialText(true);
+    }
     if (oldPopup != null) { //inherit old focus owner
       myOldFocusOwner = oldPopup.myPreviouslyFocusedComponent;
     }

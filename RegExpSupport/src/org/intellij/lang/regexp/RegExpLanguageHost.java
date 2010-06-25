@@ -24,4 +24,5 @@ public interface RegExpLanguageHost {
   boolean supportsPossessiveQuantifiers();
   boolean supportsPythonNamedGroups();
   boolean supportsPythonConditionalRefs();
+  boolean supportsRubyNamedGroups();
 }

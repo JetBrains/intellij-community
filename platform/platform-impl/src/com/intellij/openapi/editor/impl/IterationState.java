@@ -38,7 +38,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-@SuppressWarnings({"ForLoopReplaceableByForEach"}) // Way too many garbage in AbrstractList.iterator() produced otherwise.
+@SuppressWarnings({"ForLoopReplaceableByForEach"}) // Way too many garbage in AbstractList.iterator() produced otherwise.
 public final class IterationState {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.IterationState");
   private final TextAttributes myMergedAttributes = new TextAttributes();

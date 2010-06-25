@@ -301,7 +301,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     myFoldTree.rebuild();
 
     myEditor.updateCaretCursor();
-    myEditor.recalcSizeAndRepaint();
+    myEditor.recalculateSizeAndRepaint();
     if (myEditor.getGutterComponentEx().isFoldingOutlineShown()) {
       myEditor.getGutterComponentEx().repaint();
     }

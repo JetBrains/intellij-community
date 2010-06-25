@@ -48,6 +48,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -334,6 +335,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         g.setColor(color);
         g.fillRect(x + 1, yStart, paintWidth - 2, yEnd - yStart);
 
+        if (color == null) {
+          return;
+        }
         Color brighter = color.brighter();
         Color darker = color.darker();
 
@@ -388,6 +392,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       fireErrorMarkerClicked(marker, e);
     }
 
+    @Nullable
     private RangeHighlighter getNearestRangeHighlighter(final MouseEvent e, final int width) {
       List<MarkSpot> nearestSpots = getNearestMarkSpots(e, width);
       RangeHighlighter nearestMarker = null;

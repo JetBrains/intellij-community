@@ -20,7 +20,11 @@ public class MethodCallInSuperTest extends JDialog {
   private JComponent myRootComponent;
 
   public MethodCallInSuperTest() {
-    super(JOptionPane.getRootFrame(), "", true);
+    super(getNullFrame(), "", true);
     getContentPane().add(myRootComponent);
+  }
+  
+  private static JFrame getNullFrame() {
+    return null;
   }
 }

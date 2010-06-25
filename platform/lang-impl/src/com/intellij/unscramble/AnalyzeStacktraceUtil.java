@@ -19,6 +19,8 @@ package com.intellij.unscramble;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.filters.Filter;
+import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -33,6 +35,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -48,6 +52,8 @@ import java.awt.datatransfer.Transferable;
  * @author yole
  */
 public class AnalyzeStacktraceUtil {
+  public static ExtensionPointName<Filter> EP_NAME = ExtensionPointName.create("com.intellij.analyzeStacktraceFilter");
+
   private AnalyzeStacktraceUtil() {
   }
 
@@ -82,7 +88,12 @@ public class AnalyzeStacktraceUtil {
   }
 
   public static ConsoleView addConsole(Project project, @Nullable ConsoleFactory consoleFactory, final String tabTitle) {
-    final ConsoleView consoleView = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
+    final TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
+    for(Filter filter: Extensions.getExtensions(EP_NAME, project)) {
+      builder.addFilter(filter);
+    }
+
+    final ConsoleView consoleView = builder.getConsole();
     final DefaultActionGroup toolbarActions = new DefaultActionGroup();
     JComponent consoleComponent = consoleFactory != null
                                   ? consoleFactory.createConsoleComponent(consoleView, toolbarActions)

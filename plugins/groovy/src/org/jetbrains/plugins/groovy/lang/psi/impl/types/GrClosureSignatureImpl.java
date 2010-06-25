@@ -19,7 +19,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -52,18 +51,6 @@ public class GrClosureSignatureImpl implements GrClosureSignature {
 
   public GrClosureSignatureImpl(PsiParameter[] parameters, PsiType returnType) {
     this(parameters, returnType, PsiSubstitutor.EMPTY);
-  }
-
-  public GrClosureSignatureImpl(@NotNull GrClosableBlock block) {
-    this(block.getAllParameters(), block.getReturnType());
-  }
-
-  public GrClosureSignatureImpl(@NotNull PsiMethod method) {
-    this(method, PsiSubstitutor.EMPTY);
-  }
-
-  public GrClosureSignatureImpl(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
-    this(method.getParameterList().getParameters(), PsiUtil.getSmartReturnType(method), substitutor);
   }
 
   GrClosureSignatureImpl(@NotNull GrClosureParameter[] params, @Nullable PsiType returnType, boolean isVarArgs) {
@@ -99,7 +86,7 @@ public class GrClosureSignatureImpl implements GrClosureSignature {
   public GrClosureSignature curry(int count) {
     if (count > myParameters.length) {
       if (isVarargs()) {
-        return new GrClosureSignatureImpl(GrClosureParameter.EMPTY_ARRAY, myReturnType);
+        return new DerivedClosureSignature();
       }
       else {
         return null;
@@ -107,22 +94,22 @@ public class GrClosureSignatureImpl implements GrClosureSignature {
     }
     GrClosureParameter[] newParams = new GrClosureParameter[myParameters.length - count];
     System.arraycopy(myParameters, count, newParams, 0, newParams.length);
-    return new GrClosureSignatureImpl(newParams, myReturnType, myIsVarargs);
+    return new DerivedClosureSignature(newParams, null, myIsVarargs);
   }
 
   public boolean isValid() {
     for (GrClosureParameter parameter : myParameters) {
       if (!parameter.isValid()) return false;
     }
-    return myReturnType == null || myReturnType.isValid();
+    final PsiType returnType = getReturnType();
+    return returnType == null || returnType.isValid();
   }
 
   @Override
   public boolean equals(Object obj) {
     if (obj instanceof GrClosureSignature) {
       return Comparing.equal(myParameters, ((GrClosureSignature)obj).getParameters()) &&
-             Comparing.equal(myIsVarargs, ((GrClosureSignature)obj).isVarargs()) &&
-             Comparing.equal(myReturnType, ((GrClosureSignature)obj).getReturnType());
+             Comparing.equal(myIsVarargs, ((GrClosureSignature)obj).isVarargs());
     }
     return super.equals(obj);
   }
@@ -151,6 +138,21 @@ public class GrClosureSignatureImpl implements GrClosureSignature {
       return new GrClosureSignatureImpl(params, returnType, isVarArgs);
     }
     return null; //todo
+  }
+
+  private class DerivedClosureSignature extends GrClosureSignatureImpl {
+    DerivedClosureSignature() {
+      super(GrClosureParameter.EMPTY_ARRAY, null);
+    }
+
+    DerivedClosureSignature(@NotNull GrClosureParameter[] params, @Nullable PsiType returnType, boolean isVarArgs) {
+      super(params, returnType, isVarArgs);
+    }
+
+    @Override
+    public PsiType getReturnType() {
+      return GrClosureSignatureImpl.this.getReturnType();
+    }
   }
 }
 

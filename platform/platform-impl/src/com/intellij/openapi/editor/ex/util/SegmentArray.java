@@ -19,6 +19,13 @@ import com.intellij.openapi.diagnostic.Logger;
 
 import java.lang.reflect.Array;
 
+/**
+ * This class is a data structure specialized for working with the indexed segments, i.e. it holds numerous mappings like
+ * {@code 'index <-> (start; end)'} and provides convenient way for working with them, e.g. find index by particular offset that
+ * belongs to target <code>(start; end)</code> segment etc.
+ * <p/>
+ * Not thread-safe.
+ */
 public class SegmentArray {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.ex.util.SegmentArray");
 
@@ -101,7 +108,7 @@ public class SegmentArray {
   public final int findSegmentIndex(int offset) {
     if (mySegmentCount <= 0) {
       if (offset == 0) return 0;
-      throw new IllegalStateException("no segments avaliable");
+      throw new IllegalStateException("no segments available");
     }
 
     final int lastValidOffset = getLastValidOffset();

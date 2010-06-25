@@ -275,18 +275,21 @@ public class OSProcessHandler extends ProcessHandler {
     }
 
     public void readAvailable(char[] buffer) throws IOException {
+      int fairCount = 0;
       while (myReader.ready()) {
         int n = myReader.read(buffer);
-        if (n > 0) {
-          int start = 0;
-          int end = 0;
-          while (start < n) {
-            while (end < n && buffer[end++] != '\n');
+        if (n <= 0) break;
 
-            myNotificationQueue.offer(new String(buffer, start, end - start));
-            start = end;
-          }
+        int start = 0;
+        int end = 0;
+        while (start < n) {
+          while (end < n && buffer[end++] != '\n');
+
+          myNotificationQueue.offer(new String(buffer, start, end - start));
+          start = end;
         }
+
+        if (++fairCount > 10) return;
       }
 
       if (isProcessTerminated()) {

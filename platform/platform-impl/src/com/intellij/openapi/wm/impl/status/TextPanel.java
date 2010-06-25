@@ -58,7 +58,7 @@ public class TextPanel extends JComponent {
 
   @Override
   protected void paintComponent(final Graphics g) {
-    final String s = getText();
+    String s = getText();
     if (s != null) {
       final Rectangle bounds = getBounds();
       final Insets insets = getInsets();
@@ -68,10 +68,26 @@ public class TextPanel extends JComponent {
 
       UIUtil.applyRenderingHints(g2);
 
+      final FontMetrics fm = g2.getFontMetrics();
+      final int sWidth = fm.stringWidth(s);
+
       int x = insets.left;
       if (myAlignment == JComponent.CENTER_ALIGNMENT || myAlignment == JComponent.RIGHT_ALIGNMENT) {
-        final int sWidth = g2.getFontMetrics().stringWidth(s);
         x = myAlignment == JComponent.CENTER_ALIGNMENT ? (bounds.width - sWidth) / 2 : bounds.width - insets.right - sWidth;
+      }
+
+      final Rectangle textR = new Rectangle();
+      final Rectangle iconR = new Rectangle();
+      final Rectangle viewR = new Rectangle(bounds);
+      textR.x = textR.y = textR.width = textR.height = 0;
+
+      viewR.width -= insets.left;
+      viewR.width -= insets.right;
+
+      if (sWidth > (bounds.width - insets.left - insets.right)) {
+        s = SwingUtilities
+          .layoutCompoundLabel(fm, s, null, SwingUtilities.CENTER, SwingUtilities.CENTER, SwingUtilities.CENTER, SwingUtilities.TRAILING,
+                               bounds, iconR, textR, 0);
       }
 
       final int y = UIUtil.getStringY(s, bounds, g2);

@@ -112,6 +112,14 @@ public interface Editor extends UserDataHolder {
   @NotNull CaretModel getCaretModel();
 
   /**
+   * Returns the soft wrap model for the document, which can be used to get information about soft wraps registered
+   * for the editor document at the moment and provides basic management functions for them.
+   *
+   * @return the soft wrap model instance
+   */
+  @NotNull SoftWrapModel getSoftWrapModel();
+
+  /**
    * Returns the editor settings for this editor instance. Changes to these settings affect
    * only the current editor instance.
    *
