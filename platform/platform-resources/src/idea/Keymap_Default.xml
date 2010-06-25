@@ -929,8 +929,6 @@
   <action id="Console.History.Previous"><keyboard-shortcut first-keystroke="control DOWN"/></action>
 
   <action id="Console.Jdbc.Execute"><keyboard-shortcut first-keystroke="control ENTER"/></action>
-  <action id="Console.Jdbc.ExecuteCurrent"><keyboard-shortcut first-keystroke="control shift ENTER"/></action>
-  <action id="Console.Jdbc.OpenInEditor"><keyboard-shortcut first-keystroke="control alt F4"/></action>
   <action id="Console.Jdbc.Properties"><keyboard-shortcut first-keystroke="alt ENTER"/></action>
   <action id="Console.Jdbc.Close"><keyboard-shortcut first-keystroke="control shift F4"/></action>
 
