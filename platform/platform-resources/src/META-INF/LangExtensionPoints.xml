@@ -129,6 +129,7 @@
   <extensionPoint name="definitionsSearch" interface="com.intellij.util.QueryExecutor"/>
 
   <extensionPoint name="useScopeEnlarger" interface="com.intellij.psi.search.UseScopeEnlarger"/>
+  <extensionPoint name="resolveScopeEnlarger" interface="com.intellij.psi.ResolveScopeEnlarger"/>
 
   <extensionPoint name="gotoClassContributor"
                   interface="com.intellij.navigation.ChooseByNameContributor"/>

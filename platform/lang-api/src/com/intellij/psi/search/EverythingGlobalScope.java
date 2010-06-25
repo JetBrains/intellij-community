@@ -50,7 +50,7 @@ public class EverythingGlobalScope extends GlobalSearchScope {
 
   @NotNull
   @Override
-  public SearchScope union(@NotNull SearchScope scope) {
+  public GlobalSearchScope union(@NotNull SearchScope scope) {
     return this;
   }
 

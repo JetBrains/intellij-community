@@ -107,13 +107,13 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   }
 
   @NotNull
-  public SearchScope union(@NotNull SearchScope scope) {
+  public GlobalSearchScope union(@NotNull SearchScope scope) {
     if (scope instanceof GlobalSearchScope) return uniteWith((GlobalSearchScope)scope);
     return union((LocalSearchScope)scope);
   }
 
   @NotNull
-  public SearchScope union(final LocalSearchScope scope) {
+  public GlobalSearchScope union(final LocalSearchScope scope) {
     return new GlobalSearchScope(scope.getScope()[0].getProject()) {
       @Override
       public boolean contains(VirtualFile file) {
