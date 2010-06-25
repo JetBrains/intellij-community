@@ -23,10 +23,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Vector;
+import java.util.*;
 import java.util.concurrent.Semaphore;
 
 /**
@@ -112,10 +109,10 @@ public class SSHMain {
   /**
    * A constructor
    *
-   * @param host       a host
-   * @param username   a name of user (from URL)
-   * @param port       a port
-   * @param command    a command
+   * @param host     a host
+   * @param username a name of user (from URL)
+   * @param port     a port
+   * @param command  a command
    * @throws IOException if config file could not be loaded
    */
   private SSHMain(String host, String username, Integer port, String command) throws IOException {
@@ -192,7 +189,12 @@ public class SSHMain {
    * @throws IOException in case of IO error or authentication failure
    */
   private void authenticate(final Connection c) throws IOException {
-    for (String method : myHost.getPreferredMethods()) {
+    LinkedList<String> methods = new LinkedList<String>(myHost.getPreferredMethods());
+    String lastSuccessfulMethod = myXmlRpcClient.getLastSuccessful(myHandlerNo, getUserHostString());
+    if (lastSuccessfulMethod != null && lastSuccessfulMethod.length() > 0 && methods.remove(lastSuccessfulMethod)) {
+      methods.addFirst(lastSuccessfulMethod);
+    }
+    for (String method : methods) {
       if (c.isAuthenticationComplete()) {
         return;
       }
@@ -235,6 +237,7 @@ public class SSHMain {
           }
           if (c.authenticateWithKeyboardInteractive(myHost.getUser(), interactiveSupport)) {
             myLastError = "";
+            myXmlRpcClient.setLastSuccessful(myHandlerNo, getUserHostString(), KEYBOARD_INTERACTIVE_METHOD, "");
             return;
           }
           else {
@@ -262,6 +265,7 @@ public class SSHMain {
           else {
             if (c.authenticateWithPassword(myHost.getUser(), password)) {
               myLastError = "";
+              myXmlRpcClient.setLastSuccessful(myHandlerNo, getUserHostString(), PASSWORD_METHOD, "");
               return;
             }
             else {
@@ -271,7 +275,8 @@ public class SSHMain {
         }
       }
     }
-    throw new IOException("Authentication failed");
+    myXmlRpcClient.setLastSuccessful(myHandlerNo, getUserHostString(), "", myLastError);
+    throw new IOException("Authentication failed: " + myLastError);
   }
 
   /**
@@ -326,6 +331,7 @@ public class SSHMain {
         // try authentication
         if (c.authenticateWithPublicKey(myHost.getUser(), text, passphrase)) {
           myLastError = "";
+          myXmlRpcClient.setLastSuccessful(myHandlerNo, getUserHostString(), PUBLIC_KEY_METHOD, "");
           return true;
         }
         else {
@@ -529,10 +535,11 @@ public class SSHMain {
     public boolean verifyServerHostKey(String hostname, int port, String serverHostKeyAlgorithm, byte[] serverHostKey) throws Exception {
       try {
         String s = System.getenv(GitSSHHandler.SSH_IGNORE_KNOWN_HOSTS_ENV);
-        if(s != null && Boolean.parseBoolean(s)) {
+        if (s != null && Boolean.parseBoolean(s)) {
           return true;
         }
-      } catch(Exception ex) {
+      }
+      catch (Exception ex) {
         // the known host check is not suppressed, proceed with normal check
       }
       try {
