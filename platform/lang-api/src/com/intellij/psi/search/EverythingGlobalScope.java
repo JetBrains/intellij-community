@@ -48,6 +48,11 @@ public class EverythingGlobalScope extends GlobalSearchScope {
     return true;
   }
 
+  @Override
+  public boolean isSearchOutsideRootModel() {
+    return true;
+  }
+
   @NotNull
   @Override
   public GlobalSearchScope union(@NotNull SearchScope scope) {
