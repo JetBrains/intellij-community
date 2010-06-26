@@ -534,7 +534,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     private final FileType[] myFileTypes;
 
     private FileTypeRestrictionScope(@NotNull GlobalSearchScope scope, @NotNull FileType[] fileTypes) {
-      super(scope);
+      super(scope, scope.getProject());
       myFileTypes = fileTypes;
     }
 

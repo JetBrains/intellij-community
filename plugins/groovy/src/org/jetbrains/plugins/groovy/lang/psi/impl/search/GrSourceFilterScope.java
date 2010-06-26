@@ -31,7 +31,7 @@ public class GrSourceFilterScope extends DelegatingGlobalSearchScope {
   private final ProjectFileIndex myIndex;
 
   public GrSourceFilterScope(@NotNull final GlobalSearchScope delegate, final Project project) {
-    super(delegate);
+    super(delegate, project);
     myIndex = ProjectRootManager.getInstance(project).getFileIndex();
   }
 

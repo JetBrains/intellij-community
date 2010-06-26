@@ -32,7 +32,7 @@ public class JavaSourceFilterScope extends DelegatingGlobalSearchScope {
   private final ProjectFileIndex myIndex;
 
   public JavaSourceFilterScope(final GlobalSearchScope delegate, final Project project) {
-    super(delegate);
+    super(delegate, project);
     myIndex = ProjectRootManager.getInstance(project).getFileIndex();
   }
 
