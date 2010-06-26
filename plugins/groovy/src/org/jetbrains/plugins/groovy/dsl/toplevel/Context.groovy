@@ -17,6 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns
+import com.intellij.openapi.util.text.StringUtil
 
 /**
  * @author ilyas
@@ -32,8 +33,9 @@ class Context {
     // filetypes : [<file_ext>*]
     List<String> extensions = args.filetypes
     if (extensions instanceof List) {
+      extensions = extensions.collect { StringUtil.trimStart(it, '.') }
       def vfilePattern = extensions.size() == 1 ? virtualFile().withExtension(extensions[0]) : virtualFile().withExtension(extensions as String[])
-      addFilter new PlaceContextFilter(psiElement().inFile(psiFile().withVirtualFile(vfilePattern)))
+      addFilter new PlaceContextFilter(psiElement().inFile(psiFile().withOriginalFile(psiFile().withVirtualFile(vfilePattern))))
     }
 
     // filter by scope first, then by ctype
