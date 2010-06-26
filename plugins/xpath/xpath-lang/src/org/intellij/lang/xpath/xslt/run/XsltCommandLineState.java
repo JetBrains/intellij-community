@@ -48,7 +48,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-class XsltCommandLineState extends JavaCommandLineState {
+class XsltCommandLineState extends CommandLineState {
     private static final Logger LOG = Logger.getInstance(XsltCommandLineState.class.getName());
     public static final Key<XsltCommandLineState> STATE = Key.create("STATE");
 
@@ -61,12 +61,12 @@ class XsltCommandLineState extends JavaCommandLineState {
     public XsltCommandLineState(XsltRunConfiguration xsltRunConfiguration, ExecutionEnvironment env) {
         super(env);
         myXsltRunConfiguration = xsltRunConfiguration;
-        final RunnerSettings settings = env.getRunnerSettings();
-        myIsDebugger = settings != null && settings.getData() instanceof DebuggingRunnerData;
+        final ConfigurationPerRunnerSettings settings = env.getConfigurationSettings();
+        myIsDebugger = settings != null && "Debug".equals(settings.getRunnerId());
     }
 
     protected OSProcessHandler startProcess() throws ExecutionException {
-        final OSProcessHandler osProcessHandler = super.startProcess();
+        final OSProcessHandler osProcessHandler = createJavaParameters().createOSProcessHandler();
         osProcessHandler.putUserData(STATE, this);
 
         osProcessHandler.addProcessListener(new MyProcessAdapter());
@@ -78,13 +78,13 @@ class XsltCommandLineState extends JavaCommandLineState {
         return osProcessHandler;
     }
 
-    protected JavaParameters createJavaParameters() throws ExecutionException {
+    protected SimpleJavaParameters createJavaParameters() throws ExecutionException {
         final Sdk jdk = myXsltRunConfiguration.getEffectiveJDK();
         if (jdk == null) {
             throw CantRunException.noJdkConfigured();
         }
 
-        final JavaParameters parameters = new JavaParameters();
+        final SimpleJavaParameters parameters = new SimpleJavaParameters();
         parameters.setJdk(jdk);
 
         if (myXsltRunConfiguration.getJdkChoice() == XsltRunConfiguration.JdkChoice.FROM_MODULE) {

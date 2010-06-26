@@ -16,7 +16,12 @@
 
 package com.intellij.execution.configurations;
 
-import com.intellij.execution.configuration.EnvironmentVariablesComponent;
+import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessTerminatedListener;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.PathsList;
@@ -93,20 +98,20 @@ public class SimpleJavaParameters {
     myCharset = charset;
   }
 
-  public PathsList getClassPath() {
-    return myClassPath;
-  }
-
-  public Map<String, String> getEnv() {
-    return myEnv;
-  }
-
-  public void setEnv(final Map<String, String> env) {
-    myEnv = env;
-  }
-
-  public boolean isPassParentEnvs() {
-    return myPassParentEnvs;
+  public OSProcessHandler createOSProcessHandler() throws ExecutionException {
+    final Sdk sdk = getJdk();
+    assert sdk != null : "SDK should be defined";
+    final GeneralCommandLine commandLine = JdkUtil.setupJVMCommandLine(((JavaSdkType)sdk.getSdkType()).getVMExecutablePath(sdk), this,
+                                                                       JdkUtil.useDynamicClasspath(
+                                                                         PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext())));
+    final OSProcessHandler processHandler = new OSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString()) {
+      @Override
+      public Charset getCharset() {
+        return commandLine.getCharset();
+      }
+    };
+    ProcessTerminatedListener.attach(processHandler);
+    return processHandler;
   }
 
   public void setPassParentEnvs(final boolean passDefaultEnvs) {
