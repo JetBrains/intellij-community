@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.groovy.dsl.toplevel
 
-import com.intellij.openapi.util.text.StringUtil
+import static com.intellij.patterns.PlatformPatterns.*
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.patterns.PsiElementPattern
 import com.intellij.patterns.PsiJavaPatterns
@@ -30,19 +30,10 @@ class Context {
     if (!args) return
 
     // filetypes : [<file_ext>*]
-    if (args.filetypes && args.filetypes instanceof List) {
-      addFilter {PsiElement elem, fqn, ctx ->
-        def file = elem.getContainingFile()
-        if (!file) return false
-        final def name = file.getName()
-        final def idx = name.lastIndexOf(".")
-        if (idx < 0) return false;
-        def ext = name.substring(idx + 1)
-        for (ft in args.filetypes) {
-          if (ft && StringUtil.trimStart(ft, ".").equals(ext)) return true
-        }
-        return false
-      }
+    List<String> extensions = args.filetypes
+    if (extensions instanceof List) {
+      def vfilePattern = extensions.size() == 1 ? virtualFile().withExtension(extensions[0]) : virtualFile().withExtension(extensions as String[])
+      addFilter new PlaceContextFilter(psiElement().inFile(psiFile().withVirtualFile(vfilePattern)))
     }
 
     // filter by scope first, then by ctype
