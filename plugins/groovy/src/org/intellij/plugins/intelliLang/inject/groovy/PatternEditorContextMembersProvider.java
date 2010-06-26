@@ -19,10 +19,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.patterns.compiler.PatternCompilerImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.ProcessingContext;
-import org.intellij.plugins.intelliLang.PatternBasedInjectionHelper;
+import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -59,7 +60,7 @@ public class PatternEditorContextMembersProvider extends NonCodeMembersContribut
   }
 
   private static PsiFile parseInjectionContext(@NotNull BaseInjection injection, Project project) {
-    final String text = PatternBasedInjectionHelper.dumpContextDeclarations(injection.getSupportId());
+    final String text = new PatternCompilerImpl(InjectorUtils.findInjectionSupport(injection.getSupportId()).getPatternClasses()).dumpContextDeclarations();
     return PsiFileFactory.getInstance(project).createFileFromText("context.groovy", GroovyFileType.GROOVY_FILE_TYPE, text);
   }
 }
