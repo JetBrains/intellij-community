@@ -73,15 +73,18 @@ public class AntTasksProvider {
       public Result<Set<LightMethodBuilder>> compute() {
         Map<String, Class> antObjects = getAntObjects((GroovyFile)file);
 
-        final Set<LightMethodBuilder> result = new HashSet<LightMethodBuilder>();
+        final Set<LightMethodBuilder> methods = new HashSet<LightMethodBuilder>();
 
         final Project project = file.getProject();
         final PsiType closureType = JavaPsiFacade.getElementFactory(project).createTypeFromText(GrClosableBlock.GROOVY_LANG_CLOSURE, file);
 
         for (String name : antObjects.keySet()) {
-          result.add(new AntBuilderMethod(file, name, closureType, antObjects.get(name)));
+          methods.add(new AntBuilderMethod(file, name, closureType, antObjects.get(name)));
         }
-        return Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, ProjectRootManager.getInstance(project));
+        final Result<Set<LightMethodBuilder>> result =
+          Result.create(methods, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, ProjectRootManager.getInstance(project));
+        result.setLockValue(true);
+        return result;
       }
     }, false);
   }
