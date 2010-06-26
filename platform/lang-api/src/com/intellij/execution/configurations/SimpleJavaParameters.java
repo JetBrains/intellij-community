@@ -16,6 +16,8 @@
 
 package com.intellij.execution.configurations;
 
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.ide.DataManager;
@@ -98,6 +100,35 @@ public class SimpleJavaParameters {
     myCharset = charset;
   }
 
+  public PathsList getClassPath() {
+    return myClassPath;
+  }
+
+  public Map<String, String> getEnv() {
+    return myEnv;
+  }
+
+  public void setEnv(final Map<String, String> env) {
+    myEnv = env;
+  }
+
+  public boolean isPassParentEnvs() {
+    return myPassParentEnvs;
+  }
+
+  public void setPassParentEnvs(final boolean passDefaultEnvs) {
+    myPassParentEnvs = passDefaultEnvs;
+  }
+
+  public void setupEnvs(Map<String, String> envs, boolean passDefault) {
+    if (!envs.isEmpty()) {
+      final HashMap<String, String> map = new HashMap<String, String>(envs);
+      EnvironmentVariablesComponent.inlineParentOccurrences(map);
+      setEnv(map);
+      setPassParentEnvs(passDefault);
+    }
+  }
+  
   public OSProcessHandler createOSProcessHandler() throws ExecutionException {
     final Sdk sdk = getJdk();
     assert sdk != null : "SDK should be defined";
@@ -114,16 +145,4 @@ public class SimpleJavaParameters {
     return processHandler;
   }
 
-  public void setPassParentEnvs(final boolean passDefaultEnvs) {
-    myPassParentEnvs = passDefaultEnvs;
-  }
-
-  public void setupEnvs(Map<String, String> envs, boolean passDefault) {
-    if (!envs.isEmpty()) {
-      final HashMap<String, String> map = new HashMap<String, String>(envs);
-      EnvironmentVariablesComponent.inlineParentOccurrences(map);
-      setEnv(map);
-      setPassParentEnvs(passDefault);
-    }
-  }
 }
