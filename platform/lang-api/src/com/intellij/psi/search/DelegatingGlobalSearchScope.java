@@ -1,7 +1,6 @@
 package com.intellij.psi.search;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,8 +10,8 @@ import org.jetbrains.annotations.NotNull;
 public class DelegatingGlobalSearchScope extends GlobalSearchScope {
   protected final GlobalSearchScope myBaseScope;
 
-  public DelegatingGlobalSearchScope(GlobalSearchScope baseScope, Project project) {
-    super(project);
+  public DelegatingGlobalSearchScope(@NotNull GlobalSearchScope baseScope) {
+    super(baseScope.getProject());
     myBaseScope = baseScope;
   }
 

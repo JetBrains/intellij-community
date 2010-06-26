@@ -21,7 +21,6 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,9 +30,9 @@ import com.intellij.psi.search.GlobalSearchScope;
 public class JavaSourceFilterScope extends DelegatingGlobalSearchScope {
   private final ProjectFileIndex myIndex;
 
-  public JavaSourceFilterScope(final GlobalSearchScope delegate, final Project project) {
-    super(delegate, project);
-    myIndex = ProjectRootManager.getInstance(project).getFileIndex();
+  public JavaSourceFilterScope(final GlobalSearchScope delegate) {
+    super(delegate);
+    myIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
   }
 
   public boolean contains(final VirtualFile file) {

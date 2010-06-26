@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.search;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,9 +29,9 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 public class GrSourceFilterScope extends DelegatingGlobalSearchScope {
   private final ProjectFileIndex myIndex;
 
-  public GrSourceFilterScope(@NotNull final GlobalSearchScope delegate, final Project project) {
-    super(delegate, project);
-    myIndex = ProjectRootManager.getInstance(project).getFileIndex();
+  public GrSourceFilterScope(@NotNull final GlobalSearchScope delegate) {
+    super(delegate);
+    myIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
   }
 
   public boolean contains(final VirtualFile file) {
