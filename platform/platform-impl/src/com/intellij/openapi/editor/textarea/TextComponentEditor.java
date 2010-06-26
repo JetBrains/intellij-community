@@ -43,6 +43,7 @@ public class TextComponentEditor extends UserDataHolderBase implements Editor {
   private final TextComponentCaretModel myCaretModel;
   private final TextComponentSelectionModel mySelectionModel;
   private final TextComponentScrollingModel myScrollingModel;
+  private final TextComponentSoftWrapModel mySoftWrapModel;
   private EditorSettings mySettings;
 
   public TextComponentEditor(final Project project, final JTextComponent textComponent) {
@@ -57,6 +58,7 @@ public class TextComponentEditor extends UserDataHolderBase implements Editor {
     myCaretModel = new TextComponentCaretModel(textComponent, this);
     mySelectionModel = new TextComponentSelectionModel(textComponent, this);
     myScrollingModel = new TextComponentScrollingModel(textComponent);
+    mySoftWrapModel = new TextComponentSoftWrapModel();
   }
 
   @NotNull
@@ -101,6 +103,11 @@ public class TextComponentEditor extends UserDataHolderBase implements Editor {
   @NotNull
   public CaretModel getCaretModel() {
     return myCaretModel;
+  }
+
+  @NotNull
+  public SoftWrapModel getSoftWrapModel() {
+    return mySoftWrapModel;
   }
 
   @NotNull

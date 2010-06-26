@@ -26,7 +26,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.impl.IterationState;
-import com.intellij.openapi.project.Project;
 
 import java.awt.*;
 
@@ -77,7 +76,7 @@ public class EditorUtil {
 
   public static void fillVirtualSpaceUntil(final Editor editor, int columnNumber, int lineNumber) {
     final int offset = editor.logicalPositionToOffset(new LogicalPosition(lineNumber, columnNumber));
-    final String filler = EditorModificationUtil.calcStringToFillVitualSpace(editor);
+    final String filler = EditorModificationUtil.calcStringToFillVirtualSpace(editor);
     if (filler.length() > 0) {
       new WriteAction(){
         protected void run(final Result result) throws Throwable {

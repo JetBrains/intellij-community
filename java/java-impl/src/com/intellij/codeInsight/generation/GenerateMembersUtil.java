@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.generation;
 
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,14 +24,15 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.VisibilityUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -302,5 +304,26 @@ public class GenerateMembersUtil {
       child = child.getNextSibling();
       if (child == null) return false;
     }
+  }
+
+  public static boolean shouldAddOverrideAnnotation(PsiElement context, boolean interfaceMethod) {
+    CodeStyleSettings style = CodeStyleSettingsManager.getSettings(context.getProject());
+    if (!style.INSERT_OVERRIDE_ANNOTATION) return false;
+    
+    if (interfaceMethod) return PsiUtil.isLanguageLevel6OrHigher(context);
+    return PsiUtil.isLanguageLevel5OrHigher(context);
+  }
+
+  public static void setupGeneratedMethod(PsiMethod method) {
+    PsiClass base = method.getContainingClass().getSuperClass();
+    PsiMethod overridden = base == null ? null : base.findMethodBySignature(method, true);
+
+    if (overridden == null) {
+      CreateFromUsageUtils.setupMethodBody(method, method.getContainingClass());
+      return;
+    }
+
+    OverrideImplementUtil.setupMethodBody(method, overridden, method.getContainingClass());
+    OverrideImplementUtil.annotateOnOverrideImplement(method, base, overridden);
   }
 }

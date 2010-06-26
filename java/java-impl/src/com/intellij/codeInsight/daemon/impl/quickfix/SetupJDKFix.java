@@ -25,6 +25,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -39,7 +40,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-public class SetupJDKFix implements IntentionAction {
+public class SetupJDKFix implements IntentionAction, HighPriorityAction {
   private static final SetupJDKFix ourInstance = new SetupJDKFix();
   public static SetupJDKFix getInstnace() {
     return ourInstance;

@@ -176,7 +176,7 @@ mGSTRING_SINGLE_CONTENT = ({mSTRING_ESC}
 // Triple-double-quoted GStrings
 mGSTRING_TRIPLE_CONTENT = ({mSTRING_ESC}
     | \'
-    | \" (\")? [^\""$"]
+    | \" (\")? [^\""$"\\]
     | [^\\\""$"]
     | {mSTRING_NL})+
 

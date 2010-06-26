@@ -180,4 +180,10 @@ public class PathsList  {
       add(file);
     }
   }
+
+  public void addVirtualFiles(VirtualFile[] files) {
+    for (VirtualFile file : files) {
+      add(file);
+    }
+  }
 }

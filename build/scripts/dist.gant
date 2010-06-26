@@ -49,7 +49,7 @@ target(compile: "Compile project") {
     format(property: "today.year", pattern: "yyyy")
   }
 
-  project["javac"] = "$jdk/bin/javac"
+  project["javac"] = "$jdkHome/bin/javac"
   project.targetFolder = "$out/classes"
   project.clean()
   project.makeProduction()

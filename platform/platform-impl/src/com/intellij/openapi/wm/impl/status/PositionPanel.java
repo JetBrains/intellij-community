@@ -27,10 +27,10 @@ import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.ui.UIBundle;
@@ -38,6 +38,7 @@ import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
@@ -48,8 +49,8 @@ public class PositionPanel implements StatusBarWidget, StatusBarWidget.TextPrese
   public PositionPanel(@NotNull final Project project) {
     project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
       @Override
-      public void fileOpened(@NotNull final FileEditorManager source, @NotNull final VirtualFile file) {
-        final Editor editor = source.getSelectedTextEditor();
+      public void selectionChanged(final FileEditorManagerEvent event) {
+        final Editor editor = getEditor();
         if (editor != null) updatePosition(editor);
       }
     });
@@ -72,6 +73,11 @@ public class PositionPanel implements StatusBarWidget, StatusBarWidget.TextPrese
   @NotNull
   public String getMaxPossibleText() {
     return "#############";
+  }
+
+  @Override
+  public float getAlignment() {
+    return JComponent.CENTER_ALIGNMENT;
   }
 
   public String getTooltipText() {
@@ -134,7 +140,11 @@ public class PositionPanel implements StatusBarWidget, StatusBarWidget.TextPrese
   }
 
   public void caretPositionChanged(final CaretEvent e) {
-    updatePosition(e.getEditor());
+    final Editor editor = e.getEditor();
+    Project project = editor.getProject();
+    if (project != null && FileEditorManager.getInstance(project).getSelectedTextEditor() == e.getEditor()) {
+       updatePosition(editor);
+    }
   }
 
   private void updatePosition(final Editor editor) {

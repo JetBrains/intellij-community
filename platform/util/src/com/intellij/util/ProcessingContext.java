@@ -4,10 +4,10 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.Key;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -53,7 +53,7 @@ public class ProcessingContext {
   }
 
   private void checkMapInitialized() {
-    if (myMap == null) myMap = new THashMap<Object, Object>(1);
+    if (myMap == null) myMap = new HashMap<Object, Object>(1);
   }
 
 }

@@ -20,22 +20,21 @@
  */
 package com.intellij.codeInsight;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
 public class TestUtil {
-  public static final ExtensionPointName<TestFramework> TEST_FRAMEWORK = ExtensionPointName.create("com.intellij.testFramework");
-
-  private TestUtil() {}
+  private TestUtil() {
+  }
 
   public static boolean isTestClass(final PsiClass psiClass) {
-    final TestFramework[] testFrameworks = Extensions.getExtensions(TEST_FRAMEWORK);
+    final TestFramework[] testFrameworks = Extensions.getExtensions(TestFramework.EXTENSION_NAME);
     for (TestFramework framework : testFrameworks) {
-      if (framework.isTestKlass(psiClass)) {
+      if (framework.isTestClass(psiClass)) {
         return true;
       }
     }
@@ -43,12 +42,12 @@ public class TestUtil {
   }
 
   @Nullable
-  public static PsiMethod findSetUpMethod(final PsiClass psiClass) {
-    final TestFramework[] testFrameworks = Extensions.getExtensions(TEST_FRAMEWORK);
+  public static PsiMethod findOrCreateSetUpMethod(final PsiClass psiClass) {
+    final TestFramework[] testFrameworks = Extensions.getExtensions(TestFramework.EXTENSION_NAME);
     for (TestFramework framework : testFrameworks) {
-      if (framework.isTestKlass(psiClass)) {
+      if (framework.isTestClass(psiClass)) {
         try {
-          final PsiMethod setUpMethod = framework.findSetUpMethod(psiClass);
+          final PsiMethod setUpMethod = (PsiMethod)framework.findOrCreateSetUpMethod(psiClass);
           if (setUpMethod != null) {
             return setUpMethod;
           }
@@ -59,14 +58,5 @@ public class TestUtil {
       }
     }
     return null;
-  }
-
-  public static boolean isTestMethodOrConfig(PsiMethod psiMethod) {
-    for (TestFramework framework : Extensions.getExtensions(TEST_FRAMEWORK)) {
-      if (framework.isTestMethodOrConfig(psiMethod)) {
-        return true;
-      }
-    }
-    return false;
   }
 }

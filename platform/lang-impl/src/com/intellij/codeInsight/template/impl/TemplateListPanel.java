@@ -520,7 +520,19 @@ class TemplateListPanel extends JPanel {
   }
 
   private void addRow() {
-    TemplateImpl template = new TemplateImpl("", "", TemplateSettings.USER_GROUP_NAME);
+    int selected = getSelectedIndex();
+    String defaultGroup = TemplateSettings.USER_GROUP_NAME;
+    final DefaultMutableTreeNode node = getNode(selected);
+    if (node != null) {
+      if (node.getUserObject() instanceof TemplateImpl) {
+        defaultGroup = ((TemplateImpl) node.getUserObject()).getGroupName();
+      }
+      else if (node.getUserObject() instanceof TemplateGroup) {
+        defaultGroup = ((TemplateGroup) node.getUserObject()).getName();
+      }
+    }
+
+    TemplateImpl template = new TemplateImpl("", "", defaultGroup);
     myTemplateOptions.put(getKey(template), template.createOptions());
     myTemplateContext.put(getKey(template), template.createContext());
     EditTemplateDialog dialog = new EditTemplateDialog(this, CodeInsightBundle.message("dialog.add.live.template.title"), template, getTemplateGroups(),

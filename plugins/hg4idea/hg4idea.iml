@@ -13,7 +13,6 @@
     <orderEntry type="library" name="commons-lang" level="project" />
     <orderEntry type="library" scope="TEST" name="TestNG" level="project" />
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
-    <orderEntry type="module" module-name="idea-ui" />
     <orderEntry type="module" module-name="platform-api" />
     <orderEntry type="module" module-name="vcs-impl" />
   </component>

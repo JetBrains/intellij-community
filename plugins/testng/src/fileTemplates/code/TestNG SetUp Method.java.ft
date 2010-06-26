@@ -1,3 +1,4 @@
-@org.testng.annotations.BeforeTest
-public void setUp() {
+@org.testng.annotations.BeforeMethod
+public void setUp() throws Exception {
+  ${BODY}
 }

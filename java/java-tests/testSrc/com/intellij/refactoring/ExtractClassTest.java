@@ -59,6 +59,10 @@ public class ExtractClassTest extends MultiFileTestCase{
     doTestMethod();
   }
 
+  public void testStaticImport() throws Exception {
+    doTestMethod();
+  }
+
   public void testFieldReference() throws Exception {
     doTestMethod("foo", "Field 'myField' needs getter");
   }

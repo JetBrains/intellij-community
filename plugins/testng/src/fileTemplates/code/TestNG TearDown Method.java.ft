@@ -1,3 +1,4 @@
-@org.testng.annotations.AfterTest
-public void tearDown() {
+@org.testng.annotations.AfterMethod
+public void tearDown() throws Exception {
+  ${BODY}
 }

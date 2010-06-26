@@ -44,8 +44,8 @@ import javax.swing.*;
 
 public class TestNGConfigurationType implements ConfigurationType
 {
-    private static final Logger LOGGER = Logger.getInstance("TestNG Runner");
-    private static final Icon ICON = IconLoader.getIcon("/resources/testNG.png");
+  public static final Icon ICON = IconLoader.getIcon("/resources/testNG.png");
+  private static final Logger LOGGER = Logger.getInstance("TestNG Runner");
 
     private final ConfigurationFactory myFactory;
 

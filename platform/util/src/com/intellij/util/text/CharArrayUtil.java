@@ -16,6 +16,7 @@
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -26,6 +27,9 @@ import java.util.List;
 
 public class CharArrayUtil {
   private static final int GET_CHARS_THRESHOLD = 10;
+
+  private CharArrayUtil() {
+  }
 
   public static void getChars(CharSequence src, char[] dst, int dstOffset) {
     getChars(src, dst, dstOffset, src.length());
@@ -66,11 +70,12 @@ public class CharArrayUtil {
   public static char[] fromSequenceStrict(CharSequence seq) {
     char[] chars = fromSequence(seq);
     if (seq.length() == chars.length) return chars;
-    char[] strictchars = new char[seq.length()];
-    System.arraycopy(chars, 0, strictchars, 0, seq.length());
-    return strictchars;
+    char[] strictChars = new char[seq.length()];
+    System.arraycopy(chars, 0, strictChars, 0, seq.length());
+    return strictChars;
   }
 
+  @Nullable
   public static char[] fromSequenceWithoutCopying(CharSequence seq) {
     if (seq instanceof CharSequenceBackedByArray) {
       return ((CharSequenceBackedByArray)seq).getChars();
@@ -94,10 +99,11 @@ public class CharArrayUtil {
     if (seq instanceof CharBuffer) {
       final CharBuffer buffer = (CharBuffer)seq;
       if (buffer.hasArray() && !buffer.isReadOnly() && buffer.arrayOffset() == 0) {
-        final char[] bufArray = buffer.array();
-        /* return larger array. Clients may use seq.length() to calculate correct processing range.
-        if (bufArray.length == seq.length())
-        */ return bufArray;
+        return buffer.array();
+        // final char[] bufArray = buffer.array();
+        // return larger array. Clients may use seq.length() to calculate correct processing range.
+        // if (bufArray.length == seq.length())
+        // return bufArray;
       }
 
       char[] chars = new char[seq.length()];
@@ -180,9 +186,11 @@ public class CharArrayUtil {
     return shiftBackward(new CharArrayCharSequence(buffer), offset, chars);
   }
 
-  public static int shiftForwardUntil(char[] buffer, int offset, String chars) {
-    return shiftForwardUntil(new CharArrayCharSequence(buffer), offset, chars);
-  }
+  //Commented in order to apply to green code policy as the method is unused.
+  //
+  //public static int shiftForwardUntil(char[] buffer, int offset, String chars) {
+  //  return shiftForwardUntil(new CharArrayCharSequence(buffer), offset, chars);
+  //}
 
   public static int shiftForwardUntil(CharSequence buffer, int offset, String chars) {
     while (true) {
@@ -198,10 +206,37 @@ public class CharArrayUtil {
     return offset;
   }
 
-  public static int shiftBackwardUntil(char[] buffer, int offset, String chars) {
-    return shiftBackwardUntil(new CharArrayCharSequence(buffer), offset, chars);
-  }
+  //Commented in order to apply to the green code policy as the method is unused.
+  //
+  //public static int shiftBackwardUntil(char[] buffer, int offset, String chars) {
+  //  return shiftBackwardUntil(new CharArrayCharSequence(buffer), offset, chars);
+  //}
 
+  /**
+   * Calculates offset that points to the given buffer and has the following characteristics:
+   * <p/>
+   * <ul>
+   *   <li>is less than or equal to the given offset;</li>
+   *   <li>
+   *      it's guaranteed that all symbols of the given buffer that are located at <code>(returned offset; given offset]</code>
+   *      interval differ from the given symbols;
+   *    </li>
+   * </ul>
+   * <p/>
+   * Example: suppose that this method is called with buffer that holds <code>'test data'</code> symbols, offset that points
+   * to the last symbols and <code>'sf'</code> as a chars to exclude. Offset that points to <code>'s'</code> symbol
+   * is returned then, i.e. all symbols of the given buffer that are located after it and not after given offset
+   * (<code>'t data'</code>) are guaranteed to not contain given chars (<code>'sf'</code>).
+   *
+   * @param buffer      symbols buffer to check
+   * @param offset      initial symbols buffer offset to use
+   * @param chars       chars to exclude
+   * @return            offset of the given buffer that guarantees that all symbols at <code>(returned offset; given offset]</code>
+   *                    interval of the given buffer differ from symbols of given <code>'chars'</code> arguments;
+   *                    given offset is returned if it is outside of given buffer bounds;
+   *                    <code>'-1'</code> is returned if all document symbols that precede given offset differ from symbols
+   *                    of the given <code>'chars to exclude'</code>
+   */
   public static int shiftBackwardUntil(CharSequence buffer, int offset, String chars) {
     if (offset >= buffer.length()) return offset;
     while (true) {
@@ -341,8 +376,12 @@ public class CharArrayUtil {
   public static byte[] toByteArray(char[] chars, int size) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     OutputStreamWriter writer = new OutputStreamWriter(out);
-    writer.write(chars, 0, size);
-    writer.close();
+    try {
+      writer.write(chars, 0, size);
+    }
+    finally {
+      writer.close();
+    }
     return out.toByteArray();
   }
 
@@ -356,15 +395,17 @@ public class CharArrayUtil {
     return true;
   }
 
-  public static boolean subArraysEqual(char[] ca1, int startOffset1, int endOffset1,char[] ca2, int startOffset2, int endOffset2) {
-    if (endOffset1 - startOffset1 != endOffset2 - startOffset2) return false;
-    for (int i = startOffset1; i < endOffset1; i++) {
-      char c1 = ca1[i];
-      char c2 = ca2[i - startOffset1 + startOffset2];
-      if (c1 != c2) return false;
-    }
-    return true;
-  }
+  //Commented in order to apply to green code policy as the method is unused.
+  //
+  //public static boolean subArraysEqual(char[] ca1, int startOffset1, int endOffset1,char[] ca2, int startOffset2, int endOffset2) {
+  //  if (endOffset1 - startOffset1 != endOffset2 - startOffset2) return false;
+  //  for (int i = startOffset1; i < endOffset1; i++) {
+  //    char c1 = ca1[i];
+  //    char c2 = ca2[i - startOffset1 + startOffset2];
+  //    if (c1 != c2) return false;
+  //  }
+  //  return true;
+  //}
 
   public static TextRange[] getIndents(CharSequence charsSequence, int shift) {
     List<TextRange> result = new ArrayList<TextRange>();

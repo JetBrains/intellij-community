@@ -29,16 +29,14 @@ import javax.swing.*;
  */
 public class HgInitAlreadyUnderHgDialog extends DialogWrapper {
   private JPanel contentPane;
-  private JRadioButton myCreateNewRepositoryHereRadioButton;
-  private JRadioButton myUseParentRepoButThisProjectButton;
-  private JRadioButton myUseParentRepoAndCreateProjectButton;
+  private JRadioButton myCreateNewRepoButton;
+  private JRadioButton myUseParentRepoButton;
   private TitlePanel myTitlePanel;
   private String myParentRoot;
   private String mySelectedRoot;
 
   public enum Answer {
-    CREATE_PROJECT_AT_PARENT,
-    USE_PARENT_REPO_BUT_THIS_PROJECT,
+    USE_PARENT_REPO,
     CREATE_REPO_HERE
   }
 
@@ -51,12 +49,10 @@ public class HgInitAlreadyUnderHgDialog extends DialogWrapper {
   }
 
   public Answer getAnswer() {
-    if (myCreateNewRepositoryHereRadioButton.isSelected()) {
+    if (myCreateNewRepoButton.isSelected()) {
       return Answer.CREATE_REPO_HERE;
-    } else if (myUseParentRepoAndCreateProjectButton.isSelected()) {
-      return Answer.CREATE_PROJECT_AT_PARENT;
     } else {
-      return Answer.USE_PARENT_REPO_BUT_THIS_PROJECT;
+      return Answer.USE_PARENT_REPO;
     }
   }
 
@@ -64,9 +60,8 @@ public class HgInitAlreadyUnderHgDialog extends DialogWrapper {
   protected void init() {
     super.init();
     final ButtonGroup buttonGroup = new ButtonGroup();
-    buttonGroup.add(myCreateNewRepositoryHereRadioButton);
-    buttonGroup.add(myUseParentRepoAndCreateProjectButton);
-    buttonGroup.add(myUseParentRepoButThisProjectButton);
+    buttonGroup.add(myCreateNewRepoButton);
+    buttonGroup.add(myUseParentRepoButton);
   }
 
   @Override

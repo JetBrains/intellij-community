@@ -1,6 +1,5 @@
 package org.zmlx.hg4idea.action;
 
-import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -65,10 +64,7 @@ public class HgInit extends DumbAwareAction {
         return;
       }
 
-      if (dialog.getAnswer() == HgInitAlreadyUnderHgDialog.Answer.CREATE_PROJECT_AT_PARENT) {
-        NewProjectUtil.createNewProject(myProject, vcsRoot.getPath());
-        return;
-      } else if (dialog.getAnswer() == HgInitAlreadyUnderHgDialog.Answer.USE_PARENT_REPO_BUT_THIS_PROJECT) {
+      if (dialog.getAnswer() == HgInitAlreadyUnderHgDialog.Answer.USE_PARENT_REPO) {
         mapRoot = vcsRoot;
       } else if (dialog.getAnswer() == HgInitAlreadyUnderHgDialog.Answer.CREATE_REPO_HERE) {
         createRepository(selectedRoot);

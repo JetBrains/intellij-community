@@ -99,7 +99,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     for (KeyStroke eachListStroke : listKeys) {
       final String listActionID = (String)listMap.get(eachListStroke);
       if ("selectNextRow".equals(listActionID) || "selectPreviousRow".equals(listActionID)) {
-        final String textActionID = (String)field.getInputMap().get(eachListStroke);
+        final Object textActionID = field.getInputMap().get(eachListStroke);
         if (textActionID != null) {
           final Action textAction = field.getActionMap().get(textActionID);
           if (textAction != null) {
@@ -292,7 +292,8 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
         }
 
         public Icon getIconFor(final Object value) {
-          return null;
+          final LookupFile file = (LookupFile)value;
+          return file.getIcon();
         }
 
         private Separator getSeparatorAboveOf(Object value) {

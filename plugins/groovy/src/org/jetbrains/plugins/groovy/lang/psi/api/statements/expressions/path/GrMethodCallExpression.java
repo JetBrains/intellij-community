@@ -20,13 +20,12 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 
 /**
  * @author ilyas
  */
-public interface GrMethodCallExpression extends GrCallExpression {
-
-  GrExpression getInvokedExpression();
+public interface GrMethodCallExpression extends GrCallExpression, GrMethodCall {
 
   GrExpression replaceClosureArgument(@NotNull GrClosableBlock closure, @NotNull GrExpression newExpr) throws IncorrectOperationException;
 

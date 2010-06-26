@@ -15,60 +15,24 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.pom.PomDeclarationSearcher;
-import com.intellij.pom.PomTarget;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.*;
-import com.intellij.util.Consumer;
-import com.intellij.util.xml.*;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.xml.AbstractDomDeclarationSearcher;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomTarget;
+import com.intellij.util.xml.NameValue;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
  */
-public class DomDeclarationSearcher extends PomDeclarationSearcher {
-  public void findDeclarationsAt(@NotNull PsiElement psiElement, int offsetInElement, Consumer<PomTarget> consumer) {
-    if (!(psiElement instanceof XmlToken)) return;
+public class DomDeclarationSearcher extends AbstractDomDeclarationSearcher {
 
-    final IElementType tokenType = ((XmlToken)psiElement).getTokenType();
-
-    final DomManager domManager = DomManager.getDomManager(psiElement.getProject());
-    final DomElement domElement;
-    if (tokenType == XmlTokenType.XML_DATA_CHARACTERS && psiElement.getParent() instanceof XmlText && psiElement.getParent().getParent() instanceof XmlTag) {
-      final XmlTag tag = (XmlTag)psiElement.getParent().getParent();
-      for (XmlText text : tag.getValue().getTextElements()) {
-        if (InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)text)) {
-          return;
-        }
-      }
-
-      domElement = domManager.getDomElement(tag);
-    } else if (tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN && psiElement.getParent() instanceof XmlAttributeValue && psiElement.getParent().getParent() instanceof XmlAttribute) {
-      final PsiElement attributeValue = psiElement.getParent();
-      if (InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)attributeValue)) {
-        return;
-      }
-      domElement = domManager.getDomElement((XmlAttribute)attributeValue.getParent());
-    } else {
-      return;
-    }
-
-    if (!(domElement instanceof GenericDomValue)) {
-      return;
-    }
-
-    final NameValue nameValue = domElement.getAnnotation(NameValue.class);
+  @Nullable
+  protected DomTarget createDomTarget(DomElement parent, DomElement nameElement) {
+    final NameValue nameValue = nameElement.getAnnotation(NameValue.class);
     if (nameValue != null && nameValue.referencable()) {
-      DomElement parent = domElement.getParent();
-      assert parent != null;
-      final DomTarget target = DomTarget.getTarget(parent);
-      if (target != null) {
-        consumer.consume(target);
-      }
+      return DomTarget.getTarget(parent);
     }
+    return null;
   }
 
 }

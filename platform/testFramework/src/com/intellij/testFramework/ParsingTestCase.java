@@ -53,7 +53,7 @@ public abstract class ParsingTestCase extends LightPlatformTestCase {
     return false;
   }
 
-  protected void doTest(boolean checkResult) throws Exception{
+  protected void doTest(boolean checkResult) throws Exception {
     String name = getTestName(false);
     String text = loadFile(name + "." + myFileExt);
     myFile = createPsiFile(name, text);
@@ -67,7 +67,7 @@ public abstract class ParsingTestCase extends LightPlatformTestCase {
     }
   }
 
-  protected void doTest(String suffix) throws Exception{
+  protected void doTest(String suffix) throws IOException {
     String name = getTestName(false);
     String text = loadFile(name + "." + myFileExt);
     myFile = createPsiFile(name, text);
@@ -80,11 +80,11 @@ public abstract class ParsingTestCase extends LightPlatformTestCase {
     return createFile(name + "." + myFileExt, text);
   }
 
-  protected void checkResult(@NonNls @TestDataFile String targetDataName, final PsiFile file) throws Exception {
+  protected void checkResult(@NonNls @TestDataFile String targetDataName, final PsiFile file) throws IOException {
     doCheckResult(myFullDataPath, file, targetDataName, includeRanges());
   }
 
-  public static void doCheckResult(String myFullDataPath, PsiFile file, String targetDataName, boolean printRanges) throws Exception {
+  public static void doCheckResult(String myFullDataPath, PsiFile file, String targetDataName, boolean printRanges) throws IOException {
     final PsiElement[] psiRoots = file.getPsiRoots();
     if(psiRoots.length > 1){
       for (int i = 0; i < psiRoots.length; i++) {
@@ -97,11 +97,11 @@ public abstract class ParsingTestCase extends LightPlatformTestCase {
     }
   }
 
-  protected void checkResult(@TestDataFile @NonNls String targetDataName, final String text) throws Exception {
+  protected void checkResult(@TestDataFile @NonNls String targetDataName, final String text) throws IOException {
     doCheckResult(myFullDataPath, targetDataName, text);
   }
 
-  private static void doCheckResult(String myFullDataPath, String targetDataName, String text) throws Exception {
+  private static void doCheckResult(String myFullDataPath, String targetDataName, String text) throws IOException {
     try {
       text = text.trim();
       String expectedText = doLoadFile(myFullDataPath, targetDataName);
@@ -124,7 +124,7 @@ public abstract class ParsingTestCase extends LightPlatformTestCase {
     return DebugUtil.psiToString(file, false, printRanges);
   }
 
-  protected String loadFile(@NonNls @TestDataFile String name) throws Exception {
+  protected String loadFile(@NonNls @TestDataFile String name) throws IOException {
     return doLoadFile(myFullDataPath, name);
   }
 

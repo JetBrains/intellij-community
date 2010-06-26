@@ -9,11 +9,12 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="testFramework-java" />
     <orderEntry type="module" module-name="java-impl" />
-    <orderEntry type="module" module-name="idea-ui" scope="RUNTIME" />
+    <orderEntry type="module" module-name="idea-ui" />
     <orderEntry type="module" module-name="community-resources" scope="RUNTIME" />
     <orderEntry type="module" module-name="execution-impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="platform-api" />
     <orderEntry type="library" name="Velocity" level="project" />
+    <orderEntry type="module" module-name="java-i18n" />
   </component>
 </module>
 

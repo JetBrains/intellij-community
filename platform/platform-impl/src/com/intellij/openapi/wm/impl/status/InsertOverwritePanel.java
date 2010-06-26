@@ -27,6 +27,7 @@ import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
@@ -71,6 +72,11 @@ public class InsertOverwritePanel implements StatusBarWidget, StatusBarWidget.Te
   @NotNull
   public String getMaxPossibleText() {
     return UIBundle.message("status.bar.overwrite.status.text");
+  }
+
+  @Override
+  public float getAlignment() {
+    return JComponent.LEFT_ALIGNMENT;
   }
 
   public String getTooltipText() {

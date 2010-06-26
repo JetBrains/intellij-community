@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -448,16 +449,24 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
           UIUtil.drawLine(g, x + 3, wavedAt + 1, x + 4, wavedAt);
         }
       }
+      // 3. Underline
       if (attributes.isUnderline()) {
         final int underlineAt = textBaseline + 1;
         UIUtil.drawLine(g, xOffset, underlineAt, xOffset + fragmentWidth, underlineAt);
       }
+      // 4. Bold Dotted Line
+      if (attributes.isBoldDottedLine()) {
+        final int dottedAt = SystemInfo.isMac ? textBaseline : textBaseline + 1;
+        final Color lineColor = attributes.getWaveColor();
+        UIUtil.drawBoldDottedLine((Graphics2D)g, xOffset, xOffset + fragmentWidth, dottedAt, bgColor, lineColor, isOpaque());
+      }
 
-
-      xOffset += fragmentWidth;
       final Integer fixedWidth = myAligns.get(i);
-      if (fixedWidth != null && xOffset < fixedWidth.intValue()) {
-        xOffset = fixedWidth.intValue();
+      if (fixedWidth != null && fragmentWidth < fixedWidth.intValue()) {
+      //if (fixedWidth != null) {
+        xOffset += fixedWidth.intValue();
+      } else {
+        xOffset += fragmentWidth;
       }
     }
 

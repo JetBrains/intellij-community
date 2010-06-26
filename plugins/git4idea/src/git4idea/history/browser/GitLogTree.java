@@ -363,15 +363,32 @@ public class GitLogTree implements GitTreeViewI {
       }
       if (! myPeer.isOn()) {
         myMainSplitter.setFirstComponent(myFiltersSplitter);
-        myMainSplitter.doLayout();
       }
-      myFiltersSplitter.doLayout();
+      recalculateProportions(true);
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           IdeFocusManager.getInstance(myProject).requestFocus(myFocusTarget, true);
         }
       });
       myState = true;
+    }
+
+    private void recalculateProportions(final boolean turningOn) {
+      final int firstComponentSize = turningOn ? (myComponent.getPreferredSize().width) : 0;
+      int componentSize = firstComponentSize;
+      final Dimension all = myMainSplitter.getSize();
+
+      final JComponent another = myIsFirst ? myFiltersSplitter.getSecondComponent() : myFiltersSplitter.getFirstComponent();
+      final int anotherWidth = (another == null) ? 0 : another.getPreferredSize().width;
+      if (another != null) {
+        componentSize += anotherWidth + 3;
+      }
+      myMainSplitter.setProportion(((float) (componentSize + 3)/ all.width));
+      myMainSplitter.doLayout();
+      if (another != null) {
+        myFiltersSplitter.setProportion((float) ((myIsFirst ? firstComponentSize : anotherWidth) + 3) / (firstComponentSize + anotherWidth + 3));
+      }
+      myFiltersSplitter.doLayout();
     }
 
     public void off() {
@@ -382,12 +399,11 @@ public class GitLogTree implements GitTreeViewI {
       } else {
         myFiltersSplitter.setSecondComponent(null);
       }
-      myFiltersSplitter.doLayout();
       myState = false;
       if (! myPeer.isOn()) {
         myMainSplitter.setFirstComponent(null);
-        myMainSplitter.doLayout();
       }
+      recalculateProportions(false);
     }
   }
 
@@ -804,7 +820,7 @@ public class GitLogTree implements GitTreeViewI {
 
     @Override
     protected int getParentWidth(JList list) {
-      return list.getParent().getWidth() - myLeftPartWidth;
+      return list.getParent().getWidth() - myLeftPartWidth - 8;
     }
 
     @Override
@@ -1122,7 +1138,7 @@ public class GitLogTree implements GitTreeViewI {
       return true;
     }
 
-    private class MyAddAction extends AnAction {
+    private class MyAddAction extends DumbAwareAction {
       private final Consumer<Object> myAfterAction;
       //private TreeState myState;
 
@@ -1162,7 +1178,7 @@ public class GitLogTree implements GitTreeViewI {
       }
     }
 
-    private class MyRemoveAction extends AnAction {
+    private class MyRemoveAction extends DumbAwareAction {
       private final Runnable myAfterAction;
 
       private MyRemoveAction() {
@@ -1522,14 +1538,27 @@ public class GitLogTree implements GitTreeViewI {
       protected void addFiles(final VirtualFile[] files, Consumer<Object> after) {
         final boolean wasEmpty = myFilter.isEmpty();
         if (files != null) {
+          boolean somethingChanged = false;
           for (VirtualFile file : files) {
+            if (! myFilter.addPath(file)) continue;
+            somethingChanged = true;
             final StructureNode node = new StructureNode(myCommonData, myFiltering, myProject, this, file);
             addChild(node);
-            myFilter.addPath(file);
           }
+          if (! somethingChanged) return;
           if (wasEmpty) {
             myFiltering.addFilter(myFilter);
           } else {
+            final List<StructureNode> toRemove = new LinkedList<StructureNode>();
+            for (StructureNode child : getChildren()) {
+              final VirtualFile file = child.getFile();
+              if (! myFilter.containsFile(file)) {
+                toRemove.add(child);
+              }
+            }
+            for (StructureNode node : toRemove) {
+              removeChild(node);
+            }
             myFiltering.markDirty();
           }
           after.consume(this);
@@ -1584,6 +1613,9 @@ public class GitLogTree implements GitTreeViewI {
         getParent().removeChild(this);
         getParent().removeFiles(new VirtualFile[] {myFile});
         after.run();
+      }
+      public VirtualFile getFile() {
+        return myFile;
       }
     }
 

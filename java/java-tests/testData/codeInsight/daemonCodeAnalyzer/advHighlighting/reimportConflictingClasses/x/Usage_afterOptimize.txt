@@ -1,0 +1,13 @@
+package x;
+
+import x.n.*;
+
+import java.lang.Class;
+
+public class Y {
+    X1 x1;
+    x.n.Class s;
+    X2 x2;
+    Class aclass;
+    X3 cc3;
+}

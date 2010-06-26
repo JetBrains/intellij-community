@@ -16,8 +16,8 @@
 
 package com.intellij.codeInsight.folding.impl;
 
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.folding.FoldingDescriptor;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.ex.DocumentEx;

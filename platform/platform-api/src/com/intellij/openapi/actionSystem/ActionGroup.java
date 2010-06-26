@@ -32,6 +32,13 @@ import java.util.HashSet;
 public abstract class ActionGroup extends AnAction implements DumbAware {
   private boolean myPopup;
   private final PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
+  public static final ActionGroup EMPTY_GROUP = new ActionGroup() {
+    @NotNull
+    @Override
+    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+      return EMPTY_ARRAY;
+    }
+  };
 
   private Set<AnAction> mySecondaryActions;
 

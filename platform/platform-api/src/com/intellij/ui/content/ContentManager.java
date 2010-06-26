@@ -33,6 +33,7 @@ public interface ContentManager extends Disposable {
   JComponent getComponent();
 
   void addContent(@NotNull Content content);
+  void addContent(@NotNull Content content, final int order);
   void addContent(@NotNull Content content, Object constraints);
 
   boolean removeContent(@NotNull Content content, final boolean dispose);

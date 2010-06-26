@@ -24,7 +24,8 @@ import org.codehaus.groovy.tools.javac.JavaAwareResolveVisitor;
 import org.codehaus.groovy.tools.javac.JavaStubGenerator;
 
 import java.io.*;
-import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -342,9 +343,16 @@ public class GroovycRunner {
           final Enumeration resources = super.getResources(name);
           final ArrayList list = Collections.list(resources);
           for (Iterator iterator = list.iterator(); iterator.hasNext();) {
-            final String file = ((URL)iterator.next()).getFile();
-            if (file.contains(finalOutput)) {
-              iterator.remove();
+            final URL url = (URL)iterator.next();
+            try {
+              final String file = new File(new URI(url.toString())).getCanonicalPath();
+              System.out.println("Enumerated:" + file);
+              if (file.startsWith(finalOutput) || file.startsWith("/" + finalOutput)) {
+                iterator.remove();
+              }
+            }
+            catch (Exception ignored) {
+              System.out.println("Invalid URI syntax: " + url.toString());
             }
           }
           return Collections.enumeration(list);

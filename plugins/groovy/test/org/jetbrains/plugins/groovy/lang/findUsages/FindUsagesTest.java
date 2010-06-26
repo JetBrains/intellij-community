@@ -71,13 +71,12 @@ public class FindUsagesTest extends LightGroovyTestCase {
   }
 
   public void testConstructorUsageInNewExpression() throws Throwable {
-    doTestImpl("ConstructorUsageInNewExpression.groovy", 3);
+    doTestImpl("ConstructorUsageInNewExpression.groovy", 2);
   }
 
   public void testGotoConstructor() throws Throwable {
     myFixture.configureByFile("GotoConstructor.groovy");
-    final TargetElementUtilBase utilBase = TargetElementUtilBase.getInstance();
-    final PsiElement target = utilBase.findTargetElement(myFixture.getEditor(), utilBase.getReferenceSearchFlags());
+    final PsiElement target = TargetElementUtilBase.findTargetElement(myFixture.getEditor(), TargetElementUtilBase.getInstance().getReferenceSearchFlags());
     assertNotNull(target);
     assertInstanceOf(target, PsiMethod.class);
     assertTrue(((PsiMethod)target).isConstructor());
@@ -96,8 +95,7 @@ public class FindUsagesTest extends LightGroovyTestCase {
     doTestImpl("A.groovy", 1);
   }
 
-  //todo [ilyas]
-  public void _testProperty2() throws Throwable {
+  public void testProperty2() throws Throwable {
     doTestImpl("A.groovy", 1);
   }
 
@@ -156,10 +154,12 @@ public class FindUsagesTest extends LightGroovyTestCase {
 
   private void doTestImpl(String filePath, int expectedUsagesCount) throws Throwable {
     myFixture.configureByFile(filePath);
-    int offset = myFixture.getEditor().getCaretModel().getOffset();
-    final PsiReference ref = myFixture.getFile().findReferenceAt(offset);
-    assertNotNull("Did not find reference", ref);
-    final PsiElement resolved = ref.resolve();
+    assertUsageCount(expectedUsagesCount);
+  }
+
+  private void assertUsageCount(int expectedUsagesCount) {
+    final PsiElement resolved = TargetElementUtilBase.findTargetElement(myFixture.getEditor(),
+                                                                        TargetElementUtilBase.getInstance().getReferenceSearchFlags());
     assertNotNull("Could not resolve reference", resolved);
     doFind(expectedUsagesCount, resolved);
   }
@@ -176,6 +176,11 @@ public class FindUsagesTest extends LightGroovyTestCase {
 
     Collection<PsiReference> references = query.findAll();
     assertEquals(expectedUsagesCount, references.size());
+  }
+
+  public void testGdkMethod() throws Exception {
+    myFixture.configureByText("a.groovy", "[''].ea<caret>ch {}");
+    assertUsageCount(1);
   }
 
   public void testGDKSuperMethodSearch() throws Exception {

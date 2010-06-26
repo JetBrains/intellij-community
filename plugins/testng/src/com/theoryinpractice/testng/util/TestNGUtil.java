@@ -16,7 +16,6 @@
 package com.theoryinpractice.testng.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.TestFramework;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -35,7 +34,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -44,7 +42,6 @@ import com.intellij.psi.search.searches.AllClassesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PathUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.xml.NanoXmlUtil;
@@ -63,7 +60,7 @@ import java.util.regex.Pattern;
 /**
  * @author Hani Suleiman Date: Jul 20, 2005 Time: 1:37:36 PM
  */
-public class TestNGUtil implements TestFramework
+public class TestNGUtil
 {
   private static final Logger LOGGER = Logger.getInstance("TestNG Runner");
   public static final String TESTNG_GROUP_NAME = "TestNG";
@@ -429,57 +426,8 @@ public class TestNGUtil implements TestFramework
     return array;
   }
 
-  public boolean isTestKlass(PsiClass psiClass) {
-    return isTestNGClass(psiClass);
-  }
-
   public static boolean isTestNGClass(PsiClass psiClass) {
     return hasTest(psiClass, true, false);
-  }
-
-  public PsiMethod findSetUpMethod(final PsiClass psiClass) throws IncorrectOperationException {
-    final PsiManager manager = psiClass.getManager();
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-    PsiMethod patternMethod = factory.createMethodFromText("@org.testng.annotations.BeforeMethod\n protected void setUp() throws Exception {}", null);
-
-    final PsiClass superClass = psiClass.getSuperClass();
-    if (superClass != null) {
-      final PsiMethod[] methods = superClass.findMethodsBySignature(patternMethod, false);
-      if (methods.length > 0) {
-        final PsiModifierList modifierList = methods[0].getModifierList();
-        if (!modifierList.hasModifierProperty(PsiModifier.PRIVATE)) { //do not override private method
-          @NonNls String pattern = "@org.testng.annotations.BeforeMethod\n";
-          if (modifierList.hasModifierProperty(PsiModifier.PROTECTED)) {
-            pattern += "protected ";
-          } else if (modifierList.hasModifierProperty(PsiModifier.PUBLIC)) {
-            pattern +="public ";
-          }
-          patternMethod = factory.createMethodFromText(pattern + "void setUp() throws Exception {\nsuper.setUp();\n}", null);
-        }
-      }
-    }
-
-    final PsiMethod[] psiMethods = psiClass.getMethods();
-    PsiMethod inClass = null;
-    for (PsiMethod psiMethod : psiMethods) {
-      if (AnnotationUtil.isAnnotated(psiMethod, BeforeMethod.class.getName(), false)) {
-        inClass = psiMethod;
-        break;
-      }
-    }
-    if (inClass == null) {
-      final PsiMethod psiMethod = (PsiMethod)psiClass.add(patternMethod);
-      JavaCodeStyleManager.getInstance(psiClass.getProject()).shortenClassReferences(psiClass);
-      return psiMethod;
-    }
-    else if (inClass.getBody() == null) {
-      return (PsiMethod)inClass.replace(patternMethod);
-    }
-    return inClass;
-  }
-
-  public boolean isTestMethodOrConfig(PsiMethod psiMethod) {
-    return hasTest(psiMethod) || hasConfig(psiMethod);
   }
 
   public static boolean checkTestNGInClasspath(PsiElement psiElement) {

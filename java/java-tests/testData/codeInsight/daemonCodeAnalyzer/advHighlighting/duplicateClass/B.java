@@ -1,0 +1,4 @@
+package duplicateClass;
+
+class Foo {
+}

@@ -18,6 +18,7 @@ package com.intellij.openapi.fileChooser.ex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.List;
 
 public interface FileLookup {
@@ -46,6 +47,9 @@ public interface FileLookup {
     LookupFile getParent();
 
     boolean exists();
+
+    @Nullable
+    Icon getIcon();
   }
 
   interface LookupFilter {

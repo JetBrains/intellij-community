@@ -67,6 +67,8 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
     CompilerProjectExtension.getInstance(getProject()).setCompilerOutputUrl(myMainOutput.findOrCreateDir("out").getUrl());
 
     addGroovyLibrary(myModule, getName().contains("1_7"));
+
+    GroovycOSProcessHandler.ourDebug = true;
   }
 
   @Override
@@ -84,6 +86,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
 
   @Override
   protected void tearDown() throws Exception {
+    GroovycOSProcessHandler.ourDebug = false;
     myMainOutput.tearDown();
     myMainOutput = null;
     super.tearDown();

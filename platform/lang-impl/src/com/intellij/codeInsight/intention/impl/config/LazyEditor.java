@@ -88,6 +88,11 @@ class LazyEditor extends UserDataHolderBase implements Editor {
   }
 
   @NotNull
+  public SoftWrapModel getSoftWrapModel() {
+    return getEditor().getSoftWrapModel();
+  }
+
+  @NotNull
   public EditorSettings getSettings() {
     return getEditor().getSettings();
   }

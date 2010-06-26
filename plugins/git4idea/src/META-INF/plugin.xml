@@ -98,6 +98,9 @@
     <projectService
         serviceInterface="git4idea.config.GitVcsSettings"
         serviceImplementation="git4idea.config.GitVcsSettings"/>
+    <projectService
+        serviceInterface="git4idea.history.GitUsersComponent"
+        serviceImplementation="git4idea.history.GitUsersComponent"/>
     <applicationService
         serviceInterface="git4idea.config.GitVcsApplicationSettings"
         serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>
@@ -107,6 +110,9 @@
     <applicationService
         serviceInterface="git4idea.rebase.GitRebaseEditorService"
         serviceImplementation="git4idea.rebase.GitRebaseEditorService"/>
+    <applicationService
+        serviceInterface="git4idea.config.SSHConnectionSettings"
+        serviceImplementation="git4idea.config.SSHConnectionSettings"/>
     <ComponentRoamingType component="Git.Settings" type="DISABLED"/>
     <fileTypeFactory implementation="git4idea.vfs.GitFileTypeFactory"/>
   </extensions>
@@ -114,9 +120,6 @@
   <project-components>
     <component>
       <implementation-class>git4idea.history.browser.GitProjectLogManager</implementation-class>
-    </component>
-    <component>
-      <implementation-class>git4idea.history.GitUsersComponent</implementation-class>
     </component>
   </project-components>
 </idea-plugin>

@@ -525,7 +525,7 @@ public class ChooseRunConfigurationAction extends AnAction {
 
       final ArrayList<RunnerAndConfigurationSettings> contextConfigurations = new ArrayList<RunnerAndConfigurationSettings>();
       final DataContext dataContext = DataManager.getInstance().getDataContext();
-      final ConfigurationContext context = new ConfigurationContext(dataContext);
+      final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
 
       final List<RuntimeConfigurationProducer> producers = PreferedProducerFind.findPreferredProducers(context.getLocation(), context, false);
       if (producers == null) return Collections.emptyList();

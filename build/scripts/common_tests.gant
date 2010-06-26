@@ -6,7 +6,7 @@ requireProperty("out", "$home/out/classes")
 
 target(compile: "Compile project") {
   loadProject()
-  project["javac"] = "$jdk/bin/javac"
+  project["javac"] = "$jdkHome/bin/javac"
   project.targetFolder = out
   ant.delete(dir: "$home/reports")
   project.clean()
@@ -46,7 +46,7 @@ target('default': 'The default target') {
       this["community-main"].testRuntimeClasspath().each {
         pathelement(location: it)
       }
-      pathelement(location: "${jdk}/lib/tools.jar")
+      pathelement(location: "${jdkHome}/lib/tools.jar")
     }
 
     testcases.each {

@@ -15,10 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.gant;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.impl.light.LightVariableBuilder;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -26,6 +23,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -45,13 +43,35 @@ public class GantMemberContributor implements NonCodeMembersProcessor {
       return true;
     }
 
-    PsiFile file = place.getContainingFile();
-    if (!GantUtils.isGantScriptFile(file)) {
+    GrClosableBlock closure = PsiTreeUtil.getContextOfType(place, GrClosableBlock.class, true);
+    if (closure == null) {
       return true;
     }
 
-    final GrClosableBlock closure = PsiTreeUtil.getContextOfType(place, GrClosableBlock.class, true);
-    if (closure == null) {
+    boolean antTasksProcessed = false;
+    while (closure != null) {
+      final PsiElement parent = closure.getParent();
+      if (parent instanceof GrMethodCall) {
+        final PsiMethod method = ((GrMethodCall)parent).resolveMethod();
+        if (method instanceof AntBuilderMethod) {
+          antTasksProcessed = true;
+          if (!processAntTasks(processor, place)) {
+            return false;
+          }
+          if (!((AntBuilderMethod)method).processNestedElements(processor)) {
+            return false;
+          }
+          break;
+        }
+      }
+
+      closure = PsiTreeUtil.getContextOfType(closure, GrClosableBlock.class, true);
+    }
+
+    // ------- gant-specific
+
+    PsiFile file = place.getContainingFile();
+    if (!GantUtils.isGantScriptFile(file)) {
       return true;
     }
 
@@ -66,12 +86,16 @@ public class GantMemberContributor implements NonCodeMembersProcessor {
       }
     }
 
-    return processAntTasks(processor, place);
+    return antTasksProcessed || processAntTasks(processor, place);
 
   }
 
   private static boolean processAntTasks(PsiScopeProcessor processor, PsiElement place) {
-    for (LightMethodBuilder task : AntTasksProvider.getInstance(place.getProject()).getAntTasks()) {
+    if (!AntTasksProvider.antAvailable) {
+      return true;
+    }
+
+    for (LightMethodBuilder task : AntTasksProvider.getAntTasks(place)) {
       if (!ResolveUtil.processElement(processor, task)) {
         return false;
       }

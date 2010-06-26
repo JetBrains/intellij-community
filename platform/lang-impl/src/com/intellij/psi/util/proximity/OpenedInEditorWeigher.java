@@ -15,6 +15,8 @@
  */
 package com.intellij.psi.util.proximity;
 
+import com.intellij.openapi.util.NotNullLazyKey;
+import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.ProximityLocation;
@@ -27,9 +29,16 @@ import com.intellij.util.ArrayUtil;
  * @author peter
 */
 public class OpenedInEditorWeigher extends ProximityWeigher {
+  private static final NotNullLazyKey<VirtualFile[], ProximityLocation> OPENED_EDITORS = NotNullLazyKey.create("openedEditors", new NotNullFunction<ProximityLocation, VirtualFile[]>() {
+    @NotNull
+    @Override
+    public VirtualFile[] fun(ProximityLocation location) {
+      return FileEditorManager.getInstance(location.getProject()).getOpenFiles();
+    }
+  });
 
   public Comparable weigh(@NotNull final PsiElement element, final ProximityLocation location) {
     final VirtualFile virtualFile = PsiUtilBase.getVirtualFile(element);
-    return virtualFile != null && ArrayUtil.find(FileEditorManager.getInstance(location.getProject()).getOpenFiles(), virtualFile) != -1;
+    return virtualFile != null && ArrayUtil.find(OPENED_EDITORS.getValue(location), virtualFile) != -1;
   }
 }

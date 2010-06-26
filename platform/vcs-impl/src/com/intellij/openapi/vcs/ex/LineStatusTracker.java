@@ -27,7 +27,10 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.colors.*;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -48,6 +51,7 @@ import com.intellij.openapi.vcs.actions.ShowNextChangeMarkerAction;
 import com.intellij.openapi.vcs.actions.ShowPrevChangeMarkerAction;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.SideBorder2;
@@ -187,18 +191,18 @@ public class LineStatusTracker {
     }
   }
 
-  private static ColorKey getEditorColorNameFor(Range range) {
+  private static TextAttributesKey getEditorColorNameFor(Range range) {
     switch (range.getType()) {
       case Range.MODIFIED:
-        return EditorColors.MODIFIED_LINES_COLOR;
+        return DiffColors.DIFF_MODIFIED;
       default:
-        return EditorColors.ADDED_LINES_COLOR;
+        return DiffColors.DIFF_INSERTED;
     }
   }
 
   private static TextAttributes getAttributesFor(Range range) {
     EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-    Color color = globalScheme.getColor(getEditorColorNameFor(range));
+    Color color = ColorUtil.shift(globalScheme.getAttributes(getEditorColorNameFor(range)).getBackgroundColor(), 0.8);
     TextAttributes textAttributes = new TextAttributes(null, color, null, EffectType.BOXED, Font.PLAIN);
     textAttributes.setErrorStripeColor(color);
     return textAttributes;

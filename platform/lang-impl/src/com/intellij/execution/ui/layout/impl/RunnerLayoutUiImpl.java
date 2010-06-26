@@ -37,18 +37,14 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerListener;
-import com.intellij.ui.switcher.QuickAccessProvider;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.ui.switcher.SwitchProvider;
-import com.intellij.ui.switcher.SwitchTarget;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
-import java.util.List;
 
 public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutStateDefaults, LayoutViewOptions {
   private final RunnerLayout myLayout;
@@ -317,6 +313,10 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutSta
       }
 
       if (QuickActionProvider.KEY.getName().equals(dataId)) {
+        return myContentUI;
+      }
+
+      if (RunnerContentUi.KEY.getName().equals(dataId)) {
         return myContentUI;
       }
 

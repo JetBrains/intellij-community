@@ -28,7 +28,6 @@ import com.intellij.codeInsight.hint.LineTooltipRenderer;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.codeInsight.hint.TooltipRenderer;
-import com.intellij.ide.ui.LafManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -42,12 +41,15 @@ import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -324,36 +326,75 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
         final Color color = mark.getErrorStripeMarkColor();
 
-        int x = 1;
+        int x = 3;
         int paintWidth = width;
         if (mark.isThinErrorStripeMark()) {
           paintWidth /= 2;
-          x += paintWidth / 2;
+          paintWidth += 1;
+          x  += paintWidth + 1;
         }
 
+        if (color == null) return;
         g.setColor(color);
         g.fillRect(x + 1, yStart, paintWidth - 2, yEnd - yStart);
 
-        Color brighter = color.brighter();
-        Color darker = color.darker();
 
-        g.setColor(brighter);
-        //left
-        UIUtil.drawLine(g, x, yStart, x, yEnd - 1);
-        if (i == 0 || !isAdjacent(mySpots.get(i - 1), markSpot) || wider(markSpot, mySpots.get(i - 1))) {
-          //top decoration
-          UIUtil.drawLine(g, x + 1, yStart, x + paintWidth - 2, yStart);
+        if (true) {// mark.isThinErrorStripeMark()) {
+          paintPullDecorations(g, i, markSpot, yStart, yEnd, color, x, paintWidth);
         }
-        g.setColor(darker);
-        if (i == mySpots.size() - 1 || !isAdjacent(markSpot, mySpots.get(i + 1)) || wider(markSpot, mySpots.get(i + 1))) {
-          // bottom decoration
-          UIUtil.drawLine(g, x + 1, yEnd - 1, x + paintWidth - 2, yEnd - 1);
+        else {
+        paintPushDecorations(g, i, markSpot, yStart, yEnd, color, x, paintWidth);
         }
-        //right
-        UIUtil.drawLine(g, x + paintWidth - 2, yStart, x + paintWidth - 2, yEnd - 1);
 
       }
     }
+
+    private void paintPullDecorations(Graphics g,
+                                      int i,
+                                      MarkSpot markSpot,
+                                      int yStart,
+                                      int yEnd,
+                                      Color color,
+                                      int x,
+                                      int paintWidth) {
+      Color brighter = color.brighter();
+      Color darker = ColorUtil.shift(color, 0.75);
+
+      g.setColor(brighter);
+      //left
+      UIUtil.drawLine(g, x, yStart, x, yEnd - 1);
+      if (i == 0 || !isAdjacent(mySpots.get(i - 1), markSpot) || wider(markSpot, mySpots.get(i - 1))) {
+        //top decoration
+        UIUtil.drawLine(g, x + 1, yStart, x + paintWidth - 2, yStart);
+      }
+      g.setColor(darker);
+      if (i == mySpots.size() - 1 || !isAdjacent(markSpot, mySpots.get(i + 1)) || wider(markSpot, mySpots.get(i + 1))) {
+        // bottom decoration
+        UIUtil.drawLine(g, x + 1, yEnd - 1, x + paintWidth - 2, yEnd - 1);
+      }
+      //right
+      UIUtil.drawLine(g, x + paintWidth - 2, yStart, x + paintWidth - 2, yEnd - 1);
+    }
+
+    private void paintPushDecorations(Graphics g,
+                                      int i,
+                                      MarkSpot markSpot,
+                                      int yStart,
+                                      int yEnd,
+                                      Color color,
+                                      int x,
+                                      int paintWidth) {
+      Color brighter = ColorUtil.shift(color, 0.75);
+
+      g.setColor(brighter);
+      //left
+      UIUtil.drawLine(g, x, yStart, x, yEnd - 1);
+      if (i == 0 || !isAdjacent(mySpots.get(i - 1), markSpot) || wider(markSpot, mySpots.get(i - 1))) {
+        //top decoration
+        UIUtil.drawLine(g, x + 1, yStart, x + paintWidth - 2, yStart);
+      }
+    }
+
 
     private boolean isAdjacent(MarkSpot markTop, MarkSpot markBottom) {
       return markTop.yEnd >= markBottom.yStart;
@@ -388,6 +429,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       fireErrorMarkerClicked(marker, e);
     }
 
+    @Nullable
     private RangeHighlighter getNearestRangeHighlighter(final MouseEvent e, final int width) {
       List<MarkSpot> nearestSpots = getNearestMarkSpots(e, width);
       RangeHighlighter nearestMarker = null;
@@ -423,13 +465,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   public void setErrorStripeVisible(boolean val) {
     if (val) {
       myErrorPanel = new MyErrorPanel();
-      myEditor.getPanel().add(myErrorPanel,
-                              myEditor.getVerticalScrollbarOrientation() == EditorEx.VERTICAL_SCROLLBAR_LEFT
-                              ? BorderLayout.WEST
-                              : BorderLayout.EAST);
+      myEditor.getVerticalScrollBar().setUI(myErrorPanel);
     }
     else if (myErrorPanel != null) {
-      myEditor.getPanel().remove(myErrorPanel);
+      myEditor.getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createNormal());
       myErrorPanel = null;
     }
   }
@@ -515,44 +554,99 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     return myCachedSortedHighlighters;
   }
 
-  private class MyErrorPanel extends JPanel implements MouseMotionListener, MouseListener {
-    private PopupHandler myHandler;
-
-    private MyErrorPanel() {
-      setOpaque(true);
-      addMouseListener(this);
-      addMouseMotionListener(this);
+  private class ErrorStripeButton extends JButton {
+    private ErrorStripeButton() {
     }
 
-    public Dimension getPreferredSize() {
-      return new Dimension(ERRORS_FOUND_ICON.getIconWidth() + 2, 0);
-    }
-
+    @Override
     protected void paintComponent(Graphics g) {
-      if (getEditor().isDisposed()) return;
       ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintStart();
 
+      final Rectangle bounds = getBounds();
+
+      g.setColor(ButtonlessScrollBarUI.TRACK_BACKGROUND);
+      g.fillRect(3, 0, bounds.width, bounds.height);
+
+      g.setColor(ButtonlessScrollBarUI.TRACK_BORDER);
+      g.drawLine(3, 0, 3, bounds.height);
+
       try {
-        LafManager lafManager = LafManager.getInstance();
-        if (lafManager == null || lafManager.isUnderAquaLookAndFeel()) {
-          g.setColor(new Color(0xF0F0F0));
-          Rectangle clipBounds = g.getClipBounds();
-          g.fillRect(clipBounds.x, clipBounds.y, clipBounds.width, clipBounds.height);
-        } else {
-          super.paintComponent(g);
-        }
-
         if (myErrorStripeRenderer != null) {
-          EditorImpl.MyScrollBar scrollBar = myEditor.getVerticalScrollBar();
-          int top = scrollBar.getDecScrollButtonHeight();
-          myErrorStripeRenderer.paint(this, g, new Rectangle(0, 0, getWidth(), top));
+          myErrorStripeRenderer.paint(this, g, new Rectangle(5, 2, ERRORS_FOUND_ICON.getIconWidth(), ERRORS_FOUND_ICON.getIconHeight()));
         }
-
-        myMarkSpots.repaint(g, ERRORS_FOUND_ICON.getIconWidth());
       }
       finally {
         ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintFinish();
       }
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      return new Dimension(ERRORS_FOUND_ICON.getIconWidth() + 4, ERRORS_FOUND_ICON.getIconHeight() + 4);
+    }
+  }
+
+  private class MyErrorPanel extends ButtonlessScrollBarUI implements MouseMotionListener, MouseListener {
+    private PopupHandler myHandler;
+
+    private MyErrorPanel() {
+      super(false);
+    }
+
+    @Override
+    protected JButton createDecreaseButton(int orientation) {
+      return new ErrorStripeButton();
+    }
+
+    @Override
+    protected void installListeners() {
+      super.installListeners();
+      scrollbar.addMouseMotionListener(this);
+      scrollbar.addMouseListener(this);
+    }
+
+    @Override
+    public void installUI(JComponent c) {
+      c.putClientProperty("JComponent.sizeVariant", "large");
+      super.installUI(c);
+    }
+
+    @Override
+    protected void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
+      g.translate(-3, 0);
+      super.paintThumb(g, c, thumbBounds);
+      g.translate(3, 0);
+    }
+
+    @Override
+    protected int adjustThumbWidth(int width) {
+      return width - 2;
+    }
+
+    @Override
+    protected void paintTrack(Graphics g, JComponent c, Rectangle trackBounds) {
+      Rectangle bounds = new Rectangle(trackBounds);
+      bounds.width /= 1.20;
+      final int shift = trackBounds.width - bounds.width;
+
+      g.translate(shift, 0);
+
+      super.paintTrack(g, c, bounds);
+
+      ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintStart();
+
+      try {
+        myMarkSpots.repaint(g, ERRORS_FOUND_ICON.getIconWidth() - 2);
+      }
+      finally {
+        g.translate(-shift, 0);
+        ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintFinish();
+      }
+    }
+
+    @Override
+    protected Color adjustColor(Color c) {
+      return ColorUtil.withAlpha(super.adjustColor(c), 0.85);
     }
 
     // mouse events
@@ -570,6 +664,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     public void mouseReleased(MouseEvent e) {
+    }
+
+    public int getWidth() {
+      return scrollbar.getWidth();
     }
 
     private void doMouseClicked(MouseEvent e) {
@@ -598,14 +696,14 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       }
 
       if (myMarkSpots.showToolTipByMouseMove(e,getWidth())) {
-        setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        scrollbar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         return;
       }
 
       cancelMyToolTips(e);
 
-      if (getCursor().equals(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))) {
-        setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+      if (scrollbar.getCursor().equals(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))) {
+        scrollbar.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
       }
     }
 
@@ -629,13 +727,16 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     public void setPopupHandler(final PopupHandler handler) {
       if (myHandler != null) {
-        removeMouseListener(myHandler);
+        scrollbar.removeMouseListener(myHandler);
       }
 
       myHandler = handler;
-      addMouseListener(handler);
+      scrollbar.addMouseListener(handler);
     }
 
+    public void repaint() {
+      scrollbar.repaint();
+    }
   }
 
   private void showTooltip(MouseEvent e, final TooltipRenderer tooltipObject) {

@@ -774,10 +774,10 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
       if (container == element) {
         if (element instanceof PsiDirectory) {
           if (element == newContainer) {
-            throw new IncorrectOperationException("Cannot move directory into itself.");
+            throw new IncorrectOperationException("Cannot place directory into itself.");
           }
           else {
-            throw new IncorrectOperationException("Cannot move directory into its subdirectory.");
+            throw new IncorrectOperationException("Cannot place directory into its subdirectory.");
           }
         }
         else {

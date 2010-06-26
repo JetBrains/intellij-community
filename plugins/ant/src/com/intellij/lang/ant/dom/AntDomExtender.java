@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
@@ -52,14 +52,14 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
         parentElementIntrospector = getIntrospector(reflected.getTargetClass());
       }
       else {
-        final Hashtable tasks = reflected.getTaskDefinitions();
-        final Class taskClass = (Class)tasks.get(tagName);
+        final Map<String, Class> tasks = reflected.getTaskDefinitions();
+        final Class taskClass = tasks.get(tagName);
         if (taskClass != null) {
           parentElementIntrospector = getIntrospector(taskClass);
         }
         else {
-          final Hashtable dataTypes = reflected.getDataTypeDefinitions();
-          final Class dataClass = (Class)dataTypes.get(tagName);
+          final Map<String, Class> dataTypes = reflected.getDataTypeDefinitions();
+          final Class dataClass = dataTypes.get(tagName);
           if (dataClass != null) {
             parentElementIntrospector = getIntrospector(dataClass);
           }
@@ -83,9 +83,9 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
           }
         }
         else {
-          final Enumeration nested = parentElementIntrospector.getNestedElements();
+          final Enumeration<String> nested = parentElementIntrospector.getNestedElements();
           while (nested.hasMoreElements()) {
-            registerChild(registrar, genericInfo, (String)nested.nextElement());
+            registerChild(registrar, genericInfo, nested.nextElement());
           }
         }
       }
@@ -103,17 +103,29 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
   @Nullable
   private static DomExtension registerChild(DomExtensionsRegistrar registrar, DomGenericInfo elementInfo, String childName) {
     if (elementInfo.getCollectionChildDescription(childName) == null) { // register if not yet defined statically
-      Class<? extends AntDomElement> implClass = AntDomElement.class;
-      if ("property".equals(childName)) {
-        implClass = AntDomProperty.class;
+      Class<? extends AntDomElement> modelClass = AntDomElement.class;
+      if ("property".equalsIgnoreCase(childName)) {
+        modelClass = AntDomProperty.class;
       }
-      return registrar.registerCollectionChildrenExtension(new XmlName(childName), implClass);
+      else if ("fileset".equalsIgnoreCase(childName)) {
+        modelClass = AntDomFileSet.class;
+      }
+      else if ("dirset".equalsIgnoreCase(childName)) {
+        modelClass = AntDomDirSet.class;
+      }
+      else if ("path".equalsIgnoreCase(childName)) {
+        modelClass = AntDomPath.class;
+      }
+      else if ("filelist".equalsIgnoreCase(childName)) {
+        modelClass = AntDomFileList.class;
+      }
+      return registrar.registerCollectionChildrenExtension(new XmlName(childName), modelClass);
     }
     return null;
   }
 
   @Nullable
-  private static AntIntrospector getIntrospector(Class c) {
+  public static AntIntrospector getIntrospector(Class c) {
     try {
       return AntIntrospector.getInstance(c);
     }

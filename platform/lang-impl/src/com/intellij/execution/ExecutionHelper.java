@@ -88,7 +88,7 @@ public class ExecutionHelper {
           return;
         }
         for (final Exception exception : exceptionList) {
-          String[] messages = new String[]{exception.getMessage()};
+          String[] messages = StringUtil.splitByLines(exception.getMessage());
           if (messages.length == 0) messages = new String[]{"Unknown Error"};
           errorTreeView.addMessage(MessageCategory.ERROR, messages, file, -1, -1, null);
         }

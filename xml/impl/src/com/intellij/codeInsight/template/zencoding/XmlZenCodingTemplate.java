@@ -336,15 +336,13 @@ public class XmlZenCodingTemplate extends ZenCodingTemplate {
     int lineStart = editor.getDocument().getLineStartOffset(line);
     int elementStart;
     do {
-      elementStart = element != null ? element.getTextRange().getStartOffset() : 0;
+      elementStart = element.getTextRange().getStartOffset();
       int startOffset = elementStart > lineStart ? elementStart : lineStart;
       String key = computeKey(editor, startOffset);
       if (checkTemplateKey(key, callback)) {
         return key;
       }
-      if (element != null) {
-        element = element.getParent();
-      }
+      element = element.getParent();
     }
     while (element != null && elementStart > lineStart);
     return null;

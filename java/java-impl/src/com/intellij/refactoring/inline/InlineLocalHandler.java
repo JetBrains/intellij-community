@@ -32,6 +32,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
@@ -247,8 +248,8 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
         parent = parent.getParent();
       }
 
-      if (parent instanceof PsiAssignmentExpression && element == ((PsiAssignmentExpression)parent).getLExpression() ||
-          parent instanceof PsiPrefixExpression || parent instanceof PsiPostfixExpression ) {
+      if (parent instanceof PsiAssignmentExpression && element == ((PsiAssignmentExpression)parent).getLExpression()
+          || isUnaryWriteExpression(parent)) {
 
         EditorColorsManager manager = EditorColorsManager.getInstance();
         final TextAttributes writeAttributes = manager.getGlobalScheme().getAttributes(EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES);
@@ -260,6 +261,17 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
       }
     }
     return false;
+  }
+
+  private static boolean isUnaryWriteExpression(PsiElement parent) {
+    IElementType tokenType = null;
+    if (parent instanceof PsiPrefixExpression) {
+      tokenType = ((PsiPrefixExpression)parent).getOperationTokenType();
+    }
+    if (parent instanceof PsiPostfixExpression) {
+      tokenType = ((PsiPostfixExpression)parent).getOperationTokenType();
+    }
+    return tokenType == JavaTokenType.PLUSPLUS || tokenType == JavaTokenType.MINUSMINUS;
   }
 
   private static boolean isSameDefinition(final PsiElement def, final PsiExpression defToInline) {

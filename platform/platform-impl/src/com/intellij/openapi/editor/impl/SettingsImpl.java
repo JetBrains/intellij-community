@@ -72,6 +72,7 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myIsMouseClickSelectionHonorsCamelWords = null;
   private Boolean myIsRenameVariablesInplace = null;
   private Boolean myIsRefrainFromScrolling = null;
+  private Boolean myUseSoftWraps = null;
 
   public boolean isRightMarginShown() {
     return myIsRightMarginShown != null
@@ -381,6 +382,18 @@ public class SettingsImpl implements EditorSettings {
 
   public void setRefrainFromScrolling(boolean b) {
     myIsRefrainFromScrolling = b ? Boolean.TRUE : Boolean.FALSE;
+  }
+
+  public boolean isUseSoftWraps() {
+    return myUseSoftWraps != null ? myUseSoftWraps.booleanValue()
+                                  : EditorSettingsExternalizable.getInstance().isUseSoftWraps();
+  }
+
+  public void setUseSoftWraps(boolean use) {
+    final Boolean newValue = use ? Boolean.TRUE : Boolean.FALSE;
+    if (newValue.equals(myUseSoftWraps)) return;
+    myUseSoftWraps = newValue;
+    fireEditorRefresh();
   }
 
   private void fireEditorRefresh() {

@@ -108,7 +108,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   private final List<Pair<String, TextAttributes>> myPendingOutput = new ArrayList<Pair<String, TextAttributes>>();
 
-  public ProjectLevelVcsManagerImpl(Project project) {
+  public ProjectLevelVcsManagerImpl(Project project, final FileStatusManager manager) {
     myProject = project;
     mySerialization = new ProjectLevelVcsManagerSerialization();
     myOptionsAndConfirmations = new OptionsAndConfirmations();
@@ -117,7 +117,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
     myBackgroundableActionHandlerMap = new HashMap<VcsBackgroundableActions, BackgroundableActionEnabledHandler>();
     myInitialization = new VcsInitialization(myProject);
-    myMappings = new NewMappings(myProject, myEventDispatcher, this);
+    myMappings = new NewMappings(myProject, myEventDispatcher, this, manager);
     myMappingsToRoots = new MappingsToRoots(myMappings, myProject);
 
     ProjectManager.getInstance().addProjectManagerListener(myProject, new ProjectManagerAdapter() {

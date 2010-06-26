@@ -48,9 +48,10 @@ public class ColorAndFontDescriptionPanel extends JPanel {
   private static final String BOLD_UNDERSCORED_EFFECT = ApplicationBundle.message("combobox.effect.boldunderscored");
   private static final String UNDERWAVED_EFFECT = ApplicationBundle.message("combobox.effect.underwaved");
   private static final String STRIKEOUT_EFFECT = ApplicationBundle.message("combobox.effect.strikeout");
+  private static final String BOLD_DOTTED_LINE_EFFECT = ApplicationBundle.message("combobox.effect.bold.dottedline");
 
   private final JComboBox myEffectsCombo = new JComboBox(
-    new String[]{UNDERSCORED_EFFECT, BOLD_UNDERSCORED_EFFECT, UNDERWAVED_EFFECT, BORDERED_EFFECT, STRIKEOUT_EFFECT});
+    new String[]{UNDERSCORED_EFFECT, BOLD_UNDERSCORED_EFFECT, UNDERWAVED_EFFECT, BORDERED_EFFECT, STRIKEOUT_EFFECT, BOLD_DOTTED_LINE_EFFECT});
 
   private final JCheckBox myCbBold = new JCheckBox(ApplicationBundle.message("checkbox.font.bold"));
   private final JCheckBox myCbItalic = new JCheckBox(ApplicationBundle.message("checkbox.font.italic"));
@@ -361,6 +362,9 @@ public class ColorAndFontDescriptionPanel extends JPanel {
       else if (effectType == EffectType.STRIKEOUT) {
         myEffectsCombo.setSelectedItem(STRIKEOUT_EFFECT);
       }
+      else if (effectType == EffectType.BOLD_DOTTED_LINE) {
+        myEffectsCombo.setSelectedItem(BOLD_DOTTED_LINE_EFFECT);
+      }
       else {
         LOG.assertTrue(false);
       }
@@ -403,6 +407,9 @@ public class ColorAndFontDescriptionPanel extends JPanel {
         }
         else if (STRIKEOUT_EFFECT.equals(effectType)) {
           description.setEffectType(EffectType.STRIKEOUT);
+        }
+        else if (BOLD_DOTTED_LINE_EFFECT.equals(effectType)) {
+          description.setEffectType(EffectType.BOLD_DOTTED_LINE);
         }
         else {
           LOG.assertTrue(false);

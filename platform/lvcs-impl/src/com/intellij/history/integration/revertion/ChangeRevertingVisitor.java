@@ -16,6 +16,7 @@
 
 package com.intellij.history.integration.revertion;
 
+import com.intellij.history.LocalHistory;
 import com.intellij.history.core.Paths;
 import com.intellij.history.core.changes.*;
 import com.intellij.history.core.storage.Content;
@@ -64,7 +65,7 @@ public class ChangeRevertingVisitor extends ChangeVisitor {
       if (f != null) {
         unregisterDelayedApplies(f);
         try {
-          f.delete(this);
+          f.delete(LocalHistory.VFS_EVENT_REQUESTOR);
         }
         catch (IOException e) {
           throw new RuntimeIOException(e);
@@ -96,9 +97,9 @@ public class ChangeRevertingVisitor extends ChangeVisitor {
         VirtualFile existing = f.getParent().findChild(c.getOldName());
         try {
           if (existing != null && existing != f) {
-            existing.delete(this);
+            existing.delete(LocalHistory.VFS_EVENT_REQUESTOR);
           }
-          f.rename(this, c.getOldName());
+          f.rename(LocalHistory.VFS_EVENT_REQUESTOR, c.getOldName());
         }
         catch (IOException e) {
           throw new RuntimeIOException(e);
@@ -127,8 +128,8 @@ public class ChangeRevertingVisitor extends ChangeVisitor {
         try {
           VirtualFile parent = myGateway.findOrCreateFileSafely(c.getOldParent(), true);
           VirtualFile existing = parent.findChild(f.getName());
-          if (existing != null) existing.delete(this);
-          f.move(this, parent);
+          if (existing != null) existing.delete(LocalHistory.VFS_EVENT_REQUESTOR);
+          f.move(LocalHistory.VFS_EVENT_REQUESTOR, parent);
         }
         catch (IOException e) {
           throw new RuntimeIOException(e);

@@ -104,7 +104,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
 
     final Library[] libraries = GroovyConfigUtils.getInstance().getSDKLibrariesByModule(module);
     if (libraries.length > 0) {
-      classPathBuilder.addVirtualFiles(Arrays.asList(libraries[0].getFiles(OrderRootType.COMPILATION_CLASSES)));
+      classPathBuilder.addVirtualFiles(Arrays.asList(libraries[0].getFiles(OrderRootType.CLASSES)));
     }
 
     classPathBuilder.addVirtualFiles(chunk.getCompilationBootClasspathFiles());
@@ -126,6 +126,10 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
       parameters.getVMParametersList().defineProperty("profile.groovy.compiler", "true");
       parameters.getVMParametersList().add("-agentlib:yjpagent=disablej2ee,disablecounts,disablealloc,sessionname=GroovyCompiler");
       classPathBuilder.add(PathManager.findFileInLibDirectory("yjp-controller-api-redist.jar").getAbsolutePath());
+    }
+
+    if (GroovycOSProcessHandler.ourDebug) {
+      System.out.println("classpath = " + classPathBuilder.getPathsString());
     }
 
     parameters.getVMParametersList().add("-Xmx" + GroovyCompilerConfiguration.getInstance(myProject).getHeapSize() + "m");
@@ -150,6 +154,10 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
       final VirtualFile finalOutputDir = getMainOutput(compileContext, module, tests);
       LOG.assertTrue(finalOutputDir != null, "No output directory for module " + module.getName() + (tests ? " tests" : " production"));
       fillFileWithGroovycParameters(toCompile, fileWithParameters, outputDir, patchers, finalOutputDir);
+
+      if (GroovycOSProcessHandler.ourDebug) {
+        System.out.println("Groovyc parameters:\n" + new String(FileUtil.loadFileText(fileWithParameters)));
+      }
 
       parameters.getProgramParametersList().add(forStubs ? "stubs" : "groovyc");
       parameters.getProgramParametersList().add(fileWithParameters.getPath());
@@ -263,7 +271,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
 
     for (final VirtualFile item : virtualFiles) {
       printer.println(GroovycRunner.SRC_FILE);
-      printer.println(item.getPath());
+      printer.println(FileUtil.toSystemDependentName(item.getPath()));
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
           final PsiFile file = PsiManager.getInstance(myProject).findFile(item);
@@ -295,7 +303,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     printer.println(PathUtil.getLocalPath(outputDir));
 
     printer.println(GroovycRunner.FINAL_OUTPUTPATH);
-    printer.println(finalOutputDir.getPath());
+    printer.println(FileUtil.toSystemDependentName(finalOutputDir.getPath()));
 
 
     printer.close();

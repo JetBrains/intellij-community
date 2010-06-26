@@ -33,6 +33,7 @@
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="copyright" />
     <orderEntry type="module" module-name="IntelliLangJava" />
+    <orderEntry type="module" module-name="ant" />
   </component>
 </module>
 

@@ -67,8 +67,8 @@ public class IdeaTextPatchBuilder {
         }
       }, root.path);
 
-      changes.removeAll(outGoingOnly);
-      addConvertChanges(changes, result);
+      rootChanges.removeAll(outGoingOnly);
+      addConvertChanges(rootChanges, result);
 
       for (Change change : outGoingOnly) {
         result.add(new BeforeAfter<AirContentRevision>(convertRevision(change.getBeforeRevision(), provider),
@@ -84,6 +84,7 @@ public class IdeaTextPatchBuilder {
     }
   }
 
+  @NotNull
   public static List<FilePatch> buildPatch(final Project project, final Collection<Change> changes, final String basePath, final boolean reversePatch) throws VcsException {
     final Collection<BeforeAfter<AirContentRevision>> revisions;
     if (project != null) {

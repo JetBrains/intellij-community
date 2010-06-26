@@ -45,21 +45,21 @@ public class GantReferenceCompletionTest extends LightCodeInsightFixtureTestCase
 target(aaa: "") {
     dep<caret>
 }
-""", "depends", "dependSet"
+""", "depends", "dependset"
   }
 
   public void testAntBuilderJavac() throws Throwable {
     checkVariants """
 target(aaa: "") {
     ant.jav<caret>
-}""", "java", "javac", "javadoc"
+}""", "java", "javac", "javadoc", "javadoc2", "javaresource"
   }
 
   public void testAntJavacTarget() throws Throwable {
     checkVariants """
 target(aaa: "") {
     jav<caret>
-}""", "java", "javac", "javadoc"
+}""", "java", "javac", "javadoc", "javadoc2", "javaresource"
   }
 
   public void testInclude() throws Throwable {
@@ -102,7 +102,34 @@ def foo() {
 """
   }
 
-  static final def GANT_JARS = ["gant.jar", "ant.jar", "ant-junit.jar", "commons.jar"]
+  public void testPatternset() throws Exception {
+    checkVariants "ant.patt<caret>t", "patternset"
+  }
+
+  public void testTagsInsideTags() throws Exception {
+    myFixture.configureByText "a.groovy", """
+AntBuilder ant
+ant.zip {
+  patternset {
+    includ<caret>
+  }
+}"""
+    myFixture.completeBasic()
+    assertSameElements myFixture.lookupElementStrings, "include", "includesfile"
+  }
+  
+  public void testTagsInsideTagsInGantTarget() throws Exception {
+    checkVariants """
+target(aaa: "") {
+  zip {
+    patternset {
+      includ<caret>
+    }
+  }
+}""", "include", "includesfile", "includeTargets", "includeTool"
+  }
+
+  static final def GANT_JARS = ["gant.jar", "ant.jar", "ant-junit.jar", "ant-launcher.jar", "commons.jar"]
 
 }
 
@@ -122,7 +149,7 @@ class GantProjectDescriptor implements LightProjectDescriptor {
       modifiableModel.addRoot(fs.findFileByPath("$TestUtils.mockGroovyLibraryHome/$TestUtils.GROOVY_JAR!/"), OrderRootType.CLASSES);
 
       GantReferenceCompletionTest.GANT_JARS.each {
-        modifiableModel.addRoot(fs.findFileByPath("${TestUtils.absoluteTestDataPath}mockGantLib/$it!/"), OrderRootType.CLASSES);
+        modifiableModel.addRoot(fs.findFileByPath("${TestUtils.absoluteTestDataPath}mockGantLib/lib/$it!/"), OrderRootType.CLASSES);
       }
       modifiableModel.commit();
     }

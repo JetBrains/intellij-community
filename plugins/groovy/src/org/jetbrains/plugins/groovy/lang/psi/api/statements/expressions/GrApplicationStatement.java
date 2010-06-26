@@ -17,17 +17,16 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 
 /**
  * @author ilyas
  */
-public interface GrApplicationStatement extends GrStatement, GrCall {
+public interface GrApplicationStatement extends GrStatement, GrMethodCall {
+  /**
+   * @deprecated use {@link GrMethodCall#getInvokedExpression()}
+   */
   GrExpression getFunExpression();
 
   GrExpression[] getArguments();
 
-  GrArgumentList getArgumentList();
-
-  //PsiElement addNamedArgument(GrNamedArgument argument);
 }

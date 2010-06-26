@@ -16,6 +16,7 @@
 package com.intellij.packaging.impl.ui.actions;
 
 import com.intellij.openapi.deployment.DeploymentUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
@@ -44,6 +45,7 @@ import java.util.List;
  * @author nik
  */
 public class PackageFileWorker {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.packaging.impl.ui.actions.PackageFileWorker");
   private final File myFile;
   private final String myRelativeOutputPath;
 
@@ -53,6 +55,7 @@ public class PackageFileWorker {
   }
 
   public static void packageFile(@NotNull VirtualFile file, @NotNull Project project) throws IOException {
+    LOG.debug("Start packaging file: " + file.getPath());
     final Collection<Trinity<Artifact, PackagingElementPath, String>> items = ArtifactUtil.findContainingArtifactsWithOutputPaths(file, project);
     File ioFile = VfsUtil.virtualToIoFile(file);
     for (Trinity<Artifact, PackagingElementPath, String> item : items) {
@@ -60,6 +63,7 @@ public class PackageFileWorker {
       final String outputPath = artifact.getOutputPath();
       if (!StringUtil.isEmpty(outputPath)) {
         PackageFileWorker worker = new PackageFileWorker(ioFile, item.getThird());
+        LOG.debug(" package to " + outputPath);
         worker.packageFile(outputPath, item.getSecond().getParents());
       }
     }
@@ -76,7 +80,9 @@ public class PackageFileWorker {
 
   private void copyFile(String outputPath, List<CompositePackagingElement<?>> parents) throws IOException {
     if (parents.isEmpty()) {
-      FileUtil.copy(myFile, new File(FileUtil.toSystemDependentName(DeploymentUtil.appendToPath(outputPath, myRelativeOutputPath))));
+      final String fullOutputPath = DeploymentUtil.appendToPath(outputPath, myRelativeOutputPath);
+      LOG.debug("  copying to " + fullOutputPath);
+      FileUtil.copy(myFile, new File(FileUtil.toSystemDependentName(fullOutputPath)));
       return;
     }
 
@@ -94,6 +100,7 @@ public class PackageFileWorker {
   private void packFile(String archivePath, String pathInArchive, List<CompositePackagingElement<?>> parents) throws IOException {
     final File archiveFile = new File(FileUtil.toSystemDependentName(archivePath));
     if (parents.isEmpty()) {
+      LOG.debug("  adding to archive " + archivePath);
       JBZipFile file = getOrCreateZipFile(archiveFile);
       try {
         final String fullPathInArchive = DeploymentUtil.trimForwardSlashes(DeploymentUtil.appendToPath(pathInArchive, myRelativeOutputPath));
@@ -113,6 +120,7 @@ public class PackageFileWorker {
       JBZipFile zipFile = getOrCreateZipFile(archiveFile);
       try {
         final JBZipEntry entry = zipFile.getOrCreateEntry(nextPathInArchive);
+        LOG.debug("  extracting to temp file: " + nextPathInArchive + " from " + archivePath);
         final File tempFile = FileUtil.createTempFile("packageFile" + FileUtil.sanitizeFileName(nextPathInArchive), FileUtil.getExtension(PathUtil.getFileName(nextPathInArchive)));
         if (entry.getSize() != -1) {
           FileUtil.writeToFile(tempFile, entry.getData());

@@ -72,6 +72,7 @@ public class EditorOptionsPanel {
   private JCheckBox myCbEnsureBlankLineBeforeCheckBox;
   private JCheckBox myShowReformatCodeDialogCheckBox;
   private JCheckBox myShowOptimizeImportsDialogCheckBox;
+  private JCheckBox myCbUseSoftWraps;
   private final ErrorHighlightingPanel myErrorHighlightingPanel = new ErrorHighlightingPanel();
   private final MyConfigurable myConfigurable;
 
@@ -115,6 +116,7 @@ public class EditorOptionsPanel {
 
     // Virtual space
 
+    myCbUseSoftWraps.setSelected(editorSettings.isUseSoftWraps());
     myCbVirtualSpace.setSelected(editorSettings.isVirtualSpace());
     myCbCaretInsideTabs.setSelected(editorSettings.isCaretInsideTabs());
     myCbVirtualPageAtBottom.setSelected(editorSettings.isAdditionalPageAtBottom());
@@ -175,6 +177,7 @@ public class EditorOptionsPanel {
 
     // Virtual space
 
+    editorSettings.setUseSoftWraps(myCbUseSoftWraps.isSelected());
     editorSettings.setVirtualSpace(myCbVirtualSpace.isSelected());
     editorSettings.setCaretInsideTabs(myCbCaretInsideTabs.isSelected());
     editorSettings.setAdditionalPageAtBottom(myCbVirtualPageAtBottom.isSelected());
@@ -292,6 +295,7 @@ public class EditorOptionsPanel {
     isModified |= isModified(myCbHighlightIdentifierUnderCaret, codeInsightSettings.HIGHLIGHT_IDENTIFIER_UNDER_CARET);
 
     // Virtual space
+    isModified |= isModified(myCbUseSoftWraps, editorSettings.isUseSoftWraps());
     isModified |= isModified(myCbVirtualSpace, editorSettings.isVirtualSpace());
     isModified |= isModified(myCbCaretInsideTabs, editorSettings.isCaretInsideTabs());
     isModified |= isModified(myCbVirtualPageAtBottom, editorSettings.isAdditionalPageAtBottom());

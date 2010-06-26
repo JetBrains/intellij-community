@@ -127,7 +127,7 @@ fi
 if [ -z "$GROOVY_CONF" ] ; then
     GROOVY_CONF="$GROOVY_HOME/conf/groovy-starter.conf"
 fi
-STARTER_CLASSPATH="$GROOVY_HOME/lib/groovy-all-1.6.4.jar"
+STARTER_CLASSPATH="$GROOVY_HOME/lib/groovy-all-1.7.1.jar"
 
 # Create the final classpath. Setting a classpath using the -cp or -classpath option means not to use the
 # global classpath. Groovy behaves then the same as the java interpreter

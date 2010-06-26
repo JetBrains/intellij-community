@@ -61,18 +61,7 @@ public abstract class AbstractSvnUpdatePanel {
       else {
         final MultipleRootsEditor multipleRootsEditor = new MultipleRootsEditor(myRootToPanel, myVCS.getProject());
         configureRootsPanel.add(multipleRootsEditor.getPanel(), BorderLayout.CENTER);
-        /*
-        final JTabbedPane tabbedPane = new JTabbedPane();
-        configureRootsPanel.add(tabbedPane, BorderLayout.CENTER);
-
-        for (Iterator<FilePath> iterator = myRootToPanel.keySet().iterator(); iterator.hasNext();) {
-          FilePath filePath = iterator.next();
-          tabbedPane.add(myRootToPanel.get(filePath).getPanel(), filePath.getPath());
-        }
-        */
-
       }
-
     }
   }
 

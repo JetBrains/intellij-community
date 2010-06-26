@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.groovy.compiler.rt.CompilerMessage;
 import org.jetbrains.groovy.compiler.rt.GroovycRunner;
@@ -37,6 +38,7 @@ import java.util.*;
  * @date: 16.04.2007
  */
 public class GroovycOSProcessHandler extends OSProcessHandler {
+  public static boolean ourDebug = false;
   private final List<TranslatingCompiler.OutputItem> myCompiledItems = new ArrayList<TranslatingCompiler.OutputItem>();
   private final Set<File> toRecompileFiles = new HashSet<File>();
   private final List<CompilerMessage> compilerMessages = new ArrayList<CompilerMessage>();
@@ -54,22 +56,30 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
   public void notifyTextAvailable(final String text, final Key outputType) {
     super.notifyTextAvailable(text, outputType);
 
-    parseOutput(text, outputType == ProcessOutputTypes.STDERR);
-  }
-
-  private final StringBuffer outputBuffer = new StringBuffer();
-
-  private void parseOutput(String text, boolean error) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Received from groovyc: " + text);
     }
 
-    if (error) {
+    if (ourDebug) {
+      System.out.println("Received from groovyc: '''" + text.trim() + "'''");
+    }
+
+    if (outputType == ProcessOutputTypes.SYSTEM) {
+      return;
+    }
+
+    if (outputType == ProcessOutputTypes.STDERR) {
       stdErr.append(StringUtil.convertLineSeparators(text));
       return;
     }
 
 
+    parseOutput(text);
+  }
+
+  private final StringBuffer outputBuffer = new StringBuffer();
+
+  private void parseOutput(String text) {
     final String trimmed = text.trim();
 
     if (trimmed.startsWith(GroovycRunner.PRESENTABLE_MESSAGE)) {
@@ -88,52 +98,23 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
 
       //compiled start marker have to be in the beginning on each string
       if (outputBuffer.indexOf(GroovycRunner.COMPILED_START) != -1) {
-
         if (outputBuffer.indexOf(GroovycRunner.COMPILED_END) == -1) {
           return;
         }
 
-        {
-          text = handleOutputBuffer(GroovycRunner.COMPILED_START, GroovycRunner.COMPILED_END);
+        final String compiled = handleOutputBuffer(GroovycRunner.COMPILED_START, GroovycRunner.COMPILED_END);
+        final List<String> list = StringUtil.split(compiled, GroovycRunner.SEPARATOR);
+        String outputPath = list.get(0);
+        String sourceFile = list.get(1);
 
-          StringTokenizer tokenizer = new StringTokenizer(text, GroovycRunner.SEPARATOR, false);
-
-          String token;
-          /*
-          * output path
-          * source file
-          */
-
-          String outputPath = "";
-          String sourceFile = "";
-
-          if (tokenizer.hasMoreTokens()) {
-            token = tokenizer.nextToken();
-            outputPath = token;
-          }
-
-          if (tokenizer.hasMoreTokens()) {
-            token = tokenizer.nextToken();
-            sourceFile = token;
-          }
-
-          LocalFileSystem.getInstance().refreshAndFindFileByPath(outputPath);
-          final TranslatingCompiler.OutputItem item = getOutputItem(outputPath, sourceFile);
-          if (item != null) {
-            myCompiledItems.add(item);
-          }
-        }
+        LocalFileSystem.getInstance().refreshAndFindFileByPath(outputPath);
+        ContainerUtil.addIfNotNull(getOutputItem(outputPath, sourceFile), myCompiledItems);
 
       }
       else if (outputBuffer.indexOf(GroovycRunner.TO_RECOMPILE_START) != -1) {
-        if (!(outputBuffer.indexOf(GroovycRunner.TO_RECOMPILE_END) != -1)) {
-          return;
-        }
-
         if (outputBuffer.indexOf(GroovycRunner.TO_RECOMPILE_END) != -1) {
-          text = handleOutputBuffer(GroovycRunner.TO_RECOMPILE_START, GroovycRunner.TO_RECOMPILE_END);
-
-          toRecompileFiles.add(new File(text));
+          String url = handleOutputBuffer(GroovycRunner.TO_RECOMPILE_START, GroovycRunner.TO_RECOMPILE_END);
+          toRecompileFiles.add(new File(url));
         }
       }
 
@@ -151,35 +132,29 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
 
         text = handleOutputBuffer(GroovycRunner.MESSAGES_START, GroovycRunner.MESSAGES_END);
 
-        String category;
-        String message;
-        String url;
-        String linenum;
-        String colomnnum;
-
         List<String> tokens = StringUtil.split(text, GroovycRunner.SEPARATOR);
         LOG.assertTrue(tokens.size() > 4, "Wrong number of output params");
 
-        category = tokens.get(0);
-        message = tokens.get(1);
-        url = tokens.get(2);
-        linenum = tokens.get(3);
-        colomnnum = tokens.get(4);
+        String category = tokens.get(0);
+        String message = tokens.get(1);
+        String url = tokens.get(2);
+        String lineNum = tokens.get(3);
+        String columnNum = tokens.get(4);
 
-        int linenumInt;
-        int colomnnumInt;
+        int lineInt;
+        int columnInt;
 
         try {
-          linenumInt = Integer.parseInt(linenum);
-          colomnnumInt = Integer.parseInt(colomnnum);
+          lineInt = Integer.parseInt(lineNum);
+          columnInt = Integer.parseInt(columnNum);
         }
         catch (NumberFormatException e) {
           LOG.error(e);
-          linenumInt = 0;
-          colomnnumInt = 0;
+          lineInt = 0;
+          columnInt = 0;
         }
 
-        compilerMessages.add(new CompilerMessage(category, message, url, linenumInt, colomnnumInt));
+        compilerMessages.add(new CompilerMessage(category, message, url, lineInt, columnInt));
       }
     }
   }
@@ -199,7 +174,7 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
   }
 
   @Nullable
-  private TranslatingCompiler.OutputItem getOutputItem(final String outputPath, final String sourceFile) {
+  private static TranslatingCompiler.OutputItem getOutputItem(final String outputPath, final String sourceFile) {
 
     final VirtualFile sourceVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(new File(sourceFile));
     if (sourceVirtualFile == null) return null; //the source might already have been deleted

@@ -228,9 +228,6 @@
 
     <psi.referenceContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.providers.GroovyReferenceContributor"/>
 
-    <projectService serviceInterface="org.jetbrains.plugins.groovy.gant.AntTasksProvider"
-                    serviceImplementation="org.jetbrains.plugins.groovy.gant.AntTasksProvider"/>
-
     <java.elementFinder implementation="org.jetbrains.plugins.groovy.lang.psi.impl.javaView.GroovyClassFinder"/>
     <java.elementFinder implementation="org.jetbrains.plugins.groovy.gant.GantClassFinder"/>
     <java.elementFinder implementation="org.jetbrains.plugins.groovy.gradle.GradleClassFinder"/>

@@ -18,9 +18,10 @@ package com.intellij.facet.ui;
 
 import com.intellij.facet.Facet;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurationException;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -40,6 +41,10 @@ public abstract class FacetEditorTab implements Configurable {
   @NonNls
   public String getHelpTopic() {
     return null;
+  }
+
+  @Override
+  public void apply() throws ConfigurationException {
   }
 
   public void onTabEntering() {

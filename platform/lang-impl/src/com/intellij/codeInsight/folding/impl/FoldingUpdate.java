@@ -139,7 +139,7 @@ public class FoldingUpdate {
           if (!injectedEditor.getDocument().isValid()) continue;
           Map<PsiElement, FoldingDescriptor> map = maps.get(i);
           UpdateFoldRegionsOperation op = new UpdateFoldRegionsOperation(project, injectedEditor, map, applyDefaultState, true);
-          editor.getFoldingModel().runBatchFoldingOperationDoNotCollapseCaret(op);
+          injectedEditor.getFoldingModel().runBatchFoldingOperationDoNotCollapseCaret(op);
         }
 
         editor.putUserData(LAST_UPDATE_INJECTED_STAMP_KEY, timeStamp);

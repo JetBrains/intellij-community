@@ -15,20 +15,33 @@
  */
 package com.intellij.psi.util.proximity;
 
+import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.util.ProximityLocation;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
 */
 public class SamePsiMemberWeigher extends ProximityWeigher {
+  private static final NotNullLazyKey<Boolean, ProximityLocation> INSIDE_PSI_MEMBER = NotNullLazyKey.create("insidePsiMember", new NotNullFunction<ProximityLocation, Boolean>() {
+    @Override
+    @NotNull
+    public Boolean fun(ProximityLocation proximityLocation) {
+      return PsiTreeUtil.getContextOfType(proximityLocation.getPosition(), PsiMember.class, false) != null;
+    }
+  });
 
   public Comparable weigh(@NotNull final PsiElement element, final ProximityLocation location) {
+    if (!INSIDE_PSI_MEMBER.getValue(location)) {
+      return 0;
+    }
+
     PsiElement position = location.getPosition();
     if (!position.isPhysical() && element.isPhysical()) {
       final PsiFile file = position.getContainingFile();

@@ -25,7 +25,6 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.xml.util.XmlTagUtil;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,22 +34,29 @@ import org.jetbrains.annotations.Nullable;
 public class DomTarget extends DelegatePsiTarget implements PsiDeclaredTarget, PomRenameableTarget {
   private final DomElement myDomElement;
   private final TextRange myRange;
+  private GenericDomValue myNameDomElement;
 
-  private DomTarget(DomElement domElement, PsiElement navigationElement, TextRange range) {
+  private DomTarget(DomElement domElement, PsiElement navigationElement, TextRange range, final GenericDomValue nameElement) {
     super(navigationElement);
     myDomElement = domElement;
     myRange = range;
+    myNameDomElement = nameElement;
   }
 
   @Nullable
   public static DomTarget getTarget(@NotNull DomElement element) {
-    final GenericDomValue value = element.getGenericInfo().getNameDomElement(element);
-    if (value == null) {
+    final GenericDomValue nameElement = element.getGenericInfo().getNameDomElement(element);
+    if (nameElement == null) {
       return null;
     }
 
-    if (value instanceof GenericAttributeValue) {
-      final GenericAttributeValue genericAttributeValue = (GenericAttributeValue)value;
+    return getTarget(element, nameElement);
+  }
+
+  @Nullable
+  public static DomTarget getTarget(DomElement element, GenericDomValue nameElement) {
+    if (nameElement instanceof GenericAttributeValue) {
+      final GenericAttributeValue genericAttributeValue = (GenericAttributeValue)nameElement;
       final XmlAttributeValue attributeValue = genericAttributeValue.getXmlAttributeValue();
       if (attributeValue == null) {
         return null;
@@ -58,11 +64,11 @@ public class DomTarget extends DelegatePsiTarget implements PsiDeclaredTarget, P
 
       final int length = attributeValue.getTextLength();
       if (length > 2) {
-        return new DomTarget(element, attributeValue, new TextRange(1, length - 1));
+        return new DomTarget(element, attributeValue, new TextRange(1, length - 1), nameElement);
       }
     }
 
-    final XmlTag tag = value.getXmlTag();
+    final XmlTag tag = nameElement.getXmlTag();
     if (tag == null) {
       return null;
     }
@@ -72,7 +78,7 @@ public class DomTarget extends DelegatePsiTarget implements PsiDeclaredTarget, P
       return null;
     }
 
-    return new DomTarget(element, tag, XmlTagUtil.getTrimmedValueRange(tag));
+    return new DomTarget(element, tag, XmlTagUtil.getTrimmedValueRange(tag), nameElement);
   }
 
   public TextRange getNameIdentifierRange() {
@@ -84,13 +90,13 @@ public class DomTarget extends DelegatePsiTarget implements PsiDeclaredTarget, P
   }
 
   public Object setName(@NotNull String newName) {
-    ObjectUtils.assertNotNull(myDomElement.getGenericInfo().getNameDomElement(myDomElement)).setStringValue(newName);
+    myNameDomElement.setStringValue(newName);
     return myDomElement;
   }
 
   @Nullable
   public String getName() {
-    return myDomElement.getGenericInfo().getElementName(myDomElement);
+    return myNameDomElement.getStringValue();
   }
 
   @Override

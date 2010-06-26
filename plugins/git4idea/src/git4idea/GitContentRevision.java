@@ -136,4 +136,9 @@ public class GitContentRevision implements ContentRevision {
       return CurrentContentRevision.create(filePath);
     }
   }
+
+  @Override
+  public String toString() {
+    return myFile.getPath();
+  }
 }

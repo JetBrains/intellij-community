@@ -107,10 +107,14 @@ import java.util.Collection;
   }
 
   public static void addSourceContentToRoots(Module module, VirtualFile vDir) {
+    addSourceContentToRoots(module, vDir, false);
+  }
+
+  public static void addSourceContentToRoots(Module module, VirtualFile vDir, final boolean testSource) {
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
     final ModifiableRootModel rootModel = rootManager.getModifiableModel();
     final ContentEntry contentEntry = rootModel.addContentEntry(vDir);
-    contentEntry.addSourceFolder(vDir, false);
+    contentEntry.addSourceFolder(vDir, testSource);
     rootModel.commit();
   }
 

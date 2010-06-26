@@ -31,6 +31,7 @@ import com.intellij.psi.WeighingComparable;
 import com.intellij.psi.WeighingService;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.ProximityLocation;
+import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +47,7 @@ public class PsiProximityComparator implements Comparator<Object> {
       return getProximity(key, myContext);
     }
   };
+  private static final Key<Module> MODULE_BY_LOCATION = Key.create("ModuleByLocation");
 
   public PsiProximityComparator(PsiElement context) {
     myContext = context;
@@ -86,6 +88,22 @@ public class PsiProximityComparator implements Comparator<Object> {
     if (contextModule == null) return null;
 
     return WeighingService.weigh(WEIGHER_KEY, element, new ProximityLocation(context, contextModule));
+  }
+
+  @Nullable
+  public static WeighingComparable<PsiElement, ProximityLocation> getProximity(final PsiElement element, final PsiElement context, ProcessingContext processingContext) {
+    if (element == null) return null;
+    if (element instanceof MetadataPsiElementBase) return null;
+    if (context == null) return null;
+    Module contextModule = processingContext.get(MODULE_BY_LOCATION);
+    if (contextModule == null) {
+      contextModule = ModuleUtil.findModuleForPsiElement(context);
+      processingContext.put(MODULE_BY_LOCATION, contextModule);
+    }
+
+    if (contextModule == null) return null;
+
+    return WeighingService.weigh(WEIGHER_KEY, element, new ProximityLocation(context, contextModule, processingContext));
   }
 
 }

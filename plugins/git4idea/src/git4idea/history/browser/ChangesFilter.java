@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.AreaMap;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.FilePathsHelper;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairProcessor;
 import git4idea.GitUtil;
@@ -357,8 +358,31 @@ public class ChangesFilter {
       };
     }
 
-    public void addPath(final VirtualFile vf) {
+    public boolean addPath(final VirtualFile vf) {
+      final Collection<VirtualFile> filesWeAlreadyHave = myMap.values();
+      final Collection<VirtualFile> childrenToRemove = new LinkedList<VirtualFile>();
+      for (VirtualFile current : filesWeAlreadyHave) {
+        if (current.equals(vf)) return false; // doesnt add exact same
+        if (VfsUtil.isAncestor(vf, current, false)) {
+          childrenToRemove.add(current);
+          continue;
+        }
+        if (childrenToRemove.isEmpty()) {
+          if (VfsUtil.isAncestor(current, vf, false)) {
+            return false; // we have a parent already
+          }
+        }
+      }
+      for (VirtualFile virtualFile : childrenToRemove) {
+        myMap.removeByValue(virtualFile);
+      }
+
       myMap.put(FilePathsHelper.convertWithLastSeparator(vf), vf);
+      return true;
+    }
+
+    public boolean containsFile(final VirtualFile vf) {
+      return myMap.contains(FilePathsHelper.convertWithLastSeparator(vf));
     }
 
     public void removePath(final VirtualFile vf) {

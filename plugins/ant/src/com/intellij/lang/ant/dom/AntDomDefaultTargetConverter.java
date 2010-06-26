@@ -22,9 +22,7 @@ import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceBase;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlElement;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -40,26 +38,22 @@ import java.util.Set;
 public class AntDomDefaultTargetConverter extends Converter<Trinity<AntDomTarget, String, Map<String, AntDomTarget>>> implements CustomReferenceConverter<Trinity<AntDomTarget, String, Map<String, AntDomTarget>>>{
 
   @NotNull public PsiReference[] createReferences(final GenericDomValue<Trinity<AntDomTarget, String, Map<String, AntDomTarget>>> value, PsiElement element, ConvertContext context) {
-    final XmlElement xmlElement = value.getXmlElement();
-    if (!(xmlElement instanceof XmlAttribute)) {
-      return PsiReference.EMPTY_ARRAY;
-    }
-    final XmlAttributeValue valueElement = ((XmlAttribute)xmlElement).getValueElement();
-    if (valueElement == null) {
-      return PsiReference.EMPTY_ARRAY;
-    }
-    final Trinity<AntDomTarget, String, Map<String, AntDomTarget>> trinity = value.getValue();
-    if (trinity == null) {
-      return PsiReference.EMPTY_ARRAY;
-    }
-    final DomTarget domTarget = trinity.getFirst() != null? DomTarget.getTarget(trinity.getFirst()) : null;
-    return new PsiReference[] {new PsiReferenceBase<PsiElement>(valueElement, true) {
+    return new PsiReference[] {new PsiReferenceBase<PsiElement>(element, true) {
       public PsiElement resolve() {
+        final Trinity<AntDomTarget, String, Map<String, AntDomTarget>> trinity = value.getValue();
+        if (trinity == null) {
+          return null;
+        }
+        final DomTarget domTarget = trinity.getFirst() != null? DomTarget.getTarget(trinity.getFirst()) : null;
         return domTarget != null? PomService.convertToPsi(domTarget) : null;
       }
 
       @NotNull
       public Object[] getVariants() {
+        final Trinity<AntDomTarget, String, Map<String, AntDomTarget>> trinity = value.getValue();
+        if (trinity == null) {
+          return ArrayUtil.EMPTY_OBJECT_ARRAY;
+        }
         final Set<String> set = trinity.getThird().keySet();
         return set.toArray(new Object[set.size()]);
       }

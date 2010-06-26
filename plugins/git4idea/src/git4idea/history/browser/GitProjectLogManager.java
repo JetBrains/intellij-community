@@ -135,7 +135,7 @@ public class GitProjectLogManager implements ProjectComponent {
         final GitLogTree tree = new GitLogTree(myProject, root, myGitUsersComponent);
         tree.setParentDisposable(myProject);
         tree.initView();
-        final Content content = contentFactory.createContent(tree.getComponent(), getCaption(baseDir, root), false);
+        final Content content = contentFactory.createContent(tree.getComponent(), "", false);
         content.setCloseable(false);
         cvcm.addContent(content);
         newKeys.put(root, content);
