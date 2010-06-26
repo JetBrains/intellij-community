@@ -933,7 +933,7 @@ public class UIUtil {
   }
 
   public static boolean isStandardMenuLAF() {
-    return isWinLafOnVista() || "Nimbus".equals(UIManager.getLookAndFeel().getName());
+    return isWinLafOnVista() || "Nimbus".equals(UIManager.getLookAndFeel().getName()) || "GTK look and feel".equals(UIManager.getLookAndFeel().getName());
   }
 
   public static Color getFocusedFillColor() {
