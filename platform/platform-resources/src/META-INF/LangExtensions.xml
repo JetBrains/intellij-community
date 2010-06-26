@@ -366,6 +366,8 @@
   <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.LegacyCompletionContributor" id="legacy" order="last"/>
   <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.FilePathCompletionContributor" id="filePath" order="before javaClassName"/>
 
+  <psi.referenceContributor implementation="com.intellij.psi.PsiReferenceContributorImpl"/>
+
   <lookup.charFilter implementation="com.intellij.codeInsight.completion.CompletionCharFilter" order="last" id="completion"/>
   <lookup.charFilter implementation="com.intellij.refactoring.IdentifierCharFilter" id="identifier"/>
   <lookup.charFilter implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceCharFilter" id="fileRef" order="before completion"/>

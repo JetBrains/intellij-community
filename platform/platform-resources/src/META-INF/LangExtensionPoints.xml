@@ -257,6 +257,7 @@
   <extensionPoint name="psi.fileReferenceHelper" interface="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceHelper"/>
 
   <extensionPoint name="psi.referenceContributor" interface="com.intellij.psi.PsiReferenceContributor"/>
+  <extensionPoint name="psi.referenceProvider" beanClass="com.intellij.psi.PsiReferenceProviderBean"/>
 
   <extensionPoint name="pom.declarationSearcher" interface="com.intellij.pom.PomDeclarationSearcher"/>
 
