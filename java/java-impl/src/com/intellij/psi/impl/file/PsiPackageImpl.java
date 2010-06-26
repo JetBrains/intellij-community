@@ -23,7 +23,6 @@ import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UndoableAction;
@@ -51,11 +50,13 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.ui.RowIcon;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.Icons;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -105,7 +106,9 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage, Querya
     if (myDirectories == null) {
       myDirectories = CachedValuesManager.getManager(myManager.getProject()).createCachedValue(new CachedValueProvider<Collection<PsiDirectory>>() {
         public Result<Collection<PsiDirectory>> compute() {
-          return Result.create(new DirectoriesSearch().search(GlobalSearchScope.allScope(myManager.getProject())).findAll(),
+          final CommonProcessors.CollectProcessor<PsiDirectory> processor = new CommonProcessors.CollectProcessor<PsiDirectory>();
+          getFacade().processPackageDirectories(PsiPackageImpl.this, allScope(), processor);
+          return Result.create(processor.getResults(),
                                PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, ProjectRootManager.getInstance(getProject()));
         }
       }, false);
@@ -128,28 +131,6 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage, Querya
 
   public RowIcon getElementIcon(final int elementFlags) {
     return createLayeredIcon(Icons.PACKAGE_ICON, elementFlags);
-  }
-
-  private class DirectoriesSearch extends QueryFactory<PsiDirectory, GlobalSearchScope> {
-    public DirectoriesSearch() {
-      registerExecutor(new QueryExecutor<PsiDirectory, GlobalSearchScope>() {
-        public boolean execute(final GlobalSearchScope scope, final Processor<PsiDirectory> consumer) {
-          PackageIndex.getInstance(getProject()).getDirsByPackageName(myQualifiedName, false).forEach(new ReadActionProcessor<VirtualFile>() {
-            public boolean processInReadAction(final VirtualFile dir) {
-              if (!scope.contains(dir)) return true;
-              PsiDirectory psiDir = myManager.findDirectory(dir);
-              assert psiDir != null;
-              return consumer.process(psiDir);
-            }
-          });
-          return true;
-        }
-      });
-    }
-
-    public Query<PsiDirectory> search(GlobalSearchScope scope) {
-      return createQuery(scope);
-    }
   }
 
   public String getName() {
@@ -381,8 +362,9 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage, Querya
   }
 
   public boolean isValid() {
-    if (new DirectoriesSearch().search(GlobalSearchScope.allScope(getProject())).findFirst() != null) return true;
-    return getFacade().packagePrefixExists(myQualifiedName);
+    final CommonProcessors.FindFirstProcessor<PsiDirectory> processor = new CommonProcessors.FindFirstProcessor<PsiDirectory>();
+    getFacade().processPackageDirectories(this, allScope(), processor);
+    return processor.getFoundValue() != null || getFacade().packagePrefixExists(myQualifiedName);
   }
 
   public boolean isWritable() {
@@ -408,7 +390,11 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage, Querya
 
   @NotNull
   public PsiClass[] getClasses() {
-    return getClasses(GlobalSearchScope.allScope(myManager.getProject()));
+    return getClasses(allScope());
+  }
+
+  protected GlobalSearchScope allScope() {
+    return NonClasspathClassFinder.addNonClasspathScope(getProject(), GlobalSearchScope.allScope(getProject()));
   }
 
   @NotNull
@@ -426,7 +412,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage, Querya
 
   @NotNull
   public PsiPackage[] getSubPackages() {
-    return getSubPackages(GlobalSearchScope.allScope(myManager.getProject()));
+    return getSubPackages(allScope());
   }
 
   @NotNull
@@ -618,7 +604,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage, Querya
       }
 
       final JavaPsiFacadeImpl facade = getFacade();
-      for (PsiClass aClass : facade.findClasses(getQualifiedName() + ".package-info", ProjectScope.getAllScope(getProject()))) {
+      for (PsiClass aClass : facade.findClasses(getQualifiedName() + ".package-info", allScope())) {
         ContainerUtil.addIfNotNull(aClass.getModifierList(), list);
       }
 
