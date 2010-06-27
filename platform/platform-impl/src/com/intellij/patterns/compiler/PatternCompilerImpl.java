@@ -232,7 +232,10 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
           }
           break;
         case invoke_end:
-          if (ch == ')') {
+          if (ch == 0 && stack.isEmpty()) {
+            return (T)curResult;
+          }
+          else if (ch == ')') {
             curFrame.state = State.invoke;
           }
           else if (ch == ',') {
