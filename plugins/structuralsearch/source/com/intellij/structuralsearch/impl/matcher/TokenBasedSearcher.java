@@ -266,7 +266,7 @@ public class TokenBasedSearcher {
         doContinue();
         return;
       }
-      PsiFile psiFile = getPsiFileForOccurence(myTokens, occurence, myPsiFiles);
+      final PsiFile psiFile = getPsiFileForOccurence(myTokens, occurence, myPsiFiles);
       if (psiFile == null) {
         doContinue();
         return;
@@ -274,7 +274,7 @@ public class TokenBasedSearcher {
       myPsiFiles.put(occurence, psiFile);
       final int start = myTokens.get(occurence).getStart();
       assert start >= 0;
-      int end = myTokens.get(occurence + myPatternLength - 1).getEnd();
+      final int end = myTokens.get(occurence + myPatternLength - 1).getEnd();
 
       final MatchContext context = myMatcher.getMatchContext();
       SearchScope scope = context.getOptions().getScope();
@@ -284,7 +284,13 @@ public class TokenBasedSearcher {
         elementList = filterScope((LocalSearchScope)scope, psiFile, start, end);
       }
       else {
-        elementList = computeScope(psiFile, start, end);
+        elementList = ApplicationManager.getApplication().runReadAction(new Computable<List<PsiElement>>() {
+          @Nullable
+          @Override
+          public List<PsiElement> compute() {
+            return computeScope(psiFile, start, end);
+          }
+        });
       }
       assert elementList != null;
       final PsiElement[] elements = elementList.toArray(new PsiElement[elementList.size()]);
