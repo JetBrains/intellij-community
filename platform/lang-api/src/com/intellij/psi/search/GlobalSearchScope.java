@@ -263,7 +263,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     private final String myDisplayName;
 
     private IntersectionScope(@NotNull GlobalSearchScope scope1, @NotNull GlobalSearchScope scope2, String displayName) {
-      super(scope1.getProject());
+      super(scope1.getProject() == null ? scope2.getProject() : scope1.getProject());
       myScope1 = scope1;
       myScope2 = scope2;
       myDisplayName = displayName;
@@ -316,7 +316,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     private final String myDisplayName;
 
     private UnionScope(@NotNull GlobalSearchScope scope1, @NotNull GlobalSearchScope scope2, String displayName) {
-      super(scope1.getProject() == scope2.getProject() ? scope1.getProject() : null);
+      super(scope1.getProject() == null ? scope2.getProject() : scope1.getProject());
       myScope1 = scope1;
       myScope2 = scope2;
       myDisplayName = displayName;
