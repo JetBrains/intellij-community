@@ -287,18 +287,21 @@ public class IdTableBuilding {
         final int documentLength = chars.length();
         BaseFilterLexer.TodoScanningData[] todoScanningDatas = null;
         final HighlighterIterator iterator = highlighter.createIterator(0);
-        
+
         while (!iterator.atEnd()) {
           final IElementType token = iterator.getTokenType();
 
-          if (CacheUtil.isInComments(token) || myCommentTokens.contains(token)) {
+          if (myCommentTokens.contains(token) || CacheUtil.isInComments(token)) {
             int start = iterator.getStart();
+            if (start >= documentLength) break;            
             int end = iterator.getEnd();
 
-            if (start >= documentLength || end > documentLength) {
-              Logger.getInstance(getClass().getName()).error("Lexer editor highlighter produces tokens out of range:"+documentLength+",("+start + "," + end + ")");
-            }
-            todoScanningDatas = BaseFilterLexer.advanceTodoItemsCount(chars.subSequence(start, end), occurrenceConsumer, todoScanningDatas);
+            todoScanningDatas = BaseFilterLexer.advanceTodoItemsCount(
+              chars.subSequence(start, Math.min(end, documentLength)), 
+              occurrenceConsumer, 
+              todoScanningDatas
+            );
+            if (end > documentLength) break;
           }
           iterator.advance();
         }
