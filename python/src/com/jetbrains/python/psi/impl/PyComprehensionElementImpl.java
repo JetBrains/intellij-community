@@ -107,7 +107,7 @@ public class PyComprehensionElementImpl extends PyElementImpl implements NameDef
       for_targets[i] = for_comp.getIteratorVariable();
       i += 1;
     }
-    List<PyElement> name_refs = PyUtil.flattenedParens(for_targets);
+    List<PyElement> name_refs = PyUtil.flattenedParensAndLists(for_targets);
     return name_refs;
   }
 
