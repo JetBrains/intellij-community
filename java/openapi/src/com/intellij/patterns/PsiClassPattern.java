@@ -102,6 +102,13 @@ public class PsiClassPattern extends PsiMemberPattern<PsiClass, PsiClassPattern>
       }
     });
   }
-  
+  public PsiClassPattern withQualifiedName(@NonNls @NotNull final ElementPattern<String> qname) {
+    return with(new PatternCondition<PsiClass>("withQualifiedName") {
+      public boolean accepts(@NotNull final PsiClass psiClass, final ProcessingContext context) {
+        return qname.accepts(psiClass.getQualifiedName(), context);
+      }
+    });
+  }
+
 
 }

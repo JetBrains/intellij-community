@@ -5,17 +5,13 @@ import com.intellij.patterns.PlatformPatterns
 import com.intellij.patterns.PsiElementPattern
 import com.intellij.patterns.PsiJavaPatterns
 import com.intellij.patterns.StandardPatterns
-import com.intellij.psi.PsiElement
 import com.intellij.psi.SyntheticElement
-import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ClassScope
 import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ClosureScope
 import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ScriptScope
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns
 import com.intellij.openapi.util.text.StringUtil
 
@@ -35,7 +31,7 @@ class Context {
     if (extensions instanceof List) {
       extensions = extensions.collect { StringUtil.trimStart(it, '.') }
       def vfilePattern = extensions.size() == 1 ? virtualFile().withExtension(extensions[0]) : virtualFile().withExtension(extensions as String[])
-      addFilter new PlaceContextFilter(psiElement().inFile(psiFile().withOriginalFile(psiFile().withVirtualFile(vfilePattern))))
+      addFilter new FileContextFilter(psiFile().withVirtualFile(vfilePattern))
     }
 
     // filter by scope first, then by ctype
@@ -52,12 +48,12 @@ class Context {
         if (scope.extension) {
           scriptPattern = scriptPattern.withVirtualFile(PlatformPatterns.virtualFile().withExtension(scope.extension))
         }
-        addFilter new PlaceContextFilter(PlatformPatterns.psiElement().inFile(scriptPattern))
+        addFilter new FileContextFilter(scriptPattern)
 
         // Name matcher
         def namePattern = scope.namePattern
         if (namePattern) {
-          addFilter {PsiElement elem, fqn, ctx -> elem.containingFile.name.matches(namePattern)}
+          addFilter new FileContextFilter(psiFile().withName(PlatformPatterns.string().matches(namePattern)))
         }
 
         // Process unqualified references only
@@ -71,14 +67,11 @@ class Context {
         final def classScope = (ClassScope) args.scope
         def namePattern = classScope.getName()
         if (namePattern) {
-          addFilter {GrReferenceExpression elem, fqn, ctx ->
-            final GrTypeDefinition clazz = PsiTreeUtil.getParentOfType(elem, GrTypeDefinition)
-            if (clazz) {
-              final def qualName = clazz.getQualifiedName()
-              return clazz.getName().matches(namePattern) || qualName && qualName.matches(namePattern)
-            }
-            return false
-          }
+          def match = PlatformPatterns.string().matches(namePattern)
+          addFilter new PlaceContextFilter(psiElement().inside(
+                  PlatformPatterns.or(
+                          PsiJavaPatterns.psiClass().withQualifiedName(match),
+                          PsiJavaPatterns.psiClass().withName(match))))
         }
         break
 
@@ -88,21 +81,17 @@ class Context {
 
         if (((ClosureScope) args.scope).isArg()) {
           // Filter for call parameter
-          addFilter {GrReferenceExpression elem, fqn, ctx ->
-            def closParent = PsiTreeUtil.getParentOfType(elem, GrClosableBlock.class)
-            assert closParent != null
+          addFilter new PlaceContextFilter(psiElement().inside(
+                  psiElement(GrClosableBlock).withParent(
+                          PlatformPatterns.or(
+                                  psiElement(GrCall),
+                                  psiElement(GrArgumentList).withParent(GrCall)))))
 
-            def parent = closParent.getParent()
-            if (parent instanceof GrArgumentList) {
-              parent = parent.parent
-            }
-            return parent instanceof GrCall
-          }
         }
 
         // Enhance only unqualified expressions
         if (!args.ctype) {
-          addFilter getClassTypeFilter("groovy.lang.Closure")
+          addFilter getClassTypeFilter(GrClosableBlock.GROOVY_LANG_CLOSURE)
         }
         break
 
@@ -122,14 +111,15 @@ class Context {
     new ClassContextFilter(PsiJavaPatterns.psiClass().inheritorOf(false, ctype))
   }
 
-  private def addFilter(Closure cl) {
-    addFilter (cl as ContextFilter)
-  }
   private void addFilter(ContextFilter cl) {
     myFilters << cl
   }
 
   ContextFilter getFilter() {
+    if (myFilters.size() == 1) {
+      return myFilters[0]
+    }
+
     return CompositeContextFilter.compose(myFilters, true)
   }
 

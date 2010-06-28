@@ -67,13 +67,22 @@ public class ResolveUtil {
   private static final TObjectHashingStrategy<PsiType> RAW_TYPE_HASHING_STRATEGY = new TObjectHashingStrategy<PsiType>() {
     @Override
     public int computeHashCode(PsiType object) {
-      return rawCanonicalText(object).hashCode();
+      return stringify(object).hashCode();
     }
 
     @Override
     public boolean equals(PsiType o1, PsiType o2) {
-      return rawCanonicalText(o1).equals(rawCanonicalText(o2));
+      return stringify(o1).equals(stringify(o2));
     }
+
+    private String stringify(PsiType type) {
+      final PsiClass cls = PsiUtil.resolveClassInType(type);
+      if (cls instanceof PsiTypeParameter) {
+        return cls.getName() + cls.getSuperClass().getName();
+      }
+      return rawCanonicalText(type);
+    }
+
   };
 
   private ResolveUtil() {
@@ -142,6 +151,9 @@ public class ResolveUtil {
 
     if (type instanceof PsiClassType) {
       PsiClass psiClass = ((PsiClassType)type).resolve();
+      if (psiClass instanceof PsiTypeParameter) {
+        psiClass = psiClass.getSuperClass();
+      }
       if (psiClass != null && !GroovyDslFileIndex.processExecutors(psiClass, place, processor)) {
         return false;
       }
@@ -153,17 +165,6 @@ public class ResolveUtil {
       }
     }
     return true;
-  }
-
-  private static HashMap<String, PsiType> getSuperTypes(PsiType type, Project project) {
-    final HashMap<String, PsiType> visited = new HashMap<String, PsiType>();
-    collectSuperTypes(type, visited);
-    if (type instanceof PsiArrayType) {
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      collectSuperTypes(factory.createTypeFromText(CommonClassNames.JAVA_LANG_COMPARABLE, null), visited);
-      collectSuperTypes(factory.createTypeFromText(CommonClassNames.JAVA_IO_SERIALIZABLE, null), visited);
-    }
-    return visited;
   }
 
   private static void collectSuperTypes(PsiType type, Map<String, PsiType> visited) {
@@ -193,7 +194,14 @@ public class ResolveUtil {
 
           @Override
           protected Map<String, PsiType> create(PsiType key) {
-            return getSuperTypes(key, project);
+            final HashMap<String, PsiType> visited = new HashMap<String, PsiType>();
+            collectSuperTypes(key, visited);
+            if (key instanceof PsiArrayType) {
+              final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+              collectSuperTypes(factory.createTypeFromText(CommonClassNames.JAVA_LANG_COMPARABLE, null), visited);
+              collectSuperTypes(factory.createTypeFromText(CommonClassNames.JAVA_IO_SERIALIZABLE, null), visited);
+            }
+            return visited;
           }
         };
         return Result.create(map, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, ProjectRootManager.getInstance(project));

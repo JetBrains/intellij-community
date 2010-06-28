@@ -2,6 +2,7 @@ def gdslScriptContext = context(scope: scriptScope(), filetypes:['gdsl'])
 
 contributor([gdslScriptContext]) {
   method name: "context", params: [args: [:]], type: "java.lang.Object"
+  method name: "context", params: [:], type: "java.lang.Object"
   method name: "contributor", params: [contexts: "java.util.List", body: {}], type: void
   method name: "contributor", params: [contexts: "java.util.Map", body: {}], type: void
   method name: "contributor", params: [contexts: "java.lang.Object", body: {}], type: void

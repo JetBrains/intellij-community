@@ -43,9 +43,9 @@ public class GroovyDslExecutor {
     enhancers << Pair.create(CompositeContextFilter.compose(cts, false), toDo)
   }
 
-  def processVariants(ClassDescriptor descriptor, consumer, PsiElement place, String fqn, ProcessingContext ctx) {
+  def processVariants(GroovyClassDescriptor descriptor, consumer, ProcessingContext ctx) {
     for (pair in enhancers) {
-      if (pair.first.isApplicable(place, fqn, ctx)) {
+      if (pair.first.isApplicable(descriptor, ctx)) {
         Closure f = pair.second.clone()
         f.delegate = consumer
         f.resolveStrategy = Closure.DELEGATE_FIRST

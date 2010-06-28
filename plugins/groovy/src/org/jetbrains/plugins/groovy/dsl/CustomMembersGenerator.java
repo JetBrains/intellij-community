@@ -22,23 +22,23 @@ import java.util.Set;
 public class CustomMembersGenerator implements GdslMembersHolderConsumer {
   private final Set<Map> myMethods = new HashSet<Map>();
   private final Project myProject;
-  private final PsiElement myPlace;
   private final String myQualifiedName;
   private final CompoundMembersHolder myDepot = new CompoundMembersHolder();
+  private final GroovyClassDescriptor myDescriptor;
 
-  public CustomMembersGenerator(Project project, PsiElement place, String qualifiedName) {
-    myProject = project;
-    myPlace = place;
-    myQualifiedName = qualifiedName;
+  public CustomMembersGenerator(GroovyClassDescriptor descriptor) {
+    myDescriptor = descriptor;
+    myProject = descriptor.getProject();
+    myQualifiedName = descriptor.getQualifiedName();
   }
 
   public PsiElement getPlace() {
-    return myPlace;
+    return myDescriptor.getPlace();
   }
 
   @Nullable
   public PsiClass getClassType() {
-    return JavaPsiFacade.getInstance(myProject).findClass(myQualifiedName, myPlace.getResolveScope());
+    return JavaPsiFacade.getInstance(myProject).findClass(myQualifiedName, myDescriptor.getResolveScope());
   }
 
   public Project getProject() {
@@ -49,7 +49,7 @@ public class CustomMembersGenerator implements GdslMembersHolderConsumer {
   public CustomMembersHolder getMembersHolder() {
     // Add non-code members holder
     if (!myMethods.isEmpty()) {
-      addMemberHolder(NonCodeMembersHolder.generateMembers(myMethods, myPlace.getContainingFile()));
+      addMemberHolder(NonCodeMembersHolder.generateMembers(myMethods, myDescriptor.getPlaceFile()));
     }
     return myDepot;
   }

@@ -9,15 +9,9 @@ import org.jetbrains.plugins.groovy.dsl.dsltop.GdslMembersProvider
  * @author peter, ilyas
  */
 public class ExtensibleCustomMembersGenerator extends CustomMembersGenerator {
-  private final Project myProject;
-  private final PsiElement myPlace;
-  private final String myQualifiedName;
 
-  public ExtensibleCustomMembersGenerator(Project project, PsiElement place, String qualifiedName) {
-    super(project, place, qualifiedName)
-    myProject = project;
-    myPlace = place;
-    myQualifiedName = qualifiedName;
+  public ExtensibleCustomMembersGenerator(GroovyClassDescriptor descriptor) {
+    super(descriptor)
   }
 
   def methodMissing(String name, args) {

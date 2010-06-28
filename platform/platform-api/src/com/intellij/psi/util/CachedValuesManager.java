@@ -89,20 +89,22 @@ public abstract class CachedValuesManager {
 
   public <T, D extends UserDataHolder> T getCachedValue(@NotNull D dataHolder,
                               @NotNull CachedValueProvider<T> provider) {
-    class MemoizationKey<T> extends Key<T> {
-      MemoizationKey(@NotNull @NonNls String name) {
-        super(name);
-      }
-
-      public int hashCode() {
-        return toString().hashCode();
-      }
-
-      @Override
-      public boolean equals(Object obj) {
-        return obj instanceof MemoizationKey && toString().equals(obj.toString());
-      }
-    }
     return getCachedValue(dataHolder, new MemoizationKey<CachedValue<T>>("$CachedValue$" + provider.getClass().getName()), provider, false);
   }
+
+  public static class MemoizationKey<T> extends Key<T> {
+    public MemoizationKey(@NotNull @NonNls String name) {
+      super(name);
+    }
+
+    public int hashCode() {
+      return toString().hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj instanceof MemoizationKey && toString().equals(obj.toString());
+    }
+  }
+
 }
