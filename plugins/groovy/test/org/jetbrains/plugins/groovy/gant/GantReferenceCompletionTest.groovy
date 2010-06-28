@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.groovy.gant.completion;
+package org.jetbrains.plugins.groovy.gant;
 
 
 import com.intellij.openapi.module.Module
