@@ -126,6 +126,7 @@ public abstract class PropertyBunch<MType> {
                   // accessors
                   accessors.set(n, unknown); // definitely filled
                   PyExpression expr = entry.getKey();
+                  while (expr instanceof PyParenthesizedExpression) expr = ((PyParenthesizedExpression)expr).getContainedExpression();
                   if (expr instanceof PyReferenceExpression) {
                     PyReferenceExpression arg_ref = (PyReferenceExpression)expr;
                     if (arg_ref.getQualifier() == null) accessors.set(n, new Maybe<MType>(target.translate(arg_ref)));
