@@ -39,6 +39,7 @@
     <orderEntry type="library" name="microba" level="project" />
     <orderEntry type="library" name="XmlRPC" level="project" />
     <orderEntry type="library" name="commons-lang" level="project" />
+    <orderEntry type="library" name="commons-collections" level="project" />
   </component>
   <component name="copyright">
     <Base>

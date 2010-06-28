@@ -238,6 +238,8 @@
 
     <quoteHandler fileType="DjangoTemplate" className="com.jetbrains.django.lang.template.editor.DjangoTemplateQuoteHandler"/>
 
+    <lang.formatter language="DjangoTemplate" implementationClass="com.jetbrains.django.lang.template.formatter.DjangoTemplateFormattingModelBuilder"/>
+
     <!-- App Engine -->
     <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>
 
