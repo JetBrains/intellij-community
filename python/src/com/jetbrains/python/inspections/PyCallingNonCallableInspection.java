@@ -1,7 +1,9 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
@@ -12,6 +14,8 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author yole
@@ -46,13 +50,15 @@ public class PyCallingNonCallableInspection extends PyInspection {
           if (isMethodType(node, classType)) {
             return;
           }
-          //if (!classType.isDefinition() && !classType.resolveMember("__call__", PyType.Context.READ).isDefined()) {
-          //  PyClass pyClass = classType.getPyClass();
-          //  if (pyClass != null) {
-          //    classType.resolveMember("__call__", PyType.Context.READ);
-          //    registerProblem(node, "'" + pyClass.getName() + "' object is not callable");
-          //  }
-          //}
+          if (!classType.isDefinition()) {
+            final List<? extends PsiElement> calls = classType.resolveMember("__call__", AccessDirection.READ);
+            if (calls != null && calls.size() > 0) {
+              PyClass pyClass = classType.getPyClass();
+              if (pyClass != null) {
+                registerProblem(node, "'" + pyClass.getName() + "' object is not callable");
+              }
+            }
+          }
         }
       }
     }
