@@ -49,10 +49,11 @@ class AntBuilderMethod extends LightMethodBuilder implements GrBuilderMethod {
     final AntIntrospector introspector = AntDomExtender.getIntrospector(myAntClass);
     if (introspector != null) {
       final NameHint hint = processor.getHint(NameHint.KEY);
+      final PsiType closureType = getParameterList().getParameters()[1].getType();
 
       for (String name : Collections.list(introspector.getNestedElements())) {
         if (hint == null || hint.getName(ResolveState.initial()).equals(name)) {
-          final AntBuilderMethod method = new AntBuilderMethod(myPlace, name, getParameterList().getParameters()[1].getType(), null);
+          final AntBuilderMethod method = new AntBuilderMethod(myPlace, name, closureType, introspector.getElementType(name));
           if (!ResolveUtil.processElement(processor, method)) {
             return false;
           }

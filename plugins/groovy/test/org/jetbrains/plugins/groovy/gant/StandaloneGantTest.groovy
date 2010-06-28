@@ -59,6 +59,17 @@ target(aaa: "") {
     myFixture.checkHighlighting(true, false, false)
   }
 
+  public void testPathElement() throws Exception {
+    checkVariants """
+    ant.java(classname: "com.intellij.util.io.zip.ReorderJarsMain", fork: "true") {
+      arg(value: "aaa")
+      classpath {
+        pathele<caret>ment(location: "sss")
+      }
+    }
+""", "pathelement"
+  }
+
   static final def GANT_JARS = ["gant.jar", "ant.jar", "ant-junit.jar", "ant-launcher.jar", "commons.jar"]
 
 }
