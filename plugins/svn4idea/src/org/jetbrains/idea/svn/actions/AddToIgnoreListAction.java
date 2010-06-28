@@ -59,10 +59,8 @@ public class AddToIgnoreListAction extends BasicAction {
   @Override
   protected void doVcsRefresh(Project project, VirtualFile file) {
     final VcsDirtyScopeManager vcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
-    if (file.isDirectory()) {
-      vcsDirtyScopeManager.dirDirtyRecursively(file);
-    } else {
-      vcsDirtyScopeManager.fileDirty(file);
+    if (file != null && (file.getParent() != null)) {
+      vcsDirtyScopeManager.fileDirty(file.getParent());
     }
   }
 
