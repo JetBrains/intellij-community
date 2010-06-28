@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsConfiguration;
@@ -51,7 +52,9 @@ import java.util.*;
 /**
  * @author yole
  */
+@SuppressWarnings({"UseOfSystemOutOrSystemErr"})
 public class AbstractVcsTestCase {
+  protected boolean myTraceClient = false;
   protected Project myProject;
   protected VirtualFile myWorkingCopyDir;
   protected File myClientBinaryPath;
@@ -69,6 +72,9 @@ public class AbstractVcsTestCase {
       arguments.add(exeName);
     }
     Collections.addAll(arguments, commandLine);
+    if (myTraceClient) {
+      System.out.println("*** running:\n" + StringUtil.join(arguments," "));
+    }
     final ProcessBuilder builder = new ProcessBuilder().command(arguments);
     if (workingDir != null) {
       builder.directory(workingDir);
@@ -90,6 +96,17 @@ public class AbstractVcsTestCase {
     ProcessOutput result = handler.runProcess(60*1000);
     if (result.isTimeout()) {
       throw new RuntimeException("Timeout waiting for VCS client to finish execution");
+    }
+    if (myTraceClient) {
+      System.out.println("*** result: " + result.getExitCode());
+      final String out = result.getStdout().trim();
+      if (out.length() > 0) {
+        System.out.println("*** output:\n" + out);
+      }
+      final String err = result.getStderr().trim();
+      if (err.length() > 0) {
+        System.out.println("*** error:\n" + err);
+      }
     }
     return result;
   }

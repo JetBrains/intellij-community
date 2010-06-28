@@ -37,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 
@@ -105,6 +106,7 @@ public class GrConstructorInvocationImpl extends GroovyPsiElementImpl implements
       for (NonCodeMembersProcessor membersProcessor : NonCodeMembersProcessor.EP_NAME.getExtensions()) {
         if (!membersProcessor.processNonCodeMembers(thisType, processor, this, true)) break;
       }
+      NonCodeMembersContributor.processDynamicElements(thisType, processor, this, ResolveState.initial());
 
       return processor.getCandidates();
     }

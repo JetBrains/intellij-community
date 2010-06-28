@@ -147,15 +147,6 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     return null;
   }
 
-  public boolean isScheduledForRecompilation(Project project, VirtualFile file) {
-    final TIntHashSet pathsToRecompile = mySourcesToRecompile.get(getProjectId(project));
-    if (pathsToRecompile == null || pathsToRecompile.isEmpty()) {
-      return false;
-    }
-    final int fileId = getFileId(file);
-    return pathsToRecompile.contains(fileId);
-  }
-
   public void collectFiles(CompileContext context, final TranslatingCompiler compiler, Iterator<VirtualFile> scopeSrcIterator, boolean forceCompile,
                            final boolean isRebuild,
                            Collection<VirtualFile> toCompile,
@@ -309,6 +300,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
               final long fileStamp = file.getTimeStamp();
               info.updateTimestamp(projectId, fileStamp);
               saveSourceInfo(file, info);
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("Unschedule recompilation (successfully compiled) " + file.getPresentableUrl());
+              }
               removeSourceForRecompilation(projectId, Math.abs(getFileId(file)));
               if ((fileStamp > compilationStartStamp && !((CompileContextEx)context).isGenerated(file)) || forceRecompile.contains(file)) {
                 // changes were made during compilation, need to re-schedule compilation
@@ -870,7 +864,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         fileIndex.iterateContentUnderDirectory(srcRoot, new ContentIterator() {
           public boolean processFile(final VirtualFile file) {
             if (!file.isDirectory()) {
-              if (!isMarkedForRecompilation(projectId, getFileId(file))) {
+              if (!isMarkedForRecompilation(projectId, Math.abs(getFileId(file)))) {
                 final SourceFileInfo srcInfo = loadSourceInfo(file);
                 if (srcInfo == null || srcInfo.getTimestamp(projectId) != file.getTimeStamp()) {
                   addSourceForRecompilation(projectId, file, srcInfo);
@@ -1024,7 +1018,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
               if (!intermediateRoots.isEmpty()) {
                 final FileProcessor processor = new FileProcessor() {
                   public void execute(final VirtualFile file) {
-                    if (!isMarkedForRecompilation(projectId, getFileId(file))) {
+                    if (!isMarkedForRecompilation(projectId, Math.abs(getFileId(file)))) {
                       final SourceFileInfo srcInfo = loadSourceInfo(file);
                       if (srcInfo == null || srcInfo.getTimestamp(projectId) != file.getTimeStamp()) {
                         addSourceForRecompilation(projectId, file, srcInfo);
@@ -1172,7 +1166,10 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
                 for (int projectId : projects.toArray()) {
                   // mark associated outputs for deletion
                   srcInfo.processOutputPaths(projectId, deletionProc);
-                  removeSourceForRecompilation(projectId, getFileId(file));
+                  if (LOG.isDebugEnabled()) {
+                    LOG.debug("Unschedule recompilation because of deletion " + file.getPresentableUrl());
+                  }
+                  removeSourceForRecompilation(projectId, Math.abs(getFileId(file)));
                 }
               }
             }

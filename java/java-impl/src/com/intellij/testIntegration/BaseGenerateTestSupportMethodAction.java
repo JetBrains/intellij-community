@@ -105,44 +105,45 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
 
       if (frameworks.size() == 1) {
         doGenerate(editor, file, targetClass, frameworks.get(0));
-      } else {
-        final JList list = new JList(frameworks.toArray(new TestFramework[frameworks.size()]));
-        list.setCellRenderer(new DefaultListCellRenderer() {
-          @Override
-          public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-            Component result = super.getListCellRendererComponent(list, "", index, isSelected, cellHasFocus);
-            if (value == null) return result;
-            TestFramework framework = (TestFramework)value;
-
-            setIcon(framework.getIcon());
-            setText(framework.getName());
-            
-            return result;
-          }
-        });
-
-        final Runnable runnable = new Runnable() {
-          public void run() {
-            TestFramework selected = (TestFramework)list.getSelectedValue();
-            if (selected == null) return;
-            doGenerate(editor, file, targetClass, selected);
-          }
-        };
-
-        PopupChooserBuilder builder = new PopupChooserBuilder(list);
-        builder.setFilteringEnabled(new Function<Object, String>() {
-          @Override
-          public String fun(Object o) {
-            return ((TestFramework)o).getName();
-          }
-        });
-
-        builder
-          .setTitle("Choose Framework")
-          .setItemChoosenCallback(runnable)
-          .setMovable(true)
-          .createPopup().showInBestPositionFor(editor);
+        return;
       }
+
+      final JList list = new JList(frameworks.toArray(new TestFramework[frameworks.size()]));
+      list.setCellRenderer(new DefaultListCellRenderer() {
+        @Override
+        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+          Component result = super.getListCellRendererComponent(list, "", index, isSelected, cellHasFocus);
+          if (value == null) return result;
+          TestFramework framework = (TestFramework)value;
+
+          setIcon(framework.getIcon());
+          setText(framework.getName());
+
+          return result;
+        }
+      });
+
+      final Runnable runnable = new Runnable() {
+        public void run() {
+          TestFramework selected = (TestFramework)list.getSelectedValue();
+          if (selected == null) return;
+          doGenerate(editor, file, targetClass, selected);
+        }
+      };
+
+      PopupChooserBuilder builder = new PopupChooserBuilder(list);
+      builder.setFilteringEnabled(new Function<Object, String>() {
+        @Override
+        public String fun(Object o) {
+          return ((TestFramework)o).getName();
+        }
+      });
+
+      builder
+        .setTitle("Choose Framework")
+        .setItemChoosenCallback(runnable)
+        .setMovable(true)
+        .createPopup().showInBestPositionFor(editor);
     }
 
     private void doGenerate(final Editor editor, final PsiFile file, final PsiClass targetClass, final TestFramework framework) {

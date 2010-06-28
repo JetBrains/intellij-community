@@ -178,6 +178,54 @@ public class GitSSHXmlRcpClient implements GitSSHHandler {
   }
 
   /**
+   * {@inheritDoc}
+   */
+  @Override
+  @SuppressWarnings("unchecked")
+  public String setLastSuccessful(int handlerNo, String userName, String method, String error) {
+    if (myClient == null) {
+      return "";
+    }
+    Vector parameters = new Vector();
+    parameters.add(handlerNo);
+    parameters.add(userName);
+    parameters.add(method);
+    parameters.add(error);
+    try {
+      return (String)myClient.execute(methodName("setLastSuccessful"), parameters);
+    }
+    catch (XmlRpcException e) {
+      throw new RuntimeException("Invocation failed " + e.getMessage(), e);
+    }
+    catch (IOException e) {
+      throw new RuntimeException("Invocation failed " + e.getMessage(), e);
+    }
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  @SuppressWarnings("unchecked")
+  public String getLastSuccessful(int handlerNo, String userName) {
+    if (myClient == null) {
+      return "";
+    }
+    Vector parameters = new Vector();
+    parameters.add(handlerNo);
+    parameters.add(userName);
+    try {
+      return (String)myClient.execute(methodName("getLastSuccessful"), parameters);
+    }
+    catch (XmlRpcException e) {
+      throw new RuntimeException("Invocation failed " + e.getMessage(), e);
+    }
+    catch (IOException e) {
+      throw new RuntimeException("Invocation failed " + e.getMessage(), e);
+    }
+  }
+
+  /**
    * Since XML RPC client does not understand null values, the value should be
    * adjusted (The password is {@code "-"} if null, {@code "+"+s) if non-null).
    *

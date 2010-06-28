@@ -149,7 +149,6 @@ public abstract class GitSSHService {
     }
   }
 
-
   /**
    * Handler interface to use by the client code
    */
@@ -210,6 +209,23 @@ public abstract class GitSSHService {
      */
     String askPassword(final String username, boolean resetPassword, final String lastError);
 
+    /**
+     * Get last successful authentication method. The default implementation returns empty string
+     * meaning that last authentication is unknown or failed.
+     *
+     * @param userName the user name
+     * @return the successful authentication method
+     */
+    String getLastSuccessful(String userName);
+
+    /**
+     * Set last successful authentication method
+     *
+     * @param userName the user name
+     * @param method   the authentication method, the empty string if authentication process failed.
+     * @param error    the error to show to user in case when authentication process failed.
+     */
+    void setLastSuccessful(String userName, String method, String error);
   }
 
   /**
@@ -259,6 +275,23 @@ public abstract class GitSSHService {
      */
     public String askPassword(final int handlerNo, final String username, final boolean resetPassword, final String lastError) {
       return adjustNull(getHandler(handlerNo).askPassword(username, resetPassword, lastError));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String setLastSuccessful(int handlerNo, String userName, String method, String error) {
+      getHandler(handlerNo).setLastSuccessful(userName, method, error);
+      return "";
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getLastSuccessful(int handlerNo, String userName) {
+      return getHandler(handlerNo).getLastSuccessful(userName);
     }
 
     /**

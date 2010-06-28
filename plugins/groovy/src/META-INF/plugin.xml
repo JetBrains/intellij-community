@@ -30,6 +30,7 @@
     <extensionPoint name="libraryManager" interface="org.jetbrains.plugins.groovy.config.AbstractGroovyLibraryManager"/>
 
     <extensionPoint name="nonCodeProcessor" interface="org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersProcessor"/>
+    <extensionPoint name="membersContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor"/>
     <extensionPoint name="variableEnhancer" interface="org.jetbrains.plugins.groovy.lang.psi.GrVariableEnhancer"/>
     <extensionPoint name="typeConverter" interface="org.jetbrains.plugins.groovy.lang.psi.GrTypeConverter"/>
     <extensionPoint name="expectedTypesContributor" interface="org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesContributor"/>
@@ -46,7 +47,9 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.intellij.groovy">
-    <nonCodeProcessor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.ImmutableAnnotationProcessor"/>
+    <membersContributor implementation="org.jetbrains.plugins.groovy.lang.psi.impl.GdkMembersContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicMembersContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.ImmutableAnnotationProcessor"/>
     <libraryManager implementation="org.jetbrains.plugins.groovy.config.GroovyLibraryManager"/>
     <libraryManager implementation="org.jetbrains.plugins.groovy.gant.GantLibraryManager" order="last"/>
     <libraryManager implementation="org.jetbrains.plugins.groovy.gradle.GradleLibraryManager" order="last"/>
@@ -65,7 +68,7 @@
 
     <variableEnhancer implementation="org.jetbrains.plugins.groovy.lang.psi.ClosureParameterEnhancer"/>
 
-    <nonCodeProcessor implementation="org.jetbrains.plugins.groovy.gant.GantMemberContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.groovy.gant.GantMemberContributor"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

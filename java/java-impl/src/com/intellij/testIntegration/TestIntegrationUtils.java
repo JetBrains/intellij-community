@@ -17,6 +17,7 @@ package com.intellij.testIntegration;
 
 import com.intellij.codeInsight.TestUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
@@ -32,10 +33,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
-import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -46,18 +46,30 @@ public class TestIntegrationUtils {
   private static final Logger LOG = Logger.getInstance("#" + TestIntegrationUtils.class.getName());
 
   public enum MethodKind {
-    SET_UP {
+    SET_UP("setUp") {
       public FileTemplateDescriptor getFileTemplateDescriptor(TestFramework framework) {
         return framework.getSetUpMethodFileTemplateDescriptor();
-      }},
-    TEAR_DOWN {
+      }
+    },
+    TEAR_DOWN("tearDown") {
       public FileTemplateDescriptor getFileTemplateDescriptor(TestFramework framework) {
         return framework.getTearDownMethodFileTemplateDescriptor();
-      }},
-    TEST {
+      }
+    },
+    TEST("test") {
       public FileTemplateDescriptor getFileTemplateDescriptor(TestFramework framework) {
         return framework.getTestMethodFileTemplateDescriptor();
-      }};
+      }
+    };
+    private String myDefaultName;
+
+    MethodKind(String defaultName) {
+      myDefaultName = defaultName;
+    }
+
+    public String getDefaultName() {
+      return myDefaultName;
+    }
 
     public abstract FileTemplateDescriptor getFileTemplateDescriptor(TestFramework framework);
   }
@@ -99,39 +111,14 @@ public class TestIntegrationUtils {
     return result;
   }
 
-  public static PsiMethod createMethod(PsiClass targetClass, String name, String annotation) throws IncorrectOperationException {
-    PsiElementFactory f = JavaPsiFacade.getInstance(targetClass.getProject()).getElementFactory();
-    PsiMethod result = f.createMethod(name, PsiType.VOID);
-    result.getBody().add(f.createCommentFromText("// Add your code here", result));
-
-    if (annotation != null) {
-      PsiAnnotation a = f.createAnnotationFromText("@" + annotation, result);
-      PsiModifierList modifiers = result.getModifierList();
-      PsiElement first = modifiers.getFirstChild();
-      if (first == null) {
-        modifiers.add(a);
-      }
-      else {
-        modifiers.addBefore(a, first);
-      }
-
-      JavaCodeStyleManager.getInstance(targetClass.getProject()).shortenClassReferences(modifiers);
-    }
-
-    return result;
-  }
-
   public static void runTestMethodTemplate(MethodKind methodKind,
                                            TestFramework framework,
                                            final Editor editor,
-                                           PsiClass targetClass,
+                                           final PsiClass targetClass,
                                            final PsiMethod method,
-                                           String name,
+                                           @Nullable String name,
                                            boolean automatic) {
     Template template = createTestMethodTemplate(methodKind, framework, targetClass, name, automatic);
-    template.setToIndent(true);
-    template.setToReformat(true);
-    template.setToShortenLongNames(true);
 
     final TextRange range = method.getTextRange();
     editor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), "");
@@ -149,12 +136,13 @@ public class TestIntegrationUtils {
             public void run() {
               PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
               PsiFile psi = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-              PsiElement method = psi.findElementAt(range.getStartOffset());
+              PsiElement el = PsiTreeUtil.findElementOfClassAtOffset(psi, editor.getCaretModel().getOffset() - 1, PsiMethod.class, false);
 
-              if (method != null) {
-                method = PsiTreeUtil.getParentOfType(method, PsiMethod.class, false);
+              if (el != null) {
+                PsiMethod method = PsiTreeUtil.getParentOfType(el, PsiMethod.class, false);
                 if (method != null) {
-                  CreateFromUsageUtils.setupEditor((PsiMethod)method, editor);
+                  GenerateMembersUtil.setupGeneratedMethod(method);
+                  CreateFromUsageUtils.setupEditor(method, editor);
                 }
               }
             }
@@ -170,7 +158,7 @@ public class TestIntegrationUtils {
   private static Template createTestMethodTemplate(MethodKind methodKind,
                                                    TestFramework descriptor,
                                                    PsiClass targetClass,
-                                                   String name,
+                                                   @Nullable String name,
                                                    boolean automatic) {
     FileTemplateDescriptor templateDesc = methodKind.getFileTemplateDescriptor(descriptor);
     String templateName = templateDesc.getFileName();
@@ -186,8 +174,10 @@ public class TestIntegrationUtils {
       templateText = fileTemplate.getText();
     }
 
+    if (name == null) name = methodKind.getDefaultName();
+
     int from = 0;
-    while(true) {
+    while (true) {
       int index = templateText.indexOf("${NAME}", from);
       if (index == -1) break;
 
@@ -202,13 +192,18 @@ public class TestIntegrationUtils {
       if (from == 0) {
         Expression nameExpr = new ConstantNode(name);
         template.addVariable("name", nameExpr, nameExpr, !automatic);
-      } else {
+      }
+      else {
         template.addVariableSegment("name");
       }
 
       from = index + "${NAME}".length();
     }
     template.addTextSegment(templateText.substring(from, templateText.length()));
+
+    template.setToIndent(true);
+    template.setToReformat(true);
+    template.setToShortenLongNames(true);
 
     return template;
   }

@@ -19,32 +19,38 @@ package org.jetbrains.plugins.groovy.lang.resolve.noncode;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.util.ProcessingContext;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.annotator.inspections.GroovyImmutableAnnotationInspection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 27.04.2009
  */
-public class ImmutableAnnotationProcessor implements NonCodeMembersProcessor {
+public class ImmutableAnnotationProcessor extends NonCodeMembersContributor {
+  @Override
+  public void processDynamicElements(@NotNull PsiType qualifierType,
+                                     PsiScopeProcessor processor,
+                                     PsiElement place,
+                                     ResolveState state,
+                                     ProcessingContext ctx) {
+    if (!(qualifierType instanceof PsiClassType)) return;
 
-  public boolean processNonCodeMembers(PsiType type, PsiScopeProcessor processor, PsiElement place, boolean forCompletion) {
-    if (!(type instanceof PsiClassType)) return true;
-
-    PsiClass psiClass = ((PsiClassType)type).resolve();
-    if (!(psiClass instanceof GrTypeDefinition) || psiClass.getName() == null) return true;
+    PsiClass psiClass = ((PsiClassType)qualifierType).resolve();
+    if (!(psiClass instanceof GrTypeDefinition) || psiClass.getName() == null) return;
 
     PsiModifierList modifierList = psiClass.getModifierList();
-    if (modifierList == null || modifierList.findAnnotation(GroovyImmutableAnnotationInspection.IMMUTABLE) == null) return true;
+    if (modifierList == null || modifierList.findAnnotation(GroovyImmutableAnnotationInspection.IMMUTABLE) == null) return;
 
     final LightMethodBuilder fieldsConstructor = new LightMethodBuilder(psiClass);
     for (PsiField field : psiClass.getFields()) {
       fieldsConstructor.addParameter(field.getName(), field.getType());
     }
-    if (!processor.execute(fieldsConstructor, ResolveState.initial())) return false;
+    if (!processor.execute(fieldsConstructor, ResolveState.initial())) return;
 
     final LightMethodBuilder defaultConstructor = new LightMethodBuilder(psiClass);
-    return processor.execute(defaultConstructor, ResolveState.initial());
+    processor.execute(defaultConstructor, ResolveState.initial());
   }
 }

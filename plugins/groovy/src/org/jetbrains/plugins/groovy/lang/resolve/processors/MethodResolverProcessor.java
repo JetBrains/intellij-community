@@ -229,7 +229,6 @@ public class MethodResolverProcessor extends ResolverProcessor {
     List<GroovyResolveResult> result = new ArrayList<GroovyResolveResult>();
     result.add(array[0]);
 
-    PsiManager manager = myPlace.getManager();
     GlobalSearchScope scope = myPlace.getResolveScope();
 
     Outer:
@@ -242,10 +241,11 @@ public class MethodResolverProcessor extends ResolverProcessor {
           PsiElement element = otherResolveResult.getElement();
           if (element instanceof PsiMethod) {
             PsiMethod method = (PsiMethod) element;
-            if (dominated(currentMethod, array[i].getSubstitutor(), method, otherResolveResult.getSubstitutor(), manager, scope)) {
+            final int res = compareMethods(currentMethod, array[i].getSubstitutor(), method, otherResolveResult.getSubstitutor(), scope);
+            if (res > 0) {
               continue Outer;
             }
-            else if (dominated(method, otherResolveResult.getSubstitutor(), currentMethod, array[i].getSubstitutor(), manager, scope)) {
+            else if (res < 0) {
               iterator.remove();
             }
           }
@@ -258,12 +258,37 @@ public class MethodResolverProcessor extends ResolverProcessor {
     return result.toArray(new GroovyResolveResult[result.size()]);
   }
 
-  private boolean dominated(PsiMethod method1, PsiSubstitutor substitutor1, PsiMethod method2, PsiSubstitutor substitutor2, PsiManager manager, GlobalSearchScope scope) {  //method1 has more general parameter types thn method2
-    if (!method1.getName().equals(method2.getName())) return false;
+  private int compareMethods(PsiMethod method1,
+                             PsiSubstitutor substitutor1,
+                             PsiMethod method2,
+                             PsiSubstitutor substitutor2,
+                             GlobalSearchScope scope) {
+    if (!method1.getName().equals(method2.getName())) return 0;
 
     if (method2 instanceof DominanceAwareMethod && ((DominanceAwareMethod)method2).isMoreConcreteThan(substitutor2, method1, substitutor1, (GroovyPsiElement)myPlace)) {
-      return true;
+      return 1;
     }
+
+    if (method1 instanceof DominanceAwareMethod && ((DominanceAwareMethod)method1).isMoreConcreteThan(substitutor1, method2, substitutor2, (GroovyPsiElement)myPlace)) {
+      return -1;
+    }
+
+    if (dominated(method1, substitutor1, method2, substitutor2, scope)) {
+      return 1;
+    }
+    if (dominated(method2, substitutor2, method1, substitutor1, scope)) {
+      return -1;
+    }
+
+    return 0;
+  }
+
+  private boolean dominated(PsiMethod method1,
+                            PsiSubstitutor substitutor1,
+                            PsiMethod method2,
+                            PsiSubstitutor substitutor2,
+                            GlobalSearchScope scope) {  //method1 has more general parameter types thn method2
+    if (!method1.getName().equals(method2.getName())) return false;
 
     PsiType[] argTypes = myArgumentTypes;
     if (method1 instanceof GrGdkMethod && method2 instanceof GrGdkMethod) {
@@ -291,6 +316,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
       return lastType instanceof PsiArrayType;
     }
 
+    PsiManager manager = method1.getManager();
     for (int i = 0; i < params2.length; i++) {
       PsiType type1 = substitutor1.substitute(params1[i].getType());
       PsiType type2 = substitutor2.substitute(params2[i].getType());
@@ -317,7 +343,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
       type1 = ((PsiArrayType) type1).getComponentType();
     }
     return argumentsSupplied() ? //resolve, otherwise same_name_variants
-        TypesUtil.isAssignable(type1, type2, manager, scope) :
+        TypesUtil.isAssignable(type1, type2, manager, scope, false) :
         type1.equals(type2);
   }
 

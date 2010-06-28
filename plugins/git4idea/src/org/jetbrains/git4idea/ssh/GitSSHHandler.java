@@ -115,4 +115,23 @@ public interface GitSSHHandler {
    */
   @Nullable
   String askPassword(final int handlerNo, final String userName, boolean resetPassword, final String lastError);
+
+  /**
+   * Notify invoker about last successful authentication attempt.
+   *
+   * @param handlerNo the handler
+   * @param userName  the user name
+   * @param method    the authentication method, the empty string means that authentication failed
+   * @param error     the error shown in the case when authentication process failed
+   */
+  String setLastSuccessful(final int handlerNo, final String userName, final String method, final String error);
+
+  /**
+   * Get last successful authentication method
+   *
+   * @param handlerNo the handler no
+   * @param userName  the user name
+   * @return the authentication method, the empty string means that last authentication failed
+   */
+  String getLastSuccessful(final int handlerNo, final String userName);
 }

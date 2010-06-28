@@ -274,7 +274,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     }
   }
 
-  public final void markDirty() throws IOException {
+  public synchronized final void markDirty() throws IOException {
     markDirty(true);
   }
 

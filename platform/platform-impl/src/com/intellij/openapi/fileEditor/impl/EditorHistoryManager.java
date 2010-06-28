@@ -229,6 +229,13 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
     return result;
   }
 
+  public boolean hasBeenOpen(@NotNull VirtualFile f) {
+    for (HistoryEntry each : myEntriesList) {
+      if (each.myFile == f) return true;
+    }
+    return false;
+  }
+
   /**
    * Removes specified <code>file</code> from history. The method does
    * nothing if <code>file</code> is not in the history.

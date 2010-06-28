@@ -434,7 +434,16 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project)).clearUncommitedDocuments();
 
 
-    ((UndoManagerImpl)UndoManager.getGlobalInstance()).dropHistoryInTests();
+    Runnable runnable = new Runnable() {
+      public void run() {
+        ((UndoManagerImpl)UndoManager.getGlobalInstance()).dropHistoryInTests();
+      }
+    };
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      runnable.run();
+    } else {
+      SwingUtilities.invokeAndWait(runnable);
+    }
 
     ProjectManagerEx.getInstanceEx().setCurrentTestProject(null);
     application.setDataProvider(null);

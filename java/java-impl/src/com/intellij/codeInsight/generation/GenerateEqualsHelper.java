@@ -132,7 +132,7 @@ public class GenerateEqualsHelper implements Runnable {
         if (!mySuperHasHashCode) {
           @NonNls String text = "";
           CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(myProject);
-          if (styleSettings.INSERT_OVERRIDE_ANNOTATION && PsiUtil.isLanguageLevel5OrHigher(myClass)) {
+          if (GenerateMembersUtil.shouldAddOverrideAnnotation(myClass, false)) {
             text += "@Override\n";
           }
 
@@ -170,7 +170,7 @@ public class GenerateEqualsHelper implements Runnable {
 
     @NonNls StringBuffer buffer = new StringBuffer();
     CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(myProject);
-    if (styleSettings.INSERT_OVERRIDE_ANNOTATION && PsiUtil.isLanguageLevel5OrHigher(myClass)) {
+    if (GenerateMembersUtil.shouldAddOverrideAnnotation(myClass, false)) {
       buffer.append("@Override\n");
     }
     buffer.append("public boolean equals(Object ").append(myParameterName).append(") {\n");
@@ -326,7 +326,7 @@ public class GenerateEqualsHelper implements Runnable {
     @NonNls StringBuilder buffer = new StringBuilder();
 
     CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(myProject);
-    if (styleSettings.INSERT_OVERRIDE_ANNOTATION && PsiUtil.isLanguageLevel5OrHigher(myClass)) {
+    if (GenerateMembersUtil.shouldAddOverrideAnnotation(myClass, false)) {
       buffer.append("@Override\n");
     }
     buffer.append("public int hashCode() {\n");

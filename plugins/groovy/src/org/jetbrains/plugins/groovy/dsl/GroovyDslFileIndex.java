@@ -278,7 +278,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
                     return null;
                   }
 
-                  final CustomMembersGenerator generator = new CustomMembersGenerator(project, place, fqn);
+                  final ExtensibleCustomMembersGenerator generator = new ExtensibleCustomMembersGenerator(project, place, fqn);
 
                   executor.processVariants(key, generator, place, fqn, ctx);
                   return generator.getMembersHolder();

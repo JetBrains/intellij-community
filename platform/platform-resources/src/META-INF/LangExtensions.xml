@@ -125,6 +125,9 @@
   <applicationService serviceInterface="com.intellij.psi.PsiReferenceService"
                       serviceImplementation="com.intellij.psi.PsiReferenceServiceImpl"/>
 
+  <applicationService serviceInterface="com.intellij.patterns.compiler.PatternCompilerFactory"
+                      serviceImplementation="com.intellij.patterns.compiler.PatternCompilerFactoryImpl"/>
+
   <projectService serviceInterface="com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager"
                   serviceImplementation="com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager"/>
 
@@ -363,6 +366,8 @@
   <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.LegacyCompletionContributor" id="legacy" order="last"/>
   <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.FilePathCompletionContributor" id="filePath" order="before javaClassName"/>
 
+  <psi.referenceContributor implementation="com.intellij.psi.PsiReferenceContributorImpl"/>
+
   <lookup.charFilter implementation="com.intellij.codeInsight.completion.CompletionCharFilter" order="last" id="completion"/>
   <lookup.charFilter implementation="com.intellij.refactoring.IdentifierCharFilter" id="identifier"/>
   <lookup.charFilter implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceCharFilter" id="fileRef" order="before completion"/>
@@ -429,6 +434,8 @@
   <intentionAction>
     <className>com.intellij.codeInsight.intention.impl.EditFoldingOptionsAction</className>
   </intentionAction>
+
+  <resolveScopeEnlarger implementation="com.intellij.psi.NonClasspathResolveScopeEnlarger"/>
 
   <!-- CodeInsightSettings -->
   <editorActionHandler action="EditorEnter" implementationClass="com.intellij.codeInsight.editorActions.EnterHandler"/>
@@ -548,7 +555,6 @@
   <filePasteProvider implementation="com.intellij.ide.FileListPasteProvider"/>
 
   <definitionsSearch implementation="com.intellij.pom.PomDefinitionSearch"/>
-  <gotoTargetRendererProvider implementation="com.intellij.testIntegration.GotoTestRendererProvider"/>
 
   <applicationService serviceInterface="com.intellij.ide.todo.TodoConfiguration"
                       serviceImplementation="com.intellij.ide.todo.TodoConfiguration"/>

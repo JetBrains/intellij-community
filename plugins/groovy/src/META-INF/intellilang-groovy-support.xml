@@ -7,7 +7,7 @@
                      config="/resources/groovyInjections.xml"/>
   </extensions>
   <extensions defaultExtensionNs="org.intellij.groovy">
-    <nonCodeProcessor implementation="org.intellij.plugins.intelliLang.inject.groovy.PatternEditorContextMembersProvider"/>
+    <membersContributor implementation="org.intellij.plugins.intelliLang.inject.groovy.PatternEditorContextMembersProvider"/>
   </extensions>
 
 </idea-plugin>
