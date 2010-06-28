@@ -32,8 +32,7 @@ import javax.swing.*;
 import java.util.Map;
 
 public class CustomColorsPage implements ColorSettingsPage {
-  private static final ColorDescriptor[] COLORS = new ColorDescriptor[0];
-  private static final AttributesDescriptor[] ATTRS = new AttributesDescriptor[] {
+  private static final AttributesDescriptor[] ATTRS = {
     new AttributesDescriptor(OptionsBundle.message("options.custom.attribute.descriptor.keyword1"), CustomHighlighterColors.CUSTOM_KEYWORD1_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.custom.attribute.descriptor.keyword2"), CustomHighlighterColors.CUSTOM_KEYWORD2_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.custom.attribute.descriptor.keyword3"), CustomHighlighterColors.CUSTOM_KEYWORD3_ATTRIBUTES),
@@ -46,7 +45,7 @@ public class CustomColorsPage implements ColorSettingsPage {
     new AttributesDescriptor(OptionsBundle.message("options.custom.attribute.descriptor.invalid.string.escape"), CustomHighlighterColors.CUSTOM_INVALID_STRING_ESCAPE),
   };
 
-  @NonNls private final static SyntaxTable SYNTAX_TABLE = new SyntaxTable();
+  @NonNls private static final SyntaxTable SYNTAX_TABLE = new SyntaxTable();
   static {
     SYNTAX_TABLE.setLineComment("#");
     SYNTAX_TABLE.setStartComment("/*");
@@ -81,7 +80,7 @@ public class CustomColorsPage implements ColorSettingsPage {
 
   @NotNull
   public ColorDescriptor[] getColorDescriptors() {
-    return COLORS;
+    return ColorDescriptor.EMPTY_ARRAY;
   }
 
   @NotNull
