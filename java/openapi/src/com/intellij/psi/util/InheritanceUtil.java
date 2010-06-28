@@ -15,10 +15,7 @@
  */
 package com.intellij.psi.util;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -89,14 +86,12 @@ public class InheritanceUtil {
       return false;
     }
 
-    return !processSupers(psiClass, !strict, new Processor<PsiClass>() {
-      public boolean process(PsiClass psiClass) {
-        if (baseClassName.equals(psiClass.getQualifiedName())) {
-          return false;
-        }
-        return true;
-      }
-    });
+    final PsiClass base = JavaPsiFacade.getInstance(psiClass.getProject()).findClass(baseClassName, psiClass.getResolveScope());
+    if (base == null) {
+      return false;
+    }
+
+    return strict ? psiClass.isInheritor(base, true) : isInheritorOrSelf(psiClass, base, true);
   }
 
   /**
