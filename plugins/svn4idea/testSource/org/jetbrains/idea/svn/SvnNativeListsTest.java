@@ -1,6 +1,5 @@
 package org.jetbrains.idea.svn;
 
-import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -49,12 +48,16 @@ public class SvnNativeListsTest extends SvnTestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile file = createFileInCommand("a.txt", "old content");
 
-    //verify(runSvn("status"), "A a.txt");
-
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    ensureAddedToNativeList();
 
     verify(runSvn("status"), "", "--- Changelist 'newOne':", "A a.txt");
+  }
+
+  private void ensureAddedToNativeList() {
+    myDirtyScopeManager.markEverythingDirty();
+    myChangeListManager.ensureUpToDate(false);  // first time new changes are detected and added to _IDEA_ changeslist
+    myChangeListManager.ensureUpToDate(false);  // and on the same thread a request is put for files addition;
+    // so stay here for 2nd cycle and wait for native addition completion
   }
 
   @Test
@@ -68,10 +71,7 @@ public class SvnNativeListsTest extends SvnTestCase {
     checkin();
     deleteFileInCommand(file);
 
-    //verify(runSvn("status"), "D a.txt");
-
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    ensureAddedToNativeList();
 
     verify(runSvn("status"), "", "--- Changelist 'newOne':", "D a.txt");
   }
@@ -86,10 +86,7 @@ public class SvnNativeListsTest extends SvnTestCase {
     checkin();
     editFileInCommand(myProject, file, "111");
 
-    //verify(runSvn("status"), "M a.txt");
-
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    ensureAddedToNativeList();
 
     verify(runSvn("status"), "", "--- Changelist 'newOne':", "M a.txt");
   }
@@ -105,18 +102,14 @@ public class SvnNativeListsTest extends SvnTestCase {
     checkin();
     editFileInCommand(myProject, file, "111");
 
-    //verify(runSvn("status"), "M a.txt");
-
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    ensureAddedToNativeList();
 
     verify(runSvn("status"), "", "--- Changelist 'newOne':", "M a.txt");
 
     renameFileInCommand(file, "b.txt");
     verify(runSvn("status"), "", "--- Changelist 'newOne':", "A + b.txt", "D a.txt");
 
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    ensureAddedToNativeList();
 
     verify(runSvn("status"), "", "--- Changelist 'newOne':", "A + b.txt", "D a.txt");
   }
@@ -132,10 +125,7 @@ public class SvnNativeListsTest extends SvnTestCase {
     checkin();
 
     renameFileInCommand(file, "b.txt");
-    //verify(runSvn("status"), "A + b.txt", "D a.txt");
-
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    ensureAddedToNativeList();
 
     verify(runSvn("status"), "", "--- Changelist 'newOne':", "A + b.txt", "D a.txt");
   }
@@ -151,18 +141,14 @@ public class SvnNativeListsTest extends SvnTestCase {
     checkin();
 
     renameFileInCommand(file, "b.txt");
-    //verify(runSvn("status"), "A + b.txt", "D a.txt");
-
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    ensureAddedToNativeList();
 
     verify(runSvn("status"), "", "--- Changelist 'newOne':", "A + b.txt", "D a.txt");
 
     renameFileInCommand(file, "c.txt");
     verify(runSvn("status"), "", "--- Changelist 'newOne':", "A + c.txt", "D a.txt");
 
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    ensureAddedToNativeList();
 
     verify(runSvn("status"), "", "--- Changelist 'newOne':", "A + c.txt", "D a.txt");
   }
