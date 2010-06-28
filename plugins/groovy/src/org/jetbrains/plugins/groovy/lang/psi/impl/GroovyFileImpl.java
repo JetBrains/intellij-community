@@ -44,6 +44,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
@@ -88,7 +89,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     if (stub instanceof GrFileStub) {
       return ((GrFileStub)stub).getPackageName().toString();
     }
-    GrPackageDefinition packageDef = findChildByClass(GrPackageDefinition.class);
+    GrPackageDefinition packageDef = getPackageDefinition();
     if (packageDef != null) {
       return packageDef.getPackageName();
     }
@@ -96,7 +97,8 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   }
 
   public GrPackageDefinition getPackageDefinition() {
-    return findChildByClass(GrPackageDefinition.class);
+    ASTNode node = calcTreeElement().findChildByType(GroovyElementTypes.PACKAGE_DEFINITION);
+    return node != null ? (GrPackageDefinition)node.getPsi() : null;
   }
 
   private GrParameter getSyntheticArgsParameter() {

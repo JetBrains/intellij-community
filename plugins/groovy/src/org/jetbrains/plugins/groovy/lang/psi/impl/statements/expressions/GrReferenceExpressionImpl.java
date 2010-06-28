@@ -28,10 +28,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
-import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -711,7 +708,10 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   }
 
   public GrExpression getQualifierExpression() {
-    return findChildByClass(GrExpression.class);
+    for (PsiElement cur = this.getFirstChild(); cur != null; cur = cur.getNextSibling()) {
+      if (cur instanceof GrExpression) return (GrExpression)cur;
+    }
+    return null;
   }
 
   public boolean isQualified() {
