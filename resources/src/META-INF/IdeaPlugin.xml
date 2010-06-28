@@ -539,6 +539,10 @@
       <className>com.intellij.codeInsight.intention.impl.ConcatenationToMessageFormatAction</className>
       <category>I18N</category>
     </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.ConvertToBasicLatinAction</className>
+      <category>I18N</category>
+    </intentionAction>
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.AddOnDemandStaticImportAction</className>
