@@ -1,6 +1,7 @@
 package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
 import java.util.Collections;
@@ -17,27 +18,19 @@ public class HgCloneCommand {
     this.project = project;
   }
 
-  public String getDirectory() {
-    return directory;
-  }
-
   public void setDirectory(String directory) {
     this.directory = directory;
-  }
-
-  public String getRepositoryURL() {
-    return repositoryURL;
   }
 
   public void setRepositoryURL(String repositoryURL) {
     this.repositoryURL = repositoryURL;
   }
 
+  @Nullable
   public HgCommandResult execute() {
     List<String> arguments = new LinkedList<String>();
     arguments.add(repositoryURL);
     arguments.add(directory);
-
     return HgCommandService.getInstance(project).execute(null, Collections.<String>emptyList(), "clone", arguments, Charset.defaultCharset());
   }
 }
