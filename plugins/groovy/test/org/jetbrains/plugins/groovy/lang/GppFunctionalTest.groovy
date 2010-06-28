@@ -304,7 +304,7 @@ class BarImpl extends Bar {}
 
     assertEmpty(GroovyOverrideImplementUtil.getMethodsToOverrideImplement(facade.findClass("BarImpl"), true))
 
-    def implementations = new GotoImplementationHandler().getSourceAndTargetElements(myFixture.editor, myFixture.file).second
+    def implementations = new GotoImplementationHandler().getSourceAndTargetElements(myFixture.editor, myFixture.file).targets
     assertEquals Arrays.toString(implementations), 3, implementations.size()
   }
 
