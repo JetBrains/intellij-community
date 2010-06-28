@@ -20,9 +20,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.*;
@@ -262,10 +262,16 @@ public abstract class VcsVFSListener implements Disposable {
 
     public void beforePropertyChange(final VirtualFilePropertyEvent event) {
       if (!isEventIgnored(event) && event.getPropertyName().equalsIgnoreCase(VirtualFile.PROP_NAME)) {
-        final VirtualFile file = event.getFile();
-        final VirtualFile parent = file.getParent();
-        if (parent != null) {
-          addFileToMove(file, parent.getPath(), (String)event.getNewValue());
+        String oldName = (String) event.getOldValue();
+        String newName = (String) event.getNewValue();
+        // in order to force a reparse of a file, the rename event can be fired with old name equal to new name -
+        // such events needn't be handled by the VCS
+        if (!Comparing.equal(oldName, newName)) {
+          final VirtualFile file = event.getFile();
+          final VirtualFile parent = file.getParent();
+          if (parent != null) {
+            addFileToMove(file, parent.getPath(), newName);
+          }
         }
       }
     }
