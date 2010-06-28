@@ -121,8 +121,6 @@
   <extensionPoint name="fileType.fileViewProviderFactory" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint"/>
   <extensionPoint name="multiLangCommenter"
                   interface="com.intellij.psi.templateLanguages.MultipleLangCommentProvider"/>
-  <extensionPoint name="selfManagingCommenter"
-                  interface="com.intellij.codeInsight.generation.SelfManagingCommenter"/>
 
   <extensionPoint name="cacheBuilder"
                   beanClass="com.intellij.lang.cacheBuilder.CacheBuilderEP"/>

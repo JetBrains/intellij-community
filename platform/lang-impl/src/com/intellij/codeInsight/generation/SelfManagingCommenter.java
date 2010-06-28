@@ -26,8 +26,6 @@ import org.jetbrains.annotations.Nullable;
  * @author Maxim.Mossienko
  */
 public interface SelfManagingCommenter<T extends CommenterDataHolder> {
-  ExtensionPointName<SelfManagingCommenter> EP_NAME = ExtensionPointName.create("com.intellij.selfManagingCommenter");
-
   @Nullable T createLineCommentingState(int startLine, int endLine, @NotNull Document document, @NotNull PsiFile file);
   @Nullable T createBlockCommentingState(int selectionStart, int selectionEnd, @NotNull Document document, @NotNull PsiFile file);
   

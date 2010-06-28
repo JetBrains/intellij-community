@@ -28,4 +28,9 @@ public class FilterToken extends Token {
   public String getSuffix() {
     return mySuffix;
   }
+
+  @Override
+  public String toString() {
+    return "|" + mySuffix;
+  }
 }

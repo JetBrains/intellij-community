@@ -143,12 +143,12 @@ public class CurrentBranchDialog extends DialogWrapper {
     else if (".".equals(myTrackedRepository)) {
       myTrackedRepository = REMOTE_THIS;
     }
-    if (myTrackedBranch != null && myTrackedBranch.startsWith(GitBranch.REFS_HEADS_PREFIX)) {
-      myTrackedBranch = myTrackedBranch.substring(GitBranch.REFS_HEADS_PREFIX.length());
-    }
     myTrackedBranch = current == null ? null : current.getTrackedBranchName(myProject, root);
     if (myTrackedBranch == null) {
       myTrackedBranch = BRANCH_NONE;
+    }
+    else if (myTrackedBranch.startsWith(GitBranch.REFS_HEADS_PREFIX)) {
+      myTrackedBranch = myTrackedBranch.substring(GitBranch.REFS_HEADS_PREFIX.length());
     }
     myRepositoryComboBox.setSelectedItem(myTrackedRepository);
     myBranches.clear();

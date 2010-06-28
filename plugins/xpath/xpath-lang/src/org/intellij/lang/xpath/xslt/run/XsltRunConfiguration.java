@@ -33,8 +33,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -47,6 +47,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.SystemProperties;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
 import org.jdom.Element;
@@ -423,8 +424,27 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
         myJdkChoice = jdkChoice;
     }
 
+    private static Sdk ourDefaultSdk;
+  
+    private static synchronized Sdk getDefaultSdk() {
+        if (ourDefaultSdk == null) {
+            final String jdkHome = SystemProperties.getJavaHome();
+            final String versionName = ProjectBundle.message("sdk.java.name.template", SystemProperties.getJavaVersion());
+            Sdk sdk = ProjectJdkTable.getInstance().createSdk(versionName, new SimpleJavaSdkType());
+            SdkModificator modificator = sdk.getSdkModificator();
+            modificator.setHomePath(jdkHome);
+            modificator.commitChanges();
+            ourDefaultSdk = sdk;
+        }
+        
+        return ourDefaultSdk;
+    }
+  
     @Nullable
     public Sdk getEffectiveJDK() {
+        if (!XsltRunSettingsEditor.ALLOW_CHOOSING_SDK) {
+            return getDefaultSdk(); 
+        }
         if (myJdkChoice == JdkChoice.JDK) {
             return myJdk != null ? ProjectJdkTable.getInstance().findJdk(myJdk) : null;
         }

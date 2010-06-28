@@ -15,13 +15,12 @@
  */
 package com.intellij.ide.passwordSafe.impl.providers.memory;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.HashMap;
 import com.intellij.ide.passwordSafe.impl.providers.BasePasswordSafeProvider;
 import com.intellij.ide.passwordSafe.impl.providers.ByteArrayWrapper;
 import com.intellij.ide.passwordSafe.impl.providers.EncryptionUtil;
+import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.HashMap;
 
-import javax.crypto.SecretKey;
 import java.security.SecureRandom;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -35,7 +34,7 @@ public class MemoryPasswordSafe extends BasePasswordSafeProvider {
   /**
    * The key to use to encrypt data
    */
-  private transient final AtomicReference<SecretKey> key = new AtomicReference<SecretKey>();
+  private transient final AtomicReference<byte[]> key = new AtomicReference<byte[]>();
   /**
    * The password database
    */
@@ -46,9 +45,11 @@ public class MemoryPasswordSafe extends BasePasswordSafeProvider {
    * @return the secret key used by provider
    */
   @Override
-  protected SecretKey key(Project project) {
+  protected byte[] key(Project project) {
     if (key.get() == null) {
-      key.compareAndSet(null, EncryptionUtil.genKey(new SecureRandom()));
+      byte[] rnd = new byte[EncryptionUtil.SECRET_KEY_SIZE_BYTES * 16];
+      new SecureRandom().nextBytes(rnd);
+      key.compareAndSet(null, EncryptionUtil.genKey(EncryptionUtil.hash(rnd)));
     }
     return key.get();
   }

@@ -304,7 +304,6 @@ class XmlZenCodingInterpreter {
     return new XmlZenCodingFilterImpl().buildAttributesString(attribute2value, numberInIteration);
   }
 
-
   private static void invokeTemplate(TemplateToken token,
                                      final CustomTemplateCallback callback,
                                      final int numberInIteration,
@@ -372,7 +371,7 @@ class XmlZenCodingInterpreter {
     return new XmlZenCodingFilterImpl().toString(tag, context);
   }
 
-  private static void fail() {
-    LOG.error("Input string was checked incorrectly during isApplicable() invokation");
+  private void fail() {
+    LOG.error("Input string was checked incorrectly during isApplicable() invokation: " + myTokens.toString());
   }
 }

@@ -19,4 +19,8 @@ package com.intellij.codeInsight.template.zencoding;
  * @author Eugene.Kudelevsky
  */
 public class MarkerToken extends Token {
+  @Override
+  public String toString() {
+    return "&";
+  }
 }

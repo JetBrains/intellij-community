@@ -19,7 +19,7 @@ package org.intellij.lang.xpath.xslt.run;
 import com.intellij.diagnostic.logging.AdditionalTabComponent;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.configurations.AdditionalTabComponentManager;
-import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -47,7 +47,7 @@ public abstract class XsltRunnerExtension {
      */
     public abstract boolean createTabs(Project project, AdditionalTabComponentManager manager, AdditionalTabComponent outputConsole, ProcessHandler process);
 
-    public abstract void patchParameters(JavaParameters parameters, XsltRunConfiguration xsltCommandLineState, UserDataHolder extensionData) throws CantRunException;
+    public abstract void patchParameters(SimpleJavaParameters parameters, XsltRunConfiguration xsltCommandLineState, UserDataHolder extensionData) throws CantRunException;
 
 
     protected abstract boolean supports(XsltRunConfiguration config, boolean debugger);

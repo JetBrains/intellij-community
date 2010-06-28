@@ -27,9 +27,9 @@ import java.io.File;
  * The application wide settings for the git
  */
 @State(
-  name = "PasswordSafe",
+  name = "Git.Application.Settings",
   storages = {@Storage(
-    id = "PasswordSafe",
+    id = "Git.Application.Settings",
     file = "$APP_CONFIG$/vcs.xml")})
 public class GitVcsApplicationSettings implements PersistentStateComponent<GitVcsApplicationSettings.State> {
   /**

@@ -28,4 +28,9 @@ public class OperationToken extends Token {
   public char getSign() {
     return mySign;
   }
+
+  @Override
+  public String toString() {
+    return Character.toString(mySign);
+  }
 }
