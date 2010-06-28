@@ -108,7 +108,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   private final List<Pair<String, TextAttributes>> myPendingOutput = new ArrayList<Pair<String, TextAttributes>>();
 
-  public ProjectLevelVcsManagerImpl(Project project) {
+  public ProjectLevelVcsManagerImpl(Project project, final FileStatusManager manager) {
     myProject = project;
     mySerialization = new ProjectLevelVcsManagerSerialization();
     myOptionsAndConfirmations = new OptionsAndConfirmations();
@@ -117,7 +117,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
     myBackgroundableActionHandlerMap = new HashMap<VcsBackgroundableActions, BackgroundableActionEnabledHandler>();
     myInitialization = new VcsInitialization(myProject);
-    myMappings = new NewMappings(myProject, myEventDispatcher, this);
+    myMappings = new NewMappings(myProject, myEventDispatcher, this, manager);
     myMappingsToRoots = new MappingsToRoots(myMappings, myProject);
 
     ProjectManager.getInstance().addProjectManagerListener(myProject, new ProjectManagerAdapter() {
@@ -703,7 +703,9 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
     if (file == null) return false;
     final StorageScheme storageScheme = ((ProjectEx) myProject).getStateStore().getStorageScheme();
     if (StorageScheme.DIRECTORY_BASED.equals(storageScheme)) {
-      final VirtualFile ideaDir = myProject.getBaseDir().findChild(Project.DIRECTORY_STORE_FOLDER);
+      final VirtualFile baseDir = myProject.getBaseDir();
+      if (baseDir == null) return false;
+      final VirtualFile ideaDir = baseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
       return (ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory() && VfsUtil.isAncestor(ideaDir, file, false));
     }
     return false;

@@ -88,6 +88,7 @@ public abstract class FictiveTableCellRenderer extends ColoredListCellRenderer {
             appendAlign(adjWidth);
             fixedWidth += adjWidth;
           } else {
+            appendAlign(width);
             fixedWidth += width;
           }
         } else {

@@ -16,29 +16,36 @@
 
 package com.intellij.testIntegration;
 
-import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.navigation.GotoTargetHandler;
 import com.intellij.codeInsight.navigation.NavigationUtil;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collection;
+import java.util.List;
 
 public class GotoTestOrCodeHandler extends GotoTargetHandler {
   protected String getFeatureUsedKey() {
     return "navigation.goto.testOrCode";
   }
 
-  protected Pair<PsiElement, PsiElement[]> getSourceAndTargetElements(Editor editor, PsiFile file) {
+  @Nullable
+  protected GotoData getSourceAndTargetElements(final Editor editor, final PsiFile file) {
     PsiElement selectedElement = getSelectedElement(editor, file);
+    PsiElement sourceElement = TestFinderHelper.findSourceElement(selectedElement);
+    if (sourceElement == null) return null;
+
+    List<AdditionalAction> actions = new SmartList<AdditionalAction>();
 
     Collection<PsiElement> candidates;
     if (TestFinderHelper.isTest(selectedElement)) {
@@ -46,10 +53,26 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
     }
     else {
       candidates = TestFinderHelper.findTestsForClass(selectedElement);
+      actions.add(new AdditionalAction() {
+        @Override
+        public String getText() {
+          return "Create New Test...";
+        }
+
+        @Override
+        public Icon getIcon() {
+          return IconLoader.getIcon("/actions/intentionBulb.png");
+        }
+
+        @Override
+        public void execute() {
+          final TestCreator creator = LanguageTestCreators.INSTANCE.forLanguage(file.getLanguage());
+          if (creator != null) creator.createTest(file.getProject(), editor, file);
+        }
+      });
     }
 
-    PsiElement sourceElement = TestFinderHelper.findSourceElement(selectedElement);
-    return new Pair<PsiElement, PsiElement[]>(sourceElement, candidates.toArray(new PsiElement[candidates.size()]));
+    return new GotoData(sourceElement, candidates.toArray(new PsiElement[candidates.size()]), actions);
   }
 
   @NotNull
@@ -58,34 +81,22 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
   }
 
   @Override
-  protected boolean shouldSortResult() {
+  protected boolean shouldSortTargets() {
     return false;
   }
 
+  protected String getChooserTitle(PsiElement sourceElement, String name, int length) {
+    if (TestFinderHelper.isTest(sourceElement)) {
+      return CodeInsightBundle.message("goto.test.chooserTitle.subject", name, length);
+    }
+    else {
+      return CodeInsightBundle.message("goto.test.chooserTitle.test", name, length);
+    }
+  }
+
   @Override
-  protected void handleNoVariansCase(Project project, Editor editor, PsiFile file) {
-    PsiElement selectedElement = getSelectedElement(editor, file);
-    if (TestFinderHelper.isTest(selectedElement)) {
-      HintManager.getInstance().showErrorHint(editor, ActionsBundle.message("action.GotoTestSubject.nothing.found"));
-    }
-  }
-
-  protected String getChooserInFileTitleKey(PsiElement sourceElement) {
-    if (TestFinderHelper.isTest(sourceElement)) {
-      return "goto.test.subject.in.file.chooser.title";
-    }
-    else {
-      return "goto.test.in.file.chooser.title";
-    }
-  }
-
-  protected String getChooserTitleKey(PsiElement sourceElement) {
-    if (TestFinderHelper.isTest(sourceElement)) {
-      return "goto.test.subject.chooser.title";
-    }
-    else {
-      return "goto.test.chooser.title";
-    }
+  protected String getNotFoundMessage(Project project, Editor editor, PsiFile file) {
+    return CodeInsightBundle.message("goto.test.notFound");
   }
 
   @Override
@@ -96,16 +107,5 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
     else {
       element.navigate(true);
     }
-  }
-
-  @Override
-  protected void navigateToElement(@Nullable Object element, @NotNull Editor editor, @NotNull PsiFile file) {
-    final TestCreator creator = LanguageTestCreators.INSTANCE.forLanguage(file.getLanguage());
-    if (creator != null) creator.createTest(file.getProject(), editor, file);
-  }
-
-  @Override
-  protected boolean hasNullUsage() {
-    return true;
   }
 }

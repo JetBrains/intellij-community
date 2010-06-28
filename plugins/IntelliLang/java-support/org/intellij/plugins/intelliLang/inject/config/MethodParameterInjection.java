@@ -15,19 +15,21 @@
  */
 package org.intellij.plugins.intelliLang.inject.config;
 
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizableStringList;
+import com.intellij.openapi.util.JDOMExternalizer;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
+import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.intellij.plugins.intelliLang.PatternBasedInjectionHelper;
-import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
 
 import java.util.*;
 

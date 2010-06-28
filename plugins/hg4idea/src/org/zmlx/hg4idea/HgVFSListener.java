@@ -16,10 +16,8 @@
 package org.zmlx.hg4idea;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsVFSListener;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.VcsBackgroundTask;
@@ -29,9 +27,7 @@ import org.zmlx.hg4idea.command.HgCopyCommand;
 import org.zmlx.hg4idea.command.HgMoveCommand;
 import org.zmlx.hg4idea.command.HgRemoveCommand;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Listens to VFS events (such as adding or deleting bunch of files) and performs necessary operations with the VCS.
@@ -96,6 +92,44 @@ public class HgVFSListener extends VcsVFSListener {
   @Override
   protected String getSingleFileDeletePromptTemplate() {
     return HgVcsMessages.message("hg4idea.remove.single.body");
+  }
+
+  protected void executeDelete() {
+    final List<FilePath> filesToDelete = new ArrayList<FilePath>(myDeletedWithoutConfirmFiles);
+    final List<FilePath> deletedFiles = new ArrayList<FilePath>(myDeletedFiles);
+    myDeletedWithoutConfirmFiles.clear();
+    myDeletedFiles.clear();
+
+    // skip unversioned files
+    final List<FilePath> unversionedFilePaths = new ArrayList<FilePath>();
+    for (VirtualFile vf : ChangeListManagerImpl.getInstanceImpl(myProject).getUnversionedFiles()) {
+      unversionedFilePaths.add(VcsUtil.getFilePath(vf.getPath()));
+    }
+    for (Iterator<FilePath> iter = filesToDelete.iterator(); iter.hasNext(); ) {
+      if (unversionedFilePaths.contains(iter.next())) {
+        iter.remove();
+      }
+    }
+    for (Iterator<FilePath> iter = deletedFiles.iterator(); iter.hasNext(); ) {
+      if (unversionedFilePaths.contains(iter.next())) {
+        iter.remove();
+      }
+    }
+
+    // confirm removal from the VCS if needed
+    if (myRemoveOption.getValue() != VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) {
+      if (myRemoveOption.getValue() == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY || deletedFiles.isEmpty()) {
+        filesToDelete.addAll(deletedFiles);
+      }
+      else {
+        Collection<FilePath> filePaths = selectFilePathsToDelete(deletedFiles);
+        if (filePaths != null) {
+          filesToDelete.addAll(filePaths);
+        }
+      }
+    }
+    
+    performDeletion(filesToDelete);
   }
 
   @Override

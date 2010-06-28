@@ -18,7 +18,6 @@ package com.intellij.openapi.vcs.impl.projectlevelman;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
@@ -51,13 +50,15 @@ public class NewMappings {
   
   private final DefaultVcsRootPolicy myDefaultVcsRootPolicy;
   private final EventDispatcher<VcsListener> myEventDispatcher;
+  private final FileStatusManager myFileStatusManager;
   private final Project myProject;
 
   private boolean myActivated;
 
   public NewMappings(final Project project, final EventDispatcher<VcsListener> eventDispatcher,
-                     final ProjectLevelVcsManagerImpl vcsManager) {
+                     final ProjectLevelVcsManagerImpl vcsManager, FileStatusManager fileStatusManager) {
     myProject = project;
+    myFileStatusManager = fileStatusManager;
     myLock = new Object();
     myVcsToPaths = new HashMap<String, List<VcsDirectoryMapping>>();
     myDirectoryMappingWatches = new HashMap<VcsDirectoryMapping, LocalFileSystem.WatchRequest>();
@@ -171,6 +172,7 @@ public class NewMappings {
 
   public void mappingsChanged() {
     myEventDispatcher.getMulticaster().directoryMappingChanged();
+    myFileStatusManager.fileStatusesChanged();
   }
 
   @Modification

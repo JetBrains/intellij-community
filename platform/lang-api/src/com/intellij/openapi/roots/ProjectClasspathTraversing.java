@@ -21,20 +21,42 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.util.SmartList;
 
 import java.util.List;
-import java.util.ArrayList;
 
 public class ProjectClasspathTraversing {
   public static final AddModuleOutput ALL_OUTPUTS = new AddModuleOutput(true);
   public static final AddModuleOutput GENERAL_OUTPUT = new AddModuleOutput(false);
 
+  /**
+   * @deprecated use <code>OrderEnumerator.orderEntries().withoutDepModules().getPathsList()</code> instead
+   */
   public static final ProjectRootsTraversing.RootTraversePolicy FULL_CLASSPATH =
     new ProjectRootsTraversing.RootTraversePolicy(ALL_OUTPUTS, ProjectRootsTraversing.RootTraversePolicy.ADD_CLASSES, ProjectRootsTraversing.RootTraversePolicy.ADD_CLASSES, null);
+
+  /**
+   * @deprecated use <code>OrderEnumerator.orderEntries(module).withoutSdk().recursively().getPathsList()</code> or
+   * <code>OrderEnumerator.orderEntries(project).withoutSdk().getPathsList()</code> instead
+   */
   public static final ProjectRootsTraversing.RootTraversePolicy FULL_CLASS_RECURSIVE_WO_JDK =
     new ProjectRootsTraversing.RootTraversePolicy(ALL_OUTPUTS, null, ProjectRootsTraversing.RootTraversePolicy.ADD_CLASSES, ProjectRootsTraversing.RootTraversePolicy.RECURSIVE);
+
+  /**
+   * @deprecated use <code>OrderEnumerator.orderEntries(module).recursively().getPathsList()</code> or
+   * <code>OrderEnumerator.orderEntries(project).getPathsList()</code> instead
+   */
   public static final ProjectRootsTraversing.RootTraversePolicy FULL_CLASSPATH_RECURSIVE =
     new ProjectRootsTraversing.RootTraversePolicy(ALL_OUTPUTS, ProjectRootsTraversing.RootTraversePolicy.ADD_CLASSES, ProjectRootsTraversing.RootTraversePolicy.ADD_CLASSES, ProjectRootsTraversing.RootTraversePolicy.RECURSIVE);
+
+  /**
+   * @deprecated use <code>OrderEnumerator.orderEntries(module).withoutSdk().productionOnly().recursively().getPathsList()</code>
+   * or <code>OrderEnumerator.orderEntries(project).withoutSdk().productionOnly().getPathsList()</code> instead
+   */
   public static final ProjectRootsTraversing.RootTraversePolicy FULL_CLASSPATH_WITHOUT_JDK_AND_TESTS =
     new ProjectRootsTraversing.RootTraversePolicy(GENERAL_OUTPUT, null, ProjectRootsTraversing.RootTraversePolicy.ADD_CLASSES_WITHOUT_TESTS, ProjectRootsTraversing.RootTraversePolicy.RECURSIVE_WITHOUT_TESTS);
+
+  /**
+   * @deprecated use <code>OrderEnumerator.orderEntries(module).productionOnly().recursively().getPathsList()</code>
+   * or <code>OrderEnumerator.orderEntries(project).productionOnly().getPathsList()</code> instead
+   */
   public static final ProjectRootsTraversing.RootTraversePolicy FULL_CLASSPATH_WITHOUT_TESTS =
     new ProjectRootsTraversing.RootTraversePolicy(GENERAL_OUTPUT, ProjectRootsTraversing.RootTraversePolicy.ADD_CLASSES_WITHOUT_TESTS, ProjectRootsTraversing.RootTraversePolicy.ADD_CLASSES_WITHOUT_TESTS, ProjectRootsTraversing.RootTraversePolicy.RECURSIVE_WITHOUT_TESTS);
 

@@ -36,14 +36,12 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectRootsTraversing;
-import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.PathUtil;
+import com.intellij.util.PathsList;
 import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -224,16 +222,22 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
 
       parameters.addParametersString(OTHER_OPTIONS);
 
-      final String classPath = jdk.getSdkType() instanceof JavaSdk
-                               ? ProjectRootsTraversing.collectRoots(myProject, ProjectRootsTraversing.PROJECT_LIBRARIES).getPathsString()
-                               : ProjectRootsTraversing.collectRoots(myProject, ProjectRootsTraversing.LIBRARIES_AND_JDK).getPathsString(); //libraries are included into jdk
-      if (classPath.length() >0) {
+      final PathsList classPath;
+      if (jdk.getSdkType() instanceof JavaSdk) {
+        classPath = OrderEnumerator.orderEntries(myProject).withoutSdk().withoutThisModuleContent().getPathsList();
+      }
+      else {
+        //libraries are included into jdk
+        classPath = OrderEnumerator.orderEntries(myProject).withoutThisModuleContent().getPathsList();
+      }
+      final String classPathString = classPath.getPathsString();
+      if (classPathString.length() > 0) {
         parameters.add("-classpath");
-        parameters.add(classPath);
+        parameters.add(classPathString);
       }
 
       parameters.add("-sourcepath");
-      parameters.add(ProjectRootsTraversing.collectRoots(myProject, ProjectRootsTraversing.PROJECT_SOURCES).getPathsString());
+      parameters.add(OrderEnumerator.orderEntries(myProject).withoutSdk().withoutLibraries().getSourcePathsList().getPathsString());
 
       if (OUTPUT_DIRECTORY != null) {
         parameters.add("-d");

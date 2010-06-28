@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-import static org.intellij.plugins.intelliLang.PatternBasedInjectionHelper.appendStringPattern;
+import static org.intellij.plugins.intelliLang.inject.InjectorUtils.appendStringPattern;
 
 public class XmlTagInjection extends AbstractTagInjection {
 

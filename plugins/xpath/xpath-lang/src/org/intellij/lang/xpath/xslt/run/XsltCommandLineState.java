@@ -17,7 +17,10 @@ package org.intellij.lang.xpath.xslt.run;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.CommandLineState;
+import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
+import com.intellij.execution.configurations.ParametersList;
+import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -31,8 +34,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ProjectClasspathTraversing;
-import com.intellij.openapi.roots.ProjectRootsTraversing;
+import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolder;
@@ -49,7 +51,7 @@ import java.util.List;
 
 import static org.intellij.lang.xpath.xslt.run.XsltRunConfiguration.isEmpty;
 
-class XsltCommandLineState extends JavaCommandLineState {
+class XsltCommandLineState extends CommandLineState {
     private static final Logger LOG = Logger.getInstance(XsltCommandLineState.class.getName());
     public static final Key<XsltCommandLineState> STATE = Key.create("STATE");
 
@@ -62,12 +64,12 @@ class XsltCommandLineState extends JavaCommandLineState {
     public XsltCommandLineState(XsltRunConfiguration xsltRunConfiguration, ExecutionEnvironment env) {
         super(env);
         myXsltRunConfiguration = xsltRunConfiguration;
-        final RunnerSettings settings = env.getRunnerSettings();
-        myIsDebugger = settings != null && settings.getData() instanceof DebuggingRunnerData;
+        final ConfigurationPerRunnerSettings settings = env.getConfigurationSettings();
+        myIsDebugger = settings != null && "Debug".equals(settings.getRunnerId());
     }
 
     protected OSProcessHandler startProcess() throws ExecutionException {
-        final OSProcessHandler osProcessHandler = super.startProcess();
+        final OSProcessHandler osProcessHandler = createJavaParameters().createOSProcessHandler();
         osProcessHandler.putUserData(STATE, this);
 
         osProcessHandler.addProcessListener(new MyProcessAdapter());
@@ -79,13 +81,13 @@ class XsltCommandLineState extends JavaCommandLineState {
         return osProcessHandler;
     }
 
-    protected JavaParameters createJavaParameters() throws ExecutionException {
+    protected SimpleJavaParameters createJavaParameters() throws ExecutionException {
         final Sdk jdk = myXsltRunConfiguration.getEffectiveJDK();
         if (jdk == null) {
             throw CantRunException.noJdkConfigured();
         }
 
-        final JavaParameters parameters = new JavaParameters();
+        final SimpleJavaParameters parameters = new SimpleJavaParameters();
         parameters.setJdk(jdk);
 
         if (myXsltRunConfiguration.getJdkChoice() == XsltRunConfiguration.JdkChoice.FROM_MODULE) {
@@ -93,7 +95,7 @@ class XsltCommandLineState extends JavaCommandLineState {
             // relaxed check for valid module: when running XSLTs that don't belong to any module, let's assume it is
             // OK to run as if just a JDK has been selected (a missing JDK would already have been complained about above) 
             if (module != null) {
-                ProjectRootsTraversing.collectRoots(module, ProjectClasspathTraversing.FULL_CLASSPATH_WITHOUT_TESTS, parameters.getClassPath());
+                OrderEnumerator.orderEntries(module).productionOnly().recursively().collectPaths(parameters.getClassPath());
             }
         }
 

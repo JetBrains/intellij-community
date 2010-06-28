@@ -116,6 +116,32 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
     return i >= 0 ? myWraps.get(i) : null;
   }
 
+  @Override
+  @NotNull
+  public List<TextChange> getSoftWrapsForLine(int documentLine) {
+    Document document = myEditor.getDocument();
+    int start = document.getLineStartOffset(documentLine);
+    int end = document.getLineEndOffset(documentLine);
+
+    int i = getSoftWrapIndex(start);
+    if (i < 0) {
+      i = -i - 1;
+    }
+
+    List<TextChange> result = null;
+    for (; i < myWraps.size(); i++) {
+      TextChange softWrap = myWraps.get(i);
+      if (softWrap.getStart() >= end) {
+        break;
+      }
+      if (result == null) {
+        result = new ArrayList<TextChange>();
+      }
+      result.add(softWrap);
+    }
+    return result == null ? Collections.<TextChange>emptyList() : result;
+  }
+
   /**
    * Tries to find index of the target soft wrap stored at {@link #myWraps} collection. <code>'Target'</code> soft wrap is the one
    * that starts at the given offset.
@@ -453,21 +479,21 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
   }
 
   @NotNull
-  public LogicalPosition offsetToLogicalPosition(int offset) {
+  public LogicalPosition adjustLogicalPosition(LogicalPosition defaultLogical, int offset) {
     if (myActive > 0 || !isSoftWrappingEnabled()) {
-      return myEditor.offsetToLogicalPosition(offset, false);
+      return defaultLogical;
     }
 
     myActive++;
     try {
-      return doOffsetToLogicalPosition(offset);
+      return offsetToLogicalPosition(offset);
     } finally {
       myActive--;
     }
   }
 
   @SuppressWarnings({"AssignmentToForLoopParameter"})
-  private LogicalPosition doOffsetToLogicalPosition(int offset) {
+  private LogicalPosition offsetToLogicalPosition(int offset) {
     DocumentImpl document = (DocumentImpl)myEditor.getDocument();
     CharSequence chars = document.getCharsNoThreadCheck();
 
@@ -660,11 +686,11 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
       softWrapIndex = -softWrapIndex - 1;
     }
 
-    if (softWrapIndex >= myWraps.size()) {
+    Document document = myEditor.getDocument();
+
+    if (softWrapIndex >= myWraps.size() || document.getTextLength() <= 0) {
       return;
     }
-
-    Document document = myEditor.getDocument();
     int firstChangedLine = document.getLineNumber(change.getStart());
     int lastChangedLine = Math.max(document.getLineNumber(change.getEnd()), firstChangedLine + StringUtil.countNewLines(change.getText()));
     for (int i = firstChangedLine; i <= lastChangedLine; i++) {
@@ -759,7 +785,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
   }
 
   private int toVisualColumnSymbolsNumber(CharSequence text, int start, int end) {
-    return EditorUtil.calcColumnNumber(myEditor, text, start, end, EditorUtil.getTabSize(myEditor));
+    return EditorUtil.calcColumnNumber(myEditor, text, start, end);
   }
 
   private class Context {

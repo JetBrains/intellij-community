@@ -18,6 +18,8 @@ package com.intellij.openapi.editor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * Defines contract for the services that bring <code>'soft wrapping'</code> to the editor.
  * <p/>
@@ -84,6 +86,15 @@ public interface SoftWrapModel {
    */
   @Nullable
   TextChange getSoftWrap(int offset);
+
+  /**
+   * Allows to ask current model about all soft wraps registered for the given document line.
+   *
+   * @param documentLine    target document line
+   * @return                all soft wraps registered for the given document line
+   */
+  @NotNull
+  List<TextChange> getSoftWrapsForLine(int documentLine);
 
   /**
    * Notifies current model that target document is about to be changed at location identified by the given visual position.

@@ -1,0 +1,5 @@
+class Test{
+  {
+    if (<EOLError/>
+  }
+}

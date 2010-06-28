@@ -19,7 +19,7 @@
     <orderEntry type="module" module-name="properties" />
     <orderEntry type="module" module-name="execution-openapi" />
     <orderEntry type="module" module-name="idea-ui" />
-    <orderEntry type="module" module-name="dom-openapi" />
+    <orderEntry type="module" module-name="dom-openapi" exported="" />
     <orderEntry type="module" module-name="xml-openapi" />
     <orderEntry type="module" module-name="util" />
     <orderEntry type="module" module-name="idea-tests" scope="TEST" />

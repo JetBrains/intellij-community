@@ -50,7 +50,7 @@ import java.util.*;
  */
 @SuppressWarnings({"AbstractClassNeverImplemented"})
 @DefinesXml
-public abstract class AntDomProject extends AntDomElement implements PropertiesProvider {
+public abstract class AntDomProject extends AntDomNamedElement implements PropertiesProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.dom.AntDomProject");
 
   @NonNls public static final String DEFAULT_ENVIRONMENT_PREFIX = "env.";
@@ -58,10 +58,6 @@ public abstract class AntDomProject extends AntDomElement implements PropertiesP
   private volatile ClassLoader myClassLoader;
   private volatile Map<String, String> myProperties;
 
-
-  @Attribute("name")
-  @NameValue
-  public abstract GenericAttributeValue<String> getName();
 
   @Attribute("default")
   @Convert(value = AntDomDefaultTargetConverter.class)

@@ -18,17 +18,13 @@ package com.intellij.lang.ant.dom;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericAttributeValue;
-import com.intellij.util.xml.NameValue;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: Apr 6, 2010
  */
 @SuppressWarnings({"AbstractClassNeverImplemented"})
-public abstract class AntDomTarget extends AntDomElement {
-  @Attribute("name")
-  @NameValue
-  public abstract GenericAttributeValue<String> getName();
+public abstract class AntDomTarget extends AntDomNamedElement{
 
   @Attribute("if")
   public abstract GenericAttributeValue<String> getIfPropertyName();

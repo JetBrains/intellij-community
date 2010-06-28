@@ -97,7 +97,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   private final AtomicBoolean myForceScrollToEnd = new AtomicBoolean(false);
   private final MergingUpdateQueue myUpdateQueue;
   private Runnable myUiUpdateRunnable;
-
+  private boolean myEditorVisible = true;
 
   public LanguageConsoleImpl(final Project project, String title, final Language language) {
     myProject = project;
@@ -131,6 +131,20 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
         componentResized(e);
       }
     });
+  }
+
+  public void setEditorVisible(boolean visible) {
+    if (myEditorVisible == visible) return;
+    if (visible) {
+      myPanel.removeAll();
+      myPanel.add(myHistoryViewer.getComponent(), BorderLayout.NORTH);
+      myPanel.add(myConsoleEditor.getComponent(), BorderLayout.CENTER);
+    }
+    else {
+      myPanel.removeAll();
+      myPanel.add(myHistoryViewer.getComponent(), BorderLayout.CENTER);
+    }
+    myEditorVisible = visible;
   }
 
   private void setupComponents() {
@@ -285,7 +299,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     final boolean scrollToEnd = shouldScrollHistoryToEnd();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        ref.set(addTextRangeToHistory(textRange));
+        ref.set(addTextRangeToHistory(textRange, myConsoleEditor));
         if (erase) {
           myConsoleEditor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
         }
@@ -309,7 +323,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     myHistoryViewer.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
   }
 
-  private String addTextRangeToHistory(TextRange textRange) {
+  private String addTextRangeToHistory(TextRange textRange, final EditorEx consoleEditor) {
     final DocumentImpl history = (DocumentImpl)myHistoryViewer.getDocument();
     final MarkupModel markupModel = history.getMarkupModel(myProject);
     final int promptOffset = history.getTextLength();
@@ -318,9 +332,9 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
                                     HighlighterTargetArea.EXACT_RANGE);
 
     final int offset = history.getTextLength();
-    final String text = textRange.substring(myConsoleEditor.getDocument().getText());
+    final String text = textRange.substring(consoleEditor.getDocument().getText());
     history.insertString(offset, text);
-    final HighlighterIterator iterator = myConsoleEditor.getHighlighter().createIterator(0);
+    final HighlighterIterator iterator = consoleEditor.getHighlighter().createIterator(0);
     while (!iterator.atEnd()) {
       final int localOffset = textRange.getStartOffset();
       final int start = Math.max(iterator.getStart(), localOffset) - localOffset;
@@ -331,8 +345,8 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       }
       iterator.advance();
     }
-    duplicateHighlighters(markupModel, myConsoleEditor.getDocument().getMarkupModel(myProject), offset, textRange);
-    duplicateHighlighters(markupModel, myConsoleEditor.getMarkupModel(), offset, textRange);
+    duplicateHighlighters(markupModel, consoleEditor.getDocument().getMarkupModel(myProject), offset, textRange);
+    duplicateHighlighters(markupModel, consoleEditor.getMarkupModel(), offset, textRange);
     if (!text.endsWith("\n")) history.insertString(history.getTextLength(), "\n");
     return text;
   }
@@ -367,6 +381,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   }
 
   private void updateSizes(boolean forceScrollToEnd) {
+    if (!myEditorVisible) return;
     final Dimension panelSize = myPanel.getSize();
     final Dimension historyContentSize = myHistoryViewer.getContentSize();
     final Dimension contentSize = myConsoleEditor.getContentSize();
@@ -419,13 +434,6 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     sink.put(key, o);
   }
 
-  public void openInEditor() {
-    final VirtualFile virtualFile = myFile.getVirtualFile();
-    assert virtualFile != null;
-    FileEditorManager.getInstance(getProject()).openTextEditor(
-      new OpenFileDescriptor(getProject(), virtualFile, myConsoleEditor.getCaretModel().getOffset()), true);
-  }
-
   private void installEditorFactoryListener() {
     final EditorFactoryListener factoryListener = new EditorFactoryListener() {
       public void editorCreated(final EditorFactoryEvent event) {
@@ -453,6 +461,11 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       }
 
       public void editorReleased(final EditorFactoryEvent event) {
+        if (event.getEditor().getDocument() == myEditorDocument) {
+          if (myUiUpdateRunnable != null) {
+            ApplicationManager.getApplication().runReadAction(myUiUpdateRunnable);
+          }
+        }
       }
     };
     EditorFactory.getInstance().addEditorFactoryListener(factoryListener);

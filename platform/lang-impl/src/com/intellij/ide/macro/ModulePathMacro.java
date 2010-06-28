@@ -20,7 +20,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ProjectRootsTraversing;
+import com.intellij.openapi.roots.OrderEnumerator;
 
 public final class ModulePathMacro extends Macro {
   public String getName() {
@@ -36,6 +36,6 @@ public final class ModulePathMacro extends Macro {
     if (module == null) {
       return null;
     }
-    return ProjectRootsTraversing.collectRoots(module, ProjectRootsTraversing.PROJECT_SOURCES).getPathsString();
+    return OrderEnumerator.orderEntries(module).withoutSdk().withoutLibraries().getSourcePathsList().getPathsString();
   }
 }

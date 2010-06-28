@@ -75,6 +75,7 @@ public class PositionPanel implements StatusBarWidget, StatusBarWidget.TextPrese
     return "#############";
   }
 
+  @Override
   public float getAlignment() {
     return JComponent.CENTER_ALIGNMENT;
   }
@@ -140,7 +141,8 @@ public class PositionPanel implements StatusBarWidget, StatusBarWidget.TextPrese
 
   public void caretPositionChanged(final CaretEvent e) {
     final Editor editor = e.getEditor();
-    if (editor.getProject() != null && FileEditorManager.getInstance(editor.getProject()).getSelectedTextEditor() == e.getEditor()) {
+    Project project = editor.getProject();
+    if (project != null && FileEditorManager.getInstance(project).getSelectedTextEditor() == e.getEditor()) {
        updatePosition(editor);
     }
   }

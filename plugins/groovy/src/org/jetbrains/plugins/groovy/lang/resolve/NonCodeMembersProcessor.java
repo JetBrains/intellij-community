@@ -22,6 +22,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.scope.PsiScopeProcessor;
 
 /**
+ * @deprecated use {@link org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor}
  * @author Maxim.Medvedev
  */
 public interface NonCodeMembersProcessor {

@@ -175,8 +175,14 @@ public class PathsList  {
     add(PathUtil.getCanonicalPath(file.getAbsolutePath()).replace('/', File.separatorChar));
   }
 
-  public void addVirtualFiles(List<VirtualFile> files) {
+  public void addVirtualFiles(Collection<VirtualFile> files) {
     for (final VirtualFile file : files) {
+      add(file);
+    }
+  }
+
+  public void addVirtualFiles(VirtualFile[] files) {
+    for (VirtualFile file : files) {
       add(file);
     }
   }

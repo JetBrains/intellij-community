@@ -117,7 +117,7 @@ public class LibraryDefinitionsGeneratorFactory {
                                        final File baseDir,
                                        final CompositeGenerator libraryPath) {
     if (genOptions.expandJarDirectories) {
-      final VirtualFile[] files = library.getFiles(OrderRootType.COMPILATION_CLASSES);
+      final VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
       // note that it is assumed that directory entries inside library path are unordered
       TreeSet<String> visitedPaths = new TreeSet<String>();
       for (final VirtualFile file : files) {
@@ -130,7 +130,7 @@ public class LibraryDefinitionsGeneratorFactory {
       }
     }
     else {
-      TreeSet<String> urls = new TreeSet<String>(Arrays.asList(library.getUrls(OrderRootType.COMPILATION_CLASSES)));
+      TreeSet<String> urls = new TreeSet<String>(Arrays.asList(library.getUrls(OrderRootType.CLASSES)));
       for (String url : urls) {
         File file = fileFromUrl(url);
         final String path = GenerationUtils

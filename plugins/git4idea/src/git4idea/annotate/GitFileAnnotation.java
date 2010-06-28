@@ -89,36 +89,26 @@ public class GitFileAnnotation implements FileAnnotation {
    */
   private final boolean myMonitorFlag;
 
-  /**
-   * Date annotation aspect
-   */
-  private final LineAnnotationAspect DATE_ASPECT = new LineAnnotationAspectAdapter() {
-    public String getValue(int lineNumber) {
-      if (myLines.size() <= lineNumber || lineNumber < 0 || myLines.get(lineNumber) == null) {
-        return "";
-      }
-      else {
-        final Date date = myLines.get(lineNumber).getDate();
-        return date == null ? "" : DATE_FORMAT.format(date);
-      }
+  private final LineAnnotationAspect DATE_ASPECT = new MyAnnotationAspect() {
+    public String doGetValue(LineInfo info) {
+      final Date date = info.getDate();
+      return date == null ? "" : DATE_FORMAT.format(date);
     }
   };
-  /**
-   * revision annotation aspect
-   */
-  private final LineAnnotationAspect REVISION_ASPECT = new RevisionAnnotationAspect();
-  /**
-   * author annotation aspect
-   */
-  private final LineAnnotationAspect AUTHOR_ASPECT = new LineAnnotationAspectAdapter() {
-    public String getValue(int lineNumber) {
-      if (myLines.size() <= lineNumber || lineNumber < 0 || myLines.get(lineNumber) == null) {
-        return "";
-      }
-      else {
-        final String author = myLines.get(lineNumber).getAuthor();
-        return author == null ? "" : author;
-      }
+
+  private final LineAnnotationAspect REVISION_ASPECT = new MyAnnotationAspect() {
+    @Override
+    protected String doGetValue(LineInfo lineInfo) {
+      final GitRevisionNumber revision = lineInfo.getRevision();
+      return revision == null ? "" : String.valueOf(revision.getShortRev());
+    }
+  };
+
+  private final LineAnnotationAspect AUTHOR_ASPECT = new MyAnnotationAspect() {
+    @Override
+    protected String doGetValue(LineInfo lineInfo) {
+      final String author = lineInfo.getAuthor();
+      return author == null ? "" : author;
     }
   };
 
@@ -295,19 +285,17 @@ public class GitFileAnnotation implements FileAnnotation {
   /**
    * Revision annotation aspect implementation
    */
-  private class RevisionAnnotationAspect  extends LineAnnotationAspectAdapter implements EditorGutterAction {
-    /**
-     * {@inheritDoc}
-     */
+  private abstract class MyAnnotationAspect  extends LineAnnotationAspectAdapter implements EditorGutterAction {
     public String getValue(int lineNumber) {
       if (myLines.size() <= lineNumber || lineNumber < 0 || myLines.get(lineNumber) == null) {
         return "";
       }
       else {
-        final GitRevisionNumber revision = myLines.get(lineNumber).getRevision();
-        return revision == null ? "" : String.valueOf(revision.getShortRev());
+        return doGetValue(myLines.get(lineNumber));
       }
     }
+
+    protected abstract String doGetValue(LineInfo lineInfo);
 
     /**
      * {@inheritDoc}

@@ -22,7 +22,7 @@ import com.intellij.openapi.components.Storage;
 )
 public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettings> {
 
-  private static final String HG = "hg";
+  private static final String HG = HgVcs.HG_EXECUTABLE_FILE_NAME;
   private static final int FIVE_MINUTES = 300;
 
   private String hgExecutable = HG;
@@ -47,7 +47,7 @@ public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettin
     hgExecutable = HG;
   }
 
-  public int getIncomingCheckIntervalSeconds() {
+  public static int getIncomingCheckIntervalSeconds() {
     return FIVE_MINUTES;
   }
 

@@ -182,10 +182,10 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
                               boolean generateBefore,
                               boolean generateAfter) throws IncorrectOperationException {
     if (generateBefore) {
-      generateMethod(TestIntegrationUtils.MethodKind.SET_UP, descriptor, targetClass, editor, "setUp");
+      generateMethod(TestIntegrationUtils.MethodKind.SET_UP, descriptor, targetClass, editor, null);
     }
     if (generateAfter) {
-      generateMethod(TestIntegrationUtils.MethodKind.TEAR_DOWN, descriptor, targetClass, editor, "tearDown");
+      generateMethod(TestIntegrationUtils.MethodKind.TEAR_DOWN, descriptor, targetClass, editor, null);
     }
     for (MemberInfo m : methods) {
       generateMethod(TestIntegrationUtils.MethodKind.TEST, descriptor, targetClass, editor, m.getMember().getName());

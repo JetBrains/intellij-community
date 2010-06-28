@@ -118,12 +118,8 @@ public class PathManagerEx {
 
   static {
     TEST_DATA_RELATIVE_PATHS.put(TestDataLookupStrategy.ULTIMATE, Collections.singletonList(toSystemDependentName("testData")));
-    TEST_DATA_RELATIVE_PATHS.put(
-      TestDataLookupStrategy.COMMUNITY, Collections.singletonList(toSystemDependentName("java/java-tests/testData"))
-    );
-    TEST_DATA_RELATIVE_PATHS.put(
-      TestDataLookupStrategy.COMMUNITY_FROM_ULTIMATE, Collections.singletonList(toSystemDependentName("community/java/java-tests/testData"))
-    );
+    TEST_DATA_RELATIVE_PATHS.put(TestDataLookupStrategy.COMMUNITY, Collections.singletonList(toSystemDependentName("java/java-tests/testData")));
+    TEST_DATA_RELATIVE_PATHS.put(TestDataLookupStrategy.COMMUNITY_FROM_ULTIMATE, Collections.singletonList(toSystemDependentName("community/java/java-tests/testData")));
   }
 
   /**
@@ -156,8 +152,14 @@ public class PathManagerEx {
    * @throws IllegalStateException    as defined by {@link #getTestDataPath(TestDataLookupStrategy)}
    */
   public static String getTestDataPath(Class<?> testClass) throws IllegalStateException {
-    TestDataLookupStrategy strategy = determineLookupStrategy(testClass);
+    TestDataLookupStrategy strategy = isLocatedInCommunity() ? TestDataLookupStrategy.COMMUNITY : determineLookupStrategy(testClass);
     return getTestDataPath(strategy);
+  }
+
+  private static boolean isLocatedInCommunity() {
+    FileSystemLocation projectLocation = parseProjectLocation();
+    return projectLocation == FileSystemLocation.COMMUNITY;
+    // There is no other options then.
   }
 
   /**
@@ -210,6 +212,7 @@ public class PathManagerEx {
   @SuppressWarnings({"ThrowableInstanceNeverThrown"})
   @Nullable
   private static TestDataLookupStrategy guessTestDataLookupStrategyOnClassLocation() {
+    if (isLocatedInCommunity()) return TestDataLookupStrategy.COMMUNITY;
 
     // The general idea here is to find test class at the bottom of hierarchy and try to resolve test data lookup strategy
     // against it. Rationale is that there is a possible case that, say, 'ultimate' test class extends basic test class
@@ -274,13 +277,7 @@ public class PathManagerEx {
   }
 
   @Nullable
-  public static TestDataLookupStrategy determineLookupStrategy(Class<?> clazz) {
-    FileSystemLocation projectLocation = parseProjectLocation();
-    if (projectLocation == FileSystemLocation.COMMUNITY) {
-      // There is no other options then.
-      return TestDataLookupStrategy.COMMUNITY;
-    }
-
+  private static TestDataLookupStrategy determineLookupStrategy(Class<?> clazz) {
     // Check if resulting strategy is already cached for the target class.
     TestDataLookupStrategy result = CLASS_STRATEGY_CACHE.get(clazz);
     if (result != null) {

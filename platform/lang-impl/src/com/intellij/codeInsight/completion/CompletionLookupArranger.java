@@ -126,7 +126,7 @@ public class CompletionLookupArranger extends LookupArranger {
 
     for (int i = 0; i < weight1.length; i++) {
       final Comparable w1 = weight1[i];
-      final Comparable w2 = weight2[i];
+      final Comparable w2 = i < weight2.length ? weight2[i]:null;
       if (w1 != null || w2 != null) {
         if (w1 == null) return 1;
         if (w2 == null) return -1;
@@ -141,10 +141,11 @@ public class CompletionLookupArranger extends LookupArranger {
 
   @Override
   public LookupItemWeightComparable getRelevance(LookupElement item) {
-    if (item.getUserData(RELEVANCE_KEY) != null) return item.getUserData(RELEVANCE_KEY);
+    LookupItemWeightComparable result = item.getUserData(RELEVANCE_KEY);
+    if (result != null) return result;
 
     final double priority = item instanceof LookupItem ? ((LookupItem)item).getPriority() : 0;
-    final LookupItemWeightComparable result = new LookupItemWeightComparable(priority, getRelevanceWeight(item));
+    result = new LookupItemWeightComparable(priority, getRelevanceWeight(item));
 
     item.putUserData(RELEVANCE_KEY, result);
 

@@ -52,7 +52,7 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
 
   @NotNull
   public PsiClass[] getClassesByName(@NotNull @NonNls String name, @NotNull GlobalSearchScope scope) {
-    final Collection<? extends PsiElement> plainClasses = StubIndex.getInstance().get(GrShortClassNameIndex.KEY, name, myProject, new GrSourceFilterScope(scope, myProject));
+    final Collection<? extends PsiElement> plainClasses = StubIndex.getInstance().get(GrShortClassNameIndex.KEY, name, myProject, new GrSourceFilterScope(scope));
     Collection<PsiClass> allClasses = getAllScriptClasses(name, scope);
     if (allClasses.isEmpty() && plainClasses.isEmpty()) return PsiClass.EMPTY_ARRAY;
 
@@ -65,7 +65,7 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
 
   @Nullable
   public PsiClass getClassByFQName(@NotNull @NonNls String name, @NotNull GlobalSearchScope scope) {
-    final Collection<PsiElement> classes = new ArrayList<PsiElement>(StubIndex.getInstance().get(GrFullClassNameIndex.KEY, name.hashCode(), myProject, new GrSourceFilterScope(scope, myProject)));
+    final Collection<PsiElement> classes = new ArrayList<PsiElement>(StubIndex.getInstance().get(GrFullClassNameIndex.KEY, name.hashCode(), myProject, new GrSourceFilterScope(scope)));
     final Collection<PsiClass> scriptClasses = getScriptClassesByFQName(name, scope);
     classes.addAll(scriptClasses);
     for (PsiElement clazz : classes) {
@@ -79,7 +79,7 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
   }
 
   public Collection<PsiClass> getScriptClassesByFQName(final String name, final GlobalSearchScope scope) {
-    Collection<GroovyFile> scripts = StubIndex.getInstance().get(GrFullScriptNameIndex.KEY, name.hashCode(), myProject, new GrSourceFilterScope(scope, myProject));
+    Collection<GroovyFile> scripts = StubIndex.getInstance().get(GrFullScriptNameIndex.KEY, name.hashCode(), myProject, new GrSourceFilterScope(scope));
     scripts = ContainerUtil.findAll(scripts, new Condition<GroovyFile>() {
       public boolean value(final GroovyFile groovyFile) {
         final PsiClass clazz = groovyFile.getScriptClass();
@@ -97,7 +97,7 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
   public PsiClass[] getClassesByFQName(@NotNull @NonNls String name, @NotNull GlobalSearchScope scope) {
     final Collection<PsiClass> result = getScriptClassesByFQName(name, scope);
 
-    final Collection<? extends PsiElement> classes = StubIndex.getInstance().get(GrFullClassNameIndex.KEY, name.hashCode(), myProject, new GrSourceFilterScope(scope, myProject));
+    final Collection<? extends PsiElement> classes = StubIndex.getInstance().get(GrFullClassNameIndex.KEY, name.hashCode(), myProject, new GrSourceFilterScope(scope));
     if (!classes.isEmpty()) {
       //hashcode doesn't guarantee equals
       for (PsiElement psiClass : classes) {
@@ -111,7 +111,7 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
   }
 
   private Collection<PsiClass> getAllScriptClasses(String name, GlobalSearchScope scope) {
-    Collection<GroovyFile> files = StubIndex.getInstance().get(GrScriptClassNameIndex.KEY, name, myProject, new GrSourceFilterScope(scope, myProject));
+    Collection<GroovyFile> files = StubIndex.getInstance().get(GrScriptClassNameIndex.KEY, name, myProject, new GrSourceFilterScope(scope));
     files = ContainerUtil.findAll(files, new Condition<GroovyFile>() {
       public boolean value(GroovyFile groovyFile) {
         return groovyFile.isScript();
@@ -143,8 +143,8 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
 
   @NotNull
   public PsiMethod[] getMethodsByName(@NonNls @NotNull String name, @NotNull GlobalSearchScope scope) {
-    final Collection<? extends PsiMethod> methods = StubIndex.getInstance().get(GrMethodNameIndex.KEY, name, myProject, new GrSourceFilterScope(scope, myProject));
-    final Collection<? extends PsiMethod> annMethods = StubIndex.getInstance().get(GrAnnotationMethodNameIndex.KEY, name, myProject, new GrSourceFilterScope(scope, myProject));
+    final Collection<? extends PsiMethod> methods = StubIndex.getInstance().get(GrMethodNameIndex.KEY, name, myProject, new GrSourceFilterScope(scope));
+    final Collection<? extends PsiMethod> annMethods = StubIndex.getInstance().get(GrAnnotationMethodNameIndex.KEY, name, myProject, new GrSourceFilterScope(scope));
     if (methods.isEmpty() && annMethods.isEmpty()) return PsiMethod.EMPTY_ARRAY;
     return ArrayUtil
         .mergeArrays(annMethods.toArray(new PsiMethod[annMethods.size()]), methods.toArray(new PsiMethod[methods.size()]), PsiMethod.class);
@@ -168,7 +168,7 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
 
   @NotNull
   public PsiField[] getFieldsByName(@NotNull @NonNls String name, @NotNull GlobalSearchScope scope) {
-    final Collection<? extends PsiField> fields = StubIndex.getInstance().get(GrFieldNameIndex.KEY, name, myProject, new GrSourceFilterScope(scope, myProject));
+    final Collection<? extends PsiField> fields = StubIndex.getInstance().get(GrFieldNameIndex.KEY, name, myProject, new GrSourceFilterScope(scope));
     if (fields.isEmpty()) return PsiField.EMPTY_ARRAY;
     return fields.toArray(new PsiField[fields.size()]);
   }

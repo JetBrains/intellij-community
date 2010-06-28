@@ -17,7 +17,6 @@ package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -154,31 +153,17 @@ public class GenerateDelegateHandler implements CodeInsightActionHandler {
 
     final Project project = method.getProject();
     for (PsiAnnotation annotation : methodCandidate.getElement().getModifierList().getAnnotations()) {
-      annotate(method, project, annotation.getQualifiedName());
+      OverrideImplementUtil.annotate(method, annotation.getQualifiedName());
     }
 
     final PsiClass targetClass = ((PsiMember)target).getContainingClass();
     LOG.assertTrue(targetClass != null);
-    final PsiMethod[] methods = targetClass.findMethodsBySignature(method, true);
-    boolean insertOverride = false;
-    for (PsiMethod superMethod : methods) {
-      if (OverrideImplementUtil.isInsertOverride(superMethod, targetClass)) {
-        insertOverride = true;
-        break;
-      }
-    }
-    if (insertOverride) {
-      annotate(method, project, Override.class.getName());
+    PsiMethod overridden = targetClass.findMethodBySignature(method, true);
+    if (overridden != null) {
+      OverrideImplementUtil.annotateOnOverrideImplement(method, targetClass, overridden);
     }
 
     return new PsiGenerationInfo<PsiMethod>(method);
-  }
-
-  private static void annotate(PsiMethod method, Project project, final String qualifiedName) {
-    final AddAnnotationFix fix = new AddAnnotationFix(qualifiedName, method);
-    if (fix.isAvailable(project, null, method.getContainingFile())) {
-      fix.invoke(project, null, method.getContainingFile());
-    }
   }
 
   private static void clearMethod(PsiMethod method) throws IncorrectOperationException {

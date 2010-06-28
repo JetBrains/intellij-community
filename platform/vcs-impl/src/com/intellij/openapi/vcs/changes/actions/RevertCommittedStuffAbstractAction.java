@@ -22,18 +22,23 @@ import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.Convertor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -64,20 +69,29 @@ abstract class RevertCommittedStuffAbstractAction extends AnAction implements Du
       defaultName = VcsBundle.message("revert.changes.default.name", changeLists[0].getName());
     }
 
-    ChangeListChooser chooser = new ChangeListChooser(project, ChangeListManager.getInstance(project).getChangeListsCopy(), null,
+    final ChangeListChooser chooser = new ChangeListChooser(project, ChangeListManager.getInstance(project).getChangeListsCopy(), null,
                                                       "Select Target Changelist", defaultName);
     chooser.show();
     if (!chooser.isOK()) return;
 
-    List<FilePatch> patches;
-    try {
-      patches = IdeaTextPatchBuilder.buildPatch(project, changesList, baseDir.getPresentableUrl(), true);
-    }
-    catch (VcsException ex) {
-      Messages.showErrorDialog(project, "Failed to revert changes: " + ex.getMessage(), VcsBundle.message("revert.changes.title"));
-      return;
-    }
-    new PatchApplier<BinaryFilePatch>(project, baseDir, patches, chooser.getSelectedList(), null).execute();
+    final List<FilePatch> patches = new ArrayList<FilePatch>();
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, VcsBundle.message("revert.changes.title"), true,
+                                                              BackgroundFromStartOption.getInstance()) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          patches.addAll(IdeaTextPatchBuilder.buildPatch(project, changesList, baseDir.getPresentableUrl(), true));
+        }
+        catch (VcsException ex) {
+          Messages.showErrorDialog(project, "Failed to revert changes: " + ex.getMessage(), VcsBundle.message("revert.changes.title"));
+        }
+      }
+
+      @Override
+      public void onSuccess() {
+        new PatchApplier<BinaryFilePatch>(project, baseDir, patches, chooser.getSelectedList(), null).execute();
+      }
+    });
   }
 
   public void update(final AnActionEvent e) {

@@ -45,6 +45,11 @@ public class AdditionalIndexedRootsScope extends GlobalSearchScope {
     return myBaseScope.contains(file) || myFileSet.isInSet(file);
   }
 
+  @Override
+  public boolean isSearchOutsideRootModel() {
+    return true;
+  }
+
   public int compare(VirtualFile file1, VirtualFile file2) {
     return myBaseScope.compare(file1, file2);
   }

@@ -86,19 +86,39 @@ public final class HgRevisionNumber implements VcsRevisionNumber {
   }
 
   public int compareTo(VcsRevisionNumber o) {
+    // boundary cases
     if (this == o) {
       return 0;
     }
-
     if (!(o instanceof HgRevisionNumber)) {
       return -1;
     }
-
-    HgRevisionNumber hgRevisionNumber = (HgRevisionNumber) o;
-    if (changeset.equals(hgRevisionNumber.changeset)) {
+    final HgRevisionNumber other = (HgRevisionNumber) o;
+    if (changeset.equals(other.changeset)) {
       return 0;
     }
-    return java.lang.Long.valueOf(revision).compareTo(java.lang.Long.valueOf(hgRevisionNumber.revision));
+
+    // compare revision numbers.
+    final int revCompare = java.lang.Long.valueOf(getRevisionNumber()).compareTo(java.lang.Long.valueOf(other.getRevisionNumber()));
+    if (revCompare != 0) {
+      return revCompare;
+    }
+    // If they are equal, the working revision is greater.
+    if (isWorkingVersion) {
+      return other.isWorkingVersion ? 0 : 1;
+    } else {
+      return other.isWorkingVersion ? -1 : 0;
+    }
+  }
+
+  /**
+   * Returns the numeric part of the revision, i. e. the revision without trailing '+' if one exists. 
+   */
+  private String getRevisionNumber() {
+    if (isWorkingVersion) {
+      return revision.substring(0, revision.length()-1);
+    }
+    return revision;
   }
 
   @Override

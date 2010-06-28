@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
@@ -26,9 +27,10 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
 import org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -46,7 +48,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
@@ -123,67 +124,74 @@ public class ResolveUtil {
                                               Project project,
                                               PsiElement place,
                                               boolean forCompletion) {
-    return processNonCodeMethods(type, processor, project, new HashSet<String>(), place, forCompletion);
-  }
-
-  private static boolean processNonCodeMethods(PsiType type,
-                                               PsiScopeProcessor processor,
-                                               Project project,
-                                               Set<String> visited,
-                                               PsiElement place,
-                                               boolean forCompletion) {
     String qName = rawCanonicalText(type);
 
-    if (qName != null) {
-      if (!visited.add(qName)) {
-        return true;
-      }
+    if (qName == null) {
+      return true;
+    }
 
-      for (PsiMethod defaultMethod : GroovyPsiManager.getInstance(project).getDefaultMethods(qName)) {
-        if (!processElement(processor, defaultMethod)) return false;
-      }
+    if (!NonCodeMembersContributor.processDynamicElements(type, processor, place, ResolveState.initial())) {
+      return false;
+    }
 
-      for (PsiMethod method : DynamicManager.getInstance(project).getMethods(qName)) {
-        if (!processElement(processor, method)) return false;
-      }
-
-      for (PsiVariable var : DynamicManager.getInstance(project).getProperties(qName)) {
-        if (!processElement(processor, var)) return false;
-      }
-
-      for (NonCodeMembersProcessor membersProcessor : NonCodeMembersProcessor.EP_NAME.getExtensions()) {
-        if (!membersProcessor.processNonCodeMembers(type, processor, place, forCompletion)) return false;
-      }
-
-      if (visited.size() == 1) {
-        if (type instanceof PsiArrayType) {
-          //implicit super types
-          PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
-          PsiClassType t = factory.createTypeByFQClassName("java.lang.Object", GlobalSearchScope.allScope(project));
-          if (!processNonCodeMethods(t, processor, project, visited, place, forCompletion)) return false;
-          t = factory.createTypeByFQClassName("java.lang.Comparable", GlobalSearchScope.allScope(project));
-          if (!processNonCodeMethods(t, processor, project, visited, place, forCompletion)) return false;
-          t = factory.createTypeByFQClassName("java.io.Serializable", GlobalSearchScope.allScope(project));
-          if (!processNonCodeMethods(t, processor, project, visited, place, forCompletion)) return false;
-        } else if (type instanceof PsiClassType) {
-          PsiClass psiClass = ((PsiClassType)type).resolve();
-          if (psiClass != null) {
-            if (!GroovyDslFileIndex.processExecutors(psiClass, place, processor)) {
-              return false;
-            }
-          }
-        }
-
-      }
-      for (PsiType superType : type.getSuperTypes()) {
-        if (!processNonCodeMethods(TypeConversionUtil.erasure(superType), processor, project, visited, place, forCompletion)) {
-          return false;
-        }
+    if (type instanceof PsiClassType) {
+      PsiClass psiClass = ((PsiClassType)type).resolve();
+      if (psiClass != null && !GroovyDslFileIndex.processExecutors(psiClass, place, processor)) {
+        return false;
       }
     }
 
+    final HashMap<String, PsiType> visited = getSuperTypes(type, project);
+    for (PsiType psiType : visited.values()) {
+      for (NonCodeMembersProcessor membersProcessor : NonCodeMembersProcessor.EP_NAME.getExtensions()) {
+        if (!membersProcessor.processNonCodeMembers(psiType, processor, place, forCompletion)) return false;
+      }
+    }
     return true;
   }
+
+  private static HashMap<String, PsiType> getSuperTypes(PsiType type, Project project) {
+    final HashMap<String, PsiType> visited = new HashMap<String, PsiType>();
+    collectSuperTypes(type, visited, project);
+    if (type instanceof PsiArrayType) {
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      collectSuperTypes(factory.createTypeFromText(CommonClassNames.JAVA_LANG_COMPARABLE, null), visited, project);
+      collectSuperTypes(factory.createTypeFromText(CommonClassNames.JAVA_IO_SERIALIZABLE, null), visited, project);
+    }
+    return visited;
+  }
+
+  private static void collectSuperTypes(PsiType type, Map<String, PsiType> visited, Project project) {
+    String qName = rawCanonicalText(type);
+
+    if (qName == null || visited.put(qName, type) != null) {
+      return;
+    }
+
+    for (PsiType superType : type.getSuperTypes()) {
+      collectSuperTypes(TypeConversionUtil.erasure(superType), visited, project);
+    }
+
+  }
+
+  private static final Key<FactoryMap<PsiType, Map<String, PsiType>>> SUPER_TYPES = Key.create("SUPER_TYPES");
+  public static Map<String, PsiType> getAllSuperTypes(PsiType base, final PsiElement place, ProcessingContext ctx) {
+    FactoryMap<PsiType, Map<String, PsiType>> classes = ctx.get(SUPER_TYPES);
+    if (classes == null) {
+      ctx.put(SUPER_TYPES, classes = new FactoryMap<PsiType, Map<String, PsiType>>() {
+        @Override
+        protected Map<String, PsiType> create(PsiType key) {
+          return getSuperTypes(key, place.getProject());
+        }
+      });
+    }
+    return classes.get(base);
+  }
+
+  public static boolean isInheritor(PsiType type, @NotNull String baseClass, PsiElement place, ProcessingContext ctx) {
+    return getAllSuperTypes(type, place, ctx).keySet().contains(baseClass);
+  }
+
 
   @Nullable
   private static String rawCanonicalText(PsiType type) {

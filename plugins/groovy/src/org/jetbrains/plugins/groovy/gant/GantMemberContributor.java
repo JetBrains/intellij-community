@@ -15,44 +15,70 @@
  */
 package org.jetbrains.plugins.groovy.gant;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.impl.light.LightVariableBuilder;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ProcessingContext;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 /**
  * @author peter
  */
-public class GantMemberContributor implements NonCodeMembersProcessor {
-
+public class GantMemberContributor extends NonCodeMembersContributor {
   @Override
-  public boolean processNonCodeMembers(PsiType type, PsiScopeProcessor processor, PsiElement place, boolean forCompletion) {
-    if (type.equalsToText("groovy.util.AntBuilder")) {
-      return processAntTasks(processor, place);
+  public void processDynamicElements(@NotNull PsiType qualifierType,
+                                     PsiScopeProcessor processor,
+                                     PsiElement place,
+                                     ResolveState state,
+                                     ProcessingContext ctx) {
+    if (ResolveUtil.isInheritor(qualifierType, "groovy.util.AntBuilder", place, ctx)) {
+      processAntTasks(processor, place);
+      return;
     }
 
     if (!(place instanceof GrReferenceExpression) || ((GrReferenceExpression)place).isQualified()) {
-      return true;
+      return;
     }
+
+    GrClosableBlock closure = PsiTreeUtil.getContextOfType(place, GrClosableBlock.class, true);
+    if (closure == null) {
+      return;
+    }
+
+    boolean antTasksProcessed = false;
+    while (closure != null) {
+      final PsiElement parent = closure.getParent();
+      if (parent instanceof GrMethodCall) {
+        final PsiMethod method = ((GrMethodCall)parent).resolveMethod();
+        if (method instanceof AntBuilderMethod) {
+          antTasksProcessed = true;
+          if (!processAntTasks(processor, place)) {
+            return;
+          }
+          if (!((AntBuilderMethod)method).processNestedElements(processor)) {
+            return;
+          }
+          break;
+        }
+      }
+
+      closure = PsiTreeUtil.getContextOfType(closure, GrClosableBlock.class, true);
+    }
+
+    // ------- gant-specific
 
     PsiFile file = place.getContainingFile();
     if (!GantUtils.isGantScriptFile(file)) {
-      return true;
-    }
-
-    final GrClosableBlock closure = PsiTreeUtil.getContextOfType(place, GrClosableBlock.class, true);
-    if (closure == null) {
-      return true;
+      return;
     }
 
     for (GrArgumentLabel label : GantUtils.getScriptTargets((GroovyFile)file)) {
@@ -61,12 +87,14 @@ public class GantMemberContributor implements NonCodeMembersProcessor {
         final PsiNamedElement variable = new LightVariableBuilder(targetName, GrClosableBlock.GROOVY_LANG_CLOSURE, label).
           setBaseIcon(GantIcons.GANT_TARGET);
         if (!ResolveUtil.processElement(processor, variable)) {
-          return false;
+          return;
         }
       }
     }
 
-    return processAntTasks(processor, place);
+    if (!antTasksProcessed) {
+      processAntTasks(processor, place);
+    }
 
   }
 

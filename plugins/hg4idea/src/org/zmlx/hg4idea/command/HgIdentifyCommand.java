@@ -1,6 +1,7 @@
 package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
 import java.util.Collections;
@@ -24,6 +25,7 @@ public class HgIdentifyCommand {
     this.source = source;
   }
 
+  @Nullable
   public HgCommandResult execute() {
     List<String> arguments = new LinkedList<String>();
     arguments.add(source);

@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 public abstract class LightElement extends PsiElementBase {
   protected final PsiManager myManager;
   private final Language myLanguage;
-  protected volatile PsiElement myNavigationElement = this;
+  private volatile PsiElement myNavigationElement = this;
 
   protected LightElement(PsiManager manager, final Language language) {
     myManager = manager;
@@ -97,8 +97,9 @@ public abstract class LightElement extends PsiElementBase {
   }
 
   public boolean isValid() {
-    if (myNavigationElement != this) {
-      return myNavigationElement.isValid();
+    final PsiElement navElement = getNavigationElement();
+    if (navElement != this) {
+      return navElement.isValid();
     }
 
     return true;

@@ -106,6 +106,29 @@ def foo() {
     checkVariants "ant.patt<caret>t", "patternset"
   }
 
+  public void testTagsInsideTags() throws Exception {
+    myFixture.configureByText "a.groovy", """
+AntBuilder ant
+ant.zip {
+  patternset {
+    includ<caret>
+  }
+}"""
+    myFixture.completeBasic()
+    assertSameElements myFixture.lookupElementStrings, "include", "includesfile"
+  }
+  
+  public void testTagsInsideTagsInGantTarget() throws Exception {
+    checkVariants """
+target(aaa: "") {
+  zip {
+    patternset {
+      includ<caret>
+    }
+  }
+}""", "include", "includesfile", "includeTargets", "includeTool"
+  }
+
   static final def GANT_JARS = ["gant.jar", "ant.jar", "ant-junit.jar", "ant-launcher.jar", "commons.jar"]
 
 }
@@ -126,7 +149,7 @@ class GantProjectDescriptor implements LightProjectDescriptor {
       modifiableModel.addRoot(fs.findFileByPath("$TestUtils.mockGroovyLibraryHome/$TestUtils.GROOVY_JAR!/"), OrderRootType.CLASSES);
 
       GantReferenceCompletionTest.GANT_JARS.each {
-        modifiableModel.addRoot(fs.findFileByPath("${TestUtils.absoluteTestDataPath}mockGantLib/$it!/"), OrderRootType.CLASSES);
+        modifiableModel.addRoot(fs.findFileByPath("${TestUtils.absoluteTestDataPath}mockGantLib/lib/$it!/"), OrderRootType.CLASSES);
       }
       modifiableModel.commit();
     }

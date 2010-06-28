@@ -303,6 +303,11 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     return VfsUtil.toVirtualFileArray(result);
   }
 
+  @Override
+  public OrderEnumerator orderEntries() {
+    return new ProjectOrderEnumerator(myProject);
+  }
+
   public VirtualFile[] getContentRootsFromAllModules() {
     List<VirtualFile> result = new ArrayList<VirtualFile>();
     final Module[] modules = getModuleManager().getSortedModules();

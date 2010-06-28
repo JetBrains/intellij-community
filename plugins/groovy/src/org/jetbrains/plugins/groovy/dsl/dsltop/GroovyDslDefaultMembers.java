@@ -24,9 +24,9 @@ import org.jetbrains.plugins.groovy.dsl.GdslMembersHolderConsumer;
 import org.jetbrains.plugins.groovy.dsl.holders.DelegatedMembersHolder;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 
@@ -147,10 +147,11 @@ public class GroovyDslDefaultMembers implements GdslMembersProvider {
 
   @Nullable
   private static String getInvokedMethodName(GrCall call) {
-    final GrExpression expr = call instanceof GrApplicationStatement ? ((GrApplicationStatement)call).getFunExpression() :
-                              call instanceof GrMethodCallExpression ? ((GrMethodCallExpression)call).getInvokedExpression() : null;
-    if (expr instanceof GrReferenceExpression) {
-      return ((GrReferenceExpression)expr).getName();
+    if (call instanceof GrMethodCall) {
+      final GrExpression expr = ((GrMethodCall)call).getInvokedExpression();
+      if (expr instanceof GrReferenceExpression) {
+        return ((GrReferenceExpression)expr).getName();
+      }
     }
     return null;
   }

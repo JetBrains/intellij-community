@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.TextRange;
@@ -100,8 +101,13 @@ public final class NavigationUtil {
     VirtualFile vFile = file.getVirtualFile();
     if (vFile == null) return false;
 
+    if (!EditorHistoryManager.getInstance(elt.getProject()).hasBeenOpen(vFile)) return false;
+
     final FileEditorManager fem = FileEditorManager.getInstance(elt.getProject());
-    if (!fem.isFileOpen(vFile)) return false;
+    if (!fem.isFileOpen(vFile)) {
+      fem.openFile(vFile, true);
+      return true;
+    }
 
     final TextRange range = elt.getTextRange();
     if (range == null) return false;

@@ -15,8 +15,9 @@
  */
 package com.intellij.psi;
 
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,5 +90,9 @@ public abstract class PsiElementFinder {
   @NotNull
   public PsiClass[] getClasses(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
     return PsiClass.EMPTY_ARRAY;
+  }
+
+  public boolean processPackageDirectories(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope, Processor<PsiDirectory> consumer) {
+    return true;
   }
 }

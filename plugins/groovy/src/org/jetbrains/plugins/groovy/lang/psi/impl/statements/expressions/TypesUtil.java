@@ -225,25 +225,27 @@ public class TypesUtil {
       return true;
     }
 
-    return _isAssignable(lType, rType, manager, scope);
+    return _isAssignable(lType, rType, manager, scope, allowConversion);
   }
 
   public static boolean isAssignable(PsiType lType, PsiType rType, GroovyPsiElement context) {
     return isAssignableByMethodCallConversion(lType, rType, context) ||
-           _isAssignable(lType, rType, context.getManager(), context.getResolveScope());
+           _isAssignable(lType, rType, context.getManager(), context.getResolveScope(), true);
   }
 
-  private static boolean _isAssignable(PsiType lType, PsiType rType, PsiManager manager, GlobalSearchScope scope) {
+  private static boolean _isAssignable(PsiType lType, PsiType rType, PsiManager manager, GlobalSearchScope scope, boolean allowConversion) {
     if (lType == null || rType == null) {
       return false;
     }
 
-    //all numeric types are assignable
-    if (isNumericType(lType)) {
-      return isNumericType(rType) || rType.equals(PsiType.NULL);
-    }
-    else if (lType.equalsToText(JAVA_LANG_STRING)) {
-      return true;
+    if (allowConversion) {
+      //all numeric types are assignable
+      if (isNumericType(lType)) {
+        return isNumericType(rType) || rType.equals(PsiType.NULL);
+      }
+      else if (lType.equalsToText(JAVA_LANG_STRING)) {
+        return true;
+      }
     }
 
     rType = boxPrimitiveType(rType, manager, scope);
