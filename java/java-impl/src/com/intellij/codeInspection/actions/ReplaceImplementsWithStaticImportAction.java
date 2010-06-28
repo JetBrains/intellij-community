@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.actions;
 
+import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
@@ -23,23 +24,26 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
+import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 public class ReplaceImplementsWithStaticImportAction extends PsiElementBaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#" + ReplaceImplementsWithStaticImportAction.class.getName());
+  @NonNls private static final String FIND_CONSTANT_FIELD_USAGES = "Find constant field usages...";
 
   @NotNull
   public String getText() {
@@ -111,14 +115,27 @@ public class ReplaceImplementsWithStaticImportAction extends PsiElementBaseInten
       LOG.assertTrue(target instanceof PsiClass);
 
       final PsiClass targetClass = (PsiClass)target;
-
-      new WriteCommandAction(project, getText(), file) {
+      new WriteCommandAction(project, getText()) {
         protected void run(Result result) throws Throwable {
           for (PsiField constField : targetClass.getAllFields()) {
+            final String fieldName = constField.getName();
             final PsiClass containingClass = constField.getContainingClass();
             for (PsiReference ref : ReferencesSearch.search(constField)) {
-              ((PsiReferenceExpressionImpl)ref)
-                .bindToElementViaStaticImport(containingClass, constField.getName(), ((PsiJavaFile)file).getImportList());
+              final PsiElement psiElement = ref.getElement();
+              if (ref instanceof PsiReferenceExpression) {
+                final PsiElement qualifier = ((PsiReferenceExpression)ref).getQualifier();
+                if (qualifier != null) {
+                  if (qualifier instanceof PsiReferenceExpression) {
+                    final PsiElement resolved = ((PsiReferenceExpression)qualifier).resolve();
+                    if (resolved instanceof PsiClass && !InheritanceUtil.isInheritorOrSelf(psiClass, (PsiClass)resolved, true)) {
+                      continue;
+                    }
+                  }
+                  qualifier.putCopyableUserData(ChangeContextUtil.CAN_REMOVE_QUALIFIER_KEY,
+                                                ChangeContextUtil.canRemoveQualifier((PsiReferenceExpression)ref));
+                }
+              }
+              bindReference(psiElement.getContainingFile(), constField, containingClass, fieldName, ref, project);
             }
           }
           element.delete();
@@ -135,33 +152,32 @@ public class ReplaceImplementsWithStaticImportAction extends PsiElementBaseInten
       final Map<PsiFile, Map<PsiField, Set<PsiReference>>> refs = new HashMap<PsiFile, Map<PsiField, Set<PsiReference>>>();
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
-          final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
           for (PsiField field : targetClass.getAllFields()) {
-            final String fieldName = field.getName();
-            if (progressIndicator != null) {
-              progressIndicator.setText2(fieldName);
-            }
+            final PsiClass containingClass = field.getContainingClass();
             for (PsiReference reference : ReferencesSearch.search(field)) {
               if (reference == null) {
                 continue;
               }
-
-              final PsiFile psiFile = reference.getElement().getContainingFile();
-              Map<PsiField, Set<PsiReference>> references = refs.get(psiFile);
-              if (references == null) {
-                references = new HashMap<PsiField, Set<PsiReference>>();
-                refs.put(psiFile, references);
+              final PsiElement refElement = reference.getElement();
+              if (encodeQualifier(containingClass, reference, targetClass)) continue;
+              final PsiFile psiFile = refElement.getContainingFile();
+              if (psiFile instanceof PsiJavaFile) {
+                Map<PsiField, Set<PsiReference>> references = refs.get(psiFile);
+                if (references == null) {
+                  references = new HashMap<PsiField, Set<PsiReference>>();
+                  refs.put(psiFile, references);
+                }
+                Set<PsiReference> fieldsRefs = references.get(field);
+                if (fieldsRefs == null) {
+                  fieldsRefs = new HashSet<PsiReference>();
+                  references.put(field, fieldsRefs);
+                }
+                fieldsRefs.add(reference);
               }
-              Set<PsiReference> fieldsRefs = references.get(field);
-              if (fieldsRefs == null) {
-                fieldsRefs = new HashSet<PsiReference>();
-                references.put(field, fieldsRefs);
-              }
-              fieldsRefs.add(reference);
             }
           }
         }
-      }, "Find constant field usages...", true, project)) {
+      }, FIND_CONSTANT_FIELD_USAGES, true, project)) {
         return;
       }
 
@@ -183,9 +199,6 @@ public class ReplaceImplementsWithStaticImportAction extends PsiElementBaseInten
 
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
-          for (PsiJavaCodeReferenceElement referenceElement : refs2Unimplement) {
-            referenceElement.delete();
-          }
 
           for (PsiFile psiFile : refs.keySet()) {
             final Map<PsiField, Set<PsiReference>> map = refs.get(psiFile);
@@ -193,16 +206,81 @@ public class ReplaceImplementsWithStaticImportAction extends PsiElementBaseInten
               final PsiClass containingClass = psiField.getContainingClass();
               final String fieldName = psiField.getName();
               for (PsiReference reference : map.get(psiField)) {
-                if (reference instanceof PsiReferenceExpressionImpl && psiFile instanceof PsiJavaFile) {
-                  ((PsiReferenceExpressionImpl)reference).bindToElementViaStaticImport(containingClass, fieldName, ((PsiJavaFile)psiFile).getImportList());
-                } else {
-                  reference.bindToElement(psiField);
-                }
+                bindReference(psiFile, psiField, containingClass, fieldName, reference, project);
+              }
+            }
+          }
+
+          for (PsiJavaCodeReferenceElement referenceElement : refs2Unimplement) {
+            referenceElement.delete();
+          }
+        }
+      });
+      
+      final Set<SmartPsiElementPointer<PsiImportStatementBase>> redundant = new HashSet<SmartPsiElementPointer<PsiImportStatementBase>>();
+      final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
+      final SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
+      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable(){
+        public void run() {
+          for (PsiFile psiFile : refs.keySet()) {
+            final Collection<PsiImportStatementBase> red = codeStyleManager.findRedundantImports((PsiJavaFile)psiFile);
+            if (red != null) {
+              for (PsiImportStatementBase statementBase : red) {
+                redundant.add(pointerManager.createSmartPsiElementPointer(statementBase));
               }
             }
           }
         }
+      }, "Collect redundant imports...", true, project)) return;
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          for (SmartPsiElementPointer<PsiImportStatementBase> pointer : redundant) {
+            final PsiImportStatementBase statementBase = pointer.getElement();
+            if (statementBase != null) statementBase.delete();
+          }
+        }
       });
+    }
+  }
+
+  private static boolean encodeQualifier(PsiClass containingClass, PsiReference reference, PsiClass targetClass) {
+    if (reference instanceof PsiReferenceExpression) {
+      final PsiElement qualifier = ((PsiReferenceExpression)reference).getQualifier();
+      if (qualifier != null) {
+        if (qualifier instanceof PsiReferenceExpression) {
+          final PsiElement resolved = ((PsiReferenceExpression)qualifier).resolve();
+          if (resolved == containingClass || resolved instanceof PsiClass && InheritanceUtil.isInheritorOrSelf(targetClass, (PsiClass)resolved, true)) {
+            return true;
+          }
+        }
+        qualifier.putCopyableUserData(ChangeContextUtil.CAN_REMOVE_QUALIFIER_KEY,
+                                      ChangeContextUtil.canRemoveQualifier((PsiReferenceExpression)reference));
+      }
+    }
+    return false;
+  }
+
+  private static void bindReference(PsiFile psiFile,
+                                    PsiField psiField,
+                                    PsiClass containingClass,
+                                    String fieldName,
+                                    PsiReference reference,
+                                    Project project) {
+    if (reference instanceof PsiReferenceExpression) {
+      RefactoringUtil.bindToElementViaStaticImport(containingClass, fieldName, ((PsiJavaFile)psiFile).getImportList());
+      final PsiElement qualifier = ((PsiReferenceExpression)reference).getQualifier();
+      if (qualifier != null) {
+        final Boolean canRemoveQualifier = qualifier.getCopyableUserData(ChangeContextUtil.CAN_REMOVE_QUALIFIER_KEY);
+        if (canRemoveQualifier != null && canRemoveQualifier.booleanValue()) {
+          qualifier.delete();
+        } else {
+          final PsiJavaCodeReferenceElement classReferenceElement =
+            JavaPsiFacade.getElementFactory(project).createReferenceExpression(containingClass);
+          qualifier.replace(classReferenceElement);
+        }
+      }
+    } else if (reference.getElement() instanceof PsiDocMethodOrFieldRef){
+      reference.bindToElement(psiField);    //todo refs through inheritors
     }
   }
 

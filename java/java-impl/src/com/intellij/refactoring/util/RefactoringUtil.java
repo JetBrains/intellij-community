@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
@@ -61,6 +62,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.psi.JavaTokenType.*;
 
 public class RefactoringUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.RefactoringUtil");
@@ -880,6 +883,34 @@ public class RefactoringUtil {
         element.getParent().replace(factory.createTypeElement(substitutedType));
       }
     }
+  }
+
+  public static void bindToElementViaStaticImport(final PsiClass qualifierClass, final String staticName, final PsiImportList importList)
+    throws IncorrectOperationException {
+    final String qualifiedName  = qualifierClass.getQualifiedName();
+    final List<PsiJavaCodeReferenceElement> refs = getImportsFromClass(importList, qualifiedName);
+    if (refs.size() < CodeStyleSettingsManager.getSettings(qualifierClass.getProject()).NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND) {
+      importList.add(JavaPsiFacade.getInstance(qualifierClass.getProject()).getElementFactory().createImportStaticStatement(qualifierClass, staticName));
+    } else {
+      for (PsiJavaCodeReferenceElement ref : refs) {
+        final PsiImportStaticStatement importStatement = PsiTreeUtil.getParentOfType(ref, PsiImportStaticStatement.class);
+        if (importStatement != null) {
+          importStatement.delete();
+        }
+      }
+      importList.add(JavaPsiFacade.getInstance(qualifierClass.getProject()).getElementFactory().createImportStaticStatement(qualifierClass, "*"));
+    }
+  }
+
+  public static List<PsiJavaCodeReferenceElement> getImportsFromClass(@NotNull PsiImportList importList, String className){
+    final List<PsiJavaCodeReferenceElement> array = new ArrayList<PsiJavaCodeReferenceElement>();
+    for (PsiImportStaticStatement staticStatement : importList.getImportStaticStatements()) {
+      final PsiClass psiClass = staticStatement.resolveTargetClass();
+      if (psiClass != null && Comparing.strEqual(psiClass.getQualifiedName(), className)) {
+        array.add(staticStatement.getImportReference());
+      }
+    }
+    return array;
   }
 
   public static interface ImplicitConstructorUsageVisitor {
