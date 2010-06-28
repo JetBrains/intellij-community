@@ -168,7 +168,12 @@ public class IntroduceParameterTest extends LightCodeInsightTestCase {
   }
 
   public void testParameterJavaDocBeforeVararg() throws Exception {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, true, false, "Incomplete call(method()): 1 parameters expected but only 0 found");
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, true, false);
+  }
+
+  public void testIncompleteVararg() throws Exception {
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, true, false, true, false, "Incomplete call(method()): 2 parameters expected but only 0 found\n" +
+                                                                                                             "Incomplete call(method()): expected to delete the 0 parameter but only 0 parameters found");
   }
 
   public void testIncorrectScope() throws Exception {
