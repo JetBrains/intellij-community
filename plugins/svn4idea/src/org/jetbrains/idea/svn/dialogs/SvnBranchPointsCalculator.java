@@ -166,11 +166,13 @@ public class SvnBranchPointsCalculator {
       final Ref<IOException> excRef = new Ref<IOException>();
       // list for values by default
       myForSearchMap = new MultiMap<String, String>();
-      myPersistentMap.iterateData(new Processor<String>() {
+      myPersistentMap.processKeys(new Processor<String>() {
         public boolean process(final String s) {
           try {
             final TreeMap<String, BranchCopyData> map = myPersistentMap.get(s);
-            myForSearchMap.put(s, new ArrayList<String>(map.keySet()));
+            if (map != null) {
+              myForSearchMap.put(s, new ArrayList<String>(map.keySet()));
+            }
           }
           catch (IOException e) {
             excRef.set(e);

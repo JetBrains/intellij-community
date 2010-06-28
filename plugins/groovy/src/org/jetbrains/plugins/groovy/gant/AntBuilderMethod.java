@@ -4,6 +4,7 @@ import com.intellij.lang.ant.dom.AntDomExtender;
 import com.intellij.lang.ant.psi.impl.AntIntrospector;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
+import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,7 +12,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-import java.util.Enumeration;
+import java.util.Collections;
 
 /**
 * @author peter
@@ -45,12 +46,14 @@ class AntBuilderMethod extends LightMethodBuilder {
   public boolean processNestedElements(PsiScopeProcessor processor) {
     final AntIntrospector introspector = AntDomExtender.getIntrospector(myAntClass);
     if (introspector != null) {
-      final Enumeration<String> nested = introspector.getNestedElements();
-      while (nested.hasMoreElements()) {
-        final AntBuilderMethod method =
-          new AntBuilderMethod(myPlace, nested.nextElement(), getParameterList().getParameters()[1].getType(), null);
-        if (!ResolveUtil.processElement(processor, method)) {
-          return false;
+      final NameHint hint = processor.getHint(NameHint.KEY);
+
+      for (String name : Collections.list(introspector.getNestedElements())) {
+        if (hint == null || hint.getName(ResolveState.initial()).equals(name)) {
+          final AntBuilderMethod method = new AntBuilderMethod(myPlace, name, getParameterList().getParameters()[1].getType(), null);
+          if (!ResolveUtil.processElement(processor, method)) {
+            return false;
+          }
         }
       }
     }

@@ -40,26 +40,44 @@ public class OrderRootType {
 
   /**
    * Runtime classpath.
+   * Includes:
+   * <li>  production and test output for modules
+   * <li>  classes roots for libraries unless scope is 'provided'
+   * <li>  recursively for module dependencies with scope != 'provided'
    */
   public static final OrderRootType CLASSES_AND_OUTPUT = new OrderRootType("CLASSES_AND_OUTPUT");
 
   /**
-   * Classpath for compilation
+   * Classpath for compilation.
+   * Includes:
+   * <li>  production and test output for modules
+   * <li>  classes roots for libraries
+   * <li>  recursively for module dependencies: only exported items
    */
   public static final OrderRootType COMPILATION_CLASSES = new OrderRootType("COMPILATION_CLASSES");
 
   /**
-   * Classpath for compilation without tests
+   * Classpath for compilation without tests.
+   * Includes:
+   * <li>  production output for modules
+   * <li>  classes roots for libraries with scope suitable for production compile
+   * <li>  recursively for module dependencies with scope suitable for production compile: only exported items
    */
   public static final OrderRootType PRODUCTION_COMPILATION_CLASSES = new OrderRootType("PRODUCTION_COMPILATION_CLASSES");
 
   /**
    * Classpath without output directories for this module.
+   * Includes:
+   * <li>  classes roots for libraries
+   * <li>  recursively for module dependencies: only exported items
    */
   public static final OrderRootType CLASSES = new PersistentOrderRootType("CLASSES", "classPath", null, "classPathEntry");
 
   /**
    * Sources.
+   * Includes:
+   * <li>  production and test source roots for modules
+   * <li>  recursively for module dependencies: only exported items
    */
   public static final OrderRootType SOURCES = new PersistentOrderRootType("SOURCES", "sourcePath", null, "sourcePathEntry");
 

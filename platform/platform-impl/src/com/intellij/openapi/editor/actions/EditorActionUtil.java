@@ -24,6 +24,11 @@
  */
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.ide.ui.customization.CustomActionsSchema;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
@@ -31,16 +36,19 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EditorPopupHandler;
-import com.intellij.ide.ui.customization.CustomActionsSchema;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.List;
 
 public class EditorActionUtil {
   protected static final Object EDIT_COMMAND_GROUP = Key.create("EditGroup");
   protected static final Object DELETE_COMMAND_GROUP = Key.create("DeleteGroup");
+
+  private EditorActionUtil() {
+  }
 
   public static void scrollRelatively(Editor editor, int lineShift) {
     if (lineShift != 0) {
@@ -69,10 +77,10 @@ public class EditorActionUtil {
                                                   int columnShift,
                                                   int lineShift,
                                                   boolean withSelection) {
-    Rectangle viewRect = editor.getScrollingModel().getVisibleArea();
+    Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
     VisualPosition pos = editor.getCaretModel().getVisualPosition();
     Point caretLocation = editor.visualPositionToXY(pos);
-    int caretVShift = caretLocation.y - viewRect.y;
+    int caretVShift = caretLocation.y - visibleArea.y;
 
     editor.getCaretModel().moveCaretRelatively(columnShift, lineShift, withSelection, false, false);
 
@@ -82,6 +90,7 @@ public class EditorActionUtil {
     editor.getScrollingModel().scrollVertically(caretLocation2.y - caretVShift);
   }
 
+  @SuppressWarnings({"AssignmentToForLoopParameter"})
   public static void indentLine(Project project, Editor editor, int lineNumber, int indent) {
     EditorSettings editorSettings = editor.getSettings();
     Document document = editor.getDocument();
@@ -172,21 +181,21 @@ public class EditorActionUtil {
     char current = text.charAt(offset);
     char next = offset + 1 < text.length() ? text.charAt(offset + 1) : 0;
 
-    final boolean firstIsIdentifiePart = Character.isJavaIdentifierPart(prev);
+    final boolean firstIsIdentifierPart = Character.isJavaIdentifierPart(prev);
     final boolean secondIsIdentifierPart = Character.isJavaIdentifierPart(current);
-    if (firstIsIdentifiePart && !secondIsIdentifierPart) {
+    if (firstIsIdentifierPart && !secondIsIdentifierPart) {
       return true;
     }
 
     if (isCamel) {
-      if (firstIsIdentifiePart && secondIsIdentifierPart &&
+      if (firstIsIdentifierPart && secondIsIdentifierPart &&
           (Character.isLowerCase(prev) && Character.isUpperCase(current) || prev != '_' && current == '_' ||
           Character.isUpperCase(prev) && Character.isUpperCase(current) && Character.isLowerCase(next))) {
         return true;
       }
     }
 
-    return !Character.isWhitespace(prev) && !firstIsIdentifiePart &&
+    return !Character.isWhitespace(prev) && !firstIsIdentifierPart &&
            (Character.isWhitespace(current) || secondIsIdentifierPart);
   }
 
@@ -198,98 +207,197 @@ public class EditorActionUtil {
     LogicalPosition blockSelectionStart = selectionModel.hasBlockSelection()
                                           ? selectionModel.getBlockStart()
                                           : caretModel.getLogicalPosition();
-
-    int columnNumber = editor.getCaretModel().getLogicalPosition().column;
-    int lineNumber = editor.getCaretModel().getLogicalPosition().line;
-
-    VisualPosition visCaret = editor.getCaretModel().getVisualPosition();
-    while (lineNumber >= 0 && editor.logicalToVisualPosition(new LogicalPosition(lineNumber, 0)).line == visCaret.line) lineNumber--;
-    lineNumber++;
-
     EditorSettings editorSettings = editor.getSettings();
-    if (!editorSettings.isSmartHome()) {
-      LogicalPosition pos = new LogicalPosition(lineNumber, 0);
-      editor.getCaretModel().moveToLogicalPosition(pos);
 
+    int logCaretLine = caretModel.getLogicalPosition().line;
+    VisualPosition currentVisCaret = caretModel.getVisualPosition();
+    VisualPosition caretLogLineStartVis = editor.offsetToVisualPosition(document.getLineStartOffset(logCaretLine));
+
+    if (currentVisCaret.line > caretLogLineStartVis.line) {
+      // Caret is located not at the first visual line of soft-wrapped logical line.
+      moveCaretToStartOfSoftWrappedLine(editor, currentVisCaret);
       setupSelection(editor, isWithSelection, selectionStart, blockSelectionStart);
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       return;
     }
 
-    int offset = editor.getCaretModel().getOffset();
-    if (lineNumber >= document.getLineCount() || offset >= document.getTextLength()) {
-      int newColNumber = 0;
-      if (columnNumber == 0) {
-        newColNumber = findSmartIndent(editor, offset);
+    // Skip folded lines.
+    int logLineToUse = logCaretLine - 1;
+    while (logLineToUse >= 0 && editor.offsetToVisualPosition(document.getLineEndOffset(logLineToUse)).line == currentVisCaret.line) {
+      logLineToUse--;
+    }
+    logLineToUse++;
+
+    if (logLineToUse >= document.getLineCount()) {
+      editor.getCaretModel().moveToVisualPosition(new VisualPosition(logLineToUse, 0));
+    }
+    else if (logLineToUse == logCaretLine) {
+      int line = currentVisCaret.line;
+      int column = 0;
+      if (currentVisCaret.column == 0) {
+        column = findSmartIndentColumn(editor, currentVisCaret.line);
       }
-      LogicalPosition pos = new LogicalPosition(lineNumber, newColNumber);
-      editor.getCaretModel().moveToLogicalPosition(pos);
-
-      setupSelection(editor, isWithSelection, selectionStart, blockSelectionStart);
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-      return;
+      caretModel.moveToVisualPosition(new VisualPosition(line, column));
     }
-
-    int start = findFirstNonspaceOffsetOnTheLine(document, lineNumber);
-    int lineEnd = document.getLineEndOffset(lineNumber);
-    if (lineNumber > 0 && lineEnd == start && columnNumber == 0) {
-      int newColNumber = findSmartIndent(editor, offset);
-      LogicalPosition pos = new LogicalPosition(lineNumber, newColNumber);
-      editor.getCaretModel().moveToLogicalPosition(pos);
-      setupSelection(editor, isWithSelection, selectionStart, blockSelectionStart);
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-      return;
+    else {
+      LogicalPosition logLineEndLog = editor.offsetToLogicalPosition(document.getLineEndOffset(logLineToUse));
+      VisualPosition logLineEndVis = editor.logicalToVisualPosition(logLineEndLog);
+      if (logLineEndLog.isOnSoftWrappedLine()) {
+        moveCaretToStartOfSoftWrappedLine(editor, logLineEndVis);
+      }
+      else {
+        int line = logLineEndVis.line;
+        int column = 0;
+        if (currentVisCaret.column == 0 && editorSettings.isSmartHome()) {
+          findSmartIndentColumn(editor, line);
+        }
+        caretModel.moveToVisualPosition(new VisualPosition(line, column));
+      }
     }
-
-    int lineStart = document.getLineStartOffset(lineNumber);
-    int newOffset = lineStart;
-    if (start < offset || columnNumber == 0) {
-      newOffset = start;
-    }
-    editor.getCaretModel().moveToOffset(newOffset);
-    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
 
     setupSelection(editor, isWithSelection, selectionStart, blockSelectionStart);
+    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 
-  private static int findSmartIndent(Editor editor, int offset) {
-    int nonSpaceLineNumber = findFirstNonspaceLineBack(editor.getDocument(), offset);
-    if (nonSpaceLineNumber >= 0) {
-      int newOffset = findFirstNonspaceOffsetOnTheLine(editor.getDocument(), nonSpaceLineNumber);
-      return editor.offsetToLogicalPosition(newOffset).column;
+  private static void moveCaretToStartOfSoftWrappedLine(Editor editor, VisualPosition currentVisual) {
+    CaretModel caretModel = editor.getCaretModel();
+    int line = currentVisual.line;
+    int column = 0;
+
+    if (currentVisual.column == 0) {
+      line--;
+      int nonSpaceColumn = findFirstNonSpaceColumnOnTheLine(editor, line);
+      column = nonSpaceColumn >= 0 ? nonSpaceColumn : 0;
+    }
+    else {
+      int nonSpaceColumn = findFirstNonSpaceColumnOnTheLine(editor, currentVisual.line);
+      if (nonSpaceColumn > 0 /* current visual line is not empty */ && nonSpaceColumn != currentVisual.column) {
+        column = nonSpaceColumn;
+      }
+    }
+
+    caretModel.moveToVisualPosition(new VisualPosition(line, column));
+  }
+
+  private static int findSmartIndentColumn(Editor editor, int visualLine) {
+    for (int i = visualLine; i >= 0; i--) {
+      int column = findFirstNonSpaceColumnOnTheLine(editor, visualLine);
+      if (column >= 0) {
+        return column;
+      }
     }
     return 0;
   }
 
-  private static int findFirstNonspaceLineBack(Document document, int offset) {
-    CharSequence text = document.getCharsSequence();
-    int foundOffset = offset - 1;
-    for (; foundOffset > 0; foundOffset--) {
-      char c = text.charAt(foundOffset);
-      if (c != ' ' && c != '\t' && c != '\r' && c != '\n') {
-        break;
+  /**
+   * Tries to find visual column that points to the first non-white space symbol at the visual line at the given editor.
+   *
+   * @param editor              target editor
+   * @param visualLineNumber    target visual line
+   * @return                    visual column that points to the first non-white space symbol at the target visual line if the one exists;
+   *                            <code>'-1'</code> otherwise
+   */
+  public static int findFirstNonSpaceColumnOnTheLine(Editor editor, int visualLineNumber) {
+    Document document = editor.getDocument();
+    VisualPosition visLine = new VisualPosition(visualLineNumber, 0);
+    int logLine = editor.visualToLogicalPosition(visLine).line;
+    int logLineStartOffset = document.getLineStartOffset(logLine);
+    int logLineEndOffset = document.getLineEndOffset(logLine);
+    LogicalPosition logLineStart = editor.offsetToLogicalPosition(logLineStartOffset);
+    VisualPosition visLineStart = editor.logicalToVisualPosition(logLineStart);
+
+    boolean softWrapIntroducedLine = visLineStart.line != visualLineNumber;
+    if (!softWrapIntroducedLine) {
+      int offset = findFirstNonSpaceOffsetInRange(document.getCharsSequence(), logLineStartOffset, logLineEndOffset);
+      if (offset >= 0) {
+        return EditorUtil.calcColumnNumber(editor, document.getCharsSequence(), logLineStartOffset, offset);
+      }
+      else {
+        return -1;
       }
     }
-    if (foundOffset == -1) {
-      return -1;
+
+    int lineFeedsToSkip = visualLineNumber - visLineStart.line;
+    List<TextChange> softWraps = editor.getSoftWrapModel().getSoftWrapsForLine(logLine);
+    for (TextChange softWrap : softWraps) {
+      int softWrapLineFeedsNumber = StringUtil.countNewLines(softWrap.getText());
+
+      if (softWrapLineFeedsNumber < lineFeedsToSkip) {
+        lineFeedsToSkip -= softWrapLineFeedsNumber;
+        continue;
+      }
+
+      // Point to the first non-white space symbol at the target soft wrap visual line or to the first non-white space symbol
+      // of document line that follows it if possible.
+      CharSequence softWrapText = softWrap.getText();
+      int softWrapTextLength = softWrapText.length();
+      boolean skip = true;
+      for (int j = 0; j < softWrapTextLength; j++) {
+        if (softWrapText.charAt(j) == '\n') {
+          skip = --lineFeedsToSkip > 0;
+          continue;
+        }
+        if (skip) {
+          continue;
+        }
+
+        int nextSoftWrapLineFeedOffset = StringUtil.indexOf(softWrapText, '\n', j, softWrapTextLength);
+
+        int end = findFirstNonSpaceOffsetInRange(softWrapText, j, softWrapTextLength);
+        if (end >= 0) {
+          // Non space symbol is contained at soft wrap text after offset that corresponds to the target visual line start.
+          if (nextSoftWrapLineFeedOffset < 0 || end < nextSoftWrapLineFeedOffset) {
+            return EditorUtil.calcColumnNumber(editor, softWrapText, j, end);
+          }
+          else {
+            return -1;
+          }
+        }
+
+        if (nextSoftWrapLineFeedOffset >= 0) {
+          // There are soft wrap-introduced visual lines after the target one
+          return -1;
+        }
+
+        end = findFirstNonSpaceOffsetInRange(document.getCharsSequence(), softWrap.getStart(), logLineEndOffset);
+        if (end >= 0) {
+          // Width of soft wrap virtual text that is located at the target visual line.
+          int result = EditorUtil.calcColumnNumber(editor, softWrapText, j, softWrapTextLength);
+          result += EditorUtil.calcColumnNumber(editor, document.getCharsSequence(), softWrap.getStart(), end);
+          return result;
+        }
+        else {
+          return -1;
+        }
+      }
     }
-    else {
-      return document.getLineNumber(foundOffset);
-    }
+    return -1;
   }
 
-  public static int findFirstNonspaceOffsetOnTheLine(Document document, int lineNumber) {
+  public static int findFirstNonSpaceOffsetOnTheLine(Document document, int lineNumber) {
     int lineStart = document.getLineStartOffset(lineNumber);
     int lineEnd = document.getLineEndOffset(lineNumber);
-    CharSequence text = document.getCharsSequence();
-    int start = lineStart;
-    for (; start < lineEnd; start++) {
+    int result = findFirstNonSpaceOffsetInRange(document.getCharsSequence(), lineStart, lineEnd);
+    return result >= 0 ? result : lineEnd;
+  }
+
+  /**
+   * Tries to find non white space symbol at the given range at the given document.
+   *
+   * @param text        text to be inspected
+   * @param start       target start offset (inclusive)
+   * @param end         target end offset (exclusive)
+   * @return            index of the first non-white space character at the given document at the given range if the one is found;
+   *                    <code>'-1'</code> otherwise
+   */
+  public static int findFirstNonSpaceOffsetInRange(CharSequence text, int start, int end) {
+    for (; start < end; start++) {
       char c = text.charAt(start);
       if (c != ' ' && c != '\t') {
         return start;
       }
     }
-    return lineEnd;
+    return -1;
   }
 
   public static void moveCaretToLineEnd(Editor editor, boolean isWithSelection) {
@@ -309,10 +417,33 @@ public class EditorActionUtil {
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       return;
     }
-    VisualPosition visCaret = editor.getCaretModel().getVisualPosition();
-    visCaret = new VisualPosition(visCaret.line, EditorUtil.getLastVisualLineColumnNumber(editor, visCaret.line));
+    VisualPosition currentVisualCaret = editor.getCaretModel().getVisualPosition();
+    VisualPosition visualEndOfLineWithCaret
+      = new VisualPosition(currentVisualCaret.line, EditorUtil.getLastVisualLineColumnNumber(editor, currentVisualCaret.line));
 
-    LogicalPosition logLineEnd = editor.visualToLogicalPosition(visCaret);
+    // There is a possible case that the caret is already located at the visual end of line and the line is soft wrapped.
+    // We want to move the caret to the end of the next visual line then.
+    if (currentVisualCaret.equals(visualEndOfLineWithCaret)) {
+      LogicalPosition logical = editor.visualToLogicalPosition(visualEndOfLineWithCaret);
+      int offset = editor.logicalPositionToOffset(logical);
+      if (offset < editor.getDocument().getTextLength()) {
+        SoftWrapModel softWrapModel = editor.getSoftWrapModel();
+        TextChange softWrap = softWrapModel.getSoftWrap(offset);
+        if (softWrap == null) {
+          // Same offset may correspond to positions on different visual lines in case of soft wraps presence
+          // (all soft-wrap introduced virtual text is mapped to the same offset as the first document symbol after soft wrap).
+          // Hence, we check for soft wraps presence at two offsets.
+          softWrap = softWrapModel.getSoftWrap(offset + 1);
+        }
+        if (softWrap != null) {
+          int line = currentVisualCaret.line + 1;
+          int column = EditorUtil.getLastVisualLineColumnNumber(editor, line);
+          visualEndOfLineWithCaret = new VisualPosition(line, column);
+        }
+      }
+    }
+    
+    LogicalPosition logLineEnd = editor.visualToLogicalPosition(visualEndOfLineWithCaret);
     int offset = editor.logicalPositionToOffset(logLineEnd);
     lineNumber = logLineEnd.line;
     int newOffset = offset;
@@ -325,11 +456,17 @@ public class EditorActionUtil {
       newOffset = i;
     }
 
-    if (newOffset == editor.getCaretModel().getOffset()) {
-      newOffset = offset;
+    // Check if there are white space symbols between the current caret position and visual line end.
+    if (newOffset == offset) {
+      caretModel.moveToVisualPosition(visualEndOfLineWithCaret);
+    }
+    else {
+      if (newOffset == caretModel.getOffset()) {
+        newOffset = offset;
+      }
+      caretModel.moveToOffset(newOffset);
     }
 
-    editor.getCaretModel().moveToOffset(newOffset);
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
 
     setupSelection(editor, isWithSelection, selectionStart, blockSelectionStart);
@@ -416,9 +553,9 @@ public class EditorActionUtil {
   public static void moveCaretPageUp(Editor editor, boolean isWithSelection) {
     ((EditorEx)editor).stopOptimizedScrolling();
     int lineHeight = editor.getLineHeight();
-    Rectangle viewRect = editor.getScrollingModel().getVisibleArea();
-    int linesIncrement = viewRect.height / lineHeight;
-    editor.getScrollingModel().scrollVertically(viewRect.y - viewRect.y % lineHeight - linesIncrement * lineHeight);
+    Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
+    int linesIncrement = visibleArea.height / lineHeight;
+    editor.getScrollingModel().scrollVertically(visibleArea.y - visibleArea.y % lineHeight - linesIncrement * lineHeight);
     int lineShift = -linesIncrement;
     editor.getCaretModel().moveCaretRelatively(0, lineShift, isWithSelection, editor.isColumnMode(), true);
   }
@@ -426,11 +563,11 @@ public class EditorActionUtil {
   public static void moveCaretPageDown(Editor editor, boolean isWithSelection) {
     ((EditorEx)editor).stopOptimizedScrolling();
     int lineHeight = editor.getLineHeight();
-    Rectangle viewRect = editor.getScrollingModel().getVisibleArea();
-    int linesIncrement = viewRect.height / lineHeight;
-    int allowedBottom = ((EditorEx)editor).getContentSize().height - viewRect.height;
+    Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
+    int linesIncrement = visibleArea.height / lineHeight;
+    int allowedBottom = ((EditorEx)editor).getContentSize().height - visibleArea.height;
     editor.getScrollingModel().scrollVertically(
-      Math.min(allowedBottom, viewRect.y - viewRect.y % lineHeight + linesIncrement * lineHeight));
+      Math.min(allowedBottom, visibleArea.y - visibleArea.y % lineHeight + linesIncrement * lineHeight));
     editor.getCaretModel().moveCaretRelatively(0, linesIncrement, isWithSelection, editor.isColumnMode(), true);
   }
 
@@ -442,9 +579,9 @@ public class EditorActionUtil {
     LogicalPosition blockSelectionStart = selectionModel.hasBlockSelection()
                                           ? selectionModel.getBlockStart()
                                           : caretModel.getLogicalPosition();
-    Rectangle viewRect = editor.getScrollingModel().getVisibleArea();
-    int lineNumber = viewRect.y / lineHeight;
-    if (viewRect.y % lineHeight > 0) {
+    Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
+    int lineNumber = visibleArea.y / lineHeight;
+    if (visibleArea.y % lineHeight > 0) {
       lineNumber++;
     }
     VisualPosition pos = new VisualPosition(lineNumber, editor.getCaretModel().getVisualPosition().column);
@@ -460,8 +597,8 @@ public class EditorActionUtil {
     LogicalPosition blockSelectionStart = selectionModel.hasBlockSelection()
                                           ? selectionModel.getBlockStart()
                                           : caretModel.getLogicalPosition();
-    Rectangle viewRect = editor.getScrollingModel().getVisibleArea();
-    int lineNumber = (viewRect.y + viewRect.height) / lineHeight - 1;
+    Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
+    int lineNumber = (visibleArea.y + visibleArea.height) / lineHeight - 1;
     VisualPosition pos = new VisualPosition(lineNumber, editor.getCaretModel().getVisualPosition().column);
     editor.getCaretModel().moveToVisualPosition(pos);
     setupSelection(editor, isWithSelection, selectionStart, blockSelectionStart);

@@ -22,24 +22,30 @@ import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.patterns.compiler.PatternCompilerImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.util.ProcessingContext;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 /**
  * @author Gregory.Shrago
  */
-public class PatternEditorContextMembersProvider implements NonCodeMembersProcessor {
+public class PatternEditorContextMembersProvider extends NonCodeMembersContributor {
 
   public static final Key<AtomicNotNullLazyValue<PsiFile>> INJECTION_PARSED_CONTEXT = Key.create("INJECTION_PARSED_CONTEXT");
 
-  public boolean processNonCodeMembers(PsiType type, PsiScopeProcessor processor, PsiElement place, boolean forCompletion) {
+  @Override
+  public void processDynamicElements(@NotNull PsiType qualifierType,
+                                     PsiScopeProcessor processor,
+                                     PsiElement place,
+                                     ResolveState state,
+                                     ProcessingContext ctx) {
     final PsiFile file = place.getContainingFile().getOriginalFile();
     final BaseInjection injection = file.getUserData(BaseInjection.INJECTION_KEY);
-    if (injection == null) return true;
+    if (injection == null) return;
     final PsiFile contextFile =
       ((UserDataHolderEx)file).putUserDataIfAbsent(INJECTION_PARSED_CONTEXT, new AtomicNotNullLazyValue<PsiFile>() {
         @NotNull
@@ -49,9 +55,8 @@ public class PatternEditorContextMembersProvider implements NonCodeMembersProces
         }
       }).getValue();
     for (PsiElement cur = contextFile.getFirstChild(); cur != null; cur = cur.getNextSibling()) {
-      if (cur instanceof PsiNamedElement && !ResolveUtil.processElement(processor, (PsiNamedElement)cur)) return false;
+      if (cur instanceof PsiNamedElement && !ResolveUtil.processElement(processor, (PsiNamedElement)cur)) return;
     }
-    return true;
   }
 
   private static PsiFile parseInjectionContext(@NotNull BaseInjection injection, Project project) {

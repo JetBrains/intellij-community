@@ -41,6 +41,6 @@ public class JavaMethodNameIndex extends StringStubIndexExtension<PsiMethod> {
   }
 
   public Collection<PsiMethod> get(final String s, final Project project, final GlobalSearchScope scope) {
-    return super.get(s, project, new JavaSourceFilterScope(scope, project));
+    return super.get(s, project, new JavaSourceFilterScope(scope));
   }
 }

@@ -21,18 +21,20 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -47,6 +49,39 @@ import java.util.List;
  */
 public class GrClosureSignatureUtil {
   private GrClosureSignatureUtil() {
+  }
+
+
+  @Nullable
+  public static GrClosureSignature createSignature(GrCall call) {
+    if (call instanceof GrMethodCall) {
+      final GrExpression invokedExpression = ((GrMethodCall)call).getInvokedExpression();
+      return getSignatureByInvokedExpression(invokedExpression);
+    }
+
+    if (call instanceof GrConstructorCall) {
+      final GroovyResolveResult resolveResult = ((GrConstructorCall)call).resolveConstructorGenerics();
+      final PsiElement element = resolveResult.getElement();
+      if (element instanceof PsiMethod) {
+        return createSignature(((PsiMethod)element), resolveResult.getSubstitutor());
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static GrClosureSignature getSignatureByInvokedExpression(GrExpression invokedExpression) {
+    final PsiType type = invokedExpression.getType();
+    if (type instanceof GrClosureType) return ((GrClosureType)type).getSignature();
+
+    if (invokedExpression instanceof GrReferenceExpression) {
+      final GroovyResolveResult resolveResult = ((GrReferenceExpression)invokedExpression).advancedResolve();
+      final PsiElement element = resolveResult.getElement();
+      if (element instanceof PsiMethod) {
+        return createSignature((PsiMethod)element, resolveResult.getSubstitutor());
+      }
+    }
+    return null;
   }
 
   public static GrClosureSignature createSignature(final GrClosableBlock block) {
@@ -72,79 +107,108 @@ public class GrClosureSignatureUtil {
   }
 
   public static boolean isSignatureApplicable(GrClosureSignature signature, PsiType[] args, GroovyPsiElement context) {
-    if (isApplicable(signature, args, context)) return true;
+    if (mapParametersToArguments(signature, args, (Function<PsiType, PsiType>)Function.ID, context) != null) return true;
 
     if (args.length == 1) {
       PsiType arg = args[0];
       if (arg instanceof GrTupleType) {
         args = ((GrTupleType)arg).getComponentTypes();
-        if (isApplicable(signature, args, context)) return true;
+        if (mapParametersToArguments(signature, args, (Function<PsiType, PsiType>)Function.ID, context) != null) return true;
       }
     }
     return false;
   }
 
-  private static boolean isApplicable(GrClosureSignature signature, PsiType[] args, GroovyPsiElement context) {
+  @Nullable
+  private static <Arg> ArgInfo<Arg>[] mapParametersToArguments(GrClosureSignature signature,
+                                                               Arg[] args,
+                                                               Function<Arg, PsiType> typeComputer,
+                                                               GroovyPsiElement context) {
     GrClosureParameter[] params = signature.getParameters();
-    if (args.length > params.length && !signature.isVarargs()) return false;
+    if (args.length > params.length && !signature.isVarargs()) return null;
     int optional = getOptionalParamCount(signature, false);
     int notOptional = params.length - optional;
     if (signature.isVarargs()) notOptional--;
-    if (notOptional > args.length) return false;
+    if (notOptional > args.length) return null;
 
-    if (isApplicable(params, args, params.length, args.length, context)) {
-      return true;
-    }
+    final ArgInfo<Arg>[] map = mapSimple(params, args, typeComputer, context);
+    if (map != null) return map;
+
     if (signature.isVarargs()) {
-      return new ApplicabilityVerifierForVararg(context, params, args).isApplicable();
+      return new ParameterMapperForVararg<Arg>(context, params, args, typeComputer).isApplicable();
     }
-    return false;
+    return null;
   }
 
-  private static boolean isApplicable(GrClosureParameter[] params,
-                                      PsiType[] args,
-                                      int paramCount,
-                                      int argCount,
-                                      GroovyPsiElement context) {
+  @Nullable
+  private static <Arg> ArgInfo<Arg>[] mapSimple(GrClosureParameter[] params,
+                                                Arg[] args,
+                                                Function<Arg, PsiType> typeComputer,
+                                                GroovyPsiElement context) {
+    ArgInfo<Arg>[] map = new ArgInfo[params.length];
     int optional = getOptionalParamCount(params, false);
-    int notOptional = paramCount - optional;
-    int optionalArgs = argCount - notOptional;
+    int notOptional = params.length - optional;
+    int optionalArgs = args.length - notOptional;
     int cur = 0;
-    for (int i = 0; i < argCount; i++, cur++) {
-      while (optionalArgs == 0 && cur < paramCount && params[cur].isOptional()) {
+    for (int i = 0; i < args.length; i++, cur++) {
+      while (optionalArgs == 0 && cur < params.length && params[cur].isOptional()) {
         cur++;
       }
-      if (cur == paramCount) return false;
+      if (cur == params.length) return null;
       if (params[cur].isOptional()) optionalArgs--;
-      if (!TypesUtil.isAssignableByMethodCallConversion(params[cur].getType(), args[i], context)) return false;
+      if (!TypesUtil.isAssignableByMethodCallConversion(params[cur].getType(), typeComputer.fun(args[i]), context)) return null;
+      map[cur] = new ArgInfo<Arg>(args[i]);
     }
-    return true;
+    for (int i = 0; i < map.length; i++) {
+      if (map[i] == null) map[i] = new ArgInfo<Arg>(Collections.<Arg>emptyList(), false);
+    }
+    return map;
   }
 
-  private static class ApplicabilityVerifierForVararg {
+  private static class ParameterMapperForVararg<Arg> {
     private GroovyPsiElement context;
     GrClosureParameter[] params;
-    PsiType[] args;
+    Arg[] args;
+    PsiType[] types;
     PsiType vararg;
     private int paramLength;
+    private ArgInfo<Arg>[] map;
 
-    private ApplicabilityVerifierForVararg(GroovyPsiElement context, GrClosureParameter[] params, PsiType[] args) {
+    private ParameterMapperForVararg(GroovyPsiElement context,
+                                     GrClosureParameter[] params,
+                                     Arg[] args,
+                                     Function<Arg, PsiType> typeComputer) {
       this.context = context;
       this.params = params;
       this.args = args;
+      this.types = new PsiType[args.length];
+      for (int i = 0; i < args.length; i++) {
+        types[i] = typeComputer.fun(args[i]);
+      }
       paramLength = params.length - 1;
       vararg = ((PsiArrayType)params[paramLength].getType()).getComponentType();
+      map = new ArgInfo[params.length];
     }
 
-    public boolean isApplicable() {
+    @Nullable
+    public ArgInfo<Arg>[] isApplicable() {
       int notOptionals = 0;
       for (int i = 0; i < paramLength; i++) {
         if (!params[i].isOptional()) notOptionals++;
       }
-      return isApplicableInternal(0, 0, false, notOptionals);
+      if (isApplicableInternal(0, 0, false, notOptionals)) {
+        for (int i = 0; i < map.length; i++) {
+          if (map[i] == null) map[i] = new ArgInfo<Arg>(false);
+        }
+        return map;
+      }
+      else {
+        return null;
+      }
     }
 
     private boolean isApplicableInternal(int curParam, int curArg, boolean skipOptionals, int notOptional) {
+      int startParam = curParam;
       if (notOptional > args.length - curArg) return false;
       if (notOptional == args.length - curArg) skipOptionals = true;
 
@@ -156,27 +220,37 @@ public class GrClosureSignatureUtil {
         if (curParam == paramLength) break;
 
         if (params[curParam].isOptional()) {
-          if (TypesUtil.isAssignable(params[curParam].getType(), args[curArg], context) &&
+          if (TypesUtil.isAssignableByMethodCallConversion(params[curParam].getType(), types[curArg], context) &&
               isApplicableInternal(curParam + 1, curArg + 1, false, notOptional)) {
+            map[curParam] = new ArgInfo<Arg>(args[curArg]);
             return true;
           }
           skipOptionals = true;
         }
         else {
-          if (!TypesUtil.isAssignableByMethodCallConversion(params[curParam].getType(), args[curArg], context)) return false;
+          if (!TypesUtil.isAssignableByMethodCallConversion(params[curParam].getType(), types[curArg], context)) {
+            for (int i = startParam; i < curParam; i++) map[i] = null;
+            return false;
+          }
+          map[curParam] = new ArgInfo<Arg>(args[curArg]);
           notOptional--;
           curArg++;
           curParam++;
         }
       }
 
+      List<Arg> varargs = new ArrayList<Arg>();
       for (; curArg < args.length; curArg++) {
-        if (!TypesUtil.isAssignableByMethodCallConversion(vararg, args[curArg], context)) return false;
+        if (!TypesUtil.isAssignableByMethodCallConversion(vararg, types[curArg], context)) {
+          for (int i = startParam; i < curParam; i++) map[i] = null;
+          return false;
+        }
+        varargs.add(args[curArg]);
       }
+      map[paramLength] = new ArgInfo<Arg>(varargs, true);
       return true;
     }
   }
-
 
   public static int getOptionalParamCount(GrClosureSignature signature, boolean hasNamedArgs) {
     return getOptionalParamCount(signature.getParameters(), hasNamedArgs);
@@ -193,16 +267,28 @@ public class GrClosureSignatureUtil {
     return count;
   }
 
-  public static class ArgInfo {
+  public static class ArgInfo<ArgType> {
     public static final ArgInfo[] EMPTY_ARRAY = new ArgInfo[0];
     
-    public List<PsiElement> args;
+    public List<ArgType> args;
     public final boolean isMultiArg;
 
-    public ArgInfo(List<PsiElement> args, boolean multiArg) {
+    public ArgInfo(List<ArgType> args, boolean multiArg) {
       this.args = args;
       isMultiArg = multiArg;
     }
+
+    public ArgInfo(ArgType arg) {
+      this.args = Collections.singletonList(arg);
+      this.isMultiArg = false;
+    }
+
+    public ArgInfo(boolean isMultiArg) {
+      this.args = Collections.emptyList();
+      this.isMultiArg = isMultiArg;
+    }
+
+    public static <ArgType> ArgInfo<ArgType>[] empty_array() {return EMPTY_ARRAY;}
   }
   /**
    * Returns array of lists which contain psiElements mapped to parameters
@@ -212,7 +298,7 @@ public class GrClosureSignatureUtil {
    * @return null if signature can not be applied to this argumentList
    */
   @Nullable
-  public static ArgInfo[] mapParametersToArguments(@NotNull GrClosureSignature signature,
+  public static ArgInfo<PsiElement>[] mapParametersToArguments(@NotNull GrClosureSignature signature,
                                                             @NotNull GrArgumentList list,
                                                             PsiManager manager,
                                                             GlobalSearchScope scope) {
@@ -220,171 +306,74 @@ public class GrClosureSignatureUtil {
   }
 
   @Nullable
-  public static ArgInfo[] mapParametersToArguments(@NotNull GrClosureSignature signature,
+  public static ArgInfo<PsiElement>[] mapParametersToArguments(@NotNull GrClosureSignature signature,
                                                    @NotNull GrArgumentList list,
                                                    @NotNull GrClosableBlock[] closureArguments,
                                                    PsiManager manager,
                                                    GlobalSearchScope scope) {
-    ArgInfo[] map = map(signature, list, closureArguments, manager, scope);
-    if (map != null) return map;
-
-    if (signature.isVarargs()) {
-      return new ApplicabilityMapperForVararg(manager, scope, list, closureArguments, signature).map();
-    }
-    return null;
-  }
-
-  @Nullable
-  private static ArgInfo[] map(@NotNull GrClosureSignature signature,
-                               @NotNull GrArgumentList list,
-                               GrClosableBlock[] closureArguments,
-                               PsiManager manager,
-                               GlobalSearchScope scope) {
-    final GrExpression[] args = ArrayUtil.mergeArrays(list.getExpressionArguments(), closureArguments, GrExpression.class);
-
     final GrNamedArgument[] namedArgs = list.getNamedArguments();
     boolean hasNamedArgs = namedArgs.length > 0;
-
-
     GrClosureParameter[] params = signature.getParameters();
 
-    ArgInfo[] map = new ArgInfo[params.length];
+    class InnerArg {
+      List<PsiElement> list;
+      PsiType type;
 
-    int paramLength = params.length;
+      InnerArg(PsiType type, PsiElement... elements) {
+        this.list = new ArrayList<PsiElement>(Arrays.asList(elements));
+        this.type = type;
+      }
+    }
+
+    List<InnerArg> innerArgs = new ArrayList<InnerArg>();
+
     if (hasNamedArgs) {
-      if (paramLength == 0) return null;
+      if (params.length == 0) return null;
       PsiType type = params[0].getType();
       if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) {
-        paramLength--;
-        map[0] = new ArgInfo(Arrays.<PsiElement>asList(namedArgs), true);
+        innerArgs.add(new InnerArg(PsiUtil.createMapType(manager, scope), namedArgs));
       }
       else {
         return null;
       }
     }
 
-    if (args.length > paramLength && !signature.isVarargs()) return null;
-    int optional = getOptionalParamCount(signature, hasNamedArgs);
-    int notOptional = paramLength - optional;
-    if (signature.isVarargs()) notOptional--;
-    if (notOptional > args.length) return null;
-
-    int curParam = 0;
-    optional = args.length - notOptional;
-    if (hasNamedArgs) curParam++;
-    for (int curArg = 0; curArg < args.length; curArg++, curParam++) {
-      while (optional == 0 && curParam < params.length && params[curParam].isOptional()) {
-        map[curParam] = new ArgInfo(Collections.<PsiElement>emptyList(), false);
-        curParam++;
-      }
-      if (curParam == params.length) return null;
-      if (params[curParam].isOptional()) optional--;
-      if (TypesUtil.isAssignableByMethodCallConversion(params[curParam].getType(), args[curArg].getType(), manager, scope)) {
-        map[curParam] = new ArgInfo(Collections.<PsiElement>singletonList(args[curArg]), false);
-      }
-      else {
-        return null;
-      }
+    for (GrExpression expression : list.getExpressionArguments()) {
+      innerArgs.add(new InnerArg(expression.getType(), expression));
     }
-    for (; curParam < params.length; curParam++) map[curParam] = new ArgInfo(Collections.<PsiElement>emptyList(), false);
+
+    for (GrClosableBlock closureArgument : closureArguments) {
+      innerArgs.add(new InnerArg(closureArgument.getType(), closureArgument));
+    }
+
+    final ArgInfo<InnerArg>[] innerMap =
+      mapParametersToArguments(signature, innerArgs.toArray(new InnerArg[innerArgs.size()]), new Function<InnerArg, PsiType>() {
+        @Override
+        public PsiType fun(InnerArg o) {
+          return o.type;
+        }
+      }, list);
+    if (innerMap == null) return null;
+    
+    ArgInfo<PsiElement>[] map = new ArgInfo[innerMap.length];
+    int i = 0;
+    if (hasNamedArgs) {
+      map[i] = new ArgInfo<PsiElement>(innerMap[i].args.iterator().next().list, true);
+      i++;
+    }
+
+    for (; i < innerMap.length; i++) {
+      final ArgInfo<InnerArg> innerArg = innerMap[i];
+      List<PsiElement> argList = new ArrayList<PsiElement>();
+      for (InnerArg arg : innerArg.args) {
+        argList.addAll(arg.list);
+      }
+      boolean multiArg = innerArg.isMultiArg || argList.size() > 1;
+      map[i] = new ArgInfo<PsiElement>(argList, multiArg);
+    }
+
     return map;
   }
-
-  private static class ApplicabilityMapperForVararg {
-    private PsiManager manager;
-    private GlobalSearchScope scope;
-    private GrExpression[] args;
-    private PsiType[] types;
-    private GrNamedArgument[] namedArgs;
-    private int paramLength;
-    private GrClosureParameter[] params;
-    private PsiType vararg;
-
-    public ApplicabilityMapperForVararg(PsiManager manager,
-                                        GlobalSearchScope scope,
-                                        GrArgumentList list,
-                                        GrClosableBlock[] closureArguments,
-                                        GrClosureSignature signature) {
-      this.manager = manager;
-      this.scope = scope;
-      args = ArrayUtil.mergeArrays(list.getExpressionArguments(), closureArguments, GrExpression.class);
-      namedArgs = list.getNamedArguments();
-      params = signature.getParameters();
-      paramLength = params.length - 1;
-      vararg = ((PsiArrayType)params[paramLength].getType()).getComponentType();
-
-      types = new PsiType[args.length];
-      for (int i = 0; i < args.length; i++) {
-        types[i] = args[i].getType();
-      }
-    }
-
-    @Nullable
-    public ArgInfo[] map() {
-      boolean hasNamedArgs = namedArgs.length > 0;
-      ArgInfo[] map = new ArgInfo[params.length];
-      if (hasNamedArgs) {
-        if (params.length == 0) return null;
-        PsiType type = params[0].getType();
-        if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) {
-          map[0] = new ArgInfo(Arrays.<PsiElement>asList(namedArgs), true);
-        }
-        else {
-          return null;
-        }
-      }
-      int start = hasNamedArgs ? 1 : 0;
-      int notOptionals = 0;
-      for (int i = start; i < paramLength; i++) {
-        if (!params[i].isOptional()) notOptionals++;
-      }
-      return mapInternal(start, 0, false, notOptionals, map);
-    }
-
-    @Nullable
-    private ArgInfo[] mapInternal(int curParam, int curArg, boolean skipOptionals, int notOptional, ArgInfo[] map) {
-      if (notOptional > args.length - curArg) return null;
-      if (notOptional == args.length - curArg) skipOptionals = true;
-
-      while (curArg < args.length) {
-        if (skipOptionals) {
-          while (curParam < paramLength && params[curParam].isOptional()) curParam++;
-        }
-
-        if (curParam == paramLength) break;
-
-        if (params[curParam].isOptional()) {
-          if (TypesUtil.isAssignable(params[curParam].getType(), types[curArg], manager, scope)) {
-            ArgInfo[] copy = mapInternal(curParam + 1, curArg + 1, false, notOptional, copyMap(map));
-            if (copy != null) return copy;
-          }
-          skipOptionals = true;
-        }
-        else {
-          if (!TypesUtil.isAssignableByMethodCallConversion(params[curParam].getType(), types[curArg], manager, scope)) return null;
-          map[curParam] = new ArgInfo(Collections.<PsiElement>singletonList(args[curArg]), false);
-          notOptional--;
-          curArg++;
-          curParam++;
-        }
-      }
-
-      map[paramLength] = new ArgInfo(new ArrayList<PsiElement>(args.length - curArg), true);
-
-      for (; curArg < args.length; curArg++) {
-        if (!TypesUtil.isAssignableByMethodCallConversion(vararg, types[curArg], manager, scope)) return null;
-        map[paramLength].args.add(args[curArg]);
-      }
-      return map;
-    }
-
-    private static ArgInfo[] copyMap(ArgInfo[] map) {
-      ArgInfo[] copy = new ArgInfo[map.length];
-      System.arraycopy(map, 0, copy, 0, map.length);
-      return copy;
-    }
-  }
-
 
   public static List<MethodSignature> generateAllSignaturesForMethod(GrMethod method, PsiSubstitutor substitutor) {
     GrClosureSignature signature = createSignature(method, substitutor);

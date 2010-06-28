@@ -28,24 +28,22 @@ public class HgAnnotationProvider implements AnnotationProvider {
 
   private static final int DEFAULT_LIMIT = 500;
 
-  private final Project project;
+  private final Project myProject;
 
   public HgAnnotationProvider(Project project) {
-    this.project = project;
+    this.myProject = project;
   }
 
   public FileAnnotation annotate(VirtualFile file) throws VcsException {
-    VirtualFile vcsRoot = VcsUtil.getVcsRootFor(project, file);
+    final VirtualFile vcsRoot = VcsUtil.getVcsRootFor(myProject, VcsUtil.getFilePath(file.getPath()));
     if (vcsRoot == null) {
       throw new VcsException("vcs root is null");
     }
-    HgFile hgFile = new HgFile(vcsRoot, VfsUtil.virtualToIoFile(file));
-    HgAnnotateCommand hgAnnotateCommand = new HgAnnotateCommand(project);
-    HgLogCommand hgLogCommand = new HgLogCommand(project);
+    final HgFile hgFile = new HgFile(vcsRoot, VfsUtil.virtualToIoFile(file));
     return new HgAnnotation(
       hgFile,
-      hgAnnotateCommand.execute(hgFile),
-      hgLogCommand.execute(hgFile, DEFAULT_LIMIT, false)
+      (new HgAnnotateCommand(myProject)).execute(hgFile),
+      (new HgLogCommand(myProject)).execute(hgFile, DEFAULT_LIMIT, false)
     );
   }
 

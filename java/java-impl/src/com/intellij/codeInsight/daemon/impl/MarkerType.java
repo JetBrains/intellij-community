@@ -19,27 +19,27 @@
  */
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
-import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.search.PsiElementProcessorAdapter;
-import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.psi.search.searches.ClassInheritorsSearch;
-import com.intellij.util.Function;
-import com.intellij.util.NullableFunction;
-import com.intellij.util.CommonProcessors;
+import com.intellij.codeInsight.daemon.DaemonBundle;
+import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.ide.util.MethodCellRenderer;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.psi.*;
+import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.search.PsiElementProcessorAdapter;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.Function;
+import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import java.util.Comparator;
-import java.util.Arrays;
 import java.awt.event.MouseEvent;
+import java.util.Arrays;
+import java.util.Comparator;
 
 public enum MarkerType {
   OVERRIDING_METHOD(new NullableFunction<PsiElement, String>() {
@@ -175,7 +175,7 @@ public enum MarkerType {
       PsiClass[] inheritors = collectProcessor.toArray(PsiClass.EMPTY_ARRAY);
       if (inheritors.length == 0) return;
       String title = aClass.isInterface()
-                     ? CodeInsightBundle.message("goto.implementation.chooser.title", aClass.getName(), inheritors.length)
+                     ? CodeInsightBundle.message("goto.implementation.chooserTitle", aClass.getName(), inheritors.length)
                      : DaemonBundle.message("navigation.title.subclass", aClass.getName(), inheritors.length);
       PsiClassListCellRenderer renderer = new PsiClassListCellRenderer();
       Arrays.sort(inheritors, renderer.getComparator());

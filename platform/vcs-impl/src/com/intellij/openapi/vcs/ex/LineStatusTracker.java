@@ -784,7 +784,7 @@ public class LineStatusTracker {
 
     JComponent toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.FILEHISTORY_VIEW_TOOLBAR, group, true).getComponent();
 
-    final Color background = ((EditorEx)editor).getBackroundColor();
+    final Color background = ((EditorEx)editor).getBackgroundColor();
     final Color foreground = editor.getColorsScheme().getColor(EditorColors.CARET_COLOR);
     toolbar.setBackground(background);
 
