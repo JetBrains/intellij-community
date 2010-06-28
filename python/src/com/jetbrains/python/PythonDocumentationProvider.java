@@ -5,6 +5,9 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.ResolveResult;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.Processor;
 import com.intellij.xml.util.XmlStringUtil;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.PydevDocumentationProvider;
@@ -15,10 +18,13 @@ import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.resolve.RootVisitor;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.ChainIterable;
 import com.jetbrains.python.toolbox.FP;
+import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -61,12 +67,11 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
   /**
    * Creates a HTML description of function definition.
    * @param fun the function
-   * @param cat string buffer to append to
    * @param deco_name_wrapper puts a tag around decorator name
    * @param deco_separator is added between decorators
    * @param func_name_wrapper puts a tag around the function name
    * @param escaper sanitizes values that come directly from doc string or code
-   * @return cat for easy chaining
+   * @return chain of strings for further chaining
    */
   private static ChainIterable<String> describeFunction(
     PyFunction fun,
@@ -85,14 +90,16 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
     cat.add("def ").addWith(func_name_wrapper, $(fun.getName()));
     cat.add(escaper.apply(PyUtil.getReadableRepr(fun.getParameterList(), false)));
     final PyType returnType = fun.getReturnType();
-    cat.add(escaper.apply("\nInferred return type: ")).add(returnType == null ? "unknown" : returnType.getName());
+    cat.add(escaper.apply("\nInferred return type: "));
+    if (returnType == null) cat.add("unknown");
+    else cat.add(returnType.getName());
     return cat;
   }
 
   /**
    * Creates a HTML description of function definition.
    * @param cls the class
-   * @param cat string buffer to append to
+   * @param name_wrapper wrapper to render the name with
    * @return cat for easy chaining
    */
   private static ChainIterable<String> describeClass(
@@ -181,36 +188,99 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
 
     cat.add(prolog_cat).addWith(TagCode, doc_cat).add(epilog_cat); // pre-assemble; then add stuff to individual cats as needed
     cat = wrapInTag("html", wrapInTag("body", cat));
-    element = resolveToDocStringOwner(element, originalElement, prolog_cat);
 
-    // now element may contain a doc string
-    if (element instanceof PyDocStringOwner) {
+    final ChainIterable<String> reassign_cat = new ChainIterable<String>(); // sequence for reassignment info, etc
+    PsiElement followed = resolveToDocStringOwner(element, originalElement, reassign_cat);
+    if (prolog_cat.isEmpty()) prolog_cat.add(reassign_cat);
+
+    // check if we got a property ref.
+    // if so, element is an accessor, and originalElement if an identifier
+    // TODO: use messages from resources!
+    PyClass cls;
+    PsiElement outer = null;
+    boolean is_property = false;
+    String accessor_kind = "None";
+    if (originalElement != null) {
+      String element_name = originalElement.getText();
+      if (PyUtil.isPythonIdentifier(element_name)) {
+        outer = originalElement.getParent();
+        if (outer instanceof PyQualifiedExpression) {
+          PyExpression qual = ((PyQualifiedExpression)outer).getQualifier();
+          if (qual != null) {
+            PyType type = qual.getType(TypeEvalContext.fast());
+            if (type instanceof PyClassType) {
+              cls = ((PyClassType)type).getPyClass();
+              if (cls != null) {
+                Property property = cls.findProperty(element_name);
+                if (property != null) {
+                  is_property = true;
+                  final AccessDirection dir = AccessDirection.of((PyElement)outer);
+                  Maybe<PyFunction> accessor = property.getByDirection(dir);
+                  prolog_cat
+                    .add("property ").addWith(TagBold, $().addWith(TagCode, $(element_name)))
+                    .add(" of ").add(describeClass(cls, TagCode))
+                  ;
+                  if (accessor.isDefined() && property.getDoc() != null) {
+                    doc_cat.add(": ").add(property.getDoc()).add(BR);
+                  }
+                  else {
+                    final PyFunction getter = property.getGetter().valueOrNull();
+                    if (getter != null && getter != element) {
+                      // not in getter, getter's doc comment may be useful
+                      PyStringLiteralExpression docstring = getter.getDocStringExpression();
+                      if (docstring != null) {
+                        prolog_cat
+                          .add(BR).addWith(TagItalic, $("Copied from getter:")).add(BR)
+                          .add(docstring.getStringValue())
+                        ;
+                      }
+                    }
+                    doc_cat.add(BR);
+                  }
+                  doc_cat.add(BR);
+                  if (dir == AccessDirection.READ) accessor_kind = "Getter";
+                  else if (dir == AccessDirection.WRITE) accessor_kind = "Setter";
+                  else accessor_kind = "Deleter";
+                  if (followed != null) epilog_cat.addWith(TagSmall, $(BR, BR, accessor_kind, " of property")).add(BR);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // now followed may contain a doc string  
+    if (followed instanceof PyDocStringOwner) {
       String docString = null;
-      PyStringLiteralExpression doc_expr = ((PyDocStringOwner) element).getDocStringExpression();
+      PyStringLiteralExpression doc_expr = ((PyDocStringOwner) followed).getDocStringExpression();
       if (doc_expr != null) docString = doc_expr.getStringValue();
       // doc of what?
-      if (element instanceof PyClass) {
-        PyClass cls = (PyClass)element;
+      if (followed instanceof PyClass) {
+        cls = (PyClass)followed;
         doc_cat.addWith(TagSmall, describeClass(cls, TagBold));
       }
-      else if (element instanceof PyFunction) {
-        PyFunction fun = (PyFunction)element;
-        PyClass cls = fun.getContainingClass();
-        if (cls != null) doc_cat.addWith(TagSmall, $("class ", cls.getName(), BR));
+      else if (followed instanceof PyFunction) {
+        PyFunction fun = (PyFunction)followed;
+        if (! is_property) {
+          cls = fun.getContainingClass();
+          if (cls != null) doc_cat.addWith(TagSmall, $("class ", cls.getName(), BR));
+        }
+        else cls = null;
         doc_cat.add(describeFunction(fun, TagItalic, BR, TagBold, LCombUp));
         if (docString == null) {
           addInheritedDocString(fun, cls, doc_cat, epilog_cat);
         }
       }
-      else if (element instanceof PyFile) {
-        // what to prepend to a module description??
-        String path = VfsUtil.urlToPath(((PyFile)element).getUrl());
+      else if (followed instanceof PyFile) {
+        // what to prepend to a module description?
+        String path = VfsUtil.urlToPath(((PyFile)followed).getUrl());
         if ("".equals(path)) {
           prolog_cat.addWith(TagSmall, $(PyBundle.message("QDOC.module.path.unknown")));
         }
         else {
           RootFinder finder = new RootFinder(path);
-          ResolveImportUtil.visitRoots(element, finder);
+          ResolveImportUtil.visitRoots(followed, finder);
           final String root_path = finder.getResult();
           if (root_path != null) {
             String after_part = path.substring(root_path.length());
@@ -219,19 +289,34 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
           else prolog_cat.addWith(TagSmall, $(path));
         }
       }
-      else { // not a func, not a class
-        doc_cat.add(combUp(PyUtil.getReadableRepr(element, false)));
-      }
       if (docString != null) {
         doc_cat.add(BR).add(combUpDocString(docString));
       }
-      else if (prolog_cat.isEmpty() && doc_cat.isEmpty() && epilog_cat.isEmpty()) return null; // got nothing to say!
-      return cat.toString();
     }
-    return null;
+    else if (is_property) {
+      // if it was a normal accessor, ti would be a function, handled by previous branch
+      String accessor_message;
+      if (followed != null) accessor_message = "Declaration: ";
+      else accessor_message = accessor_kind + " is not defined.";
+      doc_cat.addWith(TagItalic, $(accessor_message)).add(BR);
+      if (followed != null) doc_cat.add(combUp(PyUtil.getReadableRepr(followed, false)));
+    }
+    else if (followed != null && outer instanceof PyReferenceExpression) {
+      Class[] uninteresting_classes = {PyTargetExpression.class, PyAugAssignmentStatement.class};
+      boolean is_interesting = element != null && ! PyUtil.instanceOf(element, uninteresting_classes);
+      if (is_interesting) {
+        PsiElement old_parent = element.getParent();
+        is_interesting = ! PyUtil.instanceOf(old_parent, uninteresting_classes);
+      }
+      if (is_interesting) {
+        doc_cat.add(combUp(PyUtil.getReadableRepr(followed, false)));
+      }
+    }
+    if (doc_cat.isEmpty() && epilog_cat.isEmpty()) return null; // got nothing substantial to say!
+    else return cat.toString();
   }
 
-  private class RootFinder implements RootVisitor {
+  private static class RootFinder implements RootVisitor {
     private String myResult;
     private String myPath;
 
@@ -253,13 +338,15 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
     }
   }
 
+  @Nullable
   private static PsiElement resolveToDocStringOwner(PsiElement element, PsiElement originalElement, ChainIterable<String> prolog_cat) {
     // here the ^Q target is already resolved; the resolved element may point to intermediate assignments
     boolean reassignment_marked = false;
     if (element instanceof PyTargetExpression) {
+      final String target_name = element.getText();
       if (! reassignment_marked) {
         //prolog_cat.add(TagSmall.apply($("Assigned to ", element.getText(), BR)));
-        prolog_cat.addWith(TagSmall, $(PyBundle.message("QDOC.assigned.to.$0", element.getText())).add(BR));
+        prolog_cat.addWith(TagSmall, $(PyBundle.message("QDOC.assigned.to.$0", target_name)).add(BR));
         reassignment_marked = true;
       }
       element = ((PyTargetExpression)element).findAssignedValue();
@@ -274,9 +361,8 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
     }
     // it may be a call to a standard wrapper
     if (element instanceof PyCallExpression) {
-      Pair<String, PyFunction> wrap_info = PyCallExpressionHelper.interpretAsStaticmethodOrClassmethodWrappingCall(
-        (PyCallExpression)element, originalElement
-      );
+      final PyCallExpression call = (PyCallExpression)element;
+      Pair<String, PyFunction> wrap_info = PyCallExpressionHelper.interpretAsStaticmethodOrClassmethodWrappingCall(call, originalElement);
       if (wrap_info != null) {
         String wrapper_name = wrap_info.getFirst();
         PyFunction wrapped_func = wrap_info.getSecond();
@@ -284,9 +370,8 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
         prolog_cat.addWith(TagSmall, $(PyBundle.message("QDOC.wrapped.in.$0", wrapper_name)).add(BR));
         element = wrapped_func;
       }
-
     }
-    if (element instanceof PyFunction && PyNames.INIT.equals(((PyFunction)element).getName())) {
+    else if (element instanceof PyFunction && PyNames.INIT.equals(((PyFunction)element).getName())) {
       final PyStringLiteralExpression expression = ((PyFunction)element).getDocStringExpression();
       if (expression == null) {
         PyClass containingClass = ((PyFunction) element).getContainingClass();
