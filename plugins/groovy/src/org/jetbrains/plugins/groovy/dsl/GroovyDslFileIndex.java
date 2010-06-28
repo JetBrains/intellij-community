@@ -69,12 +69,14 @@ import java.util.concurrent.TimeUnit;
  * @author peter
  */
 public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
-  public static final Key<Pair<GroovyDslExecutor, Long>> CACHED_EXECUTOR = Key.create("CachedGdslExecutor");
+  private static final Key<Pair<GroovyDslExecutor, Long>> CACHED_EXECUTOR = Key.create("CachedGdslExecutor");
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex");
   private static final FileAttribute ENABLED = new FileAttribute("ENABLED", 0);
 
   @NonNls public static final ID<String, Void> NAME = ID.create("GroovyDslFileIndex");
   @NonNls private static final String OUR_KEY = "ourKey";
+  private static final Key<CachedValue<ConcurrentMap<String,Boolean>>> PLACE_DEPENDENT_KEY = Key.create("GroovyDslIsExecutorPlaceDependent");
+  private static final Key<CachedValue<ConcurrentMap<GroovyClassDescriptor,CustomMembersHolder>>> MEMBER_HOLDERS = Key.create("GroovyDslMemberHolders");
   private final MyDataIndexer myDataIndexer = new MyDataIndexer();
   private final MyInputFilter myInputFilter = new MyInputFilter();
 
@@ -172,6 +174,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     }
 
     final PsiFile placeFile = place.getContainingFile().getOriginalFile();
+    final CachedValuesManager cacheManager = CachedValuesManager.getManager(place.getProject());
 
     final LinkedBlockingQueue<Pair<GroovyFile, GroovyDslExecutor>> queue = new LinkedBlockingQueue<Pair<GroovyFile, GroovyDslExecutor>>();
     final ArrayList<Pair<GroovyFile, GroovyDslExecutor>> ready = new ArrayList<Pair<GroovyFile, GroovyDslExecutor>>();
@@ -179,7 +182,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     int count = queueExecutors(psiClass.getProject(), queue, ready);
 
     for (Pair<GroovyFile, GroovyDslExecutor> pair : ready) {
-      if (!processExecutor(pair.second, processor, pair.first, psiClass, place, placeFile)) {
+      if (!processExecutor(pair.second, processor, pair.first, psiClass, place, placeFile, cacheManager)) {
         return false;
       }
       count--;
@@ -192,8 +195,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
         if (pair != null) {
           final GroovyDslExecutor executor = pair.second;
           final GroovyFile dslFile = pair.first;
-          if (executor != null && !processExecutor(executor, processor, dslFile, psiClass, place,
-                                                   placeFile)) {
+          if (executor != null && !processExecutor(executor, processor, dslFile, psiClass, place, placeFile, cacheManager)) {
             return false;
           }
 
@@ -266,20 +268,24 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
   private static boolean processExecutor(final GroovyDslExecutor executor,
                                          PsiScopeProcessor processor,
-                                         final GroovyFile dslFile, final PsiClass psiClass, final PsiElement place, final PsiFile placeFile) {
+                                         final GroovyFile dslFile,
+                                         final PsiClass psiClass,
+                                         final PsiElement place,
+                                         final PsiFile placeFile,
+                                         final CachedValuesManager manager) {
     final String qname = psiClass.getQualifiedName();
     if (qname == null) {
       return true;
     }
 
-    Map<String, Boolean> specificities = getCachedMap(dslFile, "placeDependent");
+    Map<String, Boolean> specificities = getCachedMap(dslFile, PLACE_DEPENDENT_KEY, manager);
     boolean firstTime = !specificities.containsKey(qname);
 
     final boolean placeDependent = firstTime || specificities.get(qname);
     GroovyClassDescriptor descriptor = new GroovyClassDescriptor(psiClass, place, placeDependent,
                                                                  placeFile);
 
-    final ConcurrentMap<GroovyClassDescriptor, CustomMembersHolder> members = getCachedMap(dslFile, "members");
+    final ConcurrentMap<GroovyClassDescriptor, CustomMembersHolder> members = getCachedMap(dslFile, MEMBER_HOLDERS, manager);
     CustomMembersHolder holder = members.get(descriptor);
     if (holder == null) {
       holder = addGdslMembers(executor, descriptor, dslFile);
@@ -298,10 +304,11 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     return holder.processMembers(processor);
   }
 
-  private static <T, V> ConcurrentMap<T, V> getCachedMap(GroovyFile dslFile, String id) {
+  private static <T, V> ConcurrentMap<T, V> getCachedMap(GroovyFile dslFile,
+                                                         final Key<CachedValue<ConcurrentMap<T, V>>> key,
+                                                         final CachedValuesManager manager) {
     final Project project = dslFile.getProject();
-    final Key<CachedValue<ConcurrentMap<T, V>>> key = new CachedValuesManager.MemoizationKey<CachedValue<ConcurrentMap<T, V>>>("GroovyDsl" + id);
-    return CachedValuesManager.getManager(project).getCachedValue(dslFile, key, new CachedValueProvider<ConcurrentMap<T, V>>() {
+    return manager.getCachedValue(dslFile, key, new CachedValueProvider<ConcurrentMap<T, V>>() {
       @Override
       public Result<ConcurrentMap<T, V>> compute() {
         final ConcurrentMap<T, V> map = new ConcurrentHashMap<T, V>();
