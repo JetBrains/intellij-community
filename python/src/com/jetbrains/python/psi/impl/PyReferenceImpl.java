@@ -197,7 +197,16 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     if (uexpr == null) {
       // ...as a part of current module
       PyType otype = PyBuiltinCache.getInstance(realContext).getObjectType(); // "object" as a closest kin to "module"
-      if (otype != null) uexpr = otype.resolveMember(myElement.getName(), PyType.Context.READ).valueOrNull();
+      if (otype != null) {
+        final List<? extends PsiElement> members = otype.resolveMember(myElement.getName(), AccessDirection.READ);
+        if (members != null) {
+          int rate = RatedResolveResult.RATE_NORMAL;
+          for (PsiElement member : members) {
+            ret.poke(member, rate);
+            rate = RatedResolveResult.RATE_LOW;
+          }
+        }
+      }
     }
     if (uexpr == null) {
       // ...as a builtin symbol

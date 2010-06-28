@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.SmartList;
 import com.jetbrains.python.codeInsight.PyDynamicMember;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -63,29 +64,24 @@ public class PyClassType implements PyType {
   }
 
   @Nullable
-  private static Maybe<? extends PsiElement> valueOrTarget(Maybe<PyFunction> what, PyTargetExpression target_site) {
-    if (what.isDefined()) return what;
-    else return new Maybe<PsiElement>(target_site);
-  }
-
-  @NotNull
-  public Maybe<? extends PsiElement> resolveMember(final String name, Context context) {
-    if (myClass == null) return null;
+  public List<? extends PsiElement> resolveMember(final String name, AccessDirection direction) {
+    assert myClass != null;
     Property property = myClass.findProperty(name);
     if (property != null) {
-      PyTargetExpression prop_definition = property.getDefinitionSite();
-      switch (context) {
-        case READ:
-          return valueOrTarget(property.getGetter(), prop_definition);
-        case WRITE:
-          return valueOrTarget(property.getSetter(), prop_definition);
-        case DELETE:
-          return valueOrTarget(property.getDeleter(), prop_definition);
+      Maybe<PyFunction> accessor = property.getByDirection(direction);
+      if (accessor.isDefined()) {
+        Callable accessor_code = accessor.value();
+        SmartList<PsiElement> ret = new SmartList<PsiElement>();
+        if (accessor_code != null) ret.add(accessor_code);
+        PyTargetExpression site = property.getDefinitionSite();
+        if (site != null) ret.add(site);
+        if (ret.size() > 0) return ret;
+        else return null; // property is found, but the required accessor is explicitly absent
       }
     }
     final PsiElement classMember = resolveClassMember(myClass, name);
     if (classMember != null) {
-      return new Maybe<PsiElement>(classMember);
+      return new SmartList<PsiElement>(classMember);
     }
 
     boolean hasSuperClasses = false;
@@ -93,7 +89,7 @@ public class PyClassType implements PyType {
       hasSuperClasses = true;
       PsiElement superMember = resolveClassMember(superClass, name);
       if (superMember != null) {
-        return new Maybe<PsiElement>(superMember);
+        return new SmartList<PsiElement>(superMember);
       }
     }
     if (!hasSuperClasses) {
@@ -109,14 +105,14 @@ public class PyClassType implements PyType {
             if (oldstyleclass != null) {
               final String oldstylename = oldstyleclass.getName();
               if ((myname != null) && (oldstylename != null) && !myname.equals(oldstylename) && !myname.equals("object")) {
-                return oldstyle.resolveMember(name, context);
+                return oldstyle.resolveMember(name, direction);
               }
             }
           }
         }
       }
     }
-    return NOT_RESOLVED_YET;
+    return Collections.emptyList();
   }
 
   @Nullable

@@ -297,7 +297,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     }
   }
 
-  public PyFunction findMethodByName(final String name, boolean inherited) {
+  public PyFunction findMethodByName(@NotNull final String name, boolean inherited) {
     if (name == null) return null;
     NameFinder<PyFunction> proc = new NameFinder<PyFunction>(name);
     visitMethods(proc, inherited);
@@ -316,16 +316,44 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   private final static Maybe<PyFunction> unknown_call = new Maybe<PyFunction>(); // denotes _not_ a PyFunction, actually
   private final static Maybe<PyFunction> none = new Maybe<PyFunction>(null); // denotes an explicit None
 
+
+  /**
+   * @param name_filter returns true if property's name is acceptable
+   * @param property_filter returns true if the property is acceptable
+   * @param advanced is @foo.setter syntax allowed
+   * @return the first property that both filters accepted.
+   */
   @Nullable
-  private Property findPropertyLocally(@NotNull String name, boolean advanced) {
+  private Property findPropertyLocally(@Nullable Processor<String> name_filter, @Nullable Processor<Property> property_filter, boolean advanced) {
     // NOTE: fast enough to be rerun every time
+    Property prop = lookInDecoratedProperties(name_filter, property_filter, advanced);
+    if (prop != null) return prop;
+    prop = lookInStubProperties(name_filter, property_filter);
+    if (prop != null) return prop;
+    else {
+      // name = property(...) assignments from PSI
+      for (PyTargetExpression target : getClassAttributes()) {
+        if (name_filter == null || name_filter.process(target.getName())) {
+          prop = PropertyImpl.fromTarget(target);
+          if (prop != null) {
+            if (property_filter == null || property_filter.process(prop)) return prop;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private Property lookInDecoratedProperties(@Nullable Processor<String> name_filter, @Nullable Processor<Property> property_filter, boolean advanced) {
     Maybe<PyFunction> getter = none;
     Maybe<PyFunction> setter = none;
     Maybe<PyFunction> deleter = none;
     String doc = null;
     // look at @property decorators
     for (PyFunction method : getMethods()) {
-      if (name.equals(method.getName())) {
+      final String name = method.getName();
+      if (name_filter == null || name_filter.process(name)) {
         PyDecoratorList decolist = method.getDecoratorList();
         if (decolist != null) {
           for (PyDecorator deco : decolist.getDecorators()) {
@@ -346,37 +374,50 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       }
       if (getter != none && setter != none && deleter != none) break; // can't improve
     }
-    if (getter != none || setter != none || deleter != none) return new PropertyImpl(getter, setter, deleter, doc, null);
-    // look at name = property(...) assignments
+    if (getter != none || setter != none || deleter != none) {
+      final PropertyImpl prop = new PropertyImpl(getter, setter, deleter, doc, null);
+      if (property_filter == null || property_filter.process(prop)) return prop;
+    }
+    return null;
+  }
+
+  private Maybe<PyFunction> fromPacked(Maybe<String> maybe_name) {
+    if (maybe_name.isDefined()) {
+      PyFunction method = findMethodByName(maybe_name.value(), true);
+      if (method != null) return new Maybe<PyFunction>(method);
+    }
+    return unknown_call;
+  }
+
+  @Nullable
+  private Property lookInStubProperties(@Nullable Processor<String> name_filter, @Nullable Processor<Property> property_filter) {
+    Maybe<PyFunction> getter = none;
+    Maybe<PyFunction> setter = none;
+    Maybe<PyFunction> deleter = none;
+    String doc = null;
     final PyClassStub stub = getStub();
     if (stub != null) {
       for (StubElement substub : stub.getChildrenStubs()) {
         if (substub.getStubType() == PyElementTypes.TARGET_EXPRESSION) {
           final PyTargetExpressionStub target_stub = (PyTargetExpressionStub)substub;
           PropertyStubStorage prop = target_stub.getPropertyPack();
-          if (prop != null && name.equals(target_stub.getName())) {
-            getter = prop.getGetter().isDefined()? new Maybe<PyFunction>(findMethodByName(prop.getGetter().value(), true)) : unknown_call;
-            setter = prop.getSetter().isDefined()? new Maybe<PyFunction>(findMethodByName(prop.getSetter().value(), true)): unknown_call;
-            deleter = prop.getDeleter().isDefined()? new Maybe<PyFunction>(findMethodByName(prop.getDeleter().value(), true)) : unknown_call;
+          if (prop != null && (name_filter == null || name_filter.process(target_stub.getName()))) {
+            getter = fromPacked(prop.getGetter());
+            setter = fromPacked(prop.getSetter());
+            deleter = fromPacked(prop.getDeleter());
             doc = prop.getDoc();
           }
         }
       }
-      if (getter != none || setter != none || deleter != none) return new PropertyImpl(getter, setter, deleter, doc, null);
-    }
-    else {
-      // from PSI
-      for (PyTargetExpression target : getClassAttributes()) {
-        if (name.equals(target.getName())) {
-          Property prop = PropertyImpl.fromTarget(target);
-          if (prop != null) return prop;
-        }
+      if (getter != none || setter != none || deleter != none) {
+        final PropertyImpl prop = new PropertyImpl(getter, setter, deleter, doc, null);
+        if (property_filter == null || property_filter.process(prop)) return prop;
       }
     }
     return null;
   }
 
-  public Property findProperty(@NotNull String name) {
+  public Property findProperty(@NotNull final String name) {
     LanguageLevel level = LanguageLevel.getDefault();
     final PsiFile containing_file = getContainingFile();
     if (containing_file != null) {
@@ -384,11 +425,36 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       if (vfile != null) level = LanguageLevel.forFile(vfile);
     }
     boolean use_advanced_syntax = level.isAtLeast(LanguageLevel.PYTHON26);
-    Property prop = findPropertyLocally(name, use_advanced_syntax);
+    Processor<String> name_filer = new Processor<String>() {
+      @Override public boolean process(String s) { return name.equals(s); }
+    };
+    Property prop = findPropertyLocally(name_filer, null, use_advanced_syntax);
     if (prop != null) return prop;
     for (PyClass cls : iterateAncestors()) {
-      prop = ((PyClassImpl)cls).findPropertyLocally(name, use_advanced_syntax);
+      prop = ((PyClassImpl)cls).findPropertyLocally(name_filer, null, use_advanced_syntax);
       if (prop != null) return prop;
+    }
+    return null;
+  }
+
+
+  // NOTE: we might accept a name filter, too
+  @Nullable
+  public Property scanProperties(Processor<Property> processor, boolean inherited) {
+    LanguageLevel level = LanguageLevel.getDefault();
+    final PsiFile containing_file = getContainingFile();
+    if (containing_file != null) {
+      final VirtualFile vfile = containing_file.getVirtualFile();
+      if (vfile != null) level = LanguageLevel.forFile(vfile);
+    }
+    boolean use_advanced_syntax = level.isAtLeast(LanguageLevel.PYTHON26);
+    Property property = findPropertyLocally(null, processor, use_advanced_syntax);
+    if (property != null) return property;
+    if (inherited) {
+      for (PyClass cls : iterateAncestors()) {
+        property = ((PyClassImpl)cls).findPropertyLocally(null, processor, use_advanced_syntax);
+        if (property != null) return property;
+      }
     }
     return null;
   }
@@ -421,16 +487,22 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     }
 
     public String getDoc() {
-      if (myDoc != null) return myDoc;
-      if (myGetter.isDefined()) {
-        final PyStringLiteralExpression doc_expr = ((PyFunction)myGetter.value()).getDocStringExpression();
-        if (doc_expr != null) return doc_expr.getStringValue();
-      }
-      return null;
+      return myDoc;
     }
 
     public PyTargetExpression getDefinitionSite() {
       return mySite;
+    }
+
+    @NotNull
+    @Override
+    public Maybe<PyFunction> getByDirection(@NotNull AccessDirection direction) {
+      switch (direction) {
+        case READ:    return myGetter;
+        case WRITE:   return mySetter;
+        case DELETE:  return myDeleter;
+      }
+      throw new IllegalArgumentException("Unknown direction " + PyUtil.nvl(direction));
     }
 
     @Override

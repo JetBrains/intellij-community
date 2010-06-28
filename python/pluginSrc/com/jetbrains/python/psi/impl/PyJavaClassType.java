@@ -1,12 +1,21 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.psi.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.SmartList;
+import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.resolve.VariantsProcessor;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author yole
@@ -18,15 +27,15 @@ public class PyJavaClassType implements PyType {
     myClass = aClass;
   }
 
-  @NotNull
-  public Maybe<PsiElement> resolveMember(final String name, Context context) {
+  @Nullable
+  public List<? extends PsiElement> resolveMember(final String name, AccessDirection direction) {
     final PsiMethod[] methods = myClass.findMethodsByName(name, true);
     if (methods.length > 0) {
-      return new Maybe<PsiElement>(methods[0]); // TODO[yole]: correct resolve
+      return Arrays.asList(methods); // TODO[yole]: correct resolve
     }
     final PsiField field = myClass.findFieldByName(name, true);
-    if (field != null) return new Maybe<PsiElement>(field);
-    return UNRESOLVED;
+    if (field != null) return new SmartList<PsiElement>(field);
+    return null;
   }
 
   public Object[] getCompletionVariants(final PyQualifiedExpression referenceExpression, ProcessingContext context) {

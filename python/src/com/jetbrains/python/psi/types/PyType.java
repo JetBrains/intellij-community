@@ -3,12 +3,13 @@ package com.jetbrains.python.psi.types;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
+import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyQualifiedExpression;
-import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -20,21 +21,13 @@ public interface PyType {
   /**
    * Resolves an attribute of type.
    * @param name attribute name
-   * @param context
-   * @return attribute's definition element
+   * @param direction
+   * @return null if name definitely cannot be found (e.g. in a qualified reference),
+   *         or an empty list if name is not found but other contexts are worth looking at,
+   *         or a list of elements that define the name, a la multiResolve().
    */
-  @NotNull
-  Maybe<? extends PsiElement> resolveMember(final String name, Context context);
-
-  /**
-   * Return this from resolveMember() when the name is neither definitely resolved nor definitely unresolved.
-   */
-  Maybe<PsiElement> NOT_RESOLVED_YET = new Maybe<PsiElement>();
-
-  /**
-   * Return this from resolveMember() when the name definitely cannot be resolved, and no other attempts should be made.
-   */
-  Maybe<PsiElement> UNRESOLVED = new Maybe<PsiElement>(null);
+  @Nullable
+  List<? extends PsiElement> resolveMember(final String name, AccessDirection direction);
 
   /**
    * Proposes completion variants from type's attributes.
@@ -54,18 +47,5 @@ public interface PyType {
    */
   @Nullable
   String getName();
-
-  /** How we refer to a name */
-  enum Context {
-
-    /** Reference */
-    READ,
-
-    /** Target of assignment */
-    WRITE,
-
-    /** Target of del statement */
-    DELETE
-  }
 
 }

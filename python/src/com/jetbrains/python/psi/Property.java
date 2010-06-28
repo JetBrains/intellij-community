@@ -32,7 +32,7 @@ public interface Property {
   Maybe<PyFunction> getDeleter();
 
   /**
-   * @return doc comment, explicit if present, else from getter.
+   * @return doc string as known to property() call. If null, see getter's doc.
    */
   @Nullable
   String getDoc();
@@ -42,5 +42,12 @@ public interface Property {
    */
   @Nullable
   PyTargetExpression getDefinitionSite();
+
+  /**
+   * @param direction how the property is accessed
+   * @return getter, setter, or deleter.
+   */
+  @NotNull
+  Maybe<PyFunction> getByDirection(@NotNull AccessDirection direction);
 
 }

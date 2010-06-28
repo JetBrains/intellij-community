@@ -3,9 +3,12 @@ package com.jetbrains.python.psi.types;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
+import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyQualifiedExpression;
-import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author yole
@@ -16,9 +19,9 @@ public class PyNoneType implements PyType { // TODO must extend ClassType. It's 
   private PyNoneType() {
   }
 
-  @NotNull
-  public Maybe<PsiElement> resolveMember(final String name, Context context) {
-    return UNRESOLVED;
+  @Nullable
+  public List<? extends PsiElement> resolveMember(final String name, AccessDirection direction) {
+    return null;
   }
 
   public Object[] getCompletionVariants(final PyQualifiedExpression referenceExpression, ProcessingContext context) {

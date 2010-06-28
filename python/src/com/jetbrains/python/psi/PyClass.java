@@ -86,6 +86,15 @@ public interface PyClass extends PsiNamedElement, PyStatement, NameDefiner, PyDo
   Iterable<PyClass> iterateAncestors();
 
   /**
+   * Scan properties in order of definition, until processor returns true for one of them.
+   * @param processor to check properties
+   * @param inherited whether inherited properties need to be scanned, too
+   * @return a property that processor accepted, or null.
+   */
+  @Nullable
+  Property scanProperties(Processor<Property> processor, boolean inherited);
+
+  /**
    * @param parent
    * @return True iff this and parent are the same or parent is one of our superclasses.
    */

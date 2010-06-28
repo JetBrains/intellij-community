@@ -4,13 +4,16 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.SmartList;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.resolve.VariantsProcessor;
 import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -42,12 +45,12 @@ public class PyModuleType implements PyType { // Maybe make it a PyClassType ref
     return myModule;
   }
 
-  @NotNull
-  public Maybe<PsiElement> resolveMember(final String name, Context context) {
+  @Nullable
+  public List<? extends PsiElement> resolveMember(final String name, AccessDirection direction) {
     //return PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(name), myModule, null, null);
     final PsiElement result = ResolveImportUtil.resolveChild(myModule, name, null, false);
-    if (result != null) return new Maybe<PsiElement>(result);
-    return NOT_RESOLVED_YET;
+    if (result != null) return new SmartList<PsiElement>(result);
+    return Collections.emptyList();
   }
 
 
