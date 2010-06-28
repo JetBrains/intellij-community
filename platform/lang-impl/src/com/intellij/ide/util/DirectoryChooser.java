@@ -95,6 +95,9 @@ public class DirectoryChooser extends DialogWrapper {
         myView.listFilled();
         if (selectionId < 0) {
           myView.clearSelection();
+          if (myView.getItemsSize() > 0) {
+            myView.selectItemByIndex(0);
+          }
         } else {
           myView.selectItemByIndex(selectionId);
         }
@@ -381,8 +384,12 @@ public class DirectoryChooser extends DialogWrapper {
     }
     buildFragments();
     myView.listFilled();
-    if (directories.length > 0) {
-      myView.selectItemByIndex(selectionIndex);
+    if (myView.getItemsSize() > 0) {
+      if (selectionIndex != -1) {
+        myView.selectItemByIndex(selectionIndex);
+      } else {
+        myView.selectItemByIndex(0);
+      }
     }
     else {
       myView.clearSelection();
