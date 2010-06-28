@@ -22,6 +22,7 @@ import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor;
+import com.intellij.structuralsearch.impl.matcher.compiler.OptimizingSearchHelper;
 import com.intellij.structuralsearch.impl.matcher.filters.DefaultFilter;
 import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
@@ -324,6 +325,14 @@ public class JSStructuralSearchProfile extends TokenBasedProfile {
     @Override
     public void visitElement(final PsiElement element) {
       super.visitElement(element);
+      if (myGlobalVisitor.getContext().getSearchHelper().doOptimizing()) {
+        if (element instanceof LeafElement && ((LeafElement)element).getElementType() == JSTokenTypes.IDENTIFIER) {
+          OptimizingSearchHelper helper = myGlobalVisitor.getContext().getSearchHelper();
+          if (helper.addWordToSearchInCode(element.getText())) {
+            helper.endTransaction();
+          }
+        }
+      }
       if (element instanceof JSExpressionStatement) {
         if (visitJsReferenceExpression((JSExpressionStatement)element)) {
           return;
@@ -372,7 +381,8 @@ public class JSStructuralSearchProfile extends TokenBasedProfile {
       myGlobalVisitor.setHandler(element, handler);
       handler.setFilter(new NodeFilter() {
         public boolean accepts(PsiElement element) {
-          return element instanceof JSExpression;
+          return element instanceof JSExpression ||
+                 (element instanceof LeafElement && ((LeafElement)element).getElementType() == JSTokenTypes.IDENTIFIER);
         }
       });
       return true;

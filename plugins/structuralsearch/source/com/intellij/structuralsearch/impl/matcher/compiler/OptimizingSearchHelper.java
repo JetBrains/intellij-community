@@ -7,7 +7,7 @@ import java.util.Set;
 /**
  * @author Maxim.Mossienko
 */
-interface OptimizingSearchHelper {
+public interface OptimizingSearchHelper {
   boolean doOptimizing();
   void clear();
 

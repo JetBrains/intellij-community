@@ -263,6 +263,10 @@ public class JSStructuralSearchTest extends StructuralSearchTestCase {
     doTestByFile("class.as", "private static function sum('_param*)", 0, 0, JavaScriptSupportLoader.JAVASCRIPT, "as");
   }
 
+  public void testAsInterface() throws Exception {
+    doTest("interface A { function aba(); }", "aba", 1, 2, JavaScriptSupportLoader.JAVASCRIPT, "as");
+  }
+
   private void doTestByFile(String fileName, String pattern, int expectedOccurences, int expectedLexicalOccurences) throws IOException {
     doTestByFile(fileName, pattern, expectedOccurences, expectedLexicalOccurences, JavaScriptSupportLoader.JAVASCRIPT, "js");
   }

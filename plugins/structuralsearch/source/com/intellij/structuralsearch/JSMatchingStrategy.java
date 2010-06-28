@@ -1,6 +1,7 @@
 package com.intellij.structuralsearch;
 
 import com.intellij.lang.javascript.psi.*;
+import com.intellij.lang.javascript.psi.ecmal4.JSClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 
@@ -53,6 +54,21 @@ public class JSMatchingStrategy extends JSElementVisitor implements MatchingStra
 
   @Override
   public void visitJSParameterList(JSParameterList node) {
+    result = true;
+  }
+
+  @Override
+  public void visitJSFunctionDeclaration(JSFunction node) {
+    result = true;
+  }
+
+  @Override
+  public void visitJSFunctionExpression(JSFunctionExpression node) {
+    result = true;
+  }
+
+  @Override
+  public void visitJSClass(JSClass aClass) {
     result = true;
   }
 

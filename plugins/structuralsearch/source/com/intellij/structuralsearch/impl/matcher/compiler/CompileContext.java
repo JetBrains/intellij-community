@@ -37,7 +37,7 @@ public class CompileContext {
                    new FindInFilesOptimizingSearchHelper(this, _findMatchingFiles, _project);
   }
 
-  OptimizingSearchHelper getSearchHelper() {
+  public OptimizingSearchHelper getSearchHelper() {
     return searchHelper;
   }
 

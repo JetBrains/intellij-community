@@ -43,6 +43,7 @@ public class TokenBasedSearcher {
   private int[] myOccurences;
 
   private final MyMatchingResultSink mySink;
+  private boolean myToFilterLocalScope;
 
   public TokenBasedSearcher(MatcherImpl matcher) {
     myTesting = ApplicationManager.getApplication().isUnitTestMode();
@@ -136,7 +137,16 @@ public class TokenBasedSearcher {
     assert patternLanguages.size() == 1;
     final List<PsiElement> patternRoots = getNodes(compiledPattern);
     MatchOptions options = myMatcher.getMatchContext().getOptions();
-    final SearchScope scope = options.getScope();
+    final SearchScope scope = compiledPattern.getScope() != null ? compiledPattern.getScope() : options.getScope();
+
+    if (scope instanceof LocalSearchScope) {
+      for (PsiElement element : ((LocalSearchScope)scope).getScope()) {
+        if (!(element instanceof PsiFile)) {
+          myToFilterLocalScope = true;
+          break;
+        }
+      }
+    }
 
     RecursiveTokenizingVisitor visitor = new RecursiveTokenizingVisitor();
     for (PsiElement patternRoot : patternRoots) {
@@ -156,7 +166,7 @@ public class TokenBasedSearcher {
 
     return ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
       public Integer compute() {
-        return search(patternTokens);
+        return search(patternTokens, scope);
       }
     });
   }
@@ -239,13 +249,15 @@ public class TokenBasedSearcher {
     private final TIntObjectHashMap<PsiFile> myPsiFiles = new TIntObjectHashMap<PsiFile>();
     private final int myPatternLength;
     private final Set<PsiElement> myVisitedScopes = new HashSet<PsiElement>();
+    private final SearchScope myScope;
     private double myStartFraction = -1;
 
     private int myIndex = 0;
     private int myBound = 0;
 
-    private MySearcher(int patternLength) {
+    private MySearcher(int patternLength, SearchScope scope) {
       myPatternLength = patternLength;
+      myScope = scope;
     }
 
     public void run() {
@@ -277,11 +289,10 @@ public class TokenBasedSearcher {
       final int end = myTokens.get(occurence + myPatternLength - 1).getEnd();
 
       final MatchContext context = myMatcher.getMatchContext();
-      SearchScope scope = context.getOptions().getScope();
 
       List<PsiElement> elementList;
-      if (scope instanceof LocalSearchScope && !ApplicationManager.getApplication().isUnitTestMode()) {
-        elementList = filterScope((LocalSearchScope)scope, psiFile, start, end);
+      if (myToFilterLocalScope && myScope instanceof LocalSearchScope && !ApplicationManager.getApplication().isUnitTestMode()) {
+        elementList = filterScope((LocalSearchScope)myScope, psiFile, start, end);
       }
       else {
         elementList = ApplicationManager.getApplication().runReadAction(new Computable<List<PsiElement>>() {
@@ -317,7 +328,7 @@ public class TokenBasedSearcher {
     }
   }
 
-  private int search(final List<Token> patternTokens) {
+  private int search(final List<Token> patternTokens, SearchScope scope) {
     addTask(new Runnable() {
       public void run() {
         if (myTokens == null || myTokens.size() == 0) {
@@ -335,7 +346,7 @@ public class TokenBasedSearcher {
     final int patternLength = patternTokens.size();
     assert patternLength > 0;
 
-    addTask(new MySearcher(patternLength));
+    addTask(new MySearcher(patternLength, scope));
 
     return myOccurences != null ? myOccurences.length : 0;
   }
