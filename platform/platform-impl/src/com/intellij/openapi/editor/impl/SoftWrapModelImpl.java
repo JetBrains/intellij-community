@@ -686,11 +686,11 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
       softWrapIndex = -softWrapIndex - 1;
     }
 
-    if (softWrapIndex >= myWraps.size()) {
+    Document document = myEditor.getDocument();
+
+    if (softWrapIndex >= myWraps.size() || document.getTextLength() <= 0) {
       return;
     }
-
-    Document document = myEditor.getDocument();
     int firstChangedLine = document.getLineNumber(change.getStart());
     int lastChangedLine = Math.max(document.getLineNumber(change.getEnd()), firstChangedLine + StringUtil.countNewLines(change.getText()));
     for (int i = firstChangedLine; i <= lastChangedLine; i++) {
