@@ -13,26 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ui;
 
-import javax.swing.*;
+public final class TableCell {
+  public final int row;
+  public final int column;
 
-public class ToolTipHandlerProviderImpl extends ToolTipHandlerProvider {
-  public void install(JComponent component) {
-    if (component instanceof JTree) {
-      TreeToolTipHandler.install((JTree)component);
-    }
-    else if (component instanceof JTable) {
-      TableToolTipHandler.install((JTable)component);
-    }
-    else if (component instanceof JList) {
-      ListToolTipHandler.install((JList)component);
-    }
-    else {
-      ToolTipManager.sharedInstance().registerComponent(component);
-    }
+  public TableCell(int rowIndex, int columnIndex) {
+    row = rowIndex;
+    column = columnIndex;
   }
 
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof TableCell)) return false;
 
+    final TableCell myKey = (TableCell)o;
+
+    if (column != myKey.column) return false;
+    if (row != myKey.row) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    int result;
+    result = row;
+    result = 29 * result + column;
+    return result;
+  }
 }

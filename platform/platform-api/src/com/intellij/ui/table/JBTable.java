@@ -17,6 +17,7 @@ package com.intellij.ui.table;
 
 import com.intellij.Patches;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TreeUIHelper;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.EmptyTextHelper;
 import com.intellij.util.ui.UIUtil;
@@ -60,6 +61,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText {
         return getRowCount() == 0;
       }
     };
+
+    TreeUIHelper.getInstance().installToolTipHandler(this);
 
     addMouseListener(new MyMouseListener());
     getColumnModel().addColumnModelListener(new TableColumnModelListener() {

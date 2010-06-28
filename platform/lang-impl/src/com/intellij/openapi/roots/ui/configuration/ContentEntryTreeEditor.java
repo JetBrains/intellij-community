@@ -84,7 +84,6 @@ public class ContentEntryTreeEditor {
 
     myEditingActionsGroup = new DefaultActionGroup();
 
-    TreeToolTipHandler.install(myTree);
     TreeUtil.installActions(myTree);
     new TreeSpeedSearch(myTree);
 

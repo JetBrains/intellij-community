@@ -185,7 +185,6 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     UIUtil.setLineStyleAngled(myTree);
-    TreeToolTipHandler.install(myTree);
     TreeUtil.installActions(myTree);
     EditSourceOnDoubleClickHandler.install(myTree);
     new TreeSpeedSearch(myTree);

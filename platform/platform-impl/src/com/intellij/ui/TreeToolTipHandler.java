@@ -26,33 +26,50 @@ import javax.swing.plaf.TreeUI;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 public class TreeToolTipHandler extends AbstractToolTipHandler<Integer, JTree> {
-  public static TreeToolTipHandler install(JTree tree) {
+  public static void install(JTree tree) {
+    installAndGet(tree);
+  }
+
+  public static TreeToolTipHandler installAndGet(JTree tree) {
     return new TreeToolTipHandler(tree);
   }
 
   protected TreeToolTipHandler(final JTree tree) {
     super(tree);
-    tree.getSelectionModel().addTreeSelectionListener(
-      new TreeSelectionListener() {
-        public void valueChanged(TreeSelectionEvent e) {
-          try {
-            updateSelection(tree);
-          }
-          catch (Exception e1) {
-            // Workaround for some race conditions in Swing, see
-            // http://www.intellij.net/tracker/idea/viewSCR?publicId=53961
-          }
+    final TreeSelectionListener selectionListener = new TreeSelectionListener() {
+      public void valueChanged(TreeSelectionEvent e) {
+        try {
+          updateSelection(tree);
+        }
+        catch (Exception e1) {
+          // Workaround for some race conditions in Swing, see
+          // http://www.intellij.net/tracker/idea/viewSCR?publicId=53961
         }
       }
-    );
+    };
+    tree.getSelectionModel().addTreeSelectionListener(selectionListener);
+    tree.addPropertyChangeListener(JTree.SELECTION_MODEL_PROPERTY, new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        updateSelection(tree);
 
-    final TreeModelListener l = new TreeModelListener() {
+        if (evt.getOldValue() != null) {
+          ((TreeSelectionModel)evt.getOldValue()).removeTreeSelectionListener(selectionListener);
+        }
+        if (evt.getNewValue() != null) {
+          ((TreeSelectionModel)evt.getNewValue()).addTreeSelectionListener(selectionListener);
+        }
+      }
+    });
+
+    final TreeModelListener modelListener = new TreeModelListener() {
       @Override
       public void treeNodesChanged(TreeModelEvent e) {
         updateSelection(tree);
@@ -74,17 +91,17 @@ public class TreeToolTipHandler extends AbstractToolTipHandler<Integer, JTree> {
       }
     };
     
-    tree.getModel().addTreeModelListener(l);
+    tree.getModel().addTreeModelListener(modelListener);
     tree.addPropertyChangeListener("model", new PropertyChangeListener() {
       @Override
       public void propertyChange(PropertyChangeEvent evt) {
         updateSelection(tree);
 
         if (evt.getOldValue() != null) {
-          ((TreeModel)evt.getOldValue()).removeTreeModelListener(l);
+          ((TreeModel)evt.getOldValue()).removeTreeModelListener(modelListener);
         }
         if (evt.getNewValue() != null) {
-          ((TreeModel)evt.getNewValue()).addTreeModelListener(l);
+          ((TreeModel)evt.getNewValue()).addTreeModelListener(modelListener);
         }
       }
     });

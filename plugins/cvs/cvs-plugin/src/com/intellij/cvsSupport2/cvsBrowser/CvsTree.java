@@ -107,7 +107,7 @@ public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListene
     mySelectionObservable.addObserver(observer);
   }
 
-  public JTree getTree() {
+  public Tree getTree() {
     return myTree;
   }
 
@@ -138,7 +138,6 @@ public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListene
     addSelectionListener();
 
     TreeUIHelper uiHelper = TreeUIHelper.getInstance();
-    uiHelper.installToolTipHandler(myTree);
     uiHelper.installTreeSpeedSearch(myTree);
     TreeUtil.installActions(myTree);
 

@@ -45,6 +45,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.*;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
@@ -1065,7 +1066,7 @@ public class GitLogTree implements GitTreeViewI {
 
     private void initView(Icon childrenIcon) {
       myStructure = new MyTreeStructure(myCommonData, myFiltering, myProject, childrenIcon, myRootFile);
-      myTree = new JTree();
+      myTree = new Tree();
 
       myAtb = new AbstractTreeBuilder(myTree, new DefaultTreeModel(new DefaultMutableTreeNode()), myStructure, null);
       myAtb.initRootNode();

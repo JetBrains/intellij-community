@@ -20,29 +20,48 @@ import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 public class ListToolTipHandler extends AbstractToolTipHandler<Integer, JList>{
-  public static ListToolTipHandler install(JList list) {
+  public static void install(JList list) {
+    install(list);
+  }
+
+  public static ListToolTipHandler installAndGet(JList list) {
     return new ListToolTipHandler(list);
   }
 
   protected ListToolTipHandler(final JList list) {
     super(list);
 
-    list.getSelectionModel().addListSelectionListener(
-      new ListSelectionListener() {
-        public void valueChanged(ListSelectionEvent e) {
-          if (e.getValueIsAdjusting()) return;
+    final ListSelectionListener selectionListener = new ListSelectionListener() {
+      public void valueChanged(ListSelectionEvent e) {
+        if (e.getValueIsAdjusting()) return;
 
-          updateSelection(list);
+        updateSelection(list);
+      }
+    };
+    list.getSelectionModel().addListSelectionListener( selectionListener );
+
+    list.addPropertyChangeListener("selectionModel", new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        updateSelection(list);
+
+        if (evt.getOldValue() != null) {
+          ((ListSelectionModel)evt.getOldValue()).removeListSelectionListener(selectionListener);
+        }
+        if (evt.getNewValue() != null) {
+          ((ListSelectionModel)evt.getNewValue()).addListSelectionListener(selectionListener);
         }
       }
-    );
+    });
 
-    final ListDataListener l = new ListDataListener() {
+
+    final ListDataListener modelListener = new ListDataListener() {
       public void intervalAdded(ListDataEvent e) {
         updateSelection(list);
       }
@@ -56,17 +75,17 @@ public class ListToolTipHandler extends AbstractToolTipHandler<Integer, JList>{
       }
     };
 
-    list.getModel().addListDataListener(l);
+    list.getModel().addListDataListener(modelListener);
     list.addPropertyChangeListener("model", new PropertyChangeListener() {
       @Override
       public void propertyChange(PropertyChangeEvent evt) {
         updateSelection(list);
 
         if (evt.getOldValue() != null) {
-          ((ListModel)evt.getOldValue()).removeListDataListener(l);
+          ((ListModel)evt.getOldValue()).removeListDataListener(modelListener);
         }
         if (evt.getNewValue() != null) {
-          ((ListModel)evt.getNewValue()).addListDataListener(l);
+          ((ListModel)evt.getNewValue()).addListDataListener(modelListener);
         }
       }
     });

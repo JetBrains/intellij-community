@@ -20,29 +20,56 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
+import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-public class TableToolTipHandler extends AbstractToolTipHandler<TableCellKey, JTable> {
-  public static TableToolTipHandler install(JTable table) {
+public class TableToolTipHandler extends AbstractToolTipHandler<TableCell, JTable> {
+  public static void install(JTable table) {
+    installAndGet(table);
+  }
+  
+  public static TableToolTipHandler installAndGet(JTable table) {
     return new TableToolTipHandler(table);
   }
 
   protected TableToolTipHandler(final JTable table) {
     super(table);
 
-    ListSelectionListener l = new ListSelectionListener() {
+    final ListSelectionListener selectionListener = new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
         if (e.getValueIsAdjusting()) return;
         updateSelection(table);
       }
     };
-    table.getSelectionModel().addListSelectionListener(l);
-    table.getColumnModel().getSelectionModel().addListSelectionListener(l);
+    table.getSelectionModel().addListSelectionListener(selectionListener);
+    table.getColumnModel().getSelectionModel().addListSelectionListener(selectionListener);
 
+    table.addPropertyChangeListener("selectionModel", new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        if (evt.getOldValue() != null) {
+          ((ListSelectionModel)evt.getOldValue()).removeListSelectionListener(selectionListener);
+        }
+        if (evt.getNewValue() != null) {
+          ((ListSelectionModel)evt.getNewValue()).addListSelectionListener(selectionListener);
+        }
+      }
+    });
+    table.addPropertyChangeListener("columnModel", new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        if (evt.getOldValue() != null) {
+          ((TableColumnModel)evt.getOldValue()).getSelectionModel().removeListSelectionListener(selectionListener);
+        }
+        if (evt.getNewValue() != null) {
+          ((TableColumnModel)evt.getNewValue()).getSelectionModel().addListSelectionListener(selectionListener);
+        }
+      }
+    });
 
     final TableModelListener modelListener = new TableModelListener() {
       @Override
@@ -70,35 +97,35 @@ public class TableToolTipHandler extends AbstractToolTipHandler<TableCellKey, JT
   private void updateSelection(JTable table) {
     int row = table.getSelectedRow();
     int column = table.getSelectedColumn();
-    handleSelectionChange((row == -1  || column == -1) ? null : new TableCellKey(row, column));
+    handleSelectionChange((row == -1  || column == -1) ? null : new TableCell(row, column));
   }
 
-  public Rectangle getCellBounds(TableCellKey tableCellKey, Component rendererComponent) {
+  public Rectangle getCellBounds(TableCell tableCellKey, Component rendererComponent) {
     Rectangle cellRect = getCellRect(tableCellKey);
     cellRect.width = rendererComponent.getPreferredSize().width;
     return cellRect;
   }
 
-  private Rectangle getCellRect(TableCellKey tableCellKey) {
-    return myComponent.getCellRect(tableCellKey.myRowIndex, tableCellKey.myColumnIndex, false);
+  private Rectangle getCellRect(TableCell tableCellKey) {
+    return myComponent.getCellRect(tableCellKey.row, tableCellKey.column, false);
   }
 
-  public Component getRendererComponent(TableCellKey key) {
-    int modelColumnIndex = myComponent.convertColumnIndexToModel(key.myColumnIndex);
+  public Component getRendererComponent(TableCell key) {
+    int modelColumnIndex = myComponent.convertColumnIndexToModel(key.column);
     final TableModel model = myComponent.getModel();
-    if (key.myRowIndex < 0 || key.myRowIndex >= model.getRowCount()
-        || key.myColumnIndex < 0 || key.myColumnIndex >= model.getColumnCount()) return null;
+    if (key.row < 0 || key.row >= model.getRowCount()
+        || key.column < 0 || key.column >= model.getColumnCount()) return null;
 
-    return myComponent.getCellRenderer(key.myRowIndex, key.myColumnIndex).
+    return myComponent.getCellRenderer(key.row, key.column).
       getTableCellRendererComponent(myComponent,
-                                    myComponent.getModel().getValueAt(key.myRowIndex, modelColumnIndex),
-                                    myComponent.getSelectionModel().isSelectedIndex(key.myRowIndex),
+                                    myComponent.getModel().getValueAt(key.row, modelColumnIndex),
+                                    myComponent.getSelectionModel().isSelectedIndex(key.row),
                                     myComponent.hasFocus(),
-                                    key.myRowIndex,key.myColumnIndex
+                                    key.row,key.column
       );
   }
 
-  public Rectangle getVisibleRect(TableCellKey key) {
+  public Rectangle getVisibleRect(TableCell key) {
     Rectangle columnVisibleRect = myComponent.getVisibleRect();
     Rectangle cellRect = getCellRect(key);
     int visibleRight = Math.min(columnVisibleRect.x + columnVisibleRect.width, cellRect.x + cellRect.width);
@@ -122,7 +149,7 @@ public class TableToolTipHandler extends AbstractToolTipHandler<TableCellKey, JT
   //  r.width = cm.getColumn(column).getWidth();
   //}
 
-  public TableCellKey getCellKeyForPoint(Point point) {
+  public TableCell getCellKeyForPoint(Point point) {
     int rowIndex = myComponent.rowAtPoint(point);
     if (rowIndex == -1) {
       return null;
@@ -133,6 +160,6 @@ public class TableToolTipHandler extends AbstractToolTipHandler<TableCellKey, JT
       return null;
     }
 
-    return new TableCellKey(rowIndex, columnIndex);
+    return new TableCell(rowIndex, columnIndex);
   }
 }

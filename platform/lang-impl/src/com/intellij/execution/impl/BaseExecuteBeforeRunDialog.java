@@ -71,7 +71,6 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
     tree.setRootVisible(false);
     tree.setShowsRootHandles(true);
     tree.setLineStyleAngled();
-    TreeToolTipHandler.install(tree);
     TreeUtil.installActions(tree);
     new TreeSpeedSearch(tree);
 

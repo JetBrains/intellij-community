@@ -116,7 +116,6 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     myTree.setLargeModel(true);
     new TreeSpeedSearch(myTree);
     ToolTipManager.sharedInstance().registerComponent(myTree);
-    TreeToolTipHandler.install(myTree);
     myTree.setCellRenderer(new NodeRenderer() {
       public void customizeCellRenderer(JTree tree,
                                         Object value,

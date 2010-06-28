@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.ToolTipHandler;
+import com.intellij.ui.ToolTipHandlerFactory;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.EmptyTextHelper;
@@ -43,6 +45,7 @@ import java.util.Map;
 
 public class Tree extends JTree implements ComponentWithEmptyText, Autoscroll, Queryable {
   private EmptyTextHelper myEmptyTextHelper;
+  private ToolTipHandler<Integer> myToolTipHandler;
 
   private AsyncProcessIcon myBusyIcon;
   private boolean myBusy;
@@ -72,6 +75,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, Autoscroll, Q
         return Tree.this.isEmpty();
       }
     };
+
+    myToolTipHandler = ToolTipHandlerFactory.getInstance().install(this);
 
     addMouseListener(new MyMouseListener());
     if (Patches.SUN_BUG_ID_4893787) {
@@ -130,6 +135,10 @@ public class Tree extends JTree implements ComponentWithEmptyText, Autoscroll, Q
 
   public void appendEmptyText(String text, SimpleTextAttributes attrs, ActionListener listener) {
     myEmptyTextHelper.appendEmptyText(text, attrs, listener);
+  }
+
+  public ToolTipHandler<Integer> getToolTipHandler() {
+    return myToolTipHandler;
   }
 
   @Override

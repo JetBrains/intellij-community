@@ -33,8 +33,6 @@
                       serviceImplementation="com.intellij.ide.CopyPasteManagerEx"/>
   <applicationService serviceInterface="com.intellij.openapi.ui.popup.JBPopupFactory"
                       serviceImplementation="com.intellij.ui.popup.PopupFactoryImpl"/>
-  <applicationService serviceInterface="com.intellij.ui.ToolTipHandlerProvider"
-                      serviceImplementation="com.intellij.ui.ToolTipHandlerProviderImpl"/>
   <applicationService serviceInterface="com.intellij.openapi.diff.DiffManager"
                       serviceImplementation="com.intellij.openapi.diff.impl.external.DiffManagerImpl"/>
   <applicationService serviceInterface="com.intellij.openapi.fileEditor.ex.FileEditorProviderManager"
@@ -59,6 +57,8 @@
                       serviceImplementation="com.intellij.ui.content.ContentFactoryImpl"/>
   <applicationService serviceInterface="com.intellij.ui.TreeUIHelper"
                       serviceImplementation="com.intellij.ui.TreeUIHelperImpl"/>
+  <applicationService serviceInterface="com.intellij.ui.ToolTipHandlerFactory"
+                      serviceImplementation="com.intellij.ui.ToolTipHandlerFactoryImpl"/>
   <applicationService serviceInterface="com.intellij.openapi.diff.DiffRequestFactory"
                       serviceImplementation="com.intellij.openapi.diff.impl.mergeTool.DiffRequestFactoryImpl"/>
   <applicationService serviceInterface="com.intellij.ui.SystemNotifications"

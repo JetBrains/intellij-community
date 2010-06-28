@@ -87,7 +87,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   private final Project myProject;
   private final StructureViewModel myTreeModel;
   private static int ourSettingsModificationCount;
-  private JTree myTree;
+  private Tree myTree;
 
   public StructureViewComponent(FileEditor editor, StructureViewModel structureViewModel, Project project) {
     this(editor, structureViewModel, project, true);
@@ -165,7 +165,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     myAutoScrollToSourceHandler.install(getTree());
     myAutoScrollFromSourceHandler.install();
 
-    TreeToolTipHandler.install(getTree());
     TreeUtil.installActions(getTree());
     new TreeSpeedSearch(getTree());
 
@@ -562,10 +561,9 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   }
 
   public JTree getTree() {
-    return myAbstractTreeBuilder == null ? null : myAbstractTreeBuilder.getTree();
+    return myTree;
   }
 
- 
   private final class MyAutoScrollToSourceHandler extends AutoScrollToSourceHandler {
     private boolean myShouldAutoScroll = true;
 

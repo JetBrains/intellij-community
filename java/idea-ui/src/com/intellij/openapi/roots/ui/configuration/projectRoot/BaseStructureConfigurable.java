@@ -154,7 +154,6 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
         return ((MyNode)treePath.getLastPathComponent()).getDisplayName();
       }
     }, true);
-    TreeToolTipHandler.install(myTree);
     ToolTipManager.sharedInstance().registerComponent(myTree);
     myTree.setCellRenderer(new ColoredTreeCellRenderer(){
       public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {

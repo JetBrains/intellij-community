@@ -74,7 +74,6 @@ public class InspectionTree extends Tree {
     myExpandedUserObjects = new HashSet<Object>();
     myExpandedUserObjects.add(project);
 
-    TreeToolTipHandler.install(this);
     TreeUtil.installActions(this);
     new TreeSpeedSearch(this, new Convertor<TreePath, String>() {
       public String convert(TreePath o) {

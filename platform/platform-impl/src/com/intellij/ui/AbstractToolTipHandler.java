@@ -26,7 +26,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 
-abstract public class AbstractToolTipHandler <KeyType, ComponentType extends JComponent>{
+abstract public class AbstractToolTipHandler <KeyType, ComponentType extends JComponent> implements ToolTipHandler<KeyType> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.AbstractToolTipHandler");
 
   protected final ComponentType myComponent;
@@ -138,7 +138,8 @@ abstract public class AbstractToolTipHandler <KeyType, ComponentType extends JCo
    */
   protected abstract KeyType getCellKeyForPoint(Point point);
 
-  public KeyType getCurrentCellKey() {
+  @Override
+  public KeyType getCurrentItem() {
     return myKey;
   }
 

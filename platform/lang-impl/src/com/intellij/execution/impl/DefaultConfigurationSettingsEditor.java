@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeToolTipHandler;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +47,7 @@ import java.util.Map;
 public class DefaultConfigurationSettingsEditor implements Configurable {
 
   @NonNls private final DefaultMutableTreeNode myRoot = new DefaultMutableTreeNode("Root");
-  private final JTree myTree = new JTree(myRoot);
+  private final Tree myTree = new Tree(myRoot);
   private final Project myProject;
   private final Map<ConfigurationType, Configurable> myStoredComponents = new HashMap<ConfigurationType, Configurable>();
   private final ConfigurationType mySelection;
@@ -68,7 +69,6 @@ public class DefaultConfigurationSettingsEditor implements Configurable {
       myRoot.add(new DefaultMutableTreeNode(type));
     }
     myTree.setRootVisible(false);
-    TreeToolTipHandler.install(myTree);
     TreeUtil.installActions(myTree);
     myTree.setCellRenderer(new DefaultTreeCellRenderer() {
       public Component getTreeCellRendererComponent(JTree tree,

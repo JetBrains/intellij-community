@@ -16,6 +16,7 @@
 package com.intellij.ui.components;
 
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TreeUIHelper;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.EmptyTextHelper;
 
@@ -53,6 +54,8 @@ public class JBList extends JList implements ComponentWithEmptyText{
         return JBList.this.isEmpty();
       }
     };
+
+    TreeUIHelper.getInstance().installToolTipHandler(this);
   }
 
   public boolean isEmpty() {

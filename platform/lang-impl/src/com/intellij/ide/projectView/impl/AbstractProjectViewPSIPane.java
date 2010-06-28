@@ -94,7 +94,6 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     EditSourceOnDoubleClickHandler.install(myTree);
 
     ToolTipManager.sharedInstance().registerComponent(myTree);
-    TreeToolTipHandler.install(myTree);
     TreeUtil.installActions(myTree);
 
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {

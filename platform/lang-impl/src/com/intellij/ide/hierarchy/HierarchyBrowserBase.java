@@ -230,7 +230,6 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
     UIUtil.setLineStyleAngled(tree);
     new TreeSpeedSearch(tree);
     TreeUtil.installActions(tree);
-    TreeToolTipHandler.install(tree);
     myAutoScrollToSourceHandler.install(tree);
   }
 

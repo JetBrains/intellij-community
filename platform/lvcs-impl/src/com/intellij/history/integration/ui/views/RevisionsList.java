@@ -25,7 +25,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.SeparatorWithText;
-import com.intellij.ui.TableCellKey;
+import com.intellij.ui.TableCell;
 import com.intellij.ui.TableToolTipHandler;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.AbstractLayoutManager;
@@ -41,8 +41,6 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
 import java.util.*;
 import java.util.List;
 
@@ -61,7 +59,7 @@ public class RevisionsList {
 
     table.resetDefaultFocusTraversalKeys();
 
-    TableToolTipHandler toolTipHandler = TableToolTipHandler.install(table);
+    TableToolTipHandler toolTipHandler = TableToolTipHandler.installAndGet(table);
     table.setDefaultRenderer(Object.class, new MyCellRenderer(table, toolTipHandler));
 
     table.setEmptyText(VcsBundle.message("history.empty"));
@@ -339,7 +337,7 @@ public class RevisionsList {
 
       myItemPanel.setBackground(bg);
 
-      isToolTipShown = new TableCellKey(row, column).equals(myToolTipHandler.getCurrentCellKey());
+      isToolTipShown = new TableCell(row, column).equals(myToolTipHandler.getCurrentItem());
 
       myWrapperPanel.doLayout();
       table.setRowHeight(row, myWrapperPanel.getPreferredSize().height);

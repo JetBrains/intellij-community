@@ -313,7 +313,6 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
         }
       }
     );
-    TreeToolTipHandler.install(myTree);
     TreeUtil.installActions(myTree);
     JScrollPane scrollPane = new JScrollPane(myTree);
     scrollPane.setPreferredSize(new Dimension(350, 450));

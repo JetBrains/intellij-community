@@ -112,9 +112,6 @@ public final class ComponentTree extends Tree implements DataProvider {
     // Install convenient keyboard navigation
     TreeUtil.installActions(this);
 
-    // Install advanced tooltips
-    TreeToolTipHandler.install(this);
-
     // Popup menu
     PopupHandler.installPopupHandler(
       this,

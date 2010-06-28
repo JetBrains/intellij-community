@@ -90,7 +90,6 @@ public abstract class TestTreeView extends Tree implements DataProvider {
         return testProxy.getName();
       }
     });
-    TreeToolTipHandler.install(this);
     TreeUtil.installActions(this);
     PopupHandler.installPopupHandler(this, IdeActions.GROUP_TESTTREE_POPUP, ActionPlaces.TESTTREE_VIEW_POPUP);
   }
