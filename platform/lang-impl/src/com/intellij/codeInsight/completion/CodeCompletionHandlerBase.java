@@ -338,8 +338,8 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       protected void run(Result result) throws Throwable {
         String uniqueText = _uniqueText;
 
-        if (item.getObject() instanceof DeferredUserLookupValue && item instanceof LookupItem) {
-          if (!((DeferredUserLookupValue)item.getObject()).handleUserSelection((LookupItem)item, context.project)) {
+        if (item.getObject() instanceof DeferredUserLookupValue && item.as(LookupItem.class) != null) {
+          if (!((DeferredUserLookupValue)item.getObject()).handleUserSelection(item.as(LookupItem.class), context.project)) {
             return;
           }
 
