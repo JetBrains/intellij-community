@@ -36,7 +36,7 @@ import java.util.List;
 public class DocCommentTokenizer extends Tokenizer<PsiDocComment> {
 
 
-  private final String[] excludedTags = new String[]{"author", "link"};
+  private final String[] excludedTags = new String[]{"author", "link","see","by"};
 
   @Nullable
   @Override
