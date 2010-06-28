@@ -134,11 +134,7 @@ public abstract class BaseSplitter implements Splitter {
   }
 
   public static void checkCancelled() {
-    try {
-      ProgressManager.checkCanceled();
-    }
-    catch (Throwable ignored) {
-    }
+    ProgressManager.checkCanceled();
   }
 
 
