@@ -30,7 +30,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
-import com.intellij.openapi.vcs.impl.ExcludedFileIndex;
+import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -53,6 +53,7 @@ public class PathsVerifier<BinaryType extends FilePatch> {
   private final List<Pair<VirtualFile, ApplyFilePatchBase<BinaryType>>> myBinaryPatches;
   private final List<VirtualFile> myWritableFiles;
   private final BaseMapper myBaseMapper;
+  private ProjectLevelVcsManager myVcsManager;
 
   public PathsVerifier(final Project project, final VirtualFile baseDirectory, final List<FilePatch> patches, BaseMapper baseMapper) {
     myProject = project;
@@ -66,6 +67,7 @@ public class PathsVerifier<BinaryType extends FilePatch> {
     myTextPatches = new ArrayList<Pair<VirtualFile, ApplyTextFilePatch>>();
     myBinaryPatches = new ArrayList<Pair<VirtualFile, ApplyFilePatchBase<BinaryType>>>();
     myWritableFiles = new ArrayList<VirtualFile>();
+    myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
   }
 
   // those to be moved to CL: target + created dirs
@@ -279,12 +281,15 @@ public class PathsVerifier<BinaryType extends FilePatch> {
 
     protected boolean checkModificationValid(final VirtualFile file, final String name) {
       // security check to avoid overwriting system files with a patch
-      if ((file == null) || (! ExcludedFileIndex.getInstance(myProject).isInContent(file)) ||
-          (ProjectLevelVcsManager.getInstance(myProject).getVcsRootFor(file) == null)) {
+      if ((file == null) || (!inContent(file)) || (myVcsManager.getVcsRootFor(file) == null)) {
         setErrorMessage("File to patch found outside content root: " + name);
         return false;
       }
       return true;
+    }
+
+    private boolean inContent(VirtualFile file) {
+      return ((ProjectLevelVcsManagerImpl) myVcsManager).isFileInContent(file);
     }
   }
 
