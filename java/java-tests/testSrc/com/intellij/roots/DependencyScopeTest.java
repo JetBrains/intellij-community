@@ -43,9 +43,9 @@ public class DependencyScopeTest extends ModuleTestCase {
     final VirtualFile[] productionCompilationClasspath = ModuleRootManager.getInstance(moduleA).getFiles(OrderRootType.PRODUCTION_COMPILATION_CLASSES);
     assertEquals(0, productionCompilationClasspath.length);
 
-    final PathsList pathsList = ProjectRootsTraversing.collectRoots(moduleA, ProjectClasspathTraversing.FULL_CLASSPATH_RECURSIVE);
+    final PathsList pathsList = OrderEnumerator.orderEntries(moduleA).recursively().getPathsList();
     assertEquals(1, pathsList.getPathList().size());
-    final PathsList pathsListWithoutTests = ProjectRootsTraversing.collectRoots(moduleA, ProjectClasspathTraversing.FULL_CLASSPATH_WITHOUT_TESTS);
+    final PathsList pathsListWithoutTests = OrderEnumerator.orderEntries(moduleA).productionOnly().recursively().getPathsList();
     assertEquals(0, pathsListWithoutTests.getPathList().size());
   }
 

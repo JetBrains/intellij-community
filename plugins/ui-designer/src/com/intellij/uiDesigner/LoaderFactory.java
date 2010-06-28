@@ -21,17 +21,13 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.roots.ProjectRootsTraversing;
-import com.intellij.openapi.roots.ProjectClasspathTraversing;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
-import com.intellij.openapi.vfs.impl.jar.JarHandler;
 import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.lang.UrlClassLoader;
@@ -93,7 +89,7 @@ public final class LoaderFactory {
       return cachedLoader;
     }
 
-    final String runClasspath = ProjectRootsTraversing.collectRoots(module, ProjectClasspathTraversing.FULL_CLASSPATH_RECURSIVE).getPathsString();
+    final String runClasspath = OrderEnumerator.orderEntries(module).recursively().getPathsList().getPathsString();
 
     final ClassLoader classLoader = createClassLoader(runClasspath);
 
@@ -104,7 +100,7 @@ public final class LoaderFactory {
 
   @NotNull public ClassLoader getProjectClassLoader() {
     if (myProjectClassLoader == null) {
-      final String runClasspath = ProjectRootsTraversing.collectRoots(myProject, ProjectClasspathTraversing.FULL_CLASSPATH_RECURSIVE).getPathsString();
+      final String runClasspath = OrderEnumerator.orderEntries(myProject).getPathsList().getPathsString();
       myProjectClassLoader = createClassLoader(runClasspath);
     }
     return myProjectClassLoader;

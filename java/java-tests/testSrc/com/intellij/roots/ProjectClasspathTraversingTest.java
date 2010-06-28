@@ -26,6 +26,7 @@ import com.intellij.util.PathsList;
 /**
  * @author nik
  */
+@SuppressWarnings({"deprecation"})
 public class ProjectClasspathTraversingTest extends ModuleRootManagerTestCase {
   public void testLibrary() throws Exception {
     addLibraryDependency(myModule, createJDomLibrary());
