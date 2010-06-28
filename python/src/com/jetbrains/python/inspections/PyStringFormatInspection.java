@@ -18,35 +18,14 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: Jul 23, 2009
- * Time: 4:15:10 PM
+ * @author Alexey.Ivanov
  */
-public class PyStringFormatInspection extends LocalInspectionTool {
-  @Nls
-  @NotNull
-  @Override
-  public String getGroupDisplayName() {
-    return PyBundle.message("INSP.GROUP.python");
-  }
-
+public class PyStringFormatInspection extends PyInspection {
   @Nls
   @NotNull
   @Override
   public String getDisplayName() {
     return PyBundle.message("INSP.NAME.str.format");
-  }
-
-  @NotNull
-  @Override
-  public String getShortName() {
-    return "PyStringFormatInspection";
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
   }
 
   @NotNull

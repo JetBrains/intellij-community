@@ -270,6 +270,15 @@ public class PyBuiltinCache {
     return getObjectType("___Classobj");
   }
 
+  @Nullable
+  public PyClassType getClassMethodType() {
+    return getObjectType("classmethod");
+  }
+
+  @Nullable
+  public PyClassType getStaticMethodType() {
+    return getObjectType("staticmethod");
+  }
 
   /**
    * @param target an element to check.

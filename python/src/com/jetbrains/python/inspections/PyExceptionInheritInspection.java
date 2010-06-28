@@ -1,6 +1,5 @@
 package com.jetbrains.python.inspections;
 
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -10,19 +9,9 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- * Author: Alexey.Ivanov
- * Date:   06.03.2010
- * Time:   19:39:09
+ * @author Alexey.Ivanov
  */
-public class PyExceptionInheritInspection extends LocalInspectionTool {
-  @Nls
-  @NotNull
-  @Override
-  public String getGroupDisplayName() {
-    return PyBundle.message("INSP.GROUP.python");
-  }
-
+public class PyExceptionInheritInspection extends PyInspection {
   @Nls
   @NotNull
   @Override
@@ -32,19 +21,8 @@ public class PyExceptionInheritInspection extends LocalInspectionTool {
 
   @NotNull
   @Override
-  public String getShortName() {
-    return "PyExceptionInheritInspection";
-  }
-
-  @NotNull
-  @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new Visitor(holder);
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
   }
 
   private static class Visitor extends PyInspectionVisitor {

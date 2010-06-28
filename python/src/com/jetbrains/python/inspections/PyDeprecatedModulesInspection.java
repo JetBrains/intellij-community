@@ -15,19 +15,9 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: 19.02.2010
- * Time: 14:54:45
+ * @author Alexey.Ivanov
  */
-public class PyDeprecatedModulesInspection extends LocalInspectionTool {
-  @Nls
-  @NotNull
-  @Override
-  public String getGroupDisplayName() {
-    return PyBundle.message("INSP.GROUP.python");
-  }
-
+public class PyDeprecatedModulesInspection extends PyInspection {
   @Nls
   @NotNull
   @Override
@@ -37,19 +27,8 @@ public class PyDeprecatedModulesInspection extends LocalInspectionTool {
 
   @NotNull
   @Override
-  public String getShortName() {
-    return "PyDeprecatedModulesInspection";
-  }
-
-  @NotNull
-  @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new Visitor(holder);
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
   }
 
   private static class Visitor extends PyInspectionVisitor {

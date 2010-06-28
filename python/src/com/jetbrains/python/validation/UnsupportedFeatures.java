@@ -7,6 +7,7 @@ import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.intentions.*;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -95,17 +96,16 @@ public class UnsupportedFeatures extends PyAnnotator {
   public void visitPyImportStatement(PyImportStatement node) {
     PyImportElement[] importElements = node.getImportElements();
     for (PyImportElement importElement : importElements) {
-      PyReferenceExpression importReference = importElement.getImportReference();
-      if (importReference != null) {
-        String name = importReference.getName();
+      final PyQualifiedName qName = importElement.getImportedQName();
+      if (qName != null) {
         if (isPy2(node)) {
-          if ("builtins".equals(name)) {
+          if (qName.matches("builtins")) {
             getHolder().createWarningAnnotation(node, "There is no module builtins in Python 2")
               .registerFix(new ReplaceBuiltinsIntention());
           }
         }
         else {
-          if ("__builtin__".equals(name)) {
+          if (qName.matches("__builtin__")) {
             getHolder().createWarningAnnotation(node, "Module __builtin__ renamed to builtins").registerFix(new ReplaceBuiltinsIntention());
           }
         }

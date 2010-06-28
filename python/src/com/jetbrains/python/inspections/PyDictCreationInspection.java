@@ -1,6 +1,5 @@
 package com.jetbrains.python.inspections;
 
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElementVisitor;
@@ -12,19 +11,9 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: 25.02.2010
- * Time: 16:26:14
+ * @author Alexey.Ivanov
  */
-public class PyDictCreationInspection extends LocalInspectionTool {
-  @Nls
-  @NotNull
-  @Override
-  public String getGroupDisplayName() {
-    return PyBundle.message("INSP.GROUP.python");
-  }
-
+public class PyDictCreationInspection extends PyInspection {
   @Nls
   @NotNull
   @Override
@@ -34,19 +23,8 @@ public class PyDictCreationInspection extends LocalInspectionTool {
 
   @NotNull
   @Override
-  public String getShortName() {
-    return "PyDictCreationInspection";
-  }
-
-  @NotNull
-  @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new Visitor(holder);
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
   }
 
   private static class Visitor extends PyInspectionVisitor {

@@ -162,6 +162,8 @@
     <lang.elementManipulator forClass="com.jetbrains.python.psi.PyStringLiteralExpression"
                              implementationClass="com.jetbrains.python.psi.impl.PyStringLiteralExpressionManipulator"/>
 
+    <analyzeStacktraceFilter implementation="com.jetbrains.python.run.PythonTracebackFilter"/>
+
     <!-- Django -->
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.django.annotator.ViewMethodLineMarkerProvider"/>
     <configurationType implementation="com.jetbrains.django.run.DjangoServerRunConfigurationType"/>

@@ -125,9 +125,11 @@ public class VariantsProcessor implements PsiScopeProcessor {
             }
             if (definer instanceof PyAssignmentStatement) {
               PyExpression value = ((PyAssignmentStatement)definer).getAssignedValue();
-              PyType type = value.getType(TypeEvalContext.fast());
-              if (type != null) {
-                lookupItem = lookupItem.setTypeText(type.getName());
+              if (value != null) {
+                PyType type = value.getType(TypeEvalContext.fast());
+                if (type != null) {
+                  lookupItem = lookupItem.setTypeText(type.getName());
+                }
               }
             }
             myVariants.put(referencedName, lookupItem);

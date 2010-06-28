@@ -1,6 +1,5 @@
 package com.jetbrains.python.inspections;
 
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
@@ -9,35 +8,14 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- * Author: Alexey.Ivanov
- * Date:   01.04.2010
- * Time:   17:36:42
+ * @author Alexey.Ivanov
  */
-public class PyByteLiteralInspection extends LocalInspectionTool {
-  @Nls
-  @NotNull
-  @Override
-  public String getGroupDisplayName() {
-    return PyBundle.message("INSP.GROUP.python");
-  }
-
+public class PyByteLiteralInspection extends PyInspection {
   @Nls
   @NotNull
   @Override
   public String getDisplayName() {
     return PyBundle.message("INSP.NAME.byte.literal");
-  }
-
-  @NotNull
-  @Override
-  public String getShortName() {
-    return "PyByteLiteralInspection";
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
   }
 
   @NotNull

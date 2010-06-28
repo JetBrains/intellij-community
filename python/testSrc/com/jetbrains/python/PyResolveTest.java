@@ -314,4 +314,9 @@ public class PyResolveTest extends PyResolveTestCase {
     PsiElement targetElement = resolve();
     assertInstanceOf(targetElement, PyNamedParameter.class);
   }
+
+  public void testListComprehension() { // PY-1143
+    PsiElement targetElement = resolve();
+    assertInstanceOf(targetElement, PyTargetExpression.class);
+  }
 }

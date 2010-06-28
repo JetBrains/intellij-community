@@ -1,44 +1,24 @@
 package com.jetbrains.python.inspections;
 
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: Jul 28, 2009
- * Time: 4:06:18 PM
+ * @author Alexey.Ivanov
  */
-public class PyMethodOverridingInspection extends LocalInspectionTool {
-
-  @Nls
-  @NotNull
-  public String getGroupDisplayName() {
-    return PyBundle.message("INSP.GROUP.python");
-  }
-
+public class PyMethodOverridingInspection extends PyInspection {
   @Nls
   @NotNull
   public String getDisplayName() {
     return PyBundle.message("INSP.NAME.method.over");
-  }
-
-  @NotNull
-  public String getShortName() {
-    return "PyMethodOverridingInspection";
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
   }
 
   @NotNull

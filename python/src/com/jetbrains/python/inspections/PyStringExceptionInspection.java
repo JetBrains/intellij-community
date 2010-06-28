@@ -11,35 +11,14 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- * Author: Alexey.Ivanov
- * Date:   26.03.2010
- * Time:   19:49:54
+ * @author Alexey.Ivanov
  */
-public class PyStringExceptionInspection extends LocalInspectionTool {
-  @Nls
-  @NotNull
-  @Override
-  public String getGroupDisplayName() {
-    return PyBundle.message("INSP.GROUP.python");
-  }
-
+public class PyStringExceptionInspection extends PyInspection {
   @Nls
   @NotNull
   @Override
   public String getDisplayName() {
     return PyBundle.message("INSP.NAME.raising.string.exception");
-  }
-
-  @NotNull
-  @Override
-  public String getShortName() {
-    return "PyStringExceptionInspection";
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
   }
 
   @NotNull

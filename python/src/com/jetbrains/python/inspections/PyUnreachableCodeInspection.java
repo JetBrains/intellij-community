@@ -16,27 +16,11 @@ import java.util.Arrays;
 /**
  * Detects unreachable code using control flow graph
  */
-public class PyUnreachableCodeInspection extends LocalInspectionTool {
-  @Nls
-  @NotNull
-  public String getGroupDisplayName() {
-    return PyBundle.message("INSP.GROUP.python");
-  }
-
+public class PyUnreachableCodeInspection extends PyInspection {
   @Nls
   @NotNull
   public String getDisplayName() {
     return PyBundle.message("INSP.NAME.unreachable.code");
-  }
-
-  @NotNull
-  public String getShortName() {
-    return "PyUnreachableCodeInspection";
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true; // else profile won't allow it
   }
 
   @NotNull
@@ -75,7 +59,7 @@ public class PyUnreachableCodeInspection extends LocalInspectionTool {
         } while (colorChanged);
 
         int color = colors[0];
-        final boolean warned[] = new boolean[flow.length];
+        final boolean[] warned = new boolean[flow.length];
         Arrays.fill(warned, false);
         for (Instruction instruction : flow) {
           final PsiElement e = instruction.getElement();

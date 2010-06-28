@@ -13,7 +13,6 @@
     <orderEntry type="module" module-name="platform-ultimate" scope="RUNTIME" />
     <orderEntry type="module" module-name="resources-en" scope="RUNTIME" />
     <orderEntry type="module" module-name="xdebugger-impl" scope="RUNTIME" />
-    <orderEntry type="module" module-name="python-py" scope="RUNTIME" />
     <orderEntry type="module" module-name="dom-impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="JavaScriptLanguage" scope="RUNTIME" />
     <orderEntry type="module" module-name="CSS" scope="RUNTIME" />

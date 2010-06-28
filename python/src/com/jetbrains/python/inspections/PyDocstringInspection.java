@@ -11,19 +11,9 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- * Author: Alexey.Ivanov
- * Date:   10.03.2010
- * Time:   16:14:45
+ * @author Alexey.Ivanov
  */
-public class PyDocstringInspection extends LocalInspectionTool {
-  @Nls
-  @NotNull
-  @Override
-  public String getGroupDisplayName() {
-    return PyBundle.message("INSP.GROUP.python");
-  }
-
+public class PyDocstringInspection extends PyInspection {
   @Nls
   @NotNull
   @Override
@@ -31,10 +21,9 @@ public class PyDocstringInspection extends LocalInspectionTool {
     return PyBundle.message("INSP.NAME.docstring");
   }
 
-  @NotNull
   @Override
-  public String getShortName() {
-    return "PyDocstringInspection";
+  public boolean isEnabledByDefault() {
+    return false;
   }
 
   @NotNull

@@ -176,6 +176,8 @@ public class PyResolveUtil {
    */
   protected static boolean refersFromMethodToClass(final PsiElement inner, final PsiElement outer) {
     return (
+      inner != null &&
+      PsiTreeUtil.isAncestor(outer, inner, false) &&
       (PyUtil.getConcealingParent(outer) instanceof PyClass) && // outer is in a class context
       (PsiTreeUtil.getParentOfType(inner, PyFunction.class, false) != null) // inner is a function or method within the class
     );

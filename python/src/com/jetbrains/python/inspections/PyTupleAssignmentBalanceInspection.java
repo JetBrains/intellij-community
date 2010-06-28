@@ -1,6 +1,5 @@
 package com.jetbrains.python.inspections;
 
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElementVisitor;
@@ -10,35 +9,14 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: 27.02.2010
- * Time: 12:55:26
+ * @author Alexey.Ivanov
  */
-public class PyTupleAssignmentBalanceInspection extends LocalInspectionTool {
-  @Nls
-  @NotNull
-  @Override
-  public String getGroupDisplayName() {
-    return PyBundle.message("INSP.GROUP.python");
-  }
-
+public class PyTupleAssignmentBalanceInspection extends PyInspection {
   @Nls
   @NotNull
   @Override
   public String getDisplayName() {
     return PyBundle.message("INSP.NAME.incorrect.assignment");
-  }
-
-  @NotNull
-  @Override
-  public String getShortName() {
-    return "PyTupleAssignmentBalanceInspection";
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
   }
 
   @NotNull

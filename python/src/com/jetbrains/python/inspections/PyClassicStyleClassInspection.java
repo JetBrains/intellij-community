@@ -12,19 +12,9 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: 28.02.2010
- * Time: 17:41:18
+ * @author Alexey.Ivanov
  */
-public class PyClassicStyleClassInspection extends LocalInspectionTool {
-  @Nls
-  @NotNull
-  @Override
-  public String getGroupDisplayName() {
-    return PyBundle.message("INSP.GROUP.python");
-  }
-
+public class PyClassicStyleClassInspection extends PyInspection {
   @Nls
   @NotNull
   @Override
@@ -32,10 +22,9 @@ public class PyClassicStyleClassInspection extends LocalInspectionTool {
     return PyBundle.message("INSP.NAME.classic.class.usage");
   }
 
-  @NotNull
   @Override
-  public String getShortName() {
-    return "PyClassicStyleClassInspection";
+  public boolean isEnabledByDefault() {
+    return false;
   }
 
   @NotNull

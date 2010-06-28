@@ -92,7 +92,7 @@ public class PyUtil {
   /**
    * @see PyUtil#flattenedParens
    */
-  protected static <T extends PyElement> List<T> _unfoldParenExprs(T[] targets, List<T> receiver) {
+  protected static <T extends PyElement> List<T> _unfoldParenExprs(T[] targets, List<T> receiver, boolean unfoldListLiterals) {
     // NOTE: this proliferation of instanceofs is not very beautiful. Maybe rewrite using a visitor.
     for (T exp : targets) {
       if (exp instanceof PyParenthesizedExpression) {
@@ -100,7 +100,7 @@ public class PyUtil {
         PyExpression cont = parex.getContainedExpression();
         if (cont instanceof PyTupleExpression) {
           final PyTupleExpression tupex = (PyTupleExpression)cont;
-          _unfoldParenExprs((T[])tupex.getElements(), receiver);
+          _unfoldParenExprs((T[])tupex.getElements(), receiver, unfoldListLiterals);
         }
         else {
           receiver.add(exp);
@@ -108,7 +108,11 @@ public class PyUtil {
       }
       else if (exp instanceof PyTupleExpression) {
         final PyTupleExpression tupex = (PyTupleExpression)exp;
-        _unfoldParenExprs((T[])tupex.getElements(), receiver);
+        _unfoldParenExprs((T[])tupex.getElements(), receiver, unfoldListLiterals);
+      }
+      else if (exp instanceof PyListLiteralExpression && unfoldListLiterals) {
+        final PyListLiteralExpression listLiteral = (PyListLiteralExpression) exp;
+        _unfoldParenExprs((T[]) listLiteral.getElements(), receiver, unfoldListLiterals);
       }
       else {
         receiver.add(exp);
@@ -129,7 +133,12 @@ public class PyUtil {
    */
   @NotNull
   public static <T extends PyElement> List<T> flattenedParens(T... targets) {
-    return _unfoldParenExprs(targets, new ArrayList<T>(targets.length));
+    return _unfoldParenExprs(targets, new ArrayList<T>(targets.length), false);
+  }
+
+  @NotNull
+  public static <T extends PyElement> List<T> flattenedParensAndLists(T... targets) {
+    return _unfoldParenExprs(targets, new ArrayList<T>(targets.length), true);
   }
 
   // Poor man's filter

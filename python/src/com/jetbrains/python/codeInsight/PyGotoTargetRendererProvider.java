@@ -10,11 +10,9 @@ import com.jetbrains.python.psi.PyElement;
  * @author yole
  */
 public class PyGotoTargetRendererProvider implements GotoTargetRendererProvider {
-  public PsiElementListCellRenderer getRenderer(final PsiElement[] elements) {
-    for(PsiElement element: elements) {
-      if (!(element instanceof PyElement) || !(element instanceof PsiNamedElement)) return null;
-    }
-    return new PyElementListCellRenderer();
+  public PsiElementListCellRenderer getRenderer(final PsiElement element) {
+    if (element instanceof PyElement && element instanceof PsiNamedElement) return new PyElementListCellRenderer();
+    return null;
   }
 
 }

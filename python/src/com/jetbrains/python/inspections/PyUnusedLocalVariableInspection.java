@@ -13,30 +13,13 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author oleg
  */
-public class PyUnusedLocalVariableInspection extends LocalInspectionTool {
+public class PyUnusedLocalVariableInspection extends PyInspection {
   private final ThreadLocal<PyUnusedLocalVariableInspectionVisitor> myLastVisitor = new ThreadLocal<PyUnusedLocalVariableInspectionVisitor>();
-
-  @Nls
-  @NotNull
-  @Override
-  public String getGroupDisplayName() {
-    return PyBundle.message("INSP.GROUP.python");
-  }
 
   @NotNull
   @Nls
   public String getDisplayName() {
     return PyBundle.message("INSP.NAME.unused");
-  }
-
-  @NotNull
-  @NonNls
-  public String getShortName() {
-    return "PyUnusedLocalVariableInspection";
-  }
-
-  public boolean isEnabledByDefault() {
-    return true;
   }
 
   @NotNull
@@ -53,10 +36,4 @@ public class PyUnusedLocalVariableInspection extends LocalInspectionTool {
     visitor.registerProblems();
     myLastVisitor.remove();
   }
-
-  @NotNull
-  public HighlightDisplayLevel getDefaultLevel() {
-    return HighlightDisplayLevel.WARNING;
-  }
-
 }

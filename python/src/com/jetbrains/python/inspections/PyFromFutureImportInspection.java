@@ -17,35 +17,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * Author: Alexey.Ivanov
- * Date:   24.03.2010
- * Time:   19:04:41
+ * @author Alexey.Ivanov
  */
-public class PyFromFutureImportInspection extends LocalInspectionTool {
-  @Nls
-  @NotNull
-  @Override
-  public String getGroupDisplayName() {
-    return PyBundle.message("INSP.GROUP.python");
-  }
-
+public class PyFromFutureImportInspection extends PyInspection {
   @Nls
   @NotNull
   @Override
   public String getDisplayName() {
     return PyBundle.message("INSP.NAME.from.future.import");
-  }
-
-  @NotNull
-  @Override
-  public String getShortName() {
-    return "PyFromFutureImportInspection";
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
   }
 
   @NotNull

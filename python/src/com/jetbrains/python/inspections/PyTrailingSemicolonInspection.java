@@ -14,31 +14,13 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: Jul 29, 2009
- * Time: 6:53:15 PM
+ * @author Alexey.Ivanov
  */
-public class PyTrailingSemicolonInspection extends LocalInspectionTool {
-  @Nls
-  @NotNull
-  public String getGroupDisplayName() {
-    return PyBundle.message("INSP.GROUP.python");
-  }
-
+public class PyTrailingSemicolonInspection extends PyInspection {
   @Nls
   @NotNull
   public String getDisplayName() {
     return PyBundle.message("INSP.NAME.trailing.semicolon");
-  }
-
-  @NotNull
-  public String getShortName() {
-    return "PyTrailingSemicolonInspection";
-  }
-
-  public boolean isEnabledByDefault() {
-    return true;
   }
 
   @NotNull

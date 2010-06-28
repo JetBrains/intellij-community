@@ -13,14 +13,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Alexey.Ivanov
  */
-public class PyRaisingNewStyleClassInspection extends LocalInspectionTool {
-  @Nls
-  @NotNull
-  @Override
-  public String getGroupDisplayName() {
-    return PyBundle.message("INSP.GROUP.python");
-  }
-
+public class PyRaisingNewStyleClassInspection extends PyInspection {
   @Nls
   @NotNull
   @Override
@@ -30,19 +23,8 @@ public class PyRaisingNewStyleClassInspection extends LocalInspectionTool {
 
   @NotNull
   @Override
-  public String getShortName() {
-    return "PyRaisingNewStyleClassInspection";
-  }
-
-  @NotNull
-  @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new Visitor(holder);
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
   }
 
   private static class Visitor extends PyInspectionVisitor {

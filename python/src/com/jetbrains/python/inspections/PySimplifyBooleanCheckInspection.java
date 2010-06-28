@@ -15,30 +15,12 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Alexey.Ivanov
  */
-public class PySimplifyBooleanCheckInspection extends LocalInspectionTool {
-  @Nls
-  @NotNull
-  @Override
-  public String getGroupDisplayName() {
-    return PyBundle.message("INSP.GROUP.python");
-  }
-
+public class PySimplifyBooleanCheckInspection extends PyInspection {
   @Nls
   @NotNull
   @Override
   public String getDisplayName() {
     return PyBundle.message("INSP.NAME.check.can.be.simplified");
-  }
-
-  @NotNull
-  @Override
-  public String getShortName() {
-    return "PySimplifyBooleanCheckInspection";
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
   }
 
   @NotNull
