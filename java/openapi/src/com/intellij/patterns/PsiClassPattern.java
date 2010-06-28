@@ -50,11 +50,7 @@ public class PsiClassPattern extends PsiMemberPattern<PsiClass, PsiClassPattern>
   public PsiClassPattern inheritorOf(final boolean strict, final String className) {
     return with(new PatternCondition<PsiClass>("inheritorOf") {
       public boolean accepts(@NotNull PsiClass psiClass, final ProcessingContext context) {
-        final PsiClass baseClass = JavaPsiFacade.getInstance(psiClass.getProject()).findClass(className, psiClass.getResolveScope());
-        if (baseClass == null) {
-          return false;
-        }
-        return strict ? psiClass.isInheritor(baseClass, true) : InheritanceUtil.isInheritorOrSelf(psiClass, baseClass, true);
+        return InheritanceUtil.isInheritor(psiClass, strict, className);
       }
     });
   }
@@ -66,27 +62,30 @@ public class PsiClassPattern extends PsiMemberPattern<PsiClass, PsiClassPattern>
       }
     });}
 
-  public PsiClassPattern withMember(final ElementPattern<? extends PsiMember> memberPattern) {
-    return with(new PatternCondition<PsiClass>("withMember") {
+  public PsiClassPattern withMethod(final boolean checkDeep, final ElementPattern<? extends PsiMethod> memberPattern) {
+    return with(new PatternCondition<PsiClass>("withMethod") {
       public boolean accepts(@NotNull final PsiClass psiClass, final ProcessingContext context) {
-        for (PsiMethod method : psiClass.getMethods()) {
+        for (PsiMethod method : (checkDeep ? psiClass.getAllMethods() : psiClass.getMethods())) {
           if (memberPattern.accepts(method, context)) {
-            return true;
-          }
-        }
-        for (PsiField field : psiClass.getFields()) {
-          if (memberPattern.accepts(field, context)) {
-            return true;
-          }
-        }
-        for (PsiClass inner : psiClass.getInnerClasses()) {
-          if (memberPattern.accepts(inner, context)) {
             return true;
           }
         }
         return false;
       }
-    });}
+    });
+  }
+  public PsiClassPattern withField(final boolean checkDeep, final ElementPattern<? extends PsiField> memberPattern) {
+    return with(new PatternCondition<PsiClass>("withField") {
+      public boolean accepts(@NotNull final PsiClass psiClass, final ProcessingContext context) {
+        for (PsiField field : (checkDeep ? psiClass.getAllFields() : psiClass.getFields())) {
+          if (memberPattern.accepts(field, context)) {
+            return true;
+          }
+        }
+        return false;
+      }
+    });
+  }
 
    public PsiClassPattern nonAnnotationType() {
     return with(new PatternCondition<PsiClass>("nonAnnotationType") {

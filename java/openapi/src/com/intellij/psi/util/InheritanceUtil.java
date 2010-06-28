@@ -81,11 +81,15 @@ public class InheritanceUtil {
   }
 
   public static boolean isInheritor(@Nullable PsiClass psiClass, final String baseClassName) {
+    return isInheritor(psiClass, false, baseClassName);
+  }
+
+  public static boolean isInheritor(@Nullable PsiClass psiClass, final boolean strict, final String baseClassName) {
     if (psiClass == null) {
       return false;
     }
 
-    return !processSupers(psiClass, true, new Processor<PsiClass>() {
+    return !processSupers(psiClass, !strict, new Processor<PsiClass>() {
       public boolean process(PsiClass psiClass) {
         if (baseClassName.equals(psiClass.getQualifiedName())) {
           return false;
