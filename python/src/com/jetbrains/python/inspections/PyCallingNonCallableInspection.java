@@ -46,13 +46,13 @@ public class PyCallingNonCallableInspection extends PyInspection {
           if (isMethodType(node, classType)) {
             return;
           }
-          if (!classType.isDefinition() && !classType.resolveMember("__call__", PyType.Context.READ).isDefined()) {
-            PyClass pyClass = classType.getPyClass();
-            if (pyClass != null) {
-              classType.resolveMember("__call__", PyType.Context.READ);
-              registerProblem(node, "'" + pyClass.getName() + "' object is not callable");
-            }
-          }
+          //if (!classType.isDefinition() && !classType.resolveMember("__call__", PyType.Context.READ).isDefined()) {
+          //  PyClass pyClass = classType.getPyClass();
+          //  if (pyClass != null) {
+          //    classType.resolveMember("__call__", PyType.Context.READ);
+          //    registerProblem(node, "'" + pyClass.getName() + "' object is not callable");
+          //  }
+          //}
         }
       }
     }
