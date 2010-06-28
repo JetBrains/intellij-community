@@ -162,7 +162,13 @@ public class GitRevisionNumber implements VcsRevisionNumber {
       }
 
       if (otherName == null && thisName == null) {
-        return myTimestamp.compareTo(other.myTimestamp);
+        final int result = myTimestamp.compareTo(other.myTimestamp);
+        if (result == 0) {
+          // it can NOT be 0 - it would mean that revisions are equal but they have different hash codes
+          // but this is NOT correct. but we don't know here how to sort
+          return myRevisionHash.compareTo(other.myRevisionHash);
+        }
+        return result;
       }
       else if (otherName == null) {
         return 1;  // I am an ancestor of the compared revision
