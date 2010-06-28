@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderEx;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class CachedValuesManager {
@@ -85,4 +86,23 @@ public abstract class CachedValuesManager {
                               @NotNull Key<CachedValue<T>> key,
                               @NotNull CachedValueProvider<T> provider,
                               boolean trackValue);
+
+  public <T, D extends UserDataHolder> T getCachedValue(@NotNull D dataHolder,
+                              @NotNull CachedValueProvider<T> provider) {
+    class MemoizationKey<T> extends Key<T> {
+      MemoizationKey(@NotNull @NonNls String name) {
+        super(name);
+      }
+
+      public int hashCode() {
+        return toString().hashCode();
+      }
+
+      @Override
+      public boolean equals(Object obj) {
+        return obj instanceof MemoizationKey && toString().equals(obj.toString());
+      }
+    }
+    return getCachedValue(dataHolder, new MemoizationKey<CachedValue<T>>("$CachedValue$" + provider.getClass().getName()), provider, false);
+  }
 }
