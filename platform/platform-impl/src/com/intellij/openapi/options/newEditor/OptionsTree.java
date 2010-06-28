@@ -431,13 +431,12 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     }
 
     protected SimpleNode[] buildChildren() {
-      ArrayList<SimpleNode> result = new ArrayList<SimpleNode>();
-      for (int i = 0; i < myGroups.size(); i++) {
-        ConfigurableGroup eachGroup = myGroups.get(i);
+      List<SimpleNode> result = new ArrayList<SimpleNode>();
+      for (ConfigurableGroup eachGroup : myGroups) {
         result.addAll(buildGroup(eachGroup));
       }
 
-      return result.toArray(new SimpleNode[result.size()]);
+      return result.isEmpty() ? NO_CHILDREN : result.toArray(new SimpleNode[result.size()]);
     }
 
     private List<EditorNode> buildGroup(final ConfigurableGroup eachGroup) {
@@ -458,7 +457,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     }
   }
 
-  private boolean isInvisibleNode(final Configurable child) {
+  private static boolean isInvisibleNode(final Configurable child) {
     return child instanceof SearchableConfigurable.Parent && !((SearchableConfigurable.Parent)child).isVisible();
   }
 
@@ -495,8 +494,8 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     }
   }
 
+  private static final EditorNode[] EMPTY_EN_ARRAY = new EditorNode[0];
   class EditorNode extends Base {
-
     Configurable myConfigurable;
     ConfigurableGroup myGroup;
 
@@ -510,7 +509,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
 
     protected EditorNode[] buildChildren() {
       List<EditorNode> list = OptionsTree.this.buildChildren(myConfigurable, this, null);
-      return list.toArray(new EditorNode[list.size()]);
+      return list.isEmpty() ? EMPTY_EN_ARRAY : list.toArray(new EditorNode[list.size()]);
     }
 
     @Override

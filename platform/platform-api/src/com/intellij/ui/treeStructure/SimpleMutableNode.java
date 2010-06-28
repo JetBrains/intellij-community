@@ -23,7 +23,7 @@ import java.util.List;
 
 public abstract class SimpleMutableNode extends CachingSimpleNode {
 
-  private final List myChildren = new ArrayList();
+  private final List<SimpleNode> myChildren = new ArrayList<SimpleNode>();
 
   public SimpleMutableNode() {
   }
@@ -37,7 +37,7 @@ public abstract class SimpleMutableNode extends CachingSimpleNode {
   }
 
   protected final SimpleNode[] buildChildren() {
-    return (SimpleNode[]) myChildren.toArray(new SimpleNode[myChildren.size()]);
+    return myChildren.isEmpty() ? NO_CHILDREN : myChildren.toArray(new SimpleNode[myChildren.size()]);
   }
 
   public final SimpleNode add(SimpleNode child) {
@@ -48,8 +48,8 @@ public abstract class SimpleMutableNode extends CachingSimpleNode {
 
 
   public final SimpleNode[] addAll(SimpleNode[] children) {
-    for (int i = 0; i < children.length; i++) {
-      add(children[i]);
+    for (SimpleNode aChildren : children) {
+      add(aChildren);
     }
 
     return children;
