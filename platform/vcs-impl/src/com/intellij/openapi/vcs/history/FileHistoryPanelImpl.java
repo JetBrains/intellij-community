@@ -36,6 +36,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.PanelWithActionsAndCloseButton;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
@@ -120,6 +121,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
   private final FilePath myFilePath;
   private final Runnable myRefresher;
   private final DualView myDualView;
+  private final Map<VcsRevisionNumber, Integer> myRevisionsOrder;
 
   private final Alarm myUpdateAlarm;
 
@@ -129,8 +131,16 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
 
   private static final String COMMIT_MESSAGE_TITLE = VcsBundle.message("label.selected.revision.commit.message");
   @NonNls private static final String VCS_HISTORY_ACTIONS_GROUP = "VcsHistoryActionsGroup";
+
+  private final Comparator<VcsFileRevision> myRevisionsInOrderComparator = new Comparator<VcsFileRevision>() {
+    @Override
+    public int compare(VcsFileRevision o1, VcsFileRevision o2) {
+      // descending
+      return Comparing.compare(myRevisionsOrder.get(o2.getRevisionNumber()), myRevisionsOrder.get(o1.getRevisionNumber()));
+    }
+  };
   
-  private static final DualViewColumnInfo REVISION =
+  private final DualViewColumnInfo REVISION =
     new VcsColumnInfo<VcsRevisionNumber>(VcsBundle.message("column.name.revision.version")) {
       protected VcsRevisionNumber getDataOf(VcsFileRevision object) {
         return object.getRevisionNumber();
@@ -138,6 +148,11 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
 
       public String valueOf(VcsFileRevision object) {
         return object.getRevisionNumber().asString();
+      }
+
+      @Override
+      public void sort(@NotNull List<VcsFileRevision> vcsFileRevisions) {
+        Collections.sort(vcsFileRevisions, myRevisionsInOrderComparator);
       }
 
       @Override
@@ -273,6 +288,9 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     myComments.setEditable(false);
     myComments.setBackground(UIUtil.getComboBoxDisabledBackground());
     myComments.addHyperlinkListener(new BrowserHyperlinkListener());
+
+    myRevisionsOrder = new HashMap<VcsRevisionNumber, Integer>();
+    refreshRevisionsOrder();
 
     replaceTransferable();
 
@@ -425,6 +443,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
 
   private void refresh(final VcsHistorySession session) {
     myHistorySession = session;
+    refreshRevisionsOrder();
     HistoryAsTreeProvider treeHistoryProvider = session.getHistoryAsTreeProvider();
 
     if (treeHistoryProvider != null) {
@@ -1549,6 +1568,17 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     public void update(AnActionEvent e) {
       super.update(e);
       e.getPresentation().setEnabled(! myInRefresh);
+    }
+  }
+
+  private void refreshRevisionsOrder() {
+    final List<VcsFileRevision> list = myHistorySession.getRevisionList();
+    myRevisionsOrder.clear();
+
+    int cnt = 0;
+    for (VcsFileRevision revision : list) {
+      myRevisionsOrder.put(revision.getRevisionNumber(), cnt);
+      ++ cnt;
     }
   }
 }
