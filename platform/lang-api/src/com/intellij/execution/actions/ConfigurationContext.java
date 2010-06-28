@@ -60,7 +60,10 @@ public class ConfigurationContext {
     final ConfigurationContext context = new ConfigurationContext(dataContext);
     final DataManager dataManager = DataManager.getInstance();
     ConfigurationContext sharedContext = dataManager.loadFromDataContext(dataContext, SHARED_CONTEXT);
-    if (sharedContext == null || !Comparing.equal(sharedContext.getLocation().getPsiElement(), context.getLocation().getPsiElement())) {
+    if (sharedContext == null ||
+        sharedContext.getLocation() == null ||
+        context.getLocation() == null ||
+        !Comparing.equal(sharedContext.getLocation().getPsiElement(), context.getLocation().getPsiElement())) {
       sharedContext = context;
       dataManager.saveInDataContext(dataContext, SHARED_CONTEXT, sharedContext);
     }

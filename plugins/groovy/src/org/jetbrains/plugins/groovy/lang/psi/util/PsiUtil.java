@@ -58,14 +58,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrPropertySelection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.JavaIdentifier;
@@ -136,7 +134,19 @@ public class PsiUtil {
       return InheritanceUtil.isInheritor(argumentTypes[0], CommonClassNames.JAVA_UTIL_MAP);
     }
     LOG.assertTrue(signature != null);
-    return GrClosureSignatureUtil.isSignatureApplicable(signature, argumentTypes, place);
+    if (GrClosureSignatureUtil.isSignatureApplicable(signature, argumentTypes, place)) {
+      return true;
+    }
+
+    if (method instanceof GrBuilderMethod &&
+        !((GrBuilderMethod)method).hasObligatoryNamedArguments()) {
+      final PsiParameter[] parameters = method.getParameterList().getParameters();
+      if (parameters.length > 0 && parameters[0].getType() instanceof GrMapType &&
+          (argumentTypes.length == 0 || !(argumentTypes[0] instanceof GrMapType))) {
+        return GrClosureSignatureUtil.isSignatureApplicable(signature.curry(1), argumentTypes, place);
+      }
+    }
+    return false;
   }
 
   public static boolean isApplicable(@Nullable PsiType[] argumentTypes, GrClosureType type, GroovyPsiElement context) {
@@ -147,7 +157,7 @@ public class PsiUtil {
   }
 
   public static PsiClassType createMapType(PsiManager manager, GlobalSearchScope scope) {
-    return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName(CommonClassNames.JAVA_UTIL_MAP, scope);
+    return new GrMapType(scope);
   }
 
   @Nullable
@@ -631,7 +641,7 @@ public class PsiUtil {
         qClass.processDeclarations(processor, ResolveState.initial().put(PsiSubstitutor.KEY, PsiSubstitutor.EMPTY), null, expr);
       }
 
-      ResolveUtil.processNonCodeMethods(qualifierType, processor, expr.getProject(), expr, false);
+      ResolveUtil.processNonCodeMethods(qualifierType, processor, expr, false);
       final GroovyResolveResult[] candidates = processor.getCandidates();
       PsiType type = null;
       if (candidates.length == 1) {
@@ -828,7 +838,7 @@ public class PsiUtil {
         for (NonCodeMembersProcessor membersProcessor : NonCodeMembersProcessor.EP_NAME.getExtensions()) {
           if (!membersProcessor.processNonCodeMembers(thisType, processor, place, true)) break;
         }
-        NonCodeMembersContributor.processDynamicElements(thisType, processor, place, ResolveState.initial());
+        NonCodeMembersContributor.runContributors(thisType, processor, place, ResolveState.initial());
         constructorResults.addAll(Arrays.asList(processor.getCandidates()));
         if (!toBreak) break;
       }

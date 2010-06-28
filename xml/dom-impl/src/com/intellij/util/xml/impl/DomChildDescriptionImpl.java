@@ -21,6 +21,25 @@ public abstract class DomChildDescriptionImpl extends AbstractDomChildDescriptio
     myTagName = tagName;
   }
 
+  public String getName() {
+    return myTagName.getLocalName();
+  }
+
+  public boolean isValid() {
+    return true;
+  }
+
+  public void navigate(boolean requestFocus) {
+  }
+
+  public boolean canNavigate() {
+    return false;
+  }
+
+  public boolean canNavigateToSource() {
+    return false;
+  }
+
   @NotNull
   public String getXmlElementName() {
     return myTagName.getLocalName();

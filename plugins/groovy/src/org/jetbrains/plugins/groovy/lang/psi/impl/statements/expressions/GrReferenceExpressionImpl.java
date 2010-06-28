@@ -624,7 +624,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
                 }
                 if (!javaLangClass.processDeclarations(processor, state, null, refExpr)) return;
                 PsiType javaLangClassType = JavaPsiFacade.getInstance(refExpr.getProject()).getElementFactory().createType(javaLangClass, substitutor);
-                ResolveUtil.processNonCodeMethods(javaLangClassType, processor, refExpr.getProject(), refExpr, false);
+                ResolveUtil.processNonCodeMethods(javaLangClassType, processor, refExpr, false);
               }
             }
           }
@@ -653,7 +653,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         return;
       }
 
-      ResolveUtil.processNonCodeMethods(qualifierType, processor, project, refExpr, false);
+      ResolveUtil.processNonCodeMethods(qualifierType, processor, refExpr, false);
     }
   }
 

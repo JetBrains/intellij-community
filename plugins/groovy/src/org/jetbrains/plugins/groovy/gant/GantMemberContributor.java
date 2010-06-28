@@ -20,7 +20,6 @@ import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.impl.light.LightVariableBuilder;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
@@ -38,9 +37,8 @@ public class GantMemberContributor extends NonCodeMembersContributor {
   public void processDynamicElements(@NotNull PsiType qualifierType,
                                      PsiScopeProcessor processor,
                                      PsiElement place,
-                                     ResolveState state,
-                                     ProcessingContext ctx) {
-    if (ResolveUtil.isInheritor(qualifierType, "groovy.util.AntBuilder", place, ctx)) {
+                                     ResolveState state) {
+    if (ResolveUtil.isInheritor(qualifierType, "groovy.util.AntBuilder", place)) {
       processAntTasks(processor, place);
       return;
     }

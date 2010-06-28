@@ -64,7 +64,11 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
     getProject().getComponent(GroovyCompilerLoader.class).projectOpened();
     CompilerManagerImpl.testSetup();
 
-    CompilerProjectExtension.getInstance(getProject()).setCompilerOutputUrl(myMainOutput.findOrCreateDir("out").getUrl());
+    new WriteCommandAction(getProject()) {
+      protected void run(Result result) throws Throwable {
+        CompilerProjectExtension.getInstance(getProject()).setCompilerOutputUrl(myMainOutput.findOrCreateDir("out").getUrl());
+      }
+    }.execute();
 
     addGroovyLibrary(myModule, getName().contains("1_7"));
 
