@@ -641,7 +641,7 @@ public class PsiUtil {
         qClass.processDeclarations(processor, ResolveState.initial().put(PsiSubstitutor.KEY, PsiSubstitutor.EMPTY), null, expr);
       }
 
-      ResolveUtil.processNonCodeMethods(qualifierType, processor, expr.getProject(), expr, false);
+      ResolveUtil.processNonCodeMethods(qualifierType, processor, expr, false);
       final GroovyResolveResult[] candidates = processor.getCandidates();
       PsiType type = null;
       if (candidates.length == 1) {
@@ -838,7 +838,7 @@ public class PsiUtil {
         for (NonCodeMembersProcessor membersProcessor : NonCodeMembersProcessor.EP_NAME.getExtensions()) {
           if (!membersProcessor.processNonCodeMembers(thisType, processor, place, true)) break;
         }
-        NonCodeMembersContributor.processDynamicElements(thisType, processor, place, ResolveState.initial());
+        NonCodeMembersContributor.runContributors(thisType, processor, place, ResolveState.initial());
         constructorResults.addAll(Arrays.asList(processor.getCandidates()));
         if (!toBreak) break;
       }

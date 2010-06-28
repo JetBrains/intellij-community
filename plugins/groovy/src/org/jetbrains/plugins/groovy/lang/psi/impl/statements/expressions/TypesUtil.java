@@ -134,7 +134,7 @@ public class TypesUtil {
         }
       }
 
-      ResolveUtil.processNonCodeMethods(thisType, processor, place.getProject(), place, false);
+      ResolveUtil.processNonCodeMethods(thisType, processor, place, false);
       return processor.getCandidates();
     }
     return GroovyResolveResult.EMPTY_ARRAY;

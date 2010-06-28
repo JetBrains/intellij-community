@@ -106,7 +106,7 @@ public class GrConstructorInvocationImpl extends GroovyPsiElementImpl implements
       for (NonCodeMembersProcessor membersProcessor : NonCodeMembersProcessor.EP_NAME.getExtensions()) {
         if (!membersProcessor.processNonCodeMembers(thisType, processor, this, true)) break;
       }
-      NonCodeMembersContributor.processDynamicElements(thisType, processor, this, ResolveState.initial());
+      NonCodeMembersContributor.runContributors(thisType, processor, this, ResolveState.initial());
 
       return processor.getCandidates();
     }
