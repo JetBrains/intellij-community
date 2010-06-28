@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -59,5 +60,9 @@ public abstract class OrderEnumerator {
 
   public static OrderEnumerator orderEntries(@NotNull Module module) {
     return ModuleRootManager.getInstance(module).orderEntries();
+  }
+
+  public static OrderEnumerator orderEntries(@NotNull Project project) {
+    return ProjectRootManager.getInstance(project).orderEntries();
   }
 }

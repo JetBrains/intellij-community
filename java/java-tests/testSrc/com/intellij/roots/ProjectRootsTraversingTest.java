@@ -9,6 +9,7 @@ import com.intellij.util.PathsList;
 /**
  * @author nik
  */
+@SuppressWarnings({"deprecation"})
 public class ProjectRootsTraversingTest extends ModuleRootManagerTestCase {
 
   public void testLibrary() throws Exception {

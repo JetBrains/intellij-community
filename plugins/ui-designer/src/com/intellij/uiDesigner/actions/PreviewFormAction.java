@@ -42,6 +42,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectClasspathTraversing;
 import com.intellij.openapi.roots.ProjectRootsTraversing;
 import com.intellij.openapi.ui.Messages;
@@ -125,7 +126,7 @@ public final class PreviewFormAction extends AnAction{
       return;
     }
 
-    final PathsList sources = ProjectRootsTraversing.collectRoots(module, ProjectRootsTraversing.PROJECT_SOURCES);
+    final PathsList sources = OrderEnumerator.orderEntries(module).withoutSdk().withoutLibraries().withoutDepModules().getSourcePathsList();
     final String classPath =
       ProjectRootsTraversing.collectRoots(module, ProjectClasspathTraversing.FULL_CLASSPATH_RECURSIVE).getPathsString() + File.pathSeparator +
       sources.getPathsString() + File.pathSeparator + /* resources bundles */
