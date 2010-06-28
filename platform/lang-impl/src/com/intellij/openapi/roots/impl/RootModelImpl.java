@@ -524,7 +524,7 @@ public class RootModelImpl implements ModifiableRootModel {
   @NotNull
   @Override
   public OrderEnumerator orderEntries() {
-    return new OrderEnumeratorImpl(this);
+    return new ModuleOrderEnumerator(this);
   }
 
   public Project getProject() {

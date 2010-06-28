@@ -3,6 +3,7 @@ package com.intellij.roots;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathsList;
 
@@ -67,6 +68,9 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
     assertClassRoots(orderEntries(myModule).withoutSdk().recursively(), getJDomJar());
     assertClassRoots(orderEntries(myModule).withoutSdk().exportedOnly().recursively(), getJDomJar());
     assertClassRoots(orderEntries(myModule).withoutSdk().productionOnly().recursively());
+
+    assertClassRoots(ProjectRootManager.getInstance(myProject).orderEntries().withoutSdk(), getJDomJar());
+    assertClassRoots(ProjectRootManager.getInstance(myProject).orderEntries().withoutSdk().productionOnly(), getJDomJar());
   }
   
   public void testNotExportedLibrary() throws Exception {

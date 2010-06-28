@@ -22,30 +22,24 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathsList;
 import com.intellij.util.Processor;
-import gnu.trove.THashSet;
 
 import java.util.*;
 
 /**
  * @author nik
  */
-public class OrderEnumeratorImpl extends OrderEnumerator {
-  private final RootModelImpl myRootModel;
+public abstract class OrderEnumeratorBase extends OrderEnumerator {
   private boolean myProductionOnly;
   private boolean myCompileOnly;
   private boolean myRuntimeOnly;
   private boolean myWithoutJdk;
   private boolean myWithoutLibraries;
-  private boolean myWithoutDepModules;
+  protected boolean myWithoutDepModules;
   private boolean myWithoutThisModuleContent;
-  private boolean myRecursively;
+  protected boolean myRecursively;
   private boolean myRecursivelyExportedOnly;
   private boolean myExportedOnly;
   private Condition<OrderEntry> myCondition;
-
-  public OrderEnumeratorImpl(RootModelImpl rootModel) {
-    myRootModel = rootModel;
-  }
 
   @Override
   public OrderEnumerator productionOnly() {
@@ -68,7 +62,7 @@ public class OrderEnumeratorImpl extends OrderEnumerator {
   @Override
   public OrderEnumerator withoutSdk() {
     myWithoutJdk = true;
-    return this; 
+    return this;
   }
 
   @Override
@@ -171,6 +165,45 @@ public class OrderEnumeratorImpl extends OrderEnumerator {
     });
   }
 
+  protected void processEntries(final ModuleRootModel rootModel,
+                              Processor<OrderEntry> processor,
+                              Set<Module> processed, boolean firstLevel) {
+    if (processed != null && !processed.add(rootModel.getModule())) return;
+
+    for (OrderEntry entry : rootModel.getOrderEntries()) {
+      if (myWithoutJdk && entry instanceof JdkOrderEntry
+          || myWithoutLibraries && entry instanceof LibraryOrderEntry
+          || myWithoutDepModules && entry instanceof ModuleOrderEntry
+          || myWithoutThisModuleContent && entry instanceof ModuleSourceOrderEntry) continue;
+
+      if (entry instanceof ExportableOrderEntry) {
+        ExportableOrderEntry exportableEntry = (ExportableOrderEntry)entry;
+        final DependencyScope scope = exportableEntry.getScope();
+        if (myProductionOnly && !scope.isForProductionCompile() && !scope.isForProductionRuntime()) continue;
+        if (myCompileOnly && !scope.isForProductionCompile() && !scope.isForTestCompile()) continue;
+        if (myRuntimeOnly && !scope.isForProductionRuntime() && !scope.isForTestRuntime()) continue;
+        if (!exportableEntry.isExported()) {
+          if (myExportedOnly) continue;
+          if (myRecursivelyExportedOnly && !firstLevel) continue;
+        }
+      }
+
+      if (myCondition != null && !myCondition.value(entry)) continue;
+
+      if (myRecursively && entry instanceof ModuleOrderEntry) {
+        final Module module = ((ModuleOrderEntry)entry).getModule();
+        if (module != null) {
+          processEntries(ModuleRootManager.getInstance(module), processor, processed, false);
+          continue;
+        }
+      }
+
+      if (!processor.process(entry)) {
+        return;
+      }
+    }
+  }
+
   private void collectModulePaths(ModuleRootModel rootModel, List<VirtualFile> list, final boolean collectSources) {
     if (collectSources) {
       if (myProductionOnly) {
@@ -208,48 +241,7 @@ public class OrderEnumeratorImpl extends OrderEnumerator {
   }
 
   @Override
-  public void forEach(Processor<OrderEntry> processor) {
-    processEntries(myRootModel, processor, myRecursively ? new THashSet<Module>() : null);
-  }
-
-  private void processEntries(final ModuleRootModel rootModel,
-                              Processor<OrderEntry> processor,
-                              Set<Module> processed) {
-    if (processed != null && !processed.add(rootModel.getModule())) return;
-
-    for (OrderEntry entry : rootModel.getOrderEntries()) {
-      if (myWithoutJdk && entry instanceof JdkOrderEntry
-          || myWithoutLibraries && entry instanceof LibraryOrderEntry
-          || myWithoutDepModules && entry instanceof ModuleOrderEntry
-          || myWithoutThisModuleContent && entry instanceof ModuleSourceOrderEntry) continue;
-
-      if (entry instanceof ExportableOrderEntry) {
-        ExportableOrderEntry exportableEntry = (ExportableOrderEntry)entry;
-        final DependencyScope scope = exportableEntry.getScope();
-        if (myProductionOnly && !scope.isForProductionCompile() && !scope.isForProductionRuntime()) continue;
-        if (myCompileOnly && !scope.isForProductionCompile() && !scope.isForTestCompile()) continue;
-        if (myRuntimeOnly && !scope.isForProductionRuntime() && !scope.isForTestRuntime()) continue;
-        if (!exportableEntry.isExported()) {
-          if (myExportedOnly) continue;
-          if (myRecursivelyExportedOnly && myRootModel != rootModel) continue;
-        }
-      }
-
-      if (myCondition != null && !myCondition.value(entry)) continue;
-
-      if (myRecursively && entry instanceof ModuleOrderEntry) {
-        final Module module = ((ModuleOrderEntry)entry).getModule();
-        if (module != null) {
-          processEntries(ModuleRootManager.getInstance(module), processor, processed);
-          continue;
-        }
-      }
-
-      if (!processor.process(entry)) {
-        return;
-      }
-    }
-  }
+  public abstract void forEach(Processor<OrderEntry> processor);
 
   @Override
   public void forEachLibrary(final Processor<Library> processor) {
@@ -267,4 +259,3 @@ public class OrderEnumeratorImpl extends OrderEnumerator {
     });
   }
 }
-
