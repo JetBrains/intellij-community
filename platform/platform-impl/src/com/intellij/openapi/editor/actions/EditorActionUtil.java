@@ -233,9 +233,12 @@ public class EditorActionUtil {
     }
     else if (logLineToUse == logCaretLine) {
       int line = currentVisCaret.line;
-      int column = 0;
+      int column;
       if (currentVisCaret.column == 0) {
         column = findSmartIndentColumn(editor, currentVisCaret.line);
+      }
+      else {
+        column = findFirstNonSpaceColumnOnTheLine(editor, currentVisCaret.line);
       }
       caretModel.moveToVisualPosition(new VisualPosition(line, column));
     }

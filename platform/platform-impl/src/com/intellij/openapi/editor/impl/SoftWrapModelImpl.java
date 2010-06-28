@@ -279,7 +279,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
 
   @NotNull
   public LogicalPosition adjustLogicalPosition(@NotNull LogicalPosition defaultLogical, @NotNull VisualPosition visual) {
-    if (myActive > 0 || !isSoftWrappingEnabled() || myWraps.isEmpty()) {
+    if (myActive > 0 || !isSoftWrappingEnabled() || myWraps.isEmpty() || myEditor.getDocument().getTextLength() <= 0) {
       return defaultLogical;
     }
 

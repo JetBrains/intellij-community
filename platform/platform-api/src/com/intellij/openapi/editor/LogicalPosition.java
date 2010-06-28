@@ -26,6 +26,9 @@ import org.jetbrains.annotations.NonNls;
  * single logical <code>(line; column)</code> pair matches soft wrap-introduced virtual space, i.e. different visual positions
  * correspond to the same logical position. It's convenient to store exact visual location details within the logical
  * position in order to relief further {@code 'logical position' -> 'visual position'} mapping.
+ * <p/>
+ * <b>Note:</b> two objects of this class are considered equal if their logical line and column are equal. I.e. all logical positions
+ * for soft wrap-introduced virtual space and the first document symbol after soft wrap are considered to be equal.
  *
  * @see Editor#offsetToLogicalPosition(int)
  * @see Editor#logicalPositionToOffset(LogicalPosition)
@@ -134,18 +137,11 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
     if (!(o instanceof LogicalPosition)) return false;
     final LogicalPosition logicalPosition = (LogicalPosition) o;
 
-    return column == logicalPosition.column && line == logicalPosition.line && softWrapLines == logicalPosition.softWrapLines
-           && linesFromActiveSoftWrap == logicalPosition.linesFromActiveSoftWrap
-           && softWrapColumnDiff == logicalPosition.softWrapColumnDiff && foldedLines == logicalPosition.foldedLines
-           && foldingColumnDiff == logicalPosition.foldingColumnDiff;
+    return column == logicalPosition.column && line == logicalPosition.line;
   }
 
   public int hashCode() {
-    int result = 29 * line + column;
-    result = result * 29 + softWrapLines;
-    result = 29 * result + softWrapColumnDiff;
-    result = 29 * result + foldedLines;
-    return 29 * result + foldingColumnDiff;
+    return 29 * line + column;
   }
 
   @NonNls
