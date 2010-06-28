@@ -559,10 +559,13 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     @Override
-    protected void paintComponent(Graphics g) {
+    public void paint(Graphics g) {
       ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintStart();
 
       final Rectangle bounds = getBounds();
+
+      g.setColor(myEditor.getBackroundColor());
+      g.fillRect(0, 0, bounds.width, bounds.height);
 
       g.setColor(ButtonlessScrollBarUI.TRACK_BACKGROUND);
       g.fillRect(3, 0, bounds.width, bounds.height);
@@ -626,6 +629,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     @Override
     protected void paintTrack(Graphics g, JComponent c, Rectangle trackBounds) {
       Rectangle bounds = new Rectangle(trackBounds);
+
+      g.setColor(myEditor.getBackroundColor());
+      g.fillRect(0, 0, bounds.width, bounds.height);
+
       bounds.width /= 1.20;
       final int shift = trackBounds.width - bounds.width;
 
