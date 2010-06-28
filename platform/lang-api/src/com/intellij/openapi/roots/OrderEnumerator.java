@@ -51,6 +51,7 @@ public abstract class OrderEnumerator {
 
   public abstract PathsList getPathsList();
   public abstract void collectPaths(PathsList list);
+  public abstract PathsList getSourcePathsList();
   public abstract void collectSourcePaths(PathsList list);
 
   public abstract void forEach(Processor<OrderEntry> processor);

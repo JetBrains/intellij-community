@@ -36,6 +36,8 @@ public class OrderEnumeratorImpl extends OrderEnumerator {
   private boolean myRuntimeOnly;
   private boolean myWithoutJdk;
   private boolean myWithoutLibraries;
+  private boolean myWithoutDepModules;
+  private boolean myWithoutThisModuleContent;
   private boolean myRecursively;
   private boolean myRecursivelyExportedOnly;
   private boolean myExportedOnly;
@@ -77,12 +79,14 @@ public class OrderEnumeratorImpl extends OrderEnumerator {
 
   @Override
   public OrderEnumerator withoutDepModules() {
-    throw new UnsupportedOperationException("'withoutOtherModules' not implemented in " + getClass().getName());
+    myWithoutDepModules = true;
+    return this;
   }
 
   @Override
   public OrderEnumerator withoutThisModuleContent() {
-    throw new UnsupportedOperationException("'withoutThisModuleContent' not implemented in " + getClass().getName());
+    myWithoutThisModuleContent = true;
+    return this;
   }
 
   @Override
@@ -118,6 +122,13 @@ public class OrderEnumeratorImpl extends OrderEnumerator {
   @Override
   public void collectPaths(final PathsList list) {
     list.addVirtualFiles(getClassesRoots());
+  }
+
+  @Override
+  public PathsList getSourcePathsList() {
+    final PathsList list = new PathsList();
+    collectSourcePaths(list);
+    return list;
   }
 
   @Override
@@ -207,8 +218,10 @@ public class OrderEnumeratorImpl extends OrderEnumerator {
     if (processed != null && !processed.add(rootModel.getModule())) return;
 
     for (OrderEntry entry : rootModel.getOrderEntries()) {
-      if (myWithoutJdk && entry instanceof JdkOrderEntry ||
-          myWithoutLibraries && entry instanceof LibraryOrderEntry) continue;
+      if (myWithoutJdk && entry instanceof JdkOrderEntry
+          || myWithoutLibraries && entry instanceof LibraryOrderEntry
+          || myWithoutDepModules && entry instanceof ModuleOrderEntry
+          || myWithoutThisModuleContent && entry instanceof ModuleSourceOrderEntry) continue;
 
       if (entry instanceof ExportableOrderEntry) {
         ExportableOrderEntry exportableEntry = (ExportableOrderEntry)entry;

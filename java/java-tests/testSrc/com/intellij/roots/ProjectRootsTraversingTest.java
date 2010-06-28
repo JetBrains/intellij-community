@@ -1,8 +1,10 @@
 package com.intellij.roots;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectRootsTraversing;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PathsList;
 
 /**
  * @author nik
@@ -11,29 +13,25 @@ public class ProjectRootsTraversingTest extends ModuleRootManagerTestCase {
 
   public void testLibrary() throws Exception {
     addLibraryDependency(myModule, createJDomLibrary());
-    assertRoots(ProjectRootsTraversing.collectRoots(myModule, ProjectRootsTraversing.LIBRARIES_AND_JDK), 
-                getRtJar(), getJDomJar());
-    assertRoots(ProjectRootsTraversing.collectRoots(myModule, ProjectRootsTraversing.PROJECT_LIBRARIES),
-                getJDomJar());
-    assertRoots(ProjectRootsTraversing.collectRoots(myModule, ProjectRootsTraversing.PROJECT_SOURCES));
+    doTest(ProjectRootsTraversing.LIBRARIES_AND_JDK, getRtJar(), getJDomJar());
+    doTest(ProjectRootsTraversing.PROJECT_LIBRARIES, getJDomJar());
+    doTest(ProjectRootsTraversing.PROJECT_SOURCES);
   }
 
   public void testModuleSources() throws Exception {
     final VirtualFile srcRoot = addSourceRoot(myModule, false);
     final VirtualFile testRoot = addSourceRoot(myModule, true);
-    assertRoots(ProjectRootsTraversing.collectRoots(myModule, ProjectRootsTraversing.LIBRARIES_AND_JDK),
-                getRtJar());
 
-    assertRoots(ProjectRootsTraversing.collectRoots(myModule, ProjectRootsTraversing.PROJECT_SOURCES),
-                srcRoot, testRoot);
+    doTest(ProjectRootsTraversing.LIBRARIES_AND_JDK, getRtJar());
+    doTest(ProjectRootsTraversing.PROJECT_SOURCES, srcRoot, testRoot);
   }
-  
+
   public void testModuleOutput() throws Exception {
     setModuleOutput(myModule, false);
     setModuleOutput(myModule, true);
-    assertRoots(ProjectRootsTraversing.collectRoots(myModule, ProjectRootsTraversing.LIBRARIES_AND_JDK),
-                getRtJar());
-    assertRoots(ProjectRootsTraversing.collectRoots(myModule, ProjectRootsTraversing.PROJECT_SOURCES));
+
+    doTest(ProjectRootsTraversing.LIBRARIES_AND_JDK, getRtJar());
+    doTest(ProjectRootsTraversing.PROJECT_SOURCES);
   }
 
   public void testModuleDependency() throws Exception {
@@ -44,8 +42,26 @@ public class ProjectRootsTraversingTest extends ModuleRootManagerTestCase {
     addSourceRoot(dep, true);
     addLibraryDependency(dep, createJDomLibrary());
     addModuleDependency(myModule, dep);
-    assertRoots(ProjectRootsTraversing.collectRoots(myModule, ProjectRootsTraversing.PROJECT_LIBRARIES),
-                getJDomJar());
-    assertRoots(ProjectRootsTraversing.collectRoots(myModule, ProjectRootsTraversing.PROJECT_SOURCES));
+
+    doTest(ProjectRootsTraversing.PROJECT_LIBRARIES, getJDomJar());
+    doTest(ProjectRootsTraversing.PROJECT_SOURCES);
+  }
+
+  private void doTest(final ProjectRootsTraversing.RootTraversePolicy policy, VirtualFile... roots) {
+    assertRoots(ProjectRootsTraversing.collectRoots(myModule, policy), roots);
+    assertRoots(collectByOrderEnumerator(policy), roots);
+  }
+
+  private PathsList collectByOrderEnumerator(ProjectRootsTraversing.RootTraversePolicy policy) {
+    if (policy == ProjectRootsTraversing.LIBRARIES_AND_JDK) {
+      return OrderEnumerator.orderEntries(myModule).withoutDepModules().withoutThisModuleContent().getPathsList();
+    }
+    if (policy == ProjectRootsTraversing.PROJECT_SOURCES) {
+      return OrderEnumerator.orderEntries(myModule).withoutSdk().withoutLibraries().withoutDepModules().getSourcePathsList();
+    }
+    if (policy == ProjectRootsTraversing.PROJECT_LIBRARIES) {
+      return OrderEnumerator.orderEntries(myModule).withoutSdk().withoutThisModuleContent().recursively().getPathsList();
+    }
+    throw new AssertionError(policy);
   }
 }
