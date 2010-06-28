@@ -19,6 +19,10 @@ import com.intellij.openapi.editor.SoftWrapModel;
 import com.intellij.openapi.editor.TextChange;
 import com.intellij.openapi.editor.VisualPosition;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Denis Zhdanov
@@ -26,14 +30,24 @@ import org.jetbrains.annotations.NotNull;
  */
 public class TextComponentSoftWrapModel implements SoftWrapModel {
 
+  @Override
   public boolean isSoftWrappingEnabled() {
     return false;
   }
 
+  @Nullable
+  @Override
   public TextChange getSoftWrap(int offset) {
     return null;
   }
 
+  @NotNull
+  @Override
+  public List<TextChange> getSoftWrapsForLine(int documentLine) {
+    return Collections.emptyList();
+  }
+
+  @Override
   public void beforeDocumentChange(@NotNull VisualPosition position) {
   }
 }

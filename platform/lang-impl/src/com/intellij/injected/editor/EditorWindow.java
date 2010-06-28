@@ -398,8 +398,8 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
     myDelegate.setBackgroundColor(color);
   }
 
-  public Color getBackroundColor() {
-    return myDelegate.getBackroundColor();
+  public Color getBackgroundColor() {
+    return myDelegate.getBackgroundColor();
   }
 
   public int getMaxWidthInRange(final int startOffset, final int endOffset) {
