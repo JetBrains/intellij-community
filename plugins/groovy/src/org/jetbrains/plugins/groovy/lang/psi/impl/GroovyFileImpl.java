@@ -161,12 +161,21 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     }
 
     if (classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.PACKAGE)) {
-      PsiPackage defaultPackage = JavaPsiFacade.getInstance(getProject()).findPackage("");
-      if (defaultPackage != null) {
-        for (PsiPackage subPackage : defaultPackage.getSubPackages(getResolveScope())) {
-          if (!ResolveUtil.processElement(processor, subPackage)) return false;
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+      if (expectedName != null) {
+        final PsiPackage pkg = facade.findPackage(expectedName);
+        if (pkg != null && !processor.execute(pkg, state)) {
+          return false;
+        }
+      } else {
+        PsiPackage defaultPackage = facade.findPackage("");
+        if (defaultPackage != null) {
+          for (PsiPackage subPackage : defaultPackage.getSubPackages(getResolveScope())) {
+            if (!ResolveUtil.processElement(processor, subPackage)) return false;
+          }
         }
       }
+
     }
 
     return true;
