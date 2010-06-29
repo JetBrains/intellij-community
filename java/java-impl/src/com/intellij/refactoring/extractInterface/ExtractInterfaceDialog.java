@@ -22,8 +22,8 @@ import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.DelegatingMemberInfoModel;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
-import com.intellij.refactoring.extractSuperclass.ExtractSuperBaseDialog;
 import com.intellij.refactoring.extractSuperclass.ExtractSuperBaseProcessor;
+import com.intellij.refactoring.extractSuperclass.JavaExtractSuperBaseDialog;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
@@ -32,7 +32,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-class ExtractInterfaceDialog extends ExtractSuperBaseDialog {
+class ExtractInterfaceDialog extends JavaExtractSuperBaseDialog {
   private JLabel myInterfaceNameLabel;
   private JLabel myPackageLabel;
 
@@ -168,13 +168,13 @@ class ExtractInterfaceDialog extends ExtractSuperBaseDialog {
     });
     panel.add(memberSelectionPanel, BorderLayout.CENTER);
 
-    panel.add(myJavaDocPanel, BorderLayout.EAST);
+    panel.add(myDocCommentPanel, BorderLayout.EAST);
 
     return panel;
   }
 
   @Override
-  protected String getJavaDocPanelName() {
+  protected String getDocCommentPanelName() {
     return RefactoringBundle.message("extractSuperInterface.javadoc");
   }
 
@@ -184,12 +184,12 @@ class ExtractInterfaceDialog extends ExtractSuperBaseDialog {
   }
 
   @Override
-  protected int getJavaDocPolicySetting() {
+  protected int getDocCommentPolicySetting() {
     return JavaRefactoringSettings.getInstance().EXTRACT_INTERFACE_JAVADOC;
   }
 
   @Override
-  protected void setJavaDocPolicySetting(int policy) {
+  protected void setDocCommentPolicySetting(int policy) {
     JavaRefactoringSettings.getInstance().EXTRACT_INTERFACE_JAVADOC = policy;
   }
 
@@ -197,7 +197,7 @@ class ExtractInterfaceDialog extends ExtractSuperBaseDialog {
   protected ExtractSuperBaseProcessor createProcessor() {
     return new ExtractInterfaceProcessor(myProject, false, getTargetDirectory(), getExtractedSuperName(),
                                          mySourceClass, getSelectedMembers(),
-                                         new DocCommentPolicy(getJavaDocPolicy()));
+                                         new DocCommentPolicy(getDocCommentPolicy()));
   }
 
   @Override
