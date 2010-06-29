@@ -35,6 +35,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.Util;
@@ -73,7 +74,7 @@ public final class InsertComponentProcessor extends EventProcessor {
 
   private static final Map<String, RadComponentFactory> myComponentClassMap = new HashMap<String, RadComponentFactory>();
   static {
-    myComponentClassMap.put(JScrollPane.class.getName(), new RadScrollPane.Factory());
+    myComponentClassMap.put(JBScrollPane.class.getName(), new RadScrollPane.Factory());
     myComponentClassMap.put(JPanel.class.getName(), new RadContainer.Factory());
     myComponentClassMap.put(VSpacer.class.getName(), new RadVSpacer.Factory());
     myComponentClassMap.put(HSpacer.class.getName(), new RadHSpacer.Factory());

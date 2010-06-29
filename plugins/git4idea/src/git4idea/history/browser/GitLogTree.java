@@ -46,6 +46,7 @@ import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.*;
 import com.intellij.util.containers.Convertor;
@@ -270,7 +271,7 @@ public class GitLogTree implements GitTreeViewI {
     myCommitsList.setCellRenderer(myListCellRenderer);
 
     myMainSplitter.setFirstComponent(myFiltersSplitter);
-    final JScrollPane sp = new JScrollPane(myCommitsList, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+    final JBScrollPane sp = new JBScrollPane(myCommitsList, JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JBScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
     myRepositoryChangesBrowser = new RepositoryChangesBrowser(myProject, Collections.<CommittedChangeList>emptyList(), Collections.<Change>emptyList(), null);
     myRepositoryChangesBrowser.getDiffAction().registerCustomShortcutSet(CommonShortcuts.getDiff(), myCommitsList);
@@ -1098,7 +1099,7 @@ public class GitLogTree implements GitTreeViewI {
       titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD));
       myPanel.add(titleLabel, BorderLayout.NORTH);
 
-      myPanel.add(new JScrollPane(myTree), BorderLayout.CENTER);
+      myPanel.add(new JBScrollPane(myTree), BorderLayout.CENTER);
 
       //tree.set
     }

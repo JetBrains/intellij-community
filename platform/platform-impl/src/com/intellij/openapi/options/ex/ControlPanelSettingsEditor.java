@@ -28,7 +28,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.help.HelpManager;
-import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurableGroup;
+import com.intellij.openapi.options.OptionsBundle;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -40,6 +43,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.LabeledIcon;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TitledSeparator;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
@@ -128,7 +132,7 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
                                      new Insets(0, 0, 0, 0), 0, 0));
 
 
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(panel);
+    JBScrollPane scrollPane = ScrollPaneFactory.createScrollPane(panel);
     scrollPane.setBorder(null);
     return scrollPane;
   }

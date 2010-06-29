@@ -19,20 +19,24 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.uiDesigner.radComponents.*;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
 import com.intellij.uiDesigner.componentTree.ComponentTree;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.designSurface.GridCaptionPanel;
-import com.intellij.uiDesigner.quickFixes.QuickFixManager;import com.intellij.util.IJSwingUtilities;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.quickFixes.QuickFixManager;
+import com.intellij.uiDesigner.radComponents.*;
+import com.intellij.util.IJSwingUtilities;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;import javax.swing.event.ChangeListener;import javax.swing.event.ChangeEvent;
+import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.*;
 import java.util.List;
 
 /**
@@ -48,7 +52,7 @@ public final class PropertyInspector extends JPanel{
   @NonNls private static final String INSPECTOR_CARD = "inspector";
   @NonNls private static final String EMPTY_CARD = "empty";
   @NonNls private static final String CUSTOM_CARD = "column";
-  private final JScrollPane myCustomPropertiesScrollPane = new JScrollPane();
+  private final JBScrollPane myCustomPropertiesScrollPane = new JBScrollPane();
   private CustomPropertiesPanel myCustomPropertiesPanel;
   private final ChangeListener myCustomPropertiesChangeListener;
   private RadContainer myPropertiesPanelContainer;
@@ -61,7 +65,7 @@ public final class PropertyInspector extends JPanel{
 
     // Card with property inspector
     final JPanel inspectorCard = new JPanel(new GridBagLayout());
-    final JScrollPane inspectorScrollPane = ScrollPaneFactory.createScrollPane(myInspectorTable);
+    final JBScrollPane inspectorScrollPane = ScrollPaneFactory.createScrollPane(myInspectorTable);
     inspectorCard.add(inspectorScrollPane,
       new GridBagConstraints(0, 0, 0, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0)
     );

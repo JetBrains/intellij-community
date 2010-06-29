@@ -25,6 +25,7 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.AbstractLayoutManager;
@@ -85,10 +86,10 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
 
   private JCheckBox myUseArchetypeCheckBox;
   private JButton myAddArchetypeButton;
-  private JScrollPane myArchetypesScrollPane;
+  private JBScrollPane myArchetypesScrollPane;
   private JPanel myArchetypesPanel;
   private Tree myArchetypesTree;
-  private JScrollPane myArchetypeDescriptionScrollPane;
+  private JBScrollPane myArchetypeDescriptionScrollPane;
   private JTextArea myArchetypeDescriptionField;
 
   private AtomicBoolean myLoadingCancelled = new AtomicBoolean();
@@ -105,7 +106,7 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
   private void initComponents() {
     myArchetypesTree = new Tree();
     myArchetypesTree.setModel(new DefaultTreeModel(new DefaultMutableTreeNode()));
-    myArchetypesScrollPane = new JScrollPane(myArchetypesTree);
+    myArchetypesScrollPane = new JBScrollPane(myArchetypesTree);
 
     myLoadingIcon.setVisible(false);
 

@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.popup.util.MinimizeButton;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.Processor;
@@ -594,9 +595,9 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
       // TODO: switch filter if removed all of the notifications from current one!
 
       final ItemsList list = new ItemsList(model);
-      final JScrollPane scrollPane = new JScrollPane(list);
-      scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-      scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+      final JBScrollPane scrollPane = new JBScrollPane(list);
+      scrollPane.setHorizontalScrollBarPolicy(JBScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+      scrollPane.setVerticalScrollBarPolicy(JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 
       scrollPane.setBorder(null);
       scrollPane.getViewport().setBackground(UIUtil.getPanelBackgound());

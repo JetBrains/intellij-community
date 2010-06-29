@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -151,7 +152,7 @@ public class ImportOptionsDialog extends DialogWrapper implements ActionListener
     myCommitMessage = new JTextArea(10, 0);
     myCommitMessage.setWrapStyleWord(true);
     myCommitMessage.setLineWrap(true);
-    panel.add(new JScrollPane(myCommitMessage), gc);
+    panel.add(new JBScrollPane(myCommitMessage), gc);
 
     gc.gridy += 1;
     gc.gridwidth = 3;

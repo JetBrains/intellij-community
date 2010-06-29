@@ -56,6 +56,7 @@ import com.intellij.profile.codeInspection.ui.actions.DeleteScopeAction;
 import com.intellij.profile.codeInspection.ui.actions.MoveScopeAction;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
@@ -429,7 +430,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     return null;
   }
 
-  private JScrollPane initTreeScrollPane() {
+  private JBScrollPane initTreeScrollPane() {
 
     fillTreeData(null, true);
 
@@ -509,7 +510,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
     myTree.setSelectionModel(new DefaultTreeSelectionModel());
 
-    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
+    final JBScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     TreeUtil.collapseAll(myTree, 1);
     final Dimension preferredSize = new Dimension(myTree.getPreferredSize().width + 20, scrollPane.getPreferredSize().height);

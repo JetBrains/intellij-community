@@ -42,6 +42,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.roots.ToolbarPanel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -87,7 +88,7 @@ public class ContentEntryTreeEditor {
     new TreeSpeedSearch(myTree);
 
     myTreePanel = new MyPanel(new BorderLayout());
-    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
+    final JBScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
     myTreePanel.add(new ToolbarPanel(scrollPane, myEditingActionsGroup), BorderLayout.CENTER);
 
     myTreePanel.setVisible(false);

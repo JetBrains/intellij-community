@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.TableUtil;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.Table;
@@ -108,7 +109,7 @@ public class AnnotationProcessorsConfigurable implements SearchableConfigurable 
     myProcessorsModel = new ProcessorTableModel();
     processorTablePanel.setBorder(new TitledBorder("Annotation Processors"));
     myProcessorTable = new Table(myProcessorsModel);
-    processorTablePanel.add(new JScrollPane(myProcessorTable), BorderLayout.CENTER);
+    processorTablePanel.add(new JBScrollPane(myProcessorTable), BorderLayout.CENTER);
     final JPanel buttons = new JPanel(new GridBagLayout());
     myAddButton = new JButton("Add");
     buttons.add(myAddButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0, 5, 0, 0), 0, 0));

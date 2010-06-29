@@ -24,6 +24,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.debugger.UiDebuggerExtension;
 
 import javax.swing.*;
@@ -71,8 +72,8 @@ public class FocusDebugger implements UiDebuggerExtension, PropertyChangeListene
 
 
     final Splitter splitter = new Splitter(true);
-    splitter.setFirstComponent(new JScrollPane(myLog));
-    splitter.setSecondComponent(new JScrollPane(myAllocation));
+    splitter.setFirstComponent(new JBScrollPane(myLog));
+    splitter.setSecondComponent(new JBScrollPane(myAllocation));
 
     myLog.addListSelectionListener(this);
 

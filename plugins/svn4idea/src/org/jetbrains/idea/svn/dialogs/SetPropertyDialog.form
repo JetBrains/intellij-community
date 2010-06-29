@@ -37,7 +37,7 @@
           <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="radio.set.property.set.property.value"/>
         </properties>
       </component>
-      <scrollpane id="17a49">
+      <scrollpane class="com.intellij.ui.components.JBScrollPane" id="17a49">
         <constraints>
           <grid row="2" column="0" row-span="1" col-span="2" vsize-policy="6" hsize-policy="6" anchor="8" fill="3" indent="0" use-parent-layout="false"/>
           <gridbag top="2" left="2" bottom="2" right="2" weightx="1.0" weighty="1.0"/>

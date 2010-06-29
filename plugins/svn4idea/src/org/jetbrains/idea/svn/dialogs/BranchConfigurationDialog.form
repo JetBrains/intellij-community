@@ -24,7 +24,7 @@
           <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="configure.branches.branch.locations"/>
         </properties>
       </component>
-      <scrollpane id="31cc0">
+      <scrollpane class="com.intellij.ui.components.JBScrollPane" id="31cc0">
         <constraints>
           <grid row="2" column="0" row-span="3" col-span="2" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>

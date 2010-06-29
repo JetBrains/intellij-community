@@ -57,6 +57,7 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -180,7 +181,7 @@ public class FileTemplateConfigurable implements Configurable {
     secondPanel.add(new JLabel(IdeBundle.message("label.description")),
                     new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
                                            new Insets(0, 0, 2, 0), 0, 0));
-    secondPanel.add(new JScrollPane(myDescriptionComponent),
+    secondPanel.add(new JBScrollPane(myDescriptionComponent),
                     new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                                            new Insets(2, 0, 0, 0), 0, 0));
 

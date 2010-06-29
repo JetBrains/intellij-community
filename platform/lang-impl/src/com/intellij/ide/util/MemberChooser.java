@@ -32,6 +32,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Icons;
 import com.intellij.util.SmartList;
@@ -313,7 +314,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
       }
     );
     TreeUtil.installActions(myTree);
-    JScrollPane scrollPane = new JScrollPane(myTree);
+    JBScrollPane scrollPane = new JBScrollPane(myTree);
     scrollPane.setPreferredSize(new Dimension(350, 450));
     panel.add(scrollPane, BorderLayout.CENTER);
 

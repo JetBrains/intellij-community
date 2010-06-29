@@ -34,6 +34,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.ui.treeStructure.Tree;
@@ -87,7 +88,7 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
     public void queryPlace(@NotNull final Place place) {
     }
   });
-  private JScrollPane myMaster;
+  private JBScrollPane myMaster;
 
   public void setHistory(final History history) {
     myHistory = history;
@@ -162,7 +163,7 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
     };
 
     left.add(myNorthPanel, BorderLayout.NORTH);
-    myMaster = new JScrollPane(myTree);
+    myMaster = new JBScrollPane(myTree);
     left.add(myMaster, BorderLayout.CENTER);
     mySplitter.setFirstComponent(left);
 

@@ -29,6 +29,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.ui.Table;
 import org.intellij.lang.xpath.XPathFileType;
@@ -129,7 +130,7 @@ public class EditContextDialog extends DialogWrapper {
         final ActionManager actionManager = ActionManager.getInstance();
         final JComponent varToolbar = actionManager.createActionToolbar("XPathVariables", group, true).getComponent();
         p.add(varToolbar, BorderLayout.NORTH);
-        p.add(new JScrollPane(myVariableTable), BorderLayout.CENTER);
+        p.add(new JBScrollPane(myVariableTable), BorderLayout.CENTER);
 
         int extendedState = myDimensionService.getExtendedState(getDimensionServiceKey());
         if (extendedState == -1) extendedState = 400;
@@ -178,7 +179,7 @@ public class EditContextDialog extends DialogWrapper {
             n.add(nsToolbar, BorderLayout.NORTH);
         }
 
-        n.add(new JScrollPane(myNamespaceTable), BorderLayout.CENTER);
+        n.add(new JBScrollPane(myNamespaceTable), BorderLayout.CENTER);
 
         mySplitter.setFirstComponent(n);
         mySplitter.setSecondComponent(p);

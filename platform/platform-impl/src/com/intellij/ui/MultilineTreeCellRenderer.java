@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -378,10 +379,10 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Tr
     return this;
   }
 
-  public static JScrollPane installRenderer(final JTree tree, final MultilineTreeCellRenderer renderer) {
+  public static JBScrollPane installRenderer(final JTree tree, final MultilineTreeCellRenderer renderer) {
     final TreeCellRenderer defaultRenderer = tree.getCellRenderer();
 
-    JScrollPane scrollpane = new JScrollPane(tree){
+    JBScrollPane scrollpane = new JBScrollPane(tree){
       private int myAddRemoveCounter = 0;
       private boolean myShouldResetCaches = false;
       public void setSize(Dimension d) {
@@ -412,8 +413,8 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Tr
         myAddRemoveCounter--;
       }
     };
-    scrollpane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-    scrollpane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+    scrollpane.setHorizontalScrollBarPolicy(JBScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+    scrollpane.setVerticalScrollBarPolicy(JBScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
     tree.setCellRenderer(renderer);
 

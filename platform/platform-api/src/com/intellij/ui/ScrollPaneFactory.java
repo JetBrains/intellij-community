@@ -15,6 +15,8 @@
  */
 package com.intellij.ui;
 
+import com.intellij.ui.components.JBScrollPane;
+
 import javax.swing.*;
 
 /**
@@ -24,11 +26,11 @@ public class ScrollPaneFactory {
   private ScrollPaneFactory() {
   }
 
-  public static JScrollPane2 createScrollPane() {
-    return new JScrollPane2();
+  public static JBScrollPane createScrollPane() {
+    return new JBScrollPane();
   }
 
-  public static JScrollPane createScrollPane(JComponent view) {
-    return new JScrollPane2(view);
+  public static JBScrollPane createScrollPane(JComponent view) {
+    return new JBScrollPane(view);
   }
 }

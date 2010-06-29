@@ -26,6 +26,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -137,7 +138,7 @@ public class ChooseModulesDialog extends DialogWrapper {
     }
     panel.add(messagePanel, BorderLayout.CENTER);
 
-    final JScrollPane jScrollPane = new JScrollPane();
+    final JBScrollPane jScrollPane = new JBScrollPane();
     jScrollPane.setViewportView(myView);
     jScrollPane.setPreferredSize(new Dimension(300, 80));
     panel.add(jScrollPane, BorderLayout.SOUTH);

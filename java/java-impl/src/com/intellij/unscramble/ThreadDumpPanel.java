@@ -24,8 +24,12 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.*;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.LightColors;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -88,7 +92,7 @@ public class ThreadDumpPanel extends JPanel {
     add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions,false).getComponent(), BorderLayout.WEST);
 
     final Splitter splitter = new Splitter(false, 0.3f);
-    splitter.setFirstComponent(new JScrollPane(myThreadList));
+    splitter.setFirstComponent(new JBScrollPane(myThreadList));
     splitter.setSecondComponent(consoleView.getComponent());
 
     add(splitter, BorderLayout.CENTER);

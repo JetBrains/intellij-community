@@ -118,7 +118,7 @@
                           <text resource-bundle="messages/IdeBundle" key="editbox.plugin.description"/>
                         </properties>
                       </component>
-                      <scrollpane id="8853a">
+                      <scrollpane class="com.intellij.ui.components.JBScrollPane" id="8853a">
                         <constraints>
                           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                           <gridbag weightx="1.0" weighty="0.5"/>
@@ -147,7 +147,7 @@
                           <text resource-bundle="messages/IdeBundle" key="editbox.plugin.change.notes"/>
                         </properties>
                       </component>
-                      <scrollpane id="59a2">
+                      <scrollpane class="com.intellij.ui.components.JBScrollPane" id="59a2">
                         <constraints>
                           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                           <gridbag weightx="1.0" weighty="0.5"/>

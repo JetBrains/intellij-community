@@ -43,6 +43,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
@@ -319,7 +320,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(IdeBorderFactory.createTitledBorder(borderTitle));
 
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(table);
+    JBScrollPane scrollPane = ScrollPaneFactory.createScrollPane(table);
 
     JPanel tablePanel = new JPanel(new BorderLayout());
     tablePanel.add(scrollPane, BorderLayout.CENTER);
@@ -416,7 +417,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     mySignatureArea.setEditable(false);
     mySignatureArea.setBackground(getContentPane().getBackground());
     //mySignatureArea.setFont(myTableFont);
-    JScrollPane scrollPane = new JScrollPane(mySignatureArea);
+    JBScrollPane scrollPane = new JBScrollPane(mySignatureArea);
     scrollPane.setBorder(IdeBorderFactory.createEmptyBorder(new Insets(0,0,0,0)));
     panel.add(scrollPane, BorderLayout.CENTER);
 

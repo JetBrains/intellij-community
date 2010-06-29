@@ -41,6 +41,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
@@ -147,7 +148,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
           return HierarchyBrowserBaseEx.this.getPrevOccurenceActionNameImpl();
         }
       });
-      myTreePanel.add(new JScrollPane(tree), key);
+      myTreePanel.add(new JBScrollPane(tree), key);
     }
 
     final JPanel legendPanel = createLegendPanel();

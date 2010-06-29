@@ -32,6 +32,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LabeledIcon;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.UIBundle;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -265,13 +266,13 @@ public class WelcomeScreen {
     myMainPanel.add(quickStartPanel);
     myMainPanel.add(docsPanel);
 
-    JScrollPane myMainScrollPane = new JScrollPane(myMainPanel);
+    JBScrollPane myMainScrollPane = new JBScrollPane(myMainPanel);
     myMainScrollPane.setBorder(null);
-    myMainScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    myMainScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+    myMainScrollPane.setHorizontalScrollBarPolicy(JBScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    myMainScrollPane.setVerticalScrollBarPolicy(JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 
     // Create Plugins Panel
-    JScrollPane myPluginsScrollPane = createPluginsPanel();
+    JBScrollPane myPluginsScrollPane = createPluginsPanel();
 
     // Create Welcome panel
     gBC = new GridBagConstraints(0, 0, 2, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(10, 5, 0, 5), 0, 0);
@@ -332,7 +333,7 @@ public class WelcomeScreen {
     return topPanel;
   }
 
-  private JScrollPane createPluginsPanel() {
+  private JBScrollPane createPluginsPanel() {
     myPluginsPanel = new WelcomeScrollablePanel(new GridBagLayout());
     myPluginsPanel.setBackground(PLUGINS_PANEL_COLOR);
 
@@ -416,10 +417,10 @@ public class WelcomeScreen {
     gBC = new GridBagConstraints(0, 4, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0);
     myPluginsPanel.add(emptyPanel_1, gBC);
 
-    JScrollPane myPluginsScrollPane = ScrollPaneFactory.createScrollPane(myPluginsPanel);
+    JBScrollPane myPluginsScrollPane = ScrollPaneFactory.createScrollPane(myPluginsPanel);
     myPluginsScrollPane.setBorder(BorderFactory.createLineBorder(GRAY_BORDER_COLOR));
-    myPluginsScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    myPluginsScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+    myPluginsScrollPane.setHorizontalScrollBarPolicy(JBScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    myPluginsScrollPane.setVerticalScrollBarPolicy(JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
     return myPluginsScrollPane;
   }
 

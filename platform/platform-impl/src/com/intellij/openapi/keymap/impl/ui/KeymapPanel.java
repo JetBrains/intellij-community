@@ -44,6 +44,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
@@ -232,7 +233,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
     myShortcutsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myShortcutsList.setCellRenderer(new ShortcutListRenderer());
     currentKeysLabel.setLabelFor(myShortcutsList);
-    JScrollPane scrollPane = new JScrollPane(myShortcutsList);
+    JBScrollPane scrollPane = new JBScrollPane(myShortcutsList);
     scrollPane.setPreferredSize(new Dimension(160, 200));
     panel.add(scrollPane, new GridBagConstraints(1,1,1,1,1,1,GridBagConstraints.WEST,GridBagConstraints.BOTH, new Insets(0, 0, 0, 2), 0, 0));
 

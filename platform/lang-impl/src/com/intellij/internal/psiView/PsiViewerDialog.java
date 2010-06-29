@@ -53,6 +53,7 @@ import com.intellij.ui.SortedComboBoxModel;
 import com.intellij.ui.TitledBorderWithMnemonic;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.UIUtil;
@@ -139,14 +140,14 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
 
     myTree.addTreeSelectionListener(new MyTreeSelectionListener());
 
-    JScrollPane scrollPane = new JScrollPane(myTree);
+    JBScrollPane scrollPane = new JBScrollPane(myTree);
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(scrollPane, BorderLayout.CENTER);
     myStructureTreePanel.setLayout(new BorderLayout());
     myStructureTreePanel.add(panel, BorderLayout.CENTER);
 
     myRefs = new JBList(new DefaultListModel());
-    JScrollPane refScrollPane = new JScrollPane(myRefs);
+    JBScrollPane refScrollPane = new JBScrollPane(myRefs);
     JPanel refPanel = new JPanel(new BorderLayout());
     refPanel.add(refScrollPane, BorderLayout.CENTER);
     myReferencesPanel.setLayout(new BorderLayout());

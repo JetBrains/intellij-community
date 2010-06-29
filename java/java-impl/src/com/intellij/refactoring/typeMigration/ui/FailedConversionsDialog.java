@@ -7,12 +7,12 @@ package com.intellij.refactoring.typeMigration.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.ui.components.JBScrollPane;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-
-import org.jetbrains.annotations.NonNls;
 
 public class FailedConversionsDialog extends DialogWrapper {
   private final String[] myConflictDescriptions;
@@ -36,7 +36,7 @@ public class FailedConversionsDialog extends DialogWrapper {
     @NonNls final String contentType = "text/html";
     final JEditorPane messagePane = new JEditorPane(contentType, "");
     messagePane.setEditable(false);
-    JScrollPane scrollPane = new JScrollPane(messagePane);
+    JBScrollPane scrollPane = new JBScrollPane(messagePane);
     scrollPane.setPreferredSize(new Dimension(500, 400));
     panel.add(new JLabel(RefactoringBundle.message("the.following.problems.were.found")), BorderLayout.NORTH);
     panel.add(scrollPane, BorderLayout.CENTER);

@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.components.JBScrollPane;
 
 import javax.swing.*;
 import java.awt.*;
@@ -42,7 +43,7 @@ public class PagedListWithActions<T> {
     myComponentManager.setData(myEngine.getCurrent());
     //myList.setListData(ArrayUtil.toObjectArray(myEngine.getCurrent()));
     myPanel.add(ActionManager.getInstance().createActionToolbar("merge all", createListActions(), true).getComponent(), BorderLayout.NORTH);
-    final JScrollPane scroll = new JScrollPane(myComponentManager.getComponent(), JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+    final JBScrollPane scroll = new JBScrollPane(myComponentManager.getComponent(), JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JBScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
     myPanel.add(scroll, BorderLayout.CENTER);
   }
 

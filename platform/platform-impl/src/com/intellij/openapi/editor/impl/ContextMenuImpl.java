@@ -31,6 +31,7 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
+import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,7 +60,7 @@ public class ContextMenuImpl extends JPanel implements Disposable {
   private boolean myDisposed;
   private final JLayeredPane myLayeredPane;
 
-  public ContextMenuImpl(JLayeredPane layeredPane, @NotNull final JScrollPane container, @NotNull final EditorImpl editor) {
+  public ContextMenuImpl(JLayeredPane layeredPane, @NotNull final JBScrollPane container, @NotNull final EditorImpl editor) {
     setLayout(new BorderLayout(0, 0));
     myEditor = editor;
     myLayeredPane = layeredPane;
@@ -99,7 +100,7 @@ public class ContextMenuImpl extends JPanel implements Disposable {
     setOpaque(false);
   }
 
-  private static boolean isInsideActivationArea(JScrollPane container, Point p) {
+  private static boolean isInsideActivationArea(JBScrollPane container, Point p) {
     final JViewport viewport = container.getViewport();
     final Rectangle r = viewport.getBounds();
     final Point viewPosition = viewport.getViewPosition();

@@ -27,6 +27,7 @@ import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -106,7 +107,7 @@ public class DebuggerUIUtil {
     textArea.setBackground(HintUtil.INFORMATION_COLOR);
     textArea.setLineWrap(false);
 
-    final JScrollPane component = ScrollPaneFactory.createScrollPane(textArea);
+    final JBScrollPane component = ScrollPaneFactory.createScrollPane(textArea);
     final Dimension frameSize = WindowManager.getInstance().getFrame(project).getSize();
     Dimension size = DimensionService.getInstance().getSize(FULL_VALUE_POPUP_DIMENSION_KEY, project);
     if (size == null) {

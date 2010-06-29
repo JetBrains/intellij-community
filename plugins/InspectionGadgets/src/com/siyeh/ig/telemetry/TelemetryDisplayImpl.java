@@ -15,15 +15,15 @@
  */
 package com.siyeh.ig.telemetry;
 
-import javax.swing.JComponent;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
+import com.intellij.ui.components.JBScrollPane;
+
+import javax.swing.*;
 import javax.swing.table.JTableHeader;
 
 public class TelemetryDisplayImpl implements TelemetryDisplay{
 
     private JTable table;
-    private JScrollPane scrollPane;
+    private JBScrollPane scrollPane;
     private final TableSorter model;
 
     public TelemetryDisplayImpl(InspectionGadgetsTelemetry telemetry){

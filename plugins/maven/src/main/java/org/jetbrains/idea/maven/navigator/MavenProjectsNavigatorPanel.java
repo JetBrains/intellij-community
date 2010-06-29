@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.PopupHandler;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.SimpleTree;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -35,7 +36,6 @@ import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
 
-import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -65,7 +65,7 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
 
     actionToolbar.setTargetComponent(tree);
     setToolbar(actionToolbar.getComponent());
-    setContent(new JScrollPane(myTree));
+    setContent(new JBScrollPane(myTree));
 
     myTree.addMouseListener(new PopupHandler() {
       public void invokePopup(final Component comp, final int x, final int y) {

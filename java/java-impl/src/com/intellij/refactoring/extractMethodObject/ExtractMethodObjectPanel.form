@@ -157,7 +157,7 @@
           </component>
         </children>
       </grid>
-      <scrollpane id="54db0">
+      <scrollpane class="com.intellij.ui.components.JBScrollPane" id="54db0">
         <constraints>
           <grid row="10" column="0" row-span="1" col-span="3" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
           <gridbag top="5" left="5" bottom="0" right="0" weightx="0.0" weighty="0.5"/>

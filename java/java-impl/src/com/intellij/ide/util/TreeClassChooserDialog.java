@@ -43,6 +43,7 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
@@ -168,7 +169,7 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
     myTree.setCellRenderer(new NodeRenderer());
     UIUtil.setLineStyleAngled(myTree);
 
-    JScrollPane scrollPane = new JScrollPane(myTree);
+    JBScrollPane scrollPane = new JBScrollPane(myTree);
     scrollPane.setPreferredSize(new Dimension(500, 300));
 
     myTree.addKeyListener(new KeyAdapter() {

@@ -36,6 +36,7 @@ import com.intellij.openapi.util.EdtRunnable;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.SearchTextField;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.navigation.History;
@@ -582,7 +583,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
       if (c != null) {
         if (scrollable) {
-          JScrollPane scroll = new JScrollPane(c);
+          JBScrollPane scroll = new JBScrollPane(c);
           scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
           scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
           scroll.setBorder(null);

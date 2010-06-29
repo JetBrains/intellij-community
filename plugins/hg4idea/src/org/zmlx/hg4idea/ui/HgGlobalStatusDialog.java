@@ -14,18 +14,13 @@ package org.zmlx.hg4idea.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
-
-import javax.swing.Action;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import java.awt.Insets;
-import java.awt.Dimension;
-
 import org.apache.commons.lang.StringUtils;
+
+import javax.swing.*;
+import java.awt.*;
 
 public class HgGlobalStatusDialog extends DialogWrapper {
   private JPanel contentPanel;
@@ -68,7 +63,7 @@ public class HgGlobalStatusDialog extends DialogWrapper {
   private void $$$setupUI$$$() {
     contentPanel = new JPanel();
     contentPanel.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
-    final JScrollPane scrollPane1 = new JScrollPane();
+    final JBScrollPane scrollPane1 = new JBScrollPane();
     contentPanel.add(scrollPane1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, new Dimension(300, 350), null, null, 0, false));
     outputTextArea = new JTextArea();
     outputTextArea.setEditable(false);

@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.ui.components.JBScrollPane;
+
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
@@ -30,7 +32,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * The scrollpane's viewport child.
    * Default is an empty <code>JViewport</code>.
    * 
-   * @see JScrollPane#setViewport
+   * @see com.intellij.ui.components.JBScrollPane#setViewport
    */
   protected JViewport viewport;
 
@@ -39,7 +41,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * The scrollpane's vertical scrollbar child.
    * Default is a <code>JScrollBar</code>.
    * 
-   * @see JScrollPane#setVerticalScrollBar
+   * @see com.intellij.ui.components.JBScrollPane#setVerticalScrollBar
    */
   protected JScrollBar vsb;
 
@@ -48,7 +50,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * The scrollpane's horizontal scrollbar child.
    * Default is a <code>JScrollBar</code>.
    * 
-   * @see JScrollPane#setHorizontalScrollBar
+   * @see com.intellij.ui.components.JBScrollPane#setHorizontalScrollBar
    */
   protected JScrollBar hsb;
 
@@ -56,7 +58,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
   /**
    * The row header child.  Default is <code>null</code>.
    * 
-   * @see JScrollPane#setRowHeader
+   * @see com.intellij.ui.components.JBScrollPane#setRowHeader
    */
   protected JViewport rowHead;
 
@@ -64,7 +66,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
   /**
    * The column header child.  Default is <code>null</code>.
    * 
-   * @see JScrollPane#setColumnHeader
+   * @see com.intellij.ui.components.JBScrollPane#setColumnHeader
    */
   protected JViewport colHead;
 
@@ -73,7 +75,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * The component to display in the lower left corner.
    * Default is <code>null</code>.
    * 
-   * @see JScrollPane#setCorner
+   * @see com.intellij.ui.components.JBScrollPane#setCorner
    */
   protected Component lowerLeft;
 
@@ -82,7 +84,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * The component to display in the lower right corner.
    * Default is <code>null</code>.
    * 
-   * @see JScrollPane#setCorner
+   * @see com.intellij.ui.components.JBScrollPane#setCorner
    */
   protected Component lowerRight;
 
@@ -91,7 +93,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * The component to display in the upper left corner.
    * Default is <code>null</code>.
    * 
-   * @see JScrollPane#setCorner
+   * @see com.intellij.ui.components.JBScrollPane#setCorner
    */
   protected Component upperLeft;
 
@@ -100,7 +102,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * The component to display in the upper right corner.
    * Default is <code>null</code>.
    * 
-   * @see JScrollPane#setCorner
+   * @see com.intellij.ui.components.JBScrollPane#setCorner
    */
   protected Component upperRight;
 
@@ -111,7 +113,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * <p/>
    * This field is obsolete, please use the <code>JScrollPane</code> field instead.
    * 
-   * @see JScrollPane#setVerticalScrollBarPolicy
+   * @see com.intellij.ui.components.JBScrollPane#setVerticalScrollBarPolicy
    */
   protected int vsbPolicy = VERTICAL_SCROLLBAR_AS_NEEDED;
 
@@ -122,7 +124,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * <p/>
    * This field is obsolete, please use the <code>JScrollPane</code> field instead.
    * 
-   * @see JScrollPane#setHorizontalScrollBarPolicy
+   * @see com.intellij.ui.components.JBScrollPane#setHorizontalScrollBarPolicy
    */
   protected int hsbPolicy = HORIZONTAL_SCROLLBAR_AS_NEEDED;
 
@@ -142,7 +144,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * scrollpane.setLayout(mySPLayout):
    * </pre>
    */
-  public void syncWithScrollPane(JScrollPane sp) {
+  public void syncWithScrollPane(JBScrollPane sp) {
     viewport = sp.getViewport();
     vsb = sp.getVerticalScrollBar();
     hsb = sp.getHorizontalScrollBar();
@@ -350,7 +352,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * scrollable contents.
    * 
    * @return the <code>JViewport</code> object that displays the scrollable contents
-   * @see JScrollPane#getViewport
+   * @see com.intellij.ui.components.JBScrollPane#getViewport
    */
   public JViewport getViewport() {
     return viewport;
@@ -361,7 +363,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * Returns the <code>JScrollBar</code> object that handles horizontal scrolling.
    * 
    * @return the <code>JScrollBar</code> object that handles horizontal scrolling
-   * @see JScrollPane#getHorizontalScrollBar
+   * @see com.intellij.ui.components.JBScrollPane#getHorizontalScrollBar
    */
   public JScrollBar getHorizontalScrollBar() {
     return hsb;
@@ -371,7 +373,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * Returns the <code>JScrollBar</code> object that handles vertical scrolling.
    * 
    * @return the <code>JScrollBar</code> object that handles vertical scrolling
-   * @see JScrollPane#getVerticalScrollBar
+   * @see com.intellij.ui.components.JBScrollPane#getVerticalScrollBar
    */
   public JScrollBar getVerticalScrollBar() {
     return vsb;
@@ -382,7 +384,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * Returns the <code>JViewport</code> object that is the row header.
    * 
    * @return the <code>JViewport</code> object that is the row header
-   * @see JScrollPane#getRowHeader
+   * @see com.intellij.ui.components.JBScrollPane#getRowHeader
    */
   public JViewport getRowHeader() {
     return rowHead;
@@ -393,7 +395,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * Returns the <code>JViewport</code> object that is the column header.
    * 
    * @return the <code>JViewport</code> object that is the column header
-   * @see JScrollPane#getColumnHeader
+   * @see com.intellij.ui.components.JBScrollPane#getColumnHeader
    */
   public JViewport getColumnHeader() {
     return colHead;
@@ -407,7 +409,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * @return the <code>Component</code> at the specified corner, as defined in
    *         {@link ScrollPaneConstants}; if <code>key</code> is not one of the
    *         four corners, <code>null</code> is returned
-   * @see JScrollPane#getCorner
+   * @see com.intellij.ui.components.JBScrollPane#getCorner
    */
   public Component getCorner(String key) {
     if (key.equals(LOWER_LEFT_CORNER)) {
@@ -447,7 +449,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
     /* Sync the (now obsolete) policy fields with the
      * JScrollPane.
      */
-    JScrollPane scrollPane = (JScrollPane)parent;
+    JBScrollPane scrollPane = (JBScrollPane)parent;
     vsbPolicy = scrollPane.getVerticalScrollBarPolicy();
     hsbPolicy = scrollPane.getHorizontalScrollBarPolicy();
 
@@ -565,7 +567,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
     /* Sync the (now obsolete) policy fields with the
      * JScrollPane.
      */
-    JScrollPane scrollPane = (JScrollPane)parent;
+    JBScrollPane scrollPane = (JBScrollPane)parent;
     vsbPolicy = scrollPane.getVerticalScrollBarPolicy();
     hsbPolicy = scrollPane.getHorizontalScrollBarPolicy();
 
@@ -665,7 +667,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
     /* Sync the (now obsolete) policy fields with the
      * JScrollPane.
      */
-    JScrollPane scrollPane = (JScrollPane)parent;
+    JBScrollPane scrollPane = (JBScrollPane)parent;
     vsbPolicy = scrollPane.getVerticalScrollBarPolicy();
     hsbPolicy = scrollPane.getHorizontalScrollBarPolicy();
 
@@ -1048,7 +1050,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * @deprecated As of JDK version Swing1.1
    *             replaced by <code>JScrollPane.getViewportBorderBounds()</code>.
    */
-  public Rectangle getViewportBorderBounds(JScrollPane scrollpane) {
+  public Rectangle getViewportBorderBounds(JBScrollPane scrollpane) {
     return scrollpane.getViewportBorderBounds();
   }
 

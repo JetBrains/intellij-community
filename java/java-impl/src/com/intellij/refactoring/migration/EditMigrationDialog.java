@@ -22,6 +22,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.Table;
 
 import javax.swing.*;
@@ -116,10 +117,10 @@ public class EditMigrationDialog extends DialogWrapper{
     myDescriptionTextArea = new JTextArea(myMigrationMap.getDescription(), 3, 40);
     myDescriptionTextArea.setLineWrap(true);
     myDescriptionTextArea.setWrapStyleWord(true);
-    JScrollPane scrollPane = new JScrollPane(myDescriptionTextArea);
+    JBScrollPane scrollPane = new JBScrollPane(myDescriptionTextArea);
     scrollPane.setBorder(null);
-    scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-    scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+    scrollPane.setHorizontalScrollBarPolicy(JBScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+    scrollPane.setVerticalScrollBarPolicy(JBScrollPane.VERTICAL_SCROLLBAR_NEVER);
     myDescriptionTextArea.setFont(myNameField.getFont());
     myDescriptionTextArea.setBackground(myNameField.getBackground());
     scrollPane.setBorder(myNameField.getBorder());
@@ -294,7 +295,7 @@ public class EditMigrationDialog extends DialogWrapper{
     myTable.setRowSelectionInterval(selected + 1, selected + 1);
   }
 
-  private JScrollPane createTable() {
+  private JBScrollPane createTable() {
     final String[] names = {
       RefactoringBundle.message("migration.type.column.header"),
       RefactoringBundle.message("migration.old.name.column.header"),

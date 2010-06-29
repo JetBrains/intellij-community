@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.containers.HashMap;
 
 import javax.swing.*;
@@ -82,7 +83,7 @@ public class SelectFontDialog extends DialogWrapper {
     JPanel panel = new JPanel(new BorderLayout());
 
     panel.add(myShowMonospacedCheckbox, BorderLayout.NORTH);
-    panel.add(new JScrollPane(myFontList), BorderLayout.CENTER);
+    panel.add(new JBScrollPane(myFontList), BorderLayout.CENTER);
 
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {

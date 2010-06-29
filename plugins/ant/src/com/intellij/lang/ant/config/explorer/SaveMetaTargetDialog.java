@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ArrayUtil;
 
 import javax.swing.*;
@@ -96,7 +97,7 @@ public class SaveMetaTargetDialog extends DialogWrapper {
                                                                                                     0.0, 0.0, GridBagConstraints.NORTHWEST,
                                                                                                     GridBagConstraints.NONE,
                                                                                                     new Insets(6, 0, 0, 0), 0, 0));
-    panel.add(new JScrollPane(myTargetList), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 2, 1.0, 1.0,
+    panel.add(new JBScrollPane(myTargetList), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 2, 1.0, 1.0,
                                                                     GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
                                                                     new Insets(4, 0, 0, 0), 0, 0));
 

@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.UIUtil;
 
@@ -151,13 +152,13 @@ public class ModuleTypeStep extends ModuleWizardStep {
     descriptionLabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
     myPanel.add(descriptionLabel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.SOUTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
 
-    final JScrollPane typesListScrollPane = ScrollPaneFactory.createScrollPane(myTypesList);
+    final JBScrollPane typesListScrollPane = ScrollPaneFactory.createScrollPane(myTypesList);
     final Dimension preferredSize = calcTypeListPreferredSize(allModuleTypes);
     typesListScrollPane.setPreferredSize(preferredSize);
     typesListScrollPane.setMinimumSize(preferredSize);
     myPanel.add(typesListScrollPane, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.2, (createNewProject? 1.0 : 0.0), GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, createNewProject? 10 : 30, 0, 10), 0, 0));
 
-    final JScrollPane descriptionScrollPane = ScrollPaneFactory.createScrollPane(myModuleDescriptionPane);
+    final JBScrollPane descriptionScrollPane = ScrollPaneFactory.createScrollPane(myModuleDescriptionPane);
     descriptionScrollPane.setPreferredSize(new Dimension(preferredSize.width * 3, preferredSize.height));
     myPanel.add(descriptionScrollPane, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.8, (createNewProject? 1.0 : 0.0), GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 10), 0, 0));
 

@@ -23,6 +23,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -178,7 +179,7 @@ class MouseShortcutDialog extends DialogWrapper{
       new GridBagConstraints(0,3,1,1,1,1,GridBagConstraints.CENTER,GridBagConstraints.BOTH,new Insets(0,0,0,0),0,0)
     );
     myTarConflicts.setPreferredSize(new Dimension(260,60));
-    JScrollPane scrollPane=new JScrollPane(myTarConflicts);
+    JBScrollPane scrollPane=new JBScrollPane(myTarConflicts);
     scrollPane.setBorder(null);
     conflictsPanel.add(
       scrollPane,

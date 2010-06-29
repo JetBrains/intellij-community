@@ -37,6 +37,7 @@ import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckboxTreeBase;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.HashSet;
@@ -103,7 +104,7 @@ public abstract class CallerChooser extends DialogWrapper {
     };
     myTree.getSelectionModel().addTreeSelectionListener(myTreeSelectionListener);
 
-    JScrollPane scrollPane = new JScrollPane(myTree);
+    JBScrollPane scrollPane = new JBScrollPane(myTree);
     splitter.setFirstComponent(scrollPane);
     final JComponent callSitesViewer = createCallSitesViewer();
     TreePath selectionPath = myTree.getSelectionPath();

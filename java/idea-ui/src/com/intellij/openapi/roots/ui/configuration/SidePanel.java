@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.ui.popup.ListItemDescriptor;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
@@ -79,7 +80,7 @@ public class SidePanel extends JPanel {
     myList.setCellRenderer(new GroupedItemsListRenderer(descriptor));
 
 
-    add(new JScrollPane(myList), BorderLayout.CENTER);
+    add(new JBScrollPane(myList), BorderLayout.CENTER);
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     myList.addListSelectionListener(new ListSelectionListener() {

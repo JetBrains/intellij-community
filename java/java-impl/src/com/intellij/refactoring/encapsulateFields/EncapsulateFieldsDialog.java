@@ -24,13 +24,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.DocCommentPanel;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.IconUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.EmptyIcon;
@@ -389,7 +390,7 @@ public String getAccessorsVisibility() {
     myTable.setPreferredScrollableViewportSize(new Dimension(550, myTable.getRowHeight() * 12));
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
+    JBScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
 //    JLabel label = new JLabel("Fields to Encapsulate");
 //    CompTitledBorder titledBorder = new CompTitledBorder(label);
     Border titledBorder = IdeBorderFactory.createTitledBorder(RefactoringBundle.message("encapsulate.fields.fields.to.encapsulate.border.title"));

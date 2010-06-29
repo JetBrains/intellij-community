@@ -33,6 +33,7 @@ import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SeparatorFactory;
 import com.intellij.ui.TableUtil;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.SortableColumnModel;
 import com.intellij.util.ui.UIUtil;
@@ -86,7 +87,7 @@ public class CommittedChangesBrowser extends JPanel {
     myCommitMessageArea.setEditable(false);
 
     JPanel commitPanel = new JPanel(new BorderLayout());
-    commitPanel.add(new JScrollPane(myCommitMessageArea), BorderLayout.CENTER);
+    commitPanel.add(new JBScrollPane(myCommitMessageArea), BorderLayout.CENTER);
     final JComponent separator = SeparatorFactory.createSeparator(VcsBundle.message("label.commit.comment"), myCommitMessageArea);
     commitPanel.add(separator, BorderLayout.NORTH);
 
@@ -114,7 +115,7 @@ public class CommittedChangesBrowser extends JPanel {
     ++ innerGb.gridy;
     innerGb.weighty = 1;
     innerGb.fill = GridBagConstraints.BOTH;
-    listContainer.add(new JScrollPane(myChangeListsView), innerGb);
+    listContainer.add(new JBScrollPane(myChangeListsView), innerGb);
 
     final GridBagConstraints gb =
       new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH, new Insets(1, 1, 1, 1), 0, 0);

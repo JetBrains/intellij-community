@@ -122,7 +122,7 @@
             </constraints>
             <properties/>
           </component>
-          <scrollpane id="a8256">
+          <scrollpane class="com.intellij.ui.components.JBScrollPane" id="a8256">
             <constraints>
               <grid row="0" column="1" row-span="1" col-span="3" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
@@ -138,7 +138,7 @@
               </component>
             </children>
           </scrollpane>
-          <scrollpane id="55a1f">
+          <scrollpane class="com.intellij.ui.components.JBScrollPane" id="55a1f">
             <constraints>
               <grid row="1" column="1" row-span="1" col-span="3" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
@@ -268,7 +268,7 @@
               <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="dialog.edit.http.proxies.settings.test.connection.button.text"/>
             </properties>
           </component>
-          <scrollpane id="e8cb0">
+          <scrollpane class="com.intellij.ui.components.JBScrollPane" id="e8cb0">
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>

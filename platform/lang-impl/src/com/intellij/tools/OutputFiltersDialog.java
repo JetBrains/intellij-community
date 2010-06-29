@@ -23,6 +23,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -186,7 +187,7 @@ class OutputFiltersDialog extends DialogWrapper {
 
     JPanel panel = new JPanel(new BorderLayout());
 
-    panel.add(new JScrollPane(myFiltersList), BorderLayout.CENTER);
+    panel.add(new JBScrollPane(myFiltersList), BorderLayout.CENTER);
     panel.add(myButtonGroup, BorderLayout.EAST);
 
     panel.setPreferredSize(new Dimension(400, 200));

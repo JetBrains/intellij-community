@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -75,7 +76,7 @@ public class LineTooltipRenderer implements TooltipRenderer {
     int widthLimit = layeredPane.getWidth() - 10;
     int heightLimit = layeredPane.getHeight() - 5;
 
-    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(pane);
+    final JBScrollPane scrollPane = ScrollPaneFactory.createScrollPane(pane);
     scrollPane.setBorder(null);
     int width = expanded ? 3 * myCurrentWidth / 2 : pane.getPreferredSize().width;
     int height = expanded ? Math.max(pane.getPreferredSize().height, 150) : pane.getPreferredSize().height;

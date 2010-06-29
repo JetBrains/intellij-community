@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ui;
+package com.intellij.ui.components;
+
+import com.intellij.util.ui.ButtonlessScrollBarUI;
 
 import javax.swing.*;
 import javax.swing.plaf.ScrollPaneUI;
@@ -22,12 +24,21 @@ import java.awt.*;
 /**
  * @author Vladimir Kondratyev
  */
-public class JScrollPane2 extends JScrollPane {
-  JScrollPane2(JComponent view) {
+public class JBScrollPane extends JScrollPane {
+  public JBScrollPane(Component view) {
     super(view);
   }
 
-  protected JScrollPane2() {
+  public JBScrollPane() {
+  }
+
+  public JBScrollPane(int vsbPolicy, int hsbPolicy) {
+    super(vsbPolicy, hsbPolicy);
+  }
+
+
+  public JBScrollPane(Component view, int vsbPolicy, int hsbPolicy) {
+    super(view, vsbPolicy, hsbPolicy);
   }
 
   /**
@@ -47,6 +58,9 @@ public class JScrollPane2 extends JScrollPane {
         }
       }
     });
+
+    getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createNormal());
+    getHorizontalScrollBar().setUI(ButtonlessScrollBarUI.createNormal());
   }
 
 }

@@ -26,6 +26,7 @@ import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.InsertPathAction;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -468,7 +469,7 @@ public class Messages {
       textArea.setText(textField.getText().replaceAll("[\\ ]*=[\\ ]*", "=").replaceAll(" ", "\n"));
       InsertPathAction.copyFromTo(textField, textArea);
       DialogBuilder builder = new DialogBuilder(textField);
-      JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(textArea);
+      JBScrollPane scrollPane = ScrollPaneFactory.createScrollPane(textArea);
       builder.setDimensionServiceKey(dimensionServiceKey);
       builder.setCenterPanel(scrollPane);
       builder.setPreferedFocusComponent(textArea);
@@ -587,10 +588,10 @@ public class Messages {
         final Dimension screenSize = messageComponent.getToolkit().getScreenSize();
         final Dimension textSize = messageComponent.getPreferredSize();
         if (textSize.width > screenSize.width * 4 / 5 || textSize.height > screenSize.height / 2) {
-          final JScrollPane pane = ScrollPaneFactory.createScrollPane(messageComponent);
+          final JBScrollPane pane = ScrollPaneFactory.createScrollPane(messageComponent);
           pane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-          pane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-          pane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+          pane.setVerticalScrollBarPolicy(JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+          pane.setHorizontalScrollBarPolicy(JBScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
           final int scrollSize = (int)new JScrollBar(JScrollBar.VERTICAL).getPreferredSize().getWidth();
           final Dimension preferredSize =
             new Dimension(Math.min(textSize.width, screenSize.width * 4 / 5) + scrollSize, Math.min(textSize.height, screenSize.height/2) + scrollSize);

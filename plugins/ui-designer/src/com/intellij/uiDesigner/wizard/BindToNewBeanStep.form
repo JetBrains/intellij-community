@@ -9,7 +9,7 @@
     <properties/>
     <border type="none"/>
     <children>
-      <scrollpane id="ebea0" binding="myScrollPane">
+      <scrollpane class="com.intellij.ui.components.JBScrollPane" id="ebea0" binding="myScrollPane">
         <constraints>
           <xy x="0" y="0" width="258" height="207"/>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3"/>

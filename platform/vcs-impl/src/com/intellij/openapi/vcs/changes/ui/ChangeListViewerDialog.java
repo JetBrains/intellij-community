@@ -37,6 +37,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.SeparatorFactory;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -60,7 +61,7 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
   private final boolean myInAir;
   private Change[] myChanges;
   private NotNullFunction<Change, Change> myConvertor;
-  private JScrollPane commitMessageScroll;
+  private JBScrollPane commitMessageScroll;
 
   public ChangeListViewerDialog(Project project, CommittedChangeList changeList) {
     super(project, true);
@@ -100,7 +101,7 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
     @NonNls final String text = IssueLinkHtmlRenderer.formatTextIntoHtml(project, changeList.getComment().trim());
     myCommitMessageArea.setBackground(UIUtil.getComboBoxDisabledBackground());
     myCommitMessageArea.addHyperlinkListener(new BrowserHyperlinkListener());
-    commitMessageScroll = new JScrollPane(myCommitMessageArea);
+    commitMessageScroll = new JBScrollPane(myCommitMessageArea);
     myCommitMessageArea.setText(text);
     myCommitMessageArea.setCaretPosition(0);
   }

@@ -30,6 +30,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeCopyProvider;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
@@ -113,7 +114,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
     final Splitter filterSplitter = new Splitter(false, 0.5f);
 
-    filterSplitter.setSecondComponent(new JScrollPane(myChangesTree));
+    filterSplitter.setSecondComponent(new JBScrollPane(myChangesTree));
     myLeftPanel.add(filterSplitter, BorderLayout.CENTER);
     final Splitter mainSplitter = new Splitter(false, 0.7f);
     mainSplitter.setFirstComponent(myLeftPanel);

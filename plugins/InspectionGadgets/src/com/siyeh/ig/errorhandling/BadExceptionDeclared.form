@@ -38,7 +38,7 @@
           <text resource-bundle="com/siyeh/InspectionGadgetsBundle" key="button.remove"/>
         </properties>
       </component>
-      <scrollpane id="73c2b">
+      <scrollpane class="com.intellij.ui.components.JBScrollPane" id="73c2b">
         <constraints>
           <grid row="0" column="0" row-span="3" col-span="1" vsize-policy="3" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
