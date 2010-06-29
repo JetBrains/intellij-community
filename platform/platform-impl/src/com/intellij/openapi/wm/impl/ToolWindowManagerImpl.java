@@ -722,7 +722,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     if (!myLayout.isToolWindowRegistered(id)) {
       return null;
     }
-    return getInternalDecorator(id).getToolWindow();
+    InternalDecorator decorator = getInternalDecorator(id);
+    return decorator != null ? decorator.getToolWindow() : null;
   }
 
   void showToolWindow(final String id) {
