@@ -3,7 +3,6 @@ package com.jetbrains.python.refactoring.classes.ui;
 import com.intellij.refactoring.classMembers.MemberInfoModel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.components.JBScrollPane;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.PyMemberInfo;
 
@@ -27,7 +26,7 @@ public class PyMemberSelectionPanel extends JPanel {
     setLayout(new BorderLayout());
 
     myTable = new PyMemberSelectionTable(memberInfo, model);
-    JBScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
 
 
     add(scrollPane, BorderLayout.CENTER);
