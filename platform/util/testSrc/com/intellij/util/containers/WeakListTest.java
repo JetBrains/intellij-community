@@ -50,7 +50,7 @@ public class WeakListTest extends WeaksTestCase {
     assertEquals(21, myWeakList.size());
     assertTrue(20 >= myWeakArray.getCorpseCount());
     myWeakList.add(new Object());
-    assertTrue(String.valueOf(myWeakList.size()), myWeakList.size() < 20);
+    assertTrue(String.valueOf(myWeakList.size()), myWeakList.size() <= 22);
     gc();
     myHolder.add(obj);
     checkSameNotNulls(myWeakArray);

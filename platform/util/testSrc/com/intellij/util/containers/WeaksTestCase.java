@@ -86,7 +86,7 @@ public abstract class WeaksTestCase extends TestCase {
     }
     assertEquals(myHolder.size(), validCount);
     assertTrue(collection.size() >= nextValidIndex(validIndex, collection));
-    assertEquals(collection.size() - myHolder.size(), collection.getCorpseCount());
+    assertTrue(collection.size() - myHolder.size() >= collection.getCorpseCount());
 
     //validIndex = Math.max(validIndex, 0);
     WeakReference[] references = collection.getReferences();
