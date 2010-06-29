@@ -73,7 +73,7 @@ public abstract class GitHandler {
   /**
    * the context project (might be a default project)
    */
-  private final Project myProject;
+  final Project myProject;
   /**
    * The descriptor for the command to be executed
    */
