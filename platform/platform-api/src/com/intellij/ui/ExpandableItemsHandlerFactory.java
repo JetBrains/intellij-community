@@ -15,8 +15,10 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -38,7 +40,9 @@ public abstract class ExpandableItemsHandlerFactory {
     return i == null ? (ExpandableItemsHandler<TableCell>)NULL : i.doInstall(table);
   }
 
+  @Nullable
   private static ExpandableItemsHandlerFactory getInstance() {
+    if (ApplicationManager.getApplication() == null) return null; // test code or no idea environment available (gui designer etc.)
     return ServiceManager.getService(ExpandableItemsHandlerFactory.class);
   }
 
