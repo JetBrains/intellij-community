@@ -230,6 +230,7 @@ public class OSProcessHandler extends ProcessHandler {
 
   private abstract class ReadProcessRequest {
     private final Reader myReader;
+    private boolean skipLF = false;
 
     private boolean myIsClosed = false;
     volatile private boolean myIsProcessTerminated = false;
@@ -276,23 +277,44 @@ public class OSProcessHandler extends ProcessHandler {
 
     public void readAvailable(char[] buffer) throws IOException {
       int fairCount = 0;
+      boolean checkForTermination = true;
+      StringBuilder token = new StringBuilder();
       while (myReader.ready()) {
         int n = myReader.read(buffer);
         if (n <= 0) break;
 
-        int start = 0;
-        int end = 0;
-        while (start < n) {
-          while (end < n && buffer[end++] != '\n');
+        for (int i = 0; i < n; i++) {
+          char c = buffer[i];
+          if (skipLF && c != '\n') {
+            token.append('\r');
+          }
 
-          myNotificationQueue.offer(new String(buffer, start, end - start));
-          start = end;
+          if (c == '\r') {
+            skipLF = true;
+          }
+          else {
+            skipLF = false;
+            token.append(c);
+          }
+
+          if (c == '\n') {
+            myNotificationQueue.offer(token.toString());
+            token.setLength(0);
+          }
         }
 
-        if (++fairCount > 10) return;
+        if (++fairCount > 10) {
+          checkForTermination = false;
+          break;
+        }
       }
 
-      if (isProcessTerminated()) {
+      if (token.length() != 0) {
+        myNotificationQueue.offer(token.toString());
+        token.setLength(0);
+      }
+
+      if (checkForTermination && isProcessTerminated()) {
         close();
       }
     }
@@ -367,4 +389,32 @@ public class OSProcessHandler extends ProcessHandler {
     }
 
   }
+
+  public static void main(String[] args) {
+    char[] chars = "\r\nfirst\rsecond\r\nlast".toCharArray();
+
+    StringBuilder token = new StringBuilder();
+    boolean skipLF = false;
+
+    for (int i = 0; i < chars.length; i++) {
+      char c = chars[i];
+      if (skipLF && c != '\n') {
+        token.append('\r');
+      }
+
+      if (c == '\r') {
+        skipLF = true;
+      }
+      else {
+        skipLF = false;
+        token.append(c);
+      }
+
+      if (c == '\n') {
+        System.out.println(token.toString().toCharArray());
+        token.setLength(0);
+      }
+    }
+  }
+
 }
