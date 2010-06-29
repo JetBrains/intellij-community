@@ -624,12 +624,7 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
 
   @Nullable
   public AbstractVcs findVersioningVcs(VirtualFile file) {
-    for(AbstractVcs vcs: getAllVcss()) {
-      if (vcs.isVersionedDirectory(file)) {
-        return vcs;
-      }
-    }
-    return null;
+    return getVcsFor(file);
   }
 
   public CheckoutProvider.Listener getCompositeCheckoutListener() {
