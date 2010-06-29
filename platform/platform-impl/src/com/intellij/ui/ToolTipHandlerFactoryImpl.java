@@ -19,17 +19,17 @@ import javax.swing.*;
 
 public class ToolTipHandlerFactoryImpl extends ToolTipHandlerFactory {
   @Override
-  public ToolTipHandler<Integer> install(JList list) {
+  public ToolTipHandler<Integer> doInstall(JList list) {
     return new ListToolTipHandler(list);
   }
 
   @Override
-  public ToolTipHandler<Integer> install(JTree tree) {
+  public ToolTipHandler<Integer> doInstall(JTree tree) {
     return new TreeToolTipHandler(tree);
   }
 
   @Override
-  public ToolTipHandler<TableCell> install(JTable table) {
+  public ToolTipHandler<TableCell> doInstall(JTable table) {
     return new TableToolTipHandler(table);
   }
 }

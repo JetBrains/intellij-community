@@ -62,7 +62,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText {
       }
     };
 
-    myToolTipHandler = ToolTipHandlerFactory.getInstance().install(this);
+    myToolTipHandler = ToolTipHandlerFactory.install(this);
 
     addMouseListener(new MyMouseListener());
     getColumnModel().addColumnModelListener(new TableColumnModelListener() {

@@ -20,11 +20,35 @@ import com.intellij.openapi.components.ServiceManager;
 import javax.swing.*;
 
 public abstract class ToolTipHandlerFactory {
-  public static ToolTipHandlerFactory getInstance() {
+  public static ToolTipHandler<Integer> install(JList list) {
+    ToolTipHandlerFactory i = getInstance();
+    return i == null ? (ToolTipHandler<Integer>)NULL : i.doInstall(list);
+  }
+
+  public static ToolTipHandler<Integer> install(JTree tree) {
+    ToolTipHandlerFactory i = getInstance();
+    return i == null ? (ToolTipHandler<Integer>)NULL : i.doInstall(tree);
+  }
+
+  public static ToolTipHandler<TableCell> install(JTable table) {
+    ToolTipHandlerFactory i = getInstance();
+    return i == null ? (ToolTipHandler<TableCell>)NULL : i.doInstall(table);
+  }
+
+  private static ToolTipHandlerFactory getInstance() {
     return ServiceManager.getService(ToolTipHandlerFactory.class);
   }
 
-  public abstract ToolTipHandler<Integer> install(JList list);
-  public abstract ToolTipHandler<Integer> install(JTree tree);
-  public abstract ToolTipHandler<TableCell> install(JTable table);
+  protected abstract ToolTipHandler<Integer> doInstall(JList list);
+
+  protected abstract ToolTipHandler<Integer> doInstall(JTree tree);
+
+  protected abstract ToolTipHandler<TableCell> doInstall(JTable table);
+
+  private static final ToolTipHandler NULL = new ToolTipHandler<Object>() {
+    @Override
+    public Object getCurrentItem() {
+      return null;
+    }
+  };
 }

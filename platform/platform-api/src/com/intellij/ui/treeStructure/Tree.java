@@ -76,7 +76,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, Autoscroll, Q
       }
     };
 
-    myToolTipHandler = ToolTipHandlerFactory.getInstance().install(this);
+    myToolTipHandler = ToolTipHandlerFactory.install(this);
 
     addMouseListener(new MyMouseListener());
     if (Patches.SUN_BUG_ID_4893787) {
