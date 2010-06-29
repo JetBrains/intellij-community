@@ -26,7 +26,6 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.ui.PopupHandler;
-import com.intellij.ui.TableToolTipHandler;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.BaseTableView;
 import com.intellij.ui.table.TableView;

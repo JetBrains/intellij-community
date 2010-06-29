@@ -21,9 +21,9 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
+import com.intellij.ui.ExpandTipHandler;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.ToolTipHandler;
-import com.intellij.ui.ToolTipHandlerFactory;
+import com.intellij.ui.ExpandTipHandlerFactory;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.EmptyTextHelper;
@@ -45,7 +45,7 @@ import java.util.Map;
 
 public class Tree extends JTree implements ComponentWithEmptyText, Autoscroll, Queryable {
   private EmptyTextHelper myEmptyTextHelper;
-  private ToolTipHandler<Integer> myToolTipHandler;
+  private ExpandTipHandler<Integer> myExpandTipHandler;
 
   private AsyncProcessIcon myBusyIcon;
   private boolean myBusy;
@@ -76,7 +76,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, Autoscroll, Q
       }
     };
 
-    myToolTipHandler = ToolTipHandlerFactory.install(this);
+    myExpandTipHandler = ExpandTipHandlerFactory.install(this);
 
     addMouseListener(new MyMouseListener());
     if (Patches.SUN_BUG_ID_4893787) {
@@ -137,8 +137,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, Autoscroll, Q
     myEmptyTextHelper.appendEmptyText(text, attrs, listener);
   }
 
-  public ToolTipHandler<Integer> getToolTipHandler() {
-    return myToolTipHandler;
+  public ExpandTipHandler<Integer> getExpandTipHandler() {
+    return myExpandTipHandler;
   }
 
   @Override

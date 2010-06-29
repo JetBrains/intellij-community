@@ -26,7 +26,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 
-abstract public class AbstractToolTipHandler <KeyType, ComponentType extends JComponent> implements ToolTipHandler<KeyType> {
+abstract public class AbstractToolTipHandler <KeyType, ComponentType extends JComponent> implements ExpandTipHandler<KeyType> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.AbstractToolTipHandler");
 
   protected final ComponentType myComponent;

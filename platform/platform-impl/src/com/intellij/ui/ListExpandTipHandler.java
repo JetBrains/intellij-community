@@ -20,21 +20,20 @@ import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-public class ListToolTipHandler extends AbstractToolTipHandler<Integer, JList>{
+public class ListExpandTipHandler extends AbstractToolTipHandler<Integer, JList>{
   public static void install(JList list) {
     installAndGet(list);
   }
 
-  public static ListToolTipHandler installAndGet(JList list) {
-    return new ListToolTipHandler(list);
+  public static ListExpandTipHandler installAndGet(JList list) {
+    return new ListExpandTipHandler(list);
   }
 
-  protected ListToolTipHandler(final JList list) {
+  protected ListExpandTipHandler(final JList list) {
     super(list);
 
     final ListSelectionListener selectionListener = new ListSelectionListener() {

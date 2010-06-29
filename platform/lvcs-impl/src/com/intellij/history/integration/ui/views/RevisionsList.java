@@ -24,10 +24,9 @@ import com.intellij.history.integration.ui.models.RevisionItem;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.ui.ExpandTipHandler;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.TableCell;
-import com.intellij.ui.TableToolTipHandler;
-import com.intellij.ui.ToolTipHandler;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.UIUtil;
@@ -198,11 +197,11 @@ public class RevisionsList {
     private final MyLabelContainer myLabelContainer = new MyLabelContainer();
     private final JLabel myLabelLabel = new JLabel();
 
-    private final ToolTipHandler<TableCell> myToolTipHandler;
+    private final ExpandTipHandler<TableCell> myToolTipHandler;
     private boolean isToolTipShown;
 
     public MyCellRenderer(JBTable table) {
-      myToolTipHandler = table.getToolTipHandler();
+      myToolTipHandler = table.getExpandTipHandler();
       JPanel headersPanel = new JPanel(new BorderLayout());
       headersPanel.setOpaque(false);
       headersPanel.add(myPeriodLabel, BorderLayout.NORTH);

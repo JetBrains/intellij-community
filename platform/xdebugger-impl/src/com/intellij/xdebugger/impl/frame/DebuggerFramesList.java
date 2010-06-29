@@ -16,7 +16,6 @@
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ide.OccurenceNavigator;
-import com.intellij.ui.ListToolTipHandler;
 import com.intellij.ui.components.JBList;
 import com.intellij.xdebugger.XDebuggerBundle;
 

@@ -29,18 +29,18 @@ import javax.swing.*;
 public class TreeUIHelperImpl extends TreeUIHelper {
   public void installToolTipHandler(final JTree tree) {
     if (tree instanceof Tree) return;
-    TreeToolTipHandler.install(tree);
+    TreeExpandTipHandler.install(tree);
   }
 
   public void installToolTipHandler(final JTable table) {
     if (table instanceof JBTable) return;
-    TableToolTipHandler.install(table);
+    TableExpandTipHandler.install(table);
   }
 
   @Override
   public void installToolTipHandler(JList list) {
     if (list instanceof JBList) return;
-    ListToolTipHandler.install(list);
+    ListExpandTipHandler.install(list);
   }
 
   public void installEditSourceOnDoubleClick(final JTree tree) {

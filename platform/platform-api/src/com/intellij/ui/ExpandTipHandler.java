@@ -15,21 +15,9 @@
  */
 package com.intellij.ui;
 
-import javax.swing.*;
+import org.jetbrains.annotations.Nullable;
 
-public class ToolTipHandlerFactoryImpl extends ToolTipHandlerFactory {
-  @Override
-  public ToolTipHandler<Integer> doInstall(JList list) {
-    return new ListToolTipHandler(list);
-  }
-
-  @Override
-  public ToolTipHandler<Integer> doInstall(JTree tree) {
-    return new TreeToolTipHandler(tree);
-  }
-
-  @Override
-  public ToolTipHandler<TableCell> doInstall(JTable table) {
-    return new TableToolTipHandler(table);
-  }
+public interface ExpandTipHandler<T> {
+  @Nullable
+  T getCurrentItem();
 }

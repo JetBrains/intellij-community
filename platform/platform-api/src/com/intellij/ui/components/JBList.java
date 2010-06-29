@@ -15,9 +15,9 @@
  */
 package com.intellij.ui.components;
 
+import com.intellij.ui.ExpandTipHandler;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.ToolTipHandler;
-import com.intellij.ui.ToolTipHandlerFactory;
+import com.intellij.ui.ExpandTipHandlerFactory;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.EmptyTextHelper;
 
@@ -27,7 +27,7 @@ import java.util.Collection;
 
 public class JBList extends JList implements ComponentWithEmptyText {
   private EmptyTextHelper myEmptyTextHelper;
-  private ToolTipHandler<Integer> myToolTipHandler;
+  private ExpandTipHandler<Integer> myExpandTipHandler;
 
   public JBList() {
     init();
@@ -56,7 +56,7 @@ public class JBList extends JList implements ComponentWithEmptyText {
       }
     };
 
-    myToolTipHandler = ToolTipHandlerFactory.install(this);
+    myExpandTipHandler = ExpandTipHandlerFactory.install(this);
   }
 
   public boolean isEmpty() {
@@ -92,7 +92,7 @@ public class JBList extends JList implements ComponentWithEmptyText {
     myEmptyTextHelper.appendEmptyText(text, attrs, listener);
   }
 
-  public ToolTipHandler<Integer> getToolTipHandler() {
-    return myToolTipHandler;
+  public ExpandTipHandler<Integer> getExpandTipHandler() {
+    return myExpandTipHandler;
   }
 }

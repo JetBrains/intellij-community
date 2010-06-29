@@ -45,7 +45,7 @@ import java.util.EventObject;
  */
 public class JBTable extends JTable implements ComponentWithEmptyText {
   private EmptyTextHelper myEmptyTextHelper;
-  private ToolTipHandler<TableCell> myToolTipHandler;
+  private ExpandTipHandler<TableCell> myExpandTipHandler;
 
   private MyCellEditorRemover myEditorRemover;
 
@@ -62,7 +62,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText {
       }
     };
 
-    myToolTipHandler = ToolTipHandlerFactory.install(this);
+    myExpandTipHandler = ExpandTipHandlerFactory.install(this);
 
     addMouseListener(new MyMouseListener());
     getColumnModel().addColumnModelListener(new TableColumnModelListener() {
@@ -129,8 +129,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText {
     myEmptyTextHelper.appendEmptyText(text, attrs, listener);
   }
 
-  public ToolTipHandler<TableCell> getToolTipHandler() {
-    return myToolTipHandler;
+  public ExpandTipHandler<TableCell> getExpandTipHandler() {
+    return myExpandTipHandler;
   }
 
   private static class MyTableHeaderRenderer extends DefaultTableCellRenderer {
