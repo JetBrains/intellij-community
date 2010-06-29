@@ -17,20 +17,32 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocToken;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlEntityDecl;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
@@ -94,6 +106,10 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
     return null;
   }
 
+  private static boolean shouldConvert(final char ch) {
+    return Character.UnicodeBlock.of(ch) != Character.UnicodeBlock.BASIC_LATIN;
+  }
+
   private interface Handler {
     @Nullable
     PsiElement findApplicable(PsiElement element);
@@ -119,6 +135,8 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
 
     new Handler() {
       public PsiElement findApplicable(final PsiElement element) {
+        loadEntities(element.getProject());
+
         if (element instanceof PsiDocComment) return element;
         if (element instanceof PsiDocToken) return element.getParent();
         if (element instanceof PsiWhiteSpace) return PsiTreeUtil.getParentOfType(element, PsiDocComment.class);
@@ -136,6 +154,8 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
 
     new Handler() {
       public PsiElement findApplicable(final PsiElement element) {
+        loadEntities(element.getProject());
+
         if (element instanceof PsiComment) return element;
         if (element instanceof PsiWhiteSpace) return PsiTreeUtil.getParentOfType(element, PsiComment.class);
         return null;
@@ -151,14 +171,48 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
     }
   );
 
-  private static boolean shouldConvert(final char ch) {
-    return Character.UnicodeBlock.of(ch) != Character.UnicodeBlock.BASIC_LATIN;
-  }
-
   private static final TokenSet ourLiterals = TokenSet.create(JavaTokenType.CHARACTER_LITERAL, JavaTokenType.STRING_LITERAL);
 
-  // todo: use standard HTML entities (e.g. U+00E9 -> &eacute;)
   private static void convertHtmlChar(final StringBuilder sb, final char ch) {
-    sb.append("&#x").append(Integer.toHexString(ch)).append(';');
+    assert ourEntities != null;
+    final String entity = ourEntities.get(ch);
+    if (entity != null) {
+      sb.append('&').append(entity).append(';');
+    }
+    else {
+      sb.append("&#x").append(Integer.toHexString(ch)).append(';');
+    }
+  }
+
+  private static Map<Character, String> ourEntities = null;
+
+  private static void loadEntities(final Project project) {
+    if (ourEntities != null) return;
+
+    final String resource = ExternalResourceManager.getInstance().getResourceLocation(XmlUtil.HTML4_LOOSE_URI, project);
+    final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(VfsUtil.urlToPath(VfsUtil.fixURLforIDEA(resource)));
+    assert vFile != null;
+    final PsiFile file = PsiManager.getInstance(project).findFile(vFile);
+    assert file instanceof XmlFile;
+
+    final Pattern pattern = Pattern.compile("&#(\\d+);");
+    final Map<Character, String> entities = new HashMap<Character, String>();
+    XmlUtil.processXmlElements((XmlFile)file, new PsiElementProcessor() {
+      public boolean execute(PsiElement element) {
+        if (element instanceof XmlEntityDecl) {
+          final XmlEntityDecl entity = (XmlEntityDecl)element;
+          final Matcher m = pattern.matcher(entity.getValueElement().getValue());
+          if (m.matches()) {
+            final char i = (char)Integer.parseInt(m.group(1));
+            if (shouldConvert(i)) {
+              entities.put(i, entity.getName());
+            }
+          }
+        }
+        return true;
+      }
+    }, true);
+
+    ourEntities = entities;
   }
 }

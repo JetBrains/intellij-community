@@ -1,3 +1,3 @@
 class C {
-    // &#xa9; 2010 JetBrains
+    // &copy; 2010 JetBrains
 }
