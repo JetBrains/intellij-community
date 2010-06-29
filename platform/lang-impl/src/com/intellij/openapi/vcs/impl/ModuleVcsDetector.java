@@ -143,6 +143,7 @@ public class ModuleVcsDetector implements ProjectComponent {
       }
     }
     if (usedVcses.size() == 1) {
+      // todo I doubt this is correct, see IDEA-50527
       final AbstractVcs[] abstractVcses = usedVcses.toArray(new AbstractVcs[1]);
       final Module[] modules = moduleManager.getModules();
       final Set<String> contentRoots = new HashSet<String>();
