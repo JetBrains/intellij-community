@@ -40,7 +40,6 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SeparatorFactory;
 import com.intellij.ui.SortedListModel;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
@@ -100,7 +99,7 @@ public class SpecialAnnotationsUtil {
       }
     });
 
-    final JBScrollPane listScrollPane = ScrollPaneFactory.createScrollPane(injectionList);
+    final JScrollPane listScrollPane = ScrollPaneFactory.createScrollPane(injectionList);
 //    listScrollPane.setBorder(BorderFactory.createEtchedBorder());
     listScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
     listScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);

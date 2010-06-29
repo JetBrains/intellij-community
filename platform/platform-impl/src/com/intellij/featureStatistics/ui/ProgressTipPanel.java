@@ -26,7 +26,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -55,7 +54,7 @@ public class ProgressTipPanel {
   private Runnable myLastRequest;
   private JButton myCloseButton;
   private JCheckBox myKeepOpen;
-  private JBScrollPane myScrollPane;
+  private JScrollPane myScrollPane;
 
   private static final @NonNls String KEEP_OPTION_NAME = "KEEP_PRODUCTIVITY_HINTS";
   private boolean myIsShownIsOwnDialog = false;

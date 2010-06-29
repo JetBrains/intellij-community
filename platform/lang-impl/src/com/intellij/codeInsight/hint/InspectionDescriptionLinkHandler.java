@@ -27,7 +27,6 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +67,7 @@ public class InspectionDescriptionLinkHandler extends TooltipLinkHandler {
     final JEditorPane pane = LineTooltipRenderer.initPane(description);
     pane.select(0, 0);
     pane.setPreferredSize(new Dimension(3 * tooltip.getPreferredSize().width /2, 200));
-    final JBScrollPane scrollPane = ScrollPaneFactory.createScrollPane(pane);
+    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(pane);
     scrollPane.setBorder(null);
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(scrollPane, scrollPane).createPopup();

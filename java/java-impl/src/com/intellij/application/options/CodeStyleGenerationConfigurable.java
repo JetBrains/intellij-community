@@ -24,7 +24,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.components.JBScrollPane;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -49,7 +48,7 @@ public class CodeStyleGenerationConfigurable implements Configurable {
 
 
   private final MembersOrderList myMembersOrderList;
-  private JBScrollPane myMembersListScroll;
+  private JScrollPane myMembersListScroll;
   private JButton myMoveUpButton;
   private JButton myMoveDownButton;
 

@@ -32,8 +32,8 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.components.JBScrollPane;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.options.*;
 import org.intellij.images.thumbnail.ThumbnailView;
@@ -136,9 +136,8 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             list.setFixedCellHeight(preferredSize.height);
 
 
-            JBScrollPane scrollPane = new JBScrollPane(
-                    list, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
-            );
+          JScrollPane scrollPane =
+            ScrollPaneFactory.createScrollPane(list, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
             ActionManager actionManager = ActionManager.getInstance();
             ActionGroup actionGroup = (ActionGroup) actionManager.getAction(ThumbnailViewActions.GROUP_TOOLBAR);

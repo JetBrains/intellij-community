@@ -169,7 +169,7 @@ public class ProcessPopup  {
 
     myActiveFocusedContent.add(wrapper, BorderLayout.CENTER);
 
-    final JBScrollPane scrolls = new JBScrollPane(myActiveFocusedContent) {
+    final JScrollPane scrolls = new JBScrollPane(myActiveFocusedContent) {
       public Dimension getPreferredSize() {
         if (myProcessBox.getComponentCount() > 0) {
           return super.getPreferredSize();

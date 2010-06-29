@@ -45,9 +45,9 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
@@ -169,7 +169,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     myTree.setCellRenderer(new NodeRenderer());
     UIUtil.setLineStyleAngled(myTree);
 
-    final JBScrollPane scrollPane = new JBScrollPane(myTree);
+    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
     scrollPane.setPreferredSize(new Dimension(500, 300));
 
     myTree.addKeyListener(new KeyAdapter() {

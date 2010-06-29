@@ -40,8 +40,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ListScrollingUtil;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.plaf.beg.BegPopupMenuBorder;
 import com.intellij.ui.popup.PopupIcons;
 import com.intellij.util.CollectConsumer;
@@ -127,7 +127,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myList.setBackground(LookupCellRenderer.BACKGROUND_COLOR);
 
-    JBScrollPane scrollPane = new JBScrollPane(myList);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myList);
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     getComponent().add(scrollPane, BorderLayout.NORTH);
     scrollPane.setBorder(null);

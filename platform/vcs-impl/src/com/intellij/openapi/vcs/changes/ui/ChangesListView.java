@@ -37,7 +37,6 @@ import com.intellij.ui.TreeCopyProvider;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
@@ -540,7 +539,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     final Container container = getParent();
     if (container instanceof JViewport) {
       final Container scrollPane = container.getParent();
-      if (scrollPane instanceof JBScrollPane) {
+      if (scrollPane instanceof JScrollPane) {
         final Rectangle rectangle = SwingUtilities.convertRectangle(this, rect, scrollPane.getParent());
         return scrollPane.getBounds().contains(rectangle);
       }

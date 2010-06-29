@@ -26,7 +26,6 @@ import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.InsertPathAction;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -469,7 +468,7 @@ public class Messages {
       textArea.setText(textField.getText().replaceAll("[\\ ]*=[\\ ]*", "=").replaceAll(" ", "\n"));
       InsertPathAction.copyFromTo(textField, textArea);
       DialogBuilder builder = new DialogBuilder(textField);
-      JBScrollPane scrollPane = ScrollPaneFactory.createScrollPane(textArea);
+      JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(textArea);
       builder.setDimensionServiceKey(dimensionServiceKey);
       builder.setCenterPanel(scrollPane);
       builder.setPreferedFocusComponent(textArea);
@@ -588,7 +587,7 @@ public class Messages {
         final Dimension screenSize = messageComponent.getToolkit().getScreenSize();
         final Dimension textSize = messageComponent.getPreferredSize();
         if (textSize.width > screenSize.width * 4 / 5 || textSize.height > screenSize.height / 2) {
-          final JBScrollPane pane = ScrollPaneFactory.createScrollPane(messageComponent);
+          final JScrollPane pane = ScrollPaneFactory.createScrollPane(messageComponent);
           pane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
           pane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
           pane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);

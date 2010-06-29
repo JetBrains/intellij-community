@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.telemetry;
 
-import com.intellij.ui.components.JBScrollPane;
+
 
 import javax.swing.*;
 import javax.swing.table.JTableHeader;
@@ -23,7 +23,7 @@ import javax.swing.table.JTableHeader;
 public class TelemetryDisplayImpl implements TelemetryDisplay{
 
     private JTable table;
-    private JBScrollPane scrollPane;
+    private JScrollPane scrollPane;
     private final TableSorter model;
 
     public TelemetryDisplayImpl(InspectionGadgetsTelemetry telemetry){

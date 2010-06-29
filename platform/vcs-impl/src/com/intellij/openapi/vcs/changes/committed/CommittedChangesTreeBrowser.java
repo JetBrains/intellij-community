@@ -26,11 +26,7 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.pom.Navigatable;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.TreeCopyProvider;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
@@ -114,7 +110,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
     final Splitter filterSplitter = new Splitter(false, 0.5f);
 
-    filterSplitter.setSecondComponent(new JBScrollPane(myChangesTree));
+    filterSplitter.setSecondComponent(ScrollPaneFactory.createScrollPane(myChangesTree));
     myLeftPanel.add(filterSplitter, BorderLayout.CENTER);
     final Splitter mainSplitter = new Splitter(false, 0.7f);
     mainSplitter.setFirstComponent(myLeftPanel);

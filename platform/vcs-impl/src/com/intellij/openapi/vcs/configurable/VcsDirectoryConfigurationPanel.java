@@ -26,7 +26,6 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.ColumnInfo;
@@ -262,7 +261,7 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
   }
 
   protected JComponent createMainComponent() {
-    return new JBScrollPane(myDirectoryMappingTable);
+    return ScrollPaneFactory.createScrollPane(myDirectoryMappingTable);
   }
 
   public void reset() {

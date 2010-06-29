@@ -25,7 +25,6 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -49,7 +48,7 @@ public class VcsConfigurationsDialog extends DialogWrapper{
       append(name, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, list.getForeground()));
     }
   };
-  private JBScrollPane myVcsesScrollPane;
+  private JScrollPane myVcsesScrollPane;
 
   @Nullable
   private final JComboBox myVcsesToUpdate;

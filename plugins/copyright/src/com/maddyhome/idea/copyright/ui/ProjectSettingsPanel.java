@@ -29,8 +29,8 @@ import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.PanelWithButtons;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.*;
 import com.maddyhome.idea.copyright.CopyrightManager;
@@ -218,7 +218,7 @@ public class ProjectSettingsPanel extends PanelWithButtons {
 
 
     protected JComponent createMainComponent() {
-        return new JBScrollPane(myScopeMappingTable);
+      return ScrollPaneFactory.createScrollPane(myScopeMappingTable);
     }
 
     public JComponent getMainComponent() {

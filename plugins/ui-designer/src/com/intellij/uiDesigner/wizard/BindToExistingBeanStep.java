@@ -22,7 +22,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
@@ -43,7 +42,7 @@ import java.util.Collections;
 final class BindToExistingBeanStep extends StepAdapter{
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.wizard.BindToExistingBeanStep");
 
-  private JBScrollPane myScrollPane;
+  private JScrollPane myScrollPane;
   private JTable myTable;
   private final WizardData myData;
   private final MyTableModel myTableModel;

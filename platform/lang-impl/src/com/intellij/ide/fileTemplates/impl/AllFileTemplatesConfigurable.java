@@ -32,8 +32,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TabbedPaneWrapper;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -222,7 +222,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
     myTabbedPane = new TabbedPaneWrapper(myUIDisposable);
     myTabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
     for (FileTemplateTab tab : myTabs) {
-      myTabbedPane.addTab(tab.getTitle(), new JBScrollPane(tab.getComponent()));
+      myTabbedPane.addTab(tab.getTitle(), ScrollPaneFactory.createScrollPane(tab.getComponent()));
     }
 
     myTabbedPane.addChangeListener(new ChangeListener() {

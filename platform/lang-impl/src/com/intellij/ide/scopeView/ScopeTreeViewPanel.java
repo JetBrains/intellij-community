@@ -64,9 +64,9 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.Function;
 import com.intellij.util.containers.HashSet;
@@ -121,7 +121,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     myProject = project;
     initTree();
 
-    add(new JBScrollPane(myTree), BorderLayout.CENTER);
+    add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
     myDependencyValidationManager = DependencyValidationManager.getInstance(myProject);
 
     final UiNotifyConnector uiNotifyConnector = new UiNotifyConnector(myTree, myUpdateQueue);

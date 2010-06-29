@@ -24,7 +24,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.ScrollPaneFactory;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -79,7 +79,7 @@ public class TipPanel extends JPanel {
         }
       }
     );
-    JBScrollPane scrollPane = new JBScrollPane(browser);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(browser);
     add(scrollPane, BorderLayout.CENTER);
     myCheckBox = new JCheckBox(IdeBundle.message("checkbox.show.tips.on.startup"), true);
     myCheckBox.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));

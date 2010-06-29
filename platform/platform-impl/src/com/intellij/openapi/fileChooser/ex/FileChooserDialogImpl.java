@@ -34,8 +34,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.UIBundle;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.containers.HashMap;
@@ -200,7 +200,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
     registerMouseListener(group);
 
-    JBScrollPane scrollPane = new JBScrollPane(myFileSystemTree.getTree());
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myFileSystemTree.getTree());
     //scrollPane.setBorder(BorderFactory.createLineBorder(new Color(148, 154, 156)));
     panel.add(scrollPane, BorderLayout.CENTER);
     panel.setPreferredSize(new Dimension(400, 400));

@@ -32,7 +32,7 @@ import com.intellij.openapi.vcs.changes.committed.CommittedChangeListDecorator;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangeListsListener;
 import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.Consumer;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.messages.Topic;
@@ -391,8 +391,8 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     final GridBagConstraints gb =
       new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
     myPanelWrapper.add(myPanel, gb);
-    return new JBScrollPane(myPanelWrapper, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                                   JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    return ScrollPaneFactory
+      .createScrollPane(myPanelWrapper, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
   }
 
   // todo refactor to get rid of duplicate code dealing with separators

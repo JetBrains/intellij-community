@@ -18,7 +18,6 @@ package com.intellij.ide.util;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.TableUtil;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -64,7 +63,7 @@ public class ElementsChooser<T> extends JPanel {
     myTable.setTableHeader(null);
     myTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
     myTable.setColumnSelectionAllowed(false);
-    JBScrollPane pane = ScrollPaneFactory.createScrollPane(myTable);
+    JScrollPane pane = ScrollPaneFactory.createScrollPane(myTable);
     pane.setPreferredSize(new Dimension(100, 155));
     int width = new JCheckBox().getPreferredSize().width;
     TableColumnModel columnModel = myTable.getColumnModel();

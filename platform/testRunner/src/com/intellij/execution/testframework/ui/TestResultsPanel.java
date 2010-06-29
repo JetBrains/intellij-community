@@ -27,7 +27,6 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.AwtVisitor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +40,7 @@ import java.beans.PropertyChangeListener;
  * @author yole
  */
 public abstract class TestResultsPanel extends JPanel implements Disposable {
-  private JBScrollPane myLeftPane;
+  private JScrollPane myLeftPane;
   private JComponent myStatisticsComponent;
   private Splitter mySplitter;
   protected final JComponent myConsole;
@@ -93,15 +92,15 @@ public abstract class TestResultsPanel extends JPanel implements Disposable {
     mySplitter = new Splitter();
     new AwtVisitor(myConsole) {
       public boolean visit(Component component) {
-        if (component instanceof JBScrollPane) {
-          ((JBScrollPane) component).putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP | SideBorder.LEFT);
+        if (component instanceof JScrollPane) {
+          ((JScrollPane) component).putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP | SideBorder.LEFT);
           return true;
         }
         return false;
       }
     };
     mySplitter.setFirstComponent(createOutputTab(myConsole, myConsoleActions));
-    final JBScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myStatisticsComponent);
+    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myStatisticsComponent);
     if (TestConsoleProperties.SHOW_STATISTICS.value(myProperties)) {
       mySplitter.setSecondComponent(scrollPane);
     }

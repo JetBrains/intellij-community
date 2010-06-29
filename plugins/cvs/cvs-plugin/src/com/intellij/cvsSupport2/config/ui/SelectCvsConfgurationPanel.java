@@ -20,7 +20,6 @@ import com.intellij.cvsSupport2.config.CvsRootConfiguration;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.components.JBScrollPane;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -77,7 +76,7 @@ public class SelectCvsConfgurationPanel extends JPanel {
 
   private JPanel createListPanel() {
     JPanel result = new JPanel(new BorderLayout());
-    JBScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myList);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myList);
     result.add(scrollPane, BorderLayout.CENTER);
     scrollPane.setFocusable(false);
     return result;

@@ -37,7 +37,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.PopupHandler;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
@@ -151,7 +150,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
 
     JPanel panel = new JPanel(new BorderLayout());
 
-    JBScrollPane scrollPane = MessageTreeRenderer.install(myTree);
+    JScrollPane scrollPane = MessageTreeRenderer.install(myTree);
     panel.add(scrollPane, BorderLayout.CENTER);
     return panel;
   }

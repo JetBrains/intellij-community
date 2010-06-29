@@ -61,7 +61,6 @@ import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.dualView.CellWrapper;
 import com.intellij.ui.dualView.DualTreeElement;
@@ -651,7 +650,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
       }
     };
     commentGroup.add(commentLabel, BorderLayout.NORTH);
-    JBScrollPane pane = ScrollPaneFactory.createScrollPane(myComments);
+    JScrollPane pane = ScrollPaneFactory.createScrollPane(myComments);
     pane.setBorder(IdeBorderFactory.createSimpleBorder(1, 1, myAdditionalDetails == null ? 0 : 1, 0));
 
     commentGroup.add(pane, BorderLayout.CENTER);

@@ -24,7 +24,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.impl.IdeRootPaneNorthExtension;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -52,7 +52,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
       myPanel.setBackground(UIUtil.getListBackground());
       myNavigationBar = new NavBarPanel(myProject);
 
-      JBScrollPane scroller = new JBScrollPane(myNavigationBar);
+      JScrollPane scroller = ScrollPaneFactory.createScrollPane(myNavigationBar);
       scroller.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
       scroller.setHorizontalScrollBar(null);
       scroller.setBorder(null);

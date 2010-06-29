@@ -18,7 +18,6 @@ package com.intellij.openapi.vcs.changes.committed;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.components.JBScrollPane;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -87,7 +86,7 @@ public class WiseSplitter {
   }
 
   private void setBorder(JComponent c, boolean leftMost) {
-    if (c instanceof JBScrollPane) c.setBorder(leftMost ? LEFT_BORDER : MIDDLE_BORDER);
+    if (c instanceof JScrollPane) c.setBorder(leftMost ? LEFT_BORDER : MIDDLE_BORDER);
   }
 
   public void remove(final String key) {

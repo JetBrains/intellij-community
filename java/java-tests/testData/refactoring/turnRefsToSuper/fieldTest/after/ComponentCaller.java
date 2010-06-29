@@ -1,4 +1,4 @@
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.ScrollPaneFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -13,7 +13,7 @@ public class ComponentCaller extends JComponent{
  
     private void buildUI() {
         setLayout(new BorderLayout());
-        add(new JBScrollPane(component1));
+      add(ScrollPaneFactory.createScrollPane((Component)component1));
     }
  
     public void doSomething(){

@@ -24,7 +24,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
@@ -49,7 +49,7 @@ public class PaletteWindow extends JPanel implements DataProvider {
   private final MyPropertyChangeListener myPropertyChangeListener = new MyPropertyChangeListener();
   private final Set<PaletteGroup> myGroups = new HashSet<PaletteGroup>();
   private final JTabbedPane myTabbedPane = new JTabbedPane();
-  private final JBScrollPane myScrollPane = new JBScrollPane();
+  private final JScrollPane myScrollPane = ScrollPaneFactory.createScrollPane();
   private final MyListSelectionListener myListSelectionListener = new MyListSelectionListener();
   private PaletteGroupHeader myLastFocusedGroup;
 
@@ -112,7 +112,7 @@ public class PaletteWindow extends JPanel implements DataProvider {
       }
       for(String tabName: tabNames) {
         PaletteContentWindow contentWindow = new PaletteContentWindow();
-        JBScrollPane scrollPane = new JBScrollPane(contentWindow);
+        JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(contentWindow);
         scrollPane.addMouseListener(new MyScrollPanePopupHandler());
         myTabbedPane.add(tabName, scrollPane);
         for(PaletteGroup group: currentGroups) {
@@ -209,12 +209,12 @@ public class PaletteWindow extends JPanel implements DataProvider {
     }
     final int tabCount = collectTabNames(myGroups).length;
     if (tabCount > 0) {
-      JBScrollPane activeScrollPane;
+      JScrollPane activeScrollPane;
       if (tabCount == 1) {
         activeScrollPane = myScrollPane;
       }
       else {
-        activeScrollPane = (JBScrollPane) myTabbedPane.getSelectedComponent();
+        activeScrollPane = (JScrollPane) myTabbedPane.getSelectedComponent();
       }
       PaletteContentWindow activeContentWindow = (PaletteContentWindow) activeScrollPane.getViewport().getView();
       PaletteGroupHeader groupHeader = activeContentWindow.getLastGroupHeader();
@@ -262,7 +262,7 @@ public class PaletteWindow extends JPanel implements DataProvider {
 
   private static class MyScrollPanePopupHandler extends PopupHandler {
     public void invokePopup(Component comp, int x, int y) {
-      JBScrollPane scrollPane = (JBScrollPane) comp;
+      JScrollPane scrollPane = (JScrollPane) comp;
       PaletteContentWindow contentWindow = (PaletteContentWindow) scrollPane.getViewport().getView();
       if (contentWindow != null) {
         PaletteGroupHeader groupHeader = contentWindow.getLastGroupHeader();

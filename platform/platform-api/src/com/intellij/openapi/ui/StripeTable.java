@@ -16,7 +16,7 @@
 
 package com.intellij.openapi.ui;
 
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.Table;
 
 import javax.swing.*;
@@ -83,7 +83,7 @@ public class StripeTable extends Table {
   }
 
   public static JScrollPane createScrollPane(JTable table) {
-    JBScrollPane scrollPane = new JBScrollPane(table);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(table);
     scrollPane.setViewport(new StripedViewport(table));
     scrollPane.getViewport().setView(table);
     scrollPane.setBorder(UIManager.getBorder("Table.scrollPaneBorder"));

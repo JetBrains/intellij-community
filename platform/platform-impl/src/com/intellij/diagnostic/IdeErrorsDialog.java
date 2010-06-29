@@ -45,7 +45,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -311,7 +311,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     JPanel gapPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 7, 0));
     gapPanel.add(myInfoLabel);
     infoPanel.add(gapPanel, BorderLayout.NORTH);
-    infoPanel.add(new JBScrollPane(myDetailsPane), BorderLayout.CENTER);
+    infoPanel.add(ScrollPaneFactory.createScrollPane(myDetailsPane), BorderLayout.CENTER);
     root.add(infoPanel, BorderLayout.CENTER);
     root.add(myImmediatePopupCheckbox, BorderLayout.SOUTH);
 
