@@ -38,6 +38,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
+import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -236,7 +237,7 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
       if (element instanceof PsiJavaCodeReferenceElement) {
         final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)element;
         Collections.sort(myClassesToImport, new PsiProximityComparator(referenceElement.getElement()));
-        final JList list = new JList(myClassesToImport.toArray(new PsiClass[myClassesToImport.size()]));
+        final JList list = new JBList(myClassesToImport.toArray(new PsiClass[myClassesToImport.size()]));
         list.setCellRenderer(new FQNameCellRenderer());
         Runnable runnable = new Runnable() {
           public void run() {

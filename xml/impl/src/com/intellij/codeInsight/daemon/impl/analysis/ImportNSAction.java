@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlExtension;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +56,7 @@ public class ImportNSAction implements QuestionAction {
   public boolean execute() {
     final Object[] objects = myNamespaces.toArray();
     Arrays.sort(objects);
-    final JList list = new JList(objects);
+    final JList list = new JBList(objects);
     list.setCellRenderer(XmlNSRenderer.INSTANCE);
     list.setSelectedIndex(0);
     final Runnable runnable = new Runnable() {

@@ -23,6 +23,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.debugger.UiDebuggerExtension;
 
 import javax.swing.*;
@@ -58,7 +59,7 @@ public class FocusDebugger implements UiDebuggerExtension, PropertyChangeListene
     final JPanel result = new JPanel(new BorderLayout());
 
     myLogModel = new DefaultListModel();
-    myLog = new JList(myLogModel);
+    myLog = new JBList(myLogModel);
     myLog.setCellRenderer(new FocusElementRenderer());
 
 

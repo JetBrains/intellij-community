@@ -40,6 +40,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ListScrollingUtil;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.plaf.beg.BegPopupMenuBorder;
 import com.intellij.ui.popup.PopupIcons;
 import com.intellij.util.CollectConsumer;
@@ -116,7 +117,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
     myProcessIcon = new AsyncProcessIcon("Completion progress");
     myProcessIcon.setVisible(false);
-    myList = new JList(new DefaultListModel());
+    myList = new JBList(new DefaultListModel());
     myCellRenderer = new LookupCellRenderer(this);
     myList.setCellRenderer(myCellRenderer);
 

@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.Icons;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
@@ -128,7 +129,7 @@ public abstract class PathEditor {
     Insets anInsets = new Insets(2, 2, 2, 2);
 
     myModel = new DefaultListModel();
-    myList = new JList(myModel);
+    myList = new JBList(myModel);
     myList.getSelectionModel().addListSelectionListener(new ListSelectionListener(){
       public void valueChanged(ListSelectionEvent e){
         updateButtons();

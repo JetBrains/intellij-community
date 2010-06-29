@@ -16,6 +16,8 @@
 package com.intellij.ui.components;
 
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.ToolTipHandler;
+import com.intellij.ui.ToolTipHandlerFactory;
 import com.intellij.ui.TreeUIHelper;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.EmptyTextHelper;
@@ -27,6 +29,7 @@ import java.util.Vector;
 
 public class JBList extends JList implements ComponentWithEmptyText{
   private EmptyTextHelper myEmptyTextHelper;
+  private ToolTipHandler<Integer> myToolTipHandler;
 
   public JBList() {
     init();
@@ -43,7 +46,7 @@ public class JBList extends JList implements ComponentWithEmptyText{
   }
 
   public JBList(Collection items) {
-    super(new Vector(items));
+    super(items.toArray());
     init();
   }
 
@@ -55,7 +58,7 @@ public class JBList extends JList implements ComponentWithEmptyText{
       }
     };
 
-    TreeUIHelper.getInstance().installToolTipHandler(this);
+    myToolTipHandler = ToolTipHandlerFactory.getInstance().install(this);
   }
 
   public boolean isEmpty() {
@@ -89,5 +92,9 @@ public class JBList extends JList implements ComponentWithEmptyText{
 
   public void appendEmptyText(String text, SimpleTextAttributes attrs, ActionListener listener) {
     myEmptyTextHelper.appendEmptyText(text, attrs, listener);
+  }
+
+  public ToolTipHandler<Integer> getToolTipHandler() {
+    return myToolTipHandler;
   }
 }

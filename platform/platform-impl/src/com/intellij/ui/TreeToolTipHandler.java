@@ -91,7 +91,7 @@ public class TreeToolTipHandler extends AbstractToolTipHandler<Integer, JTree> {
       }
     };
     
-    tree.getModel().addTreeModelListener(modelListener);
+    if (tree.getModel() != null) tree.getModel().addTreeModelListener(modelListener);
     tree.addPropertyChangeListener("model", new PropertyChangeListener() {
       @Override
       public void propertyChange(PropertyChangeEvent evt) {

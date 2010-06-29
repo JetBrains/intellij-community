@@ -32,6 +32,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.ui.components.JBList;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.options.*;
 import org.intellij.images.thumbnail.ThumbnailView;
@@ -116,7 +117,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
 
             options.addPropertyChangeListener(optionsListener);
 
-            list = new JList();
+            list = new JBList();
             list.setModel(new DefaultListModel());
             list.setLayoutOrientation(JList.HORIZONTAL_WRAP);
             list.setVisibleRowCount(-1);

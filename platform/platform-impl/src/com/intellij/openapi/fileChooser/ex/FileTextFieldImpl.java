@@ -34,6 +34,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ListScrollingUtil;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.ui.update.LazyUiDisposable;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -271,7 +272,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
 
   private void showCompletionPopup(final CompletionResult result, int position, boolean isExplicit) {
     if (myList == null) {
-      myList = new JList();
+      myList = new JBList();
       myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
       myList.setCellRenderer(new GroupedItemsListRenderer(new ListItemDescriptor() {

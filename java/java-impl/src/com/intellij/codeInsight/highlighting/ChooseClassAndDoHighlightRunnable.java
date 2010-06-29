@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
+import com.intellij.ui.components.JBList;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -75,7 +76,7 @@ public abstract class ChooseClassAndDoHighlightRunnable implements Runnable {
       Vector<Object> model = new Vector<Object>(Arrays.asList(myClasses));
       model.insertElementAt(CodeInsightBundle.message("highlight.thrown.exceptions.chooser.all.entry"), 0);
 
-      myList = new JList(model);
+      myList = new JBList(model);
       myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       myList.setCellRenderer(renderer);
 

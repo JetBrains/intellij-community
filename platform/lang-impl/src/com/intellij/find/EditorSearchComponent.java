@@ -51,6 +51,7 @@ import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.NonFocusableCheckBox;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
@@ -663,7 +664,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
 
   private void showHistory(final boolean byClickingToolbarButton) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("find.recent.search");
-    showCompletionPopup(new JList(ArrayUtil.reverseArray(FindSettings.getInstance().getRecentFindStrings())), "Recent Searches",
+    showCompletionPopup(new JBList(ArrayUtil.reverseArray(FindSettings.getInstance().getRecentFindStrings())), "Recent Searches",
                         byClickingToolbarButton);
   }
 
@@ -685,7 +686,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
       }
 
       FeatureUsageTracker.getInstance().triggerFeatureUsed("find.completion");
-      final JList list = new JList(array) {
+      final JList list = new JBList(array) {
         protected void paintComponent(final Graphics g) {
           UISettings.setupAntialiasing(g);
           super.paintComponent(g);

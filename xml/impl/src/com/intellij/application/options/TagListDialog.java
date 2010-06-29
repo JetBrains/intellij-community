@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.Icons;
 
 import javax.swing.*;
@@ -28,7 +29,7 @@ import java.util.ArrayList;
 
 public class TagListDialog extends DialogWrapper{
   private final JPanel myPanel = new JPanel(new BorderLayout());
-  private final JList myList = new JList(new DefaultListModel());
+  private final JList myList = new JBList(new DefaultListModel());
   private ArrayList<String> myData;
 
   public TagListDialog(String title) {

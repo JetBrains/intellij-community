@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.impl.http.RemoteFileState;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -71,7 +72,7 @@ public class JumpFromRemoteFileToLocalAction extends AnAction {
       navigateToFile(myProject, ContainerUtil.getFirstItem(files, null));
     }
     else {
-      final JList list = new JList(files.toArray(new VirtualFile[files.size()]));
+      final JList list = new JBList(files.toArray(new VirtualFile[files.size()]));
       list.setCellRenderer(new ColoredListCellRenderer() {
         @Override
         protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {

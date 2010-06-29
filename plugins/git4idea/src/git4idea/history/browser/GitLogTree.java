@@ -45,6 +45,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.*;
 import com.intellij.util.containers.Convertor;
@@ -117,7 +118,7 @@ public class GitLogTree implements GitTreeViewI {
     myFiltersSplitter.setDividerWidth(3);
 
     myInitWaiters = new LinkedList<Runnable>();
-    myCommitsList = new JList();
+    myCommitsList = new JBList();
     myController.init();
   }
 

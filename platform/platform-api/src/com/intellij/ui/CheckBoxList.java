@@ -1,5 +1,6 @@
 package com.intellij.ui;
 
+import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -12,7 +13,7 @@ import java.awt.event.*;
 /**
  * @author oleg
  */
-public class CheckBoxList extends JList {
+public class CheckBoxList extends JBList {
   private static final int DEFAULT_CHECK_BOX_WIDTH = 20;
 
   public CheckBoxList(final ListModel dataModel, final CheckBoxListListener checkBoxListListener) {

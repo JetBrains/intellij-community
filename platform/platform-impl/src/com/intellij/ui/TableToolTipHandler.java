@@ -78,7 +78,7 @@ public class TableToolTipHandler extends AbstractToolTipHandler<TableCell, JTabl
       }
     };
 
-    table.getModel().addTableModelListener(modelListener);
+    if (table.getModel() != null) table.getModel().addTableModelListener(modelListener);
     table.addPropertyChangeListener("model", new PropertyChangeListener() {
       @Override
       public void propertyChange(PropertyChangeEvent evt) {

@@ -27,7 +27,7 @@ import java.beans.PropertyChangeListener;
 
 public class ListToolTipHandler extends AbstractToolTipHandler<Integer, JList>{
   public static void install(JList list) {
-    install(list);
+    installAndGet(list);
   }
 
   public static ListToolTipHandler installAndGet(JList list) {
@@ -75,7 +75,7 @@ public class ListToolTipHandler extends AbstractToolTipHandler<Integer, JList>{
       }
     };
 
-    list.getModel().addListDataListener(modelListener);
+    if (list.getModel() != null) list.getModel().addListDataListener(modelListener);
     list.addPropertyChangeListener("model", new PropertyChangeListener() {
       @Override
       public void propertyChange(PropertyChangeEvent evt) {

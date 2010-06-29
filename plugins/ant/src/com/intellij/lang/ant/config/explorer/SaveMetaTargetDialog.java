@@ -22,6 +22,7 @@ import com.intellij.lang.ant.config.impl.ExecuteCompositeTargetEvent;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.ListUtil;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 
 import javax.swing.*;
@@ -86,7 +87,7 @@ public class SaveMetaTargetDialog extends DialogWrapper {
                                                GridBagConstraints.HORIZONTAL, new Insets(4, 0, 0, 0), 0, 0));
 
     final DefaultListModel dataModel = new DefaultListModel();
-    myTargetList = new JList(dataModel);
+    myTargetList = new JBList(dataModel);
     final String[] targetNames = myInitialEvent.getTargetNames();
     for (String name : targetNames) {
       dataModel.addElement(name);

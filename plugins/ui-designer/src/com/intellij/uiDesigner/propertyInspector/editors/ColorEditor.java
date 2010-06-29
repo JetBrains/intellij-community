@@ -18,6 +18,7 @@ package com.intellij.uiDesigner.propertyInspector.editors;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.ui.components.JBList;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.lw.ColorDescriptor;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
@@ -227,7 +228,7 @@ public class ColorEditor extends PropertyEditor<ColorDescriptor> {
 
     protected void buildChooser() {
       setLayout(new BorderLayout());
-      myDescriptorList = new JList(myColorDescriptors);
+      myDescriptorList = new JBList(myColorDescriptors);
       myDescriptorList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       myDescriptorList.setVisibleRowCount(15);
       myDescriptorList.setCellRenderer(new ColorRenderer());

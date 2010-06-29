@@ -26,6 +26,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 
 import javax.swing.*;
@@ -68,7 +69,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
   }
 
   protected JComponent createCenterPanel() {
-    myList = new JList();
+    myList = new JBList();
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     rebuildListContent();

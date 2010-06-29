@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.Icons;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.Nullable;
@@ -133,7 +134,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
   }
 
   private JList createList() {
-    final JList list = new JList(new DefaultListModel());
+    final JList list = new JBList(new DefaultListModel());
     list.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     list.setCellRenderer(new MyListCellRenderer());
     return list;

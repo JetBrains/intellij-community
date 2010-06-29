@@ -29,6 +29,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.UIUtil;
 
@@ -91,7 +92,7 @@ public class ModuleTypeStep extends ModuleWizardStep {
 
     final ModuleType[] allModuleTypes = ModuleTypeManager.getInstance().getRegisteredTypes();
 
-    myTypesList = new JList(allModuleTypes);
+    myTypesList = new JBList(allModuleTypes);
     myTypesList.setSelectionModel(new PermanentSingleSelectionModel());
     myTypesList.setCellRenderer(new ModuleTypesListCellRenderer());
     myTypesList.addListSelectionListener(new ListSelectionListener() {
