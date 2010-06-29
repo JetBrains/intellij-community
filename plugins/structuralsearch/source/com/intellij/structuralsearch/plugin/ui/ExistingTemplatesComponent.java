@@ -9,8 +9,9 @@ import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.containers.Convertor;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
@@ -126,7 +127,7 @@ public class ExistingTemplatesComponent {
       BorderLayout.NORTH,
       ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent()
     );
-    templatesPanel.add(BorderLayout.CENTER, new JScrollPane(patternTree));
+    templatesPanel.add(BorderLayout.CENTER, new JBScrollPane(patternTree));
 
     panel = templatesPanel;
     configureSelectTemplateAction(patternTree);
@@ -139,7 +140,7 @@ public class ExistingTemplatesComponent {
     );
     historyPanel.add(
       BorderLayout.CENTER,
-      new JScrollPane(
+      new JBScrollPane(
         historyList = new JBList(historyModel)
       )
     );
