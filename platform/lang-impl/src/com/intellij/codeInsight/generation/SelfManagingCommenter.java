@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +37,7 @@ public interface SelfManagingCommenter<T extends CommenterDataHolder> {
   @Nullable
   String getCommentPrefix(int line, @NotNull Document document, @NotNull T data);
 
+  @Nullable TextRange getBlockCommentRange(int selectionStart, int selectionEnd, @NotNull Document document, @NotNull T data);
   @Nullable String getBlockCommentPrefix(int selectionStart, @NotNull Document document, @NotNull T data);
 
   @Nullable String getBlockCommentSuffix(int selectionEnd, @NotNull Document document, @NotNull T data);
