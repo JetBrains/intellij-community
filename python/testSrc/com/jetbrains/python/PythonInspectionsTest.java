@@ -59,7 +59,6 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
 
   public void testPyMethodParametersInspection() throws Throwable {
     LocalInspectionTool inspection = new PyMethodParametersInspection();
-    LocalFileSystem.getInstance().refresh(false); // XXX
     doTest(getTestName(false), inspection);
   }
 

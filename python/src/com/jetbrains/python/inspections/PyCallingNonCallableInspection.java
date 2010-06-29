@@ -52,7 +52,7 @@ public class PyCallingNonCallableInspection extends PyInspection {
           }
           if (!classType.isDefinition()) {
             final List<? extends PsiElement> calls = classType.resolveMember("__call__", AccessDirection.READ);
-            if (calls != null && calls.size() > 0) {
+            if (calls == null || calls.size() == 0) {
               PyClass pyClass = classType.getPyClass();
               if (pyClass != null) {
                 registerProblem(node, "'" + pyClass.getName() + "' object is not callable");

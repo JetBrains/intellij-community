@@ -297,7 +297,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     }
   }
 
-  public PyFunction findMethodByName(@NotNull final String name, boolean inherited) {
+  public PyFunction findMethodByName(@Nullable final String name, boolean inherited) {
     if (name == null) return null;
     NameFinder<PyFunction> proc = new NameFinder<PyFunction>(name);
     visitMethods(proc, inherited);
