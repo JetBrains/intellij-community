@@ -459,13 +459,13 @@ public class ThreeComponentsSplitter extends JPanel {
         if (getHeight() > 0) {
           return p.y >= 0 && p.y < getHeight();
         } else {
-          return p.y >= -myDividerZone / 2 && p.y < myDividerZone / 2;
+          return p.y >= -myDividerZone / 2 && p.y <= myDividerZone / 2;
         }
       } else {
         if (getWidth() > 0) {
           return p.x >= 0 && p.x < getWidth();
         } else {
-          return p.x >= -myDividerZone / 2 && p.x < myDividerZone / 2;         
+          return p.x >= -myDividerZone / 2 && p.x <= myDividerZone / 2;
         }
       }
     }
