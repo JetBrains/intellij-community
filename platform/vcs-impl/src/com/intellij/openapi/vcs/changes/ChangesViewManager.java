@@ -41,6 +41,7 @@ import com.intellij.openapi.vcs.changes.actions.IgnoredSettingsAction;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.Alarm;
@@ -182,7 +183,7 @@ public class ChangesViewManager extends AbstractProjectComponent implements JDOM
     panel.setToolbar(toolbarPanel);
 
     final JPanel content = new JPanel(new BorderLayout());
-    content.add(new JScrollPane(myView), BorderLayout.CENTER);
+    content.add(new JBScrollPane(myView), BorderLayout.CENTER);
     content.add(myProgressLabel, BorderLayout.SOUTH);
     panel.setContent(content);
 

@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.ListScrollingUtil;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.util.Function;
@@ -202,7 +203,7 @@ public class PopupChooserBuilder {
       registerClosePopupKeyboardAction(keystroke, true);
     }
 
-    final JScrollPane scrollPane;
+    final JBScrollPane scrollPane;
     if (myChooserComponent instanceof ListWithFilter) {
       scrollPane = ((ListWithFilter)myChooserComponent).getScrollPane();
     }
@@ -294,12 +295,12 @@ public class PopupChooserBuilder {
   }
 
   @NotNull
-  private JScrollPane createScrollPane(final JTable table) {
+  private JBScrollPane createScrollPane(final JTable table) {
     if (table instanceof TreeTable) {
       TreeUtil.expandAll(((TreeTable)table).getTree());
     }
 
-    JScrollPane scrollPane = new JScrollPane(table);
+    JBScrollPane scrollPane = new JBScrollPane(table);
 
     scrollPane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
 
@@ -333,10 +334,10 @@ public class PopupChooserBuilder {
   }
 
   @NotNull
-  private JScrollPane createScrollPane(final JTree tree) {
+  private JBScrollPane createScrollPane(final JTree tree) {
     TreeUtil.expandAll(tree);
 
-    JScrollPane scrollPane = new JScrollPane(tree);
+    JBScrollPane scrollPane = new JBScrollPane(tree);
 
     scrollPane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
 
@@ -394,7 +395,7 @@ public class PopupChooserBuilder {
     return this;
   }
 
-  private class MyListWrapper extends JScrollPane implements DataProvider {
+  private class MyListWrapper extends JBScrollPane implements DataProvider {
     @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
     private final JList myList;
 

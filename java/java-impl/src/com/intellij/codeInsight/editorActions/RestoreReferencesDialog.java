@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 
 import javax.swing.*;
 import java.awt.*;
@@ -65,7 +66,7 @@ class RestoreReferencesDialog extends DialogWrapper {
     myList = new JBList(myNamedElements);
     myList.setCellRenderer(new FQNameCellRenderer());
     myList.setBorder(BorderFactory.createEtchedBorder());
-    panel.add(new JScrollPane(myList), BorderLayout.CENTER);
+    panel.add(new JBScrollPane(myList), BorderLayout.CENTER);
 
     JTextArea area = new JTextArea(myContainsClassesOnly ?
                                    CodeInsightBundle.message("dialog.paste.on.import.text") :

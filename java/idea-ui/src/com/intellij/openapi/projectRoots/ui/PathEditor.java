@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Icons;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
@@ -173,7 +174,7 @@ public abstract class PathEditor {
       }
     });
 
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myList);
+    JBScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myList);
     scrollPane.setPreferredSize(new Dimension(500, 500));
     myPanel.add(scrollPane, new GridBagConstraints(0, 0, 1, 8, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, anInsets, 0, 0));
     myPanel.add(myAddButton, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, anInsets, 0, 0));

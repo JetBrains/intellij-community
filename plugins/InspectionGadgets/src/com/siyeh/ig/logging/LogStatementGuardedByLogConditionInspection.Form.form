@@ -25,7 +25,7 @@
         </constraints>
         <properties/>
       </component>
-      <scrollpane id="5db1f">
+      <scrollpane class="com.intellij.ui.components.JBScrollPane" id="5db1f">
         <constraints>
           <grid row="1" column="0" row-span="3" col-span="2" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>

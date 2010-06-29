@@ -52,6 +52,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.uiDesigner.GuiFormFileType;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.designSurface.InsertComponentProcessor;
@@ -434,7 +435,7 @@ public class CreateSnapShotAction extends AnAction {
       while(componentClass != null) {
         if (JPanel.class.getName().equals(componentClass.getQualifiedName()) ||
             JTabbedPane.class.getName().equals(componentClass.getQualifiedName()) ||
-            JScrollPane.class.getName().equals(componentClass.getQualifiedName()) ||
+            JBScrollPane.class.getName().equals(componentClass.getQualifiedName()) ||
             JSplitPane.class.getName().equals(componentClass.getQualifiedName())) {
           return true;
         }

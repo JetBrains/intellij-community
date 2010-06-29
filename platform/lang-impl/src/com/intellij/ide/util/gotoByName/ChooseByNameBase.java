@@ -17,7 +17,6 @@
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.Patches;
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.ide.ui.UISettings;
@@ -50,6 +49,7 @@ import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.popup.PopupOwner;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.util.Alarm;
@@ -92,7 +92,7 @@ public abstract class ChooseByNameBase{
   /** the tool area of the popup, it is just after card box */
   protected JComponent myToolArea;
 
-  protected JScrollPane myListScrollPane; // Located in the layered pane
+  protected JBScrollPane myListScrollPane; // Located in the layered pane
   protected JList myList;
   private DefaultListModel myListModel;
   private List<Pair<String, Integer>> myHistory;
@@ -463,7 +463,7 @@ public abstract class ChooseByNameBase{
       }
     });
 
-    myListScrollPane = new JScrollPane(myList);
+    myListScrollPane = new JBScrollPane(myList);
 
     if (!UIUtil.isMotifLookAndFeel()) {
       UIUtil.installPopupMenuBorder(myTextFieldPanel);

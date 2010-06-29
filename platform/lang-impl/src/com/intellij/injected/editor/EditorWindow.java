@@ -40,6 +40,7 @@ import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -414,7 +415,7 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
     return myDelegate.getContentSize();
   }
 
-  public JScrollPane getScrollPane() {
+  public JBScrollPane getScrollPane() {
     return myDelegate.getScrollPane();
   }
 

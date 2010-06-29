@@ -26,6 +26,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 
 import javax.swing.*;
 import java.awt.*;
@@ -238,7 +239,7 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
     JPanel keywordsPanel = panel;
     keywordsPanel.setLayout(new BorderLayout());
 
-    keywordsPanel.add(new JScrollPane(myKeywordsLists[index]), BorderLayout.CENTER);
+    keywordsPanel.add(new JBScrollPane(myKeywordsLists[index]), BorderLayout.CENTER);
 
     DialogButtonGroup buttonGroup = new DialogButtonGroup();
     buttonGroup.setBorder(BorderFactory.createEmptyBorder(0, 10, 5, 0));

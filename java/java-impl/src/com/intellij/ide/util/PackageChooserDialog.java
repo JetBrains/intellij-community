@@ -36,6 +36,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
@@ -124,7 +125,7 @@ public class PackageChooserDialog extends PackageChooser {
     );
 
     myTree.setBorder(BorderFactory.createEtchedBorder());
-    JScrollPane scrollPane = new JScrollPane(myTree);
+    JBScrollPane scrollPane = new JBScrollPane(myTree);
     scrollPane.setPreferredSize(new Dimension(500, 300));
 
     new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {

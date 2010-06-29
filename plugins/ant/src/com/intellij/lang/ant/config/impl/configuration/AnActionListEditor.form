@@ -19,7 +19,7 @@
         <border type="none"/>
         <children/>
       </xy>
-      <scrollpane id="3742a">
+      <scrollpane class="com.intellij.ui.components.JBScrollPane" id="3742a">
         <constraints>
           <xy x="0" y="25" width="22" height="22"/>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3"/>

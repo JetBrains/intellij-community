@@ -34,6 +34,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import com.intellij.refactoring.listeners.RefactoringListenerManager;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
@@ -157,7 +158,7 @@ public class DynamicToolWindowWrapper {
 
     myTreeTablePanel.removeAll();
 
-    final JScrollPane treeTable = createTable(root);
+    final JBScrollPane treeTable = createTable(root);
 
     if (expandAll) {
       TreeUtil.expandAll(myTreeTable.getTree());
@@ -204,7 +205,7 @@ public class DynamicToolWindowWrapper {
     return rootNode;
   }
 
-  private JScrollPane createTable(final MutableTreeNode myTreeRoot) {
+  private JBScrollPane createTable(final MutableTreeNode myTreeRoot) {
     ColumnInfo[] columnInfos =
       {new ClassColumnInfo(myColumnNames[CLASS_OR_ELEMENT_NAME_COLUMN]), new PropertyTypeColumnInfo(myColumnNames[TYPE_COLUMN])};
 
@@ -372,7 +373,7 @@ public class DynamicToolWindowWrapper {
     myTreeTable.getColumn(myColumnNames[CLASS_OR_ELEMENT_NAME_COLUMN]).setPreferredWidth(200);
     myTreeTable.getColumn(myColumnNames[TYPE_COLUMN]).setPreferredWidth(160);
 
-    JScrollPane scrollpane = ScrollPaneFactory.createScrollPane(myTreeTable);
+    JBScrollPane scrollpane = ScrollPaneFactory.createScrollPane(myTreeTable);
 
     scrollpane.setPreferredSize(new Dimension(600, 400));
     return scrollpane;

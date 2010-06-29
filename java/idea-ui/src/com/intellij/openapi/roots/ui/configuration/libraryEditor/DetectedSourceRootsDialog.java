@@ -24,6 +24,7 @@ import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -60,7 +61,7 @@ public class DetectedSourceRootsDialog extends DialogWrapper {
   /**
    * A scrollable pane that contains myTree
    */
-  private final JScrollPane myPane;
+  private final JBScrollPane myPane;
 
   /**
    * A constructor
@@ -103,7 +104,7 @@ public class DetectedSourceRootsDialog extends DialogWrapper {
     super(project, true);
     myRootNode = tree;
     myTree = createCheckboxTree();
-    myPane = new JScrollPane(myTree);
+    myPane = new JBScrollPane(myTree);
     setTitle("Detected Source Roots");
     init();
   }
@@ -118,7 +119,7 @@ public class DetectedSourceRootsDialog extends DialogWrapper {
     super(component, true);
     myRootNode = tree;
     myTree = createCheckboxTree();
-    myPane = new JScrollPane(myTree);
+    myPane = new JBScrollPane(myTree);
     setTitle("Detected Source Roots");
     init();
   }

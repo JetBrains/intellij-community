@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Icons;
 
 import javax.swing.*;
@@ -61,7 +62,7 @@ public class TagListDialog extends DialogWrapper{
   }
 
   private JComponent createList() {
-    return new JScrollPane(myList);
+    return new JBScrollPane(myList);
   }
 
   private JComponent createToolbal() {

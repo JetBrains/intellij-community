@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.search.TodoPattern;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.Table;
 
 import javax.swing.*;
@@ -130,7 +131,7 @@ class FilterDialog extends DialogWrapper {
     Border border = IdeBorderFactory.createTitledBorder(IdeBundle.message("group.todo.filter.patterns"));
     patternsPanel.setBorder(border);
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
+    JBScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
     scrollPane.setPreferredSize(new Dimension(550, myTable.getRowHeight() * 10));
     patternsPanel.add(scrollPane,
                       new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));

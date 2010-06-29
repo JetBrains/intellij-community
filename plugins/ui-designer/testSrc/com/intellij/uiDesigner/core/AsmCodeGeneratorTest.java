@@ -17,6 +17,7 @@ package com.intellij.uiDesigner.core;
 
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.compiler.FormErrorInfo;
 import com.intellij.uiDesigner.compiler.NestedFormLoader;
@@ -215,7 +216,7 @@ public class AsmCodeGeneratorTest extends TestCase {
   }
 
   public void testScrollPane() throws Exception {
-    JScrollPane scrollPane = (JScrollPane)getInstrumentedRootComponent("TestScrollPane.form", "BindingTest");
+    JBScrollPane scrollPane = (JBScrollPane)getInstrumentedRootComponent("TestScrollPane.form", "BindingTest");
     assertTrue(scrollPane.getViewport().getView() instanceof JList);
   }
 
@@ -290,7 +291,7 @@ public class AsmCodeGeneratorTest extends TestCase {
     Class cls = loadAndPatchClass("TestChainedConstructor.form", "ChainedConstructorTest");
     Field scrollPaneField = cls.getField("myScrollPane");
     Object instance = cls.newInstance();
-    JScrollPane scrollPane = (JScrollPane) scrollPaneField.get(instance);
+    JBScrollPane scrollPane = (JBScrollPane) scrollPaneField.get(instance);
     assertNotNull(scrollPane.getViewport().getView());
   }
 

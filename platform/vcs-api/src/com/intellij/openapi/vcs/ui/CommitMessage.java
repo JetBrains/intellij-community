@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.SeparatorFactory;
 import com.intellij.ui.TextComponentUndoProvider;
+import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -35,7 +36,7 @@ public class CommitMessage extends JPanel implements Disposable {
 
   public CommitMessage() {
     super(new BorderLayout());
-    final JScrollPane scrollPane = new JScrollPane(myCommentArea);
+    final JBScrollPane scrollPane = new JBScrollPane(myCommentArea);
     scrollPane.setPreferredSize(myCommentArea.getPreferredSize());
     add(scrollPane, BorderLayout.CENTER);
 

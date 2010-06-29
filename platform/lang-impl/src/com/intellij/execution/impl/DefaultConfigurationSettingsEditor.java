@@ -23,6 +23,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -58,7 +59,7 @@ public class DefaultConfigurationSettingsEditor implements Configurable {
 
   public JComponent createComponent() {
     final JPanel wholePanel = new JPanel(new BorderLayout());
-    final JScrollPane pane = ScrollPaneFactory.createScrollPane(myTree);
+    final JBScrollPane pane = ScrollPaneFactory.createScrollPane(myTree);
     pane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     wholePanel.add(pane, BorderLayout.WEST);
     final JPanel rightPanel = new JPanel(new BorderLayout());

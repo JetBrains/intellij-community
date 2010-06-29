@@ -34,6 +34,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.Icons;
@@ -131,7 +132,7 @@ public class UnversionedViewDialog extends DialogWrapper {
     }
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("UNVERSIONED_DIALOG", group, false);
     myPanel.add(actionToolbar.getComponent(), BorderLayout.WEST);
-    myPanel.add(new JScrollPane(myView), BorderLayout.CENTER);
+    myPanel.add(new JBScrollPane(myView), BorderLayout.CENTER);
 
     final DeleteUnversionedFilesAction deleteUnversionedFilesAction = new DeleteUnversionedFilesAction() {
       @Override

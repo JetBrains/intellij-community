@@ -137,8 +137,8 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
   private void paintMaxiThumb(Graphics g, Rectangle thumbBounds) {
     final boolean vertical = isVertical();
-    int hgap = vertical ? 3 : 0;
-    int vgap = vertical ? 0 : 3;
+    int hgap = vertical ? 3 : 1;
+    int vgap = vertical ? 1 : 3;
 
     int w = adjustThumbWidth(thumbBounds.width - hgap * 2) - 1;
     int h = thumbBounds.height - vgap * 2 - 1;
@@ -172,8 +172,8 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
   private void paintMiniThumb(Graphics g, Rectangle thumbBounds) {
     final boolean vertical = isVertical();
-    final int hgap = vertical ? 2 : 0;
-    final int vgap = vertical ? 0 : 2;
+    final int hgap = vertical ? 2 : 1;
+    final int vgap = vertical ? 1 : 2;
 
     int w = thumbBounds.width - hgap * 2;
     int h = thumbBounds.height - vgap * 2;

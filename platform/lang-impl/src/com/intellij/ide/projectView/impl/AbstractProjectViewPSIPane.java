@@ -34,6 +34,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.ui.UIUtil;
@@ -55,7 +56,7 @@ import java.util.ArrayList;
 import java.util.StringTokenizer;
 
 public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane {
-  private JScrollPane myComponent;
+  private JBScrollPane myComponent;
 
   protected AbstractProjectViewPSIPane(Project project) {
     super(project);
@@ -68,7 +69,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     DefaultTreeModel treeModel = new DefaultTreeModel(rootNode);
     myTree = createTree(treeModel);
     enableDnD();
-    myComponent = new JScrollPane(myTree);
+    myComponent = new JBScrollPane(myTree);
     myTreeStructure = createStructure();
     setTreeBuilder(createBuilder(treeModel));
 

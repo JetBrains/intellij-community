@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.ui.components.JBScrollPane;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -42,7 +43,7 @@ public class MigrationDialog extends DialogWrapper{
   private final MigrationMapSet myMigrationMapSet;
   private JLabel promptLabel;
   private JSeparator mySeparator;
-  private JScrollPane myDescriptionScroll;
+  private JBScrollPane myDescriptionScroll;
 
 
   public MigrationDialog(Project project, MigrationMapSet migrationMapSet) {
@@ -73,11 +74,11 @@ public class MigrationDialog extends DialogWrapper{
 
     initMapCombobox();
     myDescriptionTextArea = new MyTextArea("", 3, 40);
-    JScrollPane scrollPane = new JScrollPane(myDescriptionTextArea);
+    JBScrollPane scrollPane = new JBScrollPane(myDescriptionTextArea);
     myDescriptionScroll.getViewport().add(myDescriptionTextArea);
     myDescriptionScroll.setBorder(null);
-    myDescriptionScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-    myDescriptionScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+    myDescriptionScroll.setHorizontalScrollBarPolicy(JBScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+    myDescriptionScroll.setVerticalScrollBarPolicy(JBScrollPane.VERTICAL_SCROLLBAR_NEVER);
     myDescriptionTextArea.setEditable(false);
     myDescriptionTextArea.setFont(promptLabel.getFont());
     myDescriptionTextArea.setBackground(myPanel.getBackground());

@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
@@ -72,7 +73,7 @@ public class MavenArtifactSearchPanel extends JPanel {
 
     setLayout(new BorderLayout());
     add(mySearchField, BorderLayout.NORTH);
-    add(new JScrollPane(myResultList), BorderLayout.CENTER);
+    add(new JBScrollPane(myResultList), BorderLayout.CENTER);
 
     mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {

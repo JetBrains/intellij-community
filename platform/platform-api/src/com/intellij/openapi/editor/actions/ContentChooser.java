@@ -27,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ArrayUtil;
 
 import javax.swing.*;
@@ -116,7 +117,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     });
 
     mySplitter = new Splitter(true);
-    mySplitter.setFirstComponent(new JScrollPane(myList));
+    mySplitter.setFirstComponent(new JBScrollPane(myList));
     mySplitter.setSecondComponent(new JPanel());
     updateViewerForSelection();
 
@@ -163,7 +164,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
       textArea.setSelectionStart(0);
       textArea.setSelectionEnd(textArea.getText().length());
       textArea.setEditable(false);
-      mySplitter.setSecondComponent(new JScrollPane(textArea));
+      mySplitter.setSecondComponent(new JBScrollPane(textArea));
     }
     mySplitter.revalidate();
   }

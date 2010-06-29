@@ -27,6 +27,7 @@ import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.ui.StringTableCellEditor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.Table;
@@ -110,7 +111,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
 
     JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("changeClassSignature.parameters.panel.border.title")));
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
+    JBScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
 
     panel.add(scrollPane, BorderLayout.CENTER);
     final JPanel buttonsTable = EditableRowTable.createButtonsTable(myTable, myTableModel, true);

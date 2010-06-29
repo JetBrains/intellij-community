@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.PopupBorder;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.ui.popup.util.MnemonicsSearch;
@@ -75,7 +76,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
     final JComponent content = createContent();
 
-    JScrollPane scrollPane = new JScrollPane(content);
+    JBScrollPane scrollPane = new JBScrollPane(content);
     scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     scrollPane.getHorizontalScrollBar().setBorder(null);
@@ -289,7 +290,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
       int resultHeight = ofContent.height > MAX_SIZE.height ? MAX_SIZE.height : ofContent.height;
 
       if (ofContent.height > MAX_SIZE.height) {
-        resultWidth += new JScrollPane().getVerticalScrollBar().getPreferredSize().getWidth();
+        resultWidth += new JBScrollPane().getVerticalScrollBar().getPreferredSize().getWidth();
       }
 
       return new Dimension(resultWidth, resultHeight);

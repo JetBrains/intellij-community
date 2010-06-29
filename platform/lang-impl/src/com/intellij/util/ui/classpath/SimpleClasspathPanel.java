@@ -5,9 +5,10 @@
 package com.intellij.util.ui.classpath;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -32,6 +33,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ReorderableListController;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Icons;
 import com.intellij.util.PathUtil;
 import gnu.trove.THashSet;
@@ -94,7 +96,7 @@ public class SimpleClasspathPanel extends JPanel {
       }
     });
     add(ActionManager.getInstance().createActionToolbar(ActionPlaces.PROJECT_VIEW_TOOLBAR, actionGroup, true).getComponent(), BorderLayout.NORTH);
-    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myList);
+    final JBScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myList);
     add(scrollPane, BorderLayout.CENTER);
     final FontMetrics fontMetrics = myList.getFontMetrics(myList.getFont());
     scrollPane.setPreferredSize(new Dimension(0, fontMetrics.getHeight() * 12));

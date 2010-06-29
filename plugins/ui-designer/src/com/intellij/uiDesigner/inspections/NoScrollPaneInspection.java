@@ -17,6 +17,7 @@
 package com.intellij.uiDesigner.inspections;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.actions.SurroundAction;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
@@ -45,7 +46,7 @@ public class NoScrollPaneInspection extends BaseFormInspection {
   protected void checkComponentProperties(Module module, IComponent component, FormErrorCollector collector) {
     if (FormInspectionUtil.isComponentClass(module, component, Scrollable.class) &&
         !FormInspectionUtil.isComponentClass(module, component, JTextField.class) &&
-        !FormInspectionUtil.isComponentClass(module, component.getParentContainer(), JScrollPane.class)) {
+        !FormInspectionUtil.isComponentClass(module, component.getParentContainer(), JBScrollPane.class)) {
       collector.addError(getID(), component, null, UIDesignerBundle.message("inspection.no.scroll.pane"),
                          new EditorQuickFixProvider() {
                            public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
@@ -63,7 +64,7 @@ public class NoScrollPaneInspection extends BaseFormInspection {
 
     public void run() {
       ArrayList<RadComponent> targetList = new ArrayList<RadComponent>(Collections.singletonList(myComponent));
-      new SurroundAction(JScrollPane.class.getName()).actionPerformed(myEditor, targetList, null);
+      new SurroundAction(JBScrollPane.class.getName()).actionPerformed(myEditor, targetList, null);
     }
   }
 }

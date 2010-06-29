@@ -59,7 +59,7 @@
           <text value="&lt;html&gt;These files do not belong to active changelist:&lt;/html&gt;"/>
         </properties>
       </component>
-      <scrollpane id="6c540">
+      <scrollpane class="com.intellij.ui.components.JBScrollPane" id="6c540">
         <constraints>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>

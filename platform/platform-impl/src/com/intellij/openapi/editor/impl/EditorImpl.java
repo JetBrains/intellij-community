@@ -58,8 +58,8 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
-import com.intellij.ui.JScrollPane2;
 import com.intellij.ui.LightweightHint;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.ContainerUtil;
@@ -110,7 +110,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final DocumentImpl myDocument;
 
   private final JPanel myPanel;
-  private final JScrollPane myScrollPane;
+  private final JBScrollPane myScrollPane;
   private final EditorComponentImpl myEditorComponent;
   private final EditorGutterComponentImpl myGutterComponent;
 
@@ -554,7 +554,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           final Component[] components = getComponents();
           final Rectangle r = getBounds();
           for (Component c : components) {
-            if (c instanceof JScrollPane) {
+            if (c instanceof JBScrollPane) {
               c.setBounds(0, 0, r.width, r.height);
             }
             else {
@@ -2382,7 +2382,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return new Dimension(size.width, size.height + mySettings.getAdditionalLinesCount() * getLineHeight());
   }
 
-  public JScrollPane getScrollPane() {
+  public JBScrollPane getScrollPane() {
     return myScrollPane;
   }
 
@@ -4674,7 +4674,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     info.put("caret", visual.getLine() + ":" + visual.getColumn());
   }
 
-  private class MyScrollPane extends JScrollPane2 {
+  private class MyScrollPane extends JBScrollPane {
     protected void processMouseWheelEvent(MouseWheelEvent e) {
       if (mySettings.isWheelFontChangeEnabled()) {
         boolean changeFontSize = SystemInfo.isMac

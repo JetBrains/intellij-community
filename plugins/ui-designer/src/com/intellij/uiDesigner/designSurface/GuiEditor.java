@@ -37,6 +37,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.componentTree.ComponentPtr;
@@ -300,7 +301,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
     gbc.gridy = 1;
     gbc.weightx = 1.0;
     gbc.weighty = 1.0;
-    final JScrollPane scrollPane = new JScrollPane(myLayeredPane);
+    final JBScrollPane scrollPane = new JBScrollPane(myLayeredPane);
     scrollPane.setBackground(Color.WHITE);
     panel.add(scrollPane, gbc);
     myHorzCaptionPanel.attachToScrollPane(scrollPane);

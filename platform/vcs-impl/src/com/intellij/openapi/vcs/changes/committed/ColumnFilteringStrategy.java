@@ -23,6 +23,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
@@ -41,7 +42,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author yole
  */
 public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
-  private final JScrollPane myScrollPane;
+  private final JBScrollPane myScrollPane;
   private final JList myValueList;
   private final CopyOnWriteArrayList<ChangeListener> myListeners = ContainerUtil.createEmptyCOWList();
   private final ChangeListColumn myColumn;

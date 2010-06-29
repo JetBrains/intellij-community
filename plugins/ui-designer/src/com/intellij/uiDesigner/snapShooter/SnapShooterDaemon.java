@@ -17,6 +17,7 @@
 package com.intellij.uiDesigner.snapShooter;
 
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
@@ -166,8 +167,8 @@ public class SnapShooterDaemon implements Runnable {
           children.add(splitPane.getRightComponent());
         }
       }
-      else if (parent instanceof JScrollPane) {
-        JScrollPane scrollPane = (JScrollPane) parent;
+      else if (parent instanceof JBScrollPane) {
+        JBScrollPane scrollPane = (JBScrollPane) parent;
         children.add(scrollPane.getViewport().getView());
       }
       else if (parent instanceof Container) {

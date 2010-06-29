@@ -21,14 +21,15 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
@@ -107,7 +108,7 @@ public class ChangeListDetailsAction extends AnAction implements DumbAware {
         }
       }
     });
-    JScrollPane scrollPane = new JScrollPane(editorPane);
+    JBScrollPane scrollPane = new JBScrollPane(editorPane);
     final JBPopup hint =
       JBPopupFactory.getInstance().createComponentPopupBuilder(scrollPane, editorPane)
         .setDimensionServiceKey(project, "changelist.details.popup", false)

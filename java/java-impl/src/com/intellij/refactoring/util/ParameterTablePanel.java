@@ -24,6 +24,7 @@ import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.UIBundle;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.Table;
 import org.jetbrains.annotations.NonNls;
@@ -230,7 +231,7 @@ public abstract class ParameterTablePanel extends JPanel {
     });
 
     JPanel listPanel = new JPanel(new BorderLayout());
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
+    JBScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
     listPanel.add(scrollPane, BorderLayout.CENTER);
     listPanel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
     add(listPanel, BorderLayout.CENTER);

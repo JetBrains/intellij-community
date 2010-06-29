@@ -32,7 +32,7 @@
           <text value=""/>
         </properties>
       </component>
-      <scrollpane id="bde6e">
+      <scrollpane class="com.intellij.ui.components.JBScrollPane" id="bde6e">
         <constraints>
           <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>

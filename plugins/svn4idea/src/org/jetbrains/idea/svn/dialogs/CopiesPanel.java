@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DottedBorder;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.containers.Convertor;
@@ -118,7 +119,7 @@ public class CopiesPanel {
         }
       }
     });
-    myHolder = new JScrollPane(holderPanel);
+    myHolder = new JBScrollPane(holderPanel);
     setFocusableForLinks(myRefreshLabel);
     refreshView.run();
     initView();

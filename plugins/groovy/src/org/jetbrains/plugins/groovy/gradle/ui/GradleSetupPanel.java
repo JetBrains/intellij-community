@@ -15,19 +15,10 @@
  */
 package org.jetbrains.plugins.groovy.gradle.ui;
 
-import javax.swing.AbstractAction;
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.Dimension;
+import com.intellij.ui.components.JBScrollPane;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 
 /**
@@ -110,7 +101,7 @@ public class GradleSetupPanel
       detailsTextArea.setText( message + "\n" + messageDetails );
       detailsTextArea.setCaretPosition( 0 ); //put the caret at the front.
 
-      JScrollPane scrollPane = new JScrollPane( detailsTextArea );
+      JBScrollPane scrollPane = new JBScrollPane( detailsTextArea );
       scrollPane.setPreferredSize( new Dimension( 400, 500 ) );
 
       JOptionPane.showMessageDialog( mainPanel, scrollPane );

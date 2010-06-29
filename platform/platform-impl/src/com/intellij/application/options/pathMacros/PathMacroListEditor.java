@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.text.StringTokenizer;
 
 import javax.swing.*;
@@ -36,7 +37,7 @@ public class PathMacroListEditor {
   JButton myAddButton;
   JButton myRemoveButton;
   JButton myEditButton;
-  JScrollPane myScrollPane;
+  JBScrollPane myScrollPane;
   private JTextField myIgnoredVariables;
   private PathMacroTable myPathMacroTable;
 

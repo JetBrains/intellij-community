@@ -33,6 +33,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.options.*;
 import org.intellij.images.thumbnail.ThumbnailView;
@@ -135,8 +136,8 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             list.setFixedCellHeight(preferredSize.height);
 
 
-            JScrollPane scrollPane = new JScrollPane(
-                    list, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
+            JBScrollPane scrollPane = new JBScrollPane(
+                    list, JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JBScrollPane.HORIZONTAL_SCROLLBAR_NEVER
             );
 
             ActionManager actionManager = ActionManager.getInstance();

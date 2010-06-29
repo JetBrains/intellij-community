@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiNameHelper;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,7 +37,7 @@ import javax.swing.table.TableColumn;
 final class BindToNewBeanStep extends StepAdapter{
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.wizard.BindToNewBeanStep");
 
-  private JScrollPane myScrollPane;
+  private JBScrollPane myScrollPane;
   private JTable myTable;
   private final WizardData myData;
   private final MyTableModel myTableModel;

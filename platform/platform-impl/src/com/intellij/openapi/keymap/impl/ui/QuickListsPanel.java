@@ -38,6 +38,7 @@ import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.ReorderableListController;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nls;
 
@@ -67,7 +68,7 @@ public class QuickListsPanel extends JPanel implements SearchableConfigurable, M
   private final KeymapPanel myKeymapPanel;
   private JComponent myToolbar;
   private DetailsComponent myDetailsComponent;
-  private JScrollPane myListScrollPane;
+  private JBScrollPane myListScrollPane;
 
   public QuickListsPanel(KeymapPanel panel) {
     super(new BorderLayout());

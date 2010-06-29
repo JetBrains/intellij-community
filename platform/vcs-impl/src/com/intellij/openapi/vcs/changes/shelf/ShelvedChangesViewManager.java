@@ -48,6 +48,7 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.treeStructure.Tree;
@@ -180,7 +181,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     }
     else {
       if (myContent == null) {
-        JScrollPane scrollPane = new JScrollPane(myTree);
+        JBScrollPane scrollPane = new JBScrollPane(myTree);
         scrollPane.setBorder(null);
         myContent = ContentFactory.SERVICE.getInstance().createContent(scrollPane, VcsBundle.message("shelf.tab"), false);
         myContent.setCloseable(false);

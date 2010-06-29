@@ -35,6 +35,7 @@ import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
@@ -60,8 +61,8 @@ import java.util.List;
 public abstract class ChangesTreeList<T> extends JPanel {
   private final Tree myTree;
   private final JBList myList;
-  private final JScrollPane myTreeScrollPane;
-  private final JScrollPane myListScrollPane;
+  private final JBScrollPane myTreeScrollPane;
+  private final JBScrollPane myListScrollPane;
   protected final Project myProject;
   private final boolean myShowCheckboxes;
   private final boolean myHighlightProblems;
@@ -135,8 +136,8 @@ public abstract class ChangesTreeList<T> extends JPanel {
     myList = new JBList(new DefaultListModel());
     myList.setVisibleRowCount(10);
 
-    add(myListScrollPane = new JScrollPane(myList), LIST_CARD);
-    add(myTreeScrollPane = new JScrollPane(myTree), TREE_CARD);
+    add(myListScrollPane = new JBScrollPane(myList), LIST_CARD);
+    add(myTreeScrollPane = new JBScrollPane(myTree), TREE_CARD);
 
     new ListSpeedSearch(myList) {
       protected String getElementText(Object element) {

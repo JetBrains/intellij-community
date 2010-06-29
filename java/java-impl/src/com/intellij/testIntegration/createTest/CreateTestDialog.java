@@ -52,6 +52,7 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.testIntegration.TestIntegrationUtils;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -374,7 +375,7 @@ public class CreateTestDialog extends DialogWrapper {
     constr.gridwidth = GridBagConstraints.REMAINDER;
     constr.fill = GridBagConstraints.BOTH;
     constr.weighty = 1;
-    panel.add(new JScrollPane(myMethodsTable), constr);
+    panel.add(new JBScrollPane(myMethodsTable), constr);
 
     return panel;
   }

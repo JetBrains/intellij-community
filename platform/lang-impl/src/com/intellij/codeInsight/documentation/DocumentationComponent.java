@@ -32,6 +32,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.ui.EdgeBorder;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -73,7 +74,7 @@ public class DocumentationComponent extends JPanel implements Disposable {
     }
   }
 
-  private final JScrollPane myScrollPane;
+  private final JBScrollPane myScrollPane;
   private final JEditorPane myEditorPane;
   private String myText; // myEditorPane.getText() surprisingly crashes.., let's cache the text
   private final JPanel myControlPanel;
@@ -132,7 +133,7 @@ public class DocumentationComponent extends JPanel implements Disposable {
     myEditorPane.setEditable(false);
     myEditorPane.setBackground(HintUtil.INFORMATION_COLOR);
     myEditorPane.setEditorKit(UIUtil.getHTMLEditorKit());
-    myScrollPane = new JScrollPane(myEditorPane);
+    myScrollPane = new JBScrollPane(myEditorPane);
     myScrollPane.setBorder(null);
 
     final MouseAdapter mouseAdapter = new MouseAdapter() {

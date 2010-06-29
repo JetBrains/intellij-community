@@ -60,6 +60,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.psi.*;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.UIUtil;
@@ -153,7 +154,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
 
     if (!myProject.isOpen()) return;
     JPanel valuesPanelComponent = new MyJPanel(new GridBagLayout());
-    myValuesPanel.add(new JScrollPane(valuesPanelComponent){
+    myValuesPanel.add(new JBScrollPane(valuesPanelComponent){
       @Override
       public void updateUI() {
         super.updateUI();

@@ -16,16 +16,17 @@
 
 package com.intellij.openapi.ui;
 
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.Table;
 
-import javax.swing.table.TableModel;
+import javax.swing.*;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
-import javax.swing.*;
+import javax.swing.table.TableModel;
 import java.awt.*;
-import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 /**
  * @author spleaner
@@ -81,8 +82,8 @@ public class StripeTable extends Table {
     return component;
   }
 
-  public static JScrollPane createScrollPane(JTable table) {
-    JScrollPane scrollPane = new JScrollPane(table);
+  public static JBScrollPane createScrollPane(JTable table) {
+    JBScrollPane scrollPane = new JBScrollPane(table);
     scrollPane.setViewport(new StripedViewport(table));
     scrollPane.getViewport().setView(table);
     scrollPane.setBorder(UIManager.getBorder("Table.scrollPaneBorder"));

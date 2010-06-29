@@ -26,6 +26,7 @@ import com.intellij.openapi.options.SettingsEditorConfigurable;
 import com.intellij.openapi.options.SettingsEditorListener;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -208,7 +209,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     private JPanel myOutlinePanel;
     private JLabel myWarningLabel;
     private JButton myFixButton;
-    private JScrollPane myScrollPane;
+    private JBScrollPane myScrollPane;
     private Runnable myQuickFix = null;
 
     public MyValidatableComponent() {

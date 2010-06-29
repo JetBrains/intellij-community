@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.plaf.beg;
 
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -113,7 +114,7 @@ public class BegBorders {
 
     public void paintBorder(Component c, Graphics g, int x, int y,
                             int w, int h) {
-      JScrollPane scroll = (JScrollPane) c;
+      JBScrollPane scroll = (JBScrollPane) c;
       JComponent colHeader = scroll.getColumnHeader();
       int colHeaderHeight = 0;
       if (colHeader != null)

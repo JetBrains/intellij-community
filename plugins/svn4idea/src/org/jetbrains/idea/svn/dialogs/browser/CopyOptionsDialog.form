@@ -84,7 +84,7 @@
           <text value="Commit Message:"/>
         </properties>
       </component>
-      <scrollpane id="7ec04">
+      <scrollpane class="com.intellij.ui.components.JBScrollPane" id="7ec04">
         <constraints>
           <grid row="6" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="6" anchor="1" fill="3" indent="0" use-parent-layout="false"/>
           <gridbag top="2" left="2" bottom="2" right="2" weightx="1.0" weighty="0.5"/>

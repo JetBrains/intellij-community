@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -54,7 +55,7 @@ public class ExecutionErrorDialog {
     textArea.setText(message);
     textArea.setWrapStyleWord(false);
     textArea.setLineWrap(true);
-    final JScrollPane scrollPane = new JScrollPane(textArea);
+    final JBScrollPane scrollPane = new JBScrollPane(textArea);
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     final JPanel panel = new JPanel(new BorderLayout(10, 0));
     panel.setPreferredSize(new Dimension(500, 200));

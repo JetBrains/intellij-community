@@ -40,6 +40,7 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SeparatorFactory;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -977,7 +978,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       myArea.setText(dialog.getCommitMessage());
       myArea.setLineWrap(true);      
       myArea.setWrapStyleWord(true);      
-      JScrollPane scrollPane = new JScrollPane(myArea);
+      JBScrollPane scrollPane = new JBScrollPane(myArea);
       setBorder(IdeBorderFactory.createTitledBorder(VcsBundle.message("diff.commit.message.title")));
       add(scrollPane, BorderLayout.CENTER);
       myCommitDialog = dialog;

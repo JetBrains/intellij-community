@@ -42,6 +42,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerAdapter;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.roots.ToolbarPanel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -151,7 +152,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
 
     myEditorsPanel = new ScrollablePanel(new VerticalStackLayout());
     myEditorsPanel.setBackground(BACKGROUND_COLOR);
-    JScrollPane myScrollPane = ScrollPaneFactory.createScrollPane(myEditorsPanel);
+    JBScrollPane myScrollPane = ScrollPaneFactory.createScrollPane(myEditorsPanel);
     entriesPanel.add(new ToolbarPanel(myScrollPane, group), BorderLayout.CENTER);
 
     final Splitter splitter = new Splitter(false);
