@@ -227,6 +227,17 @@ public class GitHistoryUtils {
 
     private List<String> processResult(final String line) {
       final int commentStartIdx = line.indexOf(ourCommentStartMark);
+      if (commentStartIdx == -1) {
+        LOG.info("Git history: no comment mark in line: '" + line + "'");
+        // todo remove this when clarifyed
+        java.util.StringTokenizer tk = new java.util.StringTokenizer(line, "\u0000", false);
+        final List<String> result = new ArrayList<String>();
+        while (tk.hasMoreElements()) {
+          final String token = tk.nextToken();
+          result.add(token);
+        }
+        return result;
+      }
 
       final String start = line.substring(0, commentStartIdx);
       java.util.StringTokenizer tk = new java.util.StringTokenizer(start, "\u0000", false);
