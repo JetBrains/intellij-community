@@ -32,9 +32,6 @@
     <extensionPoint name="junitPatcher"
                     interface="com.intellij.execution.JUnitPatcher"/>
 
-    <extensionPoint name="javaClasspathPolicyExtender"
-                    interface="com.intellij.execution.configurations.JavaClasspathPolicyExtender"/>
-
     <extensionPoint name="i18nInspectionTool"
                     interface="com.intellij.codeInspection.FileCheckingInspection"/>
     <extensionPoint name="invalidPropertyKeyInspectionTool"
@@ -537,6 +534,10 @@
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ConcatenationToMessageFormatAction</className>
+      <category>I18N</category>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.ConvertToBasicLatinAction</className>
       <category>I18N</category>
     </intentionAction>
 
@@ -1135,7 +1136,9 @@
                         serviceImplementation="com.intellij.profile.codeInspection.JavaAwareInspectionProfileManager"/>
     <exportable serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"/>
     <schemeOwner serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"/>
-  </extensions>
+
+    <resolveScopeEnlarger implementation="com.intellij.psi.NonClasspathResolveScopeEnlarger"/>
+    </extensions>
 
   <xi:include href="/META-INF/xdebugger.xml" xpointer="xpointer(/root/*)"/>
   <extensions defaultExtensionNs="com.intellij">

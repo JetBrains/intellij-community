@@ -73,6 +73,8 @@ public abstract class ProjectRootManager implements ModificationTracker {
 
   public abstract VirtualFile[] getFilesFromAllModules(OrderRootType type);
 
+  public abstract OrderEnumerator orderEntries();
+
   /**
    * Unlike getContentRoots(), this includes the project base dir. Is this really necessary?
    * TODO: remove this method?

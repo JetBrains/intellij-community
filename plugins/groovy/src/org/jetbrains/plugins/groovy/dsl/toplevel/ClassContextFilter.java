@@ -1,11 +1,13 @@
 package org.jetbrains.plugins.groovy.dsl.toplevel;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
 
 /**
  * @author peter
@@ -17,12 +19,12 @@ public class ClassContextFilter implements ContextFilter {
     myPattern = pattern;
   }
 
-  public boolean isApplicable(PsiElement place, String fqName, ProcessingContext ctx) {
-    return myPattern.accepts(findPsiClass(place, fqName, ctx), ctx);
+  public boolean isApplicable(GroovyClassDescriptor descriptor, ProcessingContext ctx) {
+    return myPattern.accepts(findPsiClass(descriptor.getProject(), descriptor.getResolveScope(), descriptor.getQualifiedName(), ctx), ctx);
   }
 
   @Nullable
-  private static PsiClass findPsiClass(PsiElement place, String fqName, ProcessingContext ctx) {
+  private static PsiClass findPsiClass(Project project, GlobalSearchScope scope, String fqName, ProcessingContext ctx) {
     final String key = getClassKey(fqName);
     final Object cached = ctx.get(key);
     if (cached == Boolean.FALSE) {
@@ -32,7 +34,7 @@ public class ClassContextFilter implements ContextFilter {
       return (PsiClass)cached;
     }
 
-    final PsiClass found = JavaPsiFacade.getInstance(place.getProject()).findClass(fqName, place.getResolveScope());
+    final PsiClass found = JavaPsiFacade.getInstance(project).findClass(fqName, scope);
     ctx.put(key, found == null ? Boolean.FALSE : found);
     return found;
   }

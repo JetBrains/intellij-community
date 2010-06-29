@@ -24,7 +24,7 @@
         <properties/>
         <border type="none"/>
         <children>
-          <component id="704d2" class="javax.swing.JList" binding="myGitRoots">
+          <component id="704d2" class="com.intellij.ui.components.JBList" binding="myGitRoots">
             <constraints/>
             <properties>
               <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="fix.roots.list.tooltip"/>

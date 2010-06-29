@@ -145,7 +145,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
             curFrame.state = ch == '('? State.param_start : State.name_end;
           }
           else {
-            throw new IllegalStateException("'"+curString+ch+"' method name start is invalid");
+            throw new IllegalStateException("'"+curString+ch+"' method name start is invalid, '(' expected");
           }
           break;
         case name_end:

@@ -56,7 +56,7 @@
                 <properties/>
                 <border type="none"/>
                 <children>
-                  <component id="c39f5" class="javax.swing.JList" binding="myFontNameList">
+                  <component id="c39f5" class="com.intellij.ui.components.JBList" binding="myFontNameList">
                     <constraints/>
                     <properties>
                       <enabled value="false"/>
@@ -72,7 +72,7 @@
                 <properties/>
                 <border type="none"/>
                 <children>
-                  <component id="d9ed5" class="javax.swing.JList" binding="myFontStyleList">
+                  <component id="d9ed5" class="com.intellij.ui.components.JBList" binding="myFontStyleList">
                     <constraints/>
                     <properties>
                       <enabled value="false"/>
@@ -88,7 +88,7 @@
                 <properties/>
                 <border type="none"/>
                 <children>
-                  <component id="774ff" class="javax.swing.JList" binding="myFontSizeList">
+                  <component id="774ff" class="com.intellij.ui.components.JBList" binding="myFontSizeList">
                     <constraints/>
                     <properties>
                       <enabled value="false"/>
@@ -142,7 +142,7 @@
                 <properties/>
                 <border type="none"/>
                 <children>
-                  <component id="921b3" class="javax.swing.JList" binding="mySwingFontList">
+                  <component id="921b3" class="com.intellij.ui.components.JBList" binding="mySwingFontList">
                     <constraints/>
                     <properties>
                       <selectionMode value="0"/>

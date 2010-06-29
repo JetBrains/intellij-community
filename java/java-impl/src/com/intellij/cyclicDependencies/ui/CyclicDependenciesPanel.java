@@ -243,7 +243,6 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
     tree.setShowsRootHandles(true);
     UIUtil.setLineStyleAngled(tree);
 
-    TreeToolTipHandler.install(tree);
     TreeUtil.installActions(tree);
     SmartExpander.installOn(tree);
     EditSourceOnDoubleClickHandler.install(tree);

@@ -39,6 +39,7 @@ import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.Icons;
@@ -150,7 +151,7 @@ public class ToolWindowSwitcher extends AnAction implements DumbAware {
         twModel.addElement(window);
       }
 
-      toolwindows = new JList(twModel);
+      toolwindows = new JBList(twModel);
       toolwindows.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 20));
       toolwindows.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       toolwindows.setCellRenderer(new ToolWindowsRenderer(ids));
@@ -193,7 +194,7 @@ public class ToolWindowSwitcher extends AnAction implements DumbAware {
       for (VirtualFile openFile : openFiles) {
         filesModel.addElement(openFile);
       }
-      files = new JList(filesModel);
+      files = new JBList(filesModel);
       files.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       files.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 20));
       files.setCellRenderer(new VirtualFilesRenderer(project));

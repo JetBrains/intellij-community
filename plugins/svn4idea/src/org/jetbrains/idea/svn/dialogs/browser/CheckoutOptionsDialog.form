@@ -89,7 +89,7 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="53228" class="javax.swing.JList" binding="myLocalTargetList">
+              <component id="53228" class="com.intellij.ui.components.JBList" binding="myLocalTargetList">
                 <constraints/>
                 <properties>
                   <selectionMode value="0"/>

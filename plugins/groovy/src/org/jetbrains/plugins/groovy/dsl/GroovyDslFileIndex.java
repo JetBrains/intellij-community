@@ -61,6 +61,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -68,18 +69,17 @@ import java.util.concurrent.TimeUnit;
  * @author peter
  */
 public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
-  public static final Key<CachedValue<ConcurrentFactoryMap<GroovyClassDescriptor, CustomMembersHolder>>> CACHED_ENHANCEMENTS =
-    Key.create("CACHED_ENHANCEMENTS");
+  private static final Key<Pair<GroovyDslExecutor, Long>> CACHED_EXECUTOR = Key.create("CachedGdslExecutor");
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex");
   private static final FileAttribute ENABLED = new FileAttribute("ENABLED", 0);
 
   @NonNls public static final ID<String, Void> NAME = ID.create("GroovyDslFileIndex");
   @NonNls private static final String OUR_KEY = "ourKey";
+  private static final Key<CachedValue<ConcurrentMap<String,Boolean>>> PLACE_DEPENDENT_KEY = Key.create("GroovyDslIsExecutorPlaceDependent");
+  private static final Key<CachedValue<ConcurrentMap<GroovyClassDescriptor,CustomMembersHolder>>> MEMBER_HOLDERS = Key.create("GroovyDslMemberHolders");
   private final MyDataIndexer myDataIndexer = new MyDataIndexer();
   private final MyInputFilter myInputFilter = new MyInputFilter();
 
-  private static final Map<String, Pair<GroovyDslExecutor, Long>> ourMapping =
-    new ConcurrentHashMap<String, Pair<GroovyDslExecutor, Long>>();
   private static final MultiMap<String, LinkedBlockingQueue<Pair<GroovyFile, GroovyDslExecutor>>> filesInProcessing =
     new ConcurrentMultiMap<String, LinkedBlockingQueue<Pair<GroovyFile, GroovyDslExecutor>>>();
 
@@ -153,13 +153,13 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     catch (IOException e1) {
       LOG.error(e1);
     }
-    ourMapping.remove(vfile.getUrl());
+    vfile.putUserData(CACHED_EXECUTOR, null);
   }
 
 
   @Nullable
   private static GroovyDslExecutor getCachedExecutor(@NotNull final VirtualFile file, final long stamp) {
-    final Pair<GroovyDslExecutor, Long> pair = ourMapping.get(file.getUrl());
+    final Pair<GroovyDslExecutor, Long> pair = file.getUserData(CACHED_EXECUTOR);
     if (pair == null || pair.second.longValue() != stamp) {
       return null;
     }
@@ -173,11 +173,21 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
       return true;
     }
 
+    final PsiFile placeFile = place.getContainingFile().getOriginalFile();
+    final CachedValuesManager cacheManager = CachedValuesManager.getManager(place.getProject());
+
     final LinkedBlockingQueue<Pair<GroovyFile, GroovyDslExecutor>> queue = new LinkedBlockingQueue<Pair<GroovyFile, GroovyDslExecutor>>();
+    final ArrayList<Pair<GroovyFile, GroovyDslExecutor>> ready = new ArrayList<Pair<GroovyFile, GroovyDslExecutor>>();
 
-    int count = queueExecutors(psiClass.getProject(), queue);
+    int count = queueExecutors(psiClass.getProject(), queue, ready);
 
-    final GroovyClassDescriptor descriptor = new GroovyClassDescriptor(psiClass, place);
+    for (Pair<GroovyFile, GroovyDslExecutor> pair : ready) {
+      if (!processExecutor(pair.second, processor, pair.first, psiClass, place, placeFile, cacheManager)) {
+        return false;
+      }
+      count--;
+    }
+
     try {
       while (count > 0) {
         ProgressManager.checkCanceled();
@@ -185,7 +195,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
         if (pair != null) {
           final GroovyDslExecutor executor = pair.second;
           final GroovyFile dslFile = pair.first;
-          if (executor != null && !processExecutor(executor, descriptor, processor, dslFile)) {
+          if (executor != null && !processExecutor(executor, processor, dslFile, psiClass, place, placeFile, cacheManager)) {
             return false;
           }
 
@@ -237,7 +247,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     }
   };
 
-  private static int queueExecutors(Project project, LinkedBlockingQueue<Pair<GroovyFile, GroovyDslExecutor>> queue) {
+  private static int queueExecutors(Project project, LinkedBlockingQueue<Pair<GroovyFile, GroovyDslExecutor>> queue, ArrayList<Pair<GroovyFile, GroovyDslExecutor>> ready) {
     int count = 0;
     for (GroovyFile file : DSL_FILES_CACHE.get(project, null).getValue()) {
       final long stamp = file.getModificationStamp();
@@ -246,11 +256,10 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
       final GroovyDslExecutor cached = getCachedExecutor(vfile, stamp);
       count++;
       if (cached == null) {
-        file.putUserData(CACHED_ENHANCEMENTS, null); //otherwise an old executor instance will be executed inside cachedValue
         scheduleParsing(queue, file, vfile, stamp, file.getText());
       }
       else {
-        queue.offer(Pair.create(file, cached));
+        ready.add(Pair.create(file, cached));
       }
     }
     return count;
@@ -258,69 +267,103 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
 
   private static boolean processExecutor(final GroovyDslExecutor executor,
-                                         final GroovyClassDescriptor descriptor,
                                          PsiScopeProcessor processor,
-                                         final GroovyFile dslFile) {
+                                         final GroovyFile dslFile,
+                                         final PsiClass psiClass,
+                                         final PsiElement place,
+                                         final PsiFile placeFile,
+                                         final CachedValuesManager manager) {
+    final String qname = psiClass.getQualifiedName();
+    if (qname == null) {
+      return true;
+    }
+
+    Map<String, Boolean> specificities = getCachedMap(dslFile, PLACE_DEPENDENT_KEY, manager);
+    boolean firstTime = !specificities.containsKey(qname);
+
+    final boolean placeDependent = firstTime || specificities.get(qname);
+    GroovyClassDescriptor descriptor = new GroovyClassDescriptor(psiClass, place, placeDependent,
+                                                                 placeFile);
+
+    final ConcurrentMap<GroovyClassDescriptor, CustomMembersHolder> members = getCachedMap(dslFile, MEMBER_HOLDERS, manager);
+    CustomMembersHolder holder = members.get(descriptor);
+    if (holder == null) {
+      holder = addGdslMembers(executor, descriptor, dslFile);
+
+      if (firstTime) {
+        final boolean placeAccessed = descriptor.placeAccessed();
+        specificities.put(qname, placeAccessed);
+        final GroovyClassDescriptor newDescriptor = new GroovyClassDescriptor(psiClass, place, placeAccessed,
+                                                                              placeFile);
+        members.putIfAbsent(newDescriptor, holder);
+      } else {
+        members.putIfAbsent(descriptor, holder);
+      }
+    }
+
+    return holder.processMembers(processor);
+  }
+
+  private static <T, V> ConcurrentMap<T, V> getCachedMap(GroovyFile dslFile,
+                                                         final Key<CachedValue<ConcurrentMap<T, V>>> key,
+                                                         final CachedValuesManager manager) {
     final Project project = dslFile.getProject();
-    final ConcurrentFactoryMap<GroovyClassDescriptor, CustomMembersHolder> map = CachedValuesManager.getManager(dslFile.getProject()).getCachedValue(dslFile, CACHED_ENHANCEMENTS, new CachedValueProvider<ConcurrentFactoryMap<GroovyClassDescriptor, CustomMembersHolder>>() {
-        public Result<ConcurrentFactoryMap<GroovyClassDescriptor, CustomMembersHolder>> compute() {
-          final ConcurrentFactoryMap<GroovyClassDescriptor, CustomMembersHolder> result =
-            new ConcurrentFactoryMap<GroovyClassDescriptor, CustomMembersHolder>() {
-              @Override
-              protected CustomMembersHolder create(GroovyClassDescriptor key) {
-                final PsiElement place = key.getPlace();
-                final String fqn = key.getQualifiedName();
+    return manager.getCachedValue(dslFile, key, new CachedValueProvider<ConcurrentMap<T, V>>() {
+      @Override
+      public Result<ConcurrentMap<T, V>> compute() {
+        final ConcurrentMap<T, V> map = new ConcurrentHashMap<T, V>();
+        final Result<ConcurrentMap<T, V>> result =
+          Result.create(map, PsiModificationTracker.MODIFICATION_COUNT, ProjectRootManager.getInstance(project));
+        result.setLockValue(true);
+        return result;
+      }
+    }, false);
+  }
 
-                final ProcessingContext ctx = new ProcessingContext();
-                ctx.put(ClassContextFilter.getClassKey(fqn), key.getPsiClass());
-                try {
-                  if (!isApplicable(place, fqn, ctx)) {
-                    return null;
-                  }
+  private static CustomMembersHolder addGdslMembers(GroovyDslExecutor executor, GroovyClassDescriptor descriptor, GroovyFile dslFile) {
+    final String fqn = descriptor.getQualifiedName();
+    final Project project = descriptor.getProject();
 
-                  final ExtensibleCustomMembersGenerator generator = new ExtensibleCustomMembersGenerator(project, place, fqn);
+    final ProcessingContext ctx = new ProcessingContext();
+    ctx.put(ClassContextFilter.getClassKey(fqn), descriptor.getPsiClass());
+    try {
+      if (!isApplicable(executor, descriptor, ctx)) {
+        return CustomMembersHolder.EMPTY;
+      }
 
-                  executor.processVariants(key, generator, place, fqn, ctx);
-                  return generator.getMembersHolder();
-                }
-                catch (InvokerInvocationException e) {
-                  Throwable cause = e.getCause();
-                  if (cause instanceof ProcessCanceledException) {
-                    throw (ProcessCanceledException)cause;
-                  }
-                  if (cause instanceof OutOfMemoryError) {
-                    throw (OutOfMemoryError)cause;
-                  }
-                  handleDslError(e, project, dslFile);
-                }
-                catch (ProcessCanceledException e) {
-                  throw e;
-                }
-                catch (OutOfMemoryError e) {
-                  throw e;
-                }
-                catch (Throwable e) { // To handle exceptions in definition script
-                  handleDslError(e, project, dslFile);
-                }
-                return null;
-              }
+      final ExtensibleCustomMembersGenerator generator = new ExtensibleCustomMembersGenerator(descriptor);
+      executor.processVariants(descriptor, generator, ctx);
+      return generator.getMembersHolder();
+    }
+    catch (InvokerInvocationException e) {
+      Throwable cause = e.getCause();
+      if (cause instanceof ProcessCanceledException) {
+        throw (ProcessCanceledException)cause;
+      }
+      if (cause instanceof OutOfMemoryError) {
+        throw (OutOfMemoryError)cause;
+      }
+      handleDslError(e, project, dslFile);
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (OutOfMemoryError e) {
+      throw e;
+    }
+    catch (Throwable e) { // To handle exceptions in definition script
+      handleDslError(e, project, dslFile);
+    }
+    return CustomMembersHolder.EMPTY;
+  }
 
-              private boolean isApplicable(PsiElement place, String fqn, final ProcessingContext ctx) {
-                for (Pair<ContextFilter, Closure> pair : executor.getEnhancers()) {
-                  if (pair.first.isApplicable(place, fqn, ctx)) {
-                    return true;
-                  }
-                }
-                return false;
-              }
-
-            };
-          return Result.create(result, PsiModificationTracker.MODIFICATION_COUNT, dslFile);
-        }
-      }, false);
-    assert map != null;
-    final CustomMembersHolder holder = map.get(descriptor);
-    return holder == null || holder.processMembers(processor);
+  private static boolean isApplicable(GroovyDslExecutor executor, GroovyClassDescriptor descriptor, final ProcessingContext ctx) {
+    for (Pair<ContextFilter, Closure> pair : executor.getEnhancers()) {
+      if (pair.first.isApplicable(descriptor, ctx)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static boolean handleDslError(Throwable e, Project project, GroovyFile dslFile) {
@@ -361,14 +404,14 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
           executor = createExecutor(text, vfile, project);
           // executor is not only time-consuming to create, but also takes some PermGenSpace
           // => we can't afford garbage-collecting it together with PsiFile
-          // => cache globally by file path
-          ourMapping.put(vfile.getUrl(), Pair.create(executor, stamp));
+          // => cache globally by file instance
+          vfile.putUserData(CACHED_EXECUTOR, Pair.create(executor, stamp));
           if (executor != null) {
             activateUntilModification(vfile);
           }
         }
 
-        // access to our multimap should be synchronized
+        // access to our MultiMap should be synchronized
         synchronized (vfile) {
           // put evaluated executor to all queues
           final Collection<LinkedBlockingQueue<Pair<GroovyFile, GroovyDslExecutor>>> queuesForFile = filesInProcessing.remove(fileUrl);
@@ -379,6 +422,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
       }
     };
 
+    //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (vfile) { //ensure that only one thread calculates dsl executor
       final boolean isNewRequest = !filesInProcessing.containsKey(fileUrl);
       filesInProcessing.putValue(fileUrl, queue);
@@ -400,12 +444,8 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
       }
 
       if (ApplicationManager.getApplication().isUnitTestMode()) {
-        try {
-          LOG.error(e);
-        }
-        finally {
-          return null;
-        }
+        LOG.error(e);
+        return null;
       }
       invokeDslErrorPopup(e, project, vfile);
       return null;
@@ -417,6 +457,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     }
 
     final StringWriter writer = new StringWriter();
+    //noinspection IOResourceOpenedButNotSafelyClosed
     e.printStackTrace(new PrintWriter(writer));
     final String exceptionText = writer.toString();
     LOG.info(exceptionText);

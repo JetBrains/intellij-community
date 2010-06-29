@@ -23,6 +23,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.components.JBList;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -46,7 +47,7 @@ public final class MacrosDialog extends DialogWrapper {
     setOKButtonText(IdeBundle.message("button.insert"));
 
     myMacrosModel = new DefaultListModel();
-    myMacrosList = new JList(myMacrosModel);
+    myMacrosList = new JBList(myMacrosModel);
     myPreviewTextarea = new JTextArea();
 
     init();
@@ -59,7 +60,7 @@ public final class MacrosDialog extends DialogWrapper {
     setOKButtonText(IdeBundle.message("button.insert"));
 
     myMacrosModel = new DefaultListModel();
-    myMacrosList = new JList(myMacrosModel);
+    myMacrosList = new JBList(myMacrosModel);
     myPreviewTextarea = new JTextArea();
 
     init();

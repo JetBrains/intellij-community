@@ -17,6 +17,7 @@
 package com.intellij.application.options.colors;
 
 import com.intellij.ui.ListScrollingUtil;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.EventDispatcher;
 
 import javax.swing.*;
@@ -51,7 +52,7 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
       }
     });
 
-    myOptionsList = new JList();
+    myOptionsList = new JBList();
 
     myOptionsList.addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {

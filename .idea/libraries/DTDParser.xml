@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="DTDParser">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/dtdparser113.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

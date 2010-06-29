@@ -93,7 +93,7 @@
                     <properties/>
                     <border type="none"/>
                     <children>
-                      <component id="d3735" class="javax.swing.JList" binding="myModulesList">
+                      <component id="d3735" class="com.intellij.ui.components.JBList" binding="myModulesList">
                         <constraints/>
                         <properties/>
                       </component>
@@ -151,7 +151,7 @@
                     <properties/>
                     <border type="none"/>
                     <children>
-                      <component id="96c82" class="javax.swing.JList" binding="myFilesList">
+                      <component id="96c82" class="com.intellij.ui.components.JBList" binding="myFilesList">
                         <constraints/>
                         <properties/>
                       </component>

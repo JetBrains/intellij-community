@@ -19,7 +19,6 @@ package org.jetbrains.plugins.groovy.lang.resolve.noncode;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.annotator.inspections.GroovyImmutableAnnotationInspection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -34,8 +33,7 @@ public class ImmutableAnnotationProcessor extends NonCodeMembersContributor {
   public void processDynamicElements(@NotNull PsiType qualifierType,
                                      PsiScopeProcessor processor,
                                      PsiElement place,
-                                     ResolveState state,
-                                     ProcessingContext ctx) {
+                                     ResolveState state) {
     if (!(qualifierType instanceof PsiClassType)) return;
 
     PsiClass psiClass = ((PsiClassType)qualifierType).resolve();

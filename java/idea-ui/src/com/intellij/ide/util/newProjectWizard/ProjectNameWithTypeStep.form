@@ -84,7 +84,7 @@
             </properties>
             <border type="none"/>
             <children>
-              <component id="c263e" class="javax.swing.JList" binding="myTypesList">
+              <component id="c263e" class="com.intellij.ui.components.JBList" binding="myTypesList">
                 <constraints/>
                 <properties/>
               </component>

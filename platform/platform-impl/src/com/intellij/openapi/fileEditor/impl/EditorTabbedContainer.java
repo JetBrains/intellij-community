@@ -147,6 +147,18 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
 
     UISettings uiSettings = UISettings.getInstance();
 
+    List<String> topIds = mgr.getIdsOn(ToolWindowAnchor.TOP);
+    List<String> bottom = mgr.getIdsOn(ToolWindowAnchor.BOTTOM);
+    List<String> rightIds = mgr.getIdsOn(ToolWindowAnchor.RIGHT);
+    List<String> leftIds = mgr.getIdsOn(ToolWindowAnchor.LEFT);
+
+    if (!uiSettings.HIDE_TOOL_STRIPES) {
+      border.top = topIds.size() > 0 ? 1: 0;
+      border.bottom = bottom.size() > 0 ? 1: 0;
+      border.left = leftIds.size() > 0 ? 1: 0;
+      border.right = rightIds.size() > 0 ? 1: 0;
+    }
+
     for (String each : ids) {
       ToolWindow eachWnd = mgr.getToolWindow(each);
       if (!eachWnd.isAvailable()) continue;
@@ -160,34 +172,10 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
         } else if (eachAnchor == ToolWindowAnchor.LEFT) {
           border.left = 1;
         } else if (eachAnchor == ToolWindowAnchor.RIGHT) {
-          border.right = 1;
+          border.right = 0;
         }
       }
     }
-
-    if (!uiSettings.HIDE_TOOL_STRIPES) {
-      if (mgr.getIdsOn(ToolWindowAnchor.TOP).size() > 0) {
-        border.top = 1;
-      }
-
-      if (mgr.getIdsOn(ToolWindowAnchor.BOTTOM).size() > 0) {
-        border.bottom = 1;
-      }
-
-      if (mgr.getIdsOn(ToolWindowAnchor.LEFT).size() > 0) {
-        border.left = 1;
-      }
-
-      if (mgr.getIdsOn(ToolWindowAnchor.RIGHT).size() > 0) {
-        border.right = 1;
-      }
-
-      if (!uiSettings.SHOW_STATUS_BAR && !uiSettings.HIDE_TOOL_STRIPES) {
-        border.bottom = 1;
-      }
-    }
-
-    myTabs.getComponent().setBorder(new EmptyBorder(1, 0, 0, 0));
 
     myTabs.getPresentation().setPaintBorder(border.top, border.left, border.right, border.bottom).setTabSidePaintBorder(5);
   }

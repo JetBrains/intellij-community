@@ -20,6 +20,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.Painter;
 import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.MenuDragMouseEvent;
@@ -44,6 +46,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
 
   private boolean myPaintingActive;
   private boolean myPreprocessorActive;
+  private Map<Object, Cursor> myListener2Cursor = new LinkedHashMap<Object, Cursor>();
 
   public IdeGlassPaneImpl(JRootPane rootPane) {
     myRootPane = rootPane;
@@ -99,23 +102,44 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   }
 
   private boolean preprocess(final MouseEvent e, final boolean motion) {
-    final MouseEvent event = convertEvent(e, myRootPane);
-    for (EventListener each : myMouseListeners) {
-      if (motion && each instanceof MouseMotionListener) {
-        fireMouseMotion((MouseMotionListener)each, event);
-      } else if (!motion && each instanceof MouseListener) {
-        fireMouseEvent((MouseListener)each, event);
+    try {
+      final MouseEvent event = convertEvent(e, myRootPane);
+      for (EventListener each : myMouseListeners) {
+        if (motion && each instanceof MouseMotionListener) {
+          fireMouseMotion((MouseMotionListener)each, event);
+        } else if (!motion && each instanceof MouseListener) {
+          fireMouseEvent((MouseListener)each, event);
+        }
+
+        if (event.isConsumed()) {
+          return true;
+        }
       }
 
-      if (event.isConsumed()) {
-        return true;
-      }
+      return false;
     }
-
-    return false;
+    finally {
+      Cursor cursor;
+      if (myListener2Cursor.size() > 0) {
+        cursor = myListener2Cursor.values().iterator().next();
+      } else {
+        cursor = Cursor.getDefaultCursor();
+      }
+      myListener2Cursor.clear();
+      getRootPane().setCursor(cursor);
+    }
   }
 
-private MouseEvent convertEvent(final MouseEvent e, final Component target) {
+
+  public void setCursor(Cursor cursor, Object requestor) {
+    if (cursor == null) {
+      myListener2Cursor.remove(requestor);
+    } else {
+      myListener2Cursor.put(requestor, cursor);
+    }
+  }
+
+  private MouseEvent convertEvent(final MouseEvent e, final Component target) {
     final Point point = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), target);
     if (e instanceof MouseWheelEvent) {
       final MouseWheelEvent mwe = (MouseWheelEvent)e;

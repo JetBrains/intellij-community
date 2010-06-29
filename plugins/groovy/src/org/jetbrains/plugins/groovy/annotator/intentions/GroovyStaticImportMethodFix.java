@@ -32,6 +32,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -174,7 +175,7 @@ public class GroovyStaticImportMethodFix implements IntentionAction {
   }
 
   private void chooseAndImport(Editor editor) {
-    final JList list = new JList(getCandidates().toArray(new PsiMethod[getCandidates().size()]));
+    final JList list = new JBList(getCandidates().toArray(new PsiMethod[getCandidates().size()]));
     list.setCellRenderer(new MethodCellRenderer(true));
     new PopupChooserBuilder(list).
       setTitle(QuickFixBundle.message("static.import.method.choose.method.to.import")).

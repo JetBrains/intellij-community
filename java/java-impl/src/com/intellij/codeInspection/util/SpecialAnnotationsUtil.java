@@ -39,6 +39,7 @@ import com.intellij.ui.ReorderableListController;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SeparatorFactory;
 import com.intellij.ui.SortedListModel;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
@@ -62,7 +63,7 @@ public class SpecialAnnotationsUtil {
         return o1.compareTo(o2);
       }
     });
-    final JList injectionList = new JList(listModel);
+    final JList injectionList = new JBList(listModel);
     for (String s : list) {
       listModel.add(s);
     }

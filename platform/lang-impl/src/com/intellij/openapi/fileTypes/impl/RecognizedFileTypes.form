@@ -18,7 +18,7 @@
         <properties/>
         <border type="none"/>
         <children>
-          <component id="f12a0" class="javax.swing.JList" binding="myFileTypesList">
+          <component id="f12a0" class="com.intellij.ui.components.JBList" binding="myFileTypesList">
             <constraints/>
             <properties>
               <selectionMode value="0"/>

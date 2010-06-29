@@ -66,7 +66,7 @@
         <properties/>
         <border type="none"/>
         <children>
-          <component id="3aa3b" class="javax.swing.JList" binding="myFileList">
+          <component id="3aa3b" class="com.intellij.ui.components.JBList" binding="myFileList">
             <constraints/>
             <properties/>
           </component>

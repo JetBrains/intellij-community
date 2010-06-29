@@ -34,6 +34,7 @@ import com.intellij.refactoring.ui.ClassCellRenderer;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -96,7 +97,7 @@ public class TurnRefsToSuperDialog extends RefactoringDialog {
     final JLabel classListLabel = new JLabel();
     panel.add(classListLabel, gbConstraints);
 
-    mySuperClassesList = new JList(mySuperClasses.toArray());
+    mySuperClassesList = new JBList(mySuperClasses.toArray());
     mySuperClassesList.setCellRenderer(new ClassCellRenderer());
     mySuperClassesList.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     classListLabel.setText(RefactoringBundle.message("turnRefsToSuper.change.usages.to", mySubClass.getQualifiedName()));

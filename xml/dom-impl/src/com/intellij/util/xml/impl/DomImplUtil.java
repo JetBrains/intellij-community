@@ -143,7 +143,7 @@ public class DomImplUtil {
   private static boolean isNameSuitable(final EvaluatedXmlName evaluatedXmlName, final XmlTag tag, final XmlFile file) {
     if (!tag.isValid()) {
       TreeElement parent = ((TreeElement) tag).getTreeParent();
-      LOG.error("Invalid child tag of valid parent. Parent:" + (parent == null ? null : parent.getPsi().isValid()));
+      throw new AssertionError("Invalid child tag of valid parent. Parent:" + (parent == null ? null : parent.getPsi().isValid()));
     }
     return isNameSuitable(evaluatedXmlName, tag.getLocalName(), tag.getName(), tag.getNamespace(), file);
   }

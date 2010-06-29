@@ -46,12 +46,14 @@ import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.EventListenerList;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Map;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author Eugene Belyaev
@@ -429,6 +431,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
 
     contentPane.add(inner, BorderLayout.CENTER);
     add(contentPane, BorderLayout.CENTER);
+    setBorder(new EmptyBorder(0, 0, 0, 0));
 
     // Add listeners
     registerKeyboardAction(new ActionListener() {
@@ -448,21 +451,83 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
 
     public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
       g.setColor(UIUtil.getBorderInactiveColor());
-      UIUtil.drawLine(g, x, y, x, y + height - 2);
-      UIUtil.drawLine(g, x + width - 1, y, x + width - 1, y + height - 2);
 
-      if (hasBottomLine()) {
-        UIUtil.drawLine(g, x + 1, y + height - 1, x + width - 2, y + height - 1);
+      Insets insets = getBorderInsets(c);
+
+      if (insets.left > 0) {
+        UIUtil.drawLine(g, x, y, x, y + height - 1);
       }
+
+      if (insets.right > 0) {
+        UIUtil.drawLine(g, x + width - 1, y, x + width - 1, y + height - 1);
+      }
+
+      if (insets.bottom > 0) {
+        UIUtil.drawLine(g, x + 1, y + height - 1, x + width - 1, y + height - 1);
+       }
     }
 
     private boolean hasBottomLine() {
       return (myWindow.getAnchor() == ToolWindowAnchor.BOTTOM || myWindow.getAnchor() == ToolWindowAnchor.LEFT || myWindow.getAnchor() == ToolWindowAnchor.RIGHT)
-          && !UISettings.getInstance().HIDE_TOOL_STRIPES && UISettings.getInstance().SHOW_STATUS_BAR;
+          && !UISettings.getInstance().HIDE_TOOL_STRIPES && UISettings.getInstance().SHOW_STATUS_BAR || (myWindow.getAnchor() == ToolWindowAnchor.TOP);
     }
 
     public Insets getBorderInsets(final Component c) {
-      return new Insets(0, 1, hasBottomLine() ? 1 : 0, 1);
+      UISettings settings = UISettings.getInstance();
+
+      ToolWindowManagerImpl mgr = ((ToolWindowImpl)myWindow).getToolWindowManager();
+
+      List<String> topIds = mgr.getIdsOn(ToolWindowAnchor.TOP);
+      boolean topButtons = !settings.HIDE_TOOL_STRIPES && topIds.size() > 0;
+      boolean windowAtTop = hasDockedVisible(mgr, topIds);
+
+      List<String> bottomIds = mgr.getIdsOn(ToolWindowAnchor.BOTTOM);
+      boolean bottomButtons = !settings.HIDE_TOOL_STRIPES && bottomIds.size() > 0;
+      boolean windowAtBottom = hasDockedVisible(mgr, bottomIds);
+
+      List<String> leftIds = mgr.getIdsOn(ToolWindowAnchor.LEFT);
+      boolean leftButtons = !settings.HIDE_TOOL_STRIPES && leftIds.size() > 0;
+      boolean windowAtLeft = hasDockedVisible(mgr, leftIds);
+
+      List<String> rightIds = mgr.getIdsOn(ToolWindowAnchor.RIGHT);
+      boolean rightBottoms = !settings.HIDE_TOOL_STRIPES && rightIds.size() > 0;
+      boolean windowAtRight = hasDockedVisible(mgr, rightIds);
+
+      Insets insets = new Insets(0, 0, 0, 0);
+      if (myWindow.getAnchor() == ToolWindowAnchor.TOP) {
+        insets.top = topButtons ? 1 : 0;
+        insets.left = leftButtons ? 1: 0;
+        insets.right = rightBottoms ? 1: 0;
+        insets.bottom = 1;
+      } else if (myWindow.getAnchor() == ToolWindowAnchor.BOTTOM) {
+        insets.top = 0;
+        insets.left = leftButtons ? 1 : 0;
+        insets.right = rightBottoms ? 1: 0;
+        insets.bottom = bottomButtons ? 1 : 0;
+      } else if (myWindow.getAnchor() == ToolWindowAnchor.LEFT) {
+        insets.top = topButtons && !windowAtTop ? 1 : 0;
+        insets.left = leftButtons ? 1: 0;
+        insets.right = 0;
+        insets.bottom = bottomButtons || windowAtBottom ? 1 : 0;
+      } else if (myWindow.getAnchor() == ToolWindowAnchor.RIGHT) {
+        insets.top = topButtons && !windowAtTop ? 1: 0;
+        insets.left = 1;
+        insets.right = rightBottoms ? 1: 0;
+        insets.bottom = bottomButtons || windowAtBottom ? 1: 0;
+      }
+
+      return insets;
+    }
+
+    private boolean hasDockedVisible(ToolWindowManager mgr, List<String> ids) {
+      for (String each : ids) {
+        ToolWindow eachWnd = mgr.getToolWindow(each);
+        if (eachWnd.isVisible()) {
+          if (eachWnd.getType() == ToolWindowType.DOCKED) return true;
+        }
+      }
+
+      return false;
     }
 
     public boolean isBorderOpaque() {

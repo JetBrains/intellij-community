@@ -44,6 +44,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
@@ -88,7 +89,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     if (stub instanceof GrFileStub) {
       return ((GrFileStub)stub).getPackageName().toString();
     }
-    GrPackageDefinition packageDef = findChildByClass(GrPackageDefinition.class);
+    GrPackageDefinition packageDef = getPackageDefinition();
     if (packageDef != null) {
       return packageDef.getPackageName();
     }
@@ -96,7 +97,8 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   }
 
   public GrPackageDefinition getPackageDefinition() {
-    return findChildByClass(GrPackageDefinition.class);
+    ASTNode node = calcTreeElement().findChildByType(GroovyElementTypes.PACKAGE_DEFINITION);
+    return node != null ? (GrPackageDefinition)node.getPsi() : null;
   }
 
   private GrParameter getSyntheticArgsParameter() {
@@ -159,12 +161,21 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     }
 
     if (classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.PACKAGE)) {
-      PsiPackage defaultPackage = JavaPsiFacade.getInstance(getProject()).findPackage("");
-      if (defaultPackage != null) {
-        for (PsiPackage subPackage : defaultPackage.getSubPackages(getResolveScope())) {
-          if (!ResolveUtil.processElement(processor, subPackage)) return false;
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+      if (expectedName != null) {
+        final PsiPackage pkg = facade.findPackage(expectedName);
+        if (pkg != null && !processor.execute(pkg, state)) {
+          return false;
+        }
+      } else {
+        PsiPackage defaultPackage = facade.findPackage("");
+        if (defaultPackage != null) {
+          for (PsiPackage subPackage : defaultPackage.getSubPackages(getResolveScope())) {
+            if (!ResolveUtil.processElement(processor, subPackage)) return false;
+          }
         }
       }
+
     }
 
     return true;

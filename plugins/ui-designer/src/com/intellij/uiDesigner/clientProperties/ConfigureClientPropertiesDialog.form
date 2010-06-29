@@ -34,7 +34,7 @@
                 <properties/>
                 <border type="none"/>
                 <children>
-                  <component id="f5c47" class="javax.swing.JTree" binding="myClassTree">
+                  <component id="f5c47" class="com.intellij.ui.treeStructure.Tree" binding="myClassTree">
                     <constraints/>
                     <properties>
                       <rootVisible value="false"/>
@@ -67,7 +67,7 @@
                 <properties/>
                 <border type="none"/>
                 <children>
-                  <component id="ce336" class="javax.swing.JTable" binding="myPropertiesTable">
+                  <component id="ce336" class="com.intellij.ui.table.JBTable" binding="myPropertiesTable">
                     <constraints/>
                     <properties/>
                   </component>

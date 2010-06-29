@@ -87,7 +87,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
 
       // Process non-code in closures
       PsiType clType = JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(closureClass, PsiSubstitutor.EMPTY);
-      if (!ResolveUtil.processNonCodeMethods(clType, processor, getProject(), place, true)) return false;
+      if (!ResolveUtil.processNonCodeMethods(clType, processor, place, true)) return false;
     }
 
     return true;

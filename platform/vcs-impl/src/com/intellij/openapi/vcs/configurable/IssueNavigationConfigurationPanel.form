@@ -15,7 +15,7 @@
         <properties/>
         <border type="none"/>
         <children>
-          <component id="8d1f3" class="javax.swing.JTable" binding="myLinkTable">
+          <component id="8d1f3" class="com.intellij.ui.table.JBTable" binding="myLinkTable">
             <constraints/>
             <properties/>
           </component>

@@ -8,7 +8,7 @@
     <properties/>
     <border type="none"/>
     <children>
-      <component id="5d9f6" class="javax.swing.JList">
+      <component id="5d9f6" class="com.intellij.ui.components.JBList">
         <constraints/>
         <properties>
           <enabled value="false"/>

@@ -136,16 +136,18 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   }
 
   private void paintMaxiThumb(Graphics g, Rectangle thumbBounds) {
-    final int gap = 3;
+    final boolean vertical = isVertical();
+    int hgap = vertical ? 3 : 0;
+    int vgap = vertical ? 0 : 3;
 
-    int w = adjustThumbWidth(thumbBounds.width - gap * 2);
-    int h = thumbBounds.height - gap * 2;
+    int w = adjustThumbWidth(thumbBounds.width - hgap * 2) - 1;
+    int h = thumbBounds.height - vgap * 2 - 1;
 
     final GradientPaint paint;
     final Color start = adjustColor(GRADIENT_LIGHT);
     final Color end = adjustColor(GRADIENT_DARK);
 
-    if (isVertical()) {
+    if (vertical) {
       paint = new GradientPaint(1, 0, start, w + 1, 0, end);
     }
     else {
@@ -153,10 +155,10 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     }
 
     ((Graphics2D)g).setPaint(paint);
-    g.fillRoundRect(gap, gap, w + 1, h + 1, 4, 4);
+    g.fillRoundRect(hgap, vgap, w + 1, h + 1, 4, 4);
 
     g.setColor(GRADIENT_THUMB_BORDER);
-    g.drawRoundRect(gap, gap, w, h, 4, 4);
+    g.drawRoundRect(hgap, vgap, w, h, 4, 4);
   }
 
   protected int adjustThumbWidth(int width) {
@@ -169,16 +171,18 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   }
 
   private void paintMiniThumb(Graphics g, Rectangle thumbBounds) {
-    final int gap = 2;
+    final boolean vertical = isVertical();
+    final int hgap = vertical ? 2 : 0;
+    final int vgap = vertical ? 0 : 2;
 
-    int w = thumbBounds.width - gap * 2;
-    int h = thumbBounds.height - gap * 2;
+    int w = thumbBounds.width - hgap * 2;
+    int h = thumbBounds.height - vgap * 2;
 
     g.setColor(adjustColor(PLAIN_THUMB_FILL));
-    g.fillRect(gap, gap, w, h);
+    g.fillRect(hgap, vgap, w, h);
 
     g.setColor(PLAIN_THUMB_BORDER);
-    g.drawRect(gap, gap, w, h);
+    g.drawRect(hgap, vgap, w, h);
   }
 
 

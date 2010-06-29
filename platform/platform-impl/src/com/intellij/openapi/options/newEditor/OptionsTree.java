@@ -608,7 +608,6 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
 
     @Override
     protected void configureUiHelper(final TreeUIHelper helper) {
-      helper.installToolTipHandler(this);
     }
 
     @Override

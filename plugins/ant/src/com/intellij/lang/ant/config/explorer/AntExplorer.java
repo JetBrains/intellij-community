@@ -112,7 +112,6 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider {
     myTree.setCellRenderer(new NodeRenderer());
     myBuilder = new AntExplorerTreeBuilder(project, myTree, model);
     myBuilder.setTargetsFiltered(AntConfigurationBase.getInstance(project).isFilterTargets());
-    TreeToolTipHandler.install(myTree);
     TreeUtil.installActions(myTree);
     new TreeSpeedSearch(myTree);
     myTree.addMouseListener(new PopupHandler() {

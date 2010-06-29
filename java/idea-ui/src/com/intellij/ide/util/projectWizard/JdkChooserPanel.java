@@ -30,6 +30,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +55,7 @@ public class JdkChooserPanel extends JPanel {
     super(new BorderLayout());
     myProject = project;
     myListModel = new DefaultListModel();
-    myList = new JList(myListModel);
+    myList = new JBList(myListModel);
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myList.setCellRenderer(new ProjectJdkListRenderer());
     //noinspection HardCodedStringLiteral

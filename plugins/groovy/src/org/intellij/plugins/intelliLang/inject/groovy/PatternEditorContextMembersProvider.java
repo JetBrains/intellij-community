@@ -22,7 +22,6 @@ import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.patterns.compiler.PatternCompilerImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.util.ProcessingContext;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jetbrains.annotations.NotNull;
@@ -41,8 +40,7 @@ public class PatternEditorContextMembersProvider extends NonCodeMembersContribut
   public void processDynamicElements(@NotNull PsiType qualifierType,
                                      PsiScopeProcessor processor,
                                      PsiElement place,
-                                     ResolveState state,
-                                     ProcessingContext ctx) {
+                                     ResolveState state) {
     final PsiFile file = place.getContainingFile().getOriginalFile();
     final BaseInjection injection = file.getUserData(BaseInjection.INJECTION_KEY);
     if (injection == null) return;

@@ -25,6 +25,7 @@ import com.intellij.ide.util.newProjectWizard.StepSequence;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -48,7 +49,7 @@ public class ImportChooserStep extends ProjectImportWizardStep {
     mySequence = sequence;
     myPanel = new JPanel(new BorderLayout());
     final DefaultListModel model = new DefaultListModel();
-    myList = new JList(model);
+    myList = new JBList(model);
 
     for (ProjectImportProvider provider : sorted(providers)) {
       model.addElement(provider);

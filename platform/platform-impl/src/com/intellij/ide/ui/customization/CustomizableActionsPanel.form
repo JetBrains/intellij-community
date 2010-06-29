@@ -23,7 +23,7 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="85cb" class="javax.swing.JTree" binding="myActionsTree">
+              <component id="85cb" class="com.intellij.ui.treeStructure.Tree" binding="myActionsTree">
                 <constraints/>
                 <properties/>
               </component>

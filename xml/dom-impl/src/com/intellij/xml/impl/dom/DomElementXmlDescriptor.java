@@ -17,9 +17,9 @@ package com.intellij.xml.impl.dom;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
@@ -204,11 +204,7 @@ public class DomElementXmlDescriptor implements XmlElementDescriptor {
 
     if (declaration != null) return declaration.getXmlElement();
 
-    return new FakePsiElement() {
-      public PsiElement getParent() {
-        return DomUtil.getFile(mySomeElement);
-      }
-    };
+    return PomService.convertToPsi(myManager.getProject(), myChildrenDescription);
   }
 
   @NonNls
@@ -253,6 +249,25 @@ public class DomElementXmlDescriptor implements XmlElementDescriptor {
 
     public MyRootDomChildrenDescription(final DomElement domElement) {
       myDomElement = domElement;
+    }
+
+    public String getName() {
+      return getXmlElementName();
+    }
+
+    public boolean isValid() {
+      return true;
+    }
+
+    public void navigate(boolean requestFocus) {
+    }
+
+    public boolean canNavigate() {
+      return false;
+    }
+
+    public boolean canNavigateToSource() {
+      return false;
     }
 
     @NotNull
@@ -304,4 +319,5 @@ public class DomElementXmlDescriptor implements XmlElementDescriptor {
           throw new UnsupportedOperationException("Method getAnnotation not implemented in " + getClass());
         }
   }
+
 }

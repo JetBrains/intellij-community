@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.dsl.toplevel;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
+import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
 
 /**
  * @author peter
@@ -14,8 +15,8 @@ public class PlaceContextFilter implements ContextFilter {
     myPattern = pattern;
   }
 
-  public boolean isApplicable(PsiElement place, String fqName, ProcessingContext ctx) {
-    return myPattern.accepts(place, ctx);
+  public boolean isApplicable(GroovyClassDescriptor descriptor, ProcessingContext ctx) {
+    return myPattern.accepts(descriptor.getPlace(), ctx);
   }
 
 }

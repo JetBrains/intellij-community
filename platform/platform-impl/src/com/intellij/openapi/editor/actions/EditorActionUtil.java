@@ -233,11 +233,17 @@ public class EditorActionUtil {
     }
     else if (logLineToUse == logCaretLine) {
       int line = currentVisCaret.line;
-      int column = 0;
+      int column;
       if (currentVisCaret.column == 0) {
         column = findSmartIndentColumn(editor, currentVisCaret.line);
       }
-      caretModel.moveToVisualPosition(new VisualPosition(line, column));
+      else {
+        column = findFirstNonSpaceColumnOnTheLine(editor, currentVisCaret.line);
+        if (column == currentVisCaret.column) {
+          column = 0;
+        }
+      }
+      caretModel.moveToVisualPosition(new VisualPosition(line, Math.max(column, 0)));
     }
     else {
       LogicalPosition logLineEndLog = editor.offsetToLogicalPosition(document.getLineEndOffset(logLineToUse));

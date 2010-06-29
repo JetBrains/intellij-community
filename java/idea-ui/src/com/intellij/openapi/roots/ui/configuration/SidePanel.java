@@ -17,6 +17,7 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.ui.popup.ListItemDescriptor;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
@@ -49,7 +50,7 @@ public class SidePanel extends JPanel {
     setLayout(new BorderLayout());
 
     myModel = new DefaultListModel();
-    myList = new JList(myModel);
+    myList = new JBList(myModel);
 
     final ListItemDescriptor descriptor = new ListItemDescriptor() {
       public String getTextFor(final Object value) {

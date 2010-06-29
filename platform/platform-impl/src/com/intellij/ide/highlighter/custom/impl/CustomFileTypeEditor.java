@@ -25,6 +25,7 @@ import com.intellij.ui.DialogButtonGroup;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.ui.components.JBList;
 
 import javax.swing.*;
 import java.awt.*;
@@ -52,7 +53,7 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
   private final JTextField myHexPrefix = new JTextField(20);
   private final JTextField myNumPostfixes = new JTextField(20);
 
-  private final JList[] myKeywordsLists = new JList[]{new JList(), new JList(), new JList(), new JList()};
+  private final JList[] myKeywordsLists = new JList[]{new JBList(), new JBList(), new JBList(), new JBList()};
   private final DefaultListModel[] myKeywordModels = new DefaultListModel[]{new DefaultListModel(), new DefaultListModel(), new DefaultListModel(), new DefaultListModel()};
   private final JButton[] myAddKeywordButtons = new JButton[4];
   private final JButton[] myRemoveKeywordButtons = new JButton[4];

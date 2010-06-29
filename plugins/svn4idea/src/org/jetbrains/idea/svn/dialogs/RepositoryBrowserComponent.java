@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NonNls;
@@ -187,7 +188,7 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
 
   private void createComponent() {
     setLayout(new BorderLayout());
-    myRepositoryTree = new JTree();
+    myRepositoryTree = new Tree();
     myRepositoryTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     myRepositoryTree.setRootVisible(false);
     myRepositoryTree.setShowsRootHandles(true);

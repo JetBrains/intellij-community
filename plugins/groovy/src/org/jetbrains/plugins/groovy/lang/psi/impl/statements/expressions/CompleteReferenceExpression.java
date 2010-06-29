@@ -284,7 +284,7 @@ public class CompleteReferenceExpression {
               javaLangClass.processDeclarations(processor, ResolveState.initial(), null, refExpr);
               PsiType javaLangClassType =
                 JavaPsiFacade.getInstance(refExpr.getProject()).getElementFactory().createType(javaLangClass, substitutor);
-              ResolveUtil.processNonCodeMethods(javaLangClassType, processor, refExpr.getProject(), refExpr, true);
+              ResolveUtil.processNonCodeMethods(javaLangClassType, processor, refExpr, true);
             }
           }
         }
@@ -352,6 +352,6 @@ public class CompleteReferenceExpression {
       return;
     }
 
-    ResolveUtil.processNonCodeMethods(qualifierType, processor, project, refExpr, true);
+    ResolveUtil.processNonCodeMethods(qualifierType, processor, refExpr, true);
   }
 }

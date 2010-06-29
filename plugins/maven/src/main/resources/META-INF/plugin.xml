@@ -30,7 +30,7 @@
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <configurationType implementation="org.jetbrains.idea.maven.execution.MavenRunConfigurationType"/>
     <configurationProducer implementation="org.jetbrains.idea.maven.execution.MavenConfigurationProducer"/>
-    <javaClasspathPolicyExtender implementation="org.jetbrains.idea.maven.execution.MavenJavaClasspathPolicyExtender"/>
+    <orderEnumerationHandler implementation="org.jetbrains.idea.maven.execution.MavenOrderEnumeratorHandler"/>
 
     <compiler implementation="org.jetbrains.idea.maven.compiler.MavenResourceCompiler" order="last"/>
 

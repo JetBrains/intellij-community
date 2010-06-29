@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ColorChooser;
+import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -66,7 +67,7 @@ public class RegistryUi implements Disposable {
     myContent.setLayout(new BorderLayout());
 
     myModel = new MyTableModel();
-    myTable = new JTable(myModel);
+    myTable = new JBTable(myModel);
     final MyRenderer r = new MyRenderer();
 
     final TableColumn c0 = myTable.getColumnModel().getColumn(0);

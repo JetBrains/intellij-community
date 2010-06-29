@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
@@ -440,7 +441,7 @@ public class SearchUtil {
     if (filter == null || filter.length() == 0) return null;
     final Map<String, Set<String>> hints = SearchableOptionsRegistrar.getInstance().findPossibleExtension(filter, project);
     final DefaultListModel model = new DefaultListModel();
-    final JList list = new JList(model);
+    final JList list = new JBList(model);
     for (String groupName : hints.keySet()) {
       model.addElement(groupName);
       final Set<String> descriptions = hints.get(groupName);

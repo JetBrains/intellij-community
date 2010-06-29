@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.PopupHandler;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -143,7 +144,7 @@ public class CustomizationUtil {
     DefaultMutableTreeNode root = new DefaultMutableTreeNode(rootGroup);
     root.removeAllChildren();
     schema.fillActionGroups(root);
-    final JTree defaultTree = new JTree(new DefaultTreeModel(root));
+    final JTree defaultTree = new Tree(new DefaultTreeModel(root));
 
     final ArrayList<ActionUrl> actions = new ArrayList<ActionUrl>();
 

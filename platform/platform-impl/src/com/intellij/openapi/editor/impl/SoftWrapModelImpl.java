@@ -143,6 +143,17 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
   }
 
   /**
+   * @return    total number of soft wrap-introduced new visual lines
+   */
+  public int getSoftWrapsIntroducedLinesNumber() {
+    int result = 0;
+    for (TextChange myWrap : myWraps) {
+      result += StringUtil.countNewLines(myWrap.getText());
+    }
+    return result;
+  }
+
+  /**
    * Tries to find index of the target soft wrap stored at {@link #myWraps} collection. <code>'Target'</code> soft wrap is the one
    * that starts at the given offset.
    *
@@ -279,7 +290,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
 
   @NotNull
   public LogicalPosition adjustLogicalPosition(@NotNull LogicalPosition defaultLogical, @NotNull VisualPosition visual) {
-    if (myActive > 0 || !isSoftWrappingEnabled() || myWraps.isEmpty()) {
+    if (myActive > 0 || !isSoftWrappingEnabled() || myWraps.isEmpty() || myEditor.getDocument().getTextLength() <= 0) {
       return defaultLogical;
     }
 
@@ -524,8 +535,9 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
 
     // Return eagerly if there are no soft wraps before the target offset on a line that contains it.
     if (max >= myWraps.size() || myWraps.get(max).getStart() > offset) {
+      int column = toVisualColumnSymbolsNumber(chars, targetLineStartOffset, offset);
       LogicalPosition foldingUnawarePosition = new LogicalPosition(
-        rawLineStartLogicalPosition.line, offset - targetLineStartOffset, softWrapIntroducedLines, 0, 0, 0, 0
+        rawLineStartLogicalPosition.line, column, softWrapIntroducedLines, 0, 0, 0, 0
       );
       return adjustFoldingData(foldingModel, foldingUnawarePosition);
     }
@@ -686,11 +698,11 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
       softWrapIndex = -softWrapIndex - 1;
     }
 
-    if (softWrapIndex >= myWraps.size()) {
+    Document document = myEditor.getDocument();
+
+    if (softWrapIndex >= myWraps.size() || document.getTextLength() <= 0) {
       return;
     }
-
-    Document document = myEditor.getDocument();
     int firstChangedLine = document.getLineNumber(change.getStart());
     int lastChangedLine = Math.max(document.getLineNumber(change.getEnd()), firstChangedLine + StringUtil.countNewLines(change.getText()));
     for (int i = firstChangedLine; i <= lastChangedLine; i++) {

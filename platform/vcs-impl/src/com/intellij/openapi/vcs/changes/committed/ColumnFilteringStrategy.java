@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
@@ -53,7 +54,7 @@ public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
   public ColumnFilteringStrategy(final ChangeListColumn column,
                                  final Class<? extends CommittedChangesProvider> providerClass) {
     myModel = new MyListModel();
-    myValueList = new JList();
+    myValueList = new JBList();
     myScrollPane =  ScrollPaneFactory.createScrollPane(myValueList);
     myValueList.setModel(myModel);
     myValueList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {

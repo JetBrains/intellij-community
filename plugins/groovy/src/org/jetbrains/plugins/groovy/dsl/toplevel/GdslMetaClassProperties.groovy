@@ -49,8 +49,8 @@ class GdslMetaClassProperties {
   Closure ClassScope = {Map args -> return new ClassScope(args)}
 
   Closure hasAnnotation = { String annoQName -> PsiJavaPatterns.psiModifierListOwner().withAnnotation(annoQName) }
-  Closure hasField = { ElementPattern fieldCondition -> PsiJavaPatterns.psiClass().withMember(PsiJavaPatterns.psiField().and(fieldCondition)) }
-  Closure hasMethod = { ElementPattern methodCondition -> PsiJavaPatterns.psiClass().withMember(PsiJavaPatterns.psiMethod().and(methodCondition)) }
+  Closure hasField = { ElementPattern fieldCondition -> PsiJavaPatterns.psiClass().withField(true, PsiJavaPatterns.psiField().and(fieldCondition)) }
+  Closure hasMethod = { ElementPattern methodCondition -> PsiJavaPatterns.psiClass().withMethod(true, PsiJavaPatterns.psiMethod().and(methodCondition)) }
 
 
 }

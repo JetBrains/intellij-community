@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +47,7 @@ import java.util.List;
 public class CvsConfigurationsListEditor extends DialogWrapper implements DataProvider{
   private final BorderLayout myCenterPanelLayout = new BorderLayout();
   private final JPanel myCenterPanel = new JPanel(myCenterPanelLayout);
-  private final JList myList = new JList();
+  private final JList myList = new JBList();
   private final DefaultListModel myModel = new DefaultListModel();
   private CvsRootConfiguration mySelection;
 
