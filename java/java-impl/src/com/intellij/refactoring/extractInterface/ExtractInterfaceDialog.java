@@ -146,7 +146,9 @@ class ExtractInterfaceDialog extends JavaExtractSuperBaseDialog {
 
   @Override
   protected String getPackageNameLabelText() {
-    return isExtractSuperclass() ? RefactoringBundle.message("package.for.new.interface") : "Package name for original class";
+    return isExtractSuperclass()
+           ? RefactoringBundle.message("package.for.new.interface")
+           : RefactoringBundle.message("package.for.original.class");
   }
 
   protected JLabel getPackageNameLabel() {
