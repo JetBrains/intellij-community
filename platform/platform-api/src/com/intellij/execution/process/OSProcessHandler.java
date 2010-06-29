@@ -389,32 +389,4 @@ public class OSProcessHandler extends ProcessHandler {
     }
 
   }
-
-  public static void main(String[] args) {
-    char[] chars = "\r\nfirst\rsecond\r\nlast".toCharArray();
-
-    StringBuilder token = new StringBuilder();
-    boolean skipLF = false;
-
-    for (int i = 0; i < chars.length; i++) {
-      char c = chars[i];
-      if (skipLF && c != '\n') {
-        token.append('\r');
-      }
-
-      if (c == '\r') {
-        skipLF = true;
-      }
-      else {
-        skipLF = false;
-        token.append(c);
-      }
-
-      if (c == '\n') {
-        System.out.println(token.toString().toCharArray());
-        token.setLength(0);
-      }
-    }
-  }
-
 }
