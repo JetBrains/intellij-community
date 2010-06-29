@@ -44,7 +44,6 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.RecentsManager;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -193,7 +192,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
     if (table.getRowCount() > 0) {
       table.getSelectionModel().addSelectionInterval(0, 0);
     }
-    JBScrollPane scrollPane = ScrollPaneFactory.createScrollPane(table);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(table);
     Border titledBorder = IdeBorderFactory.createTitledBorder(RefactoringBundle.message("move.members.members.to.be.moved.border.title"));
     Border emptyBorder = BorderFactory.createEmptyBorder(0, 5, 5, 5);
     Border border = BorderFactory.createCompoundBorder(titledBorder, emptyBorder);

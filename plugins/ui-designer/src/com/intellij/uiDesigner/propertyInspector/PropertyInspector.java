@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
 import com.intellij.uiDesigner.componentTree.ComponentTree;
@@ -52,7 +51,7 @@ public final class PropertyInspector extends JPanel{
   @NonNls private static final String INSPECTOR_CARD = "inspector";
   @NonNls private static final String EMPTY_CARD = "empty";
   @NonNls private static final String CUSTOM_CARD = "column";
-  private final JBScrollPane myCustomPropertiesScrollPane = new JBScrollPane();
+  private final JScrollPane myCustomPropertiesScrollPane = ScrollPaneFactory.createScrollPane();
   private CustomPropertiesPanel myCustomPropertiesPanel;
   private final ChangeListener myCustomPropertiesChangeListener;
   private RadContainer myPropertiesPanelContainer;
@@ -65,7 +64,7 @@ public final class PropertyInspector extends JPanel{
 
     // Card with property inspector
     final JPanel inspectorCard = new JPanel(new GridBagLayout());
-    final JBScrollPane inspectorScrollPane = ScrollPaneFactory.createScrollPane(myInspectorTable);
+    final JScrollPane inspectorScrollPane = ScrollPaneFactory.createScrollPane(myInspectorTable);
     inspectorCard.add(inspectorScrollPane,
       new GridBagConstraints(0, 0, 0, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0)
     );

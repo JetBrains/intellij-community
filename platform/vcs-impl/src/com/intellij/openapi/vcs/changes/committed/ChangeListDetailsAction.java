@@ -29,7 +29,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
@@ -108,7 +108,7 @@ public class ChangeListDetailsAction extends AnAction implements DumbAware {
         }
       }
     });
-    JBScrollPane scrollPane = new JBScrollPane(editorPane);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(editorPane);
     final JBPopup hint =
       JBPopupFactory.getInstance().createComponentPopupBuilder(scrollPane, editorPane)
         .setDimensionServiceKey(project, "changelist.details.popup", false)

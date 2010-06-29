@@ -18,7 +18,6 @@ package com.intellij.refactoring.extractMethod;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.UIBundle;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.Table;
 import org.jetbrains.annotations.NonNls;
 
@@ -147,7 +146,7 @@ public abstract class AbstractParameterTablePanel extends JPanel {
     });
 
     JPanel listPanel = new JPanel(new BorderLayout());
-    JBScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
     listPanel.add(scrollPane, BorderLayout.CENTER);
     listPanel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
     add(listPanel, BorderLayout.CENTER);

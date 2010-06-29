@@ -33,7 +33,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Function;
 import com.intellij.util.concurrency.SwingWorker;
 import com.intellij.util.net.HTTPProxySettingsDialog;
@@ -114,7 +113,7 @@ public class PluginManagerMain implements Disposable {
 
     installedPluginTable.setColumnWidth(2, 45);
 
-    JBScrollPane installedScrollPane = ScrollPaneFactory.createScrollPane(installedPluginTable);
+    JScrollPane installedScrollPane = ScrollPaneFactory.createScrollPane(installedPluginTable);
     installedPluginTable.registerKeyboardAction(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final int column = InstalledPluginsTableModel.getCheckboxColumn();
@@ -137,7 +136,7 @@ public class PluginManagerMain implements Disposable {
     availablePluginsTable = new PluginTable(availablePluginsModel);
     //  Downloads
     availablePluginsTable.setColumnWidth(1, 70);
-    JBScrollPane availableScrollPane = ScrollPaneFactory.createScrollPane(availablePluginsTable);
+    JScrollPane availableScrollPane = ScrollPaneFactory.createScrollPane(availablePluginsTable);
 
     installTableActions(installedPluginTable);
     installTableActions(availablePluginsTable);

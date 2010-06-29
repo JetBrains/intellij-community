@@ -29,7 +29,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -44,7 +43,7 @@ import java.util.Map;
 public class FileEncodingConfigurable implements SearchableConfigurable, NonDefaultProjectConfigurable, OptionalConfigurable {
   private final Project myProject;
   private FileTreeTable myTreeView;
-  private JBScrollPane myTreePanel;
+  private JScrollPane myTreePanel;
   private JPanel myPanel;
   private JCheckBox myAutodetectUTFEncodedFilesCheckBox;
   private JCheckBox myTransparentNativeToAsciiCheckBox;

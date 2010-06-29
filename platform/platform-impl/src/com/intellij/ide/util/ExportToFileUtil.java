@@ -27,7 +27,7 @@ import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.SystemProperties;
 
 import javax.swing.*;
@@ -106,7 +106,7 @@ public class ExportToFileUtil {
     private final Project myProject;
     private final ExporterToTextFile myExporter;
     protected JTextArea myTextArea;
-    protected JBScrollPane myTextScrollPane;
+    protected JScrollPane myTextScrollPane;
     protected JTextField myTfFile;
     protected JButton myFileButton;
     private ChangeListener myListener;
@@ -151,7 +151,7 @@ public class ExportToFileUtil {
     protected JComponent createCenterPanel() {
       myTextArea = new JTextArea();
       myTextArea.setEditable(false);
-      myTextScrollPane = new JBScrollPane(myTextArea);
+      myTextScrollPane = ScrollPaneFactory.createScrollPane(myTextArea);
       myTextScrollPane.setPreferredSize(new Dimension(400, 300));
       return myTextScrollPane;
     }

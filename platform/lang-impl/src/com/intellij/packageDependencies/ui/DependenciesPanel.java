@@ -54,7 +54,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.ui.*;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.usageView.UsageViewBundle;
@@ -761,7 +760,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       pane.setForeground(Color.black);
       pane.setBackground(HintUtil.INFORMATION_COLOR);
       pane.setOpaque(true);
-      final JBScrollPane scrollPane = ScrollPaneFactory.createScrollPane(pane);
+      final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(pane);
       final Dimension dimension = pane.getPreferredSize();
       scrollPane.setMinimumSize(new Dimension(dimension.width, dimension.height + 20));
       scrollPane.setPreferredSize(new Dimension(dimension.width, dimension.height + 20));

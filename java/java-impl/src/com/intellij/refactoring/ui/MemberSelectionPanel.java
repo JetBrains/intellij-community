@@ -27,7 +27,6 @@ package com.intellij.refactoring.ui;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.components.JBScrollPane;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -46,7 +45,7 @@ public class MemberSelectionPanel extends JPanel {
     setLayout(new BorderLayout());
 
     myTable = createMemberSelectionTable(memberInfo, abstractColumnHeader);
-    JBScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
 
 
     add(scrollPane, BorderLayout.CENTER);

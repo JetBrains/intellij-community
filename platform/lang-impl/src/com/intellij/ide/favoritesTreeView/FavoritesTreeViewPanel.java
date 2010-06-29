@@ -52,7 +52,6 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
@@ -147,7 +146,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
         }
       }
     });
-    JBScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
     myTreePopupHandler = CustomizationUtil.installPopupHandler(myTree, IdeActions.GROUP_FAVORITES_VIEW_POPUP, ActionPlaces.FAVORITES_VIEW_POPUP);
     add(scrollPane, BorderLayout.CENTER);
     //add(createActionsToolbar(), BorderLayout.NORTH);

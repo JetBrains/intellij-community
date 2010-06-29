@@ -43,7 +43,6 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.LabeledIcon;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TitledSeparator;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
@@ -132,7 +131,7 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
                                      new Insets(0, 0, 0, 0), 0, 0));
 
 
-    JBScrollPane scrollPane = ScrollPaneFactory.createScrollPane(panel);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(panel);
     scrollPane.setBorder(null);
     return scrollPane;
   }

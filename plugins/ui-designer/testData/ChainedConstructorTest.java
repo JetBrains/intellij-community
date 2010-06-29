@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import com.intellij.ui.components.JBScrollPane;
-
 import javax.swing.*;
 
 public class ChainedConstructorTest {
   private JComponent myRootComponent;
-  public JBScrollPane myScrollPane;
+  public JScrollPane myScrollPane;
   public JList myList;
 
   public ChainedConstructorTest() {

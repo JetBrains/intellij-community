@@ -21,7 +21,7 @@ package com.intellij.ui.speedSearch;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.ui.LightColors;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.Function;
 
 import javax.swing.*;
@@ -33,22 +33,22 @@ public class ListWithFilter<T> extends JPanel {
   private final JList myList;
   private final JTextField mySpeedSearchPatternField;
   private final NameFilteringListModel<T> myModel;
-  private final JBScrollPane myScroller;
+  private final JScrollPane myScroller;
   private final MySpeedSearch mySpeedSearch;
 
   public static JComponent wrap(JList list) {
-    return wrap(list, new JBScrollPane(list), new Function<Object, String>() {
+    return wrap(list, ScrollPaneFactory.createScrollPane(list), new Function<Object, String>() {
       public String fun(Object o) {
         return o.toString();
       }
     });
   }
 
-  public static <T> JComponent wrap(JList list, JBScrollPane scroller, Function<T, String> namer) {
+  public static <T> JComponent wrap(JList list, JScrollPane scroller, Function<T, String> namer) {
     return new ListWithFilter<T>(list, scroller, namer);
   }
 
-  private ListWithFilter(JList list, JBScrollPane scroller, Function<T, String> namer) {
+  private ListWithFilter(JList list, JScrollPane scroller, Function<T, String> namer) {
     super(new BorderLayout());
 
     myList = list;
@@ -127,7 +127,7 @@ public class ListWithFilter<T> extends JPanel {
     return myList;
   }
 
-  public JBScrollPane getScrollPane() {
+  public JScrollPane getScrollPane() {
     return myScroller;
   }
 

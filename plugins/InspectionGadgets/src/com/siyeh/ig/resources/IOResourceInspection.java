@@ -19,7 +19,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.ScrollPaneFactory;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TypeUtils;
@@ -92,7 +92,7 @@ public class IOResourceInspection extends ResourceInspection {
                 new IGTable(new ListWrappingTableModel(ignoredTypes,
                         InspectionGadgetsBundle.message(
                                 "ignored.io.resource.types")));
-        final JBScrollPane scrollPane = new JBScrollPane(table);
+      final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(table);
         panel.add(scrollPane, constraints);
         constraints.gridx = 1;
         constraints.weightx = 0.0;

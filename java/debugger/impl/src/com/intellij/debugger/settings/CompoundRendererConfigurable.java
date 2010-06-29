@@ -32,8 +32,8 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.Table;
 import org.jetbrains.annotations.NonNls;
@@ -266,7 +266,7 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
         myDownButton.setEnabled(enabled);
       }
     };
-    final JBScrollPane scrollPane = new JBScrollPane(myTable);
+    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
     panel.add(scrollPane, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 4, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
     panel.add(myAddButton, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 4, 4, 0), 0, 0));
     panel.add(myRemoveButton, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 4, 4, 0), 0, 0));

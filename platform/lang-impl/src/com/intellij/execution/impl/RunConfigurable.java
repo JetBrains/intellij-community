@@ -41,7 +41,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.config.StorageAccessors;
@@ -318,7 +317,7 @@ class RunConfigurable extends BaseConfigurable {
                             true).getComponent();
     leftPanel.add(myToolbarComponent, BorderLayout.NORTH);
     initTree();
-    final JBScrollPane pane = ScrollPaneFactory.createScrollPane(myTree);
+    final JScrollPane pane = ScrollPaneFactory.createScrollPane(myTree);
     pane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     leftPanel.add(pane, BorderLayout.CENTER);
     final JButton editDefaultsButton = new JButton(ExecutionBundle.message("run.configuration.edit.default.configuration.settings.button"));

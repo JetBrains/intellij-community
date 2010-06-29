@@ -31,7 +31,6 @@ import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -615,7 +614,7 @@ class TemplateListPanel extends JPanel {
 
   }
 
-  private JBScrollPane createTable() {
+  private JScrollPane createTable() {
     myTreeRoot = new CheckedTreeNode(null);
 
     myTree = new CheckboxTree(new CheckboxTree.CheckboxTreeCellRenderer(){
@@ -750,7 +749,7 @@ class TemplateListPanel extends JPanel {
       }
     );
 
-    JBScrollPane scrollpane = ScrollPaneFactory.createScrollPane(myTree);
+    JScrollPane scrollpane = ScrollPaneFactory.createScrollPane(myTree);
     if (myTemplateGroups.size() > 0) {
       myTree.setSelectionInterval(0, 0);
     }

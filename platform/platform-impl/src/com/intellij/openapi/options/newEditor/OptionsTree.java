@@ -24,11 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.ui.ErrorLabel;
-import com.intellij.ui.GroupedElementsRenderer;
-import com.intellij.ui.LoadingNode;
-import com.intellij.ui.TreeUIHelper;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.*;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
@@ -115,7 +111,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       }
     });
 
-    final JBScrollPane scrolls = new JBScrollPane(myTree);
+    final JScrollPane scrolls = ScrollPaneFactory.createScrollPane(myTree);
     scrolls.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 
     add(scrolls, BorderLayout.CENTER);

@@ -21,9 +21,9 @@ import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocToken;
@@ -190,8 +190,9 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
     if (ourEntities != null) return;
 
     final String resource = ExternalResourceManager.getInstance().getResourceLocation(XmlUtil.HTML4_LOOSE_URI, project);
-    final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(VfsUtil.urlToPath(VfsUtil.fixURLforIDEA(resource)));
-    assert vFile != null;
+    final String url = fixUrl(resource);
+    final VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(url);
+    assert vFile != null : "not found: " + resource + ", " + url;
     final PsiFile file = PsiManager.getInstance(project).findFile(vFile);
     assert file instanceof XmlFile;
 
@@ -214,5 +215,14 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
     }, true);
 
     ourEntities = entities;
+  }
+
+  private static String fixUrl(final String junk) {
+    if (junk.startsWith("jar:file:/")) {
+      return junk.replace("jar:file:/", "jar:///");
+    }
+    else {
+      return VfsUtil.fixURLforIDEA(junk);
+    }
   }
 }

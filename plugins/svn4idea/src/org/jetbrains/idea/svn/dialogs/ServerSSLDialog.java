@@ -17,7 +17,7 @@ package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.ScrollPaneFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
@@ -94,7 +94,7 @@ public class ServerSSLDialog extends DialogWrapper {
     JTextArea area = new JTextArea(5, 50);
     area.setText(getServerCertificateInfo(myCertificate));
     area.setEditable(false);
-    panel.add(new JBScrollPane(area), BorderLayout.CENTER);
+    panel.add(ScrollPaneFactory.createScrollPane(area), BorderLayout.CENTER);
 
     return panel;
   }

@@ -28,7 +28,6 @@ import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.ui.VisibilityPanel;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.usageView.UsageViewUtil;
 
 import javax.swing.*;
@@ -61,7 +60,7 @@ public abstract class MoveInstanceMethodDialogBase extends RefactoringDialog {
 
   protected JPanel createListAndVisibilityPanels() {
     myList = createTargetVariableChooser();
-    final JBScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myList);
+    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myList);
     final JPanel hBox = new JPanel(new GridBagLayout());
     final GridBagConstraints gbConstraints = new GridBagConstraints();
 

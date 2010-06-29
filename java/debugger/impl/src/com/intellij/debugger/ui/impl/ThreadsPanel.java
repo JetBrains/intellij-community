@@ -30,7 +30,7 @@ import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.ScrollPaneFactory;
 import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
@@ -59,7 +59,7 @@ public class ThreadsPanel extends DebuggerTreePanel{
         }
       }
     });
-    add(new JBScrollPane(getThreadsTree()), BorderLayout.CENTER);
+    add(ScrollPaneFactory.createScrollPane(getThreadsTree()), BorderLayout.CENTER);
   }
 
   protected DebuggerTree createTreeView() {

@@ -27,7 +27,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.CellEditorComponentWithBrowseButton;
@@ -125,7 +124,7 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
          myRemoveButton.setEnabled(myFilesTable.getSelectedRowCount() >=1);
       }
     });
-    final JBScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myFilesTable);
+    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myFilesTable);
     scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
     myScrollPanel.add(scrollPane, BorderLayout.CENTER);
     myWholePanel.setPreferredSize(new Dimension(-1, 150));

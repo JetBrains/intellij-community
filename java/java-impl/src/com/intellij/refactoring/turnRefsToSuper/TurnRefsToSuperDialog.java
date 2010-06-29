@@ -34,8 +34,8 @@ import com.intellij.refactoring.ui.ClassCellRenderer;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -110,7 +110,7 @@ public class TurnRefsToSuperDialog extends RefactoringDialog {
     }
     mySuperClassesList.setSelectedIndex(indexToSelect);
     gbConstraints.gridy++;
-    panel.add(new JBScrollPane(mySuperClassesList), gbConstraints);
+    panel.add(ScrollPaneFactory.createScrollPane(mySuperClassesList), gbConstraints);
 
     gbConstraints.gridy++;
     myCbReplaceInstanceOf.setText(RefactoringBundle.message("turnRefsToSuper.use.superclass.in.instanceof"));

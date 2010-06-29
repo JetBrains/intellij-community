@@ -91,7 +91,7 @@ public final class LoaderFactory {
 
     final String runClasspath = OrderEnumerator.orderEntries(module).recursively().getPathsList().getPathsString();
 
-    final ClassLoader classLoader = createClassLoader(runClasspath);
+    final ClassLoader classLoader = createClassLoader(runClasspath, module.getName());
 
     myModule2ClassLoader.put(module, classLoader);
 
@@ -100,13 +100,13 @@ public final class LoaderFactory {
 
   @NotNull public ClassLoader getProjectClassLoader() {
     if (myProjectClassLoader == null) {
-      final String runClasspath = OrderEnumerator.orderEntries(myProject).getPathsList().getPathsString();
-      myProjectClassLoader = createClassLoader(runClasspath);
+      final String runClasspath = OrderEnumerator.orderEntries(myProject).withoutSdk().getPathsList().getPathsString();
+      myProjectClassLoader = createClassLoader(runClasspath, "<project>");
     }
     return myProjectClassLoader;
   }
 
-  private static ClassLoader createClassLoader(final String runClasspath) {
+  private static ClassLoader createClassLoader(final String runClasspath, final String moduleName) {
     final ArrayList<URL> urls = new ArrayList<URL>();
     final VirtualFileManager manager = VirtualFileManager.getInstance();
     final JarFileSystemImpl fileSystem = (JarFileSystemImpl)JarFileSystem.getInstance();
@@ -131,7 +131,7 @@ public final class LoaderFactory {
     }
 
     final URL[] _urls = urls.toArray(new URL[urls.size()]);
-    return new DesignTimeClassLoader(Arrays.asList(_urls), null);
+    return new DesignTimeClassLoader(Arrays.asList(_urls), LoaderFactory.class.getClassLoader(), moduleName);
   }
 
   public void clearClassLoaderCache() {
@@ -152,8 +152,16 @@ public final class LoaderFactory {
   }
 
   private static class DesignTimeClassLoader extends UrlClassLoader {
-    public DesignTimeClassLoader(final List<URL> urls, final ClassLoader parent) {
+    private final String myModuleName;
+
+    public DesignTimeClassLoader(final List<URL> urls, final ClassLoader parent, final String moduleName) {
       super(urls, parent);
+      myModuleName = moduleName;
+    }
+
+    @Override
+    public String toString() {
+      return "DesignTimeClassLoader:" + myModuleName;
     }
   }
 }

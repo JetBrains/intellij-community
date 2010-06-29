@@ -18,8 +18,8 @@ package com.intellij.cvsSupport2.cvsBrowser;
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
 import com.intellij.cvsSupport2.ui.CvsTabbedWindow;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeUIHelper;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -129,7 +129,7 @@ public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListene
     model.setTree(myTree);
     model.setCvsTree(this);
 
-    add(new JBScrollPane(myTree), BorderLayout.CENTER);
+    add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
 
     myTree.setModel(model);
 

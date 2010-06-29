@@ -22,7 +22,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Icons;
 
 import javax.swing.*;
@@ -210,7 +209,7 @@ public abstract class AbstractFieldPanel extends JPanel {
         }
       }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)), myTextArea);
 
-      return new JBScrollPane(myTextArea);
+      return ScrollPaneFactory.createScrollPane(myTextArea);
     }
   }
 }

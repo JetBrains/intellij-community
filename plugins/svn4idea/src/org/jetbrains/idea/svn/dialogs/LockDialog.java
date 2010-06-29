@@ -17,7 +17,7 @@ package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.OptionsDialog;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -88,8 +88,8 @@ public class LockDialog extends OptionsDialog {
     gc.fill = GridBagConstraints.BOTH;
 
     myLockTextArea = new JTextArea(7, 25);
-    JBScrollPane scrollPane = new JBScrollPane(myLockTextArea, JBScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
-                                             JBScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    JScrollPane scrollPane =
+      ScrollPaneFactory.createScrollPane(myLockTextArea, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     scrollPane.setMinimumSize(scrollPane.getPreferredSize());
     panel.add(scrollPane, gc);
     commentLabel.setLabelFor(myLockTextArea);

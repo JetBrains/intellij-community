@@ -48,8 +48,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.PopupHandler;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
@@ -149,7 +149,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
         }
       }
     );
-    setContent(new JBScrollPane(myTree));
+    setContent(ScrollPaneFactory.createScrollPane(myTree));
 
     // Create tool bars and register custom shortcuts
 

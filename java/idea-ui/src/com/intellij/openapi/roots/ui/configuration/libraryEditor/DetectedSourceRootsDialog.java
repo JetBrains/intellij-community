@@ -20,11 +20,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TitlePanel;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.CheckboxTree;
-import com.intellij.ui.CheckedTreeNode;
-import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.*;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -61,7 +57,7 @@ public class DetectedSourceRootsDialog extends DialogWrapper {
   /**
    * A scrollable pane that contains myTree
    */
-  private final JBScrollPane myPane;
+  private final JScrollPane myPane;
 
   /**
    * A constructor
@@ -104,7 +100,7 @@ public class DetectedSourceRootsDialog extends DialogWrapper {
     super(project, true);
     myRootNode = tree;
     myTree = createCheckboxTree();
-    myPane = new JBScrollPane(myTree);
+    myPane = ScrollPaneFactory.createScrollPane(myTree);
     setTitle("Detected Source Roots");
     init();
   }
@@ -119,7 +115,7 @@ public class DetectedSourceRootsDialog extends DialogWrapper {
     super(component, true);
     myRootNode = tree;
     myTree = createCheckboxTree();
-    myPane = new JBScrollPane(myTree);
+    myPane = ScrollPaneFactory.createScrollPane(myTree);
     setTitle("Detected Source Roots");
     init();
   }

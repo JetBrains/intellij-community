@@ -19,7 +19,6 @@ package com.intellij.uiDesigner.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
@@ -186,7 +185,7 @@ public class SurroundAction extends AbstractGuiEditorAction {
   }
 
   private boolean canWrapSelection(final ArrayList<RadComponent> selection) {
-    if (myComponentClass.equals(JBScrollPane.class.getName())) {
+    if (myComponentClass.equals(JScrollPane.class.getName())) {
       if (selection.size() > 1) return false;
       RadComponent component = selection.get(0);
       return component.getDelegee() instanceof Scrollable;

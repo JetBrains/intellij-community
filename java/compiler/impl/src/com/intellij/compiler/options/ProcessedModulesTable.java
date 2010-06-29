@@ -24,7 +24,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.TableUtil;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
@@ -53,7 +52,7 @@ public class ProcessedModulesTable extends JPanel {
     myTable.setIntercellSpacing(new Dimension(0, 0));
     myTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
     myTable.setColumnSelectionAllowed(false);
-    JBScrollPane pane = ScrollPaneFactory.createScrollPane(myTable);
+    JScrollPane pane = ScrollPaneFactory.createScrollPane(myTable);
     pane.setPreferredSize(new Dimension(100, 155));
 
     final TableColumnModel columnModel = myTable.getColumnModel();

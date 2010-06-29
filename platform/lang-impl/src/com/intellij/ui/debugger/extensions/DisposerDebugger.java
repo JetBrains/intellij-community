@@ -32,7 +32,7 @@ import com.intellij.openapi.util.objectTree.ObjectNode;
 import com.intellij.openapi.util.objectTree.ObjectTree;
 import com.intellij.openapi.util.objectTree.ObjectTreeListener;
 import com.intellij.openapi.vcs.history.TextTransferrable;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.debugger.UiDebuggerExtension;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.tabs.JBTabs;
@@ -134,7 +134,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
       myAllocation.setEditable(false);
 
       setLayout(new BorderLayout());
-      add(new JBScrollPane(myAllocation), BorderLayout.CENTER);
+      add(ScrollPaneFactory.createScrollPane(myAllocation), BorderLayout.CENTER);
 
 
       treeTabs.addListener(new TabsListener.Adapter() {
@@ -241,7 +241,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
       myTree = tree;
 
       setLayout(new BorderLayout());
-      add(new JBScrollPane(myTree), BorderLayout.CENTER);
+      add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
 
       Disposer.getTree().addListener(this);
 

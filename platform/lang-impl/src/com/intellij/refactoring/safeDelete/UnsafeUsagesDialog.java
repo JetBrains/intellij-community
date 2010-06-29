@@ -23,7 +23,7 @@ package com.intellij.refactoring.safeDelete;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.ScrollPaneFactory;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -53,7 +53,7 @@ public class UnsafeUsagesDialog extends DialogWrapper {
     @NonNls final String contentType = "text/html";
     myMessagePane = new JEditorPane(contentType, "");
     myMessagePane.setEditable(false);
-    JBScrollPane scrollPane = new JBScrollPane(myMessagePane);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myMessagePane);
     scrollPane.setPreferredSize(new Dimension(500, 400));
     panel.add(new JLabel(RefactoringBundle.message("the.following.problems.were.found")), BorderLayout.NORTH);
     panel.add(scrollPane, BorderLayout.CENTER);

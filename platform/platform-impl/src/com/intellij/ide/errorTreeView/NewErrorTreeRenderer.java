@@ -21,7 +21,6 @@ import com.intellij.openapi.vcs.changes.issueLinks.TreeNodePartListener;
 import com.intellij.ui.CustomizeColoredTreeCellRenderer;
 import com.intellij.ui.MultilineTreeCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +49,7 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
     myWrapperRenderer = new MyWrapperRenderer(myColoredTreeCellRenderer, myRightCellRenderer);
   }
 
-  public static JBScrollPane install(JTree tree) {
+  public static JScrollPane install(JTree tree) {
     final NewErrorTreeRenderer renderer = new NewErrorTreeRenderer();
     //new TreeLinkMouseListener(renderer.myColoredTreeCellRenderer).install(tree);
     new TreeNodePartListener(renderer.myRightCellRenderer).install(tree);

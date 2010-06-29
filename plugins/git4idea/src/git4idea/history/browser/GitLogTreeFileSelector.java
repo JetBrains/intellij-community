@@ -21,7 +21,7 @@ import com.intellij.openapi.fileChooser.FileSystemTreeFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.ScrollPaneFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -61,7 +61,7 @@ public class GitLogTreeFileSelector extends DialogWrapper {
     tree.setCellRenderer(new GitLogTreeFileSelectorRenderer(myProject));
     myFileSystemTree.select(myRoot, null);
 
-    myPanel.add(new JBScrollPane(tree), BorderLayout.CENTER);
+    myPanel.add(ScrollPaneFactory.createScrollPane(tree), BorderLayout.CENTER);
   }
 
   @Override

@@ -32,7 +32,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.text.StringTokenizer;
 import com.intellij.util.ui.GeometryUtil;
 import com.intellij.util.ui.UIUtil;
@@ -189,10 +189,10 @@ public class DebuggerTreeBase extends DnDAwareTree implements Disposable {
     }
 
     final JComponent tipContent = createTipContent(toolTipText, node);
-    final JBScrollPane scrollPane = new JBScrollPane(tipContent);
+    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(tipContent);
     scrollPane.setBorder(null);
-    scrollPane.setHorizontalScrollBarPolicy(JBScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    scrollPane.setVerticalScrollBarPolicy(JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+    scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 
     final Point point = e.getPoint();
     SwingUtilities.convertPointToScreen(point, e.getComponent());

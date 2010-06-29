@@ -30,7 +30,6 @@ import com.intellij.psi.search.TodoPattern;
 import com.intellij.ui.PanelWithButtons;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -197,7 +196,7 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
 
 
         ((DefaultCellEditor)myPatternsTable.getDefaultEditor(String.class)).setClickCountToStart(2);
-        JBScrollPane myPatternsScroll = ScrollPaneFactory.createScrollPane(myPatternsTable);
+        JScrollPane myPatternsScroll = ScrollPaneFactory.createScrollPane(myPatternsTable);
 //        myPatternsScroll.getViewport().add(myPatternsTable);
         myPatternsScroll.setPreferredSize(new Dimension(-1, myPatternsTable.getRowHeight() * 12));
 
@@ -290,7 +289,7 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
       protected JComponent createMainComponent() {
         myFiltersTable = new Table(myFiltersModel);
         myFiltersTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        JBScrollPane myFiltersScroll = ScrollPaneFactory.createScrollPane(myFiltersTable);
+        JScrollPane myFiltersScroll = ScrollPaneFactory.createScrollPane(myFiltersTable);
 //        myFiltersScroll.getViewport().add(myFiltersTable);
         myFiltersScroll.setPreferredSize(new Dimension(-1, myPatternsTable.getRowHeight() * 12));
 

@@ -33,7 +33,6 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ReorderableListController;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Icons;
 import com.intellij.util.PathUtil;
 import gnu.trove.THashSet;
@@ -96,7 +95,7 @@ public class SimpleClasspathPanel extends JPanel {
       }
     });
     add(ActionManager.getInstance().createActionToolbar(ActionPlaces.PROJECT_VIEW_TOOLBAR, actionGroup, true).getComponent(), BorderLayout.NORTH);
-    final JBScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myList);
+    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myList);
     add(scrollPane, BorderLayout.CENTER);
     final FontMetrics fontMetrics = myList.getFontMetrics(myList.getFont());
     scrollPane.setPreferredSize(new Dimension(0, fontMetrics.getHeight() * 12));

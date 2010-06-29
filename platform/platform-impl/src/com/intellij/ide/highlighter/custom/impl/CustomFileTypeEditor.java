@@ -21,12 +21,8 @@ import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.ui.DialogButtonGroup;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.ListUtil;
-import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.components.JBScrollPane;
 
 import javax.swing.*;
 import java.awt.*;
@@ -239,7 +235,7 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
     JPanel keywordsPanel = panel;
     keywordsPanel.setLayout(new BorderLayout());
 
-    keywordsPanel.add(new JBScrollPane(myKeywordsLists[index]), BorderLayout.CENTER);
+    keywordsPanel.add(ScrollPaneFactory.createScrollPane(myKeywordsLists[index]), BorderLayout.CENTER);
 
     DialogButtonGroup buttonGroup = new DialogButtonGroup();
     buttonGroup.setBorder(BorderFactory.createEmptyBorder(0, 10, 5, 0));

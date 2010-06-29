@@ -19,7 +19,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.Table;
 import gnu.trove.TObjectIntHashMap;
 
@@ -81,7 +81,7 @@ public class DefineMacrosDialog extends DialogWrapper{
     JLabel label = new JLabel(ProjectBundle.message("project.macros.prompt"));
     label.setBorder(IdeBorderFactory.createEmptyBorder(6, 6, 6, 6));
     panel.add(label, BorderLayout.NORTH);
-    panel.add(new JBScrollPane(table), BorderLayout.CENTER);
+    panel.add(ScrollPaneFactory.createScrollPane(table), BorderLayout.CENTER);
     return panel;
   }
 

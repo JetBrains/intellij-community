@@ -20,7 +20,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.ScrollPaneFactory;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -90,7 +90,7 @@ public class BooleanMethodNameMustStartWithQuestionInspection
                 new IGTable(new ListWrappingTableModel(questionList,
                         InspectionGadgetsBundle.message(
                                 "boolean.method.name.must.start.with.question.table.column.name")));
-        final JBScrollPane scrollPane = new JBScrollPane(table);
+      final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(table);
 
         final GridBagConstraints constraints = new GridBagConstraints();
         constraints.gridx = 0;

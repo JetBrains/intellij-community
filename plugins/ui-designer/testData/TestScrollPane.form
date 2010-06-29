@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="BindingTest">
-  <scrollpane class="com.intellij.ui.components.JBScrollPane" id="d66a3" binding="myRootComponent">
+  <scrollpane id="d66a3" binding="myRootComponent">
     <constraints>
       <xy x="97" y="149" width="19" height="20"/>
       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3"/>

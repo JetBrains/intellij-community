@@ -21,7 +21,7 @@ import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.util.MinimizeButton;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.ScrollPaneFactory;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -35,7 +35,7 @@ import java.awt.*;
  */
 public class RegExHelpPopup extends JPanel {
   private final JEditorPane myEditorPane;
-  private final JBScrollPane myScrollPane;
+  private final JScrollPane myScrollPane;
 
   public RegExHelpPopup() throws BadLocationException {
     setLayout(new BorderLayout());
@@ -321,7 +321,7 @@ public class RegExHelpPopup extends JPanel {
 
     myEditorPane.setCaretPosition(0);
 
-    myScrollPane = new JBScrollPane(myEditorPane);
+    myScrollPane = ScrollPaneFactory.createScrollPane(myEditorPane);
     myScrollPane.setBorder(null);
 
     add(myScrollPane, BorderLayout.CENTER);

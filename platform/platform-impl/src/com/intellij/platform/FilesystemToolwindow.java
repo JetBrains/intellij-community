@@ -30,7 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentFactoryImpl;
@@ -60,7 +60,7 @@ public class FilesystemToolwindow {
     descriptor.addRoot(myRoot);
 
     myFsTree = new FileSystemTreeImpl(project, descriptor);
-    myContent.add(new JBScrollPane(myFsTree.getTree()), BorderLayout.CENTER);
+    myContent.add(ScrollPaneFactory.createScrollPane(myFsTree.getTree()), BorderLayout.CENTER);
     EditSourceOnDoubleClickHandler.install(myFsTree.getTree());
     EditSourceOnEnterKeyHandler.install(myFsTree.getTree());
 

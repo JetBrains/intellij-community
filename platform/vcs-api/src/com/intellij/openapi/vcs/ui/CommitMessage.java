@@ -22,9 +22,9 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SeparatorFactory;
 import com.intellij.ui.TextComponentUndoProvider;
-import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -36,7 +36,7 @@ public class CommitMessage extends JPanel implements Disposable {
 
   public CommitMessage() {
     super(new BorderLayout());
-    final JBScrollPane scrollPane = new JBScrollPane(myCommentArea);
+    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myCommentArea);
     scrollPane.setPreferredSize(myCommentArea.getPreferredSize());
     add(scrollPane, BorderLayout.CENTER);
 

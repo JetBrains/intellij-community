@@ -23,8 +23,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Icons;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
@@ -76,12 +76,12 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     myDependenciesList = createList();
 
     final Splitter splitter = new Splitter(false);
-    
-    final JBScrollPane entriesPane = new JBScrollPane(myEntriesChooser);
+
+    final JScrollPane entriesPane = ScrollPaneFactory.createScrollPane(myEntriesChooser);
     entriesPane.setBorder(BorderFactory.createTitledBorder(getEntriesChooserTitle()));
     splitter.setFirstComponent(entriesPane);
-    
-    final JBScrollPane depsPane = new JBScrollPane(myDependenciesList);
+
+    final JScrollPane depsPane = ScrollPaneFactory.createScrollPane(myDependenciesList);
     depsPane.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder(getDependenciesTitle()), depsPane.getBorder()));
     splitter.setSecondComponent(depsPane);
     
@@ -499,7 +499,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
       final JPanel labelChooser = new JPanel(new BorderLayout());
       labelChooser.add(new JLabel(getSplitDialogChooseFilesPrompt()), BorderLayout.NORTH);
-      labelChooser.add(new JBScrollPane(myChooser), BorderLayout.CENTER);
+      labelChooser.add(ScrollPaneFactory.createScrollPane(myChooser), BorderLayout.CENTER);
       labelChooser.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
       panel.add(labelNameField, BorderLayout.NORTH);

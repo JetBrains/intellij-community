@@ -28,7 +28,6 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteOverridingMethodUsageInfo;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.ui.Table;
@@ -168,7 +167,7 @@ class OverridingMethodsDialog extends DialogWrapper {
     panel.setBorder(border);*/
     panel.setLayout(new BorderLayout());
 
-    JBScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
 
     panel.add(scrollPane, BorderLayout.CENTER);
     ListSelectionListener selectionListener = new ListSelectionListener() {

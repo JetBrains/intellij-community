@@ -47,8 +47,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.ui.AutoScrollFromSourceHandler;
 import com.intellij.ui.AutoScrollToSourceHandler;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
@@ -142,7 +142,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       }
     });
 
-    setContent(new JBScrollPane(myAbstractTreeBuilder.getTree()));
+    setContent(ScrollPaneFactory.createScrollPane(myAbstractTreeBuilder.getTree()));
 
     myAbstractTreeBuilder.getTree().setCellRenderer(new NodeRenderer());
 

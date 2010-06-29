@@ -110,7 +110,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final DocumentImpl myDocument;
 
   private final JPanel myPanel;
-  private final JBScrollPane myScrollPane;
+  private final JScrollPane myScrollPane;
   private final EditorComponentImpl myEditorComponent;
   private final EditorGutterComponentImpl myGutterComponent;
 
@@ -554,7 +554,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           final Component[] components = getComponents();
           final Rectangle r = getBounds();
           for (Component c : components) {
-            if (c instanceof JBScrollPane) {
+            if (c instanceof JScrollPane) {
               c.setBounds(0, 0, r.width, r.height);
             }
             else {
@@ -2382,7 +2382,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return new Dimension(size.width, size.height + mySettings.getAdditionalLinesCount() * getLineHeight());
   }
 
-  public JBScrollPane getScrollPane() {
+  public JScrollPane getScrollPane() {
     return myScrollPane;
   }
 

@@ -27,7 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.NonNls;
@@ -119,7 +119,7 @@ public class DirectoryChooser extends DialogWrapper {
     };
     myView.onSelectionChange(runnable);
     final JComponent component = myView.getComponent();
-    final JBScrollPane jScrollPane = new JBScrollPane(component);
+    final JScrollPane jScrollPane = ScrollPaneFactory.createScrollPane(component);
     //noinspection HardCodedStringLiteral
     int prototypeWidth = component.getFontMetrics(component.getFont()).stringWidth("X:\\1234567890\\1234567890\\com\\company\\system\\subsystem");
     jScrollPane.setPreferredSize(new Dimension(Math.max(300, prototypeWidth),300));

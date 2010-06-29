@@ -18,8 +18,8 @@ package com.intellij.uiDesigner.propertyInspector.editors;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.lw.ColorDescriptor;
 import com.intellij.uiDesigner.propertyInspector.InplaceContext;
@@ -238,7 +238,7 @@ public class ColorEditor extends PropertyEditor<ColorDescriptor> {
           getColorSelectionModel().setSelectedColor(new ColorDescriptorWrapper(descriptor));
         }
       });
-      add(new JBScrollPane(myDescriptorList), BorderLayout.CENTER);
+      add(ScrollPaneFactory.createScrollPane(myDescriptorList), BorderLayout.CENTER);
     }
 
     public String getDisplayName() {

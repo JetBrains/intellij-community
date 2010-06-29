@@ -32,7 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -250,7 +250,7 @@ public class Browser extends JPanel {
     };
     myHTMLViewer.addHyperlinkListener(myHyperLinkListener);
 
-    add(new JBScrollPane(myHTMLViewer), BorderLayout.CENTER);
+    add(ScrollPaneFactory.createScrollPane(myHTMLViewer), BorderLayout.CENTER);
   }
 
   public void addClickListener(ClickListener listener) {

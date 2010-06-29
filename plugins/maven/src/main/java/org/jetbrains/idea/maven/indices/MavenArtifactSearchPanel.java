@@ -18,9 +18,9 @@ package org.jetbrains.idea.maven.indices;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
@@ -73,7 +73,7 @@ public class MavenArtifactSearchPanel extends JPanel {
 
     setLayout(new BorderLayout());
     add(mySearchField, BorderLayout.NORTH);
-    add(new JBScrollPane(myResultList), BorderLayout.CENTER);
+    add(ScrollPaneFactory.createScrollPane(myResultList), BorderLayout.CENTER);
 
     mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {

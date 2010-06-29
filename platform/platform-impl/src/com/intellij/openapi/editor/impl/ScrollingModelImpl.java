@@ -36,7 +36,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -199,7 +198,7 @@ public class ScrollingModelImpl implements ScrollingModel {
       }
     }
 
-    JBScrollPane scrollPane = myEditor.getScrollPane();
+    JScrollPane scrollPane = myEditor.getScrollPane();
     hOffset = Math.max(0, hOffset);
     vOffset = Math.max(0, vOffset);
     hOffset = Math.min(scrollPane.getHorizontalScrollBar().getMaximum() - getExtent(scrollPane.getHorizontalScrollBar()), hOffset);

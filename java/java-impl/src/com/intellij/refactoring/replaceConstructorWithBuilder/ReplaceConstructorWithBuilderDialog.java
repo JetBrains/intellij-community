@@ -34,7 +34,6 @@ import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.*;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.Table;
 import org.jetbrains.annotations.NotNull;
 
@@ -168,7 +167,7 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
     }
   }
 
-  private JBScrollPane createTablePanel() {
+  private JScrollPane createTablePanel() {
     myTableModel = new MyTableModel();
     myTable = new Table(myTableModel);
     myTable.setSurrendersFocusOnKeystroke(true);
@@ -197,7 +196,7 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
     myTable.setPreferredScrollableViewportSize(new Dimension(550, myTable.getRowHeight() * 12));
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
-    final JBScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
+    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
     final Border titledBorder = IdeBorderFactory.createTitledBorder("Parameters to Pass to the Builder");
     final Border emptyBorder = BorderFactory.createEmptyBorder(0, 5, 5, 5);
     final Border border = BorderFactory.createCompoundBorder(titledBorder, emptyBorder);

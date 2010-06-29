@@ -28,9 +28,9 @@ import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.TableUtil;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.dualView.TreeTableView;
 import com.intellij.ui.table.TableView;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
@@ -193,7 +193,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
         }
       }
     });
-    final JBScrollPane textScrollPane = new JBScrollPane(textArea);
+    final JScrollPane textScrollPane = ScrollPaneFactory.createScrollPane(textArea);
     panel.add(textScrollPane, BorderLayout.CENTER);
     textScrollPane.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.lightGray),VcsBundle.message("border.selected.revision.commit.message")));
     return panel;
@@ -285,7 +285,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
     });
 
     JPanel jPanel = new JPanel(new BorderLayout());
-    final JBScrollPane textScrollPane = new JBScrollPane(textArea);
+    final JScrollPane textScrollPane = ScrollPaneFactory.createScrollPane(textArea);
     textScrollPane.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.lightGray),VcsBundle.message("border.selected.revision.commit.message")));
     jPanel.add(textScrollPane, BorderLayout.SOUTH);
 

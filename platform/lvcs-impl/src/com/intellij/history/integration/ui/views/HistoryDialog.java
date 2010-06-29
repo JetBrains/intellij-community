@@ -51,7 +51,6 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Consumer;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ui.AbstractLayoutManager;
@@ -209,7 +208,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
       toolBarPanel.setPreferredSize(new Dimension(1, prefToolBarSize.height));
     }
     result.add(toolBarPanel, BorderLayout.NORTH);
-    JBScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myRevisionsList.getComponent());
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myRevisionsList.getComponent());
     scrollPane.setBorder(IdeBorderFactory.createSimpleBorder(1, 0, 0, 1));
     result.add(scrollPane, BorderLayout.CENTER);
 

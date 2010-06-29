@@ -15,8 +15,8 @@
  */
 package com.intellij.uiDesigner.radComponents;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.core.GridConstraints;
@@ -37,7 +37,8 @@ import java.awt.*;
  * @author Vladimir Kondratyev
  */
 public final class RadScrollPane extends RadContainer {
-  public static final Class COMPONENT_CLASS = JBScrollPane.class;
+  public static final Class COMPONENT_CLASS = JScrollPane.class;
+  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.radComponents.RadScrollPane");
 
   public static class Factory extends RadComponentFactory {
     public RadComponent newInstance(Module module, Class aClass, String id) {
@@ -65,7 +66,7 @@ public final class RadScrollPane extends RadContainer {
   public void write(final XmlWriter writer) {
     writer.startElement(UIFormXmlConstants.ELEMENT_SCROLLPANE);
     try {
-      writeNoLayout(writer, JBScrollPane.class.getName());
+      writeNoLayout(writer, JScrollPane.class.getName());
     } finally {
       writer.endElement(); // scrollpane
     }
@@ -77,7 +78,7 @@ public final class RadScrollPane extends RadContainer {
 
   @Override
   protected void importSnapshotComponent(final SnapshotContext context, final JComponent component) {
-    JBScrollPane scrollPane = (JBScrollPane) component;
+    JScrollPane scrollPane = (JScrollPane) component;
     final Component view = scrollPane.getViewport().getView();
     if (view instanceof JComponent) {
       RadComponent childComponent = createSnapshotComponent(context, (JComponent) view);
@@ -106,14 +107,22 @@ public final class RadScrollPane extends RadContainer {
     }
 
     public void addComponentToContainer(final RadContainer container, final RadComponent component, final int index) {
-      final JBScrollPane scrollPane = (JBScrollPane)container.getDelegee();
-      final JComponent delegee = component.getDelegee();
-      delegee.setLocation(0,0);
-      scrollPane.setViewportView(delegee);
+      try {
+        final JScrollPane scrollPane = (JScrollPane)container.getDelegee();
+        final JComponent delegee = component.getDelegee();
+        delegee.setLocation(0,0);
+        scrollPane.setViewportView(delegee);
+      }
+      catch (ClassCastException e) {
+        LOG.info(e);
+        LOG.info("container classloader=" + container.getDelegee().getClass().getClassLoader());
+        LOG.info("component classloader=" + component.getDelegee().getClass().getClassLoader());
+        throw e;
+      }
     }
 
     @Override public void removeComponentFromContainer(final RadContainer container, final RadComponent component) {
-      final JBScrollPane scrollPane = (JBScrollPane)container.getDelegee();
+      final JScrollPane scrollPane = (JScrollPane)container.getDelegee();
       scrollPane.setViewportView(null);
     }
   }

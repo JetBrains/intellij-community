@@ -25,7 +25,6 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveInstanceMembersUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -73,7 +72,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
 
     jLabel.setText(RefactoringBundle.message("moveInstanceMethod.select.an.instance.parameter"));
 
-    final JBScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myList);
+    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myList);
     mainPanel.add(scrollPane, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.BOTH, new Insets(0,0,0,0), 0,0));
 
     myVisibilityPanel = createVisibilityPanel();
