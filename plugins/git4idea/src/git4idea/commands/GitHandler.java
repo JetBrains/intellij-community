@@ -445,13 +445,6 @@ public abstract class GitHandler {
   protected abstract void startHandlingStreams();
 
   /**
-   * Notification for handler to handle process exit event
-   *
-   * @param exitCode a exit code.
-   */
-  protected abstract void processTerminated(int exitCode);
-
-  /**
    * @return a command line with full path to executable replace to "git"
    */
   public String printableCommandLine() {

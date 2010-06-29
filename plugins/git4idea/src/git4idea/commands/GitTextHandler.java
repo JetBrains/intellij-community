@@ -100,6 +100,13 @@ public abstract class GitTextHandler extends GitHandler {
   }
 
   /**
+   * Notification for handler to handle process exit event
+   *
+   * @param exitCode a exit code.
+   */
+  protected abstract void processTerminated(int exitCode);
+
+  /**
    * This method is invoked when some text is available
    *
    * @param text       an available text
