@@ -1,6 +1,6 @@
 package com.intellij.xml.impl.dom;
 
-import com.intellij.pom.PomNamedTarget;
+import com.intellij.pom.PomTarget;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
@@ -58,7 +58,7 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
           @Override
           @Nullable
           public PsiElement getDeclaration() {
-            final PomNamedTarget target = customDescription.getTagNameDescriptor().findDeclaration(name);
+            final PomTarget target = customDescription.getTagNameDescriptor().findDeclaration(name);
             return target == null ? null : PomService.convertToPsi(context.getProject(), target);
           }
 
@@ -100,7 +100,7 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
         @Override
         @Nullable
         public PsiElement getDeclaration() {
-          final PomNamedTarget target = ((CustomDomChildrenDescription)description).getTagNameDescriptor().findDeclaration(finalDomElement);
+          final PomTarget target = ((CustomDomChildrenDescription)description).getTagNameDescriptor().findDeclaration(finalDomElement);
           return target == null ? null : PomService.convertToPsi(childTag.getProject(), target);
         }
 
