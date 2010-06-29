@@ -133,7 +133,6 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
   @NonNls private static final String VCS_HISTORY_ACTIONS_GROUP = "VcsHistoryActionsGroup";
 
   private final Comparator<VcsFileRevision> myRevisionsInOrderComparator = new Comparator<VcsFileRevision>() {
-    @Override
     public int compare(VcsFileRevision o1, VcsFileRevision o2) {
       // descending
       return Comparing.compare(myRevisionsOrder.get(o2.getRevisionNumber()), myRevisionsOrder.get(o1.getRevisionNumber()));
