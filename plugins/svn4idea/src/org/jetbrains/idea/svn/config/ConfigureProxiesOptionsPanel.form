@@ -275,7 +275,7 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="1716a" class="javax.swing.JList" binding="myRepositoriesList">
+              <component id="1716a" class="com.intellij.ui.components.JBList" binding="myRepositoriesList">
                 <constraints/>
                 <properties/>
               </component>

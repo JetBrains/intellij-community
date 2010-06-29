@@ -27,7 +27,7 @@
         <properties/>
         <border type="none"/>
         <children>
-          <component id="20c8" class="javax.swing.JList" binding="myList">
+          <component id="20c8" class="com.intellij.ui.components.JBList" binding="myList">
             <constraints/>
             <properties>
               <selectionMode value="0"/>

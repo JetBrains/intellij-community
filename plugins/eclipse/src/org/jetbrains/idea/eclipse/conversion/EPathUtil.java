@@ -266,15 +266,22 @@ public class EPathUtil {
         final int index = ideaCollapsed.indexOf('$');
         if (index < 0) return null;
         return ideaCollapsed.substring(index).replace("$", "");
-      } else { //check if existing eclipse variable points inside project
-        final PathMacros pathMacros = PathMacros.getInstance();
-        final Set<String> names = pathMacros.getUserMacroNames();
-        for (String name : names) {
-          final String path = FileUtil.toSystemIndependentName(pathMacros.getValue(name));
-          if (filePath.startsWith(path + "/")) {
-            final String substr = filePath.substring(path.length());
-            return name + (substr.startsWith("/") || substr.length() == 0 ? substr : "/" + substr);
-          }
+      }
+    }
+    for (String url : libraryOrderEntry.getUrls(type)) {
+      //check if existing eclipse variable points inside project or doesn't exist
+      String filePath = VirtualFileManager.extractPath(url);
+      final int jarSeparatorIdx = filePath.indexOf(JarFileSystem.JAR_SEPARATOR);
+      if (jarSeparatorIdx > -1) {
+        filePath = filePath.substring(0, jarSeparatorIdx);
+      }
+      final PathMacros pathMacros = PathMacros.getInstance();
+      final Set<String> names = pathMacros.getUserMacroNames();
+      for (String name : names) {
+        final String path = FileUtil.toSystemIndependentName(pathMacros.getValue(name));
+        if (filePath.startsWith(path + "/")) {
+          final String substr = filePath.substring(path.length());
+          return name + (substr.startsWith("/") || substr.length() == 0 ? substr : "/" + substr);
         }
       }
     }

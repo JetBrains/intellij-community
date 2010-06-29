@@ -71,7 +71,7 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="75463" class="javax.swing.JList" binding="myExcludePackagesList">
+              <component id="75463" class="com.intellij.ui.components.JBList" binding="myExcludePackagesList">
                 <constraints/>
                 <properties/>
               </component>

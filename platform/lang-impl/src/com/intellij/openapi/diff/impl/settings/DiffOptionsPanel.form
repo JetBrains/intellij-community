@@ -23,7 +23,7 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="ae8c2" class="javax.swing.JList" binding="myOptionsList">
+              <component id="ae8c2" class="com.intellij.ui.components.JBList" binding="myOptionsList">
                 <constraints/>
                 <properties/>
               </component>

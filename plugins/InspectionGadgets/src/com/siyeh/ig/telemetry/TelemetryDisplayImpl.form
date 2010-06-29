@@ -8,7 +8,7 @@
     <properties/>
     <border type="none"/>
     <children>
-      <component id="d0712" class="javax.swing.JTable" binding="table">
+      <component id="d0712" class="com.intellij.ui.table.JBTable" binding="table">
         <constraints/>
         <properties>
           <rowSelectionAllowed value="true"/>

@@ -35,7 +35,7 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="859d6" class="javax.swing.JList" binding="myVcses">
+              <component id="859d6" class="com.intellij.ui.components.JBList" binding="myVcses">
                 <constraints/>
                 <properties/>
               </component>

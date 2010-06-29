@@ -60,7 +60,7 @@
         <properties/>
         <border type="none"/>
         <children>
-          <component id="22e0d" class="javax.swing.JTable" binding="myCommitsTable">
+          <component id="22e0d" class="com.intellij.ui.table.JBTable" binding="myCommitsTable">
             <constraints/>
             <properties/>
           </component>

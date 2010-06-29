@@ -61,6 +61,10 @@ public class EclipseLibrariesModificationsTest extends EclipseVarsTest {
     doTest(new String[]{"/variableidea1/test.jar!/"}, new String[]{"/srcvariableidea/test.jar!/"});
   }
 
+  public void testReplacedWithVariablesNoSrcExistOnDisc() throws Exception {
+    doTest(new String[]{"/variableidea/test.jar!/"}, new String[]{"/srcvariableidea/test.jar!/"});
+  }
+
   public void testReplacedWithVariablesCantReplaceSrc() throws Exception {
     doTest(new String[]{"/variableidea/test.jar!/"}, new String[]{"/srcvariableidea1/test.jar!/"});
   }

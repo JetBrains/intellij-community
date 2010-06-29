@@ -330,7 +330,7 @@
                     <properties/>
                     <border type="none"/>
                     <children>
-                      <component id="53e0a" class="javax.swing.JList" binding="listenersTable">
+                      <component id="53e0a" class="com.intellij.ui.components.JBList" binding="listenersTable">
                         <constraints/>
                         <properties/>
                       </component>

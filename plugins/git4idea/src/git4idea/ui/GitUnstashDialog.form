@@ -119,7 +119,7 @@
         <properties/>
         <border type="none"/>
         <children>
-          <component id="4c50b" class="javax.swing.JList" binding="myStashList">
+          <component id="4c50b" class="com.intellij.ui.components.JBList" binding="myStashList">
             <constraints/>
             <properties>
               <selectionMode value="0"/>
