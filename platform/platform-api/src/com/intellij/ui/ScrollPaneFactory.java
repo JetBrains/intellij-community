@@ -26,11 +26,11 @@ public class ScrollPaneFactory {
   private ScrollPaneFactory() {
   }
 
-  public static JBScrollPane createScrollPane() {
+  public static JScrollPane createScrollPane() {
     return new JBScrollPane();
   }
 
-  public static JBScrollPane createScrollPane(JComponent view) {
+  public static JScrollPane createScrollPane(JComponent view) {
     return new JBScrollPane(view);
   }
 }

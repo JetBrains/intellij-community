@@ -53,7 +53,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
       myNavigationBar = new NavBarPanel(myProject);
 
       JBScrollPane scroller = new JBScrollPane(myNavigationBar);
-      scroller.setVerticalScrollBarPolicy(JBScrollPane.VERTICAL_SCROLLBAR_NEVER);
+      scroller.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
       scroller.setHorizontalScrollBar(null);
       scroller.setBorder(null);
 

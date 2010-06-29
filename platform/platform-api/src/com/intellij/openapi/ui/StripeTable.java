@@ -82,7 +82,7 @@ public class StripeTable extends Table {
     return component;
   }
 
-  public static JBScrollPane createScrollPane(JTable table) {
+  public static JScrollPane createScrollPane(JTable table) {
     JBScrollPane scrollPane = new JBScrollPane(table);
     scrollPane.setViewport(new StripedViewport(table));
     scrollPane.getViewport().setView(table);

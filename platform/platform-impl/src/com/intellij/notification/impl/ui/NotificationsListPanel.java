@@ -596,8 +596,8 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
 
       final ItemsList list = new ItemsList(model);
       final JBScrollPane scrollPane = new JBScrollPane(list);
-      scrollPane.setHorizontalScrollBarPolicy(JBScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-      scrollPane.setVerticalScrollBarPolicy(JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+      scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+      scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 
       scrollPane.setBorder(null);
       scrollPane.getViewport().setBackground(UIUtil.getPanelBackgound());

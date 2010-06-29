@@ -205,7 +205,7 @@ public class DynamicToolWindowWrapper {
     return rootNode;
   }
 
-  private JBScrollPane createTable(final MutableTreeNode myTreeRoot) {
+  private JScrollPane createTable(final MutableTreeNode myTreeRoot) {
     ColumnInfo[] columnInfos =
       {new ClassColumnInfo(myColumnNames[CLASS_OR_ELEMENT_NAME_COLUMN]), new PropertyTypeColumnInfo(myColumnNames[TYPE_COLUMN])};
 

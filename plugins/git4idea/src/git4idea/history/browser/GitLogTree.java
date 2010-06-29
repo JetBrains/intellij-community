@@ -271,7 +271,7 @@ public class GitLogTree implements GitTreeViewI {
     myCommitsList.setCellRenderer(myListCellRenderer);
 
     myMainSplitter.setFirstComponent(myFiltersSplitter);
-    final JBScrollPane sp = new JBScrollPane(myCommitsList, JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JBScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+    final JBScrollPane sp = new JBScrollPane(myCommitsList, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
     myRepositoryChangesBrowser = new RepositoryChangesBrowser(myProject, Collections.<CommittedChangeList>emptyList(), Collections.<Change>emptyList(), null);
     myRepositoryChangesBrowser.getDiffAction().registerCustomShortcutSet(CommonShortcuts.getDiff(), myCommitsList);

@@ -268,8 +268,8 @@ public class WelcomeScreen {
 
     JBScrollPane myMainScrollPane = new JBScrollPane(myMainPanel);
     myMainScrollPane.setBorder(null);
-    myMainScrollPane.setHorizontalScrollBarPolicy(JBScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    myMainScrollPane.setVerticalScrollBarPolicy(JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+    myMainScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    myMainScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 
     // Create Plugins Panel
     JBScrollPane myPluginsScrollPane = createPluginsPanel();
@@ -333,7 +333,7 @@ public class WelcomeScreen {
     return topPanel;
   }
 
-  private JBScrollPane createPluginsPanel() {
+  private JScrollPane createPluginsPanel() {
     myPluginsPanel = new WelcomeScrollablePanel(new GridBagLayout());
     myPluginsPanel.setBackground(PLUGINS_PANEL_COLOR);
 
@@ -419,8 +419,8 @@ public class WelcomeScreen {
 
     JBScrollPane myPluginsScrollPane = ScrollPaneFactory.createScrollPane(myPluginsPanel);
     myPluginsScrollPane.setBorder(BorderFactory.createLineBorder(GRAY_BORDER_COLOR));
-    myPluginsScrollPane.setHorizontalScrollBarPolicy(JBScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    myPluginsScrollPane.setVerticalScrollBarPolicy(JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+    myPluginsScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    myPluginsScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
     return myPluginsScrollPane;
   }
 

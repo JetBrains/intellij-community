@@ -194,7 +194,7 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
     myRepositoryTree.setRootVisible(false);
     myRepositoryTree.setShowsRootHandles(true);
     JBScrollPane scrollPane = new JBScrollPane(myRepositoryTree,
-                                             JBScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JBScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+                                             JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
     add(scrollPane, BorderLayout.CENTER);
     myRepositoryTree.setCellRenderer(new SvnRepositoryTreeCellRenderer());
 

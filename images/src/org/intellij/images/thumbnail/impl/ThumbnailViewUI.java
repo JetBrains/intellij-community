@@ -137,7 +137,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
 
 
             JBScrollPane scrollPane = new JBScrollPane(
-                    list, JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JBScrollPane.HORIZONTAL_SCROLLBAR_NEVER
+                    list, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
             );
 
             ActionManager actionManager = ActionManager.getInstance();

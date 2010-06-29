@@ -18,7 +18,6 @@ package com.intellij.lang.ant.config.execution;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.rt.ant.execution.AntMain2;
 import com.intellij.ui.MultilineTreeCellRenderer;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Icons;
 
 import javax.swing.*;
@@ -33,7 +32,7 @@ final class MessageTreeRenderer extends MultilineTreeCellRenderer {
   private MessageTreeRenderer() {
   }
 
-  public static JBScrollPane install(JTree tree) {
+  public static JScrollPane install(JTree tree) {
     return MultilineTreeCellRenderer.installRenderer(tree, new MessageTreeRenderer());
   }
 

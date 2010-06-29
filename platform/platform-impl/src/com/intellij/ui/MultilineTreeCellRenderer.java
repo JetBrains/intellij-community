@@ -379,7 +379,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Tr
     return this;
   }
 
-  public static JBScrollPane installRenderer(final JTree tree, final MultilineTreeCellRenderer renderer) {
+  public static JScrollPane installRenderer(final JTree tree, final MultilineTreeCellRenderer renderer) {
     final TreeCellRenderer defaultRenderer = tree.getCellRenderer();
 
     JBScrollPane scrollpane = new JBScrollPane(tree){
@@ -413,8 +413,8 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Tr
         myAddRemoveCounter--;
       }
     };
-    scrollpane.setHorizontalScrollBarPolicy(JBScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-    scrollpane.setVerticalScrollBarPolicy(JBScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+    scrollpane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+    scrollpane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
     tree.setCellRenderer(renderer);
 

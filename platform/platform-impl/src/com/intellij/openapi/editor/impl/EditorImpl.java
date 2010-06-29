@@ -2382,7 +2382,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return new Dimension(size.width, size.height + mySettings.getAdditionalLinesCount() * getLineHeight());
   }
 
-  public JBScrollPane getScrollPane() {
+  public JScrollPane getScrollPane() {
     return myScrollPane;
   }
 

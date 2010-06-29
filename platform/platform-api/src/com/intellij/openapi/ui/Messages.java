@@ -590,8 +590,8 @@ public class Messages {
         if (textSize.width > screenSize.width * 4 / 5 || textSize.height > screenSize.height / 2) {
           final JBScrollPane pane = ScrollPaneFactory.createScrollPane(messageComponent);
           pane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-          pane.setVerticalScrollBarPolicy(JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-          pane.setHorizontalScrollBarPolicy(JBScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+          pane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+          pane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
           final int scrollSize = (int)new JScrollBar(JScrollBar.VERTICAL).getPreferredSize().getWidth();
           final Dimension preferredSize =
             new Dimension(Math.min(textSize.width, screenSize.width * 4 / 5) + scrollSize, Math.min(textSize.height, screenSize.height/2) + scrollSize);

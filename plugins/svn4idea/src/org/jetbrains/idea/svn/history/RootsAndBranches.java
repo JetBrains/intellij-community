@@ -391,8 +391,8 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     final GridBagConstraints gb =
       new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
     myPanelWrapper.add(myPanel, gb);
-    return new JBScrollPane(myPanelWrapper, JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                                   JBScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    return new JBScrollPane(myPanelWrapper, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                                   JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
   }
 
   // todo refactor to get rid of duplicate code dealing with separators

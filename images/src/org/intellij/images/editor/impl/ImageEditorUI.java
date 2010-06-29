@@ -99,8 +99,8 @@ final class ImageEditorUI extends JPanel implements DataProvider {
         view.addMouseListener(new FocusRequester());
 
         JBScrollPane scrollPane = new JBScrollPane(view);
-        scrollPane.setVerticalScrollBarPolicy(JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        scrollPane.setHorizontalScrollBarPolicy(JBScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
         // Zoom by wheel listener
         scrollPane.addMouseWheelListener(wheelAdapter);

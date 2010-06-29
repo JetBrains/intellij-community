@@ -168,7 +168,7 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
     }
   }
 
-  private JBScrollPane createTablePanel() {
+  private JScrollPane createTablePanel() {
     myTableModel = new MyTableModel();
     myTable = new Table(myTableModel);
     myTable.setSurrendersFocusOnKeystroke(true);

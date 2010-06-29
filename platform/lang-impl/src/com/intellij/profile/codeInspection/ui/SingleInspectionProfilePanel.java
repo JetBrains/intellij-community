@@ -430,7 +430,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     return null;
   }
 
-  private JBScrollPane initTreeScrollPane() {
+  private JScrollPane initTreeScrollPane() {
 
     fillTreeData(null, true);
 

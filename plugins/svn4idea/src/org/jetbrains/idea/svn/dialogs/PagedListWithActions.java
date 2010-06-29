@@ -43,7 +43,7 @@ public class PagedListWithActions<T> {
     myComponentManager.setData(myEngine.getCurrent());
     //myList.setListData(ArrayUtil.toObjectArray(myEngine.getCurrent()));
     myPanel.add(ActionManager.getInstance().createActionToolbar("merge all", createListActions(), true).getComponent(), BorderLayout.NORTH);
-    final JBScrollPane scroll = new JBScrollPane(myComponentManager.getComponent(), JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JBScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+    final JBScrollPane scroll = new JBScrollPane(myComponentManager.getComponent(), JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
     myPanel.add(scroll, BorderLayout.CENTER);
   }
 

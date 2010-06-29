@@ -144,7 +144,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * scrollpane.setLayout(mySPLayout):
    * </pre>
    */
-  public void syncWithScrollPane(JBScrollPane sp) {
+  public void syncWithScrollPane(JScrollPane sp) {
     viewport = sp.getViewport();
     vsb = sp.getVerticalScrollBar();
     hsb = sp.getHorizontalScrollBar();
@@ -1050,7 +1050,7 @@ public class LeftHandScrollbarLayout extends ScrollPaneLayout {
    * @deprecated As of JDK version Swing1.1
    *             replaced by <code>JScrollPane.getViewportBorderBounds()</code>.
    */
-  public Rectangle getViewportBorderBounds(JBScrollPane scrollpane) {
+  public Rectangle getViewportBorderBounds(JScrollPane scrollpane) {
     return scrollpane.getViewportBorderBounds();
   }
 

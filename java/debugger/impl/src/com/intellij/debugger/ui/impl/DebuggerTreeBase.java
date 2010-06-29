@@ -191,8 +191,8 @@ public class DebuggerTreeBase extends DnDAwareTree implements Disposable {
     final JComponent tipContent = createTipContent(toolTipText, node);
     final JBScrollPane scrollPane = new JBScrollPane(tipContent);
     scrollPane.setBorder(null);
-    scrollPane.setHorizontalScrollBarPolicy(JBScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    scrollPane.setVerticalScrollBarPolicy(JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+    scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 
     final Point point = e.getPoint();
     SwingUtilities.convertPointToScreen(point, e.getComponent());

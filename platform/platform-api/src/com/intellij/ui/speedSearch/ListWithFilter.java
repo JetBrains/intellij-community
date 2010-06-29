@@ -44,11 +44,11 @@ public class ListWithFilter<T> extends JPanel {
     });
   }
 
-  public static <T> JComponent wrap(JList list, JBScrollPane scroller, Function<T, String> namer) {
+  public static <T> JComponent wrap(JList list, JScrollPane scroller, Function<T, String> namer) {
     return new ListWithFilter<T>(list, scroller, namer);
   }
 
-  private ListWithFilter(JList list, JBScrollPane scroller, Function<T, String> namer) {
+  private ListWithFilter(JList list, JScrollPane scroller, Function<T, String> namer) {
     super(new BorderLayout());
 
     myList = list;
@@ -127,7 +127,7 @@ public class ListWithFilter<T> extends JPanel {
     return myList;
   }
 
-  public JBScrollPane getScrollPane() {
+  public JScrollPane getScrollPane() {
     return myScroller;
   }
 

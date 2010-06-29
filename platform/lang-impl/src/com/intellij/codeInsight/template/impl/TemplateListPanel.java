@@ -615,7 +615,7 @@ class TemplateListPanel extends JPanel {
 
   }
 
-  private JBScrollPane createTable() {
+  private JScrollPane createTable() {
     myTreeRoot = new CheckedTreeNode(null);
 
     myTree = new CheckboxTree(new CheckboxTree.CheckboxTreeCellRenderer(){

@@ -26,7 +26,6 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.util.Function;
-import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nls;
@@ -220,8 +219,6 @@ public class PopupChooserBuilder {
     scrollPane.getViewport().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     ((JComponent)scrollPane.getViewport().getView()).setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-    scrollPane.getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createMini());
-
     if (myChooserComponent instanceof ListWithFilter) {
       contentPane.add(myChooserComponent, BorderLayout.CENTER);
     }
@@ -295,7 +292,7 @@ public class PopupChooserBuilder {
   }
 
   @NotNull
-  private JBScrollPane createScrollPane(final JTable table) {
+  private JScrollPane createScrollPane(final JTable table) {
     if (table instanceof TreeTable) {
       TreeUtil.expandAll(((TreeTable)table).getTree());
     }
@@ -334,7 +331,7 @@ public class PopupChooserBuilder {
   }
 
   @NotNull
-  private JBScrollPane createScrollPane(final JTree tree) {
+  private JScrollPane createScrollPane(final JTree tree) {
     TreeUtil.expandAll(tree);
 
     JBScrollPane scrollPane = new JBScrollPane(tree);

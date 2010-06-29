@@ -26,7 +26,6 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -93,7 +92,7 @@ public interface EditorEx extends Editor {
 
   void setOneLineMode(boolean b);
 
-  JBScrollPane getScrollPane();
+  JScrollPane getScrollPane();
 
   boolean isRendererMode();
 

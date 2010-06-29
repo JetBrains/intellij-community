@@ -77,8 +77,8 @@ public class MigrationDialog extends DialogWrapper{
     JBScrollPane scrollPane = new JBScrollPane(myDescriptionTextArea);
     myDescriptionScroll.getViewport().add(myDescriptionTextArea);
     myDescriptionScroll.setBorder(null);
-    myDescriptionScroll.setHorizontalScrollBarPolicy(JBScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-    myDescriptionScroll.setVerticalScrollBarPolicy(JBScrollPane.VERTICAL_SCROLLBAR_NEVER);
+    myDescriptionScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+    myDescriptionScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
     myDescriptionTextArea.setEditable(false);
     myDescriptionTextArea.setFont(promptLabel.getFont());
     myDescriptionTextArea.setBackground(myPanel.getBackground());

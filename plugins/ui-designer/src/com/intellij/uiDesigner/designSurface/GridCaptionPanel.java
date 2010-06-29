@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.LightColors;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.uiDesigner.CaptionSelection;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.GridChangeUtil;
@@ -265,7 +264,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     return myEditor.getData(dataId);
   }
 
-  public void attachToScrollPane(final JBScrollPane scrollPane) {
+  public void attachToScrollPane(final JScrollPane scrollPane) {
     scrollPane.getViewport().addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
         repaint();
