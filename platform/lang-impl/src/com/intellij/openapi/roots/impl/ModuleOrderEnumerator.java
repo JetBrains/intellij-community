@@ -27,6 +27,7 @@ public class ModuleOrderEnumerator extends OrderEnumeratorBase {
   private final RootModelImpl myRootModel;
 
   public ModuleOrderEnumerator(RootModelImpl rootModel) {
+    super(rootModel.getModule(), rootModel.getProject());
     myRootModel = rootModel;
   }
 
