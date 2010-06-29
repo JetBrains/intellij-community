@@ -23,7 +23,7 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="5818b" class="javax.swing.JList" binding="myWorkingCopiesList">
+              <component id="5818b" class="com.intellij.ui.components.JBList" binding="myWorkingCopiesList">
                 <constraints/>
                 <properties>
                   <minimumSize width="100" height="100"/>

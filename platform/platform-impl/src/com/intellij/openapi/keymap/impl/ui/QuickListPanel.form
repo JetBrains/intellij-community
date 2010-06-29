@@ -67,7 +67,7 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="747bc" class="javax.swing.JTree" binding="myActionsTree">
+              <component id="747bc" class="com.intellij.ui.treeStructure.Tree" binding="myActionsTree">
                 <constraints/>
                 <properties/>
               </component>
@@ -124,7 +124,7 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="4fd59" class="javax.swing.JList" binding="myActionsList">
+              <component id="4fd59" class="com.intellij.ui.components.JBList" binding="myActionsList">
                 <constraints/>
                 <properties/>
               </component>

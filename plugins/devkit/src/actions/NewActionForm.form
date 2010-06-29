@@ -23,7 +23,7 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="6075d" class="javax.swing.JList" binding="myGroupList">
+              <component id="6075d" class="com.intellij.ui.components.JBList" binding="myGroupList">
                 <constraints/>
                 <properties>
                   <selectionMode value="0"/>
@@ -47,7 +47,7 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="c1416" class="javax.swing.JList" binding="myActionList">
+              <component id="c1416" class="com.intellij.ui.components.JBList" binding="myActionList">
                 <constraints/>
                 <properties>
                   <selectionMode value="0"/>
