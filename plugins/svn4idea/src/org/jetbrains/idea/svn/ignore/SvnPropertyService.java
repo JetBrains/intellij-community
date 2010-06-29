@@ -209,7 +209,7 @@ public class SvnPropertyService {
     protected void processFolder(final VirtualFile folder, final File folderDir, final Set<String> data, final SVNPropertyValue propertyValue)
         throws SVNException {
       String newValue = getNewPropertyValue(data, propertyValue);
-      newValue = (newValue.trim().isEmpty()) ? null : newValue;
+      newValue = (newValue.trim().size() == 0) ? null : newValue;
       myClient.doSetProperty(folderDir, SvnPropertyKeys.SVN_IGNORE, SVNPropertyValue.create(newValue), false, false, null);
 
       if (myUseCommonExtension) {
