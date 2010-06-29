@@ -1,4 +1,4 @@
-package com.jetbrains.python;
+package com.jetbrains.python.highlighting;
 
 import com.intellij.application.options.colors.InspectionColorSettingsPage;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -7,6 +7,8 @@ import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.util.containers.HashMap;
+import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.highlighting.PyHighlighter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 

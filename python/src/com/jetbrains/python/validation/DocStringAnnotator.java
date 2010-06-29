@@ -1,7 +1,7 @@
 package com.jetbrains.python.validation;
 
 import com.intellij.lang.annotation.Annotation;
-import com.jetbrains.python.PyHighlighter;
+import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.PythonDocStringFinder;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.psi.PyClass;

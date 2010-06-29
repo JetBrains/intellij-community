@@ -1,4 +1,4 @@
-package com.jetbrains.python;
+package com.jetbrains.python.highlighting;
 
 import com.intellij.lexer.LayeredLexer;
 import com.intellij.lexer.Lexer;
@@ -8,9 +8,11 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.lexer.PyStringLiteralLexer;
 import com.jetbrains.python.lexer.PythonHighlightingLexer;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.intellij.lang.regexp.RegExpTT;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -23,7 +25,7 @@ import static com.intellij.openapi.editor.SyntaxHighlighterColors.*;
  * Colors and lexer(s) needed for highlighting.
  */
 public class PyHighlighter extends SyntaxHighlighterBase {
-  private static Map<IElementType, TextAttributesKey> keys1;
+  private static Map<IElementType, TextAttributesKey> keys;
   private final LanguageLevel myLanguageLevel;
 
   @NotNull
@@ -92,38 +94,38 @@ public class PyHighlighter extends SyntaxHighlighterBase {
 
   public PyHighlighter(LanguageLevel languageLevel) {
     myLanguageLevel = languageLevel;
-    keys1 = new HashMap<IElementType, TextAttributesKey>();
+    keys = new HashMap<IElementType, TextAttributesKey>();
 
-    fillMap(keys1, PyTokenTypes.KEYWORDS, PY_KEYWORD);
-    fillMap(keys1, PyTokenTypes.OPERATIONS, PY_OPERATION_SIGN);
+    fillMap(keys, PyTokenTypes.KEYWORDS, PY_KEYWORD);
+    fillMap(keys, PyTokenTypes.OPERATIONS, PY_OPERATION_SIGN);
 
-    keys1.put(PyTokenTypes.INTEGER_LITERAL, PY_NUMBER);
-    keys1.put(PyTokenTypes.FLOAT_LITERAL, PY_NUMBER);
-    keys1.put(PyTokenTypes.IMAGINARY_LITERAL, PY_NUMBER);
-    keys1.put(PyTokenTypes.STRING_LITERAL, PY_STRING);
+    keys.put(PyTokenTypes.INTEGER_LITERAL, PY_NUMBER);
+    keys.put(PyTokenTypes.FLOAT_LITERAL, PY_NUMBER);
+    keys.put(PyTokenTypes.IMAGINARY_LITERAL, PY_NUMBER);
+    keys.put(PyTokenTypes.STRING_LITERAL, PY_STRING);
 
-    keys1.put(PyTokenTypes.LPAR, PY_PARENTHS);
-    keys1.put(PyTokenTypes.RPAR, PY_PARENTHS);
+    keys.put(PyTokenTypes.LPAR, PY_PARENTHS);
+    keys.put(PyTokenTypes.RPAR, PY_PARENTHS);
 
-    keys1.put(PyTokenTypes.LBRACE, PY_BRACES);
-    keys1.put(PyTokenTypes.RBRACE, PY_BRACES);
+    keys.put(PyTokenTypes.LBRACE, PY_BRACES);
+    keys.put(PyTokenTypes.RBRACE, PY_BRACES);
 
-    keys1.put(PyTokenTypes.LBRACKET, PY_BRACKETS);
-    keys1.put(PyTokenTypes.RBRACKET, PY_BRACKETS);
+    keys.put(PyTokenTypes.LBRACKET, PY_BRACKETS);
+    keys.put(PyTokenTypes.RBRACKET, PY_BRACKETS);
 
-    keys1.put(PyTokenTypes.COMMA, PY_COMMA);
-    keys1.put(PyTokenTypes.DOT, PY_DOT);
+    keys.put(PyTokenTypes.COMMA, PY_COMMA);
+    keys.put(PyTokenTypes.DOT, PY_DOT);
 
-    keys1.put(PyTokenTypes.END_OF_LINE_COMMENT, PY_LINE_COMMENT);
-    keys1.put(PyTokenTypes.BAD_CHARACTER, HighlighterColors.BAD_CHARACTER);
+    keys.put(PyTokenTypes.END_OF_LINE_COMMENT, PY_LINE_COMMENT);
+    keys.put(PyTokenTypes.BAD_CHARACTER, HighlighterColors.BAD_CHARACTER);
 
-    keys1.put(StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN, PY_VALID_STRING_ESCAPE);
-    keys1.put(StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN, PY_INVALID_STRING_ESCAPE);
-    keys1.put(StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN, PY_INVALID_STRING_ESCAPE);
+    keys.put(StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN, PY_VALID_STRING_ESCAPE);
+    keys.put(StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN, PY_INVALID_STRING_ESCAPE);
+    keys.put(StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN, PY_INVALID_STRING_ESCAPE);
   }
 
   @NotNull
   public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
-    return pack(keys1.get(tokenType));
+    return pack(keys.get(tokenType));
   }
 }
