@@ -25,6 +25,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
+import java.util.Collection;
+import java.util.Collections;
 
 abstract public class AbstractToolTipHandler <KeyType, ComponentType extends JComponent> implements ExpandTipHandler<KeyType> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.AbstractToolTipHandler");
@@ -138,9 +140,10 @@ abstract public class AbstractToolTipHandler <KeyType, ComponentType extends JCo
    */
   protected abstract KeyType getCellKeyForPoint(Point point);
 
+  @NotNull
   @Override
-  public KeyType getCurrentItem() {
-    return myKey;
+  public Collection<KeyType> getExpandedItems() {
+    return myKey == null ? Collections.<KeyType>emptyList() : Collections.singleton(myKey);
   }
 
   /**

@@ -336,7 +336,7 @@ public class RevisionsList {
 
       myItemPanel.setBackground(bg);
 
-      isToolTipShown = new TableCell(row, column).equals(myToolTipHandler.getCurrentItem());
+      isToolTipShown = myToolTipHandler.getExpandedItems().contains(new TableCell(row, column));
 
       myWrapperPanel.doLayout();
       table.setRowHeight(row, myWrapperPanel.getPreferredSize().height);

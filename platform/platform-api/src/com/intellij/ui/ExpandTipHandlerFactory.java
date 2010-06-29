@@ -16,8 +16,11 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.components.ServiceManager;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Collection;
+import java.util.Collections;
 
 public abstract class ExpandTipHandlerFactory {
   public static ExpandTipHandler<Integer> install(JList list) {
@@ -46,9 +49,10 @@ public abstract class ExpandTipHandlerFactory {
   protected abstract ExpandTipHandler<TableCell> doInstall(JTable table);
 
   private static final ExpandTipHandler NULL = new ExpandTipHandler<Object>() {
+    @NotNull
     @Override
-    public Object getCurrentItem() {
-      return null;
+    public Collection<Object> getExpandedItems() {
+      return Collections.emptyList();
     }
   };
 }

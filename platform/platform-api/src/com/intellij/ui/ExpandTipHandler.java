@@ -15,9 +15,11 @@
  */
 package com.intellij.ui;
 
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
 
 public interface ExpandTipHandler<T> {
-  @Nullable
-  T getCurrentItem();
+  @NotNull
+  Collection<T> getExpandedItems();
 }
