@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.TableCell;
 import com.intellij.ui.TableToolTipHandler;
+import com.intellij.ui.ToolTipHandler;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.UIUtil;
@@ -59,8 +60,7 @@ public class RevisionsList {
 
     table.resetDefaultFocusTraversalKeys();
 
-    TableToolTipHandler toolTipHandler = TableToolTipHandler.installAndGet(table);
-    table.setDefaultRenderer(Object.class, new MyCellRenderer(table, toolTipHandler));
+    table.setDefaultRenderer(Object.class, new MyCellRenderer(table));
 
     table.setEmptyText(VcsBundle.message("history.empty"));
 
@@ -198,11 +198,11 @@ public class RevisionsList {
     private final MyLabelContainer myLabelContainer = new MyLabelContainer();
     private final JLabel myLabelLabel = new JLabel();
 
-    private final TableToolTipHandler myToolTipHandler;
+    private final ToolTipHandler<TableCell> myToolTipHandler;
     private boolean isToolTipShown;
 
-    public MyCellRenderer(JTable table, TableToolTipHandler toolTipHandler) {
-      myToolTipHandler = toolTipHandler;
+    public MyCellRenderer(JBTable table) {
+      myToolTipHandler = table.getToolTipHandler();
       JPanel headersPanel = new JPanel(new BorderLayout());
       headersPanel.setOpaque(false);
       headersPanel.add(myPeriodLabel, BorderLayout.NORTH);

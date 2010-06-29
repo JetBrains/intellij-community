@@ -81,7 +81,6 @@ class StatisticsPanel extends JPanel implements DataProvider{
     myModel = model;
     myModel.addListener(myListener);
     myChildInfo.setModel(model);
-    TableToolTipHandler.install(myTable);
     BaseTableView.restore(myStorage, myTable);
   }
 

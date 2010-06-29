@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -91,7 +92,7 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
   }
 
   private void createUIComponents() {
-    myTreePanel = ScrollPaneFactory.createScrollPane(new JTable());
+    myTreePanel = ScrollPaneFactory.createScrollPane(new JBTable());
   }
 
   protected abstract String visualize(@NotNull T t);

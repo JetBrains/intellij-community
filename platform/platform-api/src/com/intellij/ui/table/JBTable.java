@@ -16,8 +16,7 @@
 package com.intellij.ui.table;
 
 import com.intellij.Patches;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.TreeUIHelper;
+import com.intellij.ui.*;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.EmptyTextHelper;
 import com.intellij.util.ui.UIUtil;
@@ -46,6 +45,7 @@ import java.util.EventObject;
  */
 public class JBTable extends JTable implements ComponentWithEmptyText {
   private EmptyTextHelper myEmptyTextHelper;
+  private ToolTipHandler<TableCell> myToolTipHandler;
 
   private MyCellEditorRemover myEditorRemover;
 
@@ -62,7 +62,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText {
       }
     };
 
-    TreeUIHelper.getInstance().installToolTipHandler(this);
+    myToolTipHandler = ToolTipHandlerFactory.getInstance().install(this);
 
     addMouseListener(new MyMouseListener());
     getColumnModel().addColumnModelListener(new TableColumnModelListener() {
@@ -127,6 +127,10 @@ public class JBTable extends JTable implements ComponentWithEmptyText {
 
   public void appendEmptyText(String text, SimpleTextAttributes attrs, ActionListener listener) {
     myEmptyTextHelper.appendEmptyText(text, attrs, listener);
+  }
+
+  public ToolTipHandler<TableCell> getToolTipHandler() {
+    return myToolTipHandler;
   }
 
   private static class MyTableHeaderRenderer extends DefaultTableCellRenderer {
