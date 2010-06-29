@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBList;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
@@ -38,7 +39,7 @@ public class PsiElementListNavigator {
       targets[0].navigate(true);
     }
     else{
-      final JList list = new JList(targets);
+      final JList list = new JBList(targets);
       list.setCellRenderer(listRenderer);
 
       final PopupChooserBuilder builder = new PopupChooserBuilder(list);

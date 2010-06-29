@@ -48,7 +48,7 @@
                 <properties/>
                 <border type="none"/>
                 <children>
-                  <component id="755cb" class="javax.swing.JList" binding="myList">
+                  <component id="755cb" class="com.intellij.ui.components.JBList" binding="myList">
                     <constraints/>
                     <properties/>
                   </component>

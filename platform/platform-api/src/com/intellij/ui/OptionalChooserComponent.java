@@ -26,7 +26,7 @@ import java.util.List;
  * @author oleg
  * This component represents a list of checkboxes.
  */
-public abstract class OptionalChooserComponent implements CheckBoxListListener {
+ public abstract class OptionalChooserComponent implements CheckBoxListListener {
   private JPanel myContentPane;
   private CheckBoxList myList;
   private DefaultListModel myListModel;

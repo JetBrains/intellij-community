@@ -17,6 +17,7 @@
 package com.intellij.ui;
 
 import com.intellij.CommonBundle;
+import com.intellij.ui.components.JBList;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -37,7 +38,7 @@ public abstract class AddDeleteListPanel extends PanelWithButtons {
   protected JButton myAddButton = new JButton(CommonBundle.message("button.add"));
   protected JButton myDeleteButton = new JButton(CommonBundle.message("button.delete"));
   protected DefaultListModel myListModel = new DefaultListModel();
-  protected JList myList = new JList(myListModel);
+  protected JList myList = new JBList(myListModel);
 
   public AddDeleteListPanel(final String title,
                             final List initialList) {

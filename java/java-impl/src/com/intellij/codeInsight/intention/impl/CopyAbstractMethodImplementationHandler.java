@@ -35,6 +35,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
 
 import javax.swing.*;
@@ -82,7 +83,7 @@ public class CopyAbstractMethodImplementationHandler {
         }
       });
       final PsiMethod[] methodArray = mySourceMethods.toArray(new PsiMethod[mySourceMethods.size()]);
-      final JList list = new JList(methodArray);
+      final JList list = new JBList(methodArray);
       list.setCellRenderer(new MethodCellRenderer(true));
       final Runnable runnable = new Runnable() {
         public void run() {

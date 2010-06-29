@@ -18,7 +18,7 @@
         <properties/>
         <border type="none"/>
         <children>
-          <component id="5f100" class="javax.swing.JList" binding="myPatternsList">
+          <component id="5f100" class="com.intellij.ui.components.JBList" binding="myPatternsList">
             <constraints/>
             <properties>
               <selectionMode value="0"/>

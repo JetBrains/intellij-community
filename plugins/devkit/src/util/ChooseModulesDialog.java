@@ -25,6 +25,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.components.JBList;
+import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
@@ -64,7 +66,7 @@ public class ChooseModulesDialog extends DialogWrapper {
     myCandidateModules = candidateModules;
     myIcon = Messages.getQuestionIcon();
     myMessage = message;
-    myView = new JTable(new AbstractTableModel() {
+    myView = new JBTable(new AbstractTableModel() {
       public int getRowCount() {
         return myCandidateModules.size();
       }
@@ -170,7 +172,7 @@ public class ChooseModulesDialog extends DialogWrapper {
 
     public MyTableCellRenderer(Project project) {
       myProject = project;
-      myList = new JList();
+      myList = new JBList();
       myCellRenderer = new ColoredListCellRenderer() {
         protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
           final Module module = ((Module)value);

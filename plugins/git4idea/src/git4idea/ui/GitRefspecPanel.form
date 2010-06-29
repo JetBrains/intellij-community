@@ -17,7 +17,7 @@
         <properties/>
         <border type="none"/>
         <children>
-          <component id="73d28" class="javax.swing.JTable" binding="myReferences">
+          <component id="73d28" class="com.intellij.ui.table.JBTable" binding="myReferences">
             <constraints/>
             <properties/>
           </component>

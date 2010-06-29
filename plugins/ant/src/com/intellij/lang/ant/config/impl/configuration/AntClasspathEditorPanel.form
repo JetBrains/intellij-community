@@ -59,7 +59,7 @@
         <properties/>
         <border type="none"/>
         <children>
-          <component id="f85d" class="javax.swing.JList" binding="myClasspathList">
+          <component id="f85d" class="com.intellij.ui.components.JBList" binding="myClasspathList">
             <constraints/>
             <properties/>
           </component>

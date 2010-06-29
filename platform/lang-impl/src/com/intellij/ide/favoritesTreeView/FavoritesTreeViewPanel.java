@@ -52,7 +52,6 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
@@ -116,7 +115,6 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     myTree.setLargeModel(true);
     new TreeSpeedSearch(myTree);
     ToolTipManager.sharedInstance().registerComponent(myTree);
-    TreeToolTipHandler.install(myTree);
     myTree.setCellRenderer(new NodeRenderer() {
       public void customizeCellRenderer(JTree tree,
                                         Object value,

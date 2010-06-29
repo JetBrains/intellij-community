@@ -31,7 +31,7 @@
         <properties/>
         <border type="none"/>
         <children>
-          <component id="d77f1" class="javax.swing.JList" binding="myLocationList">
+          <component id="d77f1" class="com.intellij.ui.components.JBList" binding="myLocationList">
             <constraints/>
             <properties/>
           </component>

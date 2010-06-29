@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.ListScrollingUtil;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.HashMap;
 
 import javax.swing.*;
@@ -49,7 +50,7 @@ public class SelectFontDialog extends DialogWrapper {
     myShowMonospacedCheckbox = new JCheckBox(ApplicationBundle.message("checkbox.show.only.monospaced.fonts"));
     final boolean useOnlyMonospacedFonts = EditorColorsManager.getInstance().isUseOnlyMonospacedFonts();
     myShowMonospacedCheckbox.setSelected(useOnlyMonospacedFonts);
-    myFontList = new JList();
+    myFontList = new JBList();
     myFontList.setModel(new DefaultListModel());
     fillList(useOnlyMonospacedFonts);
 

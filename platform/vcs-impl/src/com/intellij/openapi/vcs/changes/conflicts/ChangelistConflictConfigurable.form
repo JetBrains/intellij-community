@@ -55,7 +55,7 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="5cdb5" class="javax.swing.JList" binding="myIgnoredFiles">
+              <component id="5cdb5" class="com.intellij.ui.components.JBList" binding="myIgnoredFiles">
                 <constraints/>
                 <properties/>
               </component>

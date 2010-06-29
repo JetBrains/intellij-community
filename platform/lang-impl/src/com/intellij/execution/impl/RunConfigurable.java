@@ -105,7 +105,6 @@ class RunConfigurable extends BaseConfigurable {
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     UIUtil.setLineStyleAngled(myTree);
-    TreeToolTipHandler.install(myTree);
     TreeUtil.installActions(myTree);
     PopupHandler.installFollowingSelectionTreePopup(myTree, createActionsGroup(), ActionPlaces.UNKNOWN, ActionManager.getInstance());
     myTree.setCellRenderer(new ColoredTreeCellRenderer() {

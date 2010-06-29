@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.PopupHandler;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +39,7 @@ import java.awt.event.*;
 /**
  * @author yole
  */
-public class PaletteComponentList extends JList {
+public class PaletteComponentList extends JBList {
   private final Project myProject;
   private final PaletteGroup myGroup;
   private int myHoverIndex = -1;

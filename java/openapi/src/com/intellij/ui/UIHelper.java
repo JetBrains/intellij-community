@@ -35,8 +35,14 @@ import java.awt.*;
  * @see com.intellij.peer.PeerFactory#getUIHelper()
  */
 public interface UIHelper {
+  /**
+   * @deprecated use JBTree class instead, it will automatically configure tool tips
+   */
   void installToolTipHandler(JTree tree);
 
+  /**
+   * @deprecated use JBTable class instead, it will automatically configure tool tips
+   */
   void installToolTipHandler(JTable table);
 
   void installEditSourceOnDoubleClick(JTree tree);

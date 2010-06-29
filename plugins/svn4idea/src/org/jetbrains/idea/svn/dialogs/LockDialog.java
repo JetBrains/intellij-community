@@ -32,7 +32,7 @@ public class LockDialog extends OptionsDialog {
   private JTextArea myLockTextArea;
   private JCheckBox myForceCheckBox;
 
-  @NonNls private static final String HELP_ID = "vcs.subversion.lock";
+  @NonNls private static final String HELP_ID = "reference.VCS.subversion.lockFile";
 
   public LockDialog(Project project, boolean canBeParent, boolean multiple) {
     super(project, canBeParent);

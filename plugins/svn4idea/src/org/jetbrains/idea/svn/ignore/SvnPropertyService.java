@@ -28,9 +28,9 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.io.File;
 import java.util.*;
@@ -208,8 +208,8 @@ public class SvnPropertyService {
 
     protected void processFolder(final VirtualFile folder, final File folderDir, final Set<String> data, final SVNPropertyValue propertyValue)
         throws SVNException {
-      final String newValue = getNewPropertyValue(data, propertyValue);
-
+      String newValue = getNewPropertyValue(data, propertyValue);
+      newValue = (newValue.trim().isEmpty()) ? null : newValue;
       myClient.doSetProperty(folderDir, SvnPropertyKeys.SVN_IGNORE, SVNPropertyValue.create(newValue), false, false, null);
 
       if (myUseCommonExtension) {
@@ -254,7 +254,12 @@ public class SvnPropertyService {
     for (String pattern : patterns) {
       sb.append(pattern).append('\n');
     }
-    client.doSetProperty(file, SvnPropertyKeys.SVN_IGNORE, SVNPropertyValue.create(sb.toString()), false, SVNDepth.EMPTY, null, null);
+    if (! patterns.isEmpty()) {
+      final String value = sb.toString();
+      client.doSetProperty(file, SvnPropertyKeys.SVN_IGNORE, SVNPropertyValue.create(value), false, SVNDepth.EMPTY, null, null);
+    } else {
+      client.doSetProperty(file, SvnPropertyKeys.SVN_IGNORE, null, false, SVNDepth.EMPTY, null, null);
+    }
   }
 
   private static String getNewPropertyValueForRemove(final Collection<String> data, @NotNull final String propertyValue) {

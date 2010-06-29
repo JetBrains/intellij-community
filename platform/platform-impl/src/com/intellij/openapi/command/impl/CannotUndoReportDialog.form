@@ -31,7 +31,7 @@
             <properties/>
             <border type="none" title="Problem files"/>
             <children>
-              <component id="dbf20" class="javax.swing.JList" binding="myProblemFilesList">
+              <component id="dbf20" class="com.intellij.ui.components.JBList" binding="myProblemFilesList">
                 <constraints/>
                 <properties/>
               </component>

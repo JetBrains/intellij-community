@@ -30,6 +30,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.MethodCellRenderer;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.components.JBList;
 
 import javax.swing.*;
 import java.awt.*;
@@ -86,7 +87,7 @@ public class EnclosingMethodSelectionDialog extends DialogWrapper {
     panel.add(new JLabel(RefactoringBundle.message("introduce.parameter.to.method")), gbConstraints);
 
     gbConstraints.weighty = 1;
-    myEnclosingMethodsList = new JList(myEnclosingMethods.toArray());
+    myEnclosingMethodsList = new JBList(myEnclosingMethods.toArray());
     myEnclosingMethodsList.setCellRenderer(new MethodCellRenderer());
     myEnclosingMethodsList.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 

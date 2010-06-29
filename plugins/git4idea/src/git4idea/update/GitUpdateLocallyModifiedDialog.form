@@ -39,7 +39,7 @@
         <properties/>
         <border type="none"/>
         <children>
-          <component id="5d604" class="javax.swing.JList" binding="myFilesList" default-binding="true">
+          <component id="5d604" class="com.intellij.ui.components.JBList" binding="myFilesList" default-binding="true">
             <constraints/>
             <properties>
               <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="update.locally.modified.files.tooltip"/>

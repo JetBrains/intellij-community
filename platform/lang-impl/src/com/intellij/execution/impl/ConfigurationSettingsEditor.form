@@ -17,7 +17,7 @@
         <properties/>
         <border type="none"/>
         <children>
-          <component id="51ac6" class="javax.swing.JList" binding="myRunnersList">
+          <component id="51ac6" class="com.intellij.ui.components.JBList" binding="myRunnersList">
             <constraints/>
             <properties>
               <selectionMode value="0"/>

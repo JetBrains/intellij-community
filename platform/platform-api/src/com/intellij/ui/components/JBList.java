@@ -15,17 +15,21 @@
  */
 package com.intellij.ui.components;
 
+import com.intellij.ui.ComponentWithExpandableItems;
+import com.intellij.ui.ExpandableItemsHandler;
+import com.intellij.ui.ExpandableItemsHandlerFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.EmptyTextHelper;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionListener;
 import java.util.Collection;
-import java.util.Vector;
 
-public class JBList extends JList implements ComponentWithEmptyText{
+public class JBList extends JList implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer> {
   private EmptyTextHelper myEmptyTextHelper;
+  private ExpandableItemsHandler<Integer> myExpandableItemsHandler;
 
   public JBList() {
     init();
@@ -36,13 +40,13 @@ public class JBList extends JList implements ComponentWithEmptyText{
     init();
   }
 
-  public JBList(Object[] listData) {
+  public JBList(Object... listData) {
     super(listData);
     init();
   }
 
   public JBList(Collection items) {
-    super(new Vector(items));
+    super(items.toArray(new Object[items.size()]));
     init();
   }
 
@@ -53,6 +57,8 @@ public class JBList extends JList implements ComponentWithEmptyText{
         return JBList.this.isEmpty();
       }
     };
+
+    myExpandableItemsHandler = ExpandableItemsHandlerFactory.install(this);
   }
 
   public boolean isEmpty() {
@@ -86,5 +92,10 @@ public class JBList extends JList implements ComponentWithEmptyText{
 
   public void appendEmptyText(String text, SimpleTextAttributes attrs, ActionListener listener) {
     myEmptyTextHelper.appendEmptyText(text, attrs, listener);
+  }
+
+  @NotNull
+  public ExpandableItemsHandler<Integer> getExpandableItemsHandler() {
+    return myExpandableItemsHandler;
   }
 }

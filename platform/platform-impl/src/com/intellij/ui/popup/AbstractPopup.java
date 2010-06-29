@@ -93,6 +93,7 @@ public class AbstractPopup implements JBPopup {
   private Dimension myMinSize;
   private ArrayList<Object> myUserData;
   private boolean myShadowed;
+  private boolean myPaintShadow;
 
   private float myAlpha = 0;
   private float myLastAlpha = 0;
@@ -122,6 +123,7 @@ public class AbstractPopup implements JBPopup {
 
   protected final SpeedSearch mySpeedSearch = new SpeedSearch() {
     boolean searchFieldShown = false;
+
     protected void update() {
       mySpeedSearchPatternField.setBackground(new JTextField().getBackground());
       onSpeedSearchPatternChanged();
@@ -183,7 +185,8 @@ public class AbstractPopup implements JBPopup {
                      @NotNull List<Pair<ActionListener, KeyStroke>> keyboardActions,
                      Component settingsButtons,
                      @Nullable final Processor<JBPopup> pinCallback,
-                     boolean mayBeParent) {
+                     boolean mayBeParent,
+                     boolean showShadow) {
 
     if (requestFocus && !focusable) {
       assert false : "Incorrect argument combination: requestFocus=" + requestFocus + " focusable=" + focusable;
@@ -192,7 +195,8 @@ public class AbstractPopup implements JBPopup {
     myProject = project;
     myComponent = component;
     myPopupBorder = PopupBorder.Factory.create(true);
-    myShadowed = !movable  && !resizable && Registry.is("ide.popup.dropShadow");
+    myShadowed = showShadow;
+    myPaintShadow = showShadow && !SystemInfo.isMac && !movable && !resizable && Registry.is("ide.popup.dropShadow");
     myContent = createContentPanel(resizable, myPopupBorder, isToDrawMacCorner());
     myMayBeParent = mayBeParent;
 
@@ -227,13 +231,15 @@ public class AbstractPopup implements JBPopup {
 
       if (pinCallback != null) {
         myCaption.setButtonComponent(new InplaceButton(new IconButton("Pin", IconLoader.getIcon("/general/autohideOff.png"),
-                                                       IconLoader.getIcon("/general/autohideOff.png"),
-                                                       IconLoader.getIcon("/general/autohideOffInactive.png")), new ActionListener() {
-          public void actionPerformed(final ActionEvent e) {
-            pinCallback.process(AbstractPopup.this);
-          }
-        }));
-      } else if (cancelButton != null) {
+                                                                      IconLoader.getIcon("/general/autohideOff.png"),
+                                                                      IconLoader.getIcon("/general/autohideOffInactive.png")),
+                                                       new ActionListener() {
+                                                         public void actionPerformed(final ActionEvent e) {
+                                                           pinCallback.process(AbstractPopup.this);
+                                                         }
+                                                       }));
+      }
+      else if (cancelButton != null) {
         myCaption.setButtonComponent(new InplaceButton(cancelButton, new ActionListener() {
           public void actionPerformed(final ActionEvent e) {
             cancel();
@@ -293,13 +299,12 @@ public class AbstractPopup implements JBPopup {
 
   @NotNull
   protected MyContentPanel createContentPanel(final boolean resizable, PopupBorder border, boolean isToDrawMacCorner) {
-    return new MyContentPanel(resizable, border, isToDrawMacCorner, myShadowed);
+    return new MyContentPanel(resizable, border, isToDrawMacCorner, myPaintShadow);
   }
 
   public static boolean isToDrawMacCorner() {
     return SystemInfo.isMac;
   }
-
 
 
   public String getDimensionServiceKey() {
@@ -374,7 +379,8 @@ public class AbstractPopup implements JBPopup {
     final Component focused = getWndManager().getFocusedComponent(myProject);
     if (focused != null) {
       showInCenterOf(focused);
-    } else {
+    }
+    else {
       final JFrame frame = WindowManager.getInstance().getFrame(myProject);
       showInCenterOf(frame.getRootPane());
     }
@@ -670,8 +676,15 @@ public class AbstractPopup implements JBPopup {
       });
     }
 
-    for(JBPopupListener listener: myListeners) {
+    for (JBPopupListener listener : myListeners) {
       listener.beforeShown(new LightweightWindowEvent(this));
+    }
+
+    Window w = myPopup.getWindow();
+    if (w != null) {
+      WindowManagerEx.WindowShadowMode mode =
+        myShadowed ? WindowManagerEx.WindowShadowMode.NORMAL : WindowManagerEx.WindowShadowMode.DISABLED;
+      WindowManagerEx.getInstanceEx().setWindowShadow(myWindow, mode);
     }
 
     myPopup.setRequestFocus(myRequestFocus);
@@ -698,7 +711,7 @@ public class AbstractPopup implements JBPopup {
 
     if (myWindow != null) {
       if (!myMayBeParent) {
-        WindowManager.getInstance().doNotSuggestAsParent(myWindow);  
+        WindowManager.getInstance().doNotSuggestAsParent(myWindow);
       }
     }
 
@@ -845,9 +858,11 @@ public class AbstractPopup implements JBPopup {
   private IdeFocusManager getFocusManager() {
     if (myProject != null) {
       return IdeFocusManager.getInstance(myProject);
-    } else if (myOwner != null) {
+    }
+    else if (myOwner != null) {
       return IdeFocusManager.findInstanceByComponent(myOwner);
-    } else {
+    }
+    else {
       return IdeFocusManager.findInstance();
     }
   }
@@ -867,9 +882,11 @@ public class AbstractPopup implements JBPopup {
   private PopupComponent.Factory getFactory(boolean forceHeavyweight) {
     if (isPersistent()) {
       return new PopupComponent.Factory.Dialog();
-    } else if (forceHeavyweight || !SystemInfo.isWindows) {
+    }
+    else if (forceHeavyweight || !SystemInfo.isWindows) {
       return new PopupComponent.Factory.AwtHeavyweight();
-    } else {
+    }
+    else {
       return new PopupComponent.Factory.AwtDefault();
     }
   }
@@ -978,18 +995,18 @@ public class AbstractPopup implements JBPopup {
   public static class MyContentPanel extends JPanel {
     private final boolean myResizable;
     private final boolean myDrawMacCorner;
-    private final boolean myShadowed;
+    private final boolean myPaintShadow;
 
     public MyContentPanel(final boolean resizable, final PopupBorder border, boolean drawMacCorner) {
       this(resizable, border, drawMacCorner, false);
     }
-    
+
     public MyContentPanel(final boolean resizable, final PopupBorder border, boolean drawMacCorner, boolean shadowed) {
       super(new BorderLayout());
       myResizable = resizable;
       myDrawMacCorner = drawMacCorner;
-      myShadowed = shadowed;
-      if (isShadowPossible()) {
+      myPaintShadow = shadowed && !UISettings.isRemoteDesktopConnected();
+      if (myPaintShadow) {
         setOpaque(false);
         setBorder(new EmptyBorder(POPUP_TOP_SIZE, POPUP_SIDE_SIZE, POPUP_BOTTOM_SIZE, POPUP_SIDE_SIZE) {
           @Override
@@ -1001,17 +1018,14 @@ public class AbstractPopup implements JBPopup {
                                height - POPUP_TOP_SIZE - POPUP_BOTTOM_SIZE + 2);
           }
         });
-      } else {
+      }
+      else {
         setBorder(border);
       }
     }
 
-    private boolean isShadowPossible() {
-      return myShadowed && !SystemInfo.isMac && !UISettings.isRemoteDesktopConnected();
-    }
-
     public void paint(Graphics g) {
-      if (isShadowPossible()) {
+      if (myPaintShadow) {
         paintShadow(g);
       }
 
@@ -1054,11 +1068,13 @@ public class AbstractPopup implements JBPopup {
         if (myCancelOnWindow) {
           cancel();
         }
-      } else if (event.getID() == MouseEvent.MOUSE_ENTERED) {
+      }
+      else if (event.getID() == MouseEvent.MOUSE_ENTERED) {
         if (withinPopup(event)) {
           myEverEntered = true;
         }
-      } else if (event.getID() == MouseEvent.MOUSE_MOVED) {
+      }
+      else if (event.getID() == MouseEvent.MOUSE_MOVED) {
         if (myCancelOnMouseOutCallback != null && myEverEntered && !withinPopup(event)) {
           if (myCancelOnMouseOutCallback.check((MouseEvent)event)) {
             cancel();
@@ -1080,7 +1096,8 @@ public class AbstractPopup implements JBPopup {
   public void setLocation(@NotNull final Point screenPoint) {
     if (myPopup == null) {
       myForcedLocation = screenPoint;
-    } else {
+    }
+    else {
       moveTo(myContent, screenPoint, myLocateByContent ? myHeaderPanel.getPreferredSize() : null);
     }
   }
@@ -1098,7 +1115,8 @@ public class AbstractPopup implements JBPopup {
   public void setSize(@NotNull final Dimension size) {
     if (myPopup == null) {
       myForcedSize = size;
-    } else {
+    }
+    else {
       updateMaskAndAlpha(setSize(myContent, size));
     }
   }
@@ -1125,9 +1143,9 @@ public class AbstractPopup implements JBPopup {
 
   private class MyWindowListener extends WindowAdapter {
     public void windowClosed(final WindowEvent e) {
-        resetWindow();
-      }
- }
+      resetWindow();
+    }
+  }
 
   public boolean isPersistent() {
     return !myCancelOnClickOutside && !myCancelOnWindow;
@@ -1167,10 +1185,10 @@ public class AbstractPopup implements JBPopup {
 
   public <T> T getUserData(final Class<T> userDataClass) {
     if (myUserData != null) {
-      for(Object o: myUserData) {
+      for (Object o : myUserData) {
         if (userDataClass.isInstance(o)) {
           //noinspection unchecked
-          return (T) o;
+          return (T)o;
         }
       }
     }
@@ -1182,8 +1200,9 @@ public class AbstractPopup implements JBPopup {
   }
 
   public boolean isFocused() {
-    if (myComponent != null && isFocused(new Component[] {SwingUtilities.getWindowAncestor(myComponent)}))
+    if (myComponent != null && isFocused(new Component[]{SwingUtilities.getWindowAncestor(myComponent)})) {
       return true;
+    }
     return isFocused(myFocusOwners);
   }
 
@@ -1191,7 +1210,7 @@ public class AbstractPopup implements JBPopup {
     if (components == null) return false;
 
     Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-    
+
     if (owner == null) return false;
     for (Component each : components) {
       if (each != null && SwingUtilities.isDescendingFrom(owner, each)) return true;

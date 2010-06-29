@@ -151,7 +151,7 @@
                 <properties/>
                 <border type="none"/>
                 <children>
-                  <component id="b25ec" class="javax.swing.JList" binding="myUrlsList">
+                  <component id="b25ec" class="com.intellij.ui.components.JBList" binding="myUrlsList">
                     <constraints/>
                     <properties/>
                   </component>

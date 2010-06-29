@@ -46,6 +46,7 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlElementDescriptor;
@@ -244,7 +245,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
                                                                                            final Editor editor) throws IncorrectOperationException {
     
     if (namespacesToChooseFrom.length > 1 && !ApplicationManager.getApplication().isUnitTestMode()) {
-      final JList list = new JList(namespacesToChooseFrom);
+      final JList list = new JBList(namespacesToChooseFrom);
       list.setCellRenderer(XmlNSRenderer.INSTANCE);
       Runnable runnable = new Runnable() {
         public void run() {

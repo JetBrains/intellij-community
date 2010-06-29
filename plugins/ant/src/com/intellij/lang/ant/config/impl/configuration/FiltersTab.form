@@ -26,7 +26,7 @@
         <properties/>
         <border type="none"/>
         <children>
-          <component id="7d93d" class="javax.swing.JTable" binding="myFiltersTable">
+          <component id="7d93d" class="com.intellij.ui.table.JBTable" binding="myFiltersTable">
             <constraints/>
             <properties/>
           </component>

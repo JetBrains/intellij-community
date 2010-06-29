@@ -387,7 +387,6 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
     tree.setShowsRootHandles(true);
     UIUtil.setLineStyleAngled(tree);
 
-    TreeToolTipHandler.install(tree);
     TreeUtil.installActions(tree);
     new TreeSpeedSearch(tree, new Convertor<TreePath, String>() {
       public String convert(TreePath o) {

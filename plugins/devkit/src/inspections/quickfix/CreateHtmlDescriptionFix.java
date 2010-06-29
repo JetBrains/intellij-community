@@ -37,6 +37,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -89,7 +90,7 @@ public class CreateHtmlDescriptionFix implements LocalQuickFix, Iconable {
       for (VirtualFile file : roots) {
         options.add(file.getPresentableUrl() + File.separator + DESCRIPTIONS_FOLDER + File.separator + myFilename);
       }
-      final JList files = new JList(ArrayUtil.toStringArray(options));
+      final JList files = new JBList(ArrayUtil.toStringArray(options));
       final PopupChooserBuilder builder = JBPopupFactory.getInstance().createListPopupBuilder(files);
       final JBPopup popup = builder.setTitle(DevKitBundle.message("select.target.location.of.description", myFilename)).setItemChoosenCallback(new Runnable() {
         public void run() {

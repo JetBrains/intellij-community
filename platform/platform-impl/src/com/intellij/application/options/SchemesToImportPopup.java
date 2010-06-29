@@ -21,6 +21,7 @@ import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SharedScheme;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -44,7 +45,7 @@ public abstract class SchemesToImportPopup<T extends Scheme, E extends Externali
       return;
     }
 
-    final JList list = new JList(createModel(schemes));
+    final JList list = new JBList(createModel(schemes));
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setCellRenderer(new SchemesToImportListCellRenderer());
 

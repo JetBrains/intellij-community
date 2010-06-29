@@ -72,6 +72,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private Component[] myFocusOwners = new Component[0];
 
   private String myAd;
+  private boolean myShowShadow = true;
   private boolean myFocusable = true;
   private boolean myHeaderAlwaysFocusable;
   private InplaceButton myCommandButton;
@@ -207,7 +208,8 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
                                               myCancelButton,
                                               myCancelOnMouseOutCallback, myCancelOnWindow, myTitleIcon, myCancelKeyEnabled, myLocateByContent,
                                               myPlacewithinScreen, myMinSize, myAlpha, myMaskProvider, myInStack, myModalContext, myFocusOwners, myAd,
-                                              myHeaderAlwaysFocusable, myKeyboardActions, mySettingsButtons, myPinCallback, myMayBeParent);
+                                              myHeaderAlwaysFocusable, myKeyboardActions, mySettingsButtons, myPinCallback, myMayBeParent,
+                                              myShowShadow);
     if (myUserData != null) {
       popup.setUserData(myUserData);
     }
@@ -294,6 +296,13 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   @NotNull
   public ComponentPopupBuilder setAdText(@Nullable final String text) {
     myAd = text;
+    return this;
+  }
+
+  @NotNull
+  @Override
+  public ComponentPopupBuilder setShowShadow(boolean show) {
+    myShowShadow = show;
     return this;
   }
 }

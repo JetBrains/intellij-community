@@ -24,7 +24,9 @@ import com.intellij.history.integration.ui.models.RevisionItem;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.ui.ExpandableItemsHandler;
 import com.intellij.ui.SeparatorWithText;
+import com.intellij.ui.TableCell;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.UIUtil;
@@ -50,13 +52,14 @@ public class RevisionsList {
     table = new JBTable();
     table.setModel(new MyModel(Collections.EMPTY_LIST, Collections.EMPTY_MAP));
 
-    table.setDefaultRenderer(Object.class, new MyCellRenderer(table));
     table.setTableHeader(null);
     table.setShowGrid(false);
     table.setRowMargin(0);
     table.getColumnModel().setColumnMargin(0);
 
     table.resetDefaultFocusTraversalKeys();
+
+    table.setDefaultRenderer(Object.class, new MyCellRenderer(table));
 
     table.setEmptyText(VcsBundle.message("history.empty"));
 
@@ -194,10 +197,11 @@ public class RevisionsList {
     private final MyLabelContainer myLabelContainer = new MyLabelContainer();
     private final JLabel myLabelLabel = new JLabel();
 
+    private final ExpandableItemsHandler<TableCell> myToolTipHandler;
+    private boolean isToolTipShown;
 
-    public MyCellRenderer(JTable table) {
-      myWrapperPanel.setLayout(new BorderLayout());
-
+    public MyCellRenderer(JBTable table) {
+      myToolTipHandler = table.getExpandableItemsHandler();
       JPanel headersPanel = new JPanel(new BorderLayout());
       headersPanel.setOpaque(false);
       headersPanel.add(myPeriodLabel, BorderLayout.NORTH);
@@ -232,8 +236,31 @@ public class RevisionsList {
       myLabelPanel.setOpaque(false);
       myLabelPanel.add(myLabelContainer);
 
-      myWrapperPanel.add(headersPanel, BorderLayout.NORTH);
-      myWrapperPanel.add(myItemPanel, BorderLayout.CENTER);
+      final JPanel layoutPanel = new JPanel(new BorderLayout());
+      layoutPanel.setOpaque(false);
+
+      layoutPanel.add(headersPanel, BorderLayout.NORTH);
+      layoutPanel.add(myItemPanel, BorderLayout.CENTER);
+
+      myWrapperPanel.add(layoutPanel);
+      myWrapperPanel.setLayout(new AbstractLayoutManager() {
+        @Override
+        public Dimension preferredLayoutSize(Container parent) {
+          return layoutPanel.getPreferredSize();
+        }
+
+        @Override
+        public void layoutContainer(Container parent) {
+          Dimension size = parent.getSize();
+          Insets i = parent.getInsets();
+          Dimension pref = layoutPanel.getPreferredSize();
+          if (isToolTipShown) {
+            layoutPanel.setBounds(i.left, i.top, Math.max(pref.width, size.width - i.left - i.right), pref.height);
+          } else {
+            layoutPanel.setBounds(i.left, i.top, size.width - i.left - i.right, pref.height);
+          }
+        }
+      });
 
       myItemPanel.setBorder(myBorder);
       myItemPanel.setLayout(new BorderLayout());
@@ -248,8 +275,8 @@ public class RevisionsList {
       myItemPanel.add(north, BorderLayout.NORTH);
       myItemPanel.add(south, BorderLayout.SOUTH);
 
-      myLabelLabel.setBorder(new EmptyBorder(0, 5, 0, 5));
-      myLabelPanel.setBorder(new MyBorder(new Insets(4, 1, 3, 1)));
+      myLabelLabel.setBorder(new EmptyBorder(0, 5, 1, 5));
+      myLabelPanel.setBorder(new MyBorder(new Insets(4, 20, 3, 1)));
 
       myWrapperPanel.setOpaque(false);
       myItemPanel.setOpaque(true);
@@ -308,6 +335,8 @@ public class RevisionsList {
       myTitleLabel.setForeground(isSelected || labelsAndColor.isNamed ? fg : Color.DARK_GRAY);
 
       myItemPanel.setBackground(bg);
+
+      isToolTipShown = myToolTipHandler.getExpandedItems().contains(new TableCell(row, column));
 
       myWrapperPanel.doLayout();
       table.setRowHeight(row, myWrapperPanel.getPreferredSize().height);

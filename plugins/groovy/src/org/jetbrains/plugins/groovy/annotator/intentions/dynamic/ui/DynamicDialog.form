@@ -64,7 +64,7 @@
           <text value="Label"/>
         </properties>
       </component>
-      <component id="63583" class="javax.swing.JTable" binding="myParametersTable">
+      <component id="63583" class="com.intellij.ui.table.JBTable" binding="myParametersTable">
         <constraints>
           <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="6" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>

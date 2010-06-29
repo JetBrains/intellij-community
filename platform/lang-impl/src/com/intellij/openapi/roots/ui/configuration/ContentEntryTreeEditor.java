@@ -42,7 +42,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.ui.roots.ToolbarPanel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -84,7 +83,6 @@ public class ContentEntryTreeEditor {
 
     myEditingActionsGroup = new DefaultActionGroup();
 
-    TreeToolTipHandler.install(myTree);
     TreeUtil.installActions(myTree);
     new TreeSpeedSearch(myTree);
 

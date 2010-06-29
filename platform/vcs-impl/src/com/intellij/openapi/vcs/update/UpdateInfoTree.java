@@ -180,7 +180,6 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
       }
     });
     myTree.setCellRenderer(new UpdateTreeCellRenderer());
-    TreeUIHelper.getInstance().installToolTipHandler(myTree);
     TreeUtil.installActions(myTree);
     new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
       public String convert(TreePath path) {

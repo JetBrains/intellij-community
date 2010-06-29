@@ -15,7 +15,7 @@
         <properties/>
         <border type="none"/>
         <children>
-          <component id="81755" class="javax.swing.JList" binding="myPluginsList">
+          <component id="81755" class="com.intellij.ui.components.JBList" binding="myPluginsList">
             <constraints/>
             <properties/>
           </component>

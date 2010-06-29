@@ -75,7 +75,6 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
 
     TreeUIHelper uiHelper = TreeUIHelper.getInstance();
 
-    uiHelper.installToolTipHandler(myTree.getTree());
     uiHelper.installEditSourceOnDoubleClick(myTree.getTree());
     TreeUtil.installActions(myTree.getTree());
 

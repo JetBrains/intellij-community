@@ -20,7 +20,7 @@
         <properties/>
         <border type="none"/>
         <children>
-          <component id="8b3da" class="javax.swing.JList" binding="myList">
+          <component id="8b3da" class="com.intellij.ui.components.JBList" binding="myList">
             <constraints/>
             <properties>
               <selectionMode value="0"/>
