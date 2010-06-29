@@ -455,15 +455,15 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
       Insets insets = getBorderInsets(c);
 
       if (insets.left > 0) {
-        UIUtil.drawLine(g, x, y, x, y + height - 2);
+        UIUtil.drawLine(g, x, y, x, y + height - 1);
       }
 
       if (insets.right > 0) {
-        UIUtil.drawLine(g, x + width - 1, y, x + width - 1, y + height - 2);
+        UIUtil.drawLine(g, x + width - 1, y, x + width - 1, y + height - 1);
       }
 
       if (insets.bottom > 0) {
-        UIUtil.drawLine(g, x + 1, y + height - 1, x + width - 2, y + height - 1);
+        UIUtil.drawLine(g, x + 1, y + height - 1, x + width - 1, y + height - 1);
        }
     }
 
@@ -508,12 +508,12 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
         insets.top = topButtons && !windowAtTop ? 1 : 0;
         insets.left = leftButtons ? 1: 0;
         insets.right = 0;
-        insets.bottom = bottomButtons && !windowAtBottom ? 1 : 0;
+        insets.bottom = bottomButtons || windowAtBottom ? 1 : 0;
       } else if (myWindow.getAnchor() == ToolWindowAnchor.RIGHT) {
         insets.top = topButtons && !windowAtTop ? 1: 0;
         insets.left = 1;
         insets.right = rightBottoms ? 1: 0;
-        insets.bottom = bottomButtons && !windowAtBottom ? 1: 0;
+        insets.bottom = bottomButtons || windowAtBottom ? 1: 0;
       }
 
       return insets;

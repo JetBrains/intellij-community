@@ -93,11 +93,11 @@ final class ToolWindowsPane extends JLayeredPane {
 
     myVerticalSplitter = new ThreeComponentsSplitter(true);
     myVerticalSplitter.setDividerWidth(0);
-    myVerticalSplitter.setDividerMouseZoneSize(5);
+    myVerticalSplitter.setDividerMouseZoneSize(6);
     myVerticalSplitter.setBackground(Color.gray);
     myHorizontalSplitter = new ThreeComponentsSplitter(false);
     myHorizontalSplitter.setDividerWidth(0);
-    myHorizontalSplitter.setDividerMouseZoneSize(5);
+    myHorizontalSplitter.setDividerMouseZoneSize(6);
     myHorizontalSplitter.setBackground(Color.gray);
 
     myVerticalSplitter.setInnerComponent(myHorizontalSplitter);

@@ -398,6 +398,8 @@ public class ThreeComponentsSplitter extends JPanel {
     protected Point myPoint;
     private final boolean myIsFirst;
 
+    private IdeGlassPane myGlassPane;
+
     private MouseAdapter myListener = new MouseAdapter() {
       @Override
       public void mousePressed(MouseEvent e) {
@@ -412,6 +414,15 @@ public class ThreeComponentsSplitter extends JPanel {
       public void mouseReleased(MouseEvent e) {
         MouseEvent event = SwingUtilities.convertMouseEvent(e.getComponent(), e, Divider.this);
         processMouseEvent(event);
+        if (event.isConsumed()) {
+          e.consume();
+        }
+      }
+
+      @Override
+      public void mouseMoved(MouseEvent e) {
+        MouseEvent event = SwingUtilities.convertMouseEvent(e.getComponent(), e, Divider.this);
+        processMouseMotionEvent(event);
         if (event.isConsumed()) {
           e.consume();
         }
@@ -460,9 +471,9 @@ public class ThreeComponentsSplitter extends JPanel {
     }
 
     private void init() {
-      IdeGlassPane gp = IdeGlassPaneUtil.find(this);
-      gp.addMouseMotionPreprocessor(myListener, this);
-      gp.addMousePreprocessor(myListener, this);
+      myGlassPane = IdeGlassPaneUtil.find(this);
+      myGlassPane.addMouseMotionPreprocessor(myListener, this);
+      myGlassPane.addMousePreprocessor(myListener, this);
     }
 
     public void dispose() {
@@ -560,7 +571,10 @@ public class ThreeComponentsSplitter extends JPanel {
       super.processMouseMotionEvent(e);
       if (MouseEvent.MOUSE_DRAGGED == e.getID() && myWasPressedOnMe) {
         myDragging = true;
-        setCursor(getOrientation() ? Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR) : Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
+        setCursor(
+          getOrientation() ? Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR) : Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
+        myGlassPane.setCursor(getOrientation() ? Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR) : Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR), myListener);
+       
         myPoint = SwingUtilities.convertPoint(this, e.getPoint(), ThreeComponentsSplitter.this);
         float proportion;
         if (getOrientation()) {
@@ -584,6 +598,13 @@ public class ThreeComponentsSplitter extends JPanel {
           }
         }
         ThreeComponentsSplitter.this.doLayout();
+      } else if (MouseEvent.MOUSE_MOVED == e.getID()) {
+        if (isInside(e.getPoint())) {
+          myGlassPane.setCursor(getOrientation() ? Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR) : Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR), myListener);
+          e.consume();
+        } else {
+          myGlassPane.setCursor(null, myListener);
+        }
       }
 
       if (myWasPressedOnMe) {

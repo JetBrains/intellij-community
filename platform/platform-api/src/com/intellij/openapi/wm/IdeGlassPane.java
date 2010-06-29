@@ -18,8 +18,11 @@ package com.intellij.openapi.wm;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.Painter;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 
@@ -33,4 +36,6 @@ public interface IdeGlassPane {
 
   void removeMousePreprocessor(MouseListener listener);
   void removeMouseMotionPreprocessor(MouseMotionListener listener);
+
+  void setCursor(@Nullable Cursor cursor, @NotNull Object requestor);
 }
