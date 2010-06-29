@@ -30,6 +30,7 @@ import java.util.*;
 
 /**
  * @author Gregory.Shrago
+ * @author Konstantin Bulenkov
  */
 public class ModelDesc {
   final Map<String, String> name2replaceMap = new HashMap<String, String>();
@@ -78,7 +79,7 @@ public class ModelDesc {
     final int lastIndex = tname.lastIndexOf('.');
     String xmlName = lastIndex>-1? tname.substring(lastIndex+1): tname;
     NamespaceDesc nsd = getNSD(ns);
-    if (!ns.endsWith(".dtd")) {
+    if (ns == null || !ns.endsWith(".dtd")) {
       if (xmlName.endsWith(Util.ANONYMOUS_ELEM_TYPE_SUFFIX)) xmlName = xmlName.substring(0, xmlName.length() - Util.ANONYMOUS_ELEM_TYPE_SUFFIX.length());
       else if (xmlName.endsWith(Util.ANONYMOUS_ATTR_TYPE_SUFFIX)) xmlName = xmlName.substring(0, xmlName.length() - Util.ANONYMOUS_ATTR_TYPE_SUFFIX.length());
       else if (xmlName.endsWith(Util.TYPE_SUFFIX)) xmlName = xmlName.substring(0, xmlName.length() - Util.TYPE_SUFFIX.length());

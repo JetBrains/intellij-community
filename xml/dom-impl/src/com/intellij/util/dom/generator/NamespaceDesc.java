@@ -25,6 +25,9 @@ package com.intellij.util.dom.generator;
 import java.util.Map;
 import java.util.HashMap;
 
+/**
+ * @author Konstantin Bulenkov
+ */
 public class NamespaceDesc {
   public NamespaceDesc(String name,
                        String pkgName,
