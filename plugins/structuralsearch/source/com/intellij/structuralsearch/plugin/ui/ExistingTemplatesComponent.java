@@ -8,6 +8,7 @@ import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.Convertor;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -139,7 +140,7 @@ public class ExistingTemplatesComponent {
     historyPanel.add(
       BorderLayout.CENTER,
       new JScrollPane(
-        historyList = new JList(historyModel)
+        historyList = new JBList(historyModel)
       )
     );
 
