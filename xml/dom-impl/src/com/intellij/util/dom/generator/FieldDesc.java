@@ -22,6 +22,9 @@
  */
 package com.intellij.util.dom.generator;
 
+/**
+ * @author Konstantin Bulenkov
+ */
 public class FieldDesc implements Comparable<FieldDesc> {
   final static int STR = 1;
   final static int BOOL = 2;

@@ -33,6 +33,7 @@ import java.io.CharArrayReader;
 
 /**
  * @author Gregory.Shrago
+ * @author Konstantin Bulenkov
  */
 public class ModelGen {
   private final ModelDesc model = new ModelDesc();
@@ -73,10 +74,13 @@ public class ModelGen {
     loadConfig(loadXml(configXml));
   }
 
-  public void setConfig(String schema, String location, NamespaceDesc desc) {
+  public void setConfig(String schema, String location, NamespaceDesc desc, String... schemasToSkip) {
     schemaLocationMap.put(schema, location);
-    model.nsdMap.put("http://www.w3.org/2001/XMLSchema", new NamespaceDesc("http://www.w3.org/2001/XMLSchema"));
-    model.nsdMap.put("http://www.w3.org/2001/XMLSchema-instance", new NamespaceDesc("http://www.w3.org/2001/XMLSchema-instance"));
+    for (String sch : schemasToSkip) {
+      if (sch != null && sch.length() > 0) {
+        model.nsdMap.put(sch, new NamespaceDesc(sch));
+      }
+    }
     model.nsdMap.put("", new NamespaceDesc("", "", "com.intellij.util.xml.DomElement", "", null, null, null, null));
     model.nsdMap.put(desc.name, desc);
   }
@@ -154,8 +158,12 @@ public class ModelGen {
         File f = null;
         for (File root : modelRoots) {
           if (root == null) continue;
-          final String fileName = esid.substring(esid.lastIndexOf('/') + 1);
-          f = new File(root, fileName);
+          if (root.isDirectory()) {
+            final String fileName = esid.substring(esid.lastIndexOf('/') + 1);
+            f = new File(root, fileName);
+          } else {
+            f = root;
+          }
         }
         if (f == null || !f.exists()) {
           Util.logerr("unable to resolve: " + esid);

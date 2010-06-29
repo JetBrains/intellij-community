@@ -30,11 +30,13 @@ import java.io.IOException;
 
 /**
  * @author Gregory.Shrago
+ * @author Konstantin Bulenkov
  */
 public class JetBrainsEmitter implements Emitter {
   static final boolean NOT_COMPARE_MODE = true; // compare mode: skip package decl & all comments/javadoc
   static final boolean JB_OFF = false;
   static final boolean REPLACE_TYPES_WITH_INTERFACES = true;
+  private String AUTHOR = null;
 
 
   public void emit(FileManager fileManager, ModelDesc model, File outputRoot) {
@@ -165,7 +167,9 @@ public class JetBrainsEmitter implements Emitter {
         if (NOT_COMPARE_MODE) {
           out.println(JDOC_OPEN);
           out.println(JDOC_CONT + td.xsNamespace + ":" + td.xsName + " enumeration.");
+          if (AUTHOR != null) out.println(JDOC_CONT + AUTHOR);
           printDocumentation(out, td.documentation, JDOC_CONT);
+
           out.println(JDOC_CLOSE);
         }
         out.print("public enum " + typeName + (text ? (JB_OFF ? "" : " implements com.intellij.util.xml.NamedEnum") : ""));
@@ -205,6 +209,7 @@ public class JetBrainsEmitter implements Emitter {
           out.println(JDOC_CONT + td.xsNamespace + ":" + td.xsName + " interface.");
         }
         printDocumentation(out, td.documentation, JDOC_CONT);
+        if (AUTHOR != null) out.println(JDOC_CONT + AUTHOR);
         out.println(JDOC_CLOSE);
       }
       out.print("public interface " + typeName);
@@ -535,6 +540,7 @@ out.println("\t// getters/setters methods");
       out.println("");
       out.println(JDOC_OPEN);
       out.println(JDOC_CONT + nsd.name + " base interface.");
+      if (AUTHOR != null) out.println(JDOC_CONT + AUTHOR);
       out.println(JDOC_CLOSE);
       out.print("public interface " + typeName + " ");
       out.println("{");
@@ -587,6 +593,7 @@ out.println("\t// getters/setters methods");
       out.println("");
       out.println(JDOC_OPEN);
       out.println(JDOC_CONT + nsd.name + " helper class.");
+      if (AUTHOR != null) out.println(JDOC_CONT + AUTHOR);
       out.println(JDOC_CLOSE);
       out.print("public class " + typeName + " ");
       out.println("{");
@@ -763,4 +770,7 @@ out.println("\t// getters/setters methods");
   }
 
 
+  public void setAuthor(String author) {
+    AUTHOR = "@author: " + author;
+  }
 }
