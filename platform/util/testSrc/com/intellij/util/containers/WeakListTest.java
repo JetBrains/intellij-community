@@ -21,23 +21,24 @@ import junit.framework.Assert;
 import java.util.Iterator;
 
 public class WeakListTest extends WeaksTestCase {
-  private final com.intellij.util.containers.WeakReferenceArray myWeakArray = new com.intellij.util.containers.WeakReferenceArray();
-  private final com.intellij.util.containers.WeakList myWeakList = new com.intellij.util.containers.WeakList(myWeakArray);
+  private final WeakReferenceArray<Object> myWeakArray = new WeakReferenceArray<Object>();
+  private final WeakList<Object> myWeakList = new WeakList<Object>(myWeakArray);
 
   protected void setUp() throws Exception {
     super.setUp();
-    Assert.assertTrue(com.intellij.util.containers.WeakReferenceArray.PEFORM_CHECK_THREAD);
-    com.intellij.util.containers.WeakReferenceArray.PEFORM_CHECK_THREAD = false;
+    Assert.assertTrue(WeakReferenceArray.PEFORM_CHECK_THREAD);
+    WeakReferenceArray.PEFORM_CHECK_THREAD = false;
   }
 
   protected void tearDown() throws Exception {
-    com.intellij.util.containers.WeakReferenceArray.PEFORM_CHECK_THREAD = true;
+    WeakReferenceArray.PEFORM_CHECK_THREAD = true;
     super.tearDown();
   }
 
   public void testCompresses() {
-    for (int i = 0; i < 20; i++)
+    for (int i = 0; i < 20; i++) {
       addElement(new Object(), myWeakArray);
+    }
     Assert.assertEquals(20, myWeakList.size());
     checkSameElements(myWeakArray);
     String obj = "xxx";
@@ -46,10 +47,10 @@ public class WeakListTest extends WeaksTestCase {
     checkSameElements(myWeakArray);
     myHolder.clear();
     gc();
-    Assert.assertEquals(21, myWeakList.size());
-    Assert.assertEquals(20, myWeakArray.getCorpseCount());
+    assertEquals(21, myWeakList.size());
+    assertTrue(20 >= myWeakArray.getCorpseCount());
     myWeakList.add(new Object());
-    Assert.assertTrue(String.valueOf(myWeakList.size()), myWeakList.size() < 20);
+    assertTrue(String.valueOf(myWeakList.size()), myWeakList.size() < 20);
     gc();
     myHolder.add(obj);
     checkSameNotNulls(myWeakArray);
@@ -61,14 +62,13 @@ public class WeakListTest extends WeaksTestCase {
     myWeakArray.add(new Object());
     addElement(new Object(), myWeakArray);
     gc();
-    Assert.assertEquals(2, myWeakArray.getAliveCount());
+    assertTrue(2 <= myWeakArray.getAliveCount());
     int elementCount = 0;
-    for (Iterator iterator = myWeakList.iterator(); iterator.hasNext();) {
-      Object element = iterator.next();
-      Assert.assertNotNull(element);
+    for (Object element : myWeakList) {
+      assertNotNull(element);
       elementCount++;
     }
-    Assert.assertEquals(2, elementCount);
+    assertEquals(2, elementCount);
   }
   
   public void testRemoveViaIterator() {
@@ -77,19 +77,19 @@ public class WeakListTest extends WeaksTestCase {
     addElement(new Object(), myWeakArray);
     myWeakArray.add(new Object());
     addElement(new Object(), myWeakArray);
-    Iterator iterator = myWeakList.iterator();
-    Assert.assertSame(myHolder.get(0), iterator.next());
+    Iterator<Object> iterator = myWeakList.iterator();
+    assertSame(myHolder.get(0), iterator.next());
     while (myHolder.get(1) != iterator.next());
     gc();
-    Assert.assertEquals(4, myWeakArray.getAliveCount());
+    assertTrue(4 <= myWeakArray.getAliveCount());
     iterator.remove();
     gc();
-    Assert.assertEquals(3, myWeakArray.getAliveCount());
+    assertTrue(3 <= myWeakArray.getAliveCount());
     iterator.next();
     gc();
-    Assert.assertEquals(2, myWeakArray.getAliveCount());
-    Assert.assertSame(myHolder.get(2), iterator.next());
-    Assert.assertFalse(iterator.hasNext());
+    assertTrue(2 <= myWeakArray.getAliveCount());
+    assertSame(myHolder.get(2), iterator.next());
+    assertFalse(iterator.hasNext());
     myHolder.remove(1);
     checkSameNotNulls(myWeakArray);
     myWeakArray.compress(-1);
@@ -99,13 +99,13 @@ public class WeakListTest extends WeaksTestCase {
   public void testRemoveLastViaIterator() {
     addElement(new Object(), myWeakArray);
     addElement(new Object(), myWeakArray);
-    Iterator iterator = myWeakList.iterator();
+    Iterator<Object> iterator = myWeakList.iterator();
     iterator.next();
-    Assert.assertTrue(iterator.hasNext());
+    assertTrue(iterator.hasNext());
     iterator.next();
-    Assert.assertFalse(iterator.hasNext());
+    assertFalse(iterator.hasNext());
     iterator.remove();
-    Assert.assertFalse(iterator.hasNext());
+    assertFalse(iterator.hasNext());
     myHolder.remove(1);
     checkSameNotNulls(myWeakArray);
   }
@@ -113,24 +113,24 @@ public class WeakListTest extends WeaksTestCase {
   public void testIteratorKeepsFirstElement() {
     addElement(new Object(), myWeakArray);
     addElement(new Object(), myWeakArray);
-    Iterator iterator = myWeakList.iterator();
-    Assert.assertTrue(iterator.hasNext());
+    Iterator<Object> iterator = myWeakList.iterator();
+    assertTrue(iterator.hasNext());
     myHolder.clear();
     gc();
-    Assert.assertNotNull(iterator.next());
-    Assert.assertFalse(iterator.hasNext());
+    assertNotNull(iterator.next());
+    assertFalse(iterator.hasNext());
   }
   
   public void testIteratorKeepsNextElement() {
     addElement(new Object(), myWeakArray);
     addElement(new Object(), myWeakArray);
     addElement(new Object(), myWeakArray);
-    Iterator iterator = myWeakList.iterator();
+    Iterator<Object> iterator = myWeakList.iterator();
     iterator.next();
-    Assert.assertTrue(iterator.hasNext());
+    assertTrue(iterator.hasNext());
     myHolder.clear();
     gc();
-    Assert.assertNotNull(iterator.next());
-    Assert.assertFalse(iterator.hasNext());
+    assertNotNull(iterator.next());
+    assertFalse(iterator.hasNext());
   }
 }
