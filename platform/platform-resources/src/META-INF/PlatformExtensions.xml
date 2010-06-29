@@ -57,7 +57,7 @@
                       serviceImplementation="com.intellij.ui.content.ContentFactoryImpl"/>
   <applicationService serviceInterface="com.intellij.ui.TreeUIHelper"
                       serviceImplementation="com.intellij.ui.TreeUIHelperImpl"/>
-  <applicationService serviceInterface="com.intellij.ui.ExpandTipHandlerFactory"
+  <applicationService serviceInterface="com.intellij.ui.ExpandableItemsHandlerFactory"
                       serviceImplementation="com.intellij.ui.ExpandTipHandlerFactoryImpl"/>
   <applicationService serviceInterface="com.intellij.openapi.diff.DiffRequestFactory"
                       serviceImplementation="com.intellij.openapi.diff.impl.mergeTool.DiffRequestFactoryImpl"/>

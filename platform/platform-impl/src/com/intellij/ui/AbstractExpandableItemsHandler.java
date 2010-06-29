@@ -28,7 +28,7 @@ import java.awt.image.BufferedImage;
 import java.util.Collection;
 import java.util.Collections;
 
-abstract public class AbstractToolTipHandler <KeyType, ComponentType extends JComponent> implements ExpandTipHandler<KeyType> {
+abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType extends JComponent> implements ExpandableItemsHandler<KeyType> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.AbstractToolTipHandler");
 
   protected final ComponentType myComponent;
@@ -42,7 +42,7 @@ abstract public class AbstractToolTipHandler <KeyType, ComponentType extends JCo
   private KeyType myKey;
   protected BufferedImage myImage;
 
-  protected AbstractToolTipHandler(@NotNull final ComponentType component) {
+  protected AbstractExpandableItemsHandler(@NotNull final ComponentType component) {
     myComponent = component;
     myComponent.add(myRendererPane);
     myComponent.validate();

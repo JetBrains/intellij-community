@@ -15,21 +15,11 @@
  */
 package com.intellij.ui;
 
-import javax.swing.*;
+import org.jetbrains.annotations.NotNull;
 
-public class ExpandTipHandlerFactoryImpl extends ExpandableItemsHandlerFactory {
-  @Override
-  public ExpandableItemsHandler<Integer> doInstall(JList list) {
-    return new ListExpandableItemsHandler(list);
-  }
+import java.util.Collection;
 
-  @Override
-  public ExpandableItemsHandler<Integer> doInstall(JTree tree) {
-    return new TreeExpandableItemsHandler(tree);
-  }
-
-  @Override
-  public ExpandableItemsHandler<TableCell> doInstall(JTable table) {
-    return new TableExpandableItemsHandler(table);
-  }
+public interface ExpandableItemsHandler<T> {
+  @NotNull
+  Collection<T> getExpandedItems();
 }

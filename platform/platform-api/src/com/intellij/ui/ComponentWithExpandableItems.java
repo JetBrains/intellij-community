@@ -17,9 +17,7 @@ package com.intellij.ui;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-
-public interface ExpandTipHandler<T> {
+public interface ComponentWithExpandableItems<T> {
   @NotNull
-  Collection<T> getExpandedItems();
+  ExpandableItemsHandler<T> getExpandableItemsHandler();
 }

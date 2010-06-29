@@ -20,6 +20,7 @@ import com.intellij.ui.*;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.EmptyTextHelper;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -43,9 +44,9 @@ import java.util.EventObject;
  *
  * @author Vladimir Kondratyev
  */
-public class JBTable extends JTable implements ComponentWithEmptyText {
+public class JBTable extends JTable implements ComponentWithEmptyText, ComponentWithExpandableItems<TableCell> {
   private EmptyTextHelper myEmptyTextHelper;
-  private ExpandTipHandler<TableCell> myExpandTipHandler;
+  private ExpandableItemsHandler<TableCell> myExpandableItemsHandler;
 
   private MyCellEditorRemover myEditorRemover;
 
@@ -62,7 +63,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText {
       }
     };
 
-    myExpandTipHandler = ExpandTipHandlerFactory.install(this);
+    myExpandableItemsHandler = ExpandableItemsHandlerFactory.install(this);
 
     addMouseListener(new MyMouseListener());
     getColumnModel().addColumnModelListener(new TableColumnModelListener() {
@@ -129,8 +130,9 @@ public class JBTable extends JTable implements ComponentWithEmptyText {
     myEmptyTextHelper.appendEmptyText(text, attrs, listener);
   }
 
-  public ExpandTipHandler<TableCell> getExpandTipHandler() {
-    return myExpandTipHandler;
+  @NotNull
+  public ExpandableItemsHandler<TableCell> getExpandableItemsHandler() {
+    return myExpandableItemsHandler;
   }
 
   private static class MyTableHeaderRenderer extends DefaultTableCellRenderer {

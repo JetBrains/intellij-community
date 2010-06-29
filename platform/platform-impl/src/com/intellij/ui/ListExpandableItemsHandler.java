@@ -24,16 +24,16 @@ import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-public class ListExpandTipHandler extends AbstractToolTipHandler<Integer, JList>{
+public class ListExpandableItemsHandler extends AbstractExpandableItemsHandler<Integer, JList> {
   public static void install(JList list) {
     installAndGet(list);
   }
 
-  public static ListExpandTipHandler installAndGet(JList list) {
-    return new ListExpandTipHandler(list);
+  public static ListExpandableItemsHandler installAndGet(JList list) {
+    return new ListExpandableItemsHandler(list);
   }
 
-  protected ListExpandTipHandler(final JList list) {
+  protected ListExpandableItemsHandler(final JList list) {
     super(list);
 
     final ListSelectionListener selectionListener = new ListSelectionListener() {

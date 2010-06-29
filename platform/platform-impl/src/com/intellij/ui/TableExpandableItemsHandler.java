@@ -26,16 +26,16 @@ import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-public class TableExpandTipHandler extends AbstractToolTipHandler<TableCell, JTable> {
+public class TableExpandableItemsHandler extends AbstractExpandableItemsHandler<TableCell, JTable> {
   public static void install(JTable table) {
     installAndGet(table);
   }
   
-  public static TableExpandTipHandler installAndGet(JTable table) {
-    return new TableExpandTipHandler(table);
+  public static TableExpandableItemsHandler installAndGet(JTable table) {
+    return new TableExpandableItemsHandler(table);
   }
 
-  protected TableExpandTipHandler(final JTable table) {
+  protected TableExpandableItemsHandler(final JTable table) {
     super(table);
 
     final ListSelectionListener selectionListener = new ListSelectionListener() {

@@ -15,19 +15,21 @@
  */
 package com.intellij.ui.components;
 
-import com.intellij.ui.ExpandTipHandler;
+import com.intellij.ui.ComponentWithExpandableItems;
+import com.intellij.ui.ExpandableItemsHandler;
+import com.intellij.ui.ExpandableItemsHandlerFactory;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.ExpandTipHandlerFactory;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.EmptyTextHelper;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionListener;
 import java.util.Collection;
 
-public class JBList extends JList implements ComponentWithEmptyText {
+public class JBList extends JList implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer> {
   private EmptyTextHelper myEmptyTextHelper;
-  private ExpandTipHandler<Integer> myExpandTipHandler;
+  private ExpandableItemsHandler<Integer> myExpandableItemsHandler;
 
   public JBList() {
     init();
@@ -38,7 +40,7 @@ public class JBList extends JList implements ComponentWithEmptyText {
     init();
   }
 
-  public JBList(Object[] listData) {
+  public JBList(Object... listData) {
     super(listData);
     init();
   }
@@ -56,7 +58,7 @@ public class JBList extends JList implements ComponentWithEmptyText {
       }
     };
 
-    myExpandTipHandler = ExpandTipHandlerFactory.install(this);
+    myExpandableItemsHandler = ExpandableItemsHandlerFactory.install(this);
   }
 
   public boolean isEmpty() {
@@ -92,7 +94,8 @@ public class JBList extends JList implements ComponentWithEmptyText {
     myEmptyTextHelper.appendEmptyText(text, attrs, listener);
   }
 
-  public ExpandTipHandler<Integer> getExpandTipHandler() {
-    return myExpandTipHandler;
+  @NotNull
+  public ExpandableItemsHandler<Integer> getExpandableItemsHandler() {
+    return myExpandableItemsHandler;
   }
 }
