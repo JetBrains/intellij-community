@@ -44,6 +44,16 @@ public interface SoftWrapModelEx extends SoftWrapModel {
   LogicalPosition adjustLogicalPosition(@NotNull LogicalPosition defaultLogical, @NotNull VisualPosition visual);
 
   /**
+   * Asks current model to adjust logical position for the given document offset.
+   *
+   * @param defaultLogical  default logical position that corresponds to the given document offset
+   * @param offset    target editor document offset
+   * @return          logical position for the given editor document offset
+   */
+  @NotNull
+  LogicalPosition adjustLogicalPosition(LogicalPosition defaultLogical, int offset);
+
+  /**
    * Asks current model to adjust visual position that corresponds to the given logical position if necessary.
    * <p/>
    * Given visual position is assumed to be the one that is obtained during soft wraps unaware processing.
@@ -54,15 +64,6 @@ public interface SoftWrapModelEx extends SoftWrapModel {
    */
   @NotNull
   VisualPosition adjustVisualPosition(@NotNull LogicalPosition logical, @NotNull VisualPosition defaultVisual);
-
-  /**
-   * Asks current model to calculate logical position for the given editor document offset.
-   *
-   * @param offset    target editor document offset
-   * @return          logical position for the given editor document offset
-   */
-  @NotNull
-  LogicalPosition offsetToLogicalPosition(int offset);
 
   /**
    * @return    unmodifiable collection of soft wraps currently registered within the current model

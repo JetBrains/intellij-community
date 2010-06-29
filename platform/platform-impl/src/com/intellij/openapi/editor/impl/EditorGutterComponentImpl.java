@@ -239,7 +239,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     else {
       g.setColor(Color.white);
       int x = getWhitespaceSeparatorOffset() - 1;
-      UIUtil.drawVDottedLine((Graphics2D)g, x, clip.y, clip.y + clip.height, myEditor.getBackroundColor(), getFoldingColor(false));
+      UIUtil.drawVDottedLine((Graphics2D)g, x, clip.y, clip.y + clip.height, myEditor.getBackgroundColor(), getFoldingColor(false));
     }
   }
 
@@ -693,7 +693,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     int lineX = getWhitespaceSeparatorOffset();
     paintBackground(g, clip, getFoldingAreaOffset(), getFoldingAreaWidth());
 
-    g.setColor(myEditor.getBackroundColor());
+    g.setColor(myEditor.getBackgroundColor());
     g.fillRect(lineX, clip.y, getFoldingAreaWidth(), clip.height);
 
     paintCaretRowBackground(g, lineX, getFoldingAnchorWidth());
@@ -705,7 +705,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     if (!isFoldingOutlineShown()) return;
     Rectangle clip = g.getClipBounds();
 
-    UIUtil.drawVDottedLine(g, getWhitespaceSeparatorOffset(), clip.y, clip.y + clip.height, myEditor.getBackroundColor(), getFoldingColor(false));
+    UIUtil.drawVDottedLine(g, getWhitespaceSeparatorOffset(), clip.y, clip.y + clip.height, myEditor.getBackgroundColor(), getFoldingColor(false));
 
     int anchorX = getFoldingAreaOffset();
     int width = getFoldingAnchorWidth();
@@ -814,7 +814,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       int[] yPoints = {y, y, y + baseHeight, y + height, y + baseHeight};
 
       if (paintBackground) {
-        g.setColor(myEditor.getBackroundColor());
+        g.setColor(myEditor.getBackgroundColor());
 
         g.fillPolygon(xPoints, yPoints, 5);
       }
@@ -850,7 +850,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
                                    boolean active,
                                    boolean paintBackground) {
     if (paintBackground) {
-      g.setColor(myEditor.getBackroundColor());
+      g.setColor(myEditor.getBackgroundColor());
       g.fillRect(anchorX, y, width, width);
     }
     else {

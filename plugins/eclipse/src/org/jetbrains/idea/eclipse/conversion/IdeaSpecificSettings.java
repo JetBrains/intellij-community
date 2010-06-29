@@ -111,21 +111,6 @@ public class IdeaSpecificSettings {
         replaceModuleRelatedRoots(model.getProject(), modifiableModel, libElement, JavadocOrderRootType.getInstance(), RELATIVE_MODULE_JAVADOC);
         modifiableModel.commit();
       }
-      else {
-        libraryByName = EclipseClasspathReader.findLibraryByName(model.getProject(), libName);
-        if (libraryByName != null) {
-          appendLibraryScope(model, libElement, libraryByName);
-        }
-        final Library[] libraries = model.getModuleLibraryTable().getLibraries();
-        for (Library library : libraries) {
-          final Library.ModifiableModel modifiableModel = library.getModifiableModel();
-          replaceCollapsedByEclipseSourceRoots(libElement, modifiableModel);
-          replaceModuleRelatedRoots(model.getProject(), modifiableModel, libElement, OrderRootType.SOURCES, RELATIVE_MODULE_SRC);
-          replaceModuleRelatedRoots(model.getProject(), modifiableModel, libElement, OrderRootType.CLASSES, RELATIVE_MODULE_CLS);
-          replaceModuleRelatedRoots(model.getProject(), modifiableModel, libElement, JavadocOrderRootType.getInstance(), RELATIVE_MODULE_JAVADOC);
-          modifiableModel.commit();
-        }
-      }
     }
   }
 

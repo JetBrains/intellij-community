@@ -16,7 +16,9 @@
 package com.intellij.util.ui.update;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
@@ -58,10 +60,18 @@ public abstract class LazyUiDisposable<T extends Disposable> implements Activata
     if (myWasEverShown) return;
 
     try {
-      final Disposable parent = findParentDisposable();
-      initialize(parent, myChild, findProject());
-      Disposer.register(parent, myChild);
-    } finally {
+      findParentDisposable().doWhenDone(new AsyncResult.Handler<Disposable>() {
+        public void run(Disposable parent) {
+          Project project = null;
+          if (ApplicationManager.getApplication() != null) {
+            project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+          }
+          initialize(parent, myChild, project);
+          Disposer.register(parent, myChild);
+        }
+      });
+    }
+    finally {
       myWasEverShown = true;
     }
   }
@@ -72,26 +82,32 @@ public abstract class LazyUiDisposable<T extends Disposable> implements Activata
   protected abstract void initialize(@NotNull Disposable parent, @NotNull T child, @Nullable Project project);
 
   @NotNull
-  private Disposable findParentDisposable() {
-    final Disposable parent = findObject(myParent, PlatformDataKeys.UI_DISPOSABLE);
-    return parent != null ? parent : Disposer.get("ui");
+  private AsyncResult<Disposable> findParentDisposable() {
+    return findDisposable(myParent, PlatformDataKeys.UI_DISPOSABLE);
   }
 
 
-  @Nullable
-  private Project findProject() {
-    return (Project) findObject(myProject, PlatformDataKeys.PROJECT);
-  }
-
-  private Disposable findObject(Disposable defaultValue, DataKey<? extends Disposable> key) {
+  private static AsyncResult<Disposable> findDisposable(Disposable defaultValue, final DataKey<? extends Disposable> key) {
     if (defaultValue == null) {
       if (ApplicationManager.getApplication() != null) {
-        return key.getData(DataManager.getInstance().getDataContext());
-      } else {
+        final AsyncResult<Disposable> result = new AsyncResult<Disposable>();
+        DataManager.getInstance().getDataContextFromFocus().doWhenDone(new AsyncResult.Handler<DataContext>() {
+          public void run(DataContext context) {
+            Disposable disposable = key.getData(context);
+            if (disposable == null) {
+              disposable = Disposer.get("ui");
+            }
+            result.setDone(disposable);
+          }
+        });
+        return result;
+      }
+      else {
         return null;
       }
-    } else {
-      return defaultValue;
+    }
+    else {
+      return new AsyncResult.Done<Disposable>(defaultValue);
     }
   }
 

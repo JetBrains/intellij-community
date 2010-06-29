@@ -23,7 +23,6 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -32,13 +31,15 @@ import org.jetbrains.annotations.NotNull;
 public abstract class NonCodeMembersContributor {
   private static final ExtensionPointName<NonCodeMembersContributor> EP_NAME = ExtensionPointName.create("org.intellij.groovy.membersContributor");
 
-  public abstract void processDynamicElements(@NotNull PsiType qualifierType, PsiScopeProcessor processor, PsiElement place, ResolveState state, ProcessingContext ctx);
+  public abstract void processDynamicElements(@NotNull PsiType qualifierType,
+                                              PsiScopeProcessor processor,
+                                              PsiElement place,
+                                              ResolveState state);
 
-  public static boolean processDynamicElements(@NotNull final PsiType qualifierType,
+  public static boolean runContributors(@NotNull final PsiType qualifierType,
                                          PsiScopeProcessor processor,
                                          final PsiElement place,
                                          final ResolveState state) {
-    final ProcessingContext ctx = new ProcessingContext();
     final Ref<Boolean> result = Ref.create(true);
     final PsiScopeProcessor wrapper = new DelegatingScopeProcessor(processor) {
       @Override
@@ -52,7 +53,7 @@ public abstract class NonCodeMembersContributor {
       }
     };
     for (final NonCodeMembersContributor contributor : EP_NAME.getExtensions()) {
-      contributor.processDynamicElements(qualifierType, wrapper, place, state, ctx);
+      contributor.processDynamicElements(qualifierType, wrapper, place, state);
       if (!result.get()) {
         return false;
       }

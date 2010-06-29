@@ -149,6 +149,12 @@ public interface ModuleRootModel {
   <R> R processOrder(RootPolicy<R> policy, R initialValue);
 
   /**
+   * @since 10
+   */
+  @NotNull
+  OrderEnumerator orderEntries();
+
+  /**
    * Returns list of module names <i>this module</i> depends on.
    *
    * @return the list of module names this module depends on.

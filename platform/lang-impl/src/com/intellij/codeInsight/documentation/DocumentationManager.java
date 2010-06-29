@@ -753,7 +753,7 @@ public class DocumentationManager {
   }
 
   @NotNull
-  private static DocumentationProvider getProviderFromElement(@Nullable PsiElement element, @Nullable PsiElement originalElement) {
+  public static DocumentationProvider getProviderFromElement(@Nullable PsiElement element, @Nullable PsiElement originalElement) {
     if (element != null && !element.isValid()) {
       element = null;
     }

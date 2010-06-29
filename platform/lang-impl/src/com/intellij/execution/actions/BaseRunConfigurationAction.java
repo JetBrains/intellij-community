@@ -45,7 +45,7 @@ import java.util.Comparator;
 import java.util.List;
 
 public abstract class BaseRunConfigurationAction extends ActionGroup {
-  private static final Logger LOG = Logger.getInstance("#" + BaseRunConfigurationAction.class.getName());
+  protected static final Logger LOG = Logger.getInstance("#" + BaseRunConfigurationAction.class.getName());
 
   protected BaseRunConfigurationAction(final String text, final String description, final Icon icon) {
     super(text, description, icon);
@@ -175,12 +175,15 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
   public void update(final AnActionEvent event){
     final ConfigurationContext context = ConfigurationContext.getFromContext(event.getDataContext());
     final Presentation presentation = event.getPresentation();
-    RunnerAndConfigurationSettings configuration;
-    try {
-      configuration = context.getConfiguration();
-    }
-    catch (IndexNotReadyException e) {
-      configuration = null;
+    final RunnerAndConfigurationSettings existing = context.findExisting();
+    RunnerAndConfigurationSettings configuration = existing;
+    if (configuration == null) {
+      try {
+        configuration = context.getConfiguration();
+      }
+      catch (IndexNotReadyException e) {
+        configuration = null;
+      }
     }
     if (configuration == null){
       presentation.setEnabled(false);
@@ -189,13 +192,13 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
     else{
       presentation.setEnabled(true);
       presentation.setVisible(true);
-      final String name = suggestRunActionName((LocatableConfiguration)configuration.getConfiguration());
       final List<RuntimeConfigurationProducer> producers = getEnabledProducers(context);
-      if (!producers.isEmpty()) {
-        //todo[nik,anna] it's dirty fix. Otherwise wrong configuration will be returned from context.getConfiguration()  
+      if (existing == null && !producers.isEmpty()) {
+        //todo[nik,anna] it's dirty fix. Otherwise wrong configuration will be returned from context.getConfiguration()
         context.getConfiguration(producers.get(0));
       }
-      updatePresentation(presentation, context.findExisting() != null || producers.size() <= 1 ? " " + name : "", context);
+      final String name = suggestRunActionName((LocatableConfiguration)configuration.getConfiguration());
+      updatePresentation(presentation, existing != null || producers.size() <= 1 ? " " + name : "", context);
     }
   }
 

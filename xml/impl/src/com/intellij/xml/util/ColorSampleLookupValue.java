@@ -35,7 +35,7 @@ import java.util.List;
  * @author maxim
  */
 public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUserLookupValue, Iconable, LookupValueWithPriority {
-  private static Object[] ourColors;
+  private static ColorSampleLookupValue[] ourColors;
   private static Map<String, String> ourColorNameToHexCodeMap;
   private static Map<String, String> ourHexCodeToColorNameMap;
 
@@ -278,6 +278,14 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
     return myName;
   }
 
+  public String getValue() {
+    return myValue;
+  }
+
+  public boolean isIsStandard() {
+    return myIsStandard;
+  }
+
   public Icon getIcon(int flags) {
     if (myColor == null) {
       if (myValue.startsWith("#")) {
@@ -307,11 +315,11 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
     return ourStandardColors.contains(s);
   }
 
-  public static Object[] getColors() {
+  public static ColorSampleLookupValue[] getColors() {
     if (ourColors == null) {
       ourColorNameToHexCodeMap = new HashMap<String, String>(25);
       ourHexCodeToColorNameMap = new HashMap<String, String>(25);
-      List<Object> colorsList = new LinkedList<Object>();
+      List<ColorSampleLookupValue> colorsList = new LinkedList<ColorSampleLookupValue>();
       StringTokenizer tokenizer = new StringTokenizer(systemColorsString, "\n");
 
       while (tokenizer.hasMoreTokens()) {
@@ -348,7 +356,7 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
         }
       }
 
-      colorsList.toArray(ourColors = new Object[colorsList.size()]);
+      colorsList.toArray(ourColors = new ColorSampleLookupValue[colorsList.size()]);
     }
 
     return ourColors;

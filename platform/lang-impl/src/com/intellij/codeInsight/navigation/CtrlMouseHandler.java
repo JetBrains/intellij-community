@@ -223,8 +223,8 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   }
 
   @Nullable
-  private static String generateInfo(PsiElement element) {
-    final DocumentationProvider documentationProvider = DocumentationManager.getProviderFromElement(element);
+  private static String generateInfo(PsiElement element, PsiElement atPointer) {
+    final DocumentationProvider documentationProvider = DocumentationManager.getProviderFromElement(element, atPointer);
 
     String info = documentationProvider.getQuickNavigateInfo(element);
     if (info != null) {
@@ -305,7 +305,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     @Nullable
     public String getInfo() {
       try {
-        return generateInfo(myTargetElement);
+        return generateInfo(myTargetElement, myElementAtPointer);
       }
       catch (IndexNotReadyException e) {
         showDumbModeNotification(myTargetElement.getProject());

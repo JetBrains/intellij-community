@@ -539,6 +539,10 @@
       <className>com.intellij.codeInsight.intention.impl.ConcatenationToMessageFormatAction</className>
       <category>I18N</category>
     </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.ConvertToBasicLatinAction</className>
+      <category>I18N</category>
+    </intentionAction>
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.AddOnDemandStaticImportAction</className>
@@ -1135,7 +1139,9 @@
                         serviceImplementation="com.intellij.profile.codeInspection.JavaAwareInspectionProfileManager"/>
     <exportable serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"/>
     <schemeOwner serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"/>
-  </extensions>
+
+    <resolveScopeEnlarger implementation="com.intellij.psi.NonClasspathResolveScopeEnlarger"/>
+    </extensions>
 
   <xi:include href="/META-INF/xdebugger.xml" xpointer="xpointer(/root/*)"/>
   <extensions defaultExtensionNs="com.intellij">

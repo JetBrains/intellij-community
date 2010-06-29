@@ -959,13 +959,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public LogicalPosition offsetToLogicalPosition(int offset, boolean softWrapAware) {
-    if (softWrapAware) {
-      return mySoftWrapModel.offsetToLogicalPosition(offset);
-    }
-
     int line = calcLogicalLineNumber(offset, false);
     int column = calcColumnNumber(offset, line, false);
-    return new LogicalPosition(line, column);
+    LogicalPosition position = new LogicalPosition(line, column);
+    if (softWrapAware) {
+      return mySoftWrapModel.adjustLogicalPosition(position, offset);
+    }
+    else {
+      return position;
+    }
   }
 
   @NotNull
@@ -1284,8 +1286,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
 
-    Rectangle viewRect = getScrollingModel().getVisibleArea();
-    if (viewRect == null) {
+    Rectangle visibleArea = getScrollingModel().getVisibleArea();
+    if (visibleArea == null) {
       return;
     }
 
@@ -1374,7 +1376,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myScheme.getDefaultForeground();
   }
 
-  public Color getBackroundColor() {
+  public Color getBackgroundColor() {
     if (myForcedBackground != null) return myForcedBackground;
 
     return getBackgroundIgnoreForced();
@@ -1382,7 +1384,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private Color getBackgroundColor(final TextAttributes attributes) {
     final Color attrColor = attributes.getBackgroundColor();
-    return attrColor == myScheme.getDefaultBackground() ? getBackroundColor() : attrColor;
+    return attrColor == myScheme.getDefaultBackground() ? getBackgroundColor() : attrColor;
   }
 
   private Color getBackgroundIgnoreForced() {
@@ -1501,7 +1503,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @SuppressWarnings({"StatementWithEmptyBody"})
   private void paintBackgrounds(Graphics g, Rectangle clip) {
-    Color defaultBackground = getBackroundColor();
+    Color defaultBackground = getBackgroundColor();
     g.setColor(defaultBackground);
     g.fillRect(clip.x, clip.y, clip.width, clip.height);
 
@@ -2140,7 +2142,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         g.setColor(savedColor);
       }
       else if (effectType == EffectType.BOLD_DOTTED_LINE) {
-        final Color bgColor = getBackroundColor();
+        final Color bgColor = getBackgroundColor();
         final int dottedAt = SystemInfo.isMac ? y : y + 1;
         UIUtil.drawBoldDottedLine((Graphics2D)g, xStart, xEnd, dottedAt, bgColor, effectColor, false);
       }
@@ -2598,12 +2600,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       throw new IndexOutOfBoundsException("Wrong offset: " + offset + " textLength: " + textLength);
     }
 
+    int lineIndex = myDocument.getLineNumber(offset);
+    LOG.assertTrue(lineIndex >= 0 && lineIndex < myDocument.getLineCount());
+
     if (softWrapAware) {
-      return mySoftWrapModel.offsetToLogicalPosition(offset).line;
+      int column = calcColumnNumber(offset, lineIndex, false);
+      return mySoftWrapModel.adjustLogicalPosition(new LogicalPosition(lineIndex, column), offset).line;
     }
     else {
-      int lineIndex = myDocument.getLineNumber(offset);
-      LOG.assertTrue(lineIndex >= 0 && lineIndex < myDocument.getLineCount());
       return lineIndex;
     }
   }
@@ -2615,14 +2619,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public int calcColumnNumber(int offset, int lineIndex, boolean softWrapAware) {
     if (myDocument.getTextLength() == 0) return 0;
 
+    CharSequence text = myDocument.getCharsSequence();
+    int start = myDocument.getLineStartOffset(lineIndex);
+    if (start == offset) return 0;
+    int column = EditorUtil.calcColumnNumber(this, text, start, offset, EditorUtil.getTabSize(this));
+
     if (softWrapAware) {
-      return mySoftWrapModel.offsetToLogicalPosition(offset).column;
+    int line = calcLogicalLineNumber(offset, false);
+      return mySoftWrapModel.adjustLogicalPosition(new LogicalPosition(line, column), offset).column;
     }
     else {
-      CharSequence text = myDocument.getCharsSequence();
-      int start = myDocument.getLineStartOffset(lineIndex);
-      if (start == offset) return 0;
-      return EditorUtil.calcColumnNumber(this, text, start, offset, EditorUtil.getTabSize(this));
+      return column;
     }
   }
 
@@ -3148,7 +3155,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       else {
         Color background = myScheme.getColor(EditorColors.CARET_ROW_COLOR);
-        if (background == null) background = getBackroundColor();
+        if (background == null) background = getBackgroundColor();
         g.setXORMode(background);
 
         g.fillRect(x, y, myWidth, lineHeight - 1);
@@ -3668,6 +3675,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return r[0];
     }
 
+    @Nullable
     public AttributedCharacterIterator cancelLatestCommittedText(AttributedCharacterIterator.Attribute[] attributes) {
       return null;
     }
@@ -3707,6 +3715,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return r;
     }
 
+    @Nullable
     public TextHitInfo getLocationOffset(int x, int y) {
       if (composedText != null) {
         Point p = getContentComponent().getLocationOnScreen();

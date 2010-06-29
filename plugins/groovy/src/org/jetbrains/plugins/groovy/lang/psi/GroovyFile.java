@@ -19,6 +19,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.FileResolveScopeProvider;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
@@ -33,6 +34,7 @@ public interface GroovyFile extends GroovyFileBase, FileResolveScopeProvider {
   @NotNull
   String getPackageName();
 
+  @Nullable
   GrPackageDefinition getPackageDefinition();
 
   void setPackageName(String packageName);

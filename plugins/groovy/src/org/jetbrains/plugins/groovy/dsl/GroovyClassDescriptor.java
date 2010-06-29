@@ -15,8 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.dsl;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import org.codehaus.groovy.runtime.GroovyCategorySupport;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
 * @author peter
 */
-class GroovyClassDescriptor implements ClassDescriptor {
+public class GroovyClassDescriptor {
   static {
     try {
       final AtomicInteger integer = GroovyCategorySupport.getCategoryNameUsage("aaa");
@@ -39,10 +42,23 @@ class GroovyClassDescriptor implements ClassDescriptor {
 
   private final PsiClass myPsiClass;
   private final PsiElement myPlace;
+  private final PsiFile myFile;
+  private final boolean myPlaceDependent;
+  private boolean myPlaceElementAccessed;
 
-  public GroovyClassDescriptor(@NotNull PsiClass psiClass, PsiElement place) {
+  public GroovyClassDescriptor(@NotNull PsiClass psiClass, PsiElement place, boolean placeDependent, final PsiFile placeFile) {
     myPsiClass = psiClass;
     myPlace = place;
+    myPlaceDependent = placeDependent;
+    myFile = placeFile;
+  }
+
+  public Project getProject() {
+    return myPlace.getProject();
+  }
+
+  public GlobalSearchScope getResolveScope() {
+    return myPlace.getResolveScope();
   }
 
   @Nullable
@@ -55,11 +71,20 @@ class GroovyClassDescriptor implements ClassDescriptor {
   }
 
   public PsiElement getPlace() {
+    myPlaceElementAccessed = true;
     return myPlace;
   }
 
   public PsiClass getPsiClass() {
     return myPsiClass;
+  }
+
+  public PsiFile getPlaceFile() {
+    return myFile;
+  }
+
+  public boolean placeAccessed() {
+    return myPlaceElementAccessed;
   }
 
   @Override
@@ -71,11 +96,19 @@ class GroovyClassDescriptor implements ClassDescriptor {
 
     if (!myPsiClass.equals(that.myPsiClass)) return false;
 
+    if (myPlaceDependent) {
+      return myPlace.equals(that.myPlace);
+    }
+
     return true;
   }
 
   @Override
   public int hashCode() {
-    return myPsiClass.hashCode() * 31 + myPlace.hashCode();
+    int result = myPsiClass.hashCode();
+    if (myPlaceDependent) {
+      return result * 31 + myPlace.hashCode();
+    }
+    return result;
   }
 }

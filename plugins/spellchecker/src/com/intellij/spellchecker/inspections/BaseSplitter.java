@@ -17,14 +17,12 @@ package com.intellij.spellchecker.inspections;
 
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.spellchecker.util.Strings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -134,11 +132,7 @@ public abstract class BaseSplitter implements Splitter {
   }
 
   public static void checkCancelled() {
-    try {
-      ProgressManager.checkCanceled();
-    }
-    catch (Throwable ignored) {
-    }
+    ProgressManager.checkCanceled();
   }
 
 

@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.groovy.gant.completion;
+package org.jetbrains.plugins.groovy.gant;
 
 
 import com.intellij.openapi.util.io.FileUtil
@@ -10,7 +10,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author peter
  */
-public class StandaloneGantCompletionTest extends LightCodeInsightFixtureTestCase {
+public class StandaloneGantTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
@@ -45,6 +45,29 @@ target(aaa: "") {
 
   public void testPatternset() throws Exception {
     checkVariants "ant.patt<caret>t", "patternset"
+  }
+
+  public void testOptionalArgumentsHighlighting() throws Exception {
+    myFixture.configureByText "a.gant", """
+    ant.java(classname: "com.intellij.util.io.zip.ReorderJarsMain", fork: "true") {
+      arg(value: "aaa")
+      classpath {
+        pathelement(location: "sss")
+      }
+    }
+"""
+    myFixture.checkHighlighting(true, false, false)
+  }
+
+  public void testPathElement() throws Exception {
+    checkVariants """
+    ant.java(classname: "com.intellij.util.io.zip.ReorderJarsMain", fork: "true") {
+      arg(value: "aaa")
+      classpath {
+        pathele<caret>ment(location: "sss")
+      }
+    }
+""", "pathelement"
   }
 
   static final def GANT_JARS = ["gant.jar", "ant.jar", "ant-junit.jar", "ant-launcher.jar", "commons.jar"]

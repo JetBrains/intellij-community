@@ -251,4 +251,6 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testDuplicateParameterInClosableBlock() throws Exception {doTest();}
 
   public void testCyclicInheritance() throws Exception {doTest();}
+
+  public void testNoDefaultConstructor() throws Exception {doTest();}
 }

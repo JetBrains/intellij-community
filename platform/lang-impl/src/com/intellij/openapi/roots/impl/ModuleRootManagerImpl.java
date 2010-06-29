@@ -16,7 +16,6 @@
 
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -204,9 +203,9 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     Set<VirtualFilePointer> cachedFiles = myCachedFiles.get(type);
     if (cachedFiles == null) {
       cachedFiles = new LinkedHashSet<VirtualFilePointer>();
-      final Iterator orderIterator = myRootModel.getOrderIterator();
+      final Iterator<OrderEntry> orderIterator = myRootModel.getOrderIterator();
       while (orderIterator.hasNext()) {
-        OrderEntry entry = (OrderEntry)orderIterator.next();
+        OrderEntry entry = orderIterator.next();
         final String [] urls;
         if (entry instanceof ModuleOrderEntryImpl) {
           List<String> list = ((ModuleOrderEntryImpl)entry).getUrls(type, processed);
@@ -358,13 +357,16 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     return myRootModel.processOrder(policy, initialValue);
   }
 
+  @NotNull
+  @Override
+  public OrderEnumerator orderEntries() {
+    return myRootModel.orderEntries();
+  }
+
   List<String> getUrlsForOtherModules(OrderRootType rootType, Set<Module> processed) {
     List<String> result = new ArrayList<String>();
-    if (OrderRootType.SOURCES.equals(rootType) || OrderRootType.COMPILATION_CLASSES.equals(rootType) || OrderRootType.PRODUCTION_COMPILATION_CLASSES.equals(rootType)) {
-      addExportedUrls(myRootModel, rootType, result, processed);
-      return result;
-    }
-    else if (OrderRootType.CLASSES.equals(rootType)) {
+    if (OrderRootType.SOURCES.equals(rootType) || OrderRootType.COMPILATION_CLASSES.equals(rootType)
+        || OrderRootType.PRODUCTION_COMPILATION_CLASSES.equals(rootType) || OrderRootType.CLASSES.equals(rootType)) {
       addExportedUrls(myRootModel, rootType, result, processed);
       return result;
     }
@@ -396,10 +398,8 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     if (filePointers == null) {
       filePointers = new LinkedHashSet<VirtualFilePointer>();
       List<String> result = new ArrayList<String>();
-      if (OrderRootType.SOURCES.equals(rootType) || OrderRootType.COMPILATION_CLASSES.equals(rootType) || OrderRootType.PRODUCTION_COMPILATION_CLASSES.equals(rootType)) {
-        addExportedUrls(myRootModel, rootType, result, processed);
-      }
-      else if (OrderRootType.CLASSES.equals(rootType)) {
+      if (OrderRootType.SOURCES.equals(rootType) || OrderRootType.COMPILATION_CLASSES.equals(rootType)
+          || OrderRootType.PRODUCTION_COMPILATION_CLASSES.equals(rootType) || OrderRootType.CLASSES.equals(rootType)) {
         addExportedUrls(myRootModel, rootType, result, processed);
       }
       else if (OrderRootType.CLASSES_AND_OUTPUT.equals(rootType)) {
