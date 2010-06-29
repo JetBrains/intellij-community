@@ -120,7 +120,7 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
 
           final DomExtensionImpl extension = registrar.getCustomChildrenType();
           if (extension != null) {
-            myCustomChildren = new CustomDomChildrenDescriptionImpl(null, extension.getType());
+            myCustomChildren = new CustomDomChildrenDescriptionImpl(null, extension.getType(), extension.getTagNameDescriptor());
             clearSubTags = true;
           }
 
