@@ -142,6 +142,7 @@
   <extensionPoint name="roots.watchedRootsProvider" interface="com.intellij.openapi.roots.WatchedRootsProvider" area="IDEA_PROJECT"/>
   <extensionPoint name="moduleExtension" interface="com.intellij.openapi.roots.ModuleExtension" area="IDEA_MODULE"/>
   <extensionPoint name="orderRootType" interface="com.intellij.openapi.roots.OrderRootType"/>
+  <extensionPoint name="orderEnumerationHandler" interface="com.intellij.openapi.roots.OrderEnumerationHandler"/>
   <extensionPoint name="directoryIndexExcludePolicy" interface="com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy"
                   area="IDEA_PROJECT"/>
 

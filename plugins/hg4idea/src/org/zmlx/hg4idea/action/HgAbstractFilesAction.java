@@ -14,6 +14,7 @@ package org.zmlx.hg4idea.action;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -23,10 +24,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.zmlx.hg4idea.HgUtil;
 import org.zmlx.hg4idea.HgVcs;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.LinkedList;
 import java.util.List;
 
 abstract class HgAbstractFilesAction extends AnAction {
+
+  private static final Logger LOG = Logger.getInstance(HgAbstractGlobalAction.class.getName());
 
   protected abstract boolean isEnabled(Project project, HgVcs vcs, VirtualFile file);
 
@@ -44,7 +48,7 @@ abstract class HgAbstractFilesAction extends AnAction {
 
     project.save();
 
-    final HgVcs vcs = getHgVcs(project);
+    final HgVcs vcs = HgVcs.getInstance(project);
     if (!ProjectLevelVcsManager.getInstance(project).checkAllFilesAreUnder(vcs, files)) {
       return;
     }
@@ -81,7 +85,7 @@ abstract class HgAbstractFilesAction extends AnAction {
       return;
     }
 
-    HgVcs vcs = getHgVcs(project);
+    HgVcs vcs = HgVcs.getInstance(project);
     if (!vcs.isStarted()) {
       presentation.setEnabled(false);
       return;
@@ -124,13 +128,15 @@ abstract class HgAbstractFilesAction extends AnAction {
       }
     });
 
-    for (VirtualFile file : enabledFiles) {
-      HgUtil.markFileDirty(project, file);
+    try {
+      for (VirtualFile file : enabledFiles) {
+          HgUtil.markFileDirty(project, file);
+      }
+    } catch (InvocationTargetException e) {
+      LOG.error("Exception while marking files dirty", e);
+    } catch (InterruptedException e) {
+      LOG.error("Exception while marking files dirty", e);
     }
-  }
-
-  private HgVcs getHgVcs(Project project) {
-    return (HgVcs) ProjectLevelVcsManager.getInstance(project).findVcsByName(HgVcs.VCS_NAME);
   }
 
 }

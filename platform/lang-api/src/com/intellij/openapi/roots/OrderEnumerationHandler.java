@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.execution.configurations;
+package com.intellij.openapi.roots;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootsTraversing;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-public interface JavaClasspathPolicyExtender {
-  ExtensionPointName<JavaClasspathPolicyExtender> EP_NAME = ExtensionPointName.create("com.intellij.javaClasspathPolicyExtender");
+import java.util.List;
 
-  @NotNull
-  ProjectRootsTraversing.RootTraversePolicy extend(Project project, @NotNull ProjectRootsTraversing.RootTraversePolicy policy);
+/**
+ * @author nik
+ */
+public abstract class OrderEnumerationHandler {
+  public static final ExtensionPointName<OrderEnumerationHandler> EP_NAME = ExtensionPointName.create("com.intellij.orderEnumerationHandler");
 
-  @NotNull
-  ProjectRootsTraversing.RootTraversePolicy extend(Module module, @NotNull ProjectRootsTraversing.RootTraversePolicy policy);
+  public abstract boolean isApplicable(@NotNull Project project);
+
+  public abstract boolean isApplicable(@NotNull Module module);
+
+  public boolean shouldProcessRecursively(@NotNull ModuleOrderEntry dependency) {
+    return true;
+  }
+
+  public boolean addCustomOutput(@NotNull ModuleOrderEntry orderEntry, boolean productionOnly, @NotNull List<VirtualFile> result) {
+    return false;
+  }
 }

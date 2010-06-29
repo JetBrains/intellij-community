@@ -18,17 +18,22 @@ package org.jetbrains.idea.maven.execution;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import junit.framework.Test;
 import junit.framework.TestSuite;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -304,6 +309,7 @@ public class JavaClasspathConfigurationTest extends MavenImportingTestCase {
   }
 
   public void testOptionalLibraryDependencies() throws Exception {
+    createRepositoryFile("jmock/jmock/1.0/jmock-1.0.jar");
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
                                            "<artifactId>m1</artifactId>" +
                                            "<version>1</version>" +
@@ -419,6 +425,7 @@ public class JavaClasspathConfigurationTest extends MavenImportingTestCase {
   }
 
   public void testDoNotIncludeProvidedAndTestDependenciesInProductionClasspath() throws Exception {
+    createRepositoryFile("jmock/jmock/4.0/jmock-4.0.jar");
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
                                            "<artifactId>m1</artifactId>" +
                                            "<version>1</version>" +
@@ -479,6 +486,7 @@ public class JavaClasspathConfigurationTest extends MavenImportingTestCase {
   }
 
   public void testDoNotIncludeProvidedAndTestTransitiveDependencies() throws Exception {
+    createRepositoryFile("jmock/jmock/1.0/jmock-1.0.jar");
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
                                            "<artifactId>m1</artifactId>" +
                                            "<version>1</version>" +
@@ -604,6 +612,7 @@ public class JavaClasspathConfigurationTest extends MavenImportingTestCase {
   }
 
   private void assertModuleClasspath(String moduleName, int classpathType, String... paths) throws CantRunException {
+    createOutputDirectories();
     JavaParameters params = new JavaParameters();
     params.configureByModule(getModule(moduleName), classpathType);
     List<String> systemPaths = new ArrayList<String>();
@@ -611,5 +620,32 @@ public class JavaClasspathConfigurationTest extends MavenImportingTestCase {
       systemPaths.add(FileUtil.toSystemDependentName(each));
     }
     assertOrderedElementsAreEqual(params.getClassPath().getPathList(), systemPaths);
+  }
+
+  private void createRepositoryFile(String filePath) throws IOException {
+    createProjectSubFile("repo/" + filePath);
+    setRepositoryPath(createProjectSubDir("repo").getPath());
+  }
+
+  private void createOutputDirectories() {
+    for (Module module : ModuleManager.getInstance(myProject).getModules()) {
+      final CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
+      if (extension != null) {
+        createDirectoryIfDoesntExist(extension.getCompilerOutputUrl());
+        createDirectoryIfDoesntExist(extension.getCompilerOutputUrlForTests());
+      }
+    }
+  }
+
+  private static void createDirectoryIfDoesntExist(@Nullable String url) {
+    if (StringUtil.isEmpty(url)) return;
+
+    File file = new File(FileUtil.toSystemDependentName(VfsUtil.urlToPath(url)));
+    if (file.exists()) return;
+
+    if (!file.mkdirs()) {
+      fail("Cannot create directory " + file);
+    }
+    VirtualFileManager.getInstance().refreshAndFindFileByUrl(url);
   }
 }

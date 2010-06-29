@@ -239,8 +239,11 @@ public class EditorActionUtil {
       }
       else {
         column = findFirstNonSpaceColumnOnTheLine(editor, currentVisCaret.line);
+        if (column == currentVisCaret.column) {
+          column = 0;
+        }
       }
-      caretModel.moveToVisualPosition(new VisualPosition(line, column));
+      caretModel.moveToVisualPosition(new VisualPosition(line, Math.max(column, 0)));
     }
     else {
       LogicalPosition logLineEndLog = editor.offsetToLogicalPosition(document.getLineEndOffset(logLineToUse));

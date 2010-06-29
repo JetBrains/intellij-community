@@ -2418,7 +2418,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   int getVisibleLineCount() {
-    int line = getDocument().getLineCount();
+    int line = getDocument().getLineCount() + getSoftWrapModel().getSoftWrapsIntroducedLinesNumber();
     line -= myFoldingModel.getFoldedLinesCountBefore(getDocument().getTextLength() + 1);
     return line;
   }

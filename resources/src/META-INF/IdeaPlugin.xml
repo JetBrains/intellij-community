@@ -32,9 +32,6 @@
     <extensionPoint name="junitPatcher"
                     interface="com.intellij.execution.JUnitPatcher"/>
 
-    <extensionPoint name="javaClasspathPolicyExtender"
-                    interface="com.intellij.execution.configurations.JavaClasspathPolicyExtender"/>
-
     <extensionPoint name="i18nInspectionTool"
                     interface="com.intellij.codeInspection.FileCheckingInspection"/>
     <extensionPoint name="invalidPropertyKeyInspectionTool"

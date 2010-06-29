@@ -12,18 +12,20 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.intellij.openapi.application.*;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vfs.*;
-import com.intellij.vcsUtil.*;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.GuiUtils;
+import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.command.HgRemoveCommand;
 
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 /**
@@ -61,66 +63,41 @@ public abstract class HgUtil {
     return tempFile;
   }
 
-  public static void markDirectoryDirty( final Project project, final FilePath file ) {
-    Application application = ApplicationManager.getApplication();
-    application.runReadAction(new Runnable() {
+  public static void markDirectoryDirty(final Project project, final VirtualFile file) throws InvocationTargetException, InterruptedException {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(file);
       }
-    } );
-    application.runWriteAction(new Runnable() {
-      public void run() {
-        VirtualFile virtualFile = VcsUtil.getVirtualFile(file.getPath());
-        if (virtualFile != null) {
-          virtualFile.refresh(true, true);
-        }
-      }
-    } );
-  }
-
-  public static void markDirectoryDirty( final Project project, final VirtualFile file ) {
-    Application application = ApplicationManager.getApplication();
-    application.runReadAction(new Runnable() {
-      public void run() {
-        VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(file);
-      }
-    } );
-    application.runWriteAction(new Runnable() {
+    });
+    runWriteActionAndWait(new Runnable() {
       public void run() {
         file.refresh(true, true);
       }
-    } );
+    });
   }
 
-  public static void markFileDirty( final Project project, final FilePath file ) {
-    Application application = ApplicationManager.getApplication();
-    application.runReadAction(new Runnable() {
+  public static void markFileDirty( final Project project, final VirtualFile file ) throws InvocationTargetException, InterruptedException {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         VcsDirtyScopeManager.getInstance(project).fileDirty(file);
       }
     } );
-    application.runWriteAction(new Runnable() {
-      public void run() {
-        VirtualFile virtualFile = VcsUtil.getVirtualFile(file.getPath());
-        if (virtualFile != null) {
-          virtualFile.refresh(true, false);
-        }
-      }
-    } );
-  }
-
-  public static void markFileDirty( final Project project, final VirtualFile file ) {
-    Application application = ApplicationManager.getApplication();
-    application.runReadAction(new Runnable() {
-      public void run() {
-        VcsDirtyScopeManager.getInstance(project).fileDirty(file);
-      }
-    } );
-    application.runWriteAction(new Runnable() {
+    runWriteActionAndWait(new Runnable() {
       public void run() {
         file.refresh(true, false);
       }
-    } );
+    });
+  }
+
+  /**
+   * Runs the given task as a write action in the event dispatching thread.
+   */
+  public static void runWriteActionAndWait(@NotNull final Runnable runnable) throws InvocationTargetException, InterruptedException {
+    GuiUtils.runOrInvokeAndWait(new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(runnable);
+      }
+    });
   }
 
   /**

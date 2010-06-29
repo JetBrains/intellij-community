@@ -16,12 +16,16 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathsList;
 import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -40,6 +44,18 @@ public abstract class OrderEnumeratorBase extends OrderEnumerator {
   private boolean myRecursivelyExportedOnly;
   private boolean myExportedOnly;
   private Condition<OrderEntry> myCondition;
+  private List<OrderEnumerationHandler> myCustomHandlers;
+
+  public OrderEnumeratorBase(@Nullable Module module, @NotNull Project project) {
+    for (OrderEnumerationHandler handler : OrderEnumerationHandler.EP_NAME.getExtensions()) {
+      if (handler.isApplicable(project) && (module == null || handler.isApplicable(module))) {
+        if (myCustomHandlers == null) {
+          myCustomHandlers = new SmartList<OrderEnumerationHandler>();
+        }
+        myCustomHandlers.add(handler);
+      }
+    }
+  }
 
   @Override
   public OrderEnumerator productionOnly() {
@@ -148,12 +164,21 @@ public abstract class OrderEnumeratorBase extends OrderEnumerator {
     forEach(new Processor<OrderEntry>() {
       @Override
       public boolean process(OrderEntry orderEntry) {
+        final Module ownerModule = orderEntry.getOwnerModule();
         if (orderEntry instanceof ModuleSourceOrderEntry) {
           collectModulePaths(((ModuleSourceOrderEntry)orderEntry).getRootModel(), list, collectSources);
         }
         else if (orderEntry instanceof ModuleOrderEntry) {
-          final Module module = ((ModuleOrderEntry)orderEntry).getModule();
+          ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)orderEntry;
+          final Module module = moduleOrderEntry.getModule();
           if (module != null) {
+            if (myCustomHandlers != null) {
+              for (OrderEnumerationHandler handler : myCustomHandlers) {
+                if (handler.addCustomOutput(moduleOrderEntry, myProductionOnly, list)) {
+                  return true;
+                }
+              }
+            }
             collectModulePaths(ModuleRootManager.getInstance(module), list, collectSources);
           }
         }
@@ -179,9 +204,13 @@ public abstract class OrderEnumeratorBase extends OrderEnumerator {
       if (entry instanceof ExportableOrderEntry) {
         ExportableOrderEntry exportableEntry = (ExportableOrderEntry)entry;
         final DependencyScope scope = exportableEntry.getScope();
-        if (myProductionOnly && !scope.isForProductionCompile() && !scope.isForProductionRuntime()) continue;
         if (myCompileOnly && !scope.isForProductionCompile() && !scope.isForTestCompile()) continue;
         if (myRuntimeOnly && !scope.isForProductionRuntime() && !scope.isForTestRuntime()) continue;
+        if (myProductionOnly) {
+          if (!scope.isForProductionCompile() && !scope.isForProductionRuntime()
+            || myCompileOnly && !scope.isForProductionCompile()
+            || myRuntimeOnly && !scope.isForProductionRuntime()) continue;
+        }
         if (!exportableEntry.isExported()) {
           if (myExportedOnly) continue;
           if (myRecursivelyExportedOnly && !firstLevel) continue;
@@ -191,10 +220,23 @@ public abstract class OrderEnumeratorBase extends OrderEnumerator {
       if (myCondition != null && !myCondition.value(entry)) continue;
 
       if (myRecursively && entry instanceof ModuleOrderEntry) {
-        final Module module = ((ModuleOrderEntry)entry).getModule();
+        ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)entry;
+        final Module module = moduleOrderEntry.getModule();
         if (module != null) {
-          processEntries(ModuleRootManager.getInstance(module), processor, processed, false);
-          continue;
+          boolean processRecursively = true;
+          if (myCustomHandlers != null) {
+            for (OrderEnumerationHandler handler : myCustomHandlers) {
+              if (!handler.shouldProcessRecursively(moduleOrderEntry)) {
+                processRecursively = false;
+                break;
+              }
+            }
+          }
+
+          if (processRecursively) {
+            processEntries(ModuleRootManager.getInstance(module), processor, processed, false);
+            continue;
+          }
         }
       }
 
