@@ -22,6 +22,10 @@ import com.intellij.util.SmartList;
 
 import java.util.List;
 
+/**
+ * @deprecated use {@link com.intellij.openapi.roots.OrderEnumerator} instead
+ */
+@Deprecated
 public class ProjectClasspathTraversing {
   public static final AddModuleOutput ALL_OUTPUTS = new AddModuleOutput(true);
   public static final AddModuleOutput GENERAL_OUTPUT = new AddModuleOutput(false);

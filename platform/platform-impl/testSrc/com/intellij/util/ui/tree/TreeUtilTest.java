@@ -16,6 +16,7 @@
 package com.intellij.util.ui.tree;
 
 import com.intellij.ui.TreeExpandCollapse;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Assertion;
 import junit.framework.TestCase;
 
@@ -46,7 +47,7 @@ public class TreeUtilTest extends TestCase {
     model.insertNodeInto(child2, root, 1);
     DefaultMutableTreeNode child11 = new DefaultMutableTreeNode("11");
     model.insertNodeInto(child11, child1, 0);
-    JTree tree = new JTree(model);
+    JTree tree = new Tree(model);
     TreeExpandCollapse.expandAll(tree);
     tree.clearSelection();
     TreeUtil.removeSelected(tree);
@@ -75,7 +76,7 @@ public class TreeUtilTest extends TestCase {
     model.insertNodeInto(node1, root, 0);
     DefaultMutableTreeNode node2 = new DefaultMutableTreeNode("2");
     model.insertNodeInto(node2, node1, 0);
-    JTree tree = new JTree(model);
+    JTree tree = new Tree(model);
     TreeExpandCollapse.expandAll(tree);
     tree.setSelectionPath(TreeUtil.getPathFromRoot(node2));
     TreeUtil.removeSelected(tree);
@@ -91,7 +92,7 @@ public class TreeUtilTest extends TestCase {
     model.insertNodeInto(middle, root, 1);
     DefaultMutableTreeNode last = new DefaultMutableTreeNode("3");
     model.insertNodeInto(last, root, 2);
-    JTree tree = new JTree(model);
+    JTree tree = new Tree(model);
     tree.setSelectionPath(TreeUtil.getPathFromRoot(last));
     TreeUtil.removeSelected(tree);
     assertSame(middle, tree.getSelectionPath().getLastPathComponent());

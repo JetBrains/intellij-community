@@ -33,6 +33,8 @@ import java.awt.event.ComponentEvent;
  * @author Vladimir Kondratyev
  */
 public abstract class WindowManagerEx extends WindowManager {
+  public static enum WindowShadowMode { NORMAL, SMALL, DISABLED }
+
   public static WindowManagerEx getInstanceEx(){
     return (WindowManagerEx)WindowManager.getInstance();
   }
@@ -114,6 +116,8 @@ public abstract class WindowManagerEx extends WindowManager {
   public abstract void setAlphaModeRatio(Window window,float ratio);
 
   public abstract void setWindowMask(Window window, Shape mask);
+
+  public abstract void setWindowShadow(Window window, WindowShadowMode mode);
 
   public abstract void resetWindow(final Window window);
 

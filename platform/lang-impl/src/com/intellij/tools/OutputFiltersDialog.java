@@ -22,6 +22,7 @@ package com.intellij.tools;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBList;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -32,7 +33,7 @@ import java.awt.event.ActionListener;
 
 class OutputFiltersDialog extends DialogWrapper {
   private final DefaultListModel myFiltersModel = new DefaultListModel();
-  private final JList myFiltersList = new JList(myFiltersModel);
+  private final JList myFiltersList = new JBList(myFiltersModel);
   private final JButton myAddButton = new JButton(ToolsBundle.message("tools.filters.add.button"));
   private final JButton myEditButton = new JButton(ToolsBundle.message("tools.filters.edit.button"));
   private final JButton myRemoveButton = new JButton(ToolsBundle.message("tools.filters.remove.button"));

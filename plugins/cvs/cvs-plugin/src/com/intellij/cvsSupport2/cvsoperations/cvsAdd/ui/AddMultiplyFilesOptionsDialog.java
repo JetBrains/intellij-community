@@ -217,7 +217,6 @@ public class AddMultiplyFilesOptionsDialog extends AbstractAddOptionsDialog {
     myTreeTable.setRootVisible(false);
 
     myTreeTable.getTree().setCellRenderer(new AddedFileCellRenderer());
-    TreeUIHelper.getInstance().installToolTipHandler(myTreeTable);
     TreeUtil.installActions(myTreeTable.getTree());
   }
 

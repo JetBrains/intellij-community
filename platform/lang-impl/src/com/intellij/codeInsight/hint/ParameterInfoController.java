@@ -251,7 +251,7 @@ public class ParameterInfoController {
     JLayeredPane layeredPane = myEditor.getComponent().getRootPane().getLayeredPane();
     p.x = Math.min(p.x, layeredPane.getWidth() - hintSize.width);
     p.x = Math.max(p.x, 0);
-    myHint.setBounds(p.x, p.y,hintSize.width,hintSize.height);
+    myHint.updateBounds(p.x, p.y);
   }
 
   private void addAlarmRequest(){

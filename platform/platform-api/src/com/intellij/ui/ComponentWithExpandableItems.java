@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ui;
 
-import com.intellij.openapi.components.ServiceManager;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
-public abstract class ToolTipHandlerProvider {
-  public static ToolTipHandlerProvider getToolTipHandlerProvider() {
-    return ServiceManager.getService(ToolTipHandlerProvider.class);
-  }
-
-  public abstract void install(JComponent component);
+public interface ComponentWithExpandableItems<T> {
+  @NotNull
+  ExpandableItemsHandler<T> getExpandableItemsHandler();
 }

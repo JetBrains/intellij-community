@@ -305,12 +305,23 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     }
   }
 
+  @Override
+  public void setWindowShadow(Window window, WindowShadowMode mode) {
+    if (window instanceof JWindow) {
+      JRootPane root = ((JWindow)window).getRootPane();
+
+      root.putClientProperty("Window.shadow", mode == WindowShadowMode.DISABLED ? Boolean.FALSE : Boolean.TRUE);
+      root.putClientProperty("Window.style", mode == WindowShadowMode.SMALL ? "small" : null);
+    }
+  }
+
   public void resetWindow(final Window window) {
     try {
       if (!isAlphaModeSupported()) return;
 
       WindowUtils.setWindowMask(window, (Shape)null);
       setAlphaMode(window, 0f);
+      setWindowShadow(window, WindowShadowMode.NORMAL);
     }
     catch (Throwable e) {
       LOG.debug(e);

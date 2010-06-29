@@ -13,22 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.ui;
+package com.intellij.ui;
 
-import com.intellij.ui.table.JBTable;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.table.TableModel;
+import java.util.Collection;
 
-
-/**
- * @deprecated use {@link com.intellij.ui.table.JBTable}
- */
-public class Table extends JBTable {
-  public Table() {
-    super();
-  }
-
-  public Table(final TableModel model) {
-    super(model);
-  }
+public interface ExpandableItemsHandler<T> {
+  @NotNull
+  Collection<T> getExpandedItems();
 }

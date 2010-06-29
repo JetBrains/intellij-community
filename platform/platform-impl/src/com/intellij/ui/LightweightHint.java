@@ -89,13 +89,13 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
     myComponent.registerKeyboardAction(myEscListener, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
                                        JComponent.WHEN_IN_FOCUSED_WINDOW);
     final JLayeredPane layeredPane = parentComponent.getRootPane().getLayeredPane();
-    if (!myForceShowAsPopup && (myForceLightweightPopup || fitsLayeredPane(layeredPane, myComponent, new RelativePoint(parentComponent, new Point(x, y))))) {
+    if (!myForceShowAsPopup &&
+        (myForceLightweightPopup || fitsLayeredPane(layeredPane, myComponent, new RelativePoint(parentComponent, new Point(x, y))))) {
       beforeShow();
       final Dimension preferredSize = myComponent.getPreferredSize();
       final Point layeredPanePoint = SwingUtilities.convertPoint(parentComponent, x, y, layeredPane);
 
       myComponent.setBounds(layeredPanePoint.x, layeredPanePoint.y, preferredSize.width, preferredSize.height);
-
       layeredPane.add(myComponent, Integer.valueOf(250 + layeredPane.getComponentCount()));
 
       myComponent.validate();
@@ -108,7 +108,9 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
         .setResizable(myForceShowAsPopup)
         .setMovable(myForceShowAsPopup)
         .setTitle(myTitle)
+        .setShowShadow(false)
         .createPopup();
+
       beforeShow();
       myPopup.show(new RelativePoint(myParentComponent, new Point(x, y)));
     }
@@ -131,48 +133,6 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
     final EventListener[] listeners = myListenerList.getListeners(HintListener.class);
     for (EventListener listener : listeners) {
       ((HintListener)listener).hintHidden(new EventObject(this));
-    }
-  }
-
-  /**
-   * Sets location of the hint in the layered pane coordinate system.
-   */
-  public final void setLocation(final int x, final int y) {
-    if (myIsRealPopup) {
-      if (myPopup == null) return;
-      ((AbstractPopup)myPopup).setLocation(new RelativePoint(myParentComponent, new Point(x, y)));
-    }
-    else {
-      myComponent.setLocation(x, y);
-
-      final Dimension preferredSize = myComponent.getPreferredSize();
-      if (!preferredSize.equals(myComponent.getSize())) {
-        final JLayeredPane layeredPane = myParentComponent.getRootPane().getLayeredPane();
-        final Point layeredPanePoint = SwingUtilities.convertPoint(myParentComponent, x, y, layeredPane);
-        myComponent.setBounds(layeredPanePoint.x, layeredPanePoint.y, preferredSize.width, preferredSize.height);
-      }
-
-      myComponent.validate();
-      myComponent.repaint();
-    }
-  }
-
-  /**
-   * x and y are in layered pane coordinate system
-   */
-  public final void setBounds(final int x, final int y, final int width, final int height) {
-    if (myIsRealPopup) {
-      setLocation(x, y);
-
-      if (myPopup != null) {
-        myPopup.setSize(new Dimension(width, height));
-      }
-    }
-    else {
-      myComponent.setBounds(x, y, width, height);
-      myComponent.setLocation(x, y);
-      myComponent.validate();
-      myComponent.repaint();
     }
   }
 
@@ -204,7 +164,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
           final JLayeredPane layeredPane = rootPane.getLayeredPane();
 
           try {
-            if(myFocusBackComponent != null){
+            if (myFocusBackComponent != null) {
               LayoutFocusTraversalPolicyExt.setOverridenDefaultComponent(myFocusBackComponent);
             }
             layeredPane.remove(myComponent);
@@ -221,6 +181,36 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
       myComponent.unregisterKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0));
     }
     fireHintHidden();
+  }
+
+  @Override
+  public void updateBounds() {
+    updateBounds(-1, -1, false);
+  }
+
+  @Override
+  public void updateBounds(int x, int y) {
+    updateBounds(x, y, true);
+  }
+
+  private void updateBounds(int x, int y, boolean updateLocation) {
+    if (myIsRealPopup) {
+      if (myPopup == null) return;
+      if (updateLocation) ((AbstractPopup)myPopup).setLocation(new RelativePoint(myParentComponent, new Point(x, y)));
+      myPopup.setSize(myComponent.getPreferredSize());
+    }
+    else {
+      if (updateLocation) {
+        JLayeredPane layeredPane = myParentComponent.getRootPane().getLayeredPane();
+        myComponent.setLocation(SwingUtilities.convertPoint(myParentComponent, x, y, layeredPane));
+
+      }
+      Dimension preferredSize = myComponent.getPreferredSize();
+      myComponent.setSize(preferredSize.width, preferredSize.height);
+
+      myComponent.validate();
+      myComponent.repaint();
+    }
   }
 
   public final JComponent getComponent() {

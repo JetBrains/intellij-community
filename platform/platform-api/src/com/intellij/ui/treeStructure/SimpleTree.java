@@ -110,7 +110,6 @@ public class SimpleTree extends Tree implements CellEditorListener {
 
   protected void configureUiHelper(final TreeUIHelper helper) {
     helper.installTreeSpeedSearch(this);
-    helper.installToolTipHandler(this);
   }
 
   @Override

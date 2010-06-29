@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
@@ -232,7 +233,7 @@ public class SelectBranchPopup {
       System.arraycopy(branches.toArray(), 0, items, 0, branches.size());
       items[items.length - 1] = REFRESH_MESSAGE;
 
-      final JList branchList = new JList(items);
+      final JList branchList = new JBList(items);
       branchList.setCellRenderer(new BranchRenderer());
       final JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(branchList)
         .setTitle(SVNPathUtil.tail(selectedValue))

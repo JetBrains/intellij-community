@@ -26,7 +26,7 @@ public class ChainedConstructorTest {
   }
 
   public ChainedConstructorTest(String[] names, boolean mode) {
-    myList = new JList();
+    myList = new JBList();
     myScrollPane.setViewportView(myList);
   }
 }

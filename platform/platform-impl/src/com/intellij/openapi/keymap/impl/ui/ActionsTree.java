@@ -29,6 +29,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.EmptyIcon;
@@ -66,7 +67,7 @@ public class ActionsTree {
   public ActionsTree() {
     myRoot = new DefaultMutableTreeNode(ROOT);
 
-    myTree = new JTree(new MyModel(myRoot));
+    myTree = new Tree(new MyModel(myRoot));
     myTree.setCellRenderer(new ColoredTreeCellRenderer(){
       public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
         Keymap originalKeymap = myKeymap != null ? myKeymap.getParent() : null;

@@ -35,6 +35,7 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NonNls;
@@ -111,7 +112,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
   private void chooseTargetClass(List<PsiClass> classes, final Editor editor) {
     final Project project = classes.get(0).getProject();
 
-    final JList list = new JList(new Vector<PsiClass>(classes));
+    final JList list = new JBList(classes);
     PsiElementListCellRenderer renderer = new PsiClassListCellRenderer();
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setCellRenderer(renderer);

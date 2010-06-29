@@ -19,6 +19,7 @@ package com.intellij.openapi.ui;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -250,7 +251,7 @@ public class DetailsComponent {
     content.add(d.getComponent(), BorderLayout.CENTER);
 
     d.setText("This is a Tree");
-    final JTree c = new JTree();
+    final JTree c = new Tree();
     c.setBorder(new LineBorder(Color.red));
     d.setContent(c);
 

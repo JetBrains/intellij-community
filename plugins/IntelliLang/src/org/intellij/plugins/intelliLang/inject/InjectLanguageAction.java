@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -122,7 +123,7 @@ public class InjectLanguageAction implements IntentionAction {
     final String[] langIds = InjectedLanguage.getAvailableLanguageIDs();
     Arrays.sort(langIds);
 
-    final JList list = new JList(langIds);
+    final JList list = new JBList(langIds);
     list.setCellRenderer(new DefaultListCellRenderer() {
       @Override
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {

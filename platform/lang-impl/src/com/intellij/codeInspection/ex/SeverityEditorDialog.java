@@ -48,6 +48,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.ReorderableListController;
+import com.intellij.ui.components.JBList;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -68,7 +69,7 @@ import java.util.List;
 public class SeverityEditorDialog extends DialogWrapper {
   private final JPanel myPanel;
 
-  private final JList myOptionsList = new JList();
+  private final JList myOptionsList = new JBList();
   private final ColorAndFontDescriptionPanel myOptionsPanel = new ColorAndFontDescriptionPanel();
 
   private SeverityRegistrar.SeverityBasedTextAttributes myCurrentSelection;

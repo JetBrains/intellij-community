@@ -29,6 +29,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.List;
 
+/**
+ * @deprecated use {@link com.intellij.openapi.roots.OrderEnumerator} instead
+ */
+@Deprecated
 public class ProjectRootsTraversing {
   /**
    * @deprecated use <code>OrderEnumerator.orderEntries(module).withoutDepModules().withoutThisModuleContent().getPathsList()</code>

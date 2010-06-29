@@ -40,7 +40,6 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.Icons;
@@ -154,7 +153,6 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
         return ((MyNode)treePath.getLastPathComponent()).getDisplayName();
       }
     }, true);
-    TreeToolTipHandler.install(myTree);
     ToolTipManager.sharedInstance().registerComponent(myTree);
     myTree.setCellRenderer(new ColoredTreeCellRenderer(){
       public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {

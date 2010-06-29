@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,15 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
+import com.intellij.ui.ComponentWithExpandableItems;
+import com.intellij.ui.ExpandableItemsHandler;
+import com.intellij.ui.ExpandableItemsHandlerFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.EmptyTextHelper;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -41,8 +45,9 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Map;
 
-public class Tree extends JTree implements ComponentWithEmptyText, Autoscroll, Queryable {
+public class Tree extends JTree implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer>, Autoscroll, Queryable {
   private EmptyTextHelper myEmptyTextHelper;
+  private ExpandableItemsHandler<Integer> myExpandableItemsHandler;
 
   private AsyncProcessIcon myBusyIcon;
   private boolean myBusy;
@@ -72,6 +77,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, Autoscroll, Q
         return Tree.this.isEmpty();
       }
     };
+
+    myExpandableItemsHandler = ExpandableItemsHandlerFactory.install(this);
 
     addMouseListener(new MyMouseListener());
     if (Patches.SUN_BUG_ID_4893787) {
@@ -130,6 +137,11 @@ public class Tree extends JTree implements ComponentWithEmptyText, Autoscroll, Q
 
   public void appendEmptyText(String text, SimpleTextAttributes attrs, ActionListener listener) {
     myEmptyTextHelper.appendEmptyText(text, attrs, listener);
+  }
+
+  @NotNull
+  public ExpandableItemsHandler<Integer> getExpandableItemsHandler() {
+    return myExpandableItemsHandler;
   }
 
   @Override

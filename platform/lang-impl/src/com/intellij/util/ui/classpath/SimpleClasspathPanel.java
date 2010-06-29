@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ReorderableListController;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.Icons;
 import com.intellij.util.PathUtil;
 import gnu.trove.THashSet;
@@ -54,7 +55,7 @@ import java.util.List;
  */
 public class SimpleClasspathPanel extends JPanel {
 
-  private final JList myList = new JList();
+  private final JList myList = new JBList();
   private final DefaultListModel myListModel = new DefaultListModel();
   private URLClassLoader myClassLoader;
   private final Disposable myDisposable;

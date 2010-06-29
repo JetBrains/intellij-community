@@ -107,7 +107,6 @@ public class TargetChooserDialog extends DialogWrapper {
     tree.setRootVisible(false);
     tree.setShowsRootHandles(true);
     tree.setLineStyleAngled();
-    TreeToolTipHandler.install(tree);
     TreeUtil.installActions(tree);
     new TreeSpeedSearch(tree, new Convertor<TreePath, String>() {
       public String convert(final TreePath path) {

@@ -18,6 +18,7 @@ package com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.ui;
 import com.intellij.CvsBundle;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -59,7 +60,7 @@ public class SelectTagDialog extends DialogWrapper {
 
   private void createList(String title, Collection<String> data, String listDescription) {
     setTitle(title);
-    final JList list = new JList();
+    final JList list = new JBList();
     myLists.add(list);
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.addListSelectionListener(new ListSelectionListener() {

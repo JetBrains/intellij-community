@@ -36,7 +36,6 @@ import com.intellij.psi.PsiField;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.actions.StartInplaceEditingAction;
@@ -111,9 +110,6 @@ public final class ComponentTree extends Tree implements DataProvider {
 
     // Install convenient keyboard navigation
     TreeUtil.installActions(this);
-
-    // Install advanced tooltips
-    TreeToolTipHandler.install(this);
 
     // Popup menu
     PopupHandler.installPopupHandler(

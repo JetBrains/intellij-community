@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,26 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ui;
 
 import javax.swing.*;
 
-public class ToolTipHandlerProviderImpl extends ToolTipHandlerProvider {
-  public void install(JComponent component) {
-    if (component instanceof JTree) {
-      TreeToolTipHandler.install((JTree)component);
-    }
-    else if (component instanceof JTable) {
-      TableToolTipHandler.install((JTable)component);
-    }
-    else if (component instanceof JList) {
-      ListToolTipHandler.install((JList)component);
-    }
-    else {
-      ToolTipManager.sharedInstance().registerComponent(component);
-    }
+public class ExpandTipHandlerFactoryImpl extends ExpandableItemsHandlerFactory {
+  @Override
+  public ExpandableItemsHandler<Integer> doInstall(JList list) {
+    return new ListExpandableItemsHandler(list);
   }
 
+  @Override
+  public ExpandableItemsHandler<Integer> doInstall(JTree tree) {
+    return new TreeExpandableItemsHandler(tree);
+  }
 
+  @Override
+  public ExpandableItemsHandler<TableCell> doInstall(JTable table) {
+    return new TableExpandableItemsHandler(table);
+  }
 }

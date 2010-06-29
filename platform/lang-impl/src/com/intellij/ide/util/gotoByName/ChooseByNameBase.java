@@ -49,6 +49,7 @@ import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ListScrollingUtil;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.PopupOwner;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.util.Alarm;
@@ -430,7 +431,7 @@ public abstract class ChooseByNameBase{
     });
 
     myListModel = new DefaultListModel();
-    myList = new JList(myListModel);
+    myList = new JBList(myListModel);
     myList.setFocusable(false);
     myList.setSelectionMode(allowMultipleSelection ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION :
                             ListSelectionModel.SINGLE_SELECTION);

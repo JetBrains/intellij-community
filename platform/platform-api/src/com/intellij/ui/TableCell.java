@@ -15,34 +15,31 @@
  */
 package com.intellij.ui;
 
-/**
- * (rowIndex, columnIndex) is a unique key to identify cell inside JTable
- */
-final class TableCellKey{
-  public final int myRowIndex;
-  public final int myColumnIndex;
+public final class TableCell {
+  public final int row;
+  public final int column;
 
-  public TableCellKey(int rowIndex, int columnIndex) {
-    myRowIndex = rowIndex;
-    myColumnIndex = columnIndex;
+  public TableCell(int rowIndex, int columnIndex) {
+    row = rowIndex;
+    column = columnIndex;
   }
 
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof TableCellKey)) return false;
+    if (!(o instanceof TableCell)) return false;
 
-    final TableCellKey myKey = (TableCellKey)o;
+    final TableCell myKey = (TableCell)o;
 
-    if (myColumnIndex != myKey.myColumnIndex) return false;
-    if (myRowIndex != myKey.myRowIndex) return false;
+    if (column != myKey.column) return false;
+    if (row != myKey.row) return false;
 
     return true;
   }
 
   public int hashCode() {
     int result;
-    result = myRowIndex;
-    result = 29 * result + myColumnIndex;
+    result = row;
+    result = 29 * result + column;
     return result;
   }
 }

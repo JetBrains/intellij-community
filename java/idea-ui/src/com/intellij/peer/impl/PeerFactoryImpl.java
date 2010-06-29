@@ -107,11 +107,11 @@ public class PeerFactoryImpl extends PeerFactory {
 
   private static class MyUIHelper implements UIHelper {
     public void installToolTipHandler(JTree tree) {
-      TreeToolTipHandler.install(tree);
+      TreeUIHelper.getInstance().installToolTipHandler(tree);
     }
 
     public void installToolTipHandler(JTable table) {
-      TableToolTipHandler.install(table);
+      TreeUIHelper.getInstance().installToolTipHandler(table);
     }
 
     public void installEditSourceOnDoubleClick(JTree tree) {

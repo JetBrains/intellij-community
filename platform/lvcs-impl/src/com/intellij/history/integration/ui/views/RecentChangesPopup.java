@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -49,7 +50,7 @@ public class RecentChangesPopup {
       return;
     }
 
-    final JList list = new JList(createModel(cc));
+    final JList list = new JBList(createModel(cc));
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setCellRenderer(new RecentChangesListCellRenderer());
 

@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 
@@ -33,7 +34,7 @@ public class SelectGitBranchesPopup {
                             final List<String> branchesAndTags,
                             boolean tags,
                             DataContext dc) {
-    final JList list = new JList();
+    final JList list = new JBList();
     list.setCellRenderer(new BranchListCellRenderer(tags));
     list.setListData(ArrayUtil.toObjectArray(branchesAndTags));
     JBPopupFactory.getInstance().createListPopupBuilder(list)

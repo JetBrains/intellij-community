@@ -230,6 +230,11 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
     throw new UnsupportedOperationException();
   }
 
+  @Override
+  public void setWindowShadow(Window window, WindowShadowMode mode) {
+    throw new UnsupportedOperationException();
+  }
+
   public void hideDialog(JDialog dialog, Project project) {
     dialog.dispose();
   }
