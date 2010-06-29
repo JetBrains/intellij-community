@@ -191,7 +191,6 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
 
     final ChainIterable<String> reassign_cat = new ChainIterable<String>(); // sequence for reassignment info, etc
     PsiElement followed = resolveToDocStringOwner(element, originalElement, reassign_cat);
-    if (prolog_cat.isEmpty()) prolog_cat.add(reassign_cat);
 
     // check if we got a property ref.
     // if so, element is an accessor, and originalElement if an identifier
@@ -238,6 +237,7 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
                     doc_cat.add(BR);
                   }
                   doc_cat.add(BR);
+                  if (accessor.isDefined() && accessor.value() == null) followed = null;
                   if (dir == AccessDirection.READ) accessor_kind = "Getter";
                   else if (dir == AccessDirection.WRITE) accessor_kind = "Setter";
                   else accessor_kind = "Deleter";
@@ -249,6 +249,8 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
         }
       }
     }
+
+    if (prolog_cat.isEmpty() && ! is_property) prolog_cat.add(reassign_cat);
 
     // now followed may contain a doc string  
     if (followed instanceof PyDocStringOwner) {

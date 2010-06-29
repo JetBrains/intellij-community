@@ -85,13 +85,6 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       super(holder);
     }
 
-    static String getFirstQualifier(String name) {
-      // foo.bar.baz -> foo
-      int pos = name.indexOf('.');
-      if (pos > 0)  return name.substring(0, pos);
-      else return name;
-    }
-
     @NotNull
     static Collection<LocalQuickFix> proposeImportFixes(final PyElement node, String ref_text) {
       PsiFile exisitng_import_file = null; // if there's a matching existing import, this it the file it imports
@@ -359,14 +352,19 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
               }
               if (qtype instanceof PyClassType) {
                 PyClass cls = ((PyClassType)qtype).getPyClass();
-                if (cls != null && overridesGetAttr(cls)) {
-                  return;
-                }
-                if (cls != null && ! PyBuiltinCache.getInstance(node).hasInBuiltins(cls)) {
-                  if (reference.getElement().getParent() instanceof PyCallExpression) {
-                    actions.add(new AddMethodQuickFix(ref_text, (PyClassType)qtype));
+                if (cls != null) {
+                  if (overridesGetAttr(cls)) {
+                    return;
                   }
-                  else actions.add(new AddFieldQuickFix(ref_text, cls));
+                  if (cls.findProperty(ref_text) != null) {
+                    return; // a property exists but accessor is not found; other inspections handle this
+                  }
+                  if (! PyBuiltinCache.getInstance(node).hasInBuiltins(cls)) {
+                    if (reference.getElement().getParent() instanceof PyCallExpression) {
+                      actions.add(new AddMethodQuickFix(ref_text, (PyClassType)qtype));
+                    }
+                    else actions.add(new AddFieldQuickFix(ref_text, cls));
+                  }
                 }
                 description_buf.append(PyBundle.message("INSP.unresolved.ref.$0.for.class.$1", ref_text, qtype.getName()));
                 marked_qualified = true;
