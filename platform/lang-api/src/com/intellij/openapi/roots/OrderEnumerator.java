@@ -39,7 +39,7 @@ public abstract class OrderEnumerator {
   public abstract OrderEnumerator withoutSdk();
   public abstract OrderEnumerator withoutLibraries();
   public abstract OrderEnumerator withoutDepModules();
-  public abstract OrderEnumerator withoutThisModuleContent();
+  public abstract OrderEnumerator withoutModuleSourceEntries();
 
   public abstract OrderEnumerator recursively();
   public abstract OrderEnumerator exportedOnly();
