@@ -229,6 +229,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   private boolean disposeSelf() {
+    myDisposeInProgress = true;
     Project[] openProjects = ProjectManagerEx.getInstanceEx().getOpenProjects();
     final boolean[] canClose = {true};
     for (final Project project : openProjects) {
@@ -240,7 +241,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       }, ApplicationBundle.message("command.exit"), null);
       if (!canClose[0]) return false;
     }
-    myDisposeInProgress = true;
     Disposer.dispose(this);
 
     Disposer.assertIsEmpty();
