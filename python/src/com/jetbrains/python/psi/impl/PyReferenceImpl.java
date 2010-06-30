@@ -166,17 +166,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
     // Use real context here to enable correct completion and resolve in case of PyExpressionCodeFragment!!!
     final PsiElement realContext = PyPsiUtils.getRealContext(myElement);
-    PsiElement roof = null;
-    if (PyUtil.isClassPrivateName(referencedName)) {
-      // a class-private name; limited by either class or this file
-      PsiElement one = myElement;
-      do {
-        one = PyUtil.getConcealingParent(one);
-      }
-      while (one instanceof PyFunction);
-      if (one instanceof PyClass) roof = one;
-    }
-    if (roof == null) roof = realContext.getContainingFile();
+    PsiElement roof = findResolveRoof(referencedName, realContext);
     PsiElement uexpr = PyResolveUtil.treeCrawlUp(processor, false, realContext, roof);
     if ((uexpr != null)) {
       if ((uexpr instanceof PyClass)) {
@@ -216,15 +206,38 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         uexpr = bfile.getElementNamed(referencedName);
       }
     }
-    if (uexpr == null) {
+    if (uexpr == null && !(myElement instanceof PyTargetExpression)) {
       //uexpr = PyResolveUtil.resolveOffContext(this);
-      uexpr = PyUtil.turnDirIntoInit(PyResolveUtil.scanOuterContext(new ResolveProcessor(referencedName), realContext));
+      final PsiElement outerContextElement = PyResolveUtil.scanOuterContext(new ResolveProcessor(referencedName), realContext);
+      uexpr = PyUtil.turnDirIntoInit(outerContextElement);
     }
     if (uexpr != null) {
       ret.add(new ImportedResolveResult(uexpr, getRate(uexpr), processor.getDefiners()));
     }
 
     return ret;
+  }
+
+  private PsiElement findResolveRoof(String referencedName, PsiElement realContext) {
+    if (PyUtil.isClassPrivateName(referencedName)) {
+      // a class-private name; limited by either class or this file
+      PsiElement one = myElement;
+      do {
+        one = PyUtil.getConcealingParent(one);
+      }
+      while (one instanceof PyFunction);
+      if (one instanceof PyClass) {
+        return one;
+      }
+    }
+    
+    if (myElement instanceof PyTargetExpression) {
+      final ScopeOwner scopeOwner = PsiTreeUtil.getParentOfType(myElement, ScopeOwner.class);
+      if (scopeOwner != null && !scopeOwner.getScope().isGlobal(myElement.getName())) {
+        return scopeOwner;
+      }
+    }
+    return realContext.getContainingFile();
   }
 
   private boolean isSuperClassExpression(PyClass cls) {
