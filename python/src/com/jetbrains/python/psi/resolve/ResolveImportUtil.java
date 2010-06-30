@@ -3,7 +3,6 @@ package com.jetbrains.python.psi.resolve;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -379,7 +378,7 @@ public class ResolveImportUtil {
         if (projectRoot != null && !visitor.visitRoot(projectRoot)) return;
       }
       // else look in SDK roots
-      rootManager.processOrder(new SdkRootVisitingPolicy(visitor), null);
+      rootManager.orderEntries().process(new SdkRootVisitingPolicy(visitor), null);
     }
     else {
       // no module, another way to look in SDK roots

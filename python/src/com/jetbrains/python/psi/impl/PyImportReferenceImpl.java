@@ -166,7 +166,7 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
         final CollectingRootVisitor visitor = new CollectingRootVisitor(((PyReferenceExpression)myElement).getManager());
         final Module module = ModuleUtil.findModuleForPsiElement(myElement);
         if (module != null) {
-          ModuleRootManager.getInstance(module).processOrder(new ResolveImportUtil.SdkRootVisitingPolicy(visitor), null);
+          ModuleRootManager.getInstance(module).orderEntries().process(new ResolveImportUtil.SdkRootVisitingPolicy(visitor), null);
           for (ModuleResult result : visitor.getResult()) { // to thwart stuff like "__phello__.foo"
             String name = result.getName();
             if (PyNames.isIdentifier(name) && underscore_filter.value(name)) {
