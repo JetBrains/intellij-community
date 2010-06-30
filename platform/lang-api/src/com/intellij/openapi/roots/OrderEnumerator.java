@@ -76,7 +76,7 @@ public abstract class OrderEnumerator {
   public abstract OrderEnumerator recursively();
 
   /**
-   * Skip not exported dependencies. If this method is called after {@link #recursively()} then
+   * Skip not exported dependencies. If this method is called after {@link #recursively()} direct non-exported dependencies won't be skipped 
    * @return this instance
    */
   public abstract OrderEnumerator exportedOnly();
