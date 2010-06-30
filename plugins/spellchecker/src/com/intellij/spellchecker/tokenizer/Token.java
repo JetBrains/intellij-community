@@ -15,9 +15,11 @@
  */
 package com.intellij.spellchecker.tokenizer;
 
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.spellchecker.inspections.CheckArea;
 import com.intellij.spellchecker.inspections.Splitter;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -25,23 +27,34 @@ import java.util.List;
 
 public class Token<T extends PsiElement> {
 
-  private String text;
-  private String description;
-  private T element;
-  private boolean useRename;
+  private final String text;
+  private final String description;
+  private final boolean useRename;
   private int offset;
+
+
+  private final T element;
   private final Splitter splitter;
+
+  private TextRange range;
 
   public Token(T element, String text, boolean useRename, Splitter splitter) {
     this.element = element;
     this.text = text;
     this.useRename = useRename;
     this.splitter = splitter;
+    this.offset = 0;
+    this.description = null;
   }
 
   public Token(T element, String text, boolean useRename, int offset, Splitter splitter) {
     this(element, text, useRename, splitter);
     this.offset = offset;
+  }
+
+  public Token(T element, String text, boolean useRename, int offset, TextRange textRange, Splitter splitter) {
+    this(element, text, useRename, offset, splitter);
+    this.range = textRange;
   }
 
   public String getText() {
@@ -64,12 +77,21 @@ public class Token<T extends PsiElement> {
     return offset;
   }
 
+  @NotNull
+  public TextRange getRange() {
+    if (range==null){
+      range = new TextRange(0,(text!=null?text.length():0));
+    }
+    return range;
+  }
 
   @Nullable
   public List<CheckArea> getAreas() {
     if (splitter == null || text == null) {
       return null;
     }
-    return splitter.split(text);
+    return splitter.split(text, getRange());
   }
+
+
 }
