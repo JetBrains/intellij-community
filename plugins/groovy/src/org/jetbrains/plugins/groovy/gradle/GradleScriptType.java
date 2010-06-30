@@ -16,10 +16,7 @@
 package org.jetbrains.plugins.groovy.gradle;
 
 import com.intellij.compiler.options.CompileStepBeforeRun;
-import com.intellij.execution.CantRunException;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Location;
-import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.openapi.module.Module;
@@ -147,7 +144,7 @@ public class GradleScriptType extends GroovyScriptType {
       }
 
       @Override
-      public boolean ensureRunnerConfigured(@Nullable Module module, RunProfile profile, final Project project) throws ExecutionException {
+      public boolean ensureRunnerConfigured(@Nullable Module module, RunProfile profile, Executor executor, final Project project) throws ExecutionException {
         if (GradleLibraryManager.getSdkHome(module, project) == null) {
           int result = Messages
             .showOkCancelDialog("Gradle is not configured. Do you want to configure it?", "Configure Gradle SDK",
