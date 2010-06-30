@@ -14,6 +14,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.components.JBList;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -82,7 +83,7 @@ public class ImportFromExistingAction implements QuestionAction {
   private void selectSourceAndDo() {
     // GUI part
     ImportCandidateHolder[] items = mySources.toArray(new ImportCandidateHolder[mySources.size()]); // silly JList can't handle modern collections
-    final JList list = new JList(items);
+    final JList list = new JBList(items);
     list.setCellRenderer(new CellRenderer(myName));
 
     final Runnable runnable = new Runnable() {

@@ -5,8 +5,7 @@ import com.intellij.execution.process.ColoredProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
-import com.jetbrains.python.PyHighlighter;
+import com.jetbrains.python.highlighting.PyHighlighter;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

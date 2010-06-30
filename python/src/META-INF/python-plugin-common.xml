@@ -4,7 +4,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <fileTypeFactory implementation="com.jetbrains.python.PythonFileTypeFactory"/>
-    <lang.syntaxHighlighterFactory key="Python" implementationClass="com.jetbrains.python.PySyntaxHighlighterFactory"/>
+    <lang.syntaxHighlighterFactory key="Python" implementationClass="com.jetbrains.python.highlighting.PySyntaxHighlighterFactory"/>
     <lang.braceMatcher language="Python" implementationClass="com.jetbrains.python.PyBraceMatcher"/>
     <lang.parserDefinition language="Python" implementationClass="com.jetbrains.python.PythonParserDefinition"/>
     <lang.commenter language="Python" implementationClass="com.jetbrains.python.PythonCommenter"/>
@@ -26,7 +26,7 @@
     <gotoClassContributor implementation="com.jetbrains.python.PyGotoClassContributor"/>
     <gotoSymbolContributor implementation="com.jetbrains.python.PyGotoSymbolContributor"/>
     <codeInsight.parameterInfo language="Python" implementationClass="com.jetbrains.python.PyParameterInfoHandler"/>
-    <colorSettingsPage implementation="com.jetbrains.python.PythonColorsPage"/>
+    <colorSettingsPage implementation="com.jetbrains.python.highlighting.PythonColorsPage"/>
     <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PyWordSelectionHandler"/>
     <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PyStatementSelectionHandler"/>
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PyKeywordCompletionContributor"/>
@@ -46,6 +46,8 @@
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PySuperClassIndex"/>
 
     <fileTypeIndentOptionsProvider implementation="com.jetbrains.python.formatter.PyIndentOptionsProvider"/>
+
+    <colorSettingsPage implementation="org.intellij.lang.regexp.RegExpColorsPage"/>
 
     <!-- Run/Debug -->
     <configurationType implementation="com.jetbrains.python.run.PythonConfigurationType"/>
@@ -257,6 +259,8 @@
     <psi.referenceContributor implementation="com.jetbrains.appengine.ref.AppEngineReferenceContributor"/>
 
     <inspectionToolProvider implementation="com.jetbrains.appengine.inspection.AppEngineInspectionToolProvider"/>
+
+    <colorSettingsPage implementation="com.jetbrains.appengine.lang.gql.highlighting.GqlColorsPage"/>
   </extensions>
 
   <extensionPoints>
