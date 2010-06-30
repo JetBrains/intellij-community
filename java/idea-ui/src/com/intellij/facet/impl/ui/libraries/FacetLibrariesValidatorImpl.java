@@ -112,7 +112,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
   private List<VirtualFile> collectRoots(final @Nullable ModuleRootModel rootModel) {
     final ArrayList<VirtualFile> roots = new ArrayList<VirtualFile>();
     if (rootModel != null) {
-      rootModel.orderEntries().using(myContext.getModulesProvider()).withoutSdk().withoutModuleSourceEntries().recursively().forEachLibrary(new Processor<Library>() {
+      rootModel.orderEntries().using(myContext.getModulesProvider()).recursively().librariesOnly().forEachLibrary(new Processor<Library>() {
         @Override
         public boolean process(Library library) {
           roots.addAll(Arrays.asList(myContext.getLibrariesContainer().getLibraryFiles(library, OrderRootType.CLASSES)));

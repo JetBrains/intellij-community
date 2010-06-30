@@ -65,6 +65,10 @@ public abstract class OrderEnumerator {
   public abstract OrderEnumerator withoutDepModules();
   public abstract OrderEnumerator withoutModuleSourceEntries();
 
+  public OrderEnumerator librariesOnly() {
+    return withoutSdk().withoutDepModules().withoutModuleSourceEntries();
+  }
+
   /**
    * Recursively process modules on which the module depends
    * @return this instance

@@ -212,7 +212,7 @@ public abstract class OrderEnumeratorBase extends OrderEnumerator {
     for (OrderEntry entry : rootModel.getOrderEntries()) {
       if (myWithoutJdk && entry instanceof JdkOrderEntry
           || myWithoutLibraries && entry instanceof LibraryOrderEntry
-          || myWithoutDepModules && entry instanceof ModuleOrderEntry
+          || (myWithoutDepModules && !myRecursively) && entry instanceof ModuleOrderEntry
           || myWithoutThisModuleContent && entry instanceof ModuleSourceOrderEntry) continue;
 
       if (entry instanceof ExportableOrderEntry) {
