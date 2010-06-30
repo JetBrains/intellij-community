@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.types;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
@@ -15,6 +16,7 @@ import com.jetbrains.python.psi.patterns.ParentMatcher;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.ResolveProcessor;
 import com.jetbrains.python.psi.resolve.VariantsProcessor;
+import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -246,5 +248,10 @@ public class PyClassType implements PyType {
   @Override
   public String toString() {
     return "PyClassType: " + getClassQName();
+  }
+
+  public static PyClassType fromClassName(String typeName, Project project) {
+    PyClass clazz = PyClassNameIndex.findClass(typeName, project);
+    return new PyClassType(clazz, true);
   }
 }
