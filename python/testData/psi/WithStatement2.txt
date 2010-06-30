@@ -22,12 +22,12 @@ PyFile:WithStatement2.py
     PsiWhiteSpace(' ')
     PsiElement(Py:IMPORT_KEYWORD)('import')
     PsiWhiteSpace(' ')
-    PyImportElement
+    PyImportElement:nested_scopes
       PyReferenceExpression: nested_scopes
         PsiElement(Py:IDENTIFIER)('nested_scopes')
     PsiElement(Py:COMMA)(',')
     PsiWhiteSpace(' ')
-    PyImportElement
+    PyImportElement:with_statement
       PyReferenceExpression: with_statement
         PsiElement(Py:IDENTIFIER)('with_statement')
   PsiWhiteSpace('\n')

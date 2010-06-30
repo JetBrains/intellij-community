@@ -234,4 +234,10 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
   protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
     pyVisitor.visitPyImportElement(this);
   }
+
+  @Override
+  public String toString() {
+    final PyQualifiedName qName = getImportedQName();
+    return "PyImportElement:" + (qName != null ? qName : "null");
+  }
 }

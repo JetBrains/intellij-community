@@ -7,7 +7,7 @@ PyFile:WithStatement.py
     PsiWhiteSpace(' ')
     PsiElement(Py:IMPORT_KEYWORD)('import')
     PsiWhiteSpace(' ')
-    PyImportElement
+    PyImportElement:with_statement
       PyReferenceExpression: with_statement
         PsiElement(Py:IDENTIFIER)('with_statement')
   PsiWhiteSpace('\n')
