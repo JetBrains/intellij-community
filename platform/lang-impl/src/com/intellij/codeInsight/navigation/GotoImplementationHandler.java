@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 
@@ -30,6 +31,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     return "navigation.goto.implementation";
   }
 
+  @Nullable
   public GotoData getSourceAndTargetElements(Editor editor, PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
     PsiElement source = TargetElementUtilBase.getInstance().findTargetElement(editor, ImplementationSearcher.getFlags(), offset);

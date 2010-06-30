@@ -29,6 +29,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -80,6 +81,7 @@ public class CopyFilesOrDirectoriesHandler implements CopyHandlerDelegate {
     if (dialog.isOK()) {
       final String newName = elements.length == 1 ? dialog.getNewName() : null;
       final PsiManager psiManager = PsiManager.getInstance(project);
+      final PsiDirectory targetDirectory = dialog.getTargetDirectory();
       try {
         for (PsiElement element : elements) {
           PsiFileSystemItem psiElement = (PsiFileSystemItem)element;
@@ -87,18 +89,19 @@ public class CopyFilesOrDirectoriesHandler implements CopyHandlerDelegate {
             if (!psiElement.isDirectory()) {
               psiElement = (PsiFileSystemItem)psiElement.copy();
               psiElement.setName(newName);
+              psiManager.checkMove(psiElement, targetDirectory);
             } else {
-              dialog.getTargetDirectory().checkCreateSubdirectory(newName);
+              targetDirectory.checkCreateSubdirectory(newName);
+              MoveFilesOrDirectoriesUtil.checkIfMoveIntoSelf(psiElement, targetDirectory);
             }
           }
-          psiManager.checkMove(psiElement, dialog.getTargetDirectory());
         }
       }
       catch (IncorrectOperationException e) {
         CommonRefactoringUtil.showErrorHint(project, null, e.getMessage(), CommonBundle.getErrorTitle(), null);
         return;
       }
-      copyImpl(elements, newName, dialog.getTargetDirectory(), false);
+      copyImpl(elements, newName, targetDirectory, false);
     }
   }
 

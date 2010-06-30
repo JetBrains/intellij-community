@@ -85,6 +85,10 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
     assertClassRoots(orderEntries(myModule).withoutSdk().exportedOnly().recursively());
   }
 
+  public void testJdkIsNotExported() throws Exception {
+    assertClassRoots(orderEntries(myModule).exportedOnly());
+  }
+
   private static void assertClassRoots(final OrderEnumerator enumerator, VirtualFile... files) {
     assertRoots(enumerator.getPathsList(), files);
   }

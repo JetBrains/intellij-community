@@ -164,7 +164,7 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
     }
 
     protected SimpleNode[] buildChildren() {
-      return myChildren.toArray(new SimpleNode[myChildren.size()]);
+      return myChildren.isEmpty() ? NO_CHILDREN : myChildren.toArray(new SimpleNode[myChildren.size()]);
     }
 
     public Object[] getEqualityObjects() {

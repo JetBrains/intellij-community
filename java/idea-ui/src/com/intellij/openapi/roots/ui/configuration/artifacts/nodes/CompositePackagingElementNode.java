@@ -51,7 +51,7 @@ public class CompositePackagingElementNode extends PackagingElementNode<Composit
       PackagingTreeNodeFactory.addNodes(element.getChildren(), this, element, myContext, mySubstitutionParameters, getNodeSource(element), children,
                                         myArtifactType, new HashSet<PackagingElement<?>>());
     }
-    return children.toArray(new SimpleNode[children.size()]);
+    return children.isEmpty() ? NO_CHILDREN : children.toArray(new SimpleNode[children.size()]);
   }
 
   @Override

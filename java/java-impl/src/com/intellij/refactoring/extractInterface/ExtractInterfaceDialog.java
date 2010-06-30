@@ -27,14 +27,13 @@ import com.intellij.refactoring.extractSuperclass.JavaExtractSuperBaseDialog;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.util.ArrayUtil;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
 class ExtractInterfaceDialog extends JavaExtractSuperBaseDialog {
-  private JLabel myInterfaceNameLabel;
-  private JLabel myPackageLabel;
 
   public ExtractInterfaceDialog(Project project, PsiClass sourceClass) {
     super(project, sourceClass, collectMembers(sourceClass), ExtractInterfaceHandler.REFACTORING_NAME);
@@ -61,87 +60,10 @@ class ExtractInterfaceDialog extends JavaExtractSuperBaseDialog {
     }, true);
   }
 
-  public MemberInfo[] getSelectedMembers() {
-    int[] rows = getCheckedRows();
-    MemberInfo[] selectedMethods = new MemberInfo[rows.length];
-    for (int idx = 0; idx < rows.length; idx++) {
-      selectedMethods[idx] = myMemberInfos.get(rows[idx]);
-    }
-    return selectedMethods;
-  }
-
-    private int[] getCheckedRows() {
-    int count = 0;
-    for (MemberInfo info : myMemberInfos) {
-      if (info.isChecked()) {
-        count++;
-      }
-    }
-    int[] rows = new int[count];
-    int currentRow = 0;
-    for (int idx = 0; idx < myMemberInfos.size(); idx++) {
-      if (myMemberInfos.get(idx).isChecked()) {
-        rows[currentRow++] = idx;
-      }
-    }
-    return rows;
-  }
-
-  protected JComponent createNorthPanel() {
-    Box box = Box.createVerticalBox();
-
-    JPanel _panel = new JPanel(new BorderLayout());
-    _panel.add(new JLabel(RefactoringBundle.message("extract.interface.from")), BorderLayout.NORTH);
-    _panel.add(mySourceClassField, BorderLayout.CENTER);
-    box.add(_panel);
-
-    box.add(Box.createVerticalStrut(10));
-
-    box.add(createActionComponent());
-
-    box.add(Box.createVerticalStrut(10));
-
-    myInterfaceNameLabel = new JLabel();
-    myInterfaceNameLabel.setText(RefactoringBundle.message("interface.name.prompt"));
-
-    _panel = new JPanel(new BorderLayout());
-    _panel.add(myInterfaceNameLabel, BorderLayout.NORTH);
-    _panel.add(myExtractedSuperNameField, BorderLayout.CENTER);
-    box.add(_panel);
-    box.add(Box.createVerticalStrut(5));
-
-    _panel = new JPanel(new BorderLayout());
-    myPackageLabel = new JLabel();
-    myPackageLabel.setText(getPackageNameLabelText());
-
-    _panel.add(myPackageLabel, BorderLayout.NORTH);
-    _panel.add(myPackageNameField, BorderLayout.CENTER);
-    box.add(_panel);
-    box.add(Box.createVerticalStrut(10));
-
-    JPanel panel = new JPanel(new BorderLayout());
-    panel.add(box, BorderLayout.CENTER);
-    return panel;
-  }
-
-  @Override
-  protected void updateDialogForExtractSubclass() {
-    super.updateDialogForExtractSubclass();
-    myInterfaceNameLabel.setText(RefactoringBundle.message("rename.implementation.class.to"));
-  }
-
-  @Override
-  protected void updateDialogForExtractSuperclass() {
-    super.updateDialogForExtractSuperclass();
-    myInterfaceNameLabel.setText(RefactoringBundle.message("interface.name.prompt"));
-  }
-
   protected String getClassNameLabelText() {
-    return RefactoringBundle.message("superinterface.name");
-  }
-
-  protected JLabel getClassNameLabel() {
-    return myInterfaceNameLabel;
+    return isExtractSuperclass()
+           ? RefactoringBundle.message("interface.name.prompt")
+           : RefactoringBundle.message("rename.implementation.class.to");
   }
 
   @Override
@@ -151,23 +73,25 @@ class ExtractInterfaceDialog extends JavaExtractSuperBaseDialog {
            : RefactoringBundle.message("package.for.original.class");
   }
 
-  protected JLabel getPackageNameLabel() {
-    return myPackageLabel;
-  }
-
   protected String getEntityName() {
     return RefactoringBundle.message("extractSuperInterface.interface");
+  }
+
+  @Override
+  protected String getTopLabelText() {
+    return RefactoringBundle.message("extract.interface.from");
   }
 
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
     final MemberSelectionPanel memberSelectionPanel = new MemberSelectionPanel(RefactoringBundle.message("members.to.form.interface"),
                                                                                myMemberInfos, null);
-    memberSelectionPanel.getTable().setMemberInfoModel(new DelegatingMemberInfoModel<PsiMember, MemberInfo>(memberSelectionPanel.getTable().getMemberInfoModel()) {
-      public Boolean isFixedAbstract(MemberInfo member) {
-        return Boolean.TRUE;
-      }
-    });
+    memberSelectionPanel.getTable()
+      .setMemberInfoModel(new DelegatingMemberInfoModel<PsiMember, MemberInfo>(memberSelectionPanel.getTable().getMemberInfoModel()) {
+        public Boolean isFixedAbstract(MemberInfo member) {
+          return Boolean.TRUE;
+        }
+      });
     panel.add(memberSelectionPanel, BorderLayout.CENTER);
 
     panel.add(myDocCommentPanel, BorderLayout.EAST);
@@ -181,7 +105,7 @@ class ExtractInterfaceDialog extends JavaExtractSuperBaseDialog {
   }
 
   @Override
-  protected String getExtractedSuperNameNotSpecifiedKey() {
+  protected String getExtractedSuperNameNotSpecifiedMessage() {
     return RefactoringBundle.message("no.interface.name.specified");
   }
 
@@ -198,7 +122,7 @@ class ExtractInterfaceDialog extends JavaExtractSuperBaseDialog {
   @Override
   protected ExtractSuperBaseProcessor createProcessor() {
     return new ExtractInterfaceProcessor(myProject, false, getTargetDirectory(), getExtractedSuperName(),
-                                         mySourceClass, getSelectedMembers(),
+                                         mySourceClass, ArrayUtil.toObjectArray(getSelectedMemberInfos(), MemberInfo.class),
                                          new DocCommentPolicy(getDocCommentPolicy()));
   }
 

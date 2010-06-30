@@ -22,20 +22,25 @@ import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.facet.ui.libraries.*;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.Result;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author nik
@@ -105,36 +110,17 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
   }
 
   private List<VirtualFile> collectRoots(final @Nullable ModuleRootModel rootModel) {
-    ArrayList<VirtualFile> roots = new ArrayList<VirtualFile>();
+    final ArrayList<VirtualFile> roots = new ArrayList<VirtualFile>();
     if (rootModel != null) {
-      RootPolicy<List<VirtualFile>> policy = new CollectingLibrariesPolicy();
-      rootModel.processOrder(policy, roots);
+      rootModel.orderEntries().using(myContext.getModulesProvider()).recursively().librariesOnly().forEachLibrary(new Processor<Library>() {
+        @Override
+        public boolean process(Library library) {
+          roots.addAll(Arrays.asList(myContext.getLibrariesContainer().getLibraryFiles(library, OrderRootType.CLASSES)));
+          return true;
+        }
+      });
     }
     return roots;
-  }
-
-  private class CollectingLibrariesPolicy extends RootPolicy<List<VirtualFile>> {
-    private final Set<Module> myProcessedModules = new HashSet<Module>();
-
-    public List<VirtualFile> visitLibraryOrderEntry(final LibraryOrderEntry libraryOrderEntry, final List<VirtualFile> value) {
-      Library library = libraryOrderEntry.getLibrary();
-      if (library != null) {
-        value.addAll(Arrays.asList(myContext.getLibrariesContainer().getLibraryFiles(library, OrderRootType.CLASSES)));
-      }
-      return value;
-    }
-
-    public List<VirtualFile> visitModuleOrderEntry(final ModuleOrderEntry moduleOrderEntry, final List<VirtualFile> value) {
-      Module module = moduleOrderEntry.getModule();
-      if (module != null && myProcessedModules.add(module)) {
-        ModuleRootModel dependency = myContext.getModulesProvider().getRootModel(module);
-        if (dependency != null) {
-          return dependency.processOrder(this, value);
-        }
-      }
-      return value;
-    }
-
   }
 
   private class LibrariesQuickFix extends FacetConfigurationQuickFix {
