@@ -27,10 +27,12 @@ public class PyPropertyTestSuite {
     protected PyClass myClass;
     protected LanguageLevel myLanguageLevel = LanguageLevel.PYTHON26;
 
+    abstract String getFileName();
+
     @Override
     protected void setUp() throws Exception {
       super.setUp();
-      PsiReference ref = configureByFile("property/"+ "Classic.py");
+      PsiReference ref = configureByFile("property/"+ getFileName());
       final Project project = ref.getElement().getContainingFile().getProject();
       project.putUserData(PyBuiltinCache.TEST_SDK, PythonMockSdk.findOrCreate());
       PythonLanguageLevelPusher.setForcedLanguageLevel(project, myLanguageLevel);
@@ -47,6 +49,11 @@ public class PyPropertyTestSuite {
 
     public PyClassicPropertyTest() {
       super();
+    }
+
+    @Override
+    String getFileName() {
+      return "Classic.py";
     }
 
     public void testV1() throws Exception {
@@ -148,13 +155,23 @@ public class PyPropertyTestSuite {
   public static class PyDecoratedPropertyTest extends PyPropertyTest {
     public PyDecoratedPropertyTest() {
       super();
+    }
+
+    @Override
+    String getFileName() {
+      return "Decorated.py";
+    }
+
+    @Override
+    protected void setUp() throws Exception {
+      super.setUp();
       myLanguageLevel = LanguageLevel.PYTHON26;
     }
 
     public void testW1() throws Exception {
       Property p;
       Maybe<PyFunction> accessor;
-      p = myClass.findProperty("W1");
+      p = myClass.findProperty("w1");
       assertNotNull(p);
       assertNull(p.getDoc());
       assertNull(p.getDefinitionSite());
@@ -178,7 +195,7 @@ public class PyPropertyTestSuite {
     public void testW2() throws Exception {
       Property p;
       Maybe<PyFunction> accessor;
-      p = myClass.findProperty("W2");
+      p = myClass.findProperty("w2");
       assertNotNull(p);
       assertNull(p.getDoc());
       assertNull(p.getDefinitionSite());
