@@ -1015,7 +1015,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     assertInitialized();
     try {
       final OutputStream outputStream = copy.getOutputStream(null, 0, 0);
-      outputStream.write(loader.newFileText.getBytes());
+      outputStream.write(loader.newFileText.getBytes(copy.getCharset()));
       outputStream.close();
     }
     catch (IOException e) {
