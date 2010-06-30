@@ -19,12 +19,14 @@ import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.ui.EditorComboBox;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -41,20 +43,21 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
     super(project, sourceClass, members, refactoringName);
   }
 
-  protected void initPackageNameField() {
+  protected ComponentWithBrowseButton<EditorComboBox> createPackageNameField() {
     String name = "";
     PsiFile file = mySourceClass.getContainingFile();
     if (file instanceof PsiJavaFile) {
       name = ((PsiJavaFile)file).getPackageName();
     }
-    myPackageNameField = new PackageNameReferenceEditorCombo(name, myProject, DESTINATION_PACKAGE_RECENT_KEY,
+    return new PackageNameReferenceEditorCombo(name, myProject, DESTINATION_PACKAGE_RECENT_KEY,
                                                              RefactoringBundle.message("choose.destination.package"));
   }
 
-  protected void initSourceClassField() {
-    mySourceClassField = new JTextField();
-    mySourceClassField.setEditable(false);
-    mySourceClassField.setText(mySourceClass.getQualifiedName());
+  protected JTextField createSourceClassField() {
+    JTextField result = new JTextField();
+    result.setEditable(false);
+    result.setText(mySourceClass.getQualifiedName());
+    return result;
   }
 
   private PsiDirectory getDirUnderSameSourceRoot(final PsiDirectory[] directories) {
@@ -72,8 +75,6 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
     }
     return directories[0];
   }
-
-  protected abstract ExtractSuperBaseProcessor createProcessor();
 
   @Override
   protected void preparePackage() throws OperationFailedException {

@@ -43,6 +43,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -124,7 +125,7 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
   }
 
   public boolean checkConflicts(ExtractSuperclassDialog dialog) {
-    final MemberInfo[] infos = dialog.getSelectedMemberInfos();
+    final MemberInfo[] infos = ArrayUtil.toObjectArray(dialog.getSelectedMemberInfos(), MemberInfo.class);
     final PsiDirectory targetDirectory = dialog.getTargetDirectory();
     final PsiPackage targetPackage;
     if (targetDirectory != null) {
@@ -149,7 +150,7 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
   private void doRefactoring(final Project project, final PsiClass subclass, final ExtractSuperclassDialog dialog) {
     final String superclassName = dialog.getExtractedSuperName();
     final PsiDirectory targetDirectory = dialog.getTargetDirectory();
-    final MemberInfo[] selectedMemberInfos = dialog.getSelectedMemberInfos();
+    final MemberInfo[] selectedMemberInfos = ArrayUtil.toObjectArray(dialog.getSelectedMemberInfos(), MemberInfo.class);
     final DocCommentPolicy javaDocPolicy = new DocCommentPolicy(dialog.getDocCommentPolicy());
     LocalHistoryAction a = LocalHistory.getInstance().startAction(getCommandName(subclass, superclassName));
     try {

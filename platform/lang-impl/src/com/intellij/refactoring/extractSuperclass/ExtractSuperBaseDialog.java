@@ -24,6 +24,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.ui.DocCommentPanel;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -33,39 +34,39 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
  * @author dsl
  */
-public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, MemberType> extends RefactoringDialog {
-  protected String myRefactoringName;
-  protected ClassType mySourceClass;
+public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, MemberInfoType extends MemberInfoBase> extends RefactoringDialog {
+  private String myRefactoringName;
+  protected final ClassType mySourceClass;
   protected PsiDirectory myTargetDirectory;
-  protected List<MemberType> myMemberInfos;
+  protected final List<MemberInfoType> myMemberInfos;
 
-  protected JRadioButton myRbExtractSuperclass;
-  protected JRadioButton myRbExtractSubclass;
+  private JRadioButton myRbExtractSuperclass;
+  private JRadioButton myRbExtractSubclass;
 
-  protected JTextField mySourceClassField;
-  protected JTextField myExtractedSuperNameField;
-  protected ComponentWithBrowseButton<EditorComboBox> myPackageNameField;
+  private JTextField mySourceClassField;
+  private JLabel myClassNameLabel;
+  private JTextField myExtractedSuperNameField;
+  private JLabel myPackageNameLabel;
+  private ComponentWithBrowseButton<EditorComboBox> myPackageNameField;
   protected DocCommentPanel myDocCommentPanel;
 
-  protected abstract void initPackageNameField();
+  protected abstract ComponentWithBrowseButton<EditorComboBox> createPackageNameField();
 
-  protected abstract void initSourceClassField();
-
+  protected abstract JTextField createSourceClassField();
 
   protected abstract String getDocCommentPanelName();
 
-  protected abstract String getExtractedSuperNameNotSpecifiedKey();
-
-  protected boolean checkConflicts() {
-    return true;
-  }
+  protected abstract String getExtractedSuperNameNotSpecifiedMessage();
 
   protected abstract BaseRefactoringProcessor createProcessor();
 
@@ -78,11 +79,9 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
   @Nullable
   protected abstract String validateName(String name);
 
+  protected abstract String getTopLabelText();
+
   protected abstract String getClassNameLabelText();
-
-  protected abstract JLabel getClassNameLabel();
-
-  protected abstract JLabel getPackageNameLabel();
 
   protected abstract String getPackageNameLabelText();
 
@@ -92,7 +91,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
 
   protected abstract String getDestinationPackageRecentKey();
 
-  public ExtractSuperBaseDialog(Project project, ClassType sourceClass, List<MemberType> members, String refactoringName) {
+  public ExtractSuperBaseDialog(Project project, ClassType sourceClass, List<MemberInfoType> members, String refactoringName) {
     super(project, true);
     myRefactoringName = refactoringName;
 
@@ -105,15 +104,15 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
   protected void init() {
     setTitle(myRefactoringName);
 
-    initPackageNameField();
-    initSourceClassField();
+    myPackageNameField = createPackageNameField();
+    mySourceClassField = createSourceClassField();
     myExtractedSuperNameField = new JTextField();
 
     myDocCommentPanel = new DocCommentPanel(getDocCommentPanelName());
     myDocCommentPanel.setPolicy(getDocCommentPolicySetting());
 
     super.init();
-    updateDialogForExtractSuperclass();
+    updateDialog();
   }
 
   protected JComponent createActionComponent() {
@@ -130,35 +129,61 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
     buttonGroup.add(myRbExtractSuperclass);
     buttonGroup.add(myRbExtractSubclass);
     myRbExtractSuperclass.setSelected(true);
-    myRbExtractSuperclass.addItemListener(new ItemListener() {
-      public void itemStateChanged(ItemEvent e) {
-        updateDialogForExtractSuperclass();
-      }
-    });
 
-    myRbExtractSubclass.addItemListener(new ItemListener() {
+    ItemListener listener = new ItemListener() {
       public void itemStateChanged(ItemEvent e) {
-        updateDialogForExtractSubclass();
+        updateDialog();
       }
-    });
+    };
+    myRbExtractSuperclass.addItemListener(listener);
+    myRbExtractSubclass.addItemListener(listener);
     return box;
   }
+
+  protected JComponent createNorthPanel() {
+      Box box = Box.createVerticalBox();
+
+      JPanel _panel = new JPanel(new BorderLayout());
+      _panel.add(new JLabel(getTopLabelText()), BorderLayout.NORTH);
+      _panel.add(mySourceClassField, BorderLayout.CENTER);
+      box.add(_panel);
+
+      box.add(Box.createVerticalStrut(10));
+
+      box.add(createActionComponent());
+
+      box.add(Box.createVerticalStrut(10));
+
+      myClassNameLabel = new JLabel();
+
+      _panel = new JPanel(new BorderLayout());
+      _panel.add(myClassNameLabel, BorderLayout.NORTH);
+      _panel.add(myExtractedSuperNameField, BorderLayout.CENTER);
+      box.add(_panel);
+      box.add(Box.createVerticalStrut(5));
+
+      _panel = new JPanel(new BorderLayout());
+      myPackageNameLabel = new JLabel();
+
+      _panel.add(myPackageNameLabel, BorderLayout.NORTH);
+      _panel.add(myPackageNameField, BorderLayout.CENTER);
+      box.add(_panel);
+      box.add(Box.createVerticalStrut(10));
+
+      JPanel panel = new JPanel(new BorderLayout());
+      panel.add(box, BorderLayout.CENTER);
+      return panel;
+    }
 
   @Override
   public JComponent getPreferredFocusedComponent() {
     return myExtractedSuperNameField;
   }
 
-  protected void updateDialogForExtractSubclass() {
-    getClassNameLabel().setText(RefactoringBundle.message("extractSuper.rename.original.class.to"));
-    getPackageNameLabel().setText(getPackageNameLabelText());
-    getPreviewAction().setEnabled(true);
-  }
-
-  protected void updateDialogForExtractSuperclass() {
-    getClassNameLabel().setText(getClassNameLabelText());
-    getPackageNameLabel().setText(getPackageNameLabelText());
-    getPreviewAction().setEnabled(false);
+  protected void updateDialog() {
+    myClassNameLabel.setText(getClassNameLabelText());
+    myPackageNameLabel.setText(getPackageNameLabelText());
+    getPreviewAction().setEnabled(!isExtractSuperclass());
   }
 
   public String getExtractedSuperName() {
@@ -188,7 +213,8 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
     RecentsManager.getInstance(myProject).registerRecentEntry(getDestinationPackageRecentKey(), packageName);
 
     if ("".equals(extractedSuperName)) {
-      errorString[0] = getExtractedSuperNameNotSpecifiedKey();
+      // TODO just disable OK button
+      errorString[0] = getExtractedSuperNameNotSpecifiedMessage();
       myExtractedSuperNameField.requestFocusInWindow();
     }
     else {
@@ -236,9 +262,25 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
     HelpManager.getInstance().invokeHelp(getHelpId());
   }
 
+  protected boolean checkConflicts() {
+    return true;
+  }
+
   protected static class OperationFailedException extends Exception {
     protected OperationFailedException(String message) {
       super(message);
     }
   }
+
+  public Collection<MemberInfoType> getSelectedMemberInfos() {
+    ArrayList<MemberInfoType> result = new ArrayList<MemberInfoType>(myMemberInfos.size());
+    for (MemberInfoType info : myMemberInfos) {
+      if (info.isChecked()) {
+        result.add(info);
+      }
+    }
+    return result;
+  }
+
+
 }
