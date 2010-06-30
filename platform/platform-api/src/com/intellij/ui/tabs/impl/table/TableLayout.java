@@ -128,6 +128,8 @@ public class TableLayout extends TabLayout {
         toAjust = true;
       }
 
+      toAjust |= myTabs.myForcedRelayout;
+
       for (int i = 0; i < eachRow.myColumns.size(); i++) {
         TabInfo tabInfo = eachRow.myColumns.get(i);
         final TabLabel label = myTabs.myInfo2Label.get(tabInfo);
