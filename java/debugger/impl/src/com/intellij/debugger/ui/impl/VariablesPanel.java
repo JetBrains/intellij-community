@@ -22,6 +22,7 @@ import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.ScrollPaneFactory;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -39,7 +40,7 @@ public class VariablesPanel extends DebuggerTreePanel implements DataProvider{
 
     final FrameDebuggerTree frameTree = getFrameTree();
 
-    add(new JScrollPane(frameTree), BorderLayout.CENTER);
+    add(ScrollPaneFactory.createScrollPane(frameTree), BorderLayout.CENTER);
     registerDisposable(DebuggerAction.installEditAction(frameTree, DebuggerActions.EDIT_NODE_SOURCE));
 
     overrideShortcut(frameTree, DebuggerActions.SET_VALUE, new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0)));

@@ -32,6 +32,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.ui.EdgeBorder;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -132,7 +133,7 @@ public class DocumentationComponent extends JPanel implements Disposable {
     myEditorPane.setEditable(false);
     myEditorPane.setBackground(HintUtil.INFORMATION_COLOR);
     myEditorPane.setEditorKit(UIUtil.getHTMLEditorKit());
-    myScrollPane = new JScrollPane(myEditorPane);
+    myScrollPane = ScrollPaneFactory.createScrollPane(myEditorPane);
     myScrollPane.setBorder(null);
 
     final MouseAdapter mouseAdapter = new MouseAdapter() {

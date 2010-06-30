@@ -48,7 +48,7 @@
               <text value="Highlight files from &amp;non-active changelists"/>
             </properties>
           </component>
-          <scrollpane id="66692">
+          <scrollpane class="com.intellij.ui.components.JBScrollPane" id="66692">
             <constraints>
               <grid row="4" column="0" row-span="1" col-span="2" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>

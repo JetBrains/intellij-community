@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Chunk;
 import com.intellij.util.ListWithSelection;
@@ -176,7 +177,7 @@ public class GenerateAntBuildDialog extends DialogWrapper {
         final Dimension preferredSize = new Dimension(myTable.getPreferredSize());
         preferredSize.height = (myTableModel.getRowCount() + 2) * myTable.getRowHeight() + myTable.getTableHeader().getHeight();
 
-        final JScrollPane scrollPane = new JScrollPane(myTable);
+      final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
         scrollPane.setPreferredSize(preferredSize);
         myChunksPanel.add(scrollPane, BorderLayout.CENTER);
     }

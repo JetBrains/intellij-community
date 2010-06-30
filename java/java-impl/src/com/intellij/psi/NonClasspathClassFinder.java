@@ -15,8 +15,10 @@
  */
 package com.intellij.psi;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.PsiPackageImpl;
@@ -128,7 +130,11 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
       if (scope.contains(classRoot)) {
         final VirtualFile dir = classRoot.findFileByRelativePath(qname.replace('.', '/'));
         if (dir != null && dir.isDirectory()) {
-          final PsiDirectory psiDirectory = psiManager.findDirectory(dir);
+          final PsiDirectory psiDirectory = ApplicationManager.getApplication().runReadAction(new Computable<PsiDirectory>() {
+            public PsiDirectory compute() {
+              return psiManager.findDirectory(dir);
+            }
+          });
           assert psiDirectory != null;
           if (!consumer.process(psiDirectory)) {
             return false;

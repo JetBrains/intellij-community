@@ -90,7 +90,7 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler, Elemen
             myInterfaceName = dialog.getExtractedSuperName();
             mySelectedMembers = dialog.getSelectedMembers();
             myTargetDir = dialog.getTargetDirectory();
-            myJavaDocPolicy = new DocCommentPolicy(dialog.getJavaDocPolicy());
+            myJavaDocPolicy = new DocCommentPolicy(dialog.getDocCommentPolicy());
             try {
               doRefactoring();
             }

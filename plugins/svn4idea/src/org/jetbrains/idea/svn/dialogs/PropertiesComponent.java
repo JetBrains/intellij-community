@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.PopupHandler;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -76,8 +77,8 @@ public class PropertiesComponent extends JPanel {
     myTable = new JBTable();
     myTextArea = new JTextArea(0, 0);
     myTextArea.setEditable(false);
-    JScrollPane scrollPane = new JScrollPane(myTable);
-    mySplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, true, scrollPane, new JScrollPane(myTextArea));
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
+    mySplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, true, scrollPane, ScrollPaneFactory.createScrollPane(myTextArea));
     add(mySplitPane, BorderLayout.CENTER);
     add(createToolbar(), BorderLayout.WEST);
     final DefaultTableModel model = new DefaultTableModel(createTableModel(new HashMap<String, String>()), new Object[]{"Name", "Value"}) {

@@ -7,10 +7,11 @@ while (condition()) {
 0(1) element: null
 1(2) WRITE i
 2(3) element: WHILE statement
-3(4,9) READ condition
+3(4,10) READ condition
 4(5,6) element: IF statement
-5(9) READ i
+5(10) READ i
 6(7) READ i
-7(8) WRITE i
-8(2) READ i
-9() element: null
+7(8) READ i
+8(9) WRITE i
+9(2) READ i
+10() element: null

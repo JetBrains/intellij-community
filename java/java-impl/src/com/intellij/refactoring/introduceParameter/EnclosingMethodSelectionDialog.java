@@ -30,6 +30,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.MethodCellRenderer;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 
 import javax.swing.*;
@@ -94,7 +95,7 @@ public class EnclosingMethodSelectionDialog extends DialogWrapper {
     int indexToSelect = 0;
     myEnclosingMethodsList.setSelectedIndex(indexToSelect);
     gbConstraints.gridy++;
-    panel.add(new JScrollPane(myEnclosingMethodsList), gbConstraints);
+    panel.add(ScrollPaneFactory.createScrollPane(myEnclosingMethodsList), gbConstraints);
 
     return panel;
   }

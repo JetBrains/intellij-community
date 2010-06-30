@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.JBTable;
@@ -137,7 +138,7 @@ public class ChooseModulesDialog extends DialogWrapper {
     }
     panel.add(messagePanel, BorderLayout.CENTER);
 
-    final JScrollPane jScrollPane = new JScrollPane();
+    final JScrollPane jScrollPane = ScrollPaneFactory.createScrollPane();
     jScrollPane.setViewportView(myView);
     jScrollPane.setPreferredSize(new Dimension(300, 80));
     panel.add(jScrollPane, BorderLayout.SOUTH);

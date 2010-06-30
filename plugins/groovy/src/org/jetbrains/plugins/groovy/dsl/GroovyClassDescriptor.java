@@ -100,12 +100,12 @@ public class GroovyClassDescriptor {
       return myPlace.equals(that.myPlace);
     }
 
-    return true;
+    return myFile.equals(that.myFile);
   }
 
   @Override
   public int hashCode() {
-    int result = myPsiClass.hashCode();
+    int result = myPsiClass.hashCode() * 31 + myFile.hashCode();
     if (myPlaceDependent) {
       return result * 31 + myPlace.hashCode();
     }

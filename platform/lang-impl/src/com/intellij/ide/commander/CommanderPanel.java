@@ -270,7 +270,7 @@ public class CommanderPanel extends JPanel {
     myTitlePanel.add(panel1, BorderLayout.CENTER);
 
     add(myTitlePanel, BorderLayout.NORTH);
-    final JScrollPane scrollPane = new JScrollPane(myList);
+    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myList);
     scrollPane.setBorder(null);
     scrollPane.getVerticalScrollBar().setFocusable(false); // otherwise the scrollbar steals focus and panel switching with tab is broken 
     scrollPane.getHorizontalScrollBar().setFocusable(false);

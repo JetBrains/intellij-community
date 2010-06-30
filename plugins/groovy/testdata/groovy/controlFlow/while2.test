@@ -10,5 +10,6 @@ while (true) {
 3(4,5) element: IF statement
 4(2) READ i
 5(6) READ i
-6(2) WRITE j
-7() element: null
+6(7) READ i
+7(2) WRITE j
+8() element: null

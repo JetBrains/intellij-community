@@ -93,4 +93,23 @@ public abstract class AbstractDomChildDescriptionImpl implements AbstractDomChil
     final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(ReflectionUtil.getRawType(myType), false);
     return strategy == null ? parent.getNameStrategy() : strategy;
   }
+
+  @Override
+  public boolean isValid() {
+    return true;
+  }
+
+  @Override
+  public void navigate(boolean requestFocus) {
+  }
+
+  @Override
+  public boolean canNavigate() {
+    return false;
+  }
+
+  @Override
+  public boolean canNavigateToSource() {
+    return false;
+  }
 }

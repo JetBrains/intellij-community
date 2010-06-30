@@ -30,6 +30,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.TIntArrayList;
@@ -75,7 +76,7 @@ public class JdkChooserPanel extends JPanel {
     });
 
     JPanel panel = new JPanel(new BorderLayout());
-    panel.add(new JScrollPane(myList), BorderLayout.CENTER);
+    panel.add(ScrollPaneFactory.createScrollPane(myList), BorderLayout.CENTER);
     add(panel, BorderLayout.CENTER);
     if (myListModel.getSize() > 0) {
       myList.setSelectedIndex(0);

@@ -24,6 +24,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
@@ -165,7 +166,7 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
   }
 
   public GrCodeReferenceElement getImportReference() {
-    return findChildByClass(GrCodeReferenceElement.class);
+    return (GrCodeReferenceElement)findChildByType(GroovyElementTypes.REFERENCE_ELEMENT);
   }
 
   @Nullable
@@ -178,7 +179,7 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
       return identifier.getText();
     }
 
-    GrCodeReferenceElement ref = findChildByClass(GrCodeReferenceElement.class);
+    GrCodeReferenceElement ref = getImportReference();
     return ref == null ? null : ref.getReferenceName();
   }
 

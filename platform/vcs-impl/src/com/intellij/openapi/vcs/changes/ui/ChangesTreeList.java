@@ -135,8 +135,8 @@ public abstract class ChangesTreeList<T> extends JPanel {
     myList = new JBList(new DefaultListModel());
     myList.setVisibleRowCount(10);
 
-    add(myListScrollPane = new JScrollPane(myList), LIST_CARD);
-    add(myTreeScrollPane = new JScrollPane(myTree), TREE_CARD);
+    add(myListScrollPane = ScrollPaneFactory.createScrollPane(myList), LIST_CARD);
+    add(myTreeScrollPane = ScrollPaneFactory.createScrollPane(myTree), TREE_CARD);
 
     new ListSpeedSearch(myList) {
       protected String getElementText(Object element) {

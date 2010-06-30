@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-class ExtractSuperclassDialog extends ExtractSuperBaseDialog {
+class ExtractSuperclassDialog extends JavaExtractSuperBaseDialog {
   private final InterfaceContainmentVerifier myContainmentVerifier = new InterfaceContainmentVerifier() {
     public boolean checkedInterfacesContain(PsiMethod psiMethod) {
       return PullUpHelper.checkedInterfacesContain(myMemberInfos, psiMethod);
@@ -122,7 +122,9 @@ class ExtractSuperclassDialog extends ExtractSuperBaseDialog {
 
   @Override
   protected String getPackageNameLabelText() {
-    return isExtractSuperclass() ? RefactoringBundle.message("package.for.new.superclass") : "Package name for original class";
+    return isExtractSuperclass()
+           ? RefactoringBundle.message("package.for.new.superclass")
+           : RefactoringBundle.message("package.for.original.class");
   }
 
   protected String getEntityName() {
@@ -144,13 +146,13 @@ class ExtractSuperclassDialog extends ExtractSuperBaseDialog {
     memberSelectionPanel.getTable().setMemberInfoModel(memberInfoModel);
     memberSelectionPanel.getTable().addMemberInfoChangeListener(memberInfoModel);
 
-    panel.add(myJavaDocPanel, BorderLayout.EAST);
+    panel.add(myDocCommentPanel, BorderLayout.EAST);
 
     return panel;
   }
 
   @Override
-  protected String getJavaDocPanelName() {
+  protected String getDocCommentPanelName() {
     return RefactoringBundle.message("javadoc.for.abstracts");
   }
 
@@ -165,12 +167,12 @@ class ExtractSuperclassDialog extends ExtractSuperBaseDialog {
   }
 
   @Override
-  protected int getJavaDocPolicySetting() {
+  protected int getDocCommentPolicySetting() {
     return JavaRefactoringSettings.getInstance().EXTRACT_SUPERCLASS_JAVADOC;
   }
 
   @Override
-  protected void setJavaDocPolicySetting(int policy) {
+  protected void setDocCommentPolicySetting(int policy) {
     JavaRefactoringSettings.getInstance().EXTRACT_SUPERCLASS_JAVADOC = policy;
   }
 
@@ -179,7 +181,7 @@ class ExtractSuperclassDialog extends ExtractSuperBaseDialog {
   protected ExtractSuperBaseProcessor createProcessor() {
     return new ExtractSuperClassProcessor(myProject, getTargetDirectory(), getExtractedSuperName(),
                                           mySourceClass, getSelectedMemberInfos(), false,
-                                          new DocCommentPolicy(getJavaDocPolicy()));
+                                          new DocCommentPolicy(getDocCommentPolicy()));
   }
 
   @Override

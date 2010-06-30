@@ -32,9 +32,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.ScrollPaneFactory;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
 import java.awt.*;
 import java.util.Enumeration;
 
@@ -43,7 +43,7 @@ public abstract class WatchPanel extends DebuggerTreePanel {
 
   public WatchPanel(Project project, DebuggerStateManager stateManager) {
     super(project, stateManager);
-    add(new JScrollPane(getWatchTree()), BorderLayout.CENTER);
+    add(ScrollPaneFactory.createScrollPane(getWatchTree()), BorderLayout.CENTER);
     final Disposable disposable = DebuggerAction.installEditAction(getWatchTree(), DebuggerActions.EDIT_NODE_SOURCE);
     registerDisposable(disposable);
   }

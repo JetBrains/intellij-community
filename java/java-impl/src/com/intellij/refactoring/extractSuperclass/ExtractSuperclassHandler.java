@@ -150,7 +150,7 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
     final String superclassName = dialog.getExtractedSuperName();
     final PsiDirectory targetDirectory = dialog.getTargetDirectory();
     final MemberInfo[] selectedMemberInfos = dialog.getSelectedMemberInfos();
-    final DocCommentPolicy javaDocPolicy = new DocCommentPolicy(dialog.getJavaDocPolicy());
+    final DocCommentPolicy javaDocPolicy = new DocCommentPolicy(dialog.getDocCommentPolicy());
     LocalHistoryAction a = LocalHistory.getInstance().startAction(getCommandName(subclass, superclassName));
     try {
       PsiClass superclass = null;

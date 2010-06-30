@@ -224,11 +224,11 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
 
       final PathsList classPath;
       if (jdk.getSdkType() instanceof JavaSdk) {
-        classPath = OrderEnumerator.orderEntries(myProject).withoutSdk().withoutThisModuleContent().getPathsList();
+        classPath = OrderEnumerator.orderEntries(myProject).withoutSdk().withoutModuleSourceEntries().getPathsList();
       }
       else {
         //libraries are included into jdk
-        classPath = OrderEnumerator.orderEntries(myProject).withoutThisModuleContent().getPathsList();
+        classPath = OrderEnumerator.orderEntries(myProject).withoutModuleSourceEntries().getPathsList();
       }
       final String classPathString = classPath.getPathsString();
       if (classPathString.length() > 0) {

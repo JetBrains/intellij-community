@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 import javax.swing.*;
-import java.awt.*;
 
 public class ChainedConstructorTest {
   private JComponent myRootComponent;
