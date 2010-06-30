@@ -17,6 +17,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -38,7 +39,6 @@ import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import org.zmlx.hg4idea.provider.*;
@@ -74,6 +74,8 @@ public class HgVcs extends AbstractVcs {
   public static final String DIRSTATE_FILE_PATH = ".hg/dirstate";
   public static final String NOTIFICATION_GROUP_ID = "Mercurial";
   public static final String HG_EXECUTABLE_FILE_NAME = (SystemInfo.isWindows ? "hg.exe" : "hg");
+
+  private static final String ORIG_FILE_PATTERN = "*.orig";
 
   private final HgChangeProvider changeProvider;
   private final HgProjectConfigurable configurable;
@@ -225,17 +227,18 @@ public class HgVcs extends AbstractVcs {
 
   @Override
   public void activate() {
+    // validate hg executable
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       started = true;
     } else {
       HgExecutableValidator validator = new HgExecutableValidator(myProject);
       started = validator.check(globalSettings);
     }
-
     if (!started) {
       return;
     }
 
+    // status bar
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
     if (statusBar != null) {
       statusBar.addWidget(hgCurrentBranchStatus, myProject);
@@ -243,30 +246,21 @@ public class HgVcs extends AbstractVcs {
       statusBar.addWidget(outgoingChangesStatus, myProject);
     }
 
-    final HgIncomingStatusUpdater incomingUpdater =
-      new HgIncomingStatusUpdater(incomingChangesStatus, projectSettings);
-
-    final HgOutgoingStatusUpdater outgoingUpdater =
-      new HgOutgoingStatusUpdater(outgoingChangesStatus, projectSettings);
-
+    // updaters and listeners
+    final HgIncomingStatusUpdater incomingUpdater = new HgIncomingStatusUpdater(incomingChangesStatus, projectSettings);
+    final HgOutgoingStatusUpdater outgoingUpdater = new HgOutgoingStatusUpdater(outgoingChangesStatus, projectSettings);
     changesUpdaterScheduledFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(
       new Runnable() {
         public void run() {
           incomingUpdater.update(myProject);
           outgoingUpdater.update(myProject);
         }
-      }, 0, globalSettings.getIncomingCheckIntervalSeconds(), TimeUnit.SECONDS);
+      }, 0, HgGlobalSettings.getIncomingCheckIntervalSeconds(), TimeUnit.SECONDS);
 
-    MessageBus messageBus = myProject.getMessageBus();
-    messageBusConnection = messageBus.connect();
-
+    messageBusConnection = myProject.getMessageBus().connect();
     messageBusConnection.subscribe(INCOMING_TOPIC, incomingUpdater);
     messageBusConnection.subscribe(OUTGOING_TOPIC, outgoingUpdater);
-
-    messageBusConnection.subscribe(
-      BRANCH_TOPIC, new HgCurrentBranchStatusUpdater(hgCurrentBranchStatus)
-    );
-
+    messageBusConnection.subscribe(BRANCH_TOPIC, new HgCurrentBranchStatusUpdater(hgCurrentBranchStatus));
     messageBusConnection.subscribe(
       FileEditorManagerListener.FILE_EDITOR_MANAGER,
       new FileEditorManagerAdapter() {
@@ -281,8 +275,18 @@ public class HgVcs extends AbstractVcs {
     );
 
     myVFSListener = new HgVFSListener(myProject, this);
-
     VirtualFileManager.getInstance().addVirtualFileListener(myDirStateChangeListener);
+
+    // ignore temporary files
+    final String ignoredPattern = FileTypeManager.getInstance().getIgnoredFilesList();
+    if (!ignoredPattern.contains(ORIG_FILE_PATTERN)) {
+      final String newPattern = ignoredPattern + (ignoredPattern.endsWith(";") ? "" : ";") + ORIG_FILE_PATTERN;
+      HgUtil.runWriteActionLater(new Runnable() {
+        public void run() {
+          FileTypeManager.getInstance().setIgnoredFilesList(newPattern);
+        }
+      });
+    }
   }
 
   @Override

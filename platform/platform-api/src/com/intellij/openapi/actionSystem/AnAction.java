@@ -67,7 +67,7 @@ public abstract class AnAction {
   private boolean myEnabledInModalContext;
 
 
-  private static final ShortcutSet ourEmptyShortcutSet = new CustomShortcutSet(new Shortcut[0]);
+  private static final ShortcutSet ourEmptyShortcutSet = new CustomShortcutSet();
   private boolean myIsDefaultIcon = true;
   private boolean myWorksInInjected;
 

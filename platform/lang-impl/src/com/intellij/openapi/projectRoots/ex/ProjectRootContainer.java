@@ -30,20 +30,21 @@ import org.jetbrains.annotations.NotNull;
 
 public interface ProjectRootContainer {
   @NotNull
-  VirtualFile[] getRootFiles(OrderRootType type);
-  ProjectRoot[] getRoots(OrderRootType type);
+  VirtualFile[] getRootFiles(@NotNull OrderRootType type);
+  @NotNull ProjectRoot[] getRoots(@NotNull OrderRootType type);
 
   void startChange();
   void finishChange();
 
-  ProjectRoot addRoot(VirtualFile virtualFile, OrderRootType type);
-  void addRoot(ProjectRoot root, OrderRootType type);
-  void removeRoot(ProjectRoot root, OrderRootType type);
-  void removeAllRoots(OrderRootType type);
+  @NotNull 
+  ProjectRoot addRoot(@NotNull VirtualFile virtualFile, @NotNull OrderRootType type);
+  void addRoot(@NotNull ProjectRoot root, @NotNull OrderRootType type);
+  void removeRoot(@NotNull ProjectRoot root, @NotNull OrderRootType type);
+  void removeAllRoots(@NotNull OrderRootType type);
 
   void removeAllRoots();
 
-  void removeRoot(VirtualFile root, OrderRootType type);
+  void removeRoot(@NotNull VirtualFile root, @NotNull OrderRootType type);
 
   void update();
 }

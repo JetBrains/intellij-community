@@ -23,6 +23,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
  * @see ShortcutSet
  */
 public abstract class Shortcut {
+  public static final Shortcut[] EMPTY_ARRAY = new Shortcut[0];
   Shortcut(){
   }
 

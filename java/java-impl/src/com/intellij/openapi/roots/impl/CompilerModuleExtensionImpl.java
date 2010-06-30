@@ -300,13 +300,15 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
         OrderRootType.COMPILATION_CLASSES.equals(type) || 
         OrderRootType.PRODUCTION_COMPILATION_CLASSES.equals(type)) {
       final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
+
+      final VirtualFile outputPathForTests = OrderRootType.PRODUCTION_COMPILATION_CLASSES.equals(type) ? null : getCompilerOutputPathForTests();
+      if (outputPathForTests != null) {
+        result.add(outputPathForTests);
+      }
+
       VirtualFile outputRoot = getCompilerOutputPath();
-      if (outputRoot != null) result.add(outputRoot);
-      if (!OrderRootType.PRODUCTION_COMPILATION_CLASSES.equals(type)) {
-        final VirtualFile outputPathForTests = getCompilerOutputPathForTests();
-        if (outputPathForTests != null && !outputPathForTests.equals(outputRoot)) {
-          result.add(outputPathForTests);
-        }
+      if (outputRoot != null && !outputRoot.equals(outputPathForTests)) {
+        result.add(outputRoot);
       }
       return VfsUtil.toVirtualFileArray(result);
     }
@@ -319,13 +321,15 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
         OrderRootType.COMPILATION_CLASSES.equals(type) ||
         OrderRootType.PRODUCTION_COMPILATION_CLASSES.equals(type)) {
       final List<String> result = new ArrayList<String>();
+
+      final String outputPathForTests = OrderRootType.PRODUCTION_COMPILATION_CLASSES.equals(type) ? null : getCompilerOutputUrlForTests();
+      if (outputPathForTests != null) {
+        result.add(outputPathForTests);
+      }
+
       String outputRoot = getCompilerOutputUrl();
-      if (outputRoot != null) result.add(outputRoot);
-      if (!OrderRootType.PRODUCTION_COMPILATION_CLASSES.equals(type)) {
-        final String outputPathForTests = getCompilerOutputUrlForTests();
-        if (outputPathForTests != null && !outputPathForTests.equals(outputRoot)) {
-          result.add(outputPathForTests);
-        }
+      if (outputRoot != null && !outputRoot.equals(outputPathForTests)) {
+        result.add(outputRoot);
       }
       return ArrayUtil.toStringArray(result);
     }

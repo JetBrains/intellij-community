@@ -122,7 +122,9 @@ class ExtractSuperclassDialog extends JavaExtractSuperBaseDialog {
 
   @Override
   protected String getPackageNameLabelText() {
-    return isExtractSuperclass() ? RefactoringBundle.message("package.for.new.superclass") : "Package name for original class";
+    return isExtractSuperclass()
+           ? RefactoringBundle.message("package.for.new.superclass")
+           : RefactoringBundle.message("package.for.original.class");
   }
 
   protected String getEntityName() {

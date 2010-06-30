@@ -42,7 +42,7 @@ public class OrderRootType {
    * Runtime classpath.
    * Includes:
    * <li>  production and test output for modules
-   * <li>  classes roots for libraries unless scope is 'provided'
+   * <li>  classes roots for libraries and jdk unless scope is 'provided'
    * <li>  recursively for module dependencies with scope != 'provided'
    */
   public static final OrderRootType CLASSES_AND_OUTPUT = new OrderRootType("CLASSES_AND_OUTPUT");
@@ -51,7 +51,7 @@ public class OrderRootType {
    * Classpath for compilation.
    * Includes:
    * <li>  production and test output for modules
-   * <li>  classes roots for libraries
+   * <li>  classes roots for libraries and jdk
    * <li>  recursively for module dependencies: only exported items
    */
   public static final OrderRootType COMPILATION_CLASSES = new OrderRootType("COMPILATION_CLASSES");
@@ -60,7 +60,7 @@ public class OrderRootType {
    * Classpath for compilation without tests.
    * Includes:
    * <li>  production output for modules
-   * <li>  classes roots for libraries with scope suitable for production compile
+   * <li>  classes roots for libraries and jdk with scope suitable for production compile
    * <li>  recursively for module dependencies with scope suitable for production compile: only exported items
    */
   public static final OrderRootType PRODUCTION_COMPILATION_CLASSES = new OrderRootType("PRODUCTION_COMPILATION_CLASSES");
@@ -68,7 +68,7 @@ public class OrderRootType {
   /**
    * Classpath without output directories for this module.
    * Includes:
-   * <li>  classes roots for libraries
+   * <li>  classes roots for libraries and jdk
    * <li>  recursively for module dependencies: only exported items
    */
   public static final OrderRootType CLASSES = new PersistentOrderRootType("CLASSES", "classPath", null, "classPathEntry");
@@ -77,6 +77,7 @@ public class OrderRootType {
    * Sources.
    * Includes:
    * <li>  production and test source roots for modules
+   * <li>  source roots for libraries and jdk
    * <li>  recursively for module dependencies: only exported items
    */
   public static final OrderRootType SOURCES = new PersistentOrderRootType("SOURCES", "sourcePath", null, "sourcePathEntry");

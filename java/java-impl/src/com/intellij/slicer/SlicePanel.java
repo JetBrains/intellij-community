@@ -90,6 +90,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
       }
 
       public void stateChanged() {
+        if (project.isDisposed()) return;
         if (toolWindow.getAnchor() != myAnchor) {
           myAnchor = myToolWindow.getAnchor();
           layoutPanel();

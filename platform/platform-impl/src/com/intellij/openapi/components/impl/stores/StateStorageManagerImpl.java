@@ -332,7 +332,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   public StreamProvider[] getStreamProviders(RoamingType type) {
     synchronized (myStreamProviders) {
       final Collection<StreamProvider> providers = myStreamProviders.get(type);
-      return providers.toArray(new StreamProvider[providers.size()]);
+      return providers.isEmpty() ? EMPTY_ARRAY : providers.toArray(new StreamProvider[providers.size()]);
     }
   }
 

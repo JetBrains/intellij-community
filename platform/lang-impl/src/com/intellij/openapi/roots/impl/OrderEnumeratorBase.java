@@ -94,7 +94,7 @@ public abstract class OrderEnumeratorBase extends OrderEnumerator {
   }
 
   @Override
-  public OrderEnumerator withoutThisModuleContent() {
+  public OrderEnumerator withoutModuleSourceEntries() {
     myWithoutThisModuleContent = true;
     return this;
   }

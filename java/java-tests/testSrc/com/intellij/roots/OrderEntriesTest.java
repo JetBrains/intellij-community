@@ -3,9 +3,10 @@ package com.intellij.roots;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.roots.ModuleRootManagerTestCase;
+import com.intellij.util.PathsList;
 
 /**
  * @author nik
@@ -28,8 +29,8 @@ public class OrderEntriesTest extends ModuleRootManagerTestCase {
 
     assertOrderFiles(OrderRootType.CLASSES, getRtJar());
     assertOrderFiles(OrderRootType.SOURCES, srcRoot, testRoot);
-    assertOrderFiles(OrderRootType.CLASSES_AND_OUTPUT, getRtJar(), output, testOutput);
-    assertOrderFiles(OrderRootType.COMPILATION_CLASSES, getRtJar(), output, testOutput);
+    assertOrderFiles(OrderRootType.CLASSES_AND_OUTPUT, getRtJar(), testOutput, output);
+    assertOrderFiles(OrderRootType.COMPILATION_CLASSES, getRtJar(), testOutput, output);
     assertOrderFiles(OrderRootType.PRODUCTION_COMPILATION_CLASSES, getRtJar(), output);
   }
 
@@ -54,8 +55,8 @@ public class OrderEntriesTest extends ModuleRootManagerTestCase {
 
     assertOrderFiles(OrderRootType.CLASSES, getRtJar(), getJDomJar());
     assertOrderFiles(OrderRootType.SOURCES, srcRoot, testRoot, getJDomSources());
-    assertOrderFiles(OrderRootType.CLASSES_AND_OUTPUT, getRtJar(), output, testOutput, getJDomJar());
-    assertOrderFiles(OrderRootType.COMPILATION_CLASSES, getRtJar(), output, testOutput, getJDomJar());
+    assertOrderFiles(OrderRootType.CLASSES_AND_OUTPUT, getRtJar(), testOutput, output, getJDomJar());
+    assertOrderFiles(OrderRootType.COMPILATION_CLASSES, getRtJar(), testOutput, output, getJDomJar());
     assertOrderFiles(OrderRootType.PRODUCTION_COMPILATION_CLASSES, getRtJar(), output, getJDomJar());
   }
 
@@ -85,6 +86,27 @@ public class OrderEntriesTest extends ModuleRootManagerTestCase {
 
   private void assertOrderFiles(final OrderRootType type, VirtualFile... files) {
     assertOrderedEquals(ModuleRootManager.getInstance(myModule).getFiles(type), files);
+    assertRoots(collectByOrderEnumerator(type), files);
+  }
+
+  private PathsList collectByOrderEnumerator(OrderRootType type) {
+    final OrderEnumerator base = OrderEnumerator.orderEntries(myModule);
+    if (type == OrderRootType.CLASSES_AND_OUTPUT) {
+      return base.recursively().getPathsList();
+    }
+    if (type == OrderRootType.COMPILATION_CLASSES) {
+      return base.recursively().exportedOnly().getPathsList();
+    }
+    if (type == OrderRootType.PRODUCTION_COMPILATION_CLASSES) {
+      return base.productionOnly().recursively().exportedOnly().getPathsList();
+    }
+    if (type == OrderRootType.CLASSES) {
+      return base.withoutModuleSourceEntries().recursively().exportedOnly().getPathsList();
+    }
+    if (type == OrderRootType.SOURCES) {
+      return base.recursively().exportedOnly().getSourcePathsList();
+    }
+    throw new AssertionError(type);
   }
 }
 

@@ -90,10 +90,21 @@ public abstract class HgUtil {
   }
 
   /**
-   * Runs the given task as a write action in the event dispatching thread.
+   * Runs the given task as a write action in the event dispatching thread and waits for its completion.
    */
   public static void runWriteActionAndWait(@NotNull final Runnable runnable) throws InvocationTargetException, InterruptedException {
     GuiUtils.runOrInvokeAndWait(new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(runnable);
+      }
+    });
+  }
+
+  /**
+   * Schedules the given task to be run as a write action in the event dispatching thread.
+   */
+  public static void runWriteActionLater(@NotNull final Runnable runnable) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(runnable);
       }
