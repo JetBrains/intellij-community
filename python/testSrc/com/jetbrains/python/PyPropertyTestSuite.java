@@ -6,6 +6,7 @@ import com.intellij.psi.PsiReference;
 import com.jetbrains.python.fixtures.PyResolveTestCase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -24,6 +25,7 @@ public class PyPropertyTestSuite {
 
   abstract static class PyPropertyTest  extends PyResolveTestCase {
     protected PyClass myClass;
+    protected LanguageLevel myLanguageLevel = LanguageLevel.PYTHON26;
 
     @Override
     protected void setUp() throws Exception {
@@ -31,7 +33,7 @@ public class PyPropertyTestSuite {
       PsiReference ref = configureByFile("property/"+ "Classic.py");
       final Project project = ref.getElement().getContainingFile().getProject();
       project.putUserData(PyBuiltinCache.TEST_SDK, PythonMockSdk.findOrCreate());
-      //  if need be: PythonLanguageLevelPusher.setForcedLanguageLevel(project, LanguageLevel.PYTHON26);
+      PythonLanguageLevelPusher.setForcedLanguageLevel(project, myLanguageLevel);
       PsiElement elt = ref.resolve();
       assertInstanceOf(elt, PyExpression.class);
       PyType type = ((PyExpression)elt).getType(TypeEvalContext.slow());
@@ -146,6 +148,7 @@ public class PyPropertyTestSuite {
   public static class PyDecoratedPropertyTest extends PyPropertyTest {
     public PyDecoratedPropertyTest() {
       super();
+      myLanguageLevel = LanguageLevel.PYTHON26;
     }
 
     public void testW1() throws Exception {
