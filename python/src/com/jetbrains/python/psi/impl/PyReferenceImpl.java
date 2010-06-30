@@ -283,7 +283,24 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
             return true;
           }
         }
-        return resolve() == element; // TODO: handle multi-resolve
+        final PsiElement resolveResult = resolve();
+        if (resolveResult == element) {
+          return true;
+        }
+        // TODO support nonlocal statement
+        final PyGlobalStatement ourGlobal = PyGlobalStatementNavigator.getByArgument(resolveResult);
+        final PyGlobalStatement theirGlobal = PyGlobalStatementNavigator.getByArgument(element);
+        if (ourGlobal != null || theirGlobal != null) {
+          PsiElement ourContainer = PsiTreeUtil.getParentOfType(getElement(), PsiNamedElement.class);
+          PsiElement theirContainer = PsiTreeUtil.getParentOfType(element, PsiNamedElement.class);
+          if (ourGlobal != null && ourContainer != null && PsiTreeUtil.isAncestor(theirContainer, ourContainer, false)) {
+            return true;            
+          }
+          if (theirGlobal != null && theirContainer != null && PsiTreeUtil.isAncestor(ourContainer, theirContainer, false)) {
+            return true;            
+          }
+        }
+        return false; // TODO: handle multi-resolve
       }
     }
     return false;

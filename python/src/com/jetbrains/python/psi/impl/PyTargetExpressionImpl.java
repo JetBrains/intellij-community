@@ -208,6 +208,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
     return value instanceof PyReferenceExpression ? ((PyReferenceExpression) value).asQualifiedName() : null;
   }
 
+  @NotNull
   @Override
   public PsiReference getReference() {
     if (getQualifier() != null) {
@@ -219,6 +220,11 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
   @NotNull
   @Override
   public SearchScope getUseScope() {
+    final PyGlobalStatement globalStatement = PyGlobalStatementNavigator.getByArgument(this);
+    if (globalStatement != null) {
+      return super.getUseScope();
+    }
+    
     // find highest level function containing our var
     PyElement container = this;
     while(true) {

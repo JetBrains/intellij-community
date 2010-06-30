@@ -500,10 +500,10 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   private void parseNameDefiningStatement(boolean inSuite, final PyElementType elementType) {
     final PsiBuilder.Marker globalStatement = myBuilder.mark();
     myBuilder.advanceLexer();
-    parseIdentifier(PyElementTypes.REFERENCE_EXPRESSION);
+    parseIdentifier(PyElementTypes.TARGET_EXPRESSION);
     while (myBuilder.getTokenType() == PyTokenTypes.COMMA) {
       myBuilder.advanceLexer();
-      parseIdentifier(PyElementTypes.REFERENCE_EXPRESSION);
+      parseIdentifier(PyElementTypes.TARGET_EXPRESSION);
     }
     checkEndOfStatement(inSuite);
     globalStatement.done(elementType);

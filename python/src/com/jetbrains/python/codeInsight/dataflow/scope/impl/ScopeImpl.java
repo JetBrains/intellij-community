@@ -14,6 +14,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeVariable;
 import com.jetbrains.python.psi.PyGlobalStatement;
 import com.jetbrains.python.psi.PyRecursiveElementVisitor;
 import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -98,7 +99,7 @@ public class ScopeImpl implements Scope {
     owner.accept(new PyRecursiveElementVisitor(){
       @Override
       public void visitPyGlobalStatement(final PyGlobalStatement node) {
-        for (PyReferenceExpression expression : node.getGlobals()) {
+        for (PyTargetExpression expression : node.getGlobals()) {
           names.add(expression.getReferencedName());
         }
       }

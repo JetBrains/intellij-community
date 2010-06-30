@@ -34,13 +34,13 @@ public class GlobalAnnotator extends PyAnnotator {
 
       // check globals
       final AnnotationHolder holder = getHolder();
-      for (PyReferenceExpression expr : node.getGlobals()) {
+      for (PyTargetExpression expr : node.getGlobals()) {
         final String expr_name = expr.getReferencedName();
         if (paramNames.contains(expr_name)) {
           holder.createErrorAnnotation(expr.getTextRange(), PyBundle.message("ANN.$0.both.global.and.param", expr_name));
         }
         PsiElement resolvedElement = expr.getReference().resolve();
-        if (resolvedElement != null && PsiTreeUtil.isAncestor(function, resolvedElement, true)) {
+        if (resolvedElement != null && resolvedElement != expr && PsiTreeUtil.isAncestor(function, resolvedElement, true)) {
           getHolder().createWarningAnnotation(expr.getTextRange(),PyBundle.message("ANN.$0.both.global.and.param", expr_name));
         }
       }

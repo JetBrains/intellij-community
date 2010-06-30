@@ -2,9 +2,11 @@ package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.StubBasedPsiElement;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -24,4 +26,7 @@ public interface PyTargetExpression extends PyQualifiedExpression, PsiNamedEleme
 
   @Nullable
   PyQualifiedName getAssignedQName();
+
+  @NotNull
+  PsiReference getReference();
 }

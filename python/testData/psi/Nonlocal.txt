@@ -2,9 +2,9 @@ PyFile:Nonlocal.py
   PyNonlocalStatement
     PsiElement(Py:NONLOCAL_KEYWORD)('nonlocal')
     PsiWhiteSpace(' ')
-    PyReferenceExpression: a
+    PyTargetExpression: a
       PsiElement(Py:IDENTIFIER)('a')
     PsiElement(Py:COMMA)(',')
     PsiWhiteSpace(' ')
-    PyReferenceExpression: b
+    PyTargetExpression: b
       PsiElement(Py:IDENTIFIER)('b')

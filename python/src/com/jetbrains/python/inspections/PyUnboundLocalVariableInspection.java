@@ -1,7 +1,5 @@
 package com.jetbrains.python.inspections;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
@@ -17,7 +15,6 @@ import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.*;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -43,7 +40,7 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
           return;
         }
         // Ignore global statements arguments
-        if (PyGlobalStatementNavigator.getPyGlobalStatementByArgument(node) != null){
+        if (PyGlobalStatementNavigator.getByArgument(node) != null){
           return;
         }
         // Ignore qualifier inspections
