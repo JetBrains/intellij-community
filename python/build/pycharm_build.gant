@@ -416,6 +416,7 @@ def layoutMac(Map args, String target) {
     dir("bin") {
       fileset(dir: "$home/community/bin/mac")
       fileset(dir: "$home/community/bin/nix")
+      fileset(dir: "$home/bin", includes: "*.jnilib")
     }
     dir("lib") {
       fileset(dir: "$home/community/build/conf/mac/lib")
