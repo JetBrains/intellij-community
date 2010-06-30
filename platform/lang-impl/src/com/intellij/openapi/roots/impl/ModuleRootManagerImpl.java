@@ -501,7 +501,8 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
           }
 
           public Iterator<RootModelImpl> getIn(RootModelImpl rootModel) {
-            final ArrayList<String> names1 = rootModel.processOrder(new RootPolicy<ArrayList<String>>() {
+            final List<String> namesList = rootModel.orderEntries().withoutSdk().withoutLibraries().withoutModuleSourceEntries()
+              .process(new RootPolicy<ArrayList<String>>() {
               public ArrayList<String> visitModuleOrderEntry(ModuleOrderEntry moduleOrderEntry, ArrayList<String> strings) {
                 final Module module = moduleOrderEntry.getModule();
                 if (module != null && !module.isDisposed()) {
@@ -516,7 +517,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
               }
             }, new ArrayList<String>());
 
-            final String[] names = ArrayUtil.toStringArray(names1);
+            final String[] names = ArrayUtil.toStringArray(namesList);
             List<RootModelImpl> result = new ArrayList<RootModelImpl>();
             for (String name : names) {
               final RootModelImpl depRootModel = nameToModel.get(name);

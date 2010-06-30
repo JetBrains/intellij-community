@@ -108,7 +108,7 @@ public class InheritedJdkTest extends ModuleTestCase {
 
     assertTrue(rootManager.isSdkInherited());
     Assert.assertEquals("Correct non-existing JDK inherited", "jdk1",
-                 rootManager.processOrder(new RootPolicy<String>() {
+                 rootManager.orderEntries().process(new RootPolicy<String>() {
                    public String visitInheritedJdkOrderEntry(InheritedJdkOrderEntry inheritedJdkOrderEntry, String s) {
                      return inheritedJdkOrderEntry.getJdkName();
                    }

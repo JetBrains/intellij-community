@@ -956,7 +956,7 @@ public class RootModelImpl implements ModifiableRootModel {
 
   @NotNull
   public String[] getDependencyModuleNames() {
-    List<String> result = processOrder(new CollectDependentModules(), new ArrayList<String>());
+    List<String> result = orderEntries().withoutSdk().withoutLibraries().withoutModuleSourceEntries().process(new CollectDependentModules(), new ArrayList<String>());
     return ContainerUtil.toArray(result, new String[result.size()]);
   }
 

@@ -19,6 +19,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathsList;
@@ -45,6 +46,7 @@ public abstract class OrderEnumeratorBase extends OrderEnumerator {
   private boolean myExportedOnly;
   private Condition<OrderEntry> myCondition;
   private List<OrderEnumerationHandler> myCustomHandlers;
+  private ModulesProvider myModulesProvider;
 
   public OrderEnumeratorBase(@Nullable Module module, @NotNull Project project) {
     for (OrderEnumerationHandler handler : OrderEnumerationHandler.EP_NAME.getExtensions()) {
@@ -123,6 +125,12 @@ public abstract class OrderEnumeratorBase extends OrderEnumerator {
   }
 
   @Override
+  public OrderEnumerator using(@NotNull ModulesProvider provider) {
+    myModulesProvider = provider;
+    return this;
+  }
+
+  @Override
   public PathsList getPathsList() {
     final PathsList list = new PathsList();
     collectPaths(list);
@@ -164,7 +172,6 @@ public abstract class OrderEnumeratorBase extends OrderEnumerator {
     forEach(new Processor<OrderEntry>() {
       @Override
       public boolean process(OrderEntry orderEntry) {
-        final Module ownerModule = orderEntry.getOwnerModule();
         if (orderEntry instanceof ModuleSourceOrderEntry) {
           collectModulePaths(((ModuleSourceOrderEntry)orderEntry).getRootModel(), list, collectSources);
         }
@@ -179,7 +186,7 @@ public abstract class OrderEnumeratorBase extends OrderEnumerator {
                 }
               }
             }
-            collectModulePaths(ModuleRootManager.getInstance(module), list, collectSources);
+            collectModulePaths(getRootModel(module), list, collectSources);
           }
         }
         else {
@@ -190,6 +197,13 @@ public abstract class OrderEnumeratorBase extends OrderEnumerator {
     });
   }
 
+  private ModuleRootModel getRootModel(Module module) {
+    if (myModulesProvider != null) {
+      return myModulesProvider.getRootModel(module);
+    }
+    return ModuleRootManager.getInstance(module);
+  }
+
   protected void processEntries(final ModuleRootModel rootModel,
                               Processor<OrderEntry> processor,
                               Set<Module> processed, boolean firstLevel) {
@@ -198,9 +212,10 @@ public abstract class OrderEnumeratorBase extends OrderEnumerator {
     for (OrderEntry entry : rootModel.getOrderEntries()) {
       if (myWithoutJdk && entry instanceof JdkOrderEntry
           || myWithoutLibraries && entry instanceof LibraryOrderEntry
-          || myWithoutDepModules && entry instanceof ModuleOrderEntry
+          || (myWithoutDepModules && !myRecursively) && entry instanceof ModuleOrderEntry
           || myWithoutThisModuleContent && entry instanceof ModuleSourceOrderEntry) continue;
 
+      boolean exported = !(entry instanceof JdkOrderEntry);
       if (entry instanceof ExportableOrderEntry) {
         ExportableOrderEntry exportableEntry = (ExportableOrderEntry)entry;
         final DependencyScope scope = exportableEntry.getScope();
@@ -211,10 +226,11 @@ public abstract class OrderEnumeratorBase extends OrderEnumerator {
             || myCompileOnly && !scope.isForProductionCompile()
             || myRuntimeOnly && !scope.isForProductionRuntime()) continue;
         }
-        if (!exportableEntry.isExported()) {
-          if (myExportedOnly) continue;
-          if (myRecursivelyExportedOnly && !firstLevel) continue;
-        }
+        exported = exportableEntry.isExported();
+      }
+      if (!exported) {
+        if (myExportedOnly) continue;
+        if (myRecursivelyExportedOnly && !firstLevel) continue;
       }
 
       if (myCondition != null && !myCondition.value(entry)) continue;
@@ -234,7 +250,7 @@ public abstract class OrderEnumeratorBase extends OrderEnumerator {
           }
 
           if (processRecursively) {
-            processEntries(ModuleRootManager.getInstance(module), processor, processed, false);
+            processEntries(getRootModel(module), processor, processed, false);
             continue;
           }
         }
@@ -283,10 +299,10 @@ public abstract class OrderEnumeratorBase extends OrderEnumerator {
   }
 
   @Override
-  public abstract void forEach(Processor<OrderEntry> processor);
+  public abstract void forEach(@NotNull Processor<OrderEntry> processor);
 
   @Override
-  public void forEachLibrary(final Processor<Library> processor) {
+  public void forEachLibrary(@NotNull final Processor<Library> processor) {
     forEach(new Processor<OrderEntry>() {
       @Override
       public boolean process(OrderEntry orderEntry) {
@@ -299,5 +315,28 @@ public abstract class OrderEnumeratorBase extends OrderEnumerator {
         return true;
       }
     });
+  }
+
+  @Override
+  public <R> R process(@NotNull final RootPolicy<R> policy, final R initialValue) {
+    final OrderEntryProcessor<R> processor = new OrderEntryProcessor<R>(policy, initialValue);
+    forEach(processor);
+    return processor.myValue;
+  }
+
+  private class OrderEntryProcessor<R> implements Processor<OrderEntry> {
+    private R myValue;
+    private final RootPolicy<R> myPolicy;
+
+    public OrderEntryProcessor(RootPolicy<R> policy, R initialValue) {
+      myPolicy = policy;
+      myValue = initialValue;
+    }
+
+    @Override
+    public boolean process(OrderEntry orderEntry) {
+      myValue = orderEntry.accept(myPolicy, myValue);
+      return true;
+    }
   }
 }

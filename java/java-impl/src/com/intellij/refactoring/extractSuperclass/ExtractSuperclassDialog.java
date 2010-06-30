@@ -30,10 +30,10 @@ import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.InterfaceContainmentVerifier;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.UsesAndInterfacesDependencyMemberInfoModel;
+import com.intellij.util.ArrayUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
 
 class ExtractSuperclassDialog extends JavaExtractSuperBaseDialog {
@@ -43,12 +43,10 @@ class ExtractSuperclassDialog extends JavaExtractSuperBaseDialog {
     }
   };
 
-  public static interface Callback {
+  public interface Callback {
     boolean checkConflicts(ExtractSuperclassDialog dialog);
   }
 
-  private JLabel myClassNameLabel;
-  private JLabel myPackageLabel;
   private final Callback myCallback;
 
   public ExtractSuperclassDialog(Project project, PsiClass sourceClass, List<MemberInfo> selectedMembers, Callback callback) {
@@ -57,67 +55,14 @@ class ExtractSuperclassDialog extends JavaExtractSuperBaseDialog {
     init();
   }
 
-  public MemberInfo[] getSelectedMemberInfos() {
-    ArrayList<MemberInfo> list = new ArrayList<MemberInfo>(myMemberInfos.size());
-    for (MemberInfo info : myMemberInfos) {
-      if (info.isChecked()) {
-        list.add(info);
-      }
-    }
-    return list.toArray(new MemberInfo[list.size()]);
-  }
-
   InterfaceContainmentVerifier getContainmentVerifier() {
     return myContainmentVerifier;
   }
 
-  protected JComponent createNorthPanel() {
-    Box box = Box.createVerticalBox();
-
-    JPanel _panel = new JPanel(new BorderLayout());
-    _panel.add(new JLabel(RefactoringBundle.message("extract.superclass.from")), BorderLayout.NORTH);
-    _panel.add(mySourceClassField, BorderLayout.CENTER);
-    box.add(_panel);
-
-    box.add(Box.createVerticalStrut(10));
-
-    box.add(createActionComponent());
-
-    box.add(Box.createVerticalStrut(10));
-
-    myClassNameLabel = new JLabel();
-    myClassNameLabel.setLabelFor(myExtractedSuperNameField);
-    _panel = new JPanel(new BorderLayout());
-    _panel.add(myClassNameLabel, BorderLayout.NORTH);
-    _panel.add(myExtractedSuperNameField, BorderLayout.CENTER);
-    box.add(_panel);
-    box.add(Box.createVerticalStrut(5));
-
-
-    _panel = new JPanel(new BorderLayout());
-    myPackageLabel = new JLabel();
-    myPackageLabel.setText(getPackageNameLabelText());
-    _panel.add(myPackageLabel, BorderLayout.NORTH);
-    _panel.add(myPackageNameField, BorderLayout.CENTER);
-    //_panel.add(myBtnPackageChooser, BorderLayout.EAST);
-    box.add(_panel);
-    box.add(Box.createVerticalStrut(10));
-
-    JPanel panel = new JPanel(new BorderLayout());
-    panel.add(box, BorderLayout.CENTER);
-    return panel;
-  }
-
   protected String getClassNameLabelText() {
-    return RefactoringBundle.message("superclass.name");
-  }
-
-  protected JLabel getClassNameLabel() {
-    return myClassNameLabel;
-  }
-
-  protected JLabel getPackageNameLabel() {
-    return myPackageLabel;
+    return isExtractSuperclass()
+           ? RefactoringBundle.message("superclass.name")
+           : RefactoringBundle.message("extractSuper.rename.original.class.to");
   }
 
   @Override
@@ -129,6 +74,11 @@ class ExtractSuperclassDialog extends JavaExtractSuperBaseDialog {
 
   protected String getEntityName() {
     return RefactoringBundle.message("ExtractSuperClass.superclass");
+  }
+
+  @Override
+  protected String getTopLabelText() {
+    return RefactoringBundle.message("extract.superclass.from");
   }
 
   protected JComponent createCenterPanel() {
@@ -157,7 +107,7 @@ class ExtractSuperclassDialog extends JavaExtractSuperBaseDialog {
   }
 
   @Override
-  protected String getExtractedSuperNameNotSpecifiedKey() {
+  protected String getExtractedSuperNameNotSpecifiedMessage() {
     return RefactoringBundle.message("no.superclass.name.specified");
   }
 
@@ -180,7 +130,7 @@ class ExtractSuperclassDialog extends JavaExtractSuperBaseDialog {
   @Override
   protected ExtractSuperBaseProcessor createProcessor() {
     return new ExtractSuperClassProcessor(myProject, getTargetDirectory(), getExtractedSuperName(),
-                                          mySourceClass, getSelectedMemberInfos(), false,
+                                          mySourceClass, ArrayUtil.toObjectArray(getSelectedMemberInfos(), MemberInfo.class), false,
                                           new DocCommentPolicy(getDocCommentPolicy()));
   }
 
