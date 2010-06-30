@@ -36,11 +36,10 @@ public class PyFindUsagesTest extends PyLightFixtureTestCase {
 
   public void testGlobalUsages() { // PY-1167
     final Collection<UsageInfo> usages = myFixture.testFindUsages("findUsages/GlobalUsages.py");
-    assertEquals(3, usages.size());
+    assertEquals(4, usages.size());
   }
 
   public void testGlobalUsages2() { // PY-1167
-    // same text as GlobalUsages, different caret location
     final Collection<UsageInfo> usages = myFixture.testFindUsages("findUsages/GlobalUsages2.py");
     assertEquals(3, usages.size());
   }

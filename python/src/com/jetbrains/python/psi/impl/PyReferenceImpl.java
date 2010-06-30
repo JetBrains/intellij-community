@@ -15,6 +15,7 @@ import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.SortedList;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
@@ -277,9 +278,9 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       final String elementName = ((PsiNamedElement)element).getName();
       if (Comparing.equal(myElement.getReferencedName(), elementName) || PyNames.INIT.equals(elementName)) {
         if (element instanceof PyParameter || element instanceof PyTargetExpression) {
-          PyFunction functionContainingUs = PsiTreeUtil.getParentOfType(getElement(), PyFunction.class);
-          PyFunction functionContainingThem = PsiTreeUtil.getParentOfType(element, PyFunction.class);
-          if (functionContainingUs != null && functionContainingUs == functionContainingThem) {
+          PsiNamedElement ourContainer = PsiTreeUtil.getParentOfType(getElement(), PsiNamedElement.class);
+          PsiNamedElement theirContainer = PsiTreeUtil.getParentOfType(element, PsiNamedElement.class);
+          if (ourContainer != null && ourContainer == theirContainer) {
             return true;
           }
         }
@@ -288,17 +289,13 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
           return true;
         }
         // TODO support nonlocal statement
-        final PyGlobalStatement ourGlobal = PyGlobalStatementNavigator.getByArgument(resolveResult);
-        final PyGlobalStatement theirGlobal = PyGlobalStatementNavigator.getByArgument(element);
-        if (ourGlobal != null || theirGlobal != null) {
-          PsiElement ourContainer = PsiTreeUtil.getParentOfType(getElement(), PsiNamedElement.class);
-          PsiElement theirContainer = PsiTreeUtil.getParentOfType(element, PsiNamedElement.class);
-          if (ourGlobal != null && ourContainer != null && PsiTreeUtil.isAncestor(theirContainer, ourContainer, false)) {
-            return true;            
-          }
-          if (theirGlobal != null && theirContainer != null && PsiTreeUtil.isAncestor(ourContainer, theirContainer, false)) {
-            return true;            
-          }
+        final ScopeOwner ourScope = PsiTreeUtil.getParentOfType(getElement(), ScopeOwner.class);
+        final ScopeOwner theirScope = PsiTreeUtil.getParentOfType(element, ScopeOwner.class);
+        if (ourScope != null && ourScope.getScope().isGlobal(elementName) && PsiTreeUtil.isAncestor(theirScope, ourScope, false)) {
+          return true;
+        }
+        if (theirScope != null && theirScope.getScope().isGlobal(elementName) && PsiTreeUtil.isAncestor(ourScope, theirScope, false)) {
+          return true;
         }
         return false; // TODO: handle multi-resolve
       }

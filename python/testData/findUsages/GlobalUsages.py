@@ -3,3 +3,4 @@
 def function():
     global search_variable
     search_variable = 2
+    print(search_variable)
