@@ -183,6 +183,11 @@ public class PyMultiFileResolveTest extends PyLightFixtureTestCase {
     assertInstanceOf(element, PyFunction.class);
   }
 
+  public void testFromImportExplicit() throws Exception {
+    final PsiElement element = doResolve();
+    assertInstanceOf(element, PyFunction.class);
+  }
+
   private PsiFile prepareFile() throws Exception {
     String testName = getTestName(true);
     String fileName = getTestName(false) + ".py";

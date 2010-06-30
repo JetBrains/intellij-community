@@ -47,6 +47,29 @@ public class PyImportedModule extends LightElement implements NameDefiner {
       }
       return new PyImportedModule(myContainingFile, prefix);
     }
+    final PyImportElement fromImportElement = findMatchingFromImport(myImportedPrefix, the_name);
+    if (fromImportElement != null) {
+      return ResolveImportUtil.resolveImportElement(fromImportElement);
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private PyImportElement findMatchingFromImport(PyQualifiedName prefix, String name) {
+    final List<PyFromImportStatement> fromImports = myContainingFile.getFromImports();
+    for (PyFromImportStatement fromImport : fromImports) {
+      final PyQualifiedName qName = fromImport.getImportSourceQName();
+      if (prefix.equals(qName)) {
+        final PyImportElement[] importElements = fromImport.getImportElements();
+        for (PyImportElement importElement : importElements) {
+          final PyQualifiedName importedName = importElement.getImportedQName();
+          if (importedName != null && importedName.matches(name)) {
+            return importElement;
+          }
+        }
+      }
+    }
     return null;
   }
 

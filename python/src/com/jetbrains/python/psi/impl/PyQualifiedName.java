@@ -120,4 +120,21 @@ public class PyQualifiedName {
   public static PyQualifiedName fromDottedString(String refName) {
     return fromComponents(refName.split("\\."));
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    PyQualifiedName that = (PyQualifiedName)o;
+
+    if (myComponents != null ? !myComponents.equals(that.myComponents) : that.myComponents != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myComponents != null ? myComponents.hashCode() : 0;
+  }
 }
