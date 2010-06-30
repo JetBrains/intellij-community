@@ -279,7 +279,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         if (element instanceof PyParameter || element instanceof PyTargetExpression) {
           PyFunction functionContainingUs = PsiTreeUtil.getParentOfType(getElement(), PyFunction.class);
           PyFunction functionContainingThem = PsiTreeUtil.getParentOfType(element, PyFunction.class);
-          if (functionContainingUs == functionContainingThem) {
+          if (functionContainingUs != null && functionContainingUs == functionContainingThem) {
             return true;
           }
         }

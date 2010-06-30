@@ -222,7 +222,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
   public SearchScope getUseScope() {
     final PyGlobalStatement globalStatement = PyGlobalStatementNavigator.getByArgument(this);
     if (globalStatement != null) {
-      return super.getUseScope();
+      return new LocalSearchScope(getContainingFile());
     }
     
     // find highest level function containing our var
