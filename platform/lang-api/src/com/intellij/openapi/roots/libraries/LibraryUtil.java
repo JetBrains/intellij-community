@@ -23,11 +23,14 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.StringTokenizer;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -127,17 +130,20 @@ public class LibraryUtil {
     return VfsUtil.toVirtualFileArray(roots);
   }
 
-  public static Library findLibrary(Module module, final String name) {
-    return ModuleRootManager.getInstance(module).processOrder(new RootPolicy<Library>(){
+  @Nullable
+  public static Library findLibrary(@NotNull Module module, final @NotNull String name) {
+    final Ref<Library> result = Ref.create(null);
+    OrderEnumerator.orderEntries(module).forEachLibrary(new Processor<Library>() {
       @Override
-      public Library visitLibraryOrderEntry(LibraryOrderEntry libraryOrderEntry, Library value) {
-        if (value != null) return value;
-        if (name.equals(libraryOrderEntry.getLibraryName())) {
-          return libraryOrderEntry.getLibrary();
+      public boolean process(Library library) {
+        if (name.equals(library.getName())) {
+          result.set(library);
+          return false;
         }
-        return null;
+        return true;
       }
-    }, null);
+    });
+    return result.get();
   }
 
    @Nullable

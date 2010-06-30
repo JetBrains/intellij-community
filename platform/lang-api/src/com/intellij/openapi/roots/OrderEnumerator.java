@@ -18,6 +18,7 @@ package com.intellij.openapi.roots;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathsList;
@@ -28,10 +29,12 @@ import java.util.Collection;
 
 /**
  * Interface for convenient processing dependencies of a module or a project. Allows to process {@link OrderEntry}s and collect classes
- * and source roots
+ * and source roots.<p>
  *
  * Use {@link #orderEntries(com.intellij.openapi.module.Module)} or {@link ModuleRootModel#orderEntries()} to process dependencies of a module
- * and use {@link #orderEntries(com.intellij.openapi.project.Project)} to process dependencies of all modules in a project
+ * and use {@link #orderEntries(com.intellij.openapi.project.Project)} to process dependencies of all modules in a project.<p>
+ *
+ * Note that all configuration methods modify {@link OrderEnumerator} instance instead of creating a new one.
  *
  * @since 10.0
  *
@@ -82,6 +85,13 @@ public abstract class OrderEnumerator {
   public abstract OrderEnumerator satisfying(Condition<OrderEntry> condition);
 
   /**
+   * Use <code>provider.getRootModel()</code> to process module dependencies
+   * @param provider provider
+   * @return this instance
+   */
+  public abstract OrderEnumerator using(@NotNull ModulesProvider provider);
+
+  /**
    * @return classes roots for all entries processed by this enumerator
    */
   public abstract Collection<VirtualFile> getClassesRoots();
@@ -117,9 +127,19 @@ public abstract class OrderEnumerator {
    * Runs <code>processor.process()</code> for each entry processed by this enumerator.
    * @param processor processor
    */
-  public abstract void forEach(Processor<OrderEntry> processor);
+  public abstract void forEach(@NotNull Processor<OrderEntry> processor);
 
-  public abstract void forEachLibrary(Processor<Library> processor);
+  public abstract void forEachLibrary(@NotNull Processor<Library> processor);
+
+  /**
+   * Passes order entries to the specified visitor.
+   *
+   * @param policy       the visitor to accept.
+   * @param initialValue the default value to be returned by the visit process.
+   * @return the value returned by the visitor.
+   * @see OrderEntry#accept(RootPolicy, Object)
+   */
+  public abstract <R> R process(@NotNull RootPolicy<R> policy, R initialValue);
 
   /**
    * Creates new enumerator instance to process dependencies of <code>module</code>
