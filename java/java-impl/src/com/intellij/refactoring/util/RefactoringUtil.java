@@ -1214,7 +1214,7 @@ public class RefactoringUtil {
           final PsiElement resolved = reference.resolve();
           if (resolved instanceof PsiTypeParameter) {
             final PsiTypeParameter typeParameter = (PsiTypeParameter)resolved;
-            if (PsiTreeUtil.isAncestor(typeParameter.getOwner(), element, true)) {
+            if (PsiTreeUtil.isAncestor(typeParameter.getOwner(), element, false)) {
               used.add(typeParameter);
             }
           }
@@ -1226,7 +1226,7 @@ public class RefactoringUtil {
         super.visitExpression(expression);
         final PsiType type = expression.getType();
         final PsiClass resolved = PsiUtil.resolveClassInType(type);
-        if (resolved instanceof PsiTypeParameter && PsiTreeUtil.isAncestor(((PsiTypeParameter)resolved).getOwner(), element, true)){
+        if (resolved instanceof PsiTypeParameter && PsiTreeUtil.isAncestor(((PsiTypeParameter)resolved).getOwner(), element, false)){
           used.add((PsiTypeParameter)resolved);
         }
       }
