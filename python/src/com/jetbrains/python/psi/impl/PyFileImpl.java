@@ -9,6 +9,10 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.NamedStub;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.PyElementTypes;
@@ -32,17 +36,23 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.lang.ref.SoftReference;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   protected PyType myType;
   private ThreadLocal<List<String>> myFindExportedNameStack = new ArrayListThreadLocal();
   private ThreadLocal<List<String>> myGetElementNamedStack = new ArrayListThreadLocal();
 
+  private final CachedValue<List<PyImportElement>> myImportTargetsTransitive; 
+
   public PyFileImpl(FileViewProvider viewProvider) {
     super(viewProvider, PythonLanguage.getInstance());
+    myImportTargetsTransitive = CachedValuesManager.getManager(getProject()).createCachedValue(new CachedValueProvider<List<PyImportElement>>() {
+      @Override
+      public Result<List<PyImportElement>> compute() {
+        return new Result<List<PyImportElement>>(calculateImportTargetsTransitive(), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+      }
+    }, false);
   }
 
   @NotNull
@@ -296,7 +306,34 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     }
     return ret;
   }
-  
+
+  public List<PyImportElement> getImportTargetsTransitive() {
+    return myImportTargetsTransitive.getValue();
+  }
+
+  private List<PyImportElement> calculateImportTargetsTransitive() {
+    Set<PyFile> visitedFiles = new HashSet<PyFile>();
+    visitedFiles.add(this);
+    List<PyImportElement> result = new ArrayList<PyImportElement>();
+    calculateImportTargetsRecursive(this, visitedFiles, result);
+    return result;
+  }
+
+  private static void calculateImportTargetsRecursive(PyFileImpl pyFile, Set<PyFile> visitedFiles, List<PyImportElement> result) {
+    final List<PyImportElement> imports = pyFile.getImportTargets();
+    for (PyImportElement anImport : imports) {
+      result.add(anImport);
+      final PsiElement resolveResult = ResolveImportUtil.resolveImportElement(anImport);
+      if (resolveResult instanceof PyFileImpl) {
+        PyFileImpl file = (PyFileImpl) resolveResult;
+        if (!visitedFiles.contains(file)) {
+          visitedFiles.add(file);
+          calculateImportTargetsRecursive((PyFileImpl) resolveResult, visitedFiles, result);
+        }
+      }
+    }
+  }
+
   public List<PyFromImportStatement> getFromImports() {
     return getTopLevelItems(PyElementTypes.FROM_IMPORT_STATEMENT, PyFromImportStatement.class);
   }

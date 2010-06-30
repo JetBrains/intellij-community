@@ -15,12 +15,12 @@ import java.util.List;
  * @author yole
  */
 public class PyImportedModule extends LightElement implements NameDefiner {
-  private final PyFile myContainingFile;
+  private final PyFileImpl myContainingFile;
   private final PyQualifiedName myImportedPrefix;
 
   public PyImportedModule(PyFile containingFile, PyQualifiedName importedPrefix) {
     super(containingFile.getManager(), PythonLanguage.getInstance());
-    myContainingFile = containingFile;
+    myContainingFile = (PyFileImpl)containingFile;
     myImportedPrefix = importedPrefix;
   }
 
@@ -52,7 +52,15 @@ public class PyImportedModule extends LightElement implements NameDefiner {
 
   @Nullable
   private PyImportElement findMatchingImportElement(PyQualifiedName prefix) {
-    final List<PyImportElement> imports = ((PyFileImpl)myContainingFile).getImportTargets();
+    PyImportElement result = findMatchingImportElementInList(prefix, myContainingFile.getImportTargets());
+    if (result == null) {
+      result = findMatchingImportElementInList(prefix, myContainingFile.getImportTargetsTransitive());
+    }
+    return result;
+  }
+
+  @Nullable
+  private static PyImportElement findMatchingImportElementInList(PyQualifiedName prefix, final List<PyImportElement> imports) {
     for (PyImportElement anImport : imports) {
       final PyQualifiedName qName = anImport.getImportedQName();
       if (qName != null && qName.matchesPrefix(prefix)) {

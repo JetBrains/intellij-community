@@ -178,6 +178,11 @@ public class PyMultiFileResolveTest extends PyLightFixtureTestCase {
     assertInstanceOf(element, PyFunction.class);
   }
 
+  public void testReimportExported() throws Exception {
+    PsiElement element = doResolve();
+    assertInstanceOf(element, PyFunction.class);
+  }
+
   private PsiFile prepareFile() throws Exception {
     String testName = getTestName(true);
     String fileName = getTestName(false) + ".py";
@@ -185,7 +190,7 @@ public class PyMultiFileResolveTest extends PyLightFixtureTestCase {
     PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
 
     VirtualFile sourceFile = myFixture.findFileInTempDir(fileName);
-    assert sourceFile != null;
+    assert sourceFile != null: "Could not find file in temp dir: " + fileName;
     PsiFile psiFile = myFixture.getPsiManager().findFile(sourceFile);
     return psiFile;
   }
