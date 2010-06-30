@@ -67,22 +67,12 @@ public class PyPropertyAccessInspection extends PyInspection {
     @Override
     public void visitPyReferenceExpression(PyReferenceExpression node) {
       super.visitPyReferenceExpression(node);
-      check(node);
-    }
-
-    @Override
-    public void visitPyTargetExpression(PyTargetExpression node) {
-      super.visitPyTargetExpression(node);
-      check(node);
-    }
-
-    private void check(PyQualifiedExpression expr) {
-      PyExpression qualifier = expr.getQualifier();
+      PyExpression qualifier = node.getQualifier();
       if (qualifier != null) {
         PyType type = qualifier.getType(TypeEvalContext.fast());
         if (type instanceof PyClassType) {
           PyClass cls = ((PyClassType)type).getPyClass();
-          String name = expr.getName();
+          String name = node.getName();
           if (cls != null && name != null) {
             Map<Pair<PyClass, String>, Property> cache = PyPropertyAccessInspection.this.myPropertyCache.get();
             final Pair<PyClass, String> key = new Pair<PyClass, String>(cls, name);
@@ -91,19 +81,27 @@ public class PyPropertyAccessInspection extends PyInspection {
             else property = cls.findProperty(name);
             cache.put(key, property); // we store nulls, too, to know that a property does not exist
             if (property != null) {
-              AccessDirection dir = AccessDirection.of(expr);
-              final Maybe<PyFunction> accessor = property.getByDirection(dir);
-              if (accessor.isDefined() && accessor.value() == null) {
-                String message;
-                if (dir == AccessDirection.WRITE) message = PyBundle.message("INSP.property.$0.cant.be.set", name);
-                else if (dir == AccessDirection.DELETE) message = PyBundle.message("INSP.property.$0.cant.be.deleted", name);
-                else message = PyBundle.message("INSP.property.$0.cant.be.read", name);
-                registerProblem(expr, message);
+              AccessDirection dir = AccessDirection.of(node);
+              checkAccessor(node, name, dir, property);
+              if (dir == AccessDirection.READ && node.getParent() instanceof PyAugAssignmentStatement) {
+                checkAccessor(node, name, AccessDirection.WRITE, property);
               }
             }
           }
         }
       }
     }
+
+    private void checkAccessor(PyReferenceExpression node, String name, AccessDirection dir, Property property) {
+      Maybe<PyFunction> accessor = property.getByDirection(dir);
+      if (accessor.isDefined() && accessor.value() == null) {
+        String message;
+        if (dir == AccessDirection.WRITE) message = PyBundle.message("INSP.property.$0.cant.be.set", name);
+        else if (dir == AccessDirection.DELETE) message = PyBundle.message("INSP.property.$0.cant.be.deleted", name);
+        else message = PyBundle.message("INSP.property.$0.cant.be.read", name);
+        registerProblem(node, message);
+      }
+    }
+
   }
 }

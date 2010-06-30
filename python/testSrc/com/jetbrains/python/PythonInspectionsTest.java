@@ -203,4 +203,15 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
     myFixture.enableInspections(PyCallingNonCallableInspection.class);
     myFixture.checkHighlighting(true, false, false);
   }
+
+  public void testPyPropertyAccessInspection() throws Throwable {
+    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON26);
+    try {
+      LocalInspectionTool inspection = new PyPropertyAccessInspection();
+      doTest(getTestName(false), inspection);
+    }
+    finally {
+      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
+    }
+  }
 }
