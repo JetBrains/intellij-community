@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Anna.Kozlova
- * Date: 05-Nov-2006
- * Time: 18:04:58
- */
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
@@ -28,9 +22,45 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+/**
+ * @author Anna Kozlova
+ * @author Konstantin Bulenkov
+ */
 public abstract class PsiElementBaseIntentionAction extends BaseIntentionAction {
+  /**
+   * Invokes intention action for the element under cursor
+   *
+   * @param project the project in which the file is opened.
+   * @param editor the editor for the file
+   * @param element the element under cursor
+
+   * @throws com.intellij.util.IncorrectOperationException ...
+   */
+  public void invoke(Project project, Editor editor, PsiElement element) throws IncorrectOperationException {
+    throw new IncorrectOperationException();
+  }
+
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    final PsiElement element = getElement(editor, file);
+    return element == null ? false : isAvailable(project, editor, element);
+  }
+
+  @Nullable
+  protected static PsiElement getElement(Editor editor, PsiFile file) {
+    if (!file.getManager().isInProject(file)) return null;
+    final CaretModel caretModel = editor.getCaretModel();
+    final int position = caretModel.getOffset();
+    return file.findElementAt(position);
+  }
+
+  @Override
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    invoke(project, editor, getElement(editor, file));
+  }
 
   /**
    * Checks whether this intention is available at a caret offset in file.
@@ -42,13 +72,4 @@ public abstract class PsiElementBaseIntentionAction extends BaseIntentionAction 
    * @return true if the intention is available, false otherwise.
    */
   public abstract boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element);
-
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!file.getManager().isInProject(file)) return false;
-    final CaretModel caretModel = editor.getCaretModel();
-    final int position = caretModel.getOffset();
-    final PsiElement element = file.findElementAt(position);
-    if (element == null) return false;
-    return isAvailable(project, editor, element);
-  }
 }
