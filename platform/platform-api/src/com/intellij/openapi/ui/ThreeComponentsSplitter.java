@@ -455,19 +455,27 @@ public class ThreeComponentsSplitter extends JPanel {
     }
 
     private boolean isInside(Point p) {
+      if (!isVisible()) return false;
+
       if (myVerticalSplit) {
-        if (getHeight() > 0) {
-          return p.y >= 0 && p.y < getHeight();
-        } else {
-          return p.y >= -myDividerZone / 2 && p.y <= myDividerZone / 2;
+        if (p.x >= 0 && p.x < getWidth()) {
+          if (getHeight() > 0) {
+            return p.y >= 0 && p.y < getHeight();
+          } else {
+            return p.y >= -myDividerZone / 2 && p.y <= myDividerZone / 2;
+          }
         }
       } else {
-        if (getWidth() > 0) {
-          return p.x >= 0 && p.x < getWidth();
-        } else {
-          return p.x >= -myDividerZone / 2 && p.x <= myDividerZone / 2;
+        if (p.y >= 0 && p.y < getHeight()) {
+          if (getWidth() > 0) {
+            return p.x >= 0 && p.x < getWidth();
+          } else {
+            return p.x >= -myDividerZone / 2 && p.x <= myDividerZone / 2;
+          }
         }
       }
+
+      return false;
     }
 
     private void init() {
