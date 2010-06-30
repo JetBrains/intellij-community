@@ -12,6 +12,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyTokenTypes;
@@ -267,5 +269,44 @@ public class PyPsiUtils {
         pyImportStatement.deleteChildInternal(next);
       }
     }
+  }
+
+  static <T, U extends PsiElement> List<T> collectStubChildren(U e,
+                                                                    final StubElement<U> stub, final IElementType elementType,
+                                                                    final Class<T> itemClass) {
+    final List<T> result = new ArrayList<T>();
+    if (stub != null) {
+      final List<StubElement> children = stub.getChildrenStubs();
+      for (StubElement child : children) {
+        if (child.getStubType() == elementType) {
+          //noinspection unchecked
+          result.add((T)child.getPsi());
+        }
+      }
+    }
+    else {
+      e.acceptChildren(new PyRecursiveElementVisitor() {
+        public void visitPyElement(final PyElement node) {
+          super.visitPyElement(node);
+          checkAddElement(node);
+        }
+
+        public void visitPyClass(final PyClass node) {
+          checkAddElement(node);  // do not recurse into functions
+        }
+
+        public void visitPyFunction(final PyFunction node) {
+          checkAddElement(node);  // do not recurse into classes
+        }
+
+        private void checkAddElement(PsiElement node) {
+          if (itemClass.isInstance(node)) {
+            //noinspection unchecked
+            result.add((T)node);
+          }
+        }
+      });
+    }
+    return result;
   }
 }

@@ -2,30 +2,37 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.impl.light.LightElement;
+import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @author yole
  */
 public class PyImportedModule extends LightElement implements NameDefiner {
-  private final PyFileImpl myContainingFile;
+  private final PsiElement myContainer;
   private final PyQualifiedName myImportedPrefix;
 
-  public PyImportedModule(PyFile containingFile, PyQualifiedName importedPrefix) {
-    super(containingFile.getManager(), PythonLanguage.getInstance());
-    myContainingFile = (PyFileImpl)containingFile;
+  public PyImportedModule(PsiElement container, PyQualifiedName importedPrefix) {
+    super(container.getManager(), PythonLanguage.getInstance());
+    myContainer = container;
     myImportedPrefix = importedPrefix;
   }
 
   public PyFile getContainingFile() {
-    return myContainingFile;
+    return (PyFile)myContainer.getContainingFile();
   }
 
   public PyQualifiedName getImportedPrefix() {
@@ -45,7 +52,7 @@ public class PyImportedModule extends LightElement implements NameDefiner {
       if (qName != null && qName.getComponentCount() == prefix.getComponentCount()) {
         return resolve(importElement, prefix);
       }
-      return new PyImportedModule(myContainingFile, prefix);
+      return new PyImportedModule(myContainer, prefix);
     }
     final PyImportElement fromImportElement = findMatchingFromImport(myImportedPrefix, the_name);
     if (fromImportElement != null) {
@@ -57,7 +64,7 @@ public class PyImportedModule extends LightElement implements NameDefiner {
 
   @Nullable
   private PyImportElement findMatchingFromImport(PyQualifiedName prefix, String name) {
-    final List<PyFromImportStatement> fromImports = myContainingFile.getFromImports();
+    final List<PyFromImportStatement> fromImports = getContainingFile().getFromImports();
     for (PyFromImportStatement fromImport : fromImports) {
       final PyQualifiedName qName = fromImport.getImportSourceQName();
       if (prefix.equals(qName)) {
@@ -75,11 +82,36 @@ public class PyImportedModule extends LightElement implements NameDefiner {
 
   @Nullable
   private PyImportElement findMatchingImportElement(PyQualifiedName prefix) {
-    PyImportElement result = findMatchingImportElementInList(prefix, myContainingFile.getImportTargets());
+    PyImportElement result = findMatchingImportElementInList(prefix, collectImportTargets());
     if (result == null) {
-      result = findMatchingImportElementInList(prefix, myContainingFile.getImportTargetsTransitive());
+      result = findMatchingImportElementInList(prefix, ((PyFileImpl) getContainingFile()).getImportTargetsTransitive());
     }
     return result;
+  }
+
+  private List<PyImportElement> collectImportTargets() {
+    List<PyImportElement> result = new ArrayList<PyImportElement>();
+    if (myContainer instanceof StubBasedPsiElement) {
+      StubBasedPsiElement container = (StubBasedPsiElement) myContainer;
+      while (true) {
+        collectImports(result, container, container.getStub());
+        final StubBasedPsiElement nextParent = PsiTreeUtil.getStubOrPsiParentOfType(container, StubBasedPsiElement.class);
+        if (nextParent == null) {
+          break;
+        }
+        container = nextParent;
+      }
+    }
+    collectImports(result, myContainer.getContainingFile(), ((PsiFileImpl) myContainer.getContainingFile()).getStub());
+    return result;
+  }
+
+  private static <T extends PsiElement> void collectImports(List<PyImportElement> result, T container, StubElement<T> stub) {
+    List<PyImportStatement> statements = PyPsiUtils.collectStubChildren(container, stub, PyElementTypes.IMPORT_STATEMENT,
+                                                                        PyImportStatement.class);
+    for (PyImportStatement statement : statements) {
+      Collections.addAll(result, statement.getImportElements());
+    }
   }
 
   @Nullable
@@ -106,7 +138,7 @@ public class PyImportedModule extends LightElement implements NameDefiner {
   }
 
   public PsiElement copy() {
-    return new PyImportedModule(myContainingFile, myImportedPrefix);
+    return new PyImportedModule(myContainer, myImportedPrefix);
   }
 
   @Override

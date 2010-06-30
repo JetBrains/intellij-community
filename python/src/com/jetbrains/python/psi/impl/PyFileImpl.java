@@ -8,7 +8,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.NamedStub;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -175,15 +174,15 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   public List<PyClass> getTopLevelClasses() {
-    return getTopLevelItems(PyElementTypes.CLASS_DECLARATION, PyClass.class);
+    return PyPsiUtils.collectStubChildren(this, this.getStub(), PyElementTypes.CLASS_DECLARATION, PyClass.class);
   }
 
   public List<PyFunction> getTopLevelFunctions() {
-    return getTopLevelItems(PyElementTypes.FUNCTION_DECLARATION, PyFunction.class);
+    return PyPsiUtils.collectStubChildren(this, this.getStub(), PyElementTypes.FUNCTION_DECLARATION, PyFunction.class);
   }
 
   public List<PyTargetExpression> getTopLevelAttributes() {
-    return getTopLevelItems(PyElementTypes.TARGET_EXPRESSION, PyTargetExpression.class);
+    return PyPsiUtils.collectStubChildren(this, this.getStub(), PyElementTypes.TARGET_EXPRESSION, PyTargetExpression.class);
   }
 
   public PsiElement findExportedName(String name) {
@@ -300,7 +299,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   public List<PyImportElement> getImportTargets() {
     List<PyImportElement> ret = new ArrayList<PyImportElement>();
-    List<PyImportStatement> imports = getTopLevelItems(PyElementTypes.IMPORT_STATEMENT, PyImportStatement.class);
+    List<PyImportStatement> imports = PyPsiUtils.collectStubChildren(this, this.getStub(), PyElementTypes.IMPORT_STATEMENT, PyImportStatement.class);
     for (PyImportStatement one: imports) {
       ret.addAll(Arrays.asList(one.getImportElements()));
     }
@@ -335,45 +334,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   public List<PyFromImportStatement> getFromImports() {
-    return getTopLevelItems(PyElementTypes.FROM_IMPORT_STATEMENT, PyFromImportStatement.class);
-  }
-
-  private <T> List<T> getTopLevelItems(final IElementType elementType, final Class itemClass) {
-    final List<T> result = new ArrayList<T>();
-    final StubElement stub = getStub();
-    if (stub != null) {
-      final List<StubElement> children = stub.getChildrenStubs();
-      for (StubElement child : children) {
-        if (child.getStubType() == elementType) {
-          //noinspection unchecked
-          result.add((T)child.getPsi());
-        }
-      }
-    }
-    else {
-      accept(new PyRecursiveElementVisitor() {
-        public void visitPyElement(final PyElement node) {
-          super.visitPyElement(node);
-          checkAddElement(node);
-        }
-
-        public void visitPyClass(final PyClass node) {
-          checkAddElement(node);  // do not recurse into functions
-        }
-
-        public void visitPyFunction(final PyFunction node) {
-          checkAddElement(node);  // do not recurse into classes
-        }
-
-        private void checkAddElement(PsiElement node) {
-          if (itemClass.isInstance(node)) {
-            //noinspection unchecked
-            result.add((T)node);
-          }
-        }
-      });
-    }
-    return result;
+    return PyPsiUtils.collectStubChildren(this, getStub(), PyElementTypes.FROM_IMPORT_STATEMENT, PyFromImportStatement.class);
   }
 
   public PyType getType(@NotNull TypeEvalContext context) {

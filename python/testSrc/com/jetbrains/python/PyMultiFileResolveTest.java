@@ -133,15 +133,11 @@ public class PyMultiFileResolveTest extends PyLightFixtureTestCase {
   }
 
   public void testDirectoryVsClass() throws Exception {
-    PsiElement element = doResolve();
-    assertTrue(element instanceof PyClass);
-    assertEquals("Context", ((PyClass) element).getName());
+    assertResolvesTo(PyClass.class, "Context");
   }
 
   public void testReimportStar() throws Exception {
-    PsiElement element = doResolve();
-    assertTrue(element instanceof PyClass);
-    assertEquals("CharField", ((PyClass) element).getName());
+    assertResolvesTo(PyClass.class, "CharField");
   }
 
   public void testStackOverflowOnEmptyFile() throws Exception {
@@ -149,21 +145,15 @@ public class PyMultiFileResolveTest extends PyLightFixtureTestCase {
   }
 
   public void testResolveQualifiedSuperClass() throws Exception {
-    PsiElement element = doResolve();
-    assertTrue(element instanceof PyFunction);
-    assertEquals("copy", ((PyFunction) element).getName());
+    assertResolvesTo(PyFunction.class, "copy");
   }
 
   public void testResolveQualifiedSuperClassInPackage() throws Exception {
-    PsiElement element = doResolve();
-    assertTrue(element instanceof PyFunction);
-    assertEquals("copy", ((PyFunction) element).getName());
+    assertResolvesTo(PyFunction.class, "copy");
   }
 
   public void testNestedPackage() throws Exception {
-    PsiElement element = doResolve();
-    assertTrue(element instanceof PyFile);
-    assertEquals("__init__.py", ((PyFile) element).getName());
+    assertResolvesTo(PyFile.class, "__init__.py");
   }
 
   public void testNestedPackageElement() throws Exception {
@@ -174,18 +164,25 @@ public class PyMultiFileResolveTest extends PyLightFixtureTestCase {
   }
 
   public void testImportOsPath() throws Exception {
-    PsiElement element = doResolve();
-    assertInstanceOf(element, PyFunction.class);
+    assertResolvesTo(PyFunction.class, "makedir");
   }
 
   public void testReimportExported() throws Exception {
-    PsiElement element = doResolve();
-    assertInstanceOf(element, PyFunction.class);
+    assertResolvesTo(PyFunction.class, "dostuff");
   }
 
   public void testFromImportExplicit() throws Exception {
+    assertResolvesTo(PyFunction.class, "dostuff");
+  }
+
+  public void testLocalImport() throws Exception {
+    assertResolvesTo(PyFunction.class, "dostuff");
+  }
+
+  private <T extends PsiElement> void assertResolvesTo(final Class<T> aClass, final String name) throws Exception {
     final PsiElement element = doResolve();
-    assertInstanceOf(element, PyFunction.class);
+    assertInstanceOf(element, aClass);
+    assertEquals(name, ((PsiNamedElement) element).getName());
   }
 
   private PsiFile prepareFile() throws Exception {

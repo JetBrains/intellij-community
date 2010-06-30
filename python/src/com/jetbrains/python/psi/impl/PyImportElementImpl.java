@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -222,7 +223,8 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
       if (qName.getComponentCount() == 1) {
         return ResolveImportUtil.resolveImportElement(this, PyQualifiedName.fromComponents(the_name));
       }
-      return new PyImportedModule((PyFile) getContainingFile(), PyQualifiedName.fromComponents(the_name));
+      final PsiNamedElement container = getStubOrPsiParentOfType(PsiNamedElement.class);
+      return new PyImportedModule(container, PyQualifiedName.fromComponents(the_name));
     }
   }
 
