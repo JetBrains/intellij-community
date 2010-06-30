@@ -215,6 +215,7 @@ public abstract class OrderEnumeratorBase extends OrderEnumerator {
           || (myWithoutDepModules && !myRecursively) && entry instanceof ModuleOrderEntry
           || myWithoutThisModuleContent && entry instanceof ModuleSourceOrderEntry) continue;
 
+      boolean exported = !(entry instanceof JdkOrderEntry);
       if (entry instanceof ExportableOrderEntry) {
         ExportableOrderEntry exportableEntry = (ExportableOrderEntry)entry;
         final DependencyScope scope = exportableEntry.getScope();
@@ -225,10 +226,11 @@ public abstract class OrderEnumeratorBase extends OrderEnumerator {
             || myCompileOnly && !scope.isForProductionCompile()
             || myRuntimeOnly && !scope.isForProductionRuntime()) continue;
         }
-        if (!exportableEntry.isExported()) {
-          if (myExportedOnly) continue;
-          if (myRecursivelyExportedOnly && !firstLevel) continue;
-        }
+        exported = exportableEntry.isExported();
+      }
+      if (!exported) {
+        if (myExportedOnly) continue;
+        if (myRecursivelyExportedOnly && !firstLevel) continue;
       }
 
       if (myCondition != null && !myCondition.value(entry)) continue;
