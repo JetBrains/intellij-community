@@ -78,6 +78,12 @@ public class ResolveProcessor implements PyAsScopeProcessor {
       final NameDefiner definer = (NameDefiner)element;
       PsiElement by_name = definer.getElementNamed(myName);
       if (by_name != null) {
+        // prefer more specific imported modules to less specific ones
+        if (by_name instanceof PyImportedModule && myResult instanceof PyImportedModule &&
+            ((PyImportedModule)by_name).isAncestorOf((PyImportedModule)myResult)) {
+          return false;
+        }
+
         setResult(by_name);
         if (!PsiTreeUtil.isAncestor(element, by_name, true)) {
           addNameDefiner(definer);
