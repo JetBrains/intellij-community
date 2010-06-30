@@ -118,6 +118,7 @@ public abstract class PropertyBunch<MType> {
             accessors.add(null);
             accessors.add(null); // 3 times
             final int offset = marked_callee.getImplicitOffset();
+            // NOTE: we could find mapped parameters by name, but this won't be any shorter :(
             for (Map.Entry<PyExpression, PyNamedParameter> entry : analysis.getPlainMappedParams().entrySet()) {
               PyNamedParameter param = entry.getValue();
               int n = ArrayUtil.indexOf(params, param) - offset;
@@ -125,8 +126,7 @@ public abstract class PropertyBunch<MType> {
                 if (n < 3) {
                   // accessors
                   accessors.set(n, unknown); // definitely filled
-                  PyExpression expr = entry.getKey();
-                  while (expr instanceof PyParenthesizedExpression) expr = ((PyParenthesizedExpression)expr).getContainedExpression();
+                  PyExpression expr = peelArgument(entry.getKey());
                   if (expr instanceof PyReferenceExpression) {
                     PyReferenceExpression arg_ref = (PyReferenceExpression)expr;
                     if (arg_ref.getQualifier() == null) accessors.set(n, new Maybe<MType>(target.translate(arg_ref)));
@@ -134,7 +134,7 @@ public abstract class PropertyBunch<MType> {
                 }
                 else if (n == 3) {
                   // doc
-                  PyExpression expr = entry.getKey();
+                  PyExpression expr = peelArgument(entry.getKey());
                   if (expr instanceof PyStringLiteralExpression) {
                     target.myDoc = ((PyStringLiteralExpression)expr).getStringValue();
                   }
@@ -161,6 +161,12 @@ public abstract class PropertyBunch<MType> {
         }
       }    }
     return false;
+  }
+
+  private static PyExpression peelArgument(PyExpression expr) {
+    while (expr instanceof PyParenthesizedExpression) expr = ((PyParenthesizedExpression)expr).getContainedExpression();
+    if (expr instanceof PyKeywordArgument) expr = ((PyKeywordArgument)expr).getValueExpression();
+    return expr;
   }
 
 }
