@@ -21,13 +21,12 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.commands.GitBinaryHandler;
 import git4idea.commands.GitCommand;
-import git4idea.commands.GitSimpleHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.Date;
 
@@ -94,18 +93,11 @@ public class GitFileRevision implements VcsFileRevision, Comparable<VcsFileRevis
 
   public synchronized void loadContent() throws VcsException {
     final VirtualFile root = GitUtil.getGitRoot(path);
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.SHOW);
+    GitBinaryHandler h = new GitBinaryHandler(project, root, GitCommand.SHOW);
     h.setNoSSH(true);
-    h.setCharset(BIN_ENCODING);
     h.setSilent(true);
     h.addParameters(revision.getRev() + ":" + GitUtil.relativePath(root, path));
-    String result = h.run();
-    try {
-      content = result.getBytes(BIN_ENCODING.name());
-    }
-    catch (UnsupportedEncodingException e) {
-      throw new VcsException("Unable to locate encoding: " + BIN_ENCODING.name() + " Reason: " + e.toString(), e);
-    }
+    content = h.run();
   }
 
   public synchronized byte[] getContent() throws IOException {

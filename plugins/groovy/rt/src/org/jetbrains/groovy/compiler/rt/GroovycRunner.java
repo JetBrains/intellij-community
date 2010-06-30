@@ -25,7 +25,6 @@ import org.codehaus.groovy.tools.javac.JavaStubGenerator;
 
 import java.io.*;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -346,7 +345,6 @@ public class GroovycRunner {
             final URL url = (URL)iterator.next();
             try {
               final String file = new File(new URI(url.toString())).getCanonicalPath();
-              System.out.println("Enumerated:" + file);
               if (file.startsWith(finalOutput) || file.startsWith("/" + finalOutput)) {
                 iterator.remove();
               }

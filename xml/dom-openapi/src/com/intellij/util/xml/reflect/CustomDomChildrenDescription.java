@@ -16,7 +16,7 @@
 
 package com.intellij.util.xml.reflect;
 
-import com.intellij.pom.PomNamedTarget;
+import com.intellij.pom.PomTarget;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.EvaluatedXmlName;
 import org.jetbrains.annotations.NotNull;
@@ -40,23 +40,23 @@ public interface CustomDomChildrenDescription extends AbstractDomChildrenDescrip
       }
 
       @Override
-      public PomNamedTarget findDeclaration(@NotNull EvaluatedXmlName name) {
+      public PomTarget findDeclaration(@NotNull EvaluatedXmlName name) {
         return null;
       }
 
       @Override
-      public PomNamedTarget findDeclaration(@NotNull DomElement child) {
-        return null;
+      public PomTarget findDeclaration(@NotNull DomElement child) {
+        return child.getChildDescription();
       }
     };
 
     public abstract Set<EvaluatedXmlName> getCompletionVariants(@NotNull DomElement parent);
 
     @Nullable
-    public abstract PomNamedTarget findDeclaration(@NotNull EvaluatedXmlName name);
+    public abstract PomTarget findDeclaration(@NotNull EvaluatedXmlName name);
 
     @Nullable
-    public abstract PomNamedTarget findDeclaration(@NotNull DomElement child);
+    public abstract PomTarget findDeclaration(@NotNull DomElement child);
     
   }
   

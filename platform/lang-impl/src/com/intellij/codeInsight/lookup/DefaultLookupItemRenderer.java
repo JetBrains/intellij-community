@@ -19,7 +19,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.ui.TruncatingIcon;
+import com.intellij.ui.SizedIcon;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +47,7 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem>
   public static Icon getRawIcon(final LookupItem item, boolean real) {
     final Icon icon = _getRawIcon(item, real);
     if (icon != null && icon.getIconHeight() > SAMPLE_ICON.getIconHeight()) {
-      return new TruncatingIcon(icon, icon.getIconWidth(), SAMPLE_ICON.getIconHeight());
+      return new SizedIcon(icon, icon.getIconWidth(), SAMPLE_ICON.getIconHeight());
     }
     return icon;
   }
