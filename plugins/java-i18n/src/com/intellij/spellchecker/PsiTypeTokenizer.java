@@ -17,6 +17,7 @@ package com.intellij.spellchecker;
 
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiTypeElement;
@@ -49,6 +50,16 @@ public class PsiTypeTokenizer extends Tokenizer<PsiTypeElement> {
 
     final boolean isInSource = (virtualFile != null) && fileIndex.isInContent(virtualFile);
 
-    return !isInSource ? null : new Token[]{new Token<PsiTypeElement>(element, element.getText(), true, SplitterFactory.getInstance().getIdentifierSplitter())};
+    return !isInSource
+           ? null
+           : new Token[]{
+             new Token<PsiTypeElement>(element, element.getText(), true, 0, getRangeToCheck(element.getText(), psiClass.getName()),
+                                       SplitterFactory.getInstance().getIdentifierSplitter())};
+  }
+
+  @NotNull
+  private TextRange getRangeToCheck(@NotNull String text, @NotNull String name) {
+    final int i = text.indexOf(name);
+    return new TextRange(i, i + name.length());
   }
 }
