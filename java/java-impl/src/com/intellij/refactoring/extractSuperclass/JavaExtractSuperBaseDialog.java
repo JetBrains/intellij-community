@@ -15,8 +15,98 @@
  */
 package com.intellij.refactoring.extractSuperclass;
 
-public class ExtractSuperBaseDialog  {
-  // this is just a dummy content different enough from JavaExtractSuperBaseDialog,
-  //  so that Git does not think that this class is a rename
+import com.intellij.ide.util.PackageUtil;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.ComponentWithBrowseButton;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
+import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.ui.EditorComboBox;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.util.List;
+
+/**
+ * @author dsl
+ */
+public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<PsiClass, MemberInfo> {
+  private static final String DESTINATION_PACKAGE_RECENT_KEY = "ExtractSuperBase.RECENT_KEYS";
+
+
+  public JavaExtractSuperBaseDialog(Project project, PsiClass sourceClass, List<MemberInfo> members, String refactoringName) {
+    super(project, sourceClass, members, refactoringName);
+  }
+
+  protected ComponentWithBrowseButton<EditorComboBox> createPackageNameField() {
+    String name = "";
+    PsiFile file = mySourceClass.getContainingFile();
+    if (file instanceof PsiJavaFile) {
+      name = ((PsiJavaFile)file).getPackageName();
+    }
+    return new PackageNameReferenceEditorCombo(name, myProject, DESTINATION_PACKAGE_RECENT_KEY,
+                                                             RefactoringBundle.message("choose.destination.package"));
+  }
+
+  protected JTextField createSourceClassField() {
+    JTextField result = new JTextField();
+    result.setEditable(false);
+    result.setText(mySourceClass.getQualifiedName());
+    return result;
+  }
+
+  private PsiDirectory getDirUnderSameSourceRoot(final PsiDirectory[] directories) {
+    final VirtualFile sourceFile = mySourceClass.getContainingFile().getVirtualFile();
+    if (sourceFile != null) {
+      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+      final VirtualFile sourceRoot = fileIndex.getSourceRootForFile(sourceFile);
+      if (sourceRoot != null) {
+        for (PsiDirectory dir : directories) {
+          if (fileIndex.getSourceRootForFile(dir.getVirtualFile()) == sourceRoot) {
+            return dir;
+          }
+        }
+      }
+    }
+    return directories[0];
+  }
+
+
+  @Override
+  protected void preparePackage() throws OperationFailedException {
+    final PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage(getTargetPackageName());
+    if (aPackage != null) {
+      final PsiDirectory[] directories = aPackage.getDirectories(mySourceClass.getResolveScope());
+      if (directories.length >= 1) {
+        myTargetDirectory = getDirUnderSameSourceRoot(directories);
+      }
+    }
+    myTargetDirectory
+      = PackageUtil.findOrCreateDirectoryForPackage(myProject, getTargetPackageName(), myTargetDirectory, true);
+    if (myTargetDirectory == null) {
+      throw new OperationFailedException(""); // message already reported by PackageUtil
+    }
+    String error = RefactoringMessageUtil.checkCanCreateClass(myTargetDirectory, getExtractedSuperName());
+    if (error != null) {
+      throw new OperationFailedException(error);
+    }
+  }
+
+  @Override
+  protected String getDestinationPackageRecentKey() {
+    return DESTINATION_PACKAGE_RECENT_KEY;
+  }
+
+  @Nullable
+  @Override
+  protected String validateName(String name) {
+    return JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(name)
+           ? null
+           : RefactoringMessageUtil.getIncorrectIdentifierMessage(name);
+  }
 }
