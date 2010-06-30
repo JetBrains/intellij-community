@@ -291,4 +291,6 @@ calc
 subpartitions
 startup
 elseif
+configurator
+django
 
