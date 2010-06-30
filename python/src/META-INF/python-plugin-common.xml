@@ -47,8 +47,7 @@
 
     <fileTypeIndentOptionsProvider implementation="com.jetbrains.python.formatter.PyIndentOptionsProvider"/>
 
-    <colorSettingsPage implementation="org.intellij.lang.regexp.RegExpColorsPage"/>
-
+    
     <!-- Run/Debug -->
     <configurationType implementation="com.jetbrains.python.run.PythonConfigurationType"/>
     <programRunner implementation="com.jetbrains.python.run.PythonRunner"/>
