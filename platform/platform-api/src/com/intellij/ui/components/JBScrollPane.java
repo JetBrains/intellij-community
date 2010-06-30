@@ -18,6 +18,7 @@ package com.intellij.ui.components;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.ScrollPaneUI;
 import java.awt.*;
 
@@ -46,6 +47,9 @@ public class JBScrollPane extends JScrollPane {
    */
   public void setUI(ScrollPaneUI ui) {
     super.setUI(ui);
+
+    setViewportBorder(new EmptyBorder(1, 1, 1, 1));
+
     // We need to set color of viewport later because UIManager
     // updates UI of scroll pane and only after that updates UI
     // of its children. To be the last in this sequence we need
