@@ -1173,31 +1173,8 @@ public class RefactoringUtil {
     final Set<PsiTypeParameter> used = new HashSet<PsiTypeParameter>();
     for (final PsiElement element : elements) {
       if (element == null) continue;
-      element.accept(new JavaRecursiveElementVisitor() {  //pull up extends cls class with type params
+      collectTypeParameters(used, element);  //pull up extends cls class with type params
 
-        @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-          super.visitReferenceElement(reference);
-          if (!reference.isQualified()) {
-            final PsiElement resolved = reference.resolve();
-            if (resolved instanceof PsiTypeParameter) {
-              final PsiTypeParameter typeParameter = (PsiTypeParameter)resolved;
-              if (PsiTreeUtil.isAncestor(typeParameter.getOwner(), element, true)) {
-                used.add(typeParameter);
-              }
-            }
-          }
-        }
-
-        @Override
-        public void visitExpression(final PsiExpression expression) {
-          super.visitExpression(expression);
-          final PsiType type = expression.getType();
-          final PsiClass resolved = PsiUtil.resolveClassInType(type);
-          if (resolved instanceof PsiTypeParameter && PsiTreeUtil.isAncestor(((PsiTypeParameter)resolved).getOwner(), element, true)){
-            used.add((PsiTypeParameter)resolved);
-          }
-        }
-      });
     }
 
     if (fromList != null) {
@@ -1227,5 +1204,32 @@ public class RefactoringUtil {
       assert false;
       return null;
     }
+  }
+
+  public static void collectTypeParameters(final Set<PsiTypeParameter> used, final PsiElement element) {
+    element.accept(new JavaRecursiveElementVisitor() {
+      @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+        super.visitReferenceElement(reference);
+        if (!reference.isQualified()) {
+          final PsiElement resolved = reference.resolve();
+          if (resolved instanceof PsiTypeParameter) {
+            final PsiTypeParameter typeParameter = (PsiTypeParameter)resolved;
+            if (PsiTreeUtil.isAncestor(typeParameter.getOwner(), element, true)) {
+              used.add(typeParameter);
+            }
+          }
+        }
+      }
+
+      @Override
+      public void visitExpression(final PsiExpression expression) {
+        super.visitExpression(expression);
+        final PsiType type = expression.getType();
+        final PsiClass resolved = PsiUtil.resolveClassInType(type);
+        if (resolved instanceof PsiTypeParameter && PsiTreeUtil.isAncestor(((PsiTypeParameter)resolved).getOwner(), element, true)){
+          used.add((PsiTypeParameter)resolved);
+        }
+      }
+    });
   }
 }

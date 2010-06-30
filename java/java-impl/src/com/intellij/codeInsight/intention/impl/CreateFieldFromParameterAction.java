@@ -37,16 +37,15 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class CreateFieldFromParameterAction implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.CreateFieldFromParameterAction");
@@ -57,15 +56,29 @@ public class CreateFieldFromParameterAction implements IntentionAction {
     if (parameter == null) return null;
     PsiType type = parameter.getType();
     if (type instanceof PsiEllipsisType) type = ((PsiEllipsisType)type).toArrayType();
-    final PsiClass psiClass = PsiUtil.resolveClassInType(type);
-    if (psiClass instanceof PsiTypeParameter && parameter.getDeclarationScope() == ((PsiTypeParameter)psiClass).getOwner()) {
-      final PsiReferenceList extendsList = psiClass.getExtendsList();
-      LOG.assertTrue(extendsList != null);
-      final PsiClassType[] types = extendsList.getReferencedTypes();
-      if (types.length > 0) return types;
-      return new PsiType[]{PsiType.getJavaLangObject(parameter.getManager(), GlobalSearchScope.allScope(parameter.getProject()))};
+    final PsiClassType.ClassResolveResult result = PsiUtil.resolveGenericsClassInType(type);
+    final PsiClass psiClass = result.getElement();
+    if (psiClass == null) return new PsiType[] {type};
+    final HashSet<PsiTypeParameter> usedTypeParameters = new HashSet<PsiTypeParameter>();
+    RefactoringUtil.collectTypeParameters(usedTypeParameters, parameter);
+    for (Iterator<PsiTypeParameter> iterator = usedTypeParameters.iterator(); iterator.hasNext();) {
+      PsiTypeParameter usedTypeParameter = iterator.next();
+      if (parameter.getDeclarationScope() != usedTypeParameter.getOwner()) {
+        iterator.remove();
+      }
     }
-    return new PsiType[]{type};
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(parameter.getProject());
+    PsiSubstitutor subst = PsiSubstitutor.EMPTY;
+    for (PsiTypeParameter usedTypeParameter : usedTypeParameters) {
+      subst = subst.put(usedTypeParameter, TypeConversionUtil.typeParameterErasure(usedTypeParameter));
+    }
+    PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+    final Map<PsiTypeParameter, PsiType> typeMap = result.getSubstitutor().getSubstitutionMap();
+    for (PsiTypeParameter typeParameter : typeMap.keySet()) {
+      final PsiType psiType = typeMap.get(typeParameter);
+      substitutor = substitutor.put(typeParameter, psiType != null ? subst.substitute(psiType) : null);
+    }
+    return new PsiType[]{psiClass instanceof PsiTypeParameter ? subst.substitute((PsiTypeParameter)psiClass) : elementFactory.createType(psiClass, substitutor)};
   }
 
   @NotNull
