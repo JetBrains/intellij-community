@@ -592,6 +592,19 @@ public class DeclarationParsing extends Parsing {
     return pair;
   }
 
+  public TreeElement parseAnnotationMemberValue(PsiManager manager, CharSequence text) {
+    Lexer originalLexer = new JavaLexer(myContext.getLanguageLevel());
+    FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
+    lexer.start(text);
+    final TreeElement result = parseAnnotationMemberValue(lexer);
+
+    final FileElement dummyRoot = DummyHolderFactory.createHolder(manager, null, myContext.getCharTable()).getTreeElement();
+    dummyRoot.rawAddChildren(result);
+    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, text.length(), -1, WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
+
+    return result;
+  }
+
   private TreeElement parseAnnotationMemberValue(Lexer lexer) {
     TreeElement result;
     if (lexer.getTokenType() == JavaTokenType.AT) {

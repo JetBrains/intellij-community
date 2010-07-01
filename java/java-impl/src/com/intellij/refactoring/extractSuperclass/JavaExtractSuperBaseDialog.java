@@ -76,6 +76,7 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
     return directories[0];
   }
 
+
   @Override
   protected void preparePackage() throws OperationFailedException {
     final PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage(getTargetPackageName());

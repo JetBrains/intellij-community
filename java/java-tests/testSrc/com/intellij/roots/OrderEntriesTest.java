@@ -98,7 +98,7 @@ public class OrderEntriesTest extends ModuleRootManagerTestCase {
       return base.recursively().exportedOnly().getPathsList();
     }
     if (type == OrderRootType.PRODUCTION_COMPILATION_CLASSES) {
-      return base.productionOnly().recursively().exportedOnly().getPathsList();
+      return base.productionOnly().compileOnly().recursively().exportedOnly().getPathsList();
     }
     if (type == OrderRootType.CLASSES) {
       return base.withoutModuleSourceEntries().recursively().exportedOnly().getPathsList();

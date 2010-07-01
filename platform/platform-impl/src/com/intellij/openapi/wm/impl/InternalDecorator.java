@@ -463,7 +463,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
       }
 
       if (insets.bottom > 0) {
-        UIUtil.drawLine(g, x + 1, y + height - 1, x + width - 1, y + height - 1);
+        UIUtil.drawLine(g, x, y + height - 1, x + width - 1, y + height - 1);
        }
     }
 

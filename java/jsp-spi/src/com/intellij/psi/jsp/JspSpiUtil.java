@@ -19,7 +19,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -138,37 +138,41 @@ public abstract class JspSpiUtil {
   }
 
   public static List<URL> buildUrls(@Nullable final VirtualFile virtualFile, @Nullable final Module module) {
-    return buildUrls(virtualFile, module, OrderRootType.CLASSES_AND_OUTPUT);
+    return buildUrls(virtualFile, module, true);
   }
 
-  public static List<URL> buildUrls(@Nullable final VirtualFile virtualFile, @Nullable final Module module, OrderRootType rootType) {
+  public static List<URL> buildUrls(@Nullable final VirtualFile virtualFile, @Nullable final Module module, boolean includeModuleOutput) {
     final List<URL> urls = new ArrayList<URL>();
     processClassPathItems(virtualFile, module, new Consumer<VirtualFile>() {
       public void consume(final VirtualFile file) {
         addUrl(urls, file);
       }
-    }, rootType);
+    }, includeModuleOutput);
     return urls;
   }
 
   public static void processClassPathItems(final VirtualFile virtualFile, final Module module, final Consumer<VirtualFile> consumer) {
-    processClassPathItems(virtualFile, module, consumer, OrderRootType.CLASSES_AND_OUTPUT);
+    processClassPathItems(virtualFile, module, consumer, true);
   }
 
   public static void processClassPathItems(final VirtualFile virtualFile, final Module module, final Consumer<VirtualFile> consumer,
-                                           OrderRootType rootType) {
+                                           boolean includeModuleOutput) {
     if (isJarFile(virtualFile)){
       consumer.consume(virtualFile);
     }
 
     if (module != null) {
-      for (VirtualFile file1 : ModuleRootManager.getInstance(module).getFiles(rootType)) {
+      OrderEnumerator enumerator = ModuleRootManager.getInstance(module).orderEntries().recursively();
+      if (!includeModuleOutput) {
+        enumerator = enumerator.withoutModuleSourceEntries();
+      }
+      for (VirtualFile root : enumerator.getClassesRoots()) {
         final VirtualFile file;
-        if (file1.getFileSystem().getProtocol().equals(JarFileSystem.PROTOCOL)) {
-          file = JarFileSystem.getInstance().getVirtualFileForJar(file1);
+        if (root.getFileSystem().getProtocol().equals(JarFileSystem.PROTOCOL)) {
+          file = JarFileSystem.getInstance().getVirtualFileForJar(root);
         }
         else {
-          file = file1;
+          file = root;
         }
         consumer.consume(file);
       }

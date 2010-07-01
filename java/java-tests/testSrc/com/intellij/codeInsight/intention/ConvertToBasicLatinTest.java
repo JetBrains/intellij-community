@@ -14,18 +14,11 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: mike
- * Date: Aug 22, 2002
- * Time: 2:58:42 PM
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInsight.intention;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
@@ -38,6 +31,7 @@ public class ConvertToBasicLatinTest extends JavaCodeInsightFixtureTestCase {
   public void setUp() throws Exception {
     super.setUp();
     myIntention = CodeInsightBundle.message("intention.convert.to.basic.latin");
+    EncodingProjectManager.getInstance().setDefaultCharsetName("UTF-8");
   }
 
   public void testConvertCharLiteral() throws Exception {
