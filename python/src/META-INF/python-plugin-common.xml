@@ -12,7 +12,7 @@
     <lang.foldingBuilder language="DjangoTemplate" implementationClass="com.jetbrains.django.editor.DjangoTemplateFoldingBuilder"/>
     <lang.findUsagesProvider language="Python" implementationClass="com.jetbrains.python.findUsages.PythonFindUsagesProvider"/>
     <lang.formatter language="Python" implementationClass="com.jetbrains.python.PythonFormattingModelBuilder"/>
-    <lang.namesValidator language="Python" implementationClass="com.jetbrains.python.refactoring.PythonNamesValidator"/>
+    <lang.namesValidator language="Python" implementationClass="com.jetbrains.python.refactoring.rename.PythonNamesValidator"/>
     <lang.surroundDescriptor language="Python" implementationClass="com.jetbrains.python.refactoring.surround.PyStatementSurroundDescriptor"/>
     <lang.surroundDescriptor language="Python" implementationClass="com.jetbrains.python.refactoring.surround.PyExpressionSurroundDescriptor"/>
     <lang.psiStructureViewFactory language="Python" implementationClass="com.jetbrains.python.structureView.PyStructureViewFactory"/>
@@ -153,7 +153,9 @@
                               order="last, before default"/>
     <readWriteAccessDetector implementation="com.jetbrains.python.findUsages.PyReadWriteAccessDetector"/>
 
-    <renamePsiElementProcessor implementation="com.jetbrains.python.refactoring.RenamePyFunctionProcessor" order="last"/>
+    <renamePsiElementProcessor implementation="com.jetbrains.python.refactoring.rename.RenamePyVariableProcessor" order="last" id="pyvar"/>
+    <renamePsiElementProcessor implementation="com.jetbrains.python.refactoring.rename.RenamePyFunctionProcessor" order="before pyvar"/>
+    <renamePsiElementProcessor implementation="com.jetbrains.python.refactoring.rename.RenamePyClassProcessor" order="before pyvar"/>
 
     <lang.importOptimizer language="Python" implementationClass="com.jetbrains.python.codeInsight.PyImportOptimizer"/>
 

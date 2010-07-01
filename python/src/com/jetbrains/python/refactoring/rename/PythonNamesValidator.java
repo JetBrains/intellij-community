@@ -1,4 +1,4 @@
-package com.jetbrains.python.refactoring;
+package com.jetbrains.python.refactoring.rename;
 
 import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.project.Project;
