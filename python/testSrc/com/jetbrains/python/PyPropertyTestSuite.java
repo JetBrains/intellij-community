@@ -179,17 +179,17 @@ public class PyPropertyTestSuite {
       accessor = p.getGetter();
       assertTrue(accessor.isDefined());
       assertNotNull(accessor.value());
-      assertEquals("getter", accessor.value().getName());
+      assertEquals("w1", accessor.value().getName());
 
       accessor = p.getSetter();
       assertTrue(accessor.isDefined());
       assertNotNull(accessor.value());
-      assertEquals("setter", accessor.value().getName());
+      assertEquals("w1", accessor.value().getName());
 
       accessor = p.getDeleter();
       assertTrue(accessor.isDefined());
       assertNotNull(accessor.value());
-      assertEquals("deleter", accessor.value().getName());
+      assertEquals("w1", accessor.value().getName());
     }
 
     public void testW2() throws Exception {
