@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <file>test.py</file>
-    <line>7</line>
-    <description>from __future__ imports must occur at the beginning of the file</description>
-  </problem>
-</problems>
