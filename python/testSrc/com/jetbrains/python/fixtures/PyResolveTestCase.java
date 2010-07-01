@@ -5,6 +5,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.TestDataFile;
 import org.jetbrains.annotations.NonNls;
@@ -46,5 +48,28 @@ public abstract class PyResolveTestCase extends PyLightFixtureTestCase {
     });
     final PsiReference reference = myFixture.getFile().findReferenceAt(offset);
     return reference;
+  }
+
+  protected abstract PsiElement doResolve() throws Exception;
+
+  protected <T extends PsiElement> void assertResolvesTo(final Class<T> aClass, final String name) {
+    assertResolvesTo(aClass, name, null);
+  }
+
+  protected <T extends PsiElement> void assertResolvesTo(final Class<T> aClass,
+                                                       final String name,
+                                                       String containingFilePath) {
+    final PsiElement element;
+    try {
+      element = doResolve();
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+    assertInstanceOf(element, aClass);
+    assertEquals(name, ((PsiNamedElement) element).getName());
+    if (containingFilePath != null) {
+      assertEquals(containingFilePath, element.getContainingFile().getVirtualFile().getPath());
+    }
   }
 }

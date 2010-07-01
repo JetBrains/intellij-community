@@ -12,7 +12,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
 
 public class PyResolveTest extends PyResolveTestCase {
-  private PsiElement resolve() {
+  protected PsiElement doResolve() {
     PsiReference ref = configureByFile("resolve/" + getTestName(false) + ".py");
     final Project project = ref.getElement().getContainingFile().getProject();
     project.putUserData(PyBuiltinCache.TEST_SDK, PythonMockSdk.findOrCreate());
@@ -27,17 +27,16 @@ public class PyResolveTest extends PyResolveTestCase {
   }
 
   public void testClass() {
-    PsiElement target = resolve();
-    assertTrue(target instanceof PyClass);
+    assertResolvesTo(PyClass.class, "Test");
   }
 
   public void testFunc() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertTrue(targetElement instanceof PyFunction);
   }
 
   public void testToConstructor() {
-    PsiElement target = resolve();
+    PsiElement target = doResolve();
     assertTrue(target instanceof PyFunction);
     assertEquals(((PyFunction)target).getName(), PyNames.INIT);
   }
@@ -61,7 +60,7 @@ public class PyResolveTest extends PyResolveTestCase {
   }
   // NOTE: maybe this test does not belong exactly here; still it's the best place currently.
   public void testComplexCallee() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     PyExpression assigned = ((PyAssignmentStatement)targetElement.getContext()).getAssignedValue();
     assertTrue(assigned instanceof PyCallExpression);
     PsiElement callee = ((PyCallExpression)assigned).getCallee();
@@ -69,191 +68,191 @@ public class PyResolveTest extends PyResolveTestCase {
   }
 
   public void testVar() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertTrue(targetElement instanceof PyTargetExpression);
   }
 
   public void testDefaultInClass() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertNotNull(targetElement);
     assertTrue(targetElement instanceof PyTargetExpression);
     assertEquals(((PyTargetExpression)targetElement).getName(), "FOO");
   }
 
   public void testQualifiedFunc() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertTrue(targetElement instanceof PyFunction);
   }
 
   public void testQualifiedVar() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertTrue(targetElement instanceof PyTargetExpression);
   }
 
   public void testQualifiedTarget() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertTrue(targetElement instanceof PyTargetExpression);
   }
 
   public void testQualifiedFalseTarget() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertNull(targetElement);
   }
 
   public void testInnerFuncVar() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertTrue(targetElement instanceof PyTargetExpression);
   }
 
   public void testTupleInComprh() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertTrue(targetElement instanceof PyTargetExpression);
   }
 
   public void testForStatement() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertTrue(targetElement instanceof PyTargetExpression);
   }
 
   public void testExceptClause() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertTrue(targetElement instanceof PyTargetExpression);
   }
 
   public void testLookAhead() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertTrue(targetElement instanceof PyTargetExpression);
   }
 
   public void testLookAheadCapped() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertTrue(targetElement instanceof PyTargetExpression);
   }
 
   public void testTryExceptElse() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertTrue(targetElement instanceof PyTargetExpression);
   }
 
   public void testGlobal() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertTrue(targetElement instanceof PyTargetExpression);
     assertTrue(targetElement.getParent() instanceof PyAssignmentStatement);
   }
 
   public void testLambda() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertTrue(targetElement instanceof PyNamedParameter);
   }
 
   public void testLambdaParameterOutside() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertTrue(targetElement instanceof PyTargetExpression);
   }
 
   public void testSuperField() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertTrue(targetElement instanceof PyTargetExpression);
   }
 
   public void testFieldInCondition() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertTrue(targetElement instanceof PyTargetExpression);
   }
 
   public void testMultipleFields() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertTrue(targetElement instanceof PyTargetExpression);
   }
 
   public void testClassPeerMembers() {
-    PsiElement target = resolve();
+    PsiElement target = doResolve();
     assertTrue(target instanceof PyFunction);
   }
 
   public void testTuple() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertTrue(targetElement instanceof PyTargetExpression);
     assertTrue(targetElement.getParent() instanceof PyAssignmentStatement);
   }
 
   public void testMultiTarget() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertTrue(targetElement instanceof PyTargetExpression);
     assertTrue(targetElement.getParent() instanceof PyAssignmentStatement);
   }
 
   public void testMultiTargetTuple() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertTrue(targetElement instanceof PyTargetExpression);
     assertNotNull(PsiTreeUtil.getParentOfType(targetElement, PyAssignmentStatement.class)); // it's deep in a tuple
   }
 
   public void testWithStatement() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertTrue(targetElement instanceof PyTargetExpression);
     assertTrue(targetElement.getParent() instanceof PyWithItem);
   }
 
   public void testTupleInExcept() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertTrue(targetElement instanceof PyTargetExpression);
     assertTrue(PsiTreeUtil.getParentOfType(targetElement, PyExceptPart.class) != null);
   }
 
 
   public void testDocStringClass() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertTrue(targetElement instanceof PyStringLiteralExpression);
     assertEquals("Docstring of class Foo", ((PyStringLiteralExpression)targetElement).getStringValue());
   }
 
   public void testDocStringInstance() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertTrue(targetElement instanceof PyStringLiteralExpression);
     assertEquals("Docstring of class Foo", ((PyStringLiteralExpression)targetElement).getStringValue());
   }
 
   public void testDocStringFunction() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertTrue(targetElement instanceof PyStringLiteralExpression);
     assertEquals("Docstring of function bar", ((PyStringLiteralExpression)targetElement).getStringValue());
   }
 
   public void testDocStringInvalid() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertNull(targetElement);
   }
 
   public void testFieldNotInInit() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertTrue(targetElement instanceof PyTargetExpression);
   }
 
   public void testClassIsNotMemberOfItself() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertNull(targetElement);
   }
 
   public void testSuper() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertTrue(targetElement instanceof PyFunction);
     assertEquals("A", ((PyFunction) targetElement).getContainingClass().getName());
   }
 
   public void testStackOverflow() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertNull(targetElement);
   }
 
   public void testProperty() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertTrue(targetElement instanceof PyFunction);
     assertEquals("set_full_name", ((PyFunction)targetElement).getName());
   }
 
   public void testLambdaWithParens() {  // PY-882
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertTrue(targetElement instanceof PyParameter);
   }
   
@@ -264,41 +263,41 @@ public class PyResolveTest extends PyResolveTestCase {
   }
 
   public void testClassPrivateInClass() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertTrue(targetElement instanceof PyTargetExpression);
     assertTrue(targetElement.getParent() instanceof PyAssignmentStatement);
   }
 
   public void testClassPrivateInMethod() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertTrue(targetElement instanceof PyTargetExpression);
     assertTrue(targetElement.getParent() instanceof PyAssignmentStatement);
   }
 
   public void testClassPrivateInMethodNested() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertTrue(targetElement instanceof PyTargetExpression);
     assertTrue(targetElement.getParent() instanceof PyAssignmentStatement);
   }
 
   public void testClassPrivateInherited() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertTrue(targetElement instanceof PyTargetExpression);
     assertTrue(targetElement.getParent() instanceof PyAssignmentStatement);
   }
 
   public void testClassPrivateOutsideClass() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertNull(targetElement);
   }
 
   public void testClassPrivateOutsideInstance() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertNull(targetElement);
   }
 
   public void testClassNameEqualsMethodName() {
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertInstanceOf(targetElement, PyFunction.class);
   }
 
@@ -311,12 +310,12 @@ public class PyResolveTest extends PyResolveTestCase {
   }
 
   public void testIsInstance() {  // PY-1133
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertInstanceOf(targetElement, PyNamedParameter.class);
   }
 
   public void testListComprehension() { // PY-1143
-    PsiElement targetElement = resolve();
+    PsiElement targetElement = doResolve();
     assertInstanceOf(targetElement, PyTargetExpression.class);
   }
 }

@@ -7,13 +7,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyResolveTestCase;
 import com.jetbrains.python.psi.*;
 
 /**
  * @author yole
  */
-public class PyMultiFileResolveTest extends PyLightFixtureTestCase {
+public class PyMultiFileResolveTest extends PyResolveTestCase {
   
   private static void checkInitPyDir(PsiElement elt, String dirname) throws Exception {
     assertTrue(elt instanceof PyFile);
@@ -183,21 +183,6 @@ public class PyMultiFileResolveTest extends PyLightFixtureTestCase {
     assertResolvesTo(PyFunction.class, "do_stuff", "/src/pack2.py");
   }
 
-  private <T extends PsiElement> void assertResolvesTo(final Class<T> aClass, final String name) throws Exception {
-    assertResolvesTo(aClass, name, null);
-  }
-
-  private <T extends PsiElement> void assertResolvesTo(final Class<T> aClass,
-                                                       final String name,
-                                                       String containingFilePath) throws Exception {
-    final PsiElement element = doResolve();
-    assertInstanceOf(element, aClass);
-    assertEquals(name, ((PsiNamedElement) element).getName());
-    if (containingFilePath != null) {
-      assertEquals(containingFilePath, element.getContainingFile().getVirtualFile().getPath());
-    }
-  }
-
   private PsiFile prepareFile() throws Exception {
     String testName = getTestName(true);
     String fileName = getTestName(false) + ".py";
@@ -215,7 +200,8 @@ public class PyMultiFileResolveTest extends PyLightFixtureTestCase {
     return PythonTestUtil.getTestDataPath() + "/resolve/multiFile/";
   }
 
-  private PsiElement doResolve() throws Exception {
+  @Override
+  protected PsiElement doResolve() throws Exception {
     PsiFile psiFile = prepareFile();
     int offset = findMarkerOffset(psiFile);
     final PsiReference ref = psiFile.findReferenceAt(offset);

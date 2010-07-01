@@ -2,6 +2,7 @@ package com.jetbrains.python;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.fixtures.PyResolveTestCase;
 import com.jetbrains.python.psi.PyArgumentList;
 import com.jetbrains.python.psi.PyDecorator;
@@ -13,9 +14,9 @@ import com.jetbrains.python.psi.PyFunction;
  * User: dcheryasov
  * Date: Dec 28, 2008 3:50:23 AM
  */
-public class PyDecoratorTest extends PyResolveTestCase {
+public class PyDecoratorTest extends PyLightFixtureTestCase {
   private PsiElement find() throws Exception {
-    PsiReference ref = configureByFile(getTestName(false) + ".py");
+    PsiReference ref = myFixture.getReferenceAtCaretPosition("/resolve/decorators/" + getTestName(false) + ".py");
     return ref.getElement();
   }
 
@@ -44,10 +45,5 @@ public class PyDecoratorTest extends PyResolveTestCase {
     PyExpression[] args = arglist.getArguments();
     assertEquals("argument count", 1, args.length);
     assertEquals("argument value", "1", args[0].getText());
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return PythonTestUtil.getTestDataPath() + "/resolve/decorators/";
   }
 }
