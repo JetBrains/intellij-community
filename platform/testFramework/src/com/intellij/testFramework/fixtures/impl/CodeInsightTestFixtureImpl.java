@@ -895,7 +895,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     };
     final InspectionProfileManager inspectionProfileManager = InspectionProfileManager.getInstance();
     inspectionProfileManager.addProfile(profile);
-    Disposer.register(getProject(), new Disposable() {
+    Disposer.register(getTestRootDisposable(), new Disposable() {
       public void dispose() {
         inspectionProfileManager.deleteProfile(PROFILE);
       }
