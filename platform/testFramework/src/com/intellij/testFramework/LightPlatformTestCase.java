@@ -446,7 +446,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       SwingUtilities.invokeAndWait(runnable);
     }
 
-    TemplateDataLanguageMappings.getInstance(getProject()).cleanupForNextTest();
+    TemplateDataLanguageMappings.getInstance(project).cleanupForNextTest();
 
     ProjectManagerEx.getInstanceEx().setCurrentTestProject(null);
     application.setDataProvider(null);
