@@ -13,6 +13,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.testFramework.ModuleTestCase;
 import com.intellij.util.concurrency.Semaphore;
 import junit.framework.AssertionFailedError;
@@ -427,18 +428,9 @@ public abstract class CompilerTestCase extends ModuleTestCase {
           }
         }
 
-//        if (!"dsl".equals(SystemProperties.getUserName())){
-//          assertTrue("dsl was stupid enough to checkin these changes", false);
-//        } else {
-//          Thread.sleep(2000);
-//        }
-
-//        System.out.println("time before copying= " + System.currentTimeMillis());
         VirtualFile newChild = VfsUtil.copyFile(this, child, destDir, name);
-        assertTrue("Timestamps of test data files must differ in order for the test to work properly!\n " + child.getPath(),
-                   currentTimeStamp != ((FileSystemInterface)newChild.getFileSystem()).getTimeStamp(newChild));
-//        System.out.println("time after copying= " + System.currentTimeMillis());
-//        System.out.println("{TestCase:} copied " + child.getPath() + "origin timestamp is " + child.getPhysicalTimeStamp() + "; new timestamp is "+newChild.getPhysicalTimeStamp());
+        //to ensure that compiler will threat the file as changed. On Linux system timestamp may be rounded to multiple of 1000
+        ((NewVirtualFile)newChild).setTimeStamp(newChild.getTimeStamp() + 10);
       }
     }
   }
