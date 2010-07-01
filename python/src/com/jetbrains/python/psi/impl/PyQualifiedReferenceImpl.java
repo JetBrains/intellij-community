@@ -171,6 +171,7 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
           final PyClassType classType = new PyClassType(classes.iterator().next(), false);
           return ((PyReferenceExpressionImpl) myElement).getTypeCompletionVariants(classType);
         }
+        return collectSeenMembers(qualifier.getText());
       }
     }
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
@@ -193,6 +194,23 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
       }
     }
     return result;
+  }
+
+  private Object[] collectSeenMembers(final String text) {
+    final List<String> results = new ArrayList<String>();
+    myElement.getContainingFile().accept(new PyRecursiveElementVisitor() {
+      @Override
+      public void visitPyReferenceExpression(PyReferenceExpression node) {
+        super.visitPyReferenceExpression(node);
+        if (node != myElement) {
+          final PyExpression qualifier = node.getQualifier();
+          if (qualifier != null && qualifier.getText().equals(text)) {
+            results.add(node.getReferencedName());
+          }
+        }
+      }
+    });
+    return results.toArray(new Object[results.size()]);
   }
 
   private static Collection<PyExpression> collectAssignedAttributes(PyQualifiedExpression qualifier) {
