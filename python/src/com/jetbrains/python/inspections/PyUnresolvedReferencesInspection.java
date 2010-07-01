@@ -247,7 +247,10 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     @Override
     public void visitPyImportElement(PyImportElement node) {
       super.visitPyImportElement(node);
-      myAllImports.add(node);
+      final PyFromImportStatement fromImport = PsiTreeUtil.getParentOfType(node, PyFromImportStatement.class);
+      if (fromImport == null || !fromImport.isFromFuture()) {
+        myAllImports.add(node);
+      }
     }
 
     @Override
