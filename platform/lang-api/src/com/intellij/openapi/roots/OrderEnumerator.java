@@ -131,26 +131,10 @@ public abstract class OrderEnumerator {
   }
 
   /**
-   * Add classes roots for all entries processed by this enumerator
-   * @param list list to append paths
-   */
-  public void collectPaths(PathsList list) {
-    classes().collectPaths(list);
-  }
-
-  /**
    * @return list containing source roots for all entries processed by this enumerator
    */
   public PathsList getSourcePathsList() {
     return sources().getPathsList();
-  }
-
-  /**
-   * Add source roots for all entries processed by this enumerator
-   * @param list list to append paths
-   */
-  public void collectSourcePaths(PathsList list) {
-    sources().collectPaths(list);
   }
 
   /**

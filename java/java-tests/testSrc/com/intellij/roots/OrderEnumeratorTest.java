@@ -95,7 +95,7 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
 
   private static void assertSourceRoots(final OrderEnumerator enumerator, VirtualFile... files) {
     final PathsList result = new PathsList();
-    enumerator.collectSourcePaths(result);
+    enumerator.sources().collectPaths(result);
     assertRoots(result, files);
   }
 
