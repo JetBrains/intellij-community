@@ -2,6 +2,7 @@
   <name>Coverage</name>
   <depends optional="true">TestNG-J</depends>
   <depends optional="true">JUnit</depends>
+  <depends>com.intellij.modules.java</depends>
   <depends>com.intellij.modules.ultimate</depends>
   <description>This plugin supports gathering coverage information and presenting it right in the editor as well as in the project view.
     It is also possible to generate standalone HTML reports for external use.
@@ -32,4 +33,10 @@
       <option name="workspace" value="true"/>
     </component>
   </project-components>
+  <actions>
+    <group id="IDEACoverageMenu" popup="false">
+      <reference ref="CoverageMenu"/>
+      <add-to-group group-id="AnalyzeMenu" anchor="before" relative-to-action="ShowPackageDeps"/>
+    </group>
+  </actions>
 </idea-plugin>
