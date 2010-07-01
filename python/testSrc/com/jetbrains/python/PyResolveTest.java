@@ -332,4 +332,8 @@ public class PyResolveTest extends PyResolveTestCase {
   public void testSuperMetaClass() {
     assertResolvesTo(PyFunction.class, "foo");
   }
+
+  public void testSuperDunderClass() {  // PY-1190
+    assertResolvesTo(PyFunction.class, "foo");
+  }
 }

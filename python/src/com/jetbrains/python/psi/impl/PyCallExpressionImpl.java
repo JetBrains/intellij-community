@@ -2,6 +2,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
@@ -129,6 +130,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
     }
   }
 
+  @Nullable
   private PyType getSuperCallType(PyExpression callee, TypeEvalContext context) {
     PsiElement must_be_super_init = ((PyReferenceExpression)callee).getReference().resolve();
     if (must_be_super_init instanceof PyFunction) {
@@ -140,32 +142,49 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
           if (args.length > 1) {
             PyExpression first_arg = args[0];
             if (first_arg instanceof PyReferenceExpression) {
-              PsiElement possible_class = ((PyReferenceExpression)first_arg).getReference().resolve();
-              if (possible_class instanceof PyClass && ((PyClass)possible_class).isNewStyleClass()) {
-                final PyClass first_class = (PyClass)possible_class;
-                // check 2nd argument, too; it should be an instance
-                PyExpression second_arg = args[1];
-                if (second_arg != null) {
-                  PyType second_type = second_arg.getType(context);
-                  if (second_type instanceof PyClassType) {
-                    // imitate isinstance(second_arg, possible_class)
-                    PyClass second_class = ((PyClassType)second_type).getPyClass();
-                    assert second_class != null;
-                    if (first_class == second_class) {
-                      final PyClass[] supers = first_class.getSuperClasses();
-                      if (supers.length > 0) {
-                        return new PyClassType(supers[0], false);
-                      }
-                    }
-                    if (second_class.isSubclass(first_class)) {
-                      // TODO: super(Foo, Bar) is a superclass of Foo directly preceding Bar in MRO
-                      return new PyClassType(first_class, false); // super(Foo, self) has type of Foo, modulo __get__()
-                    }
+              final PyReferenceExpression firstArgRef = (PyReferenceExpression)first_arg;
+              final PyExpression qualifier = firstArgRef.getQualifier();
+              if (qualifier != null && PyNames.CLASS.equals(firstArgRef.getReferencedName())) {
+                final PsiReference qRef = qualifier.getReference();
+                final PsiElement element = qRef == null ? null : qRef.resolve();
+                if (element instanceof PyParameter) {
+                  final PyParameterList parameterList = PsiTreeUtil.getParentOfType(element, PyParameterList.class);
+                  if (parameterList != null && element == parameterList.getParameters() [0]) {
+                    return getSuperCallType(context, PsiTreeUtil.getParentOfType(this, PyClass.class), args[1]);
                   }
                 }
               }
+              PsiElement possible_class = firstArgRef.getReference().resolve();
+              if (possible_class instanceof PyClass && ((PyClass)possible_class).isNewStyleClass()) {
+                final PyClass first_class = (PyClass)possible_class;
+                return getSuperCallType(context, first_class, args[1]);
+              }
             }
           }
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PyType getSuperCallType(TypeEvalContext context, PyClass first_class, PyExpression second_arg) {
+    // check 2nd argument, too; it should be an instance
+    if (second_arg != null) {
+      PyType second_type = second_arg.getType(context);
+      if (second_type instanceof PyClassType) {
+        // imitate isinstance(second_arg, possible_class)
+        PyClass second_class = ((PyClassType)second_type).getPyClass();
+        assert second_class != null;
+        if (first_class == second_class) {
+          final PyClass[] supers = first_class.getSuperClasses();
+          if (supers.length > 0) {
+            return new PyClassType(supers[0], false);
+          }
+        }
+        if (second_class.isSubclass(first_class)) {
+          // TODO: super(Foo, Bar) is a superclass of Foo directly preceding Bar in MRO
+          return new PyClassType(first_class, false); // super(Foo, self) has type of Foo, modulo __get__()
         }
       }
     }
