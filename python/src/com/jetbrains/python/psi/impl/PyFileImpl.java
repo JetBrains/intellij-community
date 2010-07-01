@@ -219,7 +219,10 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
               for (StubElement importElement : importElements) {
                 final PsiElement psi = importElement.getPsi();
                 if (psi instanceof PyImportElement && name.equals(((PyImportElement)psi).getVisibleName())) {
-                  return psi;
+                  final PsiElement resolved = ((PyImportElement) psi).getElementNamed(name);
+                  if (resolved != null) {
+                    return resolved;
+                  }
                 }
               }
             }
@@ -232,7 +235,10 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
                 final PyImportElement importElement = (PyImportElement)psi;
                 final String asName = importElement.getAsName();
                 if (asName != null && asName.equals(name)) {
-                  return psi;
+                  final PsiElement resolved = importElement.getElementNamed(name);
+                  if (resolved != null) {
+                    return resolved;
+                  }
                 }
                 final PyQualifiedName qName = importElement.getImportedQName();
                 if (qName != null && qName.getComponentCount() > 0) {
@@ -243,7 +249,10 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
                     return new PyImportedModule(this, PyQualifiedName.fromComponents(name));
                   }
                   if (name.equals(((PyImportElement)psi).getVisibleName())) {
-                    return psi;
+                    final PsiElement resolved = importElement.getElementNamed(name);
+                    if (resolved != null) {
+                      return resolved;
+                    }
                   }
                 }
               }

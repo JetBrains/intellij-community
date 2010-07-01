@@ -166,6 +166,10 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     assertResolvesTo(PyFunction.class, "makedir");
   }
 
+  public void testImportOsPath2() throws Exception {
+    assertResolvesTo(PyFunction.class, "do_stuff");
+  }
+
   public void testReimportExported() throws Exception {
     assertResolvesTo(PyFunction.class, "dostuff");
   }
