@@ -22,18 +22,18 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PathsList;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author nik
  */
-public abstract class OrderEnumeratorBase extends OrderEnumerator {
+abstract class OrderEnumeratorBase extends OrderEnumerator {
   private boolean myProductionOnly;
   private boolean myCompileOnly;
   private boolean myRuntimeOnly;
@@ -131,73 +131,16 @@ public abstract class OrderEnumeratorBase extends OrderEnumerator {
   }
 
   @Override
-  public PathsList getPathsList() {
-    final PathsList list = new PathsList();
-    collectPaths(list);
-    return list;
+  public OrderRootsEnumerator classes() {
+    return new OrderRootsEnumeratorImpl(this, OrderRootType.CLASSES);
   }
 
   @Override
-  public void collectPaths(final PathsList list) {
-    list.addVirtualFiles(getClassesRoots());
+  public OrderRootsEnumerator sources() {
+    return new OrderRootsEnumeratorImpl(this, OrderRootType.SOURCES);
   }
 
-  @Override
-  public PathsList getSourcePathsList() {
-    final PathsList list = new PathsList();
-    collectSourcePaths(list);
-    return list;
-  }
-
-  @Override
-  public void collectSourcePaths(PathsList list) {
-    list.addVirtualFiles(getSourceRoots());
-  }
-
-  @Override
-  public Collection<VirtualFile> getClassesRoots() {
-    final List<VirtualFile> files = new ArrayList<VirtualFile>();
-    collectPaths(files, false);
-    return files;
-  }
-
-  @Override
-  public Collection<VirtualFile> getSourceRoots() {
-    final List<VirtualFile> files = new ArrayList<VirtualFile>();
-    collectPaths(files, true);
-    return files;
-  }
-
-  private void collectPaths(final List<VirtualFile> list, final boolean collectSources) {
-    forEach(new Processor<OrderEntry>() {
-      @Override
-      public boolean process(OrderEntry orderEntry) {
-        if (orderEntry instanceof ModuleSourceOrderEntry) {
-          collectModulePaths(((ModuleSourceOrderEntry)orderEntry).getRootModel(), list, collectSources);
-        }
-        else if (orderEntry instanceof ModuleOrderEntry) {
-          ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)orderEntry;
-          final Module module = moduleOrderEntry.getModule();
-          if (module != null) {
-            if (myCustomHandlers != null) {
-              for (OrderEnumerationHandler handler : myCustomHandlers) {
-                if (handler.addCustomOutput(moduleOrderEntry, myProductionOnly, list)) {
-                  return true;
-                }
-              }
-            }
-            collectModulePaths(getRootModel(module), list, collectSources);
-          }
-        }
-        else {
-          Collections.addAll(list, orderEntry.getFiles(collectSources ? OrderRootType.SOURCES : OrderRootType.CLASSES));
-        }
-        return true;
-      }
-    });
-  }
-
-  private ModuleRootModel getRootModel(Module module) {
+  ModuleRootModel getRootModel(Module module) {
     if (myModulesProvider != null) {
       return myModulesProvider.getRootModel(module);
     }
@@ -262,42 +205,6 @@ public abstract class OrderEnumeratorBase extends OrderEnumerator {
     }
   }
 
-  private void collectModulePaths(ModuleRootModel rootModel, List<VirtualFile> list, final boolean collectSources) {
-    if (collectSources) {
-      if (myProductionOnly) {
-        ContentEntry[] contentEntries = rootModel.getContentEntries();
-        for (ContentEntry contentEntry : contentEntries) {
-          for (SourceFolder folder : contentEntry.getSourceFolders()) {
-            VirtualFile root = folder.getFile();
-            if (root != null && !folder.isTestSource()) {
-              list.add(root);
-            }
-          }
-        }
-      }
-      else {
-        Collections.addAll(list, rootModel.getSourceRoots());
-      }
-    }
-    else {
-      final CompilerModuleExtension extension = rootModel.getModuleExtension(CompilerModuleExtension.class);
-      if (extension != null) {
-        VirtualFile testOutput = extension.getCompilerOutputPathForTests();
-        if (myProductionOnly) {
-          testOutput = null;
-        }
-
-        if (testOutput != null) {
-          list.add(testOutput);
-        }
-        VirtualFile output = extension.getCompilerOutputPath();
-        if (output != null && !output.equals(testOutput)) {
-          list.add(output);
-        }
-      }
-    }
-  }
-
   @Override
   public abstract void forEach(@NotNull Processor<OrderEntry> processor);
 
@@ -317,11 +224,26 @@ public abstract class OrderEnumeratorBase extends OrderEnumerator {
     });
   }
 
+  public boolean isProductionOnly() {
+    return myProductionOnly;
+  }
+
   @Override
   public <R> R process(@NotNull final RootPolicy<R> policy, final R initialValue) {
     final OrderEntryProcessor<R> processor = new OrderEntryProcessor<R>(policy, initialValue);
     forEach(processor);
     return processor.myValue;
+  }
+
+  boolean addCustomOutput(ModuleOrderEntry moduleOrderEntry, List<VirtualFile> list) {
+    if (myCustomHandlers != null) {
+      for (OrderEnumerationHandler handler : myCustomHandlers) {
+        if (handler.addCustomOutput(moduleOrderEntry, myProductionOnly, list)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   private class OrderEntryProcessor<R> implements Processor<OrderEntry> {

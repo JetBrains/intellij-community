@@ -100,36 +100,58 @@ public abstract class OrderEnumerator {
   public abstract OrderEnumerator using(@NotNull ModulesProvider provider);
 
   /**
+   * @return {@link OrderRootsEnumerator} instance for processing classes roots
+   */
+  public abstract OrderRootsEnumerator classes();
+
+  /**
+   * @return {@link OrderRootsEnumerator} instance for processing source roots
+   */
+  public abstract OrderRootsEnumerator sources();
+
+  /**
    * @return classes roots for all entries processed by this enumerator
    */
-  public abstract Collection<VirtualFile> getClassesRoots();
+  public Collection<VirtualFile> getClassesRoots() {
+    return classes().getRoots();
+  }
 
   /**
    * @return source roots for all entries processed by this enumerator
    */
-  public abstract Collection<VirtualFile> getSourceRoots();
+  public Collection<VirtualFile> getSourceRoots() {
+    return sources().getRoots();
+  }
 
   /**
    * @return list containing classes roots for all entries processed by this enumerator
    */
-  public abstract PathsList getPathsList();
+  public PathsList getPathsList() {
+    return classes().getPathsList();
+  }
 
   /**
    * Add classes roots for all entries processed by this enumerator
    * @param list list to append paths
    */
-  public abstract void collectPaths(PathsList list);
+  public void collectPaths(PathsList list) {
+    classes().collectPaths(list);
+  }
 
   /**
    * @return list containing source roots for all entries processed by this enumerator
    */
-  public abstract PathsList getSourcePathsList();
+  public PathsList getSourcePathsList() {
+    return sources().getPathsList();
+  }
 
   /**
    * Add source roots for all entries processed by this enumerator
    * @param list list to append paths
    */
-  public abstract void collectSourcePaths(PathsList list);
+  public void collectSourcePaths(PathsList list) {
+    sources().collectPaths(list);
+  }
 
   /**
    * Runs <code>processor.process()</code> for each entry processed by this enumerator.
