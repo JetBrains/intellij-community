@@ -253,4 +253,6 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testCyclicInheritance() throws Exception {doTest();}
 
   public void testNoDefaultConstructor() throws Exception {doTest();}
+
+  public void testTupleTypeAssignments() throws Exception{doTest(new GroovyAssignabilityCheckInspection());}
 }
