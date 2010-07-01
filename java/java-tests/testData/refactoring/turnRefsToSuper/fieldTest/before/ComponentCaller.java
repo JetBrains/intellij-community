@@ -1,4 +1,5 @@
-import java.awt.*;
+import java.awt.BorderLayout;
+import javax.swing.*;
  
 public class ComponentCaller extends JComponent{
     Component1 component1;
