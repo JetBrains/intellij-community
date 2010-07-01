@@ -29,8 +29,7 @@ public abstract class PyClassRefactoringTest extends PyLightFixtureTestCase {
 
   protected PyClass findClass(final String name) {
     final Project project = myFixture.getProject();
-    final Collection<PyClass> classes = StubIndex.getInstance().get(PyClassNameIndex.KEY, name, project,
-                                                                    ProjectScope.getProjectScope(project));
+    final Collection<PyClass> classes = PyClassNameIndex.find(name, project, false);
     assertEquals(1, classes.size());
     return classes.iterator().next();
   }

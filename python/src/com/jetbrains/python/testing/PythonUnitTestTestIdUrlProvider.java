@@ -6,9 +6,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.ProjectScope;
-import com.intellij.psi.stubs.StubIndex;
 import com.intellij.testIntegration.TestLocationProvider;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
@@ -90,7 +87,6 @@ public class PythonUnitTestTestIdUrlProvider implements TestLocationProvider {
   }
 
   private static Collection<PyClass> getClassesByName(final Project project, final String name) {
-    final GlobalSearchScope scope = ProjectScope.getProjectScope(project);
-    return StubIndex.getInstance().get(PyClassNameIndex.KEY, name, project, scope);
+    return PyClassNameIndex.find(name, project, false); 
   }
 }

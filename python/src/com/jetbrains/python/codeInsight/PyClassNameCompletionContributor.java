@@ -14,7 +14,6 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
-import com.intellij.psi.stubs.StubIndex;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.actions.AddImportHelper;
 import com.jetbrains.python.psi.*;
@@ -42,7 +41,7 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
         final GlobalSearchScope scope = ProjectScope.getAllScope(project);
         final Collection<String> allKeys = ApplicationManager.getApplication().runReadAction(new Computable<Collection<String>>() {
           public Collection<String> compute() {
-            return StubIndex.getInstance().getAllKeys(PyClassNameIndex.KEY, project);
+            return PyClassNameIndex.allKeys(project);
           }
         });
         for (final String className : allKeys) {

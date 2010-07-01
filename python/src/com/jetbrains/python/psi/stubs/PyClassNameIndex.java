@@ -26,6 +26,13 @@ public class PyClassNameIndex extends StringStubIndexExtension<PyClass> {
     return StubIndex.getInstance().get(KEY, name, project, scope);
   }
 
+  public static Collection<PyClass> find(String name, Project project, boolean includeNonProjectItems) {
+    final GlobalSearchScope scope = includeNonProjectItems
+                                    ? ProjectScope.getAllScope(project)
+                                    : GlobalSearchScope.projectScope(project);
+    return find(name, project, scope);
+  }
+
   @Nullable
   public static PyClass findClass(@NotNull String qName, Project project, GlobalSearchScope scope) {
     int pos = qName.lastIndexOf(".");
@@ -45,5 +52,9 @@ public class PyClassNameIndex extends StringStubIndexExtension<PyClass> {
       return null;
     }
     return findClass(qName, project, ProjectScope.getAllScope(project));
+  }
+
+  public static Collection<String> allKeys(Project project) {
+    return StubIndex.getInstance().getAllKeys(KEY, project);
   }
 }
