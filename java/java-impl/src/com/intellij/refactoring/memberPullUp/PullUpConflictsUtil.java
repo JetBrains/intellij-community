@@ -60,6 +60,16 @@ public class PullUpConflictsUtil {
                                         PsiPackage targetPackage,
                                         PsiDirectory targetDirectory,
                                         final InterfaceContainmentVerifier interfaceContainmentVerifier) {
+    return checkConflicts(infos, subclass, superClass, targetPackage, targetDirectory, interfaceContainmentVerifier, true);
+  }
+
+  public static MultiMap<PsiElement, String> checkConflicts(final MemberInfo[] infos,
+                                                            PsiClass subclass,
+                                                            @Nullable PsiClass superClass,
+                                                            PsiPackage targetPackage,
+                                                            PsiDirectory targetDirectory,
+                                                            final InterfaceContainmentVerifier interfaceContainmentVerifier,
+                                                            boolean movedMembers2Super) {
     final Set<PsiMember> movedMembers = new HashSet<PsiMember>();
     final Set<PsiMethod> abstractMethods = new HashSet<PsiMethod>();
     final boolean isInterfaceTarget;
@@ -98,7 +108,7 @@ public class PullUpConflictsUtil {
       }
     }
     RefactoringConflictsUtil.analyzeAccessibilityConflicts(movedMembers, superClass, conflicts, null, targetRepresentativeElement, abstrMethods);
-    if (superClass != null) {
+    if (superClass != null && movedMembers2Super) {
       checkSuperclassMembers(superClass, infos, conflicts);
       if (isInterfaceTarget) {
         checkInterfaceTarget(infos, conflicts);
