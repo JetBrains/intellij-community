@@ -1,5 +1,8 @@
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -197,7 +200,7 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
   }
 
   private Object[] collectSeenMembers(final String text) {
-    final List<String> results = new ArrayList<String>();
+    final Set<String> members = new HashSet<String>();
     myElement.getContainingFile().accept(new PyRecursiveElementVisitor() {
       @Override
       public void visitPyReferenceExpression(PyReferenceExpression node) {
@@ -205,11 +208,15 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
         if (node != myElement) {
           final PyExpression qualifier = node.getQualifier();
           if (qualifier != null && qualifier.getText().equals(text)) {
-            results.add(node.getReferencedName());
+            members.add(node.getReferencedName());
           }
         }
       }
     });
+    List<LookupElement> results = new ArrayList<LookupElement>(members.size());
+    for (String member : members) {
+      results.add(AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(LookupElementBuilder.create(member)));
+    }
     return results.toArray(new Object[results.size()]);
   }
 
