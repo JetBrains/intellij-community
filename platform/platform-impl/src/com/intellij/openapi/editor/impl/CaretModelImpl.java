@@ -199,10 +199,20 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
     }
 
     VisualPosition pos = new VisualPosition(newLineNumber, newColumnNumber);
-    moveToVisualPosition(pos);
+    if (columnShift != 0 && lineShift == 0 && myEditor.getSoftWrapModel().isInsideSoftWrap(pos)) {
+      LogicalPosition logical = myEditor.visualToLogicalPosition(pos);
+      int offsetToUse = myEditor.logicalPositionToOffset(logical);
+      if (columnShift < 0) {
+        offsetToUse--;
 
-    if (!editorSettings.isVirtualSpace() && columnShift == 0) {
-      myEditor.setLastColumnNumber(lastColumnNumber);
+      }
+      moveToOffset(offsetToUse);
+    }
+    else {
+      moveToVisualPosition(pos);
+      if (!editorSettings.isVirtualSpace() && columnShift == 0) {
+        myEditor.setLastColumnNumber(lastColumnNumber);
+      }
     }
 
     if (withSelection) {
@@ -227,8 +237,8 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
     validateCallContext();
     int column = pos.column;
     int line = pos.line;
-    int softWrapLines = pos.softWrapLines;
-    int linesFromCurrentSoftWrap = pos.linesFromActiveSoftWrap;
+    int softWrapLinesBefore = pos.softWrapLinesBeforeCurrentLogicalLine;
+    int softWrapLinesCurrent = pos.softWrapLinesOnCurrentLogicalLine;
     int softWrapColumns = pos.softWrapColumnDiff;
 
     Document doc = myEditor.getDocument();
@@ -239,8 +249,8 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
     }
     if (line < 0) {
       line = 0;
-      softWrapLines = 0;
-      linesFromCurrentSoftWrap = 0;
+      softWrapLinesBefore = 0;
+      softWrapLinesCurrent = 0;
     }
 
     int lineCount = doc.getLineCount();
@@ -249,8 +259,8 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
     }
     else if (line > lineCount - 1) {
       line = lineCount - 1;
-      softWrapLines = 0;
-      linesFromCurrentSoftWrap = 0;
+      softWrapLinesBefore = 0;
+      softWrapLinesCurrent = 0;
     }
 
     EditorSettings editorSettings = myEditor.getSettings();
@@ -272,7 +282,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
     LogicalPosition oldCaretPosition = myLogicalCaret;
 
     setCurrentLogicalCaret(new LogicalPosition(
-      line, column, softWrapLines, linesFromCurrentSoftWrap, softWrapColumns, pos.foldedLines, pos.foldingColumnDiff
+      line, column, softWrapLinesBefore, softWrapLinesCurrent, softWrapColumns, pos.foldedLines, pos.foldingColumnDiff
     ));
 
     final int offset = myEditor.logicalPositionToOffset(myLogicalCaret);
@@ -307,7 +317,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
     requestRepaint(oldInfo);
 
     if (oldCaretPosition.column + oldCaretPosition.softWrapColumnDiff != myLogicalCaret.column + myLogicalCaret.softWrapColumnDiff
-        || oldCaretPosition.line + oldCaretPosition.softWrapLines != myLogicalCaret.line + myLogicalCaret.softWrapLines)
+        || oldCaretPosition.line + oldCaretPosition.softWrapLinesBeforeCurrentLogicalLine != myLogicalCaret.line + myLogicalCaret.softWrapLinesBeforeCurrentLogicalLine)
     {
       CaretEvent event = new CaretEvent(myEditor, oldCaretPosition, myLogicalCaret);
       for (CaretListener listener : myCaretListeners) {

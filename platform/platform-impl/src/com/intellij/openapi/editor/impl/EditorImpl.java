@@ -844,7 +844,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (softWrap != null) {
           // There is a possible case that soft wrap contains more than one line feed inside and we need to start counting not
           // from its first line.
-          int softWrapLinesToSkip = activeSoftWrapProcessed ? 0 : logicalPosition.linesFromActiveSoftWrap;
+          int softWrapLinesToSkip = activeSoftWrapProcessed ? 0 : logicalPosition.softWrapLinesOnCurrentLogicalLine;
           CharSequence softWrapText = softWrap.getText();
           for (int i = 0; i < softWrapText.length(); i++) {
             c = softWrapText.charAt(i);
@@ -1832,7 +1832,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             if (softWrap != null) {
               // There is a possible case that soft wrap contains more than one line feed inside and we need to start drawing not
               // from its first line.
-              int softWrapLinesToSkip = activeSoftWrapProcessed ? 0 : logicalPosition.linesFromActiveSoftWrap;
+              int softWrapLinesToSkip = activeSoftWrapProcessed ? 0 : logicalPosition.softWrapLinesOnCurrentLogicalLine;
               char[] softWrapChars = softWrap.getChars();
 
               // We don't draw every soft wrap symbol one-by-one but whole visual line. Current variable holds index that points
@@ -2379,7 +2379,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   public Dimension getContentSize() {
     Dimension size = mySizeContainer.getContentSize();
-    return new Dimension(size.width, size.height + mySettings.getAdditionalLinesCount() * getLineHeight());
+    //TODO den move soft wrap-related logic to editor size container
+    return new Dimension(
+      size.width,
+      size.height + (mySettings.getAdditionalLinesCount() + mySoftWrapModel.getSoftWrapsIntroducedLinesNumber()) * getLineHeight()
+    );
   }
 
   public JScrollPane getScrollPane() {
@@ -2567,8 +2571,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         else if (visiblePos.column > softWrapAwareVisFoldEnd.column) {
           int columnToUse = softWrapAwareLogFoldEnd.column + visiblePos.column - softWrapAwareVisFoldEnd.column;
           return new LogicalPosition(
-            softWrapAwareLogFoldEnd.line, columnToUse, softWrapAwareLogFoldEnd.softWrapLines,
-            softWrapAwareLogFoldEnd.linesFromActiveSoftWrap, visiblePos.column - columnToUse - softWrapAwareLogFoldEnd.foldingColumnDiff,
+            softWrapAwareLogFoldEnd.line, columnToUse, softWrapAwareLogFoldEnd.softWrapLinesBeforeCurrentLogicalLine,
+            softWrapAwareLogFoldEnd.softWrapLinesOnCurrentLogicalLine, visiblePos.column - columnToUse - softWrapAwareLogFoldEnd.foldingColumnDiff,
             softWrapAwareLogFoldEnd.foldedLines, softWrapAwareLogFoldEnd.foldingColumnDiff
           );
         }
@@ -2642,15 +2646,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     int columnNumber = pos.column;
     int lineNumber = pos.line;
-    int softWrapLines = pos.softWrapLines;
-    int linesFromCurrentSoftWrap = pos.linesFromActiveSoftWrap;
+    int softWrapLinesBeforeTargetLogicalLine = pos.softWrapLinesBeforeCurrentLogicalLine;
+    int softWrapLinesOnTargetLogicalLine = pos.softWrapLinesOnCurrentLogicalLine;
     int softWrapColumns = pos.softWrapColumnDiff;
 
     if (lineNumber < 0) {
       lineNumber = 0;
       columnNumber = 0;
-      softWrapLines = 0;
-      linesFromCurrentSoftWrap = 0;
+      softWrapLinesBeforeTargetLogicalLine = 0;
+      softWrapLinesOnTargetLogicalLine = 0;
       softWrapColumns = 0;
     }
 
@@ -2686,7 +2690,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }
     LogicalPosition pos1 = new LogicalPosition(
-      lineNumber, columnNumber, softWrapLines, linesFromCurrentSoftWrap, softWrapColumns, pos.foldedLines, pos.foldingColumnDiff
+      lineNumber, columnNumber, softWrapLinesBeforeTargetLogicalLine, softWrapLinesOnTargetLogicalLine, softWrapColumns,
+      pos.foldedLines, pos.foldingColumnDiff
     );
     getCaretModel().moveToLogicalPosition(pos1);
   }
