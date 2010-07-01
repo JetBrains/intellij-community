@@ -14,6 +14,7 @@ import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyClassImpl;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
+import com.jetbrains.python.psi.stubs.PyClassNameIndexInsensitive;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PySuperClassIndex;
 
@@ -74,6 +75,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
     final String name = stub.getName();
     if (name != null) {
       sink.occurrence(PyClassNameIndex.KEY, name);
+      sink.occurrence(PyClassNameIndexInsensitive.KEY, name.toLowerCase());
     }
     for(PyQualifiedName s: stub.getSuperClasses()) {
       if (s != null) {

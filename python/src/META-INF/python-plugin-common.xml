@@ -42,6 +42,7 @@
     <typedHandler implementation="com.jetbrains.python.editor.ColonTypedHandler" id="pyColonUnindent"/>
 
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyClassNameIndex"/>
+    <stubIndex implementation="com.jetbrains.python.psi.stubs.PyClassNameIndexInsensitive"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyFunctionNameIndex"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PySuperClassIndex"/>
 

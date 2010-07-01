@@ -8,9 +8,9 @@ import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.patterns.SyntaxMatchers;
 import com.jetbrains.python.psi.resolve.*;
+import com.jetbrains.python.psi.stubs.PyClassNameIndexInsensitive;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.types.*;
-import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -154,6 +154,21 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
       }
       else {
         return qualifierType.getCompletionVariants(myElement, ctx);
+      }
+    }
+    return getUntypedVariants();
+  }
+
+  private Object[] getUntypedVariants() {
+    final PyExpression qualifierElement = myElement.getQualifier();
+    if (qualifierElement instanceof PyReferenceExpression) {
+      PyReferenceExpression qualifier = (PyReferenceExpression)qualifierElement;
+      if (qualifier.getQualifier() == null) {
+        final String className = qualifier.getText();
+        final Collection<PyClass> classes = PyClassNameIndexInsensitive.find(className, getElement().getProject());
+        if (classes.size() == 1) {
+          return new PyClassType(classes.iterator().next(), false).getCompletionVariants(myElement, new ProcessingContext());
+        }
       }
     }
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
