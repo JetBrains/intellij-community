@@ -171,7 +171,8 @@ public class PyPropertyTestSuite {
     public void testW1() throws Exception {
       Property p;
       Maybe<PyFunction> accessor;
-      p = myClass.findProperty("w1");
+      final String name = "w1";
+      p = myClass.findProperty(name);
       assertNotNull(p);
       assertNull(p.getDoc());
       assertNull(p.getDefinitionSite());
@@ -179,23 +180,24 @@ public class PyPropertyTestSuite {
       accessor = p.getGetter();
       assertTrue(accessor.isDefined());
       assertNotNull(accessor.value());
-      assertEquals("w1", accessor.value().getName());
+      assertEquals(name, accessor.value().getName());
 
       accessor = p.getSetter();
       assertTrue(accessor.isDefined());
       assertNotNull(accessor.value());
-      assertEquals("w1", accessor.value().getName());
+      assertEquals(name, accessor.value().getName());
 
       accessor = p.getDeleter();
       assertTrue(accessor.isDefined());
       assertNotNull(accessor.value());
-      assertEquals("w1", accessor.value().getName());
+      assertEquals(name, accessor.value().getName());
     }
 
     public void testW2() throws Exception {
       Property p;
       Maybe<PyFunction> accessor;
-      p = myClass.findProperty("w2");
+      final String name = "w2";
+      p = myClass.findProperty(name);
       assertNotNull(p);
       assertNull(p.getDoc());
       assertNull(p.getDefinitionSite());
@@ -203,8 +205,8 @@ public class PyPropertyTestSuite {
       accessor = p.getGetter();
       assertTrue(accessor.isDefined());
       assertNotNull(accessor.value());
-      assertEquals("getter", accessor.value().getName());
-      assertEquals("doc of w2", accessor.value().getDocStringExpression().getStringValue());
+      assertEquals("w2", accessor.value().getName());
+      assertEquals("doc of "+name, accessor.value().getDocStringExpression().getStringValue());
 
       accessor = p.getSetter();
       assertTrue(accessor.isDefined());
