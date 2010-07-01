@@ -59,7 +59,10 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
     if (PsiTreeUtil.isAncestor(this, place, false)) {
       return true;
     }
-
+    if (isStatic()) {
+      final GrImportStatement staticImportParent = PsiTreeUtil.getParentOfType(place, GrImportStatement.class, false);
+      if (staticImportParent != null) return true;
+    }
     ResolveState state = _state.put(ResolverProcessor.RESOLVE_CONTEXT, this);
     if (isOnDemand()) {
       if (!processDeclarationsForMultipleElements(processor, lastParent, place, state)) return false;
