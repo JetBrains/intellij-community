@@ -14,34 +14,36 @@ package org.zmlx.hg4idea.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.util.net.AuthenticationPanel;
+import org.zmlx.hg4idea.HgVcsMessages;
 
 import javax.swing.*;
 
 public class HgUsernamePasswordDialog extends DialogWrapper {
-  private JPanel basePanel;
-  private JTextField usernameTxt;
-  private JPasswordField passwordTxt;
+  private AuthenticationPanel authPanel;
 
-  public HgUsernamePasswordDialog(Project project) {
+  public HgUsernamePasswordDialog(Project project, String login) {
     super(project, false);
-    setTitle("Username and password required");
+    setTitle(HgVcsMessages.message("hgidea.dialog.login.password.required"));
+    authPanel = new AuthenticationPanel(null, login, "", false);
     init();
   }
 
-  public void setUsername(String username) {
-    usernameTxt.setText(username);
+  protected JComponent createCenterPanel() {
+    return authPanel;
+  }
+
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return authPanel.getPreferredFocusedComponent();
   }
 
   public String getUsername() {
-    return usernameTxt.getText();
+    return authPanel.getLogin();
   }
 
   public char[] getPassword() {
-    return passwordTxt.getPassword();
-  }
-
-  protected JComponent createCenterPanel() {
-    return basePanel;
+    return authPanel.getPassword().toCharArray();
   }
 
 }

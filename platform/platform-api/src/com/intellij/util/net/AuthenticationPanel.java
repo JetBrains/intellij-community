@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,16 @@
  */
 package com.intellij.util.net;
 
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: stathik
- * Date: Sep 12, 2003
- * Time: 8:40:40 PM
- * To change this template use Options | File Templates.
+ * Panel for authentication - contains text fields for login and password, and a checkbox to remember
+ * password in the Password Safe.
+ * 
+ * @author stathik
+ * @author Kirill Likhodedov
  */
 public class AuthenticationPanel extends JPanel {
   private JPanel myMainPanel;
@@ -31,7 +33,13 @@ public class AuthenticationPanel extends JPanel {
   private JPasswordField myPasswordTextField;
   private JCheckBox rememberPasswordCheckBox;
 
-  public AuthenticationPanel(String description, String login, String password, boolean rememberPassword) {
+  /**
+   * @param description       Description text above the text fields.
+   * @param login             Initial login value.
+   * @param password          Initial password value.
+   * @param rememberPassword  Default value for the 'remember password' checkbox.
+   */
+  public AuthenticationPanel(@Nullable String description, @Nullable String login, @Nullable String password, boolean rememberPassword) {
     add(myMainPanel);
     myDescriptionLabel.setText(description);
     myLoginTextField.setText(login);
@@ -50,4 +58,13 @@ public class AuthenticationPanel extends JPanel {
   public boolean isRememberPassword () {
     return rememberPasswordCheckBox.isSelected();
   }
+
+  /**
+   * @return the component which should be focused when the dialog appears on the screen. May be used in dialogs.
+   * @see com.intellij.openapi.ui.DialogWrapper#getPreferredFocusedComponent()
+   */
+  public JComponent getPreferredFocusedComponent() {
+    return getLogin().isEmpty() ? myLoginTextField : myPasswordTextField;
+  }
+
 }
