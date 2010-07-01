@@ -176,6 +176,8 @@ public class TestIntegrationUtils {
 
     if (name == null) name = methodKind.getDefaultName();
 
+    templateText = StringUtil.replace(templateText, "${BODY}", "");
+
     int from = 0;
     while (true) {
       int index = templateText.indexOf("${NAME}", from);
