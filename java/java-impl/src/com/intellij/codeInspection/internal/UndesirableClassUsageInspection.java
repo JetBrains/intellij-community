@@ -44,7 +44,7 @@ public class UndesirableClassUsageInspection extends BaseJavaLocalInspectionTool
   @NotNull
   @Override
   public String getGroupDisplayName() {
-    return "IDEA Platform Internal Inspections";
+    return InternalInspectionToolsProvider.GROUP_NAME;
   }
 
   @Nls

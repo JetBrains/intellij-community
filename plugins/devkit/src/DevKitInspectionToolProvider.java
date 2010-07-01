@@ -16,6 +16,7 @@
 package org.jetbrains.idea.devkit;
 
 import com.intellij.codeInspection.InspectionToolProvider;
+import com.intellij.codeInspection.internal.UndesirableClassUsageInspection;
 import org.jetbrains.idea.devkit.inspections.ComponentNotRegisteredInspection;
 import org.jetbrains.idea.devkit.inspections.InspectionDescriptionNotFoundInspection;
 import org.jetbrains.idea.devkit.inspections.IntentionDescriptionNotFoundInspection;
@@ -31,7 +32,8 @@ public class DevKitInspectionToolProvider implements InspectionToolProvider {
       PluginXmlDomInspection.class,
       ComponentNotRegisteredInspection.class,
       InspectionDescriptionNotFoundInspection.class,
-      IntentionDescriptionNotFoundInspection.class
+      IntentionDescriptionNotFoundInspection.class,
+      UndesirableClassUsageInspection.class
     };
   }
 

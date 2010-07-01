@@ -21,6 +21,8 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.util.ArrayUtil;
 
 public class InternalInspectionToolsProvider implements InspectionToolProvider {
+  public static final String GROUP_NAME = "IDEA Platform Inspections";
+
   @Override
   public Class[] getInspectionClasses() {
     if (!ApplicationManagerEx.getApplicationEx().isInternal()) return ArrayUtil.EMPTY_CLASS_ARRAY;
