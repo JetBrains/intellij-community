@@ -73,7 +73,7 @@
   </injection>
   <injection language="SQL" injector-id="xml">
     <display-name>iBatis3: sql|select|insert|update|delete</display-name>
-    <place><![CDATA[xmlTag().withLocalName(string().oneOf("sql", "select", "insert", "update", "delete")).withNamespace(string().equalTo("http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd"))]]></place>
+    <place><![CDATA[xmlTag().withLocalName(string().oneOf("sql", "select", "insert", "update", "delete")).withNamespace(string().oneOf("http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd", "http://mybatis.org/dtd/mybatis-3-mapper.dtd"))]]></place>
     <apply-to-subtags />
   </injection>
   <injection language="CSS" injector-id="xml">
