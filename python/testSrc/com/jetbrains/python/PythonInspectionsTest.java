@@ -123,8 +123,15 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   }
 
   public void testPyExceptClausesOrderInspection() throws Throwable {
-    LocalInspectionTool inspection = new PyExceptClausesOrderInspection();
-    doTest(getTestName(false), inspection);
+    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON26);
+    try {
+      myFixture.configureByFile("inspections/" + getTestName(true) + "/test.py");
+      myFixture.enableInspections(PyExceptClausesOrderInspection.class);
+      myFixture.checkHighlighting(true, false, false);
+    }
+    finally {
+      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
+    }
   }
 
   public void testPyExceptionInheritInspection() throws Throwable {
