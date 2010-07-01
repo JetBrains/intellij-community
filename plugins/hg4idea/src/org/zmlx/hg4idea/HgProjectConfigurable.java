@@ -15,16 +15,17 @@ package org.zmlx.hg4idea;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.ui.HgConfigurationProjectPanel;
 
 import javax.swing.*;
 
 public class HgProjectConfigurable implements SearchableConfigurable {
 
-  private final HgConfigurationProjectPanel hgConfigurationProjectPanel;
+  private final HgConfigurationProjectPanel myPanel;
 
   public HgProjectConfigurable(HgProjectSettings projectSettings) {
-    hgConfigurationProjectPanel = new HgConfigurationProjectPanel(projectSettings);
+    myPanel = new HgConfigurationProjectPanel(projectSettings);
   }
 
   @Nls
@@ -41,24 +42,26 @@ public class HgProjectConfigurable implements SearchableConfigurable {
   }
 
   public JComponent createComponent() {
-    return hgConfigurationProjectPanel.getPanel();
+    return myPanel.getPanel();
   }
 
   public boolean isModified() {
-    return hgConfigurationProjectPanel.isModified();
+    return myPanel.isModified();
   }
 
   public void apply() throws ConfigurationException {
-    hgConfigurationProjectPanel.saveSettings();
+    myPanel.validate();
+    myPanel.saveSettings();
   }
 
   public void reset() {
-    hgConfigurationProjectPanel.loadSettings();
+    myPanel.loadSettings();
   }
 
   public void disposeUIResources() {
   }
 
+  @NotNull
   public String getId() {
     return "Mercurial.Project";
   }

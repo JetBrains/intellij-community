@@ -12,39 +12,97 @@
 // limitations under the License.
 package org.zmlx.hg4idea.ui;
 
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import org.apache.commons.lang.StringUtils;
+import org.zmlx.hg4idea.HgGlobalSettings;
 import org.zmlx.hg4idea.HgProjectSettings;
+import org.zmlx.hg4idea.HgVcsMessages;
+import org.zmlx.hg4idea.command.HgVersionCommand;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public class HgConfigurationProjectPanel {
 
-  private JPanel panel;
-  private JCheckBox checkIncomingCbx;
-  private JCheckBox checkOutgoingCbx;
-  private final HgProjectSettings projectSettings;
+  private final HgProjectSettings myProjectSettings;
+
+  private JPanel myMainPanel;
+  private JCheckBox myCheckIncomingCbx;
+  private JCheckBox myCheckOutgoingCbx;
+  private JRadioButton myAutoRadioButton;
+  private JRadioButton mySelectRadioButton;
+  private TextFieldWithBrowseButton myPathSelector;
 
   public HgConfigurationProjectPanel(HgProjectSettings projectSettings) {
-    this.projectSettings = projectSettings;
+    myProjectSettings = projectSettings;
     loadSettings();
+
+    final ActionListener listener = new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        myPathSelector.setEnabled(mySelectRadioButton.isSelected());
+      }
+    };
+    mySelectRadioButton.addActionListener(listener);
+    myAutoRadioButton.addActionListener(listener);
   }
 
   public boolean isModified() {
-    return checkIncomingCbx.isSelected() != projectSettings.isCheckIncoming()
-      || checkOutgoingCbx.isSelected() != projectSettings.isCheckOutgoing();
+    boolean executableModified = mySelectRadioButton.isSelected()
+                                 ? !myPathSelector.getText().equals(myProjectSettings.getHgExecutable())
+                                 : myAutoRadioButton.isSelected() != myProjectSettings.isAutodetectHg();
+    return executableModified || myCheckIncomingCbx.isSelected() != myProjectSettings.isCheckIncoming()
+           || myCheckOutgoingCbx.isSelected() != myProjectSettings.isCheckOutgoing();
   }
 
   public void saveSettings() {
-    projectSettings.setCheckIncoming(checkIncomingCbx.isSelected());
-    projectSettings.setCheckOutgoing(checkOutgoingCbx.isSelected());
+    myProjectSettings.setCheckIncoming(myCheckIncomingCbx.isSelected());
+    myProjectSettings.setCheckOutgoing(myCheckOutgoingCbx.isSelected());
+
+    if (myAutoRadioButton.isSelected()) {
+      myProjectSettings.enableAutodetectHg();
+    } else {
+      myProjectSettings.setHgExecutable(myPathSelector.getText());
+    }
   }
 
   public void loadSettings() {
-    checkIncomingCbx.setSelected(projectSettings.isCheckIncoming());
-    checkOutgoingCbx.setSelected(projectSettings.isCheckOutgoing());
+    myCheckIncomingCbx.setSelected(myProjectSettings.isCheckIncoming());
+    myCheckOutgoingCbx.setSelected(myProjectSettings.isCheckOutgoing());
+
+    boolean isAutodetectHg = myProjectSettings.isAutodetectHg();
+    myAutoRadioButton.setSelected(isAutodetectHg);
+    mySelectRadioButton.setSelected(!isAutodetectHg);
+    myPathSelector.setEnabled(!isAutodetectHg);
+    if (isAutodetectHg) {
+      myPathSelector.setText(StringUtils.EMPTY);
+    } else {
+      myPathSelector.setText(myProjectSettings.getHgExecutable());
+    }
   }
 
   public JPanel getPanel() {
-    return panel;
+    return myMainPanel;
+  }
+
+  public void validate() throws ConfigurationException {
+    String hgExecutable;
+    if (myAutoRadioButton.isSelected()) {
+      hgExecutable = HgGlobalSettings.getDefaultExecutable();
+    } else {
+      hgExecutable = myPathSelector.getText();
+    }
+    HgVersionCommand command = new HgVersionCommand();
+    if (!command.isValid(hgExecutable)) {
+      throw new ConfigurationException(
+        HgVcsMessages.message("hg4idea.configuration.executable.error", hgExecutable)
+      );
+    }
+  }
+
+  private void createUIComponents() {
+    myPathSelector = new HgSetExecutablePathPanel();
   }
 
 }
