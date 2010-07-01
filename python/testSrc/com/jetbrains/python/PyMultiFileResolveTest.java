@@ -179,10 +179,23 @@ public class PyMultiFileResolveTest extends PyLightFixtureTestCase {
     assertResolvesTo(PyFunction.class, "dostuff");
   }
 
+  public void testNameConflict() throws Exception {
+    assertResolvesTo(PyFunction.class, "do_stuff", "/src/pack2.py");
+  }
+
   private <T extends PsiElement> void assertResolvesTo(final Class<T> aClass, final String name) throws Exception {
+    assertResolvesTo(aClass, name, null);
+  }
+
+  private <T extends PsiElement> void assertResolvesTo(final Class<T> aClass,
+                                                       final String name,
+                                                       String containingFilePath) throws Exception {
     final PsiElement element = doResolve();
     assertInstanceOf(element, aClass);
     assertEquals(name, ((PsiNamedElement) element).getName());
+    if (containingFilePath != null) {
+      assertEquals(containingFilePath, element.getContainingFile().getVirtualFile().getPath());
+    }
   }
 
   private PsiFile prepareFile() throws Exception {

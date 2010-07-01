@@ -195,7 +195,8 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       final StubElement stub = getStub();
       if (stub != null) {
         final List children = stub.getChildrenStubs();
-        for (Object child : children) {
+        for (int i=children.size()-1; i >= 0; i--) {
+          Object child = children.get(i);
           if (child instanceof NamedStub && name.equals(((NamedStub)child).getName())) {
             return ((NamedStub) child).getPsi();
           }
