@@ -10,6 +10,7 @@ import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.intellij.util.PathsList;
 
 import java.io.IOException;
+import java.util.Collection;
 
 /**
  * @author yole
@@ -38,10 +39,10 @@ public class DependencyScopeTest extends ModuleTestCase {
     assertFalse(moduleA.getModuleWithDependenciesAndLibrariesScope(false).contains(classB));
     assertFalse(moduleA.getModuleWithDependenciesAndLibrariesScope(false).isSearchInModuleContent(moduleB));
 
-    final VirtualFile[] compilationClasspath = ModuleRootManager.getInstance(moduleA).getFiles(OrderRootType.COMPILATION_CLASSES);
-    assertEquals(1, compilationClasspath.length);
-    final VirtualFile[] productionCompilationClasspath = ModuleRootManager.getInstance(moduleA).getFiles(OrderRootType.PRODUCTION_COMPILATION_CLASSES);
-    assertEquals(0, productionCompilationClasspath.length);
+    final Collection<VirtualFile> compilationClasspath = getCompilationClasspath(moduleA);
+    assertEquals(1, compilationClasspath.size());
+    final Collection<VirtualFile> productionCompilationClasspath = getProductionCompileClasspath(moduleA);
+    assertEmpty(productionCompilationClasspath);
 
     final PathsList pathsList = OrderEnumerator.orderEntries(moduleA).recursively().getPathsList();
     assertEquals(1, pathsList.getPathList().size());
@@ -77,35 +78,34 @@ public class DependencyScopeTest extends ModuleTestCase {
     assertTrue(m.getModuleWithDependenciesAndLibrariesScope(true).contains(libraryClass));
     assertFalse(m.getModuleWithDependenciesAndLibrariesScope(false).contains(libraryClass));
 
-    final VirtualFile[] compilationClasspath = ModuleRootManager.getInstance(m).getFiles(OrderRootType.COMPILATION_CLASSES);
-    assertEquals(1, compilationClasspath.length);
-    final VirtualFile[] productionCompilationClasspath = ModuleRootManager.getInstance(m).getFiles(OrderRootType.PRODUCTION_COMPILATION_CLASSES);
-    assertEquals(0, productionCompilationClasspath.length);
+    final Collection<VirtualFile> compilationClasspath = getCompilationClasspath(m);
+    assertEquals(1, compilationClasspath.size());
+    final Collection<VirtualFile> productionCompilationClasspath = getProductionCompileClasspath(m);
+    assertEmpty(productionCompilationClasspath);
   }
 
   public void testRuntimeModuleDependency() throws IOException {
     Module moduleA = createModule("a.iml", StdModuleTypes.JAVA);
     addDependentModule(moduleA, DependencyScope.RUNTIME);
-    final VirtualFile[] runtimeClasspath = ModuleRootManager.getInstance(moduleA).getFiles(OrderRootType.CLASSES_AND_OUTPUT);
-    assertEquals(1, runtimeClasspath.length);
-    final VirtualFile[] compilationClasspath = ModuleRootManager.getInstance(moduleA).getFiles(OrderRootType.COMPILATION_CLASSES);
-    assertEquals(1, compilationClasspath.length);
-    VirtualFile[] production = ModuleRootManager.getInstance(moduleA).getFiles(OrderRootType.PRODUCTION_COMPILATION_CLASSES);
-    assertEquals(0, production.length);
+    final Collection<VirtualFile> runtimeClasspath = getRuntimeClasspath(moduleA);
+    assertEquals(1, runtimeClasspath.size());
+    final Collection<VirtualFile> compilationClasspath = getCompilationClasspath(moduleA);
+    assertEquals(1, compilationClasspath.size());
+    Collection<VirtualFile> production = getProductionCompileClasspath(moduleA);
+    assertEmpty(production);
   }
 
   public void testRuntimeLibraryDependency() throws IOException {
     Module m = createModule("a.iml", StdModuleTypes.JAVA);
     VirtualFile libraryRoot = addLibrary(m, DependencyScope.RUNTIME);
 
-    final VirtualFile[] runtimeClasspath = ModuleRootManager.getInstance(m).getFiles(OrderRootType.CLASSES_AND_OUTPUT);
-    assertEquals(1, runtimeClasspath.length);
-    assertEquals(libraryRoot, runtimeClasspath [0]);
+    final Collection<VirtualFile> runtimeClasspath = getRuntimeClasspath(m);
+    assertOrderedEquals(runtimeClasspath, libraryRoot);
 
-    final VirtualFile[] compilationClasspath = ModuleRootManager.getInstance(m).getFiles(OrderRootType.COMPILATION_CLASSES);
-    assertEquals(1, compilationClasspath.length);
-    VirtualFile[] production = ModuleRootManager.getInstance(m).getFiles(OrderRootType.PRODUCTION_COMPILATION_CLASSES);
-    assertEquals(0, production.length);
+    final Collection<VirtualFile> compilationClasspath = getCompilationClasspath(m);
+    assertEquals(1, compilationClasspath.size());
+    Collection<VirtualFile> production = getProductionCompileClasspath(m);
+    assertEmpty(production);
 
     VirtualFile libraryClass = myFixture.createFile("lib/Test.java", "public class Test { }");
     assertTrue(m.getModuleWithDependenciesAndLibrariesScope(true).contains(libraryClass));
@@ -115,26 +115,37 @@ public class DependencyScopeTest extends ModuleTestCase {
   public void testProvidedModuleDependency() throws IOException {
     Module moduleA = createModule("a.iml", StdModuleTypes.JAVA);
     addDependentModule(moduleA, DependencyScope.PROVIDED);
-    final VirtualFile[] runtimeClasspath = ModuleRootManager.getInstance(moduleA).getFiles(OrderRootType.CLASSES_AND_OUTPUT);
-    assertEquals(0, runtimeClasspath.length);
-    final VirtualFile[] compilationClasspath = ModuleRootManager.getInstance(moduleA).getFiles(OrderRootType.COMPILATION_CLASSES);
-    assertEquals(1, compilationClasspath.length);
+    Collection<VirtualFile> runtimeClasspath = getRuntimeClasspath(moduleA);
+    assertEmpty(runtimeClasspath);
+    final Collection<VirtualFile> compilationClasspath = getCompilationClasspath(moduleA);
+    assertEquals(1, compilationClasspath.size());
   }
 
   public void testProvidedLibraryDependency() throws IOException {
     Module m = createModule("a.iml", StdModuleTypes.JAVA);
     VirtualFile libraryRoot = addLibrary(m, DependencyScope.PROVIDED);
 
-    final VirtualFile[] runtimeClasspath = ModuleRootManager.getInstance(m).getFiles(OrderRootType.CLASSES_AND_OUTPUT);
-    assertEquals(0, runtimeClasspath.length);
+    final Collection<VirtualFile> runtimeClasspath = getRuntimeClasspath(m);
+    assertEmpty(runtimeClasspath);
 
-    final VirtualFile[] compilationClasspath = ModuleRootManager.getInstance(m).getFiles(OrderRootType.COMPILATION_CLASSES);
-    assertEquals(1, compilationClasspath.length);
-    assertEquals(libraryRoot, compilationClasspath [0]);
+    final Collection<VirtualFile> compilationClasspath = getCompilationClasspath(m);
+    assertOrderedEquals(compilationClasspath, libraryRoot);
 
     VirtualFile libraryClass = myFixture.createFile("lib/Test.java", "public class Test { }");
     assertTrue(m.getModuleWithDependenciesAndLibrariesScope(true).contains(libraryClass));
     assertTrue(m.getModuleWithDependenciesAndLibrariesScope(false).contains(libraryClass));
+  }
+
+  private static Collection<VirtualFile> getRuntimeClasspath(Module m) {
+    return ModuleRootManager.getInstance(m).orderEntries().productionOnly().runtimeOnly().recursively().getClassesRoots();
+  }
+
+  private static Collection<VirtualFile> getProductionCompileClasspath(Module moduleA) {
+    return ModuleRootManager.getInstance(moduleA).orderEntries().productionOnly().compileOnly().recursively().exportedOnly().getClassesRoots();
+  }
+
+  private static Collection<VirtualFile> getCompilationClasspath(Module m) {
+    return ModuleRootManager.getInstance(m).orderEntries().recursively().exportedOnly().getClassesRoots();
   }
 
   private VirtualFile addLibrary(Module m, final DependencyScope scope) {

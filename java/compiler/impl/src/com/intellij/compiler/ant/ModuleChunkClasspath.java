@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.OrderedSet;
 import gnu.trove.TObjectHashingStrategy;
 
@@ -85,116 +86,103 @@ public class ModuleChunkClasspath extends Path {
           processedModules.add(module);
           final ProjectEx project = (ProjectEx)chunk.getProject();
           final File baseDir = BuildProperties.getProjectBaseDir(project);
-          for (final OrderEntry orderEntry : ModuleRootManager.getInstance(module).getOrderEntries()) {
-            if (!orderEntry.isValid()) {
-              continue;
-            }
-            if (orderEntry instanceof ExportableOrderEntry) {
-              ExportableOrderEntry e = (ExportableOrderEntry)orderEntry;
-              switch (e.getScope()) {
-                case COMPILE:
-                  break;
-                case PROVIDED:
-                  if (generateRuntimeClasspath && !generateTestClasspath) {
-                    continue;
-                  }
-                  break;
-                case RUNTIME:
-                  if (!generateRuntimeClasspath) {
-                    continue;
-                  }
-                  break;
-                case TEST:
-                  if (!generateTestClasspath) {
-                    continue;
-                  }
-                  break;
-              }
-            }
-            if (!generateRuntimeClasspath) {
-              // needed for compilation classpath only
-              if ((orderEntry instanceof ModuleSourceOrderEntry)) {
-                // this is the entry for outpath of the currently processed module
-                if (!generateTestClasspath && (dependencyLevel == 0 || chunk.contains(module))) {
-                  // the root module is never included
-                  continue;
-                }
-              }
-              else {
-                final boolean isExported = (orderEntry instanceof ExportableOrderEntry) && ((ExportableOrderEntry)orderEntry).isExported();
-                if (dependencyLevel > 0 && !isExported) {
-                  if (!(orderEntry instanceof ModuleOrderEntry)) {
-                    // non-exported dependencies are excluded and not processed
-                    continue;
-                  }
-                }
-              }
-            }
-            if (orderEntry instanceof JdkOrderEntry) {
-              if (genOptions.forceTargetJdk && !generateRuntimeClasspath) {
-                pathItems
-                  .add(new PathRefItem(BuildProperties.propertyRef(BuildProperties.getModuleChunkJdkClasspathProperty(chunk.getName()))));
-              }
-            }
-            else if (orderEntry instanceof ModuleOrderEntry) {
-              final ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)orderEntry;
-              final Module dependentModule = moduleOrderEntry.getModule();
-              if (!chunk.contains(dependentModule)) {
-                if (generateRuntimeClasspath && !genOptions.inlineRuntimeClasspath) {
-                  // in case of runtime classpath, just an referenced to corresponding classpath is created
-                  final ModuleChunk depChunk = genOptions.getChunkByModule(dependentModule);
-                  if (!processedChunks.contains(depChunk)) {
-                    // chunk references are included in the runtime classpath only once
-                    processedChunks.add(depChunk);
-                    String property = generateTestClasspath ? BuildProperties.getTestRuntimeClasspathProperty(depChunk.getName())
-                                                            : BuildProperties.getRuntimeClasspathProperty(depChunk.getName());
-                    pathItems.add(new PathRefItem(property));
-                  }
-                }
-                else {
-                  // in case of compile classpath or inlined runtime classpath,
-                  // the referenced module is processed recursively
-                  processModule(dependentModule, dependencyLevel + 1, moduleOrderEntry.isExported());
-                }
-              }
-            }
-            else if (orderEntry instanceof LibraryOrderEntry) {
-              final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)orderEntry;
-              final String libraryName = libraryOrderEntry.getLibraryName();
-              if (((LibraryOrderEntry)orderEntry).isModuleLevel()) {
-                CompositeGenerator gen = new CompositeGenerator();
-                gen.setHasLeadingNewline(false);
-                LibraryDefinitionsGeneratorFactory.genLibraryContent(project, genOptions, libraryOrderEntry.getLibrary(), baseDir, gen);
-                pathItems.add(new GeneratorItem(libraryName, gen));
-              }
-              else {
-                pathItems.add(new PathRefItem(BuildProperties.getLibraryPathId(libraryName)));
-              }
-            }
-            else if (orderEntry instanceof ModuleSourceOrderEntry) {
-              // Module source entry?
-              for (String url : getCompilationClasses(orderEntry, ((GenerationOptionsImpl)genOptions), generateRuntimeClasspath,
-                                                      generateTestClasspath, dependencyLevel == 0)) {
-                if (url.endsWith(JarFileSystem.JAR_SEPARATOR)) {
-                  url = url.substring(0, url.length() - JarFileSystem.JAR_SEPARATOR.length());
-                }
-                final String propertyRef = genOptions.getPropertyRefForUrl(url);
-                if (propertyRef != null) {
-                  pathItems.add(new PathElementItem(propertyRef));
-                }
-                else {
-                  final String path = VirtualFileManager.extractPath(url);
-                  pathItems.add(new PathElementItem(
-                    GenerationUtils.toRelativePath(path, chunk.getBaseDir(), moduleChunkBasedirProperty, genOptions)));
-                }
-              }
-            }
-            else {
-              // Unknown order entry type. If it is actually encountered, extension point should be implemented
-              pathItems.add(new GeneratorItem(orderEntry.getClass().getName(),
-                                              new Comment("Unknown OrderEntryType: " + orderEntry.getClass().getName())));
+          OrderEnumerator enumerator = ModuleRootManager.getInstance(module).orderEntries();
+          if (generateRuntimeClasspath) {
+            enumerator = enumerator.runtimeOnly();
+          }
+          else {
+            enumerator = enumerator.compileOnly();
+            if (!generateTestClasspath && (dependencyLevel == 0 || chunk.contains(module))) {
+              // this is the entry for outpath of the currently processed module
+              // the root module is never included
+              enumerator = enumerator.withoutModuleSourceEntries();
             }
           }
+          if (!generateTestClasspath) {
+            enumerator = enumerator.productionOnly();
+          }
+          enumerator.forEach(new Processor<OrderEntry>() {
+            @Override
+            public boolean process(OrderEntry orderEntry) {
+              if (!orderEntry.isValid()) {
+                return true;
+              }
+
+              if (!generateRuntimeClasspath && !(orderEntry instanceof ModuleOrderEntry)) {
+                // needed for compilation classpath only
+                final boolean isExported = (orderEntry instanceof ExportableOrderEntry) && ((ExportableOrderEntry)orderEntry).isExported();
+                if (dependencyLevel > 0 && !isExported) {
+                  // non-exported dependencies are excluded and not processed
+                  return true;
+                }
+              }
+
+              if (orderEntry instanceof JdkOrderEntry) {
+                if (genOptions.forceTargetJdk && !generateRuntimeClasspath) {
+                  pathItems.add(new PathRefItem(BuildProperties.propertyRef(BuildProperties.getModuleChunkJdkClasspathProperty(chunk.getName()))));
+                }
+              }
+              else if (orderEntry instanceof ModuleOrderEntry) {
+                final ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)orderEntry;
+                final Module dependentModule = moduleOrderEntry.getModule();
+                if (!chunk.contains(dependentModule)) {
+                  if (generateRuntimeClasspath && !genOptions.inlineRuntimeClasspath) {
+                    // in case of runtime classpath, just an referenced to corresponding classpath is created
+                    final ModuleChunk depChunk = genOptions.getChunkByModule(dependentModule);
+                    if (!processedChunks.contains(depChunk)) {
+                      // chunk references are included in the runtime classpath only once
+                      processedChunks.add(depChunk);
+                      String property = generateTestClasspath ? BuildProperties.getTestRuntimeClasspathProperty(depChunk.getName())
+                                                              : BuildProperties.getRuntimeClasspathProperty(depChunk.getName());
+                      pathItems.add(new PathRefItem(property));
+                    }
+                  }
+                  else {
+                    // in case of compile classpath or inlined runtime classpath,
+                    // the referenced module is processed recursively
+                    processModule(dependentModule, dependencyLevel + 1, moduleOrderEntry.isExported());
+                  }
+                }
+              }
+              else if (orderEntry instanceof LibraryOrderEntry) {
+                final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)orderEntry;
+                final String libraryName = libraryOrderEntry.getLibraryName();
+                if (((LibraryOrderEntry)orderEntry).isModuleLevel()) {
+                  CompositeGenerator gen = new CompositeGenerator();
+                  gen.setHasLeadingNewline(false);
+                  LibraryDefinitionsGeneratorFactory.genLibraryContent(project, genOptions, libraryOrderEntry.getLibrary(), baseDir, gen);
+                  pathItems.add(new GeneratorItem(libraryName, gen));
+                }
+                else {
+                  pathItems.add(new PathRefItem(BuildProperties.getLibraryPathId(libraryName)));
+                }
+              }
+              else if (orderEntry instanceof ModuleSourceOrderEntry) {
+                // Module source entry?
+                for (String url : getCompilationClasses(module, ((GenerationOptionsImpl)genOptions), generateRuntimeClasspath,
+                                                        generateTestClasspath, dependencyLevel == 0)) {
+                  if (url.endsWith(JarFileSystem.JAR_SEPARATOR)) {
+                    url = url.substring(0, url.length() - JarFileSystem.JAR_SEPARATOR.length());
+                  }
+                  final String propertyRef = genOptions.getPropertyRefForUrl(url);
+                  if (propertyRef != null) {
+                    pathItems.add(new PathElementItem(propertyRef));
+                  }
+                  else {
+                    final String path = VirtualFileManager.extractPath(url);
+                    pathItems.add(new PathElementItem(
+                      GenerationUtils.toRelativePath(path, chunk.getBaseDir(), moduleChunkBasedirProperty, genOptions)));
+                  }
+                }
+              }
+              else {
+                // Unknown order entry type. If it is actually encountered, extension point should be implemented
+                pathItems.add(new GeneratorItem(orderEntry.getClass().getName(),
+                                                new Comment("Unknown OrderEntryType: " + orderEntry.getClass().getName())));
+              }
+              return true;
+            }
+          });
         }
       }.processModule(module, 0, false);
     }
@@ -225,24 +213,26 @@ public class ModuleChunkClasspath extends Path {
     }
   }
 
-  private static String[] getCompilationClasses(final OrderEntry orderEntry,
+  private static String[] getCompilationClasses(final Module module,
                                                 final GenerationOptionsImpl options,
                                                 final boolean forRuntime,
                                                 final boolean forTest,
                                                 final boolean firstLevel) {
+    final CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
+    if (extension == null) return ArrayUtil.EMPTY_STRING_ARRAY;
+
     if (!forRuntime) {
       if (forTest) {
-        return orderEntry.getUrls(firstLevel ? OrderRootType.PRODUCTION_COMPILATION_CLASSES : OrderRootType.COMPILATION_CLASSES);
+        return extension.getOutputRootUrls(!firstLevel);
       }
       else {
-        return firstLevel ? new String[0] : orderEntry.getUrls(OrderRootType.PRODUCTION_COMPILATION_CLASSES);
+        return firstLevel ? ArrayUtil.EMPTY_STRING_ARRAY : extension.getOutputRootUrls(false);
       }
     }
     final Set<String> jdkUrls = options.getAllJdkUrls();
 
     final OrderedSet<String> urls = new OrderedSet<String>();
-    urls.addAll(Arrays.asList(orderEntry.getUrls(forTest ? OrderRootType.COMPILATION_CLASSES
-                                                         : OrderRootType.PRODUCTION_COMPILATION_CLASSES)));
+    urls.addAll(Arrays.asList(extension.getOutputRootUrls(forTest)));
     urls.removeAll(jdkUrls);
     return ArrayUtil.toStringArray(urls);
   }
