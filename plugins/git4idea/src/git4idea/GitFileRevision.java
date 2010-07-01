@@ -21,8 +21,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.commands.GitBinaryHandler;
-import git4idea.commands.GitCommand;
+import git4idea.commands.GitFileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,11 +92,12 @@ public class GitFileRevision implements VcsFileRevision, Comparable<VcsFileRevis
 
   public synchronized void loadContent() throws VcsException {
     final VirtualFile root = GitUtil.getGitRoot(path);
-    GitBinaryHandler h = new GitBinaryHandler(project, root, GitCommand.SHOW);
-    h.setNoSSH(true);
-    h.setSilent(true);
-    h.addParameters(revision.getRev() + ":" + GitUtil.relativePath(root, path));
-    content = h.run();
+    if (content == null) {
+      content = GitFileUtils.getFileContent(project, root, revision.getRev(), GitUtil.relativePath(root, path));
+      if (content == null) {
+        content = new byte[0];
+      }
+    }
   }
 
   public synchronized byte[] getContent() throws IOException {
