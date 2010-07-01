@@ -82,6 +82,10 @@ public class PushDownMultifileTest extends MultiFileTestCase {
     doTest();
   }
 
+  public void testReuseOverrideMethod() throws Exception {
+    doTest();
+  }
+
   public void testUsagesInXml() throws Exception {
     try {
       doTest(new PerformAction() {
