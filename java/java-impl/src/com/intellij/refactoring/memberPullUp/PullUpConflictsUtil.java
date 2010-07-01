@@ -25,7 +25,10 @@
 package com.intellij.refactoring.memberPullUp;
 
 import com.intellij.psi.*;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
+import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -84,7 +87,17 @@ public class PullUpConflictsUtil {
       }
     }
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
-    RefactoringConflictsUtil.analyzeAccessibilityConflicts(movedMembers, superClass, conflicts, null, targetRepresentativeElement, abstractMethods);
+    final Set<PsiMethod> abstrMethods = new HashSet<PsiMethod>(abstractMethods);
+    if (superClass != null) {
+      for (PsiMethod method : subclass.getMethods()) {
+        if (!movedMembers.contains(method) && !method.hasModifierProperty(PsiModifier.PRIVATE)) {
+          if (method.findSuperMethods(superClass).length > 0) {
+            abstrMethods.add(method);
+          }
+        }
+      }
+    }
+    RefactoringConflictsUtil.analyzeAccessibilityConflicts(movedMembers, superClass, conflicts, null, targetRepresentativeElement, abstrMethods);
     if (superClass != null) {
       checkSuperclassMembers(superClass, infos, conflicts);
       if (isInterfaceTarget) {
