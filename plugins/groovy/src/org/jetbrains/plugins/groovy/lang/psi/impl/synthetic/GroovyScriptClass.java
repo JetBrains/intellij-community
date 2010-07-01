@@ -338,7 +338,7 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
                                      @NotNull PsiElement place) {
     for (GrTopLevelDefintion defintion : myFile.getTopLevelDefinitions()) {
       if (!(defintion instanceof PsiClass)) {
-        if (!ResolveUtil.processElement(processor, defintion)) return false;
+        if (!ResolveUtil.processElement(processor, defintion, state)) return false;
       }
     }
 
@@ -346,7 +346,7 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
     //noinspection RedundantIfStatement
     if (scriptClass != null && !scriptClass.processDeclarations(new BaseScopeProcessor() {
       public boolean execute(PsiElement element, ResolveState state) {
-        return !(element instanceof PsiNamedElement) || ResolveUtil.processElement(processor, (PsiNamedElement)element);
+        return !(element instanceof PsiNamedElement) || ResolveUtil.processElement(processor, (PsiNamedElement)element, state);
       }
 
       @Override

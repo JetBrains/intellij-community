@@ -72,14 +72,14 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     if (!super.processDeclarations(processor, state, lastParent, place)) return false;
 
     for (final PsiParameter parameter : getAllParameters()) {
-      if (!ResolveUtil.processElement(processor, parameter)) return false;
+      if (!ResolveUtil.processElement(processor, parameter, state)) return false;
     }
 
     if (processor instanceof PropertyResolverProcessor && OWNER_NAME.equals(((PropertyResolverProcessor)processor).getName())) {
       processor.handleEvent(ResolveUtil.DECLARATION_SCOPE_PASSED, this);
     }
 
-    if (!ResolveUtil.processElement(processor, getOwner())) return false;
+    if (!ResolveUtil.processElement(processor, getOwner(), state)) return false;
 
     final PsiClass closureClass = JavaPsiFacade.getInstance(getProject()).findClass(GROOVY_LANG_CLOSURE, getResolveScope());
     if (closureClass != null) {

@@ -16,6 +16,7 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAssignmentOfMemberOfRawTypeInspection;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyResultOfObjectAllocationIgnoredInspection;
@@ -26,9 +27,12 @@ import org.jetbrains.plugins.groovy.codeInspection.unassignedVariable.Unassigned
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUntypedAccessInspection;
 import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.io.IOException;
+import java.util.Set;
 
 /**
  * @author peter
@@ -255,4 +259,11 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testNoDefaultConstructor() throws Exception {doTest();}
 
   public void testTupleTypeAssignments() throws Exception{doTest(new GroovyAssignabilityCheckInspection());}
+
+  public void testUnusedImportsForImportsOnDemand() throws Exception {
+    doTest();
+    final Set<GrImportStatement> unusedImportStatements =
+      GroovyImportsTracker.getInstance(getProject()).getUnusedImportStatements(((GroovyFile)myFixture.getFile()));
+    assertEquals(0, unusedImportStatements.size());
+  }
 }

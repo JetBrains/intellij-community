@@ -56,7 +56,7 @@ public class GrCatchClauseImpl extends GroovyPsiElementImpl implements GrCatchCl
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     GrParameter parameter = getParameter();
-    return parameter == null || ResolveUtil.processElement(processor, parameter);
+    return parameter == null || ResolveUtil.processElement(processor, parameter, state);
   }
 
   public GrParameter[] getParameters() {
