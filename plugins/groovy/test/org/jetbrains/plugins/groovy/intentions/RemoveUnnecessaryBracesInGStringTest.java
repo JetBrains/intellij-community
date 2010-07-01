@@ -21,7 +21,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils;
 /**
  * @author Maxim.Medvedev
  */
-public class RemoveUnnecasseryBracesInGStringTest extends GrIntentionTestCase {  
+public class RemoveUnnecessaryBracesInGStringTest extends GrIntentionTestCase {  
   @Override
   protected String getBasePath() {
     return TestUtils.getTestDataPath() + "intentions/removeUnnecessaryBraces/";
