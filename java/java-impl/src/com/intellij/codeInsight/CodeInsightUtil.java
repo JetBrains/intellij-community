@@ -171,7 +171,14 @@ public class CodeInsightUtil {
   public static PsiExpression[] findExpressionOccurrences(PsiElement scope, PsiExpression expr) {
     List<PsiExpression> array = new ArrayList<PsiExpression>();
     addExpressionOccurrences(RefactoringUtil.unparenthesizeExpression(expr), array, scope);
-    if (!array.contains(expr)) array.add(expr);
+    boolean found = false;
+    for (PsiExpression psiExpression : array) {
+      if (areExpressionsEquivalent(RefactoringUtil.unparenthesizeExpression(psiExpression), RefactoringUtil.unparenthesizeExpression(expr))) {
+        found = true;
+        break;
+      }
+    }
+    if (!found) array.add(expr);
     return array.toArray(new PsiExpression[array.size()]);
   }
 
