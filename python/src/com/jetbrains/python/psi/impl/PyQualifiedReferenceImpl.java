@@ -165,13 +165,34 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
       PyReferenceExpression qualifier = (PyReferenceExpression)qualifierElement;
       if (qualifier.getQualifier() == null) {
         final String className = qualifier.getText();
-        final Collection<PyClass> classes = PyClassNameIndexInsensitive.find(className, getElement().getProject());
+        Collection<PyClass> classes = PyClassNameIndexInsensitive.find(className, getElement().getProject());
+        classes = filterByImports(classes, myElement.getContainingFile());
         if (classes.size() == 1) {
-          return new PyClassType(classes.iterator().next(), false).getCompletionVariants(myElement, new ProcessingContext());
+          final PyClassType classType = new PyClassType(classes.iterator().next(), false);
+          return ((PyReferenceExpressionImpl) myElement).getTypeCompletionVariants(classType);
         }
       }
     }
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  }
+
+  private static Collection<PyClass> filterByImports(Collection<PyClass> classes, PsiFile containingFile) {
+    if (classes.size() <= 1) {
+      return classes;
+    }
+    List<PyClass> result = new ArrayList<PyClass>();
+    for (PyClass pyClass : classes) {
+      if (pyClass.getContainingFile() == containingFile) {
+        result.add(pyClass);
+      }
+      else {
+        final PsiElement exportedClass = ((PyFile)containingFile).findExportedName(pyClass.getName());
+        if (exportedClass == pyClass) {
+          result.add(pyClass);
+        }
+      }
+    }
+    return result;
   }
 
   private static Collection<PyExpression> collectAssignedAttributes(PyQualifiedExpression qualifier) {
