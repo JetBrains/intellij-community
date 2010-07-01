@@ -259,6 +259,7 @@
 
   <extensionPoint name="psi.referenceContributor" interface="com.intellij.psi.PsiReferenceContributor"/>
   <extensionPoint name="psi.referenceProvider" beanClass="com.intellij.psi.PsiReferenceProviderBean"/>
+  <extensionPoint name="patterns.patternClass" beanClass="com.intellij.patterns.compiler.PatternClassBean"/>  
 
   <extensionPoint name="pom.declarationSearcher" interface="com.intellij.pom.PomDeclarationSearcher"/>
 

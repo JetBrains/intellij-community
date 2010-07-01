@@ -267,6 +267,8 @@
 
     <webBrowserUrlProvider implementation="com.intellij.ide.browsers.HtmlWebBrowserUrlProvider" id="static" order="last"/>
 
+    <patterns.patternClass className="com.intellij.patterns.XmlPatterns" alias="xml"/>
+
     <lang.smartEnterProcessor language="XML" implementationClass="com.intellij.codeInsight.completion.XmlSmartEnterProcessor"/>
     <lang.smartEnterProcessor language="HTML" implementationClass="com.intellij.codeInsight.completion.XmlSmartEnterProcessor"/>
     <lang.smartEnterProcessor language="XHTML" implementationClass="com.intellij.codeInsight.completion.XmlSmartEnterProcessor"/>
