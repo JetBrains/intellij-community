@@ -515,10 +515,12 @@ public class Javac2 extends Javac {
                   return loadForm(formFileName, new FileInputStream(file));
                 }
             }
-            for(Iterator it = myNestedFormDirs.iterator(); it.hasNext(); ) {
-                String path = (String) it.next();
-                if (path.replace(File.separatorChar, '/').toLowerCase().endsWith(formFileFullName)) {
-                    return loadForm(formFileName, new FileInputStream(path));
+            if (myNestedFormDirs != null) {
+                for(Iterator it = myNestedFormDirs.iterator(); it.hasNext(); ) {
+                    String path = (String) it.next();
+                    if (path.replace(File.separatorChar, '/').toLowerCase().endsWith(formFileFullName)) {
+                        return loadForm(formFileName, new FileInputStream(path));
+                    }
                 }
             }
             InputStream resourceStream = myLoader.getResourceAsStream(formFileName);
