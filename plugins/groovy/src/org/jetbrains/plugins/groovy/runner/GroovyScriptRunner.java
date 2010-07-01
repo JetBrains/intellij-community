@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.runner;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.openapi.module.Module;
@@ -42,7 +43,7 @@ public abstract class GroovyScriptRunner {
 
   public abstract boolean isValidModule(@NotNull Module module);
 
-  public abstract boolean ensureRunnerConfigured(@Nullable Module module, RunProfile profile, final Project project) throws ExecutionException;
+  public abstract boolean ensureRunnerConfigured(@Nullable Module module, RunProfile profile, Executor executor, final Project project) throws ExecutionException;
 
   public abstract void configureCommandLine(JavaParameters params, @Nullable Module module, boolean tests, VirtualFile script,
                                             GroovyScriptRunConfiguration configuration) throws CantRunException;

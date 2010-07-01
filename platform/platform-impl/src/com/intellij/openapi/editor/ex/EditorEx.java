@@ -99,6 +99,8 @@ public interface EditorEx extends Editor {
 
   void setRendererMode(boolean isRendererMode);
 
+  boolean isUnderRepainting();
+
   void setFile(VirtualFile vFile);
 
   DataContext getDataContext();

@@ -88,7 +88,7 @@ public class BrowserUtil {
 
   private static void launchBrowser(final String url, String[] command) {
     try {
-      URL curl = BrowserUtil.getURL(url);
+      URL curl = getURL(url);
 
       if (curl != null) {
         final String urlString = curl.toString();
@@ -172,7 +172,7 @@ public class BrowserUtil {
         return;
       }
 
-      command = new String[]{browserPath};
+      command = getOpenBrowserCommand(browserPath, url);
     }
     catch (NullPointerException e) {
       // todo: fix the possible problem on startup, see SCR #35066
@@ -209,23 +209,6 @@ public class BrowserUtil {
     }
     catch (Exception e) {
       return false;
-    }
-  }
-
-  public static void launchBrowser(String url, String name) {
-    if (url.startsWith("jar:")) {
-      url = extractFiles(url);
-      if (url == null) return;
-    }
-    if (canStartDefaultBrowser() && isUseDefaultBrowser()) {
-      if (launchDefaultBrowserUsingJdk6Api(url)) {
-        return;
-      }
-
-      launchBrowser(url, getDefaultBrowserCommand());
-    }
-    else {
-      launchBrowserUsingStandardWay(url);
     }
   }
 
@@ -364,8 +347,21 @@ public class BrowserUtil {
     return new File(PathManager.getSystemPath(), "ExtractedFiles");
   }
 
-  public static void launchBrowser(@NonNls final String url) {
-    launchBrowser(url, (String)null);
+  public static void launchBrowser(@NonNls String url) {
+    if (url.startsWith("jar:")) {
+      url = extractFiles(url);
+      if (url == null) return;
+    }
+    if (canStartDefaultBrowser() && isUseDefaultBrowser()) {
+      if (launchDefaultBrowserUsingJdk6Api(url)) {
+        return;
+      }
+
+      launchBrowser(url, getDefaultBrowserCommand());
+    }
+    else {
+      launchBrowserUsingStandardWay(url);
+    }
   }
 
   @NonNls
@@ -411,6 +407,39 @@ public class BrowserUtil {
     catch (Exception e) {
       return false;
     }
+  }
+
+  public static String[] getOpenBrowserCommand(final @NonNls @NotNull String browserPath, final String... parameters) {
+    String[] command;
+    if (SystemInfo.isMac) {
+      if (parameters != null && parameters.length > 1) {
+        //open -a command doesn't support additional parameters
+        command = new String[] {browserPath};
+      }
+      else {
+        command = new String[]{"open", "-a", browserPath};
+      }
+    }
+    else if (SystemInfo.isWindows9x) {
+      if (browserPath.indexOf(File.separatorChar) != -1) {
+        command = new String[]{browserPath};
+      }
+      else {
+        command = new String[]{"command.com", "/c", "start", browserPath};
+      }
+    }
+    else if (SystemInfo.isWindows) {
+      if (browserPath.indexOf(File.separatorChar) != -1) {
+        command = new String[]{browserPath};
+      }
+      else {
+        command = new String[]{"cmd.exe", "/c", "start", browserPath};
+      }
+    }
+    else {
+      command = new String[]{browserPath};
+    }
+    return command;
   }
 
   private static class ConfirmExtractDialog extends OptionsDialog {

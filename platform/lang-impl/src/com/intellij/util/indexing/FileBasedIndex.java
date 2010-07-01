@@ -1550,6 +1550,15 @@ public class FileBasedIndex implements ApplicationComponent {
             }
           }
         }
+        if (!markForReindex) {
+          w.lock();
+          try {
+            myFilesToUpdate.remove(file); // no need to update it anymore
+          }
+          finally {
+            w.unlock();
+          }
+        }
         IndexingStamp.flushCache();
       }
     }

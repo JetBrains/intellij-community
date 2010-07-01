@@ -1,6 +1,6 @@
-package com.siyeh.igtest.verbose;
+package com.siyeh.igtest.j2me.simplifiable_if_statement;
 
-public class SimplifiableIfStatementInspection {
+public class SimplifiableIfStatement {
     public void foo() {
         boolean a = bar();
         boolean b = bar();
@@ -73,4 +73,13 @@ public class SimplifiableIfStatementInspection {
             return false;
         }
     }
+
+  public static boolean original(boolean a, boolean b, boolean c, boolean d) {
+
+    if (!(a || b)) {
+      return false;
+    }
+
+    return c || d;
+  }
 }

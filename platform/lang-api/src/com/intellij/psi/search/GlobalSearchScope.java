@@ -31,12 +31,11 @@ import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public abstract class GlobalSearchScope extends SearchScope implements ProjectAwareFileFilter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.search.GlobalSearchScope");
@@ -255,6 +254,11 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
   public static GlobalSearchScope fileScope(final Project project, final VirtualFile virtualFile) {
     return new FileScope(project, virtualFile);
+  }
+
+  public static GlobalSearchScope filesScope(final Project project, final Collection<VirtualFile> files) {
+    if (files.isEmpty()) return EMPTY_SCOPE;
+    return files.size() == 1? fileScope(project, files.iterator().next()) : new FilesScope(project, files);
   }
 
   private static class IntersectionScope extends GlobalSearchScope {
@@ -485,6 +489,34 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
     public boolean isSearchInLibraries() {
       return myModule == null;
+    }
+  }
+
+  private static class FilesScope extends GlobalSearchScope {
+    private final Collection<VirtualFile> myFiles;
+
+    public FilesScope(final Project project, final Collection<VirtualFile> files) {
+      myFiles = files;
+    }
+
+    @Override
+    public boolean contains(final VirtualFile file) {
+      return myFiles.contains(file);
+    }
+
+    @Override
+    public int compare(final VirtualFile file1, final VirtualFile file2) {
+      return 0;
+    }
+
+    @Override
+    public boolean isSearchInModuleContent(@NotNull Module aModule) {
+      return true;
+    }
+
+    @Override
+    public boolean isSearchInLibraries() {
+      return false;
     }
   }
 

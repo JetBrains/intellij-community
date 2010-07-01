@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2007 Bas Leijdekkers
+ * Copyright 2006-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,30 +25,31 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.BoolUtils;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.EquivalenceChecker;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class SimplifiableIfStatementInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "simplifiable.if.statement.display.name");
     }
 
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new SimplifiableIfStatementVisitor();
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         final PsiIfStatement statement = (PsiIfStatement)infos[0];
@@ -112,53 +113,30 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
         }
         final PsiJavaToken token = elseAssignment.getOperationSign();
         if (BoolUtils.isTrue(thenRhs)) {
-            if (ParenthesesUtils.getPrecedence(elseRhs) >
-                    ParenthesesUtils.OR_PRECEDENCE) {
-                return lhs.getText() + ' ' + token.getText() + ' ' +
-                        condition.getText() + " || (" + elseRhs.getText() + ");";
-            } else {
-                return lhs.getText() + ' ' + token.getText() + ' ' +
-                        condition.getText() + " || " + elseRhs.getText() + ';';
-            }
+            return lhs.getText() + ' ' + token.getText() + ' ' +
+                    buildExpressionText(condition,
+                            ParenthesesUtils.OR_PRECEDENCE) + " || " +
+                    buildExpressionText(elseRhs,
+                            ParenthesesUtils.OR_PRECEDENCE) + ';';
         } else if (BoolUtils.isFalse(thenRhs)) {
-            if (ParenthesesUtils.getPrecedence(elseRhs) >
-                    ParenthesesUtils.AND_PRECEDENCE) {
-                return lhs.getText() + ' ' + token.getText() + ' ' +
-                        BoolUtils.getNegatedExpressionText(condition) +
-                        " && (" + elseRhs.getText() + ");";
-            } else {
-                return lhs.getText() + ' ' + token.getText() + ' ' +
-                        BoolUtils.getNegatedExpressionText(condition) + " && " +
-                        elseRhs.getText() + ';';
-            }
+            return lhs.getText() + ' ' + token.getText() + ' ' +
+                    buildNegatedExpressionText(condition,
+                            ParenthesesUtils.AND_PRECEDENCE) + " && " +
+                    buildExpressionText(elseRhs,
+                            ParenthesesUtils.AND_PRECEDENCE) + ';';
         }
         if (BoolUtils.isTrue(elseRhs)) {
-            if (ParenthesesUtils.getPrecedence(thenRhs) >
-                    ParenthesesUtils.OR_PRECEDENCE) {
-                return lhs.getText() + ' ' + token.getText() + ' ' +
-                        BoolUtils.getNegatedExpressionText(condition) +
-                        " || (" + thenRhs.getText() + ");";
-            } else {
-                return lhs.getText() + ' ' + token.getText() + ' ' +
-                        BoolUtils.getNegatedExpressionText(condition) + " || " +
-                        thenRhs.getText() + ';';
-            }
+            return lhs.getText() + ' ' + token.getText() + ' ' +
+                    buildNegatedExpressionText(condition,
+                            ParenthesesUtils.OR_PRECEDENCE) + " || " +
+                    buildExpressionText(thenRhs,
+                            ParenthesesUtils.OR_PRECEDENCE) + ';';
         } else {
-            final String conditionText;
-            if (ParenthesesUtils.getPrecedence(condition) >
-                ParenthesesUtils.AND_PRECEDENCE) {
-                conditionText = '(' + condition.getText() + ')';
-            } else {
-                conditionText = condition.getText();
-            }
-            if (ParenthesesUtils.getPrecedence(thenRhs) >
-                    ParenthesesUtils.AND_PRECEDENCE) {
-                return lhs.getText() + ' ' + token.getText() + ' ' +
-                       conditionText + " && (" + thenRhs.getText() + ");";
-            } else {
-                return lhs.getText() + ' ' + token.getText() + ' ' +
-                       conditionText + " && " + thenRhs.getText() + ';';
-            }
+            return lhs.getText() + ' ' + token.getText() + ' ' +
+                    buildExpressionText(condition,
+                            ParenthesesUtils.AND_PRECEDENCE) + " && " +
+                    buildExpressionText(thenRhs,
+                            ParenthesesUtils.AND_PRECEDENCE) + ';';
         }
     }
 
@@ -181,56 +159,94 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
             return "";
         }
         if (BoolUtils.isTrue(thenReturnValue)) {
-            if (ParenthesesUtils.getPrecedence(elseReturnValue) >
-                    ParenthesesUtils.OR_PRECEDENCE) {
-                return "return " + condition.getText() + " || (" +
-                        elseReturnValue.getText() + ");";
-            } else {
-                return "return " + condition.getText() + " || " +
-                        elseReturnValue.getText() + ';';
-            }
+            return "return " + buildExpressionText(condition,
+                    ParenthesesUtils.OR_PRECEDENCE) + " || " +
+                    buildExpressionText(elseReturnValue,
+                            ParenthesesUtils.OR_PRECEDENCE) + ';';
         } else if (BoolUtils.isFalse(thenReturnValue)) {
-            if (ParenthesesUtils.getPrecedence(elseReturnValue) >
-                    ParenthesesUtils.AND_PRECEDENCE) {
-                return "return " +
-                        BoolUtils.getNegatedExpressionText(condition) +
-                        " && (" + elseReturnValue.getText() + ");";
-            } else {
-                return "return " +
-                        BoolUtils.getNegatedExpressionText(condition) +
-                        " && " + elseReturnValue.getText() + ';';
-            }
+            return "return " + buildNegatedExpressionText(condition,
+                    ParenthesesUtils.AND_PRECEDENCE) + " && " +
+                    buildExpressionText(elseReturnValue,
+                            ParenthesesUtils.AND_PRECEDENCE) + ';';
         }
         if (BoolUtils.isTrue(elseReturnValue)) {
-            if (ParenthesesUtils.getPrecedence(thenReturnValue) >
-                    ParenthesesUtils.OR_PRECEDENCE) {
-                return "return " +
-                        BoolUtils.getNegatedExpressionText(condition) +
-                        " || (" + thenReturnValue.getText() + ");";
-            } else {
-                return "return " +
-                        BoolUtils.getNegatedExpressionText(condition) +
-                        " || " + thenReturnValue.getText() + ';';
-            }
+            return "return " + buildNegatedExpressionText(condition,
+                    ParenthesesUtils.OR_PRECEDENCE) + " || " +
+                    buildExpressionText(thenReturnValue,
+                            ParenthesesUtils.OR_PRECEDENCE) + ';';
         } else {
-            final String conditionText;
-            if (ParenthesesUtils.getPrecedence(condition) >
-                ParenthesesUtils.AND_PRECEDENCE) {
-                conditionText = '(' + condition.getText() + ')';
-            } else {
-                conditionText = condition.getText();
-            }
-            if (ParenthesesUtils.getPrecedence(thenReturnValue) >
-                    ParenthesesUtils.AND_PRECEDENCE) {
-                return "return " + conditionText + " && (" +
-                        thenReturnValue.getText() + ");";
-            } else {
-                return "return " + conditionText + " && " +
-                        thenReturnValue.getText() + ';';
-            }
+            return "return " + buildExpressionText(condition,
+                    ParenthesesUtils.AND_PRECEDENCE) + " && " +
+                    buildExpressionText(thenReturnValue,
+                            ParenthesesUtils.AND_PRECEDENCE) + ';';
         }
     }
 
+    public static String buildExpressionText(PsiExpression expression,
+                                             int precedence) {
+        final String text;
+        if (expression == null) {
+            text = "";
+        } else {
+            text = expression.getText();
+        }
+        if (ParenthesesUtils.getPrecedence(expression) > precedence) {
+            return '(' + text + ')';
+        } else {
+            return text;
+        }
+    }
+
+
+    public static String buildNegatedExpressionText(
+            @Nullable PsiExpression expression, int precedence) {
+        if (expression == null) {
+            return "";
+        }
+        if (expression instanceof PsiParenthesizedExpression) {
+            final PsiParenthesizedExpression parenthesizedExpression =
+                    (PsiParenthesizedExpression)expression;
+            final PsiExpression contentExpression =
+                    parenthesizedExpression.getExpression();
+            return buildNegatedExpressionText(contentExpression, precedence);
+        } else if (BoolUtils.isNegation(expression)) {
+            final PsiPrefixExpression prefixExpression =
+                    (PsiPrefixExpression) expression;
+            final PsiExpression operand = prefixExpression.getOperand();
+            final PsiExpression negated =
+                    ParenthesesUtils.stripParentheses(operand);
+            if (negated == null) {
+                return "";
+            }
+            if (ParenthesesUtils.getPrecedence(negated) > precedence) {
+                return '(' + negated.getText() + ')';
+            }
+            return negated.getText();
+        } else if (ComparisonUtils.isComparison(expression)) {
+            final PsiBinaryExpression binaryExpression =
+                    (PsiBinaryExpression) expression;
+            final PsiJavaToken sign = binaryExpression.getOperationSign();
+            final String negatedComparison =
+                    ComparisonUtils.getNegatedComparison(sign);
+            final PsiExpression lhs = binaryExpression.getLOperand();
+            final PsiExpression rhs = binaryExpression.getROperand();
+            if (rhs == null) {
+                return lhs.getText() + negatedComparison;
+            }
+            if (ParenthesesUtils.getPrecedence(expression) > precedence) {
+                return '(' + lhs.getText() + negatedComparison + rhs.getText() +
+                        ')';
+            }
+            return lhs.getText() + negatedComparison + rhs.getText();
+        } else if (ParenthesesUtils.getPrecedence(expression) >
+                ParenthesesUtils.PREFIX_PRECEDENCE) {
+            return "!(" + expression.getText() + ')';
+        } else {
+            return '!' + expression.getText();
+        }
+    }
+
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new SimplifiableIfStatementFix();
     }
@@ -244,6 +260,7 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
                     "constant.conditional.expression.simplify.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement element = descriptor.getPsiElement();

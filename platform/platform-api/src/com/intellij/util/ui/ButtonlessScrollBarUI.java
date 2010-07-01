@@ -111,17 +111,35 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
   @Override
   protected Dimension getMinimumThumbSize() {
-    final int thickness = myIsMini ? 10 : 18;
+    final int thickness = getThickness();
     return isVertical() ? new Dimension(thickness, thickness * 2) : new Dimension(thickness * 2, thickness);
   }
 
+  protected int getThickness() {
+    return myIsMini ? 10 : 13;
+  }
+
+  @Override
+  public Dimension getMaximumSize(JComponent c) {
+    int thickness = getThickness();
+    return new Dimension(thickness, thickness);
+  }
+
+  @Override
+  public Dimension getMinimumSize(JComponent c) {
+    return getMaximumSize(c);
+  }
+
+  @Override
+  public Dimension getPreferredSize(JComponent c) {
+    return getMaximumSize(c);
+  }
 
   @Override
   protected void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
     if (thumbBounds.isEmpty() || !scrollbar.isEnabled()) {
       return;
     }
-
 
     g.translate(thumbBounds.x, thumbBounds.y);
 
@@ -137,11 +155,18 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
   private void paintMaxiThumb(Graphics g, Rectangle thumbBounds) {
     final boolean vertical = isVertical();
-    int hgap = vertical ? 3 : 1;
-    int vgap = vertical ? 1 : 3;
+    int hgap = vertical ? 2 : 1;
+    int vgap = vertical ? 1 : 2;
 
-    int w = adjustThumbWidth(thumbBounds.width - hgap * 2) - 1;
-    int h = thumbBounds.height - vgap * 2 - 1;
+    int w = adjustThumbWidth(thumbBounds.width - hgap * 2);
+    int h = thumbBounds.height - vgap * 2;
+
+    if (vertical) {
+      h -= 1;
+    }
+    else {
+      w -= 1;
+    }
 
     final GradientPaint paint;
     final Color start = adjustColor(GRADIENT_LIGHT);
