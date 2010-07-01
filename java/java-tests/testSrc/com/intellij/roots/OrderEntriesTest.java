@@ -11,6 +11,7 @@ import com.intellij.util.PathsList;
 /**
  * @author nik
  */
+@SuppressWarnings({"deprecation"})
 public class OrderEntriesTest extends ModuleRootManagerTestCase {
   public void testLibrary() throws Exception {
     addLibraryDependency(myModule, createJDomLibrary());
@@ -92,7 +93,7 @@ public class OrderEntriesTest extends ModuleRootManagerTestCase {
   private PathsList collectByOrderEnumerator(OrderRootType type) {
     final OrderEnumerator base = OrderEnumerator.orderEntries(myModule);
     if (type == OrderRootType.CLASSES_AND_OUTPUT) {
-      return base.recursively().getPathsList();
+      return base.compileOnly().recursively().getPathsList();
     }
     if (type == OrderRootType.COMPILATION_CLASSES) {
       return base.recursively().exportedOnly().getPathsList();
