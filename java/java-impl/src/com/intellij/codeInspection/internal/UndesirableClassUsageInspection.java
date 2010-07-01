@@ -18,11 +18,13 @@ package com.intellij.codeInspection.internal;
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.psi.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.QueryExecutor;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +40,7 @@ public class UndesirableClassUsageInspection extends BaseJavaLocalInspectionTool
     CLASSES.put(JTable.class.getName(), JBTable.class.getName());
     CLASSES.put(JTree.class.getName(), Tree.class.getName());
     CLASSES.put(JScrollPane.class.getName(), JBScrollPane.class.getName());
+    CLASSES.put(QueryExecutor.class.getName(), QueryExecutorBase.class.getName());
   }
 
   @Nls
