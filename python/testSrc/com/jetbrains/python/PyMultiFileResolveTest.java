@@ -1,6 +1,5 @@
 package com.jetbrains.python;
 
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -225,21 +224,5 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     int offset = findMarkerOffset(psiFile);
     final PsiPolyVariantReference ref = (PsiPolyVariantReference)psiFile.findReferenceAt(offset);
     return ref.multiResolve(false);
-  }
-
-  private int findMarkerOffset(final PsiFile psiFile) {
-    Document document = PsiDocumentManager.getInstance(myFixture.getProject()).getDocument(psiFile);
-    assert document != null;
-    int offset = -1;
-    for (int i=1; i<document.getLineCount(); i++) {
-      int lineStart = document.getLineStartOffset(i);
-      int lineEnd = document.getLineEndOffset(i);
-      final int index=document.getCharsSequence().subSequence(lineStart, lineEnd).toString().indexOf("<ref>");
-      if (index>0) {
-        offset = document.getLineStartOffset(i-1) + index;
-      }
-    }
-    assert offset != -1;
-    return offset;
   }
 }

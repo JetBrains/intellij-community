@@ -9,7 +9,7 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.*;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
@@ -44,13 +44,23 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   public static final PyClass[] EMPTY_ARRAY = new PyClassImpl[0];
 
   private PyTargetExpression[] myInstanceAttributes;
+  private final CachedValue<Boolean> myNewStyle;
+
+  private class NewStyleCachedValueProvider implements CachedValueProvider<Boolean> {
+    @Override
+    public Result<Boolean> compute() {
+      return new Result<Boolean>(calculateNewStyleClass(), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+    }
+  }
 
   public PyClassImpl(ASTNode astNode) {
     super(astNode);
+    myNewStyle = CachedValuesManager.getManager(getProject()).createCachedValue(new NewStyleCachedValueProvider(), false);
   }
 
   public PyClassImpl(final PyClassStub stub) {
     super(stub, PyElementTypes.CLASS_DECLARATION);
+    myNewStyle = CachedValuesManager.getManager(getProject()).createCachedValue(new NewStyleCachedValueProvider(), false);
   }
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
@@ -656,10 +666,32 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   public boolean isNewStyleClass() {
+    return myNewStyle.getValue();
+  }
+
+  private boolean calculateNewStyleClass() {
     PyClass objclass = PyBuiltinCache.getInstance(this).getClass("object");
     if (this == objclass) return true; // a rare but possible case
+    if (hasNewStyleMetaClass(this)) return true;
     for (PyClass ancestor : iterateAncestors()) {
       if (ancestor == objclass) return true;
+      if (hasNewStyleMetaClass(ancestor)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean hasNewStyleMetaClass(PyClass pyClass) {
+    final PsiFile containingFile = pyClass.getContainingFile();
+    if (containingFile instanceof PyFile) {
+      final PsiElement element = ((PyFile)containingFile).findExportedName("__metaclass__");
+      if (element instanceof PyTargetExpression) {
+        final PyExpression assignedValue = ((PyTargetExpression)element).findAssignedValue();
+        if (assignedValue != null && assignedValue.getText().equals("type")) {
+          return true;
+        }
+      }
     }
     return false;
   }
