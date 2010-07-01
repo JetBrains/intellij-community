@@ -55,6 +55,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
@@ -128,6 +129,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myList.setBackground(LookupCellRenderer.BACKGROUND_COLOR);
 
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myList);
+    scrollPane.setViewportBorder(new EmptyBorder(0, 0, 0, 0));
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     getComponent().add(scrollPane, BorderLayout.NORTH);
     scrollPane.setBorder(null);

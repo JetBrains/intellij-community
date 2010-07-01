@@ -62,6 +62,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -464,6 +465,7 @@ public abstract class ChooseByNameBase{
     });
 
     myListScrollPane = ScrollPaneFactory.createScrollPane(myList);
+    myListScrollPane.setViewportBorder(new EmptyBorder(0, 0, 0, 0));
 
     if (!UIUtil.isMotifLookAndFeel()) {
       UIUtil.installPopupMenuBorder(myTextFieldPanel);
