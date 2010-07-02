@@ -20,12 +20,15 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnVcs;
 
 public class MergeFromAction extends DumbAwareAction {
   public MergeFromAction() {
@@ -34,6 +37,7 @@ public class MergeFromAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
+    if (! isEnabled(e)) return;
     final DataContext dc = e.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(dc);
     if (project == null) return;
@@ -49,5 +53,21 @@ public class MergeFromAction extends DumbAwareAction {
         }
       }
     }
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    final DataContext dc = e.getDataContext();
+    final Project project = PlatformDataKeys.PROJECT.getData(dc);
+    if (project == null || project.isDefault()) return;
+    e.getPresentation().setVisible(isEnabled(e));
+  }
+
+  private boolean isEnabled(AnActionEvent e) {
+    final DataContext dc = e.getDataContext();
+    final Project project = PlatformDataKeys.PROJECT.getData(dc);
+    if (project == null || project.isDefault()) return false;
+    final VirtualFile[] files = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(SvnVcs.getInstance(project));
+    return files != null && files.length > 0;
   }
 }
