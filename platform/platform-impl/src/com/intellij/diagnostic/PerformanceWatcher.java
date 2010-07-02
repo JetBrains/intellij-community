@@ -121,7 +121,7 @@ public class PerformanceWatcher implements ApplicationComponent {
   }
 
   private static void deleteOldThreadDumps() {
-    File allLogsDir = new File(PathManager.getSystemPath(), "log");
+    File allLogsDir = new File(PathManager.getLogPath());
     if (allLogsDir.isDirectory()) {
       final String[] dirs = allLogsDir.list(new FilenameFilter() {
         public boolean accept(final File dir, final String name) {
