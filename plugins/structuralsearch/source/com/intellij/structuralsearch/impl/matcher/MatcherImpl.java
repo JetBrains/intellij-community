@@ -12,7 +12,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.FileIndexImplUtil;
@@ -362,7 +361,7 @@ public class MatcherImpl {
           result.addAll(Arrays.asList(contentRoots));
 
           if (scope.isSearchInLibraries()) {
-            for(VirtualFile file: instance.getFilesFromAllModules(OrderRootType.SOURCES)) {
+            for(VirtualFile file: instance.orderEntries().sources().usingCache().getRoots()) {
               if (projectFileIndex.isInLibrarySource(file)) {
                 result.add(file);
               }
