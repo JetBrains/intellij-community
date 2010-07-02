@@ -24,11 +24,10 @@
  */
 package com.intellij.refactoring.memberPullUp;
 
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
-import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -108,20 +107,31 @@ public class PullUpConflictsUtil {
       }
     }
     RefactoringConflictsUtil.analyzeAccessibilityConflicts(movedMembers, superClass, conflicts, null, targetRepresentativeElement, abstrMethods);
-    if (superClass != null && movedMembers2Super) {
-      checkSuperclassMembers(superClass, infos, conflicts);
-      if (isInterfaceTarget) {
-        checkInterfaceTarget(infos, conflicts);
+    if (superClass != null) {
+      if (movedMembers2Super) {
+        checkSuperclassMembers(superClass, infos, conflicts);
+        if (isInterfaceTarget) {
+          checkInterfaceTarget(infos, conflicts);
+        }
+      } else {
+        final String qualifiedName = superClass.getQualifiedName();
+        assert qualifiedName != null;
+        if (superClass.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
+          if (!Comparing.strEqual(StringUtil.getPackageName(qualifiedName), targetPackage.getQualifiedName())) {
+            conflicts.putValue(superClass, RefactoringUIUtil.getDescription(superClass, true) + " won't be accessible from " +RefactoringUIUtil.getDescription(targetPackage, true));
+          }
+        }
       }
     }
     // check if moved methods use other members in the classes between Subclass and Superclass
     List<PsiElement> checkModuleConflictsList = new ArrayList<PsiElement>();
     for (PsiMember member : movedMembers) {
       if (member instanceof PsiMethod || member instanceof PsiClass && !(member instanceof PsiCompiledElement)) {
-        ConflictingUsagesOfSubClassMembers visitor =
-          new ConflictingUsagesOfSubClassMembers(member, movedMembers, abstractMethods, subclass, superClass,
+        ClassMemberReferencesVisitor visitor =
+          movedMembers2Super? new ConflictingUsagesOfSubClassMembers(member, movedMembers, abstractMethods, subclass, superClass,
                                                  superClass != null ? null : targetPackage, conflicts,
-                                                 interfaceContainmentVerifier);
+                                                 interfaceContainmentVerifier)
+                            : new ConflictingUsagesOfSuperClassMemebers(member, subclass, targetPackage, movedMembers, conflicts);
         member.accept(visitor);
       }
       checkModuleConflictsList.add(member);
@@ -205,6 +215,53 @@ public class PullUpConflictsUtil {
 
   }
 
+  private static boolean willBeMoved(PsiElement element, Set<PsiMember> movedMembers) {
+    PsiElement parent = element;
+    while (parent != null) {
+      if (movedMembers.contains(parent)) return true;
+      parent = parent.getParent();
+    }
+    return false;
+  }
+
+  private static class ConflictingUsagesOfSuperClassMemebers extends ClassMemberReferencesVisitor {
+
+    private PsiMember myMember;
+    private PsiClass mySubClass;
+    private PsiPackage myTargetPackage;
+    private Set<PsiMember> myMovedMembers;
+    private MultiMap<PsiElement, String> myConflicts;
+
+    public ConflictingUsagesOfSuperClassMemebers(PsiMember member, PsiClass aClass,
+                                                 PsiPackage targetPackage,
+                                                 Set<PsiMember> movedMembers,
+                                                 MultiMap<PsiElement, String> conflicts) {
+      super(aClass);
+      myMember = member;
+      mySubClass = aClass;
+      myTargetPackage = targetPackage;
+      myMovedMembers = movedMembers;
+      myConflicts = conflicts;
+    }
+
+    @Override
+    protected void visitClassMemberReferenceElement(PsiMember classMember, PsiJavaCodeReferenceElement classMemberReference) {
+      if (classMember != null && !willBeMoved(classMember, myMovedMembers)) {
+        final PsiClass containingClass = classMember.getContainingClass();
+        if (containingClass != null) {
+          if (!PsiUtil.isAccessibleFromPackage(classMember, myTargetPackage)) {
+            if (classMember.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
+              myConflicts.putValue(myMember, RefactoringUIUtil.getDescription(classMember, true) + " won't be accessible");
+            }
+            else if (classMember.hasModifierProperty(PsiModifier.PROTECTED) && !mySubClass.isInheritor(containingClass, true)) {
+              myConflicts.putValue(myMember, RefactoringUIUtil.getDescription(classMember, true) + " won't be accessible");
+            }
+          }
+        }
+      }
+    }
+  }
+
   private static class ConflictingUsagesOfSubClassMembers extends ClassMemberReferencesVisitor {
     private final PsiElement myScope;
     private final Set<PsiMember> myMovedMembers;
@@ -236,7 +293,7 @@ public class PullUpConflictsUtil {
       if (classMember != null
           && RefactoringHierarchyUtil.isMemberBetween(mySuperClass, mySubclass, classMember)) {
         if (classMember.hasModifierProperty(PsiModifier.STATIC)
-            && !willBeMoved(classMember)) {
+            && !willBeMoved(classMember, myMovedMembers)) {
           final boolean isAccessible;
           if (mySuperClass != null) {
             isAccessible = PsiUtil.isAccessible(classMember, mySuperClass, null);
@@ -257,7 +314,7 @@ public class PullUpConflictsUtil {
           }
           return;
         }
-        if (!myAbstractMethods.contains(classMember) && !willBeMoved(classMember)) {
+        if (!myAbstractMethods.contains(classMember) && !willBeMoved(classMember, myMovedMembers)) {
           if (!existsInSuperClass(classMember)) {
             String message = RefactoringBundle.message("0.uses.1.which.is.not.moved.to.the.superclass",
                                                        RefactoringUIUtil.getDescription(myScope, false),
@@ -269,14 +326,7 @@ public class PullUpConflictsUtil {
       }
     }
 
-    private boolean willBeMoved(PsiElement element) {
-      PsiElement parent = element;
-      while (parent != null) {
-        if (myMovedMembers.contains(parent)) return true;
-        parent = parent.getParent();
-      }
-      return false;
-    }
+
 
     private boolean existsInSuperClass(PsiElement classMember) {
       if (!(classMember instanceof PsiMethod)) return false;

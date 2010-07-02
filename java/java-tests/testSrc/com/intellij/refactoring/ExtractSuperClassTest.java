@@ -22,11 +22,11 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
+import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.util.Arrays;
-import java.util.Collection;
 
 /**
  * @author yole
@@ -43,9 +43,22 @@ public class ExtractSuperClassTest extends CodeInsightTestCase {
 
   public void testConflictUsingPrivateMethod() throws Exception {
     doTest("Test", "TestSubclass",
-           new String[] {"Method <b><code>Test.foo()</code></b> is private and will not be accessible from method <b><code>x()</code></b>.",
-                         "Method <b><code>x()</code></b> uses method <b><code>Test.foo()</code></b>, which is not moved to the superclass"},
+           new String[] {"Method <b><code>Test.foo()</code></b> is private and will not be accessible from method <b><code>x()</code></b>."},
            new RefactoringTestUtil.MemberDescriptor("x", PsiMethod.class));
+  }
+
+  public void testConflictUsingPackageLocalMethod() throws Exception {
+    doTest("a.Test", "TestSubclass",
+           new String[] {"method <b><code>Sup.foo()</code></b> won't be accessible"},
+           "b",
+           new RefactoringTestUtil.MemberDescriptor("x", PsiMethod.class));
+  }
+
+  public void testConflictUsingPackageLocalSuperClass() throws Exception {
+    doTest("a.Test", "TestSubclass",
+           new String[] {"class <b><code>a.Sup</code></b> won't be accessible from package <b><code>b</code></b>"},
+           "b",
+           new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
   }
 
   public void testNoConflictUsingProtectedMethodFromSuper() throws Exception {
@@ -101,13 +114,28 @@ public class ExtractSuperClassTest extends CodeInsightTestCase {
   private void doTest(@NonNls final String className, @NonNls final String newClassName,
                       String[] conflicts,
                       RefactoringTestUtil.MemberDescriptor... membersToFind) throws Exception {
+    doTest(className, newClassName, conflicts, null, membersToFind);
+  }
+
+  private void doTest(@NonNls final String className,
+                      @NonNls final String newClassName,
+                      String[] conflicts,
+                      String targetPackageName,
+                      RefactoringTestUtil.MemberDescriptor... membersToFind) throws Exception {
     String rootBefore = getRoot() + "/before";
     PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk14());
     final VirtualFile rootDir = PsiTestUtil.createTestProjectStructure(myProject, myModule, rootBefore, myFilesToDelete);
     PsiClass psiClass = myJavaFacade.findClass(className, ProjectScope.getAllScope(myProject));
     assertNotNull(psiClass);
     final MemberInfo[] members = RefactoringTestUtil.findMembers(psiClass, membersToFind);
-    final PsiDirectory targetDirectory = psiClass.getContainingFile().getContainingDirectory();
+    PsiDirectory targetDirectory;
+    if (targetPackageName == null) {
+      targetDirectory = psiClass.getContainingFile().getContainingDirectory();
+    } else {
+      final PsiPackage aPackage = myJavaFacade.findPackage(targetPackageName);
+      assertNotNull(aPackage);
+      targetDirectory = aPackage.getDirectories()[0];
+    }
     ExtractSuperClassProcessor processor = new ExtractSuperClassProcessor(myProject,
                                                                           targetDirectory,
                                                                           newClassName,
