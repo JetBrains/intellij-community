@@ -27,8 +27,8 @@ import org.jetbrains.annotations.NotNull;
 public class ModuleOrderEnumerator extends OrderEnumeratorBase {
   private final RootModelImpl myRootModel;
 
-  public ModuleOrderEnumerator(RootModelImpl rootModel) {
-    super(rootModel.getModule(), rootModel.getProject());
+  public ModuleOrderEnumerator(RootModelImpl rootModel, final OrderRootsCache cache) {
+    super(rootModel.getModule(), rootModel.getProject(), cache);
     myRootModel = rootModel;
   }
 

@@ -465,7 +465,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected Sdk createJdk(String versionName) {
-    return JavaSdkImpl.getMockJdk15(versionName);
+    return JavaSdkImpl.getMockJdk17(versionName);
   }
 
   protected void compileModules(String... moduleNames) {

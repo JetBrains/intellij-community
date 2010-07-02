@@ -33,7 +33,7 @@ import java.util.Map;
 public class UndesirableClassUsageInspection extends BaseJavaLocalInspectionTool {
   private static final Map<String, String> CLASSES = new THashMap<String, String>();
 
-  {
+  static {
     CLASSES.put(JList.class.getName(), JBList.class.getName());
     CLASSES.put(JTable.class.getName(), JBTable.class.getName());
     CLASSES.put(JTree.class.getName(), Tree.class.getName());

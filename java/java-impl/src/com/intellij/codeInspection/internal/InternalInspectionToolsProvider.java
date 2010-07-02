@@ -21,14 +21,20 @@ import com.intellij.util.ArrayUtil;
 
 public class InternalInspectionToolsProvider implements InspectionToolProvider {
   public static final String GROUP_NAME = "IDEA Platform Inspections";
+  private static final Class[] CLASSES = new Class[] { UndesirableClassUsageInspection.class };
 
   @Override
   public Class[] getInspectionClasses() {
-    if (!ApplicationManagerEx.getApplicationEx().isInternal()) return ArrayUtil.EMPTY_CLASS_ARRAY;
-    return getPublicClasses();
+    if (!isActive()) return ArrayUtil.EMPTY_CLASS_ARRAY;
+    return CLASSES;
   }
 
   public static Class[] getPublicClasses() {
-    return new Class[] { UndesirableClassUsageInspection.class };
+    if (isActive()) return ArrayUtil.EMPTY_CLASS_ARRAY;
+    return CLASSES;
+  }
+
+  private static boolean isActive() {
+    return ApplicationManagerEx.getApplicationEx().isInternal();
   }
 }

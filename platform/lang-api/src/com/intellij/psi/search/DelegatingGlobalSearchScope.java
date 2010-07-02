@@ -53,35 +53,35 @@ public class DelegatingGlobalSearchScope extends GlobalSearchScope {
   @Override
   @NotNull
   public GlobalSearchScope intersectWith(@NotNull GlobalSearchScope scope) {
-    return myBaseScope.intersectWith(scope);
+    return super.intersectWith(scope);
   }
 
   @Override
   @NotNull
   public SearchScope intersectWith(@NotNull SearchScope scope2) {
-    return myBaseScope.intersectWith(scope2);
+    return super.intersectWith(scope2);
   }
 
   @Override
   public SearchScope intersectWith(LocalSearchScope localScope2) {
-    return myBaseScope.intersectWith(localScope2);
+    return super.intersectWith(localScope2);
   }
 
   @Override
   @NotNull
   public GlobalSearchScope union(@NotNull SearchScope scope) {
-    return myBaseScope.union(scope);
+    return super.union(scope);
   }
 
   @Override
   @NotNull
   public GlobalSearchScope union(LocalSearchScope scope) {
-    return myBaseScope.union(scope);
+    return super.union(scope);
   }
 
   @Override
   public GlobalSearchScope uniteWith(@NotNull GlobalSearchScope scope) {
-    return myBaseScope.uniteWith(scope);
+    return super.uniteWith(scope);
   }
 
   @Override

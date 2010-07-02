@@ -18,7 +18,7 @@ package com.intellij.ui;
 import javax.swing.*;
 
 /**
- * @deprecated use treeStructure.Tree instead
+ * @deprecated use {@link com.intellij.ui.treeStructure.Tree} instead
  */
 public class TreeToolTipHandler {
   public static void install(JTree tree) {

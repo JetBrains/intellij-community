@@ -50,7 +50,7 @@ public class MavenProjectsNavigatorTest extends MavenImportingTestCase {
     createModulePom("m", "<groupId>test</groupId>" +
                          "<artifactId>m</artifactId>" +
                          "<version>1</version>");
-    myProjectsManager.resetManagedFilesAndProfilesInTests(Collections.singletonList(myProjectPom), Collections.EMPTY_LIST);
+    myProjectsManager.resetManagedFilesAndProfilesInTests(Collections.singletonList(myProjectPom), Collections.<String>emptyList());
     waitForReadingCompletion();
 
     myProjectsManager.fireActivatedInTests();

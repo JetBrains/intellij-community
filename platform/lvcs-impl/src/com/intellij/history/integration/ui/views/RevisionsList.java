@@ -50,7 +50,7 @@ public class RevisionsList {
 
   public RevisionsList(SelectionListener l) {
     table = new JBTable();
-    table.setModel(new MyModel(Collections.EMPTY_LIST, Collections.EMPTY_MAP));
+    table.setModel(new MyModel(Collections.<RevisionItem>emptyList(), Collections.<RevisionItem, Period>emptyMap()));
 
     table.setTableHeader(null);
     table.setShowGrid(false);

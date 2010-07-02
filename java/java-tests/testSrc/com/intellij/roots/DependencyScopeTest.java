@@ -10,7 +10,6 @@ import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.intellij.util.PathsList;
 
 import java.io.IOException;
-import java.util.Collection;
 
 /**
  * @author yole
@@ -39,9 +38,9 @@ public class DependencyScopeTest extends ModuleTestCase {
     assertFalse(moduleA.getModuleWithDependenciesAndLibrariesScope(false).contains(classB));
     assertFalse(moduleA.getModuleWithDependenciesAndLibrariesScope(false).isSearchInModuleContent(moduleB));
 
-    final Collection<VirtualFile> compilationClasspath = getCompilationClasspath(moduleA);
-    assertEquals(1, compilationClasspath.size());
-    final Collection<VirtualFile> productionCompilationClasspath = getProductionCompileClasspath(moduleA);
+    final VirtualFile[] compilationClasspath = getCompilationClasspath(moduleA);
+    assertEquals(1, compilationClasspath.length);
+    final VirtualFile[] productionCompilationClasspath = getProductionCompileClasspath(moduleA);
     assertEmpty(productionCompilationClasspath);
 
     final PathsList pathsList = OrderEnumerator.orderEntries(moduleA).recursively().getPathsList();
@@ -78,20 +77,20 @@ public class DependencyScopeTest extends ModuleTestCase {
     assertTrue(m.getModuleWithDependenciesAndLibrariesScope(true).contains(libraryClass));
     assertFalse(m.getModuleWithDependenciesAndLibrariesScope(false).contains(libraryClass));
 
-    final Collection<VirtualFile> compilationClasspath = getCompilationClasspath(m);
-    assertEquals(1, compilationClasspath.size());
-    final Collection<VirtualFile> productionCompilationClasspath = getProductionCompileClasspath(m);
+    final VirtualFile[] compilationClasspath = getCompilationClasspath(m);
+    assertEquals(1, compilationClasspath.length);
+    final VirtualFile[] productionCompilationClasspath = getProductionCompileClasspath(m);
     assertEmpty(productionCompilationClasspath);
   }
 
   public void testRuntimeModuleDependency() throws IOException {
     Module moduleA = createModule("a.iml", StdModuleTypes.JAVA);
     addDependentModule(moduleA, DependencyScope.RUNTIME);
-    final Collection<VirtualFile> runtimeClasspath = getRuntimeClasspath(moduleA);
-    assertEquals(1, runtimeClasspath.size());
-    final Collection<VirtualFile> compilationClasspath = getCompilationClasspath(moduleA);
-    assertEquals(1, compilationClasspath.size());
-    Collection<VirtualFile> production = getProductionCompileClasspath(moduleA);
+    final VirtualFile[] runtimeClasspath = getRuntimeClasspath(moduleA);
+    assertEquals(1, runtimeClasspath.length);
+    final VirtualFile[] compilationClasspath = getCompilationClasspath(moduleA);
+    assertEquals(1, compilationClasspath.length);
+    VirtualFile[] production = getProductionCompileClasspath(moduleA);
     assertEmpty(production);
   }
 
@@ -99,12 +98,12 @@ public class DependencyScopeTest extends ModuleTestCase {
     Module m = createModule("a.iml", StdModuleTypes.JAVA);
     VirtualFile libraryRoot = addLibrary(m, DependencyScope.RUNTIME);
 
-    final Collection<VirtualFile> runtimeClasspath = getRuntimeClasspath(m);
+    final VirtualFile[] runtimeClasspath = getRuntimeClasspath(m);
     assertOrderedEquals(runtimeClasspath, libraryRoot);
 
-    final Collection<VirtualFile> compilationClasspath = getCompilationClasspath(m);
-    assertEquals(1, compilationClasspath.size());
-    Collection<VirtualFile> production = getProductionCompileClasspath(m);
+    final VirtualFile[] compilationClasspath = getCompilationClasspath(m);
+    assertEquals(1, compilationClasspath.length);
+    VirtualFile[] production = getProductionCompileClasspath(m);
     assertEmpty(production);
 
     VirtualFile libraryClass = myFixture.createFile("lib/Test.java", "public class Test { }");
@@ -115,20 +114,20 @@ public class DependencyScopeTest extends ModuleTestCase {
   public void testProvidedModuleDependency() throws IOException {
     Module moduleA = createModule("a.iml", StdModuleTypes.JAVA);
     addDependentModule(moduleA, DependencyScope.PROVIDED);
-    Collection<VirtualFile> runtimeClasspath = getRuntimeClasspath(moduleA);
+    VirtualFile[] runtimeClasspath = getRuntimeClasspath(moduleA);
     assertEmpty(runtimeClasspath);
-    final Collection<VirtualFile> compilationClasspath = getCompilationClasspath(moduleA);
-    assertEquals(1, compilationClasspath.size());
+    final VirtualFile[] compilationClasspath = getCompilationClasspath(moduleA);
+    assertEquals(1, compilationClasspath.length);
   }
 
   public void testProvidedLibraryDependency() throws IOException {
     Module m = createModule("a.iml", StdModuleTypes.JAVA);
     VirtualFile libraryRoot = addLibrary(m, DependencyScope.PROVIDED);
 
-    final Collection<VirtualFile> runtimeClasspath = getRuntimeClasspath(m);
+    final VirtualFile[] runtimeClasspath = getRuntimeClasspath(m);
     assertEmpty(runtimeClasspath);
 
-    final Collection<VirtualFile> compilationClasspath = getCompilationClasspath(m);
+    final VirtualFile[] compilationClasspath = getCompilationClasspath(m);
     assertOrderedEquals(compilationClasspath, libraryRoot);
 
     VirtualFile libraryClass = myFixture.createFile("lib/Test.java", "public class Test { }");
@@ -136,15 +135,15 @@ public class DependencyScopeTest extends ModuleTestCase {
     assertTrue(m.getModuleWithDependenciesAndLibrariesScope(false).contains(libraryClass));
   }
 
-  private static Collection<VirtualFile> getRuntimeClasspath(Module m) {
+  private static VirtualFile[] getRuntimeClasspath(Module m) {
     return ModuleRootManager.getInstance(m).orderEntries().productionOnly().runtimeOnly().recursively().getClassesRoots();
   }
 
-  private static Collection<VirtualFile> getProductionCompileClasspath(Module moduleA) {
+  private static VirtualFile[] getProductionCompileClasspath(Module moduleA) {
     return ModuleRootManager.getInstance(moduleA).orderEntries().productionOnly().compileOnly().recursively().exportedOnly().getClassesRoots();
   }
 
-  private static Collection<VirtualFile> getCompilationClasspath(Module m) {
+  private static VirtualFile[] getCompilationClasspath(Module m) {
     return ModuleRootManager.getInstance(m).orderEntries().recursively().exportedOnly().getClassesRoots();
   }
 

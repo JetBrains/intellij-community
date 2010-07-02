@@ -23,6 +23,7 @@ import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.projectRoots.impl.MockJdkWrapper;
+import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -127,15 +128,10 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
     final Sdk jdk;
     if (myJdk != null) {
       jdk = JavaSdkImpl.getInstance().createJdk(module.getName() + "_jdk", myJdk, false);
-    } else {
-      switch (myMockJdkLevel) {
-        default:
-          jdk = JavaSdkImpl.getMockJdk("java 1.4");
-          break;
-        case jdk15:
-          jdk = JavaSdkImpl.getMockJdk15("java 1.5");
-          break;
-      }
+      ((ProjectJdkImpl)jdk).setVersionString("java 1.5");
+    }
+    else {
+      jdk = JavaSdkImpl.getMockJdk17();
     }
     if (jdk != null) {
       model.setSdk(new MockJdkWrapper(CompilerConfigurationImpl.getTestsExternalCompilerHome(), jdk));

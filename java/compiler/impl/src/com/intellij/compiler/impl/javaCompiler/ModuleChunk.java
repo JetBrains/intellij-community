@@ -198,7 +198,7 @@ public class ModuleChunk extends Chunk<Module> {
       if ((mySourcesFilter & TEST_SOURCES) == 0) {
         enumerator = enumerator.productionOnly();
       }
-      cpFiles.addAll(enumerator.recursively().exportedOnly().getClassesRoots());
+      Collections.addAll(cpFiles, enumerator.recursively().exportedOnly().getClassesRoots());
     }
     cpFiles = JarClasspathHelper.patchFiles(cpFiles, myContext.getProject());
 
@@ -218,8 +218,8 @@ public class ModuleChunk extends Chunk<Module> {
       if ((mySourcesFilter & TEST_SOURCES) == 0) {
         enumerator = enumerator.productionOnly();
       }
-      cpFiles.addAll(enumerator.recursively().exportedOnly().getClassesRoots());
-      jdkFiles.addAll(OrderEnumerator.orderEntries(module).sdkOnly().getClassesRoots());
+      Collections.addAll(cpFiles, enumerator.recursively().exportedOnly().getClassesRoots());
+      Collections.addAll(jdkFiles, OrderEnumerator.orderEntries(module).sdkOnly().getClassesRoots());
     }
     cpFiles.addAll(jdkFiles);
     return cpFiles;

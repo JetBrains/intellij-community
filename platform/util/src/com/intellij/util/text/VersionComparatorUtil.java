@@ -16,6 +16,9 @@ import java.util.regex.Pattern;
  * E.g: is used for TeamCity plugins and Ruby gems versions
  */
 public class VersionComparatorUtil {
+  private static final Pattern WORDS_SPLITTER = Pattern.compile("\\d+|[^\\d]+");
+  private static final VersionTokenType[] VALUES = VersionTokenType.values();
+
   private VersionComparatorUtil() {
   }
 
@@ -58,7 +61,7 @@ public class VersionComparatorUtil {
         return _WS;
       }
 
-      for (VersionTokenType token : VersionTokenType.values()) {
+      for (VersionTokenType token : VALUES) {
         final String name = token.name();
         if (name.charAt(0) != '_' && name.equalsIgnoreCase(str)) {
           return token;
@@ -81,14 +84,12 @@ public class VersionComparatorUtil {
     }
   }
 
-  private static final Pattern myWordsSplitter = Pattern.compile("\\d+|[^\\d]+");
-
   static List<String> splitVersionString(final String ver) {
     StringTokenizer st = new StringTokenizer(ver.trim(), "()._-;:/, +~");
     List<String> result = new ArrayList<String>();
 
     while (st.hasMoreTokens()) {
-      final Matcher matcher = myWordsSplitter.matcher(st.nextToken());
+      final Matcher matcher = WORDS_SPLITTER.matcher(st.nextToken());
 
       while (matcher.find()) {
         result.add(matcher.group());

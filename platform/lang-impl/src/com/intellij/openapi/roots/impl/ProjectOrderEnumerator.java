@@ -30,8 +30,8 @@ import org.jetbrains.annotations.NotNull;
 public class ProjectOrderEnumerator extends OrderEnumeratorBase {
   private Project myProject;
 
-  public ProjectOrderEnumerator(Project project) {
-    super(null, project);
+  public ProjectOrderEnumerator(Project project, OrderRootsCache rootsCache) {
+    super(null, project, rootsCache);
     myProject = project;
   }
 

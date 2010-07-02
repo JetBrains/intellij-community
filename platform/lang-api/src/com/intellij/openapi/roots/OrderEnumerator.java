@@ -25,8 +25,6 @@ import com.intellij.util.PathsList;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-
 /**
  * Interface for convenient processing dependencies of a module or a project. Allows to process {@link OrderEntry}s and collect classes
  * and source roots.<p>
@@ -73,6 +71,14 @@ public abstract class OrderEnumerator {
     return withoutDepModules().withoutLibraries().withoutModuleSourceEntries();
   }
 
+  public VirtualFile[] getAllLibrariesAndSdkClassesRoots() {
+    return withoutModuleSourceEntries().recursively().exportedOnly().classes().usingCache().getRoots();
+  }
+
+  public VirtualFile[] getAllSourceRoots() {
+    return recursively().exportedOnly().sources().usingCache().getRoots();
+  }
+
   /**
    * Recursively process modules on which the module depends
    * @return this instance
@@ -100,36 +106,49 @@ public abstract class OrderEnumerator {
   public abstract OrderEnumerator using(@NotNull ModulesProvider provider);
 
   /**
+   * @return {@link OrderRootsEnumerator} instance for processing classes roots
+   */
+  public abstract OrderRootsEnumerator classes();
+
+  /**
+   * @return {@link OrderRootsEnumerator} instance for processing source roots
+   */
+  public abstract OrderRootsEnumerator sources();
+
+  /**
+   *
+   * @param rootType root type
+   * @return {@link OrderRootsEnumerator} instance for processing roots of the specified type
+   */
+  public abstract OrderRootsEnumerator roots(@NotNull OrderRootType rootType);
+
+  /**
    * @return classes roots for all entries processed by this enumerator
    */
-  public abstract Collection<VirtualFile> getClassesRoots();
+  public VirtualFile[] getClassesRoots() {
+    return classes().getRoots();
+  }
 
   /**
    * @return source roots for all entries processed by this enumerator
    */
-  public abstract Collection<VirtualFile> getSourceRoots();
+  public VirtualFile[] getSourceRoots() {
+    return sources().getRoots();
+  }
 
   /**
    * @return list containing classes roots for all entries processed by this enumerator
    */
-  public abstract PathsList getPathsList();
-
-  /**
-   * Add classes roots for all entries processed by this enumerator
-   * @param list list to append paths
-   */
-  public abstract void collectPaths(PathsList list);
+  public PathsList getPathsList() {
+    return classes().getPathsList();
+  }
 
   /**
    * @return list containing source roots for all entries processed by this enumerator
    */
-  public abstract PathsList getSourcePathsList();
-
-  /**
-   * Add source roots for all entries processed by this enumerator
-   * @param list list to append paths
-   */
-  public abstract void collectSourcePaths(PathsList list);
+  public PathsList getSourcePathsList() {
+    return sources().getPathsList();
+  }
 
   /**
    * Runs <code>processor.process()</code> for each entry processed by this enumerator.
@@ -154,6 +173,7 @@ public abstract class OrderEnumerator {
    * @param module module
    * @return new enumerator instance
    */
+  @NotNull
   public static OrderEnumerator orderEntries(@NotNull Module module) {
     return ModuleRootManager.getInstance(module).orderEntries();
   }
@@ -164,6 +184,7 @@ public abstract class OrderEnumerator {
    * @param project project
    * @return new enumerator instance
    */
+  @NotNull
   public static OrderEnumerator orderEntries(@NotNull Project project) {
     return ProjectRootManager.getInstance(project).orderEntries();
   }

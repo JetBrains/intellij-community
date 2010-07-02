@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,6 +36,7 @@ import java.util.List;
 class CompositeProjectRoot implements ProjectRoot {
   private final List<ProjectRoot> myRoots = new ArrayList<ProjectRoot>();
 
+  @NotNull 
   ProjectRoot[] getProjectRoots() {
     return myRoots.toArray(new ProjectRoot[myRoots.size()]);
   }
@@ -68,6 +70,7 @@ class CompositeProjectRoot implements ProjectRoot {
     myRoots.remove(root);
   }
 
+  @NotNull
   ProjectRoot add(VirtualFile virtualFile) {
     final SimpleProjectRoot root = new SimpleProjectRoot(virtualFile);
     myRoots.add(root);

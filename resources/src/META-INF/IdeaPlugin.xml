@@ -915,6 +915,8 @@
     <patternDialectProvider implementation="com.intellij.packageDependencies.ui.PackagePatternProvider" id="package" order="before file" />
     <scopeDescriptorProvider implementation="com.intellij.ide.util.scopeChooser.HierarchyScopeDescriptorProvider"/>
 
+    <patterns.patternClass className="com.intellij.patterns.PsiJavaPatterns" alias="java"/>
+
     <customScopesProvider implementation="com.intellij.analysis.PackagesScopesProvider"/>
 
     <highlightErrorFilter implementation="com.intellij.codeInsight.daemon.impl.analysis.JavadocErrorFilter"/>

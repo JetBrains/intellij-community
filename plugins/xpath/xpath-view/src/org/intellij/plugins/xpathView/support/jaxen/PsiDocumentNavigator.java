@@ -50,7 +50,7 @@ public class PsiDocumentNavigator extends DefaultNavigator {
         }
 
         if (!(contextNode instanceof XmlElement)) {
-            return Collections.EMPTY_LIST.iterator();
+            return Collections.emptyList().iterator();
         }
         return new PsiChildAxisIterator(contextNode);
     }
@@ -62,7 +62,7 @@ public class PsiDocumentNavigator extends DefaultNavigator {
         }
 
         if (!(contextNode instanceof XmlElement)) {
-            return Collections.EMPTY_LIST.iterator();
+            return Collections.emptyList().iterator();
         }
 
         return new NodeIterator((XmlElement)contextNode) {
@@ -183,7 +183,7 @@ public class PsiDocumentNavigator extends DefaultNavigator {
         if (isElement(contextNode)) {
             return new AttributeIterator((XmlElement)contextNode);
         } else {
-            return Collections.EMPTY_LIST.iterator();
+            return Collections.emptyList().iterator();
         }
     }
 

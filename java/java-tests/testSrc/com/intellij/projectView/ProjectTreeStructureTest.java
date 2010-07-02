@@ -35,7 +35,7 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
                                                 " Class4.java\n");
     assertStructureEqual("Project\n" +
            " External Libraries\n" +
-           "  Library: < java 1.5 >\n" +
+           "  Library: < java 1.7 >\n" +
            "   annotations.jar\n" +
            "    classpath.index\n" +
            "    META-INF\n" +
@@ -65,7 +65,7 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
 
     assertStructureEqual("Project\n" +
            " External Libraries\n" +
-           "  Library: < java 1.5 >\n" +
+           "  Library: < java 1.7 >\n" +
            "   annotations.jar\n" +
            "    classpath.index\n" +
            "    META-INF\n" +

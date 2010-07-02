@@ -20,34 +20,66 @@ import com.intellij.openapi.components.Storage;
   name = "hg4idea.settings",
   storages = @Storage(id = "hg4idea.settings", file = "$PROJECT_FILE$")
 )
-public class HgProjectSettings implements PersistentStateComponent<HgProjectSettings> {
+public class HgProjectSettings implements PersistentStateComponent<HgProjectSettings.State> {
 
-  private boolean checkIncoming = true;
-  private boolean checkOutgoing = true;
+  private boolean myCheckIncoming = true;
+  private boolean myCheckOutgoing = true;
+  private HgGlobalSettings myGlobalSettings;
+
+  public HgProjectSettings(HgGlobalSettings globalSettings) {
+    myGlobalSettings = globalSettings;
+  }
+
+  public State getState() {
+    return new State(myCheckIncoming, myCheckOutgoing, myGlobalSettings);
+  }
+
+  public void loadState(State state) {
+    myCheckIncoming = state.myCheckIncoming;
+    myCheckOutgoing = state.myCheckOutgoing;
+    myGlobalSettings = state.myGlobalSettings;
+  }
 
   public boolean isCheckIncoming() {
-    return checkIncoming;
+    return myCheckIncoming;
   }
 
   public void setCheckIncoming(boolean checkIncoming) {
-    this.checkIncoming = checkIncoming;
+    this.myCheckIncoming = checkIncoming;
   }
 
   public boolean isCheckOutgoing() {
-    return checkOutgoing;
+    return myCheckOutgoing;
   }
 
   public void setCheckOutgoing(boolean checkOutgoing) {
-    this.checkOutgoing = checkOutgoing;
+    this.myCheckOutgoing = checkOutgoing;
   }
 
-  public HgProjectSettings getState() {
-    return this;
+  public String getHgExecutable() {
+    return myGlobalSettings.getHgExecutable();
   }
 
-  public void loadState(HgProjectSettings state) {
-    checkIncoming = state.checkIncoming;
-    checkOutgoing = state.checkOutgoing;
+  public boolean isAutodetectHg() {
+    return myGlobalSettings.isAutodetectHg();
   }
 
+  public void enableAutodetectHg() {
+    myGlobalSettings.enableAutodetectHg();
+  }
+
+  public void setHgExecutable(String text) {
+    myGlobalSettings.setHgExecutable(text);
+  }
+
+  public static class State {
+    private boolean myCheckIncoming;
+    private boolean myCheckOutgoing;
+    private HgGlobalSettings myGlobalSettings;
+    private State(boolean checkIncoming, boolean checkOutgoing, HgGlobalSettings globalSettings) {
+      myCheckIncoming = checkIncoming;
+      myCheckOutgoing = checkOutgoing;
+      myGlobalSettings = globalSettings;
+    }
+  }
 }

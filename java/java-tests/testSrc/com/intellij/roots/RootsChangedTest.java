@@ -24,7 +24,7 @@ import java.io.IOException;
  */
 public class RootsChangedTest extends ModuleTestCase {
   private MessageBusConnection myConnection;
-  private RootsChangedTest.MyModuleRootListener myModuleRootListener;
+  private MyModuleRootListener myModuleRootListener;
 
   protected void setUp() throws Exception {
     super.setUp();
@@ -64,7 +64,7 @@ public class RootsChangedTest extends ModuleTestCase {
     final Module moduleB = createModule("b.iml");
     assertEventsCount(2);
 
-    final Sdk jdk = JavaSdkImpl.getMockJdk("AAA");
+    final Sdk jdk = JavaSdkImpl.getMockJdk17();
     ProjectJdkTable.getInstance().addJdk(jdk);
     assertEventsCount(0);
 
@@ -89,11 +89,11 @@ public class RootsChangedTest extends ModuleTestCase {
     final Module moduleB = createModule("b.iml");
     assertEventsCount(2);
 
-    final Sdk jdk = JavaSdkImpl.getMockJdk("AAA");
+    final Sdk jdk = JavaSdkImpl.getMockJdk17("AAA");
     ProjectJdkTable.getInstance().addJdk(jdk);
     assertEventsCount(0);
 
-    final Sdk jdkBBB = JavaSdkImpl.getMockJdk("BBB");
+    final Sdk jdkBBB = JavaSdkImpl.getMockJdk17("BBB");
     ProjectJdkTable.getInstance().addJdk(jdk);
     assertEventsCount(0);
 

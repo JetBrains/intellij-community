@@ -640,7 +640,7 @@ public class MavenProjectsManager extends SimpleProjectComponent
           myWatcher.scheduleUpdateAll(force, forceImport);
         }
         else {
-          myWatcher.scheduleUpdate(MavenUtil.collectFiles(projects), Collections.EMPTY_LIST, force, forceImport);
+          myWatcher.scheduleUpdate(MavenUtil.collectFiles(projects), Collections.<VirtualFile>emptyList(), force, forceImport);
         }
       }
     });
@@ -981,7 +981,7 @@ public class MavenProjectsManager extends SimpleProjectComponent
     try {
       MavenUtil.run(myProject, "Downloading dependency...", new MavenTask() {
         public void run(MavenProgressIndicator indicator) throws MavenProcessCanceledException {
-          artifact[0] = myProjectsTree.downloadArtifact(mavenProject, id, myEmbeddersManager, new SoutMavenConsole(), indicator);
+          artifact[0] = MavenProjectsTree.downloadArtifact(mavenProject, id, myEmbeddersManager, new SoutMavenConsole(), indicator);
         }
       });
     }

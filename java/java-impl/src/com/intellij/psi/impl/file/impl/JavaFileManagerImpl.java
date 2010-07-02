@@ -213,8 +213,8 @@ public class JavaFileManagerImpl implements JavaFileManager {
 
   @Nullable
   private PsiClass _findClassWithoutRepository(String qName) {
-    VirtualFile[] sourcePath = myProjectRootManager.getFilesFromAllModules(OrderRootType.SOURCES);
-    VirtualFile[] classPath = myProjectRootManager.getFilesFromAllModules(OrderRootType.CLASSES);
+    VirtualFile[] sourcePath = myProjectRootManager.orderEntries().sources().usingCache().getRoots();
+    VirtualFile[] classPath = myProjectRootManager.orderEntries().withoutModuleSourceEntries().classes().usingCache().getRoots();
 
     int index = 0;
     while (index < qName.length()) {

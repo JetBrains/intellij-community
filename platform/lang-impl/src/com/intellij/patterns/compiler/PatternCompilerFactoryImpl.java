@@ -15,13 +15,51 @@
  */
 package com.intellij.patterns.compiler;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.FactoryMap;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
 /**
  * @author Gregory.Shrago
  */
 public class PatternCompilerFactoryImpl extends PatternCompilerFactory {
+  public static final ExtensionPointName<PatternClassBean> PATTERN_CLASS_EP =
+    new ExtensionPointName<PatternClassBean>("com.intellij.patterns.patternClass");
 
+
+  private final Map<String, Class[]> myClasses = new FactoryMap<String, Class[]>() {
+    @Override
+    protected Class[] create(String key) {
+      final ArrayList<Class> result = new ArrayList<Class>(1);
+      final List<String> typeList = key == null? null : Arrays.asList(key.split(",|\\s"));
+      for (PatternClassBean bean : PATTERN_CLASS_EP.getExtensions()) {
+        if (typeList == null || typeList.contains(bean.getAlias())) result.add(bean.getPatternClass());
+      }
+      return result.isEmpty()? ArrayUtil.EMPTY_CLASS_ARRAY : result.toArray(new Class[result.size()]);
+    }
+  };
+  private final Map<Class[], PatternCompiler> myCompilers = new FactoryMap<Class[], PatternCompiler>() {
+    @Override
+    protected PatternCompiler create(Class[] key) {
+      return new PatternCompilerImpl(key);
+    }
+  };
+
+  @NotNull
   @Override
-  public <T> PatternCompiler<T> getPatternCompiler(Class[] patternClasses) {
-    return new PatternCompilerImpl<T>(patternClasses);
+  public Class[] getPatternClasses(String alias) {
+    return myClasses.get(alias);
+  }
+
+  @NotNull
+  @Override
+  public <T> PatternCompiler<T> getPatternCompiler(@NotNull Class[] patternClasses) {
+    return myCompilers.get(patternClasses);
   }
 }

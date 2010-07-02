@@ -120,7 +120,7 @@ public class MoveClassToInnerTest extends CodeInsightTestCase {
 
   private VirtualFile prepareTest() throws Exception {
     String rootBefore = getRoot() + "/before";
-    PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk("java 1.4"));
+    PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk17());
     return PsiTestUtil.createTestProjectStructure(myProject, myModule, rootBefore, myFilesToDelete);
   }
 

@@ -4,6 +4,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -13,6 +14,7 @@ public class HgCloneCommand {
 
   private String repositoryURL;
   private String directory;
+  private final HgCommandAuthenticator authenticator = new HgCommandAuthenticator();
 
   public HgCloneCommand(Project project) {
     this.project = project;
@@ -28,9 +30,9 @@ public class HgCloneCommand {
 
   @Nullable
   public HgCommandResult execute() {
-    List<String> arguments = new LinkedList<String>();
+    final List<String> arguments = new ArrayList<String>(2);
     arguments.add(repositoryURL);
     arguments.add(directory);
-    return HgCommandService.getInstance(project).execute(null, Collections.<String>emptyList(), "clone", arguments, Charset.defaultCharset());
+    return authenticator.executeCommandAndAuthenticateIfNecessary(project, null, repositoryURL, "clone", arguments);
   }
 }

@@ -17,6 +17,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.ui.HgUsernamePasswordDialog;
 
 import java.net.URISyntaxException;
@@ -27,6 +28,7 @@ import java.util.List;
  */
 class HgCommandAuthenticator {
 
+  @Nullable
   protected HgCommandResult executeCommandAndAuthenticateIfNecessary(Project project, VirtualFile localRepository, String remoteRepository, String command, List<String> arguments) {
     HgCommandService service = HgCommandService.getInstance(project);
     HgCommandResult result = service.execute(localRepository, command, arguments);
@@ -70,8 +72,7 @@ class HgCommandAuthenticator {
     }
 
     public void run() {
-      HgUsernamePasswordDialog dialog = new HgUsernamePasswordDialog(project);
-      dialog.setUsername(hgUrl.getUsername());
+      final HgUsernamePasswordDialog dialog = new HgUsernamePasswordDialog(project, hgUrl.getUsername());
       dialog.show();
 
       if (dialog.isOK()) {

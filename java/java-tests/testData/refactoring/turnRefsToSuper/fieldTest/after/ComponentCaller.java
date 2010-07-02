@@ -1,5 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
+import javax.swing.*;
  
 public class ComponentCaller extends JComponent{
     Component1 component1;

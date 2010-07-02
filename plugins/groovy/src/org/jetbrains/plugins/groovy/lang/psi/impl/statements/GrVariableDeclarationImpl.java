@@ -54,7 +54,7 @@ public class GrVariableDeclarationImpl extends GroovyPsiElementImpl implements G
     for (final GrVariable variable : getVariables()) {
       if (lastParent == variable) break;
       if (lastParent instanceof GrMethod && !(variable instanceof GrField)) break;
-      if (!ResolveUtil.processElement(processor, variable)) return false;
+      if (!ResolveUtil.processElement(processor, variable, state)) return false;
     }
 
     return true;

@@ -193,7 +193,7 @@ public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements 
 
     for (PsiReference ref : invoked.getReferences()) {
       if (ref instanceof PsiPolyVariantReference) {
-        for (ResolveResult result : ((PsiPolyVariantReference)ref).multiResolve(false)) {
+        for (ResolveResult result : ((PsiPolyVariantReference)ref).multiResolve(true)) {
           if (result instanceof GroovyResolveResult) {
             res.add((GroovyResolveResult)result);
           }

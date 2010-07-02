@@ -36,7 +36,7 @@ public abstract class LightCodeInsightTestCase extends LightPlatformCodeInsightT
 
   @Override
   protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk("java 1.4");
+    return JavaSdkImpl.getMockJdk17();
   }
 
   protected ModuleType getModuleType() {

@@ -95,7 +95,7 @@ class XsltCommandLineState extends CommandLineState {
             // relaxed check for valid module: when running XSLTs that don't belong to any module, let's assume it is
             // OK to run as if just a JDK has been selected (a missing JDK would already have been complained about above) 
             if (module != null) {
-                OrderEnumerator.orderEntries(module).productionOnly().recursively().collectPaths(parameters.getClassPath());
+              OrderEnumerator.orderEntries(module).productionOnly().recursively().classes().collectPaths(parameters.getClassPath());
             }
         }
 
