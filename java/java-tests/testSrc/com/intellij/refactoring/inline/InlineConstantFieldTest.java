@@ -27,7 +27,7 @@ public class InlineConstantFieldTest extends LightCodeInsightTestCase {
 
   @Override
   protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk15("java 1.5");
+    return JavaSdkImpl.getMockJdk17("java 1.5");
   }
 
   private void doTest() throws Exception {

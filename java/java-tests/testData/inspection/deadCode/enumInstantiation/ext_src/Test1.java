@@ -1,4 +1,4 @@
-public void Test1 {
+public class Test1 {
   void foo() {
     if (Test.FIRST.invert() != Test.SECOND) {
       //assert

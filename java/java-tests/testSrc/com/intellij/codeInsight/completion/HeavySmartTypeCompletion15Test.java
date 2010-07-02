@@ -90,6 +90,6 @@ public class HeavySmartTypeCompletion15Test extends CompletionTestCase {
   }
 
   protected Sdk getTestProjectJdk() {
-    return JavaSdkImpl.getMockJdk15("java 1.5");
+    return JavaSdkImpl.getMockJdk17("java 1.5");
   }
 }

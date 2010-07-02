@@ -115,6 +115,6 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk15("java 1.5");
+    return JavaSdkImpl.getMockJdk17("java 1.5");
   }
 }

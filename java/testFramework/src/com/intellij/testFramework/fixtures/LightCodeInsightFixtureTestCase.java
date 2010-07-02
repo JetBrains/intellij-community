@@ -48,7 +48,7 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase{
     }
 
     public Sdk getSdk() {
-      return JavaSdkImpl.getMockJdk("java 1.4");
+      return JavaSdkImpl.getMockJdk17();
     }
 
     public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
