@@ -14,10 +14,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.indexing.FileBasedIndex;
-import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.PythonDocStringFinder;
-import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.*;
 import com.jetbrains.python.codeInsight.controlflow.PyControlFlowBuilder;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.impl.ScopeImpl;
@@ -25,6 +22,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.resolve.ResolveProcessor;
+import com.jetbrains.python.psi.stubs.PyFileStub;
 import com.jetbrains.python.psi.stubs.PyFromImportStatementStub;
 import com.jetbrains.python.psi.stubs.PyImportStatementStub;
 import com.jetbrains.python.psi.types.PyModuleType;
@@ -259,14 +257,20 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
             }
           }
         }
-        return null;
       }
       else {
         // dull plain resolve, as fast as stub index or better
         ResolveProcessor proc = new ResolveProcessor(name);
         PyResolveUtil.treeCrawlUp(proc, true, getLastChild());
-        return proc.getResult();
+        if (proc.getResult() != null) {
+          return proc.getResult();
+        }
       }
+      List<String> allNames = getDunderAll();
+      if (allNames != null && allNames.contains(name)) {
+        return findExportedName(PyNames.ALL);
+      }
+      return null;
     }
     finally {
       stack.remove(name);
@@ -345,6 +349,37 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   public List<PyFromImportStatement> getFromImports() {
     return PyPsiUtils.collectStubChildren(this, getStub(), PyElementTypes.FROM_IMPORT_STATEMENT, PyFromImportStatement.class);
+  }
+
+  @Override
+  public List<String> getDunderAll() {
+    final StubElement stubElement = getStub();
+    if (stubElement instanceof PyFileStub) {
+      return ((PyFileStub) stubElement).getDunderAll();
+    }
+    return calculateDunderAll();
+  }
+
+  @Nullable
+  public List<String> calculateDunderAll() {
+    final List<PyTargetExpression> attrs = getTopLevelAttributes();
+    for (PyTargetExpression attr : attrs) {
+      if (PyNames.ALL.equals(attr.getName())) {
+        final PyExpression value = attr.findAssignedValue();
+        if (value instanceof PyListLiteralExpression) {
+          final PyExpression[] elements = ((PyListLiteralExpression)value).getElements();
+          List<String> result = new ArrayList<String>(elements.length);
+          for (PyExpression element : elements) {
+            if (!(element instanceof PyStringLiteralExpression)) {
+              return null;
+            }
+            result.add(((PyStringLiteralExpression) element).getStringValue());
+          }
+          return result;
+        }
+      }
+    }
+    return null;
   }
 
   public PyType getType(@NotNull TypeEvalContext context) {

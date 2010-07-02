@@ -51,4 +51,12 @@ public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner
   LanguageLevel getLanguageLevel();
 
   List<PyFromImportStatement> getFromImports();
+
+  /**
+   * Returns the list of names in the __all__ declaration, or null if there is no such declaration in the module.
+   *
+   * @return the list of names or null.
+   */
+  @Nullable
+  List<String> getDunderAll();
 }

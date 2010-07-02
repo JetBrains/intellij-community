@@ -186,6 +186,18 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     assertResolvesTo(PyFunction.class, "do_stuff", "/src/pack2.py");
   }
 
+  public void testDunderAll() {
+    assertResolvesTo(PyTargetExpression.class, "__all__");
+  }
+
+  public void testDunderAllImport() {
+    assertResolvesTo(PyTargetExpression.class, "__all__");
+  }
+
+  public void testDunderAllImportResolve() {
+    assertResolvesTo(PyTargetExpression.class, "__all__");
+  }
+
   private PsiFile prepareFile() throws Exception {
     String testName = getTestName(true);
     String fileName = getTestName(false) + ".py";

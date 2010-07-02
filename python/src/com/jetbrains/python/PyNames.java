@@ -32,6 +32,8 @@ public class PyNames {
   @NonNls public static final String CLASSMETHOD = "classmethod";
   @NonNls public static final String STATICMETHOD = "staticmethod";
 
+  @NonNls public static final String ALL = "__all__";
+
   @NonNls private static final Set<String> _UnderscoredAttributes = new HashSet<String>();
   static {
     _UnderscoredAttributes.add("__all__");
