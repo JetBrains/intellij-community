@@ -52,8 +52,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Eugene Belyaev
@@ -191,7 +191,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     myInfo = info;
     // Active
     final boolean active = info.isActive();
-    myTitlePanel.setActive(active, !info.isSliding());
+    myTitlePanel.setActive(active);
 
     //todo myToolWindowBorder.setActive(active);
     myFloatingDockSeparator.setActive(active);
