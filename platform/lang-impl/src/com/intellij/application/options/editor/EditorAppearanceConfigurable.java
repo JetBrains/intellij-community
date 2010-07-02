@@ -48,6 +48,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
   private JCheckBox myCbRightMargin;
   private JCheckBox myCbShowLineNumbers;
   private JCheckBox myCbShowWhitespaces;
+  private JCheckBox myCbShowSoftwraps;
   private JTextField myBlinkIntervalField;
   private JPanel myAddonPanel;
   private JCheckBox myCbShowMethodSeparators;
@@ -82,6 +83,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     myCbShowLineNumbers.setSelected(editorSettings.isLineNumbersShown());
     myCbBlockCursor.setSelected(editorSettings.isBlockCursor());
     myCbShowWhitespaces.setSelected(editorSettings.isWhitespacesShown());
+    myCbShowSoftwraps.setSelected(editorSettings.isSoftWrapsShown());
     myShowVerticalIndentGuidesCheckBox.setSelected(editorSettings.isIndentGuidesShown());
     myAntialiasingInEditorCheckBox.setSelected(UISettings.getInstance().ANTIALIASING_IN_EDITOR);
     myCbShowIconsInGutter.setSelected(DaemonCodeAnalyzerSettings.getInstance().SHOW_SMALL_ICONS_IN_GUTTER);
@@ -103,6 +105,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     editorSettings.setRightMarginShown(myCbRightMargin.isSelected());
     editorSettings.setLineNumbersShown(myCbShowLineNumbers.isSelected());
     editorSettings.setWhitespacesShown(myCbShowWhitespaces.isSelected());
+    editorSettings.setSoftwrapsShown(myCbShowSoftwraps.isSelected());
     editorSettings.setIndentGuidesShown(myShowVerticalIndentGuidesCheckBox.isSelected());
 
     EditorOptionsPanel.reinitAllEditors();
@@ -135,6 +138,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
 
     isModified |= isModified(myCbShowLineNumbers, editorSettings.isLineNumbersShown());
     isModified |= isModified(myCbShowWhitespaces, editorSettings.isWhitespacesShown());
+    isModified |= isModified(myCbShowSoftwraps, editorSettings.isSoftWrapsShown());
     isModified |= isModified(myShowVerticalIndentGuidesCheckBox, editorSettings.isIndentGuidesShown());
     isModified |= isModified(myCbShowMethodSeparators, DaemonCodeAnalyzerSettings.getInstance().SHOW_METHOD_SEPARATORS);
     isModified |= isModified(myCbShowIconsInGutter, DaemonCodeAnalyzerSettings.getInstance().SHOW_SMALL_ICONS_IN_GUTTER);

@@ -308,17 +308,13 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
     myOffset = myEditor.logicalPositionToOffset(myLogicalCaret);
     LOG.assertTrue(myOffset >= 0 && myOffset <= myEditor.getDocument().getTextLength());
 
-    int caretOffset = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line, 0)));
-    int caretLine = doc.getLineNumber(caretOffset);
-    myVisualLineStart = doc.getLineStartOffset(caretLine);
-    myVisualLineEnd = doc.getLineEndOffset(caretLine) + 1;
+    myVisualLineStart = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line, 0)));
+    myVisualLineEnd = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line + 1, 0)));
 
     myEditor.updateCaretCursor();
     requestRepaint(oldInfo);
 
-    if (oldCaretPosition.column + oldCaretPosition.softWrapColumnDiff != myLogicalCaret.column + myLogicalCaret.softWrapColumnDiff
-        || oldCaretPosition.line + oldCaretPosition.softWrapLinesBeforeCurrentLogicalLine != myLogicalCaret.line + myLogicalCaret.softWrapLinesBeforeCurrentLogicalLine)
-    {
+    if (!oldCaretPosition.toVisualPosition().equals(myLogicalCaret.toVisualPosition())) {
       CaretEvent event = new CaretEvent(myEditor, oldCaretPosition, myLogicalCaret);
       for (CaretListener listener : myCaretListeners) {
         listener.caretPositionChanged(event);
@@ -364,18 +360,6 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
   public int getOffset() {
     validateCallContext();
     return myOffset;
-  }
-
-  /**
-   * There is a possible case that single logical line is spread to more than one visual lines because of soft wraps. This method
-   * allows to receive information about vertical range occupied by the active logical line, i.e. it identifies
-   * <code>'y'</code> coordinate of the first visual line that corresponds to the logical line and total height
-   * of all visual lines that correspond to the active logical line.
-   *
-   * @return    object that encapsulates information about visual vertical range occupied by the current logical line on a screen
-   */
-  public VerticalInfo getVisualCaretInfo() {
-    return myCaretInfo;
   }
 
   public int getVisualLineStart() {

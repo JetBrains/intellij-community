@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.mock.MockFoldRegion;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapsStorage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -191,7 +192,9 @@ public class SoftWrapModelImplTest {
       });
     }});
 
-    myModel = new SoftWrapModelImpl(myEditor, myStorage);
+    SoftWrapPainter painter = myMockery.mock(SoftWrapPainter.class);
+
+    myModel = new SoftWrapModelImpl(myEditor, myStorage, painter);
   }
 
   @After

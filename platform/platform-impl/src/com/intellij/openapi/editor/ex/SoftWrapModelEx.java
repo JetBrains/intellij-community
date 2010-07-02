@@ -19,8 +19,10 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.SoftWrapModel;
 import com.intellij.openapi.editor.TextChange;
 import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.util.List;
 
 /**
@@ -69,4 +71,16 @@ public interface SoftWrapModelEx extends SoftWrapModel {
    * @return    unmodifiable collection of soft wraps currently registered within the current model
    */
   List<TextChange> getRegisteredSoftWraps();
+
+  /**
+   * Asks to paint drawing of target type at the given graphics buffer at the given position.
+   *
+   * @param g             target graphics buffer to draw in
+   * @param drawingType   target drawing type
+   * @param x             target <code>'x'</code> coordinate to use
+   * @param y             target <code>'y'</code> coordinate to use
+   * @param lineHeight    line height used at editor
+   * @return              painted drawing width
+   */
+  int paint(@NotNull Graphics g, @NotNull SoftWrapDrawingType drawingType, int x, int y, int lineHeight);
 }

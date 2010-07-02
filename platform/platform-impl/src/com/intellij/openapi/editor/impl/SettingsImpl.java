@@ -73,6 +73,7 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myIsRenameVariablesInplace = null;
   private Boolean myIsRefrainFromScrolling = null;
   private Boolean myUseSoftWraps = null;
+  private Boolean myIsSoftWrapsShown = null;
 
   public boolean isRightMarginShown() {
     return myIsRightMarginShown != null
@@ -394,6 +395,16 @@ public class SettingsImpl implements EditorSettings {
     if (newValue.equals(myUseSoftWraps)) return;
     myUseSoftWraps = newValue;
     fireEditorRefresh();
+  }
+
+  @Override
+  public boolean isSoftWrapsShown() {
+    return myIsSoftWrapsShown != null ? myIsWhitespacesShown.booleanValue() : EditorSettingsExternalizable.getInstance().isSoftWrapsShown();
+  }
+
+  @Override
+  public void setShowSoftWraps(boolean show) {
+    myIsWhitespacesShown = Boolean.valueOf(show);
   }
 
   private void fireEditorRefresh() {

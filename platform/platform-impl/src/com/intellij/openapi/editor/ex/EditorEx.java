@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -123,4 +124,6 @@ public interface EditorEx extends Editor {
   int calcColumnNumber(CharSequence text, int start, int offset, int tabSize);
 
   int calcColumnNumber(int offset, int lineIndex);
+
+  TextDrawingCallback getTextDrawingCallback();
 }

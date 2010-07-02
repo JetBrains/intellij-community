@@ -100,4 +100,7 @@ public interface EditorSettings {
 
   boolean isUseSoftWraps();
   void setUseSoftWraps(boolean use);
+
+  boolean isSoftWrapsShown();
+  void setShowSoftWraps(boolean show);
 }
