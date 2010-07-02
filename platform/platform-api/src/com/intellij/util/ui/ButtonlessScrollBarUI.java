@@ -226,6 +226,10 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   }
 
   private static class EmptyButton extends JButton {
+    private EmptyButton() {
+      setFocusable(false);
+    }
+
     @Override
     public Dimension getMaximumSize() {
       return new Dimension(0, 0);

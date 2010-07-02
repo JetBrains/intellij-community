@@ -67,7 +67,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private static final Icon ERRORS_FOUND_ICON = IconLoader.getIcon("/general/errorsFound.png");
 
   private final EditorImpl myEditor;
-  private MyErrorPanel myErrorPanel;
   private ErrorStripeRenderer myErrorStripeRenderer = null;
   private final List<ErrorStripeListener> myErrorMarkerListeners = new ArrayList<ErrorStripeListener>();
   private ErrorStripeListener[] myCachedErrorMarkerListeners = null;
@@ -464,18 +463,16 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
   public void setErrorStripeVisible(boolean val) {
     if (val) {
-      myErrorPanel = new MyErrorPanel();
-      myEditor.getVerticalScrollBar().setUI(myErrorPanel);
+      myEditor.getVerticalScrollBar().setUI(new MyErrorPanel());
     }
-    else if (myErrorPanel != null) {
+    else {
       myEditor.getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createNormal());
-      myErrorPanel = null;
     }
   }
 
   public void setErrorPanelPopupHandler(@NotNull PopupHandler handler) {
-    if (myErrorPanel != null) {
-      myErrorPanel.setPopupHandler(handler);
+    if (myEditor.getVerticalScrollBar().getUI() instanceof MyErrorPanel) {
+      ((MyErrorPanel)myEditor.getVerticalScrollBar().getUI()).setPopupHandler(handler);
     }
   }
 
@@ -498,9 +495,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     myErrorStripeRenderer = renderer;
     //try to not cancel tooltips here, since it is being called after every writeAction, even to the console
     //HintManager.getInstance().getTooltipController().cancelTooltips();
-    if (myErrorPanel != null) {
-      myErrorPanel.repaint();
-    }
+    myEditor.getVerticalScrollBar().repaint();
   }
 
   private void assertIsDispatchThread() {
@@ -520,10 +515,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     markDirtied();
     EditorImpl.MyScrollBar scrollBar = myEditor.getVerticalScrollBar();
     myScrollBarHeight = scrollBar.getSize().height;
-
-    if (myErrorPanel != null) {
-      myErrorPanel.repaint();
-    }
+    scrollBar.repaint();
   }
 
   private List<RangeHighlighter> getSortedHighlighters() {
@@ -609,9 +601,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     @Override
-    public void installUI(JComponent c) {
-      c.putClientProperty("JComponent.sizeVariant", "large");
-      super.installUI(c);
+    protected void uninstallListeners() {
+      scrollbar.removeMouseMotionListener(this);
+      scrollbar.removeMouseListener(this);
+      super.uninstallListeners();
     }
 
     @Override
@@ -744,10 +737,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
       myHandler = handler;
       scrollbar.addMouseListener(handler);
-    }
-
-    public void repaint() {
-      scrollbar.repaint();
     }
   }
 

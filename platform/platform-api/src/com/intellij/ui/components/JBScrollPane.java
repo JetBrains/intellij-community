@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.components;
 
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 
 import javax.swing.*;
@@ -22,49 +23,53 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.ScrollPaneUI;
 import java.awt.*;
 
-/**
- * @author Vladimir Kondratyev
- */
 public class JBScrollPane extends JScrollPane {
-  public JBScrollPane(Component view) {
-    super(view);
+  public JBScrollPane() {
+    init();
   }
 
-  public JBScrollPane() {
+  public JBScrollPane(Component view) {
+    super(view);
+    init();
   }
 
   public JBScrollPane(int vsbPolicy, int hsbPolicy) {
     super(vsbPolicy, hsbPolicy);
+    init();
   }
-
 
   public JBScrollPane(Component view, int vsbPolicy, int hsbPolicy) {
     super(view, vsbPolicy, hsbPolicy);
+    init();
   }
 
-  /**
-   * Scrollpane's background should be always in sync with view's background
-   */
+  private void init() {
+    setBorder(IdeBorderFactory.createSimpleBorder());
+  }
+
   public void setUI(ScrollPaneUI ui) {
     super.setUI(ui);
-
     setViewportBorder(new EmptyBorder(1, 1, 1, 1));
-
-    // We need to set color of viewport later because UIManager
-    // updates UI of scroll pane and only after that updates UI
-    // of its children. To be the last in this sequence we need
-    // set background later.
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        Component component = getViewport().getView();
-        if (component != null) {
-          getViewport().setBackground(component.getBackground());
-        }
-      }
-    });
-
-    getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createNormal());
-    getHorizontalScrollBar().setUI(ButtonlessScrollBarUI.createNormal());
   }
 
+  @Override
+  public JScrollBar createVerticalScrollBar() {
+    return new MyScrollBar(JScrollBar.VERTICAL);
+  }
+
+  @Override
+  public JScrollBar createHorizontalScrollBar() {
+    return new MyScrollBar(JScrollBar.HORIZONTAL);
+  }
+
+  private class MyScrollBar extends ScrollBar {
+    public MyScrollBar(int orientation) {
+      super(orientation);
+    }
+
+    @Override
+    public void updateUI() {
+      setUI(ButtonlessScrollBarUI.createNormal());
+    }
+  }
 }

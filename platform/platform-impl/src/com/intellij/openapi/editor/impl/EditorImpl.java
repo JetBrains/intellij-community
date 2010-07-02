@@ -59,6 +59,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.LightweightHint;
+import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
@@ -529,8 +530,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myGutterComponent.setOpaque(true);
 
     myScrollPane.setVerticalScrollBar(myVerticalScrollBar);
-    final MyScrollBar horizontalScrollBar = new MyScrollBar(Adjustable.HORIZONTAL);
-    myScrollPane.setHorizontalScrollBar(horizontalScrollBar);
     myScrollPane.setViewportView(myEditorComponent);
     //myScrollPane.setBorder(null);
     myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
@@ -3299,20 +3298,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  class MyScrollBar extends JScrollBar {
+  class MyScrollBar extends JBScrollBar {
     @NonNls private static final String DECREASE_BUTTON_FIELD = "decrButton";
     @NonNls private static final String INCREASE_BUTTON_FIELD = "incrButton";
     @NonNls private static final String APPLE_LAF_AQUA_SCROLL_BAR_UI_CLASS = "apple.laf.AquaScrollBarUI";
 
     private MyScrollBar(int orientation) {
       super(orientation);
-      setFocusable(false);
-      putClientProperty("JScrollBar.fastWheelScrolling", Boolean.TRUE); // fast scrolling for JDK 6
-    }
-
-    @Override
-    public void updateUI() {
-      setUI(ButtonlessScrollBarUI.createNormal());
     }
 
     /**
@@ -4687,11 +4679,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                  : e.isControlDown() && !e.isMetaDown() && !e.isAltDown() && !e.isShiftDown();
         if (changeFontSize) {
           setFontSize(myScheme.getEditorFontSize() + e.getWheelRotation());
-          return;
+          return;                                                            
         }
       }
 
       super.processMouseWheelEvent(e);
+    }
+
+    @Override
+    public JScrollBar createVerticalScrollBar() {
+      return new MyScrollBar(Adjustable.VERTICAL);
     }
   }
 
