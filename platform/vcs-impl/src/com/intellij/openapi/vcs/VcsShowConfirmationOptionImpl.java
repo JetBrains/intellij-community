@@ -44,4 +44,9 @@ public class VcsShowConfirmationOptionImpl extends VcsAbstractSetting implements
   public void setValue(Value value) {
     myValue = value;
   }
+
+  @Override
+  public boolean isPersistent() {
+    return true;
+  }
 }

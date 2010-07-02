@@ -97,6 +97,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   private final List<CheckinHandlerFactory> myRegisteredBeforeCheckinHandlers = new ArrayList<CheckinHandlerFactory>();
   private final EventDispatcher<VcsListener> myEventDispatcher = EventDispatcher.create(VcsListener.class);
+  
   private boolean myMappingsLoaded = false;
   private boolean myHaveLegacyVcsConfiguration = false;
   private boolean myCheckinHandlerFactoriesLoaded = false;

@@ -16,6 +16,8 @@
 package com.intellij.openapi.diff.impl.patch.formove;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
@@ -49,6 +51,16 @@ public class PathMerger {
     return getFile(new IoFilePathMerger(base), path, tail);
   }
   
+  @Nullable
+  public static FilePath getFile(final FilePath base, final String path) {
+    return getFile(new FilePathPathMerger(base), path);
+  }
+
+  @Nullable
+  public static FilePath getFile(final FilePath base, final String path, final List<String> tail) {
+    return getFile(new FilePathPathMerger(base), path, tail);
+  }
+
   @Nullable
   public static <T> T getFile(final FilePathMerger<T> merger, final String path) {
     if (path == null) {
@@ -191,6 +203,39 @@ public class PathMerger {
         return myChildPathElements.get(myChildPathElements.size() - 1);
       }
       return myBase == null ? null : myBase.getName();
+    }
+  }
+
+  public static class FilePathPathMerger implements FilePathMerger<FilePath> {
+    private final IoFilePathMerger myIoDelegate;
+    private boolean myIsDirectory;
+
+    public FilePathPathMerger(final FilePath base) {
+      myIoDelegate = new IoFilePathMerger(base.getIOFile());
+    }
+
+    @Override
+    public boolean down(String name) {
+      return myIoDelegate.down(name);
+    }
+
+    @Override
+    public boolean up() {
+      return myIoDelegate.up();
+    }
+
+    @Override
+    public FilePath getResult() {
+      return new FilePathImpl(myIoDelegate.getResult(), myIsDirectory);
+    }
+
+    @Override
+    public String getCurrentName() {
+      return myIoDelegate.getCurrentName();
+    }
+
+    public void setIsDirectory(boolean isDirectory) {
+      myIsDirectory = isDirectory;
     }
   }
 

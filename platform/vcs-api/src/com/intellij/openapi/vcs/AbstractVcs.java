@@ -446,6 +446,10 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
     return RemoteDifferenceStrategy.ASK_LATEST_REVISION;
   }
 
+  public boolean areDirectoriesVersionedItems() {
+    return false;
+  }
+
   @Nullable
   protected TreeDiffProvider getTreeDiffProviderImpl() {
     return null;

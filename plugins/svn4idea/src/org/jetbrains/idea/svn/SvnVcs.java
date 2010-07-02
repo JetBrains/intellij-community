@@ -1048,4 +1048,9 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   public SvnBranchPointsCalculator getSvnBranchPointsCalculator() {
     return mySvnBranchPointsCalculator;
   }
+
+  @Override
+  public boolean areDirectoriesVersionedItems() {
+    return true;
+  }
 }
