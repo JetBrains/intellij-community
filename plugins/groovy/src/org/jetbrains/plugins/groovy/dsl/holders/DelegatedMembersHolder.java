@@ -21,6 +21,7 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.containers.hash.HashSet;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.Set;
 
@@ -36,11 +37,10 @@ public class DelegatedMembersHolder implements CustomMembersHolder {
   }
 
   public boolean processMembers(PsiScopeProcessor processor) {
-    final NameHint nameHint = processor.getHint(NameHint.KEY);
-    final String expectedName = nameHint == null ? null : nameHint.getName(ResolveState.initial());
+    String name = ResolveUtil.getNameHint(processor);
 
     for (PsiMember member : myMembers) {
-      if ((expectedName == null || expectedName.equals(member.getName())) && !processor.execute(member, ResolveState.initial())) {
+      if ((name == null || name.equals(member.getName())) && !processor.execute(member, ResolveState.initial())) {
         return false;
       }
     }

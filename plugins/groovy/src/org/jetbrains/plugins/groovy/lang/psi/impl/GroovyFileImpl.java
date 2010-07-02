@@ -137,8 +137,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     final ClassHint classHint = processor.getHint(ClassHint.KEY);
     final boolean processClasses = classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.CLASS);
 
-    final NameHint nameHint = processor.getHint(NameHint.KEY);
-    final String expectedName = nameHint == null ? null : nameHint.getName(state);
+    final String expectedName = ResolveUtil.getNameHint(processor);
 
     PsiScopeProcessor importProcessor = !processClasses || expectedName == null ? processor : new BaseScopeProcessor() {
       public boolean execute(PsiElement element, ResolveState state) {

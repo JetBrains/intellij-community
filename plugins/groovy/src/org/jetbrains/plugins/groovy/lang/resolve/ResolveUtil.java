@@ -130,6 +130,16 @@ public class ResolveUtil {
     return true;
   }
 
+  @Nullable
+  public static String getNameHint(PsiScopeProcessor processor) {
+    NameHint nameHint = processor.getHint(NameHint.KEY);
+    if (nameHint == null) {
+      return null;
+    }
+
+    return nameHint.getName(ResolveState.initial());
+  }
+  
   /**
    * @deprecated
    * use {@link #processElement(PsiScopeProcessor, PsiNamedElement, ResolveState)} instead

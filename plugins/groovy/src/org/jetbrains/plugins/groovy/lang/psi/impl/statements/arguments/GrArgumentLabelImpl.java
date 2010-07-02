@@ -66,8 +66,17 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
 
   public PsiReference getReference() {
     PsiReference[] otherReferences = ReferenceProvidersRegistry.getReferencesFromProviders(this, GrArgumentLabel.class);
-    PsiReference[] thisReference = {this};
-    return new PsiMultiReference(otherReferences.length == 0 ? thisReference : ArrayUtil.mergeArrays(thisReference, otherReferences, PsiReference.class), this);
+    if (otherReferences.length == 0) {
+      return this;
+    }
+
+    PsiReference[] refs = new PsiReference[otherReferences.length + 1];
+    refs[0] = this;
+    for (int i = 0; i < otherReferences.length; i++) {
+      refs[i + 1] = otherReferences[i];
+    }
+    
+    return new PsiMultiReference(refs, this);
   }
 
   @Nullable

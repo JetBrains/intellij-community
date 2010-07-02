@@ -4,7 +4,6 @@ import com.intellij.lang.ant.dom.AntDomExtender;
 import com.intellij.lang.ant.psi.impl.AntIntrospector;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
-import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,15 +47,13 @@ class AntBuilderMethod extends LightMethodBuilder implements GrBuilderMethod {
   public boolean processNestedElements(PsiScopeProcessor processor) {
     final AntIntrospector introspector = AntDomExtender.getIntrospector(myAntClass);
     if (introspector != null) {
-      final NameHint hint = processor.getHint(NameHint.KEY);
+      String expectedName = ResolveUtil.getNameHint(processor);
       final PsiType closureType = getParameterList().getParameters()[1].getType();
 
       for (String name : Collections.list(introspector.getNestedElements())) {
-        if (hint == null || hint.getName(ResolveState.initial()).equals(name)) {
+        if (expectedName == null || expectedName.equals(name)) {
           final AntBuilderMethod method = new AntBuilderMethod(myPlace, name, closureType, introspector.getElementType(name));
-          if (!ResolveUtil.processElement(processor, method)) {
-            return false;
-          }
+          if (!processor.execute(method, ResolveState.initial())) return false;
         }
       }
     }
