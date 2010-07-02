@@ -83,7 +83,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
   }
 
   public final void setVersionString(String versionString) {
-    myVersionString = (versionString == null || "".equals(versionString)) ? null : versionString;
+    myVersionString = versionString == null || "".equals(versionString) ? null : versionString;
     myVersionDefined = true;
   }
 
