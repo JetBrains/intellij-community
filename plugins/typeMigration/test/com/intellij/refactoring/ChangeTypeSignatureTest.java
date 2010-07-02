@@ -18,7 +18,7 @@ import com.intellij.testFramework.LightCodeInsightTestCase;
 
 public class ChangeTypeSignatureTest extends LightCodeInsightTestCase {
   protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk15("java 1.5");
+    return JavaSdkImpl.getMockJdk17("java 1.5");
   }
 
   @Override
