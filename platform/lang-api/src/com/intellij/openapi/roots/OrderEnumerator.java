@@ -71,6 +71,14 @@ public abstract class OrderEnumerator {
     return withoutDepModules().withoutLibraries().withoutModuleSourceEntries();
   }
 
+  public VirtualFile[] getAllLibrariesAndSdkClassesRoots() {
+    return withoutModuleSourceEntries().recursively().exportedOnly().classes().usingCache().getRoots();
+  }
+
+  public VirtualFile[] getAllSourceRoots() {
+    return recursively().exportedOnly().sources().usingCache().getRoots();
+  }
+
   /**
    * Recursively process modules on which the module depends
    * @return this instance

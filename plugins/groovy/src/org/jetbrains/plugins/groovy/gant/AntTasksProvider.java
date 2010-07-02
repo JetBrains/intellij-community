@@ -19,13 +19,15 @@ import com.intellij.lang.ant.psi.impl.ReflectedProject;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -97,7 +99,7 @@ public class AntTasksProvider {
           final Module module = ModuleUtil.findModuleForPsiElement(groovyFile);
           Set<VirtualFile> jars = new HashSet<VirtualFile>();
           if (module != null) {
-            jars.addAll(Arrays.asList(ModuleRootManager.getInstance(module).getFiles(OrderRootType.CLASSES)));
+            jars.addAll(Arrays.asList(OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots()));
           }
 
           if (groovyFile.isScript() && GroovyScriptType.getScriptType(groovyFile) instanceof GantScriptType) {

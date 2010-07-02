@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -90,7 +91,7 @@ public abstract class GroovyScriptRunner {
 
   @Nullable
   protected static VirtualFile findGroovyJar(@NotNull Module module) {
-    final VirtualFile[] files = ModuleRootManager.getInstance(module).getFiles(OrderRootType.CLASSES);
+    final VirtualFile[] files = OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots();
     for (VirtualFile root : files) {
       if (root.getName().matches(GroovyConfigUtils.GROOVY_JAR_PATTERN) || root.getName().matches(GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN)) {
         return root;
