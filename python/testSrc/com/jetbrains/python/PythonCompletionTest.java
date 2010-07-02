@@ -4,6 +4,7 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 
 public class PythonCompletionTest extends PyLightFixtureTestCase {
@@ -116,7 +117,11 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
   }
 
   public void testSeenMembers() throws Exception {  // PY-1181
-    doTest();
+    final String testName = "completion/" + getTestName(true);
+    myFixture.configureByFile(testName + ".py");
+    final LookupElement[] elements = myFixture.completeBasic();
+    assertEquals(1, elements.length);
+    assertEquals("children", elements [0].getLookupString());
   }
 
   public void testImportModule() throws Exception {
