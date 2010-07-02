@@ -158,16 +158,18 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     int hgap = vertical ? 2 : 1;
     int vgap = vertical ? 1 : 2;
 
+
+
     int w = adjustThumbWidth(thumbBounds.width - hgap * 2);
     int h = thumbBounds.height - vgap * 2;
 
+    // leave one pixel between thumb and right or bottom edge
     if (vertical) {
       h -= 1;
     }
     else {
       w -= 1;
     }
-
     final GradientPaint paint;
     final Color start = adjustColor(GRADIENT_LIGHT);
     final Color end = adjustColor(GRADIENT_DARK);
@@ -180,10 +182,10 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     }
 
     ((Graphics2D)g).setPaint(paint);
-    g.fillRoundRect(hgap, vgap, w + 1, h + 1, 4, 4);
+    g.fillRect(hgap + 1, vgap + 1, w - 1, h - 1);
 
     g.setColor(GRADIENT_THUMB_BORDER);
-    g.drawRoundRect(hgap, vgap, w, h, 4, 4);
+    g.drawRoundRect(hgap, vgap, w, h, 3, 3);
   }
 
   protected int adjustThumbWidth(int width) {
