@@ -16,6 +16,8 @@
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -36,7 +38,12 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
   private final boolean myUsePlatformSourceRoot;
 
   public LightTempDirTestFixtureImpl() {
-    mySourceRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///");
+    final VirtualFile fsRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///");
+    mySourceRoot = new WriteAction<VirtualFile>() {
+      protected void run(final Result<VirtualFile> result) throws Throwable {
+        result.setResult(fsRoot.createChildDirectory(this, "root"));
+      }
+    }.execute().getResultObject();
     myUsePlatformSourceRoot = false;
   }
 
@@ -138,7 +145,7 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
   }
 
   public String getTempDirPath() {
-    return "temp:///";
+    return "temp:///root";
   }
 
   public VirtualFile getFile(@NonNls String path) {
@@ -187,10 +194,17 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
   public void deleteAll() {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        final VirtualFile[] children = getSourceRoot().getChildren();
-        for (VirtualFile child : children) {
+        final VirtualFile[] toDelete;
+        if (myUsePlatformSourceRoot) {
+          toDelete = getSourceRoot().getChildren();
+        }
+        else {
+          toDelete = new VirtualFile[] {mySourceRoot};
+        }
+
+        for (VirtualFile file : toDelete) {
           try {
-            child.delete(this);
+            file.delete(this);
           }
           catch (IOException e) {
             // ignore
