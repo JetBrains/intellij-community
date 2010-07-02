@@ -16,8 +16,6 @@
 package com.intellij.openapi.actionSystem.ex;
 
 
-
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.NotNull;
@@ -27,22 +25,10 @@ import javax.swing.*;
 import java.util.Comparator;
 
 
-
-public abstract class ActionManagerEx extends ActionManager{
-
-  private boolean myActionPopupStackEmpty;
-
-
-
-  public static ActionManagerEx getInstanceEx(){
-
+public abstract class ActionManagerEx extends ActionManager {
+  public static ActionManagerEx getInstanceEx() {
     return (ActionManagerEx)getInstance();
-
   }
-
-
-
-
 
   public abstract void fireBeforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event);
 
@@ -55,9 +41,7 @@ public abstract class ActionManagerEx extends ActionManager{
   public abstract void fireBeforeEditorTyping(char c, DataContext dataContext);
 
   /**
-
    * For logging purposes
-
    */
 
   public abstract String getLastPreformedActionId();
@@ -65,31 +49,23 @@ public abstract class ActionManagerEx extends ActionManager{
   public abstract String getPrevPreformedActionId();
 
 
-
   /**
-
    * Comparator compares action ids (String) on order of action registration.
-
+   *
    * @return a negative integer if action that corresponds to the first id was registered earler than the action that corresponds
-
-   *  to the second id; zero if both ids are equal; a positive number otherwise.
-
+   *         <p/>
+   *         to the second id; zero if both ids are equal; a positive number otherwise.
    */
 
   public abstract Comparator<String> getRegistrationOrderComparator();
 
 
-
- 
-
   /**
-
    * Similar to {@link KeyStroke#getKeyStroke(String)} but allows keys in lower case.
-
+   * <p/>
    * I.e. "control x" is accepted and interpreted as "control X".
-
+   *
    * @return null if string cannot be parsed.
-
    */
 
   @Nullable
@@ -102,12 +78,12 @@ public abstract class ActionManagerEx extends ActionManager{
 
       result = KeyStroke.getKeyStroke(s);
 
-    } catch (Exception ex) {
+    }
+    catch (Exception ex) {
 
       //ok
 
     }
-
 
 
     if (result == null && s != null && s.length() >= 2 && s.charAt(s.length() - 2) == ' ') {
@@ -118,7 +94,8 @@ public abstract class ActionManagerEx extends ActionManager{
 
         result = KeyStroke.getKeyStroke(s1);
 
-      } catch (Exception ex) {
+      }
+      catch (Exception ex) {
 
         // ok
 
@@ -127,20 +104,14 @@ public abstract class ActionManagerEx extends ActionManager{
     }
 
 
-
     return result;
 
   }
 
 
-
-  public abstract String [] getPluginActions(PluginId pluginId);
-
-
+  public abstract String[] getPluginActions(PluginId pluginId);
 
   public abstract void queueActionPerformedEvent(final AnAction action, DataContext context, AnActionEvent event);
-
-
 
   public abstract boolean isActionPopupStackEmpty();
 
