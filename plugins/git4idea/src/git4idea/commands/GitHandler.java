@@ -161,7 +161,7 @@ public abstract class GitHandler {
   protected GitHandler(@NotNull Project project, @NotNull File directory, @NotNull GitCommand command) {
     myProject = project;
     myCommand = command;
-    mySettings = GitVcsSettings.getInstanceChecked(project);
+    mySettings = GitVcsSettings.getInstance(project);
     myEnv = new HashMap<String, String>(System.getenv());
     if (!myEnv.containsKey("HOME")) {
       String home = System.getProperty("user.home");
