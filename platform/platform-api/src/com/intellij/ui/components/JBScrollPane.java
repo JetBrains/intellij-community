@@ -45,6 +45,10 @@ public class JBScrollPane extends JScrollPane {
 
   private void init() {
     setBorder(IdeBorderFactory.createSimpleBorder());
+    setCorner(UPPER_RIGHT_CORNER, new Corner(UPPER_RIGHT_CORNER));
+    setCorner(UPPER_LEFT_CORNER, new Corner(UPPER_LEFT_CORNER));
+    setCorner(LOWER_RIGHT_CORNER, new Corner(LOWER_RIGHT_CORNER));
+    setCorner(LOWER_LEFT_CORNER, new Corner(LOWER_LEFT_CORNER));
   }
 
   public void setUI(ScrollPaneUI ui) {
@@ -70,6 +74,40 @@ public class JBScrollPane extends JScrollPane {
     @Override
     public void updateUI() {
       setUI(ButtonlessScrollBarUI.createNormal());
+    }
+  }
+
+  private static class Corner extends JPanel {
+    private final String myPos;
+
+    public Corner(String pos) {
+      myPos = pos;
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+      g.setColor(ButtonlessScrollBarUI.TRACK_BACKGROUND);
+      g.fillRect(0, 0, getWidth(), getHeight());
+
+      g.setColor(ButtonlessScrollBarUI.TRACK_BORDER);
+
+      int x2 = getWidth() - 1;
+      int y2 = getHeight() - 1;
+
+      if (myPos == UPPER_LEFT_CORNER || myPos == UPPER_RIGHT_CORNER) {
+        g.drawLine(0, y2, x2, y2);
+      }
+      if (myPos == LOWER_LEFT_CORNER || myPos == LOWER_RIGHT_CORNER) {
+        g.drawLine(0, 0, x2, 0);
+      }
+
+      if (myPos == UPPER_LEFT_CORNER || myPos == LOWER_LEFT_CORNER) {
+        g.drawLine(x2, 0, x2, y2);
+      }
+
+      if (myPos == UPPER_RIGHT_CORNER || myPos == LOWER_RIGHT_CORNER) {
+        g.drawLine(0, 0, 0, y2);
+      }
     }
   }
 }
