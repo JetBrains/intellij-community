@@ -118,7 +118,7 @@ public class OrderRootType {
   }
 
   /**
-   * Whether ModuleOrderEntry.getPaths() collects the list of roots from dependent modules.
+   * Whether {@link ModuleOrderEntry#getFiles(OrderRootType)} collects the list of roots from dependent modules.
    */
   public boolean collectFromDependentModules() {
     return false;

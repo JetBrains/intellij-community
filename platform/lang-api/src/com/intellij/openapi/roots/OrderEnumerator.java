@@ -116,6 +116,13 @@ public abstract class OrderEnumerator {
   public abstract OrderRootsEnumerator sources();
 
   /**
+   *
+   * @param rootType root type
+   * @return {@link OrderRootsEnumerator} instance for processing roots of the specified type
+   */
+  public abstract OrderRootsEnumerator roots(@NotNull OrderRootType rootType);
+
+  /**
    * @return classes roots for all entries processed by this enumerator
    */
   public VirtualFile[] getClassesRoots() {
@@ -166,6 +173,7 @@ public abstract class OrderEnumerator {
    * @param module module
    * @return new enumerator instance
    */
+  @NotNull
   public static OrderEnumerator orderEntries(@NotNull Module module) {
     return ModuleRootManager.getInstance(module).orderEntries();
   }
@@ -176,6 +184,7 @@ public abstract class OrderEnumerator {
    * @param project project
    * @return new enumerator instance
    */
+  @NotNull
   public static OrderEnumerator orderEntries(@NotNull Project project) {
     return ProjectRootManager.getInstance(project).orderEntries();
   }

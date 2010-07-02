@@ -81,6 +81,7 @@ public abstract class ProjectRootManager implements ModificationTracker {
    * modules are processed so {@link OrderEnumerator#recursively()} option is ignored and {@link OrderEnumerator#withoutDepModules()} option is forced
    * @return new enumerator instance
    */
+  @NotNull
   public abstract OrderEnumerator orderEntries();
 
   /**

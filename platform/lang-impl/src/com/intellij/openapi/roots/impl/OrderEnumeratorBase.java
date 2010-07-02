@@ -148,6 +148,11 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
     return new OrderRootsEnumeratorImpl(this, OrderRootType.SOURCES);
   }
 
+  @Override
+  public OrderRootsEnumerator roots(@NotNull OrderRootType rootType) {
+    return new OrderRootsEnumeratorImpl(this, rootType);
+  }
+
   ModuleRootModel getRootModel(Module module) {
     if (myModulesProvider != null) {
       return myModulesProvider.getRootModel(module);
@@ -164,17 +169,25 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
 
   public int getFlags() {
     int flags = 0;
-    int i = 0;
-    if (myProductionOnly)           flags |= 1 << (i++);
-    if (myCompileOnly)              flags |= 1 << (i++);
-    if (myRuntimeOnly)              flags |= 1 << (i++);
-    if (myWithoutJdk)               flags |= 1 << (i++);
-    if (myWithoutLibraries)         flags |= 1 << (i++);
-    if (myWithoutDepModules)        flags |= 1 << (i++);
-    if (myWithoutThisModuleContent) flags |= 1 << (i++);
-    if (myRecursively)              flags |= 1 << (i++);
-    if (myRecursivelyExportedOnly)  flags |= 1 << (i++);
-    if (myExportedOnly)             flags |= 1 << i;
+    if (myProductionOnly)           flags |= 1;
+    flags <<= 1;
+    if (myCompileOnly)              flags |= 1;
+    flags <<= 1;
+    if (myRuntimeOnly)              flags |= 1;
+    flags <<= 1;
+    if (myWithoutJdk)               flags |= 1;
+    flags <<= 1;
+    if (myWithoutLibraries)         flags |= 1;
+    flags <<= 1;
+    if (myWithoutDepModules)        flags |= 1;
+    flags <<= 1;
+    if (myWithoutThisModuleContent) flags |= 1;
+    flags <<= 1;
+    if (myRecursively)              flags |= 1;
+    flags <<= 1;
+    if (myRecursivelyExportedOnly)  flags |= 1;
+    flags <<= 1;
+    if (myExportedOnly)             flags |= 1;
     return flags;
   }
 
