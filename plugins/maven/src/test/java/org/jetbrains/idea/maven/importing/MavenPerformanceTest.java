@@ -33,7 +33,7 @@ public abstract class MavenPerformanceTest extends MavenImportingTestCase {
     super.setUp();
     VirtualFile file = LocalFileSystem.getInstance().findFileByPath("C:\\projects\\mvn\\_projects\\geronimo\\pom.xml");
     initProjectsManager(false);
-    myProjectsManager.resetManagedFilesAndProfilesInTests(Collections.singletonList(file), Collections.EMPTY_LIST);
+    myProjectsManager.resetManagedFilesAndProfilesInTests(Collections.singletonList(file), Collections.<String>emptyList());
   }
 
   public void testReading() throws Exception {

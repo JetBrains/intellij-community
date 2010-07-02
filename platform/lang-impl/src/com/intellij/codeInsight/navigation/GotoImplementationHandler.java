@@ -36,7 +36,8 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     int offset = editor.getCaretModel().getOffset();
     PsiElement source = TargetElementUtilBase.getInstance().findTargetElement(editor, ImplementationSearcher.getFlags(), offset);
     if (source == null) return null;
-    return new GotoData(source, new ImplementationSearcher().searchImplementations(editor, source, offset), Collections.EMPTY_LIST);
+    return new GotoData(source, new ImplementationSearcher().searchImplementations(editor, source, offset),
+                        Collections.<AdditionalAction>emptyList());
   }
 
   protected String getChooserTitle(PsiElement sourceElement, String name, int length) {

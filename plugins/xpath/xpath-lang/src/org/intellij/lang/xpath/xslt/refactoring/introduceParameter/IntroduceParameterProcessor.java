@@ -86,7 +86,7 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
             usageCount += callsToUpdate.size();
         } else {
             //noinspection unchecked
-            callsToUpdate = Collections.EMPTY_LIST;
+            callsToUpdate = Collections.emptyList();
         }
 
         final UsageInfo[] usageInfos = new UsageInfo[usageCount];

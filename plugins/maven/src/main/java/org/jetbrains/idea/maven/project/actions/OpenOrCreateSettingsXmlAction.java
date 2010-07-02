@@ -26,7 +26,7 @@ import java.util.List;
 public class OpenOrCreateSettingsXmlAction extends MavenOpenOrCreateFilesAction {
   protected List<File> getFiles(AnActionEvent e) {
     File file = MavenActionUtil.getProjectsManager(e.getDataContext()).getGeneralSettings().getEffectiveUserSettingsIoFile();
-    return file != null ? Collections.singletonList(file) : Collections.EMPTY_LIST;
+    return file != null ? Collections.singletonList(file) : Collections.<File>emptyList();
   }
 
   @Override

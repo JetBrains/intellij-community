@@ -30,7 +30,7 @@ public class ReturnOfCollectionFieldInspection
 
     public List<String> fooBarEmpty()
     {
-        return Collections.EMPTY_LIST;
+        return Collections.emptyList();
     }
 
     public int[] bar()
