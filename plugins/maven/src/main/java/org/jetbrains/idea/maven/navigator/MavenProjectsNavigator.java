@@ -351,11 +351,11 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
     public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
                                 NativeMavenProjectHolder nativeMavenProject,
                                 Object message) {
-      scheduleUpdateProjects(Collections.singletonList(projectWithChanges.first), Collections.EMPTY_LIST);
+      scheduleUpdateProjects(Collections.singletonList(projectWithChanges.first), Collections.<MavenProject>emptyList());
     }
 
     public void pluginsResolved(MavenProject project) {
-      scheduleUpdateProjects(Collections.singletonList(project), Collections.EMPTY_LIST);
+      scheduleUpdateProjects(Collections.singletonList(project), Collections.<MavenProject>emptyList());
     }
 
     private void scheduleUpdateProjects(final List<MavenProject> projects, final List<MavenProject> deleted) {

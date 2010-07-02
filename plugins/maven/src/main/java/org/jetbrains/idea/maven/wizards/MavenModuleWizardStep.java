@@ -21,10 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.SpeedSearchBase;
-import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.AbstractLayoutManager;
@@ -105,7 +102,7 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
   private void initComponents() {
     myArchetypesTree = new Tree();
     myArchetypesTree.setModel(new DefaultTreeModel(new DefaultMutableTreeNode()));
-    myArchetypesScrollPane = new JScrollPane(myArchetypesTree);
+    myArchetypesScrollPane = ScrollPaneFactory.createScrollPane(myArchetypesTree);
 
     myLoadingIcon.setVisible(false);
 

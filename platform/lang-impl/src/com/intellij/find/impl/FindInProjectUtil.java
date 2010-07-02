@@ -441,23 +441,8 @@ public class FindInProjectUtil {
         boolean success = fileIndex.iterateContent(iterator);
         SearchScope customScope = findModel.getCustomScope();
         if (success && customScope instanceof GlobalSearchScope && ((GlobalSearchScope)customScope).isSearchInLibraries()) {
-          final Collection<VirtualFile> librarySources = new THashSet<VirtualFile>();
-          Module[] modules = module == null ? ModuleManager.getInstance(project).getModules() : new Module[]{module};
-          for (Module mod : modules) {
-            ModuleRootManager.getInstance(mod).processOrder(new RootPolicy<Object>(){
-              public Object visitLibraryOrderEntry(final LibraryOrderEntry libraryOrderEntry, final Object value) {
-                VirtualFile[] sources = libraryOrderEntry.getFiles(OrderRootType.SOURCES);
-                librarySources.addAll(Arrays.asList(sources));
-                return null;
-              }
-
-              public Object visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final Object value) {
-                VirtualFile[] sources = jdkOrderEntry.getFiles(OrderRootType.SOURCES);
-                librarySources.addAll(Arrays.asList(sources));
-                return null;
-              }
-            }, null);
-          }
+          OrderEnumerator enumerator = module == null ? OrderEnumerator.orderEntries(project) : OrderEnumerator.orderEntries(module);
+          final VirtualFile[] librarySources = enumerator.withoutModuleSourceEntries().withoutDepModules().getSourceRoots();
           iterateAll(librarySources, (GlobalSearchScope)customScope, iterator);
         }
       }
@@ -477,7 +462,7 @@ public class FindInProjectUtil {
     }
   }
 
-  private static boolean iterateAll(Collection<VirtualFile> files, final GlobalSearchScope searchScope, final ContentIterator iterator) {
+  private static boolean iterateAll(VirtualFile[] files, final GlobalSearchScope searchScope, final ContentIterator iterator) {
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     final VirtualFileFilter contentFilter = new VirtualFileFilter() {
       public boolean accept(final VirtualFile file) {

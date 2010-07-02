@@ -141,11 +141,11 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
     for (final GrTypeParameter typeParameter : getTypeParameters()) {
-      if (!ResolveUtil.processElement(processor, typeParameter)) return false;
+      if (!ResolveUtil.processElement(processor, typeParameter, state)) return false;
     }
 
     for (final GrParameter parameter : getParameters()) {
-      if (!ResolveUtil.processElement(processor, parameter)) return false;
+      if (!ResolveUtil.processElement(processor, parameter, state)) return false;
     }
 
     processor.handleEvent(ResolveUtil.DECLARATION_SCOPE_PASSED, this);

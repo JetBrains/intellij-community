@@ -18,31 +18,23 @@ package com.intellij.psi;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.CustomLoadingExtensionPointBean;
+import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.StandardPatterns;
-import com.intellij.patterns.compiler.PatternCompiler;
 import com.intellij.patterns.compiler.PatternCompilerFactory;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
-import com.intellij.util.xmlb.annotations.Property;
-import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.*;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class PsiReferenceProviderBean extends CustomLoadingExtensionPointBean {
+public class PsiReferenceProviderBean extends AbstractExtensionPointBean {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.PsiReferenceProviderBean");
   @Tag("className")
   public String className;
   @Tag("description")
   public String description;
+
   @Property(surroundWithTag = false)
-  @AbstractCollection(surroundWithTag = false, elementTag = "patternClass", elementValueAttribute = "")
-  public List<String> patternClasses = new ArrayList<String>();
-  @Property(surroundWithTag = false)
-  @AbstractCollection(surroundWithTag = false, elementTag = "pattern", elementValueAttribute = "")
-  public List<String> patterns = new ArrayList<String>();
+  @AbstractCollection(surroundWithTag = false)
+  public Info[] patterns;
 
   public String getDescription() {
     return description;
@@ -50,7 +42,7 @@ public class PsiReferenceProviderBean extends CustomLoadingExtensionPointBean {
 
   public PsiReferenceProvider instantiate() {
     try {
-      return (PsiReferenceProvider)instantiateExtension(className, ApplicationManager.getApplication().getPicoContainer());
+      return (PsiReferenceProvider)instantiate(className, ApplicationManager.getApplication().getPicoContainer());
     }
     catch (ClassNotFoundException e) {
       LOG.error(e);
@@ -60,30 +52,28 @@ public class PsiReferenceProviderBean extends CustomLoadingExtensionPointBean {
 
   @Nullable
   public ElementPattern<PsiElement> createElementPattern() {
-    final ArrayList<Class> classes = new ArrayList<Class>();
-    for (String patternClass : patternClasses) {
-      try {
-        classes.add(Class.forName(patternClass, true, getLoaderForClass()));
+    final PatternCompilerFactory factory = PatternCompilerFactory.getFactory();
+    if (patterns.length > 1) {
+      final ElementPattern[] result = new ElementPattern[this.patterns.length];
+      for (int i = 0, len = this.patterns.length; i < len; i++) {
+        result[i] = factory.getPatternCompiler(patterns[i].type).compileElementPattern(patterns[i].text);
       }
-      catch (ClassNotFoundException e) {
-        LOG.error(e);
-      }
+      return StandardPatterns.or(result);
     }
-    final PatternCompiler<PsiElement> compiler =
-      PatternCompilerFactory.getFactory().getPatternCompiler(classes.toArray(new Class[classes.size()]));
-    if (patterns.size() > 1) {
-      final ElementPattern[] patterns = new ElementPattern[this.patterns.size()];
-      for (int i = 0, len = this.patterns.size(); i < len; i++) {
-        patterns[i] = compiler.compileElementPattern(this.patterns.get(i));
-      }
-      return StandardPatterns.or(patterns);
-    }
-    else if (!patterns.isEmpty()) {
-      return compiler.compileElementPattern(patterns.get(0));
+    else if (patterns.length == 1) {
+      return factory.<PsiElement>getPatternCompiler(patterns[0].type).compileElementPattern(patterns[0].text);
     }
     else {
       LOG.error("At least one pattern should be specified");
       return null;
     }
+  }
+
+  @Tag("pattern")
+  public static class Info {
+    @Attribute("type")
+    public String type;
+    @Text
+    public String text;
   }
 }

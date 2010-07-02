@@ -63,5 +63,7 @@
     <pom.declarationSearcher implementation="com.intellij.util.xml.impl.DomDeclarationSearcher"/>
     <elementDescriptionProvider implementation="com.intellij.util.xml.impl.DefaultDomTargetDescriptionProvider" id="domDefault" order="last, before pomDefault"/>
     <iconProvider implementation="com.intellij.util.xml.impl.DefaultDomTargetIconProvider" id="domDefault" order="last"/>
+
+    <patterns.patternClass className="com.intellij.patterns.DomPatterns" alias="dom"/>
   </extensions>
 </idea-plugin>

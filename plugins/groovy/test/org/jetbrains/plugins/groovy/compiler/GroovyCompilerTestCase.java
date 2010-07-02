@@ -26,6 +26,7 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -56,6 +57,7 @@ import java.util.List;
 public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase {
   private TempDirTestFixture myMainOutput;
 
+
   @Override
   protected void setUp() throws Exception {
     myMainOutput = new TempDirTestFixtureImpl();
@@ -71,13 +73,12 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
     }.execute();
 
     addGroovyLibrary(myModule, getName().contains("1_7"));
-
-    GroovycOSProcessHandler.ourDebug = true;
   }
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
     moduleBuilder.setMockJdkLevel(JavaModuleFixtureBuilder.MockJdkLevel.jdk15);
+    moduleBuilder.addJdk(JavaSdkImpl.getMockJdk14Path().getPath());
     super.tuneFixture(moduleBuilder);
   }
 
@@ -90,7 +91,6 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
 
   @Override
   protected void tearDown() throws Exception {
-    GroovycOSProcessHandler.ourDebug = false;
     myMainOutput.tearDown();
     myMainOutput = null;
     super.tearDown();

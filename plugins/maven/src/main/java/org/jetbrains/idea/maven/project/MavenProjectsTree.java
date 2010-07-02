@@ -671,7 +671,7 @@ public class MavenProjectsTree {
     });
   }
 
-  private long getFileTimestamp(VirtualFile file) {
+  private static long getFileTimestamp(VirtualFile file) {
     if (file == null || !file.isValid()) return -1;
     return file.getTimeStamp();
   }
@@ -1085,7 +1085,7 @@ public class MavenProjectsTree {
     }
   }
 
-  public MavenArtifact downloadArtifact(MavenProject mavenProject,
+  public static MavenArtifact downloadArtifact(MavenProject mavenProject,
                                         MavenId id,
                                         MavenEmbeddersManager embeddersManager,
                                         MavenConsole console,
@@ -1226,13 +1226,13 @@ public class MavenProjectsTree {
 
     public void fireUpdatedIfNecessary(Object message) {
       if (updatedProjectsWithChanges.isEmpty() && deletedProjects.isEmpty()) return;
-      fireProjectsUpdated(updatedProjectsWithChanges.isEmpty()
-                          ? Collections.EMPTY_LIST
-                          : MavenUtil.mapToList(updatedProjectsWithChanges),
-                          deletedProjects.isEmpty()
-                          ? Collections.EMPTY_LIST
-                          : new ArrayList<MavenProject>(deletedProjects),
-                          message);
+      List<MavenProject> mavenProjects = deletedProjects.isEmpty()
+                                         ? Collections.<MavenProject>emptyList()
+                                         : new ArrayList<MavenProject>(deletedProjects);
+      List<Pair<MavenProject, MavenProjectChanges>> updated = updatedProjectsWithChanges.isEmpty()
+                                                              ? Collections.<Pair<MavenProject, MavenProjectChanges>>emptyList()
+                                                              : MavenUtil.mapToList(updatedProjectsWithChanges);
+      fireProjectsUpdated(updated, mavenProjects, message);
     }
   }
 
@@ -1240,7 +1240,7 @@ public class MavenProjectsTree {
     void run(MavenEmbedderWrapper embedder) throws MavenProcessCanceledException;
   }
 
-  public static abstract class Visitor<Result> {
+  public abstract static class Visitor<Result> {
     private Result result;
 
     public boolean shouldVisit(MavenProject project) {
@@ -1265,7 +1265,7 @@ public class MavenProjectsTree {
     }
   }
 
-  public static abstract class SimpleVisitor extends Visitor<Object> {
+  public abstract static class SimpleVisitor extends Visitor<Object> {
   }
 
   private static class MavenProjectTimestamp {

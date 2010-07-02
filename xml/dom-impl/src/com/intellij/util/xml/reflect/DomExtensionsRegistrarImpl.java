@@ -82,8 +82,17 @@ public class DomExtensionsRegistrarImpl implements DomExtensionsRegistrar {
 
   @NotNull
   public DomExtension registerCustomChildrenExtension(@NotNull final Type type) {
+    return registerCustomChildrenExtension(type, CustomDomChildrenDescription.TagNameDescriptor.EMPTY);
+  }
+
+  @NotNull
+  @Override
+  public DomExtension registerCustomChildrenExtension(@NotNull Type type,
+                                                      @NotNull CustomDomChildrenDescription.TagNameDescriptor descriptor) {
     assert myCustomChildrenType == null;
-    return myCustomChildrenType = new DomExtensionImpl(type, null);
+    myCustomChildrenType = new DomExtensionImpl(type, null);
+    myCustomChildrenType.setTagNameDescriptor(descriptor);
+    return myCustomChildrenType;
   }
 
   private static DomExtensionImpl addExtension(final List<DomExtensionImpl> list, final XmlName name, final Type type) {

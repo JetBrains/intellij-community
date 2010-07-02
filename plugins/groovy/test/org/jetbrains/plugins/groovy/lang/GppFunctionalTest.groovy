@@ -36,14 +36,14 @@ class GppFunctionalTest extends LightCodeInsightFixtureTestCase {
     super.setUp()
   }
 
-  public void testCastListToIterable() throws Exception {
+  public void _testCastListToIterable() throws Exception {
     myFixture.addClass("class X extends java.util.ArrayList<Integer> {}")
     testAssignability """
 X ints = [239, 4.2d]
 """
   }
 
-  public void testCastListToAnything() throws Exception {
+  public void _testCastListToAnything() throws Exception {
     testAssignability """
 File f1 = ['path']
 File f2 = <warning descr="Cannot assign 'List' to 'File'">['path', 2, true, 42]</warning>
@@ -61,7 +61,7 @@ public class Y extends java.util.HashMap<String, String> {
 
     testAssignability """
 HashMap<String, File> m1 = ['a':['b']]
-Y y = <warning descr="Cannot assign 'Map' to 'Y'">[a:'b']</warning>
+Y y = <warning descr="Cannot assign 'Map<String, String>' to 'Y'">[a:'b']</warning>
 """
   }
 
@@ -323,7 +323,7 @@ class BarImpl extends Bar {}
     return myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset).resolve()
   }
 
-  public void testMethodTypeParameterInference() throws Exception {
+  public void _testMethodTypeParameterInference() throws Exception {
     configureScript """
 @Typed package aaa
 
@@ -334,7 +334,7 @@ r.apply { it.intV<caret>i }
     assertSameElements myFixture.getLookupElementStrings(), "intValue"
   }
 
-  public void testMethodTypeParameterInference2() throws Exception {
+  public void _testMethodTypeParameterInference2() throws Exception {
     configureScript """
 @Typed package aaa
 

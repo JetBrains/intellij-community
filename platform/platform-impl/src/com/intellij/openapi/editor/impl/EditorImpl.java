@@ -58,8 +58,9 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
-import com.intellij.ui.JScrollPane2;
 import com.intellij.ui.LightweightHint;
+import com.intellij.ui.components.JBScrollBar;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.ContainerUtil;
@@ -76,6 +77,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.Timer;
+import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.ScrollBarUI;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import java.awt.*;
@@ -529,8 +531,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myGutterComponent.setOpaque(true);
 
     myScrollPane.setVerticalScrollBar(myVerticalScrollBar);
-    final MyScrollBar horizontalScrollBar = new MyScrollBar(Adjustable.HORIZONTAL);
-    myScrollPane.setHorizontalScrollBar(horizontalScrollBar);
     myScrollPane.setViewportView(myEditorComponent);
     //myScrollPane.setBorder(null);
     myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
@@ -844,7 +844,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (softWrap != null) {
           // There is a possible case that soft wrap contains more than one line feed inside and we need to start counting not
           // from its first line.
-          int softWrapLinesToSkip = activeSoftWrapProcessed ? 0 : logicalPosition.linesFromActiveSoftWrap;
+          int softWrapLinesToSkip = activeSoftWrapProcessed ? 0 : logicalPosition.softWrapLinesOnCurrentLogicalLine;
           CharSequence softWrapText = softWrap.getText();
           for (int i = 0; i < softWrapText.length(); i++) {
             c = softWrapText.charAt(i);
@@ -1832,7 +1832,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             if (softWrap != null) {
               // There is a possible case that soft wrap contains more than one line feed inside and we need to start drawing not
               // from its first line.
-              int softWrapLinesToSkip = activeSoftWrapProcessed ? 0 : logicalPosition.linesFromActiveSoftWrap;
+              int softWrapLinesToSkip = activeSoftWrapProcessed ? 0 : logicalPosition.softWrapLinesOnCurrentLogicalLine;
               char[] softWrapChars = softWrap.getChars();
 
               // We don't draw every soft wrap symbol one-by-one but whole visual line. Current variable holds index that points
@@ -2379,7 +2379,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   public Dimension getContentSize() {
     Dimension size = mySizeContainer.getContentSize();
-    return new Dimension(size.width, size.height + mySettings.getAdditionalLinesCount() * getLineHeight());
+    //TODO den move soft wrap-related logic to editor size container
+    return new Dimension(
+      size.width,
+      size.height + (mySettings.getAdditionalLinesCount() + mySoftWrapModel.getSoftWrapsIntroducedLinesNumber()) * getLineHeight()
+    );
   }
 
   public JScrollPane getScrollPane() {
@@ -2567,8 +2571,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         else if (visiblePos.column > softWrapAwareVisFoldEnd.column) {
           int columnToUse = softWrapAwareLogFoldEnd.column + visiblePos.column - softWrapAwareVisFoldEnd.column;
           return new LogicalPosition(
-            softWrapAwareLogFoldEnd.line, columnToUse, softWrapAwareLogFoldEnd.softWrapLines,
-            softWrapAwareLogFoldEnd.linesFromActiveSoftWrap, visiblePos.column - columnToUse - softWrapAwareLogFoldEnd.foldingColumnDiff,
+            softWrapAwareLogFoldEnd.line, columnToUse, softWrapAwareLogFoldEnd.softWrapLinesBeforeCurrentLogicalLine,
+            softWrapAwareLogFoldEnd.softWrapLinesOnCurrentLogicalLine, visiblePos.column - columnToUse - softWrapAwareLogFoldEnd.foldingColumnDiff,
             softWrapAwareLogFoldEnd.foldedLines, softWrapAwareLogFoldEnd.foldingColumnDiff
           );
         }
@@ -2642,15 +2646,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     int columnNumber = pos.column;
     int lineNumber = pos.line;
-    int softWrapLines = pos.softWrapLines;
-    int linesFromCurrentSoftWrap = pos.linesFromActiveSoftWrap;
+    int softWrapLinesBeforeTargetLogicalLine = pos.softWrapLinesBeforeCurrentLogicalLine;
+    int softWrapLinesOnTargetLogicalLine = pos.softWrapLinesOnCurrentLogicalLine;
     int softWrapColumns = pos.softWrapColumnDiff;
 
     if (lineNumber < 0) {
       lineNumber = 0;
       columnNumber = 0;
-      softWrapLines = 0;
-      linesFromCurrentSoftWrap = 0;
+      softWrapLinesBeforeTargetLogicalLine = 0;
+      softWrapLinesOnTargetLogicalLine = 0;
       softWrapColumns = 0;
     }
 
@@ -2686,7 +2690,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }
     LogicalPosition pos1 = new LogicalPosition(
-      lineNumber, columnNumber, softWrapLines, linesFromCurrentSoftWrap, softWrapColumns, pos.foldedLines, pos.foldingColumnDiff
+      lineNumber, columnNumber, softWrapLinesBeforeTargetLogicalLine, softWrapLinesOnTargetLogicalLine, softWrapColumns,
+      pos.foldedLines, pos.foldingColumnDiff
     );
     getCaretModel().moveToLogicalPosition(pos1);
   }
@@ -3294,20 +3299,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  class MyScrollBar extends JScrollBar {
+  class MyScrollBar extends JBScrollBar {
     @NonNls private static final String DECREASE_BUTTON_FIELD = "decrButton";
     @NonNls private static final String INCREASE_BUTTON_FIELD = "incrButton";
     @NonNls private static final String APPLE_LAF_AQUA_SCROLL_BAR_UI_CLASS = "apple.laf.AquaScrollBarUI";
 
     private MyScrollBar(int orientation) {
       super(orientation);
-      setFocusable(false);
-      putClientProperty("JScrollBar.fastWheelScrolling", Boolean.TRUE); // fast scrolling for JDK 6
-    }
-
-    @Override
-    public void updateUI() {
-      setUI(ButtonlessScrollBarUI.createNormal());
     }
 
     /**
@@ -4674,7 +4672,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     info.put("caret", visual.getLine() + ":" + visual.getColumn());
   }
 
-  private class MyScrollPane extends JScrollPane2 {
+  private class MyScrollPane extends JBScrollPane {
+
+
+    private MyScrollPane() {
+      setViewportBorder(new EmptyBorder(0, 0, 0, 0));
+    }
+
     protected void processMouseWheelEvent(MouseWheelEvent e) {
       if (mySettings.isWheelFontChangeEnabled()) {
         boolean changeFontSize = SystemInfo.isMac
@@ -4682,11 +4686,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                  : e.isControlDown() && !e.isMetaDown() && !e.isAltDown() && !e.isShiftDown();
         if (changeFontSize) {
           setFontSize(myScheme.getEditorFontSize() + e.getWheelRotation());
-          return;
+          return;                                                            
         }
       }
 
       super.processMouseWheelEvent(e);
+    }
+
+    @Override
+    public JScrollBar createVerticalScrollBar() {
+      return new MyScrollBar(Adjustable.VERTICAL);
     }
   }
 

@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source.xml;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.RenameableFakePsiElement;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.Icons;
 
@@ -26,47 +27,53 @@ import javax.swing.*;
 /**
  * @author Konstantin Bulenkov
  */
- public class SchemaPrefix extends RenameableFakePsiElement {
-    private final XmlElement myParent;
-    private final TextRange myRange;
-    private final String myName;
+public class SchemaPrefix extends RenameableFakePsiElement {
+  private final XmlElement myParent;
+  private final TextRange myRange;
+  private final String myName;
+  private final XmlAttribute myDeclaration;
 
-    public SchemaPrefix(final XmlElement parent, TextRange range, String name) {
-      super(parent);
-      myParent = parent;
-      myRange = range;
-      myName = name;
-    }
-
-    public String getTypeName() {
-      return "XML Namespace Prefix";
-    }
-
-    public Icon getIcon() {
-      return Icons.VARIABLE_ICON;
-    }
-
-    @Override
-    public int getTextOffset() {
-      return myParent.getTextRange().getStartOffset() + myRange.getStartOffset();
-    }
-
-    @Override
-    public int getTextLength() {
-      return myName.length();
-    }
-
-    @Override
-    public String getName() {
-      return myName;
-    }
-
-    public PsiElement getParent() {
-      return myParent;
-    }
-
-    @Override
-    public TextRange getTextRange() {
-      return TextRange.from(getTextOffset(), getTextLength());
-    }
+  public SchemaPrefix(final XmlElement parent, TextRange range, String name, XmlAttribute nsDeclaration) {
+    super(parent);
+    myParent = parent;
+    myRange = range;
+    myName = name;
+    myDeclaration = nsDeclaration;
   }
+
+  public String getTypeName() {
+    return "XML Namespace Prefix";
+  }
+
+  public Icon getIcon() {
+    return Icons.VARIABLE_ICON;
+  }
+
+  @Override
+  public int getTextOffset() {
+    return myParent.getTextRange().getStartOffset() + myRange.getStartOffset();
+  }
+
+  @Override
+  public int getTextLength() {
+    return myName.length();
+  }
+
+  @Override
+  public String getName() {
+    return myName;
+  }
+
+  public PsiElement getParent() {
+    return myParent;
+  }
+
+  public XmlAttribute getDeclaration() {
+    return myDeclaration;
+  }
+
+  @Override
+  public TextRange getTextRange() {
+    return TextRange.from(getTextOffset(), getTextLength());
+  }
+}

@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public interface StreamProvider {
+  StreamProvider[] EMPTY_ARRAY = new StreamProvider[0];
   StreamProvider DEFAULT = new StreamProvider(){
     public void saveContent(final String fileSpec, final InputStream content, final long size, final RoamingType roamingType, boolean async) throws IOException {
 

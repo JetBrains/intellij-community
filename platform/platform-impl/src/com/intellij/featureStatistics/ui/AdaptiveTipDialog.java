@@ -23,6 +23,7 @@ import com.intellij.featureStatistics.ProductivityFeaturesRegistry;
 import com.intellij.ide.util.TipUIUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.ui.ScrollPaneFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -61,7 +62,7 @@ public class AdaptiveTipDialog extends DialogWrapper {
 
     myBrowser = new JEditorPane("text/html", "");
 
-    panel.add(new JScrollPane(myBrowser));
+    panel.add(ScrollPaneFactory.createScrollPane(myBrowser));
     panel.setPreferredSize(new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT));
     return panel;
   }

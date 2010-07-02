@@ -29,7 +29,7 @@ import com.intellij.psi.xml.XmlTag;
 import java.util.List;
 
 
-public abstract class AbstractSyntheticBlock implements Block{
+public abstract class AbstractSyntheticBlock implements Block {
   protected final Indent myIndent;
   protected final XmlFormattingPolicy myXmlFormattingPolicy;
   protected final ASTNode myEndTreeNode;
@@ -41,7 +41,15 @@ public abstract class AbstractSyntheticBlock implements Block{
     myStartTreeNode = getFirstNode(subBlocks);
     myIndent = indent;
     myXmlFormattingPolicy = policy;
-    myTag = ((AbstractXmlBlock)parent).getTag();
+    if (parent instanceof AbstractXmlBlock) {
+      myTag = ((AbstractXmlBlock)parent).getTag();
+    }
+    else if (parent instanceof AbstractSyntheticBlock) {
+      myTag = ((AbstractSyntheticBlock)parent).getTag();
+    } else {
+      throw new IllegalStateException("Parent should be AbstractXmlBlock or AbstractSyntheticBlock, but it is " + parent.getClass());
+    }
+
   }
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.xml.AbstractSyntheticBlock");
@@ -51,7 +59,8 @@ public abstract class AbstractSyntheticBlock implements Block{
     final Block firstBlock = subBlocks.get(0);
     if (firstBlock instanceof AbstractBlock) {
       return ((AbstractBlock)firstBlock).getNode();
-    } else {
+    }
+    else {
       return getFirstNode(firstBlock.getSubBlocks());
     }
   }
@@ -61,7 +70,8 @@ public abstract class AbstractSyntheticBlock implements Block{
     final Block lastBlock = subBlocks.get(subBlocks.size() - 1);
     if (lastBlock instanceof AbstractBlock) {
       return ((AbstractBlock)lastBlock).getNode();
-    } else {
+    }
+    else {
       return getLastNode(lastBlock.getSubBlocks());
     }
   }
@@ -90,7 +100,8 @@ public abstract class AbstractSyntheticBlock implements Block{
   }
 
   public boolean endsWithText() {
-    return myEndTreeNode.getElementType() == XmlElementType.XML_TEXT || myEndTreeNode.getElementType() == XmlElementType.XML_DATA_CHARACTERS;
+    return myEndTreeNode.getElementType() == XmlElementType.XML_TEXT ||
+           myEndTreeNode.getElementType() == XmlElementType.XML_DATA_CHARACTERS;
   }
 
   public boolean isTagDescription() {
@@ -99,11 +110,13 @@ public abstract class AbstractSyntheticBlock implements Block{
   }
 
   private static boolean isTagDescription(final ASTNode startTreeNode) {
-    return startTreeNode.getElementType() == XmlElementType.XML_START_TAG_START || startTreeNode.getElementType() == XmlElementType.XML_END_TAG_START;
+    return startTreeNode.getElementType() == XmlElementType.XML_START_TAG_START ||
+           startTreeNode.getElementType() == XmlElementType.XML_END_TAG_START;
   }
 
   public boolean startsWithText() {
-    return myStartTreeNode.getElementType() == XmlElementType.XML_TEXT || myStartTreeNode.getElementType() == XmlElementType.XML_DATA_CHARACTERS;
+    return myStartTreeNode.getElementType() == XmlElementType.XML_TEXT ||
+           myStartTreeNode.getElementType() == XmlElementType.XML_DATA_CHARACTERS;
   }
 
   public boolean endsWithTextElement() {
@@ -136,7 +149,7 @@ public abstract class AbstractSyntheticBlock implements Block{
 
   protected static TextRange calculateTextRange(final List<Block> subBlocks) {
     return new TextRange(subBlocks.get(0).getTextRange().getStartOffset(),
-                                subBlocks.get(subBlocks.size()-  1).getTextRange().getEndOffset());
+                         subBlocks.get(subBlocks.size() - 1).getTextRange().getEndOffset());
   }
 
   public boolean isIncomplete() {
@@ -148,14 +161,14 @@ public abstract class AbstractSyntheticBlock implements Block{
   }
 
   public XmlTag getStartTag() {
-    return (XmlTag)myStartTreeNode.getPsi();    
+    return (XmlTag)myStartTreeNode.getPsi();
   }
 
 
   public boolean endsWithTag() {
     return isXmlTag(myEndTreeNode);
   }
-  
+
   public boolean isJspTextBlock() {
     return false;
   }
@@ -166,6 +179,7 @@ public abstract class AbstractSyntheticBlock implements Block{
 
   /**
    * Checks if the block contains a single node which belongs to the outer (template) language.
+   *
    * @return True if it does, False otherwise.
    */
   public boolean isOuterLanguageBlock() {

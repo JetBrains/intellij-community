@@ -73,6 +73,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
+import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -444,6 +445,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     } else {
       SwingUtilities.invokeAndWait(runnable);
     }
+
+    TemplateDataLanguageMappings.getInstance(project).cleanupForNextTest();
 
     ProjectManagerEx.getInstanceEx().setCurrentTestProject(null);
     application.setDataProvider(null);

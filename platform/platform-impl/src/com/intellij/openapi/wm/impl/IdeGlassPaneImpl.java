@@ -48,6 +48,9 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   private boolean myPreprocessorActive;
   private Map<Object, Cursor> myListener2Cursor = new LinkedHashMap<Object, Cursor>();
 
+  private Component myLastCursorComponent;
+  private Cursor myLastOriginalCursor;
+
   public IdeGlassPaneImpl(JRootPane rootPane) {
     myRootPane = rootPane;
     setOpaque(false);
@@ -112,6 +115,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
         }
 
         if (event.isConsumed()) {
+          e.consume();
           return true;
         }
       }
@@ -122,11 +126,44 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
       Cursor cursor;
       if (myListener2Cursor.size() > 0) {
         cursor = myListener2Cursor.values().iterator().next();
+
+        final Point point = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), myRootPane.getContentPane());
+        final Component target =
+            SwingUtilities.getDeepestComponentAt(myRootPane.getContentPane().getParent(), point.x, point.y);
+
+        restoreLastComponent(target);
+
+        if (target != null) {
+          if (myLastCursorComponent != target) {
+            myLastCursorComponent = target;
+            if (target.isCursorSet()) {
+              myLastOriginalCursor = target.getCursor();
+            } 
+          }
+
+          if (cursor != null && !cursor.equals(target.getCursor())) {
+            target.setCursor(cursor);
+          }
+        }
+
+        getRootPane().setCursor(cursor);
+
       } else {
         cursor = Cursor.getDefaultCursor();
+        getRootPane().setCursor(cursor);
+
+
+        restoreLastComponent(null);
+        myLastOriginalCursor = null;
+        myLastCursorComponent = null;
       }
       myListener2Cursor.clear();
-      getRootPane().setCursor(cursor);
+    }
+  }
+
+  private void restoreLastComponent(Component newC) {
+    if (myLastCursorComponent != null && myLastCursorComponent != newC) {
+      myLastCursorComponent.setCursor(myLastOriginalCursor);
     }
   }
 

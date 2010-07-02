@@ -43,6 +43,7 @@ import java.util.*;
 
 /**
  * @author Gregory.Shrago
+ * @author Konstantin Bulenkov
  */
 public class XSDModelLoader implements ModelLoader {
   private static final boolean TEXT_ELEMENTS_ARE_COMPLEX = false;
@@ -367,7 +368,7 @@ public class XSDModelLoader implements ModelLoader {
 
   private static String getSimpleTypesString(XSTypeDefinition et) {
     StringBuffer typesHierarchy = new StringBuffer();
-    while (et != null && !"anySimpleType".equals(et.getName()) && !"anyType".equals(et.getName())) {
+    while (et != null && !"anySimpleType".equals(et.getName()) && !"anyType".equals(et.getName()) && et.getNamespace() != null) {
       typesHierarchy.append(et.getNamespace().substring(et.getNamespace().lastIndexOf("/") + 1)).append(":").append(et.getName()).append(";");
       if (et instanceof XSSimpleType) {
         XSSimpleType simpleType = (XSSimpleType) et;
@@ -526,8 +527,9 @@ public class XSDModelLoader implements ModelLoader {
           } else if (fd1.type.equals("extensibleType")) {
             fd1.type = "Object";
           } else {
-            if ("anySimpleType".equals(et.getBaseType().getName())
-                    || "anyType".equals(et.getBaseType().getName())) {
+            if (et.getBaseType() != null &&
+                ("anySimpleType".equals(et.getBaseType().getName())
+              || "anyType".equals(et.getBaseType().getName()))) {
               fd1.type = "String";
               fd1.def = "null";
               fd1.clType = FieldDesc.STR;
@@ -617,12 +619,17 @@ public class XSDModelLoader implements ModelLoader {
             Util.logerr("uknown choice element: " + s);
           }
         }
-        choice[i] = fd;
-        choice[i].choice = choice;
-        if (fd.required) choiceOpt = false;
+
+        if (fd != null) {
+          choice[i] = fd;
+          choice[i].choice = choice;
+          if (fd.required) choiceOpt = false;
+        }
       }
       for (i = 0; i < choice.length; i++) {
-        choice[i].choiceOpt = choiceOpt;
+        if (choice[i] != null) {
+          choice[i].choiceOpt = choiceOpt;
+        }
       }
     }
     td.supers = supers.toArray(new TypeDesc[supers.size()]);

@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.NonNls;
@@ -95,6 +96,9 @@ public class DirectoryChooser extends DialogWrapper {
         myView.listFilled();
         if (selectionId < 0) {
           myView.clearSelection();
+          if (myView.getItemsSize() > 0) {
+            myView.selectItemByIndex(0);
+          }
         } else {
           myView.selectItemByIndex(selectionId);
         }
@@ -115,7 +119,7 @@ public class DirectoryChooser extends DialogWrapper {
     };
     myView.onSelectionChange(runnable);
     final JComponent component = myView.getComponent();
-    final JScrollPane jScrollPane = new JScrollPane(component);
+    final JScrollPane jScrollPane = ScrollPaneFactory.createScrollPane(component);
     //noinspection HardCodedStringLiteral
     int prototypeWidth = component.getFontMetrics(component.getFont()).stringWidth("X:\\1234567890\\1234567890\\com\\company\\system\\subsystem");
     jScrollPane.setPreferredSize(new Dimension(Math.max(300, prototypeWidth),300));
@@ -381,8 +385,12 @@ public class DirectoryChooser extends DialogWrapper {
     }
     buildFragments();
     myView.listFilled();
-    if (directories.length > 0) {
-      myView.selectItemByIndex(selectionIndex);
+    if (myView.getItemsSize() > 0) {
+      if (selectionIndex != -1) {
+        myView.selectItemByIndex(selectionIndex);
+      } else {
+        myView.selectItemByIndex(0);
+      }
     }
     else {
       myView.clearSelection();

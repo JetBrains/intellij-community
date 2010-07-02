@@ -38,6 +38,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ScrollPaneFactory;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NonNls;
 
@@ -97,7 +98,7 @@ public class ExportDialog extends DialogWrapper {
 
   protected JComponent createCenterPanel() {
     myTextArea.setEditable(false);
-    JScrollPane pane = new JScrollPane(myTextArea);
+    JScrollPane pane = ScrollPaneFactory.createScrollPane(myTextArea);
     pane.setPreferredSize(new Dimension(400, 300));
     return pane;
   }

@@ -18,29 +18,29 @@ package com.intellij.uiDesigner.propertyInspector.editors;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.lw.ColorDescriptor;
-import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.InplaceContext;
+import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.ColorRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.colorchooser.AbstractColorChooserPanel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.ColorChooserUI;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.SystemColor;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author yole
@@ -238,7 +238,7 @@ public class ColorEditor extends PropertyEditor<ColorDescriptor> {
           getColorSelectionModel().setSelectedColor(new ColorDescriptorWrapper(descriptor));
         }
       });
-      add(new JScrollPane(myDescriptorList), BorderLayout.CENTER);
+      add(ScrollPaneFactory.createScrollPane(myDescriptorList), BorderLayout.CENTER);
     }
 
     public String getDisplayName() {

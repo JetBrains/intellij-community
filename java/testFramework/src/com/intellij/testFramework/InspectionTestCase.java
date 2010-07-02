@@ -24,15 +24,20 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.ExtensionPoints;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.GlobalInspectionTool;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.deadCode.UnusedCodeExtension;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.ContentEntry;
@@ -40,16 +45,23 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.PsiUtil;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public abstract class InspectionTestCase extends PsiTestCase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.InspectionTestCase");
+  private UnusedCodeExtension myUnusedCodeExtension;
+  private VirtualFile ext_src;
 
   public InspectionManagerEx getManager() {
     return (InspectionManagerEx) InspectionManager.getInstance(myProject);
@@ -107,7 +119,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
         }
       }
     });
-    AnalysisScope scope = createAnalysisScope(sourceDir[0]);
+    AnalysisScope scope = createAnalysisScope(sourceDir[0].getParent());
 
     InspectionManagerEx inspectionManager = (InspectionManagerEx) InspectionManager.getInstance(myProject);
     final GlobalInspectionContextImpl globalContext = inspectionManager.createNewGlobalContext(true);
@@ -146,13 +158,13 @@ public abstract class InspectionTestCase extends PsiTestCase {
     if (sourceDir[0] == null) {
       sourceDir[0] = projectDir;
     }
-    VirtualFile ext_src = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(testDir + "/ext_src"));
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
     final ModifiableRootModel rootModel = rootManager.getModifiableModel();
     rootModel.clear();
     // configure source and output path
     final ContentEntry contentEntry = rootModel.addContentEntry(projectDir);
     contentEntry.addSourceFolder(sourceDir[0], false);
+    ext_src = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(testDir + "/ext_src"));
     if (ext_src != null) {
       contentEntry.addSourceFolder(ext_src, false);
     }
@@ -160,20 +172,67 @@ public abstract class InspectionTestCase extends PsiTestCase {
     // IMPORTANT! The jdk must be obtained in a way it is obtained in the normal program!
     //ProjectJdkEx jdk = ProjectJdkTable.getInstance().getInternalJdk();
 
-    rootModel.setSdk(getTestProjectSdk(sdkName));
+    rootModel.setSdk(getTestProjectSdk());
 
     rootModel.commit();
   }
 
-  protected Sdk getTestProjectSdk(String sdkName) {
-    Sdk sdk;
-    if ("java 1.5".equals(sdkName)) {
-      sdk = JavaSdkImpl.getMockJdk15(sdkName);
-      LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
-    }
-    else {
-      sdk = JavaSdkImpl.getMockJdk(sdkName);
-    }
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    ExtensionPoint<UnusedCodeExtension> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL);
+    myUnusedCodeExtension = new UnusedCodeExtension() {
+      @NotNull
+      @Override
+      public String getDisplayName() {
+        return "duh";
+      }
+
+      @Override
+      public boolean isEntryPoint(RefElement refElement) {
+        return isEntryPoint(refElement.getElement());
+      }
+
+      @Override
+      public boolean isEntryPoint(PsiElement psiElement) {
+        return ext_src != null && VfsUtil.isAncestor(ext_src, PsiUtil.getVirtualFile(psiElement), false);
+      }
+
+      @Override
+      public boolean isSelected() {
+        return false;
+      }
+
+      @Override
+      public void setSelected(boolean selected) {
+
+      }
+
+      public void readExternal(Element element) {
+
+      }
+
+      public void writeExternal(Element element) {
+
+      }
+    };
+
+    point.registerExtension(myUnusedCodeExtension);
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    ExtensionPoint<UnusedCodeExtension> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL);
+    point.unregisterExtension(myUnusedCodeExtension);
+    myUnusedCodeExtension = null;
+    ext_src = null;
+    super.tearDown();
+  }
+
+  protected Sdk getTestProjectSdk() {
+    Sdk sdk = JavaSdkImpl.getMockJdk17();
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
+    //sdk = JavaSdkImpl.getMockJdk("");
     return sdk;
   }
 

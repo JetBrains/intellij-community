@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowType;
@@ -93,11 +94,11 @@ final class ToolWindowsPane extends JLayeredPane {
 
     myVerticalSplitter = new ThreeComponentsSplitter(true);
     myVerticalSplitter.setDividerWidth(0);
-    myVerticalSplitter.setDividerMouseZoneSize(6);
+    myVerticalSplitter.setDividerMouseZoneSize(Registry.intValue("ide.splitter.mouseZone"));
     myVerticalSplitter.setBackground(Color.gray);
     myHorizontalSplitter = new ThreeComponentsSplitter(false);
     myHorizontalSplitter.setDividerWidth(0);
-    myHorizontalSplitter.setDividerMouseZoneSize(6);
+    myHorizontalSplitter.setDividerMouseZoneSize(Registry.intValue("ide.splitter.mouseZone"));
     myHorizontalSplitter.setBackground(Color.gray);
 
     myVerticalSplitter.setInnerComponent(myHorizontalSplitter);

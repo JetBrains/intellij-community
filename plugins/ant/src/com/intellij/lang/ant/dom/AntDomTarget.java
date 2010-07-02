@@ -32,6 +32,9 @@ public abstract class AntDomTarget extends AntDomNamedElement{
   @Attribute("unless")
   public abstract GenericAttributeValue<String> getUnlessPropertyName();
 
+  @Attribute("description")
+  public abstract GenericAttributeValue<String> getDescription();
+
   @Attribute("depends")
   @Convert(value = AntDomTargetDependsListConverter.class)
   public abstract GenericAttributeValue<TargetResolver.Result> getDependsList();

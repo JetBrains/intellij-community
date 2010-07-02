@@ -17,6 +17,7 @@
 package com.intellij.application.options.colors;
 
 import com.intellij.ui.ListScrollingUtil;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.EventDispatcher;
 
@@ -74,7 +75,7 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
     myOptionsList.setModel(new DefaultListModel());
     myOptionsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-    JScrollPane scrollPane = new JScrollPane(myOptionsList);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myOptionsList);
     scrollPane.setPreferredSize(new Dimension(230, 60));
     JPanel north = new JPanel(new BorderLayout());
     north.add(scrollPane, BorderLayout.WEST);

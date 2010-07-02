@@ -69,6 +69,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -1743,7 +1744,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
                   if (runProfile != null) {
                     SwingUtilities.invokeLater(new Runnable() {
                       public void run() {
-                        ExecutionUtil.handleExecutionError(myProject, runProfile, e);
+                        ExecutionUtil.handleExecutionError(myProject, ToolWindowId.DEBUG, runProfile, e);
                       }
                     });
                   }

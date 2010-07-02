@@ -55,13 +55,13 @@ public class ProjectRootsTraversingTest extends ModuleRootManagerTestCase {
 
   private PathsList collectByOrderEnumerator(ProjectRootsTraversing.RootTraversePolicy policy) {
     if (policy == ProjectRootsTraversing.LIBRARIES_AND_JDK) {
-      return OrderEnumerator.orderEntries(myModule).withoutDepModules().withoutThisModuleContent().getPathsList();
+      return OrderEnumerator.orderEntries(myModule).withoutDepModules().withoutModuleSourceEntries().getPathsList();
     }
     if (policy == ProjectRootsTraversing.PROJECT_SOURCES) {
       return OrderEnumerator.orderEntries(myModule).withoutSdk().withoutLibraries().withoutDepModules().getSourcePathsList();
     }
     if (policy == ProjectRootsTraversing.PROJECT_LIBRARIES) {
-      return OrderEnumerator.orderEntries(myModule).withoutSdk().withoutThisModuleContent().recursively().getPathsList();
+      return OrderEnumerator.orderEntries(myModule).withoutSdk().withoutModuleSourceEntries().recursively().getPathsList();
     }
     throw new AssertionError(policy);
   }

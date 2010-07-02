@@ -43,7 +43,7 @@
               <font/>
             </border>
             <children>
-              <scrollpane id="8fed2">
+              <scrollpane class="com.intellij.ui.components.JBScrollPane" id="8fed2">
                 <constraints border-constraint="Center"/>
                 <properties/>
                 <border type="none"/>
@@ -186,7 +186,7 @@
             <properties/>
             <border type="none" title="Exceptions"/>
             <children>
-              <scrollpane id="45e94">
+              <scrollpane class="com.intellij.ui.components.JBScrollPane" id="45e94">
                 <constraints border-constraint="Center"/>
                 <properties/>
                 <border type="none"/>

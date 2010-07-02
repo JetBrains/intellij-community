@@ -252,7 +252,7 @@ public class GrClassImplUtil {
           if (!isSameDeclaration(place, field)) { //the same variable declaration
             final PsiSubstitutor finalSubstitutor = PsiClassImplUtil
               .obtainFinalSubstitutor(field.getContainingClass(), fieldInfo.getSubstitutor(), grType, substitutor, place, factory);
-            if (!processor.execute(field, ResolveState.initial().put(PsiSubstitutor.KEY, finalSubstitutor))) return false;
+            if (!processor.execute(field, state.put(PsiSubstitutor.KEY, finalSubstitutor))) return false;
           }
         }
       }
@@ -262,7 +262,7 @@ public class GrClassImplUtil {
           if (!isSameDeclaration(place, field)) {  //the same variable declaration
             final PsiSubstitutor finalSubstitutor = PsiClassImplUtil
               .obtainFinalSubstitutor(field.getContainingClass(), info.getSubstitutor(), grType, substitutor, place, factory);
-            if (!processor.execute(field, ResolveState.initial().put(PsiSubstitutor.KEY, finalSubstitutor))) return false;
+            if (!processor.execute(field, state.put(PsiSubstitutor.KEY, finalSubstitutor))) return false;
           }
         }
       }
@@ -278,7 +278,7 @@ public class GrClassImplUtil {
             if (!isSameDeclaration(place, method) && isMethodVisible(isPlaceGroovy, method)) {
               final PsiSubstitutor finalSubstitutor = PsiClassImplUtil
                 .obtainFinalSubstitutor(method.getContainingClass(), info.getSubstitutor(), grType, substitutor, place, factory);
-              if (!processor.execute(method, ResolveState.initial().put(PsiSubstitutor.KEY, finalSubstitutor))) {
+              if (!processor.execute(method, state.put(PsiSubstitutor.KEY, finalSubstitutor))) {
                 return false;
               }
             }
@@ -293,7 +293,7 @@ public class GrClassImplUtil {
             if (!isSameDeclaration(place, method) && isMethodVisible(isPlaceGroovy, method)) {
               final PsiSubstitutor finalSubstitutor = PsiClassImplUtil
                 .obtainFinalSubstitutor(method.getContainingClass(), info.getSubstitutor(), grType, substitutor, place, factory);
-              if (!processor.execute(method, ResolveState.initial().put(PsiSubstitutor.KEY, finalSubstitutor))) {
+              if (!processor.execute(method, state.put(PsiSubstitutor.KEY, finalSubstitutor))) {
                 return false;
               }
             }

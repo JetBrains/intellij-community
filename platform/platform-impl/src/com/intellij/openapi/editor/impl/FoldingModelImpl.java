@@ -450,7 +450,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
         }
       }
 
-      myCachedVisible = visible.toArray(new FoldRegion[visible.size()]);
+      myCachedVisible = visible.isEmpty() ? FoldRegion.EMPTY_ARRAY : visible.toArray(new FoldRegion[visible.size()]);
 
       Arrays.sort(myCachedVisible, BY_END_OFFSET_REVERSE);
 

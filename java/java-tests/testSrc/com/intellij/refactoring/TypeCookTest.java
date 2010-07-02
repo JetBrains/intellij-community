@@ -30,7 +30,7 @@ import java.io.PrintWriter;
 
 public class TypeCookTest extends MultiFileTestCase {
   protected Sdk getTestProjectJdk() {
-    return JavaSdkImpl.getMockJdk15("java 1.5");
+    return JavaSdkImpl.getMockJdk17("java 1.5");
   }
 
   @Override

@@ -39,18 +39,17 @@ public class ExecutionUtil {
   private ExecutionUtil() {
   }
 
-  public static void handleExecutionError(Project project, @NotNull String taskName, ExecutionException e) {
-    handleExecutionError(project, ToolWindowId.MESSAGES_WINDOW, taskName, e);
-  }
-
-  public static void handleExecutionError(final Project project, @NotNull final RunProfile runProfile, final ExecutionException e) {
-    handleExecutionError(project, runProfile.getName(), e);
+  public static void handleExecutionError(@NotNull Project project,
+                                          @NotNull String toolWindowId,
+                                          @NotNull RunProfile runProfile,
+                                          @NotNull ExecutionException e) {
+    handleExecutionError(project, toolWindowId, runProfile.getName(), e);
   }
 
   public static void handleExecutionError(@NotNull final Project project,
                                           @NotNull String toolWindowId,
                                           @NotNull String taskName,
-                                          @NotNull final ExecutionException e) {
+                                          @NotNull ExecutionException e) {
     if (e instanceof RunCanceledByUserException) return;
 
     String error = e.getMessage();
@@ -65,7 +64,7 @@ public class ExecutionUtil {
 
         listener = new HyperlinkListener() {
           @Override
-          public void hyperlinkUpdate(HyperlinkEvent e) {
+          public void hyperlinkUpdate(HyperlinkEvent event) {
             PropertiesComponent.getInstance(project).setValue("dynamic.classpath", "true");
           }
         };

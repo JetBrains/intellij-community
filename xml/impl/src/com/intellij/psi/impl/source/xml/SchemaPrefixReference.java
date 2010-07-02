@@ -33,20 +33,23 @@ public class SchemaPrefixReference extends PsiReferenceBase<XmlElement> {
   private final SchemaPrefix myPrefix;
   private final PsiElement myElement;
   private final String myName;
+  private XmlElement myDeclaration = null;
 
   public SchemaPrefixReference(XmlElement element, TextRange range, String name) {
     super(element, range, true);
     myElement = element;
     myName = name;
     if (myElement instanceof XmlAttribute && ((XmlAttribute)myElement).isNamespaceDeclaration()) {
-      myPrefix = new SchemaPrefix(element, range, name);
+      myPrefix = new SchemaPrefix(element, range, name, (XmlAttribute)element);
+      myDeclaration = element;
     } else {
-      final PsiElement declaration = XmlUtil.findNamespaceDeclaration(element.getContainingFile(), name);
+      final PsiElement declaration = XmlUtil.findNamespaceDeclaration(element, name);
       if (declaration instanceof XmlAttribute) {
         final XmlAttribute attribute = (XmlAttribute)declaration;
         final String prefix = attribute.getNamespacePrefix();
         final TextRange textRange = TextRange.from(prefix.length() + 1, name.length());
-        myPrefix = new SchemaPrefix(attribute, textRange, name);
+        myPrefix = new SchemaPrefix(attribute, textRange, name, (XmlAttribute)declaration);
+        myDeclaration = (XmlElement)declaration;
       } else {
         myPrefix = null;
       }
@@ -66,6 +69,7 @@ public class SchemaPrefixReference extends PsiReferenceBase<XmlElement> {
   public boolean isReferenceTo(PsiElement element) {
     return element instanceof SchemaPrefix
            && element.getContainingFile() == myElement.getContainingFile()
+           && ((SchemaPrefix)element).getDeclaration() == myDeclaration
            && myName.equals(((SchemaPrefix)element).getName())
            && myName.length() > 0;
   }

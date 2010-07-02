@@ -20,6 +20,9 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +44,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
  * @author ven
  */
 public abstract class GrBlockImpl extends GroovyPsiElementImpl implements GrCodeBlock, GrControlFlowOwner {
-  private Instruction[] myControlFlow = null;
+  private volatile CachedValue<Instruction[]> myControlFlow = null;
 
   public void subtreeChanged() {
     super.subtreeChanged();
@@ -49,11 +52,17 @@ public abstract class GrBlockImpl extends GroovyPsiElementImpl implements GrCode
   }
 
   public Instruction[] getControlFlow() {
-    if (myControlFlow == null) {
-      myControlFlow = new ControlFlowBuilder(getProject()).buildControlFlow(this, null, null);
+    CachedValue<Instruction[]> controlFlow = myControlFlow;
+    if (controlFlow == null) {
+      myControlFlow = controlFlow = CachedValuesManager.getManager(getProject()).createCachedValue(new CachedValueProvider<Instruction[]>() {
+        @Override
+        public Result<Instruction[]> compute() {
+          return Result.create(new ControlFlowBuilder(getProject()).buildControlFlow(GrBlockImpl.this, null, null), getContainingFile());
+        }
+      }, false);
     }
 
-    return myControlFlow;
+    return controlFlow.getValue();
   }
 
   public GrBlockImpl(@NotNull ASTNode node) {

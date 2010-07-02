@@ -28,13 +28,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Enumeration;
-import java.util.Map;
+import java.util.Hashtable;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: Apr 9, 2010
  */
 public class AntDomExtender extends DomExtender<AntDomElement>{
+
   public void registerExtensions(@NotNull AntDomElement antDomElement, @NotNull DomExtensionsRegistrar registrar) {
     final XmlElement xmlElement = antDomElement.getXmlElement();
     if (xmlElement instanceof XmlTag) {
@@ -45,6 +46,8 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
 
       final DomGenericInfo genericInfo = antDomElement.getGenericInfo();
       AntIntrospector parentElementIntrospector = null;
+      final Hashtable<String,Class> taskDefs = reflected.getTaskDefinitions();
+      final Hashtable<String, Class> dataTypeDefs = reflected.getDataTypeDefinitions();
       if ("project".equals(tagName)) {
         parentElementIntrospector = getIntrospector(reflected.getProject().getClass());
       }
@@ -52,14 +55,12 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
         parentElementIntrospector = getIntrospector(reflected.getTargetClass());
       }
       else {
-        final Map<String, Class> tasks = reflected.getTaskDefinitions();
-        final Class taskClass = tasks.get(tagName);
+        final Class taskClass = taskDefs.get(tagName);
         if (taskClass != null) {
           parentElementIntrospector = getIntrospector(taskClass);
         }
         else {
-          final Map<String, Class> dataTypes = reflected.getDataTypeDefinitions();
-          final Class dataClass = dataTypes.get(tagName);
+          final Class dataClass = dataTypeDefs.get(tagName);
           if (dataClass != null) {
             parentElementIntrospector = getIntrospector(dataClass);
           }
@@ -67,7 +68,6 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
       }
 
       if (parentElementIntrospector != null) {
-
         final Enumeration attributes = parentElementIntrospector.getAttributes();
         while (attributes.hasMoreElements()) {
           registerAttribute(registrar, genericInfo, (String)attributes.nextElement());
@@ -75,17 +75,36 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
 
         // todo: handle custom tasks registered in typedefs
         if ("project".equals(tagName) || parentElementIntrospector.isContainer()) { // can contain any task or/and type definition
-          for (Object nestedName : reflected.getTaskDefinitions().keySet()) {
-            registerChild(registrar, genericInfo, (String)nestedName);
+          for (String nestedName : taskDefs.keySet()) {
+            final DomExtension extension = registerChild(registrar, genericInfo, nestedName);
+            if (extension != null) {
+              extension.putUserData(AntDomElement.ROLE, AntDomElement.Role.TASK);
+            }
           }
-          for (Object nestedTypeDef : reflected.getDataTypeDefinitions().keySet()) {
-            registerChild(registrar, genericInfo, (String)nestedTypeDef);
+          for (String nestedTypeDef : dataTypeDefs.keySet()) {
+            final DomExtension extension = registerChild(registrar, genericInfo, nestedTypeDef);
+            if (extension != null) {
+              extension.putUserData(AntDomElement.ROLE, AntDomElement.Role.DATA_TYPE);
+            }
           }
         }
         else {
           final Enumeration<String> nested = parentElementIntrospector.getNestedElements();
           while (nested.hasMoreElements()) {
-            registerChild(registrar, genericInfo, nested.nextElement());
+            final String nestedElementName = nested.nextElement();
+            final DomExtension extension = registerChild(registrar, genericInfo, nestedElementName);
+            if (extension != null) {
+              AntDomElement.Role role = null;
+              if (taskDefs.containsKey(nestedElementName)) {
+                role = AntDomElement.Role.TASK;
+              }
+              else if (dataTypeDefs.containsKey(nestedElementName)) {
+                role = AntDomElement.Role.DATA_TYPE;
+              }
+              if (role != null) {
+                extension.putUserData(AntDomElement.ROLE, role);
+              }
+            }
           }
         }
       }

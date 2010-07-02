@@ -17,20 +17,16 @@ package com.intellij.ui.switcher;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.AbstractPainter;
-import com.intellij.openapi.ui.Painter;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.geom.Area;
@@ -57,7 +53,7 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
 
   private boolean mySelectionWasMoved;
 
-  private Alarm myAutoApply = new Alarm();
+  private Alarm myAlarm = new Alarm();
   private Runnable myAutoApplyRunnable = new Runnable() {
     public void run() {
       if (myManager.canApplySwitch()) {
@@ -75,6 +71,13 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
       if (!myShowspots) {
         setShowspots(true);
       }
+    }
+  };
+
+  private boolean myFadingAway;
+  private Disposable myPainterDisposable = new Disposable() {
+    @Override
+    public void dispose() {
     }
   };
 
@@ -120,7 +123,7 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
     myGlassPane = IdeGlassPaneUtil.find(myProvider.getComponent());
     myRootComponent = myProvider.getComponent().getRootPane();
     mySpotlight = new Spotlight(myRootComponent);
-    myGlassPane.addPainter(myRootComponent, mySpotlight, this);
+    myGlassPane.addPainter(myRootComponent, mySpotlight, myPainterDisposable);
 
     myShowspotsAlarm = new Alarm(this);
     restartShowspotsAlarm();
@@ -128,6 +131,10 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
     myShowspots = showSpots;
     mySpotlight.setNeedsRepaint(true);
    }
+
+  public void setFadeaway(boolean fadeAway) {
+    myFadingAway = fadeAway;
+  }
 
 
   private class Spotlight extends AbstractPainter {
@@ -233,10 +240,14 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
   }
 
   public boolean dispatchKeyEvent(KeyEvent e) {
-    KeyEvent event = myInitialEvent;
-    if (event == null || ((e.getModifiers() & event.getModifiers()) == 0)) {
-      finish();
-      return false;
+    if (myFadingAway) {
+      _dispose();
+    } else {
+      KeyEvent event = myInitialEvent;
+      if (event == null || ((e.getModifiers() & event.getModifiers()) == 0)) {
+        finish(!isSelectionWasMoved());
+        return false;
+      }
     }
 
     return false;
@@ -275,12 +286,12 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
 
     mySelection = target;
 
-    mySelectionWasMoved = !mySelection.equals(myStartSelection);
+    mySelectionWasMoved |= !mySelection.equals(myStartSelection);
 
     mySpotlight.setNeedsRepaint(true);
 
-    myAutoApply.cancelAllRequests();
-    myAutoApply.addRequest(myAutoApplyRunnable, Registry.intValue("actionSystem.autoSelectTimeout"));
+    myAlarm.cancelAllRequests();
+    myAlarm.addRequest(myAutoApplyRunnable, Registry.intValue("actionSystem.autoSelectTimeout"));
 
     restartShowspotsAlarm();
   }
@@ -413,19 +424,37 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
   }
 
   public void dispose() {
-    KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(this);
     myFinished = true;
+
+    if (myFadingAway) {
+      myManager.addFadingAway(this);
+      myAlarm.addRequest(new Runnable() {
+        @Override
+        public void run() {
+          _dispose();
+        }
+      }, Registry.intValue("actionSystem.keyGestureDblClickTime"));
+    } else {
+      _dispose();
+    }
   }
 
-  public AsyncResult<SwitchTarget> finish() {
-    myAutoApply.cancelAllRequests();
+  private void _dispose() {
+    myFadingAway = false;
+    myManager.removeFadingAway(this);
+    Disposer.dispose(myPainterDisposable);
+    KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(this);
+  }
+
+  public AsyncResult<SwitchTarget> finish(final boolean fadeAway) {
+    myAlarm.cancelAllRequests();
 
     final AsyncResult<SwitchTarget> result = new AsyncResult<SwitchTarget>();
     final SwitchTarget selection = getSelection();
     if (selection != null) {
       selection.switchTo(true).doWhenDone(new Runnable() {
         public void run() {
-          Disposer.dispose(SwitchingSession.this);
+          myManager.disposeCurrentSession(fadeAway);
           result.setDone(selection);
         }
       }).notifyWhenRejected(result);

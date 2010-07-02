@@ -95,6 +95,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
   private final Map<List<Module>, GlobalSearchScope> myLibraryScopes = new ConcurrentHashMap<List<Module>, GlobalSearchScope>();
   private final Map<String, GlobalSearchScope> myJdkScopes = new HashMap<String, GlobalSearchScope>();
+  private final OrderRootsCache myRootsCache;
 
   private boolean myStartupActivityPerformed = false;
 
@@ -195,6 +196,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     };
     VirtualFileManager.getInstance().addVirtualFileManagerListener(myVFSListener);
 
+    myRootsCache = new OrderRootsCache(project);
     myProjectFileIndex = new ProjectFileIndexImpl(myProject, directoryIndex, fileTypeManager);
     startupManager.registerStartupActivity(new Runnable() {
       public void run() {
@@ -305,7 +307,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
   @Override
   public OrderEnumerator orderEntries() {
-    return new ProjectOrderEnumerator(myProject);
+    return new ProjectOrderEnumerator(myProject, myRootsCache);
   }
 
   public VirtualFile[] getContentRootsFromAllModules() {
@@ -452,6 +454,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   }
 
   public void clearScopesCachesForModules() {
+    myRootsCache.clearCache();
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     for (Module module : modules) {
       ((ModuleRootManagerImpl)ModuleRootManager.getInstance(module)).dropCaches();

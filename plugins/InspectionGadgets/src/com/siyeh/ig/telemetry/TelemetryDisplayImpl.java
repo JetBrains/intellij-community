@@ -15,9 +15,9 @@
  */
 package com.siyeh.ig.telemetry;
 
-import javax.swing.JComponent;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
+
+
+import javax.swing.*;
 import javax.swing.table.JTableHeader;
 
 public class TelemetryDisplayImpl implements TelemetryDisplay{

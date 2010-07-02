@@ -281,7 +281,7 @@ public class ExplorerSettingsEditor extends DialogWrapper {
 
     myOptionsPanel.setBorder(BorderFactory.createEmptyBorder(15, 5, 2, 5));
 
-    JScrollPane optionsScrollForTinyScreens = new JScrollPane(myOptionsPanel);
+    JScrollPane optionsScrollForTinyScreens = ScrollPaneFactory.createScrollPane(myOptionsPanel);
     optionsScrollForTinyScreens.setBorder(null);
     
     myComponentPanel.add(optionsScrollForTinyScreens, BorderLayout.CENTER);

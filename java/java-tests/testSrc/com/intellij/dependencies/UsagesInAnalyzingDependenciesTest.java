@@ -37,7 +37,7 @@ public class UsagesInAnalyzingDependenciesTest extends PsiTestCase{
         public void run() {
           try{
             String root = JavaTestUtil.getJavaTestDataPath() + "/dependencies/search/" + getTestName(true);
-            PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk("java 1.4"));
+            PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk17());
             PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
           }
           catch(Exception e){

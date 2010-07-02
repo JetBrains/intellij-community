@@ -82,7 +82,7 @@ public class ReferenceProvidersRegistry extends PsiReferenceRegistrar {
     };
   private final Project myProject;
 
-  private final static NotNullLazyKey<ReferenceProvidersRegistry, Project> INSTANCE_CACHE =
+  private static final NotNullLazyKey<ReferenceProvidersRegistry, Project> INSTANCE_CACHE =
     ServiceManager.createLazyKey(ReferenceProvidersRegistry.class);
 
   public static ReferenceProvidersRegistry getInstance(Project project) {
@@ -267,7 +267,6 @@ public class ReferenceProvidersRegistry extends PsiReferenceRegistrar {
         }
       }
     }
-    return ContainerUtil.toArray(result, new PsiReference[result.size()]);
+    return result.isEmpty() ? PsiReference.EMPTY_ARRAY : ContainerUtil.toArray(result, new PsiReference[result.size()]);
   }
-
 }

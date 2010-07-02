@@ -22,6 +22,7 @@ package com.intellij.openapi.editor.colors.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
+import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ExportableComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.diagnostic.Logger;
@@ -42,7 +43,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
-public class EditorColorsManagerImpl extends EditorColorsManager implements NamedJDOMExternalizable, ExportableComponent {
+public class EditorColorsManagerImpl extends EditorColorsManager implements NamedJDOMExternalizable, ExportableComponent, BaseComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl");
 
   private final Collection<EditorColorsListener> myListeners = new ArrayList<EditorColorsListener>();
@@ -381,5 +382,16 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
 
   public SchemesManager<EditorColorsScheme, EditorColorsSchemeImpl> getSchemesManager() {
     return mySchemesManager;
+  }
+
+  @NotNull
+  public String getComponentName() {
+    return "EditorColorsManagerImpl";
+  }
+
+  public void initComponent() {
+  }
+
+  public void disposeComponent() {
   }
 }

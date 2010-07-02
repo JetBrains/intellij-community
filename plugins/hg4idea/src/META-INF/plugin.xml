@@ -26,7 +26,6 @@
     <vcs name="hg4idea" vcsClass="org.zmlx.hg4idea.HgVcs"/>
     <checkoutProvider implementation="org.zmlx.hg4idea.provider.HgCheckoutProvider"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
-    <applicationConfigurable implementation="org.zmlx.hg4idea.HgIdeConfigurable"/>
 
     <applicationService serviceInterface="org.zmlx.hg4idea.HgGlobalSettings"
                         serviceImplementation="org.zmlx.hg4idea.HgGlobalSettings"/>
@@ -37,7 +36,7 @@
   </extensions>
 
   <actions>
-    <group id="MercurialFileGroup" text="Mercurial">
+    <group id="MercurialFileGroup">
       <separator/>
       <action id="Hg.Init" class="org.zmlx.hg4idea.action.HgInit" text="Create Mercurial Repository"/>
       <separator/>
@@ -45,31 +44,33 @@
     </group>
     
     <group id="hg4idea.file.menu" popup="true" icon="/images/mercurial.png" class="org.zmlx.hg4idea.action.HgMercurialMenu">
-      <action id="hg4idea.resolve.mark" class="org.zmlx.hg4idea.action.HgMarkResolved"/>
-      <separator/>
       <reference ref="CheckinFiles"/>
-      <reference ref="ChangesView.Rollback"/>
       <reference ref="ChangesView.AddUnversioned"/>
+      <reference ref="ChangesView.Rollback"/>
       <separator/>
+
       <reference ref="Compare.SameVersion"/>
       <reference ref="Compare.Selected"/>
       <reference ref="Vcs.ShowTabbedFileHistory"/>
       <reference ref="Vcs.ShowHistoryForBlock"/>
       <reference ref="Annotate"/>
-      <add-to-group group-id="VcsGroup" anchor="last"/>
-    </group>
+      <separator/>
 
-    <group id="hg4idea.global.submenu" popup="true" icon="/images/mercurial.png" class="org.zmlx.hg4idea.action.HgMercurialMenu">
       <action id="hg4idea.pull" class="org.zmlx.hg4idea.action.HgPullAction" icon="/actions/checkOut.png"/>
       <action id="hg4idea.push" class="org.zmlx.hg4idea.action.HgPushAction" icon="/actions/commit.png"/>
       <separator/>
       <action id="hg4idea.run.conflict.resolver" class="org.zmlx.hg4idea.action.HgRunConflictResolverAction"/>
-      <action id="hg4idea.mq.rebase" class="org.zmlx.hg4idea.action.HgMqRebaseAction"/>
+      <!--<action id="hg4idea.mq.rebase" class="org.zmlx.hg4idea.action.HgMqRebaseAction"/>-->
       <separator/>
+
       <action id="hg4idea.tag" class="org.zmlx.hg4idea.action.HgCreateTagAction"/>
       <action id="hg4idea.switch" class="org.zmlx.hg4idea.action.HgSwitchWorkingDirectoryAction"/>
-      <add-to-group group-id="VcsGlobalGroup" anchor="last"/>
+      <action id="hg4idea.resolve.mark" class="org.zmlx.hg4idea.action.HgMarkResolved"/>
+
+      <add-to-group group-id="VcsGroup" anchor="last"/>
+      <add-to-group group-id="VcsGroups" anchor="last"/>
     </group>
+
   </actions>
 
   <resource-bundle>org.zmlx.hg4idea.HgVcsMessages</resource-bundle>

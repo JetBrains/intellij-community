@@ -62,12 +62,9 @@ public class RootModelImpl implements ModifiableRootModel {
   private boolean myWritable;
   final VirtualFilePointerListener myVirtualFilePointerListener;
   private final VirtualFilePointerManager myFilePointerManager;
+
   VirtualFilePointer myExplodedDirectoryPointer;
-
   private String myExplodedDirectory;
-
-  final List<RootModelComponentBase> myComponents = new ArrayList<RootModelComponentBase>();
-
   private boolean myExcludeExploded;
 
   @NonNls private static final String EXPLODED_TAG = "exploded";
@@ -524,7 +521,7 @@ public class RootModelImpl implements ModifiableRootModel {
   @NotNull
   @Override
   public OrderEnumerator orderEntries() {
-    return new ModuleOrderEnumerator(this);
+    return new ModuleOrderEnumerator(this, null);
   }
 
   public Project getProject() {
@@ -956,7 +953,7 @@ public class RootModelImpl implements ModifiableRootModel {
 
   @NotNull
   public String[] getDependencyModuleNames() {
-    List<String> result = processOrder(new CollectDependentModules(), new ArrayList<String>());
+    List<String> result = orderEntries().withoutSdk().withoutLibraries().withoutModuleSourceEntries().process(new CollectDependentModules(), new ArrayList<String>());
     return ContainerUtil.toArray(result, new String[result.size()]);
   }
 

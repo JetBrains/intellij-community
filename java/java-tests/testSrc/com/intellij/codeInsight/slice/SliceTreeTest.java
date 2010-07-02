@@ -35,7 +35,7 @@ public class SliceTreeTest extends LightDaemonAnalyzerTestCase {
   }
 
   @Override protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk15("java 1.5");
+    return JavaSdkImpl.getMockJdk17("java 1.5");
   }
 
   protected void tearDown() throws Exception {

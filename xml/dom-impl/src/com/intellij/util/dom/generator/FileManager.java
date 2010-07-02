@@ -24,6 +24,9 @@ package com.intellij.util.dom.generator;
 
 import java.io.File;
 
+/**
+ * @author Konstantin Bulenkov
+ */
 public interface FileManager {
   public File releaseOutputFile(File outFile);
   public File getOutputFile(File target);

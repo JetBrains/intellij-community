@@ -16,9 +16,16 @@
 package com.intellij.lang.ant.dom;
 
 import com.intellij.lang.ant.psi.AntFilesProvider;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.xml.Attribute;
+import com.intellij.util.xml.Convert;
+import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -28,8 +35,78 @@ import java.util.Set;
  *         Date: Jun 22, 2010
  */
 public abstract class AntDomDirSet extends AntDomFilesProviderImpl{
+
+  @Attribute("dir")
+  @Convert(value = AntPathConverter.class)
+  public abstract GenericAttributeValue<PsiFileSystemItem> getDir();
+
+  @Attribute("file")
+  @Convert(value = AntPathConverter.class)
+  public abstract GenericAttributeValue<PsiFileSystemItem> getFile();
+
   @NotNull
-  public List<File> getFiles(Set<AntFilesProvider> processed) {
-    return Collections.emptyList(); // todo
+  protected List<File> getFiles(@Nullable AntDomPattern pattern, Set<AntFilesProvider> processed) {
+    assert pattern != null;
+    final File singleFile = getCanonicalFile(getFile().getStringValue());
+    if (singleFile == null || pattern.hasIncludePatterns()) {
+      // if singleFile is specified, there are no implicit includes
+      final File root = getCanonicalFile(getDir().getStringValue());
+      if (root != null) {
+        final ArrayList<File> files = new ArrayList<File>();
+        if (singleFile != null && singleFile.isDirectory()) {
+          files.add(singleFile);
+        }
+        new FilesCollector().collectFiles(files, root, "", pattern);
+        return files;
+      }
+    }
+
+    if (singleFile != null && singleFile.isDirectory()) {
+      Collections.singletonList(singleFile);
+    }
+
+    return Collections.emptyList();
   }
+
+
+  private static class FilesCollector {
+    private static final int MAX_DIRS_TO_PROCESS = 100;
+    private int myDirsProcessed = 0;
+
+    public void collectFiles(List<File> container, File from, String relativePath, final AntDomPattern pattern) {
+      if (myDirsProcessed > MAX_DIRS_TO_PROCESS) {
+        return;
+      }
+      myDirsProcessed++;
+      final File[] children = from.listFiles();
+      if (children != null) {
+        for (File child : children) {
+          if (child.isDirectory()) {
+            final String childPath = makePath(relativePath, child.getName());
+            if (pattern.acceptPath(childPath)) {
+              container.add(child);
+            }
+            if (pattern.couldBeIncluded(childPath)) {
+              collectFiles(container, child, childPath, pattern);
+            }
+          }
+        }
+      }
+    }
+
+    private static String makePath(final String parentPath, final String name) {
+      if (parentPath.length() == 0) {
+        return name;
+      }
+      final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+      try {
+        return builder.append(parentPath).append("/").append(name).toString();
+      }
+      finally {
+        StringBuilderSpinAllocator.dispose(builder);
+      }
+    }
+
+  }
+
 }

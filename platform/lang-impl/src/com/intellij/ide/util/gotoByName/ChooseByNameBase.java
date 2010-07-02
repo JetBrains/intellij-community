@@ -17,7 +17,6 @@
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.Patches;
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.ide.ui.UISettings;
@@ -49,6 +48,7 @@ import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ListScrollingUtil;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.PopupOwner;
 import com.intellij.ui.popup.PopupUpdateProcessor;
@@ -62,6 +62,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -463,7 +464,8 @@ public abstract class ChooseByNameBase{
       }
     });
 
-    myListScrollPane = new JScrollPane(myList);
+    myListScrollPane = ScrollPaneFactory.createScrollPane(myList);
+    myListScrollPane.setViewportBorder(new EmptyBorder(0, 0, 0, 0));
 
     if (!UIUtil.isMotifLookAndFeel()) {
       UIUtil.installPopupMenuBorder(myTextFieldPanel);

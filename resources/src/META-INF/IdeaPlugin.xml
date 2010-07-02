@@ -213,6 +213,7 @@
     <definitionsSearch implementation="com.intellij.codeInsight.navigation.ClassImplementationsSearch"/>
 
     <inspectionToolProvider implementation="com.intellij.codeInspection.ex.StandardInspectionToolsProvider"/>
+    <inspectionToolProvider implementation="com.intellij.codeInspection.internal.InternalInspectionToolsProvider"/>
 
     <renameHandler implementation="com.intellij.ide.projectView.impl.RenameModuleHandler"/>
 
@@ -913,6 +914,8 @@
 
     <patternDialectProvider implementation="com.intellij.packageDependencies.ui.PackagePatternProvider" id="package" order="before file" />
     <scopeDescriptorProvider implementation="com.intellij.ide.util.scopeChooser.HierarchyScopeDescriptorProvider"/>
+
+    <patterns.patternClass className="com.intellij.patterns.PsiJavaPatterns" alias="java"/>
 
     <customScopesProvider implementation="com.intellij.analysis.PackagesScopesProvider"/>
 

@@ -42,8 +42,9 @@ public abstract class ExpandableItemsHandlerFactory {
 
   @Nullable
   private static ExpandableItemsHandlerFactory getInstance() {
-    if (ApplicationManager.getApplication() == null) return null; // test code or no idea environment available (gui designer etc.)
-    return ServiceManager.getService(ExpandableItemsHandlerFactory.class);
+    return null;
+    //if (ApplicationManager.getApplication() == null) return null; // test code or no idea environment available (gui designer etc.)
+    //return ServiceManager.getService(ExpandableItemsHandlerFactory.class);
   }
 
   protected abstract ExpandableItemsHandler<Integer> doInstall(JList list);

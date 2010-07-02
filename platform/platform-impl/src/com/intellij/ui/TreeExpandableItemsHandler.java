@@ -33,14 +33,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 public class TreeExpandableItemsHandler extends AbstractExpandableItemsHandler<Integer, JTree> {
-  public static void install(JTree tree) {
-    installAndGet(tree);
-  }
-
-  public static TreeExpandableItemsHandler installAndGet(JTree tree) {
-    return new TreeExpandableItemsHandler(tree);
-  }
-
   protected TreeExpandableItemsHandler(final JTree tree) {
     super(tree);
     final TreeSelectionListener selectionListener = new TreeSelectionListener() {

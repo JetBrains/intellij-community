@@ -16,6 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 
 /**
@@ -64,6 +65,10 @@ public class GppTypeConverter extends GrTypeConverter {
   @Override
   public Boolean isConvertible(@NotNull PsiType lType, @NotNull PsiType rType, @NotNull GroovyPsiElement context) {
     if (rType instanceof GrTupleType) {
+      final PsiType type = PsiUtil.extractIterableTypeParameter(lType, false);
+      if (type != null && !TypesUtil.isAssignable(type, ((GrTupleType)rType).getParameters()[0], context)) {
+        return null;
+      }
       final PsiType[] componentTypes = ((GrTupleType)rType).getComponentTypes();
 
       final PsiType expectedComponent = PsiUtil.extractIterableTypeParameter(lType, false);
@@ -78,6 +83,14 @@ public class GppTypeConverter extends GrTypeConverter {
       return null;
     }
     else if (rType instanceof GrMapType) {
+      final PsiType lKeyType = PsiUtil.substituteTypeParameter(lType, CommonClassNames.JAVA_UTIL_MAP, 0, false);
+      final PsiType lValueType = PsiUtil.substituteTypeParameter(lType, CommonClassNames.JAVA_UTIL_MAP, 1, false);
+      final PsiType[] parameters = ((GrMapType)rType).getParameters();
+      if (lKeyType != null && lValueType != null &&
+          parameters[0] != null && parameters[1] != null &&
+          (!TypesUtil.isAssignable(lKeyType, parameters[0], context) || !TypesUtil.isAssignable(lValueType, parameters[1], context))) {
+        return null;
+      }
       if (hasDefaultConstructor(lType)) {
         return true;
       }

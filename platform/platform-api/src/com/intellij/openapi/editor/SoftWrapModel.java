@@ -105,4 +105,13 @@ public interface SoftWrapModel {
    * @param position    position where the document is to be modified
    */
   void beforeDocumentChange(@NotNull VisualPosition position);
+
+  /**
+   * Allows to answer if given visual position points to soft wrap-introduced virtual space.
+   *
+   * @param position    target visual position to check
+   * @return            <code>true</code> if given visual position points to soft wrap-introduced virtual space;
+   *                    <code>false</code> otherwise
+   */
+  boolean isInsideSoftWrap(@NotNull VisualPosition position);
 }

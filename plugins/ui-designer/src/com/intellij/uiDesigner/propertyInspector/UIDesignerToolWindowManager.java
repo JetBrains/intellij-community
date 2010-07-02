@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.componentTree.ComponentTree;
 import com.intellij.uiDesigner.componentTree.ComponentTreeBuilder;
@@ -47,7 +48,7 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -93,7 +94,7 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
       myComponentTree.addTreeSelectionListener(listener);
     }
     myPendingListeners.clear();
-    final JScrollPane scrollPane = new JScrollPane(myComponentTree);
+    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myComponentTree);
     scrollPane.setPreferredSize(new Dimension(250, -1));
     myComponentTree.initQuickFixManager(scrollPane.getViewport());
     myPropertyInspector= new PropertyInspector(myProject, myComponentTree);

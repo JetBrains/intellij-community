@@ -220,10 +220,10 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertPathEquals(pathFromBasedir("src/test/java"), p.getBuild().getTestSources().get(0));
     assertEquals(1, p.getBuild().getResources().size());
     assertResource(p.getBuild().getResources().get(0), pathFromBasedir("src/main/resources"),
-                   false, null, Collections.EMPTY_LIST, Collections.EMPTY_LIST);
+                   false, null, Collections.<String>emptyList(), Collections.<String>emptyList());
     assertEquals(1, p.getBuild().getTestResources().size());
     assertResource(p.getBuild().getTestResources().get(0), pathFromBasedir("src/test/resources"),
-                   false, null, Collections.EMPTY_LIST, Collections.EMPTY_LIST);
+                   false, null, Collections.<String>emptyList(), Collections.<String>emptyList());
     assertPathEquals(pathFromBasedir("target"), p.getBuild().getDirectory());
     assertPathEquals(pathFromBasedir("target/classes"), p.getBuild().getOutputDirectory());
     assertPathEquals(pathFromBasedir("target/test-classes"), p.getBuild().getTestOutputDirectory());
@@ -319,7 +319,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
                    true, "dir", Collections.singletonList("**.properties"), Collections.singletonList("**.xml"));
     assertEquals(1, p.getBuild().getTestResources().size());
     assertResource(p.getBuild().getTestResources().get(0), pathFromBasedir("myTestRes"),
-                   false, null, Collections.singletonList("**.properties"), Collections.EMPTY_LIST);
+                   false, null, Collections.singletonList("**.properties"), Collections.<String>emptyList());
     assertPathEquals(pathFromBasedir("myOutput"), p.getBuild().getDirectory());
     assertPathEquals(pathFromBasedir("myClasses"), p.getBuild().getOutputDirectory());
     assertPathEquals(pathFromBasedir("myTestClasses"), p.getBuild().getTestOutputDirectory());
@@ -391,10 +391,10 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertPathEquals(pathFromBasedir("subDir/myTestSrc"), p.getBuild().getTestSources().get(0));
     assertEquals(1, p.getBuild().getResources().size());
     assertResource(p.getBuild().getResources().get(0), pathFromBasedir("subDir/myRes"),
-                   false, null, Collections.EMPTY_LIST, Collections.EMPTY_LIST);
+                   false, null, Collections.<String>emptyList(), Collections.<String>emptyList());
     assertEquals(1, p.getBuild().getTestResources().size());
     assertResource(p.getBuild().getTestResources().get(0), pathFromBasedir("subDir/myTestRes"),
-                   false, null, Collections.EMPTY_LIST, Collections.EMPTY_LIST);
+                   false, null, Collections.<String>emptyList(), Collections.<String>emptyList());
     assertPathEquals(pathFromBasedir("subDir/myOutput"), p.getBuild().getDirectory());
     assertPathEquals(pathFromBasedir("subDir/myClasses"), p.getBuild().getOutputDirectory());
     assertPathEquals(pathFromBasedir("subDir/myTestClasses"), p.getBuild().getTestOutputDirectory());

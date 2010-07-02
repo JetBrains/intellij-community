@@ -18,10 +18,9 @@ package com.intellij.openapi.roots;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+import java.util.Collection;
 
 /**
  * @author nik
@@ -37,7 +36,7 @@ public abstract class OrderEnumerationHandler {
     return true;
   }
 
-  public boolean addCustomOutput(@NotNull ModuleOrderEntry orderEntry, boolean productionOnly, @NotNull List<VirtualFile> result) {
+  public boolean addCustomOutput(@NotNull ModuleOrderEntry orderEntry, boolean productionOnly, @NotNull Collection<String> urls) {
     return false;
   }
 }

@@ -17,8 +17,8 @@
 package org.jetbrains.plugins.groovy.runner;
 
 import com.intellij.execution.CantRunException;
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.runners.ExecutionUtil;
@@ -29,7 +29,6 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.openapi.project.Project;
@@ -48,13 +47,13 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
   }
 
   @Override
-  public boolean ensureRunnerConfigured(@Nullable Module module, RunProfile profile, final Project project) throws ExecutionException {
+  public boolean ensureRunnerConfigured(@Nullable Module module, RunProfile profile, Executor executor, final Project project) throws ExecutionException {
     if (module == null) {
       throw new ExecutionException("Module is not specified");
     }
 
     if (LibrariesUtil.getGroovyHomePath(module) == null) {
-      ExecutionUtil.handleExecutionError(project, profile, new ExecutionException("Groovy is not configured"));
+      ExecutionUtil.handleExecutionError(project, executor.getToolWindowId(), profile, new ExecutionException("Groovy is not configured"));
       ModulesConfigurator.showDialog(module.getProject(), module.getName(), ClasspathEditor.NAME, false);
       return false;
     }

@@ -52,7 +52,7 @@ public final class XsltImplicitUsagesProvider implements ImplicitUsageProvider {
         // BTW: Almost the same logic applies to other XML dialects (RELAX-NG).
         // Pull this class into the platform?
         final String prefix = attr.getLocalName();
-        final SchemaPrefix target = new SchemaPrefix(attr, TextRange.from("xmlns:".length(), prefix.length()), prefix);
+        final SchemaPrefix target = new SchemaPrefix(attr, TextRange.from("xmlns:".length(), prefix.length()), prefix, attr);
         final Query<PsiReference> q = ReferencesSearch.search(target, new LocalSearchScope(attr.getParent()));
         return !q.forEach(new Processor<PsiReference>() {
             public boolean process(PsiReference psiReference) {

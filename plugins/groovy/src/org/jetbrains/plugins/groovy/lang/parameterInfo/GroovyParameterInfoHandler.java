@@ -117,7 +117,9 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
     GroovyResolveResult[] variants = ResolveUtil.getMethodVariants(place);
     final List<GroovyResolveResult> namedElements = ContainerUtil.findAll(variants, new Condition<GroovyResolveResult>() {
       public boolean value(GroovyResolveResult groovyResolveResult) {
-        return groovyResolveResult.getElement() instanceof PsiNamedElement;
+        final PsiElement element = groovyResolveResult.getElement();
+        return element instanceof PsiMethod ||
+               element instanceof GrVariable && ((GrVariable)element).getTypeGroovy() instanceof GrClosureType;
       }
     });
     context.setItemsToShow(ArrayUtil.toObjectArray(namedElements));

@@ -24,11 +24,13 @@ package com.intellij.util.dom.generator;
 
 import java.io.File;
 
+/**
+ * @author Konstantin Bulenkov
+ */
 public interface Emitter {
-  public static final String JDOC_OPEN = "/**";
-  public static final String JDOC_CONT = " * ";
-  public static final String JDOC_CLOSE = " */";
-
+  String JDOC_OPEN = "/**";
+  String JDOC_CONT = " * ";
+  String JDOC_CLOSE = " */";
 
   void emit(FileManager fileManager, ModelDesc model, File outputRoot);
 }

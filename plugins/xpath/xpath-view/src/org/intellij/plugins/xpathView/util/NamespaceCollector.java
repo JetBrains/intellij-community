@@ -125,7 +125,7 @@ public class NamespaceCollector extends XmlRecursiveElementVisitor {
 
     public static CollectedInfo empty() {
         //noinspection unchecked
-        return new CollectedInfo(Collections.EMPTY_SET, Collections.EMPTY_SET, Collections.EMPTY_SET);
+        return new CollectedInfo(Collections.<Namespace>emptySet(), Collections.<QName>emptySet(), Collections.<QName>emptySet());
     }
     
     public static CollectedInfo collectInfo(final XmlFile psiFile) {

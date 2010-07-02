@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.ui.ScrollPaneFactory;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -73,7 +74,7 @@ public class MigrationDialog extends DialogWrapper{
 
     initMapCombobox();
     myDescriptionTextArea = new MyTextArea("", 3, 40);
-    JScrollPane scrollPane = new JScrollPane(myDescriptionTextArea);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myDescriptionTextArea);
     myDescriptionScroll.getViewport().add(myDescriptionTextArea);
     myDescriptionScroll.setBorder(null);
     myDescriptionScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);

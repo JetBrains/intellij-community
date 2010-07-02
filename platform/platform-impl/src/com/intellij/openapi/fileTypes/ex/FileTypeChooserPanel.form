@@ -33,7 +33,7 @@
         </constraints>
         <properties/>
       </component>
-      <scrollpane id="f588b">
+      <scrollpane class="com.intellij.ui.components.JBScrollPane" id="f588b">
         <constraints>
           <grid row="3" column="0" row-span="1" col-span="2" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="2" use-parent-layout="false">
             <preferred-size width="150" height="200"/>

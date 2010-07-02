@@ -516,7 +516,7 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
         return ourEmptyShortcutsArray;
       }
     }
-    return shortcuts.toArray(new Shortcut[shortcuts.size()]);
+    return shortcuts.isEmpty() ? ourEmptyShortcutsArray : shortcuts.toArray(new Shortcut[shortcuts.size()]);
   }
 
   private KeymapManagerEx getKeymapManager() {

@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 
@@ -114,7 +115,7 @@ public class KeyboardShortcutDialog extends DialogWrapper {
     myConflictInfoArea.setBackground(panel.getBackground());
     myConflictInfoArea.setLineWrap(true);
     myConflictInfoArea.setWrapStyleWord(true);
-    final JScrollPane conflictInfoScroll = new JScrollPane(myConflictInfoArea);
+    final JScrollPane conflictInfoScroll = ScrollPaneFactory.createScrollPane(myConflictInfoArea);
     conflictInfoScroll.setPreferredSize(new Dimension(260, 60));
     conflictInfoScroll.setBorder(null);
     conflictsPanel.add(conflictInfoScroll);

@@ -186,7 +186,7 @@ class OutputFiltersDialog extends DialogWrapper {
 
     JPanel panel = new JPanel(new BorderLayout());
 
-    panel.add(new JScrollPane(myFiltersList), BorderLayout.CENTER);
+    panel.add(ScrollPaneFactory.createScrollPane(myFiltersList), BorderLayout.CENTER);
     panel.add(myButtonGroup, BorderLayout.EAST);
 
     panel.setPreferredSize(new Dimension(400, 200));

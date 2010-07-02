@@ -74,7 +74,7 @@ class XPathFunctionProviderImpl extends XPathFunctionProvider {
             return myFunctions;
         } else {
             //noinspection unchecked
-            return Collections.EMPTY_MAP;
+            return Collections.emptyMap();
         }
     }
 

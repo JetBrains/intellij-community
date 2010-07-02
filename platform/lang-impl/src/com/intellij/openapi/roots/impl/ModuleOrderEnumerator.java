@@ -19,6 +19,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
@@ -26,13 +27,13 @@ import gnu.trove.THashSet;
 public class ModuleOrderEnumerator extends OrderEnumeratorBase {
   private final RootModelImpl myRootModel;
 
-  public ModuleOrderEnumerator(RootModelImpl rootModel) {
-    super(rootModel.getModule(), rootModel.getProject());
+  public ModuleOrderEnumerator(RootModelImpl rootModel, final OrderRootsCache cache) {
+    super(rootModel.getModule(), rootModel.getProject(), cache);
     myRootModel = rootModel;
   }
 
   @Override
-  public void forEach(Processor<OrderEntry> processor) {
+  public void forEach(@NotNull Processor<OrderEntry> processor) {
     processEntries(myRootModel, processor, myRecursively ? new THashSet<Module>() : null, true);
   }
 

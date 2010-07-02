@@ -23,6 +23,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 
 import javax.swing.*;
@@ -128,7 +129,7 @@ public final class MacrosDialog extends DialogWrapper {
     constr.insets = new Insets(0, 5, 0, 5);
     constr.fill = GridBagConstraints.BOTH;
     constr.anchor = GridBagConstraints.WEST;
-    panel.add(new JScrollPane(myMacrosList), constr);
+    panel.add(ScrollPaneFactory.createScrollPane(myMacrosList), constr);
     myMacrosList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myMacrosList.setPreferredSize(null);
 
@@ -149,7 +150,7 @@ public final class MacrosDialog extends DialogWrapper {
     constr.fill = GridBagConstraints.BOTH;
     constr.anchor = GridBagConstraints.WEST;
     constr.insets = new Insets(0, 5, 5, 5);
-    panel.add(new JScrollPane(myPreviewTextarea), constr);
+    panel.add(ScrollPaneFactory.createScrollPane(myPreviewTextarea), constr);
     myPreviewTextarea.setEditable(false);
     myPreviewTextarea.setLineWrap(true);
     myPreviewTextarea.setPreferredSize(null);

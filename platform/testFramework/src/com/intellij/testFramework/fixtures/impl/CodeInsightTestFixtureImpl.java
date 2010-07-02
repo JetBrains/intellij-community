@@ -838,6 +838,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     configureInspections(myInspections == null ? new LocalInspectionTool[0] : myInspections);
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
     DaemonCodeAnalyzer.getInstance(getProject()).setUpdateByTimerEnabled(false);
+    ensureIndexesUpToDate(getProject());
   }
 
   private void enableInspectionTool(InspectionProfileEntry tool){
@@ -895,7 +896,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     };
     final InspectionProfileManager inspectionProfileManager = InspectionProfileManager.getInstance();
     inspectionProfileManager.addProfile(profile);
-    Disposer.register(getProject(), new Disposable() {
+    Disposer.register(getTestRootDisposable(), new Disposable() {
       public void dispose() {
         inspectionProfileManager.deleteProfile(PROFILE);
       }
@@ -1030,7 +1031,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     assertInitialized();
     try {
       final OutputStream outputStream = copy.getOutputStream(null, 0, 0);
-      outputStream.write(loader.newFileText.getBytes());
+      outputStream.write(loader.newFileText.getBytes(copy.getCharset()));
       outputStream.close();
     }
     catch (IOException e) {
@@ -1102,17 +1103,22 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     //to initialize caches
     myPsiManager.getCacheManager().getFilesWithWord(XXX, UsageSearchContext.IN_COMMENTS, GlobalSearchScope.allScope(project), true);
 
-    ((PsiManagerImpl)PsiManager.getInstance(project)).setAssertOnFileLoadingFilter(myJavaFilesFilter);
+    List<HighlightInfo> infos;
+    try {
+      ((PsiManagerImpl)PsiManager.getInstance(project)).setAssertOnFileLoadingFilter(myJavaFilesFilter);
 
-    final long start = System.currentTimeMillis();
+      final long start = System.currentTimeMillis();
 //    ProfilingUtil.startCPUProfiling();
-    List<HighlightInfo> infos = doHighlighting();
-    removeDuplicatedRangesForInjected(infos);
-    final long elapsed = System.currentTimeMillis() - start;
-    duration.set(duration.isNull()? elapsed : duration.get().longValue() + elapsed);
+      infos = doHighlighting();
+      removeDuplicatedRangesForInjected(infos);
+      final long elapsed = System.currentTimeMillis() - start;
+      duration.set(duration.isNull()? elapsed : duration.get().longValue() + elapsed);
 //    ProfilingUtil.captureCPUSnapshot("testing");
+    }
+    finally {
+      ((PsiManagerImpl)PsiManager.getInstance(project)).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
+    }
 
-    ((PsiManagerImpl)PsiManager.getInstance(project)).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
 
     data.checkResult(infos, myEditor.getDocument().getText());
   }
@@ -1183,7 +1189,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
   }
 
-  private static void ensureIndexesUpToDate(Project project) {
+  public static void ensureIndexesUpToDate(Project project) {
     FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, null);
     FileBasedIndex.getInstance().ensureUpToDate(TodoIndex.NAME, project, null);
     assertTrue(!DumbServiceImpl.getInstance(project).isDumb());

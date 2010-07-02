@@ -153,6 +153,11 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
     return myDelegate.isViewer();
   }
 
+  @Override
+  public boolean isUnderRepainting() {
+    return myDelegate.isUnderRepainting();
+  }
+
   public boolean isRendererMode() {
     return myDelegate.isRendererMode();
   }

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 import javax.swing.*;
-import java.awt.*;
 
 public class ChainedConstructorTest {
   private JComponent myRootComponent;
@@ -26,7 +25,7 @@ public class ChainedConstructorTest {
   }
 
   public ChainedConstructorTest(String[] names, boolean mode) {
-    myList = new JBList();
+    myList = new JList();
     myScrollPane.setViewportView(myList);
   }
 }

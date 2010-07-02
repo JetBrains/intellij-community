@@ -16,10 +16,7 @@
 package org.jetbrains.plugins.groovy.gradle;
 
 import com.intellij.compiler.options.CompileStepBeforeRun;
-import com.intellij.execution.CantRunException;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Location;
-import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.openapi.module.Module;
@@ -27,6 +24,7 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
@@ -143,11 +141,11 @@ public class GradleScriptType extends GroovyScriptType {
     return new GroovyScriptRunner() {
       @Override
       public boolean isValidModule(@NotNull Module module) {
-        return GradleLibraryManager.isGradleSdk(ModuleRootManager.getInstance(module).getFiles(OrderRootType.CLASSES));
+        return GradleLibraryManager.isGradleSdk(OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots());
       }
 
       @Override
-      public boolean ensureRunnerConfigured(@Nullable Module module, RunProfile profile, final Project project) throws ExecutionException {
+      public boolean ensureRunnerConfigured(@Nullable Module module, RunProfile profile, Executor executor, final Project project) throws ExecutionException {
         if (GradleLibraryManager.getSdkHome(module, project) == null) {
           int result = Messages
             .showOkCancelDialog("Gradle is not configured. Do you want to configure it?", "Configure Gradle SDK",

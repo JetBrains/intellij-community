@@ -16,12 +16,8 @@
 package git4idea.commands;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -61,16 +57,11 @@ public abstract class GitHandler {
   /**
    * a command line
    */
-  private final GeneralCommandLine myCommandLine;
-  /**
-   * wrapped process handler
-   */
-  // note that access is safe because it accessed in unsynchronized block only after process is started, and it does not change after that
-  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private OSProcessHandler myHandler;
+  final GeneralCommandLine myCommandLine;
   /**
    * process
    */
-  private Process myProcess;
+  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) Process myProcess;
   /**
    * If true, the standard output is not copied to version control console
    */
@@ -82,7 +73,7 @@ public abstract class GitHandler {
   /**
    * the context project (might be a default project)
    */
-  private final Project myProject;
+  final Project myProject;
   /**
    * The descriptor for the command to be executed
    */
@@ -191,6 +182,13 @@ public abstract class GitHandler {
    */
   protected GitHandler(final Project project, final VirtualFile vcsRoot, final GitCommand command) {
     this(project, VfsUtil.virtualToIoFile(vcsRoot), command);
+  }
+
+  /**
+   * @return multicaster for listeners
+   */
+  protected GitHandlerListener listeners() {
+    return myListeners.getMulticaster();
   }
 
   /**
@@ -433,34 +431,7 @@ public abstract class GitHandler {
       myCommandLine.setEnvParams(myEnv);
       // start process
       myProcess = myCommandLine.createProcess();
-      myHandler = new OSProcessHandler(myProcess, myCommandLine.getCommandLineString()) {
-        @Override
-        public Charset getCharset() {
-          return myCharset == null ? super.getCharset() : myCharset;
-        }
-      };
-      myHandler.addProcessListener(new ProcessListener() {
-        public void startNotified(final ProcessEvent event) {
-          // do nothing
-        }
-
-        public void processTerminated(final ProcessEvent event) {
-          final int exitCode = event.getExitCode();
-          setExitCode(exitCode);
-          cleanupEnv();
-          GitHandler.this.processTerminated(exitCode);
-          myListeners.getMulticaster().processTerminated(exitCode);
-        }
-
-        public void processWillTerminate(final ProcessEvent event, final boolean willBeDestroyed) {
-          // do nothing
-        }
-
-        public void onTextAvailable(final ProcessEvent event, final Key outputType) {
-          GitHandler.this.onTextAvailable(event.getText(), outputType);
-        }
-      });
-      myHandler.startNotify();
+      startHandlingStreams();
     }
     catch (Throwable t) {
       cleanupEnv();
@@ -469,11 +440,9 @@ public abstract class GitHandler {
   }
 
   /**
-   * Notification for handler to handle process exit event
-   *
-   * @param exitCode a exit code.
+   * Start handling streams for the handler
    */
-  protected abstract void processTerminated(int exitCode);
+  protected abstract void startHandlingStreams();
 
   /**
    * @return a command line with full path to executable replace to "git"
@@ -485,14 +454,6 @@ public abstract class GitHandler {
   }
 
   /**
-   * This method is invoked when some text is available
-   *
-   * @param text       an available text
-   * @param outputType output type
-   */
-  protected abstract void onTextAvailable(final String text, final Key outputType);
-
-  /**
    * Cancel activity
    */
   public synchronized void cancel() {
@@ -500,13 +461,13 @@ public abstract class GitHandler {
     if (!myIsCancellable) {
       throw new IllegalStateException("The process is not cancellable.");
     }
-    try {
-      myHandler.destroyProcess();
-    }
-    catch (Exception e) {
-      log.warn("Exception during cancel", e);
-    }
+    destroyProcess();
   }
+
+  /**
+   * Destroy process
+   */
+  protected abstract void destroyProcess();
 
   /**
    * @return exit code for process if it is available
@@ -521,14 +482,14 @@ public abstract class GitHandler {
   /**
    * @param exitCode a exit code for process
    */
-  private synchronized void setExitCode(int exitCode) {
+  protected synchronized void setExitCode(int exitCode) {
     myExitCode = exitCode;
   }
 
   /**
    * Cleanup environment
    */
-  private synchronized void cleanupEnv() {
+  protected synchronized void cleanupEnv() {
     if (!myNoSSHFlag && !myEnvironmentCleanedUp) {
       GitSSHService ssh = GitSSHIdeaService.getInstance();
       myEnvironmentCleanedUp = true;
@@ -543,13 +504,18 @@ public abstract class GitHandler {
     checkStarted();
     try {
       if (myInputProcessor != null) {
-        myInputProcessor.process(myHandler.getProcessInput());
+        myInputProcessor.process(myProcess.getOutputStream());
       }
     }
     finally {
-      myHandler.waitFor();
+      waitForProcess();
     }
   }
+
+  /**
+   * Wait for process
+   */
+  protected abstract void waitForProcess();
 
   /**
    * Set silent mode. When handler is silent, it does not logs command in version control console.

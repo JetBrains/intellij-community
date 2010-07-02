@@ -51,7 +51,7 @@
           <grid row="6" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
         </constraints>
       </vspacer>
-      <scrollpane id="50e51">
+      <scrollpane class="com.intellij.ui.components.JBScrollPane" id="50e51">
         <constraints>
           <xy x="0" y="25" width="296" height="240"/>
           <grid row="1" column="0" row-span="6" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3"/>

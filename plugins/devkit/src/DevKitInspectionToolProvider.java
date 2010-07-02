@@ -16,19 +16,26 @@
 package org.jetbrains.idea.devkit;
 
 import com.intellij.codeInspection.InspectionToolProvider;
+import com.intellij.codeInspection.internal.InternalInspectionToolsProvider;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.idea.devkit.inspections.ComponentNotRegisteredInspection;
-import org.jetbrains.idea.devkit.inspections.DescriptionNotFoundInspection;
+import org.jetbrains.idea.devkit.inspections.InspectionDescriptionNotFoundInspection;
+import org.jetbrains.idea.devkit.inspections.IntentionDescriptionNotFoundInspection;
 import org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection;
 
+/**
+ * @author Konstantin Bulenkov
+ */
 public class DevKitInspectionToolProvider implements InspectionToolProvider {
-
   public Class[] getInspectionClasses() {
-    return new Class[] {
+    Class[] result = {
       //RegistrationProblemsInspection.class,
       PluginXmlDomInspection.class,
       ComponentNotRegisteredInspection.class,
-      DescriptionNotFoundInspection.class
+      InspectionDescriptionNotFoundInspection.class,
+      IntentionDescriptionNotFoundInspection.class,
     };
+    return ArrayUtil.mergeArrays(result, InternalInspectionToolsProvider.getPublicClasses(), Class.class);
   }
 
 }

@@ -30,6 +30,7 @@ import java.util.*;
 
 /**
  * @author Gregory.Shrago
+ * @author Konstantin Bulenkov
  */
 public class DTDModelLoader implements ModelLoader {
   private ModelDesc model;

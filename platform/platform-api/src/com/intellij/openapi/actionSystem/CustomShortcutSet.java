@@ -39,10 +39,10 @@ public final class CustomShortcutSet implements ShortcutSet {
    * @param shortcuts keyboard shortcuts
    */
   public CustomShortcutSet(Shortcut... shortcuts){
-    myShortcuts = (Shortcut[])shortcuts.clone();
+    myShortcuts = shortcuts.length == 0 ? Shortcut.EMPTY_ARRAY : shortcuts.clone();
   }
 
   public Shortcut[] getShortcuts(){
-    return (Shortcut[])myShortcuts.clone();
+    return myShortcuts.length == 0 ? Shortcut.EMPTY_ARRAY : myShortcuts.clone();
   }
 }

@@ -288,7 +288,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     final ConcurrentMap<GroovyClassDescriptor, CustomMembersHolder> members = getCachedMap(dslFile, MEMBER_HOLDERS, manager);
     CustomMembersHolder holder = members.get(descriptor);
     if (holder == null) {
-      holder = addGdslMembers(executor, descriptor, dslFile);
+      holder = addGdslMembers(executor, descriptor, dslFile, qname);
 
       if (firstTime) {
         final boolean placeAccessed = descriptor.placeAccessed();
@@ -320,12 +320,11 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     }, false);
   }
 
-  private static CustomMembersHolder addGdslMembers(GroovyDslExecutor executor, GroovyClassDescriptor descriptor, GroovyFile dslFile) {
-    final String fqn = descriptor.getQualifiedName();
+  private static CustomMembersHolder addGdslMembers(GroovyDslExecutor executor, GroovyClassDescriptor descriptor, GroovyFile dslFile, String qname) {
     final Project project = descriptor.getProject();
 
     final ProcessingContext ctx = new ProcessingContext();
-    ctx.put(ClassContextFilter.getClassKey(fqn), descriptor.getPsiClass());
+    ctx.put(ClassContextFilter.getClassKey(qname), descriptor.getPsiClass());
     try {
       if (!isApplicable(executor, descriptor, ctx)) {
         return CustomMembersHolder.EMPTY;

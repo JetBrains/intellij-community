@@ -31,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
@@ -480,7 +481,11 @@ public class XDebugSessionImpl implements XDebugSession {
     if (myCurrentPosition != null) {
       myDebuggerManager.updateExecutionPosition(this, myCurrentPosition, false);
     }
-    mySessionTab.toFront();
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      public void run() {
+        mySessionTab.toFront();
+      }
+    });
     myDispatcher.getMulticaster().sessionPaused();
   }
 

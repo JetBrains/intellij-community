@@ -29,6 +29,7 @@ import java.util.TreeSet;
 
 /**
  * @author Gregory.Shrago
+ * @author Konstantin Bulenkov
  */
 public class MergingFileManager implements FileManager {
 

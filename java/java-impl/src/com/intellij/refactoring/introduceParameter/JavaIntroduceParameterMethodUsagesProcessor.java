@@ -142,7 +142,8 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
 
 
   public void findConflicts(IntroduceParameterData data, UsageInfo[] usages, final MultiMap<PsiElement, String> conflicts) {
-    final int parametersCount = data.getMethodToReplaceIn().getParameterList().getParametersCount();
+    final PsiMethod method = data.getMethodToReplaceIn();
+    final int parametersCount = method.getParameterList().getParametersCount();
     for (UsageInfo usage : usages) {
       if (!isMethodUsage(usage)) continue;
       final PsiElement element = usage.getElement();
@@ -150,7 +151,8 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
       final PsiExpressionList argList = call.getArgumentList();
       if (argList != null) {
         final int actualParamLength = argList.getExpressions().length;
-        if (actualParamLength < parametersCount) {
+        if ((method.isVarArgs() && actualParamLength + 1 < parametersCount) ||
+            (!method.isVarArgs() && actualParamLength < parametersCount)) {
           conflicts.putValue(call, "Incomplete call(" + call.getText() +"): " + parametersCount + " parameters expected but only " + actualParamLength + " found");
         }
         data.getParametersToRemove().forEach(new TIntProcedure() {

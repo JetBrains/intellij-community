@@ -142,7 +142,7 @@ public class OptionsEditorContext {
 
   public Collection<Configurable> getChildren(final Configurable parent) {
     Collection<Configurable> result = myParentToChildrenMap.get(parent);
-    return result == null ? Collections.EMPTY_SET : result;
+    return result == null ? Collections.<Configurable>emptySet() : result;
   }
 
   interface ColleagueAction {

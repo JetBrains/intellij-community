@@ -16,7 +16,7 @@
         <properties/>
         <border type="none" title-resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" title-key="new.action.add.to.group"/>
         <children>
-          <scrollpane id="fe8a">
+          <scrollpane class="com.intellij.ui.components.JBScrollPane" id="fe8a">
             <constraints>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
@@ -40,7 +40,7 @@
               <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.group.actions"/>
             </properties>
           </component>
-          <scrollpane id="c0ce9">
+          <scrollpane class="com.intellij.ui.components.JBScrollPane" id="c0ce9">
             <constraints>
               <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>

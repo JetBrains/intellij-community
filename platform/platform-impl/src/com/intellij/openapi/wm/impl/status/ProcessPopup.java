@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.MinimizeButton;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.StatusBarEx;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ArrayUtil;
@@ -168,7 +169,7 @@ public class ProcessPopup  {
 
     myActiveFocusedContent.add(wrapper, BorderLayout.CENTER);
 
-    final JScrollPane scrolls = new JScrollPane(myActiveFocusedContent) {
+    final JScrollPane scrolls = new JBScrollPane(myActiveFocusedContent) {
       public Dimension getPreferredSize() {
         if (myProcessBox.getComponentCount() > 0) {
           return super.getPreferredSize();

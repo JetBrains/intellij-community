@@ -25,6 +25,9 @@ package com.intellij.util.dom.generator;
 import java.util.Map;
 import java.util.TreeMap;
 
+/**
+ * @author Konstantin Bulenkov
+ */
 public class TypeDesc {
   public enum TypeEnum {
     CLASS, ENUM, GROUP_INTERFACE

@@ -209,16 +209,16 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected void assertExportedDeps(String moduleName, String... expectedDeps) {
     final List<String> actual = new ArrayList<String>();
 
-    getRootManager(moduleName).processOrder(new RootPolicy<Object>() {
+    getRootManager(moduleName).orderEntries().withoutSdk().withoutModuleSourceEntries().exportedOnly().process(new RootPolicy<Object>() {
       @Override
       public Object visitModuleOrderEntry(ModuleOrderEntry e, Object value) {
-        if (e.isExported()) actual.add(e.getModuleName());
+        actual.add(e.getModuleName());
         return null;
       }
 
       @Override
       public Object visitLibraryOrderEntry(LibraryOrderEntry e, Object value) {
-        if (e.isExported()) actual.add(e.getLibraryName());
+        actual.add(e.getLibraryName());
         return null;
       }
     }, null);
@@ -465,7 +465,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected Sdk createJdk(String versionName) {
-    return JavaSdkImpl.getMockJdk15(versionName);
+    return JavaSdkImpl.getMockJdk17(versionName);
   }
 
   protected void compileModules(String... moduleNames) {

@@ -36,7 +36,7 @@ public class ArrayIndexOutOfBoundsTest extends PsiTestCase {
         public void run() {
           try{
             String root = JavaTestUtil.getJavaTestDataPath() + "/psi/arrayIndexOutOfBounds/src";
-            PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk("java 1.4"));
+            PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk17());
             myProjectRoot = PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
           }
           catch(Exception e){
