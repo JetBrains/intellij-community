@@ -64,8 +64,15 @@ public class JavaParameters extends SimpleJavaParameters {
     }
 
     setDefaultCharset(module.getProject());
-    configureEnumerator(OrderEnumerator.orderEntries(module).runtimeOnly().recursively(), classPathType)
-      .classes().collectPaths(getClassPath());
+    configureJdkAccordingToJreSelected(jdk);
+    configureEnumerator(OrderEnumerator.orderEntries(module).runtimeOnly().recursively().withoutSdk(), classPathType).collectPaths(getClassPath());
+  }
+
+  private void configureJdkAccordingToJreSelected(Sdk jdk) {
+    final Sdk currentJdk = getJdk();
+    if (currentJdk != null) {
+      getClassPath().addVirtualFiles(jdk.getRootProvider().getFiles(OrderRootType.CLASSES));
+    }
   }
 
   public void setDefaultCharset(final Project project) {
@@ -103,7 +110,8 @@ public class JavaParameters extends SimpleJavaParameters {
       return;
     }
 
-    configureEnumerator(OrderEnumerator.orderEntries(project).runtimeOnly(), classPathType).classes().collectPaths(getClassPath());
+    configureJdkAccordingToJreSelected(getJdk());
+    configureEnumerator(OrderEnumerator.orderEntries(project).runtimeOnly().withoutSdk(), classPathType).collectPaths(getClassPath());
   }
 
   private static OrderEnumerator configureEnumerator(OrderEnumerator enumerator, int classPathType) {
