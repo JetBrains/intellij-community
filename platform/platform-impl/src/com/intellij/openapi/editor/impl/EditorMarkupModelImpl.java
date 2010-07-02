@@ -584,10 +584,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private class MyErrorPanel extends ButtonlessScrollBarUI implements MouseMotionListener, MouseListener {
     private PopupHandler myHandler;
 
-    private MyErrorPanel() {
-      super(false);
-    }
-
     @Override
     protected JButton createDecreaseButton(int orientation) {
       return new ErrorStripeButton();
