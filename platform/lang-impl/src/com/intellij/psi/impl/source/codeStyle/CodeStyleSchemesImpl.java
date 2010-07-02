@@ -78,9 +78,6 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
 
     init();
     addScheme(new CodeStyleSchemeImpl(DEFAULT_SCHEME_NAME, true, null));
-    CodeStyleScheme current = findSchemeByName(CURRENT_SCHEME_NAME);
-    if (current == null) current = getDefaultScheme();
-    setCurrentScheme(current);
   }
 
   public CodeStyleScheme[] getSchemes() {
@@ -155,6 +152,10 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
   public void readExternal(Element element) throws InvalidDataException {
     init();
     DefaultJDOMExternalizer.readExternal(this, element);
+    
+    CodeStyleScheme current = findSchemeByName(CURRENT_SCHEME_NAME);
+    if (current == null) current = getDefaultScheme();
+    setCurrentScheme(current);
   }
 
   private void init() {
