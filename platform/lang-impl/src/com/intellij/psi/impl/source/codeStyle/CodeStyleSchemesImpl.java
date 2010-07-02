@@ -78,6 +78,7 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
 
     init();
     addScheme(new CodeStyleSchemeImpl(DEFAULT_SCHEME_NAME, true, null));
+    setCurrentScheme(getDefaultScheme());
   }
 
   public CodeStyleScheme[] getSchemes() {
