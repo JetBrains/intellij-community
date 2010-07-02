@@ -13,11 +13,12 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collections;
+import java.util.List;
 
 /**
- * Simplest PyStarImportElement possible. 
- * User: dcheryasov
- * Date: Jul 28, 2008
+ * Simplest PyStarImportElement possible.
+ *
+ * @author dcheryasov
  */
 public class PyStarImportElementImpl extends PyElementImpl implements PyStarImportElement {
 
@@ -35,10 +36,21 @@ public class PyStarImportElementImpl extends PyElementImpl implements PyStarImpo
     PyFromImportStatement import_from_stmt = PsiTreeUtil.getParentOfType(this, PyFromImportStatement.class);
     if (import_from_stmt != null) {
       PyReferenceExpression from_src = import_from_stmt.getImportSource();
-      // XXX won't work in Jython. Use resolvePythonImport with a mock reference
-      return ResolveImportUtil.resolvePythonImport2(from_src, the_name);
+      final PsiElement importedFile = ResolveImportUtil.resolveImportReference(from_src);
+      final PsiElement source = PyUtil.turnDirIntoInit(importedFile);
+      if (source instanceof PyFile) {
+        PyFile sourceFile = (PyFile)source;
+        final PsiElement exportedName = sourceFile.findExportedName(the_name);
+        if (exportedName != null) {
+          final List<String> all = sourceFile.getDunderAll();
+          if (all != null && !all.contains(the_name)) {
+            return null;
+          }
+        }
+        return exportedName;
+      }
     }
-    else return null;
+    return null;
   }
 
   public boolean mustResolveOutside() {
