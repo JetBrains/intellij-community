@@ -25,8 +25,6 @@ import com.intellij.util.PathsList;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-
 /**
  * Interface for convenient processing dependencies of a module or a project. Allows to process {@link OrderEntry}s and collect classes
  * and source roots.<p>
@@ -112,14 +110,14 @@ public abstract class OrderEnumerator {
   /**
    * @return classes roots for all entries processed by this enumerator
    */
-  public Collection<VirtualFile> getClassesRoots() {
+  public VirtualFile[] getClassesRoots() {
     return classes().getRoots();
   }
 
   /**
    * @return source roots for all entries processed by this enumerator
    */
-  public Collection<VirtualFile> getSourceRoots() {
+  public VirtualFile[] getSourceRoots() {
     return sources().getRoots();
   }
 

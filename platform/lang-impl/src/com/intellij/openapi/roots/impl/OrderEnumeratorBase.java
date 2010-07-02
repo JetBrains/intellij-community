@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -22,11 +23,15 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -34,6 +39,7 @@ import java.util.Set;
  * @author nik
  */
 abstract class OrderEnumeratorBase extends OrderEnumerator {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.OrderEnumeratorBase");
   private boolean myProductionOnly;
   private boolean myCompileOnly;
   private boolean myRuntimeOnly;
@@ -47,8 +53,10 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
   private Condition<OrderEntry> myCondition;
   private List<OrderEnumerationHandler> myCustomHandlers;
   private ModulesProvider myModulesProvider;
+  private OrderRootsCache myCache;
 
-  public OrderEnumeratorBase(@Nullable Module module, @NotNull Project project) {
+  public OrderEnumeratorBase(@Nullable Module module, @NotNull Project project, @Nullable OrderRootsCache cache) {
+    myCache = cache;
     for (OrderEnumerationHandler handler : OrderEnumerationHandler.EP_NAME.getExtensions()) {
       if (handler.isApplicable(project) && (module == null || handler.isApplicable(module))) {
         if (myCustomHandlers == null) {
@@ -147,6 +155,29 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
     return ModuleRootManager.getInstance(module);
   }
 
+  public OrderRootsCache getCache() {
+    LOG.assertTrue(myCache != null, "Caching supported only for OrderEnumerator obtained by using OrderEnumerator.orderEntries(module) or ModuleRootManager.getInstance(module).orderEntries() methods");
+    LOG.assertTrue(myCondition == null, "Caching not supported for OrderEnumerator with 'satisfying(Condition)' option");
+    LOG.assertTrue(myModulesProvider == null, "Caching not supported for OrderEnumerator with 'using(ModulesProvider)' option");
+    return myCache;
+  }
+
+  public int getFlags() {
+    int flags = 0;
+    int i = 0;
+    if (myProductionOnly)           flags |= 1 << (i++);
+    if (myCompileOnly)              flags |= 1 << (i++);
+    if (myRuntimeOnly)              flags |= 1 << (i++);
+    if (myWithoutJdk)               flags |= 1 << (i++);
+    if (myWithoutLibraries)         flags |= 1 << (i++);
+    if (myWithoutDepModules)        flags |= 1 << (i++);
+    if (myWithoutThisModuleContent) flags |= 1 << (i++);
+    if (myRecursively)              flags |= 1 << (i++);
+    if (myRecursivelyExportedOnly)  flags |= 1 << (i++);
+    if (myExportedOnly)             flags |= 1 << i;
+    return flags;
+  }
+
   protected void processEntries(final ModuleRootModel rootModel,
                               Processor<OrderEntry> processor,
                               Set<Module> processed, boolean firstLevel) {
@@ -235,10 +266,26 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
     return processor.myValue;
   }
 
-  boolean addCustomOutput(ModuleOrderEntry moduleOrderEntry, List<VirtualFile> list) {
+  boolean addCustomOutput(ModuleOrderEntry moduleOrderEntry, Collection<VirtualFile> result) {
     if (myCustomHandlers != null) {
       for (OrderEnumerationHandler handler : myCustomHandlers) {
-        if (handler.addCustomOutput(moduleOrderEntry, myProductionOnly, list)) {
+        final List<String> urls = new ArrayList<String>();
+        final boolean added = handler.addCustomOutput(moduleOrderEntry, myProductionOnly, urls);
+        for (String url : urls) {
+          ContainerUtil.addIfNotNull(VirtualFileManager.getInstance().findFileByUrl(url), result);
+        }
+        if (added) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  boolean addCustomOutputUrls(ModuleOrderEntry moduleOrderEntry, Collection<String> result) {
+    if (myCustomHandlers != null) {
+      for (OrderEnumerationHandler handler : myCustomHandlers) {
+        if (handler.addCustomOutput(moduleOrderEntry, myProductionOnly, result)) {
           return true;
         }
       }

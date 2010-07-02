@@ -17,15 +17,14 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author nik
@@ -33,6 +32,7 @@ import java.util.List;
 public class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
   private final OrderEnumeratorBase myOrderEnumerator;
   private final OrderRootType myRootType;
+  private boolean myUsingCache;
 
   public OrderRootsEnumeratorImpl(OrderEnumeratorBase orderEnumerator, OrderRootType rootType) {
     myOrderEnumerator = orderEnumerator;
@@ -41,9 +41,94 @@ public class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
 
   @NotNull
   @Override
-  public Collection<VirtualFile> getRoots() {
-    final List<VirtualFile> result = new ArrayList<VirtualFile>();
-    collectRoots(result);
+  public VirtualFile[] getRoots() {
+    if (myUsingCache) {
+      final OrderRootsCache cache = myOrderEnumerator.getCache();
+      if (cache != null) {
+        final int flags = myOrderEnumerator.getFlags();
+        final VirtualFile[] cached = cache.getCachedRoots(myRootType, flags);
+        if (cached == null) {
+          return cache.setCachedRoots(myRootType, flags, computeRootsUrls()).getFiles();
+        }
+        else {
+          return cached;
+        }
+      }
+    }
+
+    return VfsUtil.toVirtualFileArray(computeRoots());
+  }
+
+  @NotNull
+  @Override
+  public String[] getUrls() {
+    if (myUsingCache) {
+      final OrderRootsCache cache = myOrderEnumerator.getCache();
+      if (cache != null) {
+        final int flags = myOrderEnumerator.getFlags();
+        String[] cached = cache.getCachedUrls(myRootType, flags);
+        if (cached == null) {
+          return cache.setCachedRoots(myRootType, flags, computeRootsUrls()).getUrls();
+        }
+        else {
+          return cached;
+        }
+      }
+    }
+    return ArrayUtil.toStringArray(computeRootsUrls());
+  }
+
+  private Collection<VirtualFile> computeRoots() {
+    final Collection<VirtualFile> result = new LinkedHashSet<VirtualFile>();
+    myOrderEnumerator.forEach(new Processor<OrderEntry>() {
+      @Override
+      public boolean process(OrderEntry orderEntry) {
+        if (orderEntry instanceof ModuleSourceOrderEntry) {
+          collectModuleRoots(((ModuleSourceOrderEntry)orderEntry).getRootModel(), result);
+        }
+        else if (orderEntry instanceof ModuleOrderEntry) {
+          ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)orderEntry;
+          final Module module = moduleOrderEntry.getModule();
+          if (module != null) {
+            if (myOrderEnumerator.addCustomOutput(moduleOrderEntry, result)) {
+              return true;
+            }
+            collectModuleRoots(myOrderEnumerator.getRootModel(module), result);
+          }
+        }
+        else {
+          Collections.addAll(result, orderEntry.getFiles(myRootType));
+        }
+        return true;
+      }
+    });
+    return result;
+  }
+
+  private Collection<String> computeRootsUrls() {
+    final Collection<String> result = new LinkedHashSet<String>();
+    myOrderEnumerator.forEach(new Processor<OrderEntry>() {
+      @Override
+      public boolean process(OrderEntry orderEntry) {
+        if (orderEntry instanceof ModuleSourceOrderEntry) {
+          collectModuleRootsUrls(((ModuleSourceOrderEntry)orderEntry).getRootModel(), result);
+        }
+        else if (orderEntry instanceof ModuleOrderEntry) {
+          ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)orderEntry;
+          final Module module = moduleOrderEntry.getModule();
+          if (module != null) {
+            if (myOrderEnumerator.addCustomOutputUrls(moduleOrderEntry, result)) {
+              return true;
+            }
+            collectModuleRootsUrls(myOrderEnumerator.getRootModel(module), result);
+          }
+        }
+        else {
+          Collections.addAll(result, orderEntry.getUrls(myRootType));
+        }
+        return true;
+      }
+    });
     return result;
   }
 
@@ -60,63 +145,55 @@ public class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
     list.addVirtualFiles(getRoots());
   }
 
-  private void collectRoots(final List<VirtualFile> list) {
-    myOrderEnumerator.forEach(new Processor<OrderEntry>() {
-      @Override
-      public boolean process(OrderEntry orderEntry) {
-        if (orderEntry instanceof ModuleSourceOrderEntry) {
-          collectModulePaths(((ModuleSourceOrderEntry)orderEntry).getRootModel(), list);
-        }
-        else if (orderEntry instanceof ModuleOrderEntry) {
-          ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)orderEntry;
-          final Module module = moduleOrderEntry.getModule();
-          if (module != null) {
-            if (myOrderEnumerator.addCustomOutput(moduleOrderEntry, list)) {
-              return true;
-            }
-            collectModulePaths(myOrderEnumerator.getRootModel(module), list);
-          }
-        }
-        else {
-          Collections.addAll(list, orderEntry.getFiles(myRootType));
-        }
-        return true;
-      }
-    });
+  @Override
+  public OrderRootsEnumerator usingCache() {
+    myUsingCache = true;
+    return this;
   }
 
-  private void collectModulePaths(ModuleRootModel rootModel, List<VirtualFile> list) {
+  private void collectModuleRoots(ModuleRootModel rootModel, Collection<VirtualFile> result) {
     if (myRootType.equals(OrderRootType.SOURCES)) {
       if (myOrderEnumerator.isProductionOnly()) {
-        ContentEntry[] contentEntries = rootModel.getContentEntries();
-        for (ContentEntry contentEntry : contentEntries) {
+        for (ContentEntry contentEntry : rootModel.getContentEntries()) {
           for (SourceFolder folder : contentEntry.getSourceFolders()) {
             VirtualFile root = folder.getFile();
             if (root != null && !folder.isTestSource()) {
-              list.add(root);
+              result.add(root);
             }
           }
         }
       }
       else {
-        Collections.addAll(list, rootModel.getSourceRoots());
+        Collections.addAll(result, rootModel.getSourceRoots());
       }
     }
     else if (myRootType.equals(OrderRootType.CLASSES)) {
       final CompilerModuleExtension extension = rootModel.getModuleExtension(CompilerModuleExtension.class);
       if (extension != null) {
-        VirtualFile testOutput = extension.getCompilerOutputPathForTests();
-        if (myOrderEnumerator.isProductionOnly()) {
-          testOutput = null;
-        }
+        Collections.addAll(result, extension.getOutputRoots(!myOrderEnumerator.isProductionOnly()));
+      }
+    }
+  }
 
-        if (testOutput != null) {
-          list.add(testOutput);
+  private void collectModuleRootsUrls(ModuleRootModel rootModel, Collection<String> result) {
+    if (myRootType.equals(OrderRootType.SOURCES)) {
+      if (myOrderEnumerator.isProductionOnly()) {
+        for (ContentEntry contentEntry : rootModel.getContentEntries()) {
+          for (SourceFolder folder : contentEntry.getSourceFolders()) {
+            if (!folder.isTestSource()) {
+              result.add(folder.getUrl());
+            }
+          }
         }
-        VirtualFile output = extension.getCompilerOutputPath();
-        if (output != null && !output.equals(testOutput)) {
-          list.add(output);
-        }
+      }
+      else {
+        Collections.addAll(result, rootModel.getSourceRootUrls());
+      }
+    }
+    else if (myRootType.equals(OrderRootType.CLASSES)) {
+      final CompilerModuleExtension extension = rootModel.getModuleExtension(CompilerModuleExtension.class);
+      if (extension != null) {
+        Collections.addAll(result, extension.getOutputRootUrls(!myOrderEnumerator.isProductionOnly()));
       }
     }
   }

@@ -19,10 +19,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathsList;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-
 /**
- * Interface for processing classes or source roots.
+ * Interface for processing roots of OrderEntry's from {@link OrderEnumerator}.
  *
  * @see OrderEnumerator#classes()
  * @see OrderEnumerator#sources()
@@ -30,12 +28,34 @@ import java.util.Collection;
  * @author nik
  */
 public interface OrderRootsEnumerator {
+  /**
+   * @return all roots processed by this enumerator
+   */
   @NotNull
-  Collection<VirtualFile> getRoots();
+  VirtualFile[] getRoots();
 
+  /**
+   * @return urls of all roots processed by this enumerator
+   */
+  @NotNull
+  String[] getUrls();
+
+  /**
+   * @return list of path to all roots processed by this enumerator
+   */
   @NotNull
   PathsList getPathsList();
 
+  /**
+   * Add all source roots processed by this enumerator to <code>list</code>
+   * @param list list
+   */
   void collectPaths(@NotNull PathsList list);
 
+  /**
+   * If roots for this enumerator are already evaluated the cached result will be used. Otherwise roots will be evaluated and cached for
+   * subsequent calls
+   * @return this instance
+   */
+  OrderRootsEnumerator usingCache();
 }

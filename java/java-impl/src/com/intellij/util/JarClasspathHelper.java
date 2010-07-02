@@ -25,7 +25,9 @@ import com.intellij.util.containers.OrderedSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 
 /**
  * @author Dmitry Avdeev
@@ -38,7 +40,8 @@ public class JarClasspathHelper {
     }
     String path = getJarsPath(project);
     final OrderedSet<VirtualFile> result = new OrderedSet<VirtualFile>(TObjectHashingStrategy.CANONICAL);
-    final Collection<VirtualFile> modulesOutputs = OrderEnumerator.orderEntries(project).withoutLibraries().withoutSdk().getClassesRoots();
+    final Collection<VirtualFile> modulesOutputs =
+      new HashSet<VirtualFile>(Arrays.asList(OrderEnumerator.orderEntries(project).withoutLibraries().withoutSdk().getClassesRoots()));
     for (VirtualFile file : files) {
       VirtualFile jar = getJarFile(path, file.getName());
       if (modulesOutputs.contains(file) && jar != null) {

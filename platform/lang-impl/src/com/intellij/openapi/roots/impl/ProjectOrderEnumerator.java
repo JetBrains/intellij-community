@@ -31,7 +31,7 @@ public class ProjectOrderEnumerator extends OrderEnumeratorBase {
   private Project myProject;
 
   public ProjectOrderEnumerator(Project project) {
-    super(null, project);
+    super(null, project, null);
     myProject = project;
   }
 

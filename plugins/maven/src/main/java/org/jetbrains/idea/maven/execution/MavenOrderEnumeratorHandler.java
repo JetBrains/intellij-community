@@ -20,14 +20,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.OrderEnumerationHandler;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
-import java.util.List;
+import java.util.Collection;
 
 /**
  * @author nik
@@ -52,7 +51,7 @@ public class MavenOrderEnumeratorHandler extends OrderEnumerationHandler {
   @Override
   public boolean addCustomOutput(@NotNull ModuleOrderEntry orderEntry,
                                  boolean productionOnly,
-                                 @NotNull List<VirtualFile> result) {
+                                 @NotNull Collection<String> urls) {
     final Module ownerModule = orderEntry.getOwnerModule();
     final Module depModule = orderEntry.getModule();
     if (depModule == null) return false;
@@ -70,18 +69,18 @@ public class MavenOrderEnumeratorHandler extends OrderEnumerationHandler {
       if (productionOnly && MavenConstants.SCOPE_TEST.equals(each.getScope())) continue;
 
       boolean isTestJar = MavenConstants.TYPE_TEST_JAR.equals(each.getType()) || "tests".equals(each.getClassifier());
-      addOutput(depModule, isTestJar, result);
+      addOutput(depModule, isTestJar, urls);
     }
     return true;
   }
 
-  private static void addOutput(Module module, boolean tests, List<VirtualFile> result) {
+  private static void addOutput(Module module, boolean tests, Collection<String> urls) {
     CompilerModuleExtension ex = CompilerModuleExtension.getInstance(module);
     if (ex == null) return;
 
-    VirtualFile output = tests ? ex.getCompilerOutputPathForTests() : ex.getCompilerOutputPath();
+    String output = tests ? ex.getCompilerOutputUrlForTests() : ex.getCompilerOutputUrl();
     if (output != null) {
-      result.add(output);
+      urls.add(output);
     }
   }
 }

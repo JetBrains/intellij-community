@@ -39,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 
 public class SearchScope implements JDOMExternalizable {
 
@@ -214,8 +215,8 @@ public class SearchScope implements JDOMExternalizable {
                     if (searchScope.isSearchInLibraries()) {
                         final OrderEnumerator enumerator = OrderEnumerator.orderEntries(project).withoutModuleSourceEntries().withoutDepModules();
                         final Collection<VirtualFile> libraryFiles = new THashSet<VirtualFile>();
-                        libraryFiles.addAll(enumerator.getClassesRoots());
-                        libraryFiles.addAll(enumerator.getSourceRoots());
+                        Collections.addAll(libraryFiles, enumerator.getClassesRoots());
+                        Collections.addAll(libraryFiles, enumerator.getSourceRoots());
                         final Processor<VirtualFile> adapter = new Processor<VirtualFile>() {
                             public boolean process(VirtualFile virtualFile) {
                                 return iterator.processFile(virtualFile);

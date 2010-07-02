@@ -442,7 +442,7 @@ public class FindInProjectUtil {
         SearchScope customScope = findModel.getCustomScope();
         if (success && customScope instanceof GlobalSearchScope && ((GlobalSearchScope)customScope).isSearchInLibraries()) {
           OrderEnumerator enumerator = module == null ? OrderEnumerator.orderEntries(project) : OrderEnumerator.orderEntries(module);
-          final Collection<VirtualFile> librarySources = enumerator.withoutModuleSourceEntries().withoutDepModules().getSourceRoots();
+          final VirtualFile[] librarySources = enumerator.withoutModuleSourceEntries().withoutDepModules().getSourceRoots();
           iterateAll(librarySources, (GlobalSearchScope)customScope, iterator);
         }
       }
@@ -462,7 +462,7 @@ public class FindInProjectUtil {
     }
   }
 
-  private static boolean iterateAll(Collection<VirtualFile> files, final GlobalSearchScope searchScope, final ContentIterator iterator) {
+  private static boolean iterateAll(VirtualFile[] files, final GlobalSearchScope searchScope, final ContentIterator iterator) {
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     final VirtualFileFilter contentFilter = new VirtualFileFilter() {
       public boolean accept(final VirtualFile file) {
