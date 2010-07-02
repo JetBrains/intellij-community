@@ -19,7 +19,7 @@ public abstract class Jdk15CompilerTestCase extends CompilerTestCase{
   }
 
   protected Sdk getTestProjectJdk() {
-    return JavaSdkImpl.getMockJdk15("java 1.5");
+    return JavaSdkImpl.getMockJdk17("java 1.5");
   }
 
   protected void setUp() throws Exception {
