@@ -173,7 +173,7 @@ public class CodeInsightUtil {
     addExpressionOccurrences(RefactoringUtil.unparenthesizeExpression(expr), array, scope);
     boolean found = false;
     for (PsiExpression psiExpression : array) {
-      if (areExpressionsEquivalent(RefactoringUtil.unparenthesizeExpression(psiExpression), RefactoringUtil.unparenthesizeExpression(expr))) {
+      if (PsiTreeUtil.isAncestor(expr, psiExpression, false) || PsiTreeUtil.isAncestor(psiExpression, expr, false)) {
         found = true;
         break;
       }
