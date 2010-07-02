@@ -156,7 +156,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
   }
 
   public OrderRootsCache getCache() {
-    LOG.assertTrue(myCache != null, "Caching supported only for OrderEnumerator obtained by using OrderEnumerator.orderEntries(module) or ModuleRootManager.getInstance(module).orderEntries() methods");
+    LOG.assertTrue(myCache != null, "Caching is not supported for ModifiableRootModel");
     LOG.assertTrue(myCondition == null, "Caching not supported for OrderEnumerator with 'satisfying(Condition)' option");
     LOG.assertTrue(myModulesProvider == null, "Caching not supported for OrderEnumerator with 'using(ModulesProvider)' option");
     return myCache;

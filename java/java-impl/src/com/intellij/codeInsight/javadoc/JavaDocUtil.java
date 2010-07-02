@@ -17,22 +17,16 @@ package com.intellij.codeInsight.javadoc;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.JavadocOrderRootType;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
@@ -48,19 +42,6 @@ public class JavaDocUtil {
   private static final @NonNls String LT_ENTITY = "&lt;";
 
   private JavaDocUtil() {
-  }
-
-  public static String[] getDocPaths(Project project) {
-    ArrayList<String> result = new ArrayList<String>();
-
-    final VirtualFile[] roots = ProjectRootManagerEx.getInstanceEx(project).getFilesFromAllModules(JavadocOrderRootType.getInstance());
-    for (VirtualFile root : roots) {
-      if (!(root.getFileSystem() instanceof HttpFileSystem)) {
-        result.add(root.getUrl());
-      }
-    }
-
-    return ArrayUtil.toStringArray(result);
   }
 
   /**

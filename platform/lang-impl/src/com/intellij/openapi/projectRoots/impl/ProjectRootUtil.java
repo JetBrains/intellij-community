@@ -19,7 +19,7 @@ package com.intellij.openapi.projectRoots.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ex.ProjectRoot;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -121,8 +121,8 @@ public class ProjectRootUtil {
     return dirs.toArray(new PsiDirectory[dirs.size()]);
   }
 
-  public static PsiDirectory[] getRootDirectories(final Project project, final OrderRootType rootType) {
-    VirtualFile[] files = ProjectRootManager.getInstance(project).getFilesFromAllModules(rootType);
+  public static PsiDirectory[] getSourceRootDirectories(final Project project) {
+    VirtualFile[] files = OrderEnumerator.orderEntries(project).sources().usingCache().getRoots();
     return convertRoots(project, files);
   }
 
