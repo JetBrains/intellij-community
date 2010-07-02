@@ -17,9 +17,11 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
@@ -78,6 +80,7 @@ final class ToolWindowsPane extends JLayeredPane {
   private final ToolWindowManagerImpl myManager;
 
   private boolean myStripesOverlayed;
+  private final Disposable myDisposable = Disposer.newDisposable();
 
   ToolWindowsPane(final IdeFrameImpl frame, ToolWindowManagerImpl manager){
     myManager = manager;
@@ -206,14 +209,14 @@ final class ToolWindowsPane extends JLayeredPane {
    */
   public final void addNotify(){
     super.addNotify();
-    UISettings.getInstance().addUISettingsListener(myUISettingsListener);
+    UISettings.getInstance().addUISettingsListener(myUISettingsListener,myDisposable);
   }
 
   /**
    * Invoked when enclosed frame is being disposed.
    */
   public final void removeNotify(){
-    UISettings.getInstance().removeUISettingsListener(myUISettingsListener);
+    Disposer.dispose(myDisposable);
     super.removeNotify();
   }
 
@@ -225,7 +228,7 @@ final class ToolWindowsPane extends JLayeredPane {
    * @param comparator which is used to sort buttons within the stripe.
    * @param finishCallBack invoked when the command is completed.
    */
-  final FinalizableCommand createAddButtonCmd(final StripeButton button,final WindowInfoImpl info,final Comparator comparator,final Runnable finishCallBack){
+  final FinalizableCommand createAddButtonCmd(final StripeButton button,final WindowInfoImpl info,final Comparator<StripeButton> comparator,final Runnable finishCallBack){
     final WindowInfoImpl copiedInfo=info.copy();
     myId2Button.put(copiedInfo.getId(),button);
     myButton2Info.put(button,copiedInfo);
@@ -297,7 +300,7 @@ final class ToolWindowsPane extends JLayeredPane {
         return new RemoveDockedComponentCmd(info,dirtyMode,finishCallBack);
       }
       else {
-        return new RemoveSplitAndDockedComponentCmd(info, sideInfo, dirtyMode, finishCallBack);
+        return new RemoveSplitAndDockedComponentCmd(info, dirtyMode, finishCallBack);
       }
     }else if(info.isSliding()){
       return new RemoveSlidingComponentCmd(decorator,info,dirtyMode,finishCallBack);
@@ -531,11 +534,11 @@ final class ToolWindowsPane extends JLayeredPane {
   }
 
 
-  static interface Resizer {
+  interface Resizer {
     void setSize(int size);
 
 
-    abstract static class Splitter implements Resizer {
+    abstract class Splitter implements Resizer {
       ThreeComponentsSplitter mySplitter;
 
       Splitter(ThreeComponentsSplitter splitter) {
@@ -563,7 +566,7 @@ final class ToolWindowsPane extends JLayeredPane {
       }
     }
 
-    abstract static class LayeredPane implements Resizer {
+    abstract class LayeredPane implements Resizer {
       Component myComponent;
 
       protected LayeredPane(Component component) {
@@ -783,9 +786,9 @@ final class ToolWindowsPane extends JLayeredPane {
   private final class AddToolStripeButtonCmd extends FinalizableCommand{
     private final StripeButton myButton;
     private final WindowInfoImpl myInfo;
-    private final Comparator myComparator;
+    private final Comparator<StripeButton> myComparator;
 
-    public AddToolStripeButtonCmd(final StripeButton button,final WindowInfoImpl info,final Comparator comparator,final Runnable finishCallBack){
+    public AddToolStripeButtonCmd(final StripeButton button,final WindowInfoImpl info,final Comparator<StripeButton> comparator,final Runnable finishCallBack){
       super(finishCallBack);
       myButton=button;
       myInfo=info;
@@ -871,13 +874,13 @@ final class ToolWindowsPane extends JLayeredPane {
 
   private final class RemoveSplitAndDockedComponentCmd extends FinalizableCommand {
     private final WindowInfoImpl myInfo;
-    private final WindowInfoImpl mySideInfo;
     private final boolean myDirtyMode;
 
-    private RemoveSplitAndDockedComponentCmd(final WindowInfoImpl info, final WindowInfoImpl sideInfo, boolean dirtyMode, final Runnable finishCallBack) {
+    private RemoveSplitAndDockedComponentCmd(final WindowInfoImpl info,
+                                             boolean dirtyMode,
+                                             final Runnable finishCallBack) {
       super(finishCallBack);
       myInfo = info;
-      mySideInfo = sideInfo;
       myDirtyMode = dirtyMode;
     }
 
@@ -1034,12 +1037,12 @@ final class ToolWindowsPane extends JLayeredPane {
      * These images are used to perform animated showing and hiding of components.
      * They are the member for performance reason.
      */
-    private SoftReference myBottomImageRef;
-    private SoftReference myTopImageRef;
+    private SoftReference<BufferedImage> myBottomImageRef;
+    private SoftReference<BufferedImage> myTopImageRef;
 
     public MyLayeredPane(final JComponent splitter) {
-      myBottomImageRef=new SoftReference(null);
-      myTopImageRef=new SoftReference(null);
+      myBottomImageRef=new SoftReference<BufferedImage>(null);
+      myTopImageRef=new SoftReference<BufferedImage>(null);
       setOpaque(true);
       setBackground(Color.gray);
       add(splitter,JLayeredPane.DEFAULT_LAYER);
@@ -1053,7 +1056,7 @@ final class ToolWindowsPane extends JLayeredPane {
      */
     public final Image getBottomImage(){
       LOG.assertTrue(UISettings.getInstance().ANIMATE_WINDOWS);
-      BufferedImage image=(BufferedImage)myBottomImageRef.get();
+      BufferedImage image= myBottomImageRef.get();
       if(
         image==null ||
         image.getWidth(null) < getWidth() || image.getHeight(null) < getHeight()
@@ -1068,7 +1071,7 @@ final class ToolWindowsPane extends JLayeredPane {
           // is MUCH faster.
           image=new BufferedImage(width,height,BufferedImage.TYPE_INT_RGB);
         }
-        myBottomImageRef=new SoftReference(image);
+        myBottomImageRef=new SoftReference<BufferedImage>(image);
       }
       return image;
     }
@@ -1079,7 +1082,7 @@ final class ToolWindowsPane extends JLayeredPane {
      */
     public final Image getTopImage(){
       LOG.assertTrue(UISettings.getInstance().ANIMATE_WINDOWS);
-      BufferedImage image=(BufferedImage)myTopImageRef.get();
+      BufferedImage image= myTopImageRef.get();
       if(
         image==null ||
         image.getWidth(null) < getWidth() || image.getHeight(null) < getHeight()
@@ -1094,7 +1097,7 @@ final class ToolWindowsPane extends JLayeredPane {
           // is MUCH faster.
           image=new BufferedImage(width,height,BufferedImage.TYPE_INT_RGB);
         }
-        myTopImageRef=new SoftReference(image);
+        myTopImageRef=new SoftReference<BufferedImage>(image);
       }
       return image;
     }
@@ -1112,31 +1115,30 @@ final class ToolWindowsPane extends JLayeredPane {
         // Resize component at the DEFAULT layer. It should be only on component in that layer
         Component[] components=getComponentsInLayer(JLayeredPane.DEFAULT_LAYER.intValue());
         LOG.assertTrue(components.length<=1);
-        for(int i=0;i<components.length;i++){
-          final Component component=components[i];
-          component.setBounds(0,0,getWidth(),getHeight());
+        for (final Component component : components) {
+          component.setBounds(0, 0, getWidth(), getHeight());
         }
         // Resize components at the PALETTE layer
         components=getComponentsInLayer(JLayeredPane.PALETTE_LAYER.intValue());
-        for(int i=0;i<components.length;i++){
-          final Component component=components[i];
+        for (final Component component : components) {
           if (!(component instanceof InternalDecorator)) {
             continue;
           }
-          final WindowInfoImpl info=myDecorator2Info.get(component);
+          final WindowInfoImpl info = myDecorator2Info.get(component);
           // In normal situation info is not null. But sometimes Swing sends resize
           // event to removed component. See SCR #19566.
-          if(info == null){
+          if (info == null) {
             continue;
           }
 
           final float weight;
-          if(ToolWindowAnchor.TOP==info.getAnchor()||ToolWindowAnchor.BOTTOM==info.getAnchor()){
-            weight=(float)component.getHeight()/(float)getHeight();
-          }else{
-            weight=(float)component.getWidth()/(float)getWidth();
+          if (ToolWindowAnchor.TOP == info.getAnchor() || ToolWindowAnchor.BOTTOM == info.getAnchor()) {
+            weight = (float)component.getHeight() / (float)getHeight();
           }
-          setBoundsInPaletteLayer(component,info.getAnchor(),weight);
+          else {
+            weight = (float)component.getWidth() / (float)getWidth();
+          }
+          setBoundsInPaletteLayer(component, info.getAnchor(), weight);
         }
         validate();
         repaint();

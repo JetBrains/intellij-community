@@ -26,11 +26,12 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.notification.impl.IdeNotificationArea;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -84,9 +85,10 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
   private final Application myApplication;
   private MemoryUsagePanel myMemoryWidget;
-  private StatusBarCustomComponentFactory[] myStatusBarCustomComponentFactories;
+  private final StatusBarCustomComponentFactory[] myStatusBarCustomComponentFactories;
+  private final Disposable myDisposable= Disposer.newDisposable();
 
-  IdeRootPane(ActionManager actionManager, UISettings uiSettings, DataManager dataManager, KeymapManager keymapManager,
+  IdeRootPane(ActionManagerEx actionManager, UISettings uiSettings, DataManager dataManager,
               final Application application, final String[] commandLineArgs){
     myActionManager = actionManager;
     myUISettings = uiSettings;
@@ -95,6 +97,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     myContentPane.add(myNorthPanel, BorderLayout.NORTH);
 
     myStatusBarCustomComponentFactories = application.getExtensions(StatusBarCustomComponentFactory.EP_NAME);
+    myApplication = application;
 
     createStatusBar();
     updateStatusBarVisibility();
@@ -102,7 +105,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     myContentPane.add(myStatusBar, BorderLayout.SOUTH);
 
     myUISettingsListener=new MyUISettingsListenerImpl();
-    setJMenuBar(new IdeMenuBar(myActionManager, dataManager, keymapManager));
+    setJMenuBar(new IdeMenuBar(actionManager, dataManager));
 
     final Ref<Boolean> willOpenProject = new Ref<Boolean>(Boolean.FALSE);
     final AppLifecycleListener lifecyclePublisher = application.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC);
@@ -120,7 +123,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     myGlassPaneInitialized = true;
 
     myGlassPane.setVisible(false);
-    myApplication = application;
+    Disposer.register(application, myDisposable);
   }
 
 
@@ -134,14 +137,14 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
    */
   public final void addNotify(){
     super.addNotify();
-    myUISettings.addUISettingsListener(myUISettingsListener);
+    myUISettings.addUISettingsListener(myUISettingsListener, myDisposable);
   }
 
   /**
    * Invoked when enclosed frame is being disposed.
    */
   public final void removeNotify(){
-    myUISettings.removeUISettingsListener(myUISettingsListener);
+    Disposer.dispose(myDisposable);
     super.removeNotify();
   }
 
@@ -213,7 +216,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
  
   private void createStatusBar() {
-    myUISettings.addUISettingsListener(this);
+    myUISettings.addUISettingsListener(this, myApplication);
 
     myStatusBar = new IdeStatusBarImpl();
 
@@ -223,7 +226,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     myStatusBar.addWidget(new IdeMessagePanel(MessagePool.getInstance()), "before Memory");
 
     if (myStatusBarCustomComponentFactories != null) {
-      for (final StatusBarCustomComponentFactory componentFactory : myStatusBarCustomComponentFactories) {
+      for (final StatusBarCustomComponentFactory<JComponent> componentFactory : myStatusBarCustomComponentFactories) {
         final JComponent c = componentFactory.createComponent(myStatusBar);
         myStatusBar.addWidget(new CustomStatusBarWidget() {
           public JComponent getComponent() {

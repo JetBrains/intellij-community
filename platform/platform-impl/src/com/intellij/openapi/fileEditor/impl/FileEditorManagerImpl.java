@@ -997,12 +997,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
      * Extends/cuts number of opened tabs. Also updates location of tabs.
      */
     final MyUISettingsListener myUISettingsListener = new MyUISettingsListener();
-    UISettings.getInstance().addUISettingsListener(myUISettingsListener);
-    Disposer.register(myProject, new Disposable() {
-      public void dispose() {
-        UISettings.getInstance().removeUISettingsListener(myUISettingsListener);
-      }
-    });
+    UISettings.getInstance().addUISettingsListener(myUISettingsListener, myProject);
 
     StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
       public void run() {

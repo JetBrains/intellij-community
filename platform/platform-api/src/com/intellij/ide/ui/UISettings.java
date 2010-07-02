@@ -17,12 +17,14 @@
 package com.intellij.ide.ui;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.xmlb.Accessor;
 import com.intellij.util.xmlb.SerializationFilter;
@@ -99,8 +101,22 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
     setSystemFontFaceAndSize();
   }
 
+  /**
+   *
+    * @deprecated use {@link UISettings#addUISettingsListener(com.intellij.ide.ui.UISettingsListener, Disposable disposable)} instead
+   */
   public void addUISettingsListener(UISettingsListener listener){
     myListenerList.add(UISettingsListener.class,listener);
+  }
+
+  public void addUISettingsListener(@NotNull final UISettingsListener listener, @NotNull Disposable parentDisposable){
+    myListenerList.add(UISettingsListener.class,listener);
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        removeUISettingsListener(listener);
+      }
+    });
   }
 
   /**
@@ -198,7 +214,7 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
     // find any other suitable font withing "preferred" fonts first.
     boolean fontIsValid = isValidFont(new Font(FONT_FACE, Font.PLAIN, FONT_SIZE));
     if(!fontIsValid){
-      @NonNls final String[] preferredFonts = new String[]{"dialog", "Arial", "Tahoma"};
+      @NonNls final String[] preferredFonts = {"dialog", "Arial", "Tahoma"};
       for (String preferredFont : preferredFonts) {
         if (isValidFont(new Font(preferredFont, Font.PLAIN, FONT_SIZE))) {
           FONT_FACE = preferredFont;
@@ -274,7 +290,7 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
   public static boolean isRemoteDesktopConnected() {
     if(System.getProperty("os.name").contains("Windows")) {
       final Map map = (Map)Toolkit.getDefaultToolkit().getDesktopProperty("awt.font.desktophints");
-      return map!= null ? RenderingHints.VALUE_TEXT_ANTIALIAS_DEFAULT.equals(map.get(RenderingHints.KEY_TEXT_ANTIALIASING)) : false;
+      return map != null && RenderingHints.VALUE_TEXT_ANTIALIAS_DEFAULT.equals(map.get(RenderingHints.KEY_TEXT_ANTIALIASING));
     }
     return false;
   }

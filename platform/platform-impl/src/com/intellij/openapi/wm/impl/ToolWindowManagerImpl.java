@@ -21,7 +21,6 @@ import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
@@ -114,16 +113,14 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   @NonNls private static final String EXTENDED_STATE_ATTR = "extended-state";
 
 
-  private final Application myApp;
+  private final Set<String> myRestoredToolWindowIds = new HashSet<String>();
+  private final FileEditorManager myFileEditorManager;
 
-  private final Set<String> myRestoredToolWindowIds = new java.util.HashSet<String>();
-  private FileEditorManager myFileEditorManager;
-
-  private Map<String, Balloon> myWindow2Balloon = new HashMap<String, Balloon>();
+  private final Map<String, Balloon> myWindow2Balloon = new HashMap<String, Balloon>();
 
   private KeyState myCurrentState = KeyState.waiting;
-  private Alarm myWaiterForSecondPress = new Alarm();
-  private Runnable mySecondPressRunnable = new Runnable() {
+  private final Alarm myWaiterForSecondPress = new Alarm();
+  private final Runnable mySecondPressRunnable = new Runnable() {
     public void run() {
       if (myCurrentState != KeyState.hold) {
         resetHoldState();
@@ -138,8 +135,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   /**
    * invoked by reflection
    */
-  public ToolWindowManagerImpl(final Project project, WindowManagerEx windowManagerEx, final Application app, final FileEditorManager fem) {
-    myApp = app;
+  public ToolWindowManagerImpl(final Project project, WindowManagerEx windowManagerEx, final FileEditorManager fem) {
     myProject = project;
     myWindowManager = windowManagerEx;
     myFileEditorManager = fem;
@@ -1513,7 +1509,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
    * @see com.intellij.openapi.wm.impl.ToolWindowsPane#createAddButtonCmd
    */
   private void appendAddButtonCmd(final StripeButton button, final WindowInfoImpl info, final List<FinalizableCommand> commandsList) {
-    final Comparator comparator = myLayout.comparator(info.getAnchor());
+    final Comparator<StripeButton> comparator = myLayout.comparator(info.getAnchor());
     final CommandProcessor commandProcessor = myWindowManager.getCommandProcessor();
     final FinalizableCommand command = myToolWindowsPane.createAddButtonCmd(button, info, comparator, commandProcessor);
     commandsList.add(command);
