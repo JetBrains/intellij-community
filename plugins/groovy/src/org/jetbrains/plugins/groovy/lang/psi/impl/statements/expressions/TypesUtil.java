@@ -229,7 +229,11 @@ public class TypesUtil {
   }
 
   public static boolean isAssignable(PsiType lType, PsiType rType, GroovyPsiElement context) {
-    return isAssignableByMethodCallConversion(lType, rType, context) ||
+    return isAssignable(lType, rType, context, true);
+  }
+
+  public static boolean isAssignable(PsiType lType, PsiType rType, GroovyPsiElement context, boolean allowConversion) {
+    return (allowConversion && isAssignableByMethodCallConversion(lType, rType, context)) ||
            _isAssignable(lType, rType, context.getManager(), context.getResolveScope(), true);
   }
 
