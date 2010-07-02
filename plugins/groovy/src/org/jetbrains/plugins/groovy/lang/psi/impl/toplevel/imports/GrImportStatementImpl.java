@@ -59,7 +59,10 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
     if (PsiTreeUtil.isAncestor(this, place, false)) {
       return true;
     }
-
+    if (isStatic()) {
+      final GrImportStatement staticImportParent = PsiTreeUtil.getParentOfType(place, GrImportStatement.class, false);
+      if (staticImportParent != null) return true;
+    }
     ResolveState state = _state.put(ResolverProcessor.RESOLVE_CONTEXT, this);
     if (isOnDemand()) {
       if (!processDeclarationsForMultipleElements(processor, lastParent, place, state)) return false;
@@ -140,7 +143,7 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
       final PsiElement resolved = ref.resolve();
       if (resolved instanceof PsiClass) {
         final PsiClass clazz = (PsiClass)resolved;
-        if (!processAllMembers(processor, clazz)) return false;
+        if (!processAllMembers(processor, clazz, state)) return false;
       }
     }
     else {
@@ -155,12 +158,12 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
     return true;
   }
 
-  private static boolean processAllMembers(PsiScopeProcessor processor, PsiClass clazz) {
+  private static boolean processAllMembers(PsiScopeProcessor processor, PsiClass clazz, ResolveState state) {
     for (PsiField field : clazz.getFields()) {
-      if (field.hasModifierProperty(PsiModifier.STATIC) && !ResolveUtil.processElement(processor, field)) return false;
+      if (field.hasModifierProperty(PsiModifier.STATIC) && !ResolveUtil.processElement(processor, field, state)) return false;
     }
     for (PsiMethod method : clazz.getMethods()) {
-      if (method.hasModifierProperty(PsiModifier.STATIC) && !ResolveUtil.processElement(processor, method)) return false;
+      if (method.hasModifierProperty(PsiModifier.STATIC) && !ResolveUtil.processElement(processor, method, state)) return false;
     }
     return true;
   }

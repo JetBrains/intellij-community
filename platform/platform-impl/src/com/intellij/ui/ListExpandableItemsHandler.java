@@ -25,14 +25,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 public class ListExpandableItemsHandler extends AbstractExpandableItemsHandler<Integer, JList> {
-  public static void install(JList list) {
-    installAndGet(list);
-  }
-
-  public static ListExpandableItemsHandler installAndGet(JList list) {
-    return new ListExpandableItemsHandler(list);
-  }
-
   protected ListExpandableItemsHandler(final JList list) {
     super(list);
 

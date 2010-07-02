@@ -50,4 +50,9 @@ public class TextComponentSoftWrapModel implements SoftWrapModel {
   @Override
   public void beforeDocumentChange(@NotNull VisualPosition position) {
   }
+
+  @Override
+  public boolean isInsideSoftWrap(@NotNull VisualPosition position) {
+    return false;
+  }
 }

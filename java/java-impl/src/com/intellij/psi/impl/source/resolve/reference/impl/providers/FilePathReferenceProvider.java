@@ -18,7 +18,6 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -115,7 +114,7 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
     List<PsiFileSystemItem> result = new ArrayList<PsiFileSystemItem>();
     final PsiManager psiManager = PsiManager.getInstance(thisModule.getProject());
     if (includingClasses) {
-      VirtualFile[] libraryUrls = moduleRootManager.getFiles(OrderRootType.CLASSES);
+      VirtualFile[] libraryUrls = moduleRootManager.orderEntries().getAllLibrariesAndSdkClassesRoots();
       for (VirtualFile file : libraryUrls) {
         PsiDirectory directory = psiManager.findDirectory(file);
         if (directory != null) {

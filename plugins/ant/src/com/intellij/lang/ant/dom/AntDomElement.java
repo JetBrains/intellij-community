@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
 
@@ -26,6 +27,10 @@ import java.util.List;
  */
 @SuppressWarnings({"AbstractClassNeverImplemented"})
 public abstract class AntDomElement implements DomElement {
+  public static enum Role {
+    TASK, DATA_TYPE
+  }
+  public static final Key<Role> ROLE = Key.create("element_role");
 
   @Attribute("id")
   public abstract GenericAttributeValue<String> getId();

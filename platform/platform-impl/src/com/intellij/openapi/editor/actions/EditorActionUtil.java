@@ -462,14 +462,12 @@ public class EditorActionUtil {
       newOffset = i;
     }
 
-    // Check if there are white space symbols between the current caret position and visual line end.
-    if (newOffset == offset) {
+    // Move to the calculated end of visual line if caret is located on a last non-white space symbols on a line and there are
+    // remaining white space symbols.
+    if (newOffset == offset || newOffset == caretModel.getOffset()) {
       caretModel.moveToVisualPosition(visualEndOfLineWithCaret);
     }
     else {
-      if (newOffset == caretModel.getOffset()) {
-        newOffset = offset;
-      }
       caretModel.moveToOffset(newOffset);
     }
 

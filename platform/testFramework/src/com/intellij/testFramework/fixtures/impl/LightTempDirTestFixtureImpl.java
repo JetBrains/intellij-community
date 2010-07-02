@@ -51,7 +51,14 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
       public VirtualFile compute() {
         try {
           VirtualFile targetDir = findOrCreateDir(path);
-          return VfsUtil.copyFile(this, file, targetDir, PathUtil.getFileName(targetPath));
+          final String newName = PathUtil.getFileName(targetPath);
+          final VirtualFile existing = targetDir.findChild(newName);
+          if (existing != null) {
+            existing.setBinaryContent(file.contentsToByteArray());
+            return existing;
+          }
+
+          return VfsUtil.copyFile(this, file, targetDir, newName);
         }
         catch (IOException e) {
           throw new RuntimeException(e);

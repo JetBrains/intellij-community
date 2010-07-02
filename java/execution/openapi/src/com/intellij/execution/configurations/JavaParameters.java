@@ -64,7 +64,8 @@ public class JavaParameters extends SimpleJavaParameters {
     }
 
     setDefaultCharset(module.getProject());
-    configureEnumerator(OrderEnumerator.orderEntries(module).runtimeOnly().recursively(), classPathType).collectPaths(getClassPath());
+    configureEnumerator(OrderEnumerator.orderEntries(module).runtimeOnly().recursively(), classPathType)
+      .classes().collectPaths(getClassPath());
   }
 
   public void setDefaultCharset(final Project project) {
@@ -102,7 +103,7 @@ public class JavaParameters extends SimpleJavaParameters {
       return;
     }
 
-    configureEnumerator(OrderEnumerator.orderEntries(project).runtimeOnly(), classPathType).collectPaths(getClassPath());
+    configureEnumerator(OrderEnumerator.orderEntries(project).runtimeOnly(), classPathType).classes().collectPaths(getClassPath());
   }
 
   private static OrderEnumerator configureEnumerator(OrderEnumerator enumerator, int classPathType) {

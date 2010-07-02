@@ -76,6 +76,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   private final ModuleFileIndexImpl myFileIndex;
   private boolean myIsDisposed = false;
   private boolean isModuleAdded = false;
+  private final OrderRootsCache myOrderRootsCache;
   private final Map<OrderRootType, Set<VirtualFilePointer>> myCachedFiles = new THashMap<OrderRootType, Set<VirtualFilePointer>>();
   private final Map<OrderRootType, Set<VirtualFilePointer>> myCachedExportedFiles = new THashMap<OrderRootType, Set<VirtualFilePointer>>();
   private final Map<RootModelImpl, Throwable> myModelCreations = new THashMap<RootModelImpl, Throwable>();
@@ -92,6 +93,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     myFileIndex = new ModuleFileIndexImpl(myModule, directoryIndex);
 
     myRootModel = new RootModelImpl(this, myProjectRootManager, myFilePointerManager);
+    myOrderRootsCache = new OrderRootsCache(module);
   }
 
   @NotNull
@@ -223,19 +225,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
       }
       myCachedFiles.put(type, cachedFiles);
     }
-    return convertPointers(cachedFiles);
-  }
-
-  private static VirtualFile[] convertPointers(final Set<VirtualFilePointer> cachedFiles) {
-    final LinkedHashSet<VirtualFile> result = new LinkedHashSet<VirtualFile>();
-    for (VirtualFilePointer cachedFile : cachedFiles) {
-      final VirtualFile virtualFile = cachedFile.getFile();
-      if (virtualFile != null) {
-        result.add(virtualFile);
-      }
-    }
-
-    return VfsUtil.toVirtualFileArray(result);
+    return VfsUtil.toVirtualFileArray(OrderRootsCache.convertPointersToFiles(cachedFiles));
   }
 
   @NotNull
@@ -360,7 +350,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   @NotNull
   @Override
   public OrderEnumerator orderEntries() {
-    return myRootModel.orderEntries();
+    return new ModuleOrderEnumerator(myRootModel, myOrderRootsCache);
   }
 
   List<String> getUrlsForOtherModules(OrderRootType rootType, Set<Module> processed) {
@@ -420,7 +410,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
       myCachedExportedFiles.put(rootType, filePointers);
     }
 
-    return convertPointers(filePointers);
+    return VfsUtil.toVirtualFileArray(OrderRootsCache.convertPointersToFiles(filePointers));
   }
 
   @NotNull
@@ -534,6 +524,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   public void dropCaches() {
     myCachedFiles.clear();
     myCachedExportedFiles.clear();
+    myOrderRootsCache.clearCache();
   }
 
   public ModuleRootManagerState getState() {

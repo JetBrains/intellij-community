@@ -257,19 +257,19 @@ public abstract class GitBaseRebaseProcess {
         // Refresh files that might be affected by unshelve
         HashSet<File> filesToRefresh = new HashSet<File>();
         for (ShelvedChange c : myShelvedChangeList.getChanges()) {
-          if( c.getBeforePath() != null) {
-            filesToRefresh.add(new File(projectPath+c.getBeforePath()));
+          if (c.getBeforePath() != null) {
+            filesToRefresh.add(new File(projectPath + c.getBeforePath()));
           }
-          if( c.getAfterPath() != null) {
-            filesToRefresh.add(new File(projectPath+c.getAfterPath()));
+          if (c.getAfterPath() != null) {
+            filesToRefresh.add(new File(projectPath + c.getAfterPath()));
           }
         }
         for (ShelvedBinaryFile f : myShelvedChangeList.getBinaryFiles()) {
-          if(f.BEFORE_PATH != null) {
-            filesToRefresh.add(new File(projectPath+f.BEFORE_PATH));
+          if (f.BEFORE_PATH != null) {
+            filesToRefresh.add(new File(projectPath + f.BEFORE_PATH));
           }
-          if(f.AFTER_PATH != null) {
-            filesToRefresh.add(new File(projectPath+f.BEFORE_PATH));
+          if (f.AFTER_PATH != null) {
+            filesToRefresh.add(new File(projectPath + f.BEFORE_PATH));
           }
         }
         LocalFileSystem.getInstance().refreshIoFiles(filesToRefresh);
@@ -313,17 +313,28 @@ public abstract class GitBaseRebaseProcess {
     // Move files back to theirs change lists
     if (getUpdatePolicy() == GitVcsSettings.UpdateChangesPolicy.SHELVE || getUpdatePolicy() == GitVcsSettings.UpdateChangesPolicy.STASH) {
       VcsDirtyScopeManager m = VcsDirtyScopeManager.getInstance(myProject);
+      final boolean isStash = getUpdatePolicy() == GitVcsSettings.UpdateChangesPolicy.STASH;
+      HashSet<File> filesToRefresh = isStash ? new HashSet<File>() : null;
       for (LocalChangeList changeList : myListsCopy) {
         for (Change c : changeList.getChanges()) {
           ContentRevision after = c.getAfterRevision();
           if (after != null) {
             m.fileDirty(after.getFile());
+            if (isStash) {
+              filesToRefresh.add(after.getFile().getIOFile());
+            }
           }
           ContentRevision before = c.getBeforeRevision();
           if (before != null) {
             m.fileDirty(before.getFile());
+            if (isStash) {
+              filesToRefresh.add(before.getFile().getIOFile());
+            }
           }
         }
+      }
+      if (isStash) {
+        LocalFileSystem.getInstance().refreshIoFiles(filesToRefresh);
       }
       UIUtil.invokeLaterIfNeeded(new Runnable() {
         public void run() {

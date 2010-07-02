@@ -26,6 +26,7 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
@@ -175,4 +176,12 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
       }
     }
   }
+
+  @TestOnly
+  public void cleanupForNextTest() {
+    synchronized (myMappings) {
+      myMappings.clear();
+    }
+  }
+
 }

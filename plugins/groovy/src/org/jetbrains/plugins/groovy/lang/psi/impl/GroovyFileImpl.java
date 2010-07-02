@@ -121,15 +121,15 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     PsiClass scriptClass = getScriptClass();
     if (scriptClass != null) {
       if (!scriptClass.processDeclarations(processor, state, lastParent, place)) return false;
-      if (!ResolveUtil.processElement(processor, scriptClass)) return false;
+      if (!ResolveUtil.processElement(processor, scriptClass, state)) return false;
     }
 
     for (GrTypeDefinition definition : getTypeDefinitions()) {
-      if (!ResolveUtil.processElement(processor, definition)) return false;
+      if (!ResolveUtil.processElement(processor, definition, state)) return false;
     }
 
     if (lastParent != null && !(lastParent instanceof GrTypeDefinition) && scriptClass != null) {
-      if (!ResolveUtil.processElement(processor, getSyntheticArgsParameter())) return false;
+      if (!ResolveUtil.processElement(processor, getSyntheticArgsParameter(), state)) return false;
     }
 
     if (!processChildrenScopes(this, processor, state, lastParent, place)) return false;
@@ -171,7 +171,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
         PsiPackage defaultPackage = facade.findPackage("");
         if (defaultPackage != null) {
           for (PsiPackage subPackage : defaultPackage.getSubPackages(getResolveScope())) {
-            if (!ResolveUtil.processElement(processor, subPackage)) return false;
+            if (!ResolveUtil.processElement(processor, subPackage, state)) return false;
           }
         }
       }
@@ -225,7 +225,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
     for (String implicitlyImportedClass : IMPLICITLY_IMPORTED_CLASSES) {
       PsiClass clazz = facade.findClass(implicitlyImportedClass, getResolveScope());
-      if (clazz != null && !ResolveUtil.processElement(processor, clazz)) return false;
+      if (clazz != null && !ResolveUtil.processElement(processor, clazz, state)) return false;
     }
     return true;
   }

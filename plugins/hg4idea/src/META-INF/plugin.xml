@@ -36,7 +36,7 @@
   </extensions>
 
   <actions>
-    <group id="MercurialFileGroup" text="Mercurial">
+    <group id="MercurialFileGroup">
       <separator/>
       <action id="Hg.Init" class="org.zmlx.hg4idea.action.HgInit" text="Create Mercurial Repository"/>
       <separator/>

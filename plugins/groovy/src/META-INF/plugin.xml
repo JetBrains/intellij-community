@@ -250,6 +250,8 @@
     <indexedRootsProvider implementation="org.jetbrains.plugins.groovy.dsl.StandardDslIndexedRootsProvider"/>
     <fileBasedIndex implementation="org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex"/>
 
+    <patterns.patternClass className="org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns" alias="groovy"/>
+
     <!-- control flow -->
     <intentionAction>
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>

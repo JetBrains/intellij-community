@@ -101,7 +101,8 @@ public class EditorUtil {
           return resVisEnd.column;
         }
       }
-      int result = editor.offsetToVisualPosition(softWrap.getStart() - 1).column;
+      int result = editor.offsetToVisualPosition(softWrap.getStart() - 1).column; // Column of the symbol just before the soft wrap
+      result++; // Because we calculated column of the symbol just before the soft wrap
       result += calcColumnNumber(editor, softWrap.getText(), softWrapStartOffset, softWrapEndOffset);
       return result;
     }

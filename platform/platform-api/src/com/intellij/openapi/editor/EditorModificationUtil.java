@@ -31,6 +31,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
+import java.util.List;
 
 public class EditorModificationUtil {
   private EditorModificationUtil() {}
@@ -221,16 +222,45 @@ public class EditorModificationUtil {
     }
   }
 
+  /**
+   * Calculates columns difference between current editor caret position and end of the logical line fragment displayed
+   * on a current visual line.
+   *
+   * @param editor    target editor
+   * @return          column difference between current editor caret position and end of the logical line fragment displayed
+   *                  on a current visual line
+   */
   public static int calcAfterLineEnd(Editor editor) {
     Document document = editor.getDocument();
-    LogicalPosition logicalPosition = editor.getCaretModel().getLogicalPosition();
-    int columnNumber = logicalPosition.column;
+    CaretModel caretModel = editor.getCaretModel();
+    LogicalPosition logicalPosition = caretModel.getLogicalPosition();
     int lineNumber = logicalPosition.line;
+    int columnNumber = logicalPosition.column;
     if (lineNumber >= document.getLineCount()) {
       return columnNumber;
     }
-    int lineEndOffset = document.getLineEndOffset(lineNumber);
-    int lineEndColumnNumber = editor.offsetToLogicalPosition(lineEndOffset).column;
+
+    int caretOffset = caretModel.getOffset();
+    int anchorLineEndOffset = document.getLineEndOffset(lineNumber);
+    List<TextChange> softWraps = editor.getSoftWrapModel().getSoftWrapsForLine(logicalPosition.line);
+    for (TextChange softWrap : softWraps) {
+      if (softWrap.getStart() > caretOffset) {
+        anchorLineEndOffset = softWrap.getStart();
+        break;
+      }
+
+      // Same offset corresponds to all soft wrap-introduced symbols, however, current method should behave differently in
+      // situations when the caret is located just before the soft wrap and at the next visual line.
+      if (softWrap.getStart() == caretOffset) {
+        boolean visuallyBeforeSoftWrap = caretModel.getVisualPosition().line < editor.offsetToVisualPosition(caretOffset).line;
+        if (visuallyBeforeSoftWrap) {
+          anchorLineEndOffset = softWrap.getStart();
+          break;
+        }
+      }
+    }
+
+    int lineEndColumnNumber = editor.offsetToLogicalPosition(anchorLineEndOffset).column;
     return columnNumber - lineEndColumnNumber;
   }
 

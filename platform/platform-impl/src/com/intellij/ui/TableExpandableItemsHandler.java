@@ -27,14 +27,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 public class TableExpandableItemsHandler extends AbstractExpandableItemsHandler<TableCell, JTable> {
-  public static void install(JTable table) {
-    installAndGet(table);
-  }
-  
-  public static TableExpandableItemsHandler installAndGet(JTable table) {
-    return new TableExpandableItemsHandler(table);
-  }
-
   protected TableExpandableItemsHandler(final JTable table) {
     super(table);
 

@@ -1,6 +1,9 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
@@ -18,7 +21,7 @@ public class GdkMembersContributor extends NonCodeMembersContributor {
     final GroovyPsiManager manager = GroovyPsiManager.getInstance(place.getProject());
     for (String qName : ResolveUtil.getAllSuperTypes(qualifierType, place).keySet()) {
       for (PsiMethod defaultMethod : manager.getDefaultMethods(qName)) {
-        if (!ResolveUtil.processElement(processor, defaultMethod)) return;
+        if (!ResolveUtil.processElement(processor, defaultMethod, state)) return;
       }
     }
   }

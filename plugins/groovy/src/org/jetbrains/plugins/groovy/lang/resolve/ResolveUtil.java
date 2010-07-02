@@ -130,12 +130,20 @@ public class ResolveUtil {
     return true;
   }
 
+  /**
+   * @deprecated
+   * use {@link #processElement(PsiScopeProcessor, PsiNamedElement, ResolveState)} instead
+   */
   public static boolean processElement(PsiScopeProcessor processor, PsiNamedElement namedElement) {
+    return processElement(processor, namedElement, ResolveState.initial());
+  }
+
+  public static boolean processElement(PsiScopeProcessor processor, PsiNamedElement namedElement, ResolveState state) {
     NameHint nameHint = processor.getHint(NameHint.KEY);
     //todo [DIANA] look more carefully
-    String name = nameHint == null ? null : nameHint.getName(ResolveState.initial());
+    String name = nameHint == null ? null : nameHint.getName(state);
     if (name == null || name.equals(namedElement.getName())) {
-      return processor.execute(namedElement, ResolveState.initial());
+      return processor.execute(namedElement, state);
     }
 
     return true;
