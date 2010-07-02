@@ -105,20 +105,20 @@ public class GitVFSListener extends VcsVFSListener {
    * {@inheritDoc}
    */
   @Override
-  protected void executeAdd() {
+  protected void executeAdd(final List<VirtualFile> addedFiles, final Map<VirtualFile, VirtualFile> copiedFiles) {
     // Filter added files before further processing
     final Map<VirtualFile, List<VirtualFile>> sortedFiles;
     try {
-      sortedFiles = GitUtil.sortFilesByGitRoot(myAddedFiles, true);
+      sortedFiles = GitUtil.sortFilesByGitRoot(addedFiles, true);
     }
     catch (VcsException e) {
       throw new RuntimeException("The exception is not expected here", e);
     }
     final HashSet<VirtualFile> retainedFiles = new HashSet<VirtualFile>();
     final ProgressManager progressManager = ProgressManager.getInstance();
-    progressManager.runProcessWithProgressSynchronously(new Runnable() {
-      public void run() {
-        ProgressIndicator pi = progressManager.getProgressIndicator();
+    progressManager.run(new Task.Backgroundable(myProject, GitBundle.getString("vfs.listener.checking.ignored"), false) {
+      @Override
+      public void run(@NotNull ProgressIndicator pi) {
         for (Map.Entry<VirtualFile, List<VirtualFile>> e : sortedFiles.entrySet()) {
           VirtualFile root = e.getKey();
           pi.setText(root.getPresentableUrl());
@@ -146,11 +146,26 @@ public class GitVFSListener extends VcsVFSListener {
               });
             }
           }
+          addedFiles.retainAll(retainedFiles);
+          UIUtil.invokeLaterIfNeeded(new Runnable() {
+            @Override
+            public void run() {
+              originalExecuteAdd(addedFiles, copiedFiles);
+            }
+          });
         }
       }
-    }, GitBundle.getString("vfs.listener.checking.ignored"), false, myProject);
-    myAddedFiles.retainAll(retainedFiles);
-    super.executeAdd();
+    });
+  }
+
+  /**
+   * The version of execute add before overriding
+   *
+   * @param addedFiles  the added files
+   * @param copiedFiles the copied files
+   */
+  private void originalExecuteAdd(List<VirtualFile> addedFiles, final Map<VirtualFile, VirtualFile> copiedFiles) {
+    super.executeAdd(addedFiles, copiedFiles);
   }
 
   /**
