@@ -78,6 +78,7 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter implements Opcode
     return new MethodAdapter(v) {
 
       private final ArrayList myNotNullParams = new ArrayList();
+      private int mySyntheticCount = 0;
       private boolean myIsNotNull = false;
       //private boolean myIsUnmodifiable = false;
       public Label myThrowLabel;
@@ -92,9 +93,15 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter implements Opcode
         av = mv.visitParameterAnnotation(parameter,
                                          anno,
                                          visible);
-        if (isReferenceType(args[parameter]) &&
-            anno.equals(NOT_NULL_ANNO)) {
-          myNotNullParams.add(new Integer(parameter));
+        if (isReferenceType(args[parameter])) {
+          if (anno.equals(NOT_NULL_ANNO)) {
+            myNotNullParams.add(new Integer(parameter));
+          }
+          else if (anno.equals("Ljava/lang/Synthetic;")) {
+            // See asm r1278 for what we do this,
+            // http://forge.objectweb.org/tracker/index.php?func=detail&aid=307392&group_id=23&atid=100023
+            mySyntheticCount++;
+          }
         }
         return av;
       }
@@ -117,7 +124,7 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter implements Opcode
         }
         for (int p = 0; p < myNotNullParams.size(); ++p) {
           int var = ((access & ACC_STATIC) == 0) ? 1 : 0;
-          int param = ((Integer)myNotNullParams.get(p)).intValue();
+          int param = ((Integer)myNotNullParams.get(p)).intValue() - mySyntheticCount;
           for (int i = 0; i < param + startParameter; ++i) {
             var += args[i].getSize();
           }
