@@ -7,6 +7,8 @@ package com.jetbrains.python;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 
+import java.util.Arrays;
+
 public class PythonCompletionTest extends PyLightFixtureTestCase {
 
   private void doTest() throws Exception {
@@ -151,5 +153,11 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
 
   public void testClassMethod() throws Exception {  // PY-833
     doTest();
+  }
+
+  public void testStarImport() throws Exception {
+    myFixture.configureByFiles("completion/starImport/starImport.py", "completion/starImport/importSource.py");
+    myFixture.completeBasic();
+    assertSameElements(myFixture.getLookupElementStrings(), Arrays.asList("my_foo", "my_bar"));
   }
 }

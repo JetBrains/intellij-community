@@ -367,7 +367,19 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         if (import_src != null) {
           final String imported_name = import_src.getName();
           processor.setNotice(imported_name);
-          PyResolveUtil.treeCrawlUp(processor, true, import_src.getReference().resolve()); // names from that module
+          final PsiElement importedModule = import_src.getReference().resolve();
+          List<String> dunderAll = null;
+          if (importedModule instanceof PyFile) {
+            dunderAll = ((PyFile) importedModule).getDunderAll();
+          }
+          processor.setAllowedNames(dunderAll);
+          try {
+            PyResolveUtil.treeCrawlUp(processor, true, importedModule); // names from that module
+            processor.addVariantsFromAllowedNames();
+          }
+          finally {
+            processor.setAllowedNames(null);
+          }
         }
       }
     }
