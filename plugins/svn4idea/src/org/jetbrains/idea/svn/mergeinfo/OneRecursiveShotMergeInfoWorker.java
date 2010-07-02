@@ -83,7 +83,7 @@ public class OneRecursiveShotMergeInfoWorker implements MergeInfoWorker {
     if (relativeToWc == null) return SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS;
 
     final InfoProcessor processor = new InfoProcessor(relativeToWc, myFromUrlRelative, revisionNumber);
-    myDataMap.getSimiliar(relativeToWc.toUpperCase(), processor);
+    myDataMap.getSimiliar(keyFromPath(relativeToWc), processor);
     return SvnMergeInfoCache.MergeCheckResult.getInstance(processor.isMerged());
   }
 
@@ -149,6 +149,10 @@ public class OneRecursiveShotMergeInfoWorker implements MergeInfoWorker {
   private String keyFromFile(final File file) {
     final String path =
       FileUtil.getRelativePath(myWCInfo.getPath(), file.getAbsolutePath(), File.separatorChar).replace(File.separatorChar, '/');
+    return keyFromPath(path);
+  }
+
+  private static String keyFromPath(final String path) {
     return SystemInfo.isFileSystemCaseSensitive ? path : path.toUpperCase();
   }
 
