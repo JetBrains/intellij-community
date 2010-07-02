@@ -463,10 +463,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
   public void setErrorStripeVisible(boolean val) {
     if (val) {
-      myEditor.getVerticalScrollBar().setUI(new MyErrorPanel());
+      myEditor.getVerticalScrollBar().setPersistendUI(new MyErrorPanel());
     }
     else {
-      myEditor.getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createNormal());
+      myEditor.getVerticalScrollBar().setPersistendUI(ButtonlessScrollBarUI.createNormal());
     }
   }
 
