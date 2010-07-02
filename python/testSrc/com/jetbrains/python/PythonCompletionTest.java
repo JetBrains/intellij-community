@@ -136,7 +136,6 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
     final String testName = dirname + "moduleClass";
     myFixture.configureByFiles(testName + ".py", dirname + "__init__.py");
     myFixture.copyDirectoryToProject(dirname + "mymodule", dirname + "mymodule");
-    myFixture.copyDirectoryToProject(dirname + "mymodule/mysubmodule", dirname + "mymodule/mysubmodule");
     myFixture.completeBasic();
     myFixture.checkResultByFile(testName + ".after.py");
   }
