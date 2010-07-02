@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+
+    <problem>
+        <file>MapReplaceableByEnumMap.java</file>
+        <line>9</line>
+        <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Map replaceable with EnumMap</problem_class>
+        <description>&lt;code&gt;HashMap&lt;MyEnum, Object&gt;&lt;/code&gt; replaceable with EnumMap #loc</description>
+    </problem>
+
+</problems>
