@@ -183,18 +183,28 @@ public final class IdeKeyEventDispatcher implements Disposable {
     myContext.setModalContext(isModalContext);
     myContext.setInputEvent(e);
 
-    if (getState() == KeyState.STATE_INIT) {
-      return inInitState();
-    } else if (getState() == KeyState.STATE_PROCESSED) {
-      return inProcessedState();
-    } else if (getState() == KeyState.STATE_WAIT_FOR_SECOND_KEYSTROKE) {
-      return inWaitForSecondStrokeState();
-    } else if (getState() == KeyState.STATE_SECOND_STROKE_IN_PROGRESS) {
-      return inSecondStrokeInProgressState();
-    } else if (getState() == KeyState.STATE_KEY_GESTURE_PROCESSOR) {
-      return myKeyGestureProcessor.process();
-    } else {
-      throw new IllegalStateException("state = " + getState());
+    try {
+      if (getState() == KeyState.STATE_INIT) {
+        return inInitState();
+      }
+      else if (getState() == KeyState.STATE_PROCESSED) {
+        return inProcessedState();
+      }
+      else if (getState() == KeyState.STATE_WAIT_FOR_SECOND_KEYSTROKE) {
+        return inWaitForSecondStrokeState();
+      }
+      else if (getState() == KeyState.STATE_SECOND_STROKE_IN_PROGRESS) {
+        return inSecondStrokeInProgressState();
+      }
+      else if (getState() == KeyState.STATE_KEY_GESTURE_PROCESSOR) {
+        return myKeyGestureProcessor.process();
+      }
+      else {
+        throw new IllegalStateException("state = " + getState());
+      }
+    }
+    finally {
+      myContext.clear();
     }
   }
 
