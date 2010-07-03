@@ -71,6 +71,8 @@
     <variableEnhancer implementation="org.jetbrains.plugins.groovy.lang.psi.ClosureParameterEnhancer"/>
 
     <membersContributor implementation="org.jetbrains.plugins.groovy.gant.GantMemberContributor"/>
+
+    <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.impl.GrContainerTypeConverter"/> 
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

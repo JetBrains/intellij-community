@@ -274,4 +274,8 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testInheritConstructorsAnnotation() throws Exception {
     doTest();
   }
+
+  public void testCollectionAssignments() throws Exception {
+    doTest(new GroovyAssignabilityCheckInspection());
+  }
 }
