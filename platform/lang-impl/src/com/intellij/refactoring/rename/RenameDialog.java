@@ -134,7 +134,7 @@ public class RenameDialog extends RefactoringDialog {
     }, KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, InputEvent.CTRL_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
   }
 
-  private String[] getSuggestedNames() {
+  public String[] getSuggestedNames() {
     List<String> result = new ArrayList<String>();
     final NameSuggestionProvider[] providers = Extensions.getExtensions(NameSuggestionProvider.EP_NAME);
     for(NameSuggestionProvider provider: providers) {
