@@ -68,7 +68,13 @@ public class XmlZenCodingTemplate extends ZenCodingTemplate {
   private static Pair<String, String> parseAttrNameAndValue(@NotNull String text) {
     int eqIndex = text.indexOf('=');
     if (eqIndex > 0) {
-      return new Pair<String, String>(text.substring(0, eqIndex), text.substring(eqIndex + 1));
+      String value = text.substring(eqIndex + 1);
+      if (value.length() >= 2 && (
+        (value.charAt(0) == '\'' && value.charAt(value.length() - 1) == '\'') ||
+        (value.charAt(0) == '"' && value.charAt(value.length() - 1) == '"'))) {
+        value = value.substring(1, value.length() - 1);
+      }
+      return new Pair<String, String>(text.substring(0, eqIndex), value);
     }
     return null;
   }

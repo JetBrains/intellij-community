@@ -63,12 +63,19 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
       text = text.substring(0, filterDelim);
     }
 
+    boolean inQuotes = false;
+    boolean inApostrophes = false;
     text += MARKER;
     StringBuilder templateKeyBuilder = new StringBuilder();
     List<Token> result = new ArrayList<Token>();
     for (int i = 0, n = text.length(); i < n; i++) {
       char c = text.charAt(i);
-      if (i == n - 1 || (i < n - 2 && OPERATIONS.indexOf(c) >= 0)) {
+      if (inQuotes || inApostrophes) {
+        templateKeyBuilder.append(c);
+        if (c == '"') inQuotes = false;
+        else if (c == '\'') inApostrophes = false;
+      }
+      else if (i == n - 1 || (i < n - 2 && OPERATIONS.indexOf(c) >= 0)) {
         String key = templateKeyBuilder.toString();
         templateKeyBuilder = new StringBuilder();
         int num = parseNonNegativeInt(key);
@@ -84,10 +91,16 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
       }
       else if (!Character.isWhitespace(c)) {
         templateKeyBuilder.append(c);
+        if (c == '"') inQuotes = true;
+        else if (c == '\'') inApostrophes = true;
       }
       else {
         return null;
       }
+    }
+
+    if (inQuotes || inApostrophes) {
+      return null;
     }
 
     if (filter != null) {
@@ -152,10 +165,27 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
     }
     String key = s.substring(index);
     int lastWhitespaceIndex = -1;
+    int lastQuoteIndex = -1;
+    int lastApostropheIndex = -1;
     for (int i = 0; i < key.length(); i++) {
-      if (Character.isWhitespace(key.charAt(i))) {
+      char c = key.charAt(i);
+      if (lastQuoteIndex >= 0 || lastApostropheIndex >= 0) {
+        if (c == '"') lastQuoteIndex = -1;
+        else if (c == '\'') lastApostropheIndex = -1;
+      }
+      else if (Character.isWhitespace(c)) {
         lastWhitespaceIndex = i;
       }
+      else if (c == '"') {
+        lastQuoteIndex = i;
+      }
+      else if (c == '\'') {
+        lastApostropheIndex = i; 
+      }
+    }
+    if (lastQuoteIndex >= 0 || lastApostropheIndex >= 0) {
+      int max = Math.max(lastQuoteIndex, lastApostropheIndex);
+      return max < key.length() - 1 ? key.substring(max) : null;
     }
     if (lastWhitespaceIndex >= 0 && lastWhitespaceIndex < key.length() - 1) {
       return key.substring(lastWhitespaceIndex + 1);
