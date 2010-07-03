@@ -91,6 +91,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.noncode.GrInheritConstructorContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
 import org.jetbrains.plugins.groovy.overrideImplement.GroovyOverrideImplementUtil;
 import org.jetbrains.plugins.groovy.overrideImplement.quickFix.ImplementMethodsQuickFix;
@@ -288,6 +289,8 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     if (typeDefinition.isEnum() || typeDefinition.isInterface() || typeDefinition.isAnonymous()) return;
     final PsiClass superClass = typeDefinition.getSuperClass();
     if (superClass == null) return;
+
+    if (GrInheritConstructorContributor.hasInheritConstructorsAnnotation(typeDefinition)) return;
 
     PsiMethod defConstructor = getDefaultConstructor(superClass);
     boolean hasImplicitDefConstructor = superClass.getConstructors().length ==0;

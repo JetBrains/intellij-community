@@ -270,4 +270,8 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testSignatureIsNotApplicableToList() throws Exception {
     doTest();
   }
+
+  public void testInheritConstructorsAnnotation() throws Exception {
+    doTest();
+  }
 }

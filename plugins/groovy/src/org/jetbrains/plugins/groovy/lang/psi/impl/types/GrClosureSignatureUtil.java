@@ -158,7 +158,7 @@ public class GrClosureSignatureUtil {
       }
       if (cur == params.length) return null;
       if (params[cur].isOptional()) optionalArgs--;
-      if (!TypesUtil.isAssignable(params[cur].getType(), typeComputer.fun(args[i]), context, false)) return null;
+      if (!TypesUtil.isAssignableByMethodCallConversion(params[cur].getType(), typeComputer.fun(args[i]), context)) return null;
       map[cur] = new ArgInfo<Arg>(args[i]);
     }
     for (int i = 0; i < map.length; i++) {
@@ -222,7 +222,7 @@ public class GrClosureSignatureUtil {
         if (curParam == paramLength) break;
 
         if (params[curParam].isOptional()) {
-          if (TypesUtil.isAssignable(params[curParam].getType(), types[curArg], context, false) &&
+          if (TypesUtil.isAssignableByMethodCallConversion(params[curParam].getType(), types[curArg], context) &&
               isApplicableInternal(curParam + 1, curArg + 1, false, notOptional)) {
             map[curParam] = new ArgInfo<Arg>(args[curArg]);
             return true;
@@ -230,7 +230,7 @@ public class GrClosureSignatureUtil {
           skipOptionals = true;
         }
         else {
-          if (!TypesUtil.isAssignable(params[curParam].getType(), types[curArg], context, false)) {
+          if (!TypesUtil.isAssignableByMethodCallConversion(params[curParam].getType(), types[curArg], context)) {
             for (int i = startParam; i < curParam; i++) map[i] = null;
             return false;
           }
@@ -243,7 +243,7 @@ public class GrClosureSignatureUtil {
 
       List<Arg> varargs = new ArrayList<Arg>();
       for (; curArg < args.length; curArg++) {
-        if (!TypesUtil.isAssignable(vararg, types[curArg], context, false)) {
+        if (!TypesUtil.isAssignableByMethodCallConversion(vararg, types[curArg], context)) {
           for (int i = startParam; i < curParam; i++) map[i] = null;
           return false;
         }
