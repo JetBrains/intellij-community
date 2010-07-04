@@ -135,9 +135,8 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     ((PersistentFS)ManagingFS.getInstance()).clearIdCache();
 
     for (VirtualFile root : ManagingFS.getInstance().getRoots(this)) {
-      if (root instanceof VirtualDirectoryImpl && !survivors.contains(root)) {
-        final VirtualDirectoryImpl directory = (VirtualDirectoryImpl)root;
-        directory.cleanupCachedChildren(survivors);
+      if (root instanceof VirtualDirectoryImpl) {
+        ((VirtualDirectoryImpl)root).cleanupCachedChildren(survivors);
       }
     }
 
