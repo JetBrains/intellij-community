@@ -361,15 +361,15 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @TestOnly
   public synchronized void cleanupCachedChildren(Set<VirtualFile> survivors) {
-    if (survivors.contains(this)) {
+    /*if (survivors.contains(this)) {
       for (VirtualFile file : getCachedChildren()) {
         if (file instanceof VirtualDirectoryImpl) {
           ((VirtualDirectoryImpl)file).cleanupCachedChildren(survivors);
         }
       }
     } else {
-      myChildren = null;
-    }
+    }*/
+    myChildren = null;
   }
 
   public InputStream getInputStream() throws IOException {
