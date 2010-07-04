@@ -1015,7 +1015,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     assertInitialized();
     try {
       final OutputStream outputStream = copy.getOutputStream(null, 0, 0);
-      outputStream.write(loader.newFileText.getBytes());
+      outputStream.write(loader.newFileText.getBytes(copy.getCharset().name()));
       outputStream.close();
     }
     catch (IOException e) {
@@ -1030,8 +1030,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       offset = loader.caretMarker.getStartOffset();
       myEditor.getCaretModel().moveToOffset(offset);
     }
-    if (loader.selStartMarker != null && loader.selEndMarker != null) {
-      myEditor.getSelectionModel().setSelection(loader.selStartMarker.getStartOffset(), loader.selEndMarker.getStartOffset());
+    if (loader.selStartMarker != null && loader.selEndMarker != null) { myEditor.getSelectionModel().setSelection(loader.selStartMarker.getStartOffset(), loader.selEndMarker.getStartOffset());
     }
 
     Module module = getModule();

@@ -16,6 +16,7 @@
 
 package com.intellij.refactoring.rename;
 
+import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
@@ -36,9 +37,10 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageViewUtil;
-import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
 
 /**
  * created at Nov 13, 2001
@@ -54,7 +56,7 @@ public class PsiElementRenameHandler implements RenameHandler {
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     PsiElement element = getElement(dataContext);
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    final PsiElement nameSuggestionContext = file.findElementAt(editor.getCaretModel().getOffset());
+    final PsiElement nameSuggestionContext = InjectedLanguageUtil.findElementAtNoCommit(file, editor.getCaretModel().getOffset());
     invoke(element, project, nameSuggestionContext, editor);
   }
 
@@ -120,12 +122,21 @@ public class PsiElementRenameHandler implements RenameHandler {
     rename(element, project, nameSuggestionContext, editor, null);
   }
   
-  private static void rename(PsiElement element, final Project project, PsiElement nameSuggestionContext, Editor editor, final String defaultName) {
+  private static void rename(PsiElement element, final Project project, PsiElement nameSuggestionContext, Editor editor, String defaultName) {
     RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(element);
     element = processor.substituteElementToRename(element, editor);
     if (element == null) return;
 
     final RenameDialog dialog = new RenameDialog(project, element, nameSuggestionContext, editor);
+    if (defaultName == null && ApplicationManager.getApplication().isUnitTestMode()) {
+      String[] strings = dialog.getSuggestedNames();
+      if (strings != null && strings.length > 0) {
+        Arrays.sort(strings);
+        defaultName = strings[0];
+      } else {
+        defaultName = "undefined"; // need to avoid show dialog in test
+      }
+    }
     if (defaultName != null) {
       dialog.performRename(defaultName);
     }

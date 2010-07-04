@@ -21,12 +21,13 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.spellchecker.inspections.SplitterFactory;
 import com.intellij.spellchecker.tokenizer.Token;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
+import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -35,8 +36,13 @@ import java.util.List;
  */
 public class DocCommentTokenizer extends Tokenizer<PsiDocComment> {
 
-
-  private final String[] excludedTags = new String[]{"author", "link"};
+  private static final Set<String> excludedTags = new HashSet<String>();
+  {
+    excludedTags.add("author");
+    excludedTags.add("see");
+    excludedTags.add("by");
+    excludedTags.add("link");
+  }
 
   @Nullable
   @Override
@@ -45,7 +51,7 @@ public class DocCommentTokenizer extends Tokenizer<PsiDocComment> {
     for (PsiElement el : comment.getChildren()) {
       if (el instanceof PsiDocTag) {
         PsiDocTag tag = (PsiDocTag)el;
-        if (!Arrays.asList(excludedTags).contains(tag.getName())) {
+        if (!excludedTags.contains(tag.getName())) {
           for (PsiElement data : tag.getDataElements()) {
             result.add(new Token<PsiElement>(data, data.getText(),false, SplitterFactory.getInstance().getCommentSplitter()));
           }

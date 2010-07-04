@@ -24,9 +24,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitBranch;
@@ -43,6 +42,7 @@ import git4idea.rebase.GitRebaseUtils;
 import git4idea.ui.GitConvertFilesDialog;
 import git4idea.ui.GitUIUtil;
 
+import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -151,7 +151,8 @@ public abstract class GitBaseRebaseProcess {
                 RebaseConflictDetector rebaseConflictDetector = new RebaseConflictDetector();
                 h.addLineListener(rebaseConflictDetector);
                 try {
-                  GitHandlerUtil.doSynchronouslyWithExceptions(h, progressIndicator, GitHandlerUtil.formatOperationName("Pulling changes into", root));
+                  GitHandlerUtil
+                    .doSynchronouslyWithExceptions(h, progressIndicator, GitHandlerUtil.formatOperationName("Pulling changes into", root));
                 }
                 finally {
                   if (!rebaseConflictDetector.isRebaseConflict()) {
@@ -219,6 +220,28 @@ public abstract class GitBaseRebaseProcess {
             }
           }
           finally {
+            HashSet<File> filesToRefresh = new HashSet<File>();
+            VcsDirtyScopeManager m = VcsDirtyScopeManager.getInstance(myProject);
+            for (LocalChangeList changeList : listsCopy) {
+              final Collection<Change> changes = changeList.getChanges();
+              if (!changes.isEmpty()) {
+                LOG.debug("After unstash: moving " + changes.size() + " changes to '" + changeList.getName() + "'");
+                changeManager.moveChangesTo(changeList, changes.toArray(new Change[changes.size()]));
+              }
+              for (Change c : changeList.getChanges()) {
+                ContentRevision after = c.getAfterRevision();
+                if (after != null) {
+                  m.fileDirty(after.getFile());
+                  filesToRefresh.add(after.getFile().getIOFile());
+                }
+                ContentRevision before = c.getBeforeRevision();
+                if (before != null) {
+                  m.fileDirty(before.getFile());
+                  filesToRefresh.add(before.getFile().getIOFile());
+                }
+              }
+            }
+            LocalFileSystem.getInstance().refreshIoFiles(filesToRefresh);
             mergeFiles(root, cancelled, ex);
             //noinspection ThrowableResultOfMethodCallIgnored
             if (ex.get() != null) {
@@ -267,13 +290,6 @@ public abstract class GitBaseRebaseProcess {
   private void unstash(List<LocalChangeList> listsCopy, ChangeListManagerEx changeManager, VirtualFile root) {
     try {
       GitStashUtils.popLastStash(myProject, root);
-      for (LocalChangeList changeList : listsCopy) {
-        final Collection<Change> changes = changeList.getChanges();
-        if (!changes.isEmpty()) {
-          LOG.debug("After unstash: moving " + changes.size() + " changes to '" + changeList.getName() + "'");
-          changeManager.moveChangesTo(changeList, changes.toArray(new Change[changes.size()]));
-        }
-      }
     }
     catch (final VcsException ue) {
       myExceptions.add(ue);
