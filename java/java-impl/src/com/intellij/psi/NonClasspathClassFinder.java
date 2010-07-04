@@ -27,9 +27,7 @@ import com.intellij.psi.search.NonClasspathDirectoryScope;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author peter
@@ -93,6 +91,31 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
       }
     }
     return result.toArray(new PsiClass[result.size()]);
+  }
+
+
+  @Override
+  public Set<String> getClassNames(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
+    final List<VirtualFile> classRoots = getClassRoots();
+    if (classRoots.isEmpty()) {
+      return Collections.emptySet();
+    }
+
+    Set<String> result = new HashSet<String>();
+    for (final VirtualFile classRoot : classRoots) {
+      if (scope.contains(classRoot)) {
+        final String pkgName = psiPackage.getQualifiedName();
+        final VirtualFile dir = classRoot.findFileByRelativePath(pkgName.replace('.', '/'));
+        if (dir != null && dir.isDirectory()) {
+          for (final VirtualFile file : dir.getChildren()) {
+            if (!file.isDirectory() && "class".equals(file.getExtension())) {
+              result.add(file.getNameWithoutExtension());
+            }
+          }
+        }
+      }
+    }
+    return result;
   }
 
   @Override
