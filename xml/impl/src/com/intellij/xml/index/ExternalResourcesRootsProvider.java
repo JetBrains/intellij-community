@@ -21,7 +21,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.hash.HashSet;
-import com.intellij.util.indexing.IndexedRootsProvider;
+import com.intellij.util.indexing.IndexableSetContributor;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.URL;
@@ -30,7 +30,7 @@ import java.util.Set;
 /**
  * @author Dmitry Avdeev
  */
-public class ExternalResourcesRootsProvider implements IndexedRootsProvider {
+public class ExternalResourcesRootsProvider extends IndexableSetContributor {
   private static final URL ourRoot = ExternalResourcesRootsProvider.class.getResource(ExternalResourceManagerImpl.STANDARD_SCHEMAS);
 
   @Nullable
@@ -38,17 +38,17 @@ public class ExternalResourcesRootsProvider implements IndexedRootsProvider {
     return ourRoot == null ? null : VfsUtil.findFileByURL(ourRoot);
   }
 
-  public Set<String> getRootsToIndex() {
+  public Set<VirtualFile> getAdditionalRootsToIndex() {
     final VirtualFile standardSchemas = getStandardSchemas();
     String path = FetchExtResourceAction.getExternalResourcesPath();
     LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
     VirtualFile extResources = localFileSystem.findFileByPath(path);
-    HashSet<String> roots = new HashSet<String>(2);
+    HashSet<VirtualFile> roots = new HashSet<VirtualFile>(2);
     if (standardSchemas != null) {
-      roots.add(standardSchemas.getUrl());
+      roots.add(standardSchemas);
     }
     if (extResources != null) {
-      roots.add(extResources.getUrl());
+      roots.add(extResources);
     }
     return roots;
   }
