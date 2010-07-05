@@ -71,11 +71,13 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
   }
 
   private static boolean isProjectFile(final VirtualFile file) {
-    if ((!file.isDirectory() && file.getName().toLowerCase().endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION))) {
-      return true;
-    }
+    if (isIprFile(file)) return true;
     final ProjectOpenProcessor importProvider = ProjectOpenProcessor.getImportProvider(file);
-    if (importProvider != null && importProvider.lookForProjectsInDirectory()) {
+    return importProvider != null;
+  }
+
+  private static boolean isIprFile(VirtualFile file) {
+    if ((!file.isDirectory() && file.getName().toLowerCase().endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION))) {
       return true;
     }
     return false;
@@ -89,7 +91,13 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
       if (children == null) return false;
       for (VirtualFile file : children) {
         if (file.getName().equals(Project.DIRECTORY_STORE_FOLDER)) return true;
-        if (isProjectFile(file)) return true;
+        if (isIprFile(file)) {
+          return true;
+        }
+        final ProjectOpenProcessor importProvider = ProjectOpenProcessor.getImportProvider(file);
+        if (importProvider != null && importProvider.lookForProjectsInDirectory()) {
+          return true;
+        }
       }
     }
     return false;
