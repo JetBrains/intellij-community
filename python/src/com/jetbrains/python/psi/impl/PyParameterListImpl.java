@@ -156,6 +156,6 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
   }
 
   public boolean mustResolveOutside() {
-    return false;  // we don't exactly have children to resolve, but if we did...
+    return true;
   }
 }

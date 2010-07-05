@@ -144,6 +144,7 @@ public class PyNames {
     _BuiltinMethods.put("__pos__", _only_self_descr);
     _BuiltinMethods.put("__pow__", new BuiltinDescription("(self, power, modulo=None)"));
     _BuiltinMethods.put("__radd__", _self_other_descr);
+    _BuiltinMethods.put("__rand__", _self_other_descr);
     _BuiltinMethods.put("__rdiv__", _self_other_descr);
     _BuiltinMethods.put("__rdivmod__", _self_other_descr);
     _BuiltinMethods.put("__reduce__", _only_self_descr);

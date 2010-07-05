@@ -1,2 +1,2 @@
 class Foo:
-  def __ra<caret>
+  def __rad<caret>
