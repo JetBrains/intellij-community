@@ -22,7 +22,6 @@ import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,7 +75,7 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
       return true;
     }
     final ProjectOpenProcessor importProvider = ProjectOpenProcessor.getImportProvider(file);
-    if (importProvider != null && !(importProvider instanceof PlatformProjectOpenProcessor)) {
+    if (importProvider != null && importProvider.lookForProjectsInDirectory()) {
       return true;
     }
     return false;

@@ -61,6 +61,11 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     return file.isDirectory() || !file.getFileType().isBinary();
   }
 
+  @Override
+  public boolean lookForProjectsInDirectory() {
+    return false;
+  }
+
   @Nullable
   public Project doOpenProject(@NotNull final VirtualFile virtualFile, final Project projectToClose, final boolean forceOpenInNewFrame) {
     VirtualFile baseDir = virtualFile.isDirectory() ? virtualFile : virtualFile.getParent();
