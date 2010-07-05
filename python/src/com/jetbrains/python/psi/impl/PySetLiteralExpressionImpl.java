@@ -19,7 +19,7 @@ public class PySetLiteralExpressionImpl extends PyElementImpl implements PySetLi
   }
 
   public PyType getType(@NotNull TypeEvalContext context) {
-    return null;   // TODO
+    return PyBuiltinCache.getInstance(this).getSetType();
   }
 
   @Override
