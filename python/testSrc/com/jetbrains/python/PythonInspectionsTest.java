@@ -205,13 +205,14 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   }
 
   public void testPyPropertyAccessInspection() throws Throwable {
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON26);
-    try {
-      LocalInspectionTool inspection = new PyPropertyAccessInspection();
-      doTest(getTestName(false), inspection);
-    }
-    finally {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
-    }
+    doTestWithLanguageLevel(getTestName(false), new PyPropertyAccessInspection(), LanguageLevel.PYTHON26);
+  }
+
+  public void testPyPropertyDefinitionInspection25() throws Throwable {
+    doTestWithLanguageLevel(getTestName(false), new PyPropertyDefinitionInspection(), LanguageLevel.PYTHON25);
+  }
+
+  public void testPyPropertyDefinitionInspection26() throws Throwable {
+    doTestWithLanguageLevel(getTestName(false), new PyPropertyDefinitionInspection(), LanguageLevel.PYTHON26);
   }
 }

@@ -42,6 +42,7 @@ public class PythonInspectionToolProvider implements InspectionToolProvider {
       PyTupleItemAssignmentInspection.class,
       PyCallingNonCallableInspection.class,
       PyPropertyAccessInspection.class,
+      PyPropertyDefinitionInspection.class,
     };
   }
 }

@@ -14,6 +14,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -346,14 +347,27 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   @Nullable
   private Property lookInDecoratedProperties(@Nullable Processor<String> name_filter, @Nullable Processor<Property> property_filter, boolean advanced) {
-    Maybe<PyFunction> getter = none;
-    Maybe<PyFunction> setter = none;
-    Maybe<PyFunction> deleter = none;
-    String doc = null;
     // look at @property decorators
+    Map<String, List<PyFunction>> grouped = new HashMap<String, List<PyFunction>>();
+    // group suitable same-named methods, each group defines a property
     for (PyFunction method : getMethods()) {
       final String name = method.getName();
       if (name_filter == null || name_filter.process(name)) {
+        List<PyFunction> bucket = grouped.get(name);
+        if (bucket == null) {
+          bucket = new SmartList<PyFunction>();
+          grouped.put(name, bucket);
+        }
+        bucket.add(method);
+      }
+    }
+    for (Map.Entry<String, List<PyFunction>> entry: grouped.entrySet()) {
+      Maybe<PyFunction> getter = none;
+      Maybe<PyFunction> setter = none;
+      Maybe<PyFunction> deleter = none;
+      String doc = null;
+      final String name = entry.getKey();
+      for (PyFunction method : entry.getValue()) {
         PyDecoratorList decolist = method.getDecoratorList();
         if (decolist != null) {
           for (PyDecorator deco : decolist.getDecorators()) {
@@ -371,12 +385,12 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
             }
           }
         }
+        if (getter != none && setter != none && deleter != none) break; // can't improve
       }
-      if (getter != none && setter != none && deleter != none) break; // can't improve
-    }
-    if (getter != none || setter != none || deleter != none) {
-      final PropertyImpl prop = new PropertyImpl(getter, setter, deleter, doc, null);
-      if (property_filter == null || property_filter.process(prop)) return prop;
+      if (getter != none || setter != none || deleter != none) {
+        final PropertyImpl prop = new PropertyImpl(getter, setter, deleter, doc, null);
+        if (property_filter == null || property_filter.process(prop)) return prop;
+      }
     }
     return null;
   }

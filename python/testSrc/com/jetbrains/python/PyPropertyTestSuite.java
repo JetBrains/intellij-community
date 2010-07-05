@@ -20,7 +20,7 @@ import junit.framework.TestSuite;
  */
 public class PyPropertyTestSuite {
   public static TestSuite suite() {
-    return new TestSuite(PyClassicPropertyTest.class);
+    return new TestSuite(PyClassicPropertyTest.class, PyDecoratedPropertyTest.class);
   }
 
   abstract static class PyPropertyTest  extends PyResolveTestCase {
