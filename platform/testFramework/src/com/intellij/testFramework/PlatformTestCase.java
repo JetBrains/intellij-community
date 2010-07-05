@@ -53,6 +53,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.psi.PsiDocumentManager;
@@ -62,6 +63,8 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.util.PatchedWeakReference;
+import com.intellij.util.indexing.IndexableSetContributor;
+import com.intellij.util.indexing.IndexedRootsProvider;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -72,7 +75,9 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author yole
@@ -96,6 +101,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   private ThreadTracker myThreadTracker;
 
   protected static boolean ourPlatformPrefixInitialized;
+  private static Set<VirtualFile> ourEternallyLivingFiles;
 
   static {
     Logger.setFactory(TestLoggerFactory.getInstance());
@@ -267,7 +273,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     try {
       LocalFileSystemImpl localFileSystem = (LocalFileSystemImpl)LocalFileSystem.getInstance();
       if (localFileSystem != null) {
-        localFileSystem.cleanupForNextTest();
+        localFileSystem.cleanupForNextTest(Collections.<VirtualFile>emptySet());
       }
     }
     catch (IOException e) {
@@ -281,6 +287,35 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       virtualFilePointerManager.cleanupForNextTest();
     }
     PatchedWeakReference.clearAll();
+  }
+
+  private static void addSubTree(VirtualFile root, Set<VirtualFile> to) {
+    if (root instanceof VirtualDirectoryImpl) {
+      for (VirtualFile child : ((VirtualDirectoryImpl)root).getCachedChildren()) {
+        to.add(child);
+        addSubTree(child, to);
+      }
+    }
+  }
+
+  private static Set<VirtualFile> eternallyLivingFiles() {
+    if (ourEternallyLivingFiles != null) {
+      return ourEternallyLivingFiles;
+    }
+
+    Set<VirtualFile> survivors = new HashSet<VirtualFile>();
+
+    for (IndexedRootsProvider provider : IndexedRootsProvider.EP_NAME.getExtensions()) {
+      for (VirtualFile file : IndexableSetContributor.getRootsToIndex(provider)) {
+        addSubTree(file, survivors);
+        while (file != null && survivors.add(file)) {
+          file = file.getParent();
+        }
+      }
+    }
+
+    ourEternallyLivingFiles = survivors;
+    return survivors;
   }
 
   protected void tearDown() throws Exception {

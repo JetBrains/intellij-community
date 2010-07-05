@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 /**
@@ -46,6 +47,7 @@ public abstract class AbstractSelectFilesDialog<T> extends DialogWrapper {
     if (prompt != null) {
       final JLabel label = new JLabel(prompt);
       label.setUI(new MultiLineLabelUI());
+      label.setBorder(new EmptyBorder(5, 1, 5, 1));
       myPanel.add(label, BorderLayout.NORTH);
     }
 

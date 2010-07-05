@@ -489,6 +489,11 @@ public class CommitHelper {
         public void setValue(final Value value) {
           configuration.MOVE_TO_FAILED_COMMIT_CHANGELIST = value;
         }
+
+        @Override
+        public boolean isPersistent() {
+          return true;
+        }
       };
       boolean result = ConfirmationDialog.requestForConfirmation(option, project, VcsBundle.message("commit.failed.confirm.prompt"),
                                                                  VcsBundle.message("commit.failed.confirm.title"),

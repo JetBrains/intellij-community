@@ -250,11 +250,15 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
 
     if (!checkConflicts()) return;
 
+    executeRefactoring();
+    setDocCommentPolicySetting(getDocCommentPolicy());
+    closeOKAction();
+  }
+
+  protected void executeRefactoring() {
     if (!isExtractSuperclass()) {
       invokeRefactoring(createProcessor());
     }
-    setDocCommentPolicySetting(getDocCommentPolicy());
-    closeOKAction();
   }
 
   @Override
@@ -267,7 +271,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
   }
 
   protected static class OperationFailedException extends Exception {
-    protected OperationFailedException(String message) {
+    public OperationFailedException(String message) {
       super(message);
     }
   }

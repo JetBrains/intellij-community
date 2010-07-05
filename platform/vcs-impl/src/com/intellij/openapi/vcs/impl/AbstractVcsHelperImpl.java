@@ -245,6 +245,9 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
 
     SelectFilesDialog dlg = new SelectFilesDialog(myProject, files, prompt, confirmationOption);
     dlg.setTitle(title);
+    if (! confirmationOption.isPersistent()) {
+      dlg.setDoNotAskOption(null);
+    }
     dlg.show();
     if (dlg.isOK()) {
       final Collection<VirtualFile> selection = dlg.getSelectedFiles();
@@ -278,6 +281,9 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
 
     SelectFilePathsDialog dlg = new SelectFilePathsDialog(myProject, files, prompt, confirmationOption);
     dlg.setTitle(title);
+    if (! confirmationOption.isPersistent()) {
+      dlg.setDoNotAskOption(null);
+    }
     dlg.show();
     return dlg.isOK() ? dlg.getSelectedFiles() : null;
   }

@@ -293,4 +293,17 @@ public class GroovyCompletionTest extends LightCodeInsightFixtureTestCase {
   public void testIncSmartCompletion() throws Exception {
     doSmartCompletion("a", "b");
   }
+
+  public void testInheritConstructorsAnnotation() throws Throwable {
+    myFixture.addFileToProject("groovy/transform/InheritConstructors.java", "package groovy.transform;\n" +
+                                                                            "\n" +
+                                                                            "import java.lang.annotation.ElementType;\n" +
+                                                                            "import java.lang.annotation.Retention;\n" +
+                                                                            "import java.lang.annotation.RetentionPolicy;\n" +
+                                                                            "import java.lang.annotation.Target;@Retention(RetentionPolicy.SOURCE)\n" +
+                                                                            "@Target({ElementType.TYPE})\n" +
+                                                                            "public @interface InheritConstructors {\n" +
+                                                                            "}");
+    doSmartTest();
+  }
 }

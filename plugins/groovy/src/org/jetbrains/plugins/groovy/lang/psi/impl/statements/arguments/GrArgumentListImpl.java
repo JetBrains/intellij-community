@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,11 +96,7 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
   }
 
   public int getExpressionArgumentIndex(final GrExpression arg) {
-    for (int i = 0; i < getExpressionArguments().length; i++) {
-      GrExpression expression = getExpressionArguments()[i];
-      if (expression == arg) return i;
-    }
-    return -1;
+    return ArrayUtil.indexOf(getExpressionArguments(), arg);    
   }
 
   @Nullable

@@ -38,8 +38,10 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -193,6 +195,8 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
           boolean isAccessible = helper.isAccessible(constructor, this, null);
           result.add(new GroovyResolveResultImpl(constructor, null, classResult.getSubstitutor(), isAccessible, true));
         }
+        final GroovyResolveResult[] results = ResolveUtil.getNonCodeConstructors((PsiClass)element, this, classResult.getSubstitutor());
+        result.addAll(Arrays.asList(results));
       }
     }
 

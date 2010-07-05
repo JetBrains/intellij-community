@@ -258,11 +258,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private void paintCaretRowBackground(final Graphics g, final int x, final int width) {
-    CaretModelImpl.VerticalInfo caretInfo = myEditor.getCaretModel().getVisualCaretInfo();
+    final VisualPosition visCaret = myEditor.getCaretModel().getVisualPosition();
     Color caretRowColor = myEditor.getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR);
     if (caretRowColor != null) {
       g.setColor(caretRowColor);
-      g.fillRect(x, caretInfo.y, width, caretInfo.height);
+      final Point caretPoint = myEditor.visualPositionToXY(visCaret);
+      g.fillRect(x, caretPoint.y, width, myEditor.getLineHeight());
     }
   }
 

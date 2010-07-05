@@ -459,5 +459,10 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
   public static VcsKey getKey() {
     return ourKey;
   }
+
+  @Override
+  public boolean areDirectoriesVersionedItems() {
+    return true;
+  }
 }
 

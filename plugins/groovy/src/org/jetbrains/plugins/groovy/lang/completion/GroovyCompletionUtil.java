@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -48,6 +49,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.*;
 
@@ -287,7 +289,14 @@ public class GroovyCompletionUtil {
   }
 
   public static boolean hasConstructorParameters(PsiClass clazz) {
-    final PsiMethod[] constructors = clazz.getConstructors();
+    final PsiMethod[] constructors;
+    if (clazz instanceof GroovyPsiElement) {
+      constructors = ResolveUtil.getAllClassConstructors(clazz, (GroovyPsiElement)clazz, PsiSubstitutor.EMPTY);
+    }
+    else {
+      constructors = clazz.getConstructors();
+    }
+
     for (PsiMethod constructor : constructors) {
       if (constructor.getParameterList().getParametersCount() > 0) return true;
     }

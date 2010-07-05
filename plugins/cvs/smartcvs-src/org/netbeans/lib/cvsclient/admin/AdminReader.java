@@ -76,7 +76,7 @@ public final class AdminReader
 			return entriesHandler.getEntries().getEntries();
 		}
 		catch (FileNotFoundException ex) {
-			return Collections.EMPTY_SET;
+			return Collections.emptySet();
 		}
 	}
 

@@ -18,7 +18,7 @@ public abstract class LightQuickFix15TestCase extends LightQuickFixTestCase {
   }
 
   protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk15("java 1.5");
+    return JavaSdkImpl.getMockJdk17("java 1.5");
   }
 
   protected void tearDown() throws Exception {

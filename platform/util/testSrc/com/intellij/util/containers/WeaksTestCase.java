@@ -21,9 +21,10 @@ import junit.framework.TestCase;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 public abstract class WeaksTestCase extends TestCase {
-  protected final ArrayList myHolder = new ArrayList();
+  protected final List<Object> myHolder = new ArrayList<Object>();
 
   protected void checkSameElements(Iterator holderIterator, Iterator collectionIterator) {
     while (holderIterator.hasNext() && collectionIterator.hasNext()) {
@@ -80,12 +81,12 @@ public abstract class WeaksTestCase extends TestCase {
     int validCount = 0;
     for (int i = 0; i < myHolder.size(); i++) {
       validIndex = nextValidIndex(validIndex, collection);
-      assertSame(String.valueOf(i) + "==" + validIndex, myHolder.get(i), collection.get(validIndex));
+      assertSame(i + "==" + validIndex, myHolder.get(i), collection.get(validIndex));
       validCount++;
     }
     assertEquals(myHolder.size(), validCount);
-    assertEquals(collection.size(), nextValidIndex(validIndex, collection));
-    assertEquals(collection.size() - myHolder.size(), collection.getCorpseCount());
+    assertTrue(collection.size() >= nextValidIndex(validIndex, collection));
+    assertTrue(collection.size() - myHolder.size() >= collection.getCorpseCount());
 
     //validIndex = Math.max(validIndex, 0);
     WeakReference[] references = collection.getReferences();

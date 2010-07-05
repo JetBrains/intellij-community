@@ -55,6 +55,7 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
 
     public boolean IS_BLOCK_CURSOR = false;
     public boolean IS_WHITESPACES_SHOWN = false;
+    public boolean IS_SOFTWRAPS_SHOWN = false;
     public boolean IS_INDENT_GUIDES_SHOWN = true;
     public boolean IS_ANIMATED_SCROLLING = true;
     public boolean IS_CAMEL_WORDS = false;
@@ -311,6 +312,14 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
 
   public void setWhitespacesShown(boolean val) {
     myOptions.IS_WHITESPACES_SHOWN = val;
+  }
+
+  public boolean isSoftWrapsShown() {
+    return myOptions.IS_SOFTWRAPS_SHOWN;
+  }
+
+  public void setSoftwrapsShown(boolean val) {
+    myOptions.IS_SOFTWRAPS_SHOWN = val;
   }
 
   public boolean isIndentGuidesShown() {

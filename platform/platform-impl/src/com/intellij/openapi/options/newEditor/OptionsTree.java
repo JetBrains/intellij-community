@@ -490,7 +490,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       return result; // TODO: DECIDE IF INNERS SHOULD BE SORTED: sort(result);
     }
     else {
-      return Collections.EMPTY_LIST;
+      return Collections.emptyList();
     }
   }
 

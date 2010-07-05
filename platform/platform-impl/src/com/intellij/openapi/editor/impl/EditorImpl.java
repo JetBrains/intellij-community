@@ -49,6 +49,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.impl.event.MarkupModelEvent;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
@@ -59,6 +60,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.LightweightHint;
+import com.intellij.ui.UI;
+import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
@@ -76,7 +79,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.Timer;
+import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.ScrollBarUI;
+import javax.swing.plaf.ScrollPaneUI;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
@@ -152,6 +157,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private MyEditable myEditable;
 
   private EditorColorsScheme myScheme;
+  private ArrowPainter myTabPainter;
   private final boolean myIsViewer;
   private final SelectionModelImpl mySelectionModel;
   private final EditorMarkupModelImpl myMarkupModel;
@@ -176,6 +182,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private boolean myUnderRepainting;
 
   private EditorHighlighter myHighlighter;
+  private final TextDrawingCallback myTextDrawingCallback = new MyTextDrawingCallback();
 
   private int myScrollBarOrientation;
   private boolean myMousePressedInsideSelection;
@@ -235,11 +242,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     ourCaretBlinkingCommand.start();
   }
 
-
   public EditorImpl(Document document, boolean viewer, Project project) {
     myProject = project;
     myDocument = (DocumentImpl)document;
     myScheme = new MyColorSchemeDelegate();
+    initTabPainter();
     myIsViewer = viewer;
     mySettings = new SettingsImpl(this);
 
@@ -472,11 +479,24 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myEditorComponent.repaint();
 
+    initTabPainter();
     updateCaretCursor();
 
     if (myInitialMouseEvent != null) {
       myIgnoreMouseEventsConsecutiveToInitial = true;
     }
+  }
+
+  private void initTabPainter() {
+    myTabPainter = new ArrowPainter(
+      ColorHolder.byColorsScheme(myScheme, EditorColors.WHITESPACES_COLOR),
+      new Computable<Integer>() {
+        @Override
+        public Integer compute() {
+          return getCharHeight();
+        }
+      }
+    );
   }
 
   public void release() {
@@ -529,8 +549,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myGutterComponent.setOpaque(true);
 
     myScrollPane.setVerticalScrollBar(myVerticalScrollBar);
-    final MyScrollBar horizontalScrollBar = new MyScrollBar(Adjustable.HORIZONTAL);
-    myScrollPane.setHorizontalScrollBar(horizontalScrollBar);
     myScrollPane.setViewportView(myEditorComponent);
     //myScrollPane.setBorder(null);
     myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
@@ -1382,6 +1400,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return getBackgroundIgnoreForced();
   }
 
+  @Override
+  public TextDrawingCallback getTextDrawingCallback() {
+    return myTextDrawingCallback;
+  }
+
   private Color getBackgroundColor(final TextAttributes attributes) {
     final Color attrColor = attributes.getBackgroundColor();
     return attrColor == myScheme.getDefaultBackground() ? getBackgroundColor() : attrColor;
@@ -1543,6 +1566,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     CharSequence text = myDocument.getCharsNoThreadCheck();
     int lastLineIndex = Math.max(0, myDocument.getLineCount() - 1);
 
+    // There is a possible case that we work with visual line that is introduced by soft wrap. That implies that additional
+    // space is reserved before the document text represented at the current line (soft wrap drawing is located there).
+    // Hence, we need to take that into consideration during determining if new soft wrap should be introduced.
+    //   Example:
+    //                 111 222 333 <- soft wrap is here
+    // soft wrap drawing -> 444 555 <- we need to consider soft wrap drawing on a start of the line during checking if we need to wrap 555.
+    boolean onSoftWrapIntroducedVisualLine = false;
+
     outer:
     while (!iterationState.atEnd() && !lIterator.atEnd()) {
       int hEnd = iterationState.getEndOffset();
@@ -1571,6 +1602,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           position.x = 0;
           if (position.y > clip.y + clip.height) break;
           position.y += lineHeight;
+          onSoftWrapIntroducedVisualLine = false;
           start = lEnd;
         }
 
@@ -1583,7 +1615,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
         else {
           TextChange softWrap = getSoftWrapModel().getSoftWrap(start);
-          if (softWrap == null && getSoftWrapModel().shouldWrap(myDocument.getRawChars(), start, hEnd, position)) {
+          if (softWrap == null
+              && getSoftWrapModel().shouldWrap(g, myDocument.getRawChars(), start, hEnd, position.x, onSoftWrapIntroducedVisualLine))
+          {
             softWrap = getSoftWrapModel().wrap(myDocument.getRawChars(), start, hEnd);
           }
           if (softWrap != null) {
@@ -1593,7 +1627,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             int softWrapEnd = 0;
             while (softWrapEnd < softWrapText.length()) {
               for (; softWrapEnd < softWrapText.length() && softWrapText.charAt(softWrapEnd) != '\n'; softWrapEnd++) ;
-              if (softWrapStart >= softWrapText.length() || softWrapEnd >= softWrapText.length()) {
+              if (softWrapEnd >= softWrapText.length()) {
                 position.x = drawBackground(
                   g, backColor, softWrapText.subSequence(softWrapStart, softWrapText.length()), position, fontType, defaultBackground, clip
                 );
@@ -1607,6 +1641,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 if (position.y > clip.y + clip.height) break outer;
                 position.x = 0;
                 position.y += lineHeight;
+                onSoftWrapIntroducedVisualLine = true;
                 softWrapStart = softWrapEnd + 1;
                 softWrapEnd = softWrapStart;
               }
@@ -1839,7 +1874,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
               // to the first soft wrap symbol that is not drawn yet.
               int softWrapSegmentStartIndex = 0;
               for (int i = 0; i < softWrapChars.length; i++) {
-                // Delay soft wraps symbols drawing until EOL if found.
+                // Delay soft wraps symbols drawing until EOL is found.
                 if (softWrapChars[i] != '\n') {
                   continue;
                 }
@@ -1857,6 +1892,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                     g, softWrapChars, softWrapSegmentStartIndex, i, position, clip, currentColor, effectType, fontType, currentColor
                   );
                 }
+                mySoftWrapModel.paint(g, SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED, position.x, position.y, getLineHeight());
 
                 // Reset 'x' coordinate because of new line start.
                 position.x = 0;
@@ -1877,6 +1913,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                   fontType, currentColor
                 );
               }
+              position.x += mySoftWrapModel.paint(g, SoftWrapDrawingType.AFTER_SOFT_WRAP_LINE_FEED, position.x, position.y, getLineHeight());
 
               activeSoftWrapProcessed = true;
             }
@@ -1964,7 +2001,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (count > 0) {
         final int lastCount = count - 1;
         final Color lastColor = color[lastCount];
-        if (_data == myLastData && _start == ends[lastCount] && (_color == null || lastColor == null || _color == lastColor)) {
+        if (_data == myLastData && _start == ends[lastCount] && (_color == null || lastColor == null || _color == lastColor)
+            && _y == y[lastCount] /* there is a possible case that vertical position is adjusted because of soft wrap */) 
+        {
           ends[lastCount] = _end;
           if (lastColor == null) color[lastCount] = _color;
           return;
@@ -2195,17 +2234,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private void drawTabPlacer(Graphics g, int y, int start, int stop) {
     if (mySettings.isWhitespacesShown()) {
-      stop -= g.getFontMetrics().charWidth(' ') / 2;
-      Color oldColor = g.getColor();
-      g.setColor(myScheme.getColor(EditorColors.WHITESPACES_COLOR));
-      final int charHeight = getCharHeight();
-      final int halfCharHeight = charHeight / 2;
-      int mid = y - halfCharHeight;
-      int top = y - charHeight;
-      UIUtil.drawLine(g, start, mid, stop, mid);
-      UIUtil.drawLine(g, stop, y, stop, top);
-      g.fillPolygon(new int[]{stop - halfCharHeight, stop - halfCharHeight, stop}, new int[]{y, y - charHeight, y - halfCharHeight}, 3);
-      g.setColor(oldColor);
+      myTabPainter.paint(g, y, start, stop);
     }
   }
 
@@ -2215,21 +2244,25 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     else {
       FontInfo fnt = EditorUtil.fontForChar(data[start], fontType, this);
-      CachedFontContent cache = null;
-      for (CachedFontContent fontCache : myFontCache) {
-        if (fontCache.myFontType == fnt) {
-          cache = fontCache;
-          break;
-        }
-      }
-      if (cache == null) {
-        cache = new CachedFontContent(fnt);
-        myFontCache.add(cache);
-      }
-
-      myLastCache = cache;
-      cache.addContent(g, data, start, end, x, y, color);
+      drawCharsCached(g, data, start, end, x, y, fnt, color);
     }
+  }
+
+  private void drawCharsCached(Graphics g, char[] data, int start, int end, int x, int y, FontInfo fnt, Color color) {
+    CachedFontContent cache = null;
+    for (CachedFontContent fontCache : myFontCache) {
+      if (fontCache.myFontType == fnt) {
+        cache = fontCache;
+        break;
+      }
+    }
+    if (cache == null) {
+      cache = new CachedFontContent(fnt);
+      myFontCache.add(cache);
+    }
+
+    myLastCache = cache;
+    cache.addContent(g, data, start, end, x, y, color);
   }
 
   private static boolean spacesOnly(char[] chars, int start, int end) {
@@ -3299,20 +3332,25 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  class MyScrollBar extends JScrollBar {
+  class MyScrollBar extends JBScrollBar {
     @NonNls private static final String DECREASE_BUTTON_FIELD = "decrButton";
     @NonNls private static final String INCREASE_BUTTON_FIELD = "incrButton";
     @NonNls private static final String APPLE_LAF_AQUA_SCROLL_BAR_UI_CLASS = "apple.laf.AquaScrollBarUI";
+    private ScrollBarUI myPersistentUI;
 
     private MyScrollBar(int orientation) {
       super(orientation);
-      setFocusable(false);
-      putClientProperty("JScrollBar.fastWheelScrolling", Boolean.TRUE); // fast scrolling for JDK 6
+    }
+
+    public void setPersistendUI(ScrollBarUI ui) {
+      myPersistentUI = ui;
+      setUI(ui);
     }
 
     @Override
-    public void updateUI() {
-      setUI(ButtonlessScrollBarUI.createNormal());
+    public void setUI(ScrollBarUI ui) {
+      if (myPersistentUI == null) myPersistentUI = ui;
+      super.setUI(myPersistentUI);
     }
 
     /**
@@ -4680,6 +4718,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private class MyScrollPane extends JBScrollPane {
+
+
+    private MyScrollPane() {
+      setViewportBorder(new EmptyBorder(0, 0, 0, 0));
+    }
+
     protected void processMouseWheelEvent(MouseWheelEvent e) {
       if (mySettings.isWheelFontChangeEnabled()) {
         boolean changeFontSize = SystemInfo.isMac
@@ -4687,11 +4731,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                  : e.isControlDown() && !e.isMetaDown() && !e.isAltDown() && !e.isShiftDown();
         if (changeFontSize) {
           setFontSize(myScheme.getEditorFontSize() + e.getWheelRotation());
-          return;
+          return;                                                            
         }
       }
 
       super.processMouseWheelEvent(e);
+    }
+
+    @Override
+    public JScrollBar createVerticalScrollBar() {
+      return new MyScrollBar(Adjustable.VERTICAL);
     }
   }
 
@@ -4716,6 +4765,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         myVerticalScrollBar.setValue(myVerticalScrollBar.getValue() - height);
       }
       myOldHeight = getHeight();
+    }
+  }
+
+  private class MyTextDrawingCallback implements TextDrawingCallback {
+    @Override
+    public void drawChars(Graphics g, char[] data, int start, int end, int x, int y, Color color, FontInfo fontInfo) {
+      drawCharsCached(g, data, start, end, x, y, fontInfo, color);
     }
   }
 }

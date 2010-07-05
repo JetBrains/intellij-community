@@ -48,14 +48,18 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
     File dir3 = myIndicesFixture.getRepositoryHelper().getTestData("dir\\foo\\");
     File dir4 = myIndicesFixture.getRepositoryHelper().getTestData("dir/bar");
 
-    List<MavenIndex> indices1 = myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, dir1, Collections.EMPTY_LIST);
+    List<MavenIndex> indices1 = myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, dir1,
+                                                                                        Collections.<Pair<String, String>>emptyList());
     assertEquals(1, indices1.size());
     assertTrue(myIndicesFixture.getIndicesManager().getIndices().contains(indices1.get(0)));
 
-    assertEquals(indices1, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, dir2, Collections.EMPTY_LIST));
-    assertEquals(indices1, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, dir3, Collections.EMPTY_LIST));
+    assertEquals(indices1, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, dir2,
+                                                                                   Collections.<Pair<String, String>>emptyList()));
+    assertEquals(indices1, myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, dir3,
+                                                                                   Collections.<Pair<String, String>>emptyList()));
 
-    List<MavenIndex> indices2 = myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, dir4, Collections.EMPTY_LIST);
+    List<MavenIndex> indices2 = myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, dir4,
+                                                                                        Collections.<Pair<String, String>>emptyList());
     assertFalse(indices1.get(0).equals(indices2.get(0)));
   }
 
@@ -81,7 +85,7 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
   public void testIndexedArchetypes() throws Exception {
     myIndicesFixture.getRepositoryHelper().addTestData("archetypes");
     myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject, myIndicesFixture.getRepositoryHelper().getTestData("archetypes"),
-                                                            Collections.EMPTY_LIST);
+                                                            Collections.<Pair<String, String>>emptyList());
 
     assertArchetypeExists("org.apache.maven.archetypes:maven-archetype-foobar:1.0");
   }

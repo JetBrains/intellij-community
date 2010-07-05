@@ -3,7 +3,7 @@ package com.intellij.codeInsight.daemon.quickFix;
 
 
 
-public class MethodReturnTest extends LightQuickFixTestCase {
+public class MethodReturnTest extends LightQuickFix15TestCase {
 
   public void test() throws Exception { doAllTests(); }
 

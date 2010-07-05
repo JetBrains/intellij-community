@@ -23,7 +23,7 @@ import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.SoftWrapModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.impl.softwrap.SoftWrapsStorage;
+import com.intellij.openapi.editor.impl.softwrap.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.TIntHashSet;
@@ -64,6 +64,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
   private final CharBuffer myCharBuffer = CharBuffer.allocate(1);
 
   private final SoftWrapsStorage myStorage;
+  private final SoftWrapPainter myPainter;
 
   /**
    * Holds logical lines where soft wraps should be removed.
@@ -93,12 +94,13 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
   private int myActive;
 
   public SoftWrapModelImpl(@NotNull EditorEx editor) {
-    this(editor, new SoftWrapsStorage());
+    this(editor, new SoftWrapsStorage(), new CompositeSoftWrapPainter(editor));
   }
 
-  public SoftWrapModelImpl(@NotNull EditorEx editor, @NotNull SoftWrapsStorage storage) {
+  public SoftWrapModelImpl(@NotNull EditorEx editor, @NotNull SoftWrapsStorage storage, @NotNull SoftWrapPainter painter) {
     myEditor = editor;
     myStorage = storage;
+    myPainter = painter;
   }
 
   public boolean isSoftWrappingEnabled() {
@@ -155,13 +157,16 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
    * Allows to answer if symbols of the given char array located at <code>[start; end)</code> interval should be soft wrapped,
    * i.e. represented on a next line.
    *
-   * @param chars       symbols holder
-   * @param start       target symbols sub-sequence start within the given char array (inclusive)
-   * @param end         target symbols sub-sequence end within the given char array (exclusive)
-   * @param position    current drawing position
-   * @return            <code>true</code> if target symbols sub-sequence should be soft-wrapped; <code>false</code> otherwise
+   * @param g                               graphics buffer being used
+   * @param chars                           symbols holder
+   * @param start                           target symbols sub-sequence start within the given char array (inclusive)
+   * @param end                             target symbols sub-sequence end within the given char array (exclusive)
+   * @param x                               <code>'x'</code> coordinate of the current drawing position
+   * @param onSoftWrapIntroducedVisualLine  defines if current visual position belongs to soft wrap-introduced visual line
+   * @return                                <code>true</code> if target symbols sub-sequence should be soft-wrapped;
+   *                                        <code>false</code> otherwise
    */
-  public boolean shouldWrap(char[] chars, int start, int end, Point position) {
+  public boolean shouldWrap(@NotNull Graphics g, @NotNull char[] chars, int start, int end, int x, boolean onSoftWrapIntroducedVisualLine) {
     if (!isSoftWrappingEnabled()) {
       return false;
     }
@@ -178,7 +183,11 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
     }
 
     //TODO den implement
-    return position.x + (end - start) * 7 > myRightEdgeLocation;
+    int xAfterCharsDrawing = x + myPainter.getMinDrawingWidth(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED) + (end - start) * 7;
+    if (onSoftWrapIntroducedVisualLine) {
+      xAfterCharsDrawing += myPainter.getMinDrawingWidth(SoftWrapDrawingType.AFTER_SOFT_WRAP_LINE_FEED);
+    }
+    return xAfterCharsDrawing > myRightEdgeLocation;
   }
 
   private static boolean containsOnlyWhiteSpaces(char[] chars, int start, int end) {
@@ -241,6 +250,11 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
       myStorage.removeInRange(start, end);
     }
     myDirtyLines.clear();
+  }
+
+  @Override
+  public int paint(@NotNull Graphics g, @NotNull SoftWrapDrawingType drawingType, int x, int y, int lineHeight) {
+    return myPainter.paint(g, drawingType, x,  y, lineHeight);
   }
 
   @NotNull
@@ -706,7 +720,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
 
     Document document = myEditor.getDocument();
 
-    if (softWrapIndex >= softWraps.size() || document.getTextLength() <= 0) {
+    if (softWrapIndex >= softWraps.size() || document.getTextLength() <= 0 || change.getStart() >= document.getTextLength()) {
       return;
     }
     int firstChangedLine = document.getLineNumber(change.getStart());
@@ -723,7 +737,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
 
     // Add modified soft wraps.
     for (TextChange softWrap : toModify) {
-      softWraps.add(softWrap.advance(change.getDiff()));
+      myStorage.storeSoftWrap(softWrap.advance(change.getDiff()));
     }
   }
 

@@ -84,11 +84,11 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
     return pane;
   }
 
-  protected void assertStructureEqual(PsiDirectory packageDirectory, String expected) {
+  protected void assertStructureEqual(PsiDirectory packageDirectory, @NonNls String expected) {
     assertStructureEqual(packageDirectory, expected, 17, myStructure);
   }
 
-  protected void assertStructureEqual(PsiDirectory packageDirectory, String expected, int maxRowCount) {
+  protected void assertStructureEqual(PsiDirectory packageDirectory, @NonNls String expected, int maxRowCount) {
     assertStructureEqual(packageDirectory, expected, maxRowCount, myStructure);
   }
 
@@ -100,7 +100,7 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
     return (AbstractProjectTreeStructure)myStructure;
   }
 
-  protected void assertStructureEqual(String expected) {
+  protected void assertStructureEqual(@NonNls String expected) {
     assertStructureEqual(myStructure.getRootElement(), expected);
   }
 
@@ -289,7 +289,7 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
 
   @Override
   protected Sdk getTestProjectJdk() {
-    return JavaSdkImpl.getMockJdkCE();
+    return JavaSdkImpl.getMockJdk17();
   }
 
   protected static void sortClasses(final PsiClass[] classes) {

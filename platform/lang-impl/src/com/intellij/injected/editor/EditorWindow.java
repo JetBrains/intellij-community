@@ -33,6 +33,7 @@ import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -181,6 +182,11 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
   @Nullable
   public JComponent getHeaderComponent() {
     return null;
+  }
+
+  @Override
+  public TextDrawingCallback getTextDrawingCallback() {
+    return myDelegate.getTextDrawingCallback();
   }
 
   @NotNull

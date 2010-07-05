@@ -51,6 +51,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGd
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
@@ -130,6 +131,16 @@ public class ResolveUtil {
     return true;
   }
 
+  @Nullable
+  public static String getNameHint(PsiScopeProcessor processor) {
+    NameHint nameHint = processor.getHint(NameHint.KEY);
+    if (nameHint == null) {
+      return null;
+    }
+
+    return nameHint.getName(ResolveState.initial());
+  }
+  
   /**
    * @deprecated
    * use {@link #processElement(PsiScopeProcessor, PsiNamedElement, ResolveState)} instead
@@ -492,5 +503,28 @@ public class ResolveUtil {
       variants[i] = new GroovyResolveResultImpl(constructors[i], isAccessible);
     }
     return variants;
+  }
+
+  public static GroovyResolveResult[] getNonCodeConstructors(PsiClass psiClass, GroovyPsiElement place, PsiSubstitutor substitutor) {
+    final PsiClassType qualifierType = JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass);
+    final MethodResolverProcessor processor = new MethodResolverProcessor(psiClass.getName(), place, true, null, null, PsiType.EMPTY_ARRAY);
+    NonCodeMembersContributor
+      .runContributors(qualifierType, processor, place, ResolveState.initial().put(PsiSubstitutor.KEY, substitutor));
+    return processor.getCandidates();
+  }
+
+  public static PsiMethod[] getAllClassConstructors(PsiClass psiClass, GroovyPsiElement place, PsiSubstitutor substitutor) {
+    final PsiMethod[] realConstructors = psiClass.getConstructors();
+    final GroovyResolveResult[] nonCodeConstructors = getNonCodeConstructors(psiClass, place, substitutor);
+    PsiMethod[] constructors = new PsiMethod[realConstructors.length + nonCodeConstructors.length];
+    System.arraycopy(realConstructors, 0, constructors, 0, realConstructors.length);
+    for (int i = 0; i < nonCodeConstructors.length; i++) {
+      GroovyResolveResult nonCodeConstructor = nonCodeConstructors[i];
+      final PsiElement element = nonCodeConstructor.getElement();
+      if (element instanceof PsiMethod) {
+        constructors[i + realConstructors.length] = (PsiMethod)element;
+      }
+    }
+    return constructors;
   }
 }

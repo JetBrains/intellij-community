@@ -20,7 +20,7 @@ public class InheritedJdkTest extends ModuleTestCase {
   }
 
   public void test1() throws Exception {
-    final Sdk jdk = JavaSdkImpl.getMockJdk("java 1.4");
+    final Sdk jdk = JavaSdkImpl.getMockJdk17("java 1.4");
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         ProjectJdkTable.getInstance().addJdk(jdk);
@@ -39,7 +39,7 @@ public class InheritedJdkTest extends ModuleTestCase {
     });
 
     assertTrue("JDK is inherited after explicit inheritSdk()", rootManager.isSdkInherited());
-    assertTrue("Correct jdk inherited", jdk.equals(rootManager.getSdk()));
+    assertEquals("Correct jdk inherited", jdk, rootManager.getSdk());
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
@@ -50,9 +50,9 @@ public class InheritedJdkTest extends ModuleTestCase {
     });
 
     assertFalse("JDK is not inherited after setJdk(null)", rootManager.isSdkInherited());
-    assertTrue("No JDK assigned", null == rootManager.getSdk());
+    assertNull("No JDK assigned", rootManager.getSdk());
 
-    final Sdk jdk1 = JavaSdkImpl.getMockJdk("jjj");
+    final Sdk jdk1 = JavaSdkImpl.getMockJdk17("jjj");
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         ProjectJdkTable.getInstance().addJdk(jdk1);
@@ -67,7 +67,7 @@ public class InheritedJdkTest extends ModuleTestCase {
     });
 
     assertFalse("JDK is not inherited after setJdk(jdk1)", rootManager.isSdkInherited());
-    assertTrue("jdk1 is assigned", jdk1.equals(rootManager.getSdk()));
+    assertEquals("jdk1 is assigned", jdk1, rootManager.getSdk());
   }
 
   public void test2() throws Exception {
@@ -81,9 +81,9 @@ public class InheritedJdkTest extends ModuleTestCase {
     });
 
     assertTrue("JDK is inherited after inheritSdk()", rootManager.isSdkInherited());
-    assertTrue("No JDK assigned", null == rootManager.getSdk());
+    assertNull("No JDK assigned", rootManager.getSdk());
 
-    final Sdk mockJdk = JavaSdkImpl.getMockJdk("mock 1.4");
+    final Sdk mockJdk = JavaSdkImpl.getMockJdk17("mock 1.4");
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         ProjectJdkTable.getInstance().addJdk(mockJdk);
@@ -98,7 +98,7 @@ public class InheritedJdkTest extends ModuleTestCase {
     });
 
     assertTrue(rootManager.isSdkInherited());
-    assertTrue("mockJdk inherited", mockJdk.equals(rootManager.getSdk()));
+    assertEquals("mockJdk inherited", mockJdk, rootManager.getSdk());
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
@@ -115,7 +115,7 @@ public class InheritedJdkTest extends ModuleTestCase {
                  }, null));
     assertNull("Non-existing JDK", rootManager.getSdk());
 
-    final Sdk jdk1 = JavaSdkImpl.getMockJdk("jdk1");
+    final Sdk jdk1 = JavaSdkImpl.getMockJdk17("jdk1");
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         ProjectJdkTable.getInstance().addJdk(jdk1);
@@ -124,6 +124,6 @@ public class InheritedJdkTest extends ModuleTestCase {
 
     assertTrue(rootManager.isSdkInherited());
     assertNotNull("JDK appeared", rootManager.getSdk());
-    assertTrue("jdk1 found", jdk1.equals(rootManager.getSdk()));
+    assertEquals("jdk1 found", jdk1, rootManager.getSdk());
   }
 }

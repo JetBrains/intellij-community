@@ -58,7 +58,6 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -424,20 +423,11 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage, Querya
     return (JavaPsiFacadeImpl)JavaPsiFacade.getInstance(myManager.getProject());
   }
 
-  private Set<String> buildClassnamesCache() {
-    Set<String> classNames = new THashSet<String>();
-    for (PsiClass aClass: getClasses()) {
-      classNames.add(aClass.getName());
-    }
-    return classNames;
-  }
-
   private Set<String> getClassNamesCache() {
     if (myPublicClassNamesCache == null) {
+      Set<String> classNames = getFacade().getClassNames(this, allScope());
       synchronized (myPublicClassNamesCacheLock) {
-        if (myPublicClassNamesCache == null) {
-          myPublicClassNamesCache = buildClassnamesCache();
-        }
+        myPublicClassNamesCache = classNames;
       }
     }
 

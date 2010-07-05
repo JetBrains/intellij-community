@@ -63,7 +63,7 @@ public class ExtractSuperClassTest extends CodeInsightTestCase {
 
   @Override
   protected Sdk getTestProjectJdk() {
-    return JavaSdkImpl.getMockJdk15("mock 1.5");
+    return JavaSdkImpl.getMockJdk17();
   }
 
   @Override
@@ -80,7 +80,7 @@ public class ExtractSuperClassTest extends CodeInsightTestCase {
   private void doTest(@NonNls final String className, @NonNls final String newClassName,
                       RefactoringTestUtil.MemberDescriptor... membersToFind) throws Exception {
     String rootBefore = getRoot() + "/before";
-    PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk("java 1.5"));
+    PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk14());
     final VirtualFile rootDir = PsiTestUtil.createTestProjectStructure(myProject, myModule, rootBefore, myFilesToDelete);
     PsiClass psiClass = myJavaFacade.findClass(className, ProjectScope.getAllScope(myProject));
     assertNotNull(psiClass);

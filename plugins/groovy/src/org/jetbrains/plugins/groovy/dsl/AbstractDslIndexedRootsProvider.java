@@ -18,13 +18,14 @@ package org.jetbrains.plugins.groovy.dsl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
+import com.intellij.util.indexing.IndexableSetContributor;
 
 import java.io.File;
 import java.util.Collections;
 import java.util.Set;
 
-public class AbstractDslIndexedRootsProvider implements GroovyDslIndexedRootProvider {
-  private final Set<String> ourDslsDirs;
+public class AbstractDslIndexedRootsProvider extends IndexableSetContributor implements GroovyDslIndexedRootProvider{
+  private final Set<VirtualFile> ourDslsDirs;
 
   public AbstractDslIndexedRootsProvider() {
     final File jarPath = new File(PathUtil.getJarPathForClass(getClass()));
@@ -38,7 +39,7 @@ public class AbstractDslIndexedRootsProvider implements GroovyDslIndexedRootProv
     final VirtualFile parent = LocalFileSystem.getInstance().refreshAndFindFileByPath(dirPath);
     assert parent != null : dirPath;
     parent.getChildren();
-    ourDslsDirs = Collections.singleton(parent.getUrl());
+    ourDslsDirs = Collections.singleton(parent);
     parent.refresh(true, true);
   }
 
@@ -46,7 +47,8 @@ public class AbstractDslIndexedRootsProvider implements GroovyDslIndexedRootProv
     return "standardDsls";
   }
 
-  public Set<String> getRootsToIndex() {
+  @Override
+  public Set<VirtualFile> getAdditionalRootsToIndex() {
     return ourDslsDirs;
   }
 }

@@ -266,4 +266,16 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
       GroovyImportsTracker.getInstance(getProject()).getUnusedImportStatements(((GroovyFile)myFixture.getFile()));
     assertEquals(0, unusedImportStatements.size());
   }
+
+  public void testSignatureIsNotApplicableToList() throws Exception {
+    doTest();
+  }
+
+  public void testInheritConstructorsAnnotation() throws Exception {
+    doTest();
+  }
+
+  public void testCollectionAssignments() throws Exception {
+    doTest(new GroovyAssignabilityCheckInspection());
+  }
 }

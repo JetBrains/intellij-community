@@ -24,10 +24,7 @@ import com.intellij.openapi.diff.impl.patch.apply.ApplyTextFilePatch;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
@@ -54,6 +51,8 @@ public class PathsVerifier<BinaryType extends FilePatch> {
   private final List<VirtualFile> myWritableFiles;
   private final BaseMapper myBaseMapper;
   private ProjectLevelVcsManager myVcsManager;
+  private final List<FilePatch> mySkipped;
+  private DelayedPrecheckContext myDelayedPrecheckContext;
 
   public PathsVerifier(final Project project, final VirtualFile baseDirectory, final List<FilePatch> patches, BaseMapper baseMapper) {
     myProject = project;
@@ -68,6 +67,7 @@ public class PathsVerifier<BinaryType extends FilePatch> {
     myBinaryPatches = new ArrayList<Pair<VirtualFile, ApplyFilePatchBase<BinaryType>>>();
     myWritableFiles = new ArrayList<VirtualFile>();
     myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
+    mySkipped = new ArrayList<FilePatch>();
   }
 
   // those to be moved to CL: target + created dirs
@@ -108,15 +108,32 @@ public class PathsVerifier<BinaryType extends FilePatch> {
     }
   }
 
+  @CalledInAwt
+  public boolean nonWriteActionPreCheck() {
+    final List<CheckPath> checkers = new ArrayList<CheckPath>(myPatches.size());
+    myDelayedPrecheckContext = new DelayedPrecheckContext(myProject);
+    for (FilePatch patch : myPatches) {
+      final CheckPath checker = getChecker(patch);
+      if (! checker.canBeApplied(myDelayedPrecheckContext)) {
+        revert(checker.getErrorMessage());
+        return false;
+      }
+    }
+    final Collection<FilePatch> skipped = myDelayedPrecheckContext.doDelayed();
+    mySkipped.addAll(skipped);
+    myPatches.remove(skipped);
+    return true;
+  }
+
+  public List<FilePatch> getSkipped() {
+    return mySkipped;
+  }
+
   public boolean execute() {
     try {
       final List<CheckPath> checkers = new ArrayList<CheckPath>(myPatches.size());
       for (FilePatch patch : myPatches) {
         final CheckPath checker = getChecker(patch);
-        if (! checker.canBeApplied()) {
-          revert(checker.getErrorMessage());
-          return false;
-        }
         checkers.add(checker);
       }
       for (CheckPath checker : checkers) {
@@ -150,6 +167,14 @@ public class PathsVerifier<BinaryType extends FilePatch> {
     }
   }
 
+  public Collection<FilePath> getToBeAdded() {
+    return myDelayedPrecheckContext.getOverridenPaths();
+  }
+
+  public Collection<FilePath> getToBeDeleted() {
+    return myDelayedPrecheckContext.getAlreadyDeletedPaths();
+  }
+
   private class CheckModified extends CheckDeleted {
     private CheckModified(final FilePatch path) {
       super(path);
@@ -161,17 +186,15 @@ public class PathsVerifier<BinaryType extends FilePatch> {
       super(path);
     }
 
-    protected boolean precheck(final VirtualFile beforeFile, final VirtualFile afterFile) {
+    protected boolean precheck(final VirtualFile beforeFile, final VirtualFile afterFile, DelayedPrecheckContext context) {
       if (beforeFile == null) {
-        setErrorMessage(fileNotFoundMessage(myBeforeName));
-        return false;
+        context.addSkip(myBaseMapper.getPath(myPatch, myBeforeName), myPatch);
       }
       return true;
     }
 
     protected boolean check() throws IOException {
       final VirtualFile beforeFile = myBaseMapper.getFile(myPatch, myBeforeName);
-      // todo maybe deletion may be ok, just warning
       if (! checkExistsAndValid(beforeFile, myBeforeName)) {
         return false;
       }
@@ -186,10 +209,9 @@ public class PathsVerifier<BinaryType extends FilePatch> {
       super(path);
     }
 
-    protected boolean precheck(final VirtualFile beforeFile, final VirtualFile afterFile) {
+    protected boolean precheck(final VirtualFile beforeFile, final VirtualFile afterFile, DelayedPrecheckContext context) {
       if (afterFile != null) {
-        setErrorMessage(fileAlreadyExists(afterFile.getPath()));
-        return false;
+        context.addOverrideExisting(myPatch, new FilePathImpl(afterFile));
       }
       return true;
     }
@@ -216,7 +238,7 @@ public class PathsVerifier<BinaryType extends FilePatch> {
     }
 
     // before exists; after does not exist
-    protected boolean precheck(final VirtualFile beforeFile, final VirtualFile afterFile) {
+    protected boolean precheck(final VirtualFile beforeFile, final VirtualFile afterFile, final DelayedPrecheckContext context) {
       if (beforeFile == null) {
         setErrorMessage(fileNotFoundMessage(myBeforeName));
       } else if (afterFile != null) {
@@ -262,13 +284,15 @@ public class PathsVerifier<BinaryType extends FilePatch> {
       myErrorMessage = errorMessage;
     }
 
-    public boolean canBeApplied() {
+    public boolean canBeApplied(DelayedPrecheckContext context) {
       final VirtualFile beforeFile = myBaseMapper.getFile(myPatch, myBeforeName);
       final VirtualFile afterFile = myBaseMapper.getFile(myPatch, myAfterName);
-      return precheck(beforeFile, afterFile);
+      return precheck(beforeFile, afterFile, context);
     }
 
-    protected abstract boolean precheck(final VirtualFile beforeFile, final VirtualFile afterFile);
+    protected abstract boolean precheck(final VirtualFile beforeFile,
+                                        final VirtualFile afterFile,
+                                        DelayedPrecheckContext context);
     protected abstract boolean check() throws IOException;
 
     protected boolean checkExistsAndValid(final VirtualFile file, final String name) {
@@ -486,5 +510,60 @@ public class PathsVerifier<BinaryType extends FilePatch> {
   public interface BaseMapper {
     @Nullable
     VirtualFile getFile(final FilePatch patch, final String path);
+    FilePath getPath(final FilePatch patch, final String path);
+  }
+
+  private static class DelayedPrecheckContext {
+    private final Map<FilePath, FilePatch> mySkipDeleted;
+    private final Map<FilePath, FilePatch> myOverrideExisting;
+    private final List<FilePath> myOverridenPaths;
+    private final Project myProject;
+
+    private DelayedPrecheckContext(final Project project) {
+      myProject = project;
+      myOverrideExisting = new HashMap<FilePath, FilePatch>();
+      mySkipDeleted = new HashMap<FilePath, FilePatch>();
+      myOverridenPaths = new LinkedList<FilePath>();
+    }
+
+    public void addSkip(final FilePath path, final FilePatch filePatch) {
+      mySkipDeleted.put(path, filePatch);
+    }
+
+    public void addOverrideExisting(final FilePatch patch, final FilePath filePath) {
+      if (! myOverrideExisting.containsKey(filePath)) {
+        myOverrideExisting.put(filePath, patch);
+      }
+    }
+
+    // returns those to be skipped
+    public Collection<FilePatch> doDelayed() {
+      final List<FilePatch> result = new LinkedList<FilePatch>();
+      if (! myOverrideExisting.isEmpty()) {
+        final String prompt = myOverrideExisting.size() == 1 ? "The following file already exists. Do you want to override it?" :
+          "The following files already exist. Do you want to override them?";
+        final String title = "Override existing files";
+        final Collection<FilePath> selected = AbstractVcsHelper.getInstance(myProject).selectFilePathsToProcess(
+          new ArrayList<FilePath>(myOverrideExisting.keySet()), title,
+          "\nThe following files should be created by patch, but they already exist.\nDo you want to override them?\n", title,
+          "The following file should be created by patch, but it already exists.\nDo you want to override it?\n{0}",
+          VcsShowConfirmationOption.STATIC_SHOW_CONFIRMATION);
+        for (FilePath path : selected) {
+          myOverrideExisting.remove(path);
+        }
+        result.addAll(myOverrideExisting.values());
+        myOverridenPaths.addAll(selected);
+      }
+      result.addAll(mySkipDeleted.values());
+      return result;
+    }
+
+    public List<FilePath> getOverridenPaths() {
+      return myOverridenPaths;
+    }
+
+    public Collection<FilePath> getAlreadyDeletedPaths() {
+      return mySkipDeleted.keySet();
+    }
   }
 }

@@ -229,7 +229,19 @@ public class TypesUtil {
   }
 
   public static boolean isAssignable(PsiType lType, PsiType rType, GroovyPsiElement context) {
-    return isAssignableByMethodCallConversion(lType, rType, context) ||
+    return isAssignable(lType, rType, context, true);
+  }
+
+  public static boolean isAssignable(PsiType lType, PsiType rType, GroovyPsiElement context, boolean allowConversion) {
+    if (allowConversion && lType != null && rType != null) {
+      for (GrTypeConverter converter : GrTypeConverter.EP_NAME.getExtensions()) {
+        final Boolean result = converter.isConvertible(lType, rType, context);
+        if (result != null) {
+          return result;
+        }
+      }
+    }
+    return (allowConversion && isAssignableByMethodCallConversion(lType, rType, context)) ||
            _isAssignable(lType, rType, context.getManager(), context.getResolveScope(), true);
   }
 
@@ -255,20 +267,7 @@ public class TypesUtil {
   }
 
   public static boolean isAssignableByMethodCallConversion(PsiType lType, PsiType rType, GroovyPsiElement context) {
-    if (lType == null || rType == null) return false;
-
-    if (isAssignableByMethodCallConversion(lType, rType, context.getManager(), context.getResolveScope())) {
-      return true;
-    }
-
-    for (GrTypeConverter converter : GrTypeConverter.EP_NAME.getExtensions()) {
-      final Boolean result = converter.isConvertible(lType, rType, context);
-      if (result != null) {
-        return result;
-      }
-    }
-
-    return false;
+    return isAssignableByMethodCallConversion(lType, rType, context.getManager(), context.getResolveScope());
   }
 
   public static boolean isAssignableByMethodCallConversion(PsiType lType, PsiType rType, PsiManager manager, GlobalSearchScope scope) {

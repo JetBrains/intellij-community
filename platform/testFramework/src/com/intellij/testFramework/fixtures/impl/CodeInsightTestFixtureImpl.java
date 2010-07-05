@@ -838,6 +838,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     configureInspections(myInspections == null ? new LocalInspectionTool[0] : myInspections);
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
     DaemonCodeAnalyzer.getInstance(getProject()).setUpdateByTimerEnabled(false);
+    ensureIndexesUpToDate(getProject());
   }
 
   private void enableInspectionTool(InspectionProfileEntry tool){
@@ -1188,7 +1189,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
   }
 
-  private static void ensureIndexesUpToDate(Project project) {
+  public static void ensureIndexesUpToDate(Project project) {
     FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, null);
     FileBasedIndex.getInstance().ensureUpToDate(TodoIndex.NAME, project, null);
     assertTrue(!DumbServiceImpl.getInstance(project).isDumb());

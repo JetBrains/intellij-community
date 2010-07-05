@@ -110,6 +110,8 @@ public class GrClosureSignatureUtil {
     if (mapParametersToArguments(signature, args, (Function<PsiType, PsiType>)Function.ID, context) != null) return true;
 
     if (args.length == 1) {
+      final GrClosureParameter[] parameters = signature.getParameters();
+      if (parameters.length == 1 && parameters[0].getType() instanceof PsiArrayType) return false; 
       PsiType arg = args[0];
       if (arg instanceof GrTupleType) {
         args = ((GrTupleType)arg).getComponentTypes();
@@ -305,6 +307,16 @@ public class GrClosureSignatureUtil {
     return mapParametersToArguments(signature, list, GrClosableBlock.EMPTY_ARRAY, manager, scope);
   }
 
+  private static class InnerArg {
+      List<PsiElement> list;
+      PsiType type;
+
+      InnerArg(PsiType type, PsiElement... elements) {
+        this.list = new ArrayList<PsiElement>(Arrays.asList(elements));
+        this.type = type;
+      }
+    }
+
   @Nullable
   public static ArgInfo<PsiElement>[] mapParametersToArguments(@NotNull GrClosureSignature signature,
                                                    @NotNull GrArgumentList list,
@@ -314,16 +326,6 @@ public class GrClosureSignatureUtil {
     final GrNamedArgument[] namedArgs = list.getNamedArguments();
     boolean hasNamedArgs = namedArgs.length > 0;
     GrClosureParameter[] params = signature.getParameters();
-
-    class InnerArg {
-      List<PsiElement> list;
-      PsiType type;
-
-      InnerArg(PsiType type, PsiElement... elements) {
-        this.list = new ArrayList<PsiElement>(Arrays.asList(elements));
-        this.type = type;
-      }
-    }
 
     List<InnerArg> innerArgs = new ArrayList<InnerArg>();
 

@@ -40,8 +40,8 @@ public final class HistoryElement implements Copyable<HistoryElement> {
     @SuppressWarnings({"unchecked"})
     private HistoryElement() {
         expression = null;
-        variables = Collections.EMPTY_SET;
-        namespaces = Collections.EMPTY_SET;
+        variables = Collections.emptySet();
+        namespaces = Collections.emptySet();
     }
 
     public boolean equals(Object o) {

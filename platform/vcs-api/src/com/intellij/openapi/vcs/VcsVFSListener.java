@@ -60,7 +60,7 @@ public abstract class VcsVFSListener implements Disposable {
   protected final List<FilePath> myDeletedWithoutConfirmFiles = new ArrayList<FilePath>();
   protected final List<MovedFileInfo> myMovedFiles = new ArrayList<MovedFileInfo>();
 
-  protected enum VcsDeleteType { SILENT, CONFIRM, IGNORE }
+  protected enum VcsDeleteType {SILENT, CONFIRM, IGNORE}
 
   protected VcsVFSListener(final Project project, final AbstractVcs vcs) {
     myProject = project;
@@ -74,8 +74,8 @@ public abstract class VcsVFSListener implements Disposable {
     myAddOption = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, vcs);
     myRemoveOption = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.REMOVE, vcs);
 
-    VirtualFileManager.getInstance().addVirtualFileListener(myVFSListener,this);
-    CommandProcessor.getInstance().addCommandListener(myCommandListener,this);
+    VirtualFileManager.getInstance().addVirtualFileListener(myVFSListener, this);
+    CommandProcessor.getInstance().addCommandListener(myCommandListener, this);
   }
 
   public void dispose() {
@@ -86,11 +86,36 @@ public abstract class VcsVFSListener implements Disposable {
   }
 
   protected void executeAdd() {
-    final List<VirtualFile> addedFiles = new ArrayList<VirtualFile>(myAddedFiles);
-    final Map<VirtualFile, VirtualFile> copyFromMap = new HashMap<VirtualFile, VirtualFile>(myCopyFromMap);
-    myAddedFiles.clear();
-    myCopyFromMap.clear();
+    final List<VirtualFile> addedFiles = acquireAddedFiles();
+    final Map<VirtualFile, VirtualFile> copyFromMap = acquireCopiedFiles();
+    executeAdd(addedFiles, copyFromMap);
+  }
 
+  /**
+   * @return get map of copied files and clear the map
+   */
+  protected Map<VirtualFile, VirtualFile> acquireCopiedFiles() {
+    final Map<VirtualFile, VirtualFile> copyFromMap = new HashMap<VirtualFile, VirtualFile>(myCopyFromMap);
+    myCopyFromMap.clear();
+    return copyFromMap;
+  }
+
+  /**
+   * @return get list of added files and clear previous list
+   */
+  protected List<VirtualFile> acquireAddedFiles() {
+    final List<VirtualFile> addedFiles = new ArrayList<VirtualFile>(myAddedFiles);
+    myAddedFiles.clear();
+    return addedFiles;
+  }
+
+  /**
+   * Execute add that performs adding from specific collections
+   *
+   * @param addedFiles  the added files
+   * @param copyFromMap the copied files
+   */
+  protected void executeAdd(List<VirtualFile> addedFiles, Map<VirtualFile, VirtualFile> copyFromMap) {
     if (myAddOption.getValue() == VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) return;
     if (myAddOption.getValue() == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
       performAdding(addedFiles, copyFromMap);
@@ -108,11 +133,12 @@ public abstract class VcsVFSListener implements Disposable {
   }
 
   private void addFileToDelete(VirtualFile file) {
-    if (file.isDirectory() && file instanceof NewVirtualFile && !isDirectoryVersioningSupported()){
+    if (file.isDirectory() && file instanceof NewVirtualFile && !isDirectoryVersioningSupported()) {
       for (VirtualFile child : ((NewVirtualFile)file).getCachedChildren()) {
         addFileToDelete(child);
       }
-    } else {
+    }
+    else {
       final VcsDeleteType type = needConfirmDeletion(file);
       final FilePath filePath =
         VcsContextFactory.SERVICE.getInstance().createFilePathOnDeleted(new File(file.getPath()), file.isDirectory());
@@ -177,7 +203,7 @@ public abstract class VcsVFSListener implements Disposable {
     if (FileStatusManager.getInstance(myProject).getStatus(file) != FileStatus.UNKNOWN) {
       final String newPath = newParentPath + "/" + newName;
       boolean foundExistingInfo = false;
-      for(MovedFileInfo info: myMovedFiles) {
+      for (MovedFileInfo info : myMovedFiles) {
         if (info.myFile == file) {
           info.myNewPath = newPath;
           foundExistingInfo = true;
@@ -201,22 +227,30 @@ public abstract class VcsVFSListener implements Disposable {
   }
 
   protected abstract String getAddTitle();
+
   protected abstract String getSingleFileAddTitle();
+
   protected abstract String getSingleFileAddPromptTemplate();
+
   protected abstract void performAdding(final Collection<VirtualFile> addedFiles, final Map<VirtualFile, VirtualFile> copyFromMap);
 
   protected abstract String getDeleteTitle();
+
   protected abstract String getSingleFileDeleteTitle();
+
   protected abstract String getSingleFileDeletePromptTemplate();
+
   protected abstract void performDeletion(List<FilePath> filesToDelete);
+
   protected abstract void performMoveRename(List<MovedFileInfo> movedFiles);
+
   protected abstract boolean isDirectoryVersioningSupported();
 
   private class MyVirtualFileAdapter extends VirtualFileAdapter {
     public void fileCreated(final VirtualFileEvent event) {
       if (!isEventIgnored(event) && !myChangeListManager.isIgnoredFile(event.getFile()) &&
-           (isDirectoryVersioningSupported() || !event.getFile().isDirectory())) {
-        myAddedFiles.add(event.getFile());              
+          (isDirectoryVersioningSupported() || !event.getFile().isDirectory())) {
+        myAddedFiles.add(event.getFile());
       }
     }
 
@@ -237,7 +271,9 @@ public abstract class VcsVFSListener implements Disposable {
 
     public void beforeFileDeletion(final VirtualFileEvent event) {
       final VirtualFile file = event.getFile();
-      if (isEventIgnored(event)) { return; }
+      if (isEventIgnored(event)) {
+        return;
+      }
       if (!myChangeListManager.isIgnoredFile(file)) {
         addFileToDelete(file);
         return;
@@ -276,8 +312,8 @@ public abstract class VcsVFSListener implements Disposable {
 
     public void beforePropertyChange(final VirtualFilePropertyEvent event) {
       if (!isEventIgnored(event) && event.getPropertyName().equalsIgnoreCase(VirtualFile.PROP_NAME)) {
-        String oldName = (String) event.getOldValue();
-        String newName = (String) event.getNewValue();
+        String oldName = (String)event.getOldValue();
+        String newName = (String)event.getNewValue();
         // in order to force a reparse of a file, the rename event can be fired with old name equal to new name -
         // such events needn't be handled by the VCS
         if (!Comparing.equal(oldName, newName)) {

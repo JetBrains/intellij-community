@@ -17,7 +17,7 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.util.Alarm;
+import com.intellij.util.ui.SameColor;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -29,32 +29,20 @@ import java.awt.*;
  * @author Vladimir Kondratyev
  */
 public final class TitlePanel extends JPanel {
-  private static final int DELAY = 5; // Delay between frames
-  private static final int TOTAL_FRAME_COUNT = 7; // Total number of frames in animation sequence
+  private static final Color CNT_COLOR = new SameColor(184);
+  private static final Color BND_COLOR = CNT_COLOR;
 
-  private int myCurrentFrame;
+  public static final Color CNT_ACTIVE_COLOR = new Color(105, 128, 180);
+  public static final Color BND_ACTIVE_COLOR = CNT_ACTIVE_COLOR.brighter();
 
-  public final static Color CNT_ENABLE_COLOR = new Color(105, 128, 180);
-  public final static Color BND_ENABLE_COLOR = CNT_ENABLE_COLOR.brighter();
+  /* Gray-ish colors
+  public static final Color CNT_ACTIVE_COLOR = new SameColor(120);
+  public static final Color BND_ACTIVE_COLOR = new SameColor(160);
+  */
 
-  private final static Color BND_DISABLE_COLOR = new Color(184, 184, 184); //new Color(160, 160, 160);
-  private final static Color CNT_DISABLE_COLOR = new Color(184, 184, 184);
-
-
-  private float myBndStartRed, myBndStartGreen, myBndStartBlue; // start boundary color for animation
-  private float myBndEndRed, myBndEndGreen, myBndEndBlue; // end boundary color for animation
-  private Color myBndColor; // current boundary color
-
-  private float myCntStartRed, myCntStartGreen, myCntStartBlue; // start center color for animation
-  private float myCntEndRed, myCntEndGreen, myCntEndBlue; // end center color for animation
-  private Color myCntColor; // current center color
-
-  private final Alarm myFrameTicker; // Determines moments of rendering of next frame
-  private final MyAnimator myAnimator; // Renders panel's color
   private boolean myActive = true;
   private JComponent mySideButtons;
 
-  public static final Color BUTTON_SEPARATOR_COLOR = Color.white;
   private final Icon mySeparatorActive = IconLoader.getIcon("/general/separator.png");
   private final Icon mySeparatorInactive = IconLoader.getIcon("/general/inactiveSeparator.png");
 
@@ -64,15 +52,6 @@ public final class TitlePanel extends JPanel {
 
   TitlePanel() {
     super(new BorderLayout());
-
-    myFrameTicker = new Alarm();
-    myAnimator = new MyAnimator();
-    setLayout(new BorderLayout());
-
-    setupColors(false);
-
-    myCurrentFrame = TOTAL_FRAME_COUNT;
-    updateColor();
   }
 
 
@@ -80,96 +59,14 @@ public final class TitlePanel extends JPanel {
     add(component, BorderLayout.CENTER);
   }
 
-  public final void setActive(final boolean active, boolean animate) {
+  public final void setActive(final boolean active) {
     if (active == myActive) {
       return;
     }
 
     myActive = active;
-    myFrameTicker.cancelAllRequests();
-    if (myCurrentFrame > 0) { // reverse rendering
-      myCurrentFrame = TOTAL_FRAME_COUNT - myCurrentFrame;
-    }
-
-    setupColors(active);
-
-    if (animate) {
-      myFrameTicker.addRequest(myAnimator, DELAY);
-    }
-    else {
-      myCurrentFrame = TOTAL_FRAME_COUNT;
-      updateColor();
-    }
+    repaint();
   }
-
-  private void setupColors(final boolean active) {
-    if (active) {
-
-      // Boundary color
-
-      myBndStartRed = BND_DISABLE_COLOR.getRed();
-      myBndStartGreen = BND_DISABLE_COLOR.getGreen();
-      myBndStartBlue = BND_DISABLE_COLOR.getBlue();
-
-      myBndEndRed = BND_ENABLE_COLOR.getRed();
-      myBndEndGreen = BND_ENABLE_COLOR.getGreen();
-      myBndEndBlue = BND_ENABLE_COLOR.getBlue();
-
-      // Center color
-
-      myCntStartRed = CNT_DISABLE_COLOR.getRed();
-      myCntStartGreen = CNT_DISABLE_COLOR.getGreen();
-      myCntStartBlue = CNT_DISABLE_COLOR.getBlue();
-
-      myCntEndRed = CNT_ENABLE_COLOR.getRed();
-      myCntEndGreen = CNT_ENABLE_COLOR.getGreen();
-      myCntEndBlue = CNT_ENABLE_COLOR.getBlue();
-    }
-    else {
-
-      // Boundary color
-
-      myBndStartRed = BND_ENABLE_COLOR.getRed();
-      myBndStartGreen = BND_ENABLE_COLOR.getGreen();
-      myBndStartBlue = BND_ENABLE_COLOR.getBlue();
-
-      myBndEndRed = BND_DISABLE_COLOR.getRed();
-      myBndEndGreen = BND_DISABLE_COLOR.getGreen();
-      myBndEndBlue = BND_DISABLE_COLOR.getBlue();
-
-      // Center color
-
-      myCntStartRed = CNT_ENABLE_COLOR.getRed();
-      myCntStartGreen = CNT_ENABLE_COLOR.getGreen();
-      myCntStartBlue = CNT_ENABLE_COLOR.getBlue();
-
-      myCntEndRed = CNT_DISABLE_COLOR.getRed();
-      myCntEndGreen = CNT_DISABLE_COLOR.getGreen();
-      myCntEndBlue = CNT_DISABLE_COLOR.getBlue();
-    }
-  }
-
-  private void updateColor() {
-
-    // Update boundary color
-
-    final int bndRed = (int) (myBndStartRed + (float) myCurrentFrame * (myBndEndRed - myBndStartRed) / TOTAL_FRAME_COUNT);
-    final int bndGreen = (int) (myBndStartGreen + (float) myCurrentFrame * (myBndEndGreen - myBndStartGreen) / TOTAL_FRAME_COUNT);
-    final int bndBlue = (int) (myBndStartBlue + (float) myCurrentFrame * (myBndEndBlue - myBndStartBlue) / TOTAL_FRAME_COUNT);
-    myBndColor = new Color(Math.max(0, Math.min(bndRed, 255)),
-                           Math.max(0, Math.min(bndGreen, 255)),
-                           Math.max(0, Math.min(bndBlue, 255)));
-
-    // Update center color
-
-    final int cntRed = (int) (myCntStartRed + (float) myCurrentFrame * (myCntEndRed - myCntStartRed) / TOTAL_FRAME_COUNT);
-    final int cntGreen = (int) (myCntStartGreen + (float) myCurrentFrame * (myCntEndGreen - myCntStartGreen) / TOTAL_FRAME_COUNT);
-    final int cntBlue = (int) (myCntStartBlue + (float) myCurrentFrame * (myCntEndBlue - myCntStartBlue) / TOTAL_FRAME_COUNT);
-    myCntColor = new Color(Math.max(0, Math.min(cntRed, 255)),
-                           Math.max(0, Math.min(cntGreen, 255)),
-                           Math.max(0, Math.min(cntBlue, 255)));
-  }
-
 
   @Override
   protected void addImpl(Component comp, Object constraints, int index) {
@@ -183,7 +80,10 @@ public final class TitlePanel extends JPanel {
     final Graphics2D g2d = (Graphics2D) g;
 
 
-    g2d.setPaint(new GradientPaint(0, STRUT, myBndColor, 0, getHeight(), myCntColor));
+    Color bndColor = myActive ? BND_ACTIVE_COLOR : BND_COLOR;
+    Color cntColor = myActive ? CNT_ACTIVE_COLOR : CNT_COLOR;
+
+    g2d.setPaint(new GradientPaint(0, STRUT, bndColor, 0, getHeight(), cntColor));
     if (mySideButtons.isVisible()) {
       final Rectangle sideRec = SwingUtilities.convertRectangle(mySideButtons.getParent(), mySideButtons.getBounds(), this);
       g2d.fillRect(0, STRUT, getWidth() - sideRec.width, getHeight());
@@ -200,9 +100,6 @@ public final class TitlePanel extends JPanel {
     } else {
       g2d.fillRect(0, STRUT, getWidth(), getHeight());
     }
-  }
-  public JComponent getSideButtonsComponent() {
-    return mySideButtons;
   }
 
   public void addButtons(final JComponent buttons, JComponent sideButtons) {
@@ -224,19 +121,4 @@ public final class TitlePanel extends JPanel {
 
     add(wrapper, BorderLayout.EAST);
   }
-
-  private final class MyAnimator implements Runnable {
-    public void run() {
-      updateColor();
-      paintImmediately(0, 0, getWidth(), getHeight());
-      if (myCurrentFrame <= TOTAL_FRAME_COUNT) {
-        myCurrentFrame++;
-        myFrameTicker.addRequest(this, DELAY);
-      }
-      else {
-        myFrameTicker.cancelAllRequests();
-      }
-    }
-  }
-
 }

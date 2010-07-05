@@ -56,7 +56,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
 
     try {
       GotoData gotoData = getSourceAndTargetElements(editor, file);
-      if (gotoData != null) {
+      if (gotoData != null && gotoData.source != null) {
         show(project, editor, file, gotoData.source, gotoData.targets, gotoData.additionalActions);
       }
     }

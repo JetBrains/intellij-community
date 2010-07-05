@@ -146,6 +146,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
                     public void setValue(Value value) {
                       config.REMOVE_EMPTY_INACTIVE_CHANGELISTS = value;
                     }
+
+                    @Override
+                    public boolean isPersistent() {
+                      return true;
+                    }
                   }, "<html>The empty changelist '" + StringUtil.first(oldDefaultList.getName(), 30, true) + "' is no longer active.<br>" +
                      "Do you want to remove it?</html>", "&Remember my choice");
                   dialog.show();

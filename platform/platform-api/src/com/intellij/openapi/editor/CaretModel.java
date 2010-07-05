@@ -102,7 +102,7 @@ public interface CaretModel {
   int getVisualLineStart();
 
   /**
-   * @return    document offset for the end of the logical line where caret is located
+   * @return    document offset that points to the first symbol shown at the next visual line after the one with caret on it
    */
   int getVisualLineEnd();
 

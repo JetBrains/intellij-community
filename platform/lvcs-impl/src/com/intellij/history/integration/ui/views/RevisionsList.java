@@ -50,7 +50,7 @@ public class RevisionsList {
 
   public RevisionsList(SelectionListener l) {
     table = new JBTable();
-    table.setModel(new MyModel(Collections.EMPTY_LIST, Collections.EMPTY_MAP));
+    table.setModel(new MyModel(Collections.<RevisionItem>emptyList(), Collections.<RevisionItem, Period>emptyMap()));
 
     table.setTableHeader(null);
     table.setShowGrid(false);
@@ -309,7 +309,7 @@ public class RevisionsList {
 
       myBorder.set(row == table.getModel().getRowCount() - 1);
 
-      myDateLabel.setText(ensureString(StringUtil.formatDate(r.revision.getTimestamp(), FormatUtil.FORMAT)));
+      myDateLabel.setText(ensureString(FormatUtil.formatRelativeTimestamp(r.revision.getTimestamp())));
       myFilesCountLabel.setText(ensureString(labelsAndColor.filesCount));
 
       myTitleLabel.setFont(myTitleLabel.getFont().deriveFont(labelsAndColor.isNamed ? Font.BOLD : Font.PLAIN));

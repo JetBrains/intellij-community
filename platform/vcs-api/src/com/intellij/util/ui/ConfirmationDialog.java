@@ -15,9 +15,9 @@
  */
 package com.intellij.util.ui;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
-import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +34,9 @@ public class ConfirmationDialog extends OptionsMessageDialog{
                                                @Nullable Icon icon) {
     if (option.getValue() == VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) return false;
     final ConfirmationDialog dialog = new ConfirmationDialog(project, message, title, icon, option);
+    if (! option.isPersistent()) {
+      dialog.setDoNotAskOption(null);
+    }
     dialog.show();
     return dialog.isOK();
   }

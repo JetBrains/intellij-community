@@ -584,13 +584,14 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
     final SearchScope searchScope = options.searchScope;
     if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()){
       PsiMethod method = (PsiMethod)element;
-      if (options.isIncludeOverloadUsages) {
-        for (PsiMethod constructor : method.getContainingClass().getConstructors()) {
-          addConstructorUsages(constructor, searchScope, result, options);
-        }
-      }
-      else {
-        addConstructorUsages(method, searchScope, result, options);
+      final PsiClass parentClass = method.getContainingClass();
+
+      if (parentClass != null) {
+        MethodReferencesSearch.search(new MethodReferencesSearch.SearchParameters(method, searchScope, !options.isIncludeOverloadUsages, options.fastTrack)).forEach(new ReadActionProcessor<PsiReference>() {
+          public boolean processInReadAction(final PsiReference ref) {
+            return addResult(result, ref, options, parentClass);
+          }
+        });
       }
       return;
     }
@@ -607,17 +608,6 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
     } else {
       ReferencesSearch.search(new ReferencesSearch.SearchParameters(element, searchScope, false, options.fastTrack)).forEach(consumer);
     }
-  }
-
-  private static void addConstructorUsages(PsiMethod method, SearchScope searchScope, final Processor<UsageInfo> result, final FindUsagesOptions options) {
-    final PsiClass parentClass = method.getContainingClass();
-    if (parentClass == null) return;
-
-    ReferencesSearch.search(new ReferencesSearch.SearchParameters(method, searchScope, false, options.fastTrack)).forEach(new ReadActionProcessor<PsiReference>() {
-      public boolean processInReadAction(final PsiReference ref) {
-        return addResult(result, ref, options, parentClass);
-      }
-    });
   }
 
   public static void addResult(Processor<UsageInfo> total, PsiElement element, FindUsagesOptions options, PsiElement refElement) {
