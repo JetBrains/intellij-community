@@ -28,6 +28,7 @@ public class VariantsProcessor implements PsiScopeProcessor {
   protected Condition<String> myNameFilter;
 
   protected boolean myPlainNamesOnly = false; // if true, add insert handlers to known things like functions
+  private List<String> myAllowedNames;
 
   public VariantsProcessor(PsiElement context) {
     // empty
@@ -142,7 +143,19 @@ public class VariantsProcessor implements PsiScopeProcessor {
   }
 
   private boolean nameIsAcceptable(String name) {
-    return name != null && !myVariants.containsKey(name) && (myNameFilter == null || myNameFilter.value(name));
+    if (name == null) {
+      return false;
+    }
+    if (myVariants.containsKey(name)) {
+      return false;
+    }
+    if (myNameFilter != null && !myNameFilter.value(name)) {
+      return false;
+    }
+    if (myAllowedNames != null && !myAllowedNames.contains(name)) {
+      return false;
+    }
+    return true;
   }
 
   @Nullable
@@ -153,4 +166,17 @@ public class VariantsProcessor implements PsiScopeProcessor {
   public void handleEvent(Event event, Object associated) {
   }
 
+  public void setAllowedNames(List<String> namesFilter) {
+    myAllowedNames = namesFilter;
+  }
+
+  public void addVariantsFromAllowedNames() {
+    if (myAllowedNames != null) {
+      for (String name : myAllowedNames) {
+        if (!myVariants.containsKey(name)) {
+          myVariants.put(name, LookupElementBuilder.create(name));
+        }
+      }
+    }
+  }
 }

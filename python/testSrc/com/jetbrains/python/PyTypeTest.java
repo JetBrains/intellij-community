@@ -65,6 +65,16 @@ public class PyTypeTest extends PyLightFixtureTestCase {
     assertEquals("int", type.getName());
   }
 
+  public void testSetComp() {
+    PyClassType type = (PyClassType) doTest("expr = {i for i in range(3)}");
+    assertEquals("set", type.getName());
+  }
+
+  public void testSet() {
+    PyClassType type = (PyClassType) doTest("expr = {1, 2, 3}");
+    assertEquals("set", type.getName());
+  }
+
   private PyType doTest(final String text) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {

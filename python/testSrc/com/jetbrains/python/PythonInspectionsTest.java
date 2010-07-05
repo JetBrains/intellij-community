@@ -2,7 +2,6 @@ package com.jetbrains.python;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.inspections.*;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -124,8 +123,15 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   }
 
   public void testPyExceptClausesOrderInspection() throws Throwable {
-    LocalInspectionTool inspection = new PyExceptClausesOrderInspection();
-    doTest(getTestName(false), inspection);
+    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON26);
+    try {
+      myFixture.configureByFile("inspections/" + getTestName(true) + "/test.py");
+      myFixture.enableInspections(PyExceptClausesOrderInspection.class);
+      myFixture.checkHighlighting(true, false, false);
+    }
+    finally {
+      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
+    }
   }
 
   public void testPyExceptionInheritInspection() throws Throwable {
@@ -164,8 +170,15 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   }
 
   public void testPyFromFutureImportInspection() throws Throwable {
-    LocalInspectionTool inspection = new PyFromFutureImportInspection();
-    doTest(getTestName(false), inspection);
+    myFixture.configureByFile("inspections/" + getTestName(true) + "/test.py");
+    myFixture.enableInspections(PyFromFutureImportInspection.class);
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  public void testPyFromFutureImportInspectionDocString() throws Throwable {
+    myFixture.configureByFile("inspections/PyFromFutureImportInspection/module_docstring.py");
+    myFixture.enableInspections(PyFromFutureImportInspection.class);
+    myFixture.checkHighlighting(true, false, false);
   }
 
   public void testPyComparisonWithNoneInspection() throws Throwable {

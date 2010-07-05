@@ -1,5 +1,8 @@
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -8,9 +11,9 @@ import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.patterns.SyntaxMatchers;
 import com.jetbrains.python.psi.resolve.*;
+import com.jetbrains.python.psi.stubs.PyClassNameIndexInsensitive;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.types.*;
-import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -156,7 +159,65 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
         return qualifierType.getCompletionVariants(myElement, ctx);
       }
     }
+    return getUntypedVariants();
+  }
+
+  private Object[] getUntypedVariants() {
+    final PyExpression qualifierElement = myElement.getQualifier();
+    if (qualifierElement instanceof PyReferenceExpression) {
+      PyReferenceExpression qualifier = (PyReferenceExpression)qualifierElement;
+      if (qualifier.getQualifier() == null) {
+        final String className = qualifier.getText();
+        Collection<PyClass> classes = PyClassNameIndexInsensitive.find(className, getElement().getProject());
+        classes = filterByImports(classes, myElement.getContainingFile());
+        if (classes.size() == 1) {
+          final PyClassType classType = new PyClassType(classes.iterator().next(), false);
+          return ((PyReferenceExpressionImpl) myElement).getTypeCompletionVariants(classType);
+        }
+        return collectSeenMembers(qualifier.getText());
+      }
+    }
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  }
+
+  private static Collection<PyClass> filterByImports(Collection<PyClass> classes, PsiFile containingFile) {
+    if (classes.size() <= 1) {
+      return classes;
+    }
+    List<PyClass> result = new ArrayList<PyClass>();
+    for (PyClass pyClass : classes) {
+      if (pyClass.getContainingFile() == containingFile) {
+        result.add(pyClass);
+      }
+      else {
+        final PsiElement exportedClass = ((PyFile)containingFile).findExportedName(pyClass.getName());
+        if (exportedClass == pyClass) {
+          result.add(pyClass);
+        }
+      }
+    }
+    return result;
+  }
+
+  private Object[] collectSeenMembers(final String text) {
+    final Set<String> members = new HashSet<String>();
+    myElement.getContainingFile().accept(new PyRecursiveElementVisitor() {
+      @Override
+      public void visitPyReferenceExpression(PyReferenceExpression node) {
+        super.visitPyReferenceExpression(node);
+        if (node != myElement) {
+          final PyExpression qualifier = node.getQualifier();
+          if (qualifier != null && qualifier.getText().equals(text)) {
+            members.add(node.getReferencedName());
+          }
+        }
+      }
+    });
+    List<LookupElement> results = new ArrayList<LookupElement>(members.size());
+    for (String member : members) {
+      results.add(AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(LookupElementBuilder.create(member)));
+    }
+    return results.toArray(new Object[results.size()]);
   }
 
   private static Collection<PyExpression> collectAssignedAttributes(PyQualifiedExpression qualifier) {

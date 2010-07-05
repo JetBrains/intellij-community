@@ -14,6 +14,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -116,6 +117,11 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
       return null;
     }
     try {
+      if (PyNames.ALL.equals(getName())) {
+        // no type for __all__, to avoid unresolved reference errors for expressions where a qualifier is a name
+        // imported via __all__
+        return null;
+      }
       if (getParent() instanceof PyAssignmentStatement) {
         final PyAssignmentStatement assignmentStatement = (PyAssignmentStatement)getParent();
         final PyExpression assignedValue = assignmentStatement.getAssignedValue();
@@ -126,7 +132,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
             if (maybe_type != null) return maybe_type;
             final ResolveResult[] resolveResult = refex.getReference(PyResolveContext.noImplicits()).multiResolve(false);
             if (resolveResult.length == 1) {
-              PsiElement target = resolveResult [0].getElement();
+              PsiElement target = resolveResult[0].getElement();
               if (target == this || target == null) {
                 return null;  // fix SOE on "a = a"
               }

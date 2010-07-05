@@ -1,7 +1,7 @@
 def deco(fun):
   return fun
 
-@<ref>deco
+@<caret>deco
 def foo():
   pass
 

@@ -1,3 +1,4 @@
 class Test:
   pass
-print <ref>Test()
+print Test()
+#      <ref>

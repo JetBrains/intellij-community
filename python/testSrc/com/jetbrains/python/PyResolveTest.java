@@ -12,7 +12,17 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
 
 public class PyResolveTest extends PyResolveTestCase {
-  private PsiElement resolve() {
+  @Override
+  protected PsiElement doResolve() throws Exception {
+    myFixture.configureByFile("resolve/" + getTestName(false) + ".py");
+    final Project project = myFixture.getProject();
+    project.putUserData(PyBuiltinCache.TEST_SDK, PythonMockSdk.findOrCreate());
+    int offset = findMarkerOffset(myFixture.getFile());
+    final PsiReference ref = myFixture.getFile().findReferenceAt(offset);
+    return ref.resolve();
+  }
+
+  protected PsiElement resolve() {
     PsiReference ref = configureByFile("resolve/" + getTestName(false) + ".py");
     final Project project = ref.getElement().getContainingFile().getProject();
     project.putUserData(PyBuiltinCache.TEST_SDK, PythonMockSdk.findOrCreate());
@@ -27,8 +37,7 @@ public class PyResolveTest extends PyResolveTestCase {
   }
 
   public void testClass() {
-    PsiElement target = resolve();
-    assertTrue(target instanceof PyClass);
+    assertResolvesTo(PyClass.class, "Test");
   }
 
   public void testFunc() {
@@ -318,5 +327,13 @@ public class PyResolveTest extends PyResolveTestCase {
   public void testListComprehension() { // PY-1143
     PsiElement targetElement = resolve();
     assertInstanceOf(targetElement, PyTargetExpression.class);
+  }
+
+  public void testSuperMetaClass() {
+    assertResolvesTo(PyFunction.class, "foo");
+  }
+
+  public void testSuperDunderClass() {  // PY-1190
+    assertResolvesTo(PyFunction.class, "foo");
   }
 }

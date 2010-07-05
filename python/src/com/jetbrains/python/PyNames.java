@@ -19,6 +19,7 @@ public class PyNames {
   @NonNls public static final String NEW = "__new__";
   @NonNls public static final String GETATTR = "__getattr__";
   @NonNls public static final String GETATTRIBUTE = "__getattribute__";
+  @NonNls public static final String CLASS = "__class__";
 
   @NonNls public static final String OBJECT = "object";
   @NonNls public static final String NONE = "None";
@@ -30,6 +31,8 @@ public class PyNames {
 
   @NonNls public static final String CLASSMETHOD = "classmethod";
   @NonNls public static final String STATICMETHOD = "staticmethod";
+
+  @NonNls public static final String ALL = "__all__";
 
   @NonNls private static final Set<String> _UnderscoredAttributes = new HashSet<String>();
   static {

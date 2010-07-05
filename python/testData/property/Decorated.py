@@ -26,4 +26,4 @@ class A(object):
 
   # deleter absent
 
-<ref>a = A()
+<caret>a = A()

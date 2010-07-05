@@ -16,4 +16,4 @@ class A(object):
   v3 = property(lambda self: self._v, None, (deleter))
   v4 = otherworldly # NOTE: not supported yet
 
-<ref>a = A()
+<caret>a = A()

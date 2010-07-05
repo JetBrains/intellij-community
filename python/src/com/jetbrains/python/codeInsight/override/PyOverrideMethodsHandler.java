@@ -9,10 +9,7 @@ import com.jetbrains.python.psi.PyFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: Aug 13, 2009
- * Time: 3:46:28 PM
+ * @author Alexey.Ivanov
  */
 public class PyOverrideMethodsHandler implements LanguageCodeInsightActionHandler {
   public boolean isValidFor(Editor editor, PsiFile file) {

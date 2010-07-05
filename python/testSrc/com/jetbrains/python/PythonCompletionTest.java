@@ -4,7 +4,10 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+
+import java.util.Arrays;
 
 public class PythonCompletionTest extends PyLightFixtureTestCase {
 
@@ -111,6 +114,18 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
     doTest();
   }
 
+  public void testClassNameFromVarName() throws Exception {
+    doTest();
+  }
+
+  public void testSeenMembers() throws Exception {  // PY-1181
+    final String testName = "completion/" + getTestName(true);
+    myFixture.configureByFile(testName + ".py");
+    final LookupElement[] elements = myFixture.completeBasic();
+    assertEquals(1, elements.length);
+    assertEquals("children", elements [0].getLookupString());
+  }
+
   public void testImportModule() throws Exception {
     final String testName = "completion/" + getTestName(true);
     myFixture.configureByFiles(testName + ".py", "completion/someModule.py");
@@ -123,7 +138,6 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
     final String testName = dirname + "moduleClass";
     myFixture.configureByFiles(testName + ".py", dirname + "__init__.py");
     myFixture.copyDirectoryToProject(dirname + "mymodule", dirname + "mymodule");
-    myFixture.copyDirectoryToProject(dirname + "mymodule/mysubmodule", dirname + "mymodule/mysubmodule");
     myFixture.completeBasic();
     myFixture.checkResultByFile(testName + ".after.py");
   }
@@ -139,5 +153,11 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
 
   public void testClassMethod() throws Exception {  // PY-833
     doTest();
+  }
+
+  public void testStarImport() throws Exception {
+    myFixture.configureByFiles("completion/starImport/starImport.py", "completion/starImport/importSource.py");
+    myFixture.completeBasic();
+    assertSameElements(myFixture.getLookupElementStrings(), Arrays.asList("my_foo", "my_bar"));
   }
 }

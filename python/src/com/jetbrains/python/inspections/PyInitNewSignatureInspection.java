@@ -48,7 +48,8 @@ public class PyInitNewSignatureInspection extends PyInspection {
       if (the_other == null || builtins.getClass("object") == the_other.getContainingClass()) return;
       final PyParameterList closer_list = init_or_new.getParameterList();
       final PyParameterList farther_list = the_other.getParameterList();
-      if (! farther_list.isCompatibleTo(closer_list) && ! closer_list.isCompatibleTo(farther_list)) {
+      if (! farther_list.isCompatibleTo(closer_list) && ! closer_list.isCompatibleTo(farther_list) &&
+          closer_list.getContainingFile() == cls.getContainingFile()) {
         registerProblem(closer_list, PyNames.NEW.equals(init_or_new.getName()) ?
                                      PyBundle.message("INSP.new.incompatible.to.init") :
                                      PyBundle.message("INSP.init.incompatible.to.new")

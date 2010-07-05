@@ -236,6 +236,11 @@ public class PyBuiltinCache {
   }
 
   @Nullable
+  public PyClassType getSetType() {
+    return getObjectType("set");
+  }
+
+  @Nullable
   public PyClassType getTupleType() {
     return getObjectType("tuple");
   }

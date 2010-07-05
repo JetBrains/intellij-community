@@ -513,12 +513,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyListCompExpression(final PyListCompExpression node) {
-    visitPyGeneratorExpression(node);
-  }
-
-  @Override
-  public void visitPyGeneratorExpression(final PyGeneratorExpression node) {
+  public void visitPyComprehensionElement(final PyComprehensionElement node) {
     myBuilder.startNode(node);
     PyExpression prevCondition = null;
     for (ComprhIfComponent component : node.getIfComponents()) {
@@ -558,6 +553,4 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     node.acceptChildren(evaluator);
     InstructionBuilder.addAssertInstructions(myBuilder, evaluator);
   }
-
-
 }

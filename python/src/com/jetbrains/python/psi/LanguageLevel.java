@@ -10,12 +10,12 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public enum LanguageLevel {
-  PYTHON24(24, false, true, false),
-  PYTHON25(25, false, true, false),
-  PYTHON26(26, true, true, false),
-  PYTHON27(27, true, true, false),
-  PYTHON30(30, true, false, true),
-  PYTHON31(31, true, false, true);
+  PYTHON24(24, false, true, false, false),
+  PYTHON25(25, false, true, false, false),
+  PYTHON26(26, true, true, false, false),
+  PYTHON27(27, true, true, true, false),
+  PYTHON30(30, true, false, false, true),
+  PYTHON31(31, true, false, true, true);
 
   public static LanguageLevel getDefault() {
     return PYTHON26;
@@ -24,12 +24,14 @@ public enum LanguageLevel {
   private final int myVersion;
   private final boolean myHasWithStatement;
   private final boolean myHasPrintStatement;
+  private final boolean mySupportsSetLiterals;
   private final boolean myIsPy3K;
 
-  LanguageLevel(int version, boolean hasWithStatement, boolean hasPrintStatement, boolean isPy3K) {
+  LanguageLevel(int version, boolean hasWithStatement, boolean hasPrintStatement, boolean supportsSetLiterals, boolean isPy3K) {
     myVersion = version;
     myHasWithStatement = hasWithStatement;
     myHasPrintStatement = hasPrintStatement;
+    mySupportsSetLiterals = supportsSetLiterals;
     myIsPy3K = isPy3K;
   }
 
@@ -39,6 +41,10 @@ public enum LanguageLevel {
 
   public boolean hasPrintStatement() {
     return myHasPrintStatement;
+  }
+
+  public boolean supportsSetLiterals() {
+    return mySupportsSetLiterals;
   }
 
   public boolean isPy3K() {
@@ -63,8 +69,11 @@ public enum LanguageLevel {
     if (pythonVersion.startsWith("2.5")) {
       return PYTHON25;
     }
-    if (pythonVersion.startsWith("3.0") || pythonVersion.startsWith("3.1")) {
+    if (pythonVersion.startsWith("3.0")) {
       return PYTHON30;
+    }
+    if (pythonVersion.startsWith("3.1")) {
+      return PYTHON31;
     }
     return PYTHON24;
   }
@@ -94,5 +103,10 @@ public enum LanguageLevel {
     }
 
     return getDefault();
+  }
+
+  @Override
+  public String toString() {
+    return myVersion / 10 + "." + myVersion % 10;
   }
 }

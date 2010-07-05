@@ -6,7 +6,7 @@ def deco(prefix):
     return dfun
   return fun
 
-@<ref>deco(1)
+@<caret>deco(1)
 def foo():
   pass
 

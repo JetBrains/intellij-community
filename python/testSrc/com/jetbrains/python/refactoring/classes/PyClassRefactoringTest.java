@@ -1,8 +1,6 @@
 package com.jetbrains.python.refactoring.classes;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.search.ProjectScope;
-import com.intellij.psi.stubs.StubIndex;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
@@ -29,8 +27,7 @@ public abstract class PyClassRefactoringTest extends PyLightFixtureTestCase {
 
   protected PyClass findClass(final String name) {
     final Project project = myFixture.getProject();
-    final Collection<PyClass> classes = StubIndex.getInstance().get(PyClassNameIndex.KEY, name, project,
-                                                                    ProjectScope.getProjectScope(project));
+    final Collection<PyClass> classes = PyClassNameIndex.find(name, project, false);
     assertEquals(1, classes.size());
     return classes.iterator().next();
   }

@@ -1,16 +1,12 @@
 package com.jetbrains.python.inspections;
 
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.actions.MoveFromFutureImportQuickFix;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyFromImportStatement;
-import com.jetbrains.python.psi.PyReferenceExpression;
-import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,7 +42,14 @@ public class PyFromFutureImportInspection extends PyInspection {
         PsiFile file = importSource.getContainingFile();
         if (file instanceof PyFile) {
           final List<PyStatement> statementList = ((PyFile)file).getStatements();
+          boolean skippedDocString = false;
           for (PyStatement statement : statementList) {
+            if (statement instanceof PyExpressionStatement &&
+                ((PyExpressionStatement) statement).getExpression() instanceof PyStringLiteralExpression &&
+                !skippedDocString) {
+              skippedDocString = true;
+              continue;
+            }
             if (statement instanceof PyFromImportStatement) {
               if (statement == node) {
                 return;

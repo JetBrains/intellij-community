@@ -16,8 +16,7 @@ public class PySetCompExpressionImpl extends PyComprehensionElementImpl implemen
   }
 
   public PyType getType(@NotNull TypeEvalContext context) {
-    // TODO
-    return null;
+    return PyBuiltinCache.getInstance(this).getSetType();
   }
 
   @Override

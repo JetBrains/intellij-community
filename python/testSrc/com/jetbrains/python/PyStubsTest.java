@@ -223,6 +223,14 @@ public class PyStubsTest extends PyLightFixtureTestCase {
     assertNotParsed(file);
   }
 
+  public void testDunderAll() throws Exception {
+    final PyFileImpl file = (PyFileImpl) getTestFile();
+    final List<String> all = file.getDunderAll();
+    assertEquals(2, all.size());
+    assertTrue(all.contains("foo") && all.contains("bar"));
+    assertNotParsed(file);
+  }
+
   private PyFile getTestFile() throws Exception {
     return getTestFile(getTestName(false) + ".py");
   }

@@ -5,5 +5,5 @@ package com.jetbrains.python.psi;
  * 
  * @author yole
  */
-public interface PySetCompExpression extends PyExpression, NameDefiner {
+public interface PySetCompExpression extends PyComprehensionElement {
 }

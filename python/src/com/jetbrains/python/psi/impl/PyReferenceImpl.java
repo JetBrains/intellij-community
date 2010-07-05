@@ -291,8 +291,8 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       final String elementName = ((PsiNamedElement)element).getName();
       if (Comparing.equal(myElement.getReferencedName(), elementName) || PyNames.INIT.equals(elementName)) {
         if (element instanceof PyParameter || element instanceof PyTargetExpression) {
-          PsiNamedElement ourContainer = PsiTreeUtil.getParentOfType(getElement(), PsiNamedElement.class);
-          PsiNamedElement theirContainer = PsiTreeUtil.getParentOfType(element, PsiNamedElement.class);
+          PsiElement ourContainer = PsiTreeUtil.getParentOfType(getElement(), PsiNamedElement.class, PyLambdaExpression.class);
+          PsiElement theirContainer = PsiTreeUtil.getParentOfType(element, PsiNamedElement.class, PyLambdaExpression.class);
           if (ourContainer != null && ourContainer == theirContainer) {
             return true;
           }
@@ -367,7 +367,19 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         if (import_src != null) {
           final String imported_name = import_src.getName();
           processor.setNotice(imported_name);
-          PyResolveUtil.treeCrawlUp(processor, true, import_src.getReference().resolve()); // names from that module
+          final PsiElement importedModule = import_src.getReference().resolve();
+          List<String> dunderAll = null;
+          if (importedModule instanceof PyFile) {
+            dunderAll = ((PyFile) importedModule).getDunderAll();
+          }
+          processor.setAllowedNames(dunderAll);
+          try {
+            PyResolveUtil.treeCrawlUp(processor, true, importedModule); // names from that module
+            processor.addVariantsFromAllowedNames();
+          }
+          finally {
+            processor.setAllowedNames(null);
+          }
         }
       }
     }

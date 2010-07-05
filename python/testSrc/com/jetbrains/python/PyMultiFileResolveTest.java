@@ -1,19 +1,18 @@
 package com.jetbrains.python;
 
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
-import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.fixtures.PyResolveTestCase;
 import com.jetbrains.python.psi.*;
 
 /**
  * @author yole
  */
-public class PyMultiFileResolveTest extends PyLightFixtureTestCase {
+public class PyMultiFileResolveTest extends PyResolveTestCase {
   
   private static void checkInitPyDir(PsiElement elt, String dirname) throws Exception {
     assertTrue(elt instanceof PyFile);
@@ -167,6 +166,10 @@ public class PyMultiFileResolveTest extends PyLightFixtureTestCase {
     assertResolvesTo(PyFunction.class, "makedir");
   }
 
+  public void testImportOsPath2() throws Exception {
+    assertResolvesTo(PyFunction.class, "do_stuff");
+  }
+
   public void testReimportExported() throws Exception {
     assertResolvesTo(PyFunction.class, "dostuff");
   }
@@ -179,10 +182,24 @@ public class PyMultiFileResolveTest extends PyLightFixtureTestCase {
     assertResolvesTo(PyFunction.class, "dostuff");
   }
 
-  private <T extends PsiElement> void assertResolvesTo(final Class<T> aClass, final String name) throws Exception {
-    final PsiElement element = doResolve();
-    assertInstanceOf(element, aClass);
-    assertEquals(name, ((PsiNamedElement) element).getName());
+  public void testNameConflict() throws Exception {
+    assertResolvesTo(PyFunction.class, "do_stuff", "/src/pack2.py");
+  }
+
+  public void testDunderAll() {
+    assertResolvesTo(PyTargetExpression.class, "__all__");
+  }
+
+  public void testDunderAllImport() {
+    assertResolvesTo(PyTargetExpression.class, "__all__");
+  }
+
+  public void testDunderAllImportResolve() {
+    assertResolvesTo(PyTargetExpression.class, "__all__");
+  }
+
+  public void testDunderAllConflict() {
+    assertResolvesTo(PyFunction.class, "do_stuff", "/src/mypackage1.py");
   }
 
   private PsiFile prepareFile() throws Exception {
@@ -202,7 +219,8 @@ public class PyMultiFileResolveTest extends PyLightFixtureTestCase {
     return PythonTestUtil.getTestDataPath() + "/resolve/multiFile/";
   }
 
-  private PsiElement doResolve() throws Exception {
+  @Override
+  protected PsiElement doResolve() throws Exception {
     PsiFile psiFile = prepareFile();
     int offset = findMarkerOffset(psiFile);
     final PsiReference ref = psiFile.findReferenceAt(offset);
@@ -226,21 +244,5 @@ public class PyMultiFileResolveTest extends PyLightFixtureTestCase {
     int offset = findMarkerOffset(psiFile);
     final PsiPolyVariantReference ref = (PsiPolyVariantReference)psiFile.findReferenceAt(offset);
     return ref.multiResolve(false);
-  }
-
-  private int findMarkerOffset(final PsiFile psiFile) {
-    Document document = PsiDocumentManager.getInstance(myFixture.getProject()).getDocument(psiFile);
-    assert document != null;
-    int offset = -1;
-    for (int i=1; i<document.getLineCount(); i++) {
-      int lineStart = document.getLineStartOffset(i);
-      int lineEnd = document.getLineEndOffset(i);
-      final int index=document.getCharsSequence().subSequence(lineStart, lineEnd).toString().indexOf("<ref>");
-      if (index>0) {
-        offset = document.getLineStartOffset(i-1) + index;
-      }
-    }
-    assert offset != -1;
-    return offset;
   }
 }

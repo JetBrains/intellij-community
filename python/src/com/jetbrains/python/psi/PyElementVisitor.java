@@ -27,8 +27,12 @@ public class PyElementVisitor extends PsiElementVisitor {
     visitElement(node);
   }
 
-  public void visitPyGeneratorExpression(final PyGeneratorExpression node) {
+  public void visitPyComprehensionElement(final PyComprehensionElement node) {
     visitPyExpression(node);
+  }
+
+  public void visitPyGeneratorExpression(final PyGeneratorExpression node) {
+    visitPyComprehensionElement(node);
   }
 
   public void visitPyBinaryExpression(final PyBinaryExpression node) {
@@ -56,15 +60,15 @@ public class PyElementVisitor extends PsiElementVisitor {
   }
 
   public void visitPyListCompExpression(final PyListCompExpression node) {
-    visitPyExpression(node);
+    visitPyComprehensionElement(node);
   }
 
   public void visitPyDictCompExpression(final PyDictCompExpression node) {
-    visitPyExpression(node);
+    visitPyComprehensionElement(node);
   }
 
   public void visitPySetCompExpression(final PySetCompExpression node) {
-    visitPyExpression(node);
+    visitPyComprehensionElement(node);
   }
 
   public void visitPyLambdaExpression(final PyLambdaExpression node) {

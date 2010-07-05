@@ -1,11 +1,12 @@
 package com.jetbrains.python.fixtures;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.testFramework.TestDataFile;
 import org.jetbrains.annotations.NonNls;
 
@@ -17,6 +18,7 @@ import java.io.IOException;
  */
 public abstract class PyResolveTestCase extends PyLightFixtureTestCase {
   @NonNls protected static final String MARKER = "<ref>";
+
 
   protected PsiReference configureByFile(@TestDataFile final String filePath) {
     VirtualFile testDataRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(getTestDataPath()));
@@ -46,5 +48,44 @@ public abstract class PyResolveTestCase extends PyLightFixtureTestCase {
     });
     final PsiReference reference = myFixture.getFile().findReferenceAt(offset);
     return reference;
+  }
+
+  protected abstract PsiElement doResolve() throws Exception;
+
+  protected <T extends PsiElement> void assertResolvesTo(final Class<T> aClass, final String name) {
+    assertResolvesTo(aClass, name, null);
+  }
+
+  protected <T extends PsiElement> void assertResolvesTo(final Class<T> aClass,
+                                                         final String name,
+                                                         String containingFilePath) {
+    final PsiElement element;
+    try {
+      element = doResolve();
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+    assertInstanceOf(element, aClass);
+    assertEquals(name, ((PsiNamedElement) element).getName());
+    if (containingFilePath != null) {
+      assertEquals(containingFilePath, element.getContainingFile().getVirtualFile().getPath());
+    }
+  }
+
+  protected int findMarkerOffset(final PsiFile psiFile) {
+    Document document = PsiDocumentManager.getInstance(myFixture.getProject()).getDocument(psiFile);
+    assert document != null;
+    int offset = -1;
+    for (int i=1; i<document.getLineCount(); i++) {
+      int lineStart = document.getLineStartOffset(i);
+      int lineEnd = document.getLineEndOffset(i);
+      final int index=document.getCharsSequence().subSequence(lineStart, lineEnd).toString().indexOf("<ref>");
+      if (index>0) {
+        offset = document.getLineStartOffset(i-1) + index;
+      }
+    }
+    assert offset != -1;
+    return offset;
   }
 }

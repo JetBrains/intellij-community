@@ -3,6 +3,7 @@ package com.jetbrains.python;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.fixtures.PyResolveTestCase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -23,7 +24,7 @@ public class PyPropertyTestSuite {
     return new TestSuite(PyClassicPropertyTest.class, PyDecoratedPropertyTest.class);
   }
 
-  abstract static class PyPropertyTest  extends PyResolveTestCase {
+  abstract static class PyPropertyTest  extends PyLightFixtureTestCase {
     protected PyClass myClass;
     protected LanguageLevel myLanguageLevel = LanguageLevel.PYTHON26;
 
@@ -32,7 +33,7 @@ public class PyPropertyTestSuite {
     @Override
     protected void setUp() throws Exception {
       super.setUp();
-      PsiReference ref = configureByFile("property/"+ getFileName());
+      PsiReference ref = myFixture.getReferenceAtCaretPosition("property/"+ getFileName());
       final Project project = ref.getElement().getContainingFile().getProject();
       project.putUserData(PyBuiltinCache.TEST_SDK, PythonMockSdk.findOrCreate());
       PythonLanguageLevelPusher.setForcedLanguageLevel(project, myLanguageLevel);

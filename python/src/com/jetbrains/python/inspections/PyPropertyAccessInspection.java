@@ -23,8 +23,7 @@ import java.util.Map;
  * Date: Jun 29, 2010 5:55:52 AM
  */
 public class PyPropertyAccessInspection extends PyInspection {
-
-  ThreadLocal<HashMap<Pair<PyClass, String>, Property>> myPropertyCache;
+  private ThreadLocal<HashMap<Pair<PyClass, String>, Property>> myPropertyCache = new ThreadLocal<HashMap<Pair<PyClass, String>, Property>>();
 
   @Nls
   @NotNull
@@ -41,14 +40,12 @@ public class PyPropertyAccessInspection extends PyInspection {
   @Override
   public void inspectionStarted(LocalInspectionToolSession session) {
     super.inspectionStarted(session);
-    myPropertyCache = new ThreadLocal<HashMap<Pair<PyClass, String>, Property>>();
     myPropertyCache.set(new HashMap<Pair<PyClass, String>, Property>());
   }
 
   @Override
   public void inspectionFinished(LocalInspectionToolSession session) {
     myPropertyCache.set(null); // help gc
-    myPropertyCache = null;
     super.inspectionFinished(session);
   }
 

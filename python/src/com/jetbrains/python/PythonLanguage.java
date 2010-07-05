@@ -2,6 +2,7 @@ package com.jetbrains.python;
 
 import com.intellij.lang.Language;
 import com.intellij.psi.tree.IFileElementType;
+import com.intellij.psi.tree.IStubFileElementType;
 import com.jetbrains.python.psi.PyFileElementType;
 import com.jetbrains.python.validation.*;
 
@@ -12,7 +13,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
  * @author yole
  */
 public class PythonLanguage extends Language {
-  private final IFileElementType ELTYPE_FILE;
+  private final IStubFileElementType ELTYPE_FILE;
   private final Set<Class<? extends PyAnnotator>> _annotators = new CopyOnWriteArraySet<Class<? extends PyAnnotator>>();
 
   public static PythonLanguage getInstance() {
@@ -43,7 +44,7 @@ public class PythonLanguage extends Language {
     ELTYPE_FILE = new PyFileElementType(this);
   }
 
-  public IFileElementType getFileElementType() {
+  public IStubFileElementType getFileElementType() {
     return ELTYPE_FILE;
   }
 

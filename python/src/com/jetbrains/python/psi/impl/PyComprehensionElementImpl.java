@@ -17,7 +17,7 @@ import java.util.List;
  * User: dcheryasov
  * Date: Jul 31, 2008
  */
-public class PyComprehensionElementImpl extends PyElementImpl implements NameDefiner {
+public abstract class PyComprehensionElementImpl extends PyElementImpl implements PyComprehensionElement {
   public PyComprehensionElementImpl(ASTNode astNode) {
     super(astNode);
   }

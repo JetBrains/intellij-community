@@ -69,7 +69,9 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
     if (qualifier != null) {
       // qualifier's type must be module, it should know how to complete
       PyType type = qualifier.getType(TypeEvalContext.fast());
-      if (type != null) return type.getCompletionVariants(myElement, new ProcessingContext());
+      if (type != null) {
+        return myElement.getTypeCompletionVariants(type);
+      }
       else return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
     else {
