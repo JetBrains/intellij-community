@@ -161,6 +161,10 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   public void visitPyNamedParameter(final PyNamedParameter node) {
     final ReadWriteInstruction instruction = ReadWriteInstruction.write(myBuilder, node, node.getName());
     myBuilder.addNode(instruction);
+    final PyExpression defaultValue = node.getDefaultValue();
+    if (defaultValue != null) {
+      defaultValue.accept(this);
+    }
     myBuilder.checkPending(instruction);
   }
 
