@@ -332,6 +332,9 @@ public class FileTemplateUtil{
           File testsDir = new File(new File(file1, "ide"), "fileTemplates");
           paths.add(testsDir.getAbsolutePath());
         }
+
+        System.out.println("FileTemplateUtil$MyFileResourceLoader.init");
+        System.out.println("paths = " + paths);
       }
       catch (Exception e) {
         LOG.error(e);
