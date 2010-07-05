@@ -603,6 +603,18 @@ public class PyUtil {
     return PrioritizedLookupElement.withGrouping(lookupElementBuilder, 1);
   }
 
+  /**
+   * Peels argument expression of parentheses and of keyword argument wrapper
+   * @param expr an item of getArguments() array
+   * @return expression actually passed as argument
+   */
+  @Nullable
+  public static PyExpression peelArgument(PyExpression expr) {
+    while (expr instanceof PyParenthesizedExpression) expr = ((PyParenthesizedExpression)expr).getContainedExpression();
+    if (expr instanceof PyKeywordArgument) expr = ((PyKeywordArgument)expr).getValueExpression();
+    return expr;
+  }
+
   public static class UnderscoreFilter implements Condition<String> {
     private int myAllowed; // how many starting underscores is allowed: 0 is none, 1 is only one, 2 is two and more.
 

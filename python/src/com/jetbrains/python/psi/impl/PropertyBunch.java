@@ -126,7 +126,7 @@ public abstract class PropertyBunch<MType> {
                 if (n < 3) {
                   // accessors
                   accessors.set(n, unknown); // definitely filled
-                  PyExpression expr = peelArgument(entry.getKey());
+                  PyExpression expr = PyUtil.peelArgument(entry.getKey());
                   if (expr instanceof PyReferenceExpression) {
                     PyReferenceExpression arg_ref = (PyReferenceExpression)expr;
                     if (arg_ref.getQualifier() == null) accessors.set(n, new Maybe<MType>(target.translate(arg_ref)));
@@ -134,7 +134,7 @@ public abstract class PropertyBunch<MType> {
                 }
                 else if (n == 3) {
                   // doc
-                  PyExpression expr = peelArgument(entry.getKey());
+                  PyExpression expr = PyUtil.peelArgument(entry.getKey());
                   if (expr instanceof PyStringLiteralExpression) {
                     target.myDoc = ((PyStringLiteralExpression)expr).getStringValue();
                   }
@@ -161,12 +161,6 @@ public abstract class PropertyBunch<MType> {
         }
       }    }
     return false;
-  }
-
-  private static PyExpression peelArgument(PyExpression expr) {
-    while (expr instanceof PyParenthesizedExpression) expr = ((PyParenthesizedExpression)expr).getContainedExpression();
-    if (expr instanceof PyKeywordArgument) expr = ((PyKeywordArgument)expr).getValueExpression();
-    return expr;
   }
 
 }

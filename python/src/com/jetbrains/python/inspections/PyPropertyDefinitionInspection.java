@@ -118,11 +118,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
             // we assume fget, fset, fdel, doc names
             for (Map.Entry<PyExpression, PyNamedParameter> entry: analysis.getPlainMappedParams().entrySet()) {
               final String param_name = entry.getValue().getName();
-              PyExpression argument = entry.getKey();
-              if (argument instanceof PyKeywordArgument) argument = ((PyKeywordArgument)argument).getValueExpression();
-              while (argument instanceof PyParenthesizedExpression) {
-                argument = ((PyParenthesizedExpression)argument).getContainedExpression();
-              }
+              PyExpression argument = PyUtil.peelArgument(entry.getKey());
               assert argument != null : "Parameter mapped to null argument";
               Callable callable = null;
               if (argument instanceof PyReferenceExpression) {
