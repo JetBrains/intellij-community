@@ -291,8 +291,8 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       final String elementName = ((PsiNamedElement)element).getName();
       if (Comparing.equal(myElement.getReferencedName(), elementName) || PyNames.INIT.equals(elementName)) {
         if (element instanceof PyParameter || element instanceof PyTargetExpression) {
-          PsiNamedElement ourContainer = PsiTreeUtil.getParentOfType(getElement(), PsiNamedElement.class);
-          PsiNamedElement theirContainer = PsiTreeUtil.getParentOfType(element, PsiNamedElement.class);
+          PsiElement ourContainer = PsiTreeUtil.getParentOfType(getElement(), PsiNamedElement.class, PyLambdaExpression.class);
+          PsiElement theirContainer = PsiTreeUtil.getParentOfType(element, PsiNamedElement.class, PyLambdaExpression.class);
           if (ourContainer != null && ourContainer == theirContainer) {
             return true;
           }

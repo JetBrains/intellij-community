@@ -3,7 +3,7 @@ package com.jetbrains.python;
 import com.intellij.usageView.UsageInfo;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 
-import java.util.Collection;
+import java.util.*;
 
 /**
  * @author yole
@@ -46,6 +46,33 @@ public class PyFindUsagesTest extends PyLightFixtureTestCase {
 
   public void testNonGlobalUsages() { // PY-1179
     final Collection<UsageInfo> usages = myFixture.testFindUsages("findUsages/NonGlobalUsages.py");
-    assertEquals(1, usages.size());
+    assertUsages(usages, "<caret>a = 0");
+  }
+
+  public void testLambdaParameter() {
+    final Collection<UsageInfo> usages = myFixture.testFindUsages("findUsages/LambdaParameter.py");
+    assertUsages(usages, "<caret>parm+1");
+  }
+
+  private void assertUsages(Collection<UsageInfo> usages, String... usageTexts) {
+    assertEquals(usageTexts.length, usages.size());
+    List<UsageInfo> sortedUsages = new ArrayList<UsageInfo>(usages);
+    Collections.sort(sortedUsages, new Comparator<UsageInfo>() {
+      @Override
+      public int compare(UsageInfo o1, UsageInfo o2) {
+        return o1.getElement().getTextRange().getStartOffset() - o2.getElement().getTextRange().getStartOffset();
+      }
+    });
+    for (int i = 0; i < usageTexts.length; i++) {
+      assertSameUsage(usageTexts [i], sortedUsages.get(i));
+    }
+  }
+
+  private void assertSameUsage(String usageText, UsageInfo usageInfo) {
+    int pos = usageText.indexOf("<caret>");
+    assert pos >= 0;
+    usageText = usageText.replace("<caret>", "");
+    final int startIndex = usageInfo.getElement().getTextOffset() + usageInfo.getRange().getStartOffset() - pos;
+    assertEquals(usageText, myFixture.getFile().getText().substring(startIndex, startIndex + usageText.length()));
   }
 }
