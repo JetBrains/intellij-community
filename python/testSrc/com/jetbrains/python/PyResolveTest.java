@@ -336,4 +336,10 @@ public class PyResolveTest extends PyResolveTestCase {
   public void testSuperDunderClass() {  // PY-1190
     assertResolvesTo(PyFunction.class, "foo");
   }
+
+  public void testLambdaDefaultParameter() throws Exception {
+    final PsiElement element = doResolve();
+    assertInstanceOf(element, PyTargetExpression.class);
+    assertTrue(element.getParent() instanceof PySetCompExpression);
+  }
 }
