@@ -32,7 +32,6 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.semantic.SemKey;
 import com.intellij.semantic.SemService;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.ReflectionAssignabilityCache;
 import com.intellij.util.SmartList;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
@@ -433,12 +432,6 @@ public final class DomManagerImpl extends DomManager {
       }
     }
     return null;
-  }
-
-  @Nullable
-  public final DomFileDescription<?> getDomFileDescription(final XmlFile xmlFile) {
-    final DomFileElementImpl<DomElement> element = getFileElement(xmlFile);
-    return element != null ? element.getFileDescription() : null;
   }
 
   public final <T extends DomElement> T createMockElement(final Class<T> aClass, final Module module, final boolean physical) {

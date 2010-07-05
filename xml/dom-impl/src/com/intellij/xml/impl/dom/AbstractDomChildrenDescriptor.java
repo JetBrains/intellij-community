@@ -33,7 +33,7 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
   }
 
   public XmlElementDescriptor[] getElementsDescriptors(final XmlTag context) {
-    DomElement domElement = myManager.getDomElement(context);
+    final DomElement domElement = myManager.getDomElement(context);
     if (domElement == null) return EMPTY_ARRAY;
 
     List<XmlElementDescriptor> xmlElementDescriptors = new ArrayList<XmlElementDescriptor>();
@@ -58,7 +58,7 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
           @Override
           @Nullable
           public PsiElement getDeclaration() {
-            final PomTarget target = customDescription.getTagNameDescriptor().findDeclaration(name);
+            final PomTarget target = customDescription.getTagNameDescriptor().findDeclaration(domElement, name);
             return target == null ? null : PomService.convertToPsi(context.getProject(), target);
           }
 
