@@ -24,6 +24,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.rt.execution.junit.states.PoolOfTestStates;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -34,7 +35,9 @@ public abstract class TestState implements Printable {
   protected int myMagnitude;
 
   public List<TestProxy> getAllTestsOf(final TestProxy test) {
-    return Collections.singletonList(test);
+    final ArrayList<TestProxy> allTests = new ArrayList<TestProxy>();
+    test.collectAllTestsTo(allTests);
+    return allTests;
   }
 
   public abstract int getMagnitude();

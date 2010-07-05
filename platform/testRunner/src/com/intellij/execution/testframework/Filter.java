@@ -75,6 +75,12 @@ public abstract class Filter {
     }
   };
 
+  public static final Filter FAILED_OR_INTERRUPTED = new Filter() {
+    public boolean shouldAccept(final AbstractTestProxy test) {
+      return test.isInterrupted() || test.isDefect();
+    }
+  };
+
   public static final Filter LEAF = new Filter() {
     public boolean shouldAccept(final AbstractTestProxy test) {
       return test.isLeaf();
