@@ -41,7 +41,10 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.unscramble.UnscrambleDialog;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ConcurrentMultiMap;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
@@ -63,6 +66,7 @@ import java.io.StringWriter;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -82,6 +86,8 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
   private static final MultiMap<String, LinkedBlockingQueue<Pair<GroovyFile, GroovyDslExecutor>>> filesInProcessing =
     new ConcurrentMultiMap<String, LinkedBlockingQueue<Pair<GroovyFile, GroovyDslExecutor>>>();
+
+  private static final ThreadPoolExecutor ourPool = new ThreadPoolExecutor(1, 1, 10, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
 
   private final EnumeratorStringDescriptor myKeyDescriptor = new EnumeratorStringDescriptor();
   private static final byte[] ENABLED_FLAG = new byte[]{(byte)239};
@@ -426,7 +432,8 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
       final boolean isNewRequest = !filesInProcessing.containsKey(fileUrl);
       filesInProcessing.putValue(fileUrl, queue);
       if (isNewRequest) {
-        ApplicationManager.getApplication().executeOnPooledThread(parseScript);
+        ourPool.execute(parseScript); //todo bring back multithreading when Groovy team fixes http://jira.codehaus.org/browse/GROOVY-4292
+        //ApplicationManager.getApplication().executeOnPooledThread(parseScript);
       }
     }
   }
