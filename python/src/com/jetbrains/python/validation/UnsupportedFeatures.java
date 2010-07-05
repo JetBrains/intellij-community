@@ -14,10 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: 16.02.2010
- * Time: 16:16:45
+ * @author Alexey.Ivanov
  */
 public class UnsupportedFeatures extends PyAnnotator {
   private static final Set<String> REMOVED_METHODS = new HashSet<String>();
@@ -59,10 +56,18 @@ public class UnsupportedFeatures extends PyAnnotator {
   @Override
   public void visitPySetLiteralExpression(PySetLiteralExpression node) {
     LanguageLevel languageLevel = getLanguageLevel(node);
-    if (languageLevel == LanguageLevel.PYTHON24
-        || languageLevel == LanguageLevel.PYTHON25
-        || languageLevel == LanguageLevel.PYTHON26) {
-      getHolder().createWarningAnnotation(node, "This Python version does not support set literal expressions").registerFix(new ConvertSetLiteralIntention());
+    if (!languageLevel.supportsSetLiterals()) {
+      getHolder()
+        .createWarningAnnotation(node, "Python version " + languageLevel + " does not support set literal expressions")
+        .registerFix(new ConvertSetLiteralIntention());
+    }
+  }
+
+  @Override
+  public void visitPySetCompExpression(PySetCompExpression node) {
+    final LanguageLevel languageLevel = getLanguageLevel(node);
+    if (!languageLevel.supportsSetLiterals()) {
+      getHolder().createWarningAnnotation(node, "Python version " + languageLevel + " does not support set comprehensions");
     }
   }
 
