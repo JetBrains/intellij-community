@@ -55,10 +55,7 @@ import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnCommittedChangesProvider;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
 import org.jetbrains.idea.svn.history.TreeStructureNode;
-import org.jetbrains.idea.svn.integrate.IMerger;
-import org.jetbrains.idea.svn.integrate.MergerFactory;
-import org.jetbrains.idea.svn.integrate.SvnIntegrateChangesTask;
-import org.jetbrains.idea.svn.integrate.WorkingCopyInfo;
+import org.jetbrains.idea.svn.integrate.*;
 import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
 import org.jetbrains.idea.svn.mergeinfo.OneShotMergeInfoHelper;
 import org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache;
@@ -470,7 +467,12 @@ public class QuickMerge {
         } else {
           final List<CommittedChangeList> lists = dialog.getSelected();
           if (lists.isEmpty()) return;
-          final MergerFactory factory = new ChangeListsMergerFactory(lists);
+          final MergerFactory factory = new ChangeListsMergerFactory(lists) {
+            @Override
+            public IMerger createMerger(SvnVcs vcs, File target, UpdateEventHandler handler, SVNURL currentBranchUrl, String branchName) {
+              return new GroupMerger(vcs, lists, target, handler, currentBranchUrl, branchName, false, false, false);
+            }
+          };
           context.next(new LocalChangesPrompt(false, lists, myCopyPoint), new MergeTask(factory, myMergeTitle));
         }
       }
