@@ -5,5 +5,5 @@ package com.jetbrains.python.psi;
  *
  * @author yole
  */
-public interface PyListCompExpression extends PyGeneratorExpression {
+public interface PyListCompExpression extends PyComprehensionElement {
 }

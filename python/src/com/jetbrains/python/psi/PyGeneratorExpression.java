@@ -7,8 +7,5 @@ import java.util.List;
  *
  * @author yole
  */
-public interface PyGeneratorExpression extends PyExpression, NameDefiner {
-  PyExpression getResultExpression();
-  List<ComprhForComponent> getForComponents();
-  List<ComprhIfComponent> getIfComponents();
+public interface PyGeneratorExpression extends PyComprehensionElement {
 }
