@@ -121,13 +121,19 @@ public class TestsUIUtil {
     } else{
       List allTests = Filter.LEAF.select(root.getAllTests());
       int failedCount = Filter.DEFECTIVE_LEAF.select(allTests).size();
-      int passedCount = allTests.size() - failedCount;
-
+      int notStartedCount = Filter.NOT_PASSED.select(allTests).size();
+      int passedCount = allTests.size() - failedCount - notStartedCount;
       if (failedCount > 0) {
         title = ExecutionBundle.message("junit.runing.info.tests.failed.label");
-        text = passedCount + " passed, " + failedCount + " failed";
+        text = passedCount + " passed, " + failedCount + " failed" + (notStartedCount > 0 ? ", " + notStartedCount + " not started" : "");
         type = MessageType.ERROR;
-      } else {
+      }
+      else if (notStartedCount > 0) {
+        title = ExecutionBundle.message("junit.runing.info.failed.to.start.error.message");
+        text = passedCount + " passed, " + notStartedCount + " not started" ;
+        type = MessageType.ERROR;
+      }
+      else {
         title = ExecutionBundle.message("junit.runing.info.tests.passed.label");
         text = passedCount + " passed";
         type = MessageType.INFO;
