@@ -137,7 +137,7 @@ public class JavaResolveUtil {
     PsiElement scope = place;
     while(scope != null){
       if (scope instanceof PsiDocComment) return true;
-      if (scope instanceof PsiMember || scope instanceof PsiCodeBlock || scope instanceof PsiFile) return false;
+      if (scope instanceof PsiMember || scope instanceof PsiMethodCallExpression || scope instanceof PsiFile) return false;
       scope = scope.getContext();
     }
     return false;
