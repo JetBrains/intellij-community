@@ -203,6 +203,10 @@ public class FileTemplateUtil{
       modifiedPatternsPath = new File(modifiedPatternsPath, "fileTemplates");
       modifiedPatternsPath = new File(modifiedPatternsPath, "includes");
 
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        System.out.println("FileTemplateUtil.initVelocity");
+      }
+
       LogSystem emptyLogSystem = new LogSystem() {
         public void init(RuntimeServices runtimeServices) throws Exception {
         }
