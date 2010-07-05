@@ -108,7 +108,7 @@ public class RecentChangesPopup {
     public Component getListCellRendererComponent(JList l, Object val, int i, boolean isSelected, boolean cellHasFocus) {
       RecentChange c = (RecentChange)val;
       myActionLabel.setText(c.getChangeName());
-      myDateLabel.setText(FormatUtil.formatTimestamp(c.getTimestamp()));
+      myDateLabel.setText(FormatUtil.formatRelativeTimestamp(c.getTimestamp()));
 
       updateColors(isSelected);
       return myPanel;

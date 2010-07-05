@@ -56,8 +56,8 @@ public class PathManagerEx {
   }
 
   /** Caches test data lookup strategy by class. */
-  private static final ConcurrentMap<Class, TestDataLookupStrategy> CLASS_STRATEGY_CACHE
-    = new ConcurrentHashMap<Class, TestDataLookupStrategy>();
+  private static final ConcurrentMap<Class, TestDataLookupStrategy> CLASS_STRATEGY_CACHE = new ConcurrentHashMap<Class, TestDataLookupStrategy>();
+  private static final ConcurrentMap<String, Class> CLASS_CACHE = new ConcurrentHashMap<String, Class>();
 
   /**
    * Holds names of the files that contain community test classes.
@@ -245,21 +245,26 @@ public class PathManagerEx {
 
   @Nullable
   private static Class<?> loadClass(String className) {
-    Class<?> clazz = null;
     ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
+
+    Class<?> clazz = CLASS_CACHE.get(className);
+    if (clazz != null) {
+      return clazz;
+    }
+
     ClassLoader definingClassLoader = PathManagerEx.class.getClassLoader();
     ClassLoader systemClassLoader = ClassLoader.getSystemClassLoader();
 
-    List<ClassLoader> classLoaders
-      = asList(contextClassLoader, definingClassLoader, systemClassLoader);
-    for (ClassLoader classLoader : classLoaders) {
+    for (ClassLoader classLoader : asList(contextClassLoader, definingClassLoader, systemClassLoader)) {
       clazz = loadClass(className, classLoader);
       if (clazz != null) {
-        break;
+        CLASS_CACHE.put(className, clazz);
+        return clazz;
       }
     }
 
-    return clazz;
+    CLASS_CACHE.put(className, TestCase.class); //dummy
+    return null;
   }
 
   @Nullable

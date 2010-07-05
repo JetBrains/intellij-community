@@ -309,7 +309,7 @@ public class RevisionsList {
 
       myBorder.set(row == table.getModel().getRowCount() - 1);
 
-      myDateLabel.setText(ensureString(StringUtil.formatDate(r.revision.getTimestamp(), FormatUtil.FORMAT)));
+      myDateLabel.setText(ensureString(FormatUtil.formatRelativeTimestamp(r.revision.getTimestamp())));
       myFilesCountLabel.setText(ensureString(labelsAndColor.filesCount));
 
       myTitleLabel.setFont(myTitleLabel.getFont().deriveFont(labelsAndColor.isNamed ? Font.BOLD : Font.PLAIN));

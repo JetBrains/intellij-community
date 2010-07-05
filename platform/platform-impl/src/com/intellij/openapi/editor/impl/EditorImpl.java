@@ -60,6 +60,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.LightweightHint;
+import com.intellij.ui.UI;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
@@ -80,6 +81,7 @@ import javax.swing.*;
 import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.ScrollBarUI;
+import javax.swing.plaf.ScrollPaneUI;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
@@ -3334,9 +3336,21 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @NonNls private static final String DECREASE_BUTTON_FIELD = "decrButton";
     @NonNls private static final String INCREASE_BUTTON_FIELD = "incrButton";
     @NonNls private static final String APPLE_LAF_AQUA_SCROLL_BAR_UI_CLASS = "apple.laf.AquaScrollBarUI";
+    private ScrollBarUI myPersistentUI;
 
     private MyScrollBar(int orientation) {
       super(orientation);
+    }
+
+    public void setPersistendUI(ScrollBarUI ui) {
+      myPersistentUI = ui;
+      setUI(ui);
+    }
+
+    @Override
+    public void setUI(ScrollBarUI ui) {
+      if (myPersistentUI == null) myPersistentUI = ui;
+      super.setUI(myPersistentUI);
     }
 
     /**

@@ -309,6 +309,13 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     return myNameHelper;
   }
 
+  public Set<String> getClassNames(PsiPackageImpl psiPackage, GlobalSearchScope scope) {
+    Set<String> result = new HashSet<String>();
+    for (PsiElementFinder finder : myElementFinders) {
+      result.addAll(finder.getClassNames(psiPackage, scope));
+    }
+    return result;
+  }
   public PsiClass[] getClasses(PsiPackageImpl psiPackage, GlobalSearchScope scope) {
     List<PsiClass> result = null;
     for (PsiElementFinder finder : myElementFinders) {
@@ -428,9 +435,8 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     @NotNull
     public PsiClass[] getClasses(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
       List<PsiClass> list = null;
-      final PsiDirectory[] dirs = psiPackage.getDirectories(scope);
       String packageName = psiPackage.getQualifiedName();
-      for (PsiDirectory dir : dirs) {
+      for (PsiDirectory dir : psiPackage.getDirectories(scope)) {
         PsiClass[] classes = JavaDirectoryService.getInstance().getClasses(dir);
         if (classes.length == 0) continue;
         if (list == null) list = new ArrayList<PsiClass>();
@@ -444,6 +450,30 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
         }
       }
       return list == null ? PsiClass.EMPTY_ARRAY : list.toArray(new PsiClass[list.size()]);
+    }
+
+
+    @Override
+    public Set<String> getClassNames(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
+      Set<String> names = null;
+      for (PsiDirectory dir : psiPackage.getDirectories(scope)) {
+        for (PsiFile file : dir.getFiles()) {
+          if (file instanceof PsiClassOwner) {
+            final Set<String> inFile;
+            if (file instanceof PsiClassOwnerEx) {
+              inFile = ((PsiClassOwnerEx)file).getClassNames();
+            } else {
+              inFile = getClassNames(((PsiClassOwner)file).getClasses());
+            }
+
+            if (inFile.isEmpty()) continue;
+            if (names == null) names = new HashSet<String>();
+            names.addAll(inFile);
+          }
+        }
+
+      }
+      return names == null ? Collections.<String>emptySet() : names;
     }
 
     @Override

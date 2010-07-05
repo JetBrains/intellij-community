@@ -1906,9 +1906,7 @@ public class FileBasedIndex implements ApplicationComponent {
       if (project.isDisposed()) {
         return;
       }
-      final Set<String> rootsToIndex = provider.getRootsToIndex();
-      for (String url : rootsToIndex) {
-        final VirtualFile root = VirtualFileManager.getInstance().findFileByUrl(url);
+      for (VirtualFile root : IndexableSetContributor.getRootsToIndex(provider)) {
         if (visitedRoots.add(root)) {
           iterateRecursively(root, processor, indicator);
         }
