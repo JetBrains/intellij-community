@@ -84,7 +84,7 @@ public class ReplaceAssertEqualsWithAssertLiteralIntention
             } else {
                 otherArg = args[1];
             }
-            actualArgumentText = otherArg.getText();
+            actualArgumentText = args[0].getText() + ", " + otherArg.getText();
             assertString = getAssertString(argText);
         }
         final PsiElement qualifier = expression.getQualifier();
