@@ -2,7 +2,9 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyWithItem;
@@ -16,6 +18,8 @@ import java.util.List;
  * @author yole
  */
 public class PyWithStatementImpl extends PyElementImpl implements PyWithStatement {
+  private static final TokenSet WITH_ITEM = TokenSet.create(PyElementTypes.WITH_ITEM);
+
   public PyWithStatementImpl(ASTNode astNode) {
     super(astNode);
   }
@@ -43,5 +47,9 @@ public class PyWithStatementImpl extends PyElementImpl implements PyWithStatemen
 
   public boolean mustResolveOutside() {
     return false;
+  }
+
+  public PyWithItem[] getWithItems() {
+    return childrenToPsi(WITH_ITEM, PyWithItem.EMPTY_ARRAY); 
   }
 }

@@ -48,6 +48,7 @@ public class UnsupportedFeatures extends PyAnnotator {
 
   @Override
   public void visitPyDictCompExpression(PyDictCompExpression node) {
+    super.visitPyDictCompExpression(node);
     if (isPy2(node)) {
       getHolder().createWarningAnnotation(node, "Dictionary comprehension is not supported in Python 2").registerFix(new ConvertDictCompIntention());
     }
@@ -55,6 +56,7 @@ public class UnsupportedFeatures extends PyAnnotator {
 
   @Override
   public void visitPySetLiteralExpression(PySetLiteralExpression node) {
+    super.visitPySetLiteralExpression(node);
     LanguageLevel languageLevel = getLanguageLevel(node);
     if (!languageLevel.supportsSetLiterals()) {
       getHolder()
@@ -65,6 +67,7 @@ public class UnsupportedFeatures extends PyAnnotator {
 
   @Override
   public void visitPySetCompExpression(PySetCompExpression node) {
+    super.visitPySetCompExpression(node);
     final LanguageLevel languageLevel = getLanguageLevel(node);
     if (!languageLevel.supportsSetLiterals()) {
       getHolder().createWarningAnnotation(node, "Python version " + languageLevel + " does not support set comprehensions");
@@ -73,6 +76,7 @@ public class UnsupportedFeatures extends PyAnnotator {
 
   @Override
   public void visitPyExceptBlock(PyExceptPart node) {
+    super.visitPyExceptBlock(node);
     PyExpression exceptClass = node.getExceptClass();
     if (exceptClass != null) {
       LanguageLevel languageLevel = getLanguageLevel(node);
@@ -99,6 +103,7 @@ public class UnsupportedFeatures extends PyAnnotator {
 
   @Override
   public void visitPyImportStatement(PyImportStatement node) {
+    super.visitPyImportStatement(node);
     PyImportElement[] importElements = node.getImportElements();
     for (PyImportElement importElement : importElements) {
       final PyQualifiedName qName = importElement.getImportedQName();
@@ -120,6 +125,7 @@ public class UnsupportedFeatures extends PyAnnotator {
 
   @Override
   public void visitPyCallExpression(PyCallExpression node) {
+    super.visitPyCallExpression(node);
     if (isPy2(node)) {
       final PsiElement firstChild = node.getFirstChild();
       if (firstChild != null) {
@@ -145,6 +151,7 @@ public class UnsupportedFeatures extends PyAnnotator {
 
   @Override
   public void visitPyStarExpression(PyStarExpression node) {
+    super.visitPyStarExpression(node);
     if (isPy2(node)) {
       getHolder().createWarningAnnotation(node, "Python 2 does not support star expressions");
     }
@@ -152,6 +159,7 @@ public class UnsupportedFeatures extends PyAnnotator {
 
   @Override
   public void visitPyBinaryExpression(PyBinaryExpression node) {
+    super.visitPyBinaryExpression(node);
     if (node.isOperator("<>")) {
       final String message = isPy3K(node) ? "<> is not supported in Python 3, use != instead" : "<> is deprecated, use != instead";
       getHolder().createWarningAnnotation(node, message).registerFix(new ReplaceNotEqOperatorIntention());
@@ -160,6 +168,7 @@ public class UnsupportedFeatures extends PyAnnotator {
 
   @Override
   public void visitPyNumericLiteralExpression(final PyNumericLiteralExpression node) {
+    super.visitPyNumericLiteralExpression(node);
     if (isPy3K(node)) {
       if (!node.isIntegerLiteral()) {
         return;
@@ -167,13 +176,15 @@ public class UnsupportedFeatures extends PyAnnotator {
       final String text = node.getText();
       if (text.endsWith("l") || text.endsWith("L")) {
         getHolder().createWarningAnnotation(node,
-                                            "Integer literals do not support a trailing \'l\' or \'L\' in Python 3").registerFix(new RemoveTrailingLIntention());
+                                            "Integer literals do not support a trailing \'l\' or \'L\' in Python 3")
+          .registerFix(new RemoveTrailingLIntention());
       }
       if (text.length() > 1 && text.charAt(0) == '0') {
         final char c = Character.toLowerCase(text.charAt(1));
         if (c != 'o' && c != 'b' && c != 'x') {
           getHolder().createWarningAnnotation(node,
-                                              "Python 3 requires '0o' prefix for octal literals").registerFix(new ReplaceOctalNumericLiteralIntention());
+                                              "Python 3 requires '0o' prefix for octal literals")
+            .registerFix(new ReplaceOctalNumericLiteralIntention());
         }
       }
     }
@@ -181,17 +192,20 @@ public class UnsupportedFeatures extends PyAnnotator {
 
   @Override
   public void visitPyStringLiteralExpression(final PyStringLiteralExpression node) {
+    super.visitPyStringLiteralExpression(node);
     if (isPy3K(node)) {
       final String text = node.getText();
       if (text.startsWith("u") || text.startsWith("U")) {
         getHolder().createWarningAnnotation(node,
-                                            "String literals do not support a leading \'u\' or \'U\' in Python 3").registerFix(new RemoveLeadingUIntention());
+                                            "String literals do not support a leading \'u\' or \'U\' in Python 3")
+          .registerFix(new RemoveLeadingUIntention());
       }
     }
   }
 
   @Override
   public void visitPyListCompExpression(final PyListCompExpression node) {
+    super.visitPyListCompExpression(node);
     final List<ComprhForComponent> forComponents = node.getForComponents();
     for (ComprhForComponent forComponent : forComponents) {
       final PyExpression iteratedList = forComponent.getIteratedList();
@@ -204,6 +218,7 @@ public class UnsupportedFeatures extends PyAnnotator {
 
   @Override
   public void visitPyRaiseStatement(PyRaiseStatement node) {
+    super.visitPyRaiseStatement(node);
     final PyExpression[] expressions = node.getExpressions();
     if (expressions != null) {
       if (expressions.length < 2) {
@@ -230,8 +245,23 @@ public class UnsupportedFeatures extends PyAnnotator {
 
   @Override
   public void visitPyReprExpression(PyReprExpression node) {
+    super.visitPyReprExpression(node);
     if (isPy3K(node)) {
       getHolder().createWarningAnnotation(node, "Backquote is not supported in Python 3, use repr() instead").registerFix(new ReplaceBackquoteExpressionIntention());
+    }
+  }
+
+  @Override
+  public void visitPyWithStatement(PyWithStatement node) {
+    super.visitPyWithStatement(node);
+    final LanguageLevel languageLevel = getLanguageLevel(node);
+    if (!languageLevel.supportsSetLiterals()) {
+      final PyWithItem[] items = node.getWithItems();
+      if (items.length > 1) {
+        for (int i = 1; i < items.length; i++) {
+          getHolder().createWarningAnnotation(items [i], "Python version " + languageLevel + " does not support multiple context managers");
+        }
+      }
     }
   }
 }
