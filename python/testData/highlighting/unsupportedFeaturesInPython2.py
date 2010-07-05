@@ -1,6 +1,6 @@
 from __future__ import with_statement
 
-<warning descr="Dictionary comprehension is not supported in Python 2">{k: v for k, v in stuff}</warning>
+<warning descr="Python version 2.5 does not support dictionary comprehensions">{k: v for k, v in stuff}</warning>
 
 try:
   pass

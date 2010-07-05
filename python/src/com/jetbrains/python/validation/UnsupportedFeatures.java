@@ -49,8 +49,11 @@ public class UnsupportedFeatures extends PyAnnotator {
   @Override
   public void visitPyDictCompExpression(PyDictCompExpression node) {
     super.visitPyDictCompExpression(node);
-    if (isPy2(node)) {
-      getHolder().createWarningAnnotation(node, "Dictionary comprehension is not supported in Python 2").registerFix(new ConvertDictCompIntention());
+    LanguageLevel languageLevel = getLanguageLevel(node);
+    if (!languageLevel.supportsSetLiterals()) {
+      getHolder()
+        .createWarningAnnotation(node, "Python version " + languageLevel + " does not support dictionary comprehensions")
+        .registerFix(new ConvertDictCompIntention());
     }
   }
 
