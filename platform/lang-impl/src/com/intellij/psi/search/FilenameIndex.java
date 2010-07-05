@@ -97,11 +97,7 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
 
   private static class MyInputFilter implements FileBasedIndex.InputFilter {
     public boolean acceptInput(final VirtualFile file) {
-      if (((ApplicationEx)ApplicationManager.getApplication()).isInternal()) {
-        return true;
-      }
-
-      return !ProjectUtil.isProjectOrWorkspaceFile(file);
+      return true;
     }
   }
 }
