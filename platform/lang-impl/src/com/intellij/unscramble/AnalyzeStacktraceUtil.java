@@ -27,6 +27,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
+import com.intellij.ide.CopyPasteManagerEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -71,16 +72,15 @@ public class AnalyzeStacktraceUtil {
 
   @Nullable
   public static String getTextInClipboard() {
-    String text = null;
-    try {
-      Transferable contents = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(AnalyzeStacktraceUtil.class);
-      if (contents != null) {
-        text = (String)contents.getTransferData(DataFlavor.stringFlavor);
+    final Transferable contents = CopyPasteManagerEx.getInstance().getContents();
+    if (contents != null) {
+      try {
+        return (String)contents.getTransferData(DataFlavor.stringFlavor);
+      } catch (Exception e) {
+        //no luck
       }
     }
-    catch (Exception ignore) {
-    }
-    return text;
+    return null;
   }
 
   public interface ConsoleFactory {
