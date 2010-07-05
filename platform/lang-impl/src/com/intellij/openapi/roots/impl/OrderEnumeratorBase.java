@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.PairFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -51,6 +52,8 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
   private boolean myRecursivelyExportedOnly;
   private boolean myExportedOnly;
   private Condition<OrderEntry> myCondition;
+  private PairFunction<OrderEntry, OrderRootType, VirtualFile[]> myFileSubstitutor;
+  private PairFunction<OrderEntry, OrderRootType, String[]> myUrlsSubstitutor;
   private List<OrderEnumerationHandler> myCustomHandlers;
   private ModulesProvider myModulesProvider;
   private OrderRootsCache myCache;
@@ -135,6 +138,18 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
   @Override
   public OrderEnumerator using(@NotNull ModulesProvider provider) {
     myModulesProvider = provider;
+    return this;
+  }
+
+  @Override
+  public OrderEnumerator substituteFiles(PairFunction<OrderEntry, OrderRootType, VirtualFile[]> substitutor)  {
+    myFileSubstitutor = substitutor;
+    return this;
+  }
+
+  @Override
+  public OrderEnumerator substituteUrls(PairFunction<OrderEntry, OrderRootType, String[]> substitutor) {
+    myUrlsSubstitutor = substitutor;
     return this;
   }
 
@@ -304,6 +319,18 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
       }
     }
     return false;
+  }
+
+  @NotNull
+  public VirtualFile[] substituteFiles(OrderEntry orderEntry, OrderRootType rootType) {
+    if (myFileSubstitutor != null) return myFileSubstitutor.fun(orderEntry, rootType);
+    return orderEntry.getFiles(rootType);
+  }
+
+  @NotNull
+  public String[] substituteUrls(OrderEntry orderEntry, OrderRootType rootType) {
+    if (myUrlsSubstitutor != null) return myUrlsSubstitutor.fun(orderEntry, rootType);
+    return orderEntry.getUrls(rootType);
   }
 
   private class OrderEntryProcessor<R> implements Processor<OrderEntry> {
