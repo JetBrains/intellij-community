@@ -193,7 +193,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     return Pair.create(fileToApply, editorToApply);
   }
   
-  public static void chooseActionAndInvoke(PsiFile hostFile, final Editor hostEditor, final IntentionAction action, final String text) {
+  public static boolean chooseActionAndInvoke(PsiFile hostFile, final Editor hostEditor, final IntentionAction action, final String text) {
     final Project project = hostFile.getProject();
 
     Pair<PsiFile, Editor> pair = chooseBetweenHostAndInjected(hostFile, hostEditor, new PairProcessor<PsiFile, Editor>() {
@@ -201,7 +201,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
         return availableFor(psiFile, editor, action);
       }
     });
-    if (pair == null) return;
+    if (pair == null) return false;
     final Editor editorToApply = pair.second;
     final PsiFile fileToApply = pair.first;
 
@@ -227,5 +227,6 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     }
 
     CommandProcessor.getInstance().executeCommand(project, runnable, text, null);
+    return true;
   }
 }
