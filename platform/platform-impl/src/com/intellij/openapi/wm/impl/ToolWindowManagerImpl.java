@@ -306,6 +306,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     final ArrayList<FinalizableCommand> commandsList = new ArrayList<FinalizableCommand>();
 
     myToolWindowsPane = new ToolWindowsPane(myFrame, this);
+    Disposer.register(myProject, myToolWindowsPane);
     ((IdeRootPane)myFrame.getRootPane()).setToolWindowsPane(myToolWindowsPane);
     appendUpdateToolWindowsPaneCmd(commandsList);
 
@@ -355,7 +356,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private void registerToolWindowsFromBeans() {
     ToolWindowEP[] beans = Extensions.getExtensions(ToolWindowEP.EP_NAME);
     for (final ToolWindowEP bean : beans) {
-      final Condition condition = bean.getCondition();
+      final Condition<Project> condition = bean.getCondition();
       if (condition != null && !condition.value(myProject)) {
         continue;
       }
