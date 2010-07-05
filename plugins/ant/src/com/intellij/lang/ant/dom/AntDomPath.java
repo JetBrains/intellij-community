@@ -40,8 +40,8 @@ public abstract class AntDomPath extends AntDomFilesProviderImpl{
   public abstract GenericAttributeValue<PsiFileSystemItem> getLocation();
 
   @Attribute("path")
-  @Convert(value = AntPathConverter.class)
-  public abstract GenericAttributeValue<PsiFileSystemItem> getPath();
+  @Convert(value = AntMultiPathStringConverter.class)
+  public abstract GenericAttributeValue<List<PsiFileSystemItem>> getPath();
 
   @Nullable
   protected AntDomPattern getAntPattern() {
