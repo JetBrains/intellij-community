@@ -40,7 +40,7 @@ public interface CustomDomChildrenDescription extends AbstractDomChildrenDescrip
       }
 
       @Override
-      public PomTarget findDeclaration(@NotNull EvaluatedXmlName name) {
+      public PomTarget findDeclaration(DomElement parent, @NotNull EvaluatedXmlName name) {
         return null;
       }
 
@@ -53,7 +53,7 @@ public interface CustomDomChildrenDescription extends AbstractDomChildrenDescrip
     public abstract Set<EvaluatedXmlName> getCompletionVariants(@NotNull DomElement parent);
 
     @Nullable
-    public abstract PomTarget findDeclaration(@NotNull EvaluatedXmlName name);
+    public abstract PomTarget findDeclaration(DomElement parent, @NotNull EvaluatedXmlName name);
 
     @Nullable
     public abstract PomTarget findDeclaration(@NotNull DomElement child);
