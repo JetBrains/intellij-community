@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsVFSListener;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -30,10 +31,8 @@ import git4idea.commands.GitFileUtils;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.io.File;
 
 /**
  * Git virtual file adapter
@@ -183,14 +182,20 @@ public class GitVFSListener extends VcsVFSListener {
       return;
     }
     gitVcs().runInBackground(new Task.Backgroundable(myProject, GitBundle.getString("remove.removing")) {
-      @Override
       public void run(@NotNull ProgressIndicator indicator) {
+        HashSet<File> filesToRefresh = new HashSet<File>();
         for (Map.Entry<VirtualFile, List<FilePath>> e : sortedFiles.entrySet()) {
           try {
             final VirtualFile root = e.getKey();
+            final File rootFile = new File(root.getPath());
             indicator.setText(root.getPresentableUrl());
             GitFileUtils.delete(myProject, root, e.getValue(), "--ignore-unmatch");
             GitUtil.markFilesDirty(myProject, e.getValue());
+            for (FilePath p : e.getValue()) {
+              for (File f = p.getIOFile(); f != null && !f.equals(rootFile); f = f.getParentFile()) {
+                filesToRefresh.add(f);
+              }
+            }
           }
           catch (final VcsException ex) {
             UIUtil.invokeLaterIfNeeded(new Runnable() {
@@ -200,6 +205,7 @@ public class GitVFSListener extends VcsVFSListener {
             });
           }
         }
+        LocalFileSystem.getInstance().refreshIoFiles(filesToRefresh);
       }
     });
   }
