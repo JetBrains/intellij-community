@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -26,10 +27,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.committed.RunBackgroundable;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier;
@@ -298,26 +296,47 @@ public class QuickMerge {
         return;
       }
 
-      createChangelist();
-      final SvnIntegrateChangesTask task = new SvnIntegrateChangesTask(SvnVcs.getInstance(myProject),
-                                               new WorkingCopyInfo(myWcInfo.getPath(), true), myFactory, sourceUrlUrl, getName(), false, myBranchName);
-      RunBackgroundable.run(task);
+      context.next(new TaskDescriptor(getName(), Where.POOLED) {
+        @Override
+        public void run(ContinuationContext context) {
+          final SvnIntegrateChangesTask task = new SvnIntegrateChangesTask(SvnVcs.getInstance(myProject),
+                                                   new WorkingCopyInfo(myWcInfo.getPath(), true), myFactory, sourceUrlUrl, getName(), false, myBranchName);
+          RunBackgroundable.run(task);
+        }
+      });
+      createChangelist(context);
     }
 
-    private void createChangelist() {
+    private void createChangelist(final ContinuationContext context) {
       final ChangeListManager listManager = ChangeListManager.getInstance(myProject);
       String name = myTitle;
       int i = 1;
+      boolean updateDefaultList = false;
       while (true) {
         final LocalChangeList changeList = listManager.findChangeList(name);
         if (changeList == null) {
+          final LocalChangeList newList = listManager.addChangeList(name, null);
+          listManager.setDefaultChangeList(newList);
+          updateDefaultList = true;
+        }
+        if (changeList.getChanges().isEmpty()) {
+          if (! changeList.isDefault()) {
+            listManager.setDefaultChangeList(changeList);
+            updateDefaultList = true;
+          }
           break;
         }
         name = myTitle + " (" + i + ")";
         ++ i;
       }
-      final LocalChangeList newList = listManager.addChangeList(name, null);
-      listManager.setDefaultChangeList(newList);
+      if (updateDefaultList) {
+        context.suspend();
+        listManager.invokeAfterUpdate(new Runnable() {
+          public void run() {
+            context.ping();
+          }
+        }, InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE_NOT_AWT, "", ModalityState.NON_MODAL);
+      }
     }
   }
 

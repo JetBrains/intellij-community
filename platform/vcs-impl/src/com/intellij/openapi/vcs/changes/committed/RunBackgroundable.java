@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +30,21 @@ public class RunBackgroundable {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       pm.run(task);
     } else {
-      task.run(pm.getProgressIndicator());
+      try {
+        task.run(pm.getProgressIndicator());
+      } catch (ProcessCanceledException e) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            task.onCancel();
+          }
+        });
+        return;
+      }
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          task.onSuccess();
+        }
+      });
     }
   }
 }
