@@ -15,8 +15,10 @@
  */
 package com.intellij.xml.index;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
@@ -55,13 +57,19 @@ public class XmlTagNamesIndex extends XmlIndex<Void> {
       @NotNull
       public Map<String, Void> map(final FileContent inputData) {
         final Collection<String> tags = XsdTagNameBuilder.computeTagNames(new ByteArrayInputStream(inputData.getContent()));
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          final VirtualFile file = inputData.getFile();
+          System.out.println("TagNameIndex: " + file.getPath() + "; id=" + ((VirtualFileWithId)file).getId());
+          System.out.println("Result: " + tags);
+        }
         if (tags != null && !tags.isEmpty()) {
           final HashMap<String, Void> map = new HashMap<String, Void>(tags.size());
           for (String tag : tags) {
             map.put(tag, null);
           }
           return map;
-        } else {
+        }
+        else {
           return Collections.emptyMap();
         }
       }
