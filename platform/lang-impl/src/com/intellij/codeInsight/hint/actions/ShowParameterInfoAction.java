@@ -19,13 +19,14 @@ package com.intellij.codeInsight.hint.actions;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.hint.ShowParameterInfoHandler;
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.lang.Language;
 
-public class ShowParameterInfoAction extends BaseCodeInsightAction{
+public class ShowParameterInfoAction extends BaseCodeInsightAction implements DumbAware {
   public ShowParameterInfoAction() {
     setEnabledInModalContext(true);
   }
@@ -36,7 +37,7 @@ public class ShowParameterInfoAction extends BaseCodeInsightAction{
 
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
     final Language language = PsiUtilBase.getLanguageAtOffset(file, editor.getCaretModel().getOffset());
-    return ShowParameterInfoHandler.getHandlers(language, file.getViewProvider().getBaseLanguage()) != null;
+    return ShowParameterInfoHandler.getHandlers(project, language, file.getViewProvider().getBaseLanguage()) != null;
   }
 
   protected boolean isValidForLookup() {

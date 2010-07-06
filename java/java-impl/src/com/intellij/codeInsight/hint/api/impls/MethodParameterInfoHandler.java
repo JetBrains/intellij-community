@@ -21,6 +21,7 @@ import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.parameterInfo.*;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -39,7 +40,8 @@ import java.util.Set;
 /**
  * @author Maxim.Mossienko
  */
-public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabActionSupport<PsiExpressionList,Object,PsiExpression> {
+public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabActionSupport<PsiExpressionList,Object,PsiExpression>,
+                                                   DumbAware {
   private static final Set<Class> ourArgumentListAllowedParentClassesSet = new HashSet<Class>(
       Arrays.asList(PsiMethodCallExpression.class,PsiNewExpression.class, PsiAnonymousClass.class,PsiEnumConstant.class));
 
