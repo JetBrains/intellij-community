@@ -52,10 +52,10 @@ public class PyStubsTest extends PyLightFixtureTestCase {
       assertEquals("FooClass", pyClass.getName());
       assertEquals("StubStructure.FooClass", pyClass.getQualifiedName());
 
-      final PyTargetExpression[] attrs = pyClass.getClassAttributes();
-      assertEquals(1, attrs.length);
-      assertEquals("staticField", attrs [0].getName());
-      assertTrue(attrs [0].getAssignedQName().matches("deco"));
+      final List<PyTargetExpression> attrs = pyClass.getClassAttributes();
+      assertEquals(1, attrs.size());
+      assertEquals("staticField", attrs.get(0).getName());
+      assertTrue(attrs.get(0).getAssignedQName().matches("deco"));
 
       final PyFunction[] methods = pyClass.getMethods();
       assertEquals(2, methods.length);
@@ -80,9 +80,9 @@ public class PyStubsTest extends PyLightFixtureTestCase {
       assertEquals("deco", deco.getName());
       assertNotParsed(file);
 
-      final PyTargetExpression[] instanceAttrs = pyClass.getInstanceAttributes();
-      assertEquals(1, instanceAttrs.length);
-      assertEquals("instanceField", instanceAttrs [0].getName());
+      final List<PyTargetExpression> instanceAttrs = pyClass.getInstanceAttributes();
+      assertEquals(1, instanceAttrs.size());
+      assertEquals("instanceField", instanceAttrs.get(0).getName());
 
       final List<PyFunction> functions = file.getTopLevelFunctions();
       assertEquals(2, functions.size()); // "deco" and "topLevelFunction"
@@ -226,8 +226,14 @@ public class PyStubsTest extends PyLightFixtureTestCase {
   public void testDunderAll() throws Exception {
     final PyFileImpl file = (PyFileImpl) getTestFile();
     final List<String> all = file.getDunderAll();
-    assertEquals(2, all.size());
-    assertTrue(all.contains("foo") && all.contains("bar"));
+    assertSameElements(all, "foo", "bar");
+    assertNotParsed(file);
+  }
+
+  public void testSlots() throws Exception {
+    final PyFileImpl file = (PyFileImpl) getTestFile();
+    final PyClass pyClass = file.getTopLevelClasses().get(0);
+    assertSameElements(pyClass.getSlots(), "foo", "bar");
     assertNotParsed(file);
   }
 

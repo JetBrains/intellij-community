@@ -6,11 +6,12 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.util.Processor;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * Represents a class declaration in source.
@@ -70,9 +71,9 @@ public interface PyClass extends PsiNamedElement, PyStatement, NameDefiner, PyDo
 
   boolean visitClassAttributes(Processor<PyTargetExpression> processor, boolean inherited);
 
-  PyTargetExpression[] getClassAttributes();
+  List<PyTargetExpression> getClassAttributes();
 
-  PyTargetExpression[] getInstanceAttributes();
+  List<PyTargetExpression> getInstanceAttributes();
 
   /**
    * @return true if the class is new-style and descends from 'object'.
@@ -111,4 +112,13 @@ public interface PyClass extends PsiNamedElement, PyStatement, NameDefiner, PyDo
    * @return true if the class is top-level, false otherwise.
    */
   boolean isTopLevel();
+
+  /**
+   * Returns the list of names in the class' __slots__ attribute, or null if the class
+   * does not define such an attribute.
+   *
+   * @return the list of names or null.
+   */
+  @Nullable
+  List<String> getSlots();
 }
