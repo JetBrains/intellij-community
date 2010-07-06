@@ -17,6 +17,7 @@
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
@@ -41,7 +42,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author yole
@@ -229,5 +232,25 @@ public class SdkConfigurationUtil {
       newSdkName = suggestedName + " (" + (++i) + ")";
     }
     return newSdkName;
+  }
+
+  @Nullable
+  public static String selectSdkHome(final Component parentComponent, final SdkType sdkType){
+    final FileChooserDescriptor descriptor = sdkType.getHomeChooserDescriptor();
+    VirtualFile[] files = FileChooser.chooseFiles(parentComponent, descriptor, getSuggestedSdkRoot(sdkType));
+    if (files.length != 0){
+      final String path = files[0].getPath();
+      if (sdkType.isValidSdkHome(path)) return path;
+      String adjustedPath = sdkType.adjustSelectedSdkHome(path);
+      return sdkType.isValidSdkHome(adjustedPath) ? adjustedPath : null;
+    }
+    return null;
+  }
+
+  @Nullable
+  public static VirtualFile getSuggestedSdkRoot(SdkType sdkType) {
+    final String homepath = sdkType.suggestHomePath();
+    if (homepath == null) return null;
+    return LocalFileSystem.getInstance().findFileByPath(homepath);
   }
 }

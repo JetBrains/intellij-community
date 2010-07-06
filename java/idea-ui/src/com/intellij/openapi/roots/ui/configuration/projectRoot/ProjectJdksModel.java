@@ -29,7 +29,6 @@ import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.projectRoots.ui.NotifiableSdkModel;
-import com.intellij.openapi.projectRoots.ui.SdkEditor;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.ui.MasterDetailsComponent;
@@ -227,7 +226,7 @@ public class ProjectJdksModel implements NotifiableSdkModel {
 
   public void doAdd(final SdkType type, JComponent parent, final Consumer<Sdk> updateTree) {
     myModified = true;
-    final String home = SdkEditor.selectSdkHome(parent, type);
+    final String home = SdkConfigurationUtil.selectSdkHome(parent, type);
     if (home == null) {
       return;
     }
