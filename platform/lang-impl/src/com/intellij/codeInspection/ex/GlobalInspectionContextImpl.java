@@ -95,7 +95,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
 
   private final Map<String, Tools> myTools = new THashMap<String, Tools>();
 
-  private final AnalysisUIOptions myUIOptions;
+  private AnalysisUIOptions myUIOptions;
 
   public GlobalInspectionContextImpl(Project project, NotNullLazyValue<ContentManager> contentManager) {
     myProject = project;
@@ -402,6 +402,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   }
 
   private void launchInspections(final AnalysisScope scope, final InspectionManager manager) {
+    myUIOptions = AnalysisUIOptions.getInstance(myProject).copy();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         PsiDocumentManager.getInstance(myProject).commitAllDocuments();
