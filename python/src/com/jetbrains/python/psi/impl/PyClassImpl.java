@@ -26,7 +26,6 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
-import com.jetbrains.python.psi.resolve.VariantsProcessor;
 import com.jetbrains.python.psi.stubs.PropertyStubStorage;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
@@ -176,6 +175,21 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   @Override
   public List<String> getSlots() {
+    List<String> slots = getOwnSlots();
+    if (slots != null) {
+      return slots;
+    }
+    for(PyClass cls: iterateAncestors()) {
+      slots = ((PyClassImpl) cls).getOwnSlots();
+      if (slots != null) {
+        return slots;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public List<String> getOwnSlots() {
     final PyClassStub stub = getStub();
     if (stub != null) {
       return stub.getSlots();
