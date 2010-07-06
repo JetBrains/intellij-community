@@ -50,7 +50,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -119,7 +118,7 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
       public void uiSettingsChanged(UISettings source) {
         updateTabBorder();
       }
-    });
+    }, this);
 
     Disposer.register(project, this);
   }

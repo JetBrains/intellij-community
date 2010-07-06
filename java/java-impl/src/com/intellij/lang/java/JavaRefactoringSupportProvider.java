@@ -95,7 +95,7 @@ public class JavaRefactoringSupportProvider extends DefaultRefactoringSupportPro
     if (!(elementToRename instanceof PsiVariable)) return false;
     if (nameSuggestionContext != null && nameSuggestionContext.getContainingFile() != elementToRename.getContainingFile()) return false;
     if (!(elementToRename instanceof PsiLocalVariable) && !(elementToRename instanceof PsiParameter)) return false;
-    SearchScope useScope = elementToRename.getUseScope();
+    SearchScope useScope = elementToRename.getManager().getSearchHelper().getUseScope(elementToRename);
     if (!(useScope instanceof LocalSearchScope)) return false;
     PsiElement[] scopeElements = ((LocalSearchScope) useScope).getScope();
     if (scopeElements.length > 1 &&                          // assume there are no elements with use scopes with holes in'em

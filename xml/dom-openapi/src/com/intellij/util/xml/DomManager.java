@@ -164,4 +164,10 @@ public abstract class DomManager implements ModificationTracker {
 
   @Nullable
   public abstract AbstractDomChildrenDescription findChildrenDescription(@NotNull XmlTag templateChildTag, @NotNull DomElement parent);
+
+  @Nullable
+  public final DomFileDescription<?> getDomFileDescription(final XmlFile xmlFile) {
+    final DomFileElement<DomElement> element = getFileElement(xmlFile);
+    return element != null ? element.getFileDescription() : null;
+  }
 }

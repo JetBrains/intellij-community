@@ -74,6 +74,10 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("empty", true, true, true, "boolean"));
   }
 
+  public void testParenthizedOccurence1() throws Exception {
+    doTest(new MockIntroduceVariableHandler("s", true, true, true, "java.lang.String"));
+  }
+
   public void testConflictingField() throws Exception {
     doTest(new MockIntroduceVariableHandler("name", true, false, true, "java.lang.String"));
   }

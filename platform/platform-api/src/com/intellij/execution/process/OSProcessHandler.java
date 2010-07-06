@@ -233,7 +233,7 @@ public class OSProcessHandler extends ProcessHandler {
     private boolean skipLF = false;
 
     private boolean myIsClosed = false;
-    volatile private boolean myIsProcessTerminated = false;
+    private volatile boolean myIsProcessTerminated = false;
     private final Semaphore mySemaphore = new Semaphore();
     private final BlockingQueue<String> myNotificationQueue = new LinkedBlockingQueue<String>();
 
@@ -349,11 +349,14 @@ public class OSProcessHandler extends ProcessHandler {
     @Override
     public void run() {
       while (true) {
-        final ReadProcessRequest request = takeRequest();
+        ReadProcessRequest request = takeRequest();
         if (request == null) return;
 
         processRequest(request);
         if (!request.isClosed()) addRequest(request);
+
+        //noinspection UnusedAssignment
+        request = null;  //leak?
 
         try {
           Thread.sleep(1L);

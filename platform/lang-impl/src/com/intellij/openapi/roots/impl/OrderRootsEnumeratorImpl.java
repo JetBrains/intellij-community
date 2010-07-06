@@ -97,7 +97,7 @@ public class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
           }
         }
         else {
-          Collections.addAll(result, orderEntry.getFiles(myRootType));
+          Collections.addAll(result, myOrderEnumerator.substituteFiles(orderEntry, myRootType));
         }
         return true;
       }
@@ -124,7 +124,7 @@ public class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
           }
         }
         else {
-          Collections.addAll(result, orderEntry.getUrls(myRootType));
+          Collections.addAll(result, myOrderEnumerator.substituteUrls(orderEntry, myRootType));
         }
         return true;
       }

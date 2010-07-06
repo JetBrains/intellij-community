@@ -136,16 +136,8 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
     return getTargetName(p) + suffix;
   }
 
-  protected String getTargetFilePath(MavenProject p) {
-    return getTargetFilePath(p, "." + getTargetExtension(p));
-  }
-
   protected String getTargetFilePath(MavenProject p, String suffix) {
     return makePath(p, p.getBuildDirectory(), getTargetName(p) + suffix);
-  }
-
-  protected String getTargetFilePath(MavenProject p, String subFolder, String suffix) {
-    return makePath(p, p.getBuildDirectory(), subFolder, getTargetName(p) + suffix);
   }
 
   protected String getTargetOutputPath(MavenProject p, String... subFoldersAndFile) {

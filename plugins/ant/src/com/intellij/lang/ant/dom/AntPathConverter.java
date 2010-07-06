@@ -33,7 +33,7 @@ import java.io.File;
  * @author Eugene Zhuravlev
  *         Date: Apr 26, 2010
  */
-public class AntPathConverter extends Converter<PsiFileSystemItem> implements CustomReferenceConverter{
+public class AntPathConverter extends Converter<PsiFileSystemItem> implements CustomReferenceConverter<PsiFileSystemItem>{
   @Override
   public PsiFileSystemItem fromString(@Nullable @NonNls String s, ConvertContext context) {
     final GenericAttributeValue attribValue = context.getInvocationElement().getParentOfType(GenericAttributeValue.class, false);
@@ -82,11 +82,13 @@ public class AntPathConverter extends Converter<PsiFileSystemItem> implements Cu
 
 
   @NotNull
-  public PsiReference[] createReferences(GenericDomValue genericDomValue, PsiElement element, ConvertContext context) {
+  public PsiReference[] createReferences(GenericDomValue<PsiFileSystemItem> genericDomValue, PsiElement element, ConvertContext context) {
     if (genericDomValue instanceof GenericAttributeValue) {
       final GenericAttributeValue attrib = (GenericAttributeValue)genericDomValue;
-      final AntDomFileReferenceSet refSet = new AntDomFileReferenceSet(attrib);
-      return refSet.getAllReferences();
+      if (attrib.getRawText() != null) {
+        final AntDomFileReferenceSet refSet = new AntDomFileReferenceSet(attrib);
+        return refSet.getAllReferences();
+      }
     }
     return PsiReference.EMPTY_ARRAY;
   }

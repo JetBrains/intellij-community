@@ -205,8 +205,6 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     });
   }
 
-  int consoleCount;
-
   private void rebuildTabPopup() {
     myTabs.setPopupGroup(getCellPopupGroup(TAB_POPUP_PLACE), TAB_POPUP_PLACE, true);
 
@@ -228,8 +226,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     final AnAction[] originalActions = original.getChildren(event);
 
 
-    for (int i = 0; i < originalActions.length; i++) {
-      final AnAction each = originalActions[i];
+    for (final AnAction each : originalActions) {
       if (each == focusPlaceholder) {
         final AnAction[] focusActions = ((ActionGroup)each).getChildren(event);
         for (AnAction eachFocus : focusActions) {
@@ -242,7 +239,8 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
           }
         }
 
-      } else {
+      }
+      else {
         group.add(each);
       }
     }
@@ -317,7 +315,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       public void contentAdded(final ContentManagerEvent event) {
         final GridImpl grid = getGridFor(event.getContent(), true);
 
-        grid.add(event.getContent(), false);
+        grid.add(event.getContent());
 
         if (getSelectedGrid() == grid) {
           grid.processAddToUi(false);
@@ -425,15 +423,15 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
   private boolean rebuildCommonActions() {
     boolean hasToolbarContent = false;
-    for (GridImpl each : myCommonActionsPlaceholder.keySet()) {
-      Wrapper eachPlaceholder = myCommonActionsPlaceholder.get(each);
-      DefaultActionGroup groupToBuild;
-      JComponent contextComponent = null;
-      List<Content> contentList = each.getContents();
+    for (Map.Entry<GridImpl, Wrapper> entry : myCommonActionsPlaceholder.entrySet()) {
+      Wrapper eachPlaceholder = entry.getValue();
+      List<Content> contentList = entry.getKey().getContents();
 
       Set<Content> contents = new HashSet<Content>();
       contents.addAll(contentList);
 
+      DefaultActionGroup groupToBuild;
+      JComponent contextComponent = null;
       if (isHorizontalToolbar() && contents.size() == 1) {
         Content content = contentList.get(0);
         groupToBuild = new DefaultActionGroup();
@@ -450,7 +448,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
         groupToBuild = group;
       }
 
-      if (!contents.equals(myContextActions.get(each))) {
+      if (!contents.equals(myContextActions.get(entry.getKey()))) {
         ActionToolbar tb = myActionManager.createActionToolbar(myActionsPlace, groupToBuild, true);
         tb.setTargetComponent(contextComponent);
         eachPlaceholder.setContent(tb.getComponent());
@@ -460,17 +458,17 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
         hasToolbarContent = true;
       }
 
-      myContextActions.put(each, contents);
+      myContextActions.put(entry.getKey(), contents);
     }
 
     return hasToolbarContent;
   }
 
   private boolean rebuildMinimizedActions() {
-    for (GridImpl each : myMinimizedButtonsPlaceholder.keySet()) {
-      Wrapper eachPlaceholder = myMinimizedButtonsPlaceholder.get(each);
+    for (Map.Entry<GridImpl, Wrapper> entry : myMinimizedButtonsPlaceholder.entrySet()) {
+      Wrapper eachPlaceholder = entry.getValue();
       ActionToolbar tb = myActionManager.createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, myMinimizedViewActions, true);
-      ((ActionToolbar)tb).setReservePlaceAutoPopupIcon(false);
+      tb.setReservePlaceAutoPopupIcon(false);
       JComponent minimized = tb.getComponent();
       eachPlaceholder.setContent(minimized);
     }
@@ -484,7 +482,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   private void updateTabsUI(final boolean validateNow) {
     boolean hasToolbarContent = rebuildToolbar();
 
-    java.util.List<TabInfo> tabs = myTabs.getTabs();
+    List<TabInfo> tabs = myTabs.getTabs();
     for (TabInfo each : tabs) {
       hasToolbarContent |= updateTabUI(each);
     }
@@ -498,7 +496,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     }
   }
 
-  private boolean updateTabUI(TabInfo tab) {
+  private static boolean updateTabUI(TabInfo tab) {
     String title = getTabFor(tab).getDisplayName();
     Icon icon = getTabFor(tab).getIcon();
 
@@ -564,11 +562,11 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     return getTabFor(info);
   }
 
-  private TabImpl getTabFor(final TabInfo tab) {
-    return ((TabImpl)tab.getObject());
+  private static TabImpl getTabFor(final TabInfo tab) {
+    return (TabImpl)tab.getObject();
   }
 
-  private GridImpl getGridFor(TabInfo tab) {
+  private static GridImpl getGridFor(TabInfo tab) {
     return (GridImpl)tab.getComponent();
   }
 
@@ -657,7 +655,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   public boolean isStateBeingRestored() {
-    return myRestoreStateRequestors.size() > 0;
+    return !myRestoreStateRequestors.isEmpty();
   }
 
   public void setStateIsBeingRestored(final boolean restoredNow, final Object requestor) {
@@ -670,7 +668,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   public ActionGroup getLayoutActions() {
-    return (ActionGroup)myActionManager.getAction(RunnerContentUi.LAYOUT);
+    return (ActionGroup)myActionManager.getAction(LAYOUT);
   }
 
   public void updateActionsImmediately() {
@@ -703,7 +701,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     myConditionAttractions.put(condition, policy);
   }
 
-  private LayoutAttractionPolicy getOrCreatePolicyFor(String key, Map<String, LayoutAttractionPolicy> map, LayoutAttractionPolicy defaultPolicy) {
+  private static LayoutAttractionPolicy getOrCreatePolicyFor(String key, Map<String, LayoutAttractionPolicy> map, LayoutAttractionPolicy defaultPolicy) {
     LayoutAttractionPolicy policy = map.get(key);
     if (policy == null) {
       policy = defaultPolicy;
@@ -930,7 +928,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     List<TabInfo> tabs = myTabs.getTabs();
     for (TabInfo eachInfos : tabs) {
       GridImpl eachGrid = (GridImpl)eachInfos.getComponent();
-      if (eachGrid.getAttachedContents().size() > 0) {
+      if (!eachGrid.getAttachedContents().isEmpty()) {
         eachInfos.setHidden(false);
       }
     }
@@ -1047,7 +1045,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     });
   }
 
-  private class TwoSideComponent extends NonOpaquePanel {
+  private static class TwoSideComponent extends NonOpaquePanel {
     private TwoSideComponent(JComponent left, JComponent right) {
       setLayout(new CommonToolbarLayout(left, right));
       add(left);
@@ -1097,7 +1095,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
           Dimension leftSize = myLeft.getSize();
           int diffToRightMin = rightMinSize.width - rightWidth;
           if (leftSize.width - diffToRightMin >= leftMinSize.width) {
-            leftSize.width = leftSize.width - diffToRightMin;
+            leftSize.width -= diffToRightMin;
             myLeft.setSize(leftSize);
           }
         }
@@ -1110,7 +1108,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
     }
 
-    private void toMakeVerticallyInCenter(JComponent comp, Container parent) {
+    private static void toMakeVerticallyInCenter(JComponent comp, Container parent) {
       final Rectangle compBounds = comp.getBounds();
       int compHeight = comp.getPreferredSize().height;
       final int parentHeight = parent.getHeight();
@@ -1140,9 +1138,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     ArrayList<AnAction> result = new ArrayList<AnAction>();
     if (myLeftToolbarActions != null) {
       AnAction[] kids = myLeftToolbarActions.getChildren(null);
-      for (AnAction each : kids) {
-        result.add(each);
-      }
+      result.addAll(Arrays.asList(kids));
     }
     return result;
   }
@@ -1165,11 +1161,9 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     result.addAll(myTabs.getTargets(true, false));
     result.addAll(getSelectedGrid().getTargets(onlyVisible));
 
-    Iterator<Wrapper> toolbars = myMinimizedButtonsPlaceholder.values().iterator();
-    while (toolbars.hasNext()) {
-      Wrapper each = toolbars.next();
-      if (!each.isShowing()) continue;
-      JComponent target = each.getTargetComponent();
+    for (Wrapper wrapper : myMinimizedButtonsPlaceholder.values()) {
+      if (!wrapper.isShowing()) continue;
+      JComponent target = wrapper.getTargetComponent();
       if (target instanceof ActionToolbar) {
         ActionToolbar tb = (ActionToolbar)target;
         result.addAll(tb.getTargets(onlyVisible, false));

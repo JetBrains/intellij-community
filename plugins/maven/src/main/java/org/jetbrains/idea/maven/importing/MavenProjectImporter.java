@@ -294,7 +294,7 @@ public class MavenProjectImporter {
     // We have to refresh all the resolved artifacts manually in order to
     // update all the VirtualFilePointers. It is not enough to call
     // VirtualFileManager.refresh() since the newly created files will be only
-    // picked by FS when FileWathcer finishes its work. And in the case of import
+    // picked by FS when FileWatcher finishes its work. And in the case of import
     // it doesn't finish in time.
     // I couldn't manage to write a test for this since behaviour of VirtualFileManager
     // and FileWatcher differs from real-life execution.

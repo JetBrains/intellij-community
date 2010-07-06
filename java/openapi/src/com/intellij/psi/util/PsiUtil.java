@@ -202,7 +202,7 @@ public final class PsiUtil extends PsiUtilBase {
       if (element instanceof PsiClass && !isLocalOrAnonymousClass((PsiClass)element)) {
         break;
       }
-      if (PsiUtilBase.getTemplateLanguageFile(element) != null && element instanceof PsiFile) {
+      if (element instanceof PsiFile && PsiUtilBase.getTemplateLanguageFile(element) != null) {
         return element;
       }
       if (element == scope) break;

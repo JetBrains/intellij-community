@@ -141,7 +141,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   private Boolean myActive;
 
-  private static ThreadLocal<Integer> ourEdtSafe = new ThreadLocal<Integer>();
+  private static final ThreadLocal<Integer> ourEdtSafe = new ThreadLocal<Integer>();
 
   protected void boostrapPicoContainer() {
     super.boostrapPicoContainer();

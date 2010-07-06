@@ -106,7 +106,7 @@ public class TestCaseLoader {
         }
       }
     }
-    System.out.println("Using test group: [" + (myTestGroupName == null ? "" :  myTestGroupName) + "]");
+    System.out.println("Using test group: [" + myTestGroupName + "]");
   }
 
   /*
