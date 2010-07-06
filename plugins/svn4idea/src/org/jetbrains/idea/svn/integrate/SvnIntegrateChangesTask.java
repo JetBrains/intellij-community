@@ -225,6 +225,8 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
       }
     }
 
+    final Collection<FilePath> files = gatherChangedPaths();
+    VcsDirtyScopeManager.getInstance(myProject).filePathsDirty(files, null);
     prepareAndShowResults();
   }
 
@@ -301,17 +303,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
   }
 
   private void showLocalCommit() {
-    final Collection<FilePath> files = new ArrayList<FilePath>();
-
-    UpdateFilesHelper.iterateFileGroupFiles(myAccomulatedFiles.getUpdatedFiles(), new UpdateFilesHelper.Callback() {
-      public void onFile(final String filePath, final String groupId) {
-        final FilePath file = FilePathImpl.create(new File(filePath));
-        files.add(file);
-      }
-    });
-    if (myMergeTarget != null) {
-      files.add(myMergeTarget);
-    }
+    final Collection<FilePath> files = gatherChangedPaths();
 
     // for changes to be detected, we need switch to background change list manager update thread and back to dispatch thread
     // so callback is used; ok to be called after VCS update markup closed: no remote operations
@@ -334,6 +326,21 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
           vcsDirtyScopeManager.filePathsDirty(files, null);
         }
       }, null);
+  }
+
+  private Collection<FilePath> gatherChangedPaths() {
+    final Collection<FilePath> files = new ArrayList<FilePath>();
+
+    UpdateFilesHelper.iterateFileGroupFiles(myAccomulatedFiles.getUpdatedFiles(), new UpdateFilesHelper.Callback() {
+      public void onFile(final String filePath, final String groupId) {
+        final FilePath file = FilePathImpl.create(new File(filePath));
+        files.add(file);
+      }
+    });
+    if (myMergeTarget != null) {
+      files.add(myMergeTarget);
+    }
+    return files;
   }
 
   private void showAlienCommit() {
