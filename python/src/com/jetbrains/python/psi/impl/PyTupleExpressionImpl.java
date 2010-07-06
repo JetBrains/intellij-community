@@ -34,18 +34,6 @@ public class PyTupleExpressionImpl extends PyElementImpl implements PyTupleExpre
     return childrenToPsi(PyElementTypes.EXPRESSIONS, PyExpression.EMPTY_ARRAY);
   }
 
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                                     @NotNull ResolveState substitutor,
-                                     PsiElement lastParent,
-                                     @NotNull PsiElement place) {
-    for (PyExpression expression : getElements()) {
-      if (expression != lastParent && !expression.processDeclarations(processor, substitutor, lastParent, place)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   public PyType getType(@NotNull TypeEvalContext context) {
     final PyExpression[] elements = getElements();
     final PyType[] types = new PyType[elements.length];

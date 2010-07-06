@@ -28,20 +28,4 @@ public class PyWhileStatementImpl extends PyPartitionedElementImpl implements Py
   public PyElsePart getElsePart() {
     return (PyElsePart)getPart(PyElementTypes.ELSE_PART);
   }
-
-  @Override public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                                                 @NotNull ResolveState substitutor,
-                                                 PsiElement lastParent,
-                                                 @NotNull PsiElement place)
-    {
-      if (lastParent != null) return true;
-
-      for (PyStatementPart part : getParts()) {
-        PyStatementList stmtList = part.getStatementList();
-        if (stmtList != null) {
-            return stmtList.processDeclarations(processor, substitutor, null, place);
-        }
-      }
-      return true;
-    }
 }
