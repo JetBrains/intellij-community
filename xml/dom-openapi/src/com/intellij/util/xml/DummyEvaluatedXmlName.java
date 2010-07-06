@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.xml.impl;
+package com.intellij.util.xml;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
-import com.intellij.util.xml.XmlName;
-import com.intellij.util.xml.EvaluatedXmlName;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -30,7 +28,11 @@ public class DummyEvaluatedXmlName implements EvaluatedXmlName {
   private final String myNamespace;
 
   public DummyEvaluatedXmlName(final String localName, final String namespace) {
-    myXmlName = new XmlName(localName);
+    this(new XmlName(localName), namespace);
+  }
+
+  public DummyEvaluatedXmlName(final XmlName xmlName, final String namespace) {
+    myXmlName = xmlName;
     myNamespace = namespace;
   }
 

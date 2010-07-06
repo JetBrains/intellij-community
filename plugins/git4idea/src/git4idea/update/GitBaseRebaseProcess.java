@@ -145,88 +145,78 @@ public abstract class GitBaseRebaseProcess {
             }
             final Ref<Boolean> cancelled = new Ref<Boolean>(false);
             final Ref<Throwable> ex = new Ref<Throwable>();
+            saveRootChangesBeforeUpdate(root);
             try {
-              saveRootChangesBeforeUpdate(root);
+              markStart(root);
               try {
-                markStart(root);
+                GitLineHandler h = makeStartHandler(root);
+                RebaseConflictDetector rebaseConflictDetector = new RebaseConflictDetector();
+                h.addLineListener(rebaseConflictDetector);
                 try {
-                  GitLineHandler h = makeStartHandler(root);
-                  RebaseConflictDetector rebaseConflictDetector = new RebaseConflictDetector();
-                  h.addLineListener(rebaseConflictDetector);
-                  try {
-                    GitHandlerUtil
-                      .doSynchronouslyWithExceptions(h, progressIndicator, GitHandlerUtil.formatOperationName("Updating", root));
-                  }
-                  finally {
-                    if (!rebaseConflictDetector.isRebaseConflict()) {
-                      myExceptions.addAll(h.errors());
-                    }
-                    cleanupHandler(root, h);
-                  }
-                  while (rebaseConflictDetector.isRebaseConflict() && !cancelled.get()) {
-                    mergeFiles(root, cancelled, ex);
-                    //noinspection ThrowableResultOfMethodCallIgnored
-                    if (ex.get() != null) {
-                      //noinspection ThrowableResultOfMethodCallIgnored
-                      throw GitUtil.rethrowVcsException(ex.get());
-                    }
-                    checkLocallyModified(root, cancelled, ex);
-                    //noinspection ThrowableResultOfMethodCallIgnored
-                    if (ex.get() != null) {
-                      //noinspection ThrowableResultOfMethodCallIgnored
-                      throw GitUtil.rethrowVcsException(ex.get());
-                    }
-                    if (cancelled.get()) {
-                      break;
-                    }
-                    doRebase(progressIndicator, root, rebaseConflictDetector, "--continue");
-                    final Ref<Integer> result = new Ref<Integer>();
-                    noChangeLoop:
-                    while (rebaseConflictDetector.isNoChange()) {
-                      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-                        public void run() {
-                          int rc = Messages.showDialog(myProject, GitBundle.message("update.rebase.no.change", root.getPresentableUrl()),
-                                                       GitBundle.getString("update.rebase.no.change.title"),
-                                                       new String[]{GitBundle.getString("update.rebase.no.change.skip"),
-                                                         GitBundle.getString("update.rebase.no.change.retry"),
-                                                         GitBundle.getString("update.rebase.no.change.cancel")}, 0,
-                                                       Messages.getErrorIcon());
-                          result.set(rc);
-                        }
-                      });
-                      switch (result.get()) {
-                        case 0:
-                          doRebase(progressIndicator, root, rebaseConflictDetector, "--skip");
-                          continue noChangeLoop;
-                        case 1:
-                          continue noChangeLoop;
-                        case 2:
-                          cancelled.set(true);
-                          break noChangeLoop;
-                      }
-                    }
-                  }
-                  if (cancelled.get()) {
-                    //noinspection ThrowableInstanceNeverThrown
-                    myExceptions.add(new VcsException("The update process was cancelled for " + root.getPresentableUrl()));
-                    doRebase(progressIndicator, root, rebaseConflictDetector, "--abort");
-                  }
+                  GitHandlerUtil
+                    .doSynchronouslyWithExceptions(h, progressIndicator, GitHandlerUtil.formatOperationName("Updating", root));
                 }
                 finally {
-                  markEnd(root, cancelled.get());
+                  if (!rebaseConflictDetector.isRebaseConflict()) {
+                    myExceptions.addAll(h.errors());
+                  }
+                  cleanupHandler(root, h);
+                }
+                while (rebaseConflictDetector.isRebaseConflict() && !cancelled.get()) {
+                  mergeFiles(root, cancelled, ex, true);
+                  //noinspection ThrowableResultOfMethodCallIgnored
+                  if (ex.get() != null) {
+                    //noinspection ThrowableResultOfMethodCallIgnored
+                    throw GitUtil.rethrowVcsException(ex.get());
+                  }
+                  checkLocallyModified(root, cancelled, ex);
+                  //noinspection ThrowableResultOfMethodCallIgnored
+                  if (ex.get() != null) {
+                    //noinspection ThrowableResultOfMethodCallIgnored
+                    throw GitUtil.rethrowVcsException(ex.get());
+                  }
+                  if (cancelled.get()) {
+                    break;
+                  }
+                  doRebase(progressIndicator, root, rebaseConflictDetector, "--continue");
+                  final Ref<Integer> result = new Ref<Integer>();
+                  noChangeLoop:
+                  while (rebaseConflictDetector.isNoChange()) {
+                    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+                      public void run() {
+                        int rc = Messages.showDialog(myProject, GitBundle.message("update.rebase.no.change", root.getPresentableUrl()),
+                                                     GitBundle.getString("update.rebase.no.change.title"),
+                                                     new String[]{GitBundle.getString("update.rebase.no.change.skip"),
+                                                       GitBundle.getString("update.rebase.no.change.retry"),
+                                                       GitBundle.getString("update.rebase.no.change.cancel")}, 0,
+                                                     Messages.getErrorIcon());
+                        result.set(rc);
+                      }
+                    });
+                    switch (result.get()) {
+                      case 0:
+                        doRebase(progressIndicator, root, rebaseConflictDetector, "--skip");
+                        continue noChangeLoop;
+                      case 1:
+                        continue noChangeLoop;
+                      case 2:
+                        cancelled.set(true);
+                        break noChangeLoop;
+                    }
+                  }
+                }
+                if (cancelled.get()) {
+                  //noinspection ThrowableInstanceNeverThrown
+                  myExceptions.add(new VcsException("The update process was cancelled for " + root.getPresentableUrl()));
+                  doRebase(progressIndicator, root, rebaseConflictDetector, "--abort");
                 }
               }
               finally {
-                restoreRootChangesAfterUpdate(root);
+                markEnd(root, cancelled.get());
               }
             }
             finally {
-              mergeFiles(root, cancelled, ex);
-              //noinspection ThrowableResultOfMethodCallIgnored
-              if (ex.get() != null) {
-                //noinspection ThrowableResultOfMethodCallIgnored
-                myExceptions.add(GitUtil.rethrowVcsException(ex.get()));
-              }
+              restoreRootChangesAfterUpdate(root, cancelled);
             }
           }
           catch (VcsException ex) {
@@ -358,13 +348,32 @@ public abstract class GitBaseRebaseProcess {
   /**
    * Restore per-root changes after update
    *
-   * @param root the just updated root
+   * @param root      the just updated root
+   * @param cancelled
    */
-  private void restoreRootChangesAfterUpdate(VirtualFile root) {
+  private void restoreRootChangesAfterUpdate(VirtualFile root, Ref<Boolean> cancelled) {
+    final Ref<Throwable> ex = new Ref<Throwable>();
+    if (new File(root.getPath(), "MERGE_HEAD").exists()) {
+      // in case of unfinished merge offer direct merging
+      mergeFiles(root, cancelled, ex, false);
+      //noinspection ThrowableResultOfMethodCallIgnored
+      if (ex.get() != null) {
+        //noinspection ThrowableResultOfMethodCallIgnored
+        myExceptions.add(GitUtil.rethrowVcsException(ex.get()));
+      }
+    }
     if (stashCreated && getUpdatePolicy() == GitVcsSettings.UpdateChangesPolicy.STASH) {
       myProgressIndicator.setText(GitHandlerUtil.formatOperationName("Unstashing changes to", root));
       unstash(root);
+      // after unstash, offer reverse merge
+      mergeFiles(root, cancelled, ex, true);
+      //noinspection ThrowableResultOfMethodCallIgnored
+      if (ex.get() != null) {
+        //noinspection ThrowableResultOfMethodCallIgnored
+        myExceptions.add(GitUtil.rethrowVcsException(ex.get()));
+      }
     }
+
   }
 
   /**
@@ -564,14 +573,16 @@ public abstract class GitBaseRebaseProcess {
    * @param root      the project root
    * @param cancelled the cancelled indicator
    * @param ex        the exception holder
+   * @param reverse   if true, reverse merge provider will be used
    */
-  private void mergeFiles(final VirtualFile root, final Ref<Boolean> cancelled, final Ref<Throwable> ex) {
+  private void mergeFiles(final VirtualFile root, final Ref<Boolean> cancelled, final Ref<Throwable> ex, final boolean reverse) {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       public void run() {
         try {
           List<VirtualFile> affectedFiles = GitChangeUtils.unmergedFiles(myProject, root);
           while (affectedFiles.size() != 0) {
-            AbstractVcsHelper.getInstance(myProject).showMergeDialog(affectedFiles, myVcs.getMergeProvider());
+            AbstractVcsHelper.getInstance(myProject)
+              .showMergeDialog(affectedFiles, reverse ? myVcs.getReverseMergeProvider() : myVcs.getMergeProvider());
             affectedFiles = GitChangeUtils.unmergedFiles(myProject, root);
             if (affectedFiles.size() != 0) {
               int result = Messages

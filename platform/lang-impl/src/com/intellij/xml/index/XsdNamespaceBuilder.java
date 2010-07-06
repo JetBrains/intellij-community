@@ -64,7 +64,7 @@ public class XsdNamespaceBuilder extends NanoXmlUtil.IXMLBuilderAdapter {
   public void startElement(@NonNls final String name, @NonNls final String nsPrefix, @NonNls final String nsURI, final String systemID, final int lineNr)
       throws Exception {
 
-    if (nsPrefix == null || !nsURI.equals("http://www.w3.org/2001/XMLSchema") || !name.equals("schema")) {
+    if ( !nsURI.equals("http://www.w3.org/2001/XMLSchema") || !name.equals("schema")) {
       stop();
     }
   }

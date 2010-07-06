@@ -48,11 +48,11 @@ import java.io.IOException;
 import java.util.*;
 
 public class GitUsersComponent {
-  private final static int ourPackSize = 50;
+  private static final int ourPackSize = 50;
   private static final int ourBackInterval = 60 * 1000;
   private static final int ourForwardInterval = 100 * 60 * 1000;
   
-  private final static Logger LOG = Logger.getInstance("#git4idea.history.GitUsersComponent");
+  private static final Logger LOG = Logger.getInstance("#git4idea.history.GitUsersComponent");
 
   private final Object myLock;
   private PersistentHashMap<String, UsersData> myState;
@@ -60,8 +60,8 @@ public class GitUsersComponent {
 
   // activate-deactivate
   private volatile boolean myIsActive;
-  private ControlledCycle myControlledCycle;
-  private VcsListener myVcsListener;
+  private final ControlledCycle myControlledCycle;
+  private final VcsListener myVcsListener;
   private final GitVcs myVcs;
   private final ProjectLevelVcsManager myManager;
   private final File myFile;
@@ -181,48 +181,11 @@ public class GitUsersComponent {
     myIsActive = false;
   }
 
-  private DataExternalizer<UsersData> createExternalizer() {
-    return new DataExternalizer<UsersData>() {
-      public void save(DataOutput out, UsersData value) throws IOException {
-        final UpdatedReference<Long> closer = value.getCloserDate();
-        out.writeLong(closer.getT());
-        out.writeLong(closer.getTime());
-
-        final UpdatedReference<Long> earlier = value.getEarlierDate();
-        out.writeLong(earlier.getT());
-        out.writeLong(earlier.getTime());
-
-        final List<String> users = value.getUsers();
-        out.writeInt(users.size());
-        for (String user : users) {
-          out.writeUTF(user);
-        }
-
-        out.writeBoolean(value.isStartReached());
-      }
-
-      public UsersData read(DataInput in) throws IOException {
-        final UsersData data = new UsersData();
-        final long closerDate = in.readLong();
-        final long closerUpdate = in.readLong();
-        data.setCloserDate(new UpdatedReference<Long>(closerDate, closerUpdate));
-        final long earlierDate = in.readLong();
-        final long earlierUpdate = in.readLong();
-        data.setEarlierDate(new UpdatedReference<Long>(earlierDate, earlierUpdate));
-
-        final List<String> users = new LinkedList<String>();
-        final int size = in.readInt();
-        for (int i = 0; i < size; i++) {
-          users.add(in.readUTF());
-        }
-        data.addUsers(users);
-        data.setStartReached(in.readBoolean());
-        return data;
-      }
-    };
+  private static DataExternalizer<UsersData> createExternalizer() {
+    return new UsersDataExternalizer();
   }
 
-  private class UsersData {
+  private static class UsersData {
     private UpdatedReference<Long> myCloserDate;
     private UpdatedReference<Long> myEarlierDate;
     private final List<String> myUsers;
@@ -279,7 +242,7 @@ public class GitUsersComponent {
       try {
         final Set<String> newData = new HashSet<String>();
         boolean result = false;
-        if ((! myStartReached) && (myForceUpdate || myEarlierDate.isTimeToUpdate(ourBackInterval))) {
+        if (!myStartReached && (myForceUpdate || myEarlierDate.isTimeToUpdate(ourBackInterval))) {
           result = true;
           lookBack(lowLevelAccess, newData, atomicSectionsAware);
         }
@@ -352,6 +315,45 @@ public class GitUsersComponent {
       catch (VcsException e) {
         LOG.info(e);
       }
+    }
+  }
+
+  private static class UsersDataExternalizer implements DataExternalizer<UsersData> {
+    public void save(DataOutput out, UsersData value) throws IOException {
+      final UpdatedReference<Long> closer = value.getCloserDate();
+      out.writeLong(closer.getT());
+      out.writeLong(closer.getTime());
+
+      final UpdatedReference<Long> earlier = value.getEarlierDate();
+      out.writeLong(earlier.getT());
+      out.writeLong(earlier.getTime());
+
+      final List<String> users = value.getUsers();
+      out.writeInt(users.size());
+      for (String user : users) {
+        out.writeUTF(user);
+      }
+
+      out.writeBoolean(value.isStartReached());
+    }
+
+    public UsersData read(DataInput in) throws IOException {
+      final UsersData data = new UsersData();
+      final long closerDate = in.readLong();
+      final long closerUpdate = in.readLong();
+      data.setCloserDate(new UpdatedReference<Long>(closerDate, closerUpdate));
+      final long earlierDate = in.readLong();
+      final long earlierUpdate = in.readLong();
+      data.setEarlierDate(new UpdatedReference<Long>(earlierDate, earlierUpdate));
+
+      final List<String> users = new LinkedList<String>();
+      final int size = in.readInt();
+      for (int i = 0; i < size; i++) {
+        users.add(in.readUTF());
+      }
+      data.addUsers(users);
+      data.setStartReached(in.readBoolean());
+      return data;
     }
   }
 }

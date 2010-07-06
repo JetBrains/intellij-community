@@ -19,6 +19,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.Alarm;
@@ -53,7 +54,8 @@ public final class FloatingDecorator extends JDialog{
   private final Alarm myFrameTicker; // Determines moments of rendering of next frame
   private final MyAnimator myAnimator; // Renders alpha ratio
   private int myCurrentFrame; // current frame in transparency animation
-  private float myStartRatio, myEndRatio; // start and end alpha ratio for transparency animation
+  private float myStartRatio;
+  private float myEndRatio; // start and end alpha ratio for transparency animation
 
 
   FloatingDecorator(final IdeFrameImpl owner,final WindowInfoImpl info,final InternalDecorator internalDecorator){
@@ -118,14 +120,13 @@ public final class FloatingDecorator extends JDialog{
     }
     paint(getGraphics()); // This prevents annoying flick
 
-    //
     setFocusableWindowState(true);
 
-    uiSettings.addUISettingsListener(myUISettingsListener);
+    uiSettings.addUISettingsListener(myUISettingsListener, myDelayAlarm);
   }
 
   public final void dispose(){
-    UISettings.getInstance().removeUISettingsListener(myUISettingsListener);
+    Disposer.dispose(myDelayAlarm);
     super.dispose();
   }
 

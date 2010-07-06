@@ -131,5 +131,6 @@ public abstract class GitTextHandler extends GitHandler {
    */
   protected void waitForProcess() {
     myHandler.waitFor();
+    myHandler = null;
   }
 }

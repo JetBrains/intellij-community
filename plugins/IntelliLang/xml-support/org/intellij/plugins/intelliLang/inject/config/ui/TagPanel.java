@@ -28,7 +28,7 @@ import org.intellij.lang.regexp.RegExpLanguage;
 import org.intellij.plugins.intelliLang.inject.config.AbstractTagInjection;
 import org.intellij.plugins.intelliLang.inject.config.JspSupportProxy;
 import org.intellij.plugins.intelliLang.inject.config.XmlTagInjection;
-import org.intellij.plugins.intelliLang.util.LanguageTextField;
+import com.intellij.ui.LanguageTextField;
 
 import javax.swing.*;
 import java.util.ArrayList;

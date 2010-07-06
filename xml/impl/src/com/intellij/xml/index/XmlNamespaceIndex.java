@@ -18,6 +18,7 @@ package com.intellij.xml.index;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileContent;
@@ -47,6 +48,13 @@ public class XmlNamespaceIndex extends XmlIndex<String> {
     List<IndexedRelevantResource<String, String>> resources = IndexedRelevantResource.getResources(NAME, namespace, module, project);
     Collections.sort(resources);
     return resources;
+  }
+
+  public static List<IndexedRelevantResource<String, String>> getAllResources(@NotNull final Module module) {
+    return getAllResources(module, null);
+  }
+  public static List<IndexedRelevantResource<String, String>> getAllResources(@NotNull final Module module, @Nullable NullableFunction<List<IndexedRelevantResource<String, String>>, IndexedRelevantResource<String, String>> chooser) {
+    return IndexedRelevantResource.getAllResources(NAME, module, chooser);
   }
   
   private static final ID<String,String> NAME = ID.create("XmlNamespaces");

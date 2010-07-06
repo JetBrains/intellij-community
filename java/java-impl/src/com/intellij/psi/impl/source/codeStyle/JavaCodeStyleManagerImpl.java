@@ -585,7 +585,11 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
               || CREATE_PREFIX.equals(firstWord)) {
             if (words.length > 1) {
               final String propertyName = methodName.substring(firstWord.length());
-              final String[] names = getSuggestionsByName(propertyName, variableKind, false);
+              String[] names = getSuggestionsByName(propertyName, variableKind, false);
+              final PsiExpression qualifierExpression = methodExpr.getQualifierExpression();
+              if (qualifierExpression != null) {
+                names = ArrayUtil.append(names, changeIfNotIdentifier(qualifierExpression.getText() + StringUtil.capitalize(propertyName)));
+              }
               return new NamesByExprInfo(propertyName, names);
             }
           }

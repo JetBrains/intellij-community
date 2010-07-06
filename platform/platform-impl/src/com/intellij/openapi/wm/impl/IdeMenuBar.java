@@ -20,13 +20,15 @@ import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.actionSystem.impl.WeakTimerListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.util.Disposer;
 
 import javax.swing.*;
 import java.awt.*;
@@ -44,13 +46,12 @@ public class IdeMenuBar extends JMenuBar{
   private ArrayList<AnAction> myNewVisibleActions;
   private final MenuItemPresentationFactory myPresentationFactory;
   private final DataManager myDataManager;
-  private final ActionManager myActionManager;
-  private UISettingsListener myUISettingsListener;
+  private final ActionManagerEx myActionManager;
+  private final Disposable myDisposable = Disposer.newDisposable();
 
-  public IdeMenuBar(ActionManager actionManager, DataManager dataManager, KeymapManager keymapManager){
+  public IdeMenuBar(ActionManagerEx actionManager, DataManager dataManager){
     myActionManager = actionManager;
     myTimerListener=new MyTimerListener();
-    //(DefaultActionGroup)actionManager.getAction(IdeActions.GROUP_MAIN_MENU);
     myVisibleActions = new ArrayList<AnAction>();
     myNewVisibleActions = new ArrayList<AnAction>();
     myPresentationFactory = new MenuItemPresentationFactory();
@@ -64,22 +65,22 @@ public class IdeMenuBar extends JMenuBar{
     super.addNotify();
     updateMenuActions();
     // Add updater for menus
-    final ActionManagerEx actionManager=(ActionManagerEx)myActionManager;
-    actionManager.addTimerListener(1000,new WeakTimerListener(actionManager,myTimerListener));
-    myUISettingsListener = new UISettingsListener() {
+    myActionManager.addTimerListener(1000,new WeakTimerListener(myActionManager,myTimerListener));
+    UISettingsListener UISettingsListener = new UISettingsListener() {
       public void uiSettingsChanged(final UISettings source) {
         updateMnemonicsVisibility();
         myPresentationFactory.reset();
       }
     };
-    UISettings.getInstance().addUISettingsListener(myUISettingsListener);
+    UISettings.getInstance().addUISettingsListener(UISettingsListener, myDisposable);
+    Disposer.register(ApplicationManager.getApplication(), myDisposable);
   }
 
   /**
    * Invoked when enclosed frame is being disposed.
    */
   public void removeNotify(){
-    UISettings.getInstance().removeUISettingsListener(myUISettingsListener);
+    Disposer.dispose(myDisposable);
     super.removeNotify();
   }
 
@@ -92,7 +93,7 @@ public class IdeMenuBar extends JMenuBar{
     if (!myNewVisibleActions.equals(myVisibleActions)) {
       // should rebuild UI
 
-      final boolean changeBarVisibility = myNewVisibleActions.size() == 0 || myVisibleActions.size() == 0;
+      final boolean changeBarVisibility = myNewVisibleActions.isEmpty() || myVisibleActions.isEmpty();
 
       final ArrayList<AnAction> temp = myVisibleActions;
       myVisibleActions = myNewVisibleActions;
@@ -172,7 +173,7 @@ public class IdeMenuBar extends JMenuBar{
     }
 
     public void run(){
-      if(!IdeMenuBar.this.isShowing()){
+      if(!isShowing()){
         return;
       }
 

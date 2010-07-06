@@ -21,7 +21,7 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.util.Consumer;
 import org.intellij.lang.regexp.RegExpLanguage;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
-import org.intellij.plugins.intelliLang.util.LanguageTextField;
+import com.intellij.ui.LanguageTextField;
 
 import javax.swing.*;
 

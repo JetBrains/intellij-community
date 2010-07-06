@@ -85,9 +85,9 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
     if (ref == null) return true;
 
     String qName = ref.getCanonicalText();
-    if (qName.indexOf('.') <= 0) return true;
 
     if (isStatic()) {
+      if (qName.indexOf('.') <= 0) return true;
       final int i = qName.lastIndexOf('.');
       if (i > 0) {
         final String classQName = qName.substring(0, i);

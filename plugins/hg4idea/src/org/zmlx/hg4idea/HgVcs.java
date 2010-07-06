@@ -341,4 +341,7 @@ public class HgVcs extends AbstractVcs {
     return globalSettings.getHgExecutable();
   }
 
+  public HgGlobalSettings getGlobalSettings() {
+    return globalSettings;
+  }
 }

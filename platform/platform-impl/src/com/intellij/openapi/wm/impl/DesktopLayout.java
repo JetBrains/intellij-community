@@ -20,6 +20,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -34,11 +35,11 @@ public final class DesktopLayout implements JDOMExternalizable {
   /**
    * Map between <code>id</code>s and registered <code>WindowInfo</code>s.
    */
-  private final com.intellij.util.containers.HashMap<String, WindowInfoImpl> myRegisteredId2Info;
+  private final HashMap<String, WindowInfoImpl> myRegisteredId2Info;
   /**
    * Map between <code>id</code>s and unregistered <code>WindowInfo</code>s.
    */
-  private final com.intellij.util.containers.HashMap<String, WindowInfoImpl> myUnregisteredId2Info;
+  private final HashMap<String, WindowInfoImpl> myUnregisteredId2Info;
   /**
    *
    */
@@ -64,8 +65,8 @@ public final class DesktopLayout implements JDOMExternalizable {
   @NonNls public static final String ID_ATTR = "id";
 
   public DesktopLayout() {
-    myRegisteredId2Info = new com.intellij.util.containers.HashMap<String, WindowInfoImpl>();
-    myUnregisteredId2Info = new com.intellij.util.containers.HashMap<String, WindowInfoImpl>();
+    myRegisteredId2Info = new HashMap<String, WindowInfoImpl>();
+    myUnregisteredId2Info = new HashMap<String, WindowInfoImpl>();
   }
 
   /**
@@ -75,18 +76,18 @@ public final class DesktopLayout implements JDOMExternalizable {
    */
   public final void copyFrom(final DesktopLayout layout) {
     final WindowInfoImpl[] infos = layout.getAllInfos();
-    for (int i = 0; i < infos.length; i++) {
-      WindowInfoImpl info = myRegisteredId2Info.get(infos[i].getId());
+    for (WindowInfoImpl info1 : infos) {
+      WindowInfoImpl info = myRegisteredId2Info.get(info1.getId());
       if (info != null) {
-        info.copyFrom(infos[i]);
+        info.copyFrom(info1);
         continue;
       }
-      info = myUnregisteredId2Info.get(infos[i].getId());
+      info = myUnregisteredId2Info.get(info1.getId());
       if (info != null) {
-        info.copyFrom(infos[i]);
+        info.copyFrom(info1);
       }
       else {
-        myUnregisteredId2Info.put(infos[i].getId(), infos[i].copy());
+        myUnregisteredId2Info.put(info1.getId(), info1.copy());
       }
     }
     // invalidate caches
@@ -227,7 +228,7 @@ public final class DesktopLayout implements JDOMExternalizable {
    * @return comparator which compares <code>StripeButtons</code> in the stripe with
    *         specified <code>anchor</code>.
    */
-  final Comparator comparator(final ToolWindowAnchor anchor) {
+  final Comparator<StripeButton> comparator(final ToolWindowAnchor anchor) {
     return new MyStripeButtonComparator(anchor);
   }
 
@@ -239,8 +240,7 @@ public final class DesktopLayout implements JDOMExternalizable {
   private int getMaxOrder(final ToolWindowAnchor anchor) {
     int res = -1;
     final WindowInfoImpl[] infos = getAllInfos();
-    for (int i = 0; i < infos.length; i++) {
-      final WindowInfoImpl info = infos[i];
+    for (final WindowInfoImpl info : infos) {
       if (anchor == info.getAnchor() && res < info.getOrder()) {
         res = info.getOrder();
       }
@@ -284,9 +284,9 @@ public final class DesktopLayout implements JDOMExternalizable {
     info.setSplit(split);
   }
 
-  public final void readExternal(final org.jdom.Element layoutElement) {
-    for (Iterator i = layoutElement.getChildren().iterator(); i.hasNext();) {
-      final Element e = (Element)i.next();
+  public final void readExternal(final Element layoutElement) {
+    for (Object o : layoutElement.getChildren()) {
+      final Element e = (Element)o;
       if (WindowInfoImpl.TAG.equals(e.getName())) {
         final WindowInfoImpl info = new WindowInfoImpl(e.getAttributeValue(ID_ATTR));
         info.readExternal(e);
@@ -300,9 +300,9 @@ public final class DesktopLayout implements JDOMExternalizable {
 
   public final void writeExternal(final Element layoutElement) {
     final WindowInfoImpl[] infos = getAllInfos();
-    for (int i = 0; i < infos.length; i++) {
+    for (WindowInfoImpl info : infos) {
       final Element element = new Element(WindowInfoImpl.TAG);
-      infos[i].writeExternal(element);
+      info.writeExternal(element);
       layoutElement.addContent(element);
     }
   }
@@ -328,25 +328,24 @@ public final class DesktopLayout implements JDOMExternalizable {
     }
   }
 
-  private final class MyStripeButtonComparator implements Comparator {
-    private final com.intellij.util.containers.HashMap<String, WindowInfoImpl> myId2Info;
+  private final class MyStripeButtonComparator implements Comparator<StripeButton> {
+    private final HashMap<String, WindowInfoImpl> myId2Info;
 
     public MyStripeButtonComparator(final ToolWindowAnchor anchor) {
-      myId2Info = new com.intellij.util.containers.HashMap<String, WindowInfoImpl>();
+      myId2Info = new HashMap<String, WindowInfoImpl>();
       final WindowInfoImpl[] infos = getInfos();
-      for (int i = 0; i < infos.length; i++) {
-        final WindowInfoImpl info = infos[i];
+      for (final WindowInfoImpl info : infos) {
         if (anchor == info.getAnchor()) {
           myId2Info.put(info.getId(), info.copy());
         }
       }
     }
 
-    public final int compare(final Object obj1, final Object obj2) {
-      final WindowInfoImpl info1 = myId2Info.get(((StripeButton)obj1).getWindowInfo().getId());
+    public final int compare(final StripeButton obj1, final StripeButton obj2) {
+      final WindowInfoImpl info1 = myId2Info.get(obj1.getWindowInfo().getId());
       final int order1 = info1 != null ? info1.getOrder() : 0;
 
-      final WindowInfoImpl info2 = myId2Info.get(((StripeButton)obj2).getWindowInfo().getId());
+      final WindowInfoImpl info2 = myId2Info.get(obj2.getWindowInfo().getId());
       final int order2 = info2 != null ? info2.getOrder() : 0;
 
       return order1 - order2;
