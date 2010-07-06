@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.dsl
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
 import org.jetbrains.plugins.groovy.dsl.psi.PsiEnhancerCategory
 import org.jetbrains.plugins.groovy.dsl.toplevel.CompositeContextFilter
