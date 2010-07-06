@@ -7,6 +7,8 @@ contributor([gdslScriptContext]) {
   method name: "contributor", params: [contexts: "java.util.Map", body: {}], type: void
   method name: "contributor", params: [contexts: "java.lang.Object", body: {}], type: void
 
+  method name: "supportsVersion", params: [version: "java.lang.String"], type: boolean
+
   // scopes
   property name: "closureScope", params: [contexts: "java.util.Map"], type: {}
   property name: "scriptScope", params: [contexts: "java.util.Map"], type: {}
