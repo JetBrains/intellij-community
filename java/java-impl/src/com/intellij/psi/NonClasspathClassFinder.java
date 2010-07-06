@@ -50,6 +50,9 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
       if (scope.contains(classRoot)) {
         final VirtualFile classFile = classRoot.findFileByRelativePath(qualifiedName.replace('.', '/') + ".class");
         if (classFile != null) {
+          if (!classFile.isValid()) {
+            throw new AssertionError("Invalid child of valid parent: " + classFile.getPath() + "; " + classRoot.isValid());
+          }
           final PsiFile file = PsiManager.getInstance(myProject).findFile(classFile);
           if (file instanceof PsiClassOwner) {
             final PsiClass[] classes = ((PsiClassOwner)file).getClasses();
