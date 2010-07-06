@@ -29,31 +29,6 @@ public class PyForStatementImpl extends PyPartitionedElementImpl implements PyFo
     return (PyForPart)getPartNotNull(PyElementTypes.FOR_PART);
   }
 
-  @Override
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                                     @NotNull ResolveState substitutor,
-                                     PsiElement lastParent,
-                                     @NotNull PsiElement place) {
-    PyForPart forPart = getForPart();
-    final PyExpression target = forPart.getTarget();
-    if (target != null && target != lastParent && !target.processDeclarations(processor, substitutor, null, place)) {
-      return false;
-    }
-
-    final PyStatementList statementList = forPart.getStatementList();
-    if (statementList != null && statementList != lastParent && !statementList.processDeclarations(processor, substitutor, null, place)) {
-      return false;
-    }
-    PyElsePart elsePart = getElsePart();
-    if (elsePart != null) {
-      PyStatementList elseList = elsePart.getStatementList();
-      if (elseList != null && elseList != lastParent) {
-        return elseList.processDeclarations(processor, substitutor, null, place);
-      }
-    }
-    return true;
-  }
-
   @NotNull
   public Iterable<PyElement> iterateNames() {
     PyExpression tgt = getForPart().getTarget();

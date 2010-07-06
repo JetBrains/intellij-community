@@ -35,37 +35,4 @@ public class PyIfStatementImpl extends PyPartitionedElementImpl implements PyIfS
   public PyElsePart getElsePart() {
     return (PyElsePart)getPart(PyElementTypes.ELSE_PART);
   }
-
-  @Override
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                                     @NotNull ResolveState substitutor,
-                                     PsiElement lastParent,
-                                     @NotNull PsiElement place) {
-    if (lastParent != null) {
-      return true;
-    }
-    for (PyStatementPart part : getParts()) {
-      PyStatementList stmtList = part.getStatementList();
-      if (stmtList != null && !stmtList.processDeclarations(processor, substitutor, lastParent, place)) {
-        return false;
-      }
-    }
-
-    /*
-
-      PyStatementList[] statementLists = getStatementLists();
-      for (PyStatementList statementList: statementLists) {
-          if (!statementList.processDeclarations(processor, substitutor, lastParent, place)) {
-              return false;
-          }
-      }
-      PyStatementList elseList = getElseStatementList();
-      //noinspection RedundantIfStatement
-      if (elseList != null && !elseList.processDeclarations(processor, substitutor, lastParent, place)) {
-          return false;
-      }
-      */
-      return true;
-    }
-
 }

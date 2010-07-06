@@ -145,35 +145,6 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
     }
   }
 
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                                     @NotNull ResolveState substitutor,
-                                     PsiElement lastParent,
-                                     @NotNull PsiElement place) {
-    // a reference can never be resolved within the same assignment statement
-    if (lastParent != null) {
-      return true;
-    }
-
-    if (PsiTreeUtil.getParentOfType(this, PyFunction.class) == null && PsiTreeUtil.getParentOfType(place, PyFunction.class) != null) {
-
-      // The scope of names defined in a class block is limited to the class block;
-      // it does not extend to the code blocks of methods.
-      if (PsiTreeUtil.getParentOfType(this, PyClass.class) != null) {
-        return true;
-      }
-      if (PsiTreeUtil.getParentOfType(place, PyGlobalStatement.class) == null) {
-        return true;
-      }
-    }
-
-    for (PyExpression expression : getTargets()) {
-      if (!expression.processDeclarations(processor, substitutor, lastParent, place)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   @NotNull
   public Iterable<PyElement> iterateNames() {
     PyElement[] targets = getTargets();

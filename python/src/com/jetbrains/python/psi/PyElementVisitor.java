@@ -1,7 +1,6 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiElementVisitor;
-import com.jetbrains.python.psi.impl.PyConditionalStatementPartImpl;
 
 /**
  * Visitor for python-specific nodes.
@@ -39,8 +38,12 @@ public class PyElementVisitor extends PsiElementVisitor {
     visitPyExpression(node);
   }
 
-  public void visitPyTupleExpression(final PyTupleExpression node) {
+  public void visitPySequenceExpression(final PySequenceExpression node) {
     visitPyExpression(node);
+  }
+
+  public void visitPyTupleExpression(final PyTupleExpression node) {
+    visitPySequenceExpression(node);
   }
 
   public void visitPyParenthesizedExpression(final PyParenthesizedExpression node) {
@@ -52,7 +55,7 @@ public class PyElementVisitor extends PsiElementVisitor {
   }
 
   public void visitPyListLiteralExpression(final PyListLiteralExpression node) {
-    visitPyExpression(node);
+    visitPySequenceExpression(node);
   }
 
   public void visitPySetLiteralExpression(final PySetLiteralExpression node) {

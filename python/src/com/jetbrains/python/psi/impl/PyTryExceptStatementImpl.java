@@ -42,34 +42,4 @@ public class PyTryExceptStatementImpl extends PyPartitionedElementImpl implement
   public PyFinallyPart getFinallyPart() {
     return (PyFinallyPart)getPart(PyElementTypes.FINALLY_PART);
   }
-
-  @Override
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                                     @NotNull ResolveState substitutor,
-                                     PsiElement lastParent,
-                                     @NotNull PsiElement place) {
-    /*
-    final PyStatementList tryStatementList = getTryPart().getStatementList();
-    if (tryStatementList != null && tryStatementList != lastParent && !tryStatementList.processDeclarations(processor, substitutor, null, place)) {
-      return false;
-    }
-    */
-
-    for (PyStatementPart part : /*getExceptParts()*/ getParts()) {
-      if (part != lastParent && !part.processDeclarations(processor, substitutor, null, place)) {
-        return false;
-      }
-    }
-
-    /*
-    final PyElsePart elsePart = getElsePart();
-    if (elsePart != null) {
-      PyStatementList elseStatementList = elsePart.getStatementList();
-      if (elseStatementList != null && elseStatementList != lastParent) {
-        return elseStatementList.processDeclarations(processor, substitutor, null, place);
-      }
-    }
-    */
-    return true;
-  }
 }

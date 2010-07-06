@@ -20,6 +20,7 @@ import com.jetbrains.python.parsing.StatementParsing;
 import com.jetbrains.python.psi.impl.stubs.PyFileStubBuilder;
 import com.jetbrains.python.psi.impl.stubs.PyFileStubImpl;
 import com.jetbrains.python.psi.stubs.PyFileStub;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -40,7 +41,7 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
 
   @Override
   public int getStubVersion() {
-    return 25;
+    return 26;
   }
 
   @Override
@@ -80,30 +81,39 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
 
   @Override
   public void serialize(PyFileStub stub, StubOutputStream dataStream) throws IOException {
-    final List<String> all = stub.getDunderAll();
-    if (all == null) {
+    writeNullableList(dataStream, stub.getDunderAll());
+  }
+
+  @Override
+  public PyFileStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
+    List<String> all = readNullableList(dataStream);
+    return new PyFileStubImpl(all);
+  }
+
+  public static void writeNullableList(StubOutputStream dataStream, final List<String> names) throws IOException {
+    if (names == null) {
       dataStream.writeBoolean(false);
     }
     else {
       dataStream.writeBoolean(true);
-      dataStream.writeVarInt(all.size());
-      for(String name: all) {
+      dataStream.writeVarInt(names.size());
+      for(String name: names) {
         dataStream.writeName(name);
       }
     }
   }
 
-  @Override
-  public PyFileStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
-    boolean hasDunderAll = dataStream.readBoolean();
-    List<String> all = null;
-    if (hasDunderAll) {
+  @Nullable
+  public static List<String> readNullableList(StubInputStream dataStream) throws IOException {
+    boolean hasNames = dataStream.readBoolean();
+    List<String> names = null;
+    if (hasNames) {
       int size = dataStream.readVarInt();
-      all = new ArrayList<String>(size);
+      names = new ArrayList<String>(size);
       for(int i=0; i<size; i++) {
-        all.add(dataStream.readName().getString());
+        names.add(dataStream.readName().getString());
       }
     }
-    return new PyFileStubImpl(all);
+    return names;
   }
 }

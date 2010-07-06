@@ -32,40 +32,6 @@ public class PyStatementListImpl extends PyElementImpl implements PyStatementLis
   }
 
   @Override
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                                     @NotNull ResolveState substitutor,
-                                     PsiElement lastParent,
-                                     @NotNull PsiElement place) {
-    // in if statements, process only the section in which the original expression was located
-    PsiElement parent = getParent();
-    if (parent instanceof PyStatement && lastParent == null && PsiTreeUtil.isAncestor(parent, place, true)) {
-      return true;
-    }
-
-    PyStatement[] statements = getStatements();
-    if (lastParent != null) {
-      // if we're processing the statement list in which the last parent is found, scan up
-      // from parent
-      for (int i = 0; i < statements.length; i++) {
-        if (statements[i] == lastParent) {
-          for (int j = i - 1; j >= 0; j--) {
-            if (!statements[j].processDeclarations(processor, substitutor, lastParent, place)) {
-              return false;
-            }
-          }
-        }
-      }
-    }
-
-    for (PyStatement statement : getStatements()) {
-      if (!statement.processDeclarations(processor, substitutor, lastParent, place)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  @Override
   public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
     final PsiElement preprocessed = preprocessElement(element);
     if (preprocessed != null){

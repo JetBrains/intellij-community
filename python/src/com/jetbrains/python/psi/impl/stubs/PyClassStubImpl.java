@@ -7,17 +7,21 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 
+import java.util.List;
+
 /**
  * @author max
  */
 public class PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
   private final String myName;
   private final PyQualifiedName[] mySuperClasses;
+  private final List<String> mySlots;
 
-  public PyClassStubImpl(final String name, StubElement parentStub, final PyQualifiedName[] superClasses) {
+  public PyClassStubImpl(final String name, StubElement parentStub, final PyQualifiedName[] superClasses, final List<String> slots) {
     super(parentStub, PyElementTypes.CLASS_DECLARATION);
     myName = name;
     mySuperClasses = superClasses;
+    mySlots = slots;
   }
 
   public String getName() {
@@ -26,5 +30,10 @@ public class PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
 
   public PyQualifiedName[] getSuperClasses() {
     return mySuperClasses;
+  }
+
+  @Override
+  public List<String> getSlots() {
+    return mySlots;
   }
 }

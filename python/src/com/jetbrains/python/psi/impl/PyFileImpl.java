@@ -363,11 +363,16 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   @Nullable
   public List<String> calculateDunderAll() {
     final List<PyTargetExpression> attrs = getTopLevelAttributes();
+    return getStringListFromTargetExpression(PyNames.ALL, attrs);
+  }
+
+  @Nullable
+  public static List<String> getStringListFromTargetExpression(final String name, List<PyTargetExpression> attrs) {
     for (PyTargetExpression attr : attrs) {
-      if (PyNames.ALL.equals(attr.getName())) {
+      if (name.equals(attr.getName())) {
         final PyExpression value = attr.findAssignedValue();
-        if (value instanceof PyListLiteralExpression) {
-          final PyExpression[] elements = ((PyListLiteralExpression)value).getElements();
+        if (value instanceof PySequenceExpression) {
+          final PyExpression[] elements = ((PySequenceExpression)value).getElements();
           List<String> result = new ArrayList<String>(elements.length);
           for (PyExpression element : elements) {
             if (!(element instanceof PyStringLiteralExpression)) {

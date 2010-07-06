@@ -7,10 +7,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.io.StringRef;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyReferenceExpression;
-import com.jetbrains.python.psi.PyStubElementType;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyClassImpl;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
@@ -49,7 +46,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
         superClasses.add(null);
       }
     }
-    return new PyClassStubImpl(psi.getName(), parentStub, superClasses.toArray(new PyQualifiedName[superClasses.size()]));
+    return new PyClassStubImpl(psi.getName(), parentStub, superClasses.toArray(new PyQualifiedName[superClasses.size()]), psi.getSlots());
   }
 
   public void serialize(final PyClassStub pyClassStub, final StubOutputStream dataStream) throws IOException {
@@ -59,6 +56,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
     for(PyQualifiedName s: classes) {
       PyQualifiedName.serialize(s, dataStream);
     }
+    PyFileElementType.writeNullableList(dataStream, pyClassStub.getSlots());
   }
 
   public PyClassStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
@@ -68,7 +66,8 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
     for(int i=0; i<superClassCount; i++) {
       superClasses[i] = PyQualifiedName.deserialize(dataStream);
     }
-    return new PyClassStubImpl(name, parentStub, superClasses);
+    List<String> slots = PyFileElementType.readNullableList(dataStream);
+    return new PyClassStubImpl(name, parentStub, superClasses, slots);
   }
 
   public void indexStub(final PyClassStub stub, final IndexSink sink) {

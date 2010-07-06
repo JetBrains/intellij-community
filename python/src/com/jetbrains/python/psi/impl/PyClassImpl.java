@@ -44,7 +44,7 @@ import java.util.*;
 public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implements PyClass {
   public static final PyClass[] EMPTY_ARRAY = new PyClassImpl[0];
 
-  private PyTargetExpression[] myInstanceAttributes;
+  private List<PyTargetExpression> myInstanceAttributes;
   private final CachedValue<Boolean> myNewStyle;
 
   private class NewStyleCachedValueProvider implements CachedValueProvider<Boolean> {
@@ -172,6 +172,15 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   public boolean isTopLevel() {
     return getParentByStub() instanceof PsiFile;
+  }
+
+  @Override
+  public List<String> getSlots() {
+    final PyClassStub stub = getStub();
+    if (stub != null) {
+      return stub.getSlots();
+    }
+    return PyFileImpl.getStringListFromTargetExpression(PyNames.SLOTS, getClassAttributes());
   }
 
   protected List<PyClass> getSuperClassesList() {
@@ -580,7 +589,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   public boolean visitClassAttributes(Processor<PyTargetExpression> processor, boolean inherited) {
-    PyTargetExpression[] methods = getClassAttributes();
+    List<PyTargetExpression> methods = getClassAttributes();
     for(PyTargetExpression attribute: methods) {
       if (! processor.process(attribute)) return false;
     }
@@ -597,10 +606,11 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
 
 
-  public PyTargetExpression[] getClassAttributes() {
+  public List<PyTargetExpression> getClassAttributes() {
     PyClassStub stub = getStub();
     if (stub != null) {
-      return stub.getChildrenByType(PyElementTypes.TARGET_EXPRESSION, PyTargetExpression.EMPTY_ARRAY);
+      final PyTargetExpression[] children = stub.getChildrenByType(PyElementTypes.TARGET_EXPRESSION, PyTargetExpression.EMPTY_ARRAY);
+      return Arrays.asList(children);
     }
     List<PyTargetExpression> result = new ArrayList<PyTargetExpression>();
     for (PsiElement psiElement : getStatementList().getChildren()) {
@@ -614,17 +624,17 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
         }
       }
     }
-    return result.toArray(new PyTargetExpression[result.size()]);
+    return result;
   }
 
-  public PyTargetExpression[] getInstanceAttributes() {
+  public List<PyTargetExpression> getInstanceAttributes() {
     if (myInstanceAttributes == null) {
       myInstanceAttributes = collectInstanceAttributes();
     }
     return myInstanceAttributes;
   }
 
-  private PyTargetExpression[] collectInstanceAttributes() {
+  private List<PyTargetExpression> collectInstanceAttributes() {
     Map<String, PyTargetExpression> result = new HashMap<String, PyTargetExpression>();
 
     // __init__ takes priority over all other methods
@@ -640,7 +650,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     }
 
     final Collection<PyTargetExpression> expressions = result.values();
-    return expressions.toArray(new PyTargetExpression[expressions.size()]);
+    return new ArrayList<PyTargetExpression>(expressions);
   }
 
   private static void collectInstanceAttributes(PyFunctionImpl method, final Map<String, PyTargetExpression> result) {
@@ -710,13 +720,13 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return false;
   }
 
-  @Override
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                                     @NotNull ResolveState substitutor,
-                                     PsiElement lastParent,
-                                     @NotNull PsiElement place)
-  {
-    // class level
+  public void processDeclarations(@NotNull PsiScopeProcessor processor) {
+    if (!processClassLevelDeclarations(processor)) return;
+    if (!processInstanceLevelDeclarations(processor)) return;
+    processor.execute(this, ResolveState.initial());
+  }
+
+  public boolean processClassLevelDeclarations(PsiScopeProcessor processor) {
     final PyClassStub stub = getStub();
     if (stub != null) {
       final List<StubElement> children = stub.getChildrenStubs();
@@ -730,17 +740,14 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       final PsiElement the_psi = getNode().getPsi();
       PyResolveUtil.treeCrawlUp(processor, true, the_psi, the_psi);
     }
+    return true;
+  }
 
-    // instance level
+  public boolean processInstanceLevelDeclarations(PsiScopeProcessor processor) {
     for(PyTargetExpression expr: getInstanceAttributes()) {
-      if (expr == lastParent) continue;
-      if (!processor.execute(expr, substitutor)) return false;
+      if (!processor.execute(expr, ResolveState.initial())) return false;
     }
-    //
-    if (processor instanceof VariantsProcessor) {
-      return true;
-    }
-    return processor.execute(this, substitutor);
+    return true;
   }
 
   public int getTextOffset() {

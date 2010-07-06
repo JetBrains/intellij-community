@@ -31,19 +31,6 @@ public class PyGlobalStatementImpl extends PyElementImpl implements PyGlobalStat
     return childrenToPsi(TARGET_EXPRESSION_SET, PyTargetExpression.EMPTY_ARRAY);
   }
 
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                                     @NotNull ResolveState substitutor,
-                                     PsiElement lastParent,
-                                     @NotNull PsiElement place) {
-    for (PyExpression expression : getGlobals()) {
-      if (expression == lastParent) continue;
-      if (!expression.processDeclarations(processor, substitutor, lastParent, place)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   @NotNull
   public Iterable<PyElement> iterateNames() {
     return Arrays.<PyElement>asList(getGlobals());
