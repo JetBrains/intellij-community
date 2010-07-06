@@ -96,6 +96,8 @@
     <renameHandler implementation="org.jetbrains.plugins.groovy.refactoring.rename.PropertyRenameHandler"/>
     <renamePsiElementProcessor implementation="org.jetbrains.plugins.groovy.refactoring.rename.RenameGroovyPropertyProcessor"
                                order="first"/>
+    <renamePsiElementProcessor implementation="org.jetbrains.plugins.groovy.refactoring.rename.RenameAliasImportedClassProcessor" order="first"/>
+    <renamePsiElementProcessor implementation="org.jetbrains.plugins.groovy.refactoring.rename.RenameAliasImportedMethodProcessor" order="first"/>
     <applicationService serviceInterface="org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings"
                         serviceImplementation="org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings"/>
 
