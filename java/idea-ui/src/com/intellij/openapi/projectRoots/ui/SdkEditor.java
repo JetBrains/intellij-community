@@ -32,7 +32,6 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -282,7 +281,8 @@ public class SdkEditor implements Configurable, Place.Navigator {
     if (files.length != 0){
       final String path = files[0].getPath();
       if (sdkType.isValidSdkHome(path)) return path;
-      return SystemInfo.isMac && sdkType.isValidSdkHome(path + SdkType.MAC_HOME_PATH) ? path + SdkType.MAC_HOME_PATH : null;
+      String adjustedPath = sdkType.adjustSelectedSdkHome(path);
+      return sdkType.isValidSdkHome(adjustedPath) ? adjustedPath : null;
     }
     return null;
   }
