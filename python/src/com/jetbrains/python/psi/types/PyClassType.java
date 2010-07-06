@@ -12,6 +12,7 @@ import com.intellij.util.SmartList;
 import com.jetbrains.python.codeInsight.PyDynamicMember;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyClassImpl;
 import com.jetbrains.python.psi.patterns.ParentMatcher;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.ResolveProcessor;
@@ -134,7 +135,7 @@ public class PyClassType implements PyType {
   @Nullable
   private static PsiElement resolveInner(PyClass aClass, String name) {
     ResolveProcessor processor = new ResolveProcessor(name);
-    aClass.processDeclarations(processor, ResolveState.initial(), null, aClass); // our members are strictly within us.
+    ((PyClassImpl) aClass).processDeclarations(processor); // our members are strictly within us.
     final PsiElement resolveResult = processor.getResult();
     //final PsiElement resolveResult = PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(name), myClass, null, null);
     if (resolveResult != null && resolveResult != aClass) {
@@ -162,7 +163,7 @@ public class PyClassType implements PyType {
     final VariantsProcessor processor = new VariantsProcessor(
       referenceExpression, new PyResolveUtil.FilterNotInstance(myClass), underscoreFilter
     );
-    myClass.processDeclarations(processor, ResolveState.initial(), null, referenceExpression);
+    ((PyClassImpl) myClass).processDeclarations(processor);
     if (namesAlready != null) {
       for (LookupElement le : processor.getResultList()) {
         String name = le.getLookupString();
