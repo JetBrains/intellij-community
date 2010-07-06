@@ -146,8 +146,23 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
         return this;
       }
 
-      public <T extends PsiElement> T show(@NotNull String errorTitle, @NotNull final FileCreator<T> creator) {
+      public <T extends PsiElement> T show(@NotNull String errorTitle, @Nullable String selectedTemplateName,
+                                           @NotNull final FileCreator<T> creator) {
         final Ref<T> created = Ref.create(null);
+        if (selectedTemplateName != null) {
+          Object item = null;
+          ComboBoxModel model = dialog.myKindCombo.getModel();
+          for (int i = 0, n = model.getSize(); i < n; i++) {
+            Trinity<String, Icon, String> trinity = (Trinity<String, Icon, String>)model.getElementAt(i);
+            if (selectedTemplateName.equals(trinity.third)) {
+              item = trinity;
+              break;
+            }
+          }
+          if (item != null) {
+            dialog.myKindCombo.setSelectedItem(item);
+          }
+        }
         dialog.myCreator = new ElementCreator(project, errorTitle) {
           @Override
           protected void checkBeforeCreate(String newName) throws IncorrectOperationException {
@@ -181,7 +196,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
   public interface Builder {
     Builder addKind(@NotNull String kind, @Nullable Icon icon, @NotNull String templateName);
     @Nullable
-    <T extends PsiElement> T show(@NotNull String errorTitle, @NotNull FileCreator<T> creator);
+    <T extends PsiElement> T show(@NotNull String errorTitle, @Nullable String selectedItem, @NotNull FileCreator<T> creator);
   }
 
   public interface FileCreator<T> {
