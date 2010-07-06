@@ -484,6 +484,35 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     };
   }
 
+  @Override
+  public FocusRequestor getFurtherRequestor() {
+    return new FurtherRequestor(this, getTimestamp(true));
+  }
+
+  private static class FurtherRequestor implements FocusRequestor {
+
+    private IdeFocusManager myManager;
+    private Expirable myExpirable;
+
+    private FurtherRequestor(IdeFocusManager manager, Expirable expirable) {
+      myManager = manager;
+      myExpirable = expirable;
+    }
+
+    @NotNull
+    @Override
+    public ActionCallback requestFocus(@NotNull Component c, boolean forced) {
+      return myExpirable.isExpired() ? new ActionCallback.Rejected() : myManager.requestFocus(c, forced);
+    }
+
+    @NotNull
+    @Override
+    public ActionCallback requestFocus(@NotNull FocusCommand command, boolean forced) {
+      return myExpirable.isExpired() ? new ActionCallback.Rejected() : myManager.requestFocus(command, forced);
+    }
+  }
+
+
   static class EdtAlarm {
     private final Alarm myAlarm;
 

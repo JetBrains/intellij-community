@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.FocusRequestor;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -76,10 +77,11 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
       final ActionCallback cb = new ActionCallback();
 
       final VirtualFile finalVFile = vFile;
+      final FocusRequestor focusRequestor = IdeFocusManager.getInstance(myProject).getFurtherRequestor();
       batch(new Progressive() {
         public void run(@NotNull ProgressIndicator indicator) {
           final Ref<Object> target = new Ref<Object>();
-          _select(value, finalVFile, false, Conditions.<AbstractTreeNode>alwaysTrue(), cb, indicator, target);
+          _select(value, finalVFile, false, Conditions.<AbstractTreeNode>alwaysTrue(), cb, indicator, target, focusRequestor);
           cb.doWhenDone(new Runnable() {
             public void run() {
               result.setDone(target.get());
@@ -170,11 +172,13 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
     final ActionCallback result = new ActionCallback();
 
+    final FocusRequestor requestor = IdeFocusManager.getInstance(myProject).getFurtherRequestor();
+
     cancelUpdate().doWhenDone(new Runnable() {
       public void run() {
         batch(new Progressive() {
           public void run(@NotNull ProgressIndicator indicator) {
-            _select(element, file, requestFocus, nonStopCondition, result, indicator, null);
+            _select(element, file, requestFocus, nonStopCondition, result, indicator, null, requestor);
           }
         });
       }
@@ -191,13 +195,14 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
                        final Condition<AbstractTreeNode> nonStopCondition,
                        final ActionCallback result,
                        ProgressIndicator indicator,
-                       @Nullable final Ref<Object> virtualSelectTarget) {
+                       @Nullable final Ref<Object> virtualSelectTarget,
+                       final FocusRequestor focusRequestor) {
     AbstractTreeNode alreadySelected = alreadySelectedNode(element);
 
     final Runnable onDone = new Runnable() {
       public void run() {
         if (requestFocus && virtualSelectTarget == null) {
-          IdeFocusManager.getInstance(myProject).requestFocus(getTree(), true);
+          focusRequestor.requestFocus(getTree(), true);
         }
 
         result.setDone();
