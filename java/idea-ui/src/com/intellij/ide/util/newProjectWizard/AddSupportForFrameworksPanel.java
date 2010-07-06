@@ -28,6 +28,7 @@ import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurableListen
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelImpl;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -60,7 +61,7 @@ import java.util.List;
 /**
  * @author nik
  */
-public class AddSupportForFrameworksPanel {
+public class AddSupportForFrameworksPanel implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.newProjectWizard.AddSupportForFrameworksStep");
   @NonNls private static final String UNCHECKED_CARD = "unchecked";
   @NonNls private static final String EMPTY_CARD = "empty";
@@ -133,6 +134,10 @@ public class AddSupportForFrameworksPanel {
         }
       }
     }
+  }
+
+  @Override
+  public void dispose() {
   }
 
   private void applyLibraryOptionsForSelected() {
@@ -286,7 +291,7 @@ public class AddSupportForFrameworksPanel {
         }
         parentNode = createNode(parentProvider, nodes, groups);
       }
-      node = new FrameworkSupportNode(provider, parentNode, myModel, myBaseDirForLibrariesGetter);
+      node = new FrameworkSupportNode(provider, parentNode, myModel, myBaseDirForLibrariesGetter, this);
       nodes.put(provider.getId(), node);
       groups.put(provider.getGroupId(), node);
     }
