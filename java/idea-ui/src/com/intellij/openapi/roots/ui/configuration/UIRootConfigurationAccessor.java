@@ -22,7 +22,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,7 +51,7 @@ public class UIRootConfigurationAccessor extends RootConfigurationAccessor {
 
   @Nullable
   public Sdk getSdk(final Sdk sdk, final String sdkName) {
-    final ProjectJdksModel model = ProjectStructureConfigurable.getInstance(myProject).getJdkConfig().getJdksTreeModel();
+    final ProjectSdksModel model = ProjectStructureConfigurable.getInstance(myProject).getJdkConfig().getJdksTreeModel();
     return sdkName != null ? model.findSdk(sdkName) : sdk;
   }
 
@@ -63,7 +63,7 @@ public class UIRootConfigurationAccessor extends RootConfigurationAccessor {
   }
 
   public Sdk getProjectSdk(final Project project) {
-    return ProjectStructureConfigurable.getInstance(project).getProjectJdksModel().getProjectJdk();
+    return ProjectStructureConfigurable.getInstance(project).getProjectJdksModel().getProjectSdk();
   }
 
   @Nullable
@@ -74,7 +74,7 @@ public class UIRootConfigurationAccessor extends RootConfigurationAccessor {
       return projectJdk.getName();
     }
     else {
-      final ProjectJdksModel projectJdksModel = ProjectStructureConfigurable.getInstance(project).getProjectJdksModel();
+      final ProjectSdksModel projectJdksModel = ProjectStructureConfigurable.getInstance(project).getProjectJdksModel();
       return projectJdksModel.findSdk(projectJdkName) == null ? projectJdkName : null;
     }
   }

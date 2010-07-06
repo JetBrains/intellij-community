@@ -23,7 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.JdkListConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
@@ -47,7 +47,7 @@ import java.util.Comparator;
 class JdkComboBox extends JComboBox{
   private final JButton myEditButton = new JButton(ApplicationBundle.message("button.edit"));
 
-  public JdkComboBox(final ProjectJdksModel jdksModel) {
+  public JdkComboBox(final ProjectSdksModel jdksModel) {
     super(new JdkComboBoxModel(jdksModel));
     setRenderer(new ProjectJdkListRenderer() {
       protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
@@ -59,7 +59,7 @@ class JdkComboBox extends JComboBox{
           else if (value instanceof ProjectJdkComboBoxItem){
             final ProjectJdkComboBoxItem item = (ProjectJdkComboBoxItem)value;
             final String str = item.toString();
-            final Sdk jdk = jdksModel.getProjectJdk();
+            final Sdk jdk = jdksModel.getProjectSdk();
             if (jdk != null){
               setIcon(jdk.getSdkType().getIcon());
               append(ProjectBundle.message("project.roots.project.jdk.inherited"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
@@ -97,13 +97,13 @@ class JdkComboBox extends JComboBox{
     return minSize;
   }
 
-  public JButton createSetupButton(final Project project, final ProjectJdksModel jdksModel, final JdkComboBoxItem firstItem) {
+  public JButton createSetupButton(final Project project, final ProjectSdksModel jdksModel, final JdkComboBoxItem firstItem) {
     return createSetupButton(project, jdksModel, firstItem, null, false);
   }
 
 
   public JButton createSetupButton(final Project project,
-                                   final ProjectJdksModel jdksModel,
+                                   final ProjectSdksModel jdksModel,
                                    final JdkComboBoxItem firstItem,
                                    final Condition<Sdk> additionalSetup,
                                    final boolean moduleJdkSetup) {
@@ -144,7 +144,7 @@ class JdkComboBox extends JComboBox{
       public void actionPerformed(ActionEvent e) {
         final JdkComboBoxItem selectedItem = getSelectedItem();
         if (selectedItem instanceof ProjectJdkComboBoxItem) {
-          myEditButton.setEnabled(ProjectStructureConfigurable.getInstance(project).getProjectJdksModel().getProjectJdk() != null);
+          myEditButton.setEnabled(ProjectStructureConfigurable.getInstance(project).getProjectJdksModel().getProjectSdk() != null);
         } else {
           myEditButton.setEnabled(!(selectedItem instanceof InvalidJdkComboBoxItem) && selectedItem != null && selectedItem.getJdk() != null);
         }
@@ -212,8 +212,8 @@ class JdkComboBox extends JComboBox{
     final DefaultComboBoxModel model = ((DefaultComboBoxModel)getModel());
     model.removeAllElements();
     model.addElement(firstItem);
-    final ProjectJdksModel projectJdksModel = ProjectStructureConfigurable.getInstance(project).getProjectJdksModel();
-    final ArrayList<Sdk> projectJdks = new ArrayList<Sdk>(projectJdksModel.getProjectJdks().values());
+    final ProjectSdksModel projectJdksModel = ProjectStructureConfigurable.getInstance(project).getProjectJdksModel();
+    final ArrayList<Sdk> projectJdks = new ArrayList<Sdk>(projectJdksModel.getProjectSdks().values());
     Collections.sort(projectJdks, new Comparator<Sdk>() {
       public int compare(final Sdk o1, final Sdk o2) {
         return o1.getName().compareToIgnoreCase(o2.getName());
@@ -225,7 +225,7 @@ class JdkComboBox extends JComboBox{
   }
 
   private static class JdkComboBoxModel extends DefaultComboBoxModel {
-    public JdkComboBoxModel(final ProjectJdksModel jdksModel) {
+    public JdkComboBoxModel(final ProjectSdksModel jdksModel) {
       super();
       final Sdk[] jdks = jdksModel.getSdks();
       Arrays.sort(jdks, new Comparator<Sdk>() {

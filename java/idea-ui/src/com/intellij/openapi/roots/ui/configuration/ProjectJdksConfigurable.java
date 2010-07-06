@@ -32,7 +32,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.JdkConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.MasterDetailsStateService;
 import com.intellij.openapi.ui.NamedConfigurable;
@@ -56,7 +56,7 @@ import java.util.Set;
 
 public class ProjectJdksConfigurable extends MasterDetailsComponent implements Configurable.Assistant {
 
-  private final ProjectJdksModel myProjectJdksModel;
+  private final ProjectSdksModel myProjectJdksModel;
   private final Project myProject;
   @NonNls 
   private static final String SPLITTER_PROPORTION = "project.jdk.splitter";
@@ -86,12 +86,12 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent implements C
     myProjectJdksModel.reset(myProject);
 
     myRoot.removeAllChildren();
-    final HashMap<Sdk, Sdk> sdks = myProjectJdksModel.getProjectJdks();
+    final HashMap<Sdk, Sdk> sdks = myProjectJdksModel.getProjectSdks();
     for (Sdk sdk : sdks.keySet()) {
       final JdkConfigurable configurable = new JdkConfigurable((ProjectJdkImpl)sdks.get(sdk), myProjectJdksModel, TREE_UPDATER, myHistory, myProject);
       addNode(new MyNode(configurable), myRoot);
     }
-    selectJdk(myProjectJdksModel.getProjectJdk()); //restore selection
+    selectJdk(myProjectJdksModel.getProjectSdk()); //restore selection
     final String value = PropertiesComponent.getInstance().getValue(SPLITTER_PROPORTION);
     if (value != null) {
       try {
@@ -127,7 +127,7 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent implements C
     }
 
     if (myProjectJdksModel.isModified() || modifiedJdks) myProjectJdksModel.apply(this);
-    myProjectJdksModel.setProjectJdk(getSelectedJdk());
+    myProjectJdksModel.setProjectSdk(getSelectedJdk());
  }
 
 
@@ -168,17 +168,17 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent implements C
       final NamedConfigurable namedConfigurable = (NamedConfigurable)node.getUserObject();
       jdks.add(((JdkConfigurable)namedConfigurable).getEditableObject());
     }
-    final HashMap<Sdk, Sdk> sdks = new HashMap<Sdk, Sdk>(myProjectJdksModel.getProjectJdks());
+    final HashMap<Sdk, Sdk> sdks = new HashMap<Sdk, Sdk>(myProjectJdksModel.getProjectSdks());
     for (Sdk sdk : sdks.values()) {
       if (!jdks.contains(sdk)) {
-        myProjectJdksModel.removeJdk(sdk);
+        myProjectJdksModel.removeSdk(sdk);
       }
     }
   }
 
   protected boolean wasObjectStored(Object editableObject) {
     //noinspection RedundantCast
-    return myProjectJdksModel.getProjectJdks().containsKey((Sdk)editableObject);
+    return myProjectJdksModel.getProjectSdks().containsKey((Sdk)editableObject);
   }
 
   @Nullable
