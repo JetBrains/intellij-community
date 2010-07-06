@@ -565,7 +565,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkEnumSuperConstructorCall(expression));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkSuperQualifierType(expression));
     // in case of JSP syntethic method call, do not check
-    if (expression.getMethodExpression().isPhysical() && !myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodCall(expression, myResolveHelper));
+    if (expression.getMethodExpression().isPhysical() && !myHolder.hasErrorResults()) {
+      try {
+        myHolder.add(HighlightMethodUtil.checkMethodCall(expression, myResolveHelper));
+      }
+      catch (IndexNotReadyException ignored) {
+      }
+    }
 
     if (!myHolder.hasErrorResults()) visitExpression(expression);
   }
@@ -630,7 +636,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkQualifiedNewOfStaticClass(expression));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkCreateInnerClassFromStaticContext(expression));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkTypeParameterInstantiation(expression));
-    if (!myHolder.hasErrorResults()) HighlightMethodUtil.checkNewExpression(expression, myHolder);
+    try {
+      if (!myHolder.hasErrorResults()) HighlightMethodUtil.checkNewExpression(expression, myHolder);
+    }
+    catch (IndexNotReadyException ignored) {
+    }
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkEnumInstantiation(expression));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkGenericArrayCreation(expression, expression.getType()));
     if (!myHolder.hasErrorResults()) registerConstructorCall(expression);
@@ -758,7 +768,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     PsiElement resolved = result.getElement();
     if (resolved instanceof PsiVariable && resolved.getContainingFile() == expression.getContainingFile()) {
       if (!myHolder.hasErrorResults()) {
-        myHolder.add(HighlightControlFlowUtil.checkVariableInitializedBeforeUsage(expression, (PsiVariable)resolved, myUninitializedVarProblems));
+        try {
+          myHolder.add(HighlightControlFlowUtil.checkVariableInitializedBeforeUsage(expression, (PsiVariable)resolved, myUninitializedVarProblems));
+        }
+        catch (IndexNotReadyException ignored) {
+        }
       }
       PsiVariable variable = (PsiVariable)resolved;
       boolean isFinal = variable.hasModifierProperty(PsiModifier.FINAL);
