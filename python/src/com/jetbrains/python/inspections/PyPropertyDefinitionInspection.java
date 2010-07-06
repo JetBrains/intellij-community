@@ -42,36 +42,38 @@ public class PyPropertyDefinitionInspection extends PyInspection {
     return PyBundle.message("INSP.NAME.property.definition");
   }
 
-  LanguageLevel myLevel = null;
-  List<PyClass> myStringClasses = new ArrayList<PyClass>(2);
-  PyParameterList myOneParamList; // arglist with one arg, 'self'
-  PyParameterList myTwoParamList; // arglist with two args, 'self' and 'value'
+  private ThreadLocal<LanguageLevel> myLevel = new ThreadLocal<LanguageLevel>();
+  private ThreadLocal<List<PyClass>> myStringClasses = new ThreadLocal<List<PyClass>>();
+  private ThreadLocal<PyParameterList> myOneParamList = new ThreadLocal<PyParameterList>(); // arglist with one arg, 'self'
+  private ThreadLocal<PyParameterList> myTwoParamList = new ThreadLocal<PyParameterList>(); // arglist with two args, 'self' and 'value'
 
   @Override
   public void inspectionStarted(LocalInspectionToolSession session) {
     super.inspectionStarted(session);
     // save us continuous checks for level, module, stc
-    myLevel = null;
     final PsiFile psifile = session.getFile();
+    LanguageLevel level = null;
     if (psifile != null) {
       VirtualFile vfile = psifile.getVirtualFile();
-      if (vfile != null) myLevel = LanguageLevel.forFile(vfile);
+      if (vfile != null) level = LanguageLevel.forFile(vfile);
     }
-    if (myLevel == null) myLevel = LanguageLevel.getDefault();
+    if (level == null) level = LanguageLevel.getDefault();
+    myLevel.set(level);
     // string classes
-    myStringClasses.clear();
+    final List<PyClass> string_classes = new ArrayList<PyClass>(2);
     final PyBuiltinCache builtins = PyBuiltinCache.getInstance(psifile);
     PyClass cls = builtins.getClass("str");
-    if (cls != null) myStringClasses.add(cls);
+    if (cls != null) string_classes.add(cls);
     cls = builtins.getClass("unicode");
-    if (cls != null) myStringClasses.add(cls);
+    if (cls != null) string_classes.add(cls);
+    myStringClasses.set(string_classes);
     // reference signatures
     PyClass object_class = builtins.getClass("object");
     if (object_class != null) {
       final PyFunction method_repr = object_class.findMethodByName("__repr__", false);
-      if (method_repr != null) myOneParamList = method_repr.getParameterList();
+      if (method_repr != null) myOneParamList.set(method_repr.getParameterList());
       final PyFunction method_delattr = object_class.findMethodByName("__delattr__", false);
-      if (method_delattr != null) myTwoParamList = method_delattr.getParameterList();
+      if (method_delattr != null) myTwoParamList.set(method_delattr.getParameterList());
     }
   }
 
@@ -140,7 +142,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
               else if ("fdel".equals(param_name)) checkDeleter(callable, argument);
               else if ("doc".equals(param_name)) {
                 PyType type = argument.getType(TypeEvalContext.fast());
-                if (! (type instanceof PyClassType && myStringClasses.contains(((PyClassType)type).getPyClass()))) {
+                if (! (type instanceof PyClassType && myStringClasses.get().contains(((PyClassType)type).getPyClass()))) {
                   registerProblem(argument, PyBundle.message("INSP.doc.param.should.be.str"));
                 }
               }
@@ -167,7 +169,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
     @Override
     public void visitPyFunction(PyFunction node) {
       super.visitPyFunction(node);
-      if (myLevel.isAtLeast(LanguageLevel.PYTHON26)) {
+      if (myLevel.get().isAtLeast(LanguageLevel.PYTHON26)) {
         // check @foo.setter and @foo.deleter
         PyClass cls = node.getContainingClass();
         if (cls != null) {
@@ -220,7 +222,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
       if (callable != null) {
         // signature: at least two params, more optionals ok; first arg 'self'
         final PyParameterList param_list = callable.getParameterList();
-        if (myTwoParamList != null && ! param_list.isCompatibleTo(myTwoParamList)) {
+        if (myTwoParamList != null && ! param_list.isCompatibleTo(myTwoParamList.get())) {
           registerProblem(being_checked, PyBundle.message("INSP.setter.signature.advice"));
         }
         checkForSelf(param_list);
@@ -238,7 +240,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
 
     private void checkOneParameter(Callable callable, PsiElement being_checked, boolean is_getter) {
       final PyParameterList param_list = callable.getParameterList();
-      if (myOneParamList != null && ! param_list.isCompatibleTo(myOneParamList)) {
+      if (myOneParamList != null && ! param_list.isCompatibleTo(myOneParamList.get())) {
         if (is_getter) registerProblem(being_checked, PyBundle.message("INSP.getter.signature.advice"));
         else registerProblem(being_checked, PyBundle.message("INSP.deleter.signature.advice"));
       }
