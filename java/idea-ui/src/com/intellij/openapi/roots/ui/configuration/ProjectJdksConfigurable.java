@@ -64,7 +64,7 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent implements C
   public ProjectJdksConfigurable(Project project) {
     super();
     myProject = project;
-    myProjectJdksModel = ProjectJdksModel.getInstance(project);
+    myProjectJdksModel = ProjectStructureConfigurable.getInstance(project).getProjectJdksModel();
     MasterDetailsStateService.getInstance(project).register("ProjectJDKs.UI", this);
     initTree();
   }

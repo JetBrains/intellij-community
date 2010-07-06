@@ -63,9 +63,10 @@ public class UIRootConfigurationAccessor extends RootConfigurationAccessor {
   }
 
   public Sdk getProjectSdk(final Project project) {
-    return ProjectJdksModel.getInstance(project).getProjectJdk();
+    return ProjectStructureConfigurable.getInstance(project).getProjectJdksModel().getProjectJdk();
   }
 
+  @Nullable
   public String getProjectSdkName(final Project project) {
     final String projectJdkName = ProjectRootManager.getInstance(project).getProjectJdkName();
     final Sdk projectJdk = getProjectSdk(project);
@@ -73,7 +74,8 @@ public class UIRootConfigurationAccessor extends RootConfigurationAccessor {
       return projectJdk.getName();
     }
     else {
-      return ProjectJdksModel.getInstance(project).findSdk(projectJdkName) == null ? projectJdkName : null;
+      final ProjectJdksModel projectJdksModel = ProjectStructureConfigurable.getInstance(project).getProjectJdksModel();
+      return projectJdksModel.findSdk(projectJdkName) == null ? projectJdkName : null;
     }
   }
 }

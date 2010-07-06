@@ -212,7 +212,8 @@ class JdkComboBox extends JComboBox{
     final DefaultComboBoxModel model = ((DefaultComboBoxModel)getModel());
     model.removeAllElements();
     model.addElement(firstItem);
-    final ArrayList<Sdk> projectJdks = new ArrayList<Sdk>(ProjectJdksModel.getInstance(project).getProjectJdks().values());
+    final ProjectJdksModel projectJdksModel = ProjectStructureConfigurable.getInstance(project).getProjectJdksModel();
+    final ArrayList<Sdk> projectJdks = new ArrayList<Sdk>(projectJdksModel.getProjectJdks().values());
     Collections.sort(projectJdks, new Comparator<Sdk>() {
       public int compare(final Sdk o1, final Sdk o2) {
         return o1.getName().compareToIgnoreCase(o2.getName());

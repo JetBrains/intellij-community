@@ -58,11 +58,6 @@ public class ProjectJdksModel implements NotifiableSdkModel {
   private Sdk myProjectJdk;
   private boolean myInitialized = false;
 
-  public static ProjectJdksModel getInstance(Project project){
-    return ProjectStructureConfigurable.getInstance(project).getProjectJdksModel();
-  }
-
-
   public Listener getMulticaster() {
     return mySdkEventsDispatcher.getMulticaster();
   }
