@@ -54,6 +54,10 @@ public class MostlySingularMultiMap<K, V> {
     return myMap.keySet();
   }
 
+  public boolean isEmpty() {
+    return myMap.isEmpty();
+  }
+
   public boolean processForKey(K key, Processor<V> p) {
     return processValue(p, myMap.get(key));
   }
