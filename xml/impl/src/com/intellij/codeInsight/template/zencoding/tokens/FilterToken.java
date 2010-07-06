@@ -13,34 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.template.zencoding;
-
-import com.intellij.openapi.util.Pair;
-import com.intellij.psi.xml.XmlTag;
-
-import java.util.List;
+package com.intellij.codeInsight.template.zencoding.tokens;
 
 /**
  * @author Eugene.Kudelevsky
  */
-public class XmlTemplateToken extends TemplateToken {
-  private final List<Pair<String, String>> myAttribute2Value;
-  private XmlTag myTag;
+public class FilterToken extends ZenCodingToken {
+  private final String mySuffix;
 
-  public XmlTemplateToken(String key, List<Pair<String, String>> attribute2value) {
-    super(key);
-    myAttribute2Value = attribute2value;
+  public FilterToken(String suffix) {
+    mySuffix = suffix;
   }
 
-  public List<Pair<String, String>> getAttribute2Value() {
-    return myAttribute2Value;
+  public String getSuffix() {
+    return mySuffix;
   }
 
-  public XmlTag getTag() {
-    return myTag;
-  }
-
-  public void setTag(XmlTag tag) {
-    myTag = tag;
+  @Override
+  public String toString() {
+    return "|" + mySuffix;
   }
 }

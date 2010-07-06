@@ -13,33 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.template.zencoding;
+package com.intellij.codeInsight.template.zencoding.nodes;
 
 import com.intellij.codeInsight.template.zencoding.tokens.TemplateToken;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
  * @author Eugene.Kudelevsky
  */
-public interface ZenCodingFilter {
-  ExtensionPointName<ZenCodingFilter> EP_NAME = new ExtensionPointName<ZenCodingFilter>("com.intellij.xml.zenCodingFilter");
+public class TemplateNode extends ZenCodingNode {
+  private final TemplateToken myTemplateToken;
+
+  public TemplateNode(TemplateToken templateToken) {
+    myTemplateToken = templateToken;
+  }
+
+  public TemplateToken getTemplateToken() {
+    return myTemplateToken;
+  }
 
   @NotNull
-  String toString(@NotNull TemplateToken token, @NotNull PsiElement context);
-
-  @NotNull
-  String buildAttributesString(@NotNull List<Pair<String, String>> attribute2value, int numberInIteration);
-
-  boolean isMyContext(@NotNull PsiElement context);
-
-  @Nullable
-  String getSuffix();
-
-  boolean isDefaultFilter();
+  @Override
+  public List<GenerationNode> expand(int numberInIteration) {
+    return Arrays.asList(new GenerationNode(myTemplateToken, new ArrayList<GenerationNode>(), numberInIteration));
+  }
 }

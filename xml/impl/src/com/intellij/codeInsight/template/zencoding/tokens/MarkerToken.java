@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.template.zencoding;
+package com.intellij.codeInsight.template.zencoding.tokens;
 
 /**
  * @author Eugene.Kudelevsky
  */
-public class MarkerToken extends Token {
+public class MarkerToken extends ZenCodingToken {
   @Override
   public String toString() {
     return "&";

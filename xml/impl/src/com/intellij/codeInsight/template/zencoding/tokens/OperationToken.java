@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.template.zencoding;
+package com.intellij.codeInsight.template.zencoding.tokens;
 
 /**
  * @author Eugene.Kudelevsky
  */
-public class OperationToken extends Token {
+public class OperationToken extends ZenCodingToken {
   private final char mySign;
 
-  OperationToken(char sign) {
+  public OperationToken(char sign) {
     mySign = sign;
   }
 

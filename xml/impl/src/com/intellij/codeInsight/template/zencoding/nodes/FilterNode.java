@@ -13,32 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.template;
+package com.intellij.codeInsight.template.zencoding.nodes;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author Eugene.Kudelevsky
  */
-public interface CustomLiveTemplate {
-  ExtensionPointName<CustomLiveTemplate> EP_NAME = ExtensionPointName.create("com.intellij.customLiveTemplate");
+public class FilterNode extends ZenCodingNode {
+  private final ZenCodingNode myNode;
+  private final String myFilter;
 
-  @Nullable
-  String computeTemplateKey(@NotNull CustomTemplateCallback callback);
+  public FilterNode(ZenCodingNode node, String filter) {
+    myNode = node;
+    myFilter = filter;
+  }
 
-  boolean isApplicable(PsiFile file, int offset);
+  public ZenCodingNode getNode() {
+    return myNode;
+  }
 
-  boolean supportsWrapping();
-
-  void expand(String key, @NotNull CustomTemplateCallback callback);
-
-  void wrap(String selection, @NotNull CustomTemplateCallback callback);
+  public String getFilter() {
+    return myFilter;
+  }
 
   @NotNull
-  String getTitle();
-
-  char getShortcut();
+  @Override
+  public List<GenerationNode> expand(int numberInIteration) {
+    return myNode.expand(numberInIteration);
+  }
 }

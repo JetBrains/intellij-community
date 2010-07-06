@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInsight.template.zencoding;
 
+import com.intellij.codeInsight.template.zencoding.tokens.TemplateToken;
+import com.intellij.codeInsight.template.zencoding.tokens.XmlTemplateToken;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlTag;
@@ -34,7 +36,7 @@ public abstract class XmlZenCodingFilter implements ZenCodingFilter {
     return toString(((XmlTemplateToken)token).getTag(), context);
   }
 
-  protected abstract String toString(@NotNull XmlTag tag, @NotNull PsiElement context);
+  public abstract String toString(@NotNull XmlTag tag, @NotNull PsiElement context);
 
   @NotNull
   public abstract String buildAttributesString(@NotNull List<Pair<String, String>> attribute2value, int numberInIteration);

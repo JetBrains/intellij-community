@@ -13,24 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.template.zencoding;
+package com.intellij.codeInsight.template.zencoding.tokens;
 
 /**
  * @author Eugene.Kudelevsky
  */
-public class FilterToken extends Token {
-  private final String mySuffix;
+public class NumberToken extends ZenCodingToken {
+  private final int myNumber;
 
-  public FilterToken(String suffix) {
-    mySuffix = suffix;
+  public NumberToken(int number) {
+    myNumber = number;
   }
 
-  public String getSuffix() {
-    return mySuffix;
+  public int getNumber() {
+    return myNumber;
   }
 
   @Override
   public String toString() {
-    return "|" + mySuffix;
+    return Integer.toString(myNumber);
   }
 }

@@ -13,10 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.template.zencoding;
+package com.intellij.codeInsight.template.zencoding.nodes;
+
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author Eugene.Kudelevsky
  */
-public class Token {
+public abstract class ZenCodingNode {
+  @NotNull
+  public abstract List<GenerationNode> expand(int numberInIteration);
 }

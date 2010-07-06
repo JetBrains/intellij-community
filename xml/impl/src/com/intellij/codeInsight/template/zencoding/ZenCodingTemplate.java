@@ -19,7 +19,10 @@ import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.CustomLiveTemplate;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
-import com.intellij.codeInsight.template.TemplateInvokationListener;
+import com.intellij.codeInsight.template.LiveTemplateBuilder;
+import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.codeInsight.template.zencoding.nodes.*;
+import com.intellij.codeInsight.template.zencoding.tokens.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
@@ -34,7 +37,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -42,7 +44,8 @@ import java.util.List;
  */
 public abstract class ZenCodingTemplate implements CustomLiveTemplate {
   static final char MARKER = '$';
-  private static final String OPERATIONS = ">+*";
+  private static final String DELIMS = ">+*()";
+  public static final String ATTRS = "ATTRS";
 
   private static int parseNonNegativeInt(@NotNull String s) {
     try {
@@ -54,7 +57,18 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
   }
 
   @Nullable
-  private List<Token> parse(@NotNull String text, @NotNull CustomTemplateCallback callback) {
+  private ZenCodingNode parse(@NotNull String text, @NotNull CustomTemplateCallback callback) {
+    List<ZenCodingToken> tokens = lex(text, callback);
+    if (tokens == null) {
+      return null;
+    }
+    MyParser parser = new MyParser(tokens);
+    ZenCodingNode node = parser.parse();
+    return parser.myIndex == tokens.size() - 1 ? node : null;
+  }
+
+  @Nullable
+  private List<ZenCodingToken> lex(@NotNull String text, @NotNull CustomTemplateCallback callback) {
     String filter = null;
 
     int filterDelim = text.indexOf('|');
@@ -67,15 +81,17 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
     boolean inApostrophes = false;
     text += MARKER;
     StringBuilder templateKeyBuilder = new StringBuilder();
-    List<Token> result = new ArrayList<Token>();
+    List<ZenCodingToken> result = new ArrayList<ZenCodingToken>();
     for (int i = 0, n = text.length(); i < n; i++) {
       char c = text.charAt(i);
       if (inQuotes || inApostrophes) {
         templateKeyBuilder.append(c);
-        if (c == '"') inQuotes = false;
+        if (c == '"') {
+          inQuotes = false;
+        }
         else if (c == '\'') inApostrophes = false;
       }
-      else if (i == n - 1 || (i < n - 2 && OPERATIONS.indexOf(c) >= 0)) {
+      else if (i == n - 1 || (i < n - 2 && DELIMS.indexOf(c) >= 0)) {
         String key = templateKeyBuilder.toString();
         templateKeyBuilder = new StringBuilder();
         int num = parseNonNegativeInt(key);
@@ -87,11 +103,24 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
           if (token == null) return null;
           result.add(token);
         }
-        result.add(i < n - 1 ? new OperationToken(c) : new MarkerToken());
+        if (i == n - 1) {
+          result.add(new MarkerToken());
+        }
+        else if (c == '(') {
+          result.add(new OpeningBraceToken());
+        }
+        else if (c == ')') {
+          result.add(new ClosingBraceToken());
+        }
+        else {
+          result.add(new OperationToken(c));
+        }
       }
       else if (!Character.isWhitespace(c)) {
         templateKeyBuilder.append(c);
-        if (c == '"') inQuotes = true;
+        if (c == '"') {
+          inQuotes = true;
+        }
         else if (c == '\'') inApostrophes = true;
       }
       else {
@@ -112,50 +141,6 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
   @Nullable
   protected abstract TemplateToken parseTemplateKey(String key, CustomTemplateCallback callback);
 
-  private static boolean check(@NotNull Collection<Token> tokens) {
-    State state = State.WORD;
-    for (Token token : tokens) {
-      if (token instanceof MarkerToken) {
-        break;
-      }
-      switch (state) {
-        case OPERATION:
-          if (token instanceof OperationToken) {
-            state = ((OperationToken)token).getSign() == '*' ? State.NUMBER : State.WORD;
-          }
-          else {
-            return false;
-          }
-          break;
-        case WORD:
-          if (token instanceof TemplateToken) {
-            state = State.OPERATION;
-          }
-          else {
-            return false;
-          }
-          break;
-        case NUMBER:
-          if (token instanceof NumberToken) {
-            state = State.AFTER_NUMBER;
-          }
-          else {
-            return false;
-          }
-          break;
-        case AFTER_NUMBER:
-          if (token instanceof OperationToken && ((OperationToken)token).getSign() != '*') {
-            state = State.WORD;
-          }
-          else {
-            return false;
-          }
-          break;
-      }
-    }
-    return state == State.OPERATION || state == State.AFTER_NUMBER;
-  }
-
   protected static String computeKey(Editor editor, int startOffset) {
     int offset = editor.getCaretModel().getOffset();
     String s = editor.getDocument().getCharsSequence().subSequence(startOffset, offset).toString();
@@ -170,7 +155,9 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
     for (int i = 0; i < key.length(); i++) {
       char c = key.charAt(i);
       if (lastQuoteIndex >= 0 || lastApostropheIndex >= 0) {
-        if (c == '"') lastQuoteIndex = -1;
+        if (c == '"') {
+          lastQuoteIndex = -1;
+        }
         else if (c == '\'') lastApostropheIndex = -1;
       }
       else if (Character.isWhitespace(c)) {
@@ -180,7 +167,7 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
         lastQuoteIndex = i;
       }
       else if (c == '\'') {
-        lastApostropheIndex = i; 
+        lastApostropheIndex = i;
       }
     }
     if (lastQuoteIndex >= 0 || lastApostropheIndex >= 0) {
@@ -194,11 +181,7 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
   }
 
   protected boolean checkTemplateKey(String key, CustomTemplateCallback callback) {
-    List<Token> tokens = parse(key, callback);
-    if (tokens != null && check(tokens)) {
-      return true;
-    }
-    return false;
+    return parse(key, callback) != null;
   }
 
   public void expand(String key, @NotNull CustomTemplateCallback callback) {
@@ -208,26 +191,38 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
   private void expand(String key,
                       @NotNull CustomTemplateCallback callback,
                       String surroundedText) {
-    List<Token> tokens = parse(key, callback);
-    assert tokens != null;
+    ZenCodingNode node = parse(key, callback);
+    assert node != null;
     if (surroundedText == null) {
-      if (tokens.size() == 2) {
-        Token token = tokens.get(0);
-        if (token instanceof TemplateToken) {
-          if (key.equals(((TemplateToken)token).getKey()) && callback.findApplicableTemplates(key).size() > 1) {
-            callback.startTemplate();
-            return;
-          }
+      if (node instanceof TemplateNode) {
+        if (key.equals(((TemplateNode)node).getTemplateToken().getKey()) && callback.findApplicableTemplates(key).size() > 1) {
+          callback.startTemplate();
+          return;
         }
       }
       callback.deleteTemplateKey(key);
     }
-    XmlZenCodingInterpreter.interpret(tokens, 0, callback, State.WORD, surroundedText);
+
+    List<GenerationNode> genNodes = node.expand(-1);
+    LiveTemplateBuilder builder = new LiveTemplateBuilder();
+    int end = -1;
+    for (int i = 0, genNodesSize = genNodes.size(); i < genNodesSize; i++) {
+      GenerationNode genNode = genNodes.get(i);
+      TemplateInvokation inv = genNode.generate(callback, surroundedText);
+      int e = builder.insertTemplate(builder.length(), inv.getTemplate(), inv.getPredefinedValues());
+      if (end == -1 && end < builder.length()) {
+        end = e;
+      }
+    }
+    if (end < builder.length()) {
+      builder.insertVariableSegment(end, TemplateImpl.END);
+    }
+    callback.startTemplate(builder.buildTemplate(), builder.getPredefinedValues());
   }
 
   public void wrap(final String selection,
-                   @NotNull final CustomTemplateCallback callback,
-                   @Nullable final TemplateInvokationListener listener) {
+                   @NotNull final CustomTemplateCallback callback
+  ) {
     InputValidatorEx validator = new InputValidatorEx() {
       public String getErrorText(String inputString) {
         if (!checkTemplateKey(inputString, callback)) {
@@ -248,7 +243,7 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
       .showInputDialog(callback.getProject(), XmlBundle.message("zen.coding.enter.abbreviation.dialog.label"),
                        XmlBundle.message("zen.coding.title"), Messages.getQuestionIcon(), "", validator);
     if (abbreviation != null) {
-      doWrap(selection, abbreviation, callback, listener);
+      doWrap(selection, abbreviation, callback);
     }
   }
 
@@ -269,8 +264,7 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
 
   protected void doWrap(final String selection,
                         final String abbreviation,
-                        final CustomTemplateCallback callback,
-                        final TemplateInvokationListener listener) {
+                        final CustomTemplateCallback callback) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         CommandProcessor.getInstance().executeCommand(callback.getProject(), new Runnable() {
@@ -279,9 +273,6 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
             PsiDocumentManager.getInstance(callback.getProject()).commitAllDocuments();
             callback.fixInitialState();
             expand(abbreviation, callback, selection);
-            if (listener != null) {
-              listener.finished();
-            }
           }
         }, CodeInsightBundle.message("insert.code.template.command"), null);
       }
@@ -295,5 +286,122 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
 
   public char getShortcut() {
     return (char)WebEditorOptions.getInstance().getZenCodingExpandShortcut();
+  }
+
+  protected static boolean containsAttrsVar(TemplateImpl template) {
+    for (int i = 0; i < template.getVariableCount(); i++) {
+      String varName = template.getVariableNameAt(i);
+      if (ATTRS.equals(varName)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static class MyParser {
+    private final List<ZenCodingToken> myTokens;
+    private int myIndex = 0;
+
+    private MyParser(List<ZenCodingToken> tokens) {
+      myTokens = tokens;
+    }
+
+    @Nullable
+    private ZenCodingNode parse() {
+      ZenCodingNode add = parseAddOrMore();
+      if (add == null) {
+        return null;
+      }
+      ZenCodingToken filter = nextToken();
+      if (filter instanceof FilterToken) {
+        myIndex++;
+        return new FilterNode(add, ((FilterToken)filter).getSuffix());
+      }
+      return add;
+    }
+
+    @Nullable
+    private ZenCodingNode parseAddOrMore() {
+      ZenCodingNode mul = parseMul(true);
+      if (mul == null) {
+        return null;
+      }
+      ZenCodingToken operationToken = nextToken();
+      if (!(operationToken instanceof OperationToken)) {
+        return mul;
+      }
+      char sign = ((OperationToken)operationToken).getSign();
+      if (sign == '+') {
+        myIndex++;
+        ZenCodingNode add2 = parseAddOrMore();
+        if (add2 == null) {
+          return null;
+        }
+        return new AddOperationNode(mul, add2);
+      }
+      else if (sign == '>') {
+        myIndex++;
+        ZenCodingNode more2 = parseAddOrMore();
+        if (more2 == null) {
+          return null;
+        }
+        return new MoreOperationNode(mul, more2);
+      }
+      return null;
+    }
+
+    @Nullable
+    private ZenCodingNode parseMul(boolean canBeSingle) {
+      ZenCodingNode exp = parseExpressionInBraces();
+      if (exp == null) {
+        return null;
+      }
+      ZenCodingToken operationToken = nextToken();
+      if (!(operationToken instanceof OperationToken)) {
+        return canBeSingle ? exp : null;
+      }
+      if (((OperationToken)operationToken).getSign() != '*') {
+        return canBeSingle ? exp : null;
+      }
+      myIndex++;
+      ZenCodingToken numberToken = nextToken();
+      if (numberToken instanceof NumberToken) {
+        myIndex++;
+        return new MulOperationNode(exp, ((NumberToken)numberToken).getNumber());
+      }
+      return null;
+    }
+
+    @Nullable
+    private ZenCodingNode parseExpressionInBraces() {
+      ZenCodingToken openingBrace = nextToken();
+      if (openingBrace instanceof OpeningBraceToken) {
+        myIndex++;
+        ZenCodingNode add = parseAddOrMore();
+        if (add == null) {
+          return null;
+        }
+        ZenCodingToken closingBrace = nextToken();
+        if (!(closingBrace instanceof ClosingBraceToken)) {
+          return null;
+        }
+        myIndex++;
+        return add;
+      }
+      ZenCodingToken templateToken = nextToken();
+      if (templateToken instanceof TemplateToken) {
+        myIndex++;
+        return new TemplateNode((TemplateToken)templateToken);
+      }
+      return null;
+    }
+
+    @Nullable
+    private ZenCodingToken nextToken() {
+      if (myIndex < myTokens.size()) {
+        return myTokens.get(myIndex);
+      }
+      return null;
+    }
   }
 }

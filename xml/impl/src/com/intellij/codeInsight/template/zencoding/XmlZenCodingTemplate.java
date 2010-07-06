@@ -17,8 +17,9 @@ package com.intellij.codeInsight.template.zencoding;
 
 import com.intellij.codeInsight.template.CustomLiveTemplate;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
-import com.intellij.codeInsight.template.TemplateInvokationListener;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.codeInsight.template.zencoding.tokens.TemplateToken;
+import com.intellij.codeInsight.template.zencoding.tokens.XmlTemplateToken;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -217,7 +218,7 @@ public class XmlZenCodingTemplate extends ZenCodingTemplate {
       return null;
     }
     if (tag != null) {
-      if (!XmlZenCodingInterpreter.containsAttrsVar(template) && token.getAttribute2Value().size() > 0) {
+      if (!containsAttrsVar(template) && token.getAttribute2Value().size() > 0) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
             addMissingAttributes(tag, token.getAttribute2Value());
@@ -314,17 +315,13 @@ public class XmlZenCodingTemplate extends ZenCodingTemplate {
         String selection = callback.getEditor().getSelectionModel().getSelectedText();
         assert selection != null;
         selection = selection.trim();
-        template.doWrap(selection, abbreviation, callback, new TemplateInvokationListener() {
-          public void finished() {
-            callback.startAllExpandedTemplates();
-          }
-        });
+        template.doWrap(selection, abbreviation, callback);
       }
       else {
         String key = template.computeTemplateKey(callback);
         if (key != null) {
           template.expand(key, callback);
-          callback.startAllExpandedTemplates();
+          //callback.startAllExpandedTemplates();
           return true;
         }
         // if it is simple live template invokation, we should start it using TemplateManager because template may be ambiguous

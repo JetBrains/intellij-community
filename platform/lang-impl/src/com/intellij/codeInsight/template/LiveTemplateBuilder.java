@@ -19,6 +19,7 @@ import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.Variable;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -51,6 +52,7 @@ public class LiveTemplateBuilder {
     }
   }
 
+  @NotNull
   public TemplateImpl buildTemplate() {
     TemplateImpl template = new TemplateImpl("", "");
     for (Variable variable : myVariables) {
@@ -90,6 +92,10 @@ public class LiveTemplateBuilder {
     }
     myText.insert(offset, text);
     updateMarkers(offset, text);
+  }
+
+  public int length() {
+    return myText.length();
   }
 
   private void updateMarkers(int offset, String text) {
@@ -171,13 +177,13 @@ public class LiveTemplateBuilder {
     return end >= 0 ? end : offset + text.length();
   }
 
-  Marker createMarker(int offset) {
+  public Marker createMarker(int offset) {
     Marker marker = new Marker(offset, offset);
     myMarkers.add(marker);
     return marker;
   }
 
-  static class Marker {
+  public static class Marker {
     int myStartOffset;
     int myEndOffset;
 
