@@ -606,6 +606,12 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     @Override
     protected void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
       g.translate(-2, 0);
+      g.setColor(Color.white);
+      final Rectangle oldClip = g.getClipBounds();
+      g.setClip(thumbBounds.x, thumbBounds.y, 5, thumbBounds.height );
+      g.fillRect(thumbBounds.x + 2, thumbBounds.y + 2, thumbBounds.width, thumbBounds.height - 4);
+
+      g.setClip(oldClip);
       super.paintThumb(g, c, thumbBounds);
       g.translate(2, 0);
     }
@@ -625,7 +631,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       Rectangle bounds = new Rectangle(trackBounds);
 
       g.setColor(myEditor.getBackgroundColor());
-      g.fillRect(0, 0, bounds.width, bounds.height);
+      g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
 
       bounds.width /= 1.20;
       final int shift = trackBounds.width - bounds.width;

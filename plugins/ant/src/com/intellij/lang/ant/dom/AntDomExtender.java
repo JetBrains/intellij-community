@@ -17,18 +17,15 @@ package com.intellij.lang.ant.dom;
 
 import com.intellij.lang.ant.psi.impl.AntIntrospector;
 import com.intellij.lang.ant.psi.impl.ReflectedProject;
+import com.intellij.pom.PomTarget;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.xml.XmlName;
-import com.intellij.util.xml.reflect.DomExtender;
-import com.intellij.util.xml.reflect.DomExtension;
-import com.intellij.util.xml.reflect.DomExtensionsRegistrar;
-import com.intellij.util.xml.reflect.DomGenericInfo;
+import com.intellij.util.xml.*;
+import com.intellij.util.xml.reflect.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -42,7 +39,8 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
       final XmlTag xmlTag = (XmlTag)xmlElement;
       final String tagName = xmlTag.getName(); // todo: support namespaces
 
-      final ReflectedProject reflected = ReflectedProject.getProject(antDomElement.getAntProject().getClassLoader());
+      final AntDomProject antProject = antDomElement.getAntProject();
+      final ReflectedProject reflected = ReflectedProject.getProject(antProject.getClassLoader());
 
       final DomGenericInfo genericInfo = antDomElement.getGenericInfo();
       AntIntrospector parentElementIntrospector = null;
@@ -87,6 +85,7 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
               extension.putUserData(AntDomElement.ROLE, AntDomElement.Role.DATA_TYPE);
             }
           }
+          registrar.registerCustomChildrenExtension(AntDomCustomTask.class, new AntCustomTagNameDescriptor());
         }
         else {
           final Enumeration<String> nested = parentElementIntrospector.getNestedElements();
@@ -138,6 +137,12 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
       else if ("filelist".equalsIgnoreCase(childName)) {
         modelClass = AntDomFileList.class;
       }
+      else if ("typedef".equalsIgnoreCase(childName)) {
+        modelClass = AntDomTypeDef.class;
+      }
+      else if ("taskdef".equalsIgnoreCase(childName)) {
+        modelClass = AntDomTypeDef.class;
+      }
       return registrar.registerCollectionChildrenExtension(new XmlName(childName), modelClass);
     }
     return null;
@@ -153,4 +158,45 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
     return null;
   }
 
+  private static class AntCustomTagNameDescriptor extends CustomDomChildrenDescription.TagNameDescriptor {
+
+    public Set<EvaluatedXmlName> getCompletionVariants(@NotNull DomElement parent) {
+      if (!(parent instanceof AntDomElement)) {
+        return Collections.emptySet();
+      }
+      final AntDomElement element = (AntDomElement)parent;
+      final CustomAntElementsRegistry registry = CustomAntElementsRegistry.getInstance(element.getAntProject());
+      final Set<EvaluatedXmlName> result = new HashSet<EvaluatedXmlName>();
+      for (XmlName variant : registry.getCompletionVariants(element)) {
+        result.add(new DummyEvaluatedXmlName(variant, null));
+      }
+      return result;
+    }
+
+    @Nullable
+    public PomTarget findDeclaration(DomElement parent, @NotNull EvaluatedXmlName name) {
+      final XmlName xmlName = name.getXmlName();
+      return doFindDeclaration(parent, xmlName);
+    }
+
+    @Nullable
+    public PomTarget findDeclaration(@NotNull DomElement child) {
+      XmlName name = new XmlName(child.getXmlElementName(), child.getXmlElementNamespaceKey());
+      return doFindDeclaration(child.getParent(), name);
+    }
+
+    @Nullable
+    private static PomTarget doFindDeclaration(DomElement parent, XmlName xmlName) {
+      if (!(parent instanceof AntDomElement)) {
+        return null;
+      }
+      final AntDomElement element = (AntDomElement)parent;
+      final CustomAntElementsRegistry registry = CustomAntElementsRegistry.getInstance(element.getAntProject());
+      final AntDomElement declaringElement = registry.findDeclaringElement(element, xmlName);
+      if (declaringElement == null) {
+        return null;
+      }
+      return DomTarget.getTarget(element);
+    }
+  }
 }

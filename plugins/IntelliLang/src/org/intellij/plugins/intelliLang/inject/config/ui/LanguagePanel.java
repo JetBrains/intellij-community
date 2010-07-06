@@ -29,7 +29,7 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.SimpleTextAttributes;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
-import org.intellij.plugins.intelliLang.util.ShiftTabAction;
+import com.intellij.ui.ShiftTabAction;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

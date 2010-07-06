@@ -38,10 +38,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
-import org.jetbrains.idea.maven.execution.MavenExecutor;
-import org.jetbrains.idea.maven.execution.MavenExternalExecutor;
-import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
-import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
+import org.jetbrains.idea.maven.execution.*;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.project.MavenArtifactDownloader;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -441,7 +438,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
     MavenRunnerParameters rp = new MavenRunnerParameters(true, dir.getPath(), Arrays.asList(goal), null);
     MavenRunnerSettings rs = new MavenRunnerSettings();
-    MavenExecutor e = new MavenExternalExecutor(rp, getMavenGeneralSettings(), rs, NULL_MAVEN_CONSOLE);
+    MavenExecutor e = new MavenExternalExecutor(rp, getMavenGeneralSettings(), rs, new SoutMavenConsole());
 
     e.execute(new EmptyProgressIndicator());
   }

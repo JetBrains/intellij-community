@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+@SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class MavenArtifactUtil {
   public static final String[] DEFAULT_GROUPS = new String[]{"org.apache.maven.plugins", "org.codehaus.mojo"};
   public static final String MAVEN_PLUGIN_DESCRIPTOR = "META-INF/maven/plugin.xml";
@@ -60,26 +61,26 @@ public class MavenArtifactUtil {
   }
 
   @NotNull
-  public static File getArtifactFile(File localRepostiory, MavenId id, String type) {
-    return getArtifactFile(localRepostiory, id.getGroupId(), id.getArtifactId(), id.getVersion(), type);
+  public static File getArtifactFile(File localRepository, MavenId id, String type) {
+    return getArtifactFile(localRepository, id.getGroupId(), id.getArtifactId(), id.getVersion(), type);
   }
 
   @NotNull
-  public static File getArtifactFile(File localRepostiory, MavenId id) {
-    return getArtifactFile(localRepostiory, id.getGroupId(), id.getArtifactId(), id.getVersion(), "pom");
+  public static File getArtifactFile(File localRepository, MavenId id) {
+    return getArtifactFile(localRepository, id.getGroupId(), id.getArtifactId(), id.getVersion(), "pom");
   }
 
   @NotNull
-  public static File getArtifactFile(File localRepostiory, String groupId, String artifactId, String version, String type) {
+  public static File getArtifactFile(File localRepository, String groupId, String artifactId, String version, String type) {
     File dir = null;
     if (StringUtil.isEmpty(groupId)) {
       for (String each : DEFAULT_GROUPS) {
-        dir = getArtifactDirectory(localRepostiory, each, artifactId);
+        dir = getArtifactDirectory(localRepository, each, artifactId);
         if (dir.exists()) break;
       }
     }
     else {
-      dir = getArtifactDirectory(localRepostiory, groupId, artifactId);
+      dir = getArtifactDirectory(localRepository, groupId, artifactId);
     }
 
     if (StringUtil.isEmpty(version)) version = resolveVersion(dir);

@@ -29,6 +29,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
@@ -124,7 +125,7 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
 
   }
 
-  public boolean checkConflicts(ExtractSuperclassDialog dialog) {
+  public boolean checkConflicts(final ExtractSuperclassDialog dialog) {
     final MemberInfo[] infos = ArrayUtil.toObjectArray(dialog.getSelectedMemberInfos(), MemberInfo.class);
     final PsiDirectory targetDirectory = dialog.getTargetDirectory();
     final PsiPackage targetPackage;
@@ -134,8 +135,14 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
     else {
       targetPackage = null;
     }
-    final MultiMap<PsiElement,String> conflicts =
-      PullUpConflictsUtil.checkConflicts(infos, mySubclass, mySubclass.getSuperClass(), targetPackage, targetDirectory, dialog.getContainmentVerifier());
+    final MultiMap<PsiElement,String> conflicts = new MultiMap<PsiElement, String>();
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      public void run() {
+        final PsiClass superClass = mySubclass.getExtendsListTypes().length > 0 ? mySubclass.getSuperClass() : null;
+        conflicts.putAllValues(PullUpConflictsUtil.checkConflicts(infos, mySubclass, superClass, targetPackage, targetDirectory, dialog.getContainmentVerifier(), false));
+      }
+    }, "Detecting possible conflicts...", true, myProject)) return false;
+
     if (!conflicts.isEmpty()) {
       ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);
       conflictsDialog.show();

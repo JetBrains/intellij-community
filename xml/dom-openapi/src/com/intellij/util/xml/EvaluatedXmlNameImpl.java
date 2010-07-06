@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.xml.impl;
+package com.intellij.util.xml;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -25,9 +25,6 @@ import com.intellij.psi.xml.*;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.xml.DomFileDescription;
-import com.intellij.util.xml.EvaluatedXmlName;
-import com.intellij.util.xml.XmlName;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,7 +94,7 @@ public class EvaluatedXmlNameImpl implements EvaluatedXmlName {
     return result;
   }
 
-  public final boolean isNamespaceAllowed(DomFileElementImpl element, String namespace) {
+  public final boolean isNamespaceAllowed(DomFileElement element, String namespace) {
     if (myNamespaceKey == null || myEqualToParent) return true;
     final XmlFile file = element.getFile();
     return isNamespaceAllowed(namespace, getAllowedNamespaces(file));
@@ -111,7 +108,7 @@ public class EvaluatedXmlNameImpl implements EvaluatedXmlName {
           public Result<FactoryMap<String, List<String>>> compute() {
             final FactoryMap<String, List<String>> map = new ConcurrentFactoryMap<String, List<String>>() {
               protected List<String> create(final String key) {
-                final DomFileDescription<?> description = DomManagerImpl.getDomManager(file.getProject()).getDomFileDescription(file);
+                final DomFileDescription<?> description = DomManager.getDomManager(file.getProject()).getDomFileDescription(file);
                 if (description == null) return Collections.emptyList();
                 return description.getAllowedNamespaces(key, file);
               }
@@ -171,7 +168,7 @@ public class EvaluatedXmlNameImpl implements EvaluatedXmlName {
     return getAllowedNamespaces(file);
   }
 
-  protected static EvaluatedXmlNameImpl createEvaluatedXmlName(@NotNull final XmlName xmlName, @Nullable final String namespaceKey, boolean equalToParent) {
+  public static EvaluatedXmlNameImpl createEvaluatedXmlName(@NotNull final XmlName xmlName, @Nullable final String namespaceKey, boolean equalToParent) {
     final EvaluatedXmlNameImpl name = new EvaluatedXmlNameImpl(xmlName, namespaceKey, equalToParent);
     final EvaluatedXmlNameImpl interned = ourInterned.get(name);
     if (interned != null) {

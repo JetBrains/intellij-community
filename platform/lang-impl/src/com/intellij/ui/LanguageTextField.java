@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.intellij.plugins.intelliLang.util;
+package com.intellij.ui;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.lang.Language;
@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
-import com.intellij.ui.EditorTextField;
 import com.intellij.util.Consumer;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
