@@ -838,7 +838,7 @@ public class PsiUtil {
         for (NonCodeMembersProcessor membersProcessor : NonCodeMembersProcessor.EP_NAME.getExtensions()) {
           if (!membersProcessor.processNonCodeMembers(thisType, processor, place, true)) break;
         }
-        NonCodeMembersContributor.runContributors(thisType, processor, place, ResolveState.initial());
+        NonCodeMembersContributor.runContributors(thisType, processor, place, state);
         constructorResults.addAll(Arrays.asList(processor.getCandidates()));
         if (!toBreak) break;
       }

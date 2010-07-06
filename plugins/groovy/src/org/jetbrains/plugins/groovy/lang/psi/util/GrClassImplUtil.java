@@ -233,7 +233,7 @@ public class GrClassImplUtil {
                                             PsiElement lastParent,
                                             @NotNull PsiElement place) {
     for (final PsiTypeParameter typeParameter : grType.getTypeParameters()) {
-      if (!ResolveUtil.processElement(processor, typeParameter)) return false;
+      if (!ResolveUtil.processElement(processor, typeParameter, state)) return false;
     }
 
     NameHint nameHint = processor.getHint(NameHint.KEY);
