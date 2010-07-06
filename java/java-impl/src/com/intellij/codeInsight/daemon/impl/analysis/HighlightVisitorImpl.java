@@ -772,7 +772,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkExpressionRequired(expression));
     if (!myHolder.hasErrorResults() && resolved instanceof PsiField) {
-      myHolder.add(HighlightUtil.checkIllegalForwardReferenceToField(expression, (PsiField)resolved));
+      try {
+        myHolder.add(HighlightUtil.checkIllegalForwardReferenceToField(expression, (PsiField)resolved));
+      }
+      catch (IndexNotReadyException ignored) {
+      }
     }
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkConstructorCallMustBeFirstStatement(expression));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkAccessStaticFieldFromEnumConstructor(expression, result));
