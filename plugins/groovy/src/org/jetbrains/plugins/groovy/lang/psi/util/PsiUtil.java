@@ -156,7 +156,7 @@ public class PsiUtil {
     return GrClosureSignatureUtil.isSignatureApplicable(signature, argumentTypes, context);
   }
 
-  public static PsiClassType createMapType(PsiManager manager, GlobalSearchScope scope) {
+  public static PsiClassType createMapType(GlobalSearchScope scope) {
     return new GrMapType(scope);
   }
 
@@ -181,7 +181,7 @@ public class PsiUtil {
 
       GrNamedArgument[] namedArgs = call.getNamedArguments();
       if (namedArgs.length > 0) {
-        result.add(createMapType(place.getManager(), place.getResolveScope()));
+        result.add(createMapType(place.getResolveScope()));
       }
 
       GrExpression[] expressions = call.getExpressionArguments();
@@ -212,7 +212,7 @@ public class PsiUtil {
 
       GrNamedArgument[] namedArgs = argList.getNamedArguments();
       if (namedArgs.length > 0) {
-        result.add(createMapType(place.getManager(), place.getResolveScope()));
+        result.add(createMapType(place.getResolveScope()));
       }
 
       GrExpression[] expressions = argList.getExpressionArguments();
@@ -234,7 +234,7 @@ public class PsiUtil {
       GrNamedArgument[] namedArgs = argList != null ? argList.getNamedArguments() : GrNamedArgument.EMPTY_ARRAY;
       final ArrayList<PsiType> result = new ArrayList<PsiType>();
       if (namedArgs.length > 0) {
-        result.add(createMapType(place.getManager(), place.getResolveScope()));
+        result.add(createMapType(place.getResolveScope()));
       }
       for (GrExpression arg : args) {
         PsiType argType = arg.getType();
@@ -252,7 +252,7 @@ public class PsiUtil {
 
       List<PsiType> result = new ArrayList<PsiType>();
       if (argList.getNamedArguments().length > 0) {
-        result.add(createMapType(place.getManager(), place.getResolveScope()));
+        result.add(createMapType(place.getResolveScope()));
       }
 
       GrExpression[] expressions = argList.getExpressionArguments();
@@ -395,16 +395,33 @@ public class PsiUtil {
               if (owner instanceof PsiClass) {
                 return true;
               }
+
+              //non-physical method, e.g. gdk
+              if (containingClass == null) {
+                return true;
+              }
+
+              if (owner.hasModifierProperty(PsiModifier.STATIC)) {
+                return true;
+              }
+
               //members from java.lang.Class can be invoked without ".class"
-              PsiClass javaLangClass =
-                JavaPsiFacade.getInstance(place.getProject()).findClass(CommonClassNames.JAVA_LANG_CLASS, place.getResolveScope());
-              if (javaLangClass != null) {
-                if ((containingClass == null) || //default groovy method
-                    InheritanceUtil.isInheritorOrSelf(javaLangClass, containingClass, true)) {
+              final String qname = containingClass.getQualifiedName();
+              if (qname != null && qname.startsWith("java.")) {
+                if (CommonClassNames.JAVA_LANG_OBJECT.equals(qname) || CommonClassNames.JAVA_LANG_CLASS.equals(qname)) {
                   return true;
                 }
+
+                if (containingClass.isInterface()) {
+                  PsiClass javaLangClass =
+                    JavaPsiFacade.getInstance(place.getProject()).findClass(CommonClassNames.JAVA_LANG_CLASS, place.getResolveScope());
+                  if (javaLangClass != null && javaLangClass.isInheritor(containingClass, true)) {
+                    return true;
+                  }
+                }
               }
-              return owner.hasModifierProperty(PsiModifier.STATIC);
+
+              return false;
             }
           }
           else if (qualifier instanceof GrThisReferenceExpression && ((GrThisReferenceExpression)qualifier).getQualifier() == null) {
