@@ -397,7 +397,9 @@ def layoutFull(String target, Set usedJars) {
     }
 
     dir("help") {
-      fileset(dir: "$home/python/help")
+      fileset(dir: "$home/python/help") {
+        include(name: "*.pdf")
+      }
     }
 
     dir("helpers") {
