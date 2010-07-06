@@ -86,7 +86,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   
   public final void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile psiFile) {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      assert !ApplicationManager.getApplication().isWriteAccessAllowed();
+      assert !ApplicationManager.getApplication().isWriteAccessAllowed() : "Please don't invoke completion inside write action";
     }
 
     try {
