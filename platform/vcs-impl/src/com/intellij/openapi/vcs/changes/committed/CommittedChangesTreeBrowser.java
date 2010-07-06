@@ -172,10 +172,10 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   private TreeModel buildTreeModel(final List<CommittedChangeList> filteredChangeLists) {
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     DefaultTreeModel model = new DefaultTreeModel(root);
-    DefaultMutableTreeNode lastGroupNode = null;
-    String lastGroupName = null;
     Collections.sort(filteredChangeLists, myGroupingStrategy.getComparator());
     myGroupingStrategy.beforeStart();
+    DefaultMutableTreeNode lastGroupNode = null;
+    String lastGroupName = null;
     for(CommittedChangeList list: filteredChangeLists) {
       String groupName = myGroupingStrategy.getGroupName(list);
       if (!Comparing.equal(groupName, lastGroupName)) {
@@ -374,7 +374,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     }
     else if (key.equals(VcsDataKeys.CHANGE_LISTS)) {
       final List<CommittedChangeList> lists = getSelectedChangeLists();
-      if (lists.size() > 0) {
+      if (!lists.isEmpty()) {
         sink.put(VcsDataKeys.CHANGE_LISTS, lists.toArray(new CommittedChangeList[lists.size()]));
       }
     }
@@ -432,7 +432,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   }
 
   public void append(final List<CommittedChangeList> list) {
-    final TreeState state = (myChangeLists.isEmpty() && myState != null) ? myState :
+    final TreeState state = myChangeLists.isEmpty() && myState != null ? myState :
       TreeState.createOn(myChangesTree, (DefaultMutableTreeNode)myChangesTree.getModel().getRoot());
     state.setScrollToSelection(false);
     myChangeLists.addAll(list);
