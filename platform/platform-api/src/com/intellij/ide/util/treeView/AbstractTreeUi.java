@@ -85,7 +85,10 @@ public class AbstractTreeUi {
   private ProgressIndicator myProgress;
   private static final int WAIT_CURSOR_DELAY = 100;
   private AbstractTreeNode<Object> TREE_NODE_WRAPPER;
-  private boolean myRootNodeWasInitialized = false;
+
+  private boolean myRootNodeWasQueuedToInitialize = false;
+  private boolean myRootNodeInitialized = false;
+
   private final Map<Object, List<NodeAction>> myNodeActions = new HashMap<Object, List<NodeAction>>();
   private boolean myUpdateFromRootRequested;
   private boolean myWasEverShown;
@@ -201,7 +204,7 @@ public class AbstractTreeUi {
 
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       public void run() {
-        if (!myRootNodeWasInitialized) {
+        if (!wasRootNodeInitialized()) {
           if (myRootNode.getChildCount() == 0) {
             insertLoadingNode(myRootNode, true);
           }
@@ -605,7 +608,7 @@ public class AbstractTreeUi {
 
   private boolean initRootNodeNowIfNeeded(final TreeUpdatePass pass) {
     boolean wasCleanedUp = false;
-    if (myRootNodeWasInitialized) {
+    if (myRootNodeWasQueuedToInitialize) {
       Object root = getTreeStructure().getRootElement();
       assert root != null : "Root element cannot be null";
 
@@ -622,7 +625,9 @@ public class AbstractTreeUi {
       wasCleanedUp = true;
     }
 
-    myRootNodeWasInitialized = true;
+    if (myRootNodeWasQueuedToInitialize) return wasCleanedUp;
+
+    myRootNodeWasQueuedToInitialize = true;
 
     final Object rootElement = getTreeStructure().getRootElement();
     addNodeAction(rootElement, new NodeAction() {
@@ -668,11 +673,19 @@ public class AbstractTreeUi {
     };
 
     if (bgLoading) {
-      queueToBackground(build, update, rootDescriptor);
+      queueToBackground(build, update, rootDescriptor).doWhenProcessed(new Runnable() {
+        @Override
+        public void run() {
+          myRootNodeInitialized = true;
+          processNodeActionsIfReady(myRootNode);
+        }
+      });
     }
     else {
       build.run();
       update.run();
+      myRootNodeInitialized = true;
+      processNodeActionsIfReady(myRootNode);
     }
 
     return wasCleanedUp;
@@ -3406,11 +3419,7 @@ public class AbstractTreeUi {
   }
 
   public boolean wasRootNodeInitialized() {
-    return myRootNodeWasInitialized;
-  }
-
-  private boolean isRootNodeBuilt() {
-    return myRootNodeWasInitialized && isNodeBeingBuilt(myRootNode);
+    return myRootNodeWasQueuedToInitialize && myRootNodeInitialized;
   }
 
   public void select(final Object[] elements, @Nullable final Runnable onDone) {
@@ -3475,13 +3484,20 @@ public class AbstractTreeUi {
     final boolean oldCanProcessDeferredSelection = myCanProcessDeferredSelections;
 
     if (!deferred && wasRootNodeInitialized() && willAffectSelection) {
-      myCanProcessDeferredSelections = false;
+      getReady(this).doWhenDone(new Runnable() {
+        @Override
+        public void run() {
+          myCanProcessDeferredSelections = false;
+        }
+      });
     }
 
     if (!checkDeferred(deferred, onDone)) return;
 
     if (!deferred && oldCanProcessDeferredSelection && !myCanProcessDeferredSelections) {
-      getTree().clearSelection();
+      if (!addToSelection) {
+        getTree().clearSelection();
+      }
     }
 
 
@@ -3546,7 +3562,7 @@ public class AbstractTreeUi {
           }, originalRows, deferred, scrollToVisible, canSmartExpand);
         }
         else {
-          addToDeferred(elementsToSelect, onDone);
+          addToDeferred(elementsToSelect, onDone, addToSelection);
         }
       }
     });
@@ -3562,11 +3578,13 @@ public class AbstractTreeUi {
   }
 
 
-  private void addToDeferred(final Object[] elementsToSelect, final Runnable onDone) {
-    myDeferredSelections.clear();
+  private void addToDeferred(final Object[] elementsToSelect, final Runnable onDone, final boolean addToSelection) {
+    if (!addToSelection) {
+      myDeferredSelections.clear();
+    }
     myDeferredSelections.add(new Runnable() {
       public void run() {
-        select(elementsToSelect, onDone, false, true);
+        select(elementsToSelect, onDone, addToSelection, true);
       }
     });
   }
@@ -4074,7 +4092,7 @@ public class AbstractTreeUi {
   }
 
   public final boolean isNodeBeingBuilt(Object node) {
-    return getParentBuiltNode(node) != null;
+    return getParentBuiltNode(node) != null || (myRootNode == node && !wasRootNodeInitialized());
   }
 
   public final DefaultMutableTreeNode getParentBuiltNode(Object node) {
@@ -4276,7 +4294,9 @@ public class AbstractTreeUi {
     myTree.clearSelection();
     getRootNode().removeAllChildren();
 
-    myRootNodeWasInitialized = false;
+    myRootNodeWasQueuedToInitialize = false;
+    myRootNodeInitialized = false;
+
     clearNodeActions();
     myElementToNodeMap.clear();
     myDeferredSelections.clear();
