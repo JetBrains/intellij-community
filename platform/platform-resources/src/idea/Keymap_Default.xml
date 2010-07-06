@@ -908,7 +908,7 @@
   <action id="MaintenanceAction">
     <keyboard-shortcut first-keystroke="ctrl alt shift SLASH"/>
   </action>
-  <action id="ToolWindowSwitcher">
+  <action id="Switcher">
     <keyboard-shortcut first-keystroke="ctrl TAB"/>
     <keyboard-shortcut first-keystroke="ctrl shift TAB"/>
   </action>

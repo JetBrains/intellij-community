@@ -18,7 +18,7 @@
     <action id="PreviousEditorTab" class="com.intellij.openapi.fileEditor.impl.SelectPreviousEditorTabAction"/>
     
     <action id="TextComponent.ClearAction" class="com.intellij.ui.ClearTextAction"/>
-    <action id="ToolWindowSwitcher" class="com.intellij.ide.actions.ToolWindowSwitcher" text="Switcher"/>
+    <action id="Switcher" class="com.intellij.ide.actions.Switcher" text="Switcher"/>
 
     <group id="EditorActions">
       <action id="EditorPageUp" class="com.intellij.openapi.editor.actions.PageUpAction"/>
