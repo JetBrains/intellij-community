@@ -28,9 +28,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
-import com.intellij.openapi.projectRoots.ui.NotifiableSdkModel;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -47,7 +45,7 @@ import java.util.HashMap;
  * User: anna
  * Date: 05-Jun-2006
  */
-public class ProjectJdksModel implements NotifiableSdkModel {
+public class ProjectJdksModel implements SdkModel {
   private static final Logger LOG = Logger.getInstance("com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel");
 
   private final HashMap<Sdk, Sdk> myProjectJdks = new HashMap<Sdk, Sdk>();

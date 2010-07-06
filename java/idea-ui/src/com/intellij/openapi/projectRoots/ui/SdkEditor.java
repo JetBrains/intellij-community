@@ -72,7 +72,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
   // GUI components
   private JPanel myMainPanel;
   private TabbedPaneWrapper myTabbedPane;
-  private final NotifiableSdkModel mySdkModel;
+  private final SdkModel mySdkModel;
   private JLabel myHomeFieldLabel;
   private String myVersionString;
 
@@ -82,7 +82,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
 
   private final Disposable myDisposable = Disposer.newDisposable();
 
-  public SdkEditor(NotifiableSdkModel sdkModel, History history, final ProjectJdkImpl sdk) {
+  public SdkEditor(SdkModel sdkModel, History history, final ProjectJdkImpl sdk) {
     mySdkModel = sdkModel;
     myHistory = history;
     mySdk = sdk;
