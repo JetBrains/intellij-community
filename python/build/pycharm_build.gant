@@ -22,7 +22,7 @@ setProperty("pluginFilter", [
         "JSInspections",
         "JSIntentionPowerPack",
         "SpellChecker", "spellchecker",
-        "sass",
+        "sass", "less",
         "hg4idea"
 ])
 
@@ -324,7 +324,12 @@ def buildTarGz() {
       exclude(name: "**/*.dll")
       exclude(name: "bin/*.sh")
     }
-    tarfileset(dir: "$home/community/bin/linux", prefix: "$tarRoot/bin")
+    tarfileset(dir: "$home/bin", prefix: "$tarRoot/bin") {
+      include(name: "libyjpagent*.so")
+    }
+    tarfileset(dir: "$home/community/bin/linux", prefix: "$tarRoot/bin") {
+      exclude(name: "libbreakgen*")
+    }
     tarfileset(dir: "$home/community/bin/nix", filemode: "755", prefix: "$tarRoot/bin") {
       include(name: "inspect*.sh")
     }
@@ -333,6 +338,9 @@ def buildTarGz() {
     }
     tarfileset(dir: "$home/python/build", fullpath: "$tarRoot/bin/pycharm.vmoptions") {
       include(name: "pycharm.vmoptions")
+    }
+    tarfileset(dir: "$home/python/resources", fullpath: "$tarRoot/bin/pycharm.png") {
+      include(name: "PyCharm_32.png")
     }
     tarfileset(dir: "$home/python/help", includes: "pycharmhelp.jar", prefix: "$tarRoot/help")
   }
@@ -343,7 +351,7 @@ def buildTarGz() {
 
 def layoutFull(String target, Set usedJars) {
   def openapiModules = platformApiModules()
-  def implementationModules = [platformImplementationModules(), "python", "python-ide", "sass"].flatten()
+  def implementationModules = [platformImplementationModules(), "python", "python-ide"].flatten()
 
   layout(target) {
     dir("lib") {
