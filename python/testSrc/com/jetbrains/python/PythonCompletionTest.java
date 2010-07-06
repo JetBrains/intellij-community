@@ -160,4 +160,8 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
     myFixture.completeBasic();
     assertSameElements(myFixture.getLookupElementStrings(), Arrays.asList("my_foo", "my_bar"));
   }
+
+  public void testSlots() throws Exception {  // PY-1211
+    doTest();
+  }
 }

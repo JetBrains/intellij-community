@@ -721,13 +721,18 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   public void processDeclarations(@NotNull PsiScopeProcessor processor) {
-    // class level
+    if (!processClassLevelDeclarations(processor)) return;
+    if (!processInstanceLevelDeclarations(processor)) return;
+    processor.execute(this, ResolveState.initial());
+  }
+
+  public boolean processClassLevelDeclarations(PsiScopeProcessor processor) {
     final PyClassStub stub = getStub();
     if (stub != null) {
       final List<StubElement> children = stub.getChildrenStubs();
       for (StubElement child : children) {
         if (!processor.execute(child.getPsi(), ResolveState.initial())) {
-          return;
+          return false;
         }
       }
     }
@@ -735,16 +740,14 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       final PsiElement the_psi = getNode().getPsi();
       PyResolveUtil.treeCrawlUp(processor, true, the_psi, the_psi);
     }
+    return true;
+  }
 
-    // instance level
+  public boolean processInstanceLevelDeclarations(PsiScopeProcessor processor) {
     for(PyTargetExpression expr: getInstanceAttributes()) {
-      if (!processor.execute(expr, ResolveState.initial())) return;
+      if (!processor.execute(expr, ResolveState.initial())) return false;
     }
-    //
-    if (processor instanceof VariantsProcessor) {
-      return;
-    }
-    processor.execute(this, ResolveState.initial());
+    return true;
   }
 
   public int getTextOffset() {

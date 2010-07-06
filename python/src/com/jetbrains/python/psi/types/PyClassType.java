@@ -6,7 +6,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.ResolveState;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.jetbrains.python.codeInsight.PyDynamicMember;
@@ -145,9 +144,10 @@ public class PyClassType implements PyType {
   }
 
   public Object[] getCompletionVariants(final PyQualifiedExpression referenceExpression, ProcessingContext context) {
-    List<? extends PsiElement> classList = new ParentMatcher(PyClass.class).search(referenceExpression);
-    boolean withinOurClass = classList != null && classList.get(0) == this;
     Set<String> namesAlready = context.get(CTX_NAMES);
+    if (namesAlready == null) {
+      namesAlready = new HashSet<String>();
+    }
     List<Object> ret = new ArrayList<Object>();
     Condition<String> underscoreFilter = new PyUtil.UnderscoreFilter(PyUtil.getInitialUnderscores(referenceExpression.getName()));
     // from providers
@@ -159,23 +159,48 @@ public class PyClassType implements PyType {
         }
       }
     }
-    // from our own class
+
+    addOwnClassMembers(referenceExpression, namesAlready, ret, underscoreFilter);
+
+    addInheritedMembers(referenceExpression, context, ret);
+    
+    return ret.toArray();
+  }
+
+  private void addOwnClassMembers(PyQualifiedExpression referenceExpression,
+                                  Set<String> namesAlready,
+                                  List<Object> ret, Condition<String> underscoreFilter) {
+    List<? extends PsiElement> classList = new ParentMatcher(PyClass.class).search(referenceExpression);
+    boolean withinOurClass = classList != null && classList.get(0) == this;
+
     final VariantsProcessor processor = new VariantsProcessor(
       referenceExpression, new PyResolveUtil.FilterNotInstance(myClass), underscoreFilter
     );
-    ((PyClassImpl) myClass).processDeclarations(processor);
-    if (namesAlready != null) {
-      for (LookupElement le : processor.getResultList()) {
-        String name = le.getLookupString();
-        if (namesAlready.contains(name)) continue;
-        if (!withinOurClass && isClassPrivate(name)) continue;
-        namesAlready.add(name);
-        ret.add(le);
+    ((PyClassImpl) myClass).processClassLevelDeclarations(processor);
+
+    List<String> slots = myClass.isNewStyleClass() ? myClass.getSlots() : null;
+    if (slots != null) {
+      processor.setAllowedNames(slots);
+    }
+    ((PyClassImpl) myClass).processInstanceLevelDeclarations(processor);
+
+    for (LookupElement le : processor.getResultList()) {
+      String name = le.getLookupString();
+      if (namesAlready.contains(name)) continue;
+      if (!withinOurClass && isClassPrivate(name)) continue;
+      namesAlready.add(name);
+      ret.add(le);
+    }
+    if (slots != null) {
+      for (String name : slots) {
+        if (!namesAlready.contains(name)) {
+          ret.add(LookupElementBuilder.create(name));
+        }
       }
     }
-    else {
-      ret.addAll(processor.getResultList());
-    }
+  }
+
+  private void addInheritedMembers(PyQualifiedExpression referenceExpression, ProcessingContext context, List<Object> ret) {
     for (PyClass ancestor : myClass.getSuperClasses()) {
       Object[] ancestry = (new PyClassType(ancestor, true)).getCompletionVariants(referenceExpression, context);
       for (Object ob : ancestry) {
@@ -189,7 +214,6 @@ public class PyClassType implements PyType {
       }
       ret.addAll(Arrays.asList(ancestry));
     }
-    return ret.toArray();
   }
 
   private static boolean isClassPrivate(String lookup_string) {
