@@ -32,6 +32,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
@@ -78,6 +79,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     myLocation = location;
     myShouldBeCalledOnDispose = new ArrayList<Runnable>();
     myBrowser = new CommittedChangesTreeBrowser(project, new ArrayList<CommittedChangeList>());
+    Disposer.register(this, myBrowser);
     add(myBrowser, BorderLayout.CENTER);
 
     myErrorLabel.setForeground(Color.red);
@@ -276,7 +278,6 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
   }
 
   public void dispose() {
-    myBrowser.dispose();
     for (Runnable runnable : myShouldBeCalledOnDispose) {
       runnable.run();
     }
