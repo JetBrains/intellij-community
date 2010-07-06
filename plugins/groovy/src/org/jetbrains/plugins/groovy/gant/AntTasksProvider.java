@@ -114,8 +114,14 @@ public class AntTasksProvider {
           final ReflectedProject antProject = ReflectedProject.getProject(loader);
 
           final Map<String, Class> result = new HashMap<String, Class>();
-          result.putAll(antProject.getTaskDefinitions());
-          result.putAll(antProject.getDataTypeDefinitions());
+          final Map<String, Class> taskDefinitions = antProject.getTaskDefinitions();
+          if (taskDefinitions != null) {
+            result.putAll(taskDefinitions);
+          }
+          final Map<String, Class> dataTypeDefinitions = antProject.getDataTypeDefinitions();
+          if (dataTypeDefinitions != null) {
+            result.putAll(dataTypeDefinitions);
+          }
           return Result.create(result, ProjectRootManager.getInstance(groovyFile.getProject()));
         }
 

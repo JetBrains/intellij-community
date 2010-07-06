@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
 import java.lang.reflect.InvocationTargetException;
@@ -126,10 +127,12 @@ public final class ReflectedProject {
     return method;
   }
 
+  @Nullable
   public Hashtable<String, Class> getTaskDefinitions() {
     return myTaskDefinitions;
   }
 
+  @Nullable
   public Hashtable<String, Class> getDataTypeDefinitions() {
     return myDataTypeDefinitions;
   }
