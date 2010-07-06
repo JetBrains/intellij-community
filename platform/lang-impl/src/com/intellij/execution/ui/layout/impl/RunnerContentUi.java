@@ -288,7 +288,6 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     if (getSelectedGrid() != grid) {
       tab.setAlertIcon(content.getAlertIcon());
       if (activate) {
-        AppIcon.getInstance().requestAttention(false);
         tab.fireAlert();
       } else {
         tab.stopAlerting();
