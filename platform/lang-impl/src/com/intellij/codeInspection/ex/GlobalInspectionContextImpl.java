@@ -81,6 +81,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
 
   private ProgressIndicator myProgressIndicator;
   public static final JobDescriptor BUILD_GRAPH = new JobDescriptor(InspectionsBundle.message("inspection.processing.job.descriptor"));
+  public static final JobDescriptor[] BUILD_GRAPH_ONLY = new JobDescriptor[]{BUILD_GRAPH};
   public static final JobDescriptor FIND_EXTERNAL_USAGES =
     new JobDescriptor(InspectionsBundle.message("inspection.processing.job.descriptor1"));
 
@@ -609,6 +610,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     }
   }
 
+  @Override
   public void incrementJobDoneAmount(JobDescriptor job, String message) {
     if (myProgressIndicator == null) return;
 
