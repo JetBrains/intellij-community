@@ -7,22 +7,16 @@ import com.intellij.appengine.util.AppEngineUtil;
 import com.intellij.facet.ui.FacetConfigurationQuickFix;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.ide.BrowserUtil;
-import com.intellij.javaee.appServerIntegrations.ApplicationServer;
-import com.intellij.javaee.appServerIntegrations.ApplicationServerInfo;
-import com.intellij.javaee.appServerIntegrations.CantFindApplicationServerJarsException;
 import com.intellij.javaee.appServerIntegrations.AppServerIntegration;
+import com.intellij.javaee.appServerIntegrations.ApplicationServer;
 import com.intellij.javaee.serverInstances.ApplicationServersManager;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.text.UniqueNameGenerator;
-import com.intellij.util.NullableFunction;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -148,30 +142,7 @@ public class AppEngineSdkImpl implements AppEngineSdk {
       }
     }
 
-    final ApplicationServersManager.ApplicationServersManagerModifiableModel model = serversManager.createModifiableModel();
-    final AppEngineServerData serverData = new AppEngineServerData(myHomePath);
-    final ApplicationServerInfo serverInfo;
-    try {
-      serverInfo = integration.getApplicationServerHelper().getApplicationServerInfo(serverData);
-    }
-    catch (CantFindApplicationServerJarsException e) {
-      LOG.info(e);
-      return null;
-    }
-    UniqueNameGenerator generator = new UniqueNameGenerator(serversManager.getApplicationServers(), new NullableFunction<Object, String>() {
-      public String fun(Object o) {
-        return ((ApplicationServer)o).getName();
-      }
-    });
-    final String name = generator.generateUniqueName(serverInfo.getDefaultName());
-    final ApplicationServer server = model.createNewApplicationServer(name, serverInfo.getDefaultLibraries(), serverData);
-    server.setSourceIntegrationName(integration.getPresentableName());
-    new WriteAction() {
-      protected void run(final Result result) {
-        model.commit();
-      }
-    }.execute();
-    return server;
+    return ApplicationServersManager.getInstance().createServer(integration, new AppEngineServerData(myHomePath));
   }
 
   public String getOrmLibDirectoryPath() {

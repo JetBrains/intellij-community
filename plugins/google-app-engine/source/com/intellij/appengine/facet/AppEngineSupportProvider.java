@@ -4,7 +4,6 @@ import com.intellij.appengine.sdk.AppEngineSdk;
 import com.intellij.appengine.server.instance.AppEngineServerModel;
 import com.intellij.appengine.server.run.AppEngineServerConfigurationType;
 import com.intellij.appengine.util.AppEngineUtil;
-import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.facet.FacetManager;
@@ -16,7 +15,8 @@ import com.intellij.ide.util.frameworkSupport.*;
 import com.intellij.javaee.JavaeePersistenceDescriptorsConstants;
 import com.intellij.javaee.appServerIntegrations.ApplicationServer;
 import com.intellij.javaee.artifact.JavaeeArtifactUtil;
-import com.intellij.javaee.run.configuration.CommonStrategy;
+import com.intellij.javaee.run.configuration.CommonModel;
+import com.intellij.javaee.run.configuration.J2EEConfigurationFactory;
 import com.intellij.javaee.web.artifact.WebArtifactUtil;
 import com.intellij.javaee.web.facet.WebFacet;
 import com.intellij.jpa.facet.JpaFacet;
@@ -25,6 +25,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
@@ -102,28 +103,21 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
     final Artifact artifact = findContainingArtifact(module, appEngineFacet);
 
     final ApplicationServer appServer = sdk.getOrCreateAppServer();
+    final Project project = module.getProject();
     if (appServer != null) {
       final ConfigurationFactory type = AppEngineServerConfigurationType.getInstance().getConfigurationFactories()[0];
-      final RunManagerEx runManager = RunManagerEx.getInstanceEx(module.getProject());
-      final RunnerAndConfigurationSettings runSettings = runManager.createRunConfiguration("AppEngine Dev", type);
-
-      final CommonStrategy configuration = (CommonStrategy)runSettings.getConfiguration();
-      configuration.setApplicationServer(appServer);
-      configuration.setUrlToOpenInBrowser(configuration.getDefaultUrlForBrowser());
-
+      final RunnerAndConfigurationSettings settings = J2EEConfigurationFactory.getInstance().addAppServerConfiguration(project, type, appServer);
       if (artifact != null) {
+        final CommonModel configuration = (CommonModel)settings.getConfiguration();
         ((AppEngineServerModel)configuration.getServerModel()).setArtifact(artifact);
-        BuildArtifactsBeforeRunTaskProvider.setBuildArtifactBeforeRun(module.getProject(), configuration, artifact);
+        BuildArtifactsBeforeRunTaskProvider.setBuildArtifactBeforeRun(project, configuration, artifact);
       }
-
-      runManager.addConfiguration(runSettings, false);
-      runManager.setActiveConfiguration(runSettings);
     }
 
     final Library apiJar = addProjectLibrary(module, "AppEngine API", sdk.getLibUserDirectoryPath(), VirtualFile.EMPTY_ARRAY);
     rootModel.addLibraryEntry(apiJar);
     if (artifact != null) {
-      WebArtifactUtil.getInstance().addLibrary(apiJar, artifact, module.getProject());
+      WebArtifactUtil.getInstance().addLibrary(apiJar, artifact, project);
     }
 
     if (persistenceApi != null) {
@@ -159,7 +153,7 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
       final Library library = addProjectLibrary(module, "AppEngine ORM", sdk.getOrmLibDirectoryPath(), sdk.getOrmLibSources());
       rootModel.addLibraryEntry(library);
       if (artifact != null) {
-        WebArtifactUtil.getInstance().addLibrary(library, artifact, module.getProject());
+        WebArtifactUtil.getInstance().addLibrary(library, artifact, project);
       }
     }
   }
