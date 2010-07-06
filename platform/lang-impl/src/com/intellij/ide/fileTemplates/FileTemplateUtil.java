@@ -56,6 +56,8 @@ import java.io.*;
 import java.lang.reflect.Field;
 import java.util.*;
 
+import static com.intellij.util.containers.CollectionFactory.ar;
+
 /**
  * @author MYakovlev
  */
@@ -332,9 +334,12 @@ public class FileTemplateUtil{
         paths.clear();
         paths.add(modifiedPatternsPath.getAbsolutePath());
         if(ApplicationManager.getApplication().isUnitTestMode()){
-          File file1 = new File(PathManagerEx.getTestDataPath());
-          File testsDir = new File(new File(file1, "ide"), "fileTemplates");
-          paths.add(testsDir.getAbsolutePath());
+          // todo this is for FileTemplatesTest
+          // todo it should register its own loader and not depend on in what kind of test velocity is first needed
+          for (PathManagerEx.TestDataLookupStrategy strategy : ar(PathManagerEx.TestDataLookupStrategy.COMMUNITY_FROM_ULTIMATE, PathManagerEx.TestDataLookupStrategy.COMMUNITY)) {
+            File testsDir = new File(new File(PathManagerEx.getTestDataPath(strategy), "ide"), "fileTemplates");
+            paths.add(testsDir.getAbsolutePath());
+          }
         }
 
         System.out.println("FileTemplateUtil$MyFileResourceLoader.init");
