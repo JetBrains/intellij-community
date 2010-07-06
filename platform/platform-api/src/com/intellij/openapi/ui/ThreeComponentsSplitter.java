@@ -16,15 +16,13 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.UIBundle;
-import com.intellij.util.ui.update.LazyUiDisposable;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.ui.update.Activatable;
+import com.intellij.util.ui.update.UiNotifyConnector;
 
 import javax.swing.*;
 import java.awt.*;
@@ -393,6 +391,11 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
 
   @Override
   public void dispose() {
+    myLastComponent = null;
+    myFirstComponent = null;
+    myInnerComponent = null;
+    removeAll();
+    getParent().remove(this);
   }
 
   private class Divider extends JPanel implements Disposable {
@@ -448,12 +451,12 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
       myIsFirst = isFirst;
       setOrientation(myVerticalSplit);
 
-      new LazyUiDisposable<Divider>(null, this, this) {
+      new UiNotifyConnector.Once(this, new Activatable.Adapter() {
         @Override
-        protected void initialize(@NotNull Disposable parent, @NotNull Divider child, @Nullable Project project) {
+        public void showNotify() {
           init();
         }
-      };
+      });
     }
 
     private boolean isInside(Point p) {
