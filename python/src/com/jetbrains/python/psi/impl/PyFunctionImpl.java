@@ -79,6 +79,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     return getRequiredStubOrPsiChild(PyElementTypes.PARAMETER_LIST);
   }
 
+  @Nullable
   public PyStatementList getStatementList() {
     return childToPsi(PyElementTypes.STATEMENT_LIST);
   }
@@ -120,9 +121,12 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
       return docStringType;
     }
     ReturnVisitor visitor = new ReturnVisitor();
-    getStatementList().accept(visitor);
-    if (isGeneratedStub() && !visitor.myHasReturns) {
-      return null;
+    final PyStatementList statements = getStatementList();
+    if (statements != null) {
+      statements.accept(visitor);
+      if (isGeneratedStub() && !visitor.myHasReturns) {
+        return null;
+      }
     }
     return visitor.result();
   }

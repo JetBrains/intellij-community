@@ -30,6 +30,7 @@ extends
   @Nullable
   ASTNode getNameNode();
 
+  @Nullable
   PyStatementList getStatementList();
 
   @Nullable
