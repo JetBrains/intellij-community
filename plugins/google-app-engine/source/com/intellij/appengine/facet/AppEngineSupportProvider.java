@@ -208,7 +208,7 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
     private JPanel mySdkPanel;
 
     private AppEngineSupportConfigurable(FrameworkSupportModel model) {
-      super(AppEngineSupportProvider.this);
+      super(AppEngineSupportProvider.this, model);
       mySdkEditor = new AppEngineSdkEditor(null, true);
       mySdkPanel.add(LabeledComponent.create(mySdkEditor.getMainComponent(), "AppEngine SDK:"), BorderLayout.CENTER);
       PersistenceApiComboboxUtil.setComboboxModel(myPersistenceApiComboBox, true);
