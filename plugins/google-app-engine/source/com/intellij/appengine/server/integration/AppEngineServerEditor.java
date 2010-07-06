@@ -1,10 +1,9 @@
 package com.intellij.appengine.server.integration;
 
 import com.intellij.javaee.appServerIntegrations.ApplicationServerPersistentDataEditor;
-import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -24,7 +23,7 @@ public class AppEngineServerEditor extends ApplicationServerPersistentDataEditor
     mySdkHomeField.setText(FileUtil.toSystemDependentName(s.getSdkPath()));
   }
 
-  protected void applyEditorTo(AppEngineServerData s) throws ConfigurationException {
+  protected void applyEditorTo(AppEngineServerData s) {
     s.setSdkPath(FileUtil.toSystemIndependentName(mySdkHomeField.getText()));
   }
 
