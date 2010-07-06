@@ -36,7 +36,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Eugene.Kudelevsky
  */
-public class CreateHtmlFileAction extends CreateTemplateAction<PsiFile> {
+public class CreateHtmlFileAction extends CreateFromTemplateAction<PsiFile> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.CreateHtmlFileAction");
 
   @NonNls private static final String DEFAULT_HTML_TEMPLATE_PROPERTY = "DefaultHtmlFileTemplate";

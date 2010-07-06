@@ -33,7 +33,7 @@ import javax.swing.*;
 /**
  * @author peter
  */
-public abstract class CreateTemplateInPackageAction<T extends PsiElement> extends CreateTemplateAction<T> {
+public abstract class CreateTemplateInPackageAction<T extends PsiElement> extends CreateFromTemplateAction<T> {
   private final boolean myinSourceOnly;
 
   protected CreateTemplateInPackageAction(String text, String description, Icon icon, boolean inSourceOnly) {

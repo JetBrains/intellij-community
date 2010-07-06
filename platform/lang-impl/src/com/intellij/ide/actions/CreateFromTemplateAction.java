@@ -28,8 +28,8 @@ import javax.swing.*;
 /**
  * @author Eugene.Kudelevsky
  */
-public abstract class CreateTemplateAction<T extends PsiElement> extends AnAction {
-  public CreateTemplateAction(String text, String description, Icon icon) {
+public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnAction {
+  public CreateFromTemplateAction(String text, String description, Icon icon) {
     super(text, description, icon);
   }
 
@@ -49,16 +49,16 @@ public abstract class CreateTemplateAction<T extends PsiElement> extends AnActio
     final T createdElement =
       buildDialog(project, dir).show(getErrorTitle(), getDefaultTempalteName(dir), new CreateFileFromTemplateDialog.FileCreator<T>() {
         public void checkBeforeCreate(@NotNull String name, @NotNull String templateName) {
-          CreateTemplateAction.this.checkBeforeCreate(name, templateName, dir);
+          CreateFromTemplateAction.this.checkBeforeCreate(name, templateName, dir);
         }
 
         public T createFile(@NotNull String name, @NotNull String templateName) {
-          return CreateTemplateAction.this.createFile(name, templateName, dir);
+          return CreateFromTemplateAction.this.createFile(name, templateName, dir);
         }
 
         @NotNull
         public String getActionName(@NotNull String name, @NotNull String templateName) {
-          return CreateTemplateAction.this.getActionName(dir, name, templateName);
+          return CreateFromTemplateAction.this.getActionName(dir, name, templateName);
         }
       });
     if (createdElement != null) {
