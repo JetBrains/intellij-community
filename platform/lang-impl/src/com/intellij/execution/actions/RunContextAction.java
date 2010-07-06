@@ -44,15 +44,7 @@ public class RunContextAction extends BaseRunConfigurationAction {
     }
     runManager.setActiveConfiguration(configuration);
 
-    final ProgramRunner runner = getRunner(configuration.getConfiguration());
-    if (runner != null) {
-      try {
-        runner.execute(myExecutor, new ExecutionEnvironment(runner, configuration, context.getProject()));
-      }
-      catch (ExecutionException e) {
-        Messages.showErrorDialog(context.getProject(), e.getMessage(), ExecutionBundle.message("error.common.title"));
-      }
-    }
+    ProgramRunnerUtil.executeConfiguration(context.getProject(), configuration, myExecutor);
   }
 
   @Override
