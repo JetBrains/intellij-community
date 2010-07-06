@@ -192,6 +192,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
 
     final CompletionParameters parameters = new CompletionParameters(insertedElement, originalFile, myCompletionType, newContext.getStartOffset(), invocationCount);
+    final Project project = originalFile.getProject();
 
     final Semaphore freezeSemaphore = new Semaphore();
     freezeSemaphore.down();
@@ -217,6 +218,8 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
               if (items.length == 0) {
                 ApplicationManager.getApplication().invokeLater(new Runnable() {
                   public void run() {
+                    if (project.isDisposed()) return;
+
                     if (indicator != CompletionServiceImpl.getCompletionService().getCurrentCompletion()) return;
                     final Lookup lookup = LookupManager.getActiveLookup(editor);
                     assert lookup == indicator.getLookup() : lookup;
