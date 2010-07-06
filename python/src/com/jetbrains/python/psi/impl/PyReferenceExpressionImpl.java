@@ -18,6 +18,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
+import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -182,7 +183,9 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       return null;
     }
     try {
-      if (getQualifier() == null) {
+      final PyExpression qualifier = getQualifier();
+      PyType type;
+      if (qualifier == null) {
         String name = getReferencedName();
         if (PyNames.NONE.equals(name)) {
           return PyNoneType.INSTANCE;
@@ -191,10 +194,25 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       else {
         PyType maybe_type = PyUtil.getSpecialAttributeType(this);
         if (maybe_type != null) return maybe_type;
+        final String name = getName();
+        if (name != null) {
+          PyType qualifier_type = qualifier.getType(TypeEvalContext.fast());
+          if (qualifier_type instanceof PyClassType) {
+            Property property = ((PyClassType)qualifier_type).getPyClass().findProperty(name);
+            if (property != null) {
+              PsiElement resolved = this.getReference().resolve(); // to a correct accessor
+              if (resolved instanceof Callable) {
+                type = ((Callable)resolved).getReturnType();
+                if (type != null) return type;
+              }
+            }
+          }
+        }
+
       }
-      PyType pyType = getTypeFromProviders(context);
-      if (pyType != null) {
-        return pyType;
+      type = getTypeFromProviders(context);
+      if (type != null) {
+        return type;
       }
 
       ResolveResult[] targets = getReference(PyResolveContext.noImplicits()).multiResolve(false);
@@ -204,7 +222,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         if (target == this || target == null) {
           continue;
         }
-        PyType type = getTypeFromTarget(target, context, this);
+        type = getTypeFromTarget(target, context, this);
         if (type != null) {
           return type;
         }

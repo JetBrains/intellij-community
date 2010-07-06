@@ -118,6 +118,10 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
     doTest();
   }
 
+  public void testPropertyType() throws Exception {
+    doTest();
+  }
+
   public void testSeenMembers() throws Exception {  // PY-1181
     final String testName = "completion/" + getTestName(true);
     myFixture.configureByFile(testName + ".py");
