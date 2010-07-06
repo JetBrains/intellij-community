@@ -66,21 +66,18 @@ public class GppTypeConverter extends GrTypeConverter {
   public Boolean isConvertible(@NotNull PsiType lType, @NotNull PsiType rType, @NotNull GroovyPsiElement context) {
     if (rType instanceof GrTupleType) {
       final PsiType type = PsiUtil.extractIterableTypeParameter(lType, false);
-      if (type != null && !TypesUtil.isAssignable(type, ((GrTupleType)rType).getParameters()[0], context)) {
-        return null;
-      }
-      final PsiType[] componentTypes = ((GrTupleType)rType).getComponentTypes();
+      if (type == null || TypesUtil.isAssignable(type, ((GrTupleType)rType).getParameters()[0], context)) {
+        final PsiType[] componentTypes = ((GrTupleType)rType).getComponentTypes();
 
-      final PsiType expectedComponent = PsiUtil.extractIterableTypeParameter(lType, false);
-      if (expectedComponent != null && hasDefaultConstructor(lType)) {
-        return true;
-      }
+        final PsiType expectedComponent = PsiUtil.extractIterableTypeParameter(lType, false);
+        if (expectedComponent != null && hasDefaultConstructor(lType)) {
+          return true;
+        }
 
-      if (lType instanceof PsiClassType && hasConstructor((PsiClassType)lType, componentTypes, context)) {
-        return true;
+        if (lType instanceof PsiClassType && hasConstructor((PsiClassType)lType, componentTypes, context)) {
+          return true;
+        }
       }
-
-      return null;
     }
     else if (rType instanceof GrMapType) {
       final PsiType lKeyType = PsiUtil.substituteTypeParameter(lType, CommonClassNames.JAVA_UTIL_MAP, 0, false);
@@ -94,8 +91,6 @@ public class GppTypeConverter extends GrTypeConverter {
       if (hasDefaultConstructor(lType)) {
         return true;
       }
-
-      return null;
     }
     else if (rType instanceof GrClosureType) {
       final PsiType[] methodParameters = GppClosureParameterTypeProvider.findSingleAbstractMethodSignature(lType);
@@ -103,9 +98,7 @@ public class GppTypeConverter extends GrTypeConverter {
       if (methodParameters != null && GrClosureSignatureUtil.isSignatureApplicable(signature, methodParameters, context)) {
         return true;
       }
-      return false;
     }
-
 
     return null;
   }
