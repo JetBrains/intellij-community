@@ -16,34 +16,26 @@
 package com.intellij.lang.ant.dom;
 
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
+import org.apache.tools.ant.PathTokenizer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: May 25, 2010
  */
-public class AntMultiPathStringConverter extends Converter<List<PsiFileSystemItem>> implements CustomReferenceConverter<List<PsiFileSystemItem>> {
+public class AntMultiPathStringConverter extends Converter<List<File>> implements CustomReferenceConverter<List<File>> {
 
-  public List<PsiFileSystemItem> fromString(@Nullable @NonNls String s, ConvertContext context) {
+  public List<File> fromString(@Nullable @NonNls String s, ConvertContext context) {
     final GenericAttributeValue attribValue = context.getInvocationElement().getParentOfType(GenericAttributeValue.class, false);
     if (attribValue == null) {
       return null;
@@ -52,11 +44,11 @@ public class AntMultiPathStringConverter extends Converter<List<PsiFileSystemIte
     if (path == null) {
       return null;
     }
-    final List<PsiFileSystemItem> result = new ArrayList<PsiFileSystemItem>();
+    final List<File> result = new ArrayList<File>();
     Computable<String> basedirComputable = null;
-    for (PathIterator it = new PathIterator(path); it.hasNext();) {
-      final Pair<String, Integer> pair = it.next();
-      File file = new File(pair.getFirst());
+    final PathTokenizer pathTokenizer = new PathTokenizer(path);
+    while (pathTokenizer.hasMoreTokens()) {
+      File file = new File(pathTokenizer.nextToken());
       if (!file.isAbsolute()) {
         if (basedirComputable == null) {
           basedirComputable = new Computable<String>() {
@@ -77,23 +69,9 @@ public class AntMultiPathStringConverter extends Converter<List<PsiFileSystemIte
         }
         file = new File(baseDir, path);
       }
-      final PsiFileSystemItem psi = toPsiFileItem(context, file);
-      if (psi != null) {
-        result.add(psi);
-      }
+      result.add(file);
     }
     return result;
-  }
-
-  @Nullable
-  private static PsiFileSystemItem toPsiFileItem(ConvertContext context, File file) {
-    VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(file.getAbsolutePath()));
-    if (vFile == null) {
-      return null;
-    }
-    final PsiManager psiManager = context.getPsiManager();
-
-    return vFile.isDirectory()? psiManager.findDirectory(vFile) : psiManager.findFile(vFile);
   }
 
   private static AntDomProject getEffectiveAntProject(GenericAttributeValue attribValue) {
@@ -101,7 +79,7 @@ public class AntMultiPathStringConverter extends Converter<List<PsiFileSystemIte
     return attribValue.getParentOfType(AntDomProject.class, false);
   }
 
-  public String toString(@Nullable List<PsiFileSystemItem> files, ConvertContext context) {
+  public String toString(@Nullable List<File> files, ConvertContext context) {
     final GenericAttributeValue attribValue = context.getInvocationElement().getParentOfType(GenericAttributeValue.class, false);
     if (attribValue == null) {
       return null;
@@ -110,7 +88,7 @@ public class AntMultiPathStringConverter extends Converter<List<PsiFileSystemIte
   }
 
   @NotNull
-  public PsiReference[] createReferences(GenericDomValue<List<PsiFileSystemItem>> genericDomValue, PsiElement element, ConvertContext context) {
+  public PsiReference[] createReferences(GenericDomValue<List<File>> genericDomValue, PsiElement element, ConvertContext context) {
     final GenericAttributeValue attributeValue = (GenericAttributeValue)genericDomValue;
 
     final String cpString = genericDomValue.getRawText();
@@ -119,74 +97,18 @@ public class AntMultiPathStringConverter extends Converter<List<PsiFileSystemIte
     }
 
     final List<PsiReference> result = new ArrayList<PsiReference>();
-    
-    for (PathIterator it = new PathIterator(cpString); it.hasNext();) {
-      final Pair<String, Integer> pair = it.next();
-      final String path = pair.getFirst();
+    final PathTokenizer pathTokenizer = new PathTokenizer(cpString);
+    int searchFromIndex = 0;
+    while (pathTokenizer.hasMoreTokens()) {
+      final String path = pathTokenizer.nextToken();
       if (path.length() > 0) {
-        final AntDomFileReferenceSet refSet = new AntDomFileReferenceSet(attributeValue, path, pair.getSecond());
+        final int pathBeginIndex = cpString.indexOf(path, searchFromIndex);
+        final AntDomFileReferenceSet refSet = new AntDomFileReferenceSet(attributeValue, path, pathBeginIndex);
         ContainerUtil.addAll(result, refSet.getAllReferences());
+        searchFromIndex = pathBeginIndex;
       }
     }
 
     return result.toArray(new PsiReference[result.size()]);
-  }
-
-  private static class PathIterator implements Iterator<Pair<String, Integer>> {
-    private int myBegin;
-    private final String myPath;
-
-    public PathIterator(String path) {
-      myPath = path;
-      myBegin = 0;
-    }
-
-    public boolean hasNext() {
-      return myBegin < myPath.length();
-    }
-
-    public Pair<String, Integer> next() {
-      int end = myBegin + 1;
-      for (;end < myPath.length(); end++) {
-        if (isAtPathDelimiter(end, myPath)) {
-          break;
-        }
-      }
-      try {
-        return new Pair<String, Integer>(myPath.substring(myBegin, end), myBegin);
-      }
-      finally {
-        myBegin = end + 1;
-        while (myBegin < myPath.length() && isAtPathDelimiter(myBegin, myPath)) {
-          myBegin++;
-        }
-      }
-    }
-
-    public void remove() {
-      throw new RuntimeException("'remove' operation not supported");
-    }
-
-    private static boolean isAtPathDelimiter(int index, String path) {
-      final char ch = path.charAt(index);
-      if (ch == ';') {
-        return true;
-      }
-      if (ch != ':') {
-        return false;
-      }
-      // ch == ':'
-      if (!SystemInfo.isWindows) {
-        return true;
-      }
-      final int nextIndex = index + 1;
-      if (nextIndex < path.length()) {
-        final char nextCh = path.charAt(nextIndex);
-        if (nextCh == '/' || nextCh == '\\') {
-          return false; // looks like a drive specification
-        }
-      }
-      return true;
-    }
   }
 }
