@@ -42,6 +42,15 @@ public class PyQualifiedName {
     return result;
   }
 
+  @Nullable
+  public PyQualifiedName removeLastComponent() {
+    int size = myComponents.size();
+    PyQualifiedName result = new PyQualifiedName(size);
+    result.myComponents.addAll(myComponents);
+    result.myComponents.remove(size-1);
+    return result;
+  }
+
   public List<String> getComponents() {
     return myComponents;
   }
