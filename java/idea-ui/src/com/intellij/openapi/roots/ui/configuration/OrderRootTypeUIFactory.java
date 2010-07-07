@@ -20,7 +20,6 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ui.PathEditor;
 import com.intellij.openapi.roots.OrderRootType;
@@ -37,40 +36,4 @@ public interface OrderRootTypeUIFactory {
 
   LibraryTableTreeContentElement createElement(final LibraryElement parentElement);
   PathEditor createPathEditor(Sdk sdk);
-
-  class MyPathsEditor extends PathEditor {
-    private final boolean myShowUrl;
-    private final OrderRootType myOrderRootType;
-    private final FileChooserDescriptor myDescriptor;
-    private final String myDisplayName;
-    protected final Sdk mySdk;
-
-    public MyPathsEditor(final String displayName,
-                         final OrderRootType orderRootType,
-                         final FileChooserDescriptor descriptor,
-                         final boolean showUrl,
-                         Sdk sdk) {
-      myShowUrl = showUrl;
-      myOrderRootType = orderRootType;
-      myDescriptor = descriptor;
-      myDisplayName = displayName;
-      mySdk = sdk;
-    }
-
-    protected boolean isShowUrlButton() {
-      return myShowUrl;
-    }
-
-    protected OrderRootType getRootType() {
-      return myOrderRootType;
-    }
-
-    protected FileChooserDescriptor createFileChooserDescriptor() {
-      return myDescriptor;
-    }
-
-    public String getDisplayName() {
-      return myDisplayName;
-    }
-  }
 }

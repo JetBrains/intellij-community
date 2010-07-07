@@ -37,8 +37,7 @@ public class SourcesOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
   }
 
   public PathEditor createPathEditor(Sdk sdk) {
-    return new MyPathsEditor(ProjectBundle.message("sdk.configure.sourcepath.tab"), OrderRootType.SOURCES, new FileChooserDescriptor(true, true, true, false, true, true), false,
-                             sdk) {
+    return new PathEditor(ProjectBundle.message("sdk.configure.sourcepath.tab"), OrderRootType.SOURCES, new FileChooserDescriptor(true, true, true, false, true, true)) {
       @Override
       protected VirtualFile[] adjustAddedFileSet(final Component component, final VirtualFile[] files) {
         return PathUIUtils.scanAndSelectDetectedJavaSourceRoots(component, files);

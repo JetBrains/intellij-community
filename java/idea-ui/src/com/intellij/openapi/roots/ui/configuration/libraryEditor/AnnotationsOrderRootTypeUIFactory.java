@@ -33,7 +33,7 @@ public class AnnotationsOrderRootTypeUIFactory implements OrderRootTypeUIFactory
   }
 
   public PathEditor createPathEditor(Sdk sdk) {
-    return new MyPathsEditor(ProjectBundle.message("sdk.configure.annotations.tab"), AnnotationOrderRootType.getInstance(),
-                             FileChooserDescriptorFactory.createSingleFolderDescriptor(), false, sdk);
+    return new PathEditor(ProjectBundle.message("sdk.configure.annotations.tab"), AnnotationOrderRootType.getInstance(),
+                          FileChooserDescriptorFactory.createSingleFolderDescriptor());
   }
 }
