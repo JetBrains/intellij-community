@@ -244,6 +244,8 @@
 
     <lang.formatter language="DjangoTemplate" implementationClass="com.jetbrains.django.lang.template.formatter.DjangoTemplateFormattingModelBuilder"/>
 
+    <xml.zenCodingGenerator implementation="com.jetbrains.django.lang.template.DjangoTemplateZenCodingGenerator"/>
+
     <!-- App Engine -->
     <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>
 
