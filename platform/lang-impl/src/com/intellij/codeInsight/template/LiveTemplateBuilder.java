@@ -32,7 +32,6 @@ public class LiveTemplateBuilder {
   private final Set<String> myVarNames = new HashSet<String>();
   private final List<VarOccurence> myVariableOccurences = new ArrayList<VarOccurence>();
   private final List<Marker> myMarkers = new ArrayList<Marker>();
-  private final Map<String, String> myPredefinedValues = new HashMap<String, String>();
 
   public CharSequence getText() {
     return myText;
@@ -77,10 +76,6 @@ public class LiveTemplateBuilder {
     }
     template.addTextSegment(myText.substring(last));
     return template;
-  }
-
-  public Map<String, String> getPredefinedValues() {
-    return myPredefinedValues;
   }
 
   public void insertText(int offset, String text) {
@@ -142,6 +137,9 @@ public class LiveTemplateBuilder {
     for (int i = 0; i < template.getVariableCount(); i++) {
       String varName = template.getVariableNameAt(i);
       if (!TemplateImpl.INTERNAL_VARS_SET.contains(varName)) {
+        if (predefinedVarValues != null && predefinedVarValues.containsKey(varName)) {
+          continue;
+        }
         String newVarName;
         if (myVarNames.contains(varName)) {
           oldVarNames.remove(varName);
@@ -151,9 +149,6 @@ public class LiveTemplateBuilder {
         else {
           newVarName = varName;
         }
-        if (predefinedVarValues != null && predefinedVarValues.containsKey(varName)) {
-          myPredefinedValues.put(newVarName, predefinedVarValues.get(varName));
-        }
         Variable var =
           new Variable(newVarName, template.getExpressionStringAt(i), template.getDefaultValueStringAt(i), template.isAlwaysStopAt(i));
         myVariables.add(var);
@@ -161,10 +156,17 @@ public class LiveTemplateBuilder {
       }
     }
     int end = -1;
+
     for (int i = 0; i < template.getSegmentsCount(); i++) {
       String segmentName = template.getSegmentName(i);
       int localOffset = template.getSegmentOffset(i);
       if (!TemplateImpl.INTERNAL_VARS_SET.contains(segmentName)) {
+        if (predefinedVarValues != null && predefinedVarValues.containsKey(segmentName)) {
+          String value = predefinedVarValues.get(segmentName);
+          insertText(offset + localOffset, value);
+          offset += value.length();
+          continue;
+        }
         if (newVarNames.containsKey(segmentName)) {
           segmentName = newVarNames.get(segmentName);
         }
