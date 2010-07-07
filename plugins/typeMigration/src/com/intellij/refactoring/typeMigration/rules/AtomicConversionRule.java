@@ -34,7 +34,6 @@ public class AtomicConversionRule extends TypeConversionRule {
     else if (from instanceof PsiClassType && isAtomicTypeMigration(to, (PsiClassType)from, context)) {
       return findReverseConversion(context);
     }
-    if (PsiUtil.resolveClassInType(to) instanceof PsiTypeParameter) return findReverseConversion(context);
     return null;
   }
 

@@ -653,4 +653,24 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
                     myJavaFacade.getElementFactory().createTypeFromText("java.lang.Number", null),
                     myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null));
   }
+
+  //124,125 - do not change formal method return type
+  public void testT124() throws Exception {
+    doTestFirstParamType("meth",
+                    myJavaFacade.getElementFactory().createTypeFromText("T", null),
+                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null));
+  }
+
+  public void testT125() throws Exception {
+    doTestFirstParamType("meth",
+                    myJavaFacade.getElementFactory().createTypeFromText("T", null),
+                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null));
+  }
+
+  public void testT126() throws Exception {
+    doTestMethodType("meth",
+                     myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null),
+                     myJavaFacade.getElementFactory().createTypeFromText("T", null));
+  }
+
 }
