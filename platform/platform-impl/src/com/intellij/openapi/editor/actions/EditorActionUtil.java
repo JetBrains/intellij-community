@@ -248,7 +248,7 @@ public class EditorActionUtil {
     else {
       LogicalPosition logLineEndLog = editor.offsetToLogicalPosition(document.getLineEndOffset(logLineToUse));
       VisualPosition logLineEndVis = editor.logicalToVisualPosition(logLineEndLog);
-      if (logLineEndLog.isOnSoftWrappedLine()) {
+      if (logLineEndLog.softWrapLinesOnCurrentLogicalLine > 0) {
         moveCaretToStartOfSoftWrappedLine(editor, logLineEndVis);
       }
       else {
@@ -369,6 +369,7 @@ public class EditorActionUtil {
         if (end >= 0) {
           // Width of soft wrap virtual text that is located at the target visual line.
           int result = EditorUtil.calcColumnNumber(editor, softWrapText, j, softWrapTextLength);
+          result++; // For column reserved for 'after soft wrap' sign.
           result += EditorUtil.calcColumnNumber(editor, document.getCharsSequence(), softWrap.getStart(), end);
           return result;
         }

@@ -328,7 +328,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     for (int i = startLineNumber; i < endLineNumber; i++) {
       LogicalPosition logicalPosition = myEditor.visualToLogicalPosition(new VisualPosition(i, 0));
-      if (logicalPosition.isOnSoftWrappedLine()) {
+      if (logicalPosition.softWrapLinesOnCurrentLogicalLine > 0) {
         continue;
       }
       int logLine = logicalPosition.line;

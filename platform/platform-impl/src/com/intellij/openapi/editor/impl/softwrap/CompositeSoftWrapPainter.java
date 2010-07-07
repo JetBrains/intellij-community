@@ -19,7 +19,7 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.impl.ColorHolder;
+import com.intellij.openapi.editor.impl.ColorProvider;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,7 +34,8 @@ import static com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType.BEFO
 import static java.util.Arrays.asList;
 
 /**
- * Composite (in terms of GoF patterns) object for {@link SoftWrapPainter} objects.
+ * Encapsulates logic of wrapping multiple {@link SoftWrapPainter} implementations; chooses the one to use and deleagtes all
+ * processing to it.
  * <p/>
  * Not thread-safe.
  *
@@ -107,7 +108,7 @@ public class CompositeSoftWrapPainter implements SoftWrapPainter {
     }
     if (++mySymbolsDrawingIndex < SYMBOLS.size()) {
       TextDrawingCallback callback = myEditor.getTextDrawingCallback();
-      ColorHolder colorHolder = ColorHolder.byColorsScheme(myEditor, EditorColors.RIGHT_MARGIN_COLOR);
+      ColorProvider colorHolder = ColorProvider.byColorScheme(myEditor, EditorColors.RIGHT_MARGIN_COLOR, EditorColors.WHITESPACES_COLOR);
       myDelegate = new TextBasedSoftWrapPainter(SYMBOLS.get(mySymbolsDrawingIndex), myEditor, callback, colorHolder);
       initDelegateIfNecessary();
       return;

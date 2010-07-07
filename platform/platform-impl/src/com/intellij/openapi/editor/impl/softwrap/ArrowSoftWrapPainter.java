@@ -18,7 +18,7 @@ package com.intellij.openapi.editor.impl.softwrap;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.ArrowPainter;
-import com.intellij.openapi.editor.impl.ColorHolder;
+import com.intellij.openapi.editor.impl.ColorProvider;
 import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,7 +43,7 @@ public class ArrowSoftWrapPainter implements SoftWrapPainter {
 
   public ArrowSoftWrapPainter(Editor editor) {
     myEditor = editor;
-    myArrowPainter = new ArrowPainter(ColorHolder.byColor(myEditor.getColorsScheme().getDefaultForeground()), myHeightProvider);
+    myArrowPainter = new ArrowPainter(ColorProvider.byColor(myEditor.getColorsScheme().getDefaultForeground()), myHeightProvider);
   }
 
   @Override

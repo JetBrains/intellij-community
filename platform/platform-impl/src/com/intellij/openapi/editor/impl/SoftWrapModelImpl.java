@@ -18,8 +18,6 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.event.VisibleAreaEvent;
-import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.SoftWrapModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -40,19 +38,7 @@ import java.util.List;
 /**
  * Default {@link SoftWrapModelEx} implementation.
  * <p/>
- * Design principles:
- * <ul>
- *    <li>
- *      remembers width of the visible area used last time; drops all of registered soft wraps on offset/position
- *      recalculation/adjustment request (e.g. {@link #adjustLogicalPosition(LogicalPosition, VisualPosition)}) if current
- *      visible area width differs from the one used last time;
- *    </li>
- *    <li>
- *      performs {@code 'soft wrap' -> 'hard wrap'} conversion if the document is change in a soft wrap-introduced
- *      virtual space (e.g. user start typing inside soft wrap-introduced indent). There is a dedicated method that
- *      does that if necessary - {@link #beforeDocumentChange(VisualPosition)};
- *    </li>
- * </ul>
+ * //TODO den add doc
  * <p/>
  * Not thread-safe.
  *
@@ -63,8 +49,9 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
 
   private final CharBuffer myCharBuffer = CharBuffer.allocate(1);
 
-  private final SoftWrapsStorage myStorage;
-  private final SoftWrapPainter myPainter;
+  private final SoftWrapsStorage         myStorage;
+  private final SoftWrapPainter          myPainter;
+  private final SoftWrapApplianceManager myApplianceManager;
 
   /**
    * Holds logical lines where soft wraps should be removed.
@@ -78,29 +65,25 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
   private final TIntHashSet myDirtyLines = new TIntHashSet();
 
   private final EditorEx myEditor;
-  private int myRightEdgeLocation = -1;
-  private boolean myInitialized;
-
-  /**
-   * There is a possible case that visible area is changed but document representation of shown at viewport is still the same
-   * (e.g. the document doesn't contain long lines and viewport width is expanded).
-   * <p/>
-   * We don't drop previously registered soft wraps during visible area change then but mark them as <code>'dirty'</code> in order to
-   * drop when document content is being repainted.
-   */
-  private boolean myDataIsDirty;
-
+  private       boolean  myInitialized;
   /** Holds number of 'active' calls, i.e. number of methods calls of the current object within the current call stack. */
-  private int myActive;
+  private       int      myActive;
 
   public SoftWrapModelImpl(@NotNull EditorEx editor) {
     this(editor, new SoftWrapsStorage(), new CompositeSoftWrapPainter(editor));
   }
 
-  public SoftWrapModelImpl(@NotNull EditorEx editor, @NotNull SoftWrapsStorage storage, @NotNull SoftWrapPainter painter) {
+  public SoftWrapModelImpl(@NotNull final EditorEx editor, @NotNull SoftWrapsStorage storage, @NotNull SoftWrapPainter painter) {
+    this(editor, storage, painter, new DefaultSoftWrapApplianceManager(storage, editor, painter));
+  }
+
+  public SoftWrapModelImpl(@NotNull EditorEx editor, @NotNull SoftWrapsStorage storage, @NotNull SoftWrapPainter painter,
+                           @NotNull SoftWrapApplianceManager applianceManager)
+  {
     myEditor = editor;
     myStorage = storage;
     myPainter = painter;
+    myApplianceManager = applianceManager;
   }
 
   public boolean isSoftWrappingEnabled() {
@@ -109,19 +92,21 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
 
   @Nullable
   public TextChange getSoftWrap(int offset) {
+    if (!isSoftWrappingEnabled()) {
+      return null;
+    }
     if (myActive <= 0) {
       dropDataIfNecessary();
     }
     return myStorage.getSoftWrap(offset);
   }
 
-  @Override
   @NotNull
-  public List<TextChange> getSoftWrapsForLine(int documentLine) {
-    Document document = myEditor.getDocument();
-    int start = document.getLineStartOffset(documentLine);
-    int end = document.getLineEndOffset(documentLine);
-
+  @Override
+  public List<TextChange> getSoftWrapsForRange(int start, int end) {
+    if (!isSoftWrappingEnabled()) {
+      return Collections.emptyList();
+    }
     int i = myStorage.getSoftWrapIndex(start);
     if (i < 0) {
       i = -i - 1;
@@ -142,10 +127,25 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
     return result == null ? Collections.<TextChange>emptyList() : result;
   }
 
+  @Override
+  @NotNull
+  public List<TextChange> getSoftWrapsForLine(int documentLine) {
+    if (!isSoftWrappingEnabled()) {
+      return Collections.emptyList();
+    }
+    Document document = myEditor.getDocument();
+    int start = document.getLineStartOffset(documentLine);
+    int end = document.getLineEndOffset(documentLine);
+    return getSoftWrapsForRange(start, end);
+  }
+
   /**
    * @return    total number of soft wrap-introduced new visual lines
    */
   public int getSoftWrapsIntroducedLinesNumber() {
+    if (!isSoftWrappingEnabled()) {
+      return 0;
+    }
     int result = 0;
     for (TextChange myWrap : myStorage.getSoftWraps()) {
       result += StringUtil.countNewLines(myWrap.getText());
@@ -153,95 +153,30 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
     return result;
   }
 
-  /**
-   * Allows to answer if symbols of the given char array located at <code>[start; end)</code> interval should be soft wrapped,
-   * i.e. represented on a next line.
-   *
-   * @param g                               graphics buffer being used
-   * @param chars                           symbols holder
-   * @param start                           target symbols sub-sequence start within the given char array (inclusive)
-   * @param end                             target symbols sub-sequence end within the given char array (exclusive)
-   * @param x                               <code>'x'</code> coordinate of the current drawing position
-   * @param onSoftWrapIntroducedVisualLine  defines if current visual position belongs to soft wrap-introduced visual line
-   * @return                                <code>true</code> if target symbols sub-sequence should be soft-wrapped;
-   *                                        <code>false</code> otherwise
-   */
-  public boolean shouldWrap(@NotNull Graphics g, @NotNull char[] chars, int start, int end, int x, boolean onSoftWrapIntroducedVisualLine) {
+  public void registerSoftWrapIfNecessary(@NotNull char[] chars, int start, int end, int x, int fontType) {
     if (!isSoftWrappingEnabled()) {
-      return false;
+      return;
     }
     initIfNecessary();
     dropDataIfNecessary();
 
-    if (myStorage.hasSoftWrapAt(start)) {
-      return true;
+    myActive++;
+    try {
+      myApplianceManager.registerSoftWrapIfNecessary(chars, start, end, x, fontType);
     }
-
-    if (myRightEdgeLocation < 0) {
-      assert false;
-      return false;
+    finally {
+      myActive--;
     }
-
-    //TODO den implement
-    int xAfterCharsDrawing = x + myPainter.getMinDrawingWidth(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED) + (end - start) * 7;
-    if (onSoftWrapIntroducedVisualLine) {
-      xAfterCharsDrawing += myPainter.getMinDrawingWidth(SoftWrapDrawingType.AFTER_SOFT_WRAP_LINE_FEED);
-    }
-    return xAfterCharsDrawing > myRightEdgeLocation;
-  }
-
-  private static boolean containsOnlyWhiteSpaces(char[] chars, int start, int end) {
-    int i = CharArrayUtil.shiftForward(chars, start, "\n \t");
-    return i >= end;
-  }
-
-  /**
-   * Asks current model to perform soft wrapping for the characters sub-sequent identified by the given parameters.
-   *
-   * @param chars       symbols holder
-   * @param start       target symbols sub-sequence start within the given char array (inclusive)
-   * @param end         target symbols sub-sequence end within the given char array (exclusive)
-   * @return            soft wrap registered for the given offset
-   */
-  public TextChange wrap(char[] chars, int start, int end) {
-    TextChange result = getSoftWrap(start);
-    if (result != null) {
-      return result;
-    }
-
-    dropDataIfNecessary();
-    //TODO den implement indent calculation on formatting options
-    result = containsOnlyWhiteSpaces(chars, start, end) ? new TextChange("\n", start) : new TextChange("\n    ", start);
-    myStorage.storeSoftWrap(result);
-    return result;
   }
 
   public List<TextChange> getRegisteredSoftWraps() {
+    if (!isSoftWrappingEnabled()) {
+      return Collections.emptyList();
+    }
     return myStorage.getSoftWraps();
   }
 
-  /**
-   * Drops information about registered soft wraps if they are marked as <code>'dirty'</code>.
-   * <p/>
-   * The general idea of current {@link SoftWrapModel} implementation is that new soft wraps are created as necessary during target
-   * document painting. Hence, we drop registered soft wraps during this method processing only
-   * {@link EditorImpl#isUnderRepainting() during editor repainting} (there is a possible case that this method is called during
-   * other processing like gutter repainting).
-   *
-   * @see #myDataIsDirty
-   */
   private void dropDataIfNecessary() {
-    if (!myEditor.isUnderRepainting()) {
-      return;
-    }
-
-    if (myDataIsDirty) {
-      myDataIsDirty = false;
-      myDirtyLines.clear();
-      myStorage.removeAll();
-      return;
-    }
-
     Document document = myEditor.getDocument();
     for (TIntIterator it = myDirtyLines.iterator(); it.hasNext();) {
       int line = it.next();
@@ -254,6 +189,9 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
 
   @Override
   public int paint(@NotNull Graphics g, @NotNull SoftWrapDrawingType drawingType, int x, int y, int lineHeight) {
+    if (!isSoftWrappingEnabled()) {
+      return 0;
+    }
     return myPainter.paint(g, drawingType, x,  y, lineHeight);
   }
 
@@ -263,12 +201,10 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
       return defaultLogical;
     }
 
-    //TODO den check
-    //if (defaultLogical.softWrapAware) {
-    //  return defaultLogical;
-    //}
+    if (defaultLogical.visualPositionAware) {
+      return defaultLogical;
+    }
 
-    updateVisibleAreaIfNecessary();
     myActive++;
     try {
       return doAdjustLogicalPosition(defaultLogical, visual);
@@ -348,6 +284,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
               return result;
             }
           }
+          context.onSoftWrapSymbol('a'); // Emulate 'after soft wrap' sign
         }
 
         // Process document symbol.
@@ -502,8 +439,6 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
     int targetLine = document.getLineNumber(offset);
     int targetLineStartOffset = document.getLineStartOffset(targetLine);
 
-    updateVisibleAreaIfNecessary();
-
     int softWrapIntroducedLinesBefore = 0;
     int softWrapsOnCurrentLogicalLine = 0;
     int symbolsOnCurrentLogicalLine = 0;
@@ -562,6 +497,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
             symbolsOnCurrentVisibleLine++;
           }
         }
+        symbolsOnCurrentVisibleLine++; // For 'after soft wrap' sign.
       }
 
       // We don't want to count symbol at target offset.
@@ -592,7 +528,6 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
       return logical.toVisualPosition();
     }
 
-    updateVisibleAreaIfNecessary();
     myActive++;
     try {
       return doAdjustVisualPosition(logical, defaultVisual);
@@ -659,6 +594,9 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
 
   @Override
   public boolean isInsideSoftWrap(@NotNull VisualPosition visual) {
+    if (!isSoftWrappingEnabled()) {
+      return false;
+    }
     LogicalPosition logical = myEditor.visualToLogicalPosition(visual);
     int offset = myEditor.logicalPositionToOffset(logical);
     if (offset <= 0) {
@@ -680,6 +618,47 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
 
     VisualPosition visualBeforeSoftWrap = myEditor.offsetToVisualPosition(offset - 1);
     return visual.line > visualBeforeSoftWrap.line || visual.column > visualBeforeSoftWrap.column + 1;
+  }
+
+  @Override
+  public int getSoftWrapIndentWidthInPixels(@NotNull TextChange softWrap) {
+    if (!isSoftWrappingEnabled()) {
+      return 0;
+    }
+    char[] chars = softWrap.getChars();
+    int result = myPainter.getMinDrawingWidth(SoftWrapDrawingType.AFTER_SOFT_WRAP_LINE_FEED);
+
+    int start = 0;
+    int end = chars.length;
+
+    int i = CharArrayUtil.lastIndexOf(chars, '\n', 0, chars.length);
+    if (i >= 0) {
+      start = i + 1;
+    }
+
+    if (start < end) {
+      result += EditorUtil.textWidth(myEditor, chars, start, end, Font.PLAIN);
+    }
+
+    return result;
+  }
+
+  @Override
+  public int getSoftWrapIndentWidthInColumns(@NotNull TextChange softWrap) {
+    if (!isSoftWrappingEnabled()) {
+      return 0;
+    }
+    char[] chars = softWrap.getChars();
+    int result = 1; // For 'after soft wrap' drawing
+
+    int start = 0;
+    int i = CharArrayUtil.lastIndexOf(chars, '\n', 0, chars.length);
+    if (i >= 0) {
+      start = i + 1;
+    }
+    result += chars.length - start;
+
+    return result;
   }
 
   public void beforeDocumentChange(@NotNull VisualPosition visualPosition) {
@@ -747,15 +726,6 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
     }
     myInitialized = true;
 
-    // Subscribe for visible area changes notifications.
-    ScrollingModel scrollingModel = myEditor.getScrollingModel();
-    scrollingModel.addVisibleAreaListener(new VisibleAreaListener() {
-      public void visibleAreaChanged(VisibleAreaEvent e) {
-        updateVisibleAreaIfNecessary(e.getNewRectangle());
-      }
-    });
-    updateVisibleAreaIfNecessary(scrollingModel.getVisibleArea());
-
     // Subscribe for document change events.
     myEditor.getDocument().addDocumentListener(new DocumentListener() {
       public void beforeDocumentChange(DocumentEvent event) {
@@ -772,39 +742,6 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
       }
     });
   }  
-
-  private void updateVisibleAreaIfNecessary() {
-    updateVisibleAreaIfNecessary(myEditor.getScrollingModel().getVisibleArea());
-  }
-
-  private void updateVisibleAreaIfNecessary(@Nullable Rectangle visibleArea) {
-    if (visibleArea == null || myActive > 0 || !isSoftWrappingEnabled()) {
-      return;
-    }
-    myActive++;
-    try {
-      doUpdateVisibleAreaChange(visibleArea);
-    }
-    finally {
-      myActive--;
-    }
-  }
-
-  /**
-   * Notifies current model that visible rectangle is changed in order for it to update the state accordingly.
-   * <p/>
-   * This method is introduced mostly for business-logic vs try/finally separation.
-   *
-   * @param visibleArea   current visible area of the editor managed by the current model
-   */
-  private void doUpdateVisibleAreaChange(@NotNull Rectangle visibleArea) {
-    // Update right edge.
-    int currentRightEdgeLocation = visibleArea.x + visibleArea.width;
-    if (myRightEdgeLocation != currentRightEdgeLocation) {
-      myDataIsDirty = true;
-      myRightEdgeLocation = currentRightEdgeLocation;
-    }
-  }
 
   private int toVisualColumnSymbolsNumber(char c) {
     myCharBuffer.clear();
