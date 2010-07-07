@@ -881,8 +881,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             }
             column += columnsNumber(c, x, prevX, spaceSize);
           }
-          column++; // For 'after soft wrap' sign.
           activeSoftWrapProcessed = true;
+
+          // Process 'after soft wrap' sign.
+          prevX = x;
+          x += mySoftWrapModel.getMinDrawingWidth(SoftWrapDrawingType.AFTER_SOFT_WRAP);
+          if (x >= px) {
+            break outer;
+          }
+          column++;
         }
 
         prevX = x;
@@ -1018,7 +1025,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     int lineStartOffset = -1;
     int reserved = 0;
-    int length = visible.column;
+    int column = visible.column;
 
     if (logical.softWrapLinesOnCurrentLogicalLine > 0) {
       int linesToSkip = logical.softWrapLinesOnCurrentLogicalLine;
@@ -1035,18 +1042,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         lineStartOffset = softWrap.getStart();
         int widthInColumns = getSoftWrapModel().getSoftWrapIndentWidthInColumns(softWrap);
         int widthInPixels = getSoftWrapModel().getSoftWrapIndentWidthInPixels(softWrap);
-        if (widthInColumns <= length) {
-          length -= widthInColumns;
+        if (widthInColumns <= column) {
+          column -= widthInColumns;
           reserved = widthInPixels;
         }
         else {
           char[] softWrapChars = softWrap.getChars();
           int i = CharArrayUtil.lastIndexOf(softWrapChars, '\n', 0, softWrapChars.length);
           int start = 0;
-          if (i > 0) {
+          if (i >= 0) {
             start = i + 1;
           }
-          return new Point(EditorUtil.textWidth(this, softWrapChars, start, softWrapChars.length, Font.PLAIN), y);
+          return new Point(EditorUtil.textWidth(this, softWrapChars, start, column + 1, Font.PLAIN), y);
         }
         break;
       }
@@ -1064,7 +1071,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }
 
-    int x = getTabbedTextWidth(lineStartOffset, length);
+    int x = getTabbedTextWidth(lineStartOffset, column);
     return new Point(x + reserved, y);
   }
 
@@ -2087,7 +2094,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             g, softWrapChars, i + 1, softWrapChars.length, position, clip, effectColor, effectType, fontType, fontColor
           );
         }
-        position.x += mySoftWrapModel.paint(g, SoftWrapDrawingType.AFTER_SOFT_WRAP_LINE_FEED, position.x, position.y, getLineHeight());
+        position.x += mySoftWrapModel.paint(g, SoftWrapDrawingType.AFTER_SOFT_WRAP, position.x, position.y, getLineHeight());
         continue;
       }
 
@@ -2135,7 +2142,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           fontType, fontColor
         );
       }
-      position.x += mySoftWrapModel.paint(g, SoftWrapDrawingType.AFTER_SOFT_WRAP_LINE_FEED, position.x, position.y, getLineHeight());
+      position.x += mySoftWrapModel.paint(g, SoftWrapDrawingType.AFTER_SOFT_WRAP, position.x, position.y, getLineHeight());
     }
     return position.x = drawString(g, text, startToUse, end, position, clip, effectColor, effectType, fontType, fontColor);
   }

@@ -195,6 +195,11 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
     return myPainter.paint(g, drawingType, x,  y, lineHeight);
   }
 
+  @Override
+  public int getMinDrawingWidth(@NotNull SoftWrapDrawingType drawingType) {
+    return myPainter.getMinDrawingWidth(drawingType);
+  }
+
   @NotNull
   public LogicalPosition adjustLogicalPosition(@NotNull LogicalPosition defaultLogical, @NotNull VisualPosition visual) {
     if (myActive > 0 || !isSoftWrappingEnabled() || myStorage.isEmpty() || myEditor.getDocument().getTextLength() <= 0) {
@@ -626,7 +631,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
       return 0;
     }
     char[] chars = softWrap.getChars();
-    int result = myPainter.getMinDrawingWidth(SoftWrapDrawingType.AFTER_SOFT_WRAP_LINE_FEED);
+    int result = myPainter.getMinDrawingWidth(SoftWrapDrawingType.AFTER_SOFT_WRAP);
 
     int start = 0;
     int end = chars.length;

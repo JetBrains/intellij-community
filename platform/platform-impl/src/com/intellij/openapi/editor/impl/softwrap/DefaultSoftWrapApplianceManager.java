@@ -207,7 +207,7 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
         i = offset - 1; // Subtract one because of loop increment.
         prevSoftWrapOffset = offset;
         x = myPainter.getMinDrawingWidth(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED)
-            + myPainter.getMinDrawingWidth(SoftWrapDrawingType.AFTER_SOFT_WRAP_LINE_FEED) + reservedWidth;
+            + myPainter.getMinDrawingWidth(SoftWrapDrawingType.AFTER_SOFT_WRAP) + reservedWidth;
         continue;
       }
       x += symbolWidth;

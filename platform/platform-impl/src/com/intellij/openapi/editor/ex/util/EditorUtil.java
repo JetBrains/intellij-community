@@ -317,7 +317,7 @@ public class EditorUtil {
   public static int textWidth(@NotNull Editor editor, char[] text, int start, int end, int fontType) {
     int result = 0;
     for (int i = start; i < end; i++) {
-      char c = text[start];
+      char c = text[i];
       if (c != '\t') {
         FontInfo font = fontForChar(c, fontType, editor);
         result += font.charWidth(c, editor.getContentComponent());

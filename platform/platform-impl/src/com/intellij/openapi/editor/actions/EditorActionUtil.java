@@ -239,7 +239,7 @@ public class EditorActionUtil {
       }
       else {
         column = findFirstNonSpaceColumnOnTheLine(editor, currentVisCaret.line);
-        if (column == currentVisCaret.column) {
+        if (column >= currentVisCaret.column) {
           column = 0;
         }
       }
@@ -277,7 +277,7 @@ public class EditorActionUtil {
     }
     else {
       int nonSpaceColumn = findFirstNonSpaceColumnOnTheLine(editor, currentVisual.line);
-      if (nonSpaceColumn > 0 /* current visual line is not empty */ && nonSpaceColumn != currentVisual.column) {
+      if (nonSpaceColumn > 0 /* current visual line is not empty */ && nonSpaceColumn < currentVisual.column) {
         column = nonSpaceColumn;
       }
     }
@@ -287,7 +287,7 @@ public class EditorActionUtil {
 
   private static int findSmartIndentColumn(Editor editor, int visualLine) {
     for (int i = visualLine; i >= 0; i--) {
-      int column = findFirstNonSpaceColumnOnTheLine(editor, visualLine);
+      int column = findFirstNonSpaceColumnOnTheLine(editor, i);
       if (column >= 0) {
         return column;
       }

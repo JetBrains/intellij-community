@@ -22,5 +22,5 @@ package com.intellij.openapi.editor.impl.softwrap;
  * @since Jul 1, 2010 5:19:45 PM
  */
 public enum SoftWrapDrawingType {
-  BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP_LINE_FEED
+  BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP
 }
