@@ -20,7 +20,7 @@ public class PyTokenTypes {
 
   public static final PyElementType END_OF_LINE_COMMENT = new PyElementType("END_OF_LINE_COMMENT");
 
-  public static final PyElementType AND_KEYWORD = new PyElementType("AND_KEYWORD");
+  public static final PyElementType AND_KEYWORD = new PyElementType("AND_KEYWORD", "__and__");
   public static final PyElementType AS_KEYWORD = new PyElementType("AS_KEYWORD");
   public static final PyElementType ASSERT_KEYWORD = new PyElementType("ASSERT_KEYWORD");
   public static final PyElementType BREAK_KEYWORD = new PyElementType("BREAK_KEYWORD");
@@ -42,7 +42,7 @@ public class PyTokenTypes {
   public static final PyElementType IS_KEYWORD = new PyElementType("IS_KEYWORD");
   public static final PyElementType LAMBDA_KEYWORD = new PyElementType("LAMBDA_KEYWORD");
   public static final PyElementType NOT_KEYWORD = new PyElementType("NOT_KEYWORD");
-  public static final PyElementType OR_KEYWORD = new PyElementType("OR_KEYWORD");
+  public static final PyElementType OR_KEYWORD = new PyElementType("OR_KEYWORD", "__or__");
   public static final PyElementType PASS_KEYWORD = new PyElementType("PASS_KEYWORD");
   public static final PyElementType PRINT_KEYWORD = new PyElementType("PRINT_KEYWORD");
   public static final PyElementType RAISE_KEYWORD = new PyElementType("RAISE_KEYWORD");
@@ -75,26 +75,26 @@ public class PyTokenTypes {
   public static final PyElementType STRING_LITERAL = new PyElementType("STRING_LITERAL");
 
   // Operators
-  public static final PyElementType PLUS = new PyElementType("PLUS");// +
-  public static final PyElementType MINUS = new PyElementType("MINUS");// -
-  public static final PyElementType MULT = new PyElementType("MULT");// *
-  public static final PyElementType EXP = new PyElementType("EXP");// **
-  public static final PyElementType DIV = new PyElementType("DIV"); // /
-  public static final PyElementType FLOORDIV = new PyElementType("FLOORDIV"); // //
-  public static final PyElementType PERC = new PyElementType("PERC");// %
-  public static final PyElementType LTLT = new PyElementType("LTLT");// <<
-  public static final PyElementType GTGT = new PyElementType("GTGT");// >>
-  public static final PyElementType AND = new PyElementType("AND");// &
-  public static final PyElementType OR = new PyElementType("OR");// |
-  public static final PyElementType XOR = new PyElementType("XOR");// ^
-  public static final PyElementType TILDE = new PyElementType("TILDE");// ~
-  public static final PyElementType LT = new PyElementType("LT");// <
-  public static final PyElementType GT = new PyElementType("GT");// >
-  public static final PyElementType LE = new PyElementType("LE");// <=
-  public static final PyElementType GE = new PyElementType("GE");// >=
-  public static final PyElementType EQEQ = new PyElementType("EQEQ");// ==
-  public static final PyElementType NE = new PyElementType("NE");// !=
-  public static final PyElementType NE_OLD = new PyElementType("NE_OLD");// <>
+  public static final PyElementType PLUS = new PyElementType("PLUS", "__add__");// +
+  public static final PyElementType MINUS = new PyElementType("MINUS", "__sub__");// -
+  public static final PyElementType MULT = new PyElementType("MULT", "__mul__");// *
+  public static final PyElementType EXP = new PyElementType("EXP", "__pow__");// **
+  public static final PyElementType DIV = new PyElementType("DIV", "__div__"); // /
+  public static final PyElementType FLOORDIV = new PyElementType("FLOORDIV", "__floordiv__"); // //
+  public static final PyElementType PERC = new PyElementType("PERC", "__mod__");// %
+  public static final PyElementType LTLT = new PyElementType("LTLT", "__lshift__");// <<
+  public static final PyElementType GTGT = new PyElementType("GTGT", "__rshift__");// >>
+  public static final PyElementType AND = new PyElementType("AND", "__and__");// &
+  public static final PyElementType OR = new PyElementType("OR", "__or__");// |
+  public static final PyElementType XOR = new PyElementType("XOR", "__xor__");// ^
+  public static final PyElementType TILDE = new PyElementType("TILDE", "__invert__");// ~
+  public static final PyElementType LT = new PyElementType("LT", "__lt__");// <
+  public static final PyElementType GT = new PyElementType("GT", "__gt__");// >
+  public static final PyElementType LE = new PyElementType("LE", "__le__");// <=
+  public static final PyElementType GE = new PyElementType("GE", "__ge__");// >=
+  public static final PyElementType EQEQ = new PyElementType("EQEQ", "__eq__");// ==
+  public static final PyElementType NE = new PyElementType("NE", "__ne__");// !=
+  public static final PyElementType NE_OLD = new PyElementType("NE_OLD", "__ne__");// <>
 
   // Delimiters
   public static final PyElementType LPAR = new PyElementType("LPAR");// (

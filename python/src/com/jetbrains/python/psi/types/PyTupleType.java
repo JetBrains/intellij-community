@@ -33,6 +33,11 @@ public class PyTupleType extends PyClassType implements PySubscriptableType {
     }, ",") + ")";
   }
 
+  @Override
+  public boolean isBuiltin() {
+    return true;
+  }
+
   public PyType getElementType(PyExpression index, TypeEvalContext context) {
     final Object value = PyConstantExpressionEvaluator.evaluate(index);
     if (value instanceof Integer) {

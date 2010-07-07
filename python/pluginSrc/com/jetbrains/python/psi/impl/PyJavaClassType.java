@@ -49,4 +49,9 @@ public class PyJavaClassType implements PyType {
     return myClass.getName();
     else return null;
   }
+
+  @Override
+  public boolean isBuiltin() {
+    return false;  // TODO: JSDK's types could be considered built-in.
+  }
 }

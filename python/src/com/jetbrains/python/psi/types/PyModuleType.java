@@ -119,6 +119,11 @@ public class PyModuleType implements PyType { // Maybe make it a PyClassType ref
     else return null;
   }
 
+  @Override
+  public boolean isBuiltin() {
+    return true;
+  }
+
   @NotNull
   public static Set<String> getPossibleInstanceMembers() {
     return ourPossibleFields;

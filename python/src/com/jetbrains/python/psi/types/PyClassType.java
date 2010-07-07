@@ -230,6 +230,11 @@ public class PyClassType implements PyType {
     }
   }
 
+  @Override
+  public boolean isBuiltin() {
+    return PyBuiltinCache.getInstance(myClass).hasInBuiltins(myClass);
+  }
+
   @NotNull
   public Set<String> getPossibleInstanceMembers() {
     Set<String> ret = new HashSet<String>();
