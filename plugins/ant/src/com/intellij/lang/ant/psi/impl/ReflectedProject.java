@@ -24,7 +24,10 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.ref.SoftReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.List;
 
 /**
 * @author Eugene Zhuravlev
@@ -65,9 +68,11 @@ public final class ReflectedProject {
       }
     }
     final ReflectedProject project = new ReflectedProject(classLoader);
-    ourProjects.add(new SoftReference<Pair<ReflectedProject, ClassLoader>>(
-      new Pair<ReflectedProject, ClassLoader>(project, classLoader)
-    ));
+    if (project.getProject() != null) { // do not cache partially-loaded stuff
+      ourProjects.add(new SoftReference<Pair<ReflectedProject, ClassLoader>>(
+        new Pair<ReflectedProject, ClassLoader>(project, classLoader)
+      ));
+    }
     return project;
   }
 
