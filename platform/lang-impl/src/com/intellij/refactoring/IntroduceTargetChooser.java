@@ -38,6 +38,14 @@ public class IntroduceTargetChooser {
 
   public static <T extends PsiElement> void showChooser(final Editor editor, final List<T> expressions, final Pass<T> callback,
                                                         final Function<T, String> renderer) {
+    showChooser(editor, expressions, callback, renderer, "Expressions");
+  }
+
+  public static <T extends PsiElement> void showChooser(final Editor editor,
+                                                        final List<T> expressions,
+                                                        final Pass<T> callback,
+                                                        final Function<T, String> renderer,
+                                                        String title) {
     final ScopeHighlighter highlighter = new ScopeHighlighter(editor);
     final DefaultListModel model = new DefaultListModel();
     for (T expr : expressions) {
@@ -75,7 +83,7 @@ public class IntroduceTargetChooser {
     });
 
     JBPopupFactory.getInstance().createListPopupBuilder(list)
-          .setTitle("Expressions")
+          .setTitle(title)
           .setMovable(false)
           .setResizable(false)
           .setRequestFocus(true)

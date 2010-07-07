@@ -115,6 +115,8 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
       accessorFuture.cancel(true);
       if (showMessage) {
         showWorkaroundMessage();
+      } else {
+        LOG.warn("Can't access to SystemClipboard");
       }
 
       return null;
