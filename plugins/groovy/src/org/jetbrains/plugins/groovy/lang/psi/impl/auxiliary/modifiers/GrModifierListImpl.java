@@ -225,11 +225,13 @@ public class GrModifierListImpl extends GroovyBaseElementImpl<GrModifierListStub
 
   @Nullable
   public PsiAnnotation findAnnotation(@NotNull @NonNls String qualifiedName) {
-    PsiAnnotation[] annotations = getAnnotations();
-    for (PsiAnnotation annotation : annotations) {
-      if (qualifiedName.equals(annotation.getQualifiedName())) return annotation;
+    PsiElement child = getFirstChild();
+    while (child != null) {
+      if (child instanceof PsiAnnotation && qualifiedName.equals(((PsiAnnotation)child).getQualifiedName())) {
+        return (PsiAnnotation)child;
+      }
+      child = child.getNextSibling();
     }
-
     return null;
   }
 
