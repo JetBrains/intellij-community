@@ -16,40 +16,44 @@
 package com.intellij.xml.index;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction;
+import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.javaee.ExternalResourceManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.indexing.IndexableSetContributor;
-import org.jetbrains.annotations.Nullable;
 
-import java.net.URL;
+import java.util.List;
 import java.util.Set;
 
 /**
  * @author Dmitry Avdeev
  */
 public class ExternalResourcesRootsProvider extends IndexableSetContributor {
-  private static final URL ourRoot = ExternalResourcesRootsProvider.class.getResource(ExternalResourceManagerImpl.STANDARD_SCHEMAS);
-
-  @Nullable
-  private static VirtualFile getStandardSchemas() {
-    return ourRoot == null ? null : VfsUtil.findFileByURL(ourRoot);
-  }
 
   public Set<VirtualFile> getAdditionalRootsToIndex() {
-    final VirtualFile standardSchemas = getStandardSchemas();
+
+    HashSet<VirtualFile> roots = new HashSet<VirtualFile>();
+
     String path = FetchExtResourceAction.getExternalResourcesPath();
-    LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
-    VirtualFile extResources = localFileSystem.findFileByPath(path);
-    HashSet<VirtualFile> roots = new HashSet<VirtualFile>(2);
-    if (standardSchemas != null) {
-      roots.add(standardSchemas);
+    VirtualFile extResources = LocalFileSystem.getInstance().findFileByPath(path);
+
+    ExternalResourceManagerImpl manager = (ExternalResourceManagerImpl)ExternalResourceManagerEx.getInstance();
+    List<String> urls = manager.getStandardResources();
+    for (String url : urls) {
+      VirtualFile file = VfsUtil.findRelativeFile(url, null);
+      if (file != null) {
+        VirtualFile parent = file.getParent();
+        if (parent != null && ("standardSchemas".equals(parent.getName()) || parent.equals(extResources))) {
+          roots.add(parent);
+        }
+        else {
+          roots.add(file);
+        }
+      }
     }
-    if (extResources != null) {
-      roots.add(extResources);
-    }
+    
     return roots;
   }
 }
