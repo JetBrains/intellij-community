@@ -18,6 +18,7 @@ package com.intellij.codeInsight.template.zencoding;
 import com.intellij.codeInsight.template.CustomLiveTemplate;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.codeInsight.template.zencoding.filters.ZenCodingGenerator;
 import com.intellij.codeInsight.template.zencoding.tokens.TemplateToken;
 import com.intellij.codeInsight.template.zencoding.tokens.XmlTemplateToken;
 import com.intellij.lang.xml.XMLLanguage;
@@ -213,7 +214,10 @@ public class XmlZenCodingTemplate extends ZenCodingTemplate {
     }
     assert prefix.equals(token.getKey());
     token.setTemplate(template);
-    final XmlTag tag = parseXmlTagInTemplate(template.getString(), callback, true);
+    final XmlFile xmlFile = parseXmlFileInTemplate(template.getString(), callback, true);
+    token.setFile(xmlFile);
+    XmlDocument document = xmlFile.getDocument();
+    final XmlTag tag = document != null ? document.getRootTag() : null;
     if (token.getAttribute2Value().size() > 0 && tag == null) {
       return null;
     }
@@ -225,7 +229,6 @@ public class XmlZenCodingTemplate extends ZenCodingTemplate {
           }
         });
       }
-      token.setTag(tag);
     }
     return token;
   }
@@ -266,16 +269,15 @@ public class XmlZenCodingTemplate extends ZenCodingTemplate {
     return new TemplateImpl("", builder.toString(), "");
   }
 
-  @Nullable
-  static XmlTag parseXmlTagInTemplate(String templateString, CustomTemplateCallback callback, boolean createPhysicalFile) {
+  @NotNull
+  private static XmlFile parseXmlFileInTemplate(String templateString, CustomTemplateCallback callback, boolean createPhysicalFile) {
     XmlFile xmlFile = (XmlFile)PsiFileFactory.getInstance(callback.getProject())
       .createFileFromText("dummy.xml", StdFileTypes.XML, templateString, LocalTimeCounter.currentTime(), createPhysicalFile);
     VirtualFile vFile = xmlFile.getVirtualFile();
     if (vFile != null) {
       vFile.putUserData(UndoManager.DONT_RECORD_UNDO, Boolean.TRUE);
     }
-    XmlDocument document = xmlFile.getDocument();
-    return document == null ? null : document.getRootTag();
+    return xmlFile;
   }
 
   protected boolean isApplicable(@NotNull PsiElement element) {
@@ -286,7 +288,7 @@ public class XmlZenCodingTemplate extends ZenCodingTemplate {
       if (PsiTreeUtil.getParentOfType(element, XmlComment.class) != null) {
         return false;
       }
-      if (!findApplicableFilter(element)) {
+      if (!findApplicableGenerator(element)) {
         return false;
       }
       return true;
@@ -294,13 +296,13 @@ public class XmlZenCodingTemplate extends ZenCodingTemplate {
     return false;
   }
 
-  private static boolean findApplicableFilter(@NotNull PsiElement context) {
-    for (ZenCodingFilter filter : ZenCodingFilter.EP_NAME.getExtensions()) {
-      if (filter.isMyContext(context)) {
+  private static boolean findApplicableGenerator(@NotNull PsiElement context) {
+    for (ZenCodingGenerator generator : ZenCodingGenerator.getInstances()) {
+      if (generator.isMyContext(context) && generator.isAppliedByDefault(context)) {
         return true;
       }
     }
-    return new XmlZenCodingFilterImpl().isMyContext(context);
+    return false;
   }
 
   public static boolean startZenCoding(Editor editor, PsiFile file, String abbreviation) {

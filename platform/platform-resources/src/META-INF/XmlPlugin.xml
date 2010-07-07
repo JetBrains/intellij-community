@@ -40,7 +40,7 @@
     <extensionPoint name="xml.implicitNamespaceDescriptorProvider"
                     interface="com.intellij.javaee.ImplicitNamespaceDescriptorProvider"/>
 
-    <extensionPoint name="xml.zenCodingFilter" interface="com.intellij.codeInsight.template.zencoding.ZenCodingFilter"/>
+    <extensionPoint name="xml.zenCodingGenerator" interface="com.intellij.codeInsight.template.zencoding.filters.ZenCodingGenerator"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

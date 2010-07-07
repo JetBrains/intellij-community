@@ -21,6 +21,7 @@ import com.intellij.codeInsight.template.CustomLiveTemplate;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.LiveTemplateBuilder;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.codeInsight.template.zencoding.filters.ZenCodingGenerator;
 import com.intellij.codeInsight.template.zencoding.nodes.*;
 import com.intellij.codeInsight.template.zencoding.tokens.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -43,7 +44,7 @@ import java.util.List;
  * @author Eugene.Kudelevsky
  */
 public abstract class ZenCodingTemplate implements CustomLiveTemplate {
-  static final char MARKER = '$';
+  public static final char MARKER = '$';
   private static final String DELIMS = ">+*()";
   public static final String ATTRS = "ATTRS";
 
@@ -132,8 +133,11 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
       return null;
     }
 
+    // at least MarkerToken
+    assert result.size() > 0;
+
     if (filter != null) {
-      result.add(new FilterToken(filter));
+      result.add(result.size() - 1, new FilterToken(filter));
     }
     return result;
   }
@@ -188,6 +192,30 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
     expand(key, callback, null);
   }
 
+  @Nullable
+  private static ZenCodingGenerator findApplicableGenerator(ZenCodingNode node, PsiElement context) {
+    ZenCodingGenerator defaultGenerator = null;
+    List<ZenCodingGenerator> generators = ZenCodingGenerator.getInstances();
+    for (ZenCodingGenerator generator : generators) {
+      if (defaultGenerator == null && generator.isMyContext(context) && generator.isAppliedByDefault(context)) {
+        defaultGenerator = generator;
+      }
+    }
+    while (node instanceof FilterNode) {
+      FilterNode filterNode = (FilterNode)node;
+      String suffix = filterNode.getFilter();
+      for (ZenCodingGenerator generator : generators) {
+        if (generator.isMyContext(context)) {
+          if (suffix != null && suffix.equals(generator.getSuffix())) {
+            return generator;
+          }
+        }
+      }
+      node = filterNode.getNode();
+    }
+    return defaultGenerator;
+  }
+
   private void expand(String key,
                       @NotNull CustomTemplateCallback callback,
                       String surroundedText) {
@@ -203,13 +231,15 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
       callback.deleteTemplateKey(key);
     }
 
+    ZenCodingGenerator generator = findApplicableGenerator(node, callback.getContext());
+
     List<GenerationNode> genNodes = node.expand(-1);
     LiveTemplateBuilder builder = new LiveTemplateBuilder();
     int end = -1;
     for (int i = 0, genNodesSize = genNodes.size(); i < genNodesSize; i++) {
       GenerationNode genNode = genNodes.get(i);
-      TemplateInvokation inv = genNode.generate(callback, surroundedText);
-      int e = builder.insertTemplate(builder.length(), inv.getTemplate(), inv.getPredefinedValues());
+      TemplateImpl template = genNode.generate(callback, surroundedText, generator);
+      int e = builder.insertTemplate(builder.length(), template, null);
       if (end == -1 && end < builder.length()) {
         end = e;
       }
@@ -217,7 +247,7 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
     if (end < builder.length()) {
       builder.insertVariableSegment(end, TemplateImpl.END);
     }
-    callback.startTemplate(builder.buildTemplate(), builder.getPredefinedValues());
+    callback.startTemplate(builder.buildTemplate(), null);
   }
 
   public void wrap(final String selection,

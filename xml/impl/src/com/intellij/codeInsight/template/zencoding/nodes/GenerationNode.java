@@ -18,9 +18,14 @@ package com.intellij.codeInsight.template.zencoding.nodes;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.LiveTemplateBuilder;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.codeInsight.template.zencoding.*;
+import com.intellij.codeInsight.template.zencoding.ZenCodingTemplate;
+import com.intellij.codeInsight.template.zencoding.ZenCodingUtil;
+import com.intellij.codeInsight.template.zencoding.filters.XmlZenCodingGenerator;
+import com.intellij.codeInsight.template.zencoding.filters.XmlZenCodingGeneratorImpl;
+import com.intellij.codeInsight.template.zencoding.filters.ZenCodingGenerator;
 import com.intellij.codeInsight.template.zencoding.tokens.TemplateToken;
 import com.intellij.codeInsight.template.zencoding.tokens.XmlTemplateToken;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -28,14 +33,13 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlToken;
-import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.psi.xml.*;
 import com.intellij.util.LocalTimeCounter;
-import com.intellij.util.containers.*;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.IntArrayList;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,22 +88,34 @@ public class GenerationNode {
 
   private boolean isBlockTag() {
     if (myTemplateToken instanceof XmlTemplateToken) {
-      XmlTag tag = ((XmlTemplateToken)myTemplateToken).getTag();
-      if (tag != null) {
-        return HtmlUtil.isHtmlBlockTagL(tag.getName());
+      XmlFile xmlFile = ((XmlTemplateToken)myTemplateToken).getFile();
+      XmlDocument document = xmlFile.getDocument();
+      if (document != null) {
+        XmlTag tag = document.getRootTag();
+        if (tag != null) {
+          return HtmlUtil.isHtmlBlockTagL(tag.getName());
+        }
       }
     }
     return false;
   }
 
   @NotNull
-  public TemplateInvokation generate(@NotNull CustomTemplateCallback callback, @Nullable String surroundedText) {
+  public TemplateImpl generate(@NotNull CustomTemplateCallback callback,
+                               @Nullable String surroundedText,
+                               @Nullable ZenCodingGenerator generator) {
     LiveTemplateBuilder builder = new LiveTemplateBuilder();
     int end = -1;
-    TemplateInvokation parentInvokation =
-      invokeTemplate(myTemplateToken, callback, myNumberInIteration, null,
-                     myChildren.size() == 0 && myToInsertChildren ? surroundedText : null);
-    int offset = builder.insertTemplate(0, parentInvokation.getTemplate(), parentInvokation.getPredefinedValues());
+
+    boolean hasChildren = myChildren.size() > 0;
+    String txt = !hasChildren && myToInsertChildren ? surroundedText : null;
+
+    TemplateImpl parentTemplate = myTemplateToken instanceof XmlTemplateToken ?
+                                  invokeXmlTemplate((XmlTemplateToken)myTemplateToken, callback, myNumberInIteration, generator, txt,
+                                                    hasChildren) :
+                                  invokeTemplate(myTemplateToken, hasChildren, callback, generator, txt);
+
+    int offset = builder.insertTemplate(0, parentTemplate, null);
     int newOffset = gotoChild(callback.getProject(), builder.getText(), offset, 0, builder.length());
     if (offset < builder.length() && newOffset != offset) {
       end = offset;
@@ -111,7 +127,7 @@ public class GenerationNode {
     LiveTemplateBuilder.Marker marker = offset < builder.length() ? builder.createMarker(offset) : null;
     for (int i = 0, myChildrenSize = myChildren.size(); i < myChildrenSize; i++) {
       GenerationNode child = myChildren.get(i);
-      TemplateInvokation childInvokation = child.generate(callback, surroundedText);
+      TemplateImpl childTemplate = child.generate(callback, surroundedText, generator);
 
       boolean blockTag = child.isBlockTag();
 
@@ -119,7 +135,7 @@ public class GenerationNode {
         builder.insertText(offset++, "\n");
       }
 
-      int e = builder.insertTemplate(offset, childInvokation.getTemplate(), childInvokation.getPredefinedValues());
+      int e = builder.insertTemplate(offset, childTemplate, null);
       offset = marker != null ? marker.getEndOffset() : builder.length();
 
       if (blockTag && !isNewLineAfter(builder.getText(), offset)) {
@@ -133,56 +149,68 @@ public class GenerationNode {
     if (end != -1) {
       builder.insertVariableSegment(end, TemplateImpl.END);
     }
-    return new TemplateInvokation(builder.buildTemplate(), builder.getPredefinedValues());
+    return builder.buildTemplate();
   }
 
-  private static TemplateInvokation invokeTemplate(TemplateToken token,
-                                                   final CustomTemplateCallback callback,
-                                                   final int numberInIteration,
-                                                   String filter,
-                                                   String surroundedText) {
-    if (token instanceof XmlTemplateToken && token.getTemplate() != null) {
-      XmlTemplateToken xmlTemplateToken = (XmlTemplateToken)token;
-      final List<Pair<String, String>> attr2value = new ArrayList<Pair<String, String>>(xmlTemplateToken.getAttribute2Value());
-      TemplateImpl modifiedTemplate = token.getTemplate().copy();
-      final XmlTag tag = xmlTemplateToken.getTag();
-      assert tag != null;
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          setAttributeValues(tag, attr2value, numberInIteration);
-        }
-      });
-      String s = filterXml(callback.getContext(), tag, filter);
-      assert s != null;
-      modifiedTemplate.setString(s);
-      removeVariablesWhichHasNoSegment(modifiedTemplate);
-      Map<String, String> predefinedValues =
-        buildPredefinedValues(attr2value, numberInIteration, callback.getContext());
-      return expandTemplate(modifiedTemplate, predefinedValues, surroundedText);
+  private static TemplateImpl invokeTemplate(TemplateToken token,
+                                             boolean hasChildren,
+                                             final CustomTemplateCallback callback,
+                                             @Nullable ZenCodingGenerator generator,
+                                             String surroundedText) {
+    TemplateImpl template = token.getTemplate();
+    if (generator != null) {
+      assert template != null;
+      String s = generator.toString(token, hasChildren, callback.getContext());
+      template = template.copy();
+      template.setString(s);
+      removeVariablesWhichHasNoSegment(template);
     }
-    TemplateInvokation template = expandTemplate(callback, token.getKey(), null, surroundedText);
-    assert template != null : "cannot expand template " + token.getKey();
-    return template;
+
+    return expandTemplate(template, null, surroundedText);
   }
 
-  @Nullable
-  private static TemplateInvokation expandTemplate(CustomTemplateCallback callback, String key, Map<String, String> predefinedVarValues,
-                                                   String surroundedText) {
-    List<TemplateImpl> templates = callback.findApplicableTemplates(key);
-    if (templates.size() > 0) {
-      TemplateImpl template = templates.get(0);
-      return expandTemplate(template, predefinedVarValues, surroundedText);
+  private static TemplateImpl invokeXmlTemplate(XmlTemplateToken token,
+                                                CustomTemplateCallback callback,
+                                                final int numberInIteration,
+                                                @Nullable ZenCodingGenerator generator,
+                                                String surroundedText,
+                                                final boolean hasChildren) {
+    assert generator == null || generator instanceof XmlZenCodingGenerator :
+      "The generator cannot process XmlTemplateToken because it doesn't inherit XmlZenCodingGenerator";
+
+    TemplateImpl template = token.getTemplate();
+    assert template != null;
+
+    final List<Pair<String, String>> attr2value = new ArrayList<Pair<String, String>>(token.getAttribute2Value());
+    final XmlFile xmlFile = token.getFile();
+    XmlDocument document = xmlFile.getDocument();
+    if (document != null) {
+      final XmlTag tag = document.getRootTag();
+      if (tag != null) {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            XmlTag tag1 = hasChildren ? expandEmptyTagIfNeccessary(tag) : tag;
+            setAttributeValues(tag1, attr2value, numberInIteration);
+          }
+        });
+      }
     }
-    return null;
+    String s = (generator != null ? generator : XmlZenCodingGeneratorImpl.INSTANCE).toString(token, hasChildren, callback.getContext());
+    template = template.copy();
+    template.setString(s);
+    removeVariablesWhichHasNoSegment(template);
+    Map<String, String> predefinedValues =
+      buildPredefinedValues(attr2value, numberInIteration, (XmlZenCodingGenerator)generator, hasChildren);
+    return expandTemplate(template, predefinedValues, surroundedText);
   }
 
   @NotNull
-  private static TemplateInvokation expandTemplate(@NotNull TemplateImpl template,
-                                                   Map<String, String> predefinedVarValues,
-                                                   String surroundedText) {
+  private static TemplateImpl expandTemplate(@NotNull TemplateImpl template,
+                                             Map<String, String> predefinedVarValues,
+                                             String surroundedText) {
     LiveTemplateBuilder builder = new LiveTemplateBuilder();
     if (predefinedVarValues == null && surroundedText == null) {
-      return new TemplateInvokation(template, predefinedVarValues);
+      return template;
     }
     int offset = builder.insertTemplate(0, template, predefinedVarValues);
     if (surroundedText != null) {
@@ -191,7 +219,29 @@ public class GenerationNode {
     if (offset < builder.length()) {
       builder.insertVariableSegment(offset, TemplateImpl.END);
     }
-    return new TemplateInvokation(builder.buildTemplate(), builder.getPredefinedValues());
+    return builder.buildTemplate();
+  }
+
+  @NotNull
+  private static XmlTag expandEmptyTagIfNeccessary(@NotNull XmlTag tag) {
+    StringBuilder builder = new StringBuilder();
+    boolean flag = false;
+
+    for (PsiElement child : tag.getChildren()) {
+      if (child instanceof XmlToken && XmlTokenType.XML_EMPTY_ELEMENT_END.equals(((XmlToken)child).getTokenType())) {
+        flag = true;
+        break;
+      }
+      builder.append(child.getText());
+    }
+
+    if (flag) {
+      builder.append("></").append(tag.getName()).append('>');
+      final XmlTag tag1 = XmlElementFactory.getInstance(tag.getProject()).createTagFromText(builder.toString(), XMLLanguage.INSTANCE);
+      tag.replace(tag1);
+      return tag1;
+    }
+    return tag;
   }
 
   private static int gotoChild(Project project, CharSequence text, int offset, int start, int end) {
@@ -220,18 +270,6 @@ public class GenerationNode {
     return offset;
   }
 
-  @Nullable
-  private static String filterXml(PsiElement context, XmlTag tag, String filterSuffix) {
-    for (ZenCodingFilter filter : ZenCodingFilter.EP_NAME.getExtensions()) {
-      if ((filterSuffix == null && filter.isDefaultFilter()) || (filterSuffix != null && filterSuffix.equals(filter.getSuffix()))) {
-        if (filter instanceof XmlZenCodingFilter && filter.isDefaultFilter() && filter.isMyContext(context)) {
-          return ((XmlZenCodingFilter)filter).toString(tag, context);
-        }
-      }
-    }
-    return new XmlZenCodingFilterImpl().toString(tag, context);
-  }
-
   private static void removeVariablesWhichHasNoSegment(TemplateImpl template) {
     Set<String> segments = new HashSet<String>();
     for (int i = 0; i < template.getSegmentsCount(); i++) {
@@ -252,9 +290,9 @@ public class GenerationNode {
   @Nullable
   private static Map<String, String> buildPredefinedValues(List<Pair<String, String>> attribute2value,
                                                            int numberInIteration,
-                                                           PsiElement context) {
-    String attributes = buildAttributesString(attribute2value, numberInIteration, context);
-    assert attributes != null;
+                                                           XmlZenCodingGenerator generator,
+                                                           boolean hasChildren) {
+    String attributes = generator.buildAttributesString(attribute2value, hasChildren, numberInIteration);
     attributes = attributes.length() > 0 ? ' ' + attributes : null;
     Map<String, String> predefinedValues = null;
     if (attributes != null) {
@@ -262,18 +300,6 @@ public class GenerationNode {
       predefinedValues.put(ZenCodingTemplate.ATTRS, attributes);
     }
     return predefinedValues;
-  }
-
-  @Nullable
-  private static String buildAttributesString(List<Pair<String, String>> attribute2value,
-                                              int numberInIteration,
-                                              PsiElement context) {
-    for (ZenCodingFilter filter : ZenCodingFilter.EP_NAME.getExtensions()) {
-      if (filter.isMyContext(context)) {
-        return filter.buildAttributesString(attribute2value, numberInIteration);
-      }
-    }
-    return new XmlZenCodingFilterImpl().buildAttributesString(attribute2value, numberInIteration);
   }
 
   private static void setAttributeValues(XmlTag tag, List<Pair<String, String>> attr2value, int numberInIteration) {

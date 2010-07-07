@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.template.zencoding.tokens;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlFile;
 
 import java.util.List;
 
@@ -25,7 +25,7 @@ import java.util.List;
  */
 public class XmlTemplateToken extends TemplateToken {
   private final List<Pair<String, String>> myAttribute2Value;
-  private XmlTag myTag;
+  private XmlFile myFile;
 
   public XmlTemplateToken(String key, List<Pair<String, String>> attribute2value) {
     super(key);
@@ -36,11 +36,11 @@ public class XmlTemplateToken extends TemplateToken {
     return myAttribute2Value;
   }
 
-  public XmlTag getTag() {
-    return myTag;
+  public XmlFile getFile() {
+    return myFile;
   }
 
-  public void setTag(XmlTag tag) {
-    myTag = tag;
+  public void setFile(XmlFile file) {
+    myFile = file;
   }
 }
