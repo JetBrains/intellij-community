@@ -93,6 +93,10 @@ public class GitHistoryProvider implements VcsHistoryProvider {
       return null;
     }
     List<VcsFileRevision> revisions = GitHistoryUtils.history(project, filePath);
+    return createSession(filePath, revisions);
+  }
+
+  private VcsAbstractHistorySession createSession(final FilePath filePath, final List<VcsFileRevision> revisions) {
     return new VcsAbstractHistorySession(revisions) {
       @Nullable
       protected VcsRevisionNumber calcCurrentRevisionNumber() {
@@ -111,29 +115,16 @@ public class GitHistoryProvider implements VcsHistoryProvider {
       public HistoryAsTreeProvider getHistoryAsTreeProvider() {
         return null;
       }
+
+      @Override
+      public VcsHistorySession copy() {
+        return createSession(filePath, getRevisionList());
+      }
     };
   }
 
   public void reportAppendableHistory(final FilePath path, final VcsAppendableHistorySessionPartner partner) throws VcsException {
-    final VcsAbstractHistorySession emptySession = new VcsAbstractHistorySession(Collections.<VcsFileRevision>emptyList()) {
-      @Nullable
-      protected VcsRevisionNumber calcCurrentRevisionNumber() {
-        try {
-          return GitHistoryUtils.getCurrentRevision(project, GitHistoryUtils.getLastCommitName(project, path));
-        }
-        catch (VcsException e) {
-          // likely the file is not under VCS anymore.
-          if (log.isDebugEnabled()) {
-            log.debug("Unable to retrieve the current revision number", e);
-          }
-          return null;
-        }
-      }
-
-      public HistoryAsTreeProvider getHistoryAsTreeProvider() {
-        return null;
-      }
-    };
+    final VcsAbstractHistorySession emptySession = createSession(path, Collections.<VcsFileRevision>emptyList());
     partner.reportCreatedEmptySession(emptySession);
     GitHistoryUtils.history(project, path, new Consumer<GitFileRevision>() {
       public void consume(GitFileRevision gitFileRevision) {

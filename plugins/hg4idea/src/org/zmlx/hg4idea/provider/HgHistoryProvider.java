@@ -103,7 +103,17 @@ public class HgHistoryProvider implements VcsHistoryProvider {
 
     if (history.size() == 0) return;
     
-    final VcsAbstractHistorySession emptySession = new VcsAbstractHistorySession(Collections.<VcsFileRevision>emptyList()) {
+    final VcsAbstractHistorySession emptySession = createAppendableSession(vcsRoot);
+    partner.reportCreatedEmptySession(emptySession);
+
+    for (HgFileRevision hgFileRevision : history) {
+      partner.acceptRevision(hgFileRevision);
+    }
+    partner.finished();
+  }
+
+  private VcsAbstractHistorySession createAppendableSession(final VirtualFile vcsRoot) {
+    return new VcsAbstractHistorySession(Collections.<VcsFileRevision>emptyList()) {
       @Nullable
       protected VcsRevisionNumber calcCurrentRevisionNumber() {
         return new HgWorkingCopyRevisionsCommand(project).firstParent(vcsRoot);
@@ -112,13 +122,12 @@ public class HgHistoryProvider implements VcsHistoryProvider {
       public HistoryAsTreeProvider getHistoryAsTreeProvider() {
         return null;
       }
-    };
-    partner.reportCreatedEmptySession(emptySession);
 
-    for (HgFileRevision hgFileRevision : history) {
-      partner.acceptRevision(hgFileRevision);
-    }
-    partner.finished();
+      @Override
+      public VcsHistorySession copy() {
+        return createAppendableSession(vcsRoot);
+      }
+    };
   }
 
   private List<HgFileRevision> getHistory(FilePath filePath, VirtualFile vcsRoot, Project project, int limit) {

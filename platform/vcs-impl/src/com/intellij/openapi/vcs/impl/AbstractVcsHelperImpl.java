@@ -143,9 +143,10 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       myBuffer = new BufferedListConsumer<VcsFileRevision>(5, new Consumer<List<VcsFileRevision>>() {
         public void consume(List<VcsFileRevision> vcsFileRevisions) {
           mySession.getRevisionList().addAll(vcsFileRevisions);
+          final VcsHistorySession copy = mySession.copy();
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
-              ensureHistoryPanelCreated().getHistoryPanelRefresh().consume(mySession);
+              ensureHistoryPanelCreated().getHistoryPanelRefresh().consume(copy);
             }
           });
         }

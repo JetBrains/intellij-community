@@ -57,7 +57,9 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 public class SvnHistoryProvider implements VcsHistoryProvider {
@@ -134,19 +136,13 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
 
   private class MyHistorySession extends VcsAbstractHistorySession {
     private final FilePath myCommittedPath;
-    private final Map<Long, SvnChangeList> myListsMap;
     private final boolean mySupports15;
 
     private MyHistorySession(final List<VcsFileRevision> revisions, final FilePath committedPath, final boolean supports15) {
       super(revisions);
       myCommittedPath = committedPath;
       mySupports15 = supports15;
-      myListsMap = new HashMap<Long, SvnChangeList>();
       shouldBeRefreshed();
-    }
-
-    public Map<Long, SvnChangeList> getListsMap() {
-      return myListsMap;
     }
 
     public HistoryAsTreeProvider getHistoryAsTreeProvider() {
@@ -172,6 +168,11 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
 
     public boolean isSupports15() {
       return mySupports15;
+    }
+
+    @Override
+    public VcsHistorySession copy() {
+      return new MyHistorySession(getRevisionList(), myCommittedPath, mySupports15);
     }
   }
 
