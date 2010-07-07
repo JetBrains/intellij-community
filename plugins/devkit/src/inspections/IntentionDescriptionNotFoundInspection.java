@@ -35,7 +35,6 @@ import org.jetbrains.idea.devkit.inspections.quickfix.CreateHtmlDescriptionFix;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -57,9 +56,9 @@ public class IntentionDescriptionNotFoundInspection extends DevKitInspectionBase
 
     if (base == null || ! aClass.isInheritor(base, true)) return null;
 
-    final PsiMethod method = findNearestMethod("getFamilyName", aClass);
-    if (method == null) return null;
-    final String filename = PsiUtil.getReturnedLiteral(method, aClass);
+    //final PsiMethod method = findNearestMethod("getFamilyName", aClass);
+    //if (method == null) return null;
+    final String filename = aClass.getName();
     if (filename == null) return null;
 
     for (PsiDirectory description : getIntentionDescriptionsDirs(module)) {
