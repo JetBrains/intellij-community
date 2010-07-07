@@ -296,6 +296,10 @@
       <category>XML</category>
       <className>com.intellij.xml.actions.XmlSplitTagAction</className>
     </intentionAction>
+    <intentionAction>
+      <category>XML</category>
+      <className>com.intellij.codeInsight.daemon.impl.analysis.AddSchemaPrefixIntention</className>
+    </intentionAction>
 
     <lang.implementationTextSelectioner language="XML"
                                         implementationClass="com.intellij.codeInsight.hint.XmlImplementationTextSelectioner"/>
