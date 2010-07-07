@@ -168,7 +168,10 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
       final PsiType valueType = myTypeEvaluator.evaluateType(value);
 
       if (returnType != null && valueType != null) {
-        myLabeler.addMigrationRoot(method, valueType, myStatement, TypeConversionUtil.isAssignable(returnType, valueType), true);
+        if (!myLabeler.addMigrationRoot(method, valueType, myStatement, TypeConversionUtil.isAssignable(returnType, valueType), true)
+            && TypeMigrationLabeler.typeContainsTypeParameters(returnType)) {
+          myLabeler.markFailedConversion(new Pair<PsiType, PsiType>(returnType, valueType), value);
+        }
       }
     }
   }

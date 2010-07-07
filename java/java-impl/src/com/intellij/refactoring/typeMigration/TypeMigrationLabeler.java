@@ -362,15 +362,7 @@ public class TypeMigrationLabeler {
     type = userDefinedType ? type : TypeEvaluator.substituteType(type, originalType, isContraVariantPosition);
 
     if (!userDefinedType) {
-      if (originalType instanceof PsiClassType) {
-        final PsiClassType psiClassType = (PsiClassType)originalType;
-        if (psiClassType.resolve() instanceof PsiTypeParameter) {
-          return false;
-        }
-        for (PsiType paramType : psiClassType.getParameters()) {
-          if (paramType instanceof PsiClassType && ((PsiClassType)paramType).resolve() instanceof PsiTypeParameter) return false;
-        }
-      }
+      if (typeContainsTypeParameters(originalType)) return false;
     }
 
     if (type instanceof PsiCapturedWildcardType) {
@@ -433,6 +425,18 @@ public class TypeMigrationLabeler {
     }
   }
 
+  static boolean typeContainsTypeParameters(PsiType originalType) {
+    if (originalType instanceof PsiClassType) {
+      final PsiClassType psiClassType = (PsiClassType)originalType;
+      if (psiClassType.resolve() instanceof PsiTypeParameter) {
+        return true;
+      }
+      for (PsiType paramType : psiClassType.getParameters()) {
+        if (paramType instanceof PsiClassType && ((PsiClassType)paramType).resolve() instanceof PsiTypeParameter) return true;
+      }
+    }
+    return false;
+  }
 
 
   @Nullable
