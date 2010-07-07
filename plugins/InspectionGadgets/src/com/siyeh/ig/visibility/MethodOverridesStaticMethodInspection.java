@@ -16,6 +16,7 @@
 package com.siyeh.ig.visibility;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.MethodSignature;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -69,8 +70,7 @@ public class MethodOverridesStaticMethodInspection extends BaseInspection {
                 return;
             }
             final String methodName = method.getName();
-            final PsiParameterList parameterList = method.getParameterList();
-            final int parametersCount = parameterList.getParametersCount();
+            final MethodSignature signature = method.getSignature(PsiSubstitutor.EMPTY);
             PsiClass ancestorClass = aClass.getSuperClass();
             final Set<PsiClass> visitedClasses = new HashSet<PsiClass>();
             while(ancestorClass != null){
@@ -80,10 +80,8 @@ public class MethodOverridesStaticMethodInspection extends BaseInspection {
                 final PsiMethod[] methods =
                         ancestorClass.findMethodsByName(methodName, false);
                 for(final PsiMethod testMethod : methods){
-                    final PsiParameterList testParametersList =
-                            testMethod.getParameterList();
-                  final int numTestParameters = testParametersList.getParametersCount();
-                    if(parametersCount != numTestParameters){
+                    final MethodSignature testSignature = testMethod.getSignature(PsiSubstitutor.EMPTY);
+                    if(!signature.equals(testSignature)){
                         continue;
                     }
                     if(testMethod.hasModifierProperty(PsiModifier.STATIC) &&
