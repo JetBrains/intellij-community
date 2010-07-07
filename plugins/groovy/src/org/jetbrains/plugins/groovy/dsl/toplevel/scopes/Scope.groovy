@@ -103,7 +103,7 @@ class ScriptScope extends Scope {
 
     // Name matcher
     if (namePattern) {
-      result << new FileContextFilter(PsiJavaPatterns.psiFile().withName(PlatformPatterns.string().matches(namePattern)))
+      result << new FileContextFilter(PlatformPatterns.psiFile().withName(PlatformPatterns.string().matches(namePattern)))
     }
 
     // Process unqualified references only
