@@ -51,7 +51,7 @@ public class EnterAfterUnmatchedBraceHandler implements EnterHandlerDelegate {
       int offset = CharArrayUtil.shiftForward(text, caretOffset, " \t");
       if (offset < document.getTextLength()) {
         char c = text.charAt(offset);
-        if (c != ')' && c != ']' && c != ';' && c != ',' && c != '%' && c != '<') {
+        if (c != ')' && c != ']' && c != ';' && c != ',' && c != '%' && c != '<' && c != '?') {
           offset = CharArrayUtil.shiftForwardUntil(text, caretOffset, "\n");
         }
       }
