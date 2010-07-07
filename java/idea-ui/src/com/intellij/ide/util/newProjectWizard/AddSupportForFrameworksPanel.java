@@ -26,6 +26,7 @@ import com.intellij.facet.ui.libraries.RemoteRepositoryInfo;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurableListener;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
+import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportCommunicator;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelImpl;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.Disposable;
@@ -341,9 +342,10 @@ public class AddSupportForFrameworksPanel implements Disposable {
     List<Library> addedLibraries = new ArrayList<Library>();
     List<FrameworkSupportNode> selectedFrameworks = getFrameworkNodes(true);
     sortFrameworks(selectedFrameworks);
-
+    List<FrameworkSupportConfigurable> selectedConfigurables = new ArrayList<FrameworkSupportConfigurable>();
     for (FrameworkSupportNode node : selectedFrameworks) {
       FrameworkSupportConfigurable configurable = node.getConfigurable();
+      selectedConfigurables.add(configurable);
       final LibraryCompositionSettings settings = node.getLibraryCompositionSettings();
       Library library = settings != null ? settings.addLibraries(rootModel, addedLibraries) : null;
       configurable.addSupport(module, rootModel, library);
@@ -353,6 +355,9 @@ public class AddSupportForFrameworksPanel implements Disposable {
       if (provider instanceof FacetBasedFrameworkSupportProvider && !addedLibraries.isEmpty()) {
         ((FacetBasedFrameworkSupportProvider)provider).processAddedLibraries(module, addedLibraries);
       }
+    }
+    for (FrameworkSupportCommunicator communicator : FrameworkSupportCommunicator.EP_NAME.getExtensions()) {
+      communicator.onFrameworkSupportAdded(module, rootModel, selectedConfigurables, myModel);
     }
   }
 
