@@ -5,6 +5,7 @@ import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.io.StringRef;
 import com.jetbrains.python.psi.PyReferenceExpression;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -42,7 +43,7 @@ public class PyQualifiedName {
     return result;
   }
 
-  @Nullable
+  @NotNull
   public PyQualifiedName removeLastComponent() {
     int size = myComponents.size();
     PyQualifiedName result = new PyQualifiedName(size);

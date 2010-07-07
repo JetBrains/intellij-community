@@ -240,7 +240,7 @@ public class ResolveImportUtil {
   }
 
   @Nullable
-  public static PsiElement resolveModuleInRoots(PyQualifiedName moduleQualifiedName, PsiElement foothold) {
+  public static PsiElement resolveModuleInRoots(@NotNull PyQualifiedName moduleQualifiedName, PsiElement foothold) {
     final List<PsiElement> candidates = resolveModulesInRoots(moduleQualifiedName, foothold);
     return candidates.isEmpty() ? null : candidates.get(0);
   }
@@ -253,7 +253,7 @@ public class ResolveImportUtil {
    * @return the list of matching directories or files, or an empty list if nothing was found
    */
   @NotNull
-  public static List<PsiElement> resolveModulesInRoots(PyQualifiedName moduleQualifiedName, PsiElement foothold) {
+  public static List<PsiElement> resolveModulesInRoots(@NotNull PyQualifiedName moduleQualifiedName, PsiElement foothold) {
     if (foothold == null || !foothold.isValid()) return Collections.emptyList();
     PsiFile footholdFile = foothold.getContainingFile();
     if (footholdFile == null || !footholdFile.isValid()) return Collections.emptyList();
@@ -452,11 +452,11 @@ public class ResolveImportUtil {
 
   static class ResolveInRootVisitor implements RootVisitor {
     final PsiFile foothold_file;
-    final PyQualifiedName qualifiedName;
-    final PsiManager psiManager;
+    final @NotNull PyQualifiedName qualifiedName;
+    final @NotNull PsiManager psiManager;
     final List<PsiElement> results = new ArrayList<PsiElement>();
 
-    public ResolveInRootVisitor(PyQualifiedName qName, PsiManager psiManager, PsiFile foothold_file) {
+    public ResolveInRootVisitor(@NotNull PyQualifiedName qName, @NotNull PsiManager psiManager, PsiFile foothold_file) {
       this.qualifiedName = qName;
       this.psiManager = psiManager;
       this.foothold_file = foothold_file;
