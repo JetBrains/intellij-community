@@ -13,35 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.template.zencoding;
-
-import com.intellij.codeInsight.template.impl.TemplateImpl;
+package com.intellij.codeInsight.template.zencoding.tokens;
 
 /**
  * @author Eugene.Kudelevsky
  */
-public class TemplateToken extends Token {
-  private final String myKey;
-  private TemplateImpl myTemplate;
-
-  public TemplateToken(String key) {
-    myKey = key;
-  }
-
-  public String getKey() {
-    return myKey;
-  }
-
-  public void setTemplate(TemplateImpl template) {
-    myTemplate = template;
-  }
-
-  public TemplateImpl getTemplate() {
-    return myTemplate;
-  }
-
+public class MarkerToken extends ZenCodingToken {
   @Override
   public String toString() {
-    return "TEMPLATE";
+    return "&";
   }
 }

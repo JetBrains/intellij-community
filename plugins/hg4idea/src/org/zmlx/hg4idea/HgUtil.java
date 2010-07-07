@@ -16,6 +16,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
@@ -186,5 +187,30 @@ public abstract class HgUtil {
    */
   public static boolean isHgRoot(VirtualFile dir) {
     return dir.findChild(".hg") != null;
+  }
+
+  /**
+   * Gets the Mercurial root for the given file path or null if non exists:
+   * the root should not only be in directory mappings, but also the .hg repository folder should exist.
+   * @see #getHgRootOrThrow(com.intellij.openapi.project.Project, com.intellij.openapi.vcs.FilePath)
+   */
+  @Nullable
+  public static VirtualFile getHgRootOrNull(Project project, FilePath filePath) {
+    final VirtualFile vf = VcsUtil.getVcsRootFor(project, filePath);
+    return (vf == null || !isHgRoot(vf) ? null : vf);
+  }
+
+  /**
+   * Gets the Mercurial root for the given file path or throws a VcsException if non exists:
+   * the root should not only be in directory mappings, but also the .hg repository folder should exist.
+   * @see #getHgRootOrNull(com.intellij.openapi.project.Project, com.intellij.openapi.vcs.FilePath)
+   */
+  @NotNull
+  public static VirtualFile getHgRootOrThrow(Project project, FilePath filePath) throws VcsException {
+    final VirtualFile vf = getHgRootOrNull(project, filePath);
+    if (vf == null) {
+      throw new VcsException(HgVcsMessages.message("hg4idea.exception.file.not.under.hg", filePath.getPresentableUrl()));
+    }
+    return vf;
   }
 }

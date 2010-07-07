@@ -51,11 +51,19 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   private static final int DELAY_UNTIL_ABORT_CLIPBOARD_ACCESS = 2000;
   private boolean myIsWarningShown = false;
 
+  public static CopyPasteManagerEx getInstanceEx() {
+    return (CopyPasteManagerEx)getInstance();
+  }
+
   public CopyPasteManagerEx() {
     myDatas = new ArrayList<Transferable>();
   }
 
   public Transferable getSystemClipboardContents() {
+    return getSystemClipboardContents(true);
+  }
+
+  public Transferable getSystemClipboardContents(boolean showMessage) {
     final Transferable[] contents = new Transferable[] {null};
     final boolean[] success = new boolean[] {false};
     Runnable accessor = new Runnable() {
@@ -105,7 +113,9 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
 
       if (success[0]) return contents[0];
       accessorFuture.cancel(true);
-      showWorkaroundMessage();
+      if (showMessage) {
+        showWorkaroundMessage();
+      }
 
       return null;
     }

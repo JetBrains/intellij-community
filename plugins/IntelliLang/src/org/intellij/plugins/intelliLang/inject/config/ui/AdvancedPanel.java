@@ -18,10 +18,9 @@ package org.intellij.plugins.intelliLang.inject.config.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.EditorTextField;
-import com.intellij.util.Consumer;
+import com.intellij.ui.LanguageTextField;
 import org.intellij.lang.regexp.RegExpLanguage;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
-import com.intellij.ui.LanguageTextField;
 
 import javax.swing.*;
 
@@ -52,8 +51,8 @@ public class AdvancedPanel extends AbstractInjectionPanel<BaseInjection> {
   }
 
   private void createUIComponents() {
-    myValuePattern = new LanguageTextField(RegExpLanguage.INSTANCE, myProject, myOrigInjection.getValuePattern(), new Consumer<PsiFile>() {
-      public void consume(PsiFile psiFile) {
+    myValuePattern = new LanguageTextField(RegExpLanguage.INSTANCE, myProject, myOrigInjection.getValuePattern(), new LanguageTextField.SimpleDocumentCreator() {
+      public void customizePsiFile(PsiFile psiFile) {
         psiFile.putCopyableUserData(ValueRegExpAnnotator.KEY, Boolean.TRUE);
       }
     });

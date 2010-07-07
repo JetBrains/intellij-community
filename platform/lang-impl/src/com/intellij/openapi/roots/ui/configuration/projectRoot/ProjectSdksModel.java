@@ -109,7 +109,7 @@ public class ProjectSdksModel implements SdkModel {
     return myModified;
   }
 
-  public void apply(MasterDetailsComponent configurable) throws ConfigurationException {
+  public void apply(@Nullable MasterDetailsComponent configurable) throws ConfigurationException {
     String[] errorString = new String[1];
     if (!canApply(errorString, configurable)) {
       throw new ConfigurationException(errorString[0]);
@@ -152,7 +152,7 @@ public class ProjectSdksModel implements SdkModel {
     myModified = false;
   }
 
-  private boolean canApply(String[] errorString, MasterDetailsComponent rootConfigurable) throws ConfigurationException {
+  private boolean canApply(String[] errorString, @Nullable MasterDetailsComponent rootConfigurable) throws ConfigurationException {
     ArrayList<String> allNames = new ArrayList<String>();
     Sdk itemWithError = null;
     for (Sdk currItem : myProjectSdks.values()) {
@@ -173,10 +173,12 @@ public class ProjectSdksModel implements SdkModel {
           sdkAdditionalData.checkValid(this);
         }
         catch (ConfigurationException e) {
-          final Object projectJdk = rootConfigurable.getSelectedObject();
-          if (!(projectJdk instanceof Sdk) ||
-              !Comparing.strEqual(((Sdk)projectJdk).getName(), currName)){ //do not leave current item with current name
-            rootConfigurable.selectNodeInTree(currName);
+          if (rootConfigurable != null) {
+            final Object projectJdk = rootConfigurable.getSelectedObject();
+            if (!(projectJdk instanceof Sdk) ||
+                !Comparing.strEqual(((Sdk)projectJdk).getName(), currName)) { //do not leave current item with current name
+              rootConfigurable.selectNodeInTree(currName);
+            }
           }
           throw new ConfigurationException(ProjectBundle.message("sdk.configuration.exception", currName) + " " + e.getMessage());
         }
@@ -184,7 +186,9 @@ public class ProjectSdksModel implements SdkModel {
       allNames.add(currName);
     }
     if (itemWithError == null) return true;
-    rootConfigurable.selectNodeInTree(itemWithError.getName());
+    if (rootConfigurable != null) {
+      rootConfigurable.selectNodeInTree(itemWithError.getName());
+    }
     return false;
   }
 

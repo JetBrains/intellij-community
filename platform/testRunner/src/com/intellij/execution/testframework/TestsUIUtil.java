@@ -120,8 +120,11 @@ public class TestsUIUtil {
       type = MessageType.WARNING;
     } else{
       List allTests = Filter.LEAF.select(root.getAllTests());
-      int failedCount = Filter.DEFECTIVE_LEAF.select(allTests).size();
-      int notStartedCount = Filter.NOT_PASSED.select(allTests).size();
+      final List<AbstractTestProxy> failed = Filter.DEFECTIVE_LEAF.select(allTests);
+      int failedCount = failed.size();
+      final List<AbstractTestProxy> notStarted = Filter.NOT_PASSED.select(allTests);
+      notStarted.removeAll(failed);
+      int notStartedCount = notStarted.size();
       int passedCount = allTests.size() - failedCount - notStartedCount;
       if (failedCount > 0) {
         title = ExecutionBundle.message("junit.runing.info.tests.failed.label");

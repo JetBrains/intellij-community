@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>OverridesStaticMethod.java</file>
+    <line>5</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Method overrides static method of superclass</problem_class>
+    <description>Method &lt;code&gt;method()&lt;/code&gt; overrides a static method of a superclass #loc</description>
+  </problem>
+</problems>

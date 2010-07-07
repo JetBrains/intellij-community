@@ -15,7 +15,6 @@
  */
 package com.intellij.xml.index;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
@@ -23,7 +22,6 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexExtension;
@@ -61,10 +59,6 @@ public abstract class XmlIndex<V> extends FileBasedIndexExtension<String, V> {
 
       @Override
       public boolean contains(VirtualFile file) {
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
-          System.out.println("XmlIndex.contains: " + file.getPath() + "; id=" + ((VirtualFileWithId) file).getId());
-        }
-
         final VirtualFile parent = file.getParent();
         assert parent != null;
         return parent.getName().equals("standardSchemas") || projectScope.contains(file);
