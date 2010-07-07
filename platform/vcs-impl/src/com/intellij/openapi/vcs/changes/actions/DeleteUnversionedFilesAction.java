@@ -35,7 +35,7 @@ public class DeleteUnversionedFilesAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     DeleteProvider deleteProvider = e.getData(PlatformDataKeys.DELETE_ELEMENT_PROVIDER);
-    assert deleteProvider != null;
+    if (deleteProvider == null) return;
     deleteProvider.deleteElement(e.getDataContext());
   }
 
