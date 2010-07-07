@@ -326,7 +326,7 @@ class InitialInfoBuilder {
       final PsiFile[] roots = file.getPsiRoots();
       for (PsiFile root : roots) {
         buffer.append("Root ");
-        DebugUtil.treeToBuffer(buffer, root.getNode(), 0, false, true, true);
+        DebugUtil.treeToBuffer(buffer, root.getNode(), 0, false, true, true, true);
       }
       buffer.append('\n');
     }

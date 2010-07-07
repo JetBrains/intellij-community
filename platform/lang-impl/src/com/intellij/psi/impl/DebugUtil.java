@@ -33,10 +33,8 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 
-/**
- *
- */
-@SuppressWarnings({"HardCodedStringLiteral"})
+
+@SuppressWarnings({"HardCodedStringLiteral", "UtilityClassWithoutPrivateConstructor"})
 public class DebugUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.DebugUtil");
 
@@ -54,16 +52,21 @@ public class DebugUtil {
 
   public static String treeToString(@NotNull ASTNode root, boolean skipWhitespaces) {
     StringBuilder buffer = new StringBuilder();
-    treeToBuffer(buffer, root, 0, skipWhitespaces, false, false);
+    treeToBuffer(buffer, root, 0, skipWhitespaces, false, false, true);
+    return buffer.toString();
+  }
+
+  public static String nodeTreeToString(@NotNull ASTNode root, boolean skipWhitespaces) {
+    StringBuilder buffer = new StringBuilder();
+    treeToBuffer(buffer, root, 0, skipWhitespaces, false, false, false);
     return buffer.toString();
   }
 
   public static String treeToString(@NotNull ASTNode root, boolean skipWhitespaces, boolean showRanges) {
     StringBuilder buffer = new StringBuilder();
-    treeToBuffer(buffer, root, 0, skipWhitespaces, showRanges, false);
+    treeToBuffer(buffer, root, 0, skipWhitespaces, showRanges, false, true);
     return buffer.toString();
   }
-
 
   public static String treeToStringWithUserData(TreeElement root, boolean skipWhitespaces) {
     StringBuilder buffer = new StringBuilder();
@@ -82,19 +85,25 @@ public class DebugUtil {
                                   int indent,
                                   boolean skipWhiteSpaces,
                                   boolean showRanges,
-                                  final boolean showChildrenRanges) {
+                                  final boolean showChildrenRanges,
+                                  final boolean usePsi) {
     if (skipWhiteSpaces && root.getElementType() == TokenType.WHITE_SPACE) return;
 
     for (int i = 0; i < indent; i++) {
       buffer.append(' ');
     }
     if (root instanceof CompositeElement) {
-      final PsiElement psiElement = root.getPsi();
-      if (psiElement != null) {
-        buffer.append(psiElement.toString());
+      if (usePsi) {
+        final PsiElement psiElement = root.getPsi();
+        if (psiElement != null) {
+          buffer.append(psiElement.toString());
+        }
+        else {
+          buffer.append(root.getElementType().toString());
+        }
       }
       else {
-        buffer.append(root.getElementType().toString());
+        buffer.append(root.toString());
       }
     }
     else {
@@ -117,7 +126,7 @@ public class DebugUtil {
       }
       else {
         while (child != null) {
-          treeToBuffer(buffer, child, indent + 2, skipWhiteSpaces, showChildrenRanges, showChildrenRanges);
+          treeToBuffer(buffer, child, indent + 2, skipWhiteSpaces, showChildrenRanges, showChildrenRanges, usePsi);
           child = child.getTreeNext();
         }
       }
@@ -268,7 +277,7 @@ public class DebugUtil {
       psiToBuffer(result, root, 0, skipWhiteSpaces, showRanges, showRanges);
     }
     else {
-      treeToBuffer(result, root.getNode(), 0, skipWhiteSpaces, showRanges, showRanges);
+      treeToBuffer(result, root.getNode(), 0, skipWhiteSpaces, showRanges, showRanges, true);
     }
     return result.toString();
   }
