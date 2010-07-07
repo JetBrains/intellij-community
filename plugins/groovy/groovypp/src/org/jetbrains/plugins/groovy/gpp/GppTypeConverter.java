@@ -2,14 +2,12 @@ package org.jetbrains.plugins.groovy.gpp;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GrTypeConverter;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
@@ -29,32 +27,32 @@ public class GppTypeConverter extends GrTypeConverter {
       return false;
     }
 
-    if (context instanceof PsiModifierListOwner && isTyped(((PsiModifierListOwner)context).getModifierList())) {
-      return true;
-    }
-
-    final GrMember parentMember = PsiTreeUtil.getContextOfType(context, GrMember.class, true);
-    if (parentMember != null) {
-      return hasTypedContext(parentMember);
-    }
-
-    final PsiFile file = context.getContainingFile();
-    if (file instanceof GroovyFile) {
-      final GrPackageDefinition packageDefinition = ((GroovyFile)file).getPackageDefinition();
-      if (packageDefinition != null && isTyped(packageDefinition.getAnnotationList())) {
+    while (context != null) {
+      if (context instanceof PsiModifierListOwner && isTyped(((PsiModifierListOwner)context).getModifierList())) {
         return true;
       }
 
-      final VirtualFile vfile = file.getVirtualFile();
-      if (vfile != null) {
-        final String extension = vfile.getExtension();
-        if ("gpp".equals(extension) || "grunit".equals(vfile.getExtension())) {
-          return true;
+      if (context instanceof PsiFile) {
+        if (context instanceof GroovyFile) {
+          final GrPackageDefinition packageDefinition = ((GroovyFile)context).getPackageDefinition();
+          if (packageDefinition != null && isTyped(packageDefinition.getAnnotationList())) {
+            return true;
+          }
+
+          final VirtualFile vfile = ((GroovyFile)context).getOriginalFile().getVirtualFile();
+          if (vfile != null) {
+            final String extension = vfile.getExtension();
+            if ("gpp".equals(extension) || "grunit".equals(vfile.getExtension())) {
+              return true;
+            }
+          }
         }
+        return false;
       }
 
-      return false;
+      context = context.getContext();
     }
+
     return false;
   }
 
