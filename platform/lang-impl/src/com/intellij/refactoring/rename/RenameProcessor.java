@@ -99,16 +99,16 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   public void doRun() {
-    prepareRenaming();
+    prepareRenaming(myPrimaryElement, myNewName, myAllRenames);
 
     super.doRun();
   }
 
-  public void prepareRenaming() {
-    final List<RenamePsiElementProcessor> processors = RenamePsiElementProcessor.allForElement(myPrimaryElement);
+  public void prepareRenaming(final PsiElement element, final String newName, final LinkedHashMap<PsiElement, String> allRenames) {
+    final List<RenamePsiElementProcessor> processors = RenamePsiElementProcessor.allForElement(element);
     myForceShowPreview = false;
     for (RenamePsiElementProcessor processor : processors) {
-      processor.prepareRenaming(myPrimaryElement, myNewName, myAllRenames);
+      processor.prepareRenaming(element, newName, allRenames);
       myForceShowPreview |= processor.forcesShowPreview();
     }
   }
@@ -145,13 +145,31 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     final List<UsageInfo> variableUsages = new ArrayList<UsageInfo>();
     if (!myRenamers.isEmpty()) {
       if (!findRenamedVariables(variableUsages)) return false;
+      final LinkedHashMap<PsiElement, String> renames = new LinkedHashMap<PsiElement, String>();
       for (final AutomaticRenamer renamer : myRenamers) {
         final List<? extends PsiNamedElement> variables = renamer.getElements();
         for (final PsiNamedElement variable : variables) {
           final String newName = renamer.getNewName(variable);
           if (newName != null) {
             addElement(variable, newName);
+            prepareRenaming(variable, newName, renames);
           }
+        }
+      }
+      if (!renames.isEmpty()) {
+        myAllRenames.putAll(renames);
+        final Runnable runnable = new Runnable() {
+          public void run() {
+            for (Map.Entry<PsiElement, String> entry : renames.entrySet()) {
+              final UsageInfo[] usages =
+                RenameUtil.findUsages(entry.getKey(), entry.getValue(), mySearchInComments, mySearchTextOccurrences, myAllRenames);
+              Collections.addAll(variableUsages, usages);
+            }
+          }
+        };
+        if (!ProgressManager.getInstance()
+          .runProcessWithProgressSynchronously(runnable, RefactoringBundle.message("searching.for.variables"), true, myProject)) {
+          return false;
         }
       }
     }
@@ -349,7 +367,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
   protected void prepareTestRun() {
     if (!PsiElementRenameHandler.canRename(myProject, null, myPrimaryElement)) return;
-    prepareRenaming();
+    prepareRenaming(myPrimaryElement, myNewName, myAllRenames);
   }
 
   public Collection<String> getNewNames() {
