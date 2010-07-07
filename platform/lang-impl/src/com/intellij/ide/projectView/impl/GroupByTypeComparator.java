@@ -102,7 +102,7 @@ public class GroupByTypeComparator implements Comparator<NodeDescriptor> {
     return AlphaComparator.INSTANCE.compare(descriptor1, descriptor2);
   }
 
-  private boolean isSortByType() {
+  protected boolean isSortByType() {
     if (myProjectView != null) {
       return myProjectView.isSortByType(myPaneId);
     }
