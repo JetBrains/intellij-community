@@ -919,7 +919,8 @@ public class TypeConversionUtil {
       substitutor = getSuperClassSubstitutorInner(superClass, derivedClass, derivedSubstitutor, visited, manager);
     }
     if (substitutor == null) {
-      LOG.error("Not inheritor: " + derivedClass + " super: " + superClass);
+      LOG.error("Not inheritor: " + derivedClass + "(" + derivedClass.getClass().getName() + ");" +
+                " super: " + superClass + "(" + derivedClass.getClass().getName() + ")");
     }
     return substitutor;
   }
