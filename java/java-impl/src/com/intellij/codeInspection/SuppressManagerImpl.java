@@ -44,6 +44,7 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.annotation.Generated;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -86,6 +87,8 @@ public class SuppressManagerImpl extends SuppressManager {
 
   @Nullable
   public PsiElement getAnnotationMemberSuppressedIn(@NotNull final PsiModifierListOwner owner, final String inspectionToolID) {
+    final PsiAnnotation generatedAnnotation = AnnotationUtil.findAnnotation(owner, Generated.class.getName());
+    if (generatedAnnotation != null) return generatedAnnotation;
     PsiModifierList modifierList = owner.getModifierList();
     Collection<String> suppressedIds = getInspectionIdsSuppressedInAnnotation(modifierList);
     for (String ids : suppressedIds) {
