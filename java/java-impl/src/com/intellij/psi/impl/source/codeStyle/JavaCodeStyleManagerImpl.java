@@ -588,7 +588,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
               final String propertyName = methodName.substring(firstWord.length());
               String[] names = getSuggestionsByName(propertyName, variableKind, false);
               final PsiExpression qualifierExpression = methodExpr.getQualifierExpression();
-              if (qualifierExpression != null) {
+              if (qualifierExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifierExpression).resolve() instanceof PsiVariable) {
                 names = ArrayUtil.append(names, changeIfNotIdentifier(qualifierExpression.getText() + StringUtil.capitalize(propertyName)));
               }
               return new NamesByExprInfo(propertyName, names);
