@@ -21,7 +21,6 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PairFunction;
 import com.intellij.util.PathsList;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
@@ -189,7 +188,4 @@ public abstract class OrderEnumerator {
   public static OrderEnumerator orderEntries(@NotNull Project project) {
     return ProjectRootManager.getInstance(project).orderEntries();
   }
-
-  public abstract OrderEnumerator substituteFiles(PairFunction<OrderEntry, OrderRootType, VirtualFile[]> substitutor);
-  public abstract OrderEnumerator substituteUrls(PairFunction<OrderEntry, OrderRootType, String[]> substitutor);
 }
