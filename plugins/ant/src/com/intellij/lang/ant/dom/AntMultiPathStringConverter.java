@@ -25,6 +25,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -124,7 +125,7 @@ public class AntMultiPathStringConverter extends Converter<List<PsiFileSystemIte
       final String path = pair.getFirst();
       if (path.length() > 0) {
         final AntDomFileReferenceSet refSet = new AntDomFileReferenceSet(attributeValue, path, pair.getSecond());
-        result.addAll(Arrays.asList(refSet.getAllReferences()));
+        ContainerUtil.addAll(result, refSet.getAllReferences());
       }
     }
 

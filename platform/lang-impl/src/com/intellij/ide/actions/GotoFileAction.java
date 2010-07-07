@@ -37,6 +37,7 @@ import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -195,7 +196,7 @@ public class GotoFileAction extends GotoActionBase implements DumbAware {
      */
     private ElementsChooser<FileType> createFileTypeChooser(final GotoFileModel gotoFileModel) {
       List<FileType> elements = new ArrayList<FileType>();
-      elements.addAll(Arrays.asList(FileTypeManager.getInstance().getRegisteredFileTypes()));
+      ContainerUtil.addAll(elements, FileTypeManager.getInstance().getRegisteredFileTypes());
       Collections.sort(elements, FileTypeComparator.INSTANCE);
       final ElementsChooser<FileType> chooser = new ElementsChooser<FileType>(elements, true) {
         @Override

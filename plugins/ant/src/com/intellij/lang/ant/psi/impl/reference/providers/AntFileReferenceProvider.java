@@ -23,10 +23,10 @@ import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class AntFileReferenceProvider extends PsiReferenceProvider {
@@ -53,7 +53,7 @@ public class AntFileReferenceProvider extends PsiReferenceProvider {
         continue;
       }
       final AntFileReferenceSet refSet = new AntFileReferenceSet(antElement, xmlAttributeValue, this);
-      refList.addAll(Arrays.asList(refSet.getAllReferences()));
+      ContainerUtil.addAll(refList, refSet.getAllReferences());
     }
     return refList.toArray(new PsiReference[refList.size()]);
   }

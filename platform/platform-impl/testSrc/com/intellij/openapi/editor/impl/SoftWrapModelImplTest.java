@@ -478,7 +478,7 @@ public class SoftWrapModelImplTest {
     private final StringBuilder mySoftWrapBuffer = new StringBuilder();
     final         StringBuilder document         = new StringBuilder();
 
-    boolean virtualSpace;
+    boolean insideSoftWrap;
     boolean insideFolding;
     int     logicalLineStartOffset;
     int     logicalLine;
@@ -498,13 +498,14 @@ public class SoftWrapModelImplTest {
 
     public void onSoftWrapStart() {
       softWrapStartOffset = offset;
-      virtualSpace = true;
+      insideSoftWrap = true;
     }
 
     public void onSoftWrapEnd() {
       myStorage.storeSoftWrap(new TextChange(mySoftWrapBuffer.toString(), softWrapStartOffset));
       mySoftWrapBuffer.setLength(0);
-      virtualSpace = false;
+      visualColumn++; // For the column reserved for soft wrap sign.
+      insideSoftWrap = false;
     }
 
     public void onFoldingStart() {
@@ -534,7 +535,7 @@ public class SoftWrapModelImplTest {
       }
 
       // Symbol inside soft wrap.
-      if (virtualSpace) {
+      if (insideSoftWrap) {
         mySoftWrapBuffer.append(c);
         if (c == '\n') {
           // Emulate the situation when the user works with a virtual space after document line end (add such virtual
@@ -598,7 +599,7 @@ public class SoftWrapModelImplTest {
     }
 
     private void addData() {
-      addData(virtualSpace);
+      addData(insideSoftWrap);
     }
 
     private void addData(boolean virtualSpace) {

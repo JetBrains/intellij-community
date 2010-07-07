@@ -43,7 +43,7 @@ public class JdkConfigurable extends ProjectStructureElementConfigurable<Sdk> im
   private final SdkProjectStructureElement myProjectStructureElement;
 
   public JdkConfigurable(final ProjectJdkImpl projectJdk,
-                         final ProjectJdksModel configurable,
+                         final ProjectSdksModel configurable,
                          final Runnable updateTree, @NotNull History history, Project project) {
     super(true, updateTree);
     myProjectJdk = projectJdk;

@@ -74,5 +74,15 @@ public class FindMethodDuplicatesMiscTest extends FindMethodDuplicatesBaseTest {
     doTest();
   }
 
+  public void testVarargsAccess() throws Exception {
+    doTest();
+  }
 
+  public void testIncorrectVarargsAccess() throws Exception {
+    doTest();
+  }
+
+  public void testVarVarargsAccess() throws Exception {
+    doTest();
+  }
 }

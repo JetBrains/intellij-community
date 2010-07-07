@@ -484,6 +484,8 @@
                       serviceImplementation="com.intellij.openapi.graph.impl.builder.util.CustomGraphActionsFactoryImpl"/>
   <applicationService serviceInterface="com.intellij.openapi.graph.GraphPeerFactory"
                       serviceImplementation="com.intellij.openapi.graph.impl.GraphPeerFactoryImpl"/>
+  <applicationService serviceInterface="com.intellij.openapi.graph.GraphSvgExporter"
+                      serviceImplementation="com.intellij.openapi.graph.impl.GraphSvgExporterImpl"/>
 
   <projectService serviceInterface="com.intellij.openapi.graph.builder.GraphBuilderFactory"
                   serviceImplementation="com.intellij.openapi.graph.impl.builder.GraphBuilderFactoryImpl"/>

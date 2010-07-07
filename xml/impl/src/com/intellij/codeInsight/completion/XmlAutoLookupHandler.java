@@ -59,10 +59,14 @@ public class XmlAutoLookupHandler extends CodeCompletionHandlerBase {
       // In template language based file we need to check element from template data language tree, not from base language 
       FileViewProvider fileViewProvider = file.getViewProvider();
       Language templateDataLanguage;
-      
+
+      final PsiElement parent = lastElement.getParent();
+      if (parent == null) {
+        throw new AssertionError("Null parent for " + lastElement + " of class " + lastElement.getClass());
+      }
+
       if (fileViewProvider instanceof TemplateLanguageFileViewProvider &&
-          (templateDataLanguage = ((TemplateLanguageFileViewProvider)fileViewProvider).getTemplateDataLanguage()) != lastElement.getParent().getLanguage()
-         ) {
+          (templateDataLanguage = ((TemplateLanguageFileViewProvider)fileViewProvider).getTemplateDataLanguage()) != parent.getLanguage()) {
         lastElement = fileViewProvider.findElementAt(offset - 1, templateDataLanguage);
         if (lastElement == null) return;
         doCompleteIfNeeded(offset1, offset2, context, dummyIdentifier, editor, invocationCount, file, lastElement);

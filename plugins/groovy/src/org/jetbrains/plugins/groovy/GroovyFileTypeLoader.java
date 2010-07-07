@@ -20,6 +20,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeConsumer;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeEP;
@@ -40,7 +41,7 @@ public class GroovyFileTypeLoader extends FileTypeFactory{
     final LinkedHashSet<String> strings = new LinkedHashSet<String>();
     strings.add("gdsl");
     for (GroovyScriptTypeEP ep : GroovyScriptType.EP_NAME.getExtensions()) {
-      strings.addAll(Arrays.asList(ep.extensions.split(";")));
+      ContainerUtil.addAll(strings, ep.extensions.split(";"));
     }
     return strings;
   }

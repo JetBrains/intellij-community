@@ -29,6 +29,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -74,7 +75,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
         final THashSet<TypeConstraint> _infos = new THashSet<TypeConstraint>();
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
-            _infos.addAll(Arrays.asList(getExpectedTypes(params)));
+            ContainerUtil.addAll(_infos, getExpectedTypes(params));
           }
         });
         final Set<TypeConstraint> infos = ApplicationManager.getApplication().runReadAction(new Computable<Set<TypeConstraint>>() {

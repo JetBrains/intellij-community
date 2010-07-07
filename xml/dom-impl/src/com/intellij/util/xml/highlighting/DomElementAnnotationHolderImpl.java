@@ -25,6 +25,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.impl.ConvertContextImpl;
 import com.intellij.util.xml.impl.DomManagerImpl;
@@ -109,11 +110,11 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
     final Converter converter = WrappingConverter.getDeepestConverter(element.getConverter(), element);
     if (converter instanceof ResolvingConverter) {
       final ResolvingConverter resolvingConverter = (ResolvingConverter)converter;
-      result
-        .addAll(Arrays.asList(resolvingConverter.getQuickFixes(new ConvertContextImpl(DomManagerImpl.getDomInvocationHandler(element)))));
+      ContainerUtil
+        .addAll(result, resolvingConverter.getQuickFixes(new ConvertContextImpl(DomManagerImpl.getDomInvocationHandler(element))));
     }
     if (reference instanceof LocalQuickFixProvider) {
-      result.addAll(Arrays.asList(((LocalQuickFixProvider)reference).getQuickFixes()));
+      ContainerUtil.addAll(result, ((LocalQuickFixProvider)reference).getQuickFixes());
     }
     return result.toArray(new LocalQuickFix[result.size()]);
   }

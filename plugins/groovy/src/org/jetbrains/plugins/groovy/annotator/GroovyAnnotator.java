@@ -271,7 +271,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       return;
     }
 
-    annotation.registerFix(new GroovyStaticImportMethodFix((GrCall)referenceExpression.getParent()));
+    annotation.registerFix(new GroovyStaticImportMethodFix((GrMethodCall)referenceExpression.getParent()));
   }
 
   @Override

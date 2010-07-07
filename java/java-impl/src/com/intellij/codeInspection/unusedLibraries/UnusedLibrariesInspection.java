@@ -55,6 +55,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PackageSetFactory;
 import com.intellij.psi.search.scope.packageSet.ParsingException;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -69,11 +70,12 @@ public class UnusedLibrariesInspection extends DescriptorProviderInspection {
     final Project project = getContext().getProject();
     final ArrayList<VirtualFile> libraryRoots = new ArrayList<VirtualFile>();
     if (scope.getScopeType() == AnalysisScope.PROJECT) {
-      libraryRoots.addAll(Arrays.asList(LibraryUtil.getLibraryRoots(project, false, false)));
+      ContainerUtil.addAll(libraryRoots, LibraryUtil.getLibraryRoots(project, false, false));
     } else {
       final Set<Module> modules = new HashSet<Module>();
       scope.accept(new PsiRecursiveElementVisitor() {
-        @Override public void visitFile(PsiFile file) {
+        @Override
+        public void visitFile(PsiFile file) {
           if (!(file instanceof PsiCompiledElement)) {
             final VirtualFile virtualFile = file.getVirtualFile();
             if (virtualFile != null) {
@@ -85,7 +87,7 @@ public class UnusedLibrariesInspection extends DescriptorProviderInspection {
           }
         }
       });
-      libraryRoots.addAll(Arrays.asList(LibraryUtil.getLibraryRoots(modules.toArray(new Module[modules.size()]), false, false)));
+      ContainerUtil.addAll(libraryRoots, LibraryUtil.getLibraryRoots(modules.toArray(new Module[modules.size()]), false, false));
     }
     GlobalSearchScope searchScope;
     try {

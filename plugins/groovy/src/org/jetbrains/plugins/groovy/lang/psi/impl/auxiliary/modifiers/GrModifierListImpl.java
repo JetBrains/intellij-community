@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -93,9 +94,9 @@ public class GrModifierListImpl extends GroovyBaseElementImpl<GrModifierListStub
     PsiElement[] modifiersKeywords = findChildrenByType(TokenSets.MODIFIERS, PsiElement.class);
     GrAnnotation[] modifiersAnnotations = findChildrenByClass(GrAnnotation.class);
 
-    if (modifiersKeywords.length != 0) modifiers.addAll(Arrays.asList(modifiersKeywords));
+    if (modifiersKeywords.length != 0) ContainerUtil.addAll(modifiers, modifiersKeywords);
 
-    if (modifiersAnnotations.length != 0) modifiers.addAll(Arrays.asList(modifiersAnnotations));
+    if (modifiersAnnotations.length != 0) ContainerUtil.addAll(modifiers, modifiersAnnotations);
 
     return modifiers.toArray(new PsiElement[modifiers.size()]);
   }
@@ -225,11 +226,13 @@ public class GrModifierListImpl extends GroovyBaseElementImpl<GrModifierListStub
 
   @Nullable
   public PsiAnnotation findAnnotation(@NotNull @NonNls String qualifiedName) {
-    PsiAnnotation[] annotations = getAnnotations();
-    for (PsiAnnotation annotation : annotations) {
-      if (qualifiedName.equals(annotation.getQualifiedName())) return annotation;
+    PsiElement child = getFirstChild();
+    while (child != null) {
+      if (child instanceof PsiAnnotation && qualifiedName.equals(((PsiAnnotation)child).getQualifiedName())) {
+        return (PsiAnnotation)child;
+      }
+      child = child.getNextSibling();
     }
-
     return null;
   }
 

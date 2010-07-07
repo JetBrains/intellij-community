@@ -29,6 +29,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.UIBundle;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
@@ -177,7 +178,7 @@ public class ClassFilterEditor extends JPanel {
     public final void setFilters(ClassFilter[] filters) {
       myFilters.clear();
       if (filters != null) {
-        myFilters.addAll(Arrays.asList(filters));
+        ContainerUtil.addAll(myFilters, filters);
       }
       fireTableDataChanged();
     }

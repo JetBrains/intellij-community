@@ -248,7 +248,7 @@ public class OverrideImplementUtil {
 
     List<PsiMethod> results = new ArrayList<PsiMethod>();
     for (final MethodImplementor implementor : getImplementors()) {
-      results.addAll(Arrays.asList(implementor.createImplementationPrototypes(aClass, method)));
+      ContainerUtil.addAll(results, implementor.createImplementationPrototypes(aClass, method));
     }
     if (results.isEmpty()) {
       PsiMethod method1 = GenerateMembersUtil.substituteGenericMethod(method, substitutor);

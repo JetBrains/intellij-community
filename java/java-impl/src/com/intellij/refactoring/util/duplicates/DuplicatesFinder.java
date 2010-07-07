@@ -292,13 +292,16 @@ public class DuplicatesFinder {
     if (pattern instanceof PsiExpressionList && candidate instanceof PsiExpressionList) { //check varargs
       final PsiExpression[] expressions = ((PsiExpressionList)pattern).getExpressions();
       final PsiExpression[] childExpressions = ((PsiExpressionList)candidate).getExpressions();
-      if (expressions.length < childExpressions.length && expressions.length > 0 && expressions[expressions.length - 1] instanceof PsiReferenceExpression) {
+      if (expressions.length > 0 && expressions[expressions.length - 1] instanceof PsiReferenceExpression) {
         final PsiElement resolved = ((PsiReferenceExpression)expressions[expressions.length - 1]).resolve();
         if (resolved instanceof PsiParameter && ((PsiParameter)resolved).getType() instanceof PsiEllipsisType) {
           for(int i = 0; i < expressions.length - 1; i++) {
             final Pair<PsiVariable, PsiType> parameter = expressions[i].getUserData(PARAMETER);
-            if (parameter == null) return false;
-            if (!match.putParameter(parameter, childExpressions[i])) return false;
+            if (parameter == null) {
+              if (!matchPattern(expressions[i], childExpressions[i], candidates, match)) {
+                return false;
+              }
+            } else if (!match.putParameter(parameter, childExpressions[i])) return false;
           }
           final Pair<PsiVariable, PsiType> param = expressions[expressions.length - 1].getUserData(PARAMETER);
           if (param == null) return false;

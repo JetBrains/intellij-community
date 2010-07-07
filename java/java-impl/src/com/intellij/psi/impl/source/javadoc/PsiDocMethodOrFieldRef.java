@@ -36,6 +36,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -257,8 +258,8 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       final List<PsiModifierListOwner> vars = new ArrayList<PsiModifierListOwner>();
       final PsiElement scope = getScope();
       if (scope != null) {
-        vars.addAll(Arrays.asList(getAllMethods(scope, PsiDocMethodOrFieldRef.this)));
-        vars.addAll(Arrays.asList(getAllVariables(scope, PsiDocMethodOrFieldRef.this)));
+        ContainerUtil.addAll(vars, getAllMethods(scope, PsiDocMethodOrFieldRef.this));
+        ContainerUtil.addAll(vars, getAllVariables(scope, PsiDocMethodOrFieldRef.this));
       }
       return vars.toArray(new PsiModifierListOwner[vars.size()]);
     }

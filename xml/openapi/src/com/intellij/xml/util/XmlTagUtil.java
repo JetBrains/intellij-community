@@ -16,6 +16,7 @@
 package com.intellij.xml.util;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
@@ -58,8 +59,9 @@ public class XmlTagUtil extends XmlTagUtilBase {
     if (text == null) return null;
     String offensiveChars = "<>&\n";
     final int textLength = text.length();
-    if(textLength > 0 && (Character.isWhitespace(text.charAt(0)) || Character.isWhitespace(text.charAt(textLength - 1))))
+    if (textLength > 0 && (Character.isWhitespace(text.charAt(0)) || Character.isWhitespace(text.charAt(textLength - 1)))) {
       return "<![CDATA[" + text + "]]>";
+    }
     for (int i = 0; i < offensiveChars.length(); i++) {
       char c = offensiveChars.charAt(i);
       if (text.indexOf(c) != -1) {
@@ -109,9 +111,9 @@ public class XmlTagUtil extends XmlTagUtilBase {
 
     ASTNode current = node.getFirstChildNode();
     IElementType elementType;
-    while(current != null
-          && (elementType = current.getElementType()) != XmlTokenType.XML_NAME
-          && elementType != XmlTokenType.XML_TAG_NAME){
+    while (current != null
+           && (elementType = current.getElementType()) != XmlTokenType.XML_NAME
+           && elementType != XmlTokenType.XML_TAG_NAME) {
       current = current.getTreeNext();
     }
     return current == null ? null : (XmlToken)current.getPsi();
@@ -125,9 +127,10 @@ public class XmlTagUtil extends XmlTagUtilBase {
     ASTNode current = node.getLastChildNode();
     ASTNode prev = current;
 
-    while(current != null){
+    while (current != null) {
       final IElementType elementType = prev.getElementType();
-      if((elementType == XmlTokenType.XML_NAME || elementType == XmlTokenType.XML_TAG_NAME) && current.getElementType() == XmlTokenType.XML_END_TAG_START) {
+      if ((elementType == XmlTokenType.XML_NAME || elementType == XmlTokenType.XML_TAG_NAME) &&
+          current.getElementType() == XmlTokenType.XML_END_TAG_START) {
         return (XmlToken)prev.getPsi();
       }
 
@@ -138,7 +141,7 @@ public class XmlTagUtil extends XmlTagUtilBase {
     return null;
   }
 
-  @NotNull 
+  @NotNull
   public static TextRange getTrimmedValueRange(final @NotNull XmlTag tag) {
     XmlTagValue tagValue = tag.getValue();
     final String text = tagValue.getText();
@@ -146,5 +149,41 @@ public class XmlTagUtil extends XmlTagUtilBase {
     final int index = text.indexOf(trimmed);
     final int startOffset = tagValue.getTextRange().getStartOffset() - tag.getTextRange().getStartOffset() + index;
     return new TextRange(startOffset, startOffset + trimmed.length());
+  }
+
+  @Nullable
+  public static TextRange getStartTagRange(@NotNull XmlTag tag) {
+    XmlToken tagName = getStartTagNameElement(tag);
+    return getTag(tagName, XmlTokenType.XML_START_TAG_START);
+  }
+
+
+  @Nullable
+  public static TextRange getEndTagRange(@NotNull XmlTag tag) {
+    XmlToken tagName = getEndTagNameElement(tag);
+
+    return getTag(tagName, XmlTokenType.XML_END_TAG_START);
+  }
+
+  private static TextRange getTag(XmlToken tagName, IElementType tagStart) {
+    if (tagName != null) {
+      PsiElement s = tagName.getPrevSibling();
+
+      while (s != null && s.getNode().getElementType() != tagStart) {
+        s = s.getPrevSibling();
+      }
+
+      PsiElement f = tagName.getNextSibling();
+
+      while (f != null &&
+             !(f.getNode().getElementType() == XmlTokenType.XML_TAG_END ||
+               f.getNode().getElementType() == XmlTokenType.XML_EMPTY_ELEMENT_END)) {
+        f = f.getNextSibling();
+      }
+      if (s != null && f != null) {
+        return new TextRange(s.getTextRange().getStartOffset(), f.getTextRange().getEndOffset());
+      }
+    }
+    return null;
   }
 }

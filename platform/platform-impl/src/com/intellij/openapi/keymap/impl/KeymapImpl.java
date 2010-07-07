@@ -217,7 +217,7 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
         // copy parent shortcuts for this actionId
         Shortcut[] shortcuts = getParentShortcuts(actionId);
         // shortcuts are immutables
-        list.addAll(Arrays.asList(shortcuts));
+        ContainerUtil.addAll(list, shortcuts);
       }
     }
     list.add(shortcut);
@@ -829,7 +829,7 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
     ArrayList<String> ids = new ArrayList<String>();
     if (myParent != null) {
       String[] parentIds = getParentActionIds();
-      ids.addAll(Arrays.asList(parentIds));
+      ContainerUtil.addAll(ids, parentIds);
     }
     String[] ownActionIds = getOwnActionIds();
     for (String id : ownActionIds) {

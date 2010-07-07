@@ -34,6 +34,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -99,7 +100,7 @@ public class AntTasksProvider {
           final Module module = ModuleUtil.findModuleForPsiElement(groovyFile);
           Set<VirtualFile> jars = new HashSet<VirtualFile>();
           if (module != null) {
-            jars.addAll(Arrays.asList(OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots()));
+            ContainerUtil.addAll(jars, OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots());
           }
 
           if (groovyFile.isScript() && GroovyScriptType.getScriptType(groovyFile) instanceof GantScriptType) {
@@ -114,8 +115,14 @@ public class AntTasksProvider {
           final ReflectedProject antProject = ReflectedProject.getProject(loader);
 
           final Map<String, Class> result = new HashMap<String, Class>();
-          result.putAll(antProject.getTaskDefinitions());
-          result.putAll(antProject.getDataTypeDefinitions());
+          final Map<String, Class> taskDefinitions = antProject.getTaskDefinitions();
+          if (taskDefinitions != null) {
+            result.putAll(taskDefinitions);
+          }
+          final Map<String, Class> dataTypeDefinitions = antProject.getDataTypeDefinitions();
+          if (dataTypeDefinitions != null) {
+            result.putAll(dataTypeDefinitions);
+          }
           return Result.create(result, ProjectRootManager.getInstance(groovyFile.getProject()));
         }
 

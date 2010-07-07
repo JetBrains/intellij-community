@@ -192,11 +192,6 @@ public class ChangesViewContentManager extends AbstractProjectComponent {
   }
 
   @Nullable
-  public Content getSelectedContent() {
-    return myContentManager.getSelectedContent();
-  }
-
-  @Nullable
   public <T> T getActiveComponent(final Class<T> aClass) {
     final Content content = myContentManager.getSelectedContent();
     if (content != null && aClass.isInstance(content.getComponent())) {
@@ -242,20 +237,21 @@ public class ChangesViewContentManager extends AbstractProjectComponent {
 
   private class MyContentManagerListener extends ContentManagerAdapter {
     public void selectionChanged(final ContentManagerEvent event) {
-      if (event.getContent().getComponent() instanceof ContentStub) {
-        ChangesViewContentEP ep = ((ContentStub) event.getContent().getComponent()).getEP();
+      Content content = event.getContent();
+      if (content.getComponent() instanceof ContentStub) {
+        ChangesViewContentEP ep = ((ContentStub) content.getComponent()).getEP();
         ChangesViewContentProvider provider = ep.getInstance(myProject);
         final JComponent contentComponent = provider.initContent();
-        event.getContent().setComponent(contentComponent);
+        content.setComponent(contentComponent);
         if (contentComponent instanceof Disposable) {
-          event.getContent().setDisposer((Disposable) contentComponent);          
+          content.setDisposer((Disposable) contentComponent);
         }
       }
     }
   }
 
-  private final static String[] ourPresetOrder = {"Local", "Repository", "Incoming", "Shelf"};
-  private List<Content> doPresetOrdering(final List<Content> contents) {
+  private static final String[] ourPresetOrder = {"Local", "Repository", "Incoming", "Shelf"};
+  private static List<Content> doPresetOrdering(final List<Content> contents) {
     final List<Content> result = new ArrayList<Content>(contents.size());
     for (final String preset : ourPresetOrder) {
       for (Iterator<Content> iterator = contents.iterator(); iterator.hasNext();) {

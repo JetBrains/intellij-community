@@ -126,12 +126,12 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
       members = chooseMembers(allMembers, true, false, project);
       if (members == null) return null;
     }
-    if (baseConstructors != null){
+    if (baseConstructors != null) {
       ArrayList<ClassMember> array = new ArrayList<ClassMember>();
       for (PsiMethod baseConstructor : baseConstructors) {
         array.add(new PsiMethodMember(baseConstructor));
       }
-      array.addAll(Arrays.asList(members));
+      ContainerUtil.addAll(array, members);
       members = array.toArray(new ClassMember[array.size()]);
     }
 

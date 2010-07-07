@@ -47,6 +47,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -56,7 +57,7 @@ public abstract class PathEditor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.ui.PathEditor");
   public static final Color INVALID_COLOR = new Color(210, 0, 0);
 
-  private JPanel myPanel;
+  protected JPanel myPanel;
   private JButton myRemoveButton;
   private JButton myAddButton;
   private JButton mySpecifyUrlButton;
@@ -70,18 +71,17 @@ public abstract class PathEditor {
 
   protected abstract boolean isShowUrlButton();
 
+  protected void onSpecifyUrlButtonClicked() {
+  }
+
   protected abstract OrderRootType getRootType();
 
   protected abstract FileChooserDescriptor createFileChooserDescriptor();
 
   public abstract String getDisplayName();
 
-  public Icon getIcon(){
-    return null;
-  }
-
   protected void setModified(boolean modified){
-    this.myModified = modified;
+    myModified = modified;
   }
 
   public boolean isModified(){
@@ -116,8 +116,8 @@ public abstract class PathEditor {
     clearList();
     myEnabled = files != null;
     if(myEnabled){
-      for (int i = 0; i < files.length; i++){
-        addElement(files[i]);
+      for (VirtualFile file : files) {
+        addElement(file);
       }
     }
     setModified(false);
@@ -156,20 +156,13 @@ public abstract class PathEditor {
     });
     myRemoveButton.addActionListener(new ActionListener(){
       public void actionPerformed(ActionEvent e){
-        java.util.List removedItems = ListUtil.removeSelectedItems(myList);
+        List removedItems = ListUtil.removeSelectedItems(myList);
         itemsRemoved(removedItems);
       }
     });
     mySpecifyUrlButton.addActionListener(new ActionListener(){
       public void actionPerformed(ActionEvent e){
-        VirtualFile virtualFile  = Util.showSpecifyJavadocUrlDialog(myPanel, getInitialValue());
-        if(virtualFile != null){
-          addElement(virtualFile);
-          setModified(true);
-          updateButtons();
-          requestDefaultFocus();
-          setSelectedRoots(new Object[]{virtualFile});
-        }
+        onSpecifyUrlButtonClicked();
       }
     });
 
@@ -183,11 +176,7 @@ public abstract class PathEditor {
     return myPanel;
   }
 
-  protected String getInitialValue() {
-    return "";
-  }
-
-  private void itemsRemoved(java.util.List removedItems) {
+  private void itemsRemoved(List removedItems) {
     myAllFiles.removeAll(removedItems);
     if (removedItems.size() > 0){
       setModified(true);
@@ -200,10 +189,9 @@ public abstract class PathEditor {
     FileChooserDescriptor descriptor = createFileChooserDescriptor();
     VirtualFile[] files = FileChooser.chooseFiles(myPanel, descriptor);
     files = adjustAddedFileSet(myPanel, files);
-    java.util.List<VirtualFile> added = new ArrayList<VirtualFile>(files.length);
-    for (int i = 0; i < files.length; i++){
-      VirtualFile vFile = files[i];
-      if(addElement(vFile)){
+    List<VirtualFile> added = new ArrayList<VirtualFile>(files.length);
+    for (VirtualFile vFile : files) {
+      if (addElement(vFile)) {
         added.add(vFile);
       }
     }
@@ -211,20 +199,20 @@ public abstract class PathEditor {
   }
 
   /**
-   * Implement this method to ajust adding behavior, this method is called right after the files
+   * Implement this method to adjust adding behavior, this method is called right after the files
    * or directories are selected for added. This method allows adding UI that modify file set.
    *
-   * The default implemenation returns a value passed the parameter files and does nothing.
+   * The default implementation returns a value passed the parameter files and does nothing.
    *
    * @param component a component that could be used as a parent.
    * @param files a selected file set
-   * @return ajusted file set
+   * @return adjusted file set
    */
   protected VirtualFile[] adjustAddedFileSet(final Component component, final VirtualFile[] files) {
     return files;
   }
 
-  private void updateButtons(){
+  protected void updateButtons(){
     Object[] values = getSelectedRoots();
     myRemoveButton.setEnabled((values.length > 0) && myEnabled);
     myAddButton.setEnabled(myEnabled);
@@ -239,7 +227,7 @@ public abstract class PathEditor {
     return false;
   }
 
-  private void requestDefaultFocus(){
+  protected void requestDefaultFocus(){
     if (myList != null){
       myList.requestFocus();
     }
@@ -248,9 +236,8 @@ public abstract class PathEditor {
   public void addPaths(VirtualFile... paths){
     boolean added = false;
     keepSelectionState();
-    for (int i = 0; i < paths.length; i++){
-      final VirtualFile path = paths[i];
-      if(addElement(path)){
+    for (final VirtualFile path : paths) {
+      if (addElement(path)) {
         added = true;
       }
     }
@@ -270,7 +257,7 @@ public abstract class PathEditor {
         indicesToRemove.add(idx);
       }
     }
-    final java.util.List list = ListUtil.removeIndices(myList, indicesToRemove.toNativeArray());
+    final List list = ListUtil.removeIndices(myList, indicesToRemove.toNativeArray());
     itemsRemoved(list);
   }
 
@@ -292,11 +279,10 @@ public abstract class PathEditor {
     return true;
   }
 
-  private void setSelectedRoots(Object[] roots){
-    ArrayList rootsList = new ArrayList(roots.length);
-    for (int i = 0; i < roots.length; i++){
-      Object root = roots[i];
-      if(root != null){
+  protected void setSelectedRoots(Object[] roots){
+    ArrayList<Object> rootsList = new ArrayList<Object>(roots.length);
+    for (Object root : roots) {
+      if (root != null) {
         rootsList.add(root);
       }
     }

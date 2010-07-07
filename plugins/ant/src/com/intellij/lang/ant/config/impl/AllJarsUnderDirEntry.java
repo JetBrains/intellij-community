@@ -70,7 +70,7 @@ public class AllJarsUnderDirEntry implements AntClasspathEntry {
         return pathname.getName().endsWith(JAR_SUFFIX) && pathname.isFile();
       }
     });
-    if (children != null) files.addAll(Arrays.asList(children));
+    if (children != null) ContainerUtil.addAll(files, children);
   }
 
   public CompositeAppearance getAppearance() {

@@ -31,6 +31,7 @@ import com.intellij.refactoring.util.usageInfo.DefaultConstructorImplicitUsageIn
 import com.intellij.refactoring.util.usageInfo.NoConstructorClassUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTagValueToken;
@@ -106,7 +107,7 @@ class GrChageSignatureUsageSearcher {
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     final Set<PsiParameter> deletedOrRenamedParameters = new HashSet<PsiParameter>();
     if (isOriginal) {
-      deletedOrRenamedParameters.addAll(Arrays.asList(parameters));
+      ContainerUtil.addAll(deletedOrRenamedParameters, parameters);
       for (ParameterInfo parameterInfo : myChangeInfo.getNewParameters()) {
         if (parameterInfo.getOldIndex() >= 0) {
           final PsiParameter parameter = parameters[parameterInfo.getOldIndex()];

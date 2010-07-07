@@ -53,7 +53,6 @@ public class ContentImpl extends UserDataHolderBase implements Content {
 
   private AlertIcon myAlertIcon;
 
-  private final boolean myAlerting = false;
   private JComponent myActionsContextComponent;
   private JComponent mySearchComponent;
 
@@ -238,7 +237,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
 
   public void dispose() {
     if (myComponent instanceof Disposable) {
-      Disposer.dispose(((Disposable)myComponent));
+      Disposer.dispose((Disposable)myComponent);
     }
 
     myComponent = null;

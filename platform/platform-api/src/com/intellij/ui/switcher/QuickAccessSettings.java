@@ -37,6 +37,7 @@ import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.components.panels.VerticalBox;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AwtVisitor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -142,7 +143,7 @@ public class QuickAccessSettings implements ApplicationComponent, SearchableConf
     String[] vks = text.split(" ");
 
     HashSet<String> vksSet = new HashSet<String>();
-    vksSet.addAll(Arrays.asList(vks));
+    ContainerUtil.addAll(vksSet, vks);
     myModifierVks.clear();
     int mask = getModiferMask(vksSet);
     myModifierVks.addAll(getModifiersVKs(mask));

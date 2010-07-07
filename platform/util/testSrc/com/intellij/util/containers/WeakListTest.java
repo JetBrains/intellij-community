@@ -36,6 +36,7 @@ public class WeakListTest extends WeaksTestCase {
   }
 
   public void testCompresses() {
+    if (!JVM_IS_GC_CAPABLE) return;
     for (int i = 0; i < 20; i++) {
       addElement(new Object(), myWeakArray);
     }
@@ -57,6 +58,7 @@ public class WeakListTest extends WeaksTestCase {
   }
   
   public void testIterator() {
+    if (!JVM_IS_GC_CAPABLE) return;
     myWeakArray.add(new Object());
     addElement(new Object(), myWeakArray);
     myWeakArray.add(new Object());
@@ -72,6 +74,7 @@ public class WeakListTest extends WeaksTestCase {
   }
   
   public void testRemoveViaIterator() {
+    if (!JVM_IS_GC_CAPABLE) return;
     addElement(new Object(), myWeakArray);
     myWeakArray.add(new Object());
     addElement(new Object(), myWeakArray);
@@ -97,6 +100,7 @@ public class WeakListTest extends WeaksTestCase {
   }
 
   public void testRemoveLastViaIterator() {
+    if (!JVM_IS_GC_CAPABLE) return;
     addElement(new Object(), myWeakArray);
     addElement(new Object(), myWeakArray);
     Iterator<Object> iterator = myWeakList.iterator();
@@ -111,6 +115,7 @@ public class WeakListTest extends WeaksTestCase {
   }
 
   public void testIteratorKeepsFirstElement() {
+    if (!JVM_IS_GC_CAPABLE) return;
     addElement(new Object(), myWeakArray);
     addElement(new Object(), myWeakArray);
     Iterator<Object> iterator = myWeakList.iterator();
@@ -122,6 +127,7 @@ public class WeakListTest extends WeaksTestCase {
   }
   
   public void testIteratorKeepsNextElement() {
+    if (!JVM_IS_GC_CAPABLE) return;
     addElement(new Object(), myWeakArray);
     addElement(new Object(), myWeakArray);
     addElement(new Object(), myWeakArray);

@@ -28,6 +28,7 @@ import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -129,7 +130,7 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
 
   public FileElement[] getKnownTreeRoots() {
     final List<FileElement> knownRoots = new ArrayList<FileElement>();
-    knownRoots.addAll(Arrays.asList(super.getKnownTreeRoots()));
+    ContainerUtil.addAll(knownRoots, super.getKnownTreeRoots());
     for (PsiFile psiFile : myRoots.values()) {
       if (psiFile == null || !(psiFile instanceof PsiFileImpl)) continue;
       final FileElement fileElement = ((PsiFileImpl)psiFile).getTreeElement();

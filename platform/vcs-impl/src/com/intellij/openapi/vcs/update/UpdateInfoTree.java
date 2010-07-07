@@ -21,7 +21,6 @@ import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -63,8 +62,6 @@ import java.util.*;
 import java.util.List;
 
 public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.update.UpdateInfoTree");
-
   private VirtualFile mySelectedFile;
   private String mySelectedUrl;
   private final Tree myTree = new Tree();
@@ -155,6 +152,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
   protected JComponent createCenterPanel() {
     myCenterPanel.add(CARD_STATUS, ScrollPaneFactory.createScrollPane(myTree));
     myTreeBrowser = new CommittedChangesTreeBrowser(myProject, Collections.<CommittedChangeList>emptyList());
+    Disposer.register(this, myTreeBrowser);
     myTreeBrowser.setHelpId(getHelpId());
     myCenterPanel.add(CARD_CHANGES, myTreeBrowser);
     return myCenterPanel;

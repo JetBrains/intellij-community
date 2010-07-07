@@ -23,16 +23,11 @@
 package com.intellij.xml.refactoring;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.EmptyExpression;
-import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.template.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -41,99 +36,75 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.PairProcessor;
-import com.intellij.util.containers.Stack;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class XmlTagInplaceRenamer {
-  @NonNls private static final String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
-  @NonNls private static final String OTHER_VARIABLE_NAME = "OtherVariable";
+public class XmlTagInplaceRenamer extends InplaceRenamer {
 
-  private final Editor myEditor;
+  final XmlTag myTag;
 
-  private final static Stack<XmlTagInplaceRenamer> ourRenamersStack = new Stack<XmlTagInplaceRenamer>();
-  private ArrayList<RangeHighlighter> myHighlighters;
-
-  private XmlTagInplaceRenamer(@NotNull final Editor editor) {
-    myEditor = editor;
+  public XmlTagInplaceRenamer(@NotNull final Editor editor, XmlTag tag) {
+    super(editor);
+    this.myTag = tag;
   }
 
-  public static void rename(final Editor editor, @NotNull final XmlTag tag) {
-    if (!ourRenamersStack.isEmpty()) {
-      ourRenamersStack.peek().finish();
-    }
+  @Override
+  protected void rename() {
 
-    final XmlTagInplaceRenamer renamer = new XmlTagInplaceRenamer(editor);
-    ourRenamersStack.push(renamer);
-    renamer.rename(tag);
-  }
-
-  private void rename(@NotNull final XmlTag tag) {
-    final Pair<ASTNode, ASTNode> pair = getNamePair(tag);
+    final Pair<ASTNode, ASTNode> pair = getNamePair(myTag);
     if (pair == null) return;
 
     final Project project = myEditor.getProject();
-    if (project != null) {
-
-      final List<TextRange> highlightRanges = new ArrayList<TextRange>();
-      highlightRanges.add(pair.first.getTextRange());
-      if (pair.second != null) {
-        highlightRanges.add(pair.second.getTextRange());
-      }
-
-      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, tag)) {
-        return;
-      }
-
-      myHighlighters = new ArrayList<RangeHighlighter>();
-
-      CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              final int offset = myEditor.getCaretModel().getOffset();
-              myEditor.getCaretModel().moveToOffset(tag.getTextOffset());
-
-              final Template t = buildTemplate(tag, pair);
-              TemplateManager.getInstance(project).startTemplate(myEditor, t, new TemplateEditingAdapter() {
-                public void templateFinished(final Template template, boolean brokenOff) {
-                  finish();
-                }
-
-                public void templateCancelled(final Template template) {
-                  finish();
-                }
-              }, new PairProcessor<String, String>() {
-                public boolean process(final String variableName, final String value) {
-                  return value.length() == 0 || value.charAt(value.length() - 1) != ' ';
-                }
-              });
-
-              // restore old offset
-              myEditor.getCaretModel().moveToOffset(offset);
-
-              addHighlights(highlightRanges, myEditor, myHighlighters);
-            }
-          });
-        }
-      }, RefactoringBundle.message("rename.title"), null);
+    if (project == null) {
+      return;
     }
+
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, myTag)) {
+      return;
+    }
+
+    final List<TextRange> highlightRanges = new ArrayList<TextRange>();
+    highlightRanges.add(pair.first.getTextRange());
+    if (pair.second != null) {
+      highlightRanges.add(pair.second.getTextRange());
+    }
+
+    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            final int offset = myEditor.getCaretModel().getOffset();
+            myEditor.getCaretModel().moveToOffset(myTag.getTextOffset());
+
+            final Template t = buildTemplate(myTag, pair);
+            TemplateManager.getInstance(project).startTemplate(myEditor, t, new TemplateEditingAdapter() {
+              public void templateFinished(final Template template, boolean brokenOff) {
+                finish();
+              }
+
+              public void templateCancelled(final Template template) {
+                finish();
+              }
+            }, new PairProcessor<String, String>() {
+              public boolean process(final String variableName, final String value) {
+                return value.length() == 0 || value.charAt(value.length() - 1) != ' ';
+              }
+            });
+
+            // restore old offset
+            myEditor.getCaretModel().moveToOffset(offset);
+
+            addHighlights(highlightRanges);
+          }
+        });
+      }
+    }, RefactoringBundle.message("rename.title"), null);
   }
 
-  private void finish() {
-    ourRenamersStack.pop();
-
-    if (myHighlighters != null) {
-      final HighlightManager highlightManager = HighlightManager.getInstance(myEditor.getProject());
-      for (final RangeHighlighter highlighter : myHighlighters) {
-        highlightManager.removeSegmentHighlighter(myEditor, highlighter);
-      }
-    }
-  }
-
+  @Nullable
   private Pair<ASTNode, ASTNode> getNamePair(@NotNull final XmlTag tag) {
     final int offset = myEditor.getCaretModel().getOffset();
 
@@ -176,21 +147,6 @@ public class XmlTagInplaceRenamer {
     }
 
     return builder.buildInlineTemplate();
-  }
-
-  private static void addHighlights(List<TextRange> ranges, Editor editor, ArrayList<RangeHighlighter> highlighters) {
-    EditorColorsManager colorsManager = EditorColorsManager.getInstance();
-    final TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES);
-
-    final HighlightManager highlightManager = HighlightManager.getInstance(editor.getProject());
-    for (final TextRange range : ranges) {
-      highlightManager.addOccurrenceHighlight(editor, range.getStartOffset(), range.getEndOffset(), attributes, 0, highlighters, null);
-    }
-
-    for (RangeHighlighter highlighter : highlighters) {
-      highlighter.setGreedyToLeft(true);
-      highlighter.setGreedyToRight(true);
-    }
   }
 
 }

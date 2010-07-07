@@ -56,6 +56,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.messages.MessageBusConnection;
@@ -280,7 +281,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     final Module[] modules = getModuleManager().getModules();
     for (Module module : modules) {
       final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
-      result.addAll(Arrays.asList(contentRoots));
+      ContainerUtil.addAll(result, contentRoots);
     }
     return VfsUtil.toVirtualFileArray(result);
   }
@@ -290,7 +291,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     final Module[] modules = getModuleManager().getModules();
     for (Module module : modules) {
       final VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
-      result.addAll(Arrays.asList(sourceRoots));
+      ContainerUtil.addAll(result, sourceRoots);
     }
     return VfsUtil.toVirtualFileArray(result);
   }
@@ -300,7 +301,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     final Module[] modules = getModuleManager().getSortedModules();
     for (Module module : modules) {
       final VirtualFile[] files = ModuleRootManager.getInstance(module).getFiles(type);
-      result.addAll(Arrays.asList(files));
+      ContainerUtil.addAll(result, files);
     }
     return VfsUtil.toVirtualFileArray(result);
   }
@@ -315,7 +316,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     final Module[] modules = getModuleManager().getSortedModules();
     for (Module module : modules) {
       final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
-      result.addAll(Arrays.asList(files));
+      ContainerUtil.addAll(result, files);
     }
     result.add(myProject.getBaseDir());
     return VfsUtil.toVirtualFileArray(result);

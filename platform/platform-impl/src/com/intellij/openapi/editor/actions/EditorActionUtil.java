@@ -239,7 +239,7 @@ public class EditorActionUtil {
       }
       else {
         column = findFirstNonSpaceColumnOnTheLine(editor, currentVisCaret.line);
-        if (column == currentVisCaret.column) {
+        if (column >= currentVisCaret.column) {
           column = 0;
         }
       }
@@ -248,7 +248,7 @@ public class EditorActionUtil {
     else {
       LogicalPosition logLineEndLog = editor.offsetToLogicalPosition(document.getLineEndOffset(logLineToUse));
       VisualPosition logLineEndVis = editor.logicalToVisualPosition(logLineEndLog);
-      if (logLineEndLog.isOnSoftWrappedLine()) {
+      if (logLineEndLog.softWrapLinesOnCurrentLogicalLine > 0) {
         moveCaretToStartOfSoftWrappedLine(editor, logLineEndVis);
       }
       else {
@@ -277,7 +277,7 @@ public class EditorActionUtil {
     }
     else {
       int nonSpaceColumn = findFirstNonSpaceColumnOnTheLine(editor, currentVisual.line);
-      if (nonSpaceColumn > 0 /* current visual line is not empty */ && nonSpaceColumn != currentVisual.column) {
+      if (nonSpaceColumn > 0 /* current visual line is not empty */ && nonSpaceColumn < currentVisual.column) {
         column = nonSpaceColumn;
       }
     }
@@ -287,7 +287,7 @@ public class EditorActionUtil {
 
   private static int findSmartIndentColumn(Editor editor, int visualLine) {
     for (int i = visualLine; i >= 0; i--) {
-      int column = findFirstNonSpaceColumnOnTheLine(editor, visualLine);
+      int column = findFirstNonSpaceColumnOnTheLine(editor, i);
       if (column >= 0) {
         return column;
       }
@@ -369,6 +369,7 @@ public class EditorActionUtil {
         if (end >= 0) {
           // Width of soft wrap virtual text that is located at the target visual line.
           int result = EditorUtil.calcColumnNumber(editor, softWrapText, j, softWrapTextLength);
+          result++; // For column reserved for 'after soft wrap' sign.
           result += EditorUtil.calcColumnNumber(editor, document.getCharsSequence(), softWrap.getStart(), end);
           return result;
         }

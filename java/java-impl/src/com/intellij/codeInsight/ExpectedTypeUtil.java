@@ -18,6 +18,7 @@ package com.intellij.codeInsight;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -151,7 +152,7 @@ public class ExpectedTypeUtil {
       List<PsiMethod> methods = new ArrayList<PsiMethod>();
       for (PsiClass aClass : myOccurrenceClasses) {
         final PsiMethod[] occMethod = aClass.findMethodsByName(name, true);
-        methods.addAll(Arrays.asList(occMethod));
+        ContainerUtil.addAll(methods, occMethod);
       }
       return methods.toArray(new PsiMethod[methods.size()]);
     }

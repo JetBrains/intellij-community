@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -53,7 +54,13 @@ public class GlobalInspectionToolWrapper extends DescriptorProviderInspection {
 
   @NotNull
   public JobDescriptor[] getJobDescriptors() {
-    return isGraphNeeded() ? new JobDescriptor[]{GlobalInspectionContextImpl.BUILD_GRAPH}: JobDescriptor.EMPTY_ARRAY;
+    final JobDescriptor[] additionalJobs = myTool.getAdditionalJobs();
+    if (additionalJobs == null) {
+      return isGraphNeeded() ? GlobalInspectionContextImpl.BUILD_GRAPH_ONLY : JobDescriptor.EMPTY_ARRAY;
+    }
+    else {
+      return isGraphNeeded() ? ArrayUtil.append(additionalJobs, GlobalInspectionContextImpl.BUILD_GRAPH) : additionalJobs;
+    }
   }
 
   @NotNull

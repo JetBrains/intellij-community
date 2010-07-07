@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class AddReturnFix implements IntentionAction {
@@ -106,8 +107,8 @@ public class AddReturnFix implements IntentionAction {
       }
     }
     PsiParameter[] parameters = method.getParameterList().getParameters();
-    variables.addAll(Arrays.asList(parameters));
-    return (PsiVariable[]) variables.toArray(new PsiVariable[variables.size()]);
+    ContainerUtil.addAll(variables, parameters);
+    return (PsiVariable[])variables.toArray(new PsiVariable[variables.size()]);
   }
 
   public boolean startInWriteAction() {

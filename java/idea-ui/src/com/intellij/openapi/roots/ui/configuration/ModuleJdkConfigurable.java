@@ -24,7 +24,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -47,7 +47,7 @@ public abstract class ModuleJdkConfigurable implements Disposable {
   private Sdk mySelectedModuleJdk = null;
   private JPanel myJdkPanel;
   private ClasspathEditor myModuleEditor;
-  private final ProjectJdksModel myJdksModel;
+  private final ProjectSdksModel myJdksModel;
   private boolean myFreeze = false;
   private final SdkModel.Listener myListener = new SdkModel.Listener() {
     public void sdkAdded(Sdk sdk) {
@@ -67,7 +67,7 @@ public abstract class ModuleJdkConfigurable implements Disposable {
     }
   };
 
-  public ModuleJdkConfigurable(ClasspathEditor moduleEditor, ProjectJdksModel jdksModel) {
+  public ModuleJdkConfigurable(ClasspathEditor moduleEditor, ProjectSdksModel jdksModel) {
     myModuleEditor = moduleEditor;
     myJdksModel = jdksModel;
     myJdksModel.addListener(myListener);
@@ -122,7 +122,7 @@ public abstract class ModuleJdkConfigurable implements Disposable {
     final JButton setUpButton = myCbModuleJdk
       .createSetupButton(project, myJdksModel, new JdkComboBox.ProjectJdkComboBoxItem(), new Condition<Sdk>(){
         public boolean value(Sdk jdk) {
-          final Sdk projectJdk = myJdksModel.getProjectJdk();
+          final Sdk projectJdk = myJdksModel.getProjectSdk();
           if (projectJdk == null){
             final int res =
               Messages.showYesNoDialog(myJdkPanel,
@@ -130,7 +130,7 @@ public abstract class ModuleJdkConfigurable implements Disposable {
                                        ProjectBundle.message("project.roots.no.jdk.on.projecct.title"),
                                        Messages.getInformationIcon());
             if (res == DialogWrapper.OK_EXIT_CODE){
-              myJdksModel.setProjectJdk(jdk);
+              myJdksModel.setProjectSdk(jdk);
               return true;
             }
           }

@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
@@ -141,7 +142,7 @@ public class MavenDomProjectProcessorUtils {
       public boolean process(MavenDomProperties mavenDomProperties) {
         XmlTag propertiesTag = mavenDomProperties.getXmlTag();
         if (propertiesTag != null) {
-          properties.addAll(Arrays.asList(propertiesTag.getSubTags()));
+          ContainerUtil.addAll(properties, propertiesTag.getSubTags());
         }
         return false;
       }

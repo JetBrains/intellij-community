@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -348,7 +349,7 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
   }
 
   public LookupItem<T> addLookupStrings(@NonNls final String... additionalLookupStrings) {
-    myAllLookupStrings.addAll(Arrays.asList(additionalLookupStrings));
+    ContainerUtil.addAll(myAllLookupStrings, additionalLookupStrings);
     return this;
   }
 

@@ -28,6 +28,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ResourceUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.StringInterner;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -73,7 +74,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
       //stop words
       final String text = ResourceUtil.loadText(ResourceUtil.getResource(SearchableOptionsRegistrarImpl.class, "/search/", "ignore.txt"));
       final String[] stopWords = text.split("[\\W]");
-      myStopWords.addAll(Arrays.asList(stopWords));
+      ContainerUtil.addAll(myStopWords, stopWords);
 
       //index
       Document document =

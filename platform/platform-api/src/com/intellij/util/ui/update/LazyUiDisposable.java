@@ -35,23 +35,16 @@ public abstract class LazyUiDisposable<T extends Disposable> implements Activata
 
   private boolean myWasEverShown;
 
-  private Disposable myParent;
-  private T myChild;
-
-  private Project myProject;
+  private final Disposable myParent;
+  private final T myChild;
 
   public LazyUiDisposable(@Nullable Disposable parent, @NotNull JComponent ui, @NotNull T child) {
-    this(parent, ui, child, null);
-  }
-
-  public LazyUiDisposable(@Nullable Disposable parent, @NotNull JComponent ui, @NotNull T child, @Nullable Project project) {
     if (Boolean.TRUE.toString().equalsIgnoreCase(System.getProperty("idea.is.internal"))) {
       myAllocation = new Exception();
     }
 
     myParent = parent;
     myChild = child;
-    myProject = project;
 
     new UiNotifyConnector.Once(ui, this);
   }

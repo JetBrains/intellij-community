@@ -23,6 +23,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.javadoc.JavadocTagInfo;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,7 +48,7 @@ class ParamDocTagInfo implements JavadocTagInfo {
 
       if ((PsiTypeParameterListOwner)context instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)context;
-        result.addAll(Arrays.asList(method.getParameterList().getParameters()));
+        ContainerUtil.addAll(result, method.getParameterList().getParameters());
       }
 
       return result.toArray(new PsiNamedElement[result.size()]);

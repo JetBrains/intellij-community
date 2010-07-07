@@ -26,6 +26,7 @@ package com.intellij;
 
 import com.intellij.idea.Bombed;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestRunnerUtil;
@@ -54,6 +55,7 @@ public class TestCaseLoader {
   private final TestClassesFilter myTestClassesFilter;
   private final String myTestGroupName;
   private final Set<String> blockedTests = new HashSet<String>();
+  private final String[] slowTestNames;
 
   public TestCaseLoader(String classFilterName) {
     InputStream excludedStream = getClass().getClassLoader().getResourceAsStream(classFilterName);
@@ -86,27 +88,39 @@ public class TestCaseLoader {
       }
     }
 
+    String[] names;
+    try {
+      InputStream stream = getClass().getClassLoader().getResourceAsStream("tests/slowTests.txt");
+      names = FileUtil.loadTextAndClose(new InputStreamReader(stream)).split("\\s");
+    }
+    catch (Exception e) {
+      // no luck
+      names = new String[0];
+    }
+    slowTestNames = names;
     if (Comparing.equal(System.getProperty(FAST_TESTS_ONLY_FLAG), "true")) {
-      BufferedReader reader =
-              new BufferedReader(new InputStreamReader(getClass().getClassLoader().getResourceAsStream("tests/slowTests.txt")));
+      blockedTests.addAll(Arrays.asList(slowTestNames));
+    }
+    else {
+      checkClassesExist();
+    }
+    System.out.println("Using test group: [" + myTestGroupName +"]");
+  }
+
+  void checkClassesExist() {
+    String s = "";
+    for (String slowTestName : slowTestNames) {
+      if (slowTestName.trim().length() == 0) continue;
       try {
-        String testName;
-        while ((testName = reader.readLine()) != null) {
-          blockedTests.add(testName);
-        }
+        Class.forName(slowTestName);
       }
-      catch (IOException e) {
-        // No luck
-      } finally {
-        try {
-          reader.close();
-        }
-        catch (IOException e) {
-          // ignore
-        }
+      catch (ClassNotFoundException e) {
+        s += "\n" + slowTestName;
       }
     }
-    System.out.println("Using test group: [" + myTestGroupName + "]");
+    if (s.length() != 0) {
+      throw new RuntimeException("Tests in slowTests.txt which cannot be instantiated: "+s);
+    }
   }
 
   /*

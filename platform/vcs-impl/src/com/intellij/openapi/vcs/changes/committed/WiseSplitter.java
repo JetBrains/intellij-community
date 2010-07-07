@@ -15,8 +15,10 @@
  */
 package com.intellij.openapi.vcs.changes.committed;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.IdeBorderFactory;
 
 import javax.swing.*;
@@ -25,7 +27,7 @@ import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 
-public class WiseSplitter {
+public class WiseSplitter implements Disposable {
   private static final Border LEFT_BORDER = IdeBorderFactory.createSimpleBorder(1, 0, 0, 1);
   private static final Border MIDDLE_BORDER = IdeBorderFactory.createSimpleBorder(1, 1, 0, 1);
 
@@ -39,6 +41,7 @@ public class WiseSplitter {
     myParentSplitter = parentSplitter;
 
     myInnerSplitter = new ThreeComponentsSplitter(false);
+    Disposer.register(this, myInnerSplitter);
     myInnerSplitter.setHonorComponentsMinimumSize(true);
     myInnerSplitterContents = new HashMap<String, Integer>();
     updateBorders();
@@ -125,5 +128,9 @@ public class WiseSplitter {
     final JComponent last = myInnerSplitter.getLastComponent();
     myInnerSplitter.setLastComponent(null);
     myInnerSplitter.setInnerComponent(last);
+  }
+
+  @Override
+  public void dispose() {
   }
 }

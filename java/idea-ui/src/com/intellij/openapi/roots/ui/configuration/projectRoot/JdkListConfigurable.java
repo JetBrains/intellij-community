@@ -56,7 +56,7 @@ import java.util.List;
 )
 public class JdkListConfigurable extends BaseStructureConfigurable {
 
-  private final ProjectJdksModel myJdksTreeModel;
+  private final ProjectSdksModel myJdksTreeModel;
 
 
   SdkModel.Listener myListener = new SdkModel.Listener() {
@@ -124,7 +124,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   }
 
   protected void loadTree() {
-    final HashMap<Sdk,Sdk> sdks = myJdksTreeModel.getProjectJdks();
+    final HashMap<Sdk,Sdk> sdks = myJdksTreeModel.getProjectSdks();
     for (Sdk sdk : sdks.keySet()) {
       final JdkConfigurable configurable = new JdkConfigurable((ProjectJdkImpl)sdks.get(sdk), myJdksTreeModel, TREE_UPDATER, myHistory,
                                                                myProject);
@@ -136,7 +136,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   @Override
   protected Collection<? extends ProjectStructureElement> getProjectStructureElements() {
     final List<ProjectStructureElement> result = new ArrayList<ProjectStructureElement>();
-    for (Sdk sdk : myJdksTreeModel.getProjectJdks().values()) {
+    for (Sdk sdk : myJdksTreeModel.getProjectSdks().values()) {
       result.add(new SdkProjectStructureElement(myContext, sdk));
     }
     return result;
@@ -159,7 +159,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
     myJdksTreeModel.disposeUIResources();
   }
 
-  public ProjectJdksModel getJdksTreeModel() {
+  public ProjectSdksModel getJdksTreeModel() {
     return myJdksTreeModel;
   }
 
@@ -179,7 +179,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
     }
 
     if (myJdksTreeModel.isModified() || modifiedJdks) myJdksTreeModel.apply(this);
-    myJdksTreeModel.setProjectJdk(ProjectRootManager.getInstance(myProject).getProjectJdk());
+    myJdksTreeModel.setProjectSdk(ProjectRootManager.getInstance(myProject).getProjectJdk());
   }
 
   public boolean isModified() {
@@ -205,7 +205,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   }
 
   protected void removeJdk(final Sdk jdk) {
-    myJdksTreeModel.removeJdk(jdk);
+    myJdksTreeModel.removeSdk(jdk);
     myContext.getDaemonAnalyzer().removeElement(new SdkProjectStructureElement(myContext, jdk));
   }
 

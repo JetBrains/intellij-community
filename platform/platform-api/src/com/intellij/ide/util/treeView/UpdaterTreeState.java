@@ -19,6 +19,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -62,7 +63,7 @@ public class UpdaterTreeState {
   private Set<Object> addPaths(Object[] elements) {
     Set<Object> set = new HashSet<Object>();
     if (elements != null) {
-      set.addAll(Arrays.asList(elements));
+      ContainerUtil.addAll(set, elements);
     }
 
     return addPaths(set);
@@ -221,7 +222,7 @@ public class UpdaterTreeState {
     boolean wasFullyRejected = false;
     if (toSelect.length > 0 && selected.size() > 0 && !originallySelected.containsAll(selected)) {
       final Set<Object> successfulSelections = new HashSet<Object>();
-      successfulSelections.addAll(Arrays.asList(toSelect));
+      ContainerUtil.addAll(successfulSelections, toSelect);
 
       successfulSelections.retainAll(selected);
       wasFullyRejected = successfulSelections.size() == 0;

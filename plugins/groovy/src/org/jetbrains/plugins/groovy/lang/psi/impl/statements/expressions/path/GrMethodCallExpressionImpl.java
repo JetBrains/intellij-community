@@ -21,6 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -154,7 +155,7 @@ public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements 
     if (!(newExpr instanceof GrClosableBlock)) {
       ArrayList<GrExpression> allArgs = new ArrayList<GrExpression>();
       // Collecting all arguments
-      allArgs.addAll(Arrays.asList(getExpressionArguments()));
+      ContainerUtil.addAll(allArgs, getExpressionArguments());
       ArrayList<GrExpression> closureArgs = new ArrayList<GrExpression>();
       for (GrExpression closArg : getClosureArguments()) {
         if (closArg.equals(closure)) break;
@@ -168,7 +169,7 @@ public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements 
       GrArgumentList newArgList =
         GroovyPsiElementFactory.getInstance(getProject()).createExpressionArgumentList(allArgs.toArray(new GrExpression[allArgs.size()]));
       while (closure.getNode().getTreePrev() != null &&
-          !(closure.getNode().getTreePrev().getPsi() instanceof GrArgumentList)) {
+             !(closure.getNode().getTreePrev().getPsi() instanceof GrArgumentList)) {
         parentNode.removeChild(closure.getNode().getTreePrev());
       }
       parentNode.removeChild(closure.getNode());

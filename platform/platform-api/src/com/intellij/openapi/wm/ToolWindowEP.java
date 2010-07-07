@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.Nullable;
@@ -66,7 +67,7 @@ public class ToolWindowEP extends AbstractExtensionPointBean {
   }
 
   @Nullable
-  public Condition getCondition() {
+  public Condition<Project> getCondition() {
     if (conditionClass != null) {
       try {
         return instantiate(conditionClass, ApplicationManager.getApplication().getPicoContainer());

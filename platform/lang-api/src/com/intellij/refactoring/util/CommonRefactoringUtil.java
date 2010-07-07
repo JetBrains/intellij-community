@@ -28,6 +28,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -178,7 +179,7 @@ public class CommonRefactoringUtil {
 
     final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project)
       .ensureFilesWritable(VfsUtil.toVirtualFileArray(readonly));
-    failed.addAll(Arrays.asList(status.getReadonlyFiles()));
+    ContainerUtil.addAll(failed, status.getReadonlyFiles());
     if (notifyOnFail && (!failed.isEmpty() || seenNonWritablePsiFilesWithoutVirtualFile && readonly.isEmpty())) {
       StringBuilder message = new StringBuilder(messagePrefix);
       message.append('\n');

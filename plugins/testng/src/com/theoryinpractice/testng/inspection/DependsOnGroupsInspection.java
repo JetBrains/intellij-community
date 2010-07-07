@@ -30,6 +30,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiNameValuePair;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -86,7 +87,7 @@ public class DependsOnGroupsInspection extends BaseJavaLocalInspectionTool {
       protected void textChanged(final DocumentEvent e) {
         groups.clear();
         final String[] groupsFromString = textField.getText().split("[, ]");
-        groups.addAll(Arrays.asList(groupsFromString));
+        ContainerUtil.addAll(groups, groupsFromString);
       }
     });
     definedGroups.setComponent(textField);

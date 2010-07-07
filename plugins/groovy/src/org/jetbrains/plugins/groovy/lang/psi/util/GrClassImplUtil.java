@@ -140,7 +140,7 @@ public class GrClassImplUtil {
     if (visited.contains(clazz)) return;
     visited.add(clazz);
 
-    allMethods.addAll(Arrays.asList(clazz.getMethods()));
+    ContainerUtil.addAll(allMethods, clazz.getMethods());
 
     final PsiField[] fields = clazz.getFields();
     for (PsiField field : fields) {
@@ -148,7 +148,7 @@ public class GrClassImplUtil {
         final GrField groovyField = (GrField)field;
         if (groovyField.isProperty()) {
           PsiMethod[] getters = groovyField.getGetters();
-          if (getters.length > 0) allMethods.addAll(Arrays.asList(getters));
+          if (getters.length > 0) ContainerUtil.addAll(allMethods, getters);
           PsiMethod setter = groovyField.getSetter();
           if (setter != null) allMethods.add(setter);
         }
@@ -233,7 +233,7 @@ public class GrClassImplUtil {
                                             PsiElement lastParent,
                                             @NotNull PsiElement place) {
     for (final PsiTypeParameter typeParameter : grType.getTypeParameters()) {
-      if (!ResolveUtil.processElement(processor, typeParameter)) return false;
+      if (!ResolveUtil.processElement(processor, typeParameter, state)) return false;
     }
 
     NameHint nameHint = processor.getHint(NameHint.KEY);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.projectRoots.ui;
+package com.siyeh.ig.visibility;
 
-import com.intellij.openapi.projectRoots.SdkModel;
+import com.IGInspectionTestCase;
 
-/**
- * @author Eugene Zhuravlev
- *         Date: Oct 4, 2004
- */
-public interface NotifiableSdkModel extends SdkModel{
-  Listener getMulticaster();
+public class MethodOverridesStaticMethodInspectionTest extends IGInspectionTestCase {
+
+  public void test() throws Exception {
+    doTest("com/siyeh/igtest/visibility/overrides", new MethodOverridesStaticMethodInspection());
+  }
+
 }

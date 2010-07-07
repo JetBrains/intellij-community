@@ -54,6 +54,6 @@ public class GrPackageDefinitionImpl extends GroovyPsiElementImpl implements GrP
   }
 
   public GrModifierList getAnnotationList() {
-    return findChildByClass(GrModifierList.class);
+    return (GrModifierList)findChildByType(GroovyElementTypes.MODIFIERS);
   }
 }

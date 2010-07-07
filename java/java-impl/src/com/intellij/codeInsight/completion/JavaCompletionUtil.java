@@ -56,6 +56,7 @@ import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairFunction;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -267,7 +268,7 @@ public class JavaCompletionUtil {
         }
       }
 
-      result.addAll(Arrays.asList(getOverlappedNameVersions(prefix, suggestedNames, requiredSuffix)));
+      ContainerUtil.addAll(result, getOverlappedNameVersions(prefix, suggestedNames, requiredSuffix));
 
 
     }

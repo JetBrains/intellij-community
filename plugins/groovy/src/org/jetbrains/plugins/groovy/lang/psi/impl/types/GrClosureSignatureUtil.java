@@ -301,10 +301,9 @@ public class GrClosureSignatureUtil {
    */
   @Nullable
   public static ArgInfo<PsiElement>[] mapParametersToArguments(@NotNull GrClosureSignature signature,
-                                                            @NotNull GrArgumentList list,
-                                                            PsiManager manager,
-                                                            GlobalSearchScope scope) {
-    return mapParametersToArguments(signature, list, GrClosableBlock.EMPTY_ARRAY, manager, scope);
+                                                               @NotNull GrArgumentList list,
+                                                               GlobalSearchScope scope) {
+    return mapParametersToArguments(signature, list, GrClosableBlock.EMPTY_ARRAY, scope);
   }
 
   private static class InnerArg {
@@ -319,10 +318,9 @@ public class GrClosureSignatureUtil {
 
   @Nullable
   public static ArgInfo<PsiElement>[] mapParametersToArguments(@NotNull GrClosureSignature signature,
-                                                   @NotNull GrArgumentList list,
-                                                   @NotNull GrClosableBlock[] closureArguments,
-                                                   PsiManager manager,
-                                                   GlobalSearchScope scope) {
+                                                               @NotNull GrArgumentList list,
+                                                               @NotNull GrClosableBlock[] closureArguments,
+                                                               GlobalSearchScope scope) {
     final GrNamedArgument[] namedArgs = list.getNamedArguments();
     boolean hasNamedArgs = namedArgs.length > 0;
     GrClosureParameter[] params = signature.getParameters();
@@ -333,7 +331,7 @@ public class GrClosureSignatureUtil {
       if (params.length == 0) return null;
       PsiType type = params[0].getType();
       if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) {
-        innerArgs.add(new InnerArg(PsiUtil.createMapType(manager, scope), namedArgs));
+        innerArgs.add(new InnerArg(PsiUtil.createMapType(scope), namedArgs));
       }
       else {
         return null;

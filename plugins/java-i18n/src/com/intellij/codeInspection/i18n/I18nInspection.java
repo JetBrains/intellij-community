@@ -48,6 +48,7 @@ import com.intellij.ui.AddDeleteListPanel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -311,7 +312,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
     for (PsiClassInitializer initializer : initializers) {
       final ProblemDescriptor[] descriptors = checkElement(initializer, manager, isOnTheFly);
       if (descriptors != null) {
-        result.addAll(Arrays.asList(descriptors));
+        ContainerUtil.addAll(result, descriptors);
       }
     }
 

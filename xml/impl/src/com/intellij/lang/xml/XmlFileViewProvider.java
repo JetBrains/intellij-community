@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.CompositeLanguageFileViewProvider;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -45,7 +46,7 @@ public class XmlFileViewProvider extends CompositeLanguageFileViewProvider {
     if (myRelevantLanguages != null) return myRelevantLanguages;
     List<Language> relevantLanguages = new ArrayList<Language>(1);
     relevantLanguages.add(myLanguage);
-    relevantLanguages.addAll(Arrays.asList(myLanguage.getLanguageExtensionsForFile(getPsi(myLanguage))));
+    ContainerUtil.addAll(relevantLanguages, myLanguage.getLanguageExtensionsForFile(getPsi(myLanguage)));
     return myRelevantLanguages = new LinkedHashSet<Language>(relevantLanguages);
   }
 

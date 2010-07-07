@@ -422,13 +422,20 @@ public class ContainerUtil {
     list.set(index2, e1);
   }
 
-  public static <T> ArrayList<T> collect(Iterator<?> iterator, FilteringIterator.InstanceOf<T> instanceOf) {
-    return collect(FilteringIterator.create(iterator, instanceOf));
+  public static <T> ArrayList<T> collect(@NotNull Iterator<?> iterator, @NotNull FilteringIterator.InstanceOf<T> instanceOf) {
+    return collect(FilteringIterator.create((Iterator<T>)iterator, instanceOf));
   }
 
-  public static <T> void addAll(Collection<T> collection, Enumeration<T> enumeration) {
+  public static <T> void addAll(@NotNull Collection<T> collection, @NotNull Enumeration<T> enumeration) {
     while (enumeration.hasMoreElements()) {
       T element = enumeration.nextElement();
+      collection.add(element);
+    }
+  }
+
+  public static <T> void addAll(@NotNull Collection<T> collection, @NotNull T... elements) {
+    //noinspection ManualArrayToCollectionCopy
+    for (T element : elements) {
       collection.add(element);
     }
   }

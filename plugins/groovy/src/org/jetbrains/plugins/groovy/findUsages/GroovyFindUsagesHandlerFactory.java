@@ -29,6 +29,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
@@ -78,10 +79,10 @@ public class GroovyFindUsagesHandlerFactory extends JavaFindUsagesHandlerFactory
             if (doSearch) {
               final List<PsiElement> elements = new ArrayList<PsiElement>();
               if (getter != null) {
-                elements.addAll(Arrays.asList(SuperMethodWarningUtil.checkSuperMethods(getter, ACTION_STRING)));
+                ContainerUtil.addAll(elements, SuperMethodWarningUtil.checkSuperMethods(getter, ACTION_STRING));
               }
               if (setter != null) {
-                elements.addAll(Arrays.asList(SuperMethodWarningUtil.checkSuperMethods(setter, ACTION_STRING)));
+                ContainerUtil.addAll(elements, SuperMethodWarningUtil.checkSuperMethods(setter, ACTION_STRING));
               }
               return elements.toArray(new PsiElement[elements.size()]);
             } else {

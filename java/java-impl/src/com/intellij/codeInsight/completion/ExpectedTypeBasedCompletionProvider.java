@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,7 +43,7 @@ public abstract class ExpectedTypeBasedCompletionProvider extends CompletionProv
     final THashSet<ExpectedTypeInfo> infos = new THashSet<ExpectedTypeInfo>();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        infos.addAll(Arrays.asList(JavaSmartCompletionContributor.getExpectedTypes(params)));
+        ContainerUtil.addAll(infos, JavaSmartCompletionContributor.getExpectedTypes(params));
       }
     });
     addCompletions(params, result, infos);

@@ -82,6 +82,11 @@ public class PassThroughtIdeFocusManager extends IdeFocusManager {
   }
 
   @Override
+  public FocusRequestor getFurtherRequestor() {
+    return this;
+  }
+
+  @Override
   public void suspendKeyProcessingUntil(@NotNull ActionCallback done) {
   }
 
