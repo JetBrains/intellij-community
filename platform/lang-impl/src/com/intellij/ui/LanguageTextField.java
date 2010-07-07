@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
-import com.intellij.util.Consumer;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,14 +35,15 @@ public class LanguageTextField extends EditorTextField {
   private final Project myProject;
 
   public LanguageTextField(Language language, @NotNull Project project, @NotNull String value) {
-    this(language, project, value, null);
+    this(language, project, value, new SimpleDocumentCreator());
   }
 
   public LanguageTextField(@Nullable Language language,
                            @NotNull Project project,
                            @NotNull String value,
-                           @Nullable Consumer<PsiFile> tagger) {
-    super(createDocument(value, language, project, tagger), project,
+                           @NotNull DocumentCreator documentCreator
+                           ) {
+    super(documentCreator.createDocument(value, language, project), project,
           language != null ? language.getAssociatedFileType() : StdFileTypes.PLAIN_TEXT, language == null);
 
     myLanguage = language;
@@ -54,7 +54,22 @@ public class LanguageTextField extends EditorTextField {
     ShiftTabAction.attachTo(this);
   }
 
-  private static Document createDocument(String value, @Nullable Language language, Project project, @Nullable Consumer<PsiFile> tagger) {
+  public interface DocumentCreator {
+    Document createDocument(String value, @Nullable Language language, Project project);
+  }
+
+  public static class SimpleDocumentCreator implements DocumentCreator {
+    @Override
+    public Document createDocument(String value, @Nullable Language language, Project project) {
+      return LanguageTextField.createDocument(value, language, project, this);
+    }
+
+    public void customizePsiFile(PsiFile file) {
+    }
+  }
+
+  private static Document createDocument(String value, @Nullable Language language, Project project,
+                                         @NotNull SimpleDocumentCreator documentCreator) {
     if (language != null) {
       final PsiFileFactory factory = PsiFileFactory.getInstance(project);
       final FileType fileType = language.getAssociatedFileType();
@@ -62,9 +77,7 @@ public class LanguageTextField extends EditorTextField {
 
       final long stamp = LocalTimeCounter.currentTime();
       final PsiFile psiFile = factory.createFileFromText("Dummy." + fileType.getDefaultExtension(), fileType, value, stamp, true, false);
-      if (tagger != null) {
-        tagger.consume(psiFile);
-      }
+      documentCreator.customizePsiFile(psiFile);
       final Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
       assert document != null;
       return document;
