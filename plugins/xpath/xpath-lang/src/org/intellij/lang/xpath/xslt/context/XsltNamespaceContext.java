@@ -97,7 +97,7 @@ public class XsltNamespaceContext implements NamespaceContext {
             final XmlAttribute attribute = parent.getAttribute(name, null);
             if (attribute != null) {
               final TextRange textRange = TextRange.from("xmlns:".length(), prefix.length());
-              return new SchemaPrefix(attribute, textRange, prefix, attribute) {
+              return new SchemaPrefix(attribute, textRange, prefix) {
                 @Override
                 public boolean equals(Object obj) {
                   if (obj instanceof SchemaPrefix) {

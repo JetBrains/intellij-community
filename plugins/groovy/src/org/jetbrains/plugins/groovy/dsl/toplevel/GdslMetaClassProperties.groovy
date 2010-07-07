@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.dsl.toplevel
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PsiJavaPatterns
 import org.jetbrains.plugins.groovy.dsl.GroovyDslExecutor
+import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.AnnotatedScope
 import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ClassScope
 import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ClosureScope
 import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ScriptScope
@@ -44,9 +45,14 @@ class GdslMetaClassProperties {
   /**
    * Auxiliary methods for context definition
    */
-  Closure ClosureScope = {Map args -> return new ClosureScope(args)}
-  Closure ScriptScope = {Map args -> return new ScriptScope(args)}
-  Closure ClassScope = {Map args -> return new ClassScope(args)}
+  Closure closureScope = {Map args -> return new ClosureScope(args)}
+  Closure scriptScope = {Map args -> return new ScriptScope(args)}
+  Closure classScope = {Map args -> return new ClassScope(args)}
+
+   /**
+    * @since 10
+    */
+  Closure annotatedScope = {Map args -> return new AnnotatedScope(args)}
 
   Closure hasAnnotation = { String annoQName -> PsiJavaPatterns.psiModifierListOwner().withAnnotation(annoQName) }
   Closure hasField = { ElementPattern fieldCondition -> PsiJavaPatterns.psiClass().withField(true, PsiJavaPatterns.psiField().and(fieldCondition)) }

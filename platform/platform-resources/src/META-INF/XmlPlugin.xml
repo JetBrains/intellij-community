@@ -46,7 +46,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <fileTypeFactory implementation="com.intellij.xml.XmlFileTypeFactory"/>
 
-    <renameHandler implementation="com.intellij.xml.refactoring.XmlTagRenameHandler"/>
+    <renameHandler id="xmlTagRenameHandler" implementation="com.intellij.xml.refactoring.XmlTagRenameHandler"/>
+    <renameHandler implementation="com.intellij.xml.refactoring.SchemaPrefixRenameHandler" order="before xmlTagRenameHandler"/>
 
     <lang.literalEscaper language="XML" implementationClass="com.intellij.lang.xml.XmlLiteralEscaper"/>
 
@@ -300,7 +301,10 @@
       <category>XML</category>
       <className>com.intellij.codeInsight.daemon.impl.analysis.AddSchemaPrefixIntention</className>
     </intentionAction>
-
+    <intentionAction>
+      <category>XML</category>
+      <className>com.intellij.codeInsight.daemon.impl.analysis.ConvertSchemaPrefixToDefaultIntention</className>
+    </intentionAction>
     <lang.implementationTextSelectioner language="XML"
                                         implementationClass="com.intellij.codeInsight.hint.XmlImplementationTextSelectioner"/>
     <basicWordSelectionFilter implementation="com.intellij.codeInsight.editorActions.XmlBasicWordSelectionFilter"/>

@@ -25,18 +25,13 @@ public abstract class IndexableSetContributor implements IndexedRootsProvider {
   }
 
   public static Set<VirtualFile> getRootsToIndex(IndexedRootsProvider provider) {
-    /*
     if (provider instanceof IndexableSetContributor) {
       return ((IndexableSetContributor)provider).getAdditionalRootsToIndex();
     }
-    */
 
     final HashSet<VirtualFile> result = new HashSet<VirtualFile>();
     for (String url : provider.getRootsToIndex()) {
       ContainerUtil.addIfNotNull(VirtualFileManager.getInstance().findFileByUrl(url), result);
-    }
-    if (provider instanceof IndexableSetContributor && !result.equals(((IndexableSetContributor)provider).getAdditionalRootsToIndex())) {
-      System.out.println("Rotten VirtualFiles: " + result);
     }
 
     return result;

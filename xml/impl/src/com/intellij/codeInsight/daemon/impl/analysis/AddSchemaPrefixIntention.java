@@ -26,8 +26,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.XmlRecursiveElementVisitor;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaReferencesProvider;
+import com.intellij.psi.impl.source.xml.SchemaPrefixReference;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -87,25 +90,38 @@ public class AddSchemaPrefixIntention extends PsiElementBaseIntentionAction {
 
             @Override
             public void visitXmlAttributeValue(XmlAttributeValue value) {
+              PsiReference ref = null;
+              boolean skip = false;
               for (PsiReference reference : value.getReferences()) {
                 if (reference instanceof SchemaReferencesProvider.TypeOrElementOrAttributeReference) {
-                  final PsiElement tag = reference.resolve();
-                  if (tag instanceof XmlTag && namespace.equals(((XmlTag)tag).getNamespace())) {
-                    if (reference.getRangeInElement().getLength() == value.getValue().length()) { //no ns prefix
-                      values.add(value);
+                  ref = reference;
+                } else if (reference instanceof SchemaPrefixReference) {
+                  skip = true;
+                  break;
+                }
+              }
+              if (!skip && ref != null) {
+                final PsiElement xmlElement = ref.resolve();
+                if (xmlElement instanceof XmlElement) {
+                  final XmlTag tag = PsiTreeUtil.getParentOfType(xmlElement, XmlTag.class, false);
+                  if (tag != null) {
+                    if (namespace.equals(tag.getNamespace())) {
+                      if (ref.getRangeInElement().getLength() == value.getValue().length()) { //no ns prefix
+                        values.add(value);
+                      }
                     }
                   }
                 }
               }
             }
           });
-          xmlns.setName("xmlns:" + nsPrefix);
-          for (XmlTag xmlTag : tags) {
-            xmlTag.setName(nsPrefix + ":" + xmlTag.getLocalName());
-          }
           for (XmlAttributeValue value : values) {
             ((XmlAttribute)value.getParent()).setValue(nsPrefix + ":" + value.getValue());
           }
+          for (XmlTag xmlTag : tags) {
+            xmlTag.setName(nsPrefix + ":" + xmlTag.getLocalName());
+          }
+          xmlns.setName("xmlns:" + nsPrefix);
         }
       }.execute();
     }
