@@ -27,7 +27,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NamedConfigurable;
@@ -82,7 +82,7 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
   private boolean myFreeze = false;
   private DetailsComponent myDetailsComponent;
 
-  public ProjectConfigurable(Project project, ModulesConfigurator configurator, ProjectJdksModel model) {
+  public ProjectConfigurable(Project project, ModulesConfigurator configurator, ProjectSdksModel model) {
     myProject = project;
     myModulesConfigurator = configurator;
     init(model);
@@ -103,7 +103,7 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
     return myDetailsComponent.getComponent();
   }
 
-  private void init(final ProjectJdksModel model) {
+  private void init(final ProjectSdksModel model) {
     myPanel = new MyJPanel();
     myPanel.setPreferredSize(new Dimension(700, 500));
 

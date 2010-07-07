@@ -18,12 +18,11 @@ package com.intellij.openapi.projectRoots;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -38,13 +37,23 @@ public abstract class SdkType {
 
   private final String myName;
 
-  @NonNls public static final String MAC_HOME_PATH = "/Home";
-
   /**
    * @return path to set up filechooser to or null if not applicable
    */
   @Nullable
   public abstract String suggestHomePath();
+
+  /**
+   * If a path selected in the file chooser is not a valid SDK home path, returns an adjusted version of the path that is again
+   * checked for validity.
+   * 
+   * @param homePath the path selected in the file chooser.
+   * @return the path to be used as the SDK home.
+   */
+
+  public String adjustSelectedSdkHome(String homePath) {
+    return homePath;
+  }
 
   public abstract boolean isValidSdkHome(String path);
 
@@ -133,11 +142,10 @@ public abstract class SdkType {
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
       public void validateSelectedFiles(VirtualFile[] files) throws Exception {
         if (files.length != 0){
-          boolean valid = isValidSdkHome(files[0].getPath());
+          final String selectedPath = files[0].getPath();
+          boolean valid = isValidSdkHome(selectedPath);
           if (!valid){
-            if (SystemInfo.isMac) {
-              valid = isValidSdkHome(files[0].getPath() + MAC_HOME_PATH);
-            }
+            valid = isValidSdkHome(adjustSelectedSdkHome(selectedPath));
             if (!valid) {
               String message = files[0].isDirectory()
                                ? ProjectBundle.message("sdk.configure.home.invalid.error", getPresentableName())

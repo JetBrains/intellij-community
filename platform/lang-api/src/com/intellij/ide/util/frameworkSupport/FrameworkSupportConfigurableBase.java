@@ -17,8 +17,6 @@
 package com.intellij.ide.util.frameworkSupport;
 
 import com.intellij.facet.ui.libraries.LibraryInfo;
-import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
-import com.intellij.ide.util.frameworkSupport.FrameworkVersion;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
@@ -38,15 +36,17 @@ import java.util.List;
 public class FrameworkSupportConfigurableBase extends FrameworkSupportConfigurable {
   private JComboBox myVersionComboBox;
   private final FrameworkSupportProviderBase myFrameworkSupportProvider;
+  protected final FrameworkSupportModel myFrameworkSupportModel;
   private JPanel myMainPanel;
   private JLabel myDescriptionLabel;
 
-  public FrameworkSupportConfigurableBase(FrameworkSupportProviderBase frameworkSupportProvider) {
-    this(frameworkSupportProvider, Collections.<FrameworkVersion>emptyList(), null);
+  public FrameworkSupportConfigurableBase(FrameworkSupportProviderBase frameworkSupportProvider, FrameworkSupportModel model) {
+    this(frameworkSupportProvider, model, Collections.<FrameworkVersion>emptyList(), null);
   }
 
-  public FrameworkSupportConfigurableBase(final FrameworkSupportProviderBase frameworkSupportProvider, List<FrameworkVersion> versions, String versionLabelText) {
+  public FrameworkSupportConfigurableBase(final FrameworkSupportProviderBase frameworkSupportProvider, FrameworkSupportModel model, List<FrameworkVersion> versions, String versionLabelText) {
     myFrameworkSupportProvider = frameworkSupportProvider;
+    myFrameworkSupportModel = model;
     if (versions.size() > 0) {
       myDescriptionLabel.setText(versionLabelText);
       String maxValue = "";

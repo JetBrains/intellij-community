@@ -21,6 +21,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -192,11 +193,11 @@ public class DetailsComponent {
   public void update() {
     ArrayList<String> strings = new ArrayList<String>();
     if (myPrefix != null) {
-      strings.addAll(Arrays.asList(myPrefix));
+      ContainerUtil.addAll(strings, myPrefix);
     }
 
     if (myText != null) {
-      strings.addAll(Arrays.asList(myText));
+      ContainerUtil.addAll(strings, myText);
     }
 
     myBannerText = ArrayUtil.toStringArray(strings);

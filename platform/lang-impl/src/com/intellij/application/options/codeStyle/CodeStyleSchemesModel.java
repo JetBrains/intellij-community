@@ -25,6 +25,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemesImpl;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.*;
 
@@ -99,7 +100,7 @@ public class CodeStyleSchemesModel {
     CodeStyleScheme[] allSchemes = CodeStyleSchemes.getInstance().getSchemes();
     mySettingsToClone.clear();
     mySchemes.clear();
-    mySchemes.addAll(Arrays.asList(allSchemes));
+    ContainerUtil.addAll(mySchemes, allSchemes);
     myGlobalSelected = CodeStyleSchemes.getInstance().getCurrentScheme();
 
     CodeStyleSettings perProjectSettings = getProjectSettings().PER_PROJECT_SETTINGS;

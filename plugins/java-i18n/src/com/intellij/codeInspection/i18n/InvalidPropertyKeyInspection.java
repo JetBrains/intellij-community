@@ -30,6 +30,7 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,7 +80,7 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
     for (PsiClassInitializer initializer : initializers) {
       final ProblemDescriptor[] descriptors = checkElement(initializer, manager, isOnTheFly);
       if (descriptors != null) {
-        result.addAll(Arrays.asList(descriptors));
+        ContainerUtil.addAll(result, descriptors);
       }
     }
 

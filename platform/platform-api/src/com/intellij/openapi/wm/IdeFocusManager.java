@@ -30,25 +30,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 
-public abstract class IdeFocusManager {
-
-  /**
-   * Requests focus on a component
-   * @param c
-   * @param forced
-   * @return action callback that either notifies when the focus was obtained or focus request was droppped
-   */
-  @NotNull
-  public abstract ActionCallback requestFocus(@NotNull Component c, boolean forced);
-
-  /**
-   * Runs a request focus command, actual focus request is defined by the user in the command itself
-   * @param command
-   * @param forced
-   * @return action callback that either notifies when the focus was obtained or focus request was droppped
-   */
-  @NotNull
-  public abstract ActionCallback requestFocus(@NotNull FocusCommand command, boolean forced);
+public abstract class IdeFocusManager implements FocusRequestor {
 
   /**
    * Finds most suitable component to request focus to. For instance you may pass a JPanel instance,
@@ -74,6 +56,10 @@ public abstract class IdeFocusManager {
   public abstract ActionCallback requestDefaultFocus(boolean forced);
 
   public abstract boolean isFocusTransferEnabled();
+
+  public abstract Expirable getTimestamp(boolean trackOnlyForcedCommands);
+
+  public abstract FocusRequestor getFurtherRequestor();
 
   public static IdeFocusManager getInstance(@Nullable Project project) {
     if (project == null) return getGlobalInstance();
@@ -132,8 +118,6 @@ public abstract class IdeFocusManager {
     return owner != null ? findInstanceByComponent(owner) : findInstanceByContext(null);
   }
 
-  public abstract Expirable getTimestamp(boolean trackOnlyForcedCommands);
-
   @NotNull
   public static IdeFocusManager getGlobalInstance() {
     Application app = ApplicationManager.getApplication();
@@ -150,4 +134,5 @@ public abstract class IdeFocusManager {
   public Component getFocusOwner() {
     return isFocusBeingTransferred() ? null : KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
   }
+
 }

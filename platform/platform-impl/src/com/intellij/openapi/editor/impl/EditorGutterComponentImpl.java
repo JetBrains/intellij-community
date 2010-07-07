@@ -328,7 +328,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     for (int i = startLineNumber; i < endLineNumber; i++) {
       LogicalPosition logicalPosition = myEditor.visualToLogicalPosition(new VisualPosition(i, 0));
-      if (logicalPosition.isOnSoftWrappedLine()) {
+      if (logicalPosition.softWrapLinesOnCurrentLogicalLine > 0) {
         continue;
       }
       int logLine = logicalPosition.line;
@@ -768,7 +768,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     final FoldingGroup group = foldRange.getGroup();
 
-    final boolean drawTop = group == null || ((FoldingModelImpl)myEditor.getFoldingModel()).getFirstRegion(group) == foldRange;
+    final boolean drawTop = group == null || ((FoldingModelImpl)myEditor.getFoldingModel()).getFirstRegion(group, foldRange) == foldRange;
     if (!foldRange.isExpanded()) {
       if (y <= clip.y + clip.height && y + height >= clip.y) {
         if (drawTop) {
@@ -958,7 +958,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     for (FoldRegion foldRange : visibleRanges) {
       if (!foldRange.isValid()) continue;
       final FoldingGroup group = foldRange.getGroup();
-      if (group != null && ((FoldingModelImpl)myEditor.getFoldingModel()).getFirstRegion(group) != foldRange) {
+      if (group != null && ((FoldingModelImpl)myEditor.getFoldingModel()).getFirstRegion(group, foldRange) != foldRange) {
         continue;
       }
 

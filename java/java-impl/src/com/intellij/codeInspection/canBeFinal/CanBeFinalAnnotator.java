@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.*;
 
@@ -115,7 +116,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
         PsiField[] psiFields = psiClass.getFields();
 
         HashSet<PsiVariable> allFields = new HashSet<PsiVariable>();
-        allFields.addAll(Arrays.asList(psiFields));
+        ContainerUtil.addAll(allFields, psiFields);
         ArrayList<PsiVariable> instanceInitializerInitializedFields = new ArrayList<PsiVariable>();
         boolean hasInitializers = false;
         for (PsiClassInitializer initializer : psiClass.getInitializers()) {
@@ -123,7 +124,8 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
           hasInitializers = true;
           ControlFlow flow;
           try {
-            flow = ControlFlowFactory.getInstance(body.getProject()).getControlFlow(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false);
+            flow = ControlFlowFactory.getInstance(body.getProject())
+              .getControlFlow(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false);
           }
           catch (AnalysisCanceledException e) {
             flow = ControlFlow.EMPTY;
@@ -154,7 +156,8 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
               hasInitializers = true;
               ControlFlow flow;
               try {
-                flow = ControlFlowFactory.getInstance(body.getProject()).getControlFlow(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false);
+                flow = ControlFlowFactory.getInstance(body.getProject())
+                  .getControlFlow(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false);
               }
               catch (AnalysisCanceledException e) {
                 flow = ControlFlow.EMPTY;

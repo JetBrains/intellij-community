@@ -30,6 +30,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Time;
 import com.intellij.util.concurrency.WorkerThread;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.enumeration.EnumerationCopy;
 import com.intellij.util.ui.UIUtil;
@@ -3526,7 +3527,7 @@ public class AbstractTreeUi {
 
         Set<Object> toSelect = new HashSet<Object>();
         myTree.clearSelection();
-        toSelect.addAll(Arrays.asList(elements));
+        ContainerUtil.addAll(toSelect, elements);
         if (addToSelection) {
           toSelect.addAll(currentElements);
         }

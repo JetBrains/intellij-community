@@ -18,12 +18,11 @@ package org.intellij.plugins.intelliLang.inject.config.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.EditorTextField;
-import com.intellij.util.Consumer;
+import com.intellij.ui.LanguageTextField;
 import org.intellij.lang.regexp.RegExpLanguage;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 import org.intellij.plugins.intelliLang.inject.config.AbstractTagInjection;
 import org.intellij.plugins.intelliLang.inject.config.XPathSupportProxy;
-import com.intellij.ui.LanguageTextField;
 
 import javax.swing.*;
 
@@ -58,8 +57,8 @@ public class AdvancedXmlPanel extends AbstractInjectionPanel<AbstractTagInjectio
   }
 
   private void createUIComponents() {
-    myValuePattern = new LanguageTextField(RegExpLanguage.INSTANCE, myProject, myOrigInjection.getValuePattern(), new Consumer<PsiFile>() {
-      public void consume(PsiFile psiFile) {
+    myValuePattern = new LanguageTextField(RegExpLanguage.INSTANCE, myProject, myOrigInjection.getValuePattern(), new LanguageTextField.SimpleDocumentCreator() {
+      public void customizePsiFile(PsiFile psiFile) {
         psiFile.putCopyableUserData(ValueRegExpAnnotator.KEY, Boolean.TRUE);
       }
     });
@@ -67,8 +66,8 @@ public class AdvancedXmlPanel extends AbstractInjectionPanel<AbstractTagInjectio
     // don't even bother to look up the language when xpath-evaluation isn't possible
     final XPathSupportProxy proxy = XPathSupportProxy.getInstance();
     myXPathCondition = new LanguageTextField(proxy != null ? InjectedLanguage.findLanguageById("XPath") : null, myProject,
-                                             myOrigInjection.getXPathCondition(), new Consumer<PsiFile>() {
-        public void consume(PsiFile psiFile) {
+                                             myOrigInjection.getXPathCondition(), new LanguageTextField.SimpleDocumentCreator() {
+        public void customizePsiFile(PsiFile psiFile) {
           // important to get proper validation & completion for Jaxen's built-in and PSI functions
           // like lower-case(), file-type(), file-ext(), file-name(), etc.
           if (proxy != null) {

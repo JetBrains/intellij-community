@@ -42,6 +42,11 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
+    updateSettingsXmlFully("<settings>" +
+                           "  <mirrors>" +
+                           "  </mirrors>" +
+                           "</settings>");
+
     myRepositoryHelper = new MavenCustomRepositoryHelper(myDir, "local1", "local2", "remote");
     initIndices();
   }

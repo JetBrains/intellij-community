@@ -25,6 +25,7 @@ import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.NonClasspathDirectoryScope;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -50,6 +51,9 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
       if (scope.contains(classRoot)) {
         final VirtualFile classFile = classRoot.findFileByRelativePath(qualifiedName.replace('.', '/') + ".class");
         if (classFile != null) {
+          if (!classFile.isValid()) {
+            throw new AssertionError("Invalid child of valid parent: " + classFile.getPath() + "; " + classRoot.isValid() + " path=" + classRoot.getPath());
+          }
           final PsiFile file = PsiManager.getInstance(myProject).findFile(classFile);
           if (file instanceof PsiClassOwner) {
             final PsiClass[] classes = ((PsiClassOwner)file).getClasses();
@@ -83,7 +87,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
             if (!file.isDirectory()) {
               final PsiFile psi = PsiManager.getInstance(myProject).findFile(file);
               if (psi instanceof PsiClassOwner) {
-                result.addAll(Arrays.asList(((PsiClassOwner)psi).getClasses()));
+                ContainerUtil.addAll(result, ((PsiClassOwner)psi).getClasses());
               }
             }
           }

@@ -41,6 +41,7 @@ import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -151,8 +152,8 @@ public class ScopeViewPane extends AbstractProjectViewPane {
     if (!(element instanceof PsiElement)) return;
 
     List<NamedScope> allScopes = new ArrayList<NamedScope>();
-    allScopes.addAll(Arrays.asList(myDependencyValidationManager.getScopes()));
-    allScopes.addAll(Arrays.asList(myNamedScopeManager.getScopes()));
+    ContainerUtil.addAll(allScopes, myDependencyValidationManager.getScopes());
+    ContainerUtil.addAll(allScopes, myNamedScopeManager.getScopes());
     for (int i = 0; i < allScopes.size(); i++) {
       final NamedScope scope = allScopes.get(i);
       String name = scope.getName();

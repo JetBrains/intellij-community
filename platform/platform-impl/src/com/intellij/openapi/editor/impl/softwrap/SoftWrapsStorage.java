@@ -16,7 +16,6 @@
 package com.intellij.openapi.editor.impl.softwrap;
 
 import com.intellij.openapi.editor.TextChange;
-import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,10 +48,6 @@ public class SoftWrapsStorage {
    */
   public boolean isEmpty() {
     return myWraps.isEmpty();
-  }
-
-  public boolean hasSoftWrapAt(int offset) {
-    return getSoftWrapIndex(offset) >= 0;
   }
 
   @Nullable

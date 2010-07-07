@@ -19,7 +19,7 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.impl.ColorHolder;
+import com.intellij.openapi.editor.impl.ColorProvider;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,12 +29,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType.AFTER_SOFT_WRAP_LINE_FEED;
+import static com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType.AFTER_SOFT_WRAP;
 import static com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED;
 import static java.util.Arrays.asList;
 
 /**
- * Composite (in terms of GoF patterns) object for {@link SoftWrapPainter} objects.
+ * Encapsulates logic of wrapping multiple {@link SoftWrapPainter} implementations; chooses the one to use and deleagtes all
+ * processing to it.
  * <p/>
  * Not thread-safe.
  *
@@ -44,15 +45,15 @@ import static java.util.Arrays.asList;
 public class CompositeSoftWrapPainter implements SoftWrapPainter {
 
   private static final List<Map<SoftWrapDrawingType, Character>> SYMBOLS = asList(
-    asMap(asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP_LINE_FEED),
+    asMap(asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP),
           asList('\uE48B',                   '\uE48C')),
-    asMap(asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP_LINE_FEED),
+    asMap(asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP),
           asList('\u2926',                   '\u2925')),
-    asMap(asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP_LINE_FEED),
+    asMap(asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP),
           asList('\u21B2',                   '\u21B3')),
-    asMap(asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP_LINE_FEED),
+    asMap(asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP),
           asList('\u2936',                   '\u2937')),
-    asMap(asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP_LINE_FEED),
+    asMap(asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP),
           asList('\u21A9',                   '\u21AA'))
   );
 
@@ -107,7 +108,7 @@ public class CompositeSoftWrapPainter implements SoftWrapPainter {
     }
     if (++mySymbolsDrawingIndex < SYMBOLS.size()) {
       TextDrawingCallback callback = myEditor.getTextDrawingCallback();
-      ColorHolder colorHolder = ColorHolder.byColorsScheme(myEditor, EditorColors.RIGHT_MARGIN_COLOR);
+      ColorProvider colorHolder = ColorProvider.byColorScheme(myEditor, EditorColors.RIGHT_MARGIN_COLOR, EditorColors.WHITESPACES_COLOR);
       myDelegate = new TextBasedSoftWrapPainter(SYMBOLS.get(mySymbolsDrawingIndex), myEditor, callback, colorHolder);
       initDelegateIfNecessary();
       return;

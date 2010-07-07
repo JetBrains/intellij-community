@@ -47,6 +47,12 @@ public class TextComponentSoftWrapModel implements SoftWrapModel {
     return Collections.emptyList();
   }
 
+  @NotNull
+  @Override
+  public List<TextChange> getSoftWrapsForRange(int start, int end) {
+    return Collections.emptyList();
+  }
+
   @Override
   public void beforeDocumentChange(@NotNull VisualPosition position) {
   }
@@ -54,5 +60,15 @@ public class TextComponentSoftWrapModel implements SoftWrapModel {
   @Override
   public boolean isInsideSoftWrap(@NotNull VisualPosition position) {
     return false;
+  }
+
+  @Override
+  public int getSoftWrapIndentWidthInPixels(@NotNull TextChange softWrap) {
+    return 0;
+  }
+
+  @Override
+  public int getSoftWrapIndentWidthInColumns(@NotNull TextChange softWrap) {
+    return 0;
   }
 }

@@ -24,6 +24,7 @@ import com.intellij.cvsSupport2.ui.CvsTabbedWindow;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.vcs.ui.Refreshable;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -81,7 +82,7 @@ public class RemoveLocallyDeletedFilesAction extends RemoveLocallyFileOrDirector
     File[] files = context.getSelectedIOFiles();
     ArrayList<File> result = new ArrayList<File>();
     if (files == null) return result;
-    result.addAll(Arrays.asList(files));
+    ContainerUtil.addAll(result, files);
     return result;
   }
 

@@ -21,6 +21,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
@@ -65,7 +66,7 @@ public abstract class AutomaticRenamer {
       for (final UsageInfo usage : usages) {
         if (usage instanceof UnresolvableCollisionUsageInfo) return false;
       }
-      result.addAll(Arrays.asList(usages));
+      ContainerUtil.addAll(result, usages);
     }
     return true;
   }

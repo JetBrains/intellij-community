@@ -48,6 +48,7 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.IndexInfrastructure;
@@ -1069,7 +1070,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
           {
             final Set<VirtualFile> newRoots = new HashSet<VirtualFile>();
-            newRoots.addAll(Arrays.asList(rootsAfter));
+            ContainerUtil.addAll(newRoots, rootsAfter);
             if (myRootsBefore != null) {
               newRoots.removeAll(Arrays.asList(myRootsBefore));
             }
@@ -1079,7 +1080,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
           {
             final Set<VirtualFile> oldRoots = new HashSet<VirtualFile>();
             if (myRootsBefore != null) {
-              oldRoots.addAll(Arrays.asList(myRootsBefore));
+              ContainerUtil.addAll(oldRoots, myRootsBefore);
             }
             if (!oldRoots.isEmpty()) {
               oldRoots.removeAll(Arrays.asList(rootsAfter));

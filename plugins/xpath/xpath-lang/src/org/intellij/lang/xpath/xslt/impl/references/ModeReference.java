@@ -16,6 +16,7 @@
 
 package org.intellij.lang.xpath.xslt.impl.references;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.xpath.completion.NamespaceLookup;
 import org.intellij.lang.xpath.psi.impl.ResolveUtil;
 import org.intellij.lang.xpath.xslt.XsltSupport;
@@ -70,13 +71,13 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
         if (containingFile instanceof XmlFile && XsltSupport.isXsltFile(containingFile)) {
             final List<Object> l = new ArrayList<Object>();
             if (!myImplicitModeElement.hasPrefix()) {
-                final Object[] prefixes = PrefixReference.getPrefixCompletions(myAttribute);
-                l.addAll(Arrays.asList(prefixes));
+              final Object[] prefixes = PrefixReference.getPrefixCompletions(myAttribute);
+              ContainerUtil.addAll(l, prefixes);
             }
 
             if (myImplicitModeElement.getQName() != null) {
-                final PsiElement[] modes = ResolveUtil.collect(getMatcher().variantMatcher());
-                l.addAll(Arrays.asList(modes));
+              final PsiElement[] modes = ResolveUtil.collect(getMatcher().variantMatcher());
+              ContainerUtil.addAll(l, modes);
             }
           return ArrayUtil.toObjectArray(l);
         }

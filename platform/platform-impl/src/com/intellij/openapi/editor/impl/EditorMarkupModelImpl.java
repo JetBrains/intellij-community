@@ -159,7 +159,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       if (nearestMarkSpots.isEmpty()) return false;
       Set<RangeHighlighter> highlighters = new THashSet<RangeHighlighter>(nearestMarkSpots.size() + 4);
       for (MarkSpot markSpot : nearestMarkSpots) {
-        highlighters.addAll(Arrays.asList(markSpot.highlighters));
+        ContainerUtil.addAll(highlighters, markSpot.highlighters);
       }
       TooltipRenderer bigRenderer = myTooltipRendererProvider.calcTooltipRenderer(highlighters);
       if (bigRenderer != null) {

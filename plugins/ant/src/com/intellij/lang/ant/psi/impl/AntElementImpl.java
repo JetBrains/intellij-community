@@ -31,12 +31,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
 import java.util.List;
 
 public class AntElementImpl extends MetadataPsiElementBase implements AntElement {
@@ -249,7 +249,7 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     final List<PsiReference> result = PsiReferenceListSpinAllocator.alloc();
     try {
       for (final PsiReferenceProvider provider : providers) {
-        result.addAll(Arrays.asList(provider.getReferencesByElement(this, new ProcessingContext())));
+        ContainerUtil.addAll(result, provider.getReferencesByElement(this, new ProcessingContext()));
       }
       return myReferences = result.toArray(new PsiReference[result.size()]);
     }

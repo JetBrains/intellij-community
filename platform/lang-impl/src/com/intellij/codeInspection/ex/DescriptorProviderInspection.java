@@ -31,6 +31,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashMap;
@@ -137,7 +138,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
         localQuickFixes = new HashSet<QuickFix>();
         getQuickFixActions().put(refEntity, localQuickFixes);
       }
-      localQuickFixes.addAll(Arrays.asList(fixes));
+      ContainerUtil.addAll(localQuickFixes, fixes);
     }
   }
 
@@ -454,7 +455,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
         final Set<CommonProblemDescriptor> allAvailable = new HashSet<CommonProblemDescriptor>();
         for (CommonProblemDescriptor[] descriptors : myOldProblemElements.values()) {
           if (descriptors != null) {
-            allAvailable.addAll(Arrays.asList(descriptors));
+            ContainerUtil.addAll(allAvailable, descriptors);
           }
         }
         final boolean old = contains(descriptor, allAvailable);

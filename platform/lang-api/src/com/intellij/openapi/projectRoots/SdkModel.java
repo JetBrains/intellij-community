@@ -91,4 +91,6 @@ public interface SdkModel {
    * @param listener the listener instance.
    */
   void removeListener(Listener listener);
+
+  Listener getMulticaster();
 }

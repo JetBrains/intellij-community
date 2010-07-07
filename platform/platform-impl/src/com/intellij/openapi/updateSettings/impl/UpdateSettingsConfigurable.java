@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ListUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.MappingListCellRenderer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -126,7 +127,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     }
     final String pluginHosts = System.getProperty("idea.plugin.hosts");
     if (pluginHosts != null) {
-      hosts.addAll(Arrays.asList(pluginHosts.split(";")));
+      ContainerUtil.addAll(hosts, pluginHosts.split(";"));
     }
     return hosts;
   }

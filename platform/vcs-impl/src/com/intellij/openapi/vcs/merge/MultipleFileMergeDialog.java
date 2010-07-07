@@ -322,9 +322,14 @@ public class MultipleFileMergeDialog extends DialogWrapper {
     if (file.getFileType() == StdFileTypes.IDEA_MODULE ||
         file.getFileType() == StdFileTypes.IDEA_PROJECT ||
         file.getFileType() == StdFileTypes.IDEA_WORKSPACE ||
-        ProjectOpenProcessor.getImportProvider(file) != null) {
+        isProjectFile(file)) {
       myProjectManager.saveChangedProjectFile(file, myProject);
     }
+  }
+
+  private static boolean isProjectFile(VirtualFile file) {
+    final ProjectOpenProcessor importProvider = ProjectOpenProcessor.getImportProvider(file);
+    return importProvider != null && importProvider.lookForProjectsInDirectory();
   }
 
   private static String decodeContent(final VirtualFile file, final byte[] content) {

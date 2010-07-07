@@ -16,6 +16,7 @@
 
 package com.intellij.ide.util.frameworkSupport;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
@@ -28,7 +29,7 @@ import javax.swing.*;
 /**
  * @author nik
  */
-public abstract class FrameworkSupportConfigurable {
+public abstract class FrameworkSupportConfigurable implements Disposable {
   private final EventDispatcher<FrameworkSupportConfigurableListener> myDispatcher = EventDispatcher.create(FrameworkSupportConfigurableListener.class);
 
   @Nullable
@@ -54,5 +55,9 @@ public abstract class FrameworkSupportConfigurable {
 
   protected void fireFrameworkVersionChanged() {
     myDispatcher.getMulticaster().frameworkVersionChanged();
+  }
+
+  @Override
+  public void dispose() {
   }
 }

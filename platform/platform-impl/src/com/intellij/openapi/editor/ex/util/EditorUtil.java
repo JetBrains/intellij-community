@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.impl.IterationState;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.List;
@@ -295,6 +296,42 @@ public class EditorUtil {
 
     int nTabs = x / tabSize;
     return (nTabs + 1) * tabSize;
+  }
+
+  /**
+   * Allows to answer what width in pixels is required to draw fragment of the given char array from <code>[start; end)</code> interval
+   * at the given editor.
+   * <p/>
+   * Tabulation symbols is processed specially, i.e. it's ta
+   * <p/>
+   * <b>Note:</b> it's assumed that target text fragment remains to the single line, i.e. line feed symbols within it are not
+   * treated specially.
+   *
+   * @param editor    editor that will be used for target text representation
+   * @param text      target text holder
+   * @param start     offset within the given char array that points to target text start (inclusive)
+   * @param end       offset within the given char array that points to target text end (exclusive)
+   * @param fontType  font type to use for target text representation
+   * @return          width in pixels required for target text representation
+   */
+  public static int textWidth(@NotNull Editor editor, char[] text, int start, int end, int fontType) {
+    int result = 0;
+    for (int i = start; i < end; i++) {
+      char c = text[i];
+      if (c != '\t') {
+        FontInfo font = fontForChar(c, fontType, editor);
+        result += font.charWidth(c, editor.getContentComponent());
+        continue;
+      }
+
+      if (editor.getSettings().isWhitespacesShown()) {
+        result += getTabSize(editor) * getSpaceWidth(fontType, editor);
+      }
+      else {
+        result += getSpaceWidth(fontType, editor);
+      }
+    }
+    return result;
   }
 }
 

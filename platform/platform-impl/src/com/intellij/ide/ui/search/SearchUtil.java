@@ -31,6 +31,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -659,7 +660,7 @@ public class SearchUtil {
   public static List<Configurable> expandGroup(final ConfigurableGroup group) {
     final Configurable[] configurables = group.getConfigurables();
     ArrayList<Configurable> result = new ArrayList<Configurable>();
-    result.addAll(Arrays.asList(configurables));
+    ContainerUtil.addAll(result, configurables);
     for (Configurable each : configurables) {
       addChildren(each, result);
     }

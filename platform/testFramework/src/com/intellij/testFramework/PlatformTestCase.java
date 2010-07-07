@@ -306,7 +306,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
     Set<VirtualFile> survivors = new HashSet<VirtualFile>();
 
-    for (IndexedRootsProvider provider : IndexedRootsProvider.EP_NAME.getExtensions()) {
+    for (IndexedRootsProvider provider : IndexableSetContributor.EP_NAME.getExtensions()) {
       for (VirtualFile file : IndexableSetContributor.getRootsToIndex(provider)) {
         addSubTree(file, survivors);
         while (file != null && survivors.add(file)) {

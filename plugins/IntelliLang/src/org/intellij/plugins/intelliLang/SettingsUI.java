@@ -21,6 +21,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +50,7 @@ class SettingsUI {
 
     final ArrayList<Configurable> configurables = new ArrayList<Configurable>();
     for (LanguageInjectionSupport support : Extensions.getExtensions(LanguageInjectionSupport.EP_NAME)) {
-      configurables.addAll(Arrays.asList(support.createSettings(project, configuration)));
+      ContainerUtil.addAll(configurables, support.createSettings(project, configuration));
     }
     Collections.sort(configurables, new Comparator<Configurable>() {
       public int compare(final Configurable o1, final Configurable o2) {

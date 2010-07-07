@@ -205,10 +205,6 @@ public class FileTemplateUtil{
       modifiedPatternsPath = new File(modifiedPatternsPath, "fileTemplates");
       modifiedPatternsPath = new File(modifiedPatternsPath, "includes");
 
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        System.out.println("FileTemplateUtil.initVelocity");
-      }
-
       LogSystem emptyLogSystem = new LogSystem() {
         public void init(RuntimeServices runtimeServices) throws Exception {
         }
@@ -341,9 +337,6 @@ public class FileTemplateUtil{
             paths.add(testsDir.getAbsolutePath());
           }
         }
-
-        System.out.println("FileTemplateUtil$MyFileResourceLoader.init");
-        System.out.println("paths = " + paths);
       }
       catch (Exception e) {
         LOG.error(e);

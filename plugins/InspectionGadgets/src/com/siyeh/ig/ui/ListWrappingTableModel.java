@@ -15,6 +15,8 @@
  */
 package com.siyeh.ig.ui;
 
+import com.intellij.util.containers.ContainerUtil;
+
 import javax.swing.table.AbstractTableModel;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,14 +29,14 @@ public class ListWrappingTableModel extends AbstractTableModel {
 
     public ListWrappingTableModel(List<List<String>> list,
                                   String... columnNames) {
-        if (list == null) {
-            throw new NullPointerException("list");
-        }
-        if (columnNames == null) {
-            throw new NullPointerException("columnNames");
-        }
-        this.list = list;
-        this.columnNames.addAll(Arrays.asList(columnNames));
+      if (list == null) {
+        throw new NullPointerException("list");
+      }
+      if (columnNames == null) {
+        throw new NullPointerException("columnNames");
+      }
+      this.list = list;
+      ContainerUtil.addAll(this.columnNames, columnNames);
     }
 
     /**

@@ -13,24 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.template.zencoding;
+package com.intellij.codeInsight.template.zencoding.tokens;
 
 /**
  * @author Eugene.Kudelevsky
  */
-public class NumberToken extends Token {
-  private final int myNumber;
+public class OperationToken extends ZenCodingToken {
+  private final char mySign;
 
-  NumberToken(int number) {
-    myNumber = number;
+  public OperationToken(char sign) {
+    mySign = sign;
   }
 
-  public int getNumber() {
-    return myNumber;
+  public char getSign() {
+    return mySign;
   }
 
   @Override
   public String toString() {
-    return Integer.toString(myNumber);
+    return Character.toString(mySign);
   }
 }

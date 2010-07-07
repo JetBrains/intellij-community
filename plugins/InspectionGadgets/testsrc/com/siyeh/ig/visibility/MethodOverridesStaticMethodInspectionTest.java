@@ -13,10 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.template.zencoding;
+package com.siyeh.ig.visibility;
 
-/**
- * @author Eugene.Kudelevsky
- */
-public class Token {
+import com.IGInspectionTestCase;
+
+public class MethodOverridesStaticMethodInspectionTest extends IGInspectionTestCase {
+
+  public void test() throws Exception {
+    doTest("com/siyeh/igtest/visibility/overrides", new MethodOverridesStaticMethodInspection());
+  }
+
 }

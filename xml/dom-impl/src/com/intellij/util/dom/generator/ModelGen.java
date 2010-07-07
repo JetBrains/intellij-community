@@ -15,6 +15,7 @@
  */
 package com.intellij.util.dom.generator;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jdom.Document;
 import org.jdom.input.SAXBuilder;
@@ -175,7 +176,7 @@ public class ModelGen {
     };
     ArrayList<File> files = new ArrayList<File>();
     for (File root : modelRoots) {
-      files.addAll(Arrays.asList(root.listFiles()));
+      ContainerUtil.addAll(files, root.listFiles());
     }
     loader.loadModel(model, files, resolver);
     Util.log(model.jtMap.size() + " java types loaded");

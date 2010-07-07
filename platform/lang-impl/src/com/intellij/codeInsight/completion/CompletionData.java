@@ -121,8 +121,8 @@ public class CompletionData {
     });
   }
 
-  public void addKeywordVariants(Set<CompletionVariant> set, PsiElement position, final PsiFile file){
-    set.addAll(Arrays.asList(findVariants(position, file)));
+  public void addKeywordVariants(Set<CompletionVariant> set, PsiElement position, final PsiFile file) {
+    ContainerUtil.addAll(set, findVariants(position, file));
   }
 
   public void completeKeywordsBySet(final Set<LookupElement> set, Set<CompletionVariant> variants, final PsiElement position,

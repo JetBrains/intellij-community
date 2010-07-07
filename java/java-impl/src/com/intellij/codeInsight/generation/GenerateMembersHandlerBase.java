@@ -38,6 +38,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -185,7 +186,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
     for (ClassMember member : members) {
       GenerationInfo[] prototypes = generateMemberPrototypes(aClass, member);
       if (prototypes != null) {
-        array.addAll(Arrays.asList(prototypes));
+        ContainerUtil.addAll(array, prototypes);
       }
     }
     return array;

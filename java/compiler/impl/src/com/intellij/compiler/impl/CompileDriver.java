@@ -1271,7 +1271,7 @@ public class CompileDriver {
     for (File outputDirectory : outputDirectories) {
       File[] files = outputDirectory.listFiles();
       if (files != null) {
-        filesToDelete.addAll(Arrays.asList(files));
+        ContainerUtil.addAll(filesToDelete, files);
       }
     }
     if (filesToDelete.size() > 0) {

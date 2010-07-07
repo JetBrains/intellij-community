@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.findUsages;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.TextRange;
@@ -83,20 +84,17 @@ public class GroovyConstructorUsagesSearchHelper {
     }
 
 
-    ReferencesSearch.search(clazz, searchScope, true).forEach(new Processor<PsiReference>() {
-      public boolean process(final PsiReference ref) {
-        return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-          public Boolean compute() {
-            final PsiElement element = ref.getElement();
-            if (element instanceof GrCodeReferenceElement && element.getParent() instanceof GrNewExpression) {
-              final GrNewExpression newExpression = (GrNewExpression)element.getParent();
-              final PsiMethod resolvedConstructor = newExpression.resolveConstructor();
-              final PsiManager manager = constructor.getManager();
-              if (manager.areElementsEquivalent(resolvedConstructor, constructor) && !consumer.process(ref)) return false;
-            }
-            return true;
-          }
-        });
+    ReferencesSearch.search(clazz, searchScope, true).forEach(new ReadActionProcessor<PsiReference>() {
+      @Override
+      public boolean processInReadAction(PsiReference ref) {
+        final PsiElement element = ref.getElement();
+        if (element instanceof GrCodeReferenceElement && element.getParent() instanceof GrNewExpression) {
+          final GrNewExpression newExpression = (GrNewExpression)element.getParent();
+          final PsiMethod resolvedConstructor = newExpression.resolveConstructor();
+          final PsiManager manager = constructor.getManager();
+          if (manager.areElementsEquivalent(resolvedConstructor, constructor) && !consumer.process(ref)) return false;
+        }
+        return true;
       }
     });
 

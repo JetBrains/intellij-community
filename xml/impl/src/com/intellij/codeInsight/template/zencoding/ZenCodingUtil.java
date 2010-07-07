@@ -24,6 +24,7 @@ public class ZenCodingUtil {
   static final String NUMBER_IN_ITERATION_PLACE_HOLDER = "$";
 
   public static String getValue(Pair<String, String> pair, int numberInIteration) {
-    return pair.second.replace(NUMBER_IN_ITERATION_PLACE_HOLDER, Integer.toString(numberInIteration + 1));
+    String s = pair.second.replace(NUMBER_IN_ITERATION_PLACE_HOLDER, Integer.toString(numberInIteration + 1));
+    return s.replace("\"", "&quot;");
   }
 }

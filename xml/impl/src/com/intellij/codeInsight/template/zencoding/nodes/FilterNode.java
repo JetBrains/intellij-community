@@ -13,34 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.template.zencoding;
+package com.intellij.codeInsight.template.zencoding.nodes;
 
-import com.intellij.openapi.util.Pair;
-import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 /**
  * @author Eugene.Kudelevsky
  */
-public class XmlTemplateToken extends TemplateToken {
-  private final List<Pair<String, String>> myAttribute2Value;
-  private XmlTag myTag;
+public class FilterNode extends ZenCodingNode {
+  private final ZenCodingNode myNode;
+  private final String myFilter;
 
-  public XmlTemplateToken(String key, List<Pair<String, String>> attribute2value) {
-    super(key);
-    myAttribute2Value = attribute2value;
+  public FilterNode(ZenCodingNode node, String filter) {
+    myNode = node;
+    myFilter = filter;
   }
 
-  public List<Pair<String, String>> getAttribute2Value() {
-    return myAttribute2Value;
+  public ZenCodingNode getNode() {
+    return myNode;
   }
 
-  public XmlTag getTag() {
-    return myTag;
+  public String getFilter() {
+    return myFilter;
   }
 
-  public void setTag(XmlTag tag) {
-    myTag = tag;
+  @NotNull
+  @Override
+  public List<GenerationNode> expand(int numberInIteration) {
+    return myNode.expand(numberInIteration);
   }
 }

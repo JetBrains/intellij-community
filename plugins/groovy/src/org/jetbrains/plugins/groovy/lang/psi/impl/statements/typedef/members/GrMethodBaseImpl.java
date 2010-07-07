@@ -362,9 +362,7 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
 
   @NotNull
   public GrModifierList getModifierList() {
-    GrModifierListImpl list = findChildByClass(GrModifierListImpl.class);
-    assert list != null;
-    return list;
+    return (GrModifierList)findNotNullChildByType(GroovyElementTypes.MODIFIERS);
   }
 
   public boolean hasModifierProperty(@NonNls @NotNull String name) {

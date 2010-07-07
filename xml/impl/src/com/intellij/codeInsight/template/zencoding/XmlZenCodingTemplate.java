@@ -17,8 +17,10 @@ package com.intellij.codeInsight.template.zencoding;
 
 import com.intellij.codeInsight.template.CustomLiveTemplate;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
-import com.intellij.codeInsight.template.TemplateInvokationListener;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.codeInsight.template.zencoding.filters.ZenCodingGenerator;
+import com.intellij.codeInsight.template.zencoding.tokens.TemplateToken;
+import com.intellij.codeInsight.template.zencoding.tokens.XmlTemplateToken;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -68,7 +70,13 @@ public class XmlZenCodingTemplate extends ZenCodingTemplate {
   private static Pair<String, String> parseAttrNameAndValue(@NotNull String text) {
     int eqIndex = text.indexOf('=');
     if (eqIndex > 0) {
-      return new Pair<String, String>(text.substring(0, eqIndex), text.substring(eqIndex + 1));
+      String value = text.substring(eqIndex + 1);
+      if (value.length() >= 2 && (
+        (value.charAt(0) == '\'' && value.charAt(value.length() - 1) == '\'') ||
+        (value.charAt(0) == '"' && value.charAt(value.length() - 1) == '"'))) {
+        value = value.substring(1, value.length() - 1);
+      }
+      return new Pair<String, String>(text.substring(0, eqIndex), value);
     }
     return null;
   }
@@ -206,19 +214,21 @@ public class XmlZenCodingTemplate extends ZenCodingTemplate {
     }
     assert prefix.equals(token.getKey());
     token.setTemplate(template);
-    final XmlTag tag = parseXmlTagInTemplate(template.getString(), callback, true);
+    final XmlFile xmlFile = parseXmlFileInTemplate(template.getString(), callback, true);
+    token.setFile(xmlFile);
+    XmlDocument document = xmlFile.getDocument();
+    final XmlTag tag = document != null ? document.getRootTag() : null;
     if (token.getAttribute2Value().size() > 0 && tag == null) {
       return null;
     }
     if (tag != null) {
-      if (!XmlZenCodingInterpreter.containsAttrsVar(template) && token.getAttribute2Value().size() > 0) {
+      if (!containsAttrsVar(template) && token.getAttribute2Value().size() > 0) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
             addMissingAttributes(tag, token.getAttribute2Value());
           }
         });
       }
-      token.setTag(tag);
     }
     return token;
   }
@@ -259,16 +269,15 @@ public class XmlZenCodingTemplate extends ZenCodingTemplate {
     return new TemplateImpl("", builder.toString(), "");
   }
 
-  @Nullable
-  static XmlTag parseXmlTagInTemplate(String templateString, CustomTemplateCallback callback, boolean createPhysicalFile) {
+  @NotNull
+  private static XmlFile parseXmlFileInTemplate(String templateString, CustomTemplateCallback callback, boolean createPhysicalFile) {
     XmlFile xmlFile = (XmlFile)PsiFileFactory.getInstance(callback.getProject())
       .createFileFromText("dummy.xml", StdFileTypes.XML, templateString, LocalTimeCounter.currentTime(), createPhysicalFile);
     VirtualFile vFile = xmlFile.getVirtualFile();
     if (vFile != null) {
       vFile.putUserData(UndoManager.DONT_RECORD_UNDO, Boolean.TRUE);
     }
-    XmlDocument document = xmlFile.getDocument();
-    return document == null ? null : document.getRootTag();
+    return xmlFile;
   }
 
   protected boolean isApplicable(@NotNull PsiElement element) {
@@ -279,7 +288,7 @@ public class XmlZenCodingTemplate extends ZenCodingTemplate {
       if (PsiTreeUtil.getParentOfType(element, XmlComment.class) != null) {
         return false;
       }
-      if (!findApplicableFilter(element)) {
+      if (!findApplicableGenerator(element)) {
         return false;
       }
       return true;
@@ -287,13 +296,13 @@ public class XmlZenCodingTemplate extends ZenCodingTemplate {
     return false;
   }
 
-  private static boolean findApplicableFilter(@NotNull PsiElement context) {
-    for (ZenCodingFilter filter : ZenCodingFilter.EP_NAME.getExtensions()) {
-      if (filter.isMyContext(context)) {
+  private static boolean findApplicableGenerator(@NotNull PsiElement context) {
+    for (ZenCodingGenerator generator : ZenCodingGenerator.getInstances()) {
+      if (generator.isMyContext(context) && generator.isAppliedByDefault(context)) {
         return true;
       }
     }
-    return new XmlZenCodingFilterImpl().isMyContext(context);
+    return false;
   }
 
   public static boolean startZenCoding(Editor editor, PsiFile file, String abbreviation) {
@@ -308,17 +317,13 @@ public class XmlZenCodingTemplate extends ZenCodingTemplate {
         String selection = callback.getEditor().getSelectionModel().getSelectedText();
         assert selection != null;
         selection = selection.trim();
-        template.doWrap(selection, abbreviation, callback, new TemplateInvokationListener() {
-          public void finished() {
-            callback.startAllExpandedTemplates();
-          }
-        });
+        template.doWrap(selection, abbreviation, callback);
       }
       else {
         String key = template.computeTemplateKey(callback);
         if (key != null) {
           template.expand(key, callback);
-          callback.startAllExpandedTemplates();
+          //callback.startAllExpandedTemplates();
           return true;
         }
         // if it is simple live template invokation, we should start it using TemplateManager because template may be ambiguous

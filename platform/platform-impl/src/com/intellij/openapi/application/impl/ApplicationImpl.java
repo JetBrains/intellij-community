@@ -495,6 +495,10 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
                 progress.cancel();
                 // ok to ignore.
               }
+              catch (RuntimeException e) {
+                progress.cancel();
+                throw e;
+              }
               finally {
                 setExceptionalThreadWithReadAccessFlag(old);
                 makeChangesVisibleToEDT();

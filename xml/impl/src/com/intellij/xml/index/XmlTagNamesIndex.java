@@ -61,7 +61,8 @@ public class XmlTagNamesIndex extends XmlIndex<Void> {
             map.put(tag, null);
           }
           return map;
-        } else {
+        }
+        else {
           return Collections.emptyMap();
         }
       }
