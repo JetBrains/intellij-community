@@ -16,11 +16,12 @@
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.RenameableFakePsiElement;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.Icons;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -28,17 +29,13 @@ import javax.swing.*;
  * @author Konstantin Bulenkov
  */
 public class SchemaPrefix extends RenameableFakePsiElement {
-  private final XmlElement myParent;
   private final TextRange myRange;
   private final String myName;
-  private final XmlAttribute myDeclaration;
 
-  public SchemaPrefix(final XmlElement parent, TextRange range, String name, XmlAttribute nsDeclaration) {
+  public SchemaPrefix(final XmlAttribute parent, TextRange range, String name) {
     super(parent);
-    myParent = parent;
     myRange = range;
     myName = name;
-    myDeclaration = nsDeclaration;
   }
 
   public String getTypeName() {
@@ -51,7 +48,7 @@ public class SchemaPrefix extends RenameableFakePsiElement {
 
   @Override
   public int getTextOffset() {
-    return myParent.getTextRange().getStartOffset() + myRange.getStartOffset();
+    return getParent().getTextRange().getStartOffset() + myRange.getStartOffset();
   }
 
   @Override
@@ -64,16 +61,18 @@ public class SchemaPrefix extends RenameableFakePsiElement {
     return myName;
   }
 
-  public PsiElement getParent() {
-    return myParent;
-  }
-
   public XmlAttribute getDeclaration() {
-    return myDeclaration;
+    return (XmlAttribute)getParent();
   }
 
   @Override
   public TextRange getTextRange() {
     return TextRange.from(getTextOffset(), getTextLength());
+  }
+
+  @NotNull
+  @Override
+  public SearchScope getUseScope() {
+    return new LocalSearchScope(getDeclaration().getParent());
   }
 }

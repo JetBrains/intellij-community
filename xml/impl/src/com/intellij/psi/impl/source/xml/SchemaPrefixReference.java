@@ -40,7 +40,7 @@ public class SchemaPrefixReference extends PsiReferenceBase<XmlElement> {
     myElement = element;
     myName = name;
     if (myElement instanceof XmlAttribute && ((XmlAttribute)myElement).isNamespaceDeclaration()) {
-      myPrefix = new SchemaPrefix(element, range, name, (XmlAttribute)element);
+      myPrefix = new SchemaPrefix((XmlAttribute)element, range, name);
       myDeclaration = element;
     } else {
       final PsiElement declaration = XmlUtil.findNamespaceDeclaration(element, name);
@@ -48,7 +48,7 @@ public class SchemaPrefixReference extends PsiReferenceBase<XmlElement> {
         final XmlAttribute attribute = (XmlAttribute)declaration;
         final String prefix = attribute.getNamespacePrefix();
         final TextRange textRange = TextRange.from(prefix.length() + 1, name.length());
-        myPrefix = new SchemaPrefix(attribute, textRange, name, (XmlAttribute)declaration);
+        myPrefix = new SchemaPrefix(attribute, textRange, name);
         myDeclaration = (XmlElement)declaration;
       } else {
         myPrefix = null;

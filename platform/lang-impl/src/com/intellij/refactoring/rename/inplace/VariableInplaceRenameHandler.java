@@ -89,7 +89,9 @@ public final class VariableInplaceRenameHandler implements RenameHandler {
       try {
         ourPreventInlineRenameFlag.set(Boolean.TRUE);
 
-        RenameHandlerRegistry.getInstance().getRenameHandler(dataContext).invoke(
+        RenameHandler handler = RenameHandlerRegistry.getInstance().getRenameHandler(dataContext);
+        assert handler != null;
+        handler.invoke(
           elementToRename.getProject(),
           editor,
           elementToRename.getContainingFile(), dataContext
