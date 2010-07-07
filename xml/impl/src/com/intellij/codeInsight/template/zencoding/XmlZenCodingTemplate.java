@@ -281,19 +281,16 @@ public class XmlZenCodingTemplate extends ZenCodingTemplate {
   }
 
   protected boolean isApplicable(@NotNull PsiElement element) {
-    if (element.getLanguage() instanceof XMLLanguage) {
-      if (PsiTreeUtil.getParentOfType(element, XmlAttributeValue.class) != null) {
-        return false;
-      }
-      if (PsiTreeUtil.getParentOfType(element, XmlComment.class) != null) {
-        return false;
-      }
-      if (!findApplicableGenerator(element)) {
-        return false;
-      }
-      return true;
+    if (PsiTreeUtil.getParentOfType(element, XmlAttributeValue.class) != null) {
+      return false;
     }
-    return false;
+    if (PsiTreeUtil.getParentOfType(element, XmlComment.class) != null) {
+      return false;
+    }
+    if (!findApplicableGenerator(element)) {
+      return false;
+    }
+    return true;
   }
 
   private static boolean findApplicableGenerator(@NotNull PsiElement context) {
