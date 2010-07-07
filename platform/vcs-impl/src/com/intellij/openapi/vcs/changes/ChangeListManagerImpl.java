@@ -44,6 +44,7 @@ import com.intellij.ui.EditorNotifications;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.Topic;
 import org.jdom.Element;
@@ -852,7 +853,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   private boolean doCommit(final LocalChangeList changeList, final List<Change> changes, final boolean synchronously) {
     return new CommitHelper(myProject, changeList, changes, changeList.getName(),
-                     changeList.getComment(), new ArrayList<CheckinHandler>(), false, synchronously, null).doCommit();
+                     changeList.getComment(), new ArrayList<CheckinHandler>(), false, synchronously, new NullableFunction<Object, Object>() {
+        @Override
+        public Object fun(Object o) {
+          return null;
+        }
+      }).doCommit();
   }
 
   public void commitChangesSynchronously(LocalChangeList changeList, List<Change> changes) {
