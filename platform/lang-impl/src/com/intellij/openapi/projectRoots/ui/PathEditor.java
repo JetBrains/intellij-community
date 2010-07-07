@@ -38,6 +38,7 @@ import com.intellij.util.Icons;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -121,11 +122,12 @@ public class PathEditor {
     return roots;
   }
 
-  public void reset(VirtualFile[] files) {
+  public void reset(@Nullable SdkModificator modificator) {
     keepSelectionState();
     clearList();
-    myEnabled = files != null;
+    myEnabled = modificator != null;
     if(myEnabled){
+      VirtualFile[] files = modificator.getRoots(myOrderRootType);
       for (VirtualFile file : files) {
         addElement(file);
       }

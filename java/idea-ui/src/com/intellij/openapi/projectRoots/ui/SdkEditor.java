@@ -215,7 +215,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
     else{
       final SdkModificator sdkModificator = mySdk.getSdkModificator();
       for (OrderRootType type : myPathEditors.keySet()) {
-        myPathEditors.get(type).reset(sdkModificator.getRoots(type));
+        myPathEditors.get(type).reset(sdkModificator);
       }
       sdkModificator.commitChanges();
       setHomePathValue(mySdk.getHomePath().replace('/', File.separatorChar));
