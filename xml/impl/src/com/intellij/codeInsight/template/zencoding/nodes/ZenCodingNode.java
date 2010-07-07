@@ -13,32 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.template.zencoding;
+package com.intellij.codeInsight.template.zencoding.nodes;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 /**
  * @author Eugene.Kudelevsky
  */
-public interface ZenCodingFilter {
-  ExtensionPointName<ZenCodingFilter> EP_NAME = new ExtensionPointName<ZenCodingFilter>("com.intellij.xml.zenCodingFilter");
-
+public abstract class ZenCodingNode {
   @NotNull
-  String toString(@NotNull TemplateToken token, @NotNull PsiElement context);
-
-  @NotNull
-  String buildAttributesString(@NotNull List<Pair<String, String>> attribute2value, int numberInIteration);
-
-  boolean isMyContext(@NotNull PsiElement context);
-
-  @Nullable
-  String getSuffix();
-
-  boolean isDefaultFilter();
+  public abstract List<GenerationNode> expand(int numberInIteration);
 }

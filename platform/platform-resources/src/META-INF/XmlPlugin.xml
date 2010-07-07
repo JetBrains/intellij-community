@@ -40,7 +40,7 @@
     <extensionPoint name="xml.implicitNamespaceDescriptorProvider"
                     interface="com.intellij.javaee.ImplicitNamespaceDescriptorProvider"/>
 
-    <extensionPoint name="xml.zenCodingFilter" interface="com.intellij.codeInsight.template.zencoding.ZenCodingFilter"/>
+    <extensionPoint name="xml.zenCodingGenerator" interface="com.intellij.codeInsight.template.zencoding.filters.ZenCodingGenerator"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -323,9 +323,10 @@
 
   <actions>
     <group id="NewXml" text="XML">
-      <action id="NewHtmlType" class="com.intellij.ide.actions.CreateHtmlAction" text="HTML File"/>
-      <action id="NewHtml5Type" class="com.intellij.ide.actions.CreateHtml5Action" text="HTML5 File"/>
-      <action id="NewXhtmlType" class="com.intellij.ide.actions.CreateXhtmlAction" text="XHTML File"/>
+      <!--<action id="NewHtmlType" class="com.intellij.ide.actions.CreateHtmlAction" text="HTML File"/>-->
+      <!--<action id="NewHtml5Type" class="com.intellij.ide.actions.CreateHtml5Action" text="HTML5 File"/>-->
+      <!--<action id="NewXhtmlType" class="com.intellij.ide.actions.CreateXhtmlAction" text="XHTML File"/>-->
+      <action id="NewHtmlFile" class="com.intellij.ide.actions.CreateHtmlFileAction"/>
       <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFromTemplate"/>
     </group>
 

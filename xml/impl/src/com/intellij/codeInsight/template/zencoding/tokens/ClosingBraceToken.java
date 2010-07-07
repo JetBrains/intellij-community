@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.template.zencoding;
+package com.intellij.codeInsight.template.zencoding.tokens;
 
-import com.intellij.openapi.util.Pair;
+import com.intellij.codeInsight.template.zencoding.tokens.ZenCodingToken;
 
 /**
  * @author Eugene.Kudelevsky
  */
-public class ZenCodingUtil {
-  static final String NUMBER_IN_ITERATION_PLACE_HOLDER = "$";
-
-  public static String getValue(Pair<String, String> pair, int numberInIteration) {
-    String s = pair.second.replace(NUMBER_IN_ITERATION_PLACE_HOLDER, Integer.toString(numberInIteration + 1));
-    return s.replace("\"", "&quot;");
+public class ClosingBraceToken extends ZenCodingToken {
+  @Override
+  public String toString() {
+    return ")";
   }
 }

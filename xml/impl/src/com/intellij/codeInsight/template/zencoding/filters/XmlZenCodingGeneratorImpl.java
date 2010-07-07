@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.template.zencoding;
+package com.intellij.codeInsight.template.zencoding.filters;
 
+import com.intellij.codeInsight.template.zencoding.XmlZenCodingTemplate;
+import com.intellij.codeInsight.template.zencoding.ZenCodingUtil;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -35,9 +38,14 @@ import java.util.List;
 /**
  * @author Eugene.Kudelevsky
  */
-public class XmlZenCodingFilterImpl extends XmlZenCodingFilter {
+public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
+  public static final XmlZenCodingGeneratorImpl INSTANCE = new XmlZenCodingGeneratorImpl();
+
   @NotNull
-  public String toString(@NotNull XmlTag tag, @NotNull PsiElement context) {
+  public String toString(@NotNull XmlTag tag,
+                         @NotNull List<Pair<String, String>> attribute2Value,
+                         boolean hasChildren,
+                         @NotNull PsiElement context) {
     FileType fileType = context.getContainingFile().getFileType();
     if (XmlZenCodingTemplate.isTrueXml(fileType)) {
       closeUnclosingTags(tag);
@@ -46,7 +54,7 @@ public class XmlZenCodingFilterImpl extends XmlZenCodingFilter {
   }
 
   @NotNull
-  public String buildAttributesString(@NotNull List<Pair<String, String>> attribute2value, int numberInIteration) {
+  public String buildAttributesString(@NotNull List<Pair<String, String>> attribute2value, boolean hasChildren, int numberInIteration) {
     StringBuilder result = new StringBuilder();
     for (Iterator<Pair<String, String>> it = attribute2value.iterator(); it.hasNext();) {
       Pair<String, String> pair = it.next();
@@ -61,14 +69,14 @@ public class XmlZenCodingFilterImpl extends XmlZenCodingFilter {
   }
 
   public boolean isMyContext(@NotNull PsiElement context) {
-    return true;
+    return context.getLanguage() instanceof XMLLanguage;
   }
 
   public String getSuffix() {
-    return null;
+    return "html";
   }
 
-  public boolean isDefaultFilter() {
+  public boolean isAppliedByDefault(@NotNull PsiElement context) {
     return true;
   }
 

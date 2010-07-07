@@ -30,7 +30,7 @@ public class AdditionalIndexableFileSet implements IndexableFileSet {
   private final Set<VirtualFile> myRoots = new THashSet<VirtualFile>();
 
   public AdditionalIndexableFileSet() {
-    this(Extensions.getExtensions(IndexedRootsProvider.EP_NAME));
+    this(Extensions.getExtensions(IndexableSetContributor.EP_NAME));
   }
 
   public AdditionalIndexableFileSet(IndexedRootsProvider... extensions) {
