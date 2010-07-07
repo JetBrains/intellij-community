@@ -277,6 +277,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       myBuilder.done(this);
     }
 
+    public void collapse(IElementType type) {
+      myType = type;
+      myBuilder.collapse(this);
+    }
+
     public void doneBefore(IElementType type, Marker before) {
       myType = type;
       myBuilder.doneBefore(this, before);
@@ -373,6 +378,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   private static class DoneMarker extends ProductionMarker {
     public StartMarker myStart;
+    public boolean myCollapse = false;
 
     public DoneMarker() {}
 
@@ -593,9 +599,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myProduction.add(doneMarker);
   }
 
-  public void done(Marker marker) {
+  public void done(final Marker marker) {
     doValidityChecks(marker);
-
 
     DoneMarker doneMarker = DONE_MARKERS.alloc();
     doneMarker.myStart = (StartMarker)marker;
@@ -603,6 +608,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     ((StartMarker)marker).myDoneMarker = doneMarker;
     myProduction.add(doneMarker);
+  }
+
+  public void collapse(final Marker marker) {
+    done(marker);
+    ((StartMarker)marker).myDoneMarker.myCollapse = true;
   }
 
   @SuppressWarnings({"UseOfSystemOutOrSystemErr", "SuspiciousMethodCalls"})
@@ -828,9 +838,14 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
         lexIndex = insertLeafs(lexIndex, childMarker.myLexemeIndex, ast);
 
-        CompositeElement childNode = createComposite(childMarker);
-        ast.rawAddChildren(childNode);
-        lexIndex = bind(childNode, childMarker, lexIndex);
+        if (!childMarker.myDoneMarker.myCollapse) {
+          CompositeElement childNode = createComposite(childMarker);
+          ast.rawAddChildren(childNode);
+          lexIndex = bind(childNode, childMarker, lexIndex);
+        }
+        else {
+          lexIndex = collapseLeafs(ast, childMarker);
+        }
 
         lexIndex = insertLeafs(lexIndex, childMarker.myDoneMarker.myLexemeIndex, ast);
       }
@@ -861,6 +876,14 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
 
     return curToken;
+  }
+
+  private int collapseLeafs(CompositeElement ast, StartMarker startMarker) {
+    final int start = myLexStarts[startMarker.myLexemeIndex];
+    final int end = myLexStarts[startMarker.myDoneMarker.myLexemeIndex];
+    final TreeElement leaf = createLeaf(startMarker.myType, start, end);
+    ast.rawAddChildren(leaf);
+    return startMarker.myDoneMarker.myLexemeIndex;
   }
 
   private static CompositeElement createComposite(final StartMarker marker) {
