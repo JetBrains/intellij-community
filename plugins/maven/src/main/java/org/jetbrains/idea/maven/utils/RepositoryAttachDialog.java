@@ -135,6 +135,12 @@ public class RepositoryAttachDialog extends DialogWrapper {
     final int caret = field.getCaretPosition();
     myFilterString = prefix.toUpperCase();
 
+    final Pair<MavenArtifactInfo, MavenRepositoryInfo> pair = myCoordinates.get(getCoordinateText());
+    if (myRepositories.containsKey(myRepositoryUrl.getEditor().getItem())) {
+      myRepositoryUrl.setSelectedItem(pair != null && pair.second != null? pair.second.getUrl() : DEFAULT_REPOSITORY);
+    }
+
+
     if (!force && myFilterString.equals(prevFilter)) return;
     myShownItems.clear();
     final boolean itemSelected = Comparing.equal(myCombobox.getSelectedItem(), prefix);
@@ -180,6 +186,9 @@ public class RepositoryAttachDialog extends DialogWrapper {
         final int prevSize = myCoordinates.size();
         for (Pair<MavenArtifactInfo, MavenRepositoryInfo> each : artifacts) {
           myCoordinates.put(each.first.getGroupId() + ":" + each.first.getArtifactId() + ":" + each.first.getVersion(), each);
+          if (each.second != null && !myRepositories.containsKey(each.second.getUrl())) {
+            myRepositories.put(each.second.getUrl(), each.second);
+          }
         }
 
         myRepositoryUrl.setModel(new CollectionComboBoxModel(new ArrayList<String>(myRepositories.keySet()), myRepositoryUrl.getEditor().getItem()));
@@ -190,15 +199,6 @@ public class RepositoryAttachDialog extends DialogWrapper {
             createBalloon().show(new RelativePoint(myCombobox, point), Balloon.Position.above);
         }
         updateComboboxSelection(prevSize != myCoordinates.size());
-        return true;
-      }
-    }, new Processor<Collection<MavenRepositoryInfo>>() {
-      public boolean process(Collection<MavenRepositoryInfo> repos) {
-        for (MavenRepositoryInfo each : repos) {
-          if (!myRepositories.containsKey(each.getUrl())) {
-            myRepositories.put(each.getUrl(), each);
-          }
-        }
         return true;
       }
     });

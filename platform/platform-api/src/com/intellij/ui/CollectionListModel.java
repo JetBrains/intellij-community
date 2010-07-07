@@ -54,6 +54,11 @@ public class CollectionListModel extends AbstractListModel {
     fireIntervalRemoved(this, i, i);
   }
 
+  public void remove(int index) {
+    myItems.remove(index);
+    fireIntervalRemoved(this, index, index);
+  }
+
   public void removeAll() {
     int size = myItems.size();
     myItems.clear();
