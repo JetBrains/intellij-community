@@ -265,6 +265,26 @@ public class PsiTreeUtil {
     return getParentOfType(element, parentClass);
   }
 
+  @Nullable public static <T extends PsiElement> T getContextOfType(@Nullable PsiElement element, @NotNull Class<T> aClass, boolean strict, Class<? extends PsiElement>... stopAt) {
+    if (element == null) return null;
+    if (strict) {
+      element = element.getContext();
+    }
+
+    while (element != null && !instanceOf(aClass, element)) {
+      for (Class stopClass : stopAt) {
+        if (instanceOf(stopClass, element)) {
+          return null;
+        }
+      }
+
+      element = element.getContext();
+    }
+
+    return (T)element;
+
+  }
+
   @Nullable public static <T extends PsiElement> T getContextOfType(@Nullable PsiElement element, @NotNull Class<T> aClass, boolean strict) {
     if (element == null) return null;
     if (strict) {
