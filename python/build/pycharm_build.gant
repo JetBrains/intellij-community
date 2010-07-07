@@ -157,6 +157,8 @@ target('default': "Build artifacts") {
 
   def usedJars = new HashSet();
 
+  def forbiddenJars = ["client-api", "ideaLicenseDecoder", "eawtstub.jar", "ui.jar", "exe4jlib.jar"]
+
   project.clean()
   modules.each {
     Module module = project[it] as Module
@@ -171,7 +173,7 @@ target('default': "Build artifacts") {
                                         path.startsWith("$normalizedHome/community/lib/") ||
                                         path.startsWith("$normalizedHome/python/lib"))
               && !path.contains("/dev/") && !path.contains("/rt/") && !path.contains("/ant/")
-              && !path.contains("client-api") && !path.contains("ideaLicenseDecoder")) {
+              && !forbiddenJars.any { path.contains(it) }) {
             usedJars.add(path);
           }
         }
@@ -417,6 +419,7 @@ def layoutFull(String target, Set usedJars) {
       fileset(dir: "$home/community/bin") {
         include(name: "*.*")
         exclude(name: "idea.properties")
+        exclude(name: "appletviewer.policy")
       }
       fileset(dir: "$home/python/build") {
         include(name: "idea.properties")
