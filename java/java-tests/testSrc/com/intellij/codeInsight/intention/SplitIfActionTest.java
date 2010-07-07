@@ -39,6 +39,20 @@ public class SplitIfActionTest extends LightCodeInsightTestCase {
     checkResultByFile("/codeInsight/splitIfAction/after5.java");
   }
 
+  public void test6() throws Exception {
+    configureByFile("/codeInsight/splitIfAction/beforeParenthesis.java");
+    perform();
+    checkResultByFile("/codeInsight/splitIfAction/afterParenthesis.java");
+  }
+
+  public void test7() throws Exception {
+    configureByFile("/codeInsight/splitIfAction/beforeOrParenthesis.java");
+    perform();
+    checkResultByFile("/codeInsight/splitIfAction/afterOrParenthesis.java");
+  }
+
+
+
   private void perform() throws Exception {
     SplitIfAction action = new SplitIfAction();
     assertTrue(action.isAvailable(getProject(), getEditor(), getFile()));

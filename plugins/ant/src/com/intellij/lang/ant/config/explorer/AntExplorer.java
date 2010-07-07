@@ -52,6 +52,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -313,7 +314,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider {
       }
       final AntBuildTarget target = ((AntTargetNodeDescriptor)userObject).getTarget();
       if (target instanceof MetaTarget) {
-        targets.addAll(Arrays.asList(((MetaTarget)target).getTargetNames()));
+        ContainerUtil.addAll(targets, ((MetaTarget)target).getTargetNames());
       }
       else {
         targets.add(target.getName());

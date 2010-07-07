@@ -22,6 +22,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -188,7 +189,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
       if (myAllItems == null) {
         myAllItems = new THashSet<T>(Arrays.asList(mySingleItem));
       }
-      myAllItems.addAll(Arrays.asList(items));
+      ContainerUtil.addAll(myAllItems, items);
     }
 
     public T[] getResult() {

@@ -56,13 +56,9 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
       @Override
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        if (value == null) {
-          LOG.error("Model: " + list.getModel().toString());
-        }
-
-        @SuppressWarnings({"unchecked"}) Trinity<String, Icon, String> _value = (Trinity<String, Icon, String>) value;
-        setText(_value.first);
-        setIcon(_value.second);
+        @SuppressWarnings({"unchecked"}) Trinity<String, Icon, String> trinity = (Trinity<String, Icon, String>) value;
+        setText(trinity == null ? "" : trinity.first);
+        setIcon(trinity == null ? null : trinity.second);
         return this;
       }
     });

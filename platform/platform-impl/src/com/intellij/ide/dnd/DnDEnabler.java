@@ -20,6 +20,7 @@ import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AwtVisitor;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -95,7 +96,7 @@ public class DnDEnabler implements Activatable, Disposable {
       public boolean visit(Component component) {
         EventListener[] mouseListeners = component.getListeners(MouseListener.class);
         if (mouseListeners.length > 0) {
-          myMouseListeners.addAll(Arrays.asList(mouseListeners));
+          ContainerUtil.addAll(myMouseListeners, mouseListeners);
           for (EventListener each : mouseListeners) {
             if (each instanceof MouseDragGestureRecognizer) {
               myOriginalDragGestureRecognizer = (MouseListener)each;

@@ -17,6 +17,7 @@ package com.intellij.cvsSupport2.cvshandlers;
 
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -43,7 +44,7 @@ class SelectedFiles extends AnyProcessedFiles {
   }
 
   public SelectedFiles(VirtualFile[] files) {
-    myFiles.addAll(Arrays.asList(files));
+    ContainerUtil.addAll(myFiles, files);
   }
 
 

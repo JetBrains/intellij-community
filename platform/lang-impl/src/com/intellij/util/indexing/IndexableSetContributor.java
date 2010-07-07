@@ -35,6 +35,10 @@ public abstract class IndexableSetContributor implements IndexedRootsProvider {
     for (String url : provider.getRootsToIndex()) {
       ContainerUtil.addIfNotNull(VirtualFileManager.getInstance().findFileByUrl(url), result);
     }
+    if (provider instanceof IndexableSetContributor && !result.equals(((IndexableSetContributor)provider).getAdditionalRootsToIndex())) {
+      System.out.println("Rotten VirtualFiles: " + result);
+    }
+
     return result;
   }
 

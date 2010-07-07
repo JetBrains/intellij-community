@@ -23,6 +23,7 @@ package com.intellij.debugger.ui.breakpoints;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ItemRemovable;
 
 import javax.swing.table.AbstractTableModel;
@@ -46,7 +47,7 @@ public class BreakpointTableModel extends AbstractTableModel implements ItemRemo
   public final void setBreakpoints(Breakpoint[] breakpoints) {
     myBreakpoints.clear();
     if (breakpoints != null) {
-      myBreakpoints.addAll(Arrays.asList(breakpoints));
+      ContainerUtil.addAll(myBreakpoints, breakpoints);
     }
     fireTableDataChanged();
   }

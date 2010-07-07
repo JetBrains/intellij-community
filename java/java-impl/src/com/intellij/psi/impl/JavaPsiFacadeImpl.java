@@ -60,6 +60,7 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
@@ -100,7 +101,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
 
     List<PsiElementFinder> elementFinders = new ArrayList<PsiElementFinder>();
     elementFinders.add(new PsiElementFinderImpl());
-    elementFinders.addAll(Arrays.asList(myProject.getExtensions(PsiElementFinder.EP_NAME)));
+    ContainerUtil.addAll(elementFinders, myProject.getExtensions(PsiElementFinder.EP_NAME));
     myElementFinders = elementFinders.toArray(new PsiElementFinder[elementFinders.size()]);
 
     myPackagePrefixIndex = new PackagePrefixIndex(myProject);
@@ -109,7 +110,8 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
 
     if (isProjectDefault) {
       myShortNamesCache = new EmptyShortNamesCacheImpl();
-    } else {
+    }
+    else {
       myShortNamesCache = new PsiShortNamesCacheImpl((PsiManagerEx)PsiManager.getInstance(project));
       for (final PsiShortNamesCache cache : project.getExtensions(PsiShortNamesCache.EP_NAME)) {
         _registerShortNamesCache(cache);
@@ -118,11 +120,12 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
 
     myFileManager = new JavaFileManagerImpl(psiManager, projectRootManagerEx, psiManager.getFileManager(), bus);
 
-    final PsiModificationTrackerImpl modificationTracker = (PsiModificationTrackerImpl) psiManager.getModificationTracker();
+    final PsiModificationTrackerImpl modificationTracker = (PsiModificationTrackerImpl)psiManager.getModificationTracker();
     psiManager.addTreeChangePreprocessor(new JavaCodeBlockModificationListener(modificationTracker));
 
     bus.connect().subscribe(ProjectTopics.MODIFICATION_TRACKER, new PsiModificationTracker.Listener() {
       private long lastTimeSeen = -1L;
+
       public void modificationCountChanged() {
         final long now = modificationTracker.getJavaStructureModificationCount();
         if (lastTimeSeen != now) {
@@ -224,7 +227,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     List<PsiClass> classes = new SmartList<PsiClass>();
     for (PsiElementFinder finder : myElementFinders) {
       PsiClass[] finderClasses = finder.findClasses(qualifiedName, scope);
-      classes.addAll(Arrays.asList(finderClasses));
+      ContainerUtil.addAll(classes, finderClasses);
     }
 
     return classes.toArray(new PsiClass[classes.size()]);
@@ -322,7 +325,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
       PsiClass[] classes = finder.getClasses(psiPackage, scope);
       if (classes.length == 0) continue;
       if (result == null) result = new ArrayList<PsiClass>();
-      result.addAll(Arrays.asList(classes));
+      ContainerUtil.addAll(result, classes);
     }
 
     return result == null ? PsiClass.EMPTY_ARRAY : result.toArray(new PsiClass[result.size()]);
@@ -341,7 +344,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     List<PsiPackage> result = new ArrayList<PsiPackage>();
     for (PsiElementFinder finder : myElementFinders) {
       PsiPackage[] packages = finder.getSubPackages(psiPackage, scope);
-      result.addAll(Arrays.asList(packages));
+      ContainerUtil.addAll(result, packages);
     }
 
     return result.toArray(new PsiPackage[result.size()]);

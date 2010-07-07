@@ -25,7 +25,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
 import com.intellij.openapi.util.Comparing;
@@ -45,7 +45,7 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
   private JdkComboBox myCbProjectJdk;
   private JPanel myJdkPanel;
   private final Project myProject;
-  private final ProjectJdksModel myJdksModel;
+  private final ProjectSdksModel myJdksModel;
   private final SdkModel.Listener myListener = new SdkModel.Listener() {
     public void sdkAdded(Sdk sdk) {
       reloadModel();
@@ -66,7 +66,7 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
 
   private boolean myFreeze = false;
 
-  public ProjectJdkConfigurable(Project project, final ProjectJdksModel jdksModel) {
+  public ProjectJdkConfigurable(Project project, final ProjectSdksModel jdksModel) {
     myProject = project;
     myJdksModel = jdksModel;
     myJdksModel.addListener(myListener);
@@ -84,7 +84,7 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
 
   private void reloadModel() {
     myFreeze = true;
-    final Sdk projectJdk = myJdksModel.getProjectJdk();
+    final Sdk projectJdk = myJdksModel.getProjectSdk();
     myCbProjectJdk.reloadModel(new JdkComboBox.NoneJdkComboBoxItem(), myProject);
     final String sdkName = projectJdk == null ? ProjectRootManager.getInstance(myProject).getProjectJdkName() : projectJdk.getName();
     if (sdkName != null) {
@@ -108,8 +108,8 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
     myCbProjectJdk.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         if (myFreeze) return;
-        final Sdk oldJdk = myJdksModel.getProjectJdk();
-        myJdksModel.setProjectJdk(myCbProjectJdk.getSelectedJdk());
+        final Sdk oldJdk = myJdksModel.getProjectSdk();
+        myJdksModel.setProjectSdk(myCbProjectJdk.getSelectedJdk());
         clearCaches();
       }
     });
@@ -120,7 +120,7 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
     myCbProjectJdk.appendEditButton(myProject, myJdkPanel, new GridBagConstraints(GridBagConstraints.RELATIVE, 1, 1, 1, 1.0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 4, 0, 0), 0, 0), new Computable<Sdk>() {
       @Nullable
       public Sdk compute() {
-        return myJdksModel.getProjectJdk();
+        return myJdksModel.getProjectSdk();
       }
     });
   }

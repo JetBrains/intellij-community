@@ -116,8 +116,8 @@ public class XmlTagRenameHandler implements RenameHandler {
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.rename");
 
-    if (isInplaceRenameAvailable(editor)) {
-      XmlTagInplaceRenamer.rename(editor, (XmlTag)element.getParent());
+    if (editor != null && isInplaceRenameAvailable(editor)) {
+      InplaceRenamer.rename(new XmlTagInplaceRenamer(editor, (XmlTag)element.getParent()));
     }
     else {
       XmlTagRenameDialog.renameXmlTag(editor, element, (XmlTag)element.getParent());

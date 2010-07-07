@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -133,7 +134,8 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     if (classResults.length == 0) return GroovyResolveResult.EMPTY_ARRAY;
 
     if (getNamedArguments().length > 0 && getArgumentList().getExpressionArguments().length == 0) {
-      GroovyResolveResult[] constructorResults = PsiUtil.getConstructorCandidates(ref, classResults, new PsiType[]{PsiUtil.createMapType(getManager(), getResolveScope())}); //one Map parameter, actually
+      GroovyResolveResult[] constructorResults = PsiUtil.getConstructorCandidates(ref, classResults, new PsiType[]{PsiUtil.createMapType(
+        getResolveScope())}); //one Map parameter, actually
       for (GroovyResolveResult result : constructorResults) {
         if (result.getElement() instanceof PsiMethod) {
           PsiMethod constructor = (PsiMethod)result.getElement();
@@ -196,7 +198,7 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
           result.add(new GroovyResolveResultImpl(constructor, null, classResult.getSubstitutor(), isAccessible, true));
         }
         final GroovyResolveResult[] results = ResolveUtil.getNonCodeConstructors((PsiClass)element, this, classResult.getSubstitutor());
-        result.addAll(Arrays.asList(results));
+        ContainerUtil.addAll(result, results);
       }
     }
 

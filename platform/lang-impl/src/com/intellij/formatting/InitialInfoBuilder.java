@@ -24,6 +24,7 @@ import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.formatter.ReadOnlyBlockInformationProvider;
 import com.intellij.psi.impl.DebugUtil;
 import gnu.trove.THashMap;
+import org.apache.commons.collections.list.UnmodifiableList;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
@@ -54,7 +55,7 @@ class InitialInfoBuilder {
                              final FormatTextRanges affectedRanges,
                              final CodeStyleSettings.IndentOptions options,
                              final int positionOfInterest
-                             ) {
+  ) {
     myModel = model;
     myAffectedRanges = affectedRanges;
     myCurrentWhiteSpace = new WhiteSpace(0, true);
@@ -80,14 +81,14 @@ class InitialInfoBuilder {
    * {@link #processCompositeBlock(Block, CompositeBlockWrapper, int, WrapImpl, boolean)} and
    * {@link #processSimpleBlock(Block, CompositeBlockWrapper, boolean, int, Block)}.
    *
-   * @param rootBlock               block to wrap
-   * @param index                   index of the current block at its parent block. <code>-1</code> may be used here if we don't
-   *                                have information about parent block
-   * @param parent                  parent block wrapper. <code>null</code> may be used here we no parent block wrapper exists
-   * @param currentWrapParent       parent wrap if any; <code>null</code> otherwise
-   * @param parentBlock             parent block of the block to wrap
-   * @param rootBlockIsRightBlock   flag that shows if target block is the right-most block
-   * @return                        wrapper for the given <code>'rootBlock'</code>
+   * @param rootBlock             block to wrap
+   * @param index                 index of the current block at its parent block. <code>-1</code> may be used here if we don't
+   *                              have information about parent block
+   * @param parent                parent block wrapper. <code>null</code> may be used here we no parent block wrapper exists
+   * @param currentWrapParent     parent wrap if any; <code>null</code> otherwise
+   * @param parentBlock           parent block of the block to wrap
+   * @param rootBlockIsRightBlock flag that shows if target block is the right-most block
+   * @return wrapper for the given <code>'rootBlock'</code>
    */
   private AbstractBlockWrapper buildFrom(final Block rootBlock,
                                          final int index,
@@ -95,7 +96,7 @@ class InitialInfoBuilder {
                                          WrapImpl currentWrapParent,
                                          final Block parentBlock,
                                          boolean rootBlockIsRightBlock
-                                         ) {
+  ) {
     final WrapImpl wrap = (WrapImpl)rootBlock.getWrap();
     if (wrap != null) {
       wrap.registerParent(currentWrapParent);
@@ -138,8 +139,7 @@ class InitialInfoBuilder {
 
       final List<Block> subBlocks = rootBlock.getSubBlocks();
       if (subBlocks.isEmpty() || myReadOnlyBlockInformationProvider != null
-                                 && myReadOnlyBlockInformationProvider.isReadOnly(rootBlock))
-      {
+                                 && myReadOnlyBlockInformationProvider.isReadOnly(rootBlock)) {
         final AbstractBlockWrapper wrapper = processSimpleBlock(rootBlock, parent, isReadOnly, index, parentBlock);
         if (!subBlocks.isEmpty()) {
           wrapper.setIndent((IndentImpl)subBlocks.get(0).getIndent());
@@ -158,7 +158,7 @@ class InitialInfoBuilder {
                                                      final int index,
                                                      final WrapImpl currentWrapParent,
                                                      boolean rootBlockIsRightBlock
-                                                     ) {
+  ) {
     final CompositeBlockWrapper info = new CompositeBlockWrapper(rootBlock, myCurrentWhiteSpace, parent);
     if (index == 0) {
       info.arrangeParentTextRange();
@@ -190,7 +190,7 @@ class InitialInfoBuilder {
         childBlockIsRightBlock = true;
       }
 
-      final AbstractBlockWrapper wrapper = buildFrom(block, i, info, currentWrapParent, rootBlock,childBlockIsRightBlock);
+      final AbstractBlockWrapper wrapper = buildFrom(block, i, info, currentWrapParent, rootBlock, childBlockIsRightBlock);
       list.add(wrapper);
 
       if (wrapper.getIndent() == null) {
@@ -198,7 +198,9 @@ class InitialInfoBuilder {
       }
       previous = block;
 
-      if (!blocksAreReadOnly) subBlocks.set(i, null); // to prevent extra strong refs during model building
+      if (!blocksAreReadOnly && !(subBlocks instanceof UnmodifiableList)) {
+        subBlocks.set(i, null); // to prevent extra strong refs during model building
+      }
     }
     setDefaultIndents(list);
     info.setChildren(list);
@@ -221,8 +223,9 @@ class InitialInfoBuilder {
                                                   final int index,
                                                   Block parentBlock
 
-                                                  ) {
-    final LeafBlockWrapper info = new LeafBlockWrapper(rootBlock, parent, myCurrentWhiteSpace, myModel, myOptions, myPreviousBlock, readOnly);
+  ) {
+    final LeafBlockWrapper info =
+      new LeafBlockWrapper(rootBlock, parent, myCurrentWhiteSpace, myModel, myOptions, myPreviousBlock, readOnly);
     if (index == 0) {
       info.arrangeParentTextRange();
     }
@@ -277,7 +280,7 @@ class InitialInfoBuilder {
     return myAffectedRanges.isReadOnly(textRange, rootIsRightBlock);
   }
 
-  public Map<AbstractBlockWrapper,Block> getBlockToInfoMap() {
+  public Map<AbstractBlockWrapper, Block> getBlockToInfoMap() {
     return myResult;
   }
 

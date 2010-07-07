@@ -21,6 +21,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.StringScanner;
@@ -316,7 +317,7 @@ public final class GitRemote {
       else if (s.tryConsume(SHOW_BRANCHES_LINE)) {
         s.line();
         if (s.tryConsume("    ")) {
-          branches.addAll(Arrays.asList(s.line().split(" ")));
+          ContainerUtil.addAll(branches, s.line().split(" "));
         }
       }
       else if (s.tryConsume("  Remote branch")) {

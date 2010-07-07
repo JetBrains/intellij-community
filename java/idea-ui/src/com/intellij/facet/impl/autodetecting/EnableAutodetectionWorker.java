@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,7 +85,7 @@ public class EnableAutodetectionWorker {
     }
 
     if (moduleElements.isEmpty()) {
-      modulesToProcess.addAll(Arrays.asList(moduleManager.getModules()));
+      ContainerUtil.addAll(modulesToProcess, moduleManager.getModules());
     }
     if (newElement != null) {
       Set<String> toRemove = new THashSet<String>();

@@ -19,6 +19,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiType;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -100,7 +101,7 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
      */
     private static final Set<String> timeZoneIds = new HashSet();
     static {
-        timeZoneIds.addAll(Arrays.asList(TimeZone.getAvailableIDs()));
+      ContainerUtil.addAll(timeZoneIds, TimeZone.getAvailableIDs());
     }
 
     /**

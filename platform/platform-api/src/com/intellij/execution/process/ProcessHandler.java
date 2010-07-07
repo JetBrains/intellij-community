@@ -27,7 +27,6 @@ import java.io.OutputStream;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -117,15 +116,11 @@ public abstract class ProcessHandler extends UserDataHolderBase {
   }
 
   public void addProcessListener(final ProcessListener listener) {
-    synchronized(myListeners) {
-      myListeners.add(listener);
-    }
+    myListeners.add(listener);
   }
 
   public void removeProcessListener(final ProcessListener listener) {
-    synchronized(myListeners) {
-      myListeners.remove(listener);
-    }
+    myListeners.remove(listener);
   }
 
   protected void notifyProcessDetached() {
@@ -189,6 +184,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
           runnable.run();
         }
       });
+      assert !isStartNotified();
     }
   }
 
@@ -200,14 +196,9 @@ public abstract class ProcessHandler extends UserDataHolderBase {
     final Class<ProcessListener> listenerClass = ProcessListener.class;
     return (ProcessListener)Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[] {listenerClass}, new InvocationHandler() {
       public Object invoke(Object object, Method method, Object[] params) throws Throwable {
-        final Iterator<ProcessListener> iterator;
-        synchronized (myListeners) {
-          iterator = myListeners.iterator();
-        }
-        while (iterator.hasNext()) {
-          final ProcessListener processListener = iterator.next();
+        for (ProcessListener listener : myListeners) {
           try {
-            method.invoke(processListener, params);
+            method.invoke(listener, params);
           }
           catch (Throwable e) {
             LOG.error(e);

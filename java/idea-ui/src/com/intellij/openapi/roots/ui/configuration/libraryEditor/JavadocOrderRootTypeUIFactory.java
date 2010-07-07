@@ -21,11 +21,15 @@
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ui.PathEditor;
+import com.intellij.openapi.projectRoots.ui.Util;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.ui.configuration.OrderRootTypeUIFactory;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 
 public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
   public LibraryTableTreeContentElement createElement(final LibraryElement parentElement) {
@@ -33,7 +37,44 @@ public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
   }
 
   public PathEditor createPathEditor(Sdk sdk) {
-    return new MyPathsEditor(ProjectBundle.message("sdk.configure.javadoc.tab"), JavadocOrderRootType.getInstance(), new FileChooserDescriptor(false, true, true, false, true, true), true,
-                             sdk);
+    return new JavadocPathsEditor(sdk);
+  }
+
+  static class JavadocPathsEditor extends MyPathsEditor {
+
+    public JavadocPathsEditor(Sdk sdk) {
+      super(ProjectBundle.message("sdk.configure.javadoc.tab"),
+            JavadocOrderRootType.getInstance(),
+            new FileChooserDescriptor(false, true, true, false, true, true), 
+            true,
+            sdk);
+    }
+
+    @Override
+    protected void onSpecifyUrlButtonClicked() {
+      VirtualFile virtualFile  = Util.showSpecifyJavadocUrlDialog(myPanel, getInitialValue());
+      if(virtualFile != null){
+        addElement(virtualFile);
+        setModified(true);
+        updateButtons();
+        requestDefaultFocus();
+        setSelectedRoots(new Object[]{virtualFile});
+      }
+    }
+
+    private String getInitialValue() {
+      if (mySdk != null) {
+        final String versionString = mySdk.getVersionString();
+        if (versionString != null) {
+          final LanguageLevel level = LanguageLevelUtil.getDefaultLanguageLevel(versionString);
+          if (level == LanguageLevel.JDK_1_5) {
+            return "http://java.sun.com/j2se/1.5.0/docs/api/";
+          } else if (level == LanguageLevel.JDK_1_6) {
+            return "http://java.sun.com/j2se/6/docs/api/";
+          }
+        }
+      }
+      return "";
+    }
   }
 }

@@ -32,6 +32,7 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
@@ -622,7 +623,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       c.weightx = 1;
       c.fill = GridBagConstraints.HORIZONTAL;
       final Set<String> authors = getUsersList(project, roots);
-      authors.addAll(Arrays.asList(mySettings.getCommitAuthors()));
+      ContainerUtil.addAll(authors, mySettings.getCommitAuthors());
       final ArrayList<String> authorsList = new ArrayList<String>(authors);
       Collections.sort(authorsList);
       myAuthor = new JComboBox(authorsList.toArray(new Object[authorsList.size()]));

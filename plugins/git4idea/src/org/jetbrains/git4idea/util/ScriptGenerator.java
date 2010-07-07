@@ -19,6 +19,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -137,7 +138,7 @@ public class ScriptGenerator {
    * @return this script generator
    */
   public ScriptGenerator addInternal(String... parameters) {
-    myInternalParameters.addAll(Arrays.asList(parameters));
+    ContainerUtil.addAll(myInternalParameters, parameters);
     return this;
   }
 

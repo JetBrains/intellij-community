@@ -17,6 +17,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -55,23 +56,26 @@ import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class ToolWindowSwitcher extends AnAction implements DumbAware {
-  private static volatile ToolWindowSwitcherPanel SWITCHER = null;
+@SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
+public class Switcher extends AnAction implements DumbAware {
+  private static volatile SwitcherPanel SWITCHER = null;
   private static final Color BORDER_COLOR = new Color(0x87, 0x87, 0x87);
   private static final Color SEPARATOR_COLOR = BORDER_COLOR.brighter();
   @NonNls private static final String SWITCHER_FEATURE_ID = "switcher";
+  private static final Color ON_MOUSE_OVER_BG_COLOR = new Color(231, 242, 249);
 
   private static final KeyListener performanceProblemsSolver = new KeyAdapter() { //IDEA-24436
     @Override
     public void keyReleased(KeyEvent e) {
       if (e.getKeyCode() == KeyEvent.VK_CONTROL) {
-        synchronized (ToolWindowSwitcher.class) {
-          if (ToolWindowSwitcher.SWITCHER != null) {
-            ToolWindowSwitcher.SWITCHER.navigate();
+        synchronized (Switcher.class) {
+          if (SWITCHER != null) {
+            SWITCHER.navigate();
           }
         }
       }
@@ -89,7 +93,7 @@ public class ToolWindowSwitcher extends AnAction implements DumbAware {
       if (focusComponent != null) {
         focusComponent.addKeyListener(performanceProblemsSolver);
       }
-      SWITCHER = new ToolWindowSwitcherPanel(project);
+      SWITCHER = new SwitcherPanel(project);
       FeatureUsageTracker.getInstance().triggerFeatureUsed(SWITCHER_FEATURE_ID);
     }
 
@@ -100,7 +104,7 @@ public class ToolWindowSwitcher extends AnAction implements DumbAware {
     }
   }
 
-  private class ToolWindowSwitcherPanel extends JPanel implements KeyListener, MouseListener, MouseMotionListener {
+  private class SwitcherPanel extends JPanel implements KeyListener, MouseListener, MouseMotionListener {
     final JBPopup myPopup;
     final Map<ToolWindow, String> ids = new HashMap<ToolWindow, String>();
     final JList toolwindows;
@@ -113,7 +117,7 @@ public class ToolWindowSwitcher extends AnAction implements DumbAware {
     final int CTRL_KEY;
     final int ALT_KEY;
 
-    ToolWindowSwitcherPanel(Project project) {
+    SwitcherPanel(Project project) {
       super(new BorderLayout(0, 0));
       this.project = project;
       setFocusable(true);
@@ -146,15 +150,28 @@ public class ToolWindowSwitcher extends AnAction implements DumbAware {
       }
 
       final ArrayList<ToolWindow> windows = new ArrayList<ToolWindow>(ids.keySet());
-      Collections.sort(windows, new ToolWindowComparator());
+      Collections.sort(windows, new ToolWindowComparator("Project", "Changes", "Structure"));
       for (ToolWindow window : windows) {
         twModel.addElement(window);
       }
-
       toolwindows = new JBList(twModel);
       toolwindows.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 20));
       toolwindows.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-      toolwindows.setCellRenderer(new ToolWindowsRenderer(ids));
+      toolwindows.setCellRenderer(new ToolWindowsRenderer(ids) {
+        @Override
+        public Component getListCellRendererComponent(JList list,
+                                                      Object value,
+                                                      int index,
+                                                      boolean selected,
+                                                      boolean hasFocus) {
+          final JComponent renderer = (JComponent)super.getListCellRendererComponent(list, value, index, selected, hasFocus);
+          if (list == mouseMoveSrc && index == mouseMoveListIndex && !selected) {
+            renderer.setBackground(ON_MOUSE_OVER_BG_COLOR);
+          }
+          return renderer;
+
+        }
+      });
       toolwindows.addKeyListener(this);
       toolwindows.addMouseListener(this);
       toolwindows.addMouseMotionListener(this);
@@ -194,10 +211,24 @@ public class ToolWindowSwitcher extends AnAction implements DumbAware {
       for (VirtualFile openFile : openFiles) {
         filesModel.addElement(openFile);
       }
+
       files = new JBList(filesModel);
       files.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       files.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 20));
-      files.setCellRenderer(new VirtualFilesRenderer(project));
+      files.setCellRenderer(new VirtualFilesRenderer(project) {
+        @Override
+        public Component getListCellRendererComponent(JList list,
+                                                      Object value,
+                                                      int index,
+                                                      boolean selected,
+                                                      boolean hasFocus) {
+          final JComponent renderer = (JComponent)super.getListCellRendererComponent(list, value, index, selected, hasFocus);
+          if (list == mouseMoveSrc && index == mouseMoveListIndex && !selected) {
+            renderer.setBackground(ON_MOUSE_OVER_BG_COLOR);
+          }
+          return renderer;
+        }
+      });
       files.addKeyListener(this);
       files.addMouseListener(this);
       files.addMouseMotionListener(this);
@@ -231,7 +262,7 @@ public class ToolWindowSwitcher extends AnAction implements DumbAware {
         }
 
         public void valueChanged(final ListSelectionEvent e) {
-          SwingUtilities.invokeLater(new Runnable() {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
               updatePathLabel();
             }
@@ -253,7 +284,7 @@ public class ToolWindowSwitcher extends AnAction implements DumbAware {
         }
       });
 
-      final int modifiers = getModifiers(ToolWindowSwitcher.this.getShortcutSet());
+      final int modifiers = getModifiers(Switcher.this.getShortcutSet());
       if ((modifiers & Event.ALT_MASK) != 0) {
         ALT_KEY = KeyEvent.VK_CONTROL;
         CTRL_KEY = KeyEvent.VK_ALT;
@@ -475,8 +506,19 @@ public class ToolWindowSwitcher extends AnAction implements DumbAware {
     }
 
     private class ToolWindowComparator implements Comparator<ToolWindow> {
+      private List<String> exceptions;
+
+      public ToolWindowComparator(String... exceptions) {
+        this.exceptions = Arrays.asList(exceptions);
+      }
       public int compare(ToolWindow o1, ToolWindow o2) {
-        return ids.get(o1).compareTo(ids.get(o2));
+        final String n1 = ids.get(o1);
+        final String n2 = ids.get(o2);
+        for (String exception : exceptions) {
+          if (n1.equals(exception)) return -1;
+          if (n2.equals(exception)) return 1;
+        }
+        return n1.compareTo(n2);
       }
     }
 
@@ -494,26 +536,44 @@ public class ToolWindowSwitcher extends AnAction implements DumbAware {
     }
 
     private boolean mouseMovedFirstTime = true;
+    private JList mouseMoveSrc = null;
+    private int mouseMoveListIndex = -1;
     public void mouseMoved(MouseEvent e) {
       if (mouseMovedFirstTime) {
         mouseMovedFirstTime = false;
         return;
       }
-      
       final Object source = e.getSource();
+      boolean changed = false;
       if (source instanceof JList) {
         JList list = (JList)source;
         int index = list.locationToIndex(e.getPoint());
         if (0 <= index && index < list.getModel().getSize()) {
-          list.setSelectedIndex(index);        
+          mouseMoveSrc = list;
+          mouseMoveListIndex = index;
+          changed = true;
         }
       }
+      if (!changed) {
+        mouseMoveSrc = null;
+        mouseMoveListIndex = -1;
+      }
+
+      repaintLists();
+    }
+    private void repaintLists() {
+      toolwindows.repaint();
+      files.repaint();
     }
 
     public void mousePressed(MouseEvent e) {}
     public void mouseReleased(MouseEvent e) {}
     public void mouseEntered(MouseEvent e) {}
-    public void mouseExited(MouseEvent e) {}
+    public void mouseExited(MouseEvent e) {
+      mouseMoveSrc = null;
+      mouseMoveListIndex = -1;
+      repaintLists();
+    }
     public void mouseDragged(MouseEvent e) {}
   }
 

@@ -74,14 +74,6 @@ public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements Mo
     return ProjectBundle.message("project.root.module.source");
   }
 
-  void addExportedFiles(OrderRootType type, List<VirtualFile> result) {
-    result.addAll(Arrays.asList(getFiles(type)));
-  }
-
-  void addExportedUrls(OrderRootType type, List<String> result) {
-    result.addAll(Arrays.asList(getUrls(type)));
-  }
-
 
   @NotNull
   public VirtualFile[] getFiles(OrderRootType type) {

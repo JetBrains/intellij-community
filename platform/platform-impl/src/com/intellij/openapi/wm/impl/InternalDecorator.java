@@ -21,7 +21,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -60,7 +59,6 @@ import java.util.Map;
  * @author Vladimir Kondratyev
  */
 public final class InternalDecorator extends JPanel implements Queryable, TypeSafeDataProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.InternalDecorator");
 
   private static final int DIVIDER_WIDTH = 5;
 
@@ -115,7 +113,6 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
    */
   private final TogglePinnedModeAction myToggleAutoHideModeAction;
   private final HideAction myHideAction;
-  private final HideSideAction myHideSideAction;
   private final ToggleDockModeAction myToggleDockModeAction;
   private final ToggleFloatingModeAction myToggleFloatingModeAction;
   private final ToggleSideModeAction myToggleSideModeAction;
@@ -125,15 +122,14 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
    * Catches all event from tool window and modifies decorator's appearance.
    */
   private final ToolWindowHandler myToolWindowHandler;
-  private final MyKeymapManagerListener myKeymapManagerListener;
   private final WeakKeymapManagerListener myWeakKeymapManagerListener;
-  @NonNls protected static final String TOGGLE_PINNED_MODE_ACTION_ID = "TogglePinnedMode";
-  @NonNls protected static final String TOGGLE_DOCK_MODE_ACTION_ID = "ToggleDockMode";
-  @NonNls protected static final String TOGGLE_FLOATING_MODE_ACTION_ID = "ToggleFloatingMode";
-  @NonNls protected static final String TOGGLE_SIDE_MODE_ACTION_ID = "ToggleSideMode";
-  @NonNls protected static final String HIDE_ACTIVE_WINDOW_ACTION_ID = "HideActiveWindow";
-  @NonNls protected static final String HIDE_ACTIVE_SIDE_WINDOW_ACTION_ID = "HideSideWindows";
-  @NonNls protected static final String TOGGLE_CONTENT_UI_TYPE_ACTION_ID = "ToggleContentUiTypeMode";
+  @NonNls private static final String TOGGLE_PINNED_MODE_ACTION_ID = "TogglePinnedMode";
+  @NonNls private static final String TOGGLE_DOCK_MODE_ACTION_ID = "ToggleDockMode";
+  @NonNls private static final String TOGGLE_FLOATING_MODE_ACTION_ID = "ToggleFloatingMode";
+  @NonNls private static final String TOGGLE_SIDE_MODE_ACTION_ID = "ToggleSideMode";
+  @NonNls private static final String HIDE_ACTIVE_WINDOW_ACTION_ID = "HideActiveWindow";
+  @NonNls private static final String HIDE_ACTIVE_SIDE_WINDOW_ACTION_ID = "HideSideWindows";
+  @NonNls private static final String TOGGLE_CONTENT_UI_TYPE_ACTION_ID = "ToggleContentUiTypeMode";
   private final MyTitleButton myHideSideButton;
   private final JComponent myTitleTabs;
 
@@ -155,20 +151,20 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     myToggleAutoHideModeAction = new TogglePinnedModeAction();
     myAutoHideHideSeparator = new Separator();
     myHideAction = new HideAction();
-    myHideSideAction = new HideSideAction();
+    HideSideAction hideSideAction = new HideSideAction();
     myToggleContentUiTypeAction = new ToggleContentUiTypeAction();
 
     myToggleFloatingModeButton = new MyTitleButton(myToggleFloatingModeAction);
     myToggleDockModeButton = new MyTitleButton(myToggleDockModeAction);
     myToggleAutoHideModeButton = new MyTitleButton(myToggleAutoHideModeAction);
     myHideButton = new MyTitleButton(myHideAction);
-    myHideSideButton = new MyTitleButton(myHideSideAction);
+    myHideSideButton = new MyTitleButton(hideSideAction);
     myListenerList = new EventListenerList();
 
 
-    myKeymapManagerListener = new MyKeymapManagerListener();
+    MyKeymapManagerListener keymapManagerListener = new MyKeymapManagerListener();
     final KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
-    myWeakKeymapManagerListener = new WeakKeymapManagerListener(keymapManager, myKeymapManagerListener);
+    myWeakKeymapManagerListener = new WeakKeymapManagerListener(keymapManager, keymapManagerListener);
     keymapManager.addKeymapManagerListener(myWeakKeymapManagerListener);
 
     init();
@@ -324,16 +320,16 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
   }
 
   private void fireAnchorChanged(final ToolWindowAnchor anchor) {
-    final InternalDecoratorListener[] listeners = (InternalDecoratorListener[])myListenerList.getListeners(InternalDecoratorListener.class);
-    for (int i = 0; i < listeners.length; i++) {
-      listeners[i].anchorChanged(this, anchor);
+    final InternalDecoratorListener[] listeners = myListenerList.getListeners(InternalDecoratorListener.class);
+    for (InternalDecoratorListener listener : listeners) {
+      listener.anchorChanged(this, anchor);
     }
   }
 
   private void fireAutoHideChanged(final boolean autoHide) {
-    final InternalDecoratorListener[] listeners = (InternalDecoratorListener[])myListenerList.getListeners(InternalDecoratorListener.class);
-    for (int i = 0; i < listeners.length; i++) {
-      listeners[i].autoHideChanged(this, autoHide);
+    final InternalDecoratorListener[] listeners = myListenerList.getListeners(InternalDecoratorListener.class);
+    for (InternalDecoratorListener listener : listeners) {
+      listener.autoHideChanged(this, autoHide);
     }
   }
 
@@ -341,9 +337,9 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
    * Fires event that "hide" button has been pressed.
    */
   final void fireHidden() {
-    final InternalDecoratorListener[] listeners = (InternalDecoratorListener[])myListenerList.getListeners(InternalDecoratorListener.class);
-    for (int i = 0; i < listeners.length; i++) {
-      listeners[i].hidden(this);
+    final InternalDecoratorListener[] listeners = myListenerList.getListeners(InternalDecoratorListener.class);
+    for (InternalDecoratorListener listener : listeners) {
+      listener.hidden(this);
     }
   }
 
@@ -351,9 +347,9 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
    * Fires event that "hide" button has been pressed.
    */
   final void fireHiddenSide() {
-    final InternalDecoratorListener[] listeners = (InternalDecoratorListener[])myListenerList.getListeners(InternalDecoratorListener.class);
-    for (int i = 0; i < listeners.length; i++) {
-      listeners[i].hiddenSide(this);
+    final InternalDecoratorListener[] listeners = myListenerList.getListeners(InternalDecoratorListener.class);
+    for (InternalDecoratorListener listener : listeners) {
+      listener.hiddenSide(this);
     }
   }
 
@@ -361,37 +357,37 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
    * Fires event that user performed click into the title bar area.
    */
   final void fireActivated() {
-    final InternalDecoratorListener[] listeners = (InternalDecoratorListener[])myListenerList.getListeners(InternalDecoratorListener.class);
-    for (int i = 0; i < listeners.length; i++) {
-      listeners[i].activated(this);
+    final InternalDecoratorListener[] listeners = myListenerList.getListeners(InternalDecoratorListener.class);
+    for (InternalDecoratorListener listener : listeners) {
+      listener.activated(this);
     }
   }
 
   private void fireTypeChanged(final ToolWindowType type) {
-    final InternalDecoratorListener[] listeners = (InternalDecoratorListener[])myListenerList.getListeners(InternalDecoratorListener.class);
-    for (int i = 0; i < listeners.length; i++) {
-      listeners[i].typeChanged(this, type);
+    final InternalDecoratorListener[] listeners = myListenerList.getListeners(InternalDecoratorListener.class);
+    for (InternalDecoratorListener listener : listeners) {
+      listener.typeChanged(this, type);
     }
   }
 
   final void fireResized() {
-    final InternalDecoratorListener[] listeners = (InternalDecoratorListener[])myListenerList.getListeners(InternalDecoratorListener.class);
-    for (int i = 0; i < listeners.length; i++) {
-      listeners[i].resized(this);
+    final InternalDecoratorListener[] listeners = myListenerList.getListeners(InternalDecoratorListener.class);
+    for (InternalDecoratorListener listener : listeners) {
+      listener.resized(this);
     }
   }
 
   private void fireSideStatusChanged(boolean isSide) {
-    final InternalDecoratorListener[] listeners = (InternalDecoratorListener[])myListenerList.getListeners(InternalDecoratorListener.class);
-    for (int i = 0; i < listeners.length; i++) {
-      listeners[i].sideStatusChanged(this, isSide);
+    final InternalDecoratorListener[] listeners = myListenerList.getListeners(InternalDecoratorListener.class);
+    for (InternalDecoratorListener listener : listeners) {
+      listener.sideStatusChanged(this, isSide);
     }
   }
 
   private void fireContentUiTypeChanges(ToolWindowContentUiType type) {
-    final InternalDecoratorListener[] listeners = (InternalDecoratorListener[])myListenerList.getListeners(InternalDecoratorListener.class);
-    for (int i = 0; i < listeners.length; i++) {
-      listeners[i].contentUiTypeChanges(this, type);
+    final InternalDecoratorListener[] listeners = myListenerList.getListeners(InternalDecoratorListener.class);
+    for (InternalDecoratorListener listener : listeners) {
+      listener.contentUiTypeChanges(this, type);
     }
   }
 
@@ -443,7 +439,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
 
   private static class InnerPanelBorder implements Border {
 
-    private ToolWindow myWindow;
+    private final ToolWindow myWindow;
 
     private InnerPanelBorder(ToolWindow window) {
       myWindow = window;
@@ -469,7 +465,8 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
 
     private boolean hasBottomLine() {
       return (myWindow.getAnchor() == ToolWindowAnchor.BOTTOM || myWindow.getAnchor() == ToolWindowAnchor.LEFT || myWindow.getAnchor() == ToolWindowAnchor.RIGHT)
-          && !UISettings.getInstance().HIDE_TOOL_STRIPES && UISettings.getInstance().SHOW_STATUS_BAR || (myWindow.getAnchor() == ToolWindowAnchor.TOP);
+          && !UISettings.getInstance().HIDE_TOOL_STRIPES && UISettings.getInstance().SHOW_STATUS_BAR ||
+             myWindow.getAnchor() == ToolWindowAnchor.TOP;
     }
 
     public Insets getBorderInsets(final Component c) {
@@ -478,19 +475,19 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
       ToolWindowManagerImpl mgr = ((ToolWindowImpl)myWindow).getToolWindowManager();
 
       List<String> topIds = mgr.getIdsOn(ToolWindowAnchor.TOP);
-      boolean topButtons = !settings.HIDE_TOOL_STRIPES && topIds.size() > 0;
+      boolean topButtons = !settings.HIDE_TOOL_STRIPES && !topIds.isEmpty();
       boolean windowAtTop = hasDockedVisible(mgr, topIds);
 
       List<String> bottomIds = mgr.getIdsOn(ToolWindowAnchor.BOTTOM);
-      boolean bottomButtons = !settings.HIDE_TOOL_STRIPES && bottomIds.size() > 0;
+      boolean bottomButtons = !settings.HIDE_TOOL_STRIPES && !bottomIds.isEmpty();
       boolean windowAtBottom = hasDockedVisible(mgr, bottomIds);
 
       List<String> leftIds = mgr.getIdsOn(ToolWindowAnchor.LEFT);
-      boolean leftButtons = !settings.HIDE_TOOL_STRIPES && leftIds.size() > 0;
+      boolean leftButtons = !settings.HIDE_TOOL_STRIPES && !leftIds.isEmpty();
       boolean windowAtLeft = hasDockedVisible(mgr, leftIds);
 
       List<String> rightIds = mgr.getIdsOn(ToolWindowAnchor.RIGHT);
-      boolean rightBottoms = !settings.HIDE_TOOL_STRIPES && rightIds.size() > 0;
+      boolean rightBottoms = !settings.HIDE_TOOL_STRIPES && !rightIds.isEmpty();
       boolean windowAtRight = hasDockedVisible(mgr, rightIds);
 
       Insets insets = new Insets(0, 0, 0, 0);
@@ -519,7 +516,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
       return insets;
     }
 
-    private boolean hasDockedVisible(ToolWindowManager mgr, List<String> ids) {
+    private static boolean hasDockedVisible(ToolWindowManager mgr, List<String> ids) {
       for (String each : ids) {
         ToolWindow eachWnd = mgr.getToolWindow(each);
         if (eachWnd.isVisible()) {

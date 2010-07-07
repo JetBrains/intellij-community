@@ -83,4 +83,12 @@ public interface SoftWrapModelEx extends SoftWrapModel {
    * @return              painted drawing width
    */
   int paint(@NotNull Graphics g, @NotNull SoftWrapDrawingType drawingType, int x, int y, int lineHeight);
+
+  /**
+   * Allows to ask for the minimal width in pixels required for painting of the given type.
+   *
+   * @param drawingType   target drawing type
+   * @return              width in pixels required for the painting of the given type
+   */
+  int getMinDrawingWidth(@NotNull SoftWrapDrawingType drawingType);
 }

@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -104,8 +105,8 @@ public class SplitIfAction extends PsiElementBaseIntentionAction {
     PsiManager psiManager = ifStatement.getManager();
     PsiIfStatement subIf = (PsiIfStatement)ifStatement.copy();
 
-    subIf.getCondition().replace(rOperand);
-    ifStatement.getCondition().replace(lOperand);
+    subIf.getCondition().replace(RefactoringUtil.unparenthesizeExpression(rOperand));
+    ifStatement.getCondition().replace(RefactoringUtil.unparenthesizeExpression(lOperand));
 
     if (ifStatement.getThenBranch() instanceof PsiBlockStatement) {
       PsiBlockStatement blockStmt = (PsiBlockStatement)JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createStatementFromText("{}", null);
@@ -141,8 +142,8 @@ public class SplitIfAction extends PsiElementBaseIntentionAction {
     PsiStatement elseBranch = ifStatement.getElseBranch();
     if (elseBranch != null) { elseBranch = (PsiStatement)elseBranch.copy(); }
 
-    ifStatement.getCondition().replace(lOperand);
-    secondIf.getCondition().replace(rOperand);
+    ifStatement.getCondition().replace(RefactoringUtil.unparenthesizeExpression(lOperand));
+    secondIf.getCondition().replace(RefactoringUtil.unparenthesizeExpression(rOperand));
 
     ifStatement.setElseBranch(secondIf);
     if (elseBranch != null) { secondIf.setElseBranch(elseBranch); }

@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContaine
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -121,7 +122,7 @@ public class LibraryCompositionSettings {
       List<VirtualFile> roots = new ArrayList<VirtualFile>();
       roots.addAll(myAddedJars);
       for (Library library : myUsedLibraries) {
-        roots.addAll(Arrays.asList(librariesContainer.getLibraryFiles(library, OrderRootType.CLASSES)));
+        ContainerUtil.addAll(roots, librariesContainer.getLibraryFiles(library, OrderRootType.CLASSES));
       }
       VirtualFile[] jars = VfsUtil.toVirtualFileArray(roots);
       RequiredLibrariesInfo.RequiredClassesNotFoundInfo info = requiredLibraries.checkLibraries(jars, all);
@@ -135,7 +136,7 @@ public class LibraryCompositionSettings {
           if (files.length != downloadingInfos.length) {
             return false;
           }
-          myAddedJars.addAll(Arrays.asList(files));
+          ContainerUtil.addAll(myAddedJars, files);
         }
       }
     }

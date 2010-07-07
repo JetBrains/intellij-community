@@ -17,6 +17,7 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
@@ -64,7 +65,7 @@ class TagBinding implements Binding {
       List<Object> childrenList = new ArrayList<Object>();
       for (Object node : nodes) {
         assert ((Element)node).getName().equals(name);
-        childrenList.addAll(Arrays.asList(JDOMUtil.getContent((Element)node)));
+        ContainerUtil.addAll(childrenList, JDOMUtil.getContent((Element)node));
       }
 
       children = ArrayUtil.toObjectArray(childrenList);

@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 
 import javax.swing.*;
 import java.util.*;
@@ -51,7 +52,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
     Set<String> names = new HashSet<String>();
     for (ChooseByNameContributor contributor : myContributors) {
       try {
-        names.addAll(Arrays.asList(contributor.getNames(myProject, checkBoxState)));
+        ContainerUtil.addAll(names, contributor.getNames(myProject, checkBoxState));
       }
       catch(ProcessCanceledException ex) {
         // index corruption detected, ignore

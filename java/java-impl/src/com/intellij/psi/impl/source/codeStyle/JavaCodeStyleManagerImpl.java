@@ -37,6 +37,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -135,7 +136,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     if (JspPsiUtil.isInJspFile(file)) {
       // remove only duplicate imports
       redundants = new THashSet<PsiImportStatementBase>(TObjectHashingStrategy.IDENTITY);
-      redundants.addAll(Arrays.asList(imports));
+      ContainerUtil.addAll(redundants, imports);
       redundants.removeAll(allImports);
       for (PsiImportStatementBase importStatement : imports) {
         if (importStatement instanceof JspxImportStatement && ((JspxImportStatement)importStatement).isForeignFileImport()) {
@@ -231,7 +232,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     if (propertyName != null) {
       String[] namesByName = getSuggestionsByName(propertyName, kind, false);
       sortVariableNameSuggestions(namesByName, kind, propertyName, null);
-      names.addAll(Arrays.asList(namesByName));
+      ContainerUtil.addAll(names, namesByName);
     }
 
     final NamesByExprInfo namesByExpr;
@@ -240,7 +241,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       if (namesByExpr.propertyName != null) {
         sortVariableNameSuggestions(namesByExpr.names, kind, namesByExpr.propertyName, null);
       }
-      names.addAll(Arrays.asList(namesByExpr.names));
+      ContainerUtil.addAll(names, namesByExpr.names);
     }
     else {
       namesByExpr = null;
@@ -249,7 +250,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     if (type != null) {
       String[] namesByType = suggestVariableNameByType(type, kind);
       sortVariableNameSuggestions(namesByType, kind, null, type);
-      names.addAll(Arrays.asList(namesByType));
+      ContainerUtil.addAll(names, namesByType);
     }
 
     final String _propertyName;
@@ -327,7 +328,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
     String typeName = normalizeTypeName(getTypeName(type));
     if (typeName != null) {
-      suggestions.addAll(Arrays.asList(getSuggestionsByName(typeName, variableKind, type instanceof PsiArrayType)));
+      ContainerUtil.addAll(suggestions, getSuggestionsByName(typeName, variableKind, type instanceof PsiArrayType));
     }
 
     return ArrayUtil.toStringArray(suggestions);
@@ -352,7 +353,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     String baseName = normalizeTypeName(getTypeName(type));
     if (baseName != null) {
       fullNameBuilder.append(baseName);
-      suggestions.addAll(Arrays.asList(getSuggestionsByName(fullNameBuilder.toString(), variableKind, false)));
+      ContainerUtil.addAll(suggestions, getSuggestionsByName(fullNameBuilder.toString(), variableKind, false));
     }
   }
 
@@ -411,7 +412,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
             }
             String typeName = normalizeTypeName(getTypeName(componentType));
             if (typeName != null) {
-              suggestions.addAll(Arrays.asList(getSuggestionsByName(typeName, variableKind, true)));
+              ContainerUtil.addAll(suggestions, getSuggestionsByName(typeName, variableKind, true));
             }
           }
         }
@@ -561,10 +562,10 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     }
 
     LinkedHashSet<String> names = new LinkedHashSet<String>();
-    names.addAll(Arrays.asList(names1.names));
-    names.addAll(Arrays.asList(names2.names));
+    ContainerUtil.addAll(names, names1.names);
+    ContainerUtil.addAll(names, names2.names);
     if (names3 != null) {
-      names.addAll(Arrays.asList(names3));
+      ContainerUtil.addAll(names, names3);
     }
     String[] namesArray = ArrayUtil.toStringArray(names);
     String propertyName = names1.propertyName != null ? names1.propertyName : names2.propertyName;
@@ -585,7 +586,11 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
               || CREATE_PREFIX.equals(firstWord)) {
             if (words.length > 1) {
               final String propertyName = methodName.substring(firstWord.length());
-              final String[] names = getSuggestionsByName(propertyName, variableKind, false);
+              String[] names = getSuggestionsByName(propertyName, variableKind, false);
+              final PsiExpression qualifierExpression = methodExpr.getQualifierExpression();
+              if (qualifierExpression != null) {
+                names = ArrayUtil.append(names, changeIfNotIdentifier(qualifierExpression.getText() + StringUtil.capitalize(propertyName)));
+              }
               return new NamesByExprInfo(propertyName, names);
             }
           }

@@ -132,6 +132,13 @@ public class ResolveClassTest extends GroovyResolveTestCase {
     assertNotNull(resolved);
   }
 
+  public void testAliasedImportedClassFromDefaultPackage() throws Exception {
+    myFixture.addClass("class Foo{}");
+    final PsiReference ref = configureByFile("aliasedImportedClassFromDefaultPackage/Test.groovy");
+    final PsiElement resolved = ref.resolve();
+    assertNotNull(resolved);
+  }
+
   private void doTest() throws Exception {
     doTest(getTestName(true) + "/" + getTestName(false) + ".groovy");
   }

@@ -294,8 +294,9 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
       final int currentParameter = context.getCurrentParameterIndex();
 
       PsiParameter[] parms = method.getParameterList().getParameters();
-      if (resolveResult.getCurrentFileResolveContext() instanceof GrMethodCallExpression)
+      if (resolveResult.getCurrentFileResolveContext() instanceof GrMethodCallExpression) {
         parms = ArrayUtil.remove(parms, 0);
+      }
       int numParams = parms.length;
       if (numParams > 0) {
         final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
@@ -334,6 +335,10 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
     }
     else if (element instanceof GrVariable) {
       final PsiElement parent = context.getParameterOwner().getParent();
+      if (parent == null || !parent.isValid()) {
+        context.setUIComponentEnabled(false);
+        return;
+      }
       final PsiType type;
       if (parent instanceof GrMethodCallExpression) {
         type = ((GrMethodCallExpression)parent).getInvokedExpression().getType();

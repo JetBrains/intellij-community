@@ -58,6 +58,7 @@ import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.CharArrayUtil;
 import org.jdom.Element;
@@ -105,7 +106,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
   public final UnusedCodeExtension[] myExtensions;
 
   public UnusedDeclarationInspection() {
-    ADDITIONAL_ANNOTATIONS.addAll(Arrays.asList(ADDITIONAL_ANNOS));
+    ContainerUtil.addAll(ADDITIONAL_ANNOTATIONS, ADDITIONAL_ANNOS);
     myQuickFixActions = new QuickFixAction[]{new PermanentDeleteAction(), new CommentOutBin(), new MoveToEntries()};
     ExtensionPoint<UnusedCodeExtension> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL);
     final UnusedCodeExtension[] deadCodeAddins = point.getExtensions();

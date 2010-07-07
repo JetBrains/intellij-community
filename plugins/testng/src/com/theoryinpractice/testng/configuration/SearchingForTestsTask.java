@@ -38,6 +38,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.searches.AllClassesSearch;
 import com.intellij.psi.search.searches.AnnotatedMembersSearch;
+import com.intellij.util.containers.ContainerUtil;
 import com.theoryinpractice.testng.model.TestClassFilter;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestType;
@@ -359,7 +360,7 @@ public class SearchingForTestsTask extends Task.Backgroundable {
         psiMethods = new LinkedHashSet<PsiMethod>();
         classes.put(psiClass, psiMethods);
       }
-      psiMethods.addAll(Arrays.asList(methods));
+      ContainerUtil.addAll(psiMethods, methods);
     }
     else if (data.TEST_OBJECT.equals(TestType.GROUP.getType())) {
       //for a group, we include all classes

@@ -28,10 +28,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
-import com.intellij.openapi.projectRoots.ui.NotifiableSdkModel;
-import com.intellij.openapi.projectRoots.ui.SdkEditor;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -48,33 +45,28 @@ import java.util.HashMap;
  * User: anna
  * Date: 05-Jun-2006
  */
-public class ProjectJdksModel implements NotifiableSdkModel {
-  private static final Logger LOG = Logger.getInstance("com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel");
+public class ProjectSdksModel implements SdkModel {
+  private static final Logger LOG = Logger.getInstance("com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel");
 
-  private final HashMap<Sdk, Sdk> myProjectJdks = new HashMap<Sdk, Sdk>();
-  private final EventDispatcher<Listener> mySdkEventsDispatcher = EventDispatcher.create(SdkModel.Listener.class);
+  private final HashMap<Sdk, Sdk> myProjectSdks = new HashMap<Sdk, Sdk>();
+  private final EventDispatcher<Listener> mySdkEventsDispatcher = EventDispatcher.create(Listener.class);
 
   private boolean myModified = false;
 
-  private Sdk myProjectJdk;
+  private Sdk myProjectSdk;
   private boolean myInitialized = false;
-
-  public static ProjectJdksModel getInstance(Project project){
-    return ProjectStructureConfigurable.getInstance(project).getProjectJdksModel();
-  }
-
 
   public Listener getMulticaster() {
     return mySdkEventsDispatcher.getMulticaster();
   }
 
   public Sdk[] getSdks() {
-    return myProjectJdks.values().toArray(new Sdk[myProjectJdks.size()]);
+    return myProjectSdks.values().toArray(new Sdk[myProjectSdks.size()]);
   }
 
   @Nullable
   public Sdk findSdk(String sdkName) {
-    for (Sdk projectJdk : myProjectJdks.values()) {
+    for (Sdk projectJdk : myProjectSdks.values()) {
       if (Comparing.strEqual(projectJdk.getName(), sdkName)) return projectJdk;
     }
     return null;
@@ -89,28 +81,28 @@ public class ProjectJdksModel implements NotifiableSdkModel {
   }
 
   public void reset(Project project) {
-    myProjectJdks.clear();
+    myProjectSdks.clear();
     final Sdk[] projectJdks = ProjectJdkTable.getInstance().getAllJdks();
     for (Sdk jdk : projectJdks) {
       try {
-        myProjectJdks.put(jdk, (Sdk)jdk.clone());
+        myProjectSdks.put(jdk, (Sdk)jdk.clone());
       }
       catch (CloneNotSupportedException e) {
         //can't be
       }
     }
-    myProjectJdk = findSdk(ProjectRootManager.getInstance(project).getProjectJdkName());
+    myProjectSdk = findSdk(ProjectRootManager.getInstance(project).getProjectJdkName());
     myModified = false;
     myInitialized = true;
   }
 
   public void disposeUIResources() {
-    myProjectJdks.clear();
+    myProjectSdks.clear();
     myInitialized = false;
   }
 
-  public HashMap<Sdk, Sdk> getProjectJdks() {
-    return myProjectJdks;
+  public HashMap<Sdk, Sdk> getProjectSdks() {
+    return myProjectSdks;
   }
 
   public boolean isModified(){
@@ -129,7 +121,7 @@ public class ProjectJdksModel implements NotifiableSdkModel {
       public void run() {
         final ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
         for (final Sdk tableItem : allFromTable) {
-          if (myProjectJdks.containsKey(tableItem)) {
+          if (myProjectSdks.containsKey(tableItem)) {
             itemsInTable.add(tableItem);
           }
           else {
@@ -143,13 +135,13 @@ public class ProjectJdksModel implements NotifiableSdkModel {
         // Now all removed items are deleted from table, itemsInTable contains all items in table
         final ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
         for (Sdk originalJdk : itemsInTable) {
-          final Sdk modifiedJdk = myProjectJdks.get(originalJdk);
+          final Sdk modifiedJdk = myProjectSdks.get(originalJdk);
           LOG.assertTrue(modifiedJdk != null);
           jdkTable.updateJdk(originalJdk, modifiedJdk);
         }
         // Add new items to table
         final Sdk[] allJdks = jdkTable.getAllJdks();
-        for (final Sdk projectJdk : myProjectJdks.keySet()) {
+        for (final Sdk projectJdk : myProjectSdks.keySet()) {
           LOG.assertTrue(projectJdk != null);
           if (ArrayUtil.find(allJdks, projectJdk) == -1) {
             jdkTable.addJdk(projectJdk);
@@ -163,7 +155,7 @@ public class ProjectJdksModel implements NotifiableSdkModel {
   private boolean canApply(String[] errorString, MasterDetailsComponent rootConfigurable) throws ConfigurationException {
     ArrayList<String> allNames = new ArrayList<String>();
     Sdk itemWithError = null;
-    for (Sdk currItem : myProjectJdks.values()) {
+    for (Sdk currItem : myProjectSdks.values()) {
       String currName = currItem.getName();
       if (currName.length() == 0) {
         itemWithError = currItem;
@@ -196,16 +188,16 @@ public class ProjectJdksModel implements NotifiableSdkModel {
     return false;
   }
 
-  public void removeJdk(final Sdk editableObject) {
+  public void removeSdk(final Sdk editableObject) {
     Sdk projectJdk = null;
-    for (Sdk jdk : myProjectJdks.keySet()) {
-      if (myProjectJdks.get(jdk) == editableObject) {
+    for (Sdk jdk : myProjectSdks.keySet()) {
+      if (myProjectSdks.get(jdk) == editableObject) {
         projectJdk = jdk;
         break;
       }
     }
     if (projectJdk != null) {
-      myProjectJdks.remove(projectJdk);
+      myProjectSdks.remove(projectJdk);
       mySdkEventsDispatcher.getMulticaster().beforeSdkRemove(projectJdk);
       myModified = true;
     }
@@ -227,11 +219,11 @@ public class ProjectJdksModel implements NotifiableSdkModel {
 
   public void doAdd(final SdkType type, JComponent parent, final Consumer<Sdk> updateTree) {
     myModified = true;
-    final String home = SdkEditor.selectSdkHome(parent, type);
+    final String home = SdkConfigurationUtil.selectSdkHome(parent, type);
     if (home == null) {
       return;
     }
-    String newSdkName = SdkConfigurationUtil.createUniqueSdkName(type, home, myProjectJdks.values());
+    String newSdkName = SdkConfigurationUtil.createUniqueSdkName(type, home, myProjectSdks.values());
     final ProjectJdkImpl newJdk = new ProjectJdkImpl(newSdkName, type);
     newJdk.setHomePath(home);
 
@@ -242,27 +234,27 @@ public class ProjectJdksModel implements NotifiableSdkModel {
                                   ProjectBundle.message("sdk.java.corrupt.title"), Messages.getErrorIcon());
     }
 
-    myProjectJdks.put(newJdk, newJdk);
+    myProjectSdks.put(newJdk, newJdk);
     updateTree.consume(newJdk);
     mySdkEventsDispatcher.getMulticaster().sdkAdded(newJdk);
   }
 
   @Nullable
   public Sdk findSdk(@Nullable final Sdk modelJdk) {
-    for (Sdk jdk : myProjectJdks.keySet()) {
-      if (Comparing.equal(myProjectJdks.get(jdk), modelJdk)) return jdk;
+    for (Sdk jdk : myProjectSdks.keySet()) {
+      if (Comparing.equal(myProjectSdks.get(jdk), modelJdk)) return jdk;
     }
     return null;
   }
 
   @Nullable
-  public Sdk getProjectJdk() {
-    if (!myProjectJdks.containsValue(myProjectJdk)) return null;
-    return myProjectJdk;
+  public Sdk getProjectSdk() {
+    if (!myProjectSdks.containsValue(myProjectSdk)) return null;
+    return myProjectSdk;
   }
 
-  public void setProjectJdk(final Sdk projectJdk) {
-    myProjectJdk = projectJdk;
+  public void setProjectSdk(final Sdk projectSdk) {
+    myProjectSdk = projectSdk;
   }
 
   public boolean isInitialized() {

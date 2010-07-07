@@ -43,6 +43,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathsList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -182,7 +183,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
           }
           if (!dirItems.isEmpty()) {
             final RmicProcessingItem[] successfullyProcessed = invokeRmic(context, parserPool, pair.getFirst(), dirItems, pair.getSecond());
-            processed.addAll(Arrays.asList(successfullyProcessed));
+            ContainerUtil.addAll(processed, successfullyProcessed);
           }
           progressIndicator.setFraction(((double)processed.size()) / ((double)items.length));
         }
@@ -294,7 +295,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
 
     commandLine.add("-verbose");
 
-    commandLine.addAll(Arrays.asList(RmicConfiguration.getSettings(module.getProject()).getOptions()));
+    ContainerUtil.addAll(commandLine, RmicConfiguration.getSettings(module.getProject()).getOptions());
 
     commandLine.add("-classpath");
 

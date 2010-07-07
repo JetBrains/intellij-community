@@ -81,6 +81,11 @@ public class MavenProjectIndicesManagerTest extends MavenIndicesTestCase {
     myIndicesFixture = new MavenIndicesTestFixture(myDir, myProject, "local2", "remote_mirror");
     myIndicesFixture.setUp();
 
+    updateSettingsXmlFully("<settings>" +
+                           "  <mirrors>" +
+                           "  </mirrors>" +
+                           "</settings>");
+
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +

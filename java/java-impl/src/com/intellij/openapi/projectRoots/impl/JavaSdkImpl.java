@@ -121,6 +121,16 @@ public class JavaSdkImpl extends JavaSdk {
     return null;
   }
 
+  @NonNls public static final String MAC_HOME_PATH = "/Home";
+
+  @Override
+  public String adjustSelectedSdkHome(String homePath) {
+    if (SystemInfo.isMac) {
+      return homePath + MAC_HOME_PATH;
+    }
+    return homePath;
+  }
+
   public boolean isValidSdkHome(String path) {
     return checkForJdk(new File(path));
   }

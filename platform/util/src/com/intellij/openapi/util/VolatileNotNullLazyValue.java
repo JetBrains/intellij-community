@@ -13,14 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.projectRoots.ui;
 
-import com.intellij.openapi.projectRoots.SdkModel;
+package com.intellij.openapi.util;
+
+import org.jetbrains.annotations.NotNull;
 
 /**
- * @author Eugene Zhuravlev
- *         Date: Oct 4, 2004
+ * @author peter
  */
-public interface NotifiableSdkModel extends SdkModel{
-  Listener getMulticaster();
+public abstract class VolatileNotNullLazyValue<T> {
+
+  private volatile T myValue;
+
+  @NotNull
+  protected abstract T compute();
+
+  @NotNull
+  public final T getValue() {
+    T value = myValue;
+    if (value != null) {
+      return value;
+    }
+    value = myValue = compute();
+    return value;
+  }
 }

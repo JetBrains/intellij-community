@@ -49,6 +49,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.ui.content.*;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,7 +94,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
             Set<String> currentWindows = new HashSet<String>();
             String[] toolWindowIds = toolWindowManager.getToolWindowIds();
 
-            currentWindows.addAll(Arrays.asList(toolWindowIds));
+            ContainerUtil.addAll(currentWindows, toolWindowIds);
             myToolwindowIdZbuffer.retainAll(currentWindows);
 
             final String activeToolWindowId = toolWindowManager.getActiveToolWindowId();

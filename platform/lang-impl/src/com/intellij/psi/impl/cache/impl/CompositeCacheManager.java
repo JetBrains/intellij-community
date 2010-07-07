@@ -25,6 +25,7 @@ import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.IndexPatternProvider;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -57,7 +58,7 @@ public class CompositeCacheManager implements CacheManager{
   public CacheUpdater[] getCacheUpdaters() {
     List<CacheUpdater> updaters = new ArrayList<CacheUpdater>();
     for (CacheManager cacheManager : myManagers) {
-      updaters.addAll(Arrays.asList(cacheManager.getCacheUpdaters()));
+      ContainerUtil.addAll(updaters, cacheManager.getCacheUpdaters());
     }
     return updaters.toArray(new CacheUpdater[updaters.size()]);
   }
@@ -83,7 +84,7 @@ public class CompositeCacheManager implements CacheManager{
       PsiFile[] items = cacheManager.getFilesWithTodoItems();
       if (items.length != 0 && files == null) {
         files = new ArrayList<PsiFile>();
-        files.addAll(Arrays.asList(items));
+        ContainerUtil.addAll(files, items);
       }
     }
     return files == null ? PsiFile.EMPTY_ARRAY : files.toArray(new PsiFile[files.size()]);

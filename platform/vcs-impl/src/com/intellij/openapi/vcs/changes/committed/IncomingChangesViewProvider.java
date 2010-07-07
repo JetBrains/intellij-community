@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
@@ -71,6 +72,7 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
 
   public void disposeContent() {
     myConnection.disconnect();
+    Disposer.dispose(myBrowser);
     myBrowser = null;
   }
 

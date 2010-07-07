@@ -34,6 +34,7 @@ import com.intellij.ui.tabs.JBTabs;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ArrayListSet;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -521,7 +522,7 @@ public final class EditorsSplitters extends JPanel {
 
     for (final EditorWindow myWindow : myWindows) {
       final EditorWithProviderComposite[] editors = myWindow.getEditors();
-      res.addAll(Arrays.asList(editors));
+      ContainerUtil.addAll(res, editors);
     }
     return res.toArray(new EditorWithProviderComposite[res.size()]);
   }

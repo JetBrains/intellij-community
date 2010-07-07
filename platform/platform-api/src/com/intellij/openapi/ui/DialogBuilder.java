@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -93,7 +94,7 @@ public class DialogBuilder {
 
   public void setActionDescriptors(ActionDescriptor[] descriptors) {
     removeAllActions();
-    myActions.addAll(Arrays.asList(descriptors));
+    ContainerUtil.addAll(myActions, descriptors);
   }
 
   public void removeAllActions() {

@@ -275,7 +275,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
       }
     }
     else {
-      list.addAll(Arrays.asList(classes));
+      ContainerUtil.addAll(list, classes);
     }
     return list.toArray();
   }

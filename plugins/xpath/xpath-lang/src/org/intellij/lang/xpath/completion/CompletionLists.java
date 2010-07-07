@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.Icons;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.xpath.XPathFile;
 import org.intellij.lang.xpath.XPathTokenTypes;
 import org.intellij.lang.xpath.context.ContextProvider;
@@ -234,39 +235,40 @@ public class CompletionLists {
     }
 
     private static void addNameCompletions(ContextProvider contextProvider, final XPathNodeTest element, final Set<Lookup> list) {
-        final PrefixedName prefixedName = element.getQName();
-        final XPathNodeTest.PrincipalType principalType = element.getPrincipalType();
+      final PrefixedName prefixedName = element.getQName();
+      final XPathNodeTest.PrincipalType principalType = element.getPrincipalType();
 
-        final Set<PsiFile> files = new HashSet<PsiFile>();
-        final XPathFile file = (XPathFile)element.getContainingFile();
-        files.add(file);
-        files.addAll(Arrays.asList(contextProvider.getRelatedFiles(file)));
+      final Set<PsiFile> files = new HashSet<PsiFile>();
+      final XPathFile file = (XPathFile)element.getContainingFile();
+      files.add(file);
+      ContainerUtil.addAll(files, contextProvider.getRelatedFiles(file));
 
-        for (PsiFile xpathFile : files) {
-            xpathFile.accept(new PsiRecursiveElementVisitor() {
-                public void visitElement(PsiElement e) {
-                    if (e instanceof XPathNodeTest) {
-                        final XPathNodeTest nodeTest = (XPathNodeTest)e;
+      for (PsiFile xpathFile : files) {
+        xpathFile.accept(new PsiRecursiveElementVisitor() {
+          public void visitElement(PsiElement e) {
+            if (e instanceof XPathNodeTest) {
+              final XPathNodeTest nodeTest = (XPathNodeTest)e;
 
-                        final XPathNodeTest.PrincipalType _principalType = nodeTest.getPrincipalType();
-                        if (_principalType == principalType) {
-                            final PrefixedName _prefixedName = nodeTest.getQName();
-                            if (_prefixedName != null && prefixedName != null) {
-                                final String localName = _prefixedName.getLocalName();
-                                if (!"*".equals(localName) && localName.indexOf(INTELLIJ_IDEA_RULEZ) == -1) {
-                                    if (Comparing.equal(_prefixedName.getPrefix(), prefixedName.getPrefix())) {
-                                        list.add(new NodeLookup(localName, _principalType));
-                                    } else if (prefixedName.getPrefix() == null) {
-                                        list.add(new NodeLookup(_prefixedName.toString(), _principalType));
-                                    }
-                                }
-                            }
-                        }
+              final XPathNodeTest.PrincipalType _principalType = nodeTest.getPrincipalType();
+              if (_principalType == principalType) {
+                final PrefixedName _prefixedName = nodeTest.getQName();
+                if (_prefixedName != null && prefixedName != null) {
+                  final String localName = _prefixedName.getLocalName();
+                  if (!"*".equals(localName) && localName.indexOf(INTELLIJ_IDEA_RULEZ) == -1) {
+                    if (Comparing.equal(_prefixedName.getPrefix(), prefixedName.getPrefix())) {
+                      list.add(new NodeLookup(localName, _principalType));
                     }
-                    super.visitElement(e);
+                    else if (prefixedName.getPrefix() == null) {
+                      list.add(new NodeLookup(_prefixedName.toString(), _principalType));
+                    }
+                  }
                 }
-            });
-        }
+              }
+            }
+            super.visitElement(e);
+          }
+        });
+      }
     }
 
     private static boolean namespaceMatches(PrefixedName prefixedName, String uri, NamespaceContext namespaceContext, XmlElement context) {
@@ -298,8 +300,8 @@ public class CompletionLists {
     public static Class[] getAllInterfaces(Class<?> clazz) {
         Set<Class> set = new HashSet<Class>();
         do {
-            set.addAll(Arrays.asList(clazz.getInterfaces()));
-            clazz = clazz.getSuperclass();
+          ContainerUtil.addAll(set, clazz.getInterfaces());
+          clazz = clazz.getSuperclass();
         } while (clazz != null);
         return set.toArray(new Class[set.size()]);
     }

@@ -33,6 +33,7 @@ import com.intellij.semantic.SemKey;
 import com.intellij.semantic.SemService;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.events.ElementChangedEvent;
@@ -459,7 +460,7 @@ public final class DomManagerImpl extends DomManager {
     final StableInvocationHandler handler = new StableInvocationHandler<T>(initial, provider, validator);
 
     final Set<Class> intf = new HashSet<Class>();
-    intf.addAll(Arrays.asList(initial.getClass().getInterfaces()));
+    ContainerUtil.addAll(intf, initial.getClass().getInterfaces());
     intf.add(StableElement.class);
     //noinspection unchecked
 

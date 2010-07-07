@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -75,7 +76,7 @@ public class EclipseUserLibrariesHelper {
     }
     final Element userLibsElement = new Element("eclipse-userlibraries");
     final List<Library> libraries = new ArrayList<Library>(Arrays.asList(ProjectLibraryTable.getInstance(project).getLibraries()));
-    libraries.addAll(Arrays.asList(LibraryTablesRegistrar.getInstance().getLibraryTable().getLibraries()));
+    ContainerUtil.addAll(libraries, LibraryTablesRegistrar.getInstance().getLibraryTable().getLibraries());
     for (Library library : libraries) {
       Element libElement = new Element("library");
       libElement.setAttribute("name", library.getName());

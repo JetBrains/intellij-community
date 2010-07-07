@@ -1,7 +1,8 @@
 package org.jetbrains.plugins.groovy.dsl
 
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.util.Pair
-import com.intellij.psi.PsiElement
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ProcessingContext
 import org.jetbrains.plugins.groovy.dsl.psi.PsiEnhancerCategory
 import org.jetbrains.plugins.groovy.dsl.toplevel.CompositeContextFilter
@@ -16,6 +17,14 @@ public class GroovyDslExecutor {
   static final def cats = PsiEnhancerCategory.EP_NAME.extensions.collect { it.class }
   final List<Pair<ContextFilter, Closure>> enhancers = []
   private final String myFileName;
+  static final String ideaVersion
+
+  static {
+    def major = ApplicationInfo.instance.majorVersion
+      def minor = ApplicationInfo.instance.minorVersion
+      def full = major + (minor ? ".$minor" : "")
+    ideaVersion = full
+  }
 
   public GroovyDslExecutor(String text, String fileName) {
     myFileName = fileName
@@ -32,6 +41,10 @@ public class GroovyDslExecutor {
       if (p.getType() == Closure.class) {
         mc."$p.name" = p.getProperty(enhancer)
       }
+    }
+
+    mc.supportsVersion = { String ver ->
+      StringUtil.compareVersionNumbers(ideaVersion, ver) >= 0
     }
 
     mc.initialize()

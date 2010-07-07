@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.Chunk;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
@@ -239,13 +240,13 @@ public class GenerationOptionsImpl extends GenerationOptions {
         final Collection<ModuleChunk> nodes = moduleChunkGraph.getNodes();
         final ModuleChunk[] moduleChunks = nodes.toArray(new ModuleChunk[nodes.size()]);
         for (ModuleChunk moduleChunk : moduleChunks) {
-            final Iterator<ModuleChunk> depsIterator = moduleChunkGraph.getIn(moduleChunk);
-            List<ModuleChunk> deps = new ArrayList<ModuleChunk>();
-            while (depsIterator.hasNext()) {
-                deps.add(depsIterator.next());
-            }
-            moduleChunk.setDependentChunks(deps.toArray(new ModuleChunk[deps.size()]));
-            myCustomCompilers.addAll(Arrays.asList(moduleChunk.getCustomCompilers()));
+          final Iterator<ModuleChunk> depsIterator = moduleChunkGraph.getIn(moduleChunk);
+          List<ModuleChunk> deps = new ArrayList<ModuleChunk>();
+          while (depsIterator.hasNext()) {
+            deps.add(depsIterator.next());
+          }
+          moduleChunk.setDependentChunks(deps.toArray(new ModuleChunk[deps.size()]));
+          ContainerUtil.addAll(myCustomCompilers, moduleChunk.getCustomCompilers());
         }
         Arrays.sort(moduleChunks, new ChunksComparator());
         if (generateSingleFile) {
@@ -273,7 +274,7 @@ public class GenerationOptionsImpl extends GenerationOptions {
         final Sdk[] projectJdks = ProjectJdkTable.getInstance().getAllJdks();
         myJdkUrls = new HashSet<String>();
         for (Sdk jdk : projectJdks) {
-            myJdkUrls.addAll(Arrays.asList(jdk.getRootProvider().getUrls(OrderRootType.CLASSES)));
+          ContainerUtil.addAll(myJdkUrls, jdk.getRootProvider().getUrls(OrderRootType.CLASSES));
         }
         return myJdkUrls;
     }

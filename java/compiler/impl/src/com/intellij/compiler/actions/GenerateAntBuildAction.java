@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -151,7 +152,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
               generated = generateMultipleFileBuild(project, genOptions, filesToRefresh);
             }
             if (generated != null) {
-              _generated.addAll(Arrays.asList(generated));
+              ContainerUtil.addAll(_generated, generated);
             }
           }
           catch (IOException e) {

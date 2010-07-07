@@ -32,6 +32,7 @@ import com.intellij.psi.util.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -255,12 +256,12 @@ public class GroovyCompletionContributor extends CompletionContributor {
         //costructor call
         if (call instanceof GrConstructorCall) {
           GrConstructorCall constructorCall = (GrConstructorCall)call;
-          results.addAll(Arrays.asList(constructorCall.multiResolveConstructor()));
-          results.addAll(Arrays.asList(constructorCall.multiResolveClass()));
+          ContainerUtil.addAll(results, constructorCall.multiResolveConstructor());
+          ContainerUtil.addAll(results, constructorCall.multiResolveClass());
         }
         else if (call instanceof GrCallExpression) {
           GrCallExpression constructorCall = (GrCallExpression)call;
-          results.addAll(Arrays.asList(constructorCall.getMethodVariants()));
+          ContainerUtil.addAll(results, constructorCall.getMethodVariants());
           final PsiType type = ((GrCallExpression)call).getType();
           if (type instanceof PsiClassType) {
             final PsiClass psiClass = ((PsiClassType)type).resolve();
@@ -270,7 +271,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
         else if (call instanceof GrApplicationStatement) {
           final GrExpression element = ((GrApplicationStatement)call).getFunExpression();
           if (element instanceof GrReferenceElement) {
-            results.addAll(Arrays.asList(((GrReferenceElement)element).multiResolve(true)));
+            ContainerUtil.addAll(results, ((GrReferenceElement)element).multiResolve(true));
           }
         }
 

@@ -21,10 +21,11 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.util.PairFunction;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
 
@@ -64,8 +65,22 @@ public class JavaParameters extends SimpleJavaParameters {
     }
 
     setDefaultCharset(module.getProject());
-    configureEnumerator(OrderEnumerator.orderEntries(module).runtimeOnly().recursively(), classPathType)
-      .classes().collectPaths(getClassPath());
+    final PairFunction<OrderEntry, OrderRootType, VirtualFile[]> substitutor = computeSubstitutor(classPathType, jdk);
+    configureEnumerator(OrderEnumerator.orderEntries(module).runtimeOnly().recursively().substituteFiles(substitutor)
+      , classPathType).classes().collectPaths(getClassPath());
+  }
+
+  @Nullable
+  private static PairFunction<OrderEntry, OrderRootType, VirtualFile[]> computeSubstitutor(int classPathType, final Sdk jdk) {
+    return (classPathType & JDK_ONLY) == 0 ? null : new PairFunction<OrderEntry, OrderRootType, VirtualFile[]>() {
+        @Override
+        public VirtualFile[] fun(OrderEntry orderEntry, OrderRootType orderRootType) {
+          if (orderEntry instanceof JdkOrderEntry) {
+            return jdk.getRootProvider().getFiles(orderRootType);
+          }
+          return orderEntry.getFiles(orderRootType);
+        }
+      };
   }
 
   public void setDefaultCharset(final Project project) {
@@ -102,8 +117,8 @@ public class JavaParameters extends SimpleJavaParameters {
     if ((classPathType & CLASSES_ONLY) == 0) {
       return;
     }
-
-    configureEnumerator(OrderEnumerator.orderEntries(project).runtimeOnly(), classPathType).classes().collectPaths(getClassPath());
+    final PairFunction<OrderEntry, OrderRootType, VirtualFile[]> substitutor = computeSubstitutor(classPathType, jdk);
+    configureEnumerator(OrderEnumerator.orderEntries(project).runtimeOnly().substituteFiles(substitutor), classPathType).classes().collectPaths(getClassPath());
   }
 
   private static OrderEnumerator configureEnumerator(OrderEnumerator enumerator, int classPathType) {
