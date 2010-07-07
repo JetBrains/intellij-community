@@ -13,6 +13,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.*;
 import com.jetbrains.python.codeInsight.controlflow.PyControlFlowBuilder;
@@ -315,7 +316,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     List<PyImportElement> ret = new ArrayList<PyImportElement>();
     List<PyImportStatement> imports = PyPsiUtils.collectStubChildren(this, this.getStub(), PyElementTypes.IMPORT_STATEMENT, PyImportStatement.class);
     for (PyImportStatement one: imports) {
-      ret.addAll(Arrays.asList(one.getImportElements()));
+      ContainerUtil.addAll(ret, one.getImportElements());
     }
     return ret;
   }

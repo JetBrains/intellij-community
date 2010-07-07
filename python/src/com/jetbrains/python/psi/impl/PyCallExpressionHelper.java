@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
@@ -774,7 +775,7 @@ public class PyCallExpressionHelper {
       if (argflags == null) {
         argflags = EnumSet.noneOf(PyArgumentList.ArgFlag.class);
       }
-      argflags.addAll(Arrays.asList(flags));
+      ContainerUtil.addAll(argflags, flags);
       my_arg_flags.put(arg, argflags);
       return arg;
     }

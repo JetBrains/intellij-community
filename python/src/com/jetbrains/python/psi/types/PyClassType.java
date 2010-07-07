@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.PyDynamicMember;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -212,7 +213,7 @@ public class PyClassType implements PyType {
           if (!isClassPrivate(ob.toString())) ret.add(ob);
         }
       }
-      ret.addAll(Arrays.asList(ancestry));
+      ContainerUtil.addAll(ret, ancestry);
     }
   }
 
