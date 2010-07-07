@@ -20,6 +20,7 @@ import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
 import com.intellij.structuralsearch.impl.matcher.predicates.ExprTypePredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.NotPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.*;
 
@@ -1227,7 +1228,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     else {
       List<PsiCatchSection> unmatchedCatchSections = new ArrayList<PsiCatchSection>();
 
-      unmatchedCatchSections.addAll(Arrays.asList(catches2));
+      ContainerUtil.addAll(unmatchedCatchSections, catches2);
 
       for (int i = 0, j; i < catches1.length; ++i) {
         MatchingHandler handler = myMatchingVisitor.getMatchContext().getPattern().getHandler(catches1[i]);

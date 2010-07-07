@@ -37,6 +37,7 @@ import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairProcessor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
@@ -358,10 +359,10 @@ public class MatcherImpl {
           // We search from content roots even for java files due to jsps
           final VirtualFile[] contentRoots = instance.getContentRoots();
           List<VirtualFile> result = new ArrayList<VirtualFile>(contentRoots.length);
-          result.addAll(Arrays.asList(contentRoots));
+          ContainerUtil.addAll(result, contentRoots);
 
           if (scope.isSearchInLibraries()) {
-            for(VirtualFile file: instance.orderEntries().sources().usingCache().getRoots()) {
+            for (VirtualFile file : instance.orderEntries().sources().usingCache().getRoots()) {
               if (projectFileIndex.isInLibrarySource(file)) {
                 result.add(file);
               }
