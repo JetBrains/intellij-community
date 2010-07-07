@@ -239,6 +239,10 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
     dialog.dispose();
   }
 
+  @Override
+  public void adjustContainerWindow(Component c, Dimension oldSize, Dimension newSize) {
+  }
+
   public final String getComponentName() {
     return "TestWindowManager";
   }

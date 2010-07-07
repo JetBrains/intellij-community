@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.ex;
 
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.IdeFrame;
@@ -140,5 +141,8 @@ public abstract class WindowManagerEx extends WindowManager {
    * @param project the dialog has been shown for
    */
   public abstract void hideDialog(JDialog dialog, Project project);
+
+  public abstract void adjustContainerWindow(Component c, Dimension oldSize, Dimension newSize);
+
 
 }
