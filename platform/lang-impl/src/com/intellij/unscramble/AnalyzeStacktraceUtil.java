@@ -72,7 +72,7 @@ public class AnalyzeStacktraceUtil {
 
   @Nullable
   public static String getTextInClipboard() {
-    final Transferable contents = CopyPasteManagerEx.getInstance().getContents();
+    final Transferable contents = CopyPasteManagerEx.getInstanceEx().getSystemClipboardContents(false);
     if (contents != null) {
       try {
         return (String)contents.getTransferData(DataFlavor.stringFlavor);
