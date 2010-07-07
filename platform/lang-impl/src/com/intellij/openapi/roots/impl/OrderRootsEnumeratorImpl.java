@@ -85,7 +85,7 @@ public class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
   }
 
   private void checkCanUseCache() {
-    LOG.assertTrue(myCustomRootProvider != null, "Caching not supported for OrderRootsEnumerator with 'usingCustomRootProvider' option");
+    LOG.assertTrue(myCustomRootProvider == null, "Caching not supported for OrderRootsEnumerator with 'usingCustomRootProvider' option");
   }
 
   private Collection<VirtualFile> computeRoots() {
