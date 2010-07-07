@@ -56,6 +56,10 @@ public class SchemaPrefixReference extends PsiReferenceBase<XmlElement> {
     }
   }
 
+  public String getNamespacePrefix() {
+    return myName;
+  }
+
   public SchemaPrefix resolve() {
     return myPrefix;
   }
