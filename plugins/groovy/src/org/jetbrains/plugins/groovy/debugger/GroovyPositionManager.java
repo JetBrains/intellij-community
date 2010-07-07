@@ -313,7 +313,7 @@ public class GroovyPositionManager implements PositionManager {
         GroovyPsiElement sourceImage = findReferenceTypeSourceImage(position);
         final String scriptName = getScriptQualifiedName(position);
 
-        if (sourceImage instanceof GrTypeDefinition) {
+        if (sourceImage instanceof GrTypeDefinition && !((GrTypeDefinition)sourceImage).isAnonymous()) {
           String qName = getClassNameForJvm((GrTypeDefinition)sourceImage);
           if (qName != null) return myDebugProcess.getVirtualMachineProxy().classesByName(qName);
         } else if (sourceImage == null) {
