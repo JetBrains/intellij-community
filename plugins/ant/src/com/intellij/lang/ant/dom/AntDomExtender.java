@@ -19,6 +19,7 @@ import com.intellij.lang.ant.psi.impl.AntIntrospector;
 import com.intellij.lang.ant.psi.impl.ReflectedProject;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.PomTarget;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
@@ -244,7 +245,21 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
       if (declaringElement == null) {
         return null;
       }
-      return DomTarget.getTarget(parentElement);
+      DomTarget target = DomTarget.getTarget(declaringElement);
+      if (target == null && declaringElement instanceof AntDomTypeDef) {
+        final AntDomTypeDef typedef = (AntDomTypeDef)declaringElement;
+        final GenericAttributeValue<PsiFileSystemItem> resource = typedef.getResource();
+        if (resource != null) {
+          target = DomTarget.getTarget(declaringElement, resource);
+        }
+        if (target == null) {
+          final GenericAttributeValue<PsiFileSystemItem> file = typedef.getFile();
+          if (file != null) {
+            target = DomTarget.getTarget(declaringElement, file);
+          }
+        }
+      }
+      return target;
     }
   }
 }

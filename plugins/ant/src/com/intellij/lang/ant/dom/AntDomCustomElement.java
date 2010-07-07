@@ -15,8 +15,7 @@
  */
 package com.intellij.lang.ant.dom;
 
-import com.intellij.util.xml.DomElement;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.xml.XmlName;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -27,16 +26,8 @@ public abstract class AntDomCustomElement extends AntDomElement{
 
   @Nullable
   public final Class getDefinitionClass() {
-    return CustomAntElementsRegistry.getInstance(getAntProject()).lookupClass(getCustomElementId());
-  }
-
-  @NotNull
-  public final String getCustomElementId() {
-    final String id = getXmlElementName();
-    final DomElement parent = getParent();
-    if (parent instanceof AntDomCustomElement) {
-      return parent.getXmlElementName() + "." + id;
-    }
-    return id;
+    final String name = getXmlElementName();
+    final String nsKey = getXmlElementNamespaceKey();
+    return CustomAntElementsRegistry.getInstance(getAntProject()).lookupClass(new XmlName(name, nsKey));
   }
 }
