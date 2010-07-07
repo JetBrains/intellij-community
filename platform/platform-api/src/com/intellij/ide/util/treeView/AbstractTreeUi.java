@@ -1735,6 +1735,8 @@ public class AbstractTreeUi {
   }
 
   private void resetIncompleteNode(DefaultMutableTreeNode node) {
+    if (myReleaseRequested) return;
+
     addToCancelled(node);
 
     if (!isExpanded(node, false)) {
@@ -1753,8 +1755,12 @@ public class AbstractTreeUi {
     myYeildingNow = true;
     yield(new Runnable() {
       public void run() {
+        if (isReleased()) return;
+
         runOnYieldingDone(new Runnable() {
           public void run() {
+            if (isReleased()) return;
+
             executeYieldingRequest(runnable, pass);
           }
         });
