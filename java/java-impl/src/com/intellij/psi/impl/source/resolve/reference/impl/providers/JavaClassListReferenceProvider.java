@@ -95,11 +95,11 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider {
           }
         }
         String s = str.substring(start, end + 1);
-        results.addAll(Arrays.asList(new JavaClassReferenceSet(s, position, offsetInPosition + start, false, this){
-          public boolean isSoft(){
+        ContainerUtil.addAll(results, new JavaClassReferenceSet(s, position, offsetInPosition + start, false, this) {
+          public boolean isSoft() {
             return true;
           }
-        }.getAllReferences()));
+        }.getAllReferences());
         ProgressManager.checkCanceled();
       }
     }

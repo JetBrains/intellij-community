@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -197,7 +198,7 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
           result.add(new GroovyResolveResultImpl(constructor, null, classResult.getSubstitutor(), isAccessible, true));
         }
         final GroovyResolveResult[] results = ResolveUtil.getNonCodeConstructors((PsiClass)element, this, classResult.getSubstitutor());
-        result.addAll(Arrays.asList(results));
+        ContainerUtil.addAll(result, results);
       }
     }
 

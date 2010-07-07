@@ -38,6 +38,7 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -206,7 +207,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   private List<String> getImplicitlyImportedPackages() {
     final ArrayList<String> result = new ArrayList<String>();
     result.add(getPackageName());
-    result.addAll(Arrays.asList(IMPLICITLY_IMPORTED_PACKAGES));
+    ContainerUtil.addAll(result, IMPLICITLY_IMPORTED_PACKAGES);
     if (isScript()) {
       result.addAll(GroovyScriptType.getScriptType(this).appendImplicitImports(this));
     }

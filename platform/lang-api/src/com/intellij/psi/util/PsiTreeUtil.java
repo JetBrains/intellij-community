@@ -25,6 +25,7 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -608,7 +609,7 @@ public class PsiTreeUtil {
     }
 
     ArrayList<PsiElement> filteredElements = new ArrayList<PsiElement>();
-    filteredElements.addAll(Arrays.asList(elements));
+    ContainerUtil.addAll(filteredElements, elements);
 
     int previousSize;
     do {
@@ -626,7 +627,8 @@ public class PsiTreeUtil {
           }
         }
       }
-    } while (filteredElements.size() != previousSize);
+    }
+    while (filteredElements.size() != previousSize);
 
     if (LOG.isDebugEnabled()) {
       for (PsiElement element : filteredElements) {

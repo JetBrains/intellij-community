@@ -27,6 +27,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferen
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceOwner;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -211,7 +212,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
     final ArrayList<LocalQuickFix> list = new ArrayList<LocalQuickFix>();
     for (Object ref: myReferences) {
       if (ref instanceof LocalQuickFixProvider) {
-        list.addAll(Arrays.asList(((LocalQuickFixProvider)ref).getQuickFixes()));
+        ContainerUtil.addAll(list, ((LocalQuickFixProvider)ref).getQuickFixes());
       }
     }
     return list.toArray(new LocalQuickFix[list.size()]);

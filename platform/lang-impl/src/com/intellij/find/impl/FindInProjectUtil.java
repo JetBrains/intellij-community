@@ -70,6 +70,7 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Function;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
@@ -562,7 +563,7 @@ public class FindInProjectUtil {
     // in case our word splitting is incorrect
     PsiFile[] allWordsFiles =
       cacheManager.getFilesWithWord(findModel.getStringToFind(), UsageSearchContext.ANY, scope, findModel.isCaseSensitive());
-    resultFiles.addAll(Arrays.asList(allWordsFiles));
+    ContainerUtil.addAll(resultFiles, allWordsFiles);
 
     filterMaskedFiles(resultFiles, fileMaskRegExp);
 

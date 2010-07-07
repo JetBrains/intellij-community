@@ -20,6 +20,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -90,11 +91,11 @@ public class GrTypeDefinitionBodyImpl extends GroovyPsiElementImpl implements Gr
     GrField[] fields = getFields();
     if (fields.length == 0) return Arrays.asList(groovyMethods);
     List<PsiMethod> result = new ArrayList<PsiMethod>();
-    result.addAll(Arrays.asList(groovyMethods));
+    ContainerUtil.addAll(result, groovyMethods);
     for (GrField field : fields) {
       if (field.isProperty()) {
         PsiMethod[] getters = field.getGetters();
-        if (getters.length > 0) result.addAll(Arrays.asList(getters));
+        if (getters.length > 0) ContainerUtil.addAll(result, getters);
         PsiMethod setter = field.getSetter();
         if (setter != null) result.add(setter);
       }

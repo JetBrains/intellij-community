@@ -31,6 +31,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -59,12 +60,12 @@ public class TodoJavaTreeHelper extends TodoTreeHelper {
   public void addPackagesToChildren(final ArrayList<AbstractTreeNode> children, final Module module, final TodoTreeBuilder builder) {
     final PsiManager psiManager = PsiManager.getInstance(getProject());
     final List<VirtualFile> sourceRoots = new ArrayList<VirtualFile>();
-    if (module == null){
+    if (module == null) {
       final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(getProject());
-      sourceRoots.addAll(Arrays.asList(projectRootManager.getContentSourceRoots()));
+      ContainerUtil.addAll(sourceRoots, projectRootManager.getContentSourceRoots());
     } else {
       ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-      sourceRoots.addAll(Arrays.asList(moduleRootManager.getSourceRoots()));
+      ContainerUtil.addAll(sourceRoots, moduleRootManager.getSourceRoots());
     }
     final Set<PsiPackage> topLevelPackages = new HashSet<PsiPackage>();
     for (final VirtualFile root : sourceRoots) {

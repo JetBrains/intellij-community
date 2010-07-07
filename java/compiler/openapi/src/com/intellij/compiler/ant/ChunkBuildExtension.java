@@ -21,6 +21,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,7 +45,7 @@ public abstract class ChunkBuildExtension {
     List<String> allTargets = new ArrayList<String>();
     final ChunkBuildExtension[] extensions = Extensions.getRootArea().getExtensionPoint(EP_NAME).getExtensions();
     for (ChunkBuildExtension extension : extensions) {
-      allTargets.addAll(Arrays.asList(extension.getTargets(chunk)));
+      ContainerUtil.addAll(allTargets, extension.getTargets(chunk));
     }
     if (allTargets.isEmpty()) {
       allTargets.add(BuildProperties.getCompileTargetName(chunk.getName()));

@@ -583,7 +583,7 @@ public class CreateFromUsageUtils {
     if (expectedTypes.length == 0 && !typesList.isEmpty()) {
       List<ExpectedTypeInfo> union = new ArrayList<ExpectedTypeInfo>();
       for (ExpectedTypeInfo[] aTypesList : typesList) {
-        union.addAll(Arrays.asList((ExpectedTypeInfo[])aTypesList));
+        ContainerUtil.addAll(union, (ExpectedTypeInfo[])aTypesList);
       }
       expectedTypes = union.toArray(new ExpectedTypeInfo[union.size()]);
     }
@@ -633,7 +633,7 @@ public class CreateFromUsageUtils {
     if (expectedTypes.length == 0 && !typesList.isEmpty()) {
       List<ExpectedTypeInfo> union = new ArrayList<ExpectedTypeInfo>();
       for (ExpectedTypeInfo[] aTypesList : typesList) {
-        union.addAll(Arrays.asList((ExpectedTypeInfo[])aTypesList));
+        ContainerUtil.addAll(union, (ExpectedTypeInfo[])aTypesList);
       }
       expectedTypes = union.toArray(new ExpectedTypeInfo[union.size()]);
     }

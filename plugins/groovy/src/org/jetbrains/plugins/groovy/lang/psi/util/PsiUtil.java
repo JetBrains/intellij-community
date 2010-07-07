@@ -31,6 +31,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.TIntStack;
 import org.jetbrains.annotations.NotNull;
@@ -845,8 +846,10 @@ public class PsiUtil {
         final GroovyPsiElement context = classResult.getCurrentFileResolveContext();
         PsiClass clazz = (PsiClass)element;
         String className = clazz.getName();
-        PsiType thisType = JavaPsiFacade.getInstance(place.getProject()).getElementFactory().createType(clazz, classResult.getSubstitutor());
-        final MethodResolverProcessor processor = new MethodResolverProcessor(className, place, true, thisType, argTypes, PsiType.EMPTY_ARRAY);
+        PsiType thisType =
+          JavaPsiFacade.getInstance(place.getProject()).getElementFactory().createType(clazz, classResult.getSubstitutor());
+        final MethodResolverProcessor processor =
+          new MethodResolverProcessor(className, place, true, thisType, argTypes, PsiType.EMPTY_ARRAY);
         PsiSubstitutor substitutor = classResult.getSubstitutor();
         final ResolveState state =
           ResolveState.initial().put(PsiSubstitutor.KEY, substitutor).put(ResolverProcessor.RESOLVE_CONTEXT, context);
@@ -856,7 +859,7 @@ public class PsiUtil {
           if (!membersProcessor.processNonCodeMembers(thisType, processor, place, true)) break;
         }
         NonCodeMembersContributor.runContributors(thisType, processor, place, state);
-        constructorResults.addAll(Arrays.asList(processor.getCandidates()));
+        ContainerUtil.addAll(constructorResults, processor.getCandidates());
         if (!toBreak) break;
       }
     }

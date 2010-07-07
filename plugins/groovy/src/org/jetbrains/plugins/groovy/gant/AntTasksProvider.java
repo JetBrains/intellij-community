@@ -34,6 +34,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -99,7 +100,7 @@ public class AntTasksProvider {
           final Module module = ModuleUtil.findModuleForPsiElement(groovyFile);
           Set<VirtualFile> jars = new HashSet<VirtualFile>();
           if (module != null) {
-            jars.addAll(Arrays.asList(OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots()));
+            ContainerUtil.addAll(jars, OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots());
           }
 
           if (groovyFile.isScript() && GroovyScriptType.getScriptType(groovyFile) instanceof GantScriptType) {

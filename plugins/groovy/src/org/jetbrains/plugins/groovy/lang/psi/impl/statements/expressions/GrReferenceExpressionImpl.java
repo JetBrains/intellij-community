@@ -29,6 +29,7 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -476,7 +477,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
           return candidates;
         }
         else {
-          accessorResults.addAll(Arrays.asList(candidates));
+          ContainerUtil.addAll(accessorResults, candidates);
         }
       }
       if (fieldCandidates.length > 0) return fieldCandidates;
@@ -505,7 +506,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
           return candidates;
         }
         else {
-          list.addAll(Arrays.asList(candidates));
+          ContainerUtil.addAll(list, candidates);
         }
       }
 

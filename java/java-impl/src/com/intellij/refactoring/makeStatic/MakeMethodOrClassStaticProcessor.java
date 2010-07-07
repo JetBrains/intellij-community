@@ -44,6 +44,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -200,7 +201,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
   protected UsageInfo[] findUsages() {
     ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
 
-    result.addAll(Arrays.asList(MakeStaticUtil.findClassRefsInMember(myMember, true)));
+    ContainerUtil.addAll(result, MakeStaticUtil.findClassRefsInMember(myMember, true));
 
     if (mySettings.isReplaceUsages()) {
       findExternalUsages(result);

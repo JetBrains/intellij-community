@@ -30,6 +30,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
@@ -126,12 +127,12 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
           }
           else if (token.getTokenType() == XmlTokenType.XML_CONTENT_ANY) {
             if (NSDescriptor instanceof XmlNSDescriptorImpl) {
-              result.addAll(Arrays.asList(((XmlNSDescriptorImpl) NSDescriptor).getElements()));
+              ContainerUtil.addAll(result, ((XmlNSDescriptorImpl)NSDescriptor).getElements());
             } else if (NSDescriptor instanceof XmlNSDescriptorSequence) {
 
               for (XmlNSDescriptor xmlNSDescriptor : ((XmlNSDescriptorSequence)NSDescriptor).getSequence()) {
                 if (xmlNSDescriptor instanceof XmlNSDescriptorImpl) {
-                  result.addAll(Arrays.asList(((XmlNSDescriptorImpl) xmlNSDescriptor).getElements()));
+                  ContainerUtil.addAll(result, ((XmlNSDescriptorImpl)xmlNSDescriptor).getElements());
                 }
               }
             }

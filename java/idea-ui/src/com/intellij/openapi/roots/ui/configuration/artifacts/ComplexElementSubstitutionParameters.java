@@ -19,6 +19,7 @@ import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.ComplexPackag
 import com.intellij.packaging.elements.ComplexPackagingElement;
 import com.intellij.packaging.elements.ComplexPackagingElementType;
 import com.intellij.packaging.elements.PackagingElementFactory;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -31,7 +32,7 @@ public class ComplexElementSubstitutionParameters {
   private final Set<ComplexPackagingElement<?>> mySubstituted = new HashSet<ComplexPackagingElement<?>>();
 
   public void setSubstituteAll() {
-    myTypesToSubstitute.addAll(Arrays.asList(PackagingElementFactory.getInstance().getComplexElementTypes()));
+    ContainerUtil.addAll(myTypesToSubstitute, PackagingElementFactory.getInstance().getComplexElementTypes());
     mySubstituted.clear();
   }
 

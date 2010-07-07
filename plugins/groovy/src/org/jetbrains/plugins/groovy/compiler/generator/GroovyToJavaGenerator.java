@@ -36,6 +36,7 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -166,7 +167,7 @@ public class GroovyToJavaGenerator {
     final HashSet<VirtualFile> set = new HashSet<VirtualFile>();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        set.addAll(Arrays.asList(context.getProjectCompileScope().getFiles(GroovyFileType.GROOVY_FILE_TYPE, true)));
+        ContainerUtil.addAll(set, context.getProjectCompileScope().getFiles(GroovyFileType.GROOVY_FILE_TYPE, true));
       }
     });
 
@@ -350,7 +351,9 @@ public class GroovyToJavaGenerator {
 
     writePackageStatement(text, packageDefinition);
 
-    GrMembersDeclaration[] membersDeclarations = typeDefinition instanceof GrTypeDefinition ? ((GrTypeDefinition) typeDefinition).getMemberDeclarations() : GrMembersDeclaration.EMPTY_ARRAY; //todo
+    GrMembersDeclaration[] membersDeclarations = typeDefinition instanceof GrTypeDefinition
+                                                 ? ((GrTypeDefinition)typeDefinition).getMemberDeclarations()
+                                                 : GrMembersDeclaration.EMPTY_ARRAY; //todo
 
     boolean isClassDef = typeDefinition instanceof GrClassDefinition;
     boolean isInterface = typeDefinition instanceof GrInterfaceDefinition;
@@ -372,7 +375,8 @@ public class GroovyToJavaGenerator {
 
     if (isScript) {
       text.append("extends groovy.lang.Script ");
-    } else if (!isEnum && !isAtInterface) {
+    }
+    else if (!isEnum && !isAtInterface) {
       final PsiClassType[] extendsClassesTypes = typeDefinition.getExtendsListTypes();
 
       if (extendsClassesTypes.length > 0) {
@@ -394,14 +398,14 @@ public class GroovyToJavaGenerator {
     text.append("{");
 
     if (isEnum) {
-      writeEnumConstants(text, (GrEnumTypeDefinition) typeDefinition);
+      writeEnumConstants(text, (GrEnumTypeDefinition)typeDefinition);
     }
 
     Set<MethodSignature> methodSignatures = new HashSet<MethodSignature>();
 
 
     List<PsiMethod> methods = new ArrayList<PsiMethod>();
-    methods.addAll(Arrays.asList(typeDefinition.getMethods()));
+    ContainerUtil.addAll(methods, typeDefinition.getMethods());
     if (isClassDef) {
       final PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
       methods.add(factory.createMethodFromText("public groovy.lang.MetaClass getMetaClass() {}", null));
@@ -418,7 +422,7 @@ public class GroovyToJavaGenerator {
       }
 
       if (method instanceof GrConstructor) {
-        writeConstructor(text, (GrConstructor) method, isEnum);
+        writeConstructor(text, (GrConstructor)method, isEnum);
         continue;
       }
 
@@ -432,17 +436,19 @@ public class GroovyToJavaGenerator {
         }
 
         for (int i = parameters.length - 1; i >= 0; i--) {
-          MethodSignature signature = MethodSignatureUtil.createMethodSignature(method.getName(), parameterTypes, method.getTypeParameters(), PsiSubstitutor.EMPTY);
+          MethodSignature signature =
+            MethodSignatureUtil.createMethodSignature(method.getName(), parameterTypes, method.getTypeParameters(), PsiSubstitutor.EMPTY);
           if (methodSignatures.add(signature)) {
             writeMethod(text, method, parametersCopy);
           }
 
           PsiParameter parameter = parameters[i];
-          if (!(parameter instanceof GrParameter) || !((GrParameter) parameter).isOptional()) break;
+          if (!(parameter instanceof GrParameter) || !((GrParameter)parameter).isOptional()) break;
           parameterTypes = ArrayUtil.remove(parameterTypes, parameterTypes.length - 1);
           parametersCopy = ArrayUtil.remove(parametersCopy, parametersCopy.length - 1);
         }
-      } else {
+      }
+      else {
         MethodSignature signature = method.getSignature(PsiSubstitutor.EMPTY);
         if (methodSignatures.add(signature)) {
           writeMethod(text, method, parameters);
@@ -452,7 +458,7 @@ public class GroovyToJavaGenerator {
 
     for (GrMembersDeclaration declaration : membersDeclarations) {
       if (declaration instanceof GrVariableDeclaration) {
-        writeVariableDeclarations(text, (GrVariableDeclaration) declaration);
+        writeVariableDeclarations(text, (GrVariableDeclaration)declaration);
       }
     }
     for (PsiClass inner : typeDefinition.getInnerClasses()) {

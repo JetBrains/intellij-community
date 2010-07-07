@@ -31,6 +31,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.ZipUtil;
 
 import java.io.BufferedOutputStream;
@@ -58,7 +59,7 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
     Set<File> exportFiles = new HashSet<File>();
     for (final ExportableComponent markedComponent : markedComponents) {
       final File[] files = markedComponent.getExportFiles();
-      exportFiles.addAll(Arrays.asList(files));
+      ContainerUtil.addAll(exportFiles, files);
     }
 
     ApplicationManager.getApplication().saveSettings();

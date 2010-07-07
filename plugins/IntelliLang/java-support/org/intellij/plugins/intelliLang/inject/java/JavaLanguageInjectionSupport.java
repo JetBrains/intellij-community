@@ -298,7 +298,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
         return method;
       }
       else {
-        methods.addAll(Arrays.asList(method.findSuperMethods()));
+        ContainerUtil.addAll(methods, method.findSuperMethods());
       }
     }
     return null;
@@ -342,7 +342,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     new ConcatenationInjector.InjectionProcessor(configuration, host) {
       @Override
       protected boolean processAnnotationInjections(PsiModifierListOwner annoElement) {
-        annotations.addAll(Arrays.asList(AnnotationUtilEx.getAnnotationFrom(annoElement, configuration.getLanguageAnnotationPair(), true)));
+        ContainerUtil.addAll(annotations, AnnotationUtilEx.getAnnotationFrom(annoElement, configuration.getLanguageAnnotationPair(), true));
         return true;
       }
 

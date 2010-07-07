@@ -33,6 +33,7 @@ import com.intellij.spellchecker.state.StateLoader;
 import com.intellij.spellchecker.util.SPFileUtil;
 import com.intellij.spellchecker.util.Strings;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -192,7 +193,7 @@ public class SpellCheckerManager {
   public List<String> getBundledDictionaries() {
     final ArrayList<String> dictionaries = new ArrayList<String>();
     for (BundledDictionaryProvider provider : Extensions.getExtensions(BundledDictionaryProvider.EP_NAME)) {
-      dictionaries.addAll(Arrays.asList(provider.getBundledDictionaries()));
+      ContainerUtil.addAll(dictionaries, provider.getBundledDictionaries());
     }
     return dictionaries;
   }

@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -103,7 +104,7 @@ public class VariableOfTypeMacro implements Macro {
     }
 
     PsiExpression[] expressions = MacroUtil.getStandardExpressionsOfType(place, type);
-    array.addAll(Arrays.asList(expressions));
+    ContainerUtil.addAll(array, expressions);
     return array.toArray(new PsiElement[array.size()]);
   }
 }

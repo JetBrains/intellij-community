@@ -130,9 +130,10 @@ public class InjectionsSettingsUI implements Configurable {
       }
     };
     for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
-      myAddActions.addAll(Arrays.asList(support.createAddActions(myProject, consumer)));
+      ContainerUtil.addAll(myAddActions, support.createAddActions(myProject, consumer));
       final AnAction action = support.createEditAction(myProject, producer);
-      myEditActions.put(support.getId(), action == null? AbstractLanguageInjectionSupport.createDefaultEditAction(myProject, producer) : action);
+      myEditActions
+        .put(support.getId(), action == null ? AbstractLanguageInjectionSupport.createDefaultEditAction(myProject, producer) : action);
       mySupports.put(support.getId(), support);
     }
     Collections.sort(myAddActions, new Comparator<AnAction>() {

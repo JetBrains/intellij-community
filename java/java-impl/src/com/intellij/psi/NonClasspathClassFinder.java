@@ -25,6 +25,7 @@ import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.NonClasspathDirectoryScope;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -86,7 +87,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
             if (!file.isDirectory()) {
               final PsiFile psi = PsiManager.getInstance(myProject).findFile(file);
               if (psi instanceof PsiClassOwner) {
-                result.addAll(Arrays.asList(((PsiClassOwner)psi).getClasses()));
+                ContainerUtil.addAll(result, ((PsiClassOwner)psi).getClasses());
               }
             }
           }

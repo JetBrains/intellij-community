@@ -28,6 +28,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.Table;
 
 import javax.swing.*;
@@ -228,8 +229,8 @@ class EditVariableDialog extends DialogWrapper {
 
     if (additionalMacros!=null) {
       ArrayList<Macro> list = new ArrayList<Macro>(macros.length + additionalMacros.size());
-      list.addAll( Arrays.asList(macros) );
-      list.addAll( additionalMacros );
+      ContainerUtil.addAll(list, macros);
+      list.addAll(additionalMacros);
       macros = list.toArray(new Macro[0]);
     }
 

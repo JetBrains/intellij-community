@@ -41,6 +41,7 @@ import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -1137,7 +1138,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     ArrayList<AnAction> result = new ArrayList<AnAction>();
     if (myLeftToolbarActions != null) {
       AnAction[] kids = myLeftToolbarActions.getChildren(null);
-      result.addAll(Arrays.asList(kids));
+      ContainerUtil.addAll(result, kids);
     }
     return result;
   }

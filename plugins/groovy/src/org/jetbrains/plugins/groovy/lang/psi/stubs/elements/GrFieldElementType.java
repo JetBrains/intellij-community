@@ -142,7 +142,7 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
         namedParameterSetArray[j] = dataStream.readUTF();
       }
       Set<String> curSet = new HashSet<String>();
-      curSet.addAll(Arrays.asList(namedParameterSetArray));
+      ContainerUtil.addAll(curSet, namedParameterSetArray);
       namedParametersSets.add(curSet);
     }
 

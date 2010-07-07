@@ -48,7 +48,7 @@ class StableInvocationHandler<T> implements InvocationHandler, StableElement {
     myValidator = validator;
     final Class superClass = initial.getClass().getSuperclass();
     final Set<Class> classes = new HashSet<Class>();
-    classes.addAll(Arrays.asList(initial.getClass().getInterfaces()));
+    ContainerUtil.addAll(classes, initial.getClass().getInterfaces());
     ContainerUtil.addIfNotNull(superClass, classes);
     classes.remove(MergedObject.class);
     myClasses = classes;

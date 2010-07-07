@@ -187,8 +187,8 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
     List<FileTemplateTab> allTabs = new ArrayList<FileTemplateTab>(Arrays.asList(myTemplatesList, myIncludesList, myCodeTemplatesList));
 
     final Set<FileTemplateGroupDescriptorFactory> factories = new THashSet<FileTemplateGroupDescriptorFactory>();
-    factories.addAll(Arrays.asList(ApplicationManager.getApplication().getComponents(FileTemplateGroupDescriptorFactory.class)));
-    factories.addAll(Arrays.asList(Extensions.getExtensions(FileTemplateGroupDescriptorFactory.EXTENSION_POINT_NAME)));
+    ContainerUtil.addAll(factories, ApplicationManager.getApplication().getComponents(FileTemplateGroupDescriptorFactory.class));
+    ContainerUtil.addAll(factories, Extensions.getExtensions(FileTemplateGroupDescriptorFactory.EXTENSION_POINT_NAME));
 
     if (!factories.isEmpty()) {
       myJ2eeTemplatesList = new FileTemplateTabAsTree(J2EE_TITLE) {
@@ -197,11 +197,12 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
         }
 
         protected FileTemplateNode initModel() {
-          SortedSet<FileTemplateGroupDescriptor> categories = new TreeSet<FileTemplateGroupDescriptor>(new Comparator<FileTemplateGroupDescriptor>() {
-            public int compare(FileTemplateGroupDescriptor o1, FileTemplateGroupDescriptor o2) {
-              return o1.getTitle().compareTo(o2.getTitle());
-            }
-          });
+          SortedSet<FileTemplateGroupDescriptor> categories =
+            new TreeSet<FileTemplateGroupDescriptor>(new Comparator<FileTemplateGroupDescriptor>() {
+              public int compare(FileTemplateGroupDescriptor o1, FileTemplateGroupDescriptor o2) {
+                return o1.getTitle().compareTo(o2.getTitle());
+              }
+            });
 
 
           for (FileTemplateGroupDescriptorFactory templateGroupFactory : factories) {
@@ -209,11 +210,12 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
           }
 
           //noinspection HardCodedStringLiteral
-          return new FileTemplateNode("ROOT", null, ContainerUtil.map2List(categories, new Function<FileTemplateGroupDescriptor, FileTemplateNode>() {
-            public FileTemplateNode fun(FileTemplateGroupDescriptor s) {
-              return new FileTemplateNode(s);
-            }
-          }));
+          return new FileTemplateNode("ROOT", null,
+                                      ContainerUtil.map2List(categories, new Function<FileTemplateGroupDescriptor, FileTemplateNode>() {
+                                        public FileTemplateNode fun(FileTemplateGroupDescriptor s) {
+                                          return new FileTemplateNode(s);
+                                        }
+                                      }));
         }
       };
       allTabs.add(myJ2eeTemplatesList);
@@ -561,27 +563,27 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
     // Apply templates
     ArrayList<FileTemplate> newModifiedItems = new ArrayList<FileTemplate>();
     FileTemplate[] templates = myTemplatesList.getTemplates();
-    newModifiedItems.addAll(Arrays.asList(templates));
+    ContainerUtil.addAll(newModifiedItems, templates);
     FileTemplateManager templatesManager = FileTemplateManager.getInstance();
     apply(newModifiedItems, myTemplatesList.savedTemplates, TEMPLATE_ID, templatesManager.getAllTemplates());
 
     // Apply patterns
     newModifiedItems = new ArrayList<FileTemplate>();
     templates = myIncludesList.getTemplates();
-    newModifiedItems.addAll(Arrays.asList(templates));
+    ContainerUtil.addAll(newModifiedItems, templates);
     apply(newModifiedItems, myIncludesList.savedTemplates, PATTERN_ID, templatesManager.getAllPatterns());
 
     //Apply code templates
     newModifiedItems = new ArrayList<FileTemplate>();
     templates = myCodeTemplatesList.getTemplates();
-    newModifiedItems.addAll(Arrays.asList(templates));
+    ContainerUtil.addAll(newModifiedItems, templates);
     apply(newModifiedItems, myCodeTemplatesList.savedTemplates, CODE_ID, templatesManager.getAllCodeTemplates());
 
     //Apply J2EE templates
     if (myJ2eeTemplatesList != null) {
       newModifiedItems = new ArrayList<FileTemplate>();
       templates = myJ2eeTemplatesList.getTemplates();
-      newModifiedItems.addAll(Arrays.asList(templates));
+      ContainerUtil.addAll(newModifiedItems, templates);
       apply(newModifiedItems, myJ2eeTemplatesList.savedTemplates, J2EE_ID, templatesManager.getAllJ2eeTemplates());
     }
 
