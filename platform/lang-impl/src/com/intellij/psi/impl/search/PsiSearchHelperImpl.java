@@ -641,7 +641,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         });
       } else {
         final List<String> words = StringUtil.getWordsIn(primitive.word);
-        final Set<IdIndexEntry> key = new HashSet<IdIndexEntry>(words.size());
+        final Set<IdIndexEntry> key = new HashSet<IdIndexEntry>(words.size() * 2);
         for (String word : words) {
           key.add(new IdIndexEntry(word, primitive.caseSensitive));
         }
