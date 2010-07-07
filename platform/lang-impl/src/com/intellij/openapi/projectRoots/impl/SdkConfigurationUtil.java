@@ -35,7 +35,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -54,7 +53,7 @@ public class SdkConfigurationUtil {
   }
 
   @Nullable
-  public static Sdk addSdk(final Project project, final SdkType... sdkTypes) {
+  public static Sdk createSdk(final Project project, final Sdk[] existingSdks, final SdkType... sdkTypes) {
     if (sdkTypes.length == 0) return null;
     final FileChooserDescriptor descriptor = createCompositeDescriptor(sdkTypes);
     final FileChooserDialog dialog = FileChooserFactory.getInstance().createFileChooser(descriptor, project);
@@ -66,7 +65,7 @@ public class SdkConfigurationUtil {
     if (selection.length > 0) {
       for (SdkType sdkType : sdkTypes) {
         if (sdkType.isValidSdkHome(selection[0].getPath())) {
-          return setupSdk(selection[0], sdkType, false);
+          return setupSdk(existingSdks, selection[0], sdkType, false, null, null);
         }
       }
     }
@@ -98,6 +97,15 @@ public class SdkConfigurationUtil {
     return descriptor;
   }
 
+  public static void addSdk(final Sdk sdk) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        ProjectJdkTable.getInstance().addJdk(sdk);
+      }
+    });
+  }
+
   public static void removeSdk(final Sdk sdk) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
@@ -107,33 +115,28 @@ public class SdkConfigurationUtil {
   }
 
   @Nullable
-  public static Sdk setupSdk(final VirtualFile homeDir, final SdkType sdkType, final boolean silent) {
-    return setupSdk(homeDir, sdkType, silent, null, null);
-  }
-
-  @Nullable
-  public static Sdk setupSdk(final VirtualFile homeDir, final SdkType sdkType, final boolean silent,
+  public static Sdk setupSdk(final Sdk[] allSdks,
+                             final VirtualFile homeDir, final SdkType sdkType, final boolean silent,
                              @Nullable final SdkAdditionalData additionalData,
                              @Nullable final String customSdkSuggestedName) {
-    final Sdk[] sdks = ProjectJdkTable.getInstance().getAllJdks();
-    final List<Sdk> sdksList = Arrays.asList(sdks);
+    final List<Sdk> sdksList = Arrays.asList(allSdks);
 
-    final ProjectJdkImpl projectJdk;
+    final ProjectJdkImpl sdk;
     try {
       final String sdkName = customSdkSuggestedName == null
                              ? createUniqueSdkName(sdkType, homeDir.getPath(), sdksList)
                              : createUniqueSdkName(customSdkSuggestedName, sdksList);
-      projectJdk = new ProjectJdkImpl(sdkName, sdkType);
+      sdk = new ProjectJdkImpl(sdkName, sdkType);
 
       if (additionalData != null) {
         // additional initialization.
         // E.g. some ruby sdks must be initialized before
         // setupSdkPaths() method invocation
-        projectJdk.setSdkAdditionalData(additionalData);
+        sdk.setSdkAdditionalData(additionalData);
       }
 
-      projectJdk.setHomePath(homeDir.getPath());
-      sdkType.setupSdkPaths(projectJdk);
+      sdk.setHomePath(homeDir.getPath());
+      sdkType.setupSdkPaths(sdk);
     }
     catch (Exception e) {
       if (!silent) {
@@ -145,17 +148,7 @@ public class SdkConfigurationUtil {
       }
       return null;
     }
-    return ApplicationManager.getApplication().runWriteAction(new NullableComputable<Sdk>() {
-        public Sdk compute() {
-          ProjectJdkTable.getInstance().addJdk(projectJdk);
-          return projectJdk;
-        }
-    });
-  }
-
-  @Nullable
-  public static Sdk setupSdk(final VirtualFile homeDir, final SdkType sdkType) {
-    return setupSdk(homeDir, sdkType, true);
+    return sdk;
   }
 
   public static void setDirectoryProjectSdk(final Project project, final Sdk sdk) {
@@ -210,7 +203,9 @@ public class SdkConfigurationUtil {
           }
         });
         if (sdkHome != null) {
-          return setupSdk(sdkHome, sdkType, true);
+          final Sdk newSdk = setupSdk(ProjectJdkTable.getInstance().getAllJdks(), sdkHome, sdkType, true, null, null);
+          addSdk(newSdk);
+          return newSdk;
         }
       }
     }

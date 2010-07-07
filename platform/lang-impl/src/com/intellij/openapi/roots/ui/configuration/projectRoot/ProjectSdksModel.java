@@ -109,6 +109,10 @@ public class ProjectSdksModel implements SdkModel {
     return myModified;
   }
 
+  public void apply() throws ConfigurationException {
+    apply(null);
+  }
+
   public void apply(@Nullable MasterDetailsComponent configurable) throws ConfigurationException {
     String[] errorString = new String[1];
     if (!canApply(errorString, configurable)) {
@@ -238,9 +242,19 @@ public class ProjectSdksModel implements SdkModel {
                                   ProjectBundle.message("sdk.java.corrupt.title"), Messages.getErrorIcon());
     }
 
-    myProjectSdks.put(newJdk, newJdk);
-    updateTree.consume(newJdk);
-    mySdkEventsDispatcher.getMulticaster().sdkAdded(newJdk);
+    doAdd(newJdk, updateTree);
+  }
+
+  public void addSdk(Sdk sdk) {
+    doAdd((ProjectJdkImpl) sdk, null);
+  }
+
+  private void doAdd(ProjectJdkImpl newSdk, @Nullable Consumer<Sdk> updateTree) {
+    myProjectSdks.put(newSdk, newSdk);
+    if (updateTree != null) {
+      updateTree.consume(newSdk);
+    }
+    mySdkEventsDispatcher.getMulticaster().sdkAdded(newSdk);
   }
 
   @Nullable
