@@ -553,13 +553,8 @@ public class SvnUtil {
 
   public static boolean seemsLikeVersionedDir(final VirtualFile file) {
     final String adminName = SVNFileUtil.getAdminDirectoryName();
-    final VirtualFile[] children = file.getChildren();
-    for (VirtualFile child : children) {
-      if (adminName.equals(child.getName()) && child.isDirectory()) {
-        return true;
-      }
-    }
-    return false;
+    final VirtualFile child = file.findChild(adminName);
+    return child != null && child.isDirectory();
   }
 
   public static boolean isAdminDirectory(final VirtualFile file) {
