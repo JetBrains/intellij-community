@@ -35,7 +35,7 @@ public class CustomAntElementsRegistry {
 
   public static CustomAntElementsRegistry getInstance(AntDomProject antProject) {
     // todo: walk the project and all its includes, gather taskdefs and load tasks
-    return new CustomAntElementsRegistry(); // todo: caching
+    return new CustomAntElementsRegistry(); // todo: caching per-project
   }
 
   @NotNull
@@ -48,6 +48,14 @@ public class CustomAntElementsRegistry {
   @Nullable
   public AntDomElement findDeclaringElement(AntDomElement parentElement, XmlName customElementName) {
     return null;
+  }
+
+  @Nullable
+  public Class lookupClass(String customElementId) {
+    return null;
+  }
+
+  public void registerCustomElement(String custoimElementId, Class clazz) {
   }
 
   private static class CustomTagFinder extends AntDomRecursiveVisitor {

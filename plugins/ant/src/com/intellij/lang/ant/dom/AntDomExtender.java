@@ -17,11 +17,13 @@ package com.intellij.lang.ant.dom;
 
 import com.intellij.lang.ant.psi.impl.AntIntrospector;
 import com.intellij.lang.ant.psi.impl.ReflectedProject;
+import com.intellij.openapi.util.Key;
 import com.intellij.pom.PomTarget;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.*;
+import org.apache.tools.ant.Task;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +34,18 @@ import java.util.*;
  *         Date: Apr 9, 2010
  */
 public class AntDomExtender extends DomExtender<AntDomElement>{
+  private static final Key<Class> ELEMENT_IMPL_CLASS_KEY = Key.create("_element_impl_class_");
+  private static final Map<String, Class<? extends AntDomElement>> TAG_MAPPING = new HashMap<String, Class<? extends AntDomElement>>();
+  static {
+    TAG_MAPPING.put("property", AntDomProperty.class);
+    TAG_MAPPING.put("fileset", AntDomFileSet.class);
+    TAG_MAPPING.put("dirset", AntDomDirSet.class);
+    TAG_MAPPING.put("filelist", AntDomFileList.class);
+    TAG_MAPPING.put("path", AntDomPath.class);
+    TAG_MAPPING.put("classpath", AntDomPath.class);
+    TAG_MAPPING.put("typedef", AntDomTypeDef.class);
+    TAG_MAPPING.put("taskdef", AntDomTypeDef.class);
+  }
 
   public void registerExtensions(@NotNull AntDomElement antDomElement, @NotNull DomExtensionsRegistrar registrar) {
     final XmlElement xmlElement = antDomElement.getXmlElement();
@@ -44,8 +58,8 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
 
       final DomGenericInfo genericInfo = antDomElement.getGenericInfo();
       AntIntrospector parentElementIntrospector = null;
-      final Hashtable<String,Class> taskDefs = reflected.getTaskDefinitions();
-      final Hashtable<String, Class> dataTypeDefs = reflected.getDataTypeDefinitions();
+      final Hashtable<String,Class> coreTaskDefs = reflected.getTaskDefinitions();
+      final Hashtable<String, Class> coreTypeDefs = reflected.getDataTypeDefinitions();
       if ("project".equals(tagName)) {
         parentElementIntrospector = getIntrospector(reflected.getProject().getClass());
       }
@@ -53,14 +67,30 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
         parentElementIntrospector = getIntrospector(reflected.getTargetClass());
       }
       else {
-        final Class taskClass = taskDefs.get(tagName);
-        if (taskClass != null) {
-          parentElementIntrospector = getIntrospector(taskClass);
+        if (antDomElement instanceof AntDomCustomElement) {
+          final AntDomCustomElement custom = (AntDomCustomElement)antDomElement;
+          final Class definitionClass = custom.getDefinitionClass();
+          if (definitionClass != null) {
+            parentElementIntrospector = getIntrospector(definitionClass);
+          }
         }
         else {
-          final Class dataClass = dataTypeDefs.get(tagName);
-          if (dataClass != null) {
-            parentElementIntrospector = getIntrospector(dataClass);
+          Class elemType = antDomElement.getChildDescription().getUserData(ELEMENT_IMPL_CLASS_KEY);
+
+          if (elemType == null) {
+            if (coreTaskDefs != null){
+              elemType = coreTaskDefs.get(tagName);
+            }
+          }
+
+          if (elemType == null) {
+            if (coreTypeDefs != null){
+              elemType = coreTypeDefs.get(tagName);
+            }
+          }
+
+          if (elemType != null) {
+            parentElementIntrospector = getIntrospector(elemType);
           }
         }
       }
@@ -71,21 +101,32 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
           registerAttribute(registrar, genericInfo, (String)attributes.nextElement());
         }
 
-        // todo: handle custom tasks registered in typedefs
         if ("project".equals(tagName) || parentElementIntrospector.isContainer()) { // can contain any task or/and type definition
-          for (String nestedName : taskDefs.keySet()) {
-            final DomExtension extension = registerChild(registrar, genericInfo, nestedName);
-            if (extension != null) {
-              extension.putUserData(AntDomElement.ROLE, AntDomElement.Role.TASK);
+          if (coreTaskDefs != null) {
+            for (Map.Entry<String, Class> entry : coreTaskDefs.entrySet()) {
+              final DomExtension extension = registerChild(registrar, genericInfo, entry.getKey());
+              if (extension != null) {
+                final Class type = entry.getValue();
+                if (type != null) {
+                  extension.putUserData(ELEMENT_IMPL_CLASS_KEY, type);
+                }
+                extension.putUserData(AntDomElement.ROLE, AntDomElement.Role.TASK);
+              }
             }
           }
-          for (String nestedTypeDef : dataTypeDefs.keySet()) {
-            final DomExtension extension = registerChild(registrar, genericInfo, nestedTypeDef);
-            if (extension != null) {
-              extension.putUserData(AntDomElement.ROLE, AntDomElement.Role.DATA_TYPE);
+          if (coreTypeDefs != null) {
+            for (Map.Entry<String, Class> entry : coreTypeDefs.entrySet()) {
+              final DomExtension extension = registerChild(registrar, genericInfo, entry.getKey());
+              if (extension != null) {
+                final Class type = entry.getValue();
+                if (type != null) {
+                  extension.putUserData(ELEMENT_IMPL_CLASS_KEY, type);
+                }
+                extension.putUserData(AntDomElement.ROLE, AntDomElement.Role.DATA_TYPE);
+              }
             }
           }
-          registrar.registerCustomChildrenExtension(AntDomCustomTask.class, new AntCustomTagNameDescriptor());
+          registrar.registerCustomChildrenExtension(AntDomCustomElement.class, new AntCustomTagNameDescriptor());
         }
         else {
           final Enumeration<String> nested = parentElementIntrospector.getNestedElements();
@@ -93,12 +134,19 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
             final String nestedElementName = nested.nextElement();
             final DomExtension extension = registerChild(registrar, genericInfo, nestedElementName);
             if (extension != null) {
+              final Class type = parentElementIntrospector.getElementType(nestedElementName);
+              if (type != null) {
+                extension.putUserData(ELEMENT_IMPL_CLASS_KEY, type);
+              }
               AntDomElement.Role role = null;
-              if (taskDefs.containsKey(nestedElementName)) {
+              if (coreTaskDefs != null && coreTaskDefs.containsKey(nestedElementName)) {
                 role = AntDomElement.Role.TASK;
               }
-              else if (dataTypeDefs.containsKey(nestedElementName)) {
+              else if (coreTypeDefs != null && coreTypeDefs.containsKey(nestedElementName)) {
                 role = AntDomElement.Role.DATA_TYPE;
+              }
+              else if (type != null && isAssignableFrom(Task.class.getName(), type)) {
+                role = AntDomElement.Role.TASK;
               }
               if (role != null) {
                 extension.putUserData(AntDomElement.ROLE, role);
@@ -121,27 +169,9 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
   @Nullable
   private static DomExtension registerChild(DomExtensionsRegistrar registrar, DomGenericInfo elementInfo, String childName) {
     if (elementInfo.getCollectionChildDescription(childName) == null) { // register if not yet defined statically
-      Class<? extends AntDomElement> modelClass = AntDomElement.class;
-      if ("property".equalsIgnoreCase(childName)) {
-        modelClass = AntDomProperty.class;
-      }
-      else if ("fileset".equalsIgnoreCase(childName)) {
-        modelClass = AntDomFileSet.class;
-      }
-      else if ("dirset".equalsIgnoreCase(childName)) {
-        modelClass = AntDomDirSet.class;
-      }
-      else if ("path".equalsIgnoreCase(childName)) {
-        modelClass = AntDomPath.class;
-      }
-      else if ("filelist".equalsIgnoreCase(childName)) {
-        modelClass = AntDomFileList.class;
-      }
-      else if ("typedef".equalsIgnoreCase(childName)) {
-        modelClass = AntDomTypeDef.class;
-      }
-      else if ("taskdef".equalsIgnoreCase(childName)) {
-        modelClass = AntDomTypeDef.class;
+      Class<? extends AntDomElement> modelClass = getModelClass(childName);
+      if (modelClass == null) {
+        modelClass = AntDomElement.class;
       }
       return registrar.registerCollectionChildrenExtension(new XmlName(childName), modelClass);
     }
@@ -156,6 +186,24 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
     catch (Throwable ignored) {
     }
     return null;
+  }
+
+  @Nullable
+  private static Class<? extends AntDomElement> getModelClass(@NotNull String tagName) {
+    return TAG_MAPPING.get(tagName.toLowerCase(Locale.US));
+  }
+
+  private static boolean isAssignableFrom(final String baseClassName, final Class clazz) {
+    try {
+      final ClassLoader loader = clazz.getClassLoader();
+      if (loader != null) {
+        final Class baseClass = loader.loadClass(baseClassName);
+        return baseClass.isAssignableFrom(clazz);
+      }
+    }
+    catch (ClassNotFoundException ignored) {
+    }
+    return false;
   }
 
   private static class AntCustomTagNameDescriptor extends CustomDomChildrenDescription.TagNameDescriptor {
@@ -190,13 +238,13 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
       if (!(parent instanceof AntDomElement)) {
         return null;
       }
-      final AntDomElement element = (AntDomElement)parent;
-      final CustomAntElementsRegistry registry = CustomAntElementsRegistry.getInstance(element.getAntProject());
-      final AntDomElement declaringElement = registry.findDeclaringElement(element, xmlName);
+      final AntDomElement parentElement = (AntDomElement)parent;
+      final CustomAntElementsRegistry registry = CustomAntElementsRegistry.getInstance(parentElement.getAntProject());
+      final AntDomElement declaringElement = registry.findDeclaringElement(parentElement, xmlName);
       if (declaringElement == null) {
         return null;
       }
-      return DomTarget.getTarget(element);
+      return DomTarget.getTarget(parentElement);
     }
   }
 }

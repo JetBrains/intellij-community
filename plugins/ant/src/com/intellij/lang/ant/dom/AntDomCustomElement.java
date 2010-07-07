@@ -15,9 +15,28 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.util.xml.DomElement;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author Eugene Zhuravlev
  *         Date: Jun 30, 2010
  */
-public abstract class AntDomCustomTask extends AntDomElement{
+public abstract class AntDomCustomElement extends AntDomElement{
+
+  @Nullable
+  public final Class getDefinitionClass() {
+    return CustomAntElementsRegistry.getInstance(getAntProject()).lookupClass(getCustomElementId());
+  }
+
+  @NotNull
+  public final String getCustomElementId() {
+    final String id = getXmlElementName();
+    final DomElement parent = getParent();
+    if (parent instanceof AntDomCustomElement) {
+      return parent.getXmlElementName() + "." + id;
+    }
+    return id;
+  }
 }
