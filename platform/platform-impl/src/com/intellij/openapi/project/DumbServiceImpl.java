@@ -104,6 +104,22 @@ public class DumbServiceImpl extends DumbService {
     final CacheUpdateRunner runner = new CacheUpdateRunner(myProject, new ArrayList<CacheUpdater>(updaters));
 
     final Application application = ApplicationManager.getApplication();
+
+    if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
+      // no dumb mode for tests
+      EmptyProgressIndicator i = new EmptyProgressIndicator();
+      runner.queryNeededFiles(i);
+      try {
+        HeavyProcessLatch.INSTANCE.processStarted();
+        runner.processFiles(i, false);
+        runner.updatingDone();
+      }
+      finally {
+        HeavyProcessLatch.INSTANCE.processFinished();
+      }
+      return;
+    }
+
     if (!forceDumbMode && !myDumb && application.isReadAccessAllowed()) {
       // if there are not so many files to process, process them on the spot without entering dumb mode
       final ProgressIndicator currentIndicator = ProgressManager.getInstance().getProgressIndicator();
