@@ -18,6 +18,7 @@ package com.intellij.platform;
 
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.ide.projectView.impl.nodes.ExternalLibrariesNode;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
@@ -29,6 +30,7 @@ import com.intellij.psi.PsiDirectory;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author yole
@@ -42,10 +44,19 @@ public class PlatformProjectViewStructureProvider implements TreeStructureProvid
 
   public Collection<AbstractTreeNode> modify(final AbstractTreeNode parent, final Collection<AbstractTreeNode> children, final ViewSettings settings) {
     if (parent instanceof ProjectViewProjectNode) {
+      int foundModules = 0;
+      List<AbstractTreeNode> allChildren = new ArrayList<AbstractTreeNode>();
       for(AbstractTreeNode child: children) {
         if (child instanceof ProjectViewModuleNode) {
-          return child.getChildren();
+          foundModules++;
+          allChildren.addAll(child.getChildren());
         }
+        else if (child instanceof ExternalLibrariesNode) {
+          allChildren.add(child);
+        }
+      }
+      if (foundModules == 1) {
+        return allChildren;
       }
     }
     else if (parent instanceof PsiDirectoryNode) {
