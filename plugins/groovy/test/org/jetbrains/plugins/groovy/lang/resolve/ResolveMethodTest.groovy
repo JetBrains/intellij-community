@@ -589,4 +589,10 @@ class Zoo {
     assertInstanceOf(element, PsiMethod.class);
     assertEquals "Foo", element.getContainingClass().getName()
   }
+
+  public void testUseInCategory() throws Exception {
+    PsiReference ref = configureByFile("useInCategory/A.groovy")
+    PsiElement resolved = ref.resolve()
+    assertInstanceOf resolved, PsiMethod
+  }
 }

@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.NameHint;
@@ -329,31 +330,10 @@ public class ResolveUtil {
 
   public static boolean processCategoryMembers(PsiElement place, ResolverProcessor processor) {
     PsiElement prev = null;
+    Ref<Boolean> result = new Ref<Boolean>(null);
     while (place != null) {
       if (place instanceof GrMember) break;
-
-      if (place instanceof GrMethodCallExpression) {
-        final GrMethodCallExpression call = (GrMethodCallExpression)place;
-        final GrExpression invoked = call.getInvokedExpression();
-        if (invoked instanceof GrReferenceExpression && "use".equals(((GrReferenceExpression)invoked).getReferenceName())) {
-          final GrClosableBlock[] closures = call.getClosureArguments();
-          if (closures.length == 1 && closures[0].equals(prev)) {
-            if (useCategoryClass(call)) {
-              final GrArgumentList argList = call.getArgumentList();
-              if (argList != null) {
-                final GrExpression[] args = argList.getExpressionArguments();
-                if (args.length == 1 && args[0] instanceof GrReferenceExpression) {
-                  final PsiElement resolved = ((GrReferenceExpression)args[0]).resolve();
-                  if (resolved instanceof PsiClass &&
-                      !resolved.processDeclarations(processor, ResolveState.initial().put(ResolverProcessor.RESOLVE_CONTEXT, call), null, place)) {
-                    return false;
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+      if (categoryIteration(place, processor, prev, result)) return result.get();
 
       prev = place;
       place = place.getContext();
@@ -362,20 +342,38 @@ public class ResolveUtil {
     return true;
   }
 
-  private static boolean useCategoryClass(GrMethodCallExpression call) {
+  private static boolean categoryIteration(PsiElement place, ResolverProcessor processor, PsiElement prev, Ref<Boolean> result) {
+    if (!(place instanceof GrMethodCallExpression)) return false;
 
-    final PsiMethod resolved = call.resolveMethod();
-    if (resolved instanceof GrGdkMethod) {
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(call.getProject()).getElementFactory();
-      final GlobalSearchScope scope = call.getResolveScope();
-      final PsiType[] parametersType =
-        {factory.createTypeByFQClassName("java.lang.Class", scope), factory.createTypeByFQClassName("groovy.lang.Closure", scope)};
-      final MethodSignature pattern =
-        MethodSignatureUtil.createMethodSignature("use", parametersType, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
-      return resolved.getSignature(PsiSubstitutor.EMPTY).equals(pattern);
+    final GrMethodCallExpression call = (GrMethodCallExpression)place;
+    final GrExpression invoked = call.getInvokedExpression();
+    if (!(invoked instanceof GrReferenceExpression) || !"use".equals(((GrReferenceExpression)invoked).getReferenceName())) return false;
+
+    final GrClosableBlock[] closures = call.getClosureArguments();
+    if (closures.length != 1 || !closures[0].equals(prev)) return false;
+
+    if (!useCategoryClass(call)) return false;
+
+    final GrArgumentList argList = call.getArgumentList();
+    if (argList == null) return false;
+
+    result.set(Boolean.TRUE);
+    final GrExpression[] args = argList.getExpressionArguments();
+    for (GrExpression arg : args) {
+      if (arg instanceof GrReferenceExpression) {
+        final PsiElement resolved = ((GrReferenceExpression)arg).resolve();
+        if (resolved instanceof PsiClass) {
+          if (!resolved.processDeclarations(processor, ResolveState.initial().put(ResolverProcessor.RESOLVE_CONTEXT, call), null, place)) {
+            result.set(Boolean.FALSE);
+          }
+        }
+      }
     }
+    return true;
+  }
 
-    return false;
+  private static boolean useCategoryClass(GrMethodCallExpression call) {
+    return call.resolveMethod() instanceof GrGdkMethod;
   }
 
   public static PsiElement[] mapToElements(GroovyResolveResult[] candidates) {
