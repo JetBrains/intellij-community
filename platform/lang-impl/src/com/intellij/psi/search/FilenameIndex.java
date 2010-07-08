@@ -108,6 +108,11 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
    */
   @NotNull
   public static Collection<VirtualFile> getAllFilesByExt(@NotNull Project project, @NotNull String ext) {
+      return getAllFilesByExt(project, ext, GlobalSearchScope.allScope(project));
+  }
+
+  @NotNull
+  public static Collection<VirtualFile> getAllFilesByExt(@NotNull Project project, @NotNull String ext, @NotNull GlobalSearchScope searchScope) {
     int len = ext.length();
 
     if (len == 0) return Collections.emptyList();
@@ -119,7 +124,7 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
     for (String name : getAllFilenames(project)) {
       final int length = name.length();
       if (length > len && name.substring(length - len).equalsIgnoreCase(ext)) {
-        files.addAll(getVirtualFilesByName(project, name, GlobalSearchScope.allScope(project)));
+        files.addAll(getVirtualFilesByName(project, name, searchScope));
       }
     }
     return files;
