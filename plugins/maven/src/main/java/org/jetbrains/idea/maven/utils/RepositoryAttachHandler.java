@@ -50,6 +50,7 @@ import org.jetbrains.idea.maven.model.MavenRemoteRepository;
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 import org.jetbrains.idea.maven.project.MavenEmbeddersManager;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.services.MavenServicesManager;
 
 import javax.swing.*;
 import java.io.File;
@@ -191,10 +192,9 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
   }
 
   public static void searchArtifacts(final Project project, String coord,
-                                     final PairProcessor<Collection<Pair<MavenArtifactInfo, MavenRepositoryInfo>>, Boolean> resultProcessor,
-                                     final Processor<Collection<MavenRepositoryInfo>> repoProcessor) {
+                                     final PairProcessor<Collection<Pair<MavenArtifactInfo, MavenRepositoryInfo>>, Boolean> resultProcessor) {
     if (coord == null) return;
-    final MavenArtifactInfo template = createTemplate(coord, null);
+    final MavenArtifactInfo template = createTemplate(coord, "jar");
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Maven", false) {
 
       public void run(@NotNull ProgressIndicator indicator) {
@@ -204,12 +204,9 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
         final Ref<Boolean> tooManyRef = Ref.create(Boolean.FALSE);
         try {
           MavenFacadeManager facade = MavenFacadeManager.getInstance();
-
-          final String[] nexusUrls = getDefaultNexusUrls();
-          final List<Pair<MavenArtifactInfo, MavenRepositoryInfo>> resultList
-            = new ArrayList<Pair<MavenArtifactInfo, MavenRepositoryInfo>>();
+          final List<Pair<MavenArtifactInfo, MavenRepositoryInfo>> resultList = new ArrayList<Pair<MavenArtifactInfo, MavenRepositoryInfo>>();
           final List<MavenRepositoryInfo> result2List = new ArrayList<MavenRepositoryInfo>();
-          for (String nexusUrl : nexusUrls) {
+          for (String nexusUrl : MavenServicesManager.getServiceUrls()) {
             final List<MavenArtifactInfo> artifacts;
             try {
               artifacts = facade.findArtifacts(template, nexusUrl);
@@ -242,7 +239,6 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
         finally {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
-              repoProcessor.process(result2.get());
               resultProcessor.process(result.get(), tooManyRef.get());
             }
           });
@@ -251,13 +247,12 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
     });
   }
 
-  public static void searchRepositories(final Project project, final Processor<Collection<MavenRepositoryInfo>> resultProcessor) {
+  public static void searchRepositories(final Project project, final Collection<String> nexusUrls, final Processor<Collection<MavenRepositoryInfo>> resultProcessor) {
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Maven", false) {
 
       public void run(@NotNull ProgressIndicator indicator) {
         final Ref<List<MavenRepositoryInfo>> result = Ref.create(Collections.<MavenRepositoryInfo>emptyList());
         try {
-          final String[] nexusUrls = getDefaultNexusUrls();
           final MavenFacadeManager manager = MavenFacadeManager.getInstance();
           final ArrayList<MavenRepositoryInfo> repoList = new ArrayList<MavenRepositoryInfo>();
           for (String nexusUrl : nexusUrls) {
@@ -372,14 +367,6 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
       result.add(new MavenRemoteRepository(each.getId(), each.getName(), each.getUrl(), null, null, null));
     }
     return result;
-  }
-
-  private static String[] getDefaultNexusUrls() {
-    return new String[]{
-      "http://oss.sonatype.org/service/local/",
-      "http://repository.sonatype.org/service/local/",
-      //"http://maven.labs.intellij.net:8081/nexus/service/local/"
-    };
   }
 
   public static List<MavenRepositoryInfo> getDefaultRepositories() {

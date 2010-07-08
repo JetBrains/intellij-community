@@ -34,7 +34,7 @@ import static com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType.BEFO
 import static java.util.Arrays.asList;
 
 /**
- * Encapsulates logic of wrapping multiple {@link SoftWrapPainter} implementations; chooses the one to use and deleagtes all
+ * Encapsulates logic of wrapping multiple {@link SoftWrapPainter} implementations; chooses the one to use and delegates all
  * processing to it.
  * <p/>
  * Not thread-safe.
@@ -75,7 +75,7 @@ public class CompositeSoftWrapPainter implements SoftWrapPainter {
   @Override
   public int paint(@NotNull Graphics g, @NotNull SoftWrapDrawingType drawingType, int x, int y, int lineHeight) {
     initDelegateIfNecessary();
-    if (!myEditor.getSettings().isSoftWrapsShown()) {
+    if (!myEditor.getSettings().isAllSoftWrapsShown()) {
       int visualLine = y / lineHeight;
       LogicalPosition position = myEditor.visualToLogicalPosition(new VisualPosition(visualLine, 0));
       if (position.line != myEditor.getCaretModel().getLogicalPosition().line) {

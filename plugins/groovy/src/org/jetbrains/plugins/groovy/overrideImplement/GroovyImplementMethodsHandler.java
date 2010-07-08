@@ -32,7 +32,7 @@ public class GroovyImplementMethodsHandler implements LanguageCodeInsightActionH
   }
 
   public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    GroovyOverrideImplementUtil.invokeOverrideImplement(project, editor, file, true);
+    GroovyOverrideImplementUtil.invokeOverrideImplement(editor, file, true);
   }
 
   public boolean startInWriteAction() {

@@ -29,6 +29,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AllClassesSearch;
 import com.intellij.util.IncorrectOperationException;
@@ -73,6 +74,7 @@ public class AllClassesGetter {
       if (handler != null) {
         checkReference = handler.handleInsert(context, item);
       }
+      PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting();
 
       final int newOffset = context.getOffsetMap().getOffset(key);
       if (newOffset >= 0) {

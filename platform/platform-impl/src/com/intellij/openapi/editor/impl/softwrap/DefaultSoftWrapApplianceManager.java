@@ -16,7 +16,6 @@
 package com.intellij.openapi.editor.impl.softwrap;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.TextChange;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -112,6 +111,7 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
     myStorage = storage;
     myEditor = editor;
     myPainter = painter;
+    init(editor.getDocument());
   }
 
   @SuppressWarnings({"AssignmentToForLoopParameter"})
@@ -134,6 +134,21 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
     }
   }
 
+  private void init(final Document document) {
+    document.addDocumentListener(new LineOrientedDocumentChangeAdapter() {
+      @Override
+      public void beforeDocumentChange(int startLine, int endLine, int symbolsDifference) {
+      }
+
+      @Override
+      public void afterDocumentChange(int startLine, int endLine, int symbolsDifference) {
+        for (int i = startLine; i <= endLine; i++) {
+          myProcessedLogicalLines.remove(i);
+        }
+      }
+    });
+  }
+
   private void dropDataIfNecessary() {
     int currentVisibleAreaWidth = myEditor.getScrollingModel().getVisibleArea().width;
     if (myVisibleAreaWidth == currentVisibleAreaWidth) {
@@ -146,7 +161,6 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
     myVisibleAreaWidth = currentVisibleAreaWidth;
   }
 
-  @SuppressWarnings({"AssignmentToForLoopParameter"})
   private void processLogicalLine(char[] text, int line, int fontType, IndentType indentType) {
     Document document = myEditor.getDocument();
     int startOffset = document.getLineStartOffset(line);
@@ -228,7 +242,7 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
   private void registerSoftWraps(TIntArrayList offsets, int indentInColumns) {
     for (int i = 0; i < offsets.size(); i++) {
       int offset = offsets.getQuick(i);
-      myStorage.storeSoftWrap(new TextChange("\n" + StringUtil.repeatSymbol(' ', indentInColumns), offset));
+      myStorage.storeOrReplace(new TextChangeImpl("\n" + StringUtil.repeatSymbol(' ', indentInColumns), offset));
     }
   }
 
@@ -259,7 +273,7 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
       }
 
       // Don't wrap on a non-id symbol followed by non-id symbol, e.g. don't wrap between two pluses at i++;
-      if (!isIdSymbol(c) && (i < min + 2 || isIdSymbol(text[i - 1]))) {
+      if (!isIdSymbol(c) && (i < min + 2 || (isIdSymbol(text[i - 1]) && !WHITE_SPACES.contains(text[i - 1])))) {
         return i;
       }
     }

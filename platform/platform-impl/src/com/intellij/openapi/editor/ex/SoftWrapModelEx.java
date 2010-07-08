@@ -70,7 +70,7 @@ public interface SoftWrapModelEx extends SoftWrapModel {
   /**
    * @return    unmodifiable collection of soft wraps currently registered within the current model
    */
-  List<TextChange> getRegisteredSoftWraps();
+  List<? extends TextChange> getRegisteredSoftWraps();
 
   /**
    * Asks to paint drawing of target type at the given graphics buffer at the given position.

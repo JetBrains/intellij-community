@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.ui.awt.RelativePoint;
@@ -109,6 +110,9 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
         .setMovable(myForceShowAsPopup)
         .setTitle(myTitle)
         .setShowShadow(false)
+        .setCancelKeyEnabled(false)
+        .setCancelOnClickOutside(false)
+        .setCancelOnOtherWindowOpen(false)
         .createPopup();
 
       beforeShow();

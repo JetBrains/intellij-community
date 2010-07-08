@@ -182,7 +182,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
     }
   }
 
-  static class TypeOrElementOrAttributeReference implements PsiReference, QuickFixProvider<TypeOrElementOrAttributeReference> {
+  public static class TypeOrElementOrAttributeReference implements PsiReference, QuickFixProvider<TypeOrElementOrAttributeReference> {
     private final PsiElement myElement;
     private TextRange myRange;
     private String nsPrefix;

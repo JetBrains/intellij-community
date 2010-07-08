@@ -540,9 +540,11 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
         throw new PsiInvalidElementAccessException(tag);
       }
       final XmlTag[] subTags = tag.getSubTags();
-      for (XmlTag xmlTag : subTags) {
+      for (int i = 0, subTagsLength = subTags.length; i < subTagsLength; i++) {
+        XmlTag xmlTag = subTags[i];
         if (!xmlTag.isValid()) {
-          throw new PsiInvalidElementAccessException(xmlTag, "invalid children of valid tag: " + tag.getText());
+          throw new PsiInvalidElementAccessException(xmlTag,
+                                                     "invalid children of valid tag: " + tag.getText() + "; subtag=" + xmlTag + "; index=" + i);
         }
       }
       final List<XmlTag> tags = DomImplUtil.findSubTags(subTags, evaluatedXmlName, getFile());

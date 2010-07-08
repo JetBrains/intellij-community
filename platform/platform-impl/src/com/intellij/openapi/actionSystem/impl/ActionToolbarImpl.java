@@ -38,6 +38,8 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.switcher.SwitchTarget;
@@ -751,10 +753,14 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
           myVisibleActions = myNewVisibleActions;
           myNewVisibleActions = temp;
 
+          Dimension oldSize = getPreferredSize();
+
           removeAll();
           mySecondaryActions.removeAll();
           mySecondaryActionsButton = null;
           fillToolBar(myVisibleActions, getLayoutPolicy() == AUTO_LAYOUT_POLICY && myOrientation == SwingConstants.HORIZONTAL);
+
+          Dimension newSize = getPreferredSize();
 
           if (changeBarVisibility) {
             revalidate();
@@ -766,6 +772,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
               parent.validate();
             }
           }
+
+          ((WindowManagerEx)WindowManager.getInstance()).adjustContainerWindow(ActionToolbarImpl.this, oldSize, newSize);
+
           repaint();
         }
       }

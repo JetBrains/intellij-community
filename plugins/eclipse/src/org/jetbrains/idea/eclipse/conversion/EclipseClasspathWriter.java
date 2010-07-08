@@ -159,7 +159,7 @@ public class EclipseClasspathWriter {
                 }
               }
             }
-            if (addSrcRoots) setOrRemoveAttribute(orderEntry, EclipseXml.SOURCEPATH_ATTR, eclipseSrcVariablePath != null ? eclipseSrcVariablePath : srcRelativePath);
+            setOrRemoveAttribute(orderEntry, EclipseXml.SOURCEPATH_ATTR, addSrcRoots ? (eclipseSrcVariablePath != null ? eclipseSrcVariablePath : srcRelativePath) : null);
 
             EJavadocUtil.setupJavadocAttributes(orderEntry, libraryOrderEntry, myModel);
             setExported(orderEntry, libraryOrderEntry);

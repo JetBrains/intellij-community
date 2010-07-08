@@ -28,6 +28,7 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.SystemInfo;
@@ -348,6 +349,25 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
       else {
         queueForDisposal(dialog, project);
         dialog.setVisible(false);
+      }
+    }
+  }
+
+  @Override
+  public void adjustContainerWindow(Component c, Dimension oldSize, Dimension newSize) {
+    if (c == null) return;
+
+    Window wnd = SwingUtilities.getWindowAncestor(c);
+
+    if (wnd instanceof JWindow) {
+      JBPopup popup = (JBPopup)((JWindow)wnd).getRootPane().getClientProperty(JBPopup.KEY);
+      if (popup != null) {
+        if (oldSize.height < newSize.height) {
+          Dimension size = popup.getSize();
+          size.height += (newSize.height - oldSize.height);
+          popup.setSize(size);
+          popup.moveToFitScreen();
+        }
       }
     }
   }

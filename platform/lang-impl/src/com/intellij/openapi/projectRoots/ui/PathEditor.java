@@ -38,6 +38,7 @@ import com.intellij.util.Icons;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -53,7 +54,7 @@ import java.util.Set;
 /**
  * @author MYakovlev
  */
-public abstract class PathEditor {
+public class PathEditor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.ui.PathEditor");
   public static final Color INVALID_COLOR = new Color(210, 0, 0);
 
@@ -68,17 +69,28 @@ public abstract class PathEditor {
   private boolean myEnabled = false;
   private static final Icon ICON_INVALID = IconLoader.getIcon("/nodes/ppInvalid.png");
   private static final Icon ICON_EMPTY = IconLoader.getIcon("/nodes/emptyNode.png");
+  private final String myDisplayName;
+  private final OrderRootType myOrderRootType;
+  private final FileChooserDescriptor myDescriptor;
 
-  protected abstract boolean isShowUrlButton();
+  public PathEditor(final String displayName,
+                    final OrderRootType orderRootType,
+                    final FileChooserDescriptor descriptor) {
+    myDisplayName = displayName;
+    myOrderRootType = orderRootType;
+    myDescriptor = descriptor;
+  }
+
+  protected boolean isShowUrlButton() {
+    return false;
+  }
 
   protected void onSpecifyUrlButtonClicked() {
   }
 
-  protected abstract OrderRootType getRootType();
-
-  protected abstract FileChooserDescriptor createFileChooserDescriptor();
-
-  public abstract String getDisplayName();
+  public String getDisplayName() {
+    return myDisplayName;
+  }
 
   protected void setModified(boolean modified){
     myModified = modified;
@@ -89,11 +101,10 @@ public abstract class PathEditor {
   }
 
   public void apply(SdkModificator sdkModificator) {
-    final OrderRootType rootType = getRootType();
-    sdkModificator.removeRoots(rootType);
+    sdkModificator.removeRoots(myOrderRootType);
     // add all items
     for (int i = 0; i < getRowCount(); i++){
-      sdkModificator.addRoot(getValueAt(i), rootType);
+      sdkModificator.addRoot(getValueAt(i), myOrderRootType);
     }
     setModified(false);
     updateButtons();
@@ -111,11 +122,12 @@ public abstract class PathEditor {
     return roots;
   }
 
-  public void reset(VirtualFile[] files) {
+  public void reset(@Nullable SdkModificator modificator) {
     keepSelectionState();
     clearList();
-    myEnabled = files != null;
+    myEnabled = modificator != null;
     if(myEnabled){
+      VirtualFile[] files = modificator.getRoots(myOrderRootType);
       for (VirtualFile file : files) {
         addElement(file);
       }
@@ -186,8 +198,7 @@ public abstract class PathEditor {
   }
 
   private VirtualFile[] doAdd(){
-    FileChooserDescriptor descriptor = createFileChooserDescriptor();
-    VirtualFile[] files = FileChooser.chooseFiles(myPanel, descriptor);
+    VirtualFile[] files = FileChooser.chooseFiles(myPanel, myDescriptor);
     files = adjustAddedFileSet(myPanel, files);
     List<VirtualFile> added = new ArrayList<VirtualFile>(files.length);
     for (VirtualFile vFile : files) {

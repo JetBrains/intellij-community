@@ -223,11 +223,11 @@ public class EditorModificationUtil {
   }
 
   /**
-   * Calculates columns difference between current editor caret position and end of the logical line fragment displayed
+   * Calculates difference in columns between current editor caret position and end of the logical line fragment displayed
    * on a current visual line.
    *
    * @param editor    target editor
-   * @return          column difference between current editor caret position and end of the logical line fragment displayed
+   * @return          difference in columns between current editor caret position and end of the logical line fragment displayed
    *                  on a current visual line
    */
   public static int calcAfterLineEnd(Editor editor) {

@@ -32,6 +32,10 @@ public class AntDomRecursiveVisitor implements DomElementVisitor{
     }
   }
 
+  public void visitTypeDef(AntDomTypeDef typedef) {
+    visitAntDomElement(typedef);
+  }
+
   public void visitTarget(AntDomTarget target) {
     visitAntDomElement(target);
   }

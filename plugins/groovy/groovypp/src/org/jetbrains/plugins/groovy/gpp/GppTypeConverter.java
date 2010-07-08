@@ -4,11 +4,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.dsl.toplevel.AnnotatedContextFilter;
 import org.jetbrains.plugins.groovy.lang.psi.GrTypeConverter;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
@@ -27,37 +26,19 @@ public class GppTypeConverter extends GrTypeConverter {
       return false;
     }
 
-    while (context != null) {
-      if (context instanceof PsiModifierListOwner && isTyped(((PsiModifierListOwner)context).getModifierList())) {
+    if (AnnotatedContextFilter.hasAnnotatedContext(context, "groovy.lang.Typed")) {
+      return true;
+    }
+
+    final VirtualFile vfile = context.getContainingFile().getOriginalFile().getVirtualFile();
+    if (vfile != null) {
+      final String extension = vfile.getExtension();
+      if ("gpp".equals(extension) || "grunit".equals(vfile.getExtension())) {
         return true;
       }
-
-      if (context instanceof PsiFile) {
-        if (context instanceof GroovyFile) {
-          final GrPackageDefinition packageDefinition = ((GroovyFile)context).getPackageDefinition();
-          if (packageDefinition != null && isTyped(packageDefinition.getAnnotationList())) {
-            return true;
-          }
-
-          final VirtualFile vfile = ((GroovyFile)context).getOriginalFile().getVirtualFile();
-          if (vfile != null) {
-            final String extension = vfile.getExtension();
-            if ("gpp".equals(extension) || "grunit".equals(vfile.getExtension())) {
-              return true;
-            }
-          }
-        }
-        return false;
-      }
-
-      context = context.getContext();
     }
 
     return false;
-  }
-
-  private static boolean isTyped(PsiModifierList modifierList) {
-    return modifierList != null && modifierList.findAnnotation("groovy.lang.Typed") != null;
   }
 
   @Override

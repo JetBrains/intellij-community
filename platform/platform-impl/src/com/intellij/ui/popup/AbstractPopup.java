@@ -1121,6 +1121,29 @@ public class AbstractPopup implements JBPopup {
     }
   }
 
+  @Override
+  public Dimension getSize() {
+    if (myPopup != null) {
+      final Window popupWindow = SwingUtilities.windowForComponent(myContent);
+      return popupWindow.getSize();
+    } else {
+      return myForcedSize;
+    }
+  }
+
+  @Override
+  public void moveToFitScreen() {
+    if (myPopup == null) return;
+    
+    final Window popupWindow = SwingUtilities.windowForComponent(myContent);
+    Rectangle bounds = popupWindow.getBounds();
+
+    ScreenUtil.moveRectangleToFitTheScreen(bounds);
+    setLocation(bounds.getLocation());
+    setSize(bounds.getSize());
+  }
+
+
   public static Window setSize(JComponent content, final Dimension size) {
     final Window popupWindow = SwingUtilities.windowForComponent(content);
     final Point location = popupWindow.getLocation();

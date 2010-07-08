@@ -228,6 +228,9 @@ public class OverrideImplementUtil {
   }
 
   public static boolean isInsertOverride(PsiMethod superMethod, PsiClass targetClass) {
+    if (superMethod.isConstructor()) {
+      return false;
+    }
     if (!CodeStyleSettingsManager.getSettings(targetClass.getProject()).INSERT_OVERRIDE_ANNOTATION
         || !PsiUtil.isLanguageLevel5OrHigher(targetClass)) {
       return false;
@@ -318,7 +321,7 @@ public class OverrideImplementUtil {
   }
 
   public static void annotateOnOverrideImplement(PsiMethod method, PsiClass targetClass, PsiMethod overridden, boolean insertOverride) {
-    if (insertOverride && !overridden.isConstructor() && isInsertOverride(overridden, targetClass)) {
+    if (insertOverride && isInsertOverride(overridden, targetClass)) {
       annotate(method, Override.class.getName());
     }
     for (OverrideImplementsAnnotationsHandler each : Extensions.getExtensions(OverrideImplementsAnnotationsHandler.EP_NAME)) {
@@ -479,7 +482,27 @@ public class OverrideImplementUtil {
     Collection<CandidateInfo> candidates = getMethodsToOverrideImplement(aClass, toImplement);
     Collection<CandidateInfo> secondary = toImplement ? Collections.<CandidateInfo>emptyList() : getMethodsToOverrideImplement(aClass, true);
 
-    if (candidates.isEmpty() && secondary.isEmpty()) return;
+    final MemberChooser<PsiMethodMember> chooser = showOverrideImplementChooser(editor, aClass, toImplement, candidates, secondary);
+    if (chooser == null) return;
+
+    final List<PsiMethodMember> selectedElements = chooser.getSelectedElements();
+    if (selectedElements == null || selectedElements.isEmpty()) return;
+
+    new WriteCommandAction(project, aClass.getContainingFile()) {
+      protected void run(final Result result) throws Throwable {
+        overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, chooser.isCopyJavadoc(), chooser.isInsertOverrideAnnotation());
+      }
+    }.execute();
+  }
+
+  @Nullable
+  public static MemberChooser<PsiMethodMember> showOverrideImplementChooser(Editor editor,
+                                                                            final PsiClass aClass,
+                                                                            final boolean toImplement,
+                                                                            Collection<CandidateInfo> candidates,
+                                                                            Collection<CandidateInfo> secondary) {
+    Project project = aClass.getProject();
+    if (candidates.isEmpty() && secondary.isEmpty()) return null;
 
     final PsiMethodMember[] onlyPrimary = convertToMethodMembers(candidates);
     final PsiMethodMember[] all = ArrayUtil.mergeArrays(onlyPrimary, convertToMethodMembers(secondary), PsiMethodMember.class);
@@ -521,20 +544,12 @@ public class OverrideImplementUtil {
     if (toImplement) {
       chooser.selectElements(isAll ? all : onlyPrimary);
     }
-    
+
     chooser.show();
-    if (chooser.getExitCode() != DialogWrapper.OK_EXIT_CODE) return;
+    if (chooser.getExitCode() != DialogWrapper.OK_EXIT_CODE) return null;
 
     PropertiesComponent.getInstance(project).setValue(PROP_COMBINED_OVERRIDE_IMPLEMENT, merge.get().toString());
-
-    final List<PsiMethodMember> selectedElements = chooser.getSelectedElements();
-    if (selectedElements == null || selectedElements.isEmpty()) return;
-
-    new WriteCommandAction(project, aClass.getContainingFile()) {
-      protected void run(final Result result) throws Throwable {
-        overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, chooser.isCopyJavadoc(), chooser.isInsertOverrideAnnotation());
-      }
-    }.execute();
+    return chooser;
   }
 
   private static String getChooserTitle(boolean toImplement, Ref<Boolean> merge) {

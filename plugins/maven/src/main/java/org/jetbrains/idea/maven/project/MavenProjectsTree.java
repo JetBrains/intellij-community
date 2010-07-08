@@ -383,7 +383,7 @@ public class MavenProjectsTree {
     Collection<String> active = includeActive ? new THashSet<String>() : null;
     for (MavenProject each : getProjects()) {
       if (available != null) available.addAll(each.getProfilesIds());
-      if (active != null) active.addAll(each.getActiveProfilesIds());
+      if (active != null) active.addAll(each.getActivatedProfilesIds());
     }
     return Pair.create(available, active);
   }

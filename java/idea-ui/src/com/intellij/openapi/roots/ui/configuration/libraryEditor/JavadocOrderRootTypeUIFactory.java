@@ -40,14 +40,19 @@ public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
     return new JavadocPathsEditor(sdk);
   }
 
-  static class JavadocPathsEditor extends MyPathsEditor {
+  static class JavadocPathsEditor extends PathEditor {
+    private final Sdk mySdk;
 
     public JavadocPathsEditor(Sdk sdk) {
       super(ProjectBundle.message("sdk.configure.javadoc.tab"),
             JavadocOrderRootType.getInstance(),
-            new FileChooserDescriptor(false, true, true, false, true, true), 
-            true,
-            sdk);
+            new FileChooserDescriptor(false, true, true, false, true, true));
+      mySdk = sdk;
+    }
+
+    @Override
+    protected boolean isShowUrlButton() {
+      return true;
     }
 
     @Override

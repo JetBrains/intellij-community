@@ -19,6 +19,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.ResolveState;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
 import java.util.EnumSet;
@@ -35,13 +36,14 @@ public class AccessorResolverProcessor extends ResolverProcessor {
   }
 
   public boolean execute(PsiElement element, ResolveState state) {
+    final boolean usedInCategory = state.get(RESOLVE_CONTEXT) instanceof GrMethodCallExpression;
     if (mySearchForGetter) {
-      if (element instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertyGetter((PsiMethod)element)) {
+      if (element instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertyGetter((PsiMethod)element, null, usedInCategory)) {
         return super.execute(element, state);
       }
     }
     else {
-      if (element instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertySetter((PsiMethod)element)) {
+      if (element instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertySetter((PsiMethod)element, null, usedInCategory)) {
         return super.execute(element, state);
       }
     }

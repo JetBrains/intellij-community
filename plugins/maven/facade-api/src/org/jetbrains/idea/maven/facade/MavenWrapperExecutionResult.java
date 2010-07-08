@@ -44,12 +44,12 @@ public class MavenWrapperExecutionResult implements Serializable {
     public final MavenModel mavenModel;
     public final Map<String, String> mavenModelMap;
     public final NativeMavenProjectHolder nativeMavenProject;
-    public final Collection<MavenProfile> activatedProfiles;
+    public final Collection<String> activatedProfiles;
 
     public ProjectData(MavenModel mavenModel,
                        Map<String, String> mavenModelMap,
                        NativeMavenProjectHolder nativeMavenProject,
-                       Collection<MavenProfile> activatedProfiles) {
+                       Collection<String> activatedProfiles) {
       this.mavenModel = mavenModel;
       this.mavenModelMap = mavenModelMap;
       this.nativeMavenProject = nativeMavenProject;

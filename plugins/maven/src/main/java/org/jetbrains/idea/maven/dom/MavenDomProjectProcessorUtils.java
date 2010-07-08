@@ -31,7 +31,6 @@ import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
@@ -426,7 +425,7 @@ public class MavenDomProjectProcessorUtils {
                                              MavenProject mavenProjectOrNull,
                                              Processor<T> processor,
                                              Function<MavenDomProfile, T> f) {
-    Collection<String> activePropfiles = mavenProjectOrNull == null ? null : mavenProjectOrNull.getActiveProfilesIds();
+    Collection<String> activePropfiles = mavenProjectOrNull == null ? null : mavenProjectOrNull.getActivatedProfilesIds();
     for (MavenDomProfile each : profilesDom.getProfiles()) {
       XmlTag idTag = each.getId().getXmlTag();
       if (idTag == null) continue;
