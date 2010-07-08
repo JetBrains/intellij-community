@@ -176,7 +176,7 @@ public class IdeaSpecificSettings {
 
     final CompilerModuleExtension compilerModuleExtension = model.getModuleExtension(CompilerModuleExtension.class);
 
-    if (compilerModuleExtension.getCompilerOutputPathForTests() != null) {
+    if (compilerModuleExtension.getCompilerOutputUrlForTests() != null) {
       final Element pathElement = new Element(IdeaXml.OUTPUT_TEST_TAG);
       pathElement.setAttribute(IdeaXml.URL_ATTR, compilerModuleExtension.getCompilerOutputUrlForTests());
       root.addContent(pathElement);
