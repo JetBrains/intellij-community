@@ -44,7 +44,7 @@ class FormatProcessor {
   private final CodeStyleSettings mySettings;
 
   /**
-   * Remembers mappings between backward-shifted aligned block and blocks that cause that shift in order to detected
+   * Remembers mappings between backward-shifted aligned block and blocks that cause that shift in order to detect
    * infinite cycles that may occur when, for example following alignment is specified:
    * <p/>
    * <pre>
@@ -484,8 +484,12 @@ class FormatProcessor {
    *            because of specified alignment options)
    */
   private boolean adjustIndent() {
-    IndentData alignOffset = getAlignOffset();
     WhiteSpace whiteSpace = myCurrentBlock.getWhiteSpace();
+    if (whiteSpace.isIsReadOnly()) {
+      return true;
+    }
+
+    IndentData alignOffset = getAlignOffset();
 
     if (alignOffset == null) {
       if (whiteSpace.containsLineFeeds()) {
@@ -538,9 +542,10 @@ class FormatProcessor {
     Set<LeafBlockWrapper> blocksCausedRealignment = myBackwardShiftedAlignedBlocks.get(offsetResponsibleBlock);
     if (blocksCausedRealignment != null && blocksCausedRealignment.contains(myCurrentBlock)) {
       LOG.error(String.format("Formatting error - code block %s is set to be shifted right because of its alignment with "
-                              + "block %s more than once. I.e. moving the former block because of alignment algo causes "
+                              + "block %s more than once. I.e. moving the former block because of alignment algorithm causes "
                               + "subsequent block to be shifted right as well - cyclic dependency",
                               offsetResponsibleBlock.getTextRange(), myCurrentBlock.getTextRange()));
+      blocksCausedRealignment.add(myCurrentBlock);
       return true;
     }
     myBackwardShiftedAlignedBlocks.clear();
