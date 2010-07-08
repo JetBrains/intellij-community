@@ -1692,7 +1692,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     // Perform additional activity if soft wrap is added or removed during repainting.
     // Note: this code lives in this method in assumption that background repainting is the very first activity performed
     //       during whole editor component repaint.
-    List<TextChange> softWrapsAfterRepaint = mySoftWrapModel.getRegisteredSoftWraps();
+    List<? extends TextChange> softWrapsAfterRepaint = mySoftWrapModel.getRegisteredSoftWraps();
     if (!mySoftWrapsOnLastRepaint.equals(softWrapsAfterRepaint)) {
       // Repaint editor to the bottom in order to ensure that its content is shown correctly after new soft wrap introduction.
       repaintToScreenBottom(xyToLogicalPosition(position).line);

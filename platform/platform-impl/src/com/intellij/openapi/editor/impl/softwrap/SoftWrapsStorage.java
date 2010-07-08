@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.editor.impl.softwrap;
 
-import com.intellij.openapi.editor.TextChange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,14 +33,14 @@ import java.util.List;
  */
 public class SoftWrapsStorage {
 
-  private static final Comparator<TextChange> SOFT_WRAPS_BY_OFFSET_COMPARATOR = new Comparator<TextChange>() {
-    public int compare(TextChange c1, TextChange c2) {
+  private static final Comparator<TextChangeImpl> SOFT_WRAPS_BY_OFFSET_COMPARATOR = new Comparator<TextChangeImpl>() {
+    public int compare(TextChangeImpl c1, TextChangeImpl c2) {
       return c1.getStart() - c2.getEnd();
     }
   };
 
-  private final List<TextChange> myWraps = new ArrayList<TextChange>();
-  private final List<TextChange> myWrapsView = Collections.unmodifiableList(myWraps);
+  private final List<TextChangeImpl> myWraps = new ArrayList<TextChangeImpl>();
+  private final List<TextChangeImpl> myWrapsView = Collections.unmodifiableList(myWraps);
 
   /**
    * @return    <code>true</code> if there is at least one soft wrap registered at the current storage; <code>false</code> otherwise
@@ -51,7 +50,7 @@ public class SoftWrapsStorage {
   }
 
   @Nullable
-  public TextChange getSoftWrap(int offset) {
+  public TextChangeImpl getSoftWrap(int offset) {
     int i = getSoftWrapIndex(offset);
     return i >= 0 ? myWraps.get(i) : null;
   }
@@ -60,7 +59,7 @@ public class SoftWrapsStorage {
    * @return    view for registered soft wraps sorted by offset in ascending order if any; empty collection otherwise
    */
   @NotNull
-  public List<TextChange> getSoftWraps() {
+  public List<TextChangeImpl> getSoftWraps() {
     return myWrapsView;
   }
 
@@ -74,7 +73,7 @@ public class SoftWrapsStorage {
    *                  to position at {@link #myWraps} collection where soft wrap for the given index should be inserted
    */
   public int getSoftWrapIndex(int offset) {
-    TextChange searchKey = new TextChange("", offset);
+    TextChangeImpl searchKey = new TextChangeImpl("", offset);
     return Collections.binarySearch(myWraps, searchKey, SOFT_WRAPS_BY_OFFSET_COMPARATOR);
   }
 
@@ -85,7 +84,7 @@ public class SoftWrapsStorage {
    * @return            previous soft wrap object stored for the same offset if any; <code>null</code> otherwise
    */
   @Nullable
-  public TextChange storeSoftWrap(TextChange softWrap) {
+  public TextChangeImpl storeOrReplace(TextChangeImpl softWrap) {
     int i = Collections.binarySearch(myWraps, softWrap, SOFT_WRAPS_BY_OFFSET_COMPARATOR);
     if (i >= 0) {
       return myWraps.set(i, softWrap);
@@ -104,33 +103,33 @@ public class SoftWrapsStorage {
    * @return        removed soft wrap if the one was found for the given index; <code>null</code> otherwise
    */
   @Nullable
-  public TextChange removeByIndex(int index) {
+  public TextChangeImpl removeByIndex(int index) {
     if (index < 0 || index >= myWraps.size()) {
       return null;
     }
     return myWraps.remove(index);
   }
 
-  /**
-   * Removes all soft wraps with offsets at [start; end] range registered at the current storage if any.
-   *
-   * @param start   start range offset (inclusive)
-   * @param end     end range offset (exclusive)
-   */
-  public void removeInRange(int start, int end) {
-    int startIndex = getSoftWrapIndex(start);
-    if (startIndex < 0) {
-      startIndex = -startIndex - 1;
-    }
-    int endIndex = startIndex;
-    for (; endIndex < myWraps.size(); endIndex++) {
-      TextChange softWrap = myWraps.get(endIndex);
-      if (softWrap.getStart() >= end) {
-        break;
-      }
-    }
-    myWraps.subList(startIndex, endIndex).clear();
-  }
+  ///**
+  // * Removes all soft wraps with offsets at <code>[start; end)</code> range registered at the current storage if any.
+  // *
+  // * @param start   start range offset (inclusive)
+  // * @param end     end range offset (exclusive)
+  // */
+  //public void removeInRange(int start, int end) {
+  //  int startIndex = getSoftWrapIndex(start);
+  //  if (startIndex < 0) {
+  //    startIndex = -startIndex - 1;
+  //  }
+  //  int endIndex = startIndex;
+  //  for (; endIndex < myWraps.size(); endIndex++) {
+  //    TextChangeImpl softWrap = myWraps.get(endIndex);
+  //    if (softWrap.getStart() >= end) {
+  //      break;
+  //    }
+  //  }
+  //  myWraps.subList(startIndex, endIndex).clear();
+  //}
 
   /**
    * Removes all soft wraps registered at the current storage.

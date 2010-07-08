@@ -1,25 +1,8 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.intellij.openapi.editor.impl;
+package com.intellij.openapi.editor.impl.softwrap;
 
 import com.intellij.mock.MockFoldRegion;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter;
-import com.intellij.openapi.editor.impl.softwrap.SoftWrapsStorage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import gnu.trove.TIntHashSet;
@@ -41,9 +24,9 @@ import java.util.List;
 
 /**
  * @author Denis Zhdanov
- * @since 06/29/2010
+ * @since 07/07/2010
  */
-public class SoftWrapModelImplTest {
+public class SoftWrapDataMapperTest {
 
   private static final Comparator<DataEntry> LOGICAL_POSITIONS_COMPARATOR = new Comparator<DataEntry>() {
     @Override
@@ -90,14 +73,13 @@ public class SoftWrapModelImplTest {
   private final TIntHashSet      myFoldedOffsets = new TIntHashSet();
   private final List<FoldRegion> myFoldRegions   = new ArrayList<FoldRegion>();
 
-  private SoftWrapModelImpl myModel;
-  private Mockery           myMockery;
-  private ScrollingModel    myScrollingModel;
-  private EditorEx          myEditor;
-  private Document          myDocument;
-  private SoftWrapsStorage  myStorage;
-  private FoldingModel      myFoldingModel;
-
+  private SoftWrapDataMapper myAdjuster;
+  private Mockery              myMockery;
+  private EditorEx             myEditor;
+  private Document             myDocument;
+  private SoftWrapsStorage     myStorage;
+  private FoldingModel         myFoldingModel;
+    
   @Before
   public void setUp() {
     myMockery = new JUnit4Mockery() {{
@@ -106,9 +88,8 @@ public class SoftWrapModelImplTest {
     myStorage = new SoftWrapsStorage();
     myEditor = myMockery.mock(EditorEx.class);
     myDocument = myMockery.mock(Document.class);
-    final EditorSettings settings = myMockery.mock(EditorSettings.class);
-    myScrollingModel = myMockery.mock(ScrollingModel.class);
     myFoldingModel = myMockery.mock(FoldingModel.class);
+    final EditorSettings settings = myMockery.mock(EditorSettings.class);
     final Project project = myMockery.mock(Project.class);
 
     myMockery.checking(new Expectations() {{
@@ -144,10 +125,6 @@ public class SoftWrapModelImplTest {
       allowing(settings).isUseSoftWraps();will(returnValue(true));
       allowing(settings).getTabSize(project);will(returnValue(TAB_SIZE));
       allowing(myEditor).getProject();will(returnValue(project));
-
-      // Scrolling
-      ignoring(myScrollingModel);
-      allowing(myEditor).getScrollingModel();will(returnValue(myScrollingModel));
 
       // Folding.
       allowing(myEditor).getFoldingModel();will(returnValue(myFoldingModel));
@@ -192,11 +169,9 @@ public class SoftWrapModelImplTest {
       });
     }});
 
-    SoftWrapPainter painter = myMockery.mock(SoftWrapPainter.class);
-
-    myModel = new SoftWrapModelImpl(myEditor, myStorage, painter);
+    myAdjuster = new SoftWrapDataMapper(myEditor, myStorage);
   }
-
+  
   @After
   public void checkExpectations() {
     myMockery.assertIsSatisfied();
@@ -216,7 +191,7 @@ public class SoftWrapModelImplTest {
       "}";
     test(document);
   }
-  
+
   @Test
   public void multipleSoftWrappedLogicalLines() {
     String document =
@@ -235,7 +210,7 @@ public class SoftWrapModelImplTest {
       "}";
     test(document);
   }
-  
+
   @Test
   public void softWrapAndFoldedLines() {
     String document =
@@ -344,7 +319,7 @@ public class SoftWrapModelImplTest {
     for (DataEntry data : myExpectedData) {
 
       // Check logical by visual.
-      LogicalPosition actualLogicalByVisual = myModel.adjustLogicalPosition(toSoftWrapUnawareLogicalByVisual(data), data.visual);
+      LogicalPosition actualLogicalByVisual = myAdjuster.adjustLogicalPosition(toSoftWrapUnawareLogicalByVisual(data), data.visual);
       // We don't want to perform the check for logical positions that correspond to the folded space because all of them relate to
       // the same logical position of the folding start.
       if (!data.foldedSpace && !equals(data.logical, actualLogicalByVisual)) {
@@ -356,7 +331,7 @@ public class SoftWrapModelImplTest {
       }
 
       // Check logical by offset.
-      LogicalPosition actualLogicalByOffset = myModel.adjustLogicalPosition(toSoftWrapUnawareLogicalByOffset(data), data.offset);
+      LogicalPosition actualLogicalByOffset = myAdjuster.offsetToLogicalPosition(data.offset);
       // We don't to perform the check for the data that points to soft wrap location here. The reason is that it shares offset
       // with the first document symbol after soft wrap, hence, examination always fails.
       if (!data.virtualSpace && !equals(data.logical, actualLogicalByOffset)) {
@@ -368,8 +343,9 @@ public class SoftWrapModelImplTest {
       }
 
       // Check visual by logical.
-      VisualPosition actualVisual = myModel.adjustVisualPosition(data.logical, toSoftWrapUnawareVisual(data));
+      VisualPosition actualVisual = myAdjuster.adjustVisualPosition(data.logical, toSoftWrapUnawareVisual(data));
       if (!actualVisual.equals(data.visual)) {
+        myAdjuster.adjustVisualPosition(data.logical, toSoftWrapUnawareVisual(data));
         throw new AssertionError(
           String.format("Detected unmatched visual position by logical. Expected: '%s', actual: '%s'. Calculation was performed "
                         + "against logical position: '%s' and soft wrap-unaware visual: '%s'",
@@ -449,7 +425,7 @@ public class SoftWrapModelImplTest {
   }
 
   private static class DataEntry {
-    public final VisualPosition  visual;
+    public final VisualPosition visual;
     public final LogicalPosition logical;
     public final int             offset;
     public final boolean         foldedSpace;
@@ -502,7 +478,7 @@ public class SoftWrapModelImplTest {
     }
 
     public void onSoftWrapEnd() {
-      myStorage.storeSoftWrap(new TextChange(mySoftWrapBuffer.toString(), softWrapStartOffset));
+      myStorage.storeOrReplace(new TextChangeImpl(mySoftWrapBuffer.toString(), softWrapStartOffset));
       mySoftWrapBuffer.setLength(0);
       visualColumn++; // For the column reserved for soft wrap sign.
       insideSoftWrap = false;
