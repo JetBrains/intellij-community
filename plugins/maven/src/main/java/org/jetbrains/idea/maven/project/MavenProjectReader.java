@@ -251,10 +251,12 @@ public class MavenProjectReader {
       mySettingsProfilesCache = new SettingsProfilesCache(settingsProfiles, settingsAlwaysOnProfiles, settingsProblems);
     }
 
-    List<MavenProfile> modelProfiles = model.getProfiles();
+    List<MavenProfile> modelProfiles = new ArrayList<MavenProfile>(model.getProfiles());
     for (MavenProfile each : mySettingsProfilesCache.profiles) {
       addProfileIfDoesNotExist(each, modelProfiles);
     }
+    model.setProfiles(modelProfiles);
+    
     problems.addAll(mySettingsProfilesCache.problems);
     alwaysOnProfiles.addAll(mySettingsProfilesCache.alwaysOnProfiles);
   }
@@ -479,8 +481,6 @@ public class MavenProjectReader {
                                                   MavenConsole console) throws MavenProcessCanceledException {
     try {
       List<String> goals = Arrays.asList(importingSettings.getUpdateFoldersOnImportPhase());
-      Collection<MavenProjectProblem> problems = MavenProjectProblem.createProblemsList();
-      Set<MavenId> unresolvedArtifacts = new THashSet<MavenId>();
       MavenWrapperExecutionResult result = embedder.execute(file, profiles, goals);
       if (result.projectData == null) return null;
 
