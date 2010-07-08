@@ -21,12 +21,15 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.ElementBase;
+import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.InheritanceImplUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.ui.RowIcon;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -392,7 +395,9 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
 
   @Nullable
   public Icon getIcon(int flags) {
-    return myFile.getIcon(flags);
+    final Icon icon = myFile.getIcon(flags);
+    RowIcon baseIcon = ElementBase.createLayeredIcon(icon, 0);
+    return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 
   public void checkDelete() throws IncorrectOperationException {
