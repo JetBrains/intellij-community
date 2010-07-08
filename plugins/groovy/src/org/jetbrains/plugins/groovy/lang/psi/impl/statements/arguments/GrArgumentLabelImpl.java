@@ -85,13 +85,20 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
     if (element instanceof GrLiteral) {
       final Object value = ((GrLiteral)element).getValue();
       if (value instanceof String) {
-        return (String) value;
+        return (String)value;
+      }
+
+      if (value instanceof Number) {
+        return value.toString();
       }
     }
     if (element instanceof GrExpression) {
       final Object value = JavaPsiFacade.getInstance(getProject()).getConstantEvaluationHelper().computeConstantExpression(element);
       if (value instanceof String) {
         return (String)value;
+      }
+      if (value instanceof Number) {
+        return value.toString();
       }
     }
 

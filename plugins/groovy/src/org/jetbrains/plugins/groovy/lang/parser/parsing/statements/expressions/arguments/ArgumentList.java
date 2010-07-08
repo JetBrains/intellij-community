@@ -23,7 +23,6 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.AssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary.ListOrMapConstructorExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary.PrimaryExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
@@ -116,44 +115,37 @@ public class ArgumentList implements GroovyElementTypes {
    * @return
    */
   public static boolean argumentLabelStartCheck(PsiBuilder builder, GroovyParser parser) {
-
     PsiBuilder.Marker marker = builder.mark();
     if (ParserUtils.lookAhead(builder, mSTAR, mCOLON)) {
       builder.advanceLexer();
       marker.done(ARGUMENT_LABEL);
       return true;
-    } else if (ParserUtils.lookAhead(builder, mIDENT, mCOLON) ||
-            TokenSets.KEYWORD_REFERENCE_NAMES.contains(builder.getTokenType()) ||
-            TokenSets.NUMBERS.contains(builder.getTokenType()) ||
-            mSTRING_LITERAL.equals(builder.getTokenType()) ||
-            mGSTRING_LITERAL.equals(builder.getTokenType())
-            ) {
+    }
+    else if (ParserUtils.lookAhead(builder, mIDENT, mCOLON) ||
+             TokenSets.KEYWORD_REFERENCE_NAMES.contains(builder.getTokenType()) ||
+             mSTRING_LITERAL.equals(builder.getTokenType()) ||
+             mGSTRING_LITERAL.equals(builder.getTokenType())) {
       builder.advanceLexer();
       if (mCOLON.equals(builder.getTokenType())) {
         marker.done(ARGUMENT_LABEL);
         return true;
-      } else {
+      }
+      else {
         marker.rollbackTo();
         return false;
       }
     }
     else if (mGSTRING_BEGIN.equals(builder.getTokenType()) ||
+             TokenSets.NUMBERS.contains(builder.getTokenType()) ||
+             mLBRACK.equals(builder.getTokenType()) ||
              mLPAREN.equals(builder.getTokenType()) ||
              mLCURLY.equals(builder.getTokenType())) {
       PrimaryExpression.parse(builder, parser);
       if (mCOLON.equals(builder.getTokenType())) {
         marker.done(ARGUMENT_LABEL);
         return true;
-      } else {
-        marker.rollbackTo();
-        return false;
       }
-    } else if (mLBRACK.equals(builder.getTokenType())) {
-      ListOrMapConstructorExpression.parse(builder, parser);
-      if (mCOLON.equals(builder.getTokenType())) {
-        marker.done(ARGUMENT_LABEL);
-        return true;
-      } else {
+      else {
         marker.rollbackTo();
         return false;
       }
