@@ -43,7 +43,7 @@ public abstract class ModuleRootManager implements ModuleRootModel {
    *
    * @deprecated
    * <ul>
-   *   <li> to get {@link OrderRootType#CLASSES} use <code>OrderEnumerator.orderEntries(module).getClassesRootsWithoutModuleOutputs()<code>
+   *   <li> to get {@link OrderRootType#CLASSES} use <code>OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots()<code>
    *   <li> to get {@link OrderRootType#SOURCES} use <code>OrderEnumerator.orderEntries(module).getAllSourceRoots()<code>
    */
   @NotNull
