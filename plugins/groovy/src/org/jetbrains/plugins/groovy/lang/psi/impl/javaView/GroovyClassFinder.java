@@ -23,6 +23,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 
+import java.util.Collection;
+import java.util.List;
+
 /**
  * @author ven
  */
@@ -35,12 +38,14 @@ public class GroovyClassFinder extends PsiElementFinder {
 
   @Nullable
   public PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
-    return myGroovyPsiManager.getNamesCache().getClassByFQName(qualifiedName, scope);
+    final List<PsiClass> classes = myGroovyPsiManager.getNamesCache().getScriptClassesByFQName(qualifiedName, scope);
+    return classes.isEmpty() ? null : classes.get(0);
   }
 
   @NotNull
   public PsiClass[] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
-    return myGroovyPsiManager.getNamesCache().getClassesByFQName(qualifiedName, scope);
+    final Collection<PsiClass> classes = myGroovyPsiManager.getNamesCache().getScriptClassesByFQName(qualifiedName, scope);
+    return classes.isEmpty() ? PsiClass.EMPTY_ARRAY : classes.toArray(new PsiClass[classes.size()]);
   }
 
 }

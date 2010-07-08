@@ -208,7 +208,6 @@
 
     <stubElementTypeHolder class="org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes"/>
     <!--Stubs index-->
-    <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrShortClassNameIndex"/>
     <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullClassNameIndex"/>
     <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullScriptNameIndex"/>
     <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFieldNameIndex"/>

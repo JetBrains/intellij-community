@@ -19,7 +19,6 @@
  */
 package com.intellij.psi.impl.search;
 
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -39,9 +38,12 @@ public class JavaSourceFilterScope extends DelegatingGlobalSearchScope {
     if (!super.contains(file)) {
       return false;
     }
-    final FileType fileType = file.getFileType();
-    return  StdFileTypes.JAVA == fileType && myIndex.isInSourceContent(file) ||
-            StdFileTypes.CLASS == fileType && myIndex.isInLibraryClasses(file);
+
+    if (StdFileTypes.CLASS == file.getFileType()) {
+      return myIndex.isInLibraryClasses(file);
+    }
+
+    return myIndex.isInSourceContent(file);
   }
 
 }
