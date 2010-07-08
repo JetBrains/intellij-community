@@ -16,15 +16,13 @@
     <orderEntry type="module" module-name="testRunner" />
     <orderEntry type="module" module-name="idea" />
     <orderEntry type="module-library" exported="">
-      <library name="Coverage">
+      <library name="CoverageReport">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/coverage-report.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/coverage-report-idea.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/instrumenter.jar!/" />
         </CLASSES>
-        <SOURCES>
-          <root url="jar://$MODULE_DIR$/lib/coverage-src.zip!/" />
-        </SOURCES>
+        <JAVADOC />
+        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="testng_rt" />
