@@ -150,6 +150,10 @@ class PyUnusedLocalVariableInspectionVisitor extends PyInspectionVisitor {
                 final PsiElement instrElement = rwInstr.getElement();
                 myUsedElements.add(instrElement);
                 myUnusedElements.remove(instrElement);
+                // In case when assignment is inside try part we should move further
+                if (PsiTreeUtil.getParentOfType(instrElement, PyTryPart.class) != null){
+                  return PyControlFlowUtil.Operation.NEXT;
+                }
                 return PyControlFlowUtil.Operation.CONTINUE;
               }
             });
