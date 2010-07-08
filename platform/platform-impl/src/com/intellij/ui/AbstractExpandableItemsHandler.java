@@ -29,18 +29,14 @@ import java.util.Collection;
 import java.util.Collections;
 
 abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType extends JComponent> implements ExpandableItemsHandler<KeyType> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.AbstractToolTipHandler");
-
   protected final ComponentType myComponent;
-  protected final CellRendererPane myRendererPane = new CellRendererPane();
+  private final CellRendererPane myRendererPane = new CellRendererPane();
   private final TipComponent myTipComponent;
 
   private Hint myHint;
-  /**
-   * A sort of unique key that identify the cell at point
-   */
+
   private KeyType myKey;
-  protected BufferedImage myImage;
+  private BufferedImage myImage;
 
   protected AbstractExpandableItemsHandler(@NotNull final ComponentType component) {
     myComponent = component;
@@ -58,7 +54,8 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
           hideHint();
         }
 
-        public void mouseClicked(MouseEvent e) {}
+        public void mouseClicked(MouseEvent e) {
+        }
 
         public void mousePressed(MouseEvent e) {
           handleMouseEvent(e);
@@ -96,7 +93,7 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
     myComponent.addComponentListener(
       new ComponentAdapter() {
-        public void componentHidden(ComponentEvent e){
+        public void componentHidden(ComponentEvent e) {
           hideHint();
         }
 
@@ -107,7 +104,7 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     );
     myComponent.addHierarchyListener(
       new HierarchyListener() {
-        public void hierarchyChanged(HierarchyEvent e){
+        public void hierarchyChanged(HierarchyEvent e) {
           hideHint();
         }
       }
@@ -132,12 +129,6 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     }
   }
 
-  /**
-   * @return "key" that can unique identify some cell at the specified <code>point</code>.
-   * <code>null</code> means that the <code>point</code> doesn't correspond to
-   * any cell. Please note that the <code>point</code> is in coordinate system
-   * of the component which was passed into the class constructor.
-   */
   protected abstract KeyType getCellKeyForPoint(Point point);
 
   @NotNull
@@ -146,9 +137,6 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     return myKey == null ? Collections.<KeyType>emptyList() : Collections.singleton(myKey);
   }
 
-  /**
-   * Hides tool tip
-   */
   protected final void hideHint() {
     if (myHint != null) {
       myHint.hide();
@@ -156,14 +144,18 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     }
   }
 
-  private void handleMouseEvent(MouseEvent e){
-    handleSelectionChange(getCellKeyForPoint(e.getPoint()));
+  private void handleMouseEvent(MouseEvent e) {
+    handleSelectionChange(getCellKeyForPoint(e.getPoint()), true);
   }
 
-  protected void handleSelectionChange(KeyType selected){
+  protected void handleSelectionChange(KeyType selected) {
+    handleSelectionChange(selected, false);
+  }
+
+  protected void handleSelectionChange(KeyType selected, boolean processIfUnfocused) {
     Object oldKey = myKey;
     myKey = selected;
-    if(myKey == null || !myComponent.isShowing()){
+    if (myKey == null || !myComponent.isShowing() || (!myComponent.isFocusOwner() && !processIfUnfocused)) {
       hideHint();
       return;
     }
@@ -176,16 +168,17 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     else if (myHint == null) {
       show(location);
     }
-    else if (!Comparing.equal(oldKey, myKey)){
+    else if (!Comparing.equal(oldKey, myKey)) {
       hideHint();
       show(location);
-    } else {
+    }
+    else {
       repaintHint(location);
     }
   }
 
   private void show(Point location) {
-    LOG.assertTrue(myHint == null);
+    assert myHint == null;
 
     if (!myComponent.isShowing()) {
       return;
@@ -197,7 +190,8 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
     if (fitIntoLayeredPane) {
       myHint = new LightweightHint(myTipComponent);
-    } else {
+    }
+    else {
       MenuElement[] selectedPath = MenuSelectionManager.defaultManager().getSelectedPath();
       if (selectedPath.length > 0) {
         // do not show heavyweight hints when menu is shown to avoid their overlapping
@@ -226,7 +220,7 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
     Rectangle cellBounds = getCellBounds(key, rComponent);
     if (cellBounds == null) return null;
-    
+
     Rectangle visibleRect = getVisibleRect(key);
 
     int width = cellBounds.x + cellBounds.width - (visibleRect.x + visibleRect.width);
