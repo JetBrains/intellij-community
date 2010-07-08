@@ -38,8 +38,10 @@ import java.util.ArrayList;
  * @author Konstantin Bulenkov
  */
 public class ConvertSchemaPrefixToDefaultIntention extends PsiElementBaseIntentionAction {
+  public static final String NAME = "Set Namespace Prefix to Empty";
+
   public ConvertSchemaPrefixToDefaultIntention() {
-    setText("Set Default Namespace Prefix");
+    setText(NAME);
   }
 
   @Override
@@ -108,6 +110,6 @@ public class ConvertSchemaPrefixToDefaultIntention extends PsiElementBaseIntenti
   @NotNull
   @Override
   public String getFamilyName() {
-    return getClass().getName();
+    return NAME;
   }
 }

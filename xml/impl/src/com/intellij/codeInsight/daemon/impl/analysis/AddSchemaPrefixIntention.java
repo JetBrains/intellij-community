@@ -43,14 +43,16 @@ import java.util.Set;
  * @author Konstantin Bulenkov
  */
 public class AddSchemaPrefixIntention extends PsiElementBaseIntentionAction {
+  public static final String NAME = "Insert Namespace Prefix";
+
   public AddSchemaPrefixIntention() {
-    setText("Insert Namespace Prefix");
+    setText(NAME);
   }
 
   @NotNull
   @Override
   public String getFamilyName() {
-    return getClass().getName();
+    return NAME;
   }
 
   @Override
@@ -61,7 +63,7 @@ public class AddSchemaPrefixIntention extends PsiElementBaseIntentionAction {
 
     if (tag != null) {
       final Set<String> ns = tag.getLocalNamespaceDeclarations().keySet();
-      final String nsPrefix = Messages.showInputDialog(project, "Write new namespace prefix:", "Insert Namespace Prefix", Messages.getInformationIcon(), "",
+      final String nsPrefix = Messages.showInputDialog(project, "Namespace Prefix:", NAME, Messages.getInformationIcon(), "",
                                new InputValidator() {
                                  @Override
                                  public boolean checkInput(String inputString) {
@@ -76,7 +78,7 @@ public class AddSchemaPrefixIntention extends PsiElementBaseIntentionAction {
       if (nsPrefix == null) return;
       final List<XmlTag> tags = new ArrayList<XmlTag>();
       final List<XmlAttributeValue> values = new ArrayList<XmlAttributeValue>();
-      new WriteCommandAction(project, "Introduce Namespace Prefix", tag.getContainingFile()) {
+      new WriteCommandAction(project, NAME, tag.getContainingFile()) {
         @Override
         protected void run(Result result) throws Throwable {
           tag.accept(new XmlRecursiveElementVisitor() {
