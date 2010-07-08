@@ -428,7 +428,7 @@
       <separator/>
       <action id="NotificationTestAction" internal="true" class="com.intellij.notification.impl.actions.NotificationTestAction"
               text="Add Test Notification"/>
-
+      <action id="TestMessageBoxAction" internal="true" class="com.intellij.diagnostic.TestMessageBoxAction" text="Show Test Dialog"/>
       <separator/>
       <reference ref="MaintenanceGroup"/>
       
