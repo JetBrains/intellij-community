@@ -95,6 +95,17 @@ public class PythonSdkType extends SdkType {
   @NonNls
   @Nullable
   public String suggestHomePath() {
+    Collection<String> candidates = suggestHomePaths();
+    if (candidates.size() > 0) {
+      // return latest version
+      String[] candidateArray = ArrayUtil.toStringArray(candidates);
+      return candidateArray[candidateArray.length - 1];
+    }
+    return null;
+  }
+
+  @Override
+  public Collection<String> suggestHomePaths() {
     TreeSet<String> candidates = new TreeSet<String>(new Comparator<String>() {
       public int compare(String o1, String o2) {
         return findDigits(o1).compareTo(findDigits(o2));
@@ -103,13 +114,7 @@ public class PythonSdkType extends SdkType {
     for (PythonSdkFlavor flavor : PythonSdkFlavor.getApplicableFlavors()) {
       candidates.addAll(flavor.suggestHomePaths());
     }
-
-    if (candidates.size() > 0) {
-      // return latest version
-      String[] candidateArray = ArrayUtil.toStringArray(candidates);
-      return candidateArray[candidateArray.length - 1];
-    }
-    return null;
+    return candidates;
   }
 
   private static String findDigits(String s) {
