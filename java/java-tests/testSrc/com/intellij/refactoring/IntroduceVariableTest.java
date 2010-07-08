@@ -5,8 +5,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableSettings;
@@ -221,17 +219,6 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     checkResultByFile(baseName + ".after.java");
   }
 
-  private LanguageLevel myOldLanguageLevel;
-  protected void setUp() throws Exception {
-    super.setUp();
-    myOldLanguageLevel = LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).getLanguageLevel();
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
-  }
-
-  protected void tearDown() throws Exception {
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(myOldLanguageLevel);
-    super.tearDown();
-  }
   @Override
    protected Sdk getProjectJDK() {
     return JavaSdkImpl.getMockJdk17();

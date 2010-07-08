@@ -12,11 +12,6 @@ public class UnusedImportsTest extends DaemonAnalyzerTestCase {
     return new LocalInspectionTool[]{new UnusedImportLocalInspection()};
   }
 
-  protected void setUp() throws Exception {
-    super.setUp();
-    LanguageLevelProjectExtension.getInstance(myJavaFacade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
-  }
-
   public void test1() throws Exception { doTest(); }
   public void test2() throws Exception { doTest(); }
 

@@ -15,6 +15,8 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
@@ -25,6 +27,8 @@ import com.intellij.openapi.module.StdModuleTypes;
  * A TestCase for single PsiFile being opened in Editor conversion. See configureXXX and checkResultXXX method docs.
  */
 public abstract class LightCodeInsightTestCase extends LightPlatformCodeInsightTestCase {
+  private LanguageLevel myOldLanguageLevel;
+
   protected LightCodeInsightTestCase() {
     IdeaTestCase.initPlatformPrefix();
   }
@@ -33,6 +37,22 @@ public abstract class LightCodeInsightTestCase extends LightPlatformCodeInsightT
     return JavaPsiFacadeEx.getInstanceEx(ourProject);
   }
 
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myOldLanguageLevel = LanguageLevelProjectExtension.getInstance(getProject()).getLanguageLevel();
+    setLanguageLevel(LanguageLevel.HIGHEST);
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    setLanguageLevel(myOldLanguageLevel);
+    super.tearDown();
+  }
+
+  protected static void setLanguageLevel(final LanguageLevel level) {
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(level);
+  }
 
   @Override
   protected Sdk getProjectJDK() {

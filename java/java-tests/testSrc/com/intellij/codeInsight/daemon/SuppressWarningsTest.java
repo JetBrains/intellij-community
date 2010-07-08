@@ -8,24 +8,10 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
 
 public class SuppressWarningsTest extends LightDaemonAnalyzerTestCase {
-  private LanguageLevel myPrevLanguageLevel;
   @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advHighlighting";
-
-  protected void setUp() throws Exception {
-    super.setUp();
-    myPrevLanguageLevel = LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).getLanguageLevel();
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
-  }
-
-  protected void tearDown() throws Exception {
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(myPrevLanguageLevel);
-    super.tearDown();
-  }
 
   private void doTest(boolean checkWarnings) throws Exception {
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);

@@ -4,8 +4,6 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.pom.java.LanguageLevel;
 
 @SuppressWarnings({"ALL"})
 public class HeavySmartTypeCompletion15Test extends CompletionTestCase {
@@ -77,11 +75,6 @@ public class HeavySmartTypeCompletion15Test extends CompletionTestCase {
 
   private void performAction() {
     complete();
-  }
-
-  protected void setUp() throws Exception {
-    super.setUp();
-    LanguageLevelProjectExtension.getInstance(myJavaFacade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
   }
 
   protected void tearDown() throws Exception {
