@@ -395,7 +395,10 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     myFirstComponent = null;
     myInnerComponent = null;
     removeAll();
-    getParent().remove(this);
+    Container container = getParent();
+    if (container != null) {
+      container.remove(this);
+    }
   }
 
   private class Divider extends JPanel implements Disposable {
@@ -590,7 +593,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
         setCursor(
           getOrientation() ? Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR) : Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
         myGlassPane.setCursor(getOrientation() ? Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR) : Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR), myListener);
-       
+
         myPoint = SwingUtilities.convertPoint(this, e.getPoint(), ThreeComponentsSplitter.this);
         if (getOrientation()) {
           if (getHeight() > 0 || myDividerZone > 0) {
