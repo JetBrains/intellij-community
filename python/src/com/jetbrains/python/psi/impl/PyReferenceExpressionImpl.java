@@ -18,7 +18,6 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
-import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -281,7 +280,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
           if (defs.length > 0) {
             PyType type = getTypeIfExpr(defs[0], context);
             for (int i = 1; i < defs.length; i++) {
-              type = PyUnionType.union(type, getTypeIfExpr(defs[i], context));
+              type = PyUnionType.union(type, getTypeIfExpr(defs[i], context), context.allowNulls());
             }
             return type;
           }

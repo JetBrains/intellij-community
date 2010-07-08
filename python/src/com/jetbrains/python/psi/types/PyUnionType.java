@@ -56,6 +56,19 @@ public class PyUnionType implements PyType {
   }
 
   @Nullable
+  public static PyType union(PyType type1, PyType type2, boolean allowNulls) {
+    if (allowNulls) {
+      if (type1 == null) {
+        return type2;
+      }
+      if (type2 == null) {
+        return type1;
+      }
+    }
+    return union(type1, type2);
+  }
+
+  @Nullable
   public static PyType union(PyType type1, PyType type2) {
     if (type1 instanceof PyTupleType && type2 instanceof PyTupleType) {
       final PyTupleType tupleType1 = (PyTupleType)type1;
@@ -64,20 +77,20 @@ public class PyUnionType implements PyType {
         int count = tupleType1.getElementCount();
         PyType[] members = new PyType[count];
         for (int i = 0; i < count; i++) {
-          members [i] = union(tupleType1.getElementType(i), tupleType2.getElementType(i));
+          members[i] = union(tupleType1.getElementType(i), tupleType2.getElementType(i));
         }
         return new PyTupleType(tupleType1, members);
       }
     }
     Set<PyType> members = new HashSet<PyType>();
     if (type1 instanceof PyUnionType) {
-      members.addAll(((PyUnionType) type1).myMembers);
+      members.addAll(((PyUnionType)type1).myMembers);
     }
     else {
       members.add(type1);
     }
     if (type2 instanceof PyUnionType) {
-      members.addAll(((PyUnionType) type2).myMembers);
+      members.addAll(((PyUnionType)type2).myMembers);
     }
     else {
       members.add(type2);

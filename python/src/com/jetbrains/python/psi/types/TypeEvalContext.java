@@ -11,6 +11,8 @@ import java.util.Map;
  */
 public class TypeEvalContext {
   private boolean myAllowDataFlow;
+  private boolean allowNulls = false;
+
   private Map<PyExpression, PyType> myEvaluated = new HashMap<PyExpression, PyType>();
 
   private TypeEvalContext(boolean allowDataFlow) {
@@ -24,6 +26,15 @@ public class TypeEvalContext {
   public boolean allowReturnTypes() {
     return myAllowDataFlow;
   }
+
+
+  public static TypeEvalContext variants() {
+    TypeEvalContext context = slow();
+    context.allowNulls = true;
+    
+    return context;
+  }
+
 
   public static TypeEvalContext slow() {
     return new TypeEvalContext(true);
@@ -41,5 +52,9 @@ public class TypeEvalContext {
     PyType result = expr.getType(this);
     myEvaluated.put(expr, result);
     return result;
+  }
+
+  public boolean allowNulls() {
+    return allowNulls;
   }
 }

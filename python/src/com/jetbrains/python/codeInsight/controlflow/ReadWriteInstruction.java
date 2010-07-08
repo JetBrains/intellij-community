@@ -17,8 +17,8 @@ public class ReadWriteInstruction extends InstructionImpl {
     private final boolean isRead;
 
     ACCESS(boolean read, boolean write) {
-      isWrite = write;
       isRead = read;
+      isWrite = write;
     }
     public boolean isWriteAccess(){
       return isWrite;
