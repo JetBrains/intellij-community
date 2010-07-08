@@ -283,7 +283,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     return new DataInputStream(new ByteArrayInputStream(bytes));
   }
 
-  public byte[] readBytes(int record) {
+  byte[] readBytes(int record) {
     synchronized (myLock) {
       final int length = myRecordsTable.getSize(record);
       if (length == 0) return ArrayUtil.EMPTY_BYTE_ARRAY;
