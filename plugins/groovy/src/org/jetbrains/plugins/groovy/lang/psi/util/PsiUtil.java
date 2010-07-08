@@ -808,7 +808,8 @@ public class PsiUtil {
   }
 
   public static boolean isClosurePropertyGetter(PsiMethod method) {
-    if (GroovyPropertyUtils.isGetterName(method.getName())) {
+    String methodName = method.getName();
+    if (methodName.startsWith("get") && GroovyPropertyUtils.isGetterName(methodName)) { // exclude isXXX()
       PsiModifierList modifiers = method.getModifierList();
 
       if (!modifiers.hasModifierProperty(PsiModifier.STATIC)

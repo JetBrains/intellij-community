@@ -51,6 +51,7 @@ import org.jetbrains.plugins.groovy.lang.completion.filters.types.BuiltInTypeAsA
 import org.jetbrains.plugins.groovy.lang.completion.filters.types.BuiltInTypeFilter;
 import org.jetbrains.plugins.groovy.lang.completion.getters.SuggestedVariableNamesGetter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 
 import java.util.Set;
 
@@ -129,7 +130,12 @@ public class GroovyCompletionData extends CompletionData {
 
   private void registerSimpleExprsCompletion() {
     String[] exprs = {"true", "false", "null", "super", "new", "this"};
-    registerStandardCompletion(new SimpleExpressionFilter(), exprs);
+    registerStandardCompletion(new SimpleExpressionFilter() {
+      @Override
+      public boolean isAcceptable(Object element, PsiElement context) {
+        return super.isAcceptable(element, context) && !(context.getParent() instanceof GrLiteral);
+      }
+    }, exprs);
   }
 
   private void registerThrowsCompletion() {
