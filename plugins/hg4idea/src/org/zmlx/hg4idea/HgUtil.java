@@ -201,6 +201,17 @@ public abstract class HgUtil {
   }
 
   /**
+   * Gets the Mercurial root for the given file path or null if non exists:
+   * the root should not only be in directory mappings, but also the .hg repository folder should exist.
+   * @see #getHgRootOrThrow(com.intellij.openapi.project.Project, com.intellij.openapi.vcs.FilePath)
+   * @see #getHgRootOrNull(com.intellij.openapi.project.Project, com.intellij.openapi.vcs.FilePath) 
+   */
+  @Nullable
+  public static VirtualFile getHgRootOrNull(Project project, VirtualFile file) {
+    return getHgRootOrNull(project, VcsUtil.getFilePath(file.getPath()));
+  }
+
+  /**
    * Gets the Mercurial root for the given file path or throws a VcsException if non exists:
    * the root should not only be in directory mappings, but also the .hg repository folder should exist.
    * @see #getHgRootOrNull(com.intellij.openapi.project.Project, com.intellij.openapi.vcs.FilePath)
@@ -213,4 +224,5 @@ public abstract class HgUtil {
     }
     return vf;
   }
+
 }
