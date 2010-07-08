@@ -19,12 +19,13 @@ import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceBase;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.xml.util.XmlUtil;
+import com.intellij.xml.XmlExtension;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -35,16 +36,26 @@ public class SchemaPrefixReference extends PsiReferenceBase<XmlElement> {
   private final NullableLazyValue<SchemaPrefix> myPrefix = new NullableLazyValue<SchemaPrefix>() {
     @Override
     protected SchemaPrefix compute() {
-      if (myElement instanceof XmlAttribute && ((XmlAttribute)myElement).isNamespaceDeclaration()) {
+      if (myElement instanceof XmlAttribute && (((XmlAttribute)myElement).isNamespaceDeclaration())) {
         return new SchemaPrefix((XmlAttribute)myElement, getRangeInElement(), myName);
       }
+      else if (myElement instanceof XmlAttributeValue &&
+               ((XmlAttribute)((XmlAttributeValue)myElement).getParent()).getLocalName().equals("prefix")) {
+        return new SchemaPrefix((XmlAttribute)myElement.getParent(), getRangeInElement().shiftRight(myElement.getStartOffsetInParent()), myName) {
+          @NotNull
+          @Override
+          public SearchScope getUseScope() {
+            return new LocalSearchScope(((XmlFile)myElement.getContainingFile()).getDocument());
+          }
+        };
+      }
       else {
-        final PsiElement declaration = XmlUtil.findNamespaceDeclaration(myElement, myName);
-        if (declaration instanceof XmlAttribute) {
-          final XmlAttribute attribute = (XmlAttribute)declaration;
-          final String prefix = attribute.getNamespacePrefix();
+        XmlExtension extension = XmlExtension.getExtension(myElement.getContainingFile());
+        final XmlAttribute declaration = extension.getPrefixDeclaration(PsiTreeUtil.getParentOfType(myElement, XmlTag.class, false), myName);
+        if (declaration != null) {
+          final String prefix = declaration.getNamespacePrefix();
           final TextRange textRange = TextRange.from(prefix.length() + 1, myName.length());
-          return new SchemaPrefix(attribute, textRange, myName);
+          return new SchemaPrefix(declaration, textRange, myName);
         }
       }
       return null;
@@ -56,7 +67,6 @@ public class SchemaPrefixReference extends PsiReferenceBase<XmlElement> {
   public SchemaPrefixReference(XmlElement element, TextRange range, String name) {
     super(element, range, true);
     myName = name;
-
   }
 
   public String getNamespacePrefix() {

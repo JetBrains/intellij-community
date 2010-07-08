@@ -153,7 +153,8 @@ public abstract class XmlExtension {
     return HighlightInfoType.ERROR;
   }
 
-  public abstract boolean isPrefixDeclared(final XmlTag context, String namespacePrefix);
+  @Nullable
+  public abstract XmlAttribute getPrefixDeclaration(final XmlTag context, String namespacePrefix);
 
   public boolean shouldBeHighlightedAsTag(XmlTag tag) {
     return true;

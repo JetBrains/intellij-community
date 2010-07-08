@@ -242,15 +242,16 @@ public class DefaultXmlExtension extends XmlExtension {
     }
   }
 
-  public boolean isPrefixDeclared(final XmlTag context, String namespacePrefix) {
+  public XmlAttribute getPrefixDeclaration(final XmlTag context, String namespacePrefix) {
     @NonNls String nsDeclarationAttrName = null;
     for(XmlTag t = context; t != null; t = t.getParentTag()) {
       if (t.hasNamespaceDeclarations()) {
         if (nsDeclarationAttrName == null) nsDeclarationAttrName = namespacePrefix.length() > 0 ? "xmlns:"+namespacePrefix:"xmlns";
-        if (t.getAttributeValue(nsDeclarationAttrName) != null) return true;
+        XmlAttribute attribute = t.getAttribute(nsDeclarationAttrName);
+        if (attribute != null) return attribute;
       }
     }
-    return false;
+    return null;
   }
 
   private static Set<String> guessNamespace(final PsiFile file, String tagName) {

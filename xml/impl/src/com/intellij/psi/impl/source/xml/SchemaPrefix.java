@@ -20,6 +20,7 @@ import com.intellij.psi.impl.RenameableFakePsiElement;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.NotNull;
 
@@ -73,6 +74,7 @@ public class SchemaPrefix extends RenameableFakePsiElement {
   @NotNull
   @Override
   public SearchScope getUseScope() {
-    return new LocalSearchScope(getDeclaration().getParent());
+    XmlAttribute declaration = getDeclaration();
+    return new LocalSearchScope(declaration.isNamespaceDeclaration() ? declaration.getParent() : ((XmlFile)declaration.getContainingFile()).getDocument());
   }
 }
