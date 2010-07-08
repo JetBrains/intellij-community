@@ -133,7 +133,7 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
     PyExpression qualifier = myElement.getQualifier();
     assert qualifier != null;
 
-    PyType qualifierType = qualifier.getType(TypeEvalContext.variants());
+    PyType qualifierType = qualifier.getType(TypeEvalContext.slow());
     ProcessingContext ctx = new ProcessingContext();
     final Set<String> namesAlready = new HashSet<String>();
     ctx.put(PyType.CTX_NAMES, namesAlready);

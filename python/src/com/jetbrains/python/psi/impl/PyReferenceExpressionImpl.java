@@ -280,7 +280,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
           if (defs.length > 0) {
             PyType type = getTypeIfExpr(defs[0], context);
             for (int i = 1; i < defs.length; i++) {
-              type = PyUnionType.union(type, getTypeIfExpr(defs[i], context), context.allowNulls());
+              type = PyUnionType.union(type, getTypeIfExpr(defs[i], context));
             }
             return type;
           }
