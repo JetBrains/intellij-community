@@ -679,7 +679,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
       final String[] myUrls = mySdk.getRootProvider().getUrls(OrderRootType.CLASSES);
       final String[] newUrls = newSdk.getRootProvider().getUrls(OrderRootType.CLASSES);
-      return CollectionFactory.newSet(myUrls).equals(CollectionFactory.newSet(newUrls));
+      return !CollectionFactory.newSet(myUrls).equals(CollectionFactory.newSet(newUrls));
     }
 
   }
