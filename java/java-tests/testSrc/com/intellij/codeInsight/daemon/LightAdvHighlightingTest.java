@@ -29,6 +29,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -289,6 +290,8 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
       PsiExpression expression = field.getInitializer();
       binary.getLOperand().replace(expression);
       binary.getROperand().replace(literal);
+
+      UIUtil.dispatchAllInvocationEvents();
 
       expression.replace(binary);
       PostprocessReformattingAspect.getInstance(getProject()).clear(); // OOM otherwise
