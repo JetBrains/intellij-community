@@ -15,19 +15,28 @@
  */
 package com.intellij.lang.ant.dom;
 
-import com.intellij.util.xml.XmlName;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.xml.SubTagList;
+
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jun 30, 2010
+ *         Date: Jul 8, 2010
  */
-public abstract class AntDomCustomElement extends AntDomElement{
+public abstract class AntDomAntlib extends AntDomElement{
 
-  @Nullable
-  public final Class getDefinitionClass() {
-    final String name = getXmlElementName();
-    final String nsKey = getXmlElementNamespace();
-    return CustomAntElementsRegistry.getInstance(getAntProject()).lookupClass(new XmlName(name, nsKey));
-  }
+  @SubTagList("typedef")
+  public abstract List<AntDomTypeDef> getTypedefs();
+
+  @SubTagList("taskdef")
+  public abstract List<AntDomTypeDef> getTaskdefs();
+
+  @SubTagList("macrodef")
+  public abstract List<AntDomTypeDef> getMacrodefs();
+
+  @SubTagList("presetdef")
+  public abstract List<AntDomTypeDef> getPresetdefs();
+
+  @SubTagList("scriptdef")
+  public abstract List<AntDomTypeDef> getScriptdefs();
 }

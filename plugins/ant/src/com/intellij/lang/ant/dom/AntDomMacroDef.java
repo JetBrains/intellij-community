@@ -15,19 +15,9 @@
  */
 package com.intellij.lang.ant.dom;
 
-import com.intellij.util.xml.XmlName;
-import org.jetbrains.annotations.Nullable;
-
 /**
  * @author Eugene Zhuravlev
- *         Date: Jun 30, 2010
+ *         Date: Jul 8, 2010
  */
-public abstract class AntDomCustomElement extends AntDomElement{
-
-  @Nullable
-  public final Class getDefinitionClass() {
-    final String name = getXmlElementName();
-    final String nsKey = getXmlElementNamespace();
-    return CustomAntElementsRegistry.getInstance(getAntProject()).lookupClass(new XmlName(name, nsKey));
-  }
+public abstract class AntDomMacroDef extends AntDomNamedElement{
 }
