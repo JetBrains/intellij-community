@@ -7,8 +7,6 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyQualifiedExpression;
-import com.jetbrains.python.toolbox.Maybe;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -28,10 +26,12 @@ public class PyUnionType implements PyType {
     SmartList<PsiElement> ret = new SmartList<PsiElement>();
     boolean all_nulls = true;
     for (PyType member : myMembers) {
-      List<? extends PsiElement> result = member.resolveMember(name, direction);
-      if (result != null) {
-        all_nulls = false;
-        ret.addAll(result);
+      if (member != null) {
+        List<? extends PsiElement> result = member.resolveMember(name, direction);
+        if (result != null) {
+          all_nulls = false;
+          ret.addAll(result);
+        }
       }
     }
     return all_nulls ? null : ret;
@@ -40,7 +40,9 @@ public class PyUnionType implements PyType {
   public Object[] getCompletionVariants(PyQualifiedExpression referenceExpression, ProcessingContext context) {
     Set<Object> variants = new HashSet<Object>();
     for (PyType member : myMembers) {
-      Collections.addAll(variants, member.getCompletionVariants(referenceExpression, context));
+      if (member != null) {
+        Collections.addAll(variants, member.getCompletionVariants(referenceExpression, context));
+      }
     }
     return variants.toArray(new Object[variants.size()]);
   }
@@ -48,16 +50,13 @@ public class PyUnionType implements PyType {
   public String getName() {
     return "one of (" + StringUtil.join(myMembers, new NullableFunction<PyType, String>() {
       public String fun(PyType pyType) {
-        return pyType.getName();
+        return pyType == null ? "unknown" : pyType.getName();
       }
     }, ", ") + ")";
   }
 
   @Nullable
   public static PyType union(PyType type1, PyType type2) {
-    if (type1 == null || type2 == null) {
-      return null;
-    }
     if (type1 instanceof PyTupleType && type2 instanceof PyTupleType) {
       final PyTupleType tupleType1 = (PyTupleType)type1;
       final PyTupleType tupleType2 = (PyTupleType)type2;
@@ -87,5 +86,14 @@ public class PyUnionType implements PyType {
       return members.iterator().next();
     }
     return new PyUnionType(members);
+  }
+
+  public boolean isWeak() {
+    for (PyType member : myMembers) {
+      if (member == null) {
+        return true;
+      }
+    }
+    return false;
   }
 }

@@ -365,7 +365,8 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           if (qexpr != null) {
             PyType qtype = qexpr.getType(TypeEvalContext.fast());
             if (qtype != null) {
-              if (qtype instanceof PyNoneType || qtype instanceof PyTypeReference) {
+              if (qtype instanceof PyNoneType || qtype instanceof PyTypeReference ||
+                  (qtype instanceof PyUnionType && ((PyUnionType) qtype).isWeak())) {
                 // this almost always means that we don't know the type, so don't show an error in this case
                 return;
               }
