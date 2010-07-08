@@ -1029,7 +1029,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     if (logical.softWrapLinesOnCurrentLogicalLine > 0) {
       int linesToSkip = logical.softWrapLinesOnCurrentLogicalLine;
-      List<TextChange> softWraps = getSoftWrapModel().getSoftWrapsForLine(logLine);
+      List<? extends TextChange> softWraps = getSoftWrapModel().getSoftWrapsForLine(logLine);
       for (TextChange softWrap : softWraps) {
         if (myFoldingModel.isOffsetCollapsed(softWrap.getStart())) {
           continue;
@@ -1619,7 +1619,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           position.x = drawBackground(g, backColor, collapsedFolderAt.getPlaceholderText(), position, fontType, defaultBackground, clip);
         }
         else {
-          List<TextChange> softWraps = getSoftWrapModel().getSoftWrapsForRange(start, hEnd);
+          List<? extends TextChange> softWraps = getSoftWrapModel().getSoftWrapsForRange(start, hEnd);
           int startToUse = start;
           for (TextChange softWrap : softWraps) {
             // Draw background for token text before the wrap.
@@ -2064,7 +2064,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int softWrapLinesToSkip = startDrawingLogicalPosition.softWrapLinesOnCurrentLogicalLine;
     TextChange lastSkippedSoftWrap = null;
     if (softWrapLinesToSkip > 0) {
-      List<TextChange> softWraps = getSoftWrapModel().getSoftWrapsForLine(startDrawingLogicalPosition.line);
+      List<? extends TextChange> softWraps = getSoftWrapModel().getSoftWrapsForLine(startDrawingLogicalPosition.line);
       for (TextChange softWrap : softWraps) {
         softWrapLinesToSkip -= StringUtil.countNewLines(softWrap.getText());
         if (softWrapLinesToSkip <= 0) {

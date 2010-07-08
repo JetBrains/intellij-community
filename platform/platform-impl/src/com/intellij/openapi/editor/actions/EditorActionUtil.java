@@ -324,7 +324,7 @@ public class EditorActionUtil {
     }
 
     int lineFeedsToSkip = visualLineNumber - visLineStart.line;
-    List<TextChange> softWraps = editor.getSoftWrapModel().getSoftWrapsForLine(logLine);
+    List<? extends TextChange> softWraps = editor.getSoftWrapModel().getSoftWrapsForLine(logLine);
     for (TextChange softWrap : softWraps) {
       int softWrapLineFeedsNumber = StringUtil.countNewLines(softWrap.getText());
 

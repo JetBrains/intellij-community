@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -86,42 +85,42 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
     if (!isSoftWrappingEnabled()) {
       return null;
     }
-    if (myActive <= 0) {
-      //TODO den check
-      //dropDataIfNecessary();
-    }
     return myStorage.getSoftWrap(offset);
   }
 
   @NotNull
   @Override
-  public List<TextChange> getSoftWrapsForRange(int start, int end) {
+  public List<? extends TextChange> getSoftWrapsForRange(int start, int end) {
     if (!isSoftWrappingEnabled()) {
       return Collections.emptyList();
     }
-    int i = myStorage.getSoftWrapIndex(start);
-    if (i < 0) {
-      i = -i - 1;
+    int startIndex = myStorage.getSoftWrapIndex(start);
+    if (startIndex < 0) {
+      startIndex = -startIndex - 1;
     }
 
     List<TextChangeImpl> softWraps = myStorage.getSoftWraps();
-    List<TextChange> result = null;
-    for (; i < softWraps.size(); i++) {
-      TextChange softWrap = softWraps.get(i);
-      if (softWrap.getStart() >= end) {
-        break;
-      }
-      if (result == null) {
-        result = new ArrayList<TextChange>();
-      }
-      result.add(softWrap);
+    if (startIndex >= softWraps.size()) {
+      return Collections.emptyList();
     }
-    return result == null ? Collections.<TextChange>emptyList() : result;
+
+    int endIndex = myStorage.getSoftWrapIndex(end);
+    if (endIndex < 0) {
+      endIndex = -endIndex - 1;
+    }
+    endIndex = Math.min(softWraps.size(), endIndex);
+
+    if (endIndex > startIndex) {
+      return softWraps.subList(startIndex, endIndex);
+    }
+    else {
+      return Collections.emptyList();
+    }
   }
 
   @Override
   @NotNull
-  public List<TextChange> getSoftWrapsForLine(int documentLine) {
+  public List<? extends TextChange> getSoftWrapsForLine(int documentLine) {
     if (!isSoftWrappingEnabled()) {
       return Collections.emptyList();
     }
@@ -297,28 +296,17 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
     return result;
   }
 
-  //TODO den remove
-  public void beforeDocumentChange(@NotNull VisualPosition visualPosition) {
-    List<TextChangeImpl> softWraps = myStorage.getSoftWraps();
-    LogicalPosition logicalPosition = myEditor.visualToLogicalPosition(visualPosition);
-    int offset = myEditor.logicalPositionToOffset(logicalPosition);
-    int i = myStorage.getSoftWrapIndex(offset);
-    if (i < 0 || i >= softWraps.size()) {
+  public void beforeDocumentChangeAtCaret() {
+    int offset = myEditor.getCaretModel().getOffset();
+    TextChangeImpl softWrap = myStorage.getSoftWrap(offset);
+    if (softWrap == null) {
       return;
     }
 
-    TextChange softWrap = softWraps.get(i);
-
     VisualPosition visualCaretPosition = myEditor.getCaretModel().getVisualPosition();
-
-    // Consider given visual position to belong to soft wrap-introduced virtual space if visual position for the target offset
-    // differs from the given.
-    if (!visualPosition.equals(myEditor.offsetToVisualPosition(offset))) {
-      myEditor.getDocument().replaceString(softWrap.getStart(), softWrap.getEnd(), softWrap.getText());
-    }
+    myDocumentChangeManager.makeHardWrap(softWrap);
 
     // Restore caret position.
     myEditor.getCaretModel().moveToVisualPosition(visualCaretPosition);
-    myStorage.removeByIndex(i);
   }
 }

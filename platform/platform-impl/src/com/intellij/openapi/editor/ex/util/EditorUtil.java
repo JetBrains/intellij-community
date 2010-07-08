@@ -60,7 +60,7 @@ public class EditorUtil {
     }
 
     int visualLinesToSkip = line - resVisStart.line;
-    List<TextChange> softWraps = editor.getSoftWrapModel().getSoftWrapsForLine(resultLogLine);
+    List<? extends TextChange> softWraps = editor.getSoftWrapModel().getSoftWrapsForLine(resultLogLine);
     for (int i = 0; i < softWraps.size(); i++) {
       TextChange softWrap = softWraps.get(i);
       int softWrapLineFeeds = StringUtil.countNewLines(softWrap.getText());

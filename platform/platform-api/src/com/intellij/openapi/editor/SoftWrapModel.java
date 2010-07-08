@@ -95,7 +95,7 @@ public interface SoftWrapModel {
    * @return        all soft wraps registered for the target document offsets range
    */
   @NotNull
-  List<TextChange> getSoftWrapsForRange(int start, int end);
+  List<? extends TextChange> getSoftWrapsForRange(int start, int end);
 
   /**
    * Allows to ask current model about all soft wraps registered for the given document line.
@@ -104,17 +104,15 @@ public interface SoftWrapModel {
    * @return                all soft wraps registered for the given document line
    */
   @NotNull
-  List<TextChange> getSoftWrapsForLine(int documentLine);
+  List<? extends TextChange> getSoftWrapsForLine(int documentLine);
 
   /**
-   * Notifies current model that target document is about to be changed at location identified by the given visual position.
+   * Notifies current model that target document is about to be changed at current caret location.
    * <p/>
    * Primary purpose of this method is to perform {@code 'soft wrap' -> 'hard wrap'} conversion if the user types in virtual
    * soft wraps-introduced space.
-   *
-   * @param position    position where the document is to be modified
    */
-  void beforeDocumentChange(@NotNull VisualPosition position);
+  void beforeDocumentChangeAtCaret();
 
   /**
    * Allows to answer if given visual position points to soft wrap-introduced virtual space.

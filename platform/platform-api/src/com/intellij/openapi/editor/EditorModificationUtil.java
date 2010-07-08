@@ -86,7 +86,7 @@ public class EditorModificationUtil {
 
     // There is a possible case that particular soft wraps become hard wraps if the caret is located at soft wrap-introduced virtual
     // space, hence, we need to give editor a chance to react accordingly.
-    editor.getSoftWrapModel().beforeDocumentChange(editor.getCaretModel().getVisualPosition());
+    editor.getSoftWrapModel().beforeDocumentChangeAtCaret();
     int oldOffset = editor.getCaretModel().getOffset();
 
     String filler = calcStringToFillVirtualSpace(editor);
@@ -242,7 +242,7 @@ public class EditorModificationUtil {
 
     int caretOffset = caretModel.getOffset();
     int anchorLineEndOffset = document.getLineEndOffset(lineNumber);
-    List<TextChange> softWraps = editor.getSoftWrapModel().getSoftWrapsForLine(logicalPosition.line);
+    List<? extends TextChange> softWraps = editor.getSoftWrapModel().getSoftWrapsForLine(logicalPosition.line);
     for (TextChange softWrap : softWraps) {
       if (softWrap.getStart() > caretOffset) {
         anchorLineEndOffset = softWrap.getStart();

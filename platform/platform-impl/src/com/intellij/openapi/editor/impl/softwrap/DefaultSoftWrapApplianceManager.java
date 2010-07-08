@@ -128,7 +128,11 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
     int endLine = document.getLineNumber(end);
     for (int i = startLine; i <= endLine; i++) {
       if (!myProcessedLogicalLines.contains(i)) {
-        processLogicalLine(chars, i, fontType, IndentType.TO_PREV_LINE_NON_WS_START);
+        IndentType indent = IndentType.NONE;
+        if (!myEditor.isViewer() && !document.isWritable()) {
+          indent = IndentType.TO_PREV_LINE_NON_WS_START;
+        }
+        processLogicalLine(chars, i, fontType, indent);
         myProcessedLogicalLines.add(i);
       }
     }
@@ -272,7 +276,8 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
         return i;
       }
 
-      // Don't wrap on a non-id symbol followed by non-id symbol, e.g. don't wrap between two pluses at i++;
+      // Don't wrap on a non-id symbol followed by non-id symbol, e.g. don't wrap between two pluses at i++.
+      // Also don't wrap before non-id symbol preceded by a space - wrap on space instead;
       if (!isIdSymbol(c) && (i < min + 2 || (isIdSymbol(text[i - 1]) && !WHITE_SPACES.contains(text[i - 1])))) {
         return i;
       }

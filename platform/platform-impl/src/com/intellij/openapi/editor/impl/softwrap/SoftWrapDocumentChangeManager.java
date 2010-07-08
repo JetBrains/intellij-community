@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,10 +47,19 @@ public class SoftWrapDocumentChangeManager {
   private final SoftWrapsStorage myStorage;
   private final Editor           myEditor;
 
-  public SoftWrapDocumentChangeManager(Editor editor, SoftWrapsStorage storage) {
+  public SoftWrapDocumentChangeManager(@NotNull Editor editor, @NotNull SoftWrapsStorage storage) {
     myStorage = storage;
     myEditor = editor;
     init(editor.getDocument());
+  }
+
+  /**
+   * Performs {@code 'soft wrap' -> 'hard wrap'} conversion for the given soft wrap.
+   *
+   * @param softWrap    soft wrap to make hard wrap
+   */
+  public void makeHardWrap(@NotNull TextChangeImpl softWrap) {
+    myEditor.getDocument().replaceString(softWrap.getStart(), softWrap.getEnd(), softWrap.getText());
   }
 
   /**
