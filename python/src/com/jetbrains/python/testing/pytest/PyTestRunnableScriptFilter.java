@@ -1,12 +1,14 @@
 package com.jetbrains.python.testing.pytest;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.PsiFile;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyRecursiveElementVisitor;
-import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyRecursiveElementVisitor;
 import com.jetbrains.python.run.RunnableScriptFilter;
+import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -14,7 +16,13 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PyTestRunnableScriptFilter implements RunnableScriptFilter {
   public boolean isRunnableScript(PsiFile script, @NotNull Module module) {
-    return isPyTestScript(script);
+    return isPyTestInstalled(module) && isPyTestScript(script);
+  }
+
+  private static boolean isPyTestInstalled(Module module) {
+    // TODO[yole] add caching to avoid disk I/O in findPyTestRunner()?
+    final Sdk sdk = PythonSdkType.findPythonSdk(module);
+    return sdk != null && PyTestRunConfiguration.findPyTestRunner(sdk.getHomePath()) != null;
   }
 
   public static boolean isPyTestScript(PsiFile script) {
