@@ -107,6 +107,11 @@ public abstract class GitBaseRebaseProcess {
    */
   private ShelvedChangeList myShelvedChangeList;
   /**
+   * Contains vcs roots for which commits were skipped
+   */
+  private SortedMap<VirtualFile, List<GitRebaseUtils.CommitInfo>> mySkippedCommits =
+    new TreeMap<VirtualFile, List<GitRebaseUtils.CommitInfo>>(GitUtil.VIRTUAL_FILE_COMPARATOR);
+  /**
    * The progress indicator to use
    */
   private ProgressIndicator myProgressIndicator;
@@ -133,6 +138,7 @@ public abstract class GitBaseRebaseProcess {
       if (!saveProjectChangesBeforeUpdate()) return;
       try {
         for (final VirtualFile root : roots) {
+          List<GitRebaseUtils.CommitInfo> skippedCommits = null;
           try {
             // check if there is a remote for the branch
             final GitBranch branch = GitBranch.current(myProject, root);
@@ -179,30 +185,13 @@ public abstract class GitBaseRebaseProcess {
                     break;
                   }
                   doRebase(progressIndicator, root, rebaseConflictDetector, "--continue");
-                  final Ref<Integer> result = new Ref<Integer>();
-                  noChangeLoop:
                   while (rebaseConflictDetector.isNoChange()) {
-                    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-                      public void run() {
-                        int rc = Messages.showDialog(myProject, GitBundle.message("update.rebase.no.change", root.getPresentableUrl()),
-                                                     GitBundle.getString("update.rebase.no.change.title"),
-                                                     new String[]{GitBundle.getString("update.rebase.no.change.skip"),
-                                                       GitBundle.getString("update.rebase.no.change.retry"),
-                                                       GitBundle.getString("update.rebase.no.change.cancel")}, 0,
-                                                     Messages.getErrorIcon());
-                        result.set(rc);
-                      }
-                    });
-                    switch (result.get()) {
-                      case 0:
-                        doRebase(progressIndicator, root, rebaseConflictDetector, "--skip");
-                        continue noChangeLoop;
-                      case 1:
-                        continue noChangeLoop;
-                      case 2:
-                        cancelled.set(true);
-                        break noChangeLoop;
+                    if (skippedCommits == null) {
+                      skippedCommits = new ArrayList<GitRebaseUtils.CommitInfo>();
+                      mySkippedCommits.put(root, skippedCommits);
                     }
+                    skippedCommits.add(GitRebaseUtils.getCurrentRebaseCommit(root));
+                    doRebase(progressIndicator, root, rebaseConflictDetector, "--skip");
                   }
                 }
                 if (cancelled.get()) {
@@ -237,6 +226,9 @@ public abstract class GitBaseRebaseProcess {
    * Restore project changes after update
    */
   private void restoreProjectChangesAfterUpdate() {
+    if (mySkippedCommits.size() > 0) {
+      GitSkippedCommits.showSkipped(myProject, mySkippedCommits);
+    }
     if (getUpdatePolicy() == GitVcsSettings.UpdateChangesPolicy.SHELVE) {
       if (myShelvedChangeList != null) {
         // The changes are temporary copied to the first local change list, the next operation will restore them back
