@@ -5,8 +5,6 @@ import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.types.*;
 
-import java.io.IOException;
-
 /**
  * @author yole
  */
@@ -78,15 +76,9 @@ public class PyTypeTest extends PyLightFixtureTestCase {
   private PyType doTest(final String text) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        try {
-          myFixture.configureByText(PythonFileType.INSTANCE,
-                                    text);
+        myFixture.configureByText(PythonFileType.INSTANCE, text);
         }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    });
+      });
     PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
     return expr.getType(TypeEvalContext.slow());
   }

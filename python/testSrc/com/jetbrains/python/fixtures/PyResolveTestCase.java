@@ -38,12 +38,7 @@ public abstract class PyResolveTestCase extends PyLightFixtureTestCase {
     final String finalFileText = fileText;
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        try {
-          myFixture.configureByText(new File(filePath).getName(), finalFileText);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+        myFixture.configureByText(new File(filePath).getName(), finalFileText);
       }
     });
     final PsiReference reference = myFixture.getFile().findReferenceAt(offset);
