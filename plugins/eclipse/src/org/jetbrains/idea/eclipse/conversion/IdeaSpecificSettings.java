@@ -242,20 +242,10 @@ public class IdeaSpecificSettings {
       element.setAttribute("scope", scope.name());
       if (libraryEntry.isModuleLevel()) {
         final String[] urls = libraryEntry.getRootUrls(OrderRootType.SOURCES);
-        if (urls.length > 1) {
-          for (String url : urls) {
-            Element srcElement = new Element(SRCROOT_ATTR);
-            srcElement.setAttribute("url", url);
-            element.addContent(srcElement);
-          }
-        }
-        else if (urls.length == 1 && urls[0].contains(JarFileSystem.JAR_SEPARATOR)) {
-          final VirtualFile virtualFile = JarFileSystem.getInstance().findFileByPath(VfsUtil.urlToPath(urls[0]));
-          if (virtualFile != null) {
-            Element srcElement = new Element(SRCROOT_ATTR);
-            srcElement.setAttribute("url", urls[0]);
-            element.addContent(srcElement);
-          }
+        for (String url : urls) {
+          Element srcElement = new Element(SRCROOT_ATTR);
+          srcElement.setAttribute("url", url);
+          element.addContent(srcElement);
         }
 
         for (String srcUrl : libraryEntry.getRootUrls(OrderRootType.SOURCES)) {
