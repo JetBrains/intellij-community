@@ -291,7 +291,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
       binary.getLOperand().replace(expression);
       binary.getROperand().replace(literal);
 
-      UIUtil.dispatchAllInvocationEvents();
+      //UIUtil.dispatchAllInvocationEvents();
 
       expression.replace(binary);
       PostprocessReformattingAspect.getInstance(getProject()).clear(); // OOM otherwise
