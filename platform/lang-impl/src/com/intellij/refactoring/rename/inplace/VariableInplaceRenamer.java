@@ -88,7 +88,7 @@ public class VariableInplaceRenamer {
 
   private static final Stack<VariableInplaceRenamer> ourRenamersStack = new Stack<VariableInplaceRenamer>();
 
-  public VariableInplaceRenamer(PsiNamedElement elementToRename, Editor editor) {
+  public VariableInplaceRenamer(@NotNull PsiNamedElement elementToRename, Editor editor) {
     myElementToRename = elementToRename;
     myEditor = /*(editor instanceof EditorWindow)? ((EditorWindow)editor).getDelegate() : */editor;
     myProject = myElementToRename.getProject();

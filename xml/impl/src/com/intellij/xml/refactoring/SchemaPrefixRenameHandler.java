@@ -44,7 +44,7 @@ public class SchemaPrefixRenameHandler implements RenameHandler {
 
   public boolean isRenaming(DataContext dataContext) {
     SchemaPrefixReference ref = getReference(dataContext);
-    return ref != null;
+    return ref != null && ref.resolve() != null;
   }
 
   @Nullable
@@ -79,12 +79,14 @@ public class SchemaPrefixRenameHandler implements RenameHandler {
     SchemaPrefixReference reference = getReference(file, editor);
     if (reference != null) {
       SchemaPrefix prefix = reference.resolve();
-      new VariableInplaceRenamer(prefix, editor) {
-        @Override
-        protected void addReferenceAtCaret(Collection<PsiReference> refs) {
-          
-        }
-      }.performInplaceRename();
+      if (prefix != null) {
+        new VariableInplaceRenamer(prefix, editor) {
+          @Override
+          protected void addReferenceAtCaret(Collection<PsiReference> refs) {
+
+          }
+        }.performInplaceRename();
+      }
     }
   }
 
