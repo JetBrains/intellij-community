@@ -887,6 +887,11 @@ public class StringUtil {
 
 
   @NotNull public static List<String> split(@NotNull String s, @NotNull String separator) {
+    return split(s, separator, true);
+  }
+
+  @NotNull public static List<String> split(@NotNull String s, @NotNull String separator,
+                                            boolean excludeSeparator) {
     if (separator.length() == 0) {
       return Collections.singletonList(s);
     }
@@ -895,11 +900,12 @@ public class StringUtil {
     while (true) {
       int index = s.indexOf(separator, pos);
       if (index == -1) break;
-      String token = s.substring(pos, index);
+      final int nextPos = index + separator.length();
+      String token = s.substring(pos, excludeSeparator ? index : nextPos);
       if (token.length() != 0) {
         result.add(token);
       }
-      pos = index + separator.length();
+      pos = nextPos;
     }
     if (pos < s.length()) {
       result.add(s.substring(pos, s.length()));
