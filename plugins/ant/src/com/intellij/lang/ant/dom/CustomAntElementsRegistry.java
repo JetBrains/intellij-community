@@ -33,8 +33,6 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.StringBuilderSpinAllocator;
-import com.intellij.util.xml.DomAnchor;
-import com.intellij.util.xml.DomService;
 import com.intellij.util.xml.XmlName;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +58,7 @@ public class CustomAntElementsRegistry {
 
   private final Map<XmlName, Class> myCustomElements = new HashMap<XmlName, Class>();
   private final Map<XmlName, String> myErrors = new HashMap<XmlName, String>();
-  private final Map<XmlName, DomAnchor<AntDomTypeDef>> myDeclarations = new HashMap<XmlName, DomAnchor<AntDomTypeDef>>();
+  private final Map<XmlName, AntDomElement> myDeclarations = new HashMap<XmlName, AntDomElement>();
 
   private CustomAntElementsRegistry(final AntDomProject antProject) {
     antProject.accept(new BaseVisitor() {
@@ -92,8 +90,8 @@ public class CustomAntElementsRegistry {
 
   @Nullable
   public AntDomElement findDeclaringElement(final AntDomElement parentElement, final XmlName customElementName) {
-    final DomAnchor<AntDomTypeDef> domAnchor = myDeclarations.get(customElementName);
-    return domAnchor != null? domAnchor.retrieveDomElement() : null;
+    final AntDomElement declaration = myDeclarations.get(customElementName);
+    return declaration != null? declaration : null;
   }
 
   @Nullable
@@ -271,7 +269,7 @@ public class CustomAntElementsRegistry {
     final XmlName xmlName = (nsPrefix == null) ? new XmlName(customTagName) : new XmlName(customTagName, nsPrefix);
     if (clazz != null) {
       myCustomElements.put(xmlName, clazz);
-      myDeclarations.put(xmlName, DomService.getInstance().createAnchor(typedef));
+      myDeclarations.put(xmlName, typedef);
     }
     else {
       myErrors.put(xmlName, error);
