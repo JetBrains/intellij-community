@@ -6,6 +6,7 @@ package com.intellij.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.listeners.JavaRefactoringListenerManager;
@@ -69,6 +70,7 @@ public class PullUpTest extends LightCodeInsightTestCase {
 
 
   public void testRemoveOverride() throws Exception {
+    setLanguageLevel(LanguageLevel.JDK_1_5);
     doTest(new RefactoringTestUtil.MemberDescriptor("get", PsiMethod.class));
   }
 
