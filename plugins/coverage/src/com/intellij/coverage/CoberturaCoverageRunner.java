@@ -12,6 +12,7 @@ import com.intellij.execution.process.DefaultJavaProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -59,7 +60,7 @@ public class CoberturaCoverageRunner extends JavaCoverageRunner {
   }
 
   public void generateReport(final Project project,
-                             boolean trackTestFolders,
+                             DataContext dataContext, boolean trackTestFolders,
                              final String binaryFilePath,
                              final String outputDirectory,
                              final boolean openInBrowser) {

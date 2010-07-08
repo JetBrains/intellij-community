@@ -7,6 +7,7 @@ package com.intellij.coverage;
 import com.intellij.CommonBundle;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -81,7 +82,7 @@ public class IDEACoverageRunner extends JavaCoverageRunner {
 
   @Override
   public void generateReport(final Project project,
-                             final boolean trackTestFolders,
+                             DataContext dataContext, final boolean trackTestFolders,
                              final String coverageDataFileName,
                              final String outputDir,
                              final boolean openInBrowser) {
