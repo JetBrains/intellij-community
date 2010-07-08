@@ -666,7 +666,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       SimpleLightProjectDescriptor that = (SimpleLightProjectDescriptor)o;
 
       if (myModuleType != null ? !myModuleType.equals(that.myModuleType) : that.myModuleType != null) return false;
-      return !isJDKChanged(that.getSdk());
+      return areJdksEqual(that.getSdk());
     }
 
     @Override
@@ -674,12 +674,12 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       return myModuleType != null ? myModuleType.hashCode() : 0;
     }
 
-    private boolean isJDKChanged(final Sdk newSdk) {
-      if (mySdk == null || newSdk == null) return mySdk != newSdk;
+    private boolean areJdksEqual(final Sdk newSdk) {
+      if (mySdk == null || newSdk == null) return mySdk == newSdk;
 
       final String[] myUrls = mySdk.getRootProvider().getUrls(OrderRootType.CLASSES);
       final String[] newUrls = newSdk.getRootProvider().getUrls(OrderRootType.CLASSES);
-      return !CollectionFactory.newSet(myUrls).equals(CollectionFactory.newSet(newUrls));
+      return CollectionFactory.newSet(myUrls).equals(CollectionFactory.newSet(newUrls));
     }
 
   }
