@@ -34,6 +34,7 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,7 +58,8 @@ public class AddSchemaPrefixIntention extends PsiElementBaseIntentionAction {
 
   @Override
   public void invoke(Project project, Editor editor, PsiElement element) throws IncorrectOperationException {
-    final XmlAttribute xmlns = (XmlAttribute)element.getParent();
+    final XmlAttribute xmlns = getXmlnsDeclaration(element);
+    if (xmlns == null) return;
     final String namespace = xmlns.getValue();
     final XmlTag tag = xmlns.getParent();
 
@@ -131,7 +133,24 @@ public class AddSchemaPrefixIntention extends PsiElementBaseIntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+    return getXmlnsDeclaration(element) != null;
+  }
+
+  @Nullable
+  private static XmlAttribute getXmlnsDeclaration(PsiElement element) {
     final PsiElement parent = element.getParent();
-    return parent instanceof XmlAttribute && "xmlns".equals(((XmlAttribute)parent).getName());
+    if (parent instanceof XmlTag) {
+      XmlTag tag = (XmlTag)parent;
+      if (tag.getNamespacePrefix().length() == 0) {
+        while (tag != null) {
+          final XmlAttribute attr = tag.getAttribute("xmlns");
+          if (attr != null) return attr;
+          tag = tag.getParentTag();
+        }
+      }
+    } else if (parent instanceof XmlAttribute && ((XmlAttribute)parent).getName().equals("xmlns")) {
+      return (XmlAttribute)parent;
+    }
+    return null;
   }
 }

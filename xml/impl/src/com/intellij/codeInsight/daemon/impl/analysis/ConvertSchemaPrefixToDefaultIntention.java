@@ -27,10 +27,10 @@ import com.intellij.psi.impl.source.xml.SchemaPrefix;
 import com.intellij.psi.impl.source.xml.SchemaPrefixReference;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
@@ -46,7 +46,8 @@ public class ConvertSchemaPrefixToDefaultIntention extends PsiElementBaseIntenti
 
   @Override
   public void invoke(Project project, Editor editor, PsiElement element) throws IncorrectOperationException {
-    final XmlAttribute xmlns = (XmlAttribute)element.getParent();
+    final XmlAttribute xmlns = getXmlnsDeclaration(element);
+    if (xmlns == null) return;
     SchemaPrefixReference prefixRef = null;
     for (PsiReference ref : xmlns.getReferences()) {
       if (ref instanceof SchemaPrefixReference) {
@@ -97,19 +98,33 @@ public class ConvertSchemaPrefixToDefaultIntention extends PsiElementBaseIntenti
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    final PsiElement parent = element.getParent();
-    if (parent instanceof XmlAttribute && ((XmlAttribute)parent).getName().startsWith("xmlns:")) {
-      final XmlTag tag = ((XmlAttribute)parent).getParent();
-      return tag != null
-             && tag.getParent() instanceof XmlDocument //root tag
-             && !tag.getLocalNamespaceDeclarations().containsKey(""); //no xmlns declaration
-    }
-    return false;
+    return getXmlnsDeclaration(element) != null;
   }
 
   @NotNull
   @Override
   public String getFamilyName() {
     return NAME;
+  }
+
+  @Nullable
+  private static XmlAttribute getXmlnsDeclaration(PsiElement element) {
+    final PsiElement parent = element.getParent();
+    if (parent == null) return null;
+    for (PsiReference ref : parent.getReferences()) {
+      if (ref instanceof SchemaPrefixReference) {
+        final PsiElement elem = ref.resolve();
+        if (elem != null) {
+          final PsiElement attr = elem.getParent();
+          if (attr instanceof XmlAttribute) {
+            final PsiElement tag = attr.getParent();
+            if (tag instanceof XmlTag && ((XmlTag)tag).getAttribute("xmlns") == null) {
+              return (XmlAttribute)attr;
+            }
+          }
+        }
+      }
+    }
+    return null;
   }
 }
