@@ -270,51 +270,24 @@ public class ExecutionHelper {
                                                             final int timeout) {
     return new Runnable() {
       private final Semaphore mySemaphore = new Semaphore();
-      private final Object LOCK = new Object();
-      private Boolean processedFinished = Boolean.FALSE;
 
       private final Runnable myProcessThread = new Runnable() {
         public void run() {
           try {
-            processHandler.waitFor();
-            synchronized (LOCK) {
-              processedFinished = Boolean.TRUE;
+            final boolean finished = processHandler.waitFor(1000 * timeout);
+            if (!finished) {
+              LOG.error("Timeout (" + timeout + " sec) on executing: " + processHandler.getCommandLine());
+              processHandler.destroyProcess();
             }
-          }
-          finally {
+          } finally {
             mySemaphore.up();
           }
-        }
-      };
-
-      private final Runnable myTimeoutListener = new Runnable() {
-        public void run() {
-            try {
-              synchronized (this) {
-                try {
-                  wait(1000 * timeout);
-                  synchronized (LOCK) {
-                    if (!processedFinished) {
-                      LOG.error("Timeout (" + timeout + " sec) on executing: " + processHandler.getCommandLine());
-                      processHandler.destroyProcess();
-                    }
-                  }
-                }
-                finally {
-                  mySemaphore.up();
-                }
-              }
-            }
-            catch (InterruptedException e) {
-              //Do nothing
-            }
         }
       };
 
       public void run() {
         mySemaphore.down();
         ApplicationManager.getApplication().executeOnPooledThread(myProcessThread);
-        ApplicationManager.getApplication().executeOnPooledThread(myTimeoutListener);
 
         mySemaphore.waitFor();
       }
