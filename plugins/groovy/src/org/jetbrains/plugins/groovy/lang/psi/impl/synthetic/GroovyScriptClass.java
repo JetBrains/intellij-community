@@ -376,7 +376,8 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
       }
 
       public String getLocationString() {
-        return "(groovy script)";
+        final String packageName = myFile.getPackageName();
+        return "(groovy script" + (packageName.isEmpty() ? "" : ", " + packageName) + ")";
       }
 
       public TextAttributesKey getTextAttributesKey() {
@@ -384,7 +385,7 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
       }
 
       public Icon getIcon(boolean open) {
-        return myFile.getIcon(0);
+        return GroovyScriptClass.this.getIcon(ICON_FLAG_VISIBILITY | ICON_FLAG_READ_STATUS);
       }
     };
   }
