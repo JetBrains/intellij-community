@@ -268,7 +268,7 @@ public class EPathUtil {
         return ideaCollapsed.substring(index).replace("$", "");
       }
     }
-    for (String url : libraryOrderEntry.getUrls(type)) {
+    for (String url : libraryOrderEntry.getRootUrls(type)) {
       //check if existing eclipse variable points inside project or doesn't exist
       String filePath = VirtualFileManager.extractPath(url);
       final int jarSeparatorIdx = filePath.indexOf(JarFileSystem.JAR_SEPARATOR);

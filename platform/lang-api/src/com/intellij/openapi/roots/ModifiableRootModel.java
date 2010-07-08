@@ -155,6 +155,9 @@ public interface ModifiableRootModel extends ModuleRootModel {
 
   boolean isChanged();
 
+  /**
+   * @deprecated see {@link ModuleRootManager#getUrls(OrderRootType)}
+   */
   @NotNull String[] getOrderedRootUrls(OrderRootType type);
 
   boolean isExcludeExplodedDirectory();

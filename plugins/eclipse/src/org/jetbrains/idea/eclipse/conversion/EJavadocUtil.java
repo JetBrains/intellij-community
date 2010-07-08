@@ -196,7 +196,7 @@ public class EJavadocUtil {
 
   static void setupJavadocAttributes(Element orderEntry, LibraryOrderEntry libraryOrderEntry, final ModuleRootModel model) {
     final List<String> eclipseUrls = new ArrayList<String>();
-    final String[] docUrls = libraryOrderEntry.getUrls(JavadocOrderRootType.getInstance());
+    final String[] docUrls = libraryOrderEntry.getRootUrls(JavadocOrderRootType.getInstance());
     for (String docUrl : docUrls) {
       eclipseUrls.add(toEclipseJavadocPath(model, docUrl));
     }

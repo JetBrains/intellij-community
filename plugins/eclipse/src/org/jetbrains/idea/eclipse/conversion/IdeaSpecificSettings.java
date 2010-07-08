@@ -233,41 +233,52 @@ public class IdeaSpecificSettings {
     }
 
     for (OrderEntry entry : model.getOrderEntries()) {
-      if (entry instanceof LibraryOrderEntry) {
-        final Element element = new Element("lib");
-        element.setAttribute("name", entry.getPresentableName());
-        final DependencyScope scope = ((LibraryOrderEntry)entry).getScope();
-        element.setAttribute("scope", scope.name());
-        if (((LibraryOrderEntry)entry).isModuleLevel()) {
-          final String[] urls = entry.getUrls(OrderRootType.SOURCES);
+      if (!(entry instanceof LibraryOrderEntry)) continue;
+
+      final Element element = new Element("lib");
+      element.setAttribute("name", entry.getPresentableName());
+      final LibraryOrderEntry libraryEntry = (LibraryOrderEntry)entry;
+      final DependencyScope scope = libraryEntry.getScope();
+      element.setAttribute("scope", scope.name());
+      if (libraryEntry.isModuleLevel()) {
+        final String[] urls = libraryEntry.getRootUrls(OrderRootType.SOURCES);
+        if (urls.length > 1) {
           for (String url : urls) {
             Element srcElement = new Element(SRCROOT_ATTR);
             srcElement.setAttribute("url", url);
             element.addContent(srcElement);
           }
-
-          for (String srcUrl : entry.getUrls(OrderRootType.SOURCES)) {
-            appendModuleRelatedRoot(element, srcUrl, RELATIVE_MODULE_SRC, model);
-          }
-
-          for (String classesUrl : entry.getUrls(OrderRootType.CLASSES)) {
-            appendModuleRelatedRoot(element, classesUrl, RELATIVE_MODULE_CLS, model);
-          }
-
-          for (String javadocUrl : entry.getUrls(JavadocOrderRootType.getInstance())) {
-            appendModuleRelatedRoot(element, javadocUrl, RELATIVE_MODULE_JAVADOC, model);
-          }
-
-          if (!element.getChildren().isEmpty()) {
-            root.addContent(element);
-            isModified = true;
-            continue;
+        }
+        else if (urls.length == 1 && urls[0].contains(JarFileSystem.JAR_SEPARATOR)) {
+          final VirtualFile virtualFile = JarFileSystem.getInstance().findFileByPath(VfsUtil.urlToPath(urls[0]));
+          if (virtualFile != null) {
+            Element srcElement = new Element(SRCROOT_ATTR);
+            srcElement.setAttribute("url", urls[0]);
+            element.addContent(srcElement);
           }
         }
-        if (!scope.equals(DependencyScope.COMPILE)) {
+
+        for (String srcUrl : libraryEntry.getRootUrls(OrderRootType.SOURCES)) {
+          appendModuleRelatedRoot(element, srcUrl, RELATIVE_MODULE_SRC, model);
+        }
+
+        for (String classesUrl : libraryEntry.getRootUrls(OrderRootType.CLASSES)) {
+          appendModuleRelatedRoot(element, classesUrl, RELATIVE_MODULE_CLS, model);
+        }
+
+        for (String javadocUrl : libraryEntry.getRootUrls(JavadocOrderRootType.getInstance())) {
+          appendModuleRelatedRoot(element, javadocUrl, RELATIVE_MODULE_JAVADOC, model);
+        }
+
+        if (!element.getChildren().isEmpty()) {
           root.addContent(element);
           isModified = true;
+          continue;
         }
+      }
+      if (!scope.equals(DependencyScope.COMPILE)) {
+        root.addContent(element);
+        isModified = true;
       }
     }
 

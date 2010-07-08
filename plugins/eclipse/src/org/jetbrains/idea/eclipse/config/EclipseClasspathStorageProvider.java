@@ -64,13 +64,16 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
 
   public void assertCompatible(final ModifiableRootModel model) throws ConfigurationException {
     for (OrderEntry entry : model.getOrderEntries()) {
-      if (entry instanceof LibraryOrderEntry && ((LibraryOrderEntry)entry).isModuleLevel()) {
-        final Library library = ((LibraryOrderEntry)entry).getLibrary();
-        if (library == null ||
-            entry.getUrls(OrderRootType.CLASSES).length != 1 ||
-            library.isJarDirectory(library.getUrls(OrderRootType.CLASSES)[0])) {
-          throw new ConfigurationException(
-            "Library \'" + entry.getPresentableName() + "\' is incompatible with eclipse format which supports only one content root");
+      if (entry instanceof LibraryOrderEntry) {
+        final LibraryOrderEntry libraryEntry = (LibraryOrderEntry)entry;
+        if (libraryEntry.isModuleLevel()) {
+          final Library library = libraryEntry.getLibrary();
+          if (library == null ||
+              libraryEntry.getRootUrls(OrderRootType.CLASSES).length != 1 ||
+              library.isJarDirectory(library.getUrls(OrderRootType.CLASSES)[0])) {
+            throw new ConfigurationException(
+              "Library \'" + entry.getPresentableName() + "\' is incompatible with eclipse format which supports only one content root");
+          }
         }
       }
     }
