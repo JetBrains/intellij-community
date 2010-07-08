@@ -742,6 +742,10 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
         if (leftExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression) leftExpression).getQualifier() == null) {
           String name = leftExpression.getText();
           if (name != null) {
+            final PsiElement resolve = ((PsiReferenceExpression)leftExpression).resolve();
+            if (resolve instanceof PsiVariable) {
+              name = variableNameToPropertyName(name, getVariableKind((PsiVariable)resolve));
+            }
             String[] names = getSuggestionsByName(name, variableKind, false);
             return new NamesByExprInfo(name, names);
           }
