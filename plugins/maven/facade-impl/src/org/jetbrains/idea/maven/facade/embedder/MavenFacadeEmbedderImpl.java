@@ -159,8 +159,6 @@ public class MavenFacadeEmbedderImpl extends RemoteObject implements MavenFacade
                                                         mavenProject.getExtensionArtifacts(),
                                                         getLocalRepositoryFile());
 
-    Collection<MavenProfile> activatedProfiles = MavenModelConverter.convertProfiles(mavenProject.getActiveProfiles());
-
     RemoteNativeMavenProjectHolder holder = new RemoteNativeMavenProjectHolder(mavenProject);
     try {
       UnicastRemoteObject.exportObject(holder, 0);
@@ -169,9 +167,35 @@ public class MavenFacadeEmbedderImpl extends RemoteObject implements MavenFacade
       throw new RuntimeException(e);
     }
 
+    Collection<String> activatedProfiles = collectActivatedProfiles(mavenProject);
+
     MavenWrapperExecutionResult.ProjectData data = new MavenWrapperExecutionResult.ProjectData(
       model, MavenModelConverter.convertToMap(mavenProject.getModel()), holder, activatedProfiles);
     return new MavenWrapperExecutionResult(data, problems, unresolvedArtifacts);
+  }
+
+  private Collection<String> collectActivatedProfiles(MavenProject mavenProject) {
+    // for some reason project's active profiles do not contain parent's profiles - only local and settings'.
+    // parent's profiles do not contain settings' profiles.
+
+    List<Profile> profiles = new ArrayList<Profile>();
+    while (mavenProject != null) {
+      if (profiles != null) {
+        profiles.addAll(mavenProject.getActiveProfiles());
+      }
+      mavenProject = mavenProject.getParent();
+    }
+    return collectProfilesIds(profiles);
+  }
+
+  private static Collection<String> collectProfilesIds(List<Profile> profiles) {
+    Collection<String> result = new THashSet<String>();
+    for (Profile each : profiles) {
+      if (each.getId() != null) {
+        result.add(each.getId());
+      }
+    }
+    return result;
   }
 
   @NotNull
@@ -433,7 +457,7 @@ public class MavenFacadeEmbedderImpl extends RemoteObject implements MavenFacade
     }
 
     return new ProfileApplicationResult(MavenModelConverter.convertModel(nativeModel, null),
-                                        MavenModelConverter.convertProfiles(activatedProfiles));
+                                        collectProfilesIds(activatedProfiles));
   }
 
   private static ProfileActivator[] getProfileActivators() {
@@ -632,7 +656,7 @@ public class MavenFacadeEmbedderImpl extends RemoteObject implements MavenFacade
     catch (IllegalAccessException e) {
       MavenFacadeGlobalsManager.getLogger().info(e);
     }
-    catch(Exception e) {
+    catch (Exception e) {
       throw new RuntimeException(wrapException(e));
     }
   }

@@ -56,7 +56,7 @@ public class MavenPropertyResolver {
 
     collectPropertiesFromDOM(projectDom.getProperties(), result);
 
-    Collection<String> activePropfiles = project.getActiveProfilesIds();
+    Collection<String> activePropfiles = project.getActivatedProfilesIds();
     for (MavenDomProfile each : projectDom.getProfiles().getProfiles()) {
       XmlTag idTag = each.getId().getXmlTag();
       if (idTag == null || !activePropfiles.contains(idTag.getValue().getText())) continue;

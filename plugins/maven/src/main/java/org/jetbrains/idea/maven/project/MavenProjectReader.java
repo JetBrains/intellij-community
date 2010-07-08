@@ -50,7 +50,7 @@ public class MavenProjectReader {
                                               VirtualFile file,
                                               Collection<String> explicitProfiles,
                                               MavenProjectReaderProjectLocator locator) {
-    Pair<RawModelReadResult, Collection<MavenProfile>> readResult =
+    Pair<RawModelReadResult, Collection<String>> readResult =
       doReadProjectModel(generalSettings, file, explicitProfiles, new THashSet<VirtualFile>(), locator);
 
     File basedir = getBaseDir(file);
@@ -68,11 +68,11 @@ public class MavenProjectReader {
     return new File(file.getParent().getPath());
   }
 
-  private Pair<RawModelReadResult, Collection<MavenProfile>> doReadProjectModel(MavenGeneralSettings generalSettings,
-                                                                                VirtualFile file,
-                                                                                Collection<String> explicitProfiles,
-                                                                                Set<VirtualFile> recursionGuard,
-                                                                                MavenProjectReaderProjectLocator locator) {
+  private Pair<RawModelReadResult, Collection<String>> doReadProjectModel(MavenGeneralSettings generalSettings,
+                                                                          VirtualFile file,
+                                                                          Collection<String> explicitProfiles,
+                                                                          Set<VirtualFile> recursionGuard,
+                                                                          MavenProjectReaderProjectLocator locator) {
     RawModelReadResult cachedModel = myRawModelsCache.get(file);
     if (cachedModel == null) {
       cachedModel = doReadProjectModel(file, false);
@@ -92,8 +92,8 @@ public class MavenProjectReader {
 
     repairModelBody(model);
 
-    return new Pair<RawModelReadResult, Collection<MavenProfile>>(new RawModelReadResult(model, problems, alwaysOnProfiles),
-                                                                  applied.getActivatedProfiles());
+    return new Pair<RawModelReadResult, Collection<String>>(new RawModelReadResult(model, problems, alwaysOnProfiles),
+                                                            applied.getActivatedProfiles());
   }
 
   private RawModelReadResult doReadProjectModel(VirtualFile file, boolean headerOnly) {
