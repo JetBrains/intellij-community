@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -42,6 +43,11 @@ public abstract class SdkType {
    */
   @Nullable
   public abstract String suggestHomePath();
+
+  public Collection<String> suggestHomePaths() {
+    String s = suggestHomePath();
+    return s == null ? Collections.<String>emptyList() : Collections.singletonList(s);
+  }
 
   /**
    * If a path selected in the file chooser is not a valid SDK home path, returns an adjusted version of the path that is again
