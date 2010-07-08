@@ -248,7 +248,7 @@ public class EPathUtil {
 
   @Nullable
   static String collapse2EclipseVariabledPath(final LibraryOrderEntry libraryOrderEntry, OrderRootType type) {
-    final VirtualFile[] virtualFiles = libraryOrderEntry.getFiles(type);
+    final VirtualFile[] virtualFiles = libraryOrderEntry.getRootFiles(type);
     if (virtualFiles.length > 0) {
       VirtualFile jarFile = virtualFiles[0];
       if (jarFile.getFileSystem() instanceof JarFileSystem) {

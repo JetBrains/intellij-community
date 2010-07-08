@@ -67,19 +67,13 @@ public class PackageViewLibrariesNode extends ProjectViewNode<LibrariesElement>{
   }
 
   private static void addModuleLibraryRoots(ModuleRootManager moduleRootManager, List<VirtualFile> roots) {
-    final OrderEntry[] orderEntries = moduleRootManager.getOrderEntries();
-    for (final OrderEntry orderEntry : orderEntries) {
-      if (!(orderEntry instanceof LibraryOrderEntry || orderEntry instanceof JdkOrderEntry)) {
+    final VirtualFile[] files = moduleRootManager.orderEntries().withoutModuleSourceEntries().withoutDepModules().classes().getRoots();
+    for (final VirtualFile file : files) {
+      if (file.getFileSystem() instanceof JarFileSystem && file.getParent() != null) {
+        // skip entries inside jars
         continue;
       }
-      final VirtualFile[] files = orderEntry.getFiles(OrderRootType.CLASSES);
-      for (final VirtualFile file : files) {
-        if (file.getFileSystem() instanceof JarFileSystem && file.getParent() != null) {
-          // skip entries inside jars
-          continue;
-        }
-        roots.add(file);
-      }
+      roots.add(file);
     }
   }
 

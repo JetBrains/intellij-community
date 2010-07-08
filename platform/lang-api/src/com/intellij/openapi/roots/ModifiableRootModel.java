@@ -146,6 +146,11 @@ public interface ModifiableRootModel extends ModuleRootModel {
    */
   void inheritSdk();
 
+  /**
+   * @deprecated see {@link ModuleRootManager#getFiles(OrderRootType)}
+   * @param type
+   * @return
+   */
   @NotNull VirtualFile[] getOrderedRoots(OrderRootType type);
 
 

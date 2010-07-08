@@ -42,7 +42,7 @@ public class JdkScope extends GlobalSearchScope {
     super(project);
     myIndex = ProjectRootManager.getInstance(project).getFileIndex();
     myJdkName = jdk.getJdkName();
-    ContainerUtil.addAll(myEntries, jdk.getFiles(OrderRootType.CLASSES));
+    ContainerUtil.addAll(myEntries, jdk.getRootFiles(OrderRootType.CLASSES));
   }
 
   public int hashCode() {

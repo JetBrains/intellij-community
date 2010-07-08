@@ -77,7 +77,7 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
 
           final String libraryName = library.getName();
           if (libraryName == null || libraryName.length() == 0) {
-            addLibraryChildren(orderEntry, children, getProject(), this);
+            addLibraryChildren(libraryOrderEntry, children, getProject(), this);
           }
           else {
             children.add(new NamedLibraryElementNode(getProject(), new NamedLibraryElement(null, orderEntry), getSettings()));
@@ -96,9 +96,9 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
     return children;
   }
 
-  public static void addLibraryChildren(final OrderEntry entry, final List<AbstractTreeNode> children, Project project, ProjectViewNode node) {
+  public static void addLibraryChildren(final LibraryOrderEntry entry, final List<AbstractTreeNode> children, Project project, ProjectViewNode node) {
     final PsiManager psiManager = PsiManager.getInstance(project);
-    final VirtualFile[] files = entry.getFiles(OrderRootType.CLASSES);
+    final VirtualFile[] files = entry.getRootFiles(OrderRootType.CLASSES);
     for (final VirtualFile file : files) {
       final PsiDirectory psiDir = psiManager.findDirectory(file);
       if (psiDir == null) {
@@ -108,8 +108,8 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
     }
   }
 
-  private static boolean hasExternalEntries(ProjectFileIndex index, OrderEntry orderEntry) {
-    VirtualFile[] files = orderEntry.getFiles(OrderRootType.CLASSES);
+  private static boolean hasExternalEntries(ProjectFileIndex index, LibraryOrderEntry orderEntry) {
+    VirtualFile[] files = orderEntry.getRootFiles(OrderRootType.CLASSES);
     for (VirtualFile file : files) {
       if (!index.isInContent(PathUtil.getLocalFile(file))) return true;
     }

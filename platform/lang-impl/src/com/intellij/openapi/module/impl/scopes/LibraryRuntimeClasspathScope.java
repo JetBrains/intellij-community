@@ -64,7 +64,7 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
     ModuleRootManager.getInstance(module).orderEntries().recursively().process(new RootPolicy<LinkedHashSet<VirtualFile>>() {
       public LinkedHashSet<VirtualFile> visitLibraryOrderEntry(final LibraryOrderEntry libraryOrderEntry,
                                                                final LinkedHashSet<VirtualFile> value) {
-        ContainerUtil.addAll(value, libraryOrderEntry.getFiles(OrderRootType.CLASSES));
+        ContainerUtil.addAll(value, libraryOrderEntry.getRootFiles(OrderRootType.CLASSES));
         return value;
       }
 
@@ -76,7 +76,7 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
 
       public LinkedHashSet<VirtualFile> visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final LinkedHashSet<VirtualFile> value) {
         if (!myJDKProcessed.add(jdkOrderEntry.getJdk())) return value;
-        ContainerUtil.addAll(value, jdkOrderEntry.getFiles(OrderRootType.CLASSES));
+        ContainerUtil.addAll(value, jdkOrderEntry.getRootFiles(OrderRootType.CLASSES));
         return value;
       }
     }, myEntries);

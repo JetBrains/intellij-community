@@ -34,7 +34,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -120,9 +119,10 @@ public class LibraryUtil {
             ContainerUtil.addAll(roots, files);
           }
         } else if (includeJdk && entry instanceof JdkOrderEntry) {
-          VirtualFile[] files = includeSourceFiles ? entry.getFiles(OrderRootType.SOURCES) : null;
+          JdkOrderEntry jdkEntry = (JdkOrderEntry)entry;
+          VirtualFile[] files = includeSourceFiles ? jdkEntry.getRootFiles(OrderRootType.SOURCES) : null;
           if (files == null || files.length == 0) {
-            files = entry.getFiles(OrderRootType.CLASSES);
+            files = jdkEntry.getRootFiles(OrderRootType.CLASSES);
           }
           ContainerUtil.addAll(roots, files);
         }

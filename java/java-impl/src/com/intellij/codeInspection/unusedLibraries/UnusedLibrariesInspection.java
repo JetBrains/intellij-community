@@ -150,7 +150,8 @@ public class UnusedLibrariesInspection extends DescriptorProviderInspection {
         if (orderEntry instanceof LibraryOrderEntry) {
           final RefModule refModule = refManager.getRefModule(orderEntry.getOwnerModule());
           final Set<VirtualFile> files = unusedLibs.get(orderEntry);
-          if (files.size() < orderEntry.getFiles(OrderRootType.CLASSES).length) {
+          final VirtualFile[] roots = ((LibraryOrderEntry)orderEntry).getRootFiles(OrderRootType.CLASSES);
+          if (files.size() < roots.length) {
             final String unusedLibraryRoots = StringUtil.join(files, new Function<VirtualFile, String>() {
               public String fun(final VirtualFile file) {
                 return file.getPresentableName();

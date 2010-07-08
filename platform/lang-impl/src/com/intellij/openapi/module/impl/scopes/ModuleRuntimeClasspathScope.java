@@ -23,7 +23,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.LinkedHashSet;
 
 /**
@@ -67,14 +66,14 @@ public class ModuleRuntimeClasspathScope extends GlobalSearchScope {
 
       public LinkedHashSet<VirtualFile> visitLibraryOrderEntry(final LibraryOrderEntry libraryOrderEntry,
                                                                final LinkedHashSet<VirtualFile> value) {
-        ContainerUtil.addAll(value, libraryOrderEntry.getFiles(OrderRootType.CLASSES));
+        ContainerUtil.addAll(value, libraryOrderEntry.getRootFiles(OrderRootType.CLASSES));
         return value;
       }
 
       public LinkedHashSet<VirtualFile> visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final LinkedHashSet<VirtualFile> value) {
         if (myJDKProcessed) return value;
         myJDKProcessed = true;
-        ContainerUtil.addAll(value, jdkOrderEntry.getFiles(OrderRootType.CLASSES));
+        ContainerUtil.addAll(value, jdkOrderEntry.getRootFiles(OrderRootType.CLASSES));
         return value;
       }
     }, myEntries);
