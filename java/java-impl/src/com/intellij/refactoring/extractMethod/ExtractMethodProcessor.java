@@ -1081,7 +1081,11 @@ public class ExtractMethodProcessor implements MatchProvider {
         }
         if (success) {
           myTargetClass = newTargetClass;
-          inputVariables.addAll(array);
+          for (PsiVariable variable : array) {
+            if (!inputVariables.contains(variable)) {
+              inputVariables.addAll(array);
+            }
+          }
           myNeedChangeContext = true;
         }
       }
