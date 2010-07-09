@@ -53,11 +53,14 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
 
   private final Project myProject;
   private boolean myEnabledForTabs = true;
+  private boolean myHighlightNonProjectFiles = true;
 
   private static final Map<String, Color> ourDefaultColors;
+  private static final Map<String, Color> ourHiddenColors;
 
   static {
     ourDefaultColors = new LinkedHashMap<String, Color>();
+    ourHiddenColors = new LinkedHashMap<String, Color>();
     ourDefaultColors.put("Blue", new Color(215, 237, 243));
     //ourDefaultColors.put("Blue 2", new Color(218, 224, 244));
     ourDefaultColors.put("Green", new Color(228, 241, 209));
@@ -66,6 +69,8 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
     ourDefaultColors.put("Rose", new Color(242, 206, 202));
     ourDefaultColors.put("Violet", new Color(222, 213, 241));
     ourDefaultColors.put("Yellow", new Color(247, 241, 203));
+
+    ourHiddenColors.put(OUT_OF_PROJECT_SCOPE_COLOR, new Color(255, 255, 228));
   }
 
   public FileColorManagerImpl(@NotNull final Project project) {
@@ -95,11 +100,20 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
     return myEnabledForTabs;
   }
 
+  public boolean isHighlightNonProjectFiles() {
+    return myHighlightNonProjectFiles;
+  }
+
+  public void setHighlightNonProjectFiles(boolean highlight) {
+    myHighlightNonProjectFiles = highlight;
+  }
+
   public Element getState(final boolean shared) {
     Element element = new Element("state");
     if (!shared) {
       element.setAttribute("enabled", Boolean.toString(myEnabled));
       element.setAttribute("enabledForTabs", Boolean.toString(myEnabledForTabs));
+      element.setAttribute("highlightNonProjectFiles", Boolean.toString(myHighlightNonProjectFiles));
     }
 
     myModel.save(element, shared);
@@ -110,7 +124,8 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
   @SuppressWarnings({"MethodMayBeStatic"})
   @Nullable
   public Color getColor(@NotNull final String name) {
-    return ourDefaultColors.get(name);
+    final Color color = ourDefaultColors.get(name);
+    return color == null ? ourHiddenColors.get(name) : color;
   }
 
   public static String toString(final Color color) {
@@ -133,7 +148,10 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
       myEnabled = enabled == null ? true : Boolean.valueOf(enabled);
 
       final String enabledForTabs = state.getAttributeValue("enabledForTabs");
-      myEnabledForTabs = enabledForTabs == null ? false : Boolean.valueOf(enabledForTabs);
+      myEnabledForTabs = enabledForTabs == null ? true : Boolean.valueOf(enabledForTabs);
+
+      final String highlightNonProjectFiles = state.getAttributeValue("highlightNonProjectFiles");
+      myHighlightNonProjectFiles = highlightNonProjectFiles == null ? true : Boolean.valueOf(highlightNonProjectFiles);
     }
 
     myModel.load(state, shared);
@@ -183,7 +201,7 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
   @Nullable
   public Color getFileColor(@NotNull final PsiFile file) {
     final String colorName = myModel.getColor(file);
-    return colorName == null ? null : ourDefaultColors.get(colorName);
+    return colorName == null ? null : getColor(colorName);
   }
 
   public boolean isShared(@NotNull final String scopeName) {
