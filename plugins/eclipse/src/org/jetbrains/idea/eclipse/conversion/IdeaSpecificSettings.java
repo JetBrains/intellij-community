@@ -64,6 +64,7 @@ public class IdeaSpecificSettings {
 
   @NonNls private static final String SRCROOT_ATTR = "srcroot";
   private static final Logger LOG = Logger.getInstance("#" + IdeaSpecificSettings.class.getName());
+  @NonNls private static final String JAVADOCROOT_ATTR = "javadocroot_attr";
 
   private IdeaSpecificSettings() {
   }
@@ -106,6 +107,10 @@ public class IdeaSpecificSettings {
         appendLibraryScope(model, libElement, libraryByName);
         final Library.ModifiableModel modifiableModel = libraryByName.getModifiableModel();
         replaceCollapsedByEclipseSourceRoots(libElement, modifiableModel);
+        for (Object r : libElement.getChildren(JAVADOCROOT_ATTR)) {
+          final String url = ((Element)r).getAttributeValue("url");
+          modifiableModel.addRoot(url, JavadocOrderRootType.getInstance());
+        }
         replaceModuleRelatedRoots(model.getProject(), modifiableModel, libElement, OrderRootType.SOURCES, RELATIVE_MODULE_SRC);
         replaceModuleRelatedRoots(model.getProject(), modifiableModel, libElement, OrderRootType.CLASSES, RELATIVE_MODULE_CLS);
         replaceModuleRelatedRoots(model.getProject(), modifiableModel, libElement, JavadocOrderRootType.getInstance(), RELATIVE_MODULE_JAVADOC);
@@ -246,6 +251,13 @@ public class IdeaSpecificSettings {
           Element srcElement = new Element(SRCROOT_ATTR);
           srcElement.setAttribute("url", url);
           element.addContent(srcElement);
+        }
+
+        final String[] javadocUrls = libraryEntry.getRootUrls(JavadocOrderRootType.getInstance());
+        for (int i = 1; i < javadocUrls.length;  i++) {
+          Element javadocElement = new Element(JAVADOCROOT_ATTR);
+          javadocElement.setAttribute("url", javadocUrls[i]);
+          element.addContent(javadocElement);
         }
 
         for (String srcUrl : libraryEntry.getRootUrls(OrderRootType.SOURCES)) {
