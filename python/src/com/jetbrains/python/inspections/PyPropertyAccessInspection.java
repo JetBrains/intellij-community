@@ -64,6 +64,16 @@ public class PyPropertyAccessInspection extends PyInspection {
     @Override
     public void visitPyReferenceExpression(PyReferenceExpression node) {
       super.visitPyReferenceExpression(node);
+      checkExpression(node);
+    }
+
+    @Override
+    public void visitPyTargetExpression(PyTargetExpression node) {
+      super.visitPyTargetExpression(node);
+      checkExpression(node);
+    }
+
+    private void checkExpression(PyQualifiedExpression node) {
       PyExpression qualifier = node.getQualifier();
       if (qualifier != null) {
         PyType type = qualifier.getType(TypeEvalContext.fast());
@@ -89,7 +99,7 @@ public class PyPropertyAccessInspection extends PyInspection {
       }
     }
 
-    private void checkAccessor(PyReferenceExpression node, String name, AccessDirection dir, Property property) {
+    private void checkAccessor(PyExpression node, String name, AccessDirection dir, Property property) {
       Maybe<PyFunction> accessor = property.getByDirection(dir);
       if (accessor.isDefined() && accessor.value() == null) {
         String message;
