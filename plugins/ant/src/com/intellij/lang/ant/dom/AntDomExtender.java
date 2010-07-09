@@ -45,7 +45,11 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
     TAG_MAPPING.put("path", AntDomPath.class);
     TAG_MAPPING.put("classpath", AntDomPath.class);
     TAG_MAPPING.put("typedef", AntDomTypeDef.class);
-    TAG_MAPPING.put("taskdef", AntDomTypeDef.class);
+    TAG_MAPPING.put("taskdef", AntDomTaskdef.class);
+    TAG_MAPPING.put("presetdef", AntDomPresetDef.class);
+    TAG_MAPPING.put("macrodef", AntDomMacroDef.class);
+    TAG_MAPPING.put("scriptdef", AntDomScriptDef.class);
+    TAG_MAPPING.put("antlib", AntDomAntlib.class);
   }
 
   public void registerExtensions(@NotNull AntDomElement antDomElement, @NotNull DomExtensionsRegistrar registrar) {
@@ -217,7 +221,8 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
       final CustomAntElementsRegistry registry = CustomAntElementsRegistry.getInstance(element.getAntProject());
       final Set<EvaluatedXmlName> result = new HashSet<EvaluatedXmlName>();
       for (XmlName variant : registry.getCompletionVariants(element)) {
-        result.add(new DummyEvaluatedXmlName(variant, null));
+        final String ns = variant.getNamespaceKey();
+        result.add(new DummyEvaluatedXmlName(variant, ns != null? ns : ""));
       }
       return result;
     }
@@ -230,7 +235,7 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
 
     @Nullable
     public PomTarget findDeclaration(@NotNull DomElement child) {
-      XmlName name = new XmlName(child.getXmlElementName(), child.getXmlElementNamespaceKey());
+      XmlName name = new XmlName(child.getXmlElementName(), child.getXmlElementNamespace());
       return doFindDeclaration(child.getParent(), name);
     }
 

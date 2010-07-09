@@ -45,13 +45,18 @@ public abstract class WeaksTestCase extends TestCase {
 
   protected static void gc() {
     System.gc();
-    List<Object> list = new ArrayList<Object>();
-    while (Runtime.getRuntime().freeMemory() > 10000) {
-      list.add(new byte[1000]);
-    }
+    try {
+      List<Object> list = new ArrayList<Object>();
+      while (Runtime.getRuntime().freeMemory() > 10000) {
+        list.add(new byte[1000]);
+      }
 
-    System.gc();
-    list = null;
+      System.gc();
+      list = null;
+    }
+    catch (OutOfMemoryError e) {
+      // ignore
+    }
     System.gc();
 
     WeakReference<Object> weakReference = new WeakReference<Object>(new Object());

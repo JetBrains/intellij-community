@@ -22,6 +22,7 @@ package org.jetbrains.idea.eclipse;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
@@ -74,10 +75,15 @@ public class EclipseLibrariesModificationsTest extends EclipseVarsTest {
   }
 
   public void testReplacedExistingWithVariablesCantReplaceSrc() throws Exception {
-    doTestExisting(new String[]{"/variableidea/test.jar!/"}, new String[]{"/srcvariableidea1/test.jar!/"});
+    doTestExisting(new String[]{"/variableidea/test.jar!/"}, new String[]{"/srcvariableidea1/test.jar!/"}, new String[0]);
   }
 
-  private void doTestExisting(String[] classRoots, String[] sourceRoots) throws Exception {
+   public void testReplacedExistingWithMultipleJavadocs() throws Exception {
+    doTestExisting(new String[]{"/variableidea/test.jar!/"}, new String[]{},
+                   new String[]{"/srcvariableidea1/test.jar!/", "/srcvariableidea11/test.jar!/"});
+  }
+
+  private void doTestExisting(String[] classRoots, String[] sourceRoots, String[] javadocs) throws Exception {
     final Project project = getProject();
     final String path = project.getBaseDir().getPath() + "/test";
     final Module module = EclipseClasspathTest.setUpModule(path, project);
@@ -94,11 +100,19 @@ public class EclipseLibrariesModificationsTest extends EclipseVarsTest {
     for (String oldSrcRoot : oldSrcRoots) {
       libModifiableModel.removeRoot(oldSrcRoot, OrderRootType.SOURCES);
     }
+
+    final String[] oldJdcRoots = libModifiableModel.getUrls(JavadocOrderRootType.getInstance());
+    for (String oldJavadocRoot : oldJdcRoots) {
+      libModifiableModel.removeRoot(oldJavadocRoot, JavadocOrderRootType.getInstance());
+    }
     for (String classRoot : classRoots) {
       libModifiableModel.addRoot(parentUrl + classRoot, OrderRootType.CLASSES);
     }
     for (String sourceRoot : sourceRoots) {
       libModifiableModel.addRoot(parentUrl + sourceRoot, OrderRootType.SOURCES);
+    }
+     for (String javadocRoot : javadocs) {
+      libModifiableModel.addRoot(parentUrl + javadocRoot, JavadocOrderRootType.getInstance());
     }
     libModifiableModel.commit();
     model.commit();
