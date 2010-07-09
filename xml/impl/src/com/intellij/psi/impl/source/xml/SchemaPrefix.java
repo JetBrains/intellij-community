@@ -17,11 +17,10 @@ package com.intellij.psi.impl.source.xml;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.impl.RenameableFakePsiElement;
-import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Icons;
+import com.intellij.xml.XmlExtension;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -74,7 +73,6 @@ public class SchemaPrefix extends RenameableFakePsiElement {
   @NotNull
   @Override
   public SearchScope getUseScope() {
-    XmlAttribute declaration = getDeclaration();
-    return new LocalSearchScope(declaration.isNamespaceDeclaration() ? declaration.getParent() : ((XmlFile)declaration.getContainingFile()).getDocument());
+    return XmlExtension.getExtension(getContainingFile()).getNsPrefixScope(getDeclaration());
   }
 }

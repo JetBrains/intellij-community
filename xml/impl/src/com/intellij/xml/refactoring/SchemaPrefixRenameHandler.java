@@ -15,9 +15,6 @@
  */
 package com.intellij.xml.refactoring;
 
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -36,16 +33,10 @@ import java.util.Collection;
  */
 public class SchemaPrefixRenameHandler extends VariableInplaceRenameHandler {
   
-  public boolean isAvailableOnDataContext(DataContext dataContext) {
-    SchemaPrefixReference ref = getReference(dataContext);
+  @Override
+  protected boolean isAvailable(PsiElement element, Editor editor, PsiFile file) {
+    SchemaPrefixReference ref = getReference(file, editor);
     return ref != null && ref.resolve() != null;
-  }
-
-  @Nullable
-  private static SchemaPrefixReference getReference(DataContext dataContext) {
-    PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-    return getReference(file, editor);
   }
 
   @Nullable

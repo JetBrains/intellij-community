@@ -19,8 +19,6 @@ import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceBase;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
@@ -41,13 +39,7 @@ public class SchemaPrefixReference extends PsiReferenceBase<XmlElement> {
       }
       else if (myElement instanceof XmlAttributeValue &&
                ((XmlAttribute)((XmlAttributeValue)myElement).getParent()).getLocalName().equals("prefix")) {
-        return new SchemaPrefix((XmlAttribute)myElement.getParent(), getRangeInElement().shiftRight(myElement.getStartOffsetInParent()), myName) {
-          @NotNull
-          @Override
-          public SearchScope getUseScope() {
-            return new LocalSearchScope(((XmlFile)myElement.getContainingFile()).getDocument());
-          }
-        };
+        return new SchemaPrefix((XmlAttribute)myElement.getParent(), getRangeInElement().shiftRight(myElement.getStartOffsetInParent()), myName);
       }
       else {
         XmlExtension extension = XmlExtension.getExtension(myElement.getContainingFile());

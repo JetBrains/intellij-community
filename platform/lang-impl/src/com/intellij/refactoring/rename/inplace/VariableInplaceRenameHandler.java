@@ -38,7 +38,7 @@ public class VariableInplaceRenameHandler implements RenameHandler {
   private static final ThreadLocal<Boolean> ourPreventInlineRenameFlag = new ThreadLocal<Boolean>();
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler");
 
-  public boolean isAvailableOnDataContext(final DataContext dataContext) {
+  public final boolean isAvailableOnDataContext(final DataContext dataContext) {
     final PsiElement element = PsiElementRenameHandler.getElement(dataContext);
     final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     final PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
@@ -47,15 +47,20 @@ public class VariableInplaceRenameHandler implements RenameHandler {
     if (ourPreventInlineRenameFlag.get() != null) {
       return false;
     }
+    return isAvailable(element, editor, file);
+  }
+
+  protected boolean isAvailable(PsiElement element, Editor editor, PsiFile file) {
     final PsiElement nameSuggestionContext = file.findElementAt(editor.getCaretModel().getOffset());
 
-    final RefactoringSupportProvider supportProvider = element != null ? LanguageRefactoringSupport.INSTANCE.forLanguage(element.getLanguage()):null;
+    final RefactoringSupportProvider
+      supportProvider = element != null ? LanguageRefactoringSupport.INSTANCE.forLanguage(element.getLanguage()):null;
     return supportProvider != null &&
            editor.getSettings().isVariableInplaceRenameEnabled() &&
            supportProvider.doInplaceRenameFor(element, nameSuggestionContext);
   }
 
-  public boolean isRenaming(final DataContext dataContext) {
+  public final boolean isRenaming(final DataContext dataContext) {
     return isAvailableOnDataContext(dataContext);
   }
 
