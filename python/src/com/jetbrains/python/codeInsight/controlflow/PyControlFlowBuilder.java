@@ -497,16 +497,16 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
         }
 
         // handle return pending instructions inside try if final block exists
-        if (!finallyRef.isNull() &&
-            PsiTreeUtil.isAncestor(tryPart, pendingElement, false)) {
+        final boolean isPending = PsiTreeUtil.isAncestor(node, pendingElement, false) &&
+                                  (finallyPart == null || !PsiTreeUtil.isAncestor(finallyPart, pendingElement, false));
+        if (!finallyRef.isNull() && isPending) {
           myBuilder.addEdge(instruction, finallyRef.get());
           myBuilder.addPendingEdge(null, lastFinallyRef.get());
           return;
         }
 
         // Handle pending instructions inside try with final block
-        if (finallyPart!=null && pendingScope !=finallyPart &&
-            PsiTreeUtil.isAncestor(tryPart, pendingElement, false)) {
+        if (finallyPart!=null && pendingScope !=finallyPart && isPending) {
           myBuilder.addEdge(instruction, finallyRef.get());
           return;
         }
