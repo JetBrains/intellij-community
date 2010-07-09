@@ -111,13 +111,10 @@ public class GitHistoryUtils {
       return null;
     }
     String[] lines = result.split("\n");
-    if (lines.length < 3) {
-      LOG.error("Unsupported result format: " + result);
-      return null;
-    }
     String hash = lines[0];
+    boolean exists = lines.length < 3 || lines[2].charAt(0) != 'D';
     Date commitDate = GitUtil.parseTimestamp(lines[1]);
-    return new ItemLatestState(new GitRevisionNumber(hash, commitDate), lines[2].charAt(0) != 'D', false);
+    return new ItemLatestState(new GitRevisionNumber(hash, commitDate), exists, false);
   }
 
   public static void history(final Project project, FilePath path, final Consumer<GitFileRevision> consumer,
@@ -134,7 +131,7 @@ public class GitHistoryUtils {
     h.addRelativePaths(path);
 
     final String prefix = root.getPath() + "/";
-    final MyTokenAccomulator accomulator = new MyTokenAccomulator(6);
+    final MyTokenAccumulator accumulator = new MyTokenAccumulator(6);
 
     final Consumer<List<String>> resultAdapter = new Consumer<List<String>>() {
       public void consume(List<String> result) {
@@ -158,20 +155,21 @@ public class GitHistoryUtils {
     h.addLineListener(new GitLineHandlerAdapter() {
       @Override
       public void onLineAvailable(String line, Key outputType) {
-        final List<String> result = accomulator.acceptLine(line);
+        final List<String> result = accumulator.acceptLine(line);
         if (result != null) {
           resultAdapter.consume(result);
         }
       }
       @Override
       public void startFailed(Throwable exception) {
+        //noinspection ThrowableInstanceNeverThrown
         exceptionConsumer.consume(new VcsException(exception));
       }
 
       @Override
       public void processTerminated(int exitCode) {
         super.processTerminated(exitCode);
-        final List<String> result = accomulator.processLast();
+        final List<String> result = accumulator.processLast();
         if (result != null) {
           resultAdapter.consume(result);
         }
@@ -183,7 +181,7 @@ public class GitHistoryUtils {
     semaphore.waitFor();
   }
 
-  private static class MyTokenAccomulator {
+  private static class MyTokenAccumulator {
     // %x00%x02%x00%s%x00%x02%x01%b%x00%x01%x00
     private final static String ourCommentStartMark = "\u0000\u0002\u0000";
     private final static String ourCommentEndMark = "\u0000\u0002\u0001";
@@ -194,7 +192,7 @@ public class GitHistoryUtils {
 
     private boolean myNotStarted;
 
-    private MyTokenAccomulator(final int max) {
+    private MyTokenAccumulator(final int max) {
       myMax = max;
       myBuffer = new StringBuilder();
       myNotStarted = true;
@@ -222,7 +220,7 @@ public class GitHistoryUtils {
       return processResult(myBuffer.toString());
     }
 
-    private List<String> processResult(final String line) {
+    private static List<String> processResult(final String line) {
       final int commentStartIdx = line.indexOf(ourCommentStartMark);
 
       final String start = line.substring(0, commentStartIdx);
