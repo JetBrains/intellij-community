@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 /**
- * @author oleg
+ * @author Roman.Chernyatchik, oleg
  */
 public class ExecutionModes {
   /**
