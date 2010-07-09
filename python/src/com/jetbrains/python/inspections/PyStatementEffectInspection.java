@@ -7,6 +7,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,6 +57,27 @@ public class PyStatementEffectInspection extends PyInspection {
       else if (expression instanceof PyListCompExpression) {
         if (((PyListCompExpression)expression).getResultExpression() instanceof PyCallExpression) {
           return;
+        }
+      }
+      else if (expression instanceof PyBinaryExpression) {
+        PyBinaryExpression binary = (PyBinaryExpression)expression;
+        String method = binary.getOperator().getSpecialMethodName();
+        if (method != null) {
+          // maybe the op is overridden and may produce side effects, like cout << "hello"
+          PyType type = binary.getLeftExpression().getType(TypeEvalContext.fast());
+          if (type != null && ! type.isBuiltin() && type.resolveMember(method, AccessDirection.READ) != null) {
+            return;
+          }
+          final PyExpression rhs = binary.getRightExpression();
+          if (rhs != null) {
+            type = rhs.getType(TypeEvalContext.fast());
+            if (type != null) {
+              String rmethod = "__r" + method.substring(2); // __add__ -> __radd__
+              if (! type.isBuiltin() && type.resolveMember(rmethod, AccessDirection.READ) != null) {
+                return;
+              }
+            }
+          }
         }
       }
 

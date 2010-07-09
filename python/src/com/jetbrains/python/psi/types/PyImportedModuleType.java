@@ -55,4 +55,9 @@ public class PyImportedModuleType implements PyType {
   public String getName() {
     return "PyImportedModuleType:" + myImportedModule.toString();
   }
+
+  @Override
+  public boolean isBuiltin() {
+    return false;  // no module can be imported from builtins
+  }
 }

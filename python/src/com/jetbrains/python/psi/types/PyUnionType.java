@@ -55,6 +55,17 @@ public class PyUnionType implements PyType {
     }, ", ") + ")";
   }
 
+  /**
+   * @return true if all types in the union are built-in.
+   */
+  @Override
+  public boolean isBuiltin() {
+    for (PyType one : myMembers) {
+      if (! one.isBuiltin()) return false;
+    }
+    return true;
+  }
+
   @Nullable
   public static PyType union(PyType type1, PyType type2) {
     if (type1 instanceof PyTupleType && type2 instanceof PyTupleType) {

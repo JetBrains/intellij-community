@@ -17,8 +17,7 @@ import org.jetbrains.annotations.Nullable;
 public interface PyFunction
 extends
   PsiNamedElement, StubBasedPsiElement<PyFunctionStub>,
-  PsiNameIdentifierOwner, PyStatement, Callable, NameDefiner, PyDocStringOwner, ScopeOwner
-{
+  PsiNameIdentifierOwner, PyStatement, Callable, NameDefiner, PyDocStringOwner, ScopeOwner, PyDecoratable {
   PyFunction[] EMPTY_ARRAY = new PyFunction[0];
   
   /**
@@ -35,9 +34,6 @@ extends
 
   @Nullable
   PyClass getContainingClass();
-
-  @Nullable
-  PyDecoratorList getDecoratorList();
 
   /**
    * Returns true if the function is a top-level class (its parent is its containing file).

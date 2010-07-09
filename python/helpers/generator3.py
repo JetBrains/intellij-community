@@ -19,7 +19,7 @@ all this too.
 """
 
 from datetime import datetime
-OUR_OWN_DATETIME = datetime(2010, 6, 3, 17, 13, 12) # datetime.now() of edit time
+OUR_OWN_DATETIME = datetime(2010, 7, 9, 16, 1, 5) # datetime.now() of edit time
 # we could use script's ctime, but the actual running copy may have it all wrong.
 #
 # Note: DON'T FORGET TO UPDATE!
@@ -347,7 +347,7 @@ optionalPart << (
   | ellipsis
 )
 
-# this is our ideal target, with balancing paren and a multiline rest of doc. 
+# this is our ideal target, with balancing paren and a multiline rest of doc.
 paramSeqAndRest = paramSeq + Suppress(')') + Suppress(Optional(Regex(".*(?s)"))) 
 
 def transformSeq(results, toplevel=True):
@@ -554,6 +554,146 @@ class ModuleRedeclarator(object):
   # keyed by (module_name, class_name, method_name). PREDEFINED_BUILTIN_SIGS might be a layer of it.
   PREDEFINED_MOD_CLASS_SIGS = {
     ("datetime", "timedelta", "__new__") : "(cls, days=None, seconds=None, microseconds=None, milliseconds=None, minutes=None, hours=None, weeks=None)",
+  }
+  
+  # known properties of modules
+  # {{"module": {"class", "property" : ("letters", "getter")}}, 
+  # where letters is any set of r,w,d (read, write, del) and "getter" is a source of typed getter.
+  # if vlue is None, the property should be omitted.
+  # read-only properties that return an object are not listed.
+  G_OBJECT = "lambda self: object()"
+  G_TYPE = "lambda self: type(object)"
+  G_DICT = "lambda self: {}"
+  G_STR = "lambda self: ''"
+  G_TUPLE = "lambda self: tuple()"
+  G_FLOAT = "lambda self: 0.0"
+  G_INT = "lambda self: 0"
+  G_BOOL = "lambda self: True"
+  
+  KNOWN_PROPS = {
+    BUILTIN_MOD_NAME: {
+      ("object", '__class__'): ('r', G_TYPE),
+      ("BaseException", '__dict__'): ('r', G_DICT),
+      ("BaseException", 'message'): ('rwd', G_STR),
+      ("BaseException",'args'): ('r', G_TUPLE),
+      ('complex','real'): ('r', G_FLOAT),
+      ('complex','imag'): ('r', G_FLOAT),
+      ("EnvironmentError", 'errno'): ('rwd', G_INT),
+      ("EnvironmentError", 'message'): ('rwd', G_STR),
+      ("EnvironmentError", 'strerror'): ('rwd', G_INT),
+      ("EnvironmentError", 'filename'): ('rwd', G_STR),
+      ("file", 'softspace'): ('r', G_BOOL),
+      ("file", 'name'): ('r', G_STR),
+      ("file", 'encoding'): ('r', G_STR),
+      ("file", 'mode'): ('r', G_STR),
+      ("file", 'closed'): ('r', G_BOOL),
+      ("file", 'newlines'): ('r', G_STR),
+      ("SyntaxError", 'text'): ('rwd', G_STR),
+      ("SyntaxError", 'print_file_and_line'): ('rwd', G_BOOL),
+      ("SyntaxError", 'filename'): ('rwd', G_STR),
+      ("SyntaxError", 'lineno'): ('rwd', G_INT),
+      ("SyntaxError", 'offset'): ('rwd', G_INT),
+      ("SyntaxError", 'msg'): ('rwd', G_STR),
+      ("SyntaxError", 'message'): ('rwd', G_STR),
+      ("slice", 'start'): ('r', G_INT),
+      ("slice", 'step'): ('r', G_INT),
+      ("slice", 'stop'): ('r', G_INT),
+      ("super", '__thisclass__'): ('r', G_TYPE),
+      ("super", '__self__'): ('r', G_TYPE),
+      ("super", '__self_class__'): ('r', G_TYPE),
+      ("SystemExit", 'message'): ('rwd', G_STR),
+      ("SystemExit", 'code'): ('rwd', G_OBJECT),
+      ("type", '__basicsize__'): ('r', G_INT),
+      ("type", '__itemsize__'): ('r', G_INT),
+      ("type", '__base__'): ('r', G_TYPE),
+      ("type", '__flags__'): ('r', G_INT),
+      ("type", '__mro__'): ('r', G_TUPLE),
+      ("type", '__bases__'): ('r', G_TUPLE),
+      ("type", '__dictoffset__'): ('r', G_INT),
+      ("type", '__dict__'): ('r', G_DICT),
+      ("type", '__name__'): ('r', G_STR),
+      ("type", '__weakrefoffset__'): ('r', G_INT),
+      ("UnicodeDecodeError", '__basicsize__'): None,
+      ("UnicodeDecodeError", '__itemsize__'): None,
+      ("UnicodeDecodeError", '__base__'): None,
+      ("UnicodeDecodeError", '__flags__'): ('rwd', G_INT),
+      ("UnicodeDecodeError", '__mro__'): None,
+      ("UnicodeDecodeError", '__bases__'): None,
+      ("UnicodeDecodeError", '__dictoffset__'): None,
+      ("UnicodeDecodeError", '__dict__'): None,
+      ("UnicodeDecodeError", '__name__'): None,
+      ("UnicodeDecodeError", '__weakrefoffset__'): None,
+      ("UnicodeEncodeError", 'end'): ('rwd', G_INT),
+      ("UnicodeEncodeError", 'encoding'): ('rwd', G_STR),
+      ("UnicodeEncodeError", 'object'): ('rwd', G_OBJECT),
+      ("UnicodeEncodeError", 'start'): ('rwd', G_INT),
+      ("UnicodeEncodeError", 'reason'): ('rwd', G_STR),
+      ("UnicodeEncodeError", 'message'): ('rwd', G_STR),
+      ("UnicodeTranslateError", 'end'): ('rwd', G_INT),
+      ("UnicodeTranslateError", 'encoding'): ('rwd', G_STR),
+      ("UnicodeTranslateError", 'object'): ('rwd', G_OBJECT),
+      ("UnicodeTranslateError", 'start'): ('rwd', G_INT),
+      ("UnicodeTranslateError", 'reason'): ('rwd', G_STR),
+      ("UnicodeTranslateError", 'message'): ('rwd', G_STR),
+    },
+    '_ast': {
+      ("AST", '__dict__'): ('rd', G_DICT),
+    },
+    'posix': {
+      ("statvfs_result", 'f_flag'): ('r', G_INT),
+      ("statvfs_result", 'f_bavail'): ('r', G_INT),
+      ("statvfs_result", 'f_favail'): ('r', G_INT),
+      ("statvfs_result", 'f_files'): ('r', G_INT),
+      ("statvfs_result", 'f_frsize'): ('r', G_INT),
+      ("statvfs_result", 'f_blocks'): ('r', G_INT),
+      ("statvfs_result", 'f_ffree'): ('r', G_INT),
+      ("statvfs_result", 'f_bfree'): ('r', G_INT),
+      ("statvfs_result", 'f_namemax'): ('r', G_INT),
+      ("statvfs_result", 'f_bsize'): ('r', G_INT),
+      
+      ("stat_result", 'st_ctime'): ('r', G_INT),
+      ("stat_result", 'st_rdev'): ('r', G_INT),
+      ("stat_result", 'st_mtime'): ('r', G_INT),
+      ("stat_result", 'st_blocks'): ('r', G_INT),
+      ("stat_result", 'st_gid'): ('r', G_INT),
+      ("stat_result", 'st_nlink'): ('r', G_INT),
+      ("stat_result", 'st_ino'): ('r', G_INT),
+      ("stat_result", 'st_blksize'): ('r', G_INT),
+      ("stat_result", 'st_dev'): ('r', G_INT),
+      ("stat_result", 'st_size'): ('r', G_INT),
+      ("stat_result", 'st_mode'): ('r', G_INT),
+      ("stat_result", 'st_uid'): ('r', G_INT),
+      ("stat_result", 'st_atime'): ('r', G_INT),
+    },
+    "pwd": {
+      ("struct_pwent", 'pw_dir'): ('r', G_STR),
+      ("struct_pwent", 'pw_gid'): ('r', G_INT),
+      ("struct_pwent", 'pw_passwd'): ('r', G_STR),
+      ("struct_pwent", 'pw_gecos'): ('r', G_STR),
+      ("struct_pwent", 'pw_shell'): ('r', G_STR),
+      ("struct_pwent", 'pw_name'): ('r', G_STR),
+      ("struct_pwent", 'pw_uid'): ('r', G_INT),
+      
+      ("struct_passwd", 'pw_dir'): ('r', G_STR),
+      ("struct_passwd", 'pw_gid'): ('r', G_INT),
+      ("struct_passwd", 'pw_passwd'): ('r', G_STR),
+      ("struct_passwd", 'pw_gecos'): ('r', G_STR),
+      ("struct_passwd", 'pw_shell'): ('r', G_STR),
+      ("struct_passwd", 'pw_name'): ('r', G_STR),
+      ("struct_passwd", 'pw_uid'): ('r', G_INT),
+    },
+    "thread": {
+      ("_local", '__dict__'): None
+    },
+    "xxsubtype": {
+      ("spamdict", 'state'): ('r', G_INT),
+      ("spamlist", 'state'): ('r', G_INT),
+    },
+    "zipimport": {
+      ("zipimporter", 'prefix'): ('r', G_STR),
+      ("zipimporter", 'archive'): ('r', G_STR),
+      ("zipimporter", '_files'): ('r', G_DICT),
+    },
   }
 
   # Some builtin classes effectively change __init__ signature without overriding it.
@@ -948,10 +1088,10 @@ class ModuleRedeclarator(object):
     self.out("class " + p_name + base_def + ":", indent)
     self.outDocAttr(p_class, indent+1)
     # inner parts
+    methods = {}
+    properties = {}
+    others = {}
     if hasattr(p_class, "__dict__"):
-      methods = {}
-      properties = {}
-      others = {}
       we_are_the_base_class = p_modname == BUILTIN_MOD_NAME and p_name in ("object", FAKE_CLASSOBJ_NAME)
       for item_name in p_class.__dict__:
         if item_name in ("__doc__", "__module__"):
@@ -978,9 +1118,24 @@ class ModuleRedeclarator(object):
         item =  methods[item_name]
         self.redoFunction(item, item_name, indent+1, p_class, p_modname)
       #
+      known_props = self.KNOWN_PROPS.get(p_modname, {})
+      a_setter = "lambda self, v: None"
+      a_deleter = "lambda self: None"
       for item_name in sortedNoCase(properties.keys()):
-        item =  properties[item_name]
-        self.out(item_name + " =  property(None, None, None)", indent+1) # TODO: handle docstring
+        prop_key = (p_name, item_name)
+        if known_props.has_key(prop_key):
+          prop_descr = known_props.get(prop_key, None)
+          if prop_descr is None:
+            continue # explicitly omitted
+          acc_line, getter = prop_descr
+          accessors = []
+          accessors.append("r" in acc_line and getter or "None")
+          accessors.append("w" in acc_line and a_setter or "None")
+          accessors.append("d" in acc_line and a_deleter or "None")
+          self.out(item_name + " = property(" + ", ".join(accessors) + ")", indent+1) 
+        else:  
+          self.out(item_name + " = property(lambda self: object(), None, None) # default", indent+1) 
+        # TODO: handle docstring
       if properties:
         self.out("", 0) # empty line after the block
       #
@@ -1015,7 +1170,7 @@ class ModuleRedeclarator(object):
         if hasattr(item, "__name__"):
           self.out("import " + item.__name__ + " as " + item_name + " # refers to " + str(item))
         else:
-          self.out(item_name + " = None # XXX name unknown, refers to " + str(item))
+          self.out(item_name + " = None # ??? name unknown, refers to " + str(item))
     self.out("", 0) # empty line after imports
     # group what else we have into buckets
     vars_simple = {}

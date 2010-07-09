@@ -49,11 +49,11 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
         cat.append("class ").append(cls_name).append("\n ");
         // It would be nice to have class import info here, but we don't know the ctrl+hovered reference and context
       }
-      return describeFunction(func, LSame2, ", ", LSame2, LSame1).toString();
+      return describeDecorators(func, LSame2, ", ", LSame1).add(describeFunction(func, LSame2, LSame1)).toString();
     }
     else if (element instanceof PyClass) {
       PyClass cls = (PyClass)element;
-      return describeClass(cls, LSame2).toString();
+      return describeDecorators(cls, LSame2, ", ", LSame1).add(describeClass(cls, LSame2)).toString();
     }
     return null;
   }
@@ -75,24 +75,30 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
    */
   private static ChainIterable<String> describeFunction(
     PyFunction fun,
-    FP.Lambda1<Iterable<String>, Iterable<String>> deco_name_wrapper,
-    String deco_separator,
     FP.Lambda1<Iterable<String>, Iterable<String>> func_name_wrapper,
     FP.Lambda1<String, String> escaper
   ) {
     ChainIterable<String> cat = new ChainIterable<String>(null);
-    PyDecoratorList deco_list = fun.getDecoratorList();
-    if (deco_list != null) {
-      for (PyDecorator deco : deco_list.getDecorators()) {
-        cat.add(describeDeco(deco, deco_name_wrapper, escaper)).add(deco_separator); // can't easily pass describeDeco to map() %)
-      }
-    }
     cat.add("def ").addWith(func_name_wrapper, $(fun.getName()));
     cat.add(escaper.apply(PyUtil.getReadableRepr(fun.getParameterList(), false)));
     final PyType returnType = fun.getReturnType();
     cat.add(escaper.apply("\nInferred return type: "));
     if (returnType == null) cat.add("unknown");
     else cat.add(returnType.getName());
+    return cat;
+  }
+
+  private static ChainIterable<String> describeDecorators(
+    PyDecoratable what, FP.Lambda1<Iterable<String>, Iterable<String>> deco_name_wrapper,
+    String deco_separator, FP.Lambda1<String, String> escaper
+  ) {
+    ChainIterable<String> cat = new ChainIterable<String>();
+    PyDecoratorList deco_list = what.getDecoratorList();
+    if (deco_list != null) {
+      for (PyDecorator deco : deco_list.getDecorators()) {
+        cat.add(describeDeco(deco, deco_name_wrapper, escaper)).add(deco_separator); // can't easily pass describeDeco to map() %)
+      }
+    }
     return cat;
   }
 
@@ -112,7 +118,6 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
     if (ancestors.length > 0) {
       cat.add("(").add(interleave(FP.map(LReadableRepr, ancestors), ", ")).add(")");
     }
-    // TODO: for py3k, show decorators
     return cat;
   }
 
@@ -260,6 +265,7 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
       // doc of what?
       if (followed instanceof PyClass) {
         cls = (PyClass)followed;
+        doc_cat.add(describeDecorators(cls, TagItalic, BR, LCombUp));
         doc_cat.addWith(TagSmall, describeClass(cls, TagBold));
       }
       else if (followed instanceof PyFunction) {
@@ -269,7 +275,7 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
           if (cls != null) doc_cat.addWith(TagSmall, $("class ", cls.getName(), BR));
         }
         else cls = null;
-        doc_cat.add(describeFunction(fun, TagItalic, BR, TagBold, LCombUp));
+        doc_cat.add(describeDecorators(fun, TagItalic, BR, LCombUp)).add(describeFunction(fun, TagBold, LCombUp));
         if (docString == null) {
           addInheritedDocString(fun, cls, doc_cat, epilog_cat);
         }

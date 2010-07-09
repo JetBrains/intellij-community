@@ -31,4 +31,9 @@ public class PyNoneType implements PyType { // TODO must extend ClassType. It's 
   public String getName() {
     return "None"; 
   }
+
+  @Override
+  public boolean isBuiltin() {
+    return true;
+  }
 }

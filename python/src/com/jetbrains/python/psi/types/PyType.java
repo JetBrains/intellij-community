@@ -48,4 +48,9 @@ public interface PyType {
   @Nullable
   String getName();
 
+  /**
+   * @return true if the type is a known built-in type.
+   */
+  boolean isBuiltin();
+
 }
