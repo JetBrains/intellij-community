@@ -23,10 +23,7 @@ import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @State(
   name = "EclipseModuleManager",
@@ -44,9 +41,9 @@ public class EclipseModuleManager implements PersistentStateComponent<Element>{
   @NonNls private static final String CONELEMENT = "conelement";
   @NonNls private static final String FORCED_JDK = "forced_jdk";
   private CachedXmlDocumentSet myDocumentSet;
-  private final Map<String, String> myEclipseVariablePaths = new HashMap<String, String>();
-  private final Set<String> myEclipseUrls = new HashSet<String>();
-  private final Set<String> myUnknownCons = new HashSet<String>();
+  private final Map<String, String> myEclipseVariablePaths = new LinkedHashMap<String, String>();
+  private final Set<String> myEclipseUrls = new LinkedHashSet<String>();
+  private final Set<String> myUnknownCons = new LinkedHashSet<String>();
   private boolean myForceConfigureJDK = false;
   private static final String SRC_PREFIX = "src:";
   private static final String SRC_LINK_PREFIX = "linksrc:";
