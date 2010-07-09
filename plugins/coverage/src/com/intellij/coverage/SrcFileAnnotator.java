@@ -46,6 +46,7 @@ import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.rt.coverage.instrumentation.SourceLineCounter;
+import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.LightColors;
 import com.intellij.util.Function;
 import com.intellij.util.containers.HashSet;
@@ -69,7 +70,7 @@ public class SrcFileAnnotator implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.coverage.SrcFileAnnotator");
   public static final Key<List<RangeHighlighter>> COVERAGE_HIGHLIGHTERS = Key.create("COVERAGE_HIGHLIGHTERS");
   private static final Key<DocumentListener> COVERAGE_DOCUMENT_LISTENER = Key.create("COVERAGE_DOCUMENT_LISTENER");
-  public static final Key<JLabel> FILE_LEVEL_LABEL = Key.create("FILE_LEVEL_LABEL");
+  public static final Key<EditorNotificationPanel> NOTIFICATION_PANEL = Key.create("NOTIFICATION_PANEL");
 
   private final PsiFile myFile;
   private final Editor myEditor;
@@ -98,14 +99,14 @@ public class SrcFileAnnotator implements Disposable {
       myFile.putUserData(COVERAGE_HIGHLIGHTERS, null);
     }
     else {
-      final JLabel label = myFile.getUserData(FILE_LEVEL_LABEL);
-      if (label != null) {
-        myFile.putUserData(FILE_LEVEL_LABEL, null);
+      final EditorNotificationPanel panel = myFile.getUserData(NOTIFICATION_PANEL);
+      if (panel != null) {
+        myFile.putUserData(NOTIFICATION_PANEL, null);
         final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
         final VirtualFile vFile = myFile.getVirtualFile();
         assert vFile != null;
         for (final FileEditor editor : fileEditorManager.getEditors(vFile)) {
-          fileEditorManager.removeEditorAnnotation(editor, label);
+          fileEditorManager.removeTopComponent(editor, panel);
         }
       }
     }
@@ -373,16 +374,21 @@ public class SrcFileAnnotator implements Disposable {
   }
 
   private void showEditorWarningMessage(final String message) {
-    final JLabel label = new JLabel(message);
-    label.setBackground(LightColors.YELLOW);
-    label.setIcon(ourIcon);
-    myFile.putUserData(FILE_LEVEL_LABEL, label);
     final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
     final VirtualFile vFile = myFile.getVirtualFile();
     assert vFile != null;
+
+    EditorNotificationPanel panel = new EditorNotificationPanel() {
+      {
+        myLabel.setIcon(ourIcon);
+        myLabel.setText(message);
+      }
+    };
+
+    myFile.putUserData(NOTIFICATION_PANEL, panel);
     final FileEditor[] editors = fileEditorManager.getEditors(vFile);
     for (final FileEditor editor : editors) {
-      fileEditorManager.showEditorAnnotation(editor, label);
+      fileEditorManager.addTopComponent(editor, panel);
     }
   }
 
