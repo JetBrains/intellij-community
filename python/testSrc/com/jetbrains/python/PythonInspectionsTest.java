@@ -212,8 +212,12 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   }
 
   public void testPyCallingNonCallableInspection() throws Exception {
+    doHighlightingTest(PyCallingNonCallableInspection.class);
+  }
+
+  private void doHighlightingTest(final Class<? extends PyInspection> inspectionClass) throws Exception {
     myFixture.configureByFile("inspections/" + getTestName(true) + "/test.py");
-    myFixture.enableInspections(PyCallingNonCallableInspection.class);
+    myFixture.enableInspections(inspectionClass);
     myFixture.checkHighlighting(true, false, false);
   }
 

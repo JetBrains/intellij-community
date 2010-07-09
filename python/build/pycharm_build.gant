@@ -22,7 +22,7 @@ setProperty("pluginFilter", [
         "JSInspections",
         "JSIntentionPowerPack",
         "SpellChecker", "spellchecker",
-        "sass",
+        "sass", "less",
         "hg4idea"
 ])
 
@@ -157,6 +157,8 @@ target('default': "Build artifacts") {
 
   def usedJars = new HashSet();
 
+  def forbiddenJars = ["client-api", "ideaLicenseDecoder", "eawtstub.jar", "ui.jar", "exe4jlib.jar"]
+
   project.clean()
   modules.each {
     Module module = project[it] as Module
@@ -171,7 +173,7 @@ target('default': "Build artifacts") {
                                         path.startsWith("$normalizedHome/community/lib/") ||
                                         path.startsWith("$normalizedHome/python/lib"))
               && !path.contains("/dev/") && !path.contains("/rt/") && !path.contains("/ant/")
-              && !path.contains("client-api") && !path.contains("ideaLicenseDecoder")) {
+              && !forbiddenJars.any { path.contains(it) }) {
             usedJars.add(path);
           }
         }
@@ -324,7 +326,12 @@ def buildTarGz() {
       exclude(name: "**/*.dll")
       exclude(name: "bin/*.sh")
     }
-    tarfileset(dir: "$home/community/bin/linux", prefix: "$tarRoot/bin")
+    tarfileset(dir: "$home/bin", prefix: "$tarRoot/bin") {
+      include(name: "libyjpagent*.so")
+    }
+    tarfileset(dir: "$home/community/bin/linux", prefix: "$tarRoot/bin") {
+      exclude(name: "libbreakgen*")
+    }
     tarfileset(dir: "$home/community/bin/nix", filemode: "755", prefix: "$tarRoot/bin") {
       include(name: "inspect*.sh")
     }
@@ -333,6 +340,9 @@ def buildTarGz() {
     }
     tarfileset(dir: "$home/python/build", fullpath: "$tarRoot/bin/pycharm.vmoptions") {
       include(name: "pycharm.vmoptions")
+    }
+    tarfileset(dir: "$home/python/resources", fullpath: "$tarRoot/bin/pycharm.png") {
+      include(name: "PyCharm_32.png")
     }
     tarfileset(dir: "$home/python/help", includes: "pycharmhelp.jar", prefix: "$tarRoot/help")
   }
@@ -343,7 +353,7 @@ def buildTarGz() {
 
 def layoutFull(String target, Set usedJars) {
   def openapiModules = platformApiModules()
-  def implementationModules = [platformImplementationModules(), "python", "python-ide", "sass"].flatten()
+  def implementationModules = [platformImplementationModules(), "python", "python-ide"].flatten()
 
   layout(target) {
     dir("lib") {
@@ -388,6 +398,12 @@ def layoutFull(String target, Set usedJars) {
       }
     }
 
+    dir("help") {
+      fileset(dir: "$home/python/help") {
+        include(name: "*.pdf")
+      }
+    }
+
     dir("helpers") {
       fileset(dir: "$home/python/helpers")
     }
@@ -403,6 +419,7 @@ def layoutFull(String target, Set usedJars) {
       fileset(dir: "$home/community/bin") {
         include(name: "*.*")
         exclude(name: "idea.properties")
+        exclude(name: "appletviewer.policy")
       }
       fileset(dir: "$home/python/build") {
         include(name: "idea.properties")

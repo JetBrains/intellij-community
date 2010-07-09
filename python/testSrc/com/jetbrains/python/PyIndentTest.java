@@ -16,12 +16,7 @@ public class PyIndentTest extends PyLightFixtureTestCase {
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        try {
-          myFixture.configureByText(name + ".py", before);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+        myFixture.configureByText(name + ".py", before);
       }
     });
     CommandProcessor.getInstance().executeCommand(myFixture.getProject(), new Runnable() {

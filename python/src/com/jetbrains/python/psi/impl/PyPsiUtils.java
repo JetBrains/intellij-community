@@ -162,9 +162,12 @@ public class PyPsiUtils {
     return result;
   }
 
-  public static int getElementIndentation(final PsiElement element){
+  public static int getElementIndentation(final PsiElement element) {
     final PsiElement compStatement = getCompoundStatement(element);
     final PsiElement statement = getStatement(compStatement, element);
+    if (statement == null) {
+      return 0;
+    }
     PsiElement sibling = statement.getPrevSibling();
     if (sibling == null){
       sibling = compStatement.getPrevSibling();

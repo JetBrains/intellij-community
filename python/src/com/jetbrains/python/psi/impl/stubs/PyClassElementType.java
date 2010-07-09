@@ -46,7 +46,9 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
         superClasses.add(null);
       }
     }
-    return new PyClassStubImpl(psi.getName(), parentStub, superClasses.toArray(new PyQualifiedName[superClasses.size()]), psi.getSlots());
+    return new PyClassStubImpl(psi.getName(), parentStub,
+                               superClasses.toArray(new PyQualifiedName[superClasses.size()]),
+                               ((PyClassImpl) psi).getOwnSlots());
   }
 
   public void serialize(final PyClassStub pyClassStub, final StubOutputStream dataStream) throws IOException {

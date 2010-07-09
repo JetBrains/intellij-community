@@ -1025,7 +1025,7 @@ class ModuleRedeclarator(object):
     reexports = {} # contains not real objects, but qualified id strings, like "sys.stdout"
     #
     for item_name in self.module.__dict__:
-      if item_name in ("__dict__", "__doc__", "__module__", "__file__", "__name__"):
+      if item_name in ("__dict__", "__doc__", "__module__", "__file__", "__name__", "__builtins__", "__package__"):
         continue
       try:
         item = getattr(self.module, item_name) # let getters do the magic

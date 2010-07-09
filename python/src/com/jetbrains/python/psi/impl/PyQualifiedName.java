@@ -5,6 +5,7 @@ import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.io.StringRef;
 import com.jetbrains.python.psi.PyReferenceExpression;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -39,6 +40,15 @@ public class PyQualifiedName {
     PyQualifiedName result = new PyQualifiedName(myComponents.size()+1);
     result.myComponents.addAll(myComponents);
     result.myComponents.add(name);
+    return result;
+  }
+
+  @NotNull
+  public PyQualifiedName removeLastComponent() {
+    int size = myComponents.size();
+    PyQualifiedName result = new PyQualifiedName(size);
+    result.myComponents.addAll(myComponents);
+    result.myComponents.remove(size-1);
     return result;
   }
 

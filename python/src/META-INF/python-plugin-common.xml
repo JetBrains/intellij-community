@@ -177,7 +177,7 @@
     <lang.substitutor language="XHTML" implementationClass="com.jetbrains.django.lang.template.DjangoTemplateLanguageSubstitutor"/>
     <lang.substitutor language="HTML" implementationClass="com.jetbrains.django.lang.template.DjangoTemplateLanguageSubstitutor"/>
     <lang.substitutor language="XML" implementationClass="com.jetbrains.django.lang.template.DjangoTemplateLanguageSubstitutor"/>
-    <highlightErrorFilter implementation="com.jetbrains.django.inspection.DjangoErrorFilter"/>
+    <highlightErrorFilter implementation="com.jetbrains.django.lang.template.inspection.DjangoErrorFilter"/>
 
     <lang.parserDefinition language="DjangoTemplate"
                            implementationClass="com.jetbrains.django.lang.template.parsing.DjangoTemplateParserDefinition"/>
@@ -190,7 +190,7 @@
 
     <psi.referenceContributor implementation="com.jetbrains.django.ref.DjangoReferenceContributor"/>
 
-    <inspectionToolProvider implementation="com.jetbrains.django.inspection.DjangoInspectionToolProvider"/>
+    <inspectionToolProvider implementation="com.jetbrains.django.lang.template.inspection.DjangoInspectionToolProvider"/>
 
     <moduleService serviceInterface="com.jetbrains.django.model.TemplateManager"
                    serviceImplementation="com.jetbrains.django.model.TemplateManager"/>
@@ -216,7 +216,7 @@
     <extendWordSelectionHandler implementation="com.jetbrains.django.editor.DjangoTemplateTagSelectionHandler"/>
     <extendWordSelectionHandler implementation="com.jetbrains.django.editor.DjangoTemplateTagNameSelectionHandler"/>
 
-    <lang.namesValidator language="DjangoTemplate" implementationClass="com.jetbrains.django.inspection.DjangoTemplateNamesValidator"/>
+    <lang.namesValidator language="DjangoTemplate" implementationClass="com.jetbrains.django.lang.template.inspection.DjangoTemplateNamesValidator"/>
 
     <renamePsiElementProcessor implementation="com.jetbrains.django.refactoring.RenameDjangoNamedExpressionProcessor" order="last"/>
 
@@ -225,12 +225,12 @@
 
     <lang.refactoringSupport language="DjangoTemplate" implementationClass="com.jetbrains.django.refactoring.DjangoRefactoringProvider"/>
 
-    <lang.surroundDescriptor language="DjangoTemplate" implementationClass="com.jetbrains.django.surround.DjangoTemplateTagSurroundDescriptor"
+    <lang.surroundDescriptor language="DjangoTemplate" implementationClass="com.jetbrains.django.lang.template.surround.DjangoTemplateTagSurroundDescriptor"
                              order="first"/>
-    <lang.surroundDescriptor language="HTML" implementationClass="com.jetbrains.django.surround.DjangoXmlSurroundDescriptor" order="after djangoHtmlSurround"/>
-    <lang.surroundDescriptor language="XML" implementationClass="com.jetbrains.django.surround.DjangoXmlSurroundDescriptor" order="after djangoXmlSurround"/>
-    <lang.surroundDescriptor language="HTML" implementationClass="com.jetbrains.django.surround.DjangoTemplateVariableSurroundDescriptor" order="first" id="djangoHtmlSurround"/>
-    <lang.surroundDescriptor language="XML" implementationClass="com.jetbrains.django.surround.DjangoTemplateVariableSurroundDescriptor" order="first" id="djangoXmlSurround"/>
+    <lang.surroundDescriptor language="HTML" implementationClass="com.jetbrains.django.lang.template.surround.DjangoXmlSurroundDescriptor" order="after djangoHtmlSurround"/>
+    <lang.surroundDescriptor language="XML" implementationClass="com.jetbrains.django.lang.template.surround.DjangoXmlSurroundDescriptor" order="after djangoXmlSurround"/>
+    <lang.surroundDescriptor language="HTML" implementationClass="com.jetbrains.django.lang.template.surround.DjangoTemplateVariableSurroundDescriptor" order="first" id="djangoHtmlSurround"/>
+    <lang.surroundDescriptor language="XML" implementationClass="com.jetbrains.django.lang.template.surround.DjangoTemplateVariableSurroundDescriptor" order="first" id="djangoXmlSurround"/>
 
     <lang.elementManipulator forClass="com.jetbrains.django.lang.template.psi.impl.DjangoStringLiteralImpl"
                              implementationClass="com.jetbrains.django.lang.template.ref.DjangoStringLiteralManipulator"/>
@@ -243,6 +243,8 @@
     <quoteHandler fileType="DjangoTemplate" className="com.jetbrains.django.lang.template.editor.DjangoTemplateQuoteHandler"/>
 
     <lang.formatter language="DjangoTemplate" implementationClass="com.jetbrains.django.lang.template.formatter.DjangoTemplateFormattingModelBuilder"/>
+
+    <xml.zenCodingGenerator implementation="com.jetbrains.django.lang.template.DjangoTemplateZenCodingGenerator"/>
 
     <!-- App Engine -->
     <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>

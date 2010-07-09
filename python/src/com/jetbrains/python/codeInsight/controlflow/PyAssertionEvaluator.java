@@ -35,10 +35,32 @@ public class PyAssertionEvaluator extends PyRecursiveElementVisitor {
       PyExpression[] args = node.getArguments();
       if (args.length == 2 && args[0] instanceof PyReferenceExpression) {
         PyReferenceExpression target = (PyReferenceExpression)args[0];
-        Assertion o = new Assertion(target.getName(), args[1]);
-        myStack.push(o);
+        PyExpression typeElement = args[1];
+
+        if (!processTuple(target, typeElement)) {
+          pushTypeElement(target, typeElement);
+        }
       }
     }
+  }
+
+  private boolean processTuple(PyReferenceExpression target, PyExpression typeElement) {
+    boolean pushed = false;
+    if (typeElement instanceof PyParenthesizedExpression) {
+      PyExpression contained = ((PyParenthesizedExpression)typeElement).getContainedExpression();
+      if (contained instanceof PyTupleExpression) {
+        for (PyExpression e : ((PyTupleExpression)contained).getElements()) {
+          pushTypeElement(target, e);
+          pushed = true;
+        }
+      }
+    }
+    return pushed;
+  }
+
+  private void pushTypeElement(PyReferenceExpression target, PyExpression typeElement) {
+    Assertion o = new Assertion(target.getName(), typeElement);
+    myStack.push(o);
   }
 
   class Assertion {
@@ -57,6 +79,7 @@ public class PyAssertionEvaluator extends PyRecursiveElementVisitor {
     public PyElement getElement() {
       return element;
     }
+
   }
 
   public List<Assertion> getDefinitions() {

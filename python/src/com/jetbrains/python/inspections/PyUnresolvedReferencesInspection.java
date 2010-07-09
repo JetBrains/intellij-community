@@ -240,6 +240,23 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       final PyExpression qualifier = node.getQualifier();
       if (qualifier != null) {
         qualifier.accept(this);
+        checkSlots(node);
+      }
+    }
+
+    private void checkSlots(PyQualifiedExpression node) {
+      final PyExpression qualifier = node.getQualifier();
+      if (qualifier != null) {
+        final PyType type = qualifier.getType(TypeEvalContext.fast());
+        if (type instanceof PyClassType) {
+          final PyClass pyClass = ((PyClassType)type).getPyClass();
+          if (pyClass != null && pyClass.isNewStyleClass()) {
+            final List<String> slots = pyClass.getSlots();
+            if (slots != null && !slots.contains(node.getReferencedName())) {
+              registerProblem(node, "'" + pyClass.getName() + "' object has no attribute '" + node.getReferencedName() + "'");
+            }
+          }
+        }
       }
     }
 
@@ -348,7 +365,8 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           if (qexpr != null) {
             PyType qtype = qexpr.getType(TypeEvalContext.fast());
             if (qtype != null) {
-              if (qtype instanceof PyNoneType || qtype instanceof PyTypeReference) {
+              if (qtype instanceof PyNoneType || qtype instanceof PyTypeReference ||
+                  (qtype instanceof PyUnionType && ((PyUnionType) qtype).isWeak())) {
                 // this almost always means that we don't know the type, so don't show an error in this case
                 return;
               }

@@ -1,14 +1,30 @@
 package com.jetbrains.python.inspections;
 
+import com.intellij.codeInspection.CustomSuppressableInspectionTool;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.SuppressIntentionAction;
+import com.intellij.codeInspection.SuppressionUtil;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.actions.PySuppressInspectionFix;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author yole
  */
-public abstract class PyInspection extends LocalInspectionTool {
+public abstract class PyInspection extends LocalInspectionTool implements CustomSuppressableInspectionTool {
   @Nls
   @NotNull
   @Override
@@ -25,5 +41,66 @@ public abstract class PyInspection extends LocalInspectionTool {
   @Override
   public boolean isEnabledByDefault() {
     return true;
+  }
+
+  @Override
+  public SuppressIntentionAction[] getSuppressActions(@Nullable PsiElement element) {
+    List<SuppressIntentionAction> result = new ArrayList<SuppressIntentionAction>();
+    if (element != null) {
+      if (PsiTreeUtil.getParentOfType(element, PyStatementList.class, false, ScopeOwner.class) != null ||
+          PsiTreeUtil.getParentOfType(element, PyFunction.class, PyClass.class) == null) {
+        result.add(new PySuppressInspectionFix(getSuppressId(), "Suppress for statement", PyStatement.class));
+      }
+      if (PsiTreeUtil.getParentOfType(element, PyFunction.class) != null) {
+        result.add(new PySuppressInspectionFix(getSuppressId(), "Suppress for function", PyFunction.class));
+      }
+      if (PsiTreeUtil.getParentOfType(element, PyClass.class) != null) {
+        result.add(new PySuppressInspectionFix(getSuppressId(), "Suppress for class", PyClass.class));
+      }
+    }
+    return result.toArray(new SuppressIntentionAction[result.size()]);
+  }
+
+  @Override
+  public boolean isSuppressedFor(PsiElement element) {
+    return isSuppressedForParent(element, PyStatement.class) ||
+           isSuppressedForParent(element, PyFunction.class) ||
+           isSuppressedForParent(element, PyClass.class);
+  }
+
+  private boolean isSuppressedForParent(PsiElement element, final Class<? extends PyElement> parentClass) {
+    PyElement parent = PsiTreeUtil.getParentOfType(element, parentClass);
+    if (parent == null) {
+      return false;
+    }
+    return isSuppressedForElement(parent);
+  }
+
+  private boolean isSuppressedForElement(PyElement stmt) {
+    PsiElement prevSibling = stmt.getPrevSibling();
+    if (prevSibling == null) {
+      final PsiElement parent = stmt.getParent();
+      if (parent != null) {
+        prevSibling = parent.getPrevSibling();
+      }
+    }
+    while (prevSibling instanceof PsiComment || prevSibling instanceof PsiWhiteSpace) {
+      if (prevSibling instanceof PsiComment && isSuppressedInComment(prevSibling.getText().substring(1).trim())) {
+        return true;
+      }
+      prevSibling = prevSibling.getPrevSibling();
+    }
+    return false;
+  }
+
+  private static final Pattern SUPPRESS_PATTERN = Pattern.compile(SuppressionUtil.COMMON_SUPPRESS_REGEXP);
+
+  private boolean isSuppressedInComment(String commentText) {
+    Matcher m = SUPPRESS_PATTERN.matcher(commentText);
+    return m.matches() && SuppressionUtil.isInspectionToolIdMentioned(m.group(1), getSuppressId());
+  }
+
+  private String getSuppressId() {
+    return getShortName().replace("Inspection", "");
   }
 }

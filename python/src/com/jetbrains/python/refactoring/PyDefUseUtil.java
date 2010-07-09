@@ -19,7 +19,8 @@ import java.util.HashSet;
  * @author Dennis.Ushakov
  */
 public class PyDefUseUtil {
-  private PyDefUseUtil() {}
+  private PyDefUseUtil() {
+  }
 
   @NotNull
   public static PyElement[] getLatestDefs(ScopeOwner block, PyElement var, PsiElement anchor) {
@@ -50,8 +51,10 @@ public class PyDefUseUtil {
         name = instruction.getName();
       }
       if (access.isWriteAccess() && Comparing.strEqual(name, var.getName())) {
-        result.add((PyElement) instruction.getElement());
-        return;
+        result.add((PyElement)instruction.getElement());
+        if (access != ReadWriteInstruction.ACCESS.WRITETYPE) {
+          return;
+        }
       }
     }
     for (Instruction instruction : instructions[instr].allPred()) {
@@ -73,7 +76,11 @@ public class PyDefUseUtil {
     return result.toArray(new PyElement[result.size()]);
   }
 
-  private static void getPostRefs(PyTargetExpression var, Instruction[] instructions, int instr, boolean[] visited, Collection<PyElement> result) {
+  private static void getPostRefs(PyTargetExpression var,
+                                  Instruction[] instructions,
+                                  int instr,
+                                  boolean[] visited,
+                                  Collection<PyElement> result) {
     if (visited[instr]) return;
     visited[instr] = true;
     if (instructions[instr] instanceof ReadWriteInstruction) {

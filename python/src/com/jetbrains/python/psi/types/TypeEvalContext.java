@@ -11,6 +11,7 @@ import java.util.Map;
  */
 public class TypeEvalContext {
   private boolean myAllowDataFlow;
+
   private Map<PyExpression, PyType> myEvaluated = new HashMap<PyExpression, PyType>();
 
   private TypeEvalContext(boolean allowDataFlow) {

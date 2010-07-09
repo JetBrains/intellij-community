@@ -110,6 +110,10 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
     doTest();
   }
 
+  public void testIsInstanceTuple() throws Exception {
+    doTest();
+  }
+
   public void testPropertyParens() throws Exception {  // PY-1037
     doTest();
   }
@@ -166,6 +170,10 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
   }
 
   public void testSlots() throws Exception {  // PY-1211
+    doTest();
+  }
+
+  public void testReturnType() throws Exception {  
     doTest();
   }
 }

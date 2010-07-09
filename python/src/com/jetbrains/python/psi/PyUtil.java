@@ -20,6 +20,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -83,7 +84,7 @@ public class PyUtil {
         result.add((T)child);
       }
       else {
-        result.addAll(Arrays.asList(getAllChildrenOfType(child, aClass)));
+        ContainerUtil.addAll(result, getAllChildrenOfType(child, aClass));
       }
     }
     return ArrayUtil.toObjectArray(result, aClass);

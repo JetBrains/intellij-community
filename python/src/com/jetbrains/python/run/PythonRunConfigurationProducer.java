@@ -4,14 +4,16 @@ import com.intellij.execution.Location;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PythonFileType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -58,6 +60,28 @@ public class PythonRunConfigurationProducer extends RuntimeConfigurationProducer
       configuration.setModule(module);
     }
     return settings;
+  }
+
+  @Override
+  protected RunnerAndConfigurationSettings findExistingByElement(Location location,
+                                                                 @NotNull RunnerAndConfigurationSettings[] existingConfigurations,
+                                                                 ConfigurationContext context) {
+    PsiFile script = location.getPsiElement().getContainingFile();
+    if (script == null) {
+      return null;
+    }
+    final VirtualFile vFile = script.getVirtualFile();
+    if (vFile == null) {
+      return null;
+    }
+    String path = vFile.getPath();
+    for (RunnerAndConfigurationSettings configuration : existingConfigurations) {
+      final String scriptName = ((PythonRunConfiguration)configuration.getConfiguration()).getScriptName();
+      if (FileUtil.toSystemIndependentName(scriptName).equals(path)) {
+        return configuration;
+      }
+    }
+    return null;
   }
 
   public int compareTo(final Object o) {

@@ -29,6 +29,16 @@ def sortedNoCase(p_array):
     
   return p_array
 
+def is_binary(path, f):
+    suffixes = ('.so', '.pyd')
+    for suf in suffixes:
+      if f.endswith(suf):
+        return True
+    if f.endswith('.pyc') or f.endswith('.pyo'):
+      fullname = os.path.join(path, f[:-1])
+      return not os.path.exists(fullname)
+    return False
+
 def find_binaries(paths):
   """
   Finds binaries in the given list of paths. 
@@ -38,8 +48,7 @@ def find_binaries(paths):
   @return a list like [(module_name: full_path),.. ]
   """
   SEP = os.path.sep
-  suffixes = ('.so', '.pyd')
-  res = {} # {name.upper(): (name, full_path)} 
+  res = {} # {name.upper(): (name, full_path)}
   if not paths:
     return {}
   if hasattr(os, "java"): # jython can't have binary modules
@@ -57,19 +66,18 @@ def find_binaries(paths):
         prefix += '.'
       #print root, path, prefix, preprefix # XXX
       for f in files:
-        for suf in suffixes:
-          if f.endswith(suf):
-            name = f[:-len(suf)]
-            #print "+++ ", name
-            if preprefix:
-              #print("prefixes: ", prefix, preprefix) # XXX
-              pre_name = (preprefix + prefix + name).upper()
-              if pre_name in res:
-                res.pop(pre_name) # there might be a dupe, if paths got both a/b and a/b/c
-              #print "+ ", name # XXX
-            the_name = prefix + name   
-            res[the_name.upper()] = (the_name, root + SEP + f)
-            break
+        if is_binary(root, f):
+          name = f[:f.rindex('.')]
+          #print "+++ ", name
+          if preprefix:
+            #print("prefixes: ", prefix, preprefix) # XXX
+            pre_name = (preprefix + prefix + name).upper()
+            if pre_name in res:
+              res.pop(pre_name) # there might be a dupe, if paths got both a/b and a/b/c
+            #print "+ ", name # XXX
+          the_name = prefix + name
+          res[the_name.upper()] = (the_name, root + SEP + f)
+          break
   return list(res.values())
 
 

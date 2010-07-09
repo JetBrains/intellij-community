@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
 import com.jetbrains.python.psi.PyArgumentList;
@@ -468,26 +469,26 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
       StringBuilder wrongs = new StringBuilder();
       // see if highlighted matches
       Set<String> highlight_set = new HashSet<String>();
-      highlight_set.addAll(Arrays.asList(highlighted));
-      for (int i=0; i < myTexts.length; i += 1) {
+      ContainerUtil.addAll(highlight_set, highlighted);
+      for (int i = 0; i < myTexts.length; i += 1) {
         if (myFlags[i].contains(Flag.HIGHLIGHT) && !highlight_set.contains(myTexts[i])) {
           wrongs.append("Highlighted unexpected '").append(myTexts[i]).append("'. ");
         }
       }
-      for (int i=0; i < myTexts.length; i += 1) {
+      for (int i = 0; i < myTexts.length; i += 1) {
         if (!myFlags[i].contains(Flag.HIGHLIGHT) && highlight_set.contains(myTexts[i])) {
           wrongs.append("Not highlighted expected '").append(myTexts[i]).append("'. ");
         }
       }
       // see if disabled matches
       Set<String> disabled_set = new HashSet<String>();
-      disabled_set.addAll(Arrays.asList(disabled));
-      for (int i=0; i < myTexts.length; i += 1) {
+      ContainerUtil.addAll(disabled_set, disabled);
+      for (int i = 0; i < myTexts.length; i += 1) {
         if (myFlags[i].contains(Flag.DISABLE) && !disabled_set.contains(myTexts[i])) {
           wrongs.append("Highlighted a disabled '").append(myTexts[i]).append("'. ");
         }
       }
-      for (int i=0; i < myTexts.length; i += 1) {
+      for (int i = 0; i < myTexts.length; i += 1) {
         if (!myFlags[i].contains(Flag.DISABLE) && disabled_set.contains(myTexts[i])) {
           wrongs.append("Not disabled expected '").append(myTexts[i]).append("'. ");
         }

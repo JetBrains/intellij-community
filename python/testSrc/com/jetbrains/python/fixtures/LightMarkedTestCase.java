@@ -93,13 +93,8 @@ public abstract class LightMarkedTestCase extends PyLightFixtureTestCase {
     Map<String, PsiElement> result = new HashMap<String, PsiElement>();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        try {
-          myFile = myFixture.addFileToProject(fileName, text.toString());
-          myFixture.configureFromExistingVirtualFile(myFile.getVirtualFile());
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+        myFile = myFixture.addFileToProject(fileName, text.toString());
+        myFixture.configureFromExistingVirtualFile(myFile.getVirtualFile());
       }
     });
     for (Map.Entry<String, Integer> entry : offsets.entrySet()) {

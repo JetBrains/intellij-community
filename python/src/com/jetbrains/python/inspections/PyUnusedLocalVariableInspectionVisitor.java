@@ -47,23 +47,33 @@ class PyUnusedLocalVariableInspectionVisitor extends PyInspectionVisitor {
 
   @Override
   public void visitPyFunction(final PyFunction node) {
-    processScope(node);
+    processScope(node, node);
+  }
+
+  @Override
+  public void visitPyLambdaExpression(final PyLambdaExpression node) {
+    processScope(PsiTreeUtil.getParentOfType(node, ScopeOwner.class), node);
   }
 
   class DontPerformException extends RuntimeException {}
 
-  private void processScope(final ScopeOwner owner) {
+  private void processScope(final ScopeOwner owner, final PyElement node) {
     if (owner.getContainingFile() instanceof PyExpressionCodeFragment || PydevConsoleRunner.isInPydevConsole(owner)){
       return;
     }
     // Check for locals() call
     try {
-      owner.accept(new PyRecursiveElementVisitor(){
+      owner.acceptChildren(new PyRecursiveElementVisitor(){
         @Override
         public void visitPyCallExpression(final PyCallExpression node) {
           if ("locals".equals(node.getCallee().getText())){
             throw new DontPerformException();
           }
+        }
+
+        @Override
+        public void visitPyFunction(final PyFunction node) {
+          // stop here
         }
       });
     }
@@ -91,6 +101,11 @@ class PyUnusedLocalVariableInspectionVisitor extends PyInspectionVisitor {
           continue;
         }
         final PsiElement element = instruction.getElement();
+
+        // Ignore elements out of scope
+        if (element == null || !PsiTreeUtil.isAncestor(node, element, false)){
+          continue;
+        }
         // Ignore arguments of import statement
         if (PyImportStatementNavigator.getImportStatementByElement(element) != null) {
           continue;
@@ -117,6 +132,10 @@ class PyUnusedLocalVariableInspectionVisitor extends PyInspectionVisitor {
           continue;
         }
         final PsiElement element = instruction.getElement();
+        // Ignore elements out of scope
+        if (element == null || !PsiTreeUtil.isAncestor(node, element, false)){
+          continue;
+        }
         final ReadWriteInstruction.ACCESS access = ((ReadWriteInstruction)instruction).getAccess();
         // Read or self assign access
         if (access.isReadAccess()) {
@@ -148,8 +167,16 @@ class PyUnusedLocalVariableInspectionVisitor extends PyInspectionVisitor {
             .iterateWriteAccessFor(name, number, instructions, new Function<ReadWriteInstruction, PyControlFlowUtil.Operation>() {
               public PyControlFlowUtil.Operation fun(final ReadWriteInstruction rwInstr) {
                 final PsiElement instrElement = rwInstr.getElement();
+                // Ignore elements out of scope
+                if (instrElement == null || !PsiTreeUtil.isAncestor(node, instrElement, false)){
+                  return PyControlFlowUtil.Operation.CONTINUE;
+                }
                 myUsedElements.add(instrElement);
                 myUnusedElements.remove(instrElement);
+                // In case when assignment is inside try part we should move further
+                if (PsiTreeUtil.getParentOfType(instrElement, PyTryPart.class) != null){
+                  return PyControlFlowUtil.Operation.NEXT;
+                }
                 return PyControlFlowUtil.Operation.CONTINUE;
               }
             });
