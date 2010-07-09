@@ -15,20 +15,15 @@
  */
 package com.intellij.xml.refactoring;
 
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.impl.source.xml.SchemaPrefix;
 import com.intellij.psi.impl.source.xml.SchemaPrefixReference;
-import com.intellij.refactoring.rename.RenameHandler;
+import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -36,22 +31,12 @@ import java.util.Collection;
 /**
  * @author Dmitry Avdeev
  */
-public class SchemaPrefixRenameHandler implements RenameHandler {
+public class SchemaPrefixRenameHandler extends VariableInplaceRenameHandler {
   
-  public boolean isAvailableOnDataContext(DataContext dataContext) {
-    return isRenaming(dataContext);
-  }
-
-  public boolean isRenaming(DataContext dataContext) {
-    SchemaPrefixReference ref = getReference(dataContext);
+  @Override
+  protected boolean isAvailable(PsiElement element, Editor editor, PsiFile file) {
+    SchemaPrefixReference ref = getReference(file, editor);
     return ref != null && ref.resolve() != null;
-  }
-
-  @Nullable
-  private static SchemaPrefixReference getReference(DataContext dataContext) {
-    PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-    return getReference(file, editor);
   }
 
   @Nullable
@@ -75,22 +60,19 @@ public class SchemaPrefixRenameHandler implements RenameHandler {
 
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    SchemaPrefixReference reference = getReference(file, editor);
+  @Override
+  protected VariableInplaceRenamer createRenamer(PsiElement elementToRename, Editor editor) {
+    SchemaPrefixReference reference = getReference(elementToRename.getContainingFile(), editor);
     if (reference != null) {
       SchemaPrefix prefix = reference.resolve();
       if (prefix != null) {
-        new VariableInplaceRenamer(prefix, editor) {
+        return new VariableInplaceRenamer(prefix, editor) {
           @Override
-          protected void addReferenceAtCaret(Collection<PsiReference> refs) {
+          protected void addReferenceAtCaret(Collection<PsiReference> refs) {}
 
-          }
-        }.performInplaceRename();
+        };
       }
     }
-  }
-
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
-   
+    return null;
   }
 }

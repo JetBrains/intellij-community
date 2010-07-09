@@ -30,6 +30,7 @@ import java.util.Collection;
  * @author spleaner
  */
 public abstract class FileColorManager {
+  public static final String OUT_OF_PROJECT_SCOPE_COLOR = "OUT_OF_PROJECT_SCOPE";
 
   public static FileColorManager getInstance(@NotNull final Project project) {
     return ServiceManager.getService(project, FileColorManager.class);
@@ -40,6 +41,8 @@ public abstract class FileColorManager {
   public abstract void setEnabled(boolean enabled);
 
   public abstract boolean isEnabledForTabs();
+
+  public abstract boolean isHighlightNonProjectFiles();
 
   @SuppressWarnings({"MethodMayBeStatic"})
   @Nullable

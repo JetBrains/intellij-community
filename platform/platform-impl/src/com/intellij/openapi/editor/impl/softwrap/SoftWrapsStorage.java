@@ -15,12 +15,16 @@
  */
 package com.intellij.openapi.editor.impl.softwrap;
 
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ex.SoftWrapChangeListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * Holds registered soft wraps and provides monitoring and management facilities for them.
@@ -32,8 +36,15 @@ import java.util.List;
  */
 public class SoftWrapsStorage {
 
-  private final List<TextChangeImpl> myWraps = new ArrayList<TextChangeImpl>();
-  private final List<TextChangeImpl> myWrapsView = Collections.unmodifiableList(myWraps);
+  private final List<TextChangeImpl>        myWraps     = new ArrayList<TextChangeImpl>();
+  private final List<TextChangeImpl>        myWrapsView = Collections.unmodifiableList(myWraps);
+  private final Set<SoftWrapChangeListener> myListeners = new CopyOnWriteArraySet<SoftWrapChangeListener>();
+
+  private final Document myDocument;
+
+  public SoftWrapsStorage(Document document) {
+    myDocument = document;
+  }
 
   /**
    * @return    <code>true</code> if there is at least one soft wrap registered at the current storage; <code>false</code> otherwise
@@ -103,6 +114,10 @@ public class SoftWrapsStorage {
 
     i = -i - 1;
     myWraps.add(i, softWrap);
+    int changedLogicalLine = myDocument.getLineNumber(softWrap.getStart());
+    for (SoftWrapChangeListener listener : myListeners) {
+      listener.softWrapsStateChanged(changedLogicalLine);
+    }
     return null;
   }
 
@@ -126,5 +141,15 @@ public class SoftWrapsStorage {
    */
   public void removeAll() {
     myWraps.clear();
+  }
+
+  /**
+   * Registers given listener within the current model
+   *
+   * @param listener    listener to register
+   * @return            <code>true</code> if given listener was not registered before; <code>false</code> otherwise
+   */
+  public boolean addSoftWrapChangeListener(@NotNull SoftWrapChangeListener listener) {
+    return myListeners.add(listener);
   }
 }
