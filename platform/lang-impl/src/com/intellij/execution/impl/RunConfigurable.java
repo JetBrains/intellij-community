@@ -17,6 +17,7 @@
 package com.intellij.execution.impl;
 
 import com.intellij.execution.*;
+import com.intellij.execution.configuration.ConfigurationFactoryEx;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -692,6 +693,9 @@ class RunConfigurable extends BaseConfigurable {
       ((DefaultTreeModel)myTree.getModel()).reload();
     }
     final RunnerAndConfigurationSettings settings = getRunManager().createConfiguration(createUniqueName(node), factory);
+    if (factory instanceof ConfigurationFactoryEx) {
+      ((ConfigurationFactoryEx)factory).onNewConfigurationCreated(settings.getConfiguration());
+    }
     createNewConfiguration(settings, node);
   }
 
@@ -899,6 +903,10 @@ class RunConfigurable extends BaseConfigurable {
         final RunnerAndConfigurationSettings settings = configuration.getSnapshot();
         final String copyName = createUniqueName(typeNode);
         settings.setName(copyName);
+        final ConfigurationFactory factory = settings.getFactory();
+        if (factory instanceof ConfigurationFactoryEx) {
+          ((ConfigurationFactoryEx)factory).onConfigurationCopied(settings.getConfiguration());
+        }
         final SingleConfigurationConfigurable<RunConfiguration> configurable = createNewConfiguration(settings, typeNode);
         IdeFocusManager.getInstance(myProject).requestFocus(configurable.getNameTextField(), true);
         configurable.getNameTextField().setSelectionStart(0);
