@@ -4692,7 +4692,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       synchronized (lock) {
         if (!myIsDirty) return;
-        int lineCount = myLineWidths.size();
+        int lineCount = Math.min(myLineWidths.size(), myDocument.getLineCount());
 
         if (myMaxWidth != -1 && myDocument.isInBulkUpdate()) {
           mySize = new Dimension(myMaxWidth, getLineHeight() * lineCount);
