@@ -32,8 +32,9 @@ import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.refactoring.rename.RenameHandlerRegistry;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public final class VariableInplaceRenameHandler implements RenameHandler {
+public class VariableInplaceRenameHandler implements RenameHandler {
   private static final ThreadLocal<Boolean> ourPreventInlineRenameFlag = new ThreadLocal<Boolean>();
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler");
 
@@ -83,7 +84,8 @@ public final class VariableInplaceRenameHandler implements RenameHandler {
       return;
     }
 
-    final boolean startedRename = new VariableInplaceRenamer((PsiNameIdentifierOwner)elementToRename, editor).performInplaceRename();
+    VariableInplaceRenamer renamer = createRenamer(elementToRename, editor);
+    boolean startedRename = renamer == null ? false : renamer.performInplaceRename();
 
     if (!startedRename) {
       try {
@@ -100,5 +102,10 @@ public final class VariableInplaceRenameHandler implements RenameHandler {
         ourPreventInlineRenameFlag.set(null);
       }
     }
+  }
+
+  @Nullable
+  protected VariableInplaceRenamer createRenamer(PsiElement elementToRename, Editor editor) {
+    return new VariableInplaceRenamer((PsiNameIdentifierOwner)elementToRename, editor);
   }
 }
