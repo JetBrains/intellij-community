@@ -16,7 +16,9 @@ import java.util.List;
 /**
  * Represents a class declaration in source.
  */
-public interface PyClass extends PsiNamedElement, PyStatement, NameDefiner, PyDocStringOwner, StubBasedPsiElement<PyClassStub>, ScopeOwner {
+public interface PyClass extends
+  PsiNamedElement, PyStatement, NameDefiner, PyDocStringOwner, StubBasedPsiElement<PyClassStub>, ScopeOwner, PyDecoratable
+{
   @Nullable
   ASTNode getNameNode();
 
@@ -101,8 +103,6 @@ public interface PyClass extends PsiNamedElement, PyStatement, NameDefiner, PyDo
    */
   boolean isSubclass(PyClass parent);
 
-  @Nullable
-  PyDecoratorList getDecoratorList();
 
   String getQualifiedName();
 
