@@ -59,9 +59,9 @@ public class CoberturaCoverageRunner extends JavaCoverageRunner {
     javaParameters.getClassPath().add(PathManager.getLibPath() + File.separator + "cobertura.jar");
   }
 
-  public void generateReport(final Project project,
-                             DataContext dataContext, boolean trackTestFolders,
-                             final String binaryFilePath,
+  public void generateReport(@NotNull final Project project,
+                             @NotNull DataContext dataContext, @NotNull CoverageSuite currentSuite, boolean trackTestFolders,
+                             @NotNull final String binaryFilePath,
                              final String outputDirectory,
                              final boolean openInBrowser) {
     try {

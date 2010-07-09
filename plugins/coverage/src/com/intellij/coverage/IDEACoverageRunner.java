@@ -81,9 +81,9 @@ public class IDEACoverageRunner extends JavaCoverageRunner {
   }
 
   @Override
-  public void generateReport(final Project project,
-                             DataContext dataContext, final boolean trackTestFolders,
-                             final String coverageDataFileName,
+  public void generateReport(@NotNull final Project project,
+                             @NotNull DataContext dataContext, @NotNull CoverageSuite currentSuite, final boolean trackTestFolders,
+                             @NotNull final String coverageDataFileName,
                              final String outputDir,
                              final boolean openInBrowser) {
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Generating coverage report ...") {
