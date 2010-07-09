@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.RenameableFakePsiElement;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.xml.XmlAttribute;
@@ -74,5 +75,10 @@ public class SchemaPrefix extends RenameableFakePsiElement {
   @Override
   public SearchScope getUseScope() {
     return XmlExtension.getExtension(getContainingFile()).getNsPrefixScope(getDeclaration());
+  }
+
+  @Override
+  public boolean isEquivalentTo(PsiElement another) {
+    return another instanceof SchemaPrefix && ((SchemaPrefix)another).getDeclaration() == getDeclaration();
   }
 }

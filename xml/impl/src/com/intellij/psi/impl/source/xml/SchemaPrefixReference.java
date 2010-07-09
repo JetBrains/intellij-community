@@ -25,6 +25,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlExtension;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Konstantin Bulenkov
@@ -42,15 +43,8 @@ public class SchemaPrefixReference extends PsiReferenceBase<XmlElement> {
         return new SchemaPrefix((XmlAttribute)myElement.getParent(), getRangeInElement().shiftRight(myElement.getStartOffsetInParent()), myName);
       }
       else {
-        XmlExtension extension = XmlExtension.getExtension(myElement.getContainingFile());
-        final XmlAttribute declaration = extension.getPrefixDeclaration(PsiTreeUtil.getParentOfType(myElement, XmlTag.class, false), myName);
-        if (declaration != null) {
-          final String prefix = declaration.getNamespacePrefix();
-          final TextRange textRange = TextRange.from(prefix.length() + 1, myName.length());
-          return new SchemaPrefix(declaration, textRange, myName);
-        }
+        return resolvePrefix(myElement, myName);
       }
-      return null;
     }
   };
 
@@ -77,9 +71,7 @@ public class SchemaPrefixReference extends PsiReferenceBase<XmlElement> {
   @Override
   public boolean isReferenceTo(PsiElement element) {
     if (!(element instanceof SchemaPrefix) || !myName.equals(((SchemaPrefix)element).getName())) return false;
-
-    SchemaPrefix prefix = resolve();
-    return prefix != null && ((SchemaPrefix)element).getDeclaration() == prefix.getDeclaration();
+    return super.isReferenceTo(element);
   }
 
   @Override
@@ -95,5 +87,17 @@ public class SchemaPrefixReference extends PsiReferenceBase<XmlElement> {
       return tag.setName(name + ":" + tag.getLocalName());
     }
     return super.handleElementRename(name);
+  }
+
+  @Nullable
+  public static SchemaPrefix resolvePrefix(PsiElement element, String name) {
+    XmlExtension extension = XmlExtension.getExtension(element.getContainingFile());
+    final XmlAttribute declaration = extension.getPrefixDeclaration(PsiTreeUtil.getParentOfType(element, XmlTag.class, false), name);
+    if (declaration != null) {
+      final String prefix = declaration.getNamespacePrefix();
+      final TextRange textRange = TextRange.from(prefix.length() + 1, name.length());
+      return new SchemaPrefix(declaration, textRange, name);
+    }
+    return null;
   }
 }
