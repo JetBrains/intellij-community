@@ -161,8 +161,14 @@ public class PyBuiltinCache {
   public PyBuiltinCache() {
   }
 
+
+  public static final Key<String> MARKER_KEY = new Key<String>("python.builtins.skeleton.file");
+
   private PyBuiltinCache(@Nullable final PyFile builtins) {
     myBuiltinsFile = builtins;
+    if (myBuiltinsFile != null) {
+      myBuiltinsFile.putUserData(MARKER_KEY, ""); // mark this file as builtins
+    }
   }
 
   @Nullable

@@ -1,6 +1,8 @@
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.psi.*;
@@ -64,7 +66,10 @@ public abstract class PropertyBunch<MType> {
       if (callee instanceof PyReferenceExpression) {
         PyReferenceExpression ref = (PyReferenceExpression)callee;
         if (ref.getQualifier() != null) return null;
-        if ("property".equals(callee.getName()) && !resolvesLocally(ref)) {
+        boolean is_inside_builtins = false;
+        PsiFile psifile = source.getContainingFile();
+        is_inside_builtins = psifile != null && psifile.getUserData(PyBuiltinCache.MARKER_KEY) != null;
+        if ("property".equals(callee.getName()) && (is_inside_builtins || !resolvesLocally(ref))) {
           // we assume that a non-local name 'property' is a built-in name.
           // ref.resolve() is not used because we run in stub building phase where resolve() is frowned upon.
           // NOTE: this logic fails if (quite unusually) name 'property' is directly imported from builtins.
