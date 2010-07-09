@@ -89,10 +89,10 @@ public class CodeFoldingConfigurable extends CompositeConfigurable<CodeFoldingOp
         for (Pair<Editor, Project> each : toUpdate) {
           final CodeFoldingManager foldingManager = CodeFoldingManager.getInstance(each.second);
           if (foldingManager != null) {
-            foldingManager.forceDefaultState(each.first);
-            EditorOptionsPanel.reinitAllEditors();
+            foldingManager.buildInitialFoldings(each.first);
           }
         }
+        EditorOptionsPanel.reinitAllEditors();
       }
     }, ModalityState.NON_MODAL);
   }
