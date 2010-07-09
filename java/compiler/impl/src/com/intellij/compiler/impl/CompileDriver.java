@@ -97,6 +97,8 @@ import java.util.concurrent.TimeUnit;
 
 public class CompileDriver {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompileDriver");
+  // to be used in tests only for debug output
+  public static boolean ourDebugMode = false;
 
   private final Project myProject;
   private final Map<Pair<IntermediateOutputCompiler, Module>, Pair<VirtualFile, VirtualFile>> myGenerationCompilerModuleToOutputDirMap; // [IntermediateOutputCompiler, Module] -> [ProductionSources, TestSources]
@@ -1558,12 +1560,20 @@ public class CompileDriver {
         if (toDelete.isEmpty() && toCompile.isEmpty()) {
           return false;
         }
-        if (LOG.isDebugEnabled()) {
+        if (LOG.isDebugEnabled() || ourDebugMode) {
           if (!toDelete.isEmpty()) {
-            LOG.debug("Found items to delete, compiler " + compiler.getDescription());
+            final String message = "Found items to delete, compiler " + compiler.getDescription();
+            LOG.debug(message);
+            if (ourDebugMode) {
+              System.out.println(message);
+            }
           }
           if (!toCompile.isEmpty()) {
-            LOG.debug("Found items to compile, compiler " + compiler.getDescription());
+            final String message = "Found items to compile, compiler " + compiler.getDescription();
+            LOG.debug(message);
+            if (ourDebugMode) {
+              System.out.println(message);
+            }
           }
         }
         throw new ExitException(ExitStatus.CANCELLED);
