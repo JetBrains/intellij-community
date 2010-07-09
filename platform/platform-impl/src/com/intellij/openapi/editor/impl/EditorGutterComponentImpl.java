@@ -118,6 +118,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   public void reinitSettings() {
     myBackgroundColor = null;
+    revalidateMarkup();
     repaint();
   }
   
@@ -212,7 +213,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         .line;
       endLineNumber = Math.min(endLineNumber, lastLine + 1);
       if (startLineNumber >= endLineNumber) {
-        return;
+        break;
       }
 
       for (int j = startLineNumber; j < endLineNumber; j++) {
@@ -234,7 +235,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       x += myTextAnnotationGutterSizes.get(i);
     }
 
-    UIUtil.drawVDottedLine((Graphics2D)g, x - 1, clip.y, clip.y + clip.height, getBackground(), getOutlineColor(false));
+    UIUtil.drawVDottedLine((Graphics2D)g, getAnnotationsAreaOffset() + w - 1, clip.y, clip.y + clip.height, null, getOutlineColor(false));
   }
 
   private void paintFoldingTree(Graphics g, Rectangle clip) {
@@ -242,8 +243,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       paintFoldingTree((Graphics2D)g);
     }
     else {
-      UIUtil.drawVDottedLine((Graphics2D)g, clip.x + clip.width -1, clip.y, clip.y + clip.height,
-                            myEditor.getBackgroundColor(), getOutlineColor(false));
+      UIUtil.drawVDottedLine((Graphics2D)g, clip.x + clip.width -1, clip.y, clip.y + clip.height, null, getOutlineColor(false));
     }
   }
 
@@ -275,7 +275,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     if (isLineNumbersShown()) {
       paintBackground(g, clip, getLineNumberAreaOffset(), getLineNumberAreaWidth());
       int x = getLineNumberAreaOffset() + getLineNumberAreaWidth() - 2;
-      UIUtil.drawVDottedLine((Graphics2D)g, x, clip.y, clip.y + clip.height, getBackground(), getOutlineColor(false));
+      UIUtil.drawVDottedLine((Graphics2D)g, x, clip.y, clip.y + clip.height, null, getOutlineColor(false));
       paintLineNumbers(g);
     }
   }
@@ -698,7 +698,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     if (!isFoldingOutlineShown()) return;
     Rectangle clip = g.getClipBounds();
 
-    UIUtil.drawVDottedLine(g, getWhitespaceSeparatorOffset(), clip.y, clip.y + clip.height, myEditor.getBackgroundColor(), getOutlineColor(false));
+    UIUtil.drawVDottedLine(g, getWhitespaceSeparatorOffset(), clip.y, clip.y + clip.height, null, getOutlineColor(false));
 
     int anchorX = getFoldingAreaOffset();
     int width = getFoldingAnchorWidth();
