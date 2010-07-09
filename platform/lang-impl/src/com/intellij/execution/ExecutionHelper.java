@@ -150,7 +150,7 @@ public class ExecutionHelper {
 
   public static class RailsErrorViewPanel extends NewErrorTreeViewPanel {
     public RailsErrorViewPanel(final Project project) {
-      super(project, null);
+      super(project, "reference.toolWindows.messages");
     }
 
     protected boolean canHideWarnings() {
