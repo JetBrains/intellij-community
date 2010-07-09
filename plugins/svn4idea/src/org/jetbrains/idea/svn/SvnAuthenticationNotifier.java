@@ -50,7 +50,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
   private Timer myTimer;
 
   public SvnAuthenticationNotifier(final SvnVcs svnVcs) {
-    super(svnVcs.getProject(), ourGroupId, "Not Logged To Subversion", NotificationType.ERROR);
+    super(svnVcs.getProject(), ourGroupId, "Not Logged In to Subversion", NotificationType.ERROR);
     myVcs = svnVcs;
     myRootsToWorkingCopies = myVcs.getRootsToWorkingCopies();
     myCopiesPassiveResults = Collections.synchronizedMap(new HashMap<SVNURL, Boolean>());
@@ -177,13 +177,13 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
   @NotNull
   @Override
   protected String getNotificationContent(AuthenticationRequest obj) {
-    return "<a href=\"\">Click to fix.</a> Not logged to Subversion '" + obj.getRealm() + "' (" + obj.getUrl().toDecodedString() + ")";
+    return "<a href=\"\">Click to fix.</a> Not logged In to Subversion '" + obj.getRealm() + "' (" + obj.getUrl().toDecodedString() + ")";
   }
 
   @NotNull
   @Override
   protected String getToString(AuthenticationRequest obj) {
-    return "Click to fix. Not logged to Subversion '" + obj.getRealm() + "' (" + obj.getUrl().toDecodedString() + ")";
+    return "Click to fix. Not logged In to Subversion '" + obj.getRealm() + "' (" + obj.getUrl().toDecodedString() + ")";
   }
 
   public static class AuthenticationRequest {
