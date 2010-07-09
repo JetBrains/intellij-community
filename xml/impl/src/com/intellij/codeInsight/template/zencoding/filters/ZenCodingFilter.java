@@ -15,11 +15,11 @@
  */
 package com.intellij.codeInsight.template.zencoding.filters;
 
+import com.intellij.codeInsight.template.zencoding.nodes.GenerationNode;
 import com.intellij.codeInsight.template.zencoding.tokens.TemplateToken;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -28,22 +28,38 @@ import java.util.List;
 /**
  * @author Eugene.Kudelevsky
  */
-public abstract class ZenCodingGenerator {
-  private static final ExtensionPointName<ZenCodingGenerator> EP_NAME = new ExtensionPointName<ZenCodingGenerator>("com.intellij.xml.zenCodingGenerator");
+public abstract class ZenCodingFilter {
+  public static final ExtensionPointName<ZenCodingFilter> EP_NAME =
+    new ExtensionPointName<ZenCodingFilter>("com.intellij.xml.zenCodingFilter");
+
+  private static final ZenCodingFilter[] ourStandartFilters = new ZenCodingFilter[]{
+    new XslZenCodingFilter(),
+    new CommentZenCodingFilter(),
+    new EscapeZenCodingFilter()
+  };
 
   @NotNull
-  public abstract String toString(@NotNull TemplateToken token, boolean hasChildren, @NotNull PsiElement context);
+  public String filterText(@NotNull String text, @NotNull TemplateToken token) {
+    return text;
+  }
+
+  @NotNull
+  public GenerationNode filterNode(@NotNull GenerationNode node) {
+    return node;
+  }
+
+  @NotNull
+  public abstract String getSuffix();
 
   public abstract boolean isMyContext(@NotNull PsiElement context);
 
-  @Nullable
-  public abstract String getSuffix();
+  public boolean isAppliedByDefault(@NotNull PsiElement context) {
+    return false;
+  }
 
-  public abstract boolean isAppliedByDefault(@NotNull PsiElement context);
-
-  public static List<ZenCodingGenerator> getInstances() {
-    List<ZenCodingGenerator> generators = new ArrayList<ZenCodingGenerator>();
-    Collections.addAll(generators, XmlZenCodingGeneratorImpl.INSTANCE);
+  public static List<ZenCodingFilter> getInstances() {
+    List<ZenCodingFilter> generators = new ArrayList<ZenCodingFilter>();
+    Collections.addAll(generators, ourStandartFilters);
     Collections.addAll(generators, EP_NAME.getExtensions());
     return generators;
   }

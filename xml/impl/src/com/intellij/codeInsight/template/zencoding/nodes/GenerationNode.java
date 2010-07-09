@@ -22,6 +22,7 @@ import com.intellij.codeInsight.template.zencoding.ZenCodingTemplate;
 import com.intellij.codeInsight.template.zencoding.ZenCodingUtil;
 import com.intellij.codeInsight.template.zencoding.filters.XmlZenCodingGenerator;
 import com.intellij.codeInsight.template.zencoding.filters.XmlZenCodingGeneratorImpl;
+import com.intellij.codeInsight.template.zencoding.filters.ZenCodingFilter;
 import com.intellij.codeInsight.template.zencoding.filters.ZenCodingGenerator;
 import com.intellij.codeInsight.template.zencoding.tokens.TemplateToken;
 import com.intellij.codeInsight.template.zencoding.tokens.XmlTemplateToken;
@@ -34,6 +35,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.XmlElementFactory;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.LocalTimeCounter;
@@ -103,17 +106,45 @@ public class GenerationNode {
   @NotNull
   public TemplateImpl generate(@NotNull CustomTemplateCallback callback,
                                @Nullable String surroundedText,
-                               @Nullable ZenCodingGenerator generator) {
+                               @Nullable ZenCodingGenerator generator,
+                               @NotNull Collection<ZenCodingFilter> filters) {
+    GenerationNode generationNode = this;
+    for (ZenCodingFilter filter : filters) {
+      generationNode = filter.filterNode(generationNode);
+    }
+
+    if (generationNode != this) {
+      return generationNode.generate(callback, surroundedText, generator, Collections.<ZenCodingFilter>emptyList());
+    }
+
     LiveTemplateBuilder builder = new LiveTemplateBuilder();
     int end = -1;
 
     boolean hasChildren = myChildren.size() > 0;
     String txt = !hasChildren && myToInsertChildren ? surroundedText : null;
 
-    TemplateImpl parentTemplate = myTemplateToken instanceof XmlTemplateToken ?
-                                  invokeXmlTemplate((XmlTemplateToken)myTemplateToken, callback, myNumberInIteration, generator, txt,
-                                                    hasChildren) :
-                                  invokeTemplate(myTemplateToken, hasChildren, callback, generator, txt);
+    TemplateImpl parentTemplate;
+    Map<String, String> predefinedValues;
+    if (myTemplateToken instanceof XmlTemplateToken) {
+      XmlTemplateToken xmlTemplateToken = (XmlTemplateToken)myTemplateToken;
+      List<Pair<String, String>> attr2value = new ArrayList<Pair<String, String>>(xmlTemplateToken.getAttribute2Value());
+      parentTemplate = invokeXmlTemplate(xmlTemplateToken, callback, myNumberInIteration, generator,
+                                         hasChildren, attr2value);
+      predefinedValues = buildPredefinedValues(attr2value, myNumberInIteration, (XmlZenCodingGenerator)generator, hasChildren);
+    }
+    else {
+      parentTemplate = invokeTemplate(myTemplateToken, hasChildren, callback, generator);
+      predefinedValues = null;
+    }
+
+    String s = parentTemplate.getString();
+    for (ZenCodingFilter filter : filters) {
+      s = filter.filterText(s, myTemplateToken);
+    }
+    parentTemplate = parentTemplate.copy();
+    parentTemplate.setString(s);
+
+    parentTemplate = expandTemplate(parentTemplate, predefinedValues, txt);
 
     int offset = builder.insertTemplate(0, parentTemplate, null);
     int newOffset = gotoChild(callback.getProject(), builder.getText(), offset, 0, builder.length());
@@ -125,21 +156,41 @@ public class GenerationNode {
       end = offset;
     }
     LiveTemplateBuilder.Marker marker = offset < builder.length() ? builder.createMarker(offset) : null;
+
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(callback.getProject());
+    String tabStr;
+    if (callback.isInInjectedFragment()) {
+      tabStr = "";
+    }
+    else if (settings.useTabCharacter(callback.getFileType())) {
+      tabStr = "\t";
+    }
+    else {
+      StringBuilder tab = new StringBuilder();
+      int tabSize = settings.getTabSize(callback.getFileType());
+      while (tabSize-- > 0) {
+        tab.append(' ');
+      }
+      tabStr = tab.toString();
+    }
+
     for (int i = 0, myChildrenSize = myChildren.size(); i < myChildrenSize; i++) {
       GenerationNode child = myChildren.get(i);
-      TemplateImpl childTemplate = child.generate(callback, surroundedText, generator);
+      TemplateImpl childTemplate = child.generate(callback, surroundedText, generator, filters);
 
       boolean blockTag = child.isBlockTag();
 
       if (blockTag && !isNewLineBefore(builder.getText(), offset)) {
-        builder.insertText(offset++, "\n");
+        builder.insertText(offset, "\n" + tabStr);
+        offset += tabStr.length() + 1;
       }
 
       int e = builder.insertTemplate(offset, childTemplate, null);
       offset = marker != null ? marker.getEndOffset() : builder.length();
 
       if (blockTag && !isNewLineAfter(builder.getText(), offset)) {
-        builder.insertText(offset++, "\n");
+        builder.insertText(offset, "\n" + tabStr);
+        offset += tabStr.length() + 1;
       }
 
       if (end == -1 && e < offset) {
@@ -155,8 +206,7 @@ public class GenerationNode {
   private static TemplateImpl invokeTemplate(TemplateToken token,
                                              boolean hasChildren,
                                              final CustomTemplateCallback callback,
-                                             @Nullable ZenCodingGenerator generator,
-                                             String surroundedText) {
+                                             @Nullable ZenCodingGenerator generator) {
     TemplateImpl template = token.getTemplate();
     if (generator != null) {
       assert template != null;
@@ -166,22 +216,21 @@ public class GenerationNode {
       removeVariablesWhichHasNoSegment(template);
     }
 
-    return expandTemplate(template, null, surroundedText);
+    return template;
   }
 
   private static TemplateImpl invokeXmlTemplate(XmlTemplateToken token,
                                                 CustomTemplateCallback callback,
                                                 final int numberInIteration,
                                                 @Nullable ZenCodingGenerator generator,
-                                                String surroundedText,
-                                                final boolean hasChildren) {
+                                                final boolean hasChildren,
+                                                final List<Pair<String, String>> attr2value) {
     assert generator == null || generator instanceof XmlZenCodingGenerator :
       "The generator cannot process XmlTemplateToken because it doesn't inherit XmlZenCodingGenerator";
 
     TemplateImpl template = token.getTemplate();
     assert template != null;
 
-    final List<Pair<String, String>> attr2value = new ArrayList<Pair<String, String>>(token.getAttribute2Value());
     final XmlFile xmlFile = token.getFile();
     XmlDocument document = xmlFile.getDocument();
     if (document != null) {
@@ -199,9 +248,7 @@ public class GenerationNode {
     template = template.copy();
     template.setString(s);
     removeVariablesWhichHasNoSegment(template);
-    Map<String, String> predefinedValues =
-      buildPredefinedValues(attr2value, numberInIteration, (XmlZenCodingGenerator)generator, hasChildren);
-    return expandTemplate(template, predefinedValues, surroundedText);
+    return template;
   }
 
   @NotNull
@@ -332,5 +379,9 @@ public class GenerationNode {
       i++;
     }
     return i == text.length();
+  }
+
+  public TemplateToken getTemplateToken() {
+    return myTemplateToken;
   }
 }

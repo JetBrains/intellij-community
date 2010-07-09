@@ -21,6 +21,7 @@ import com.intellij.codeInsight.template.CustomLiveTemplate;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.LiveTemplateBuilder;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.codeInsight.template.zencoding.filters.ZenCodingFilter;
 import com.intellij.codeInsight.template.zencoding.filters.ZenCodingGenerator;
 import com.intellij.codeInsight.template.zencoding.nodes.*;
 import com.intellij.codeInsight.template.zencoding.tokens.*;
@@ -38,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -70,11 +72,11 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
 
   @Nullable
   private List<ZenCodingToken> lex(@NotNull String text, @NotNull CustomTemplateCallback callback) {
-    String filter = null;
+    String filterString = null;
 
     int filterDelim = text.indexOf('|');
     if (filterDelim >= 0 && filterDelim < text.length() - 1) {
-      filter = text.substring(filterDelim + 1);
+      filterString = text.substring(filterDelim + 1);
       text = text.substring(0, filterDelim);
     }
 
@@ -136,8 +138,11 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
     // at least MarkerToken
     assert result.size() > 0;
 
-    if (filter != null) {
-      result.add(result.size() - 1, new FilterToken(filter));
+    if (filterString != null) {
+      String[] filterSuffixes = filterString.split("\\|");
+      for (String filterSuffix : filterSuffixes) {
+        result.add(result.size() - 1, new FilterToken(filterSuffix));
+      }
     }
     return result;
   }
@@ -216,6 +221,31 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
     return defaultGenerator;
   }
 
+  private static List<ZenCodingFilter> getFilters(ZenCodingNode node, PsiElement context) {
+    List<ZenCodingFilter> result = new ArrayList<ZenCodingFilter>();
+
+    while (node instanceof FilterNode) {
+      FilterNode filterNode = (FilterNode)node;
+      String filterSuffix = filterNode.getFilter();
+      for (ZenCodingFilter filter : ZenCodingFilter.getInstances()) {
+        if (filter.isMyContext(context) && filter.getSuffix().equals(filterSuffix)) {
+          result.add(filter);
+        }
+      }
+      node = filterNode.getNode();
+    }
+
+    for (ZenCodingFilter filter : ZenCodingFilter.getInstances()) {
+      if (filter.isMyContext(context) && filter.isAppliedByDefault(context)) {
+        result.add(filter);
+      }
+    }
+
+    Collections.reverse(result);
+    return result;
+  }
+
+
   private void expand(String key,
                       @NotNull CustomTemplateCallback callback,
                       String surroundedText) {
@@ -231,14 +261,16 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
       callback.deleteTemplateKey(key);
     }
 
-    ZenCodingGenerator generator = findApplicableGenerator(node, callback.getContext());
+    PsiElement context = callback.getContext();
+    ZenCodingGenerator generator = findApplicableGenerator(node, context);
+    List<ZenCodingFilter> filters = getFilters(node, context);
 
     List<GenerationNode> genNodes = node.expand(-1);
     LiveTemplateBuilder builder = new LiveTemplateBuilder();
     int end = -1;
     for (int i = 0, genNodesSize = genNodes.size(); i < genNodesSize; i++) {
       GenerationNode genNode = genNodes.get(i);
-      TemplateImpl template = genNode.generate(callback, surroundedText, generator);
+      TemplateImpl template = genNode.generate(callback, surroundedText, generator, filters);
       int e = builder.insertTemplate(builder.length(), template, null);
       if (end == -1 && end < builder.length()) {
         end = e;
@@ -343,11 +375,13 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
         return null;
       }
       ZenCodingToken filter = nextToken();
-      if (filter instanceof FilterToken) {
+      ZenCodingNode result = add;
+      while (filter instanceof FilterToken) {
+        result = new FilterNode(result, ((FilterToken)filter).getSuffix());
         myIndex++;
-        return new FilterNode(add, ((FilterToken)filter).getSuffix());
+        filter = nextToken();
       }
-      return add;
+      return result;
     }
 
     @Nullable
