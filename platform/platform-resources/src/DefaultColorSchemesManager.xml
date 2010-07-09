@@ -11,6 +11,8 @@
       <option name="METHOD_SEPARATORS_COLOR" value="c0c0c0"/>
       <option name="WHITESPACES" value="c5c5c5"/>
       <option name="INDENT_GUIDE" value="e6e6e6"/>
+      <option name="GUTTER_BACKGROUND" value="f0f0f0" />
+      <option name="NOTIFICATION_BACKGROUND" value="ffffcc" />
       <option name="SELECTED_INDENT_GUIDE" value="c8c8c8"/>
       <option name="SELECTION_FOREGROUND" value="ffffff"/>
       <option name="LINE_NUMBERS_COLOR" value="800000"/>
@@ -18,8 +20,8 @@
       <option name="ANNOTATIONS_MERGED_COLOR" value="008080" />
       <option name="CARET_COLOR" value="0"/>
       <option name="RIGHT_MARGIN_COLOR" value="c0c0c0"/>
-      <option name="FOLDING_TREE_COLOR" value="808080"/>
-      <option name="SELECTED_FOLDING_TREE_COLOR" value="000000"/>
+      <option name="TEARLINE_COLOR" value="808080"/>
+      <option name="SELECTED_TEARLINE_COLOR" value="000000"/>
       <option name="READONLY_FRAGMENT_BACKGROUND" value="cfe7ff"/>
 
       <option name="ADDED_LINES_COLOR" value="edfced"/>

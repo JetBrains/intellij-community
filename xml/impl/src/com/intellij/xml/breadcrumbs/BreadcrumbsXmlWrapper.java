@@ -156,7 +156,8 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
 
     myWrapperPanel = new JPanel();
     myWrapperPanel.setLayout(new BorderLayout());
-    myWrapperPanel.setBorder(BorderFactory.createEmptyBorder(2, 0, 1, 0));
+    myWrapperPanel.setBorder(BorderFactory.createEmptyBorder(2, 2, 1, 2));
+    myWrapperPanel.setOpaque(false);
 
     myWrapperPanel.add(myComponent, BorderLayout.CENTER);
   }

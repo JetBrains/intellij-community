@@ -915,17 +915,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   }
 
   public void showEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent) {
-    final EditorComposite composite = getEditorComposite(editor);
-    if (composite != null) {
-      composite.getPane(editor).addInfo(annotationComponent);
-    }
+    addTopComponent(editor, annotationComponent);
   }
 
   public void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent) {
-    final EditorComposite composite = getEditorComposite(editor);
-    if (composite != null) {
-      composite.getPane(editor).removeInfo(annotationComponent);
-    }
+    removeTopComponent(editor, annotationComponent);
   }
 
   public void addTopComponent(@NotNull final FileEditor editor, @NotNull final JComponent component) {
