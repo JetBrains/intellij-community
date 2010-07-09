@@ -33,5 +33,5 @@ public abstract class LineAnnotationAspectAdapter implements LineAnnotationAspec
     showAffectedPaths(lineNum);
   }
 
-  protected void showAffectedPaths(int lineNum) {}
+  protected abstract void showAffectedPaths(int lineNum);
 }
