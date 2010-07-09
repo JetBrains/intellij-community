@@ -1,5 +1,6 @@
 package com.intellij.openapi.editor.impl.softwrap;
 
+import com.intellij.idea.Bombed;
 import com.intellij.mock.MockFoldRegion;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -17,10 +18,7 @@ import org.jmock.integration.junit4.JUnit4Mockery;
 import org.jmock.Mockery;
 import org.jmock.lib.legacy.ClassImposteriser;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Denis Zhdanov
@@ -178,6 +176,7 @@ public class SoftWrapDataMapperTest {
     myMockery.assertIsSatisfied();
   }
 
+  @Bombed(day = 12, month = Calendar.JULY)
   @Test
   public void softWrapHasSymbolBeforeFirstLineFeed() {
     String document =
@@ -193,6 +192,7 @@ public class SoftWrapDataMapperTest {
     test(document);
   }
 
+  @Bombed(day = 12, month = Calendar.JULY)
   @Test
   public void multipleSoftWrappedLogicalLines() {
     String document =
@@ -212,6 +212,7 @@ public class SoftWrapDataMapperTest {
     test(document);
   }
 
+  @Bombed(day = 12, month = Calendar.JULY)
   @Test
   public void softWrapAndFoldedLines() {
     String document =
