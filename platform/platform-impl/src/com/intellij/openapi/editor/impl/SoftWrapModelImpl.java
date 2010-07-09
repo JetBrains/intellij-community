@@ -15,11 +15,9 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.TextChange;
-import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.SoftWrapChangeListener;
 import com.intellij.openapi.editor.ex.SoftWrapModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.softwrap.*;
@@ -56,7 +54,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
   private       int      myActive;
 
   public SoftWrapModelImpl(@NotNull EditorEx editor) {
-    this(editor, new SoftWrapsStorage(), new CompositeSoftWrapPainter(editor));
+    this(editor, new SoftWrapsStorage(editor.getDocument()), new CompositeSoftWrapPainter(editor));
   }
 
   public SoftWrapModelImpl(@NotNull final EditorEx editor, @NotNull SoftWrapsStorage storage, @NotNull SoftWrapPainter painter) {
@@ -77,7 +75,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
   }
 
   public boolean isSoftWrappingEnabled() {
-    return myEditor.getSettings().isUseSoftWraps();
+    return myEditor.getSettings().isUseSoftWraps() && !myEditor.isOneLineMode();
   }
 
   @Nullable
@@ -86,6 +84,11 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
       return null;
     }
     return myStorage.getSoftWrap(offset);
+  }
+
+  @Override
+  public int getSoftWrapIndex(int offset) {
+    return myStorage.getSoftWrapIndex(offset);
   }
 
   @NotNull
@@ -138,8 +141,11 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
       return 0;
     }
     int result = 0;
-    for (TextChange myWrap : myStorage.getSoftWraps()) {
-      result += StringUtil.countNewLines(myWrap.getText());
+    FoldingModel foldingModel = myEditor.getFoldingModel();
+    for (TextChange softWrap : myStorage.getSoftWraps()) {
+      if (!foldingModel.isOffsetCollapsed(softWrap.getStart())) {
+        result += StringUtil.countNewLines(softWrap.getText());
+      }
     }
     return result;
   }
@@ -308,5 +314,10 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
 
     // Restore caret position.
     myEditor.getCaretModel().moveToVisualPosition(visualCaretPosition);
+  }
+
+  @Override
+  public boolean addSoftWrapChangeListener(@NotNull SoftWrapChangeListener listener) {
+    return myStorage.addSoftWrapChangeListener(listener);
   }
 }

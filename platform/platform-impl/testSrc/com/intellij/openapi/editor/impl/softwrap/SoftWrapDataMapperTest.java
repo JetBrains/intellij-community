@@ -85,9 +85,10 @@ public class SoftWrapDataMapperTest {
     myMockery = new JUnit4Mockery() {{
       setImposteriser(ClassImposteriser.INSTANCE);
     }};
-    myStorage = new SoftWrapsStorage();
+
     myEditor = myMockery.mock(EditorEx.class);
     myDocument = myMockery.mock(Document.class);
+    myStorage = new SoftWrapsStorage(myDocument);
     myFoldingModel = myMockery.mock(FoldingModel.class);
     final EditorSettings settings = myMockery.mock(EditorSettings.class);
     final Project project = myMockery.mock(Project.class);
