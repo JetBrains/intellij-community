@@ -17,8 +17,13 @@ package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-@SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod", "UnusedDeclaration"})
+/**
+ * @author max
+ * @author Konstantin Bulenkov
+ */
+@SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod", "UnusedDeclaration", "EqualsWhichDoesntCheckParameterClass"})
 public class Key<T> {
   private static int ourKeysCounter = 0;
   private final int myIndex = ourKeysCounter++;
@@ -44,5 +49,19 @@ public class Key<T> {
 
   public static <T> Key<T> create(@NotNull @NonNls String name) {
     return new Key<T>(name);
+  }
+
+  @Nullable
+  public T get(@Nullable UserDataHolder holder) {
+    return holder == null ? null : holder.getUserData(this);
+  }
+
+  public T get(@Nullable UserDataHolder holder, T defaultValue) {
+    final T t = get(holder);
+    return t == null ? defaultValue : t;
+  }
+
+  public boolean containsIn(@Nullable UserDataHolder holder) {
+    return get(holder) != null;
   }
 }
