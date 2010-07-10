@@ -64,4 +64,10 @@ public class Key<T> {
   public boolean containsIn(@Nullable UserDataHolder holder) {
     return get(holder) != null;
   }
+
+  public void set(@Nullable UserDataHolder holder, T value) {
+    if (holder != null) {
+      holder.putUserData(this, value);
+    }
+  }
 }
