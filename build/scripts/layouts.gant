@@ -172,6 +172,9 @@ def layoutFull(String home, String targetDirectory) {
 
       layoutPlugin("SpellChecker", "spellchecker", "spellchecker-core")
 
+      layoutPlugin("RelaxNG-Support", "relaxng") {
+        fileset(dir: "${home}/community/plugins/relaxng/lib", includes: "**/*.jar")
+      }
 
       layoutPlugin("maven") {
         jar("maven-facade-api.jar") {
