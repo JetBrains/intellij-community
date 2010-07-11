@@ -50,6 +50,10 @@ public class NoNamespaceSchemaProvider extends XmlSchemaProvider {
 
   @Override
   public boolean isAvailable(@NotNull XmlFile file) {
-    return file.getFileType() == XmlFileType.INSTANCE;
+    if (file.getFileType() != XmlFileType.INSTANCE) {
+      return false;
+    }
+    NoNamespaceConfig config = NoNamespaceConfig.getInstance(file.getProject());
+    return config != null && config.getMappedFile(file) != null;
   }
 }
