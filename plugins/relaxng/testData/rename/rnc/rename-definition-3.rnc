@@ -1,0 +1,2 @@
+start = element foo { <caret>pattern }
+pattern = element bar { empty }

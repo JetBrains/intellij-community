@@ -1,0 +1,5 @@
+
+start = element foo { empty }
+
+#suppress UnusedDefine
+foo = element bar { empty }
