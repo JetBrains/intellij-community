@@ -1,4 +1,6 @@
-package com.intellij.execution;
+package com.intellij.execution.console;
+
+import com.intellij.execution.ConsoleFolding;
 
 import java.util.List;
 

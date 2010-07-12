@@ -256,6 +256,12 @@
 
     <patterns.patternClass className="org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns" alias="groovy"/>
 
+    <stacktrace.fold substring="at org.codehaus.groovy."/>
+    <stacktrace.fold substring="at groovy."/>
+    <stacktrace.fold substring="at org.codehaus.groovy.runtime.DefaultGroovyMethods." negate="true"/>
+    <stacktrace.fold substring="at org.codehaus.groovy.vmplugin.v5.PluginDefaultGroovyMethods." negate="true"/>
+    <stacktrace.fold substring="at org.codehaus.groovy.runtime.DefaultGroovyMethodsSupport." negate="true"/>
+
     <!-- control flow -->
     <intentionAction>
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>

@@ -1,4 +1,4 @@
-package com.intellij.execution;
+package com.intellij.execution.console;
 
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;

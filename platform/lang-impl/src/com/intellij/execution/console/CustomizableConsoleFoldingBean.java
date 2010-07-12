@@ -1,4 +1,4 @@
-package com.intellij.execution;
+package com.intellij.execution.console;
 
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;

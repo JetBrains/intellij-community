@@ -1,4 +1,4 @@
-package com.intellij.execution;
+package com.intellij.execution.console;
 
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
