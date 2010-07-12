@@ -1,5 +1,6 @@
 package com.intellij.execution.console;
 
+import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -14,12 +15,14 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author peter
  */
-public class FoldLinesWithSubstring extends DumbAwareAction {
+public class FoldLinesLikeThis extends DumbAwareAction {
   private final Editor myEditor;
+  private final ConsoleViewImpl myConsole;
 
-  public FoldLinesWithSubstring(Editor editor) {
+  public FoldLinesLikeThis(Editor editor, ConsoleViewImpl console) {
     super("Fold lines like this");
     myEditor = editor;
+    myConsole = console;
   }
 
   @Nullable
@@ -71,5 +74,6 @@ public class FoldLinesWithSubstring extends DumbAwareAction {
         }, ModalityState.stateForComponent(createComponent()));
       }
     });
+    myConsole.foldImmediately();
   }
 }
