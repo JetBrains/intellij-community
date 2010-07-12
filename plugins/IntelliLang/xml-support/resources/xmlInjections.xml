@@ -7,16 +7,16 @@
   </injection>
   <injection language="XPath" injector-id="xml">
     <display-name>JAXB attribute node</display-name>
-    <place><![CDATA[xmlAttribute().withLocalName(string().equalTo("node")).inside(xmlTag().withLocalName(string().equalTo("bindings")).withNamespace(string().equalTo("http://java.sun.com/xml/ns/jaxb")))]]></place>
+    <place><![CDATA[xmlAttribute().withLocalName(string().equalTo("node")).withParent(xmlTag().withLocalName(string().equalTo("bindings")).withNamespace(string().equalTo("http://java.sun.com/xml/ns/jaxb")))]]></place>
   </injection>
   <injection language="JavaScript" injector-id="xml">
     <display-name>*/@href</display-name>
     <value-pattern>^javascript:(.+)</value-pattern>
-    <place><![CDATA[xmlAttribute().withLocalName(string().equalTo("href")).inside(xmlTag().withNamespace(string().equalTo("http://www.w3.org/1999/xhtml")))]]></place>
+    <place><![CDATA[xmlAttribute().withLocalName(string().equalTo("href")).withParent(xmlTag().withNamespace(string().equalTo("http://www.w3.org/1999/xhtml")))]]></place>
   </injection>
   <injection language="JavaScript" injector-id="xml">
     <display-name>*/@on.*</display-name>
-    <place><![CDATA[xmlAttribute().withLocalName(string().matches("on.*")).inside(xmlTag().withNamespace(string().equalTo("http://www.w3.org/1999/xhtml")))]]></place>
+    <place><![CDATA[xmlAttribute().withLocalName(string().matches("on.*")).withParent(xmlTag().withNamespace(string().equalTo("http://www.w3.org/1999/xhtml")))]]></place>
   </injection>
   <injection language="CSS" injector-id="xml">
     <display-name>*/@style</display-name>

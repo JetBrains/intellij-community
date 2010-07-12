@@ -145,7 +145,7 @@ public class XmlAttributeInjection extends AbstractTagInjection {
     if (StringUtil.isNotEmpty(name)) appendStringPattern(result, ".withLocalName(", name, ")");
     if (StringUtil.isNotEmpty(namespace)) appendStringPattern(result, ".withNamespace(", namespace, ")");
     if (StringUtil.isNotEmpty(injection.getTagName()) || StringUtil.isNotEmpty(injection.getTagNamespace())) {
-      result.append(".inside(").append(XmlTagInjection.getPatternString(injection)).append(")");
+      result.append(".withParent(").append(XmlTagInjection.getPatternString(injection)).append(")");
     }
     return result.toString();
   }
