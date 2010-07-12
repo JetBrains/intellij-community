@@ -75,6 +75,18 @@ public class SuggestedParamTypesTest extends LightCodeInsightTestCase {
     doTest("String", "Object", "Serializable", "Comparable<String>", "CharSequence");
   }
 
+  public void testCastInside() throws Exception {
+    doTest("A", "Object");
+  }
+
+  public void testMultipleCasts() throws Exception {
+    doTest("A", "Object");
+  }
+
+  public void testCastNoCast() throws Exception {
+    doTest("Object");
+  }
+
   private void doTest(String... types) throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
 

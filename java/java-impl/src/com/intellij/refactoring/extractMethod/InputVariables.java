@@ -29,11 +29,16 @@ import com.intellij.psi.controlFlow.ControlFlow;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.ParameterTablePanel;
 import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.*;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
 
 public class InputVariables {
   private final List<ParameterTablePanel.VariableData> myInputVariables;
@@ -86,6 +91,33 @@ public class InputVariables {
       if (type instanceof PsiEllipsisType) {
         type = ((PsiEllipsisType)type).toArrayType();
       }
+      final Map<PsiCodeBlock, PsiType> casts = new HashMap<PsiCodeBlock, PsiType>();
+      for (PsiReference reference : ReferencesSearch.search(var, myScope)) {
+        final PsiElement element = reference.getElement();
+        final PsiElement parent = element.getParent();
+        final PsiCodeBlock block = PsiTreeUtil.getParentOfType(parent, PsiCodeBlock.class);
+        if (parent instanceof PsiTypeCastExpression) {
+          final PsiType currentType = casts.get(block);
+          final PsiType castType = ((PsiTypeCastExpression)parent).getType();
+          casts.put(block, getBroaderType(currentType, castType));
+        } else if (!(parent instanceof PsiInstanceOfExpression)){
+          if (!casts.containsKey(block)) {
+            casts.put(block, null);
+          }
+        }
+      }
+      if (!casts.containsValue(null)) {
+        PsiType currentType = null;
+        for (PsiType psiType : casts.values()) {
+          currentType = getBroaderType(currentType, psiType);
+          if (currentType == null) {
+            break;
+          }
+        }
+        if (currentType != null) {
+          type = currentType;
+        }
+      }
 
       ParameterTablePanel.VariableData data = new ParameterTablePanel.VariableData(var, type);
       data.name = name;
@@ -109,6 +141,28 @@ public class InputVariables {
 
 
     return inputData;
+  }
+
+  @Nullable
+  private static PsiType getBroaderType(PsiType currentType, PsiType castType) {
+    if (currentType != null) {
+      if (castType != null) {
+        if (TypeConversionUtil.isAssignable(castType, currentType)) {
+          return castType;
+        } else if (!TypeConversionUtil.isAssignable(currentType, castType)) {
+          for (PsiType superType : castType.getSuperTypes()) {
+            if (TypeConversionUtil.isAssignable(superType, currentType)) {
+              return superType;
+            }
+          }
+          return null;
+        }
+      }
+    }
+    else {
+      return castType;
+    }
+    return currentType;
   }
 
   public List<ParameterTablePanel.VariableData> getInputVariables() {
