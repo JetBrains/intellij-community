@@ -267,6 +267,12 @@ def layoutFull(String home, String targetDirectory) {
           dir("standardDsls") {
             fileset(dir: "$home/plugins/groovy/resources/standardDsls")
           }
+          dir("agent") {
+            fileset(dir: "${home}/plugins/groovy/hotswap") {
+              include(name: "gragent.jar")
+            }
+          }
+
 
           fileset(dir: "$home/plugins/groovy/resources/conf")
           fileset(dir: "${home}/plugins/groovy/lib")

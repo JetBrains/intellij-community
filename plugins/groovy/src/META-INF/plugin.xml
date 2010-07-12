@@ -447,6 +447,8 @@
 
     <projectService serviceInterface="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper"
                     serviceImplementation="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper"/>
+
+    <java.programPatcher implementation="org.jetbrains.plugins.groovy.debugger.GroovyHotSwapper"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">
