@@ -3,6 +3,10 @@ package org.jetbrains.jps
 import org.codehaus.gant.GantBinding
 import org.jetbrains.jps.dag.DagBuilder
 import org.jetbrains.jps.builders.*
+import org.jetbrains.jps.timing.BuildTiming
+
+import org.jetbrains.jps.timing.DummyBuildTiming
+import org.jetbrains.jps.timing.BuildTimingImpl
 
 /**
  * @author max
@@ -24,6 +28,8 @@ class ProjectBuilder {
   final List<ModuleBuilder> weavingBuilders = []
   final CustomTasksBuilder preTasksBuilder = new CustomTasksBuilder()
   final CustomTasksBuilder postTasksBuilder = new CustomTasksBuilder()
+
+  BuildTiming timing = new BuildTimingImpl()
 
   def ProjectBuilder(GantBinding binding, Project project) {
     this.project = project
@@ -67,18 +73,22 @@ class ProjectBuilder {
   }
 
   public def buildAll() {
+    timing.onBuildStarted(project)
     buildChunks()
     chunks.each {
       makeChunk(it)
       makeChunkTests(it)
     }
+    timing.onBuildFinished(project)
   }
 
   public def buildProduction() {
+    timing.onBuildStarted(project)
     buildChunks()
     chunks.each {
       makeChunk(it)
     }
+    timing.onBuildFinished(project)
   }
 
   def preModuleBuildTask(String moduleName, Closure task) {
@@ -151,7 +161,7 @@ class ProjectBuilder {
     List sources = validatePaths(tests ? chunk.testRoots : chunk.sourceRoots)
 
     if (sources.isEmpty()) return
-    
+
     def ant = binding.ant
     ant.mkdir dir: dst
 
@@ -166,11 +176,15 @@ class ProjectBuilder {
 
     if (!project.dryRun) {
       builders().each {
+        timing.onModuleBuilderStarted(it, chunk)
         it.processModule(chunk, state)
+        timing.onModuleBuilderFinished(it, chunk)
       }
+      timing.onCompilationStarted(chunk)
       state.tempRootsToDelete.each {
         binding.ant.delete(dir: it)
       }
+      timing.onCompilationFinished(chunk)
     }
 
     chunk.modules.each {
