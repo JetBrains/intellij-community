@@ -41,9 +41,9 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrRefer
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 /**
  * @author ilyas
@@ -187,21 +187,17 @@ public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements 
   }
 
   @NotNull
-  public GroovyResolveResult[] getMethodVariants() {
+  public GroovyResolveResult[] getMethodVariants(@Nullable GrExpression upToArgument) {
     final GrExpression invoked = getInvokedExpression();
-    if (!(invoked instanceof GrReferenceExpression)) return GroovyResolveResult.EMPTY_ARRAY;
-    final ArrayList<GroovyResolveResult> res = new ArrayList<GroovyResolveResult>();
+    if (!(invoked instanceof GrReferenceExpressionImpl)) return GroovyResolveResult.EMPTY_ARRAY;
 
-    for (PsiReference ref : invoked.getReferences()) {
-      if (ref instanceof PsiPolyVariantReference) {
-        for (ResolveResult result : ((PsiPolyVariantReference)ref).multiResolve(true)) {
-          if (result instanceof GroovyResolveResult) {
-            res.add((GroovyResolveResult)result);
-          }
-        }
-      }
+    final PsiType[] partialArgs = PsiUtil.getArgumentTypes(invoked, false, upToArgument);
+    final MethodResolverProcessor processor = ((GrReferenceExpressionImpl)invoked).runMethodResolverProcessor(partialArgs, true);
+    if (processor != null) {
+      return processor.getCandidates();
     }
-    return res.toArray(new GroovyResolveResult[res.size()]);
+
+    return GroovyResolveResult.EMPTY_ARRAY;
   }
 
 }

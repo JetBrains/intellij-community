@@ -50,6 +50,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
   @Nullable
   private final PsiType[] myArgumentTypes;
   private final PsiType[] myTypeArguments;
+  private final boolean myAllVariants;
 
   private final Set<GroovyResolveResult> myInapplicableCandidates = new LinkedHashSet<GroovyResolveResult>();
   private final boolean myIsConstructor;
@@ -57,11 +58,15 @@ public class MethodResolverProcessor extends ResolverProcessor {
   private boolean myStopExecuting = false;
 
   public MethodResolverProcessor(String name, GroovyPsiElement place, boolean isConstructor, PsiType thisType, @Nullable PsiType[] argumentTypes, PsiType[] typeArguments) {
+    this(name, place, isConstructor, thisType, argumentTypes, typeArguments, false);
+  }
+  public MethodResolverProcessor(String name, GroovyPsiElement place, boolean isConstructor, PsiType thisType, @Nullable PsiType[] argumentTypes, PsiType[] typeArguments, boolean allVariants) {
     super(name, EnumSet.of(ResolveKind.METHOD, ResolveKind.PROPERTY), place, PsiType.EMPTY_ARRAY);
     myIsConstructor = isConstructor;
     myThisType = thisType;
     myArgumentTypes = argumentTypes;
     myTypeArguments = typeArguments;
+    myAllVariants = allVariants;
   }
 
   public boolean execute(PsiElement element, ResolveState state) {
@@ -78,7 +83,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
       boolean isAccessible = isAccessible(method);
       GroovyPsiElement fileResolveContext = state.get(RESOLVE_CONTEXT);
       boolean isStaticsOK = isStaticsOK(method, fileResolveContext);
-      if (PsiUtil.isApplicable(myArgumentTypes, method, substitutor, fileResolveContext instanceof GrMethodCallExpression, (GroovyPsiElement)myPlace) && isStaticsOK) {
+      if (!myAllVariants && PsiUtil.isApplicable(myArgumentTypes, method, substitutor, fileResolveContext instanceof GrMethodCallExpression, (GroovyPsiElement)myPlace) && isStaticsOK) {
         myCandidates.add(new GroovyResolveResultImpl(method, fileResolveContext, substitutor, isAccessible, isStaticsOK));
       } else {
         myInapplicableCandidates.add(new GroovyResolveResultImpl(method, fileResolveContext, substitutor, isAccessible, isStaticsOK));
@@ -213,6 +218,10 @@ public class MethodResolverProcessor extends ResolverProcessor {
 
   @NotNull
   public GroovyResolveResult[] getCandidates() {
+    if (myAllVariants) {
+      return myInapplicableCandidates.toArray(new GroovyResolveResult[myInapplicableCandidates.size()]);
+    }
+
     if (!myCandidates.isEmpty()) {
       return filterCandidates();
     }

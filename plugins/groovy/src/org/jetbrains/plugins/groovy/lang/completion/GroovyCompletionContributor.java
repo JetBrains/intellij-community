@@ -261,7 +261,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
         }
         else if (call instanceof GrCallExpression) {
           GrCallExpression constructorCall = (GrCallExpression)call;
-          ContainerUtil.addAll(results, constructorCall.getMethodVariants());
+          ContainerUtil.addAll(results, constructorCall.getMethodVariants(null));
           final PsiType type = ((GrCallExpression)call).getType();
           if (type instanceof PsiClassType) {
             final PsiClass psiClass = ((PsiClassType)type).resolve();
