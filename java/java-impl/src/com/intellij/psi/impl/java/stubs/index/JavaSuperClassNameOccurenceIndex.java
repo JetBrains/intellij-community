@@ -21,7 +21,7 @@ package com.intellij.psi.impl.java.stubs.index;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiReferenceList;
-import com.intellij.psi.impl.search.JavaSourceFilterScope;
+import com.intellij.psi.impl.search.JavaLikeSourceFilterScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StringStubIndexExtension;
 import com.intellij.psi.stubs.StubIndexKey;
@@ -42,7 +42,7 @@ public class JavaSuperClassNameOccurenceIndex extends StringStubIndexExtension<P
   }
 
   public Collection<PsiReferenceList> get(final String s, final Project project, final GlobalSearchScope scope) {
-    return super.get(s, project, new JavaSourceFilterScope(scope, project));
+    return super.get(s, project, new JavaLikeSourceFilterScope(scope, project));
   }
 
   @Override

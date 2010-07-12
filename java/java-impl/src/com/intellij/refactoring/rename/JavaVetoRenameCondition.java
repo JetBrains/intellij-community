@@ -26,7 +26,7 @@ public class JavaVetoRenameCondition implements Condition<PsiElement> {
   public boolean value(final PsiElement element) {
     return element instanceof PsiJavaFile &&
            !JspPsiUtil.isInJspFile(element) &&
-           !CollectHighlightsUtil.isOutsideSourceRootJavaFile((PsiFile)element) &&
+           !CollectHighlightsUtil.isOutsideSourceRoot((PsiFile)element) &&
            ((PsiJavaFile) element).getClasses().length > 0;
   }
 }

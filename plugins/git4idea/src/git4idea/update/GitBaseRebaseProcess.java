@@ -220,33 +220,35 @@ public abstract class GitBaseRebaseProcess {
             }
           }
           finally {
-            HashSet<File> filesToRefresh = new HashSet<File>();
-            VcsDirtyScopeManager m = VcsDirtyScopeManager.getInstance(myProject);
-            for (LocalChangeList changeList : listsCopy) {
-              final Collection<Change> changes = changeList.getChanges();
-              if (!changes.isEmpty()) {
-                LOG.debug("After unstash: moving " + changes.size() + " changes to '" + changeList.getName() + "'");
-                changeManager.moveChangesTo(changeList, changes.toArray(new Change[changes.size()]));
-              }
-              for (Change c : changeList.getChanges()) {
-                ContentRevision after = c.getAfterRevision();
-                if (after != null) {
-                  m.fileDirty(after.getFile());
-                  filesToRefresh.add(after.getFile().getIOFile());
+            if (listsCopy != null) {
+              HashSet<File> filesToRefresh = new HashSet<File>();
+              VcsDirtyScopeManager m = VcsDirtyScopeManager.getInstance(myProject);
+              for (LocalChangeList changeList : listsCopy) {
+                final Collection<Change> changes = changeList.getChanges();
+                if (!changes.isEmpty()) {
+                  LOG.debug("After unstash: moving " + changes.size() + " changes to '" + changeList.getName() + "'");
+                  changeManager.moveChangesTo(changeList, changes.toArray(new Change[changes.size()]));
                 }
-                ContentRevision before = c.getBeforeRevision();
-                if (before != null) {
-                  m.fileDirty(before.getFile());
-                  filesToRefresh.add(before.getFile().getIOFile());
+                for (Change c : changeList.getChanges()) {
+                  ContentRevision after = c.getAfterRevision();
+                  if (after != null) {
+                    m.fileDirty(after.getFile());
+                    filesToRefresh.add(after.getFile().getIOFile());
+                  }
+                  ContentRevision before = c.getBeforeRevision();
+                  if (before != null) {
+                    m.fileDirty(before.getFile());
+                    filesToRefresh.add(before.getFile().getIOFile());
+                  }
                 }
               }
-            }
-            LocalFileSystem.getInstance().refreshIoFiles(filesToRefresh);
-            mergeFiles(root, cancelled, ex);
-            //noinspection ThrowableResultOfMethodCallIgnored
-            if (ex.get() != null) {
+              LocalFileSystem.getInstance().refreshIoFiles(filesToRefresh);
+              mergeFiles(root, cancelled, ex);
               //noinspection ThrowableResultOfMethodCallIgnored
-              myExceptions.add(GitUtil.rethrowVcsException(ex.get()));
+              if (ex.get() != null) {
+                //noinspection ThrowableResultOfMethodCallIgnored
+                myExceptions.add(GitUtil.rethrowVcsException(ex.get()));
+              }
             }
           }
         }
