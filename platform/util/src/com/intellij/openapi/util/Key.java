@@ -61,7 +61,15 @@ public class Key<T> {
     return t == null ? defaultValue : t;
   }
 
-  public boolean containsIn(@Nullable UserDataHolder holder) {
+  /**
+   * Returns <code>true</code> if and only if the <code>holder</code> has
+   * not null value by the key.
+   *
+   * @param holder user data holder object
+   * @return <code>true</code> if holder.getUserData(this) != null
+   * <code>false</code> otherwise.
+   */
+  public boolean isIn(@Nullable UserDataHolder holder) {
     return get(holder) != null;
   }
 
