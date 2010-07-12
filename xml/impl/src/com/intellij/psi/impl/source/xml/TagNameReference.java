@@ -17,10 +17,7 @@ package com.intellij.psi.impl.source.xml;
 
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.XmlTagInsertHandler;
-import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.lookup.TailTypeDecorator;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -195,7 +192,7 @@ public class TagNameReference implements PsiReference {
                                       TailType.createSimpleTailType('>'));
   }
 
-  public static LookupElement[] getTagNameVariants(final XmlTag tag) {
+  public static LookupElement[] getTagNameVariants(final @NotNull XmlTag tag) {
     final String prefix = tag.getNamespacePrefix();
     final List<String> namespaces;
     if (prefix.isEmpty()) {
@@ -212,12 +209,13 @@ public class TagNameReference implements PsiReference {
         if (!prefix.isEmpty() && qname.startsWith(prefix)) {
           qname = qname.substring(prefix.length() + 1);    
         }
-        LookupElementBuilder builder = LookupElementBuilder.create(qname);
-        int separator = qname.indexOf(':');
+        final MutableLookupElement<String> lookupElement = LookupElementFactory.getInstance().createLookupElement(qname);
+        final int separator = qname.indexOf(':');
         if (separator > 0) {
-          builder.addLookupString(qname.substring(separator + 1));
+          lookupElement.addLookupStrings(qname.substring(separator + 1));
         }
-        return builder.setInsertHandler(XmlTagInsertHandler.INSTANCE);
+        lookupElement.setInsertHandler(XmlTagInsertHandler.INSTANCE);
+        return lookupElement;
       }
     });
   }
