@@ -25,7 +25,6 @@
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="IntelliLang-java" />
     <orderEntry type="module" module-name="IntelliLang-xml" />
-    <orderEntry type="module" module-name="groovypp" />
   </component>
 </module>
 

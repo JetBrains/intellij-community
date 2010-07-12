@@ -72,7 +72,16 @@
 
     <membersContributor implementation="org.jetbrains.plugins.groovy.gant.GantMemberContributor"/>
 
-    <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.impl.GrContainerTypeConverter"/> 
+    <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.impl.GrContainerTypeConverter"/>
+
+    <libraryManager implementation="org.jetbrains.plugins.groovy.gpp.GppLibraryManager" order="first"/>
+    <typeConverter implementation="org.jetbrains.plugins.groovy.gpp.GppTypeConverter"/>
+    <expectedTypesContributor implementation="org.jetbrains.plugins.groovy.gpp.GppExpectedTypesContributor"/>
+    <variableEnhancer implementation="org.jetbrains.plugins.groovy.gpp.GppClosureParameterTypeProvider"/>
+    <classSubstitutor implementation="org.jetbrains.plugins.groovy.gpp.GppClassSubstitutor"/>
+    <nonCodeProcessor implementation="org.jetbrains.plugins.groovy.gpp.GppStdLibSupport"/>
+    <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gpp.GppPositionManager"/>
+    
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -449,6 +458,7 @@
                     serviceImplementation="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper"/>
 
     <java.programPatcher implementation="org.jetbrains.plugins.groovy.debugger.GroovyHotSwapper"/>
+    <psi.referenceContributor implementation="org.jetbrains.plugins.groovy.gpp.GppReferenceContributor"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">
