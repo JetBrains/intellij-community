@@ -42,6 +42,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileTypes.FileType;
@@ -97,7 +98,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   private final AtomicBoolean myForceScrollToEnd = new AtomicBoolean(false);
   private final MergingUpdateQueue myUpdateQueue;
   private Runnable myUiUpdateRunnable;
-  private boolean myEditorVisible = true;
+  private Editor myFullEditor;
 
   public LanguageConsoleImpl(final Project project, String title, final Language language) {
     myProject = project;
@@ -133,9 +134,14 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     });
   }
 
-  public void setEditorVisible(boolean visible) {
-    if (myEditorVisible == visible) return;
-    if (visible) {
+  public void setFullEditorMode(boolean fullEditorMode) {
+    if (myFullEditor != null == fullEditorMode) return;
+    final VirtualFile virtualFile = myFile.getVirtualFile();
+    assert virtualFile != null;
+    final FileEditorManagerEx fileManager = FileEditorManagerEx.getInstanceEx(getProject());
+    if (!fullEditorMode) {
+      fileManager.closeFile(virtualFile);
+      myFullEditor = null;
       myPanel.removeAll();
       myPanel.add(myHistoryViewer.getComponent(), BorderLayout.NORTH);
       myPanel.add(myConsoleEditor.getComponent(), BorderLayout.CENTER);
@@ -143,8 +149,10 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     else {
       myPanel.removeAll();
       myPanel.add(myHistoryViewer.getComponent(), BorderLayout.CENTER);
+      myFullEditor = fileManager.openTextEditor(new OpenFileDescriptor(getProject(), virtualFile, 0), true);
+      assert myFullEditor != null;
+      fileManager.getCurrentWindow().setFilePinned(virtualFile, true);
     }
-    myEditorVisible = visible;
   }
 
   private void setupComponents() {
@@ -279,6 +287,10 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     printToHistory(text, attributes);
   }
 
+  public Editor getFullEditor() {
+    return myFullEditor;
+  }
+
   public void printToHistory(String text, final TextAttributes attributes) {
     text = StringUtil.convertLineSeparators(text);
     final boolean scrollToEnd = shouldScrollHistoryToEnd();
@@ -381,7 +393,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   }
 
   private void updateSizes(boolean forceScrollToEnd) {
-    if (!myEditorVisible) return;
+    if (myFullEditor != null) return;
     final Dimension panelSize = myPanel.getSize();
     final Dimension historyContentSize = myHistoryViewer.getContentSize();
     final Dimension contentSize = myConsoleEditor.getContentSize();
@@ -512,7 +524,8 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     if (prevFile != null) {
       final FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
       final VirtualFile file = prevFile.getVirtualFile();
-      if (file != null && editorManager.isFileOpen(file)) {
+      if (file != null && myFullEditor != null) {
+        myFullEditor = null;
         final FileEditor prevEditor = editorManager.getSelectedEditor(file);
         final boolean focusEditor;
         final int offset;
@@ -526,7 +539,8 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
           offset = 0;
         }
         editorManager.closeFile(file);
-        editorManager.openTextEditor(new OpenFileDescriptor(getProject(), newVFile, offset), focusEditor);
+        myFullEditor = editorManager.openTextEditor(new OpenFileDescriptor(getProject(), newVFile, offset), focusEditor);
+        ((FileEditorManagerEx)editorManager).getCurrentWindow().setFilePinned(newVFile, true);        
       }
     }
   }
