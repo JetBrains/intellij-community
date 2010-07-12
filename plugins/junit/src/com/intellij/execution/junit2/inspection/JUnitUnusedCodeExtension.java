@@ -80,6 +80,8 @@ public class JUnitUnusedCodeExtension extends UnusedCodeExtension {
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
+    if (!ADD_JUNIT_TO_ENTRIES) {
+      DefaultJDOMExternalizer.writeExternal(this, element);
+    }
   }
 }
