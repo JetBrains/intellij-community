@@ -19,6 +19,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeInsight.daemon.ChangeLocalityDetector;
 import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
@@ -166,8 +167,9 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
 
   private void updateByChange(PsiElement child, final boolean whitespaceOptimizationAllowed) {
     final Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
-    if (editor != null) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
+    Application application = ApplicationManager.getApplication();
+    if (editor != null && !application.isUnitTestMode()) {
+      application.invokeLater(new Runnable() {
         public void run() {
           if (myProject.isDisposed()) return;
           EditorMarkupModel markupModel = (EditorMarkupModel)editor.getMarkupModel();
