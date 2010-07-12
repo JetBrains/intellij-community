@@ -17,6 +17,9 @@ package com.intellij.execution.configurations;
 
 import org.jetbrains.annotations.NonNls;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
 public class RemoteConnection {
   private boolean myUseSockets;
   private boolean myServerMode;
@@ -90,8 +93,18 @@ public class RemoteConnection {
       catch (NumberFormatException e) {
       }
       if (serverMode) {
-        result = "-Xdebug -Xrunjdwp:transport=dt_socket,server=n,address=" +
-                 ((p == -1)? "..." : Integer.toString(p)) +
+        String localHostName = "<host name>:";
+        try {
+          final InetAddress localAddress = InetAddress.getLocalHost();
+          final String name = localAddress.getCanonicalHostName();
+          if (name != null) {
+            localHostName = name + ":";
+          }
+        }
+        catch (UnknownHostException e) {
+        }
+        result = "-Xdebug -Xrunjdwp:transport=dt_socket,server=n,address=" + localHostName +
+                 ((p == -1)? "<port>" : Integer.toString(p)) +
                  ONTHROW + ",suspend=y" + ONUNCAUGHT;
       }
       else {
