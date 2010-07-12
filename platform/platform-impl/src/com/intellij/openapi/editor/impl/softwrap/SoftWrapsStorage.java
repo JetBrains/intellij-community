@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.editor.impl.softwrap;
 
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.SoftWrapChangeListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,12 +38,6 @@ public class SoftWrapsStorage {
   private final List<TextChangeImpl>        myWraps     = new ArrayList<TextChangeImpl>();
   private final List<TextChangeImpl>        myWrapsView = Collections.unmodifiableList(myWraps);
   private final Set<SoftWrapChangeListener> myListeners = new CopyOnWriteArraySet<SoftWrapChangeListener>();
-
-  private final Document myDocument;
-
-  public SoftWrapsStorage(Document document) {
-    myDocument = document;
-  }
 
   /**
    * @return    <code>true</code> if there is at least one soft wrap registered at the current storage; <code>false</code> otherwise
@@ -114,9 +107,8 @@ public class SoftWrapsStorage {
 
     i = -i - 1;
     myWraps.add(i, softWrap);
-    int changedLogicalLine = myDocument.getLineNumber(softWrap.getStart());
     for (SoftWrapChangeListener listener : myListeners) {
-      listener.softWrapsStateChanged(changedLogicalLine);
+      listener.softWrapAdded(softWrap);
     }
     return null;
   }

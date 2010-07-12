@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.editor.ex;
 
+import com.intellij.openapi.editor.TextChange;
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Defines a contract for the callbacks for soft wraps management notifications (addition/removal).
  *
@@ -24,10 +27,9 @@ package com.intellij.openapi.editor.ex;
 public interface SoftWrapChangeListener {
 
   /**
-   * This method is assumed to be called every time number of soft wraps registered for the target logical line(s)
-   * is changed (soft wraps are added or remove).
+   * This method is assumed to be called every new soft wrap is registered.
    *
-   * @param changedLogicalLine   logical line for which number of registered soft wraps is changed
+   * @param softWrap   newly registered soft wrap
    */
-  void softWrapsStateChanged(int changedLogicalLine);
+  void softWrapAdded(@NotNull TextChange softWrap);
 }
