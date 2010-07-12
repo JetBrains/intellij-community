@@ -175,6 +175,10 @@ public class PsiUtil {
 
   @Nullable
   public static PsiType[] getArgumentTypes(PsiElement place, boolean nullAsBottom) {
+    return getArgumentTypes(place, nullAsBottom, null);
+  }
+  @Nullable
+  public static PsiType[] getArgumentTypes(PsiElement place, boolean nullAsBottom, @Nullable GrExpression stopAt) {
     PsiElement parent = place.getParent();
     if (parent instanceof GrCallExpression) {
       List<PsiType> result = new ArrayList<PsiType>();
@@ -193,6 +197,9 @@ public class PsiUtil {
         } else {
           result.add(type);
         }
+        if (stopAt == expression) {
+          return result.toArray(new PsiType[result.size()]);
+        }
       }
 
       GrClosableBlock[] closures = call.getClosureArguments();
@@ -200,6 +207,9 @@ public class PsiUtil {
         PsiType closureType = closure.getType();
         if (closureType != null) {
           result.add(closureType);
+        }
+        if (stopAt == closure) {
+          break;
         }
       }
 
@@ -224,6 +234,9 @@ public class PsiUtil {
         } else {
           result.add(type);
         }
+        if (stopAt == expression) {
+          break;
+        }
       }
 
       return result.toArray(new PsiType[result.size()]);
@@ -245,6 +258,10 @@ public class PsiUtil {
         else {
           result.add(argType);
         }
+        if (stopAt == arg) {
+          break;
+        }
+
       }
       return result.toArray(new PsiType[result.size()]);
     } else if (parent instanceof GrConstructorInvocation || parent instanceof GrEnumConstant) {
@@ -264,6 +281,10 @@ public class PsiUtil {
         } else {
           result.add(type);
         }
+        if (stopAt == expression) {
+          break;
+        }
+
       }
 
       return result.toArray(new PsiType[result.size()]);
@@ -603,7 +624,7 @@ public class PsiUtil {
   }
 
   public static boolean isRawMethodCall(GrMethodCallExpression call) {
-    final GroovyResolveResult[] resolveResults = call.getMethodVariants();
+    final GroovyResolveResult[] resolveResults = call.getMethodVariants(null);
     if (resolveResults.length == 0) return false;
     final PsiElement element = resolveResults[0].getElement();
     if (element instanceof PsiMethod) {

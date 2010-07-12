@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.util;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -113,6 +114,13 @@ public class FieldConflictsResolver {
                                                         final PsiMember member,
                                                         @Nullable final PsiClass qualifyingClass) throws IncorrectOperationException {
     PsiManager manager = referenceExpression.getManager();
+    PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(referenceExpression, PsiMethodCallExpression.class, true);
+    while ((methodCallExpression) != null) {
+      if (HighlightUtil.isSuperOrThisMethodCall(methodCallExpression)) {
+        return referenceExpression;
+      }
+      methodCallExpression = PsiTreeUtil.getParentOfType(methodCallExpression, PsiMethodCallExpression.class, true);
+    }
     PsiReferenceExpression expressionFromText;
     final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     if (qualifyingClass == null) {

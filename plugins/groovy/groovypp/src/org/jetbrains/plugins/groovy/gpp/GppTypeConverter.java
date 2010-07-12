@@ -44,18 +44,17 @@ public class GppTypeConverter extends GrTypeConverter {
   @Override
   public Boolean isConvertible(@NotNull PsiType lType, @NotNull PsiType rType, @NotNull GroovyPsiElement context) {
     if (rType instanceof GrTupleType) {
-      final PsiType type = PsiUtil.extractIterableTypeParameter(lType, false);
-      if (type == null || TypesUtil.isAssignable(type, ((GrTupleType)rType).getParameters()[0], context)) {
-        final PsiType[] componentTypes = ((GrTupleType)rType).getComponentTypes();
+      final GrTupleType tupleType = (GrTupleType)rType;
 
-        final PsiType expectedComponent = PsiUtil.extractIterableTypeParameter(lType, false);
-        if (expectedComponent != null && hasDefaultConstructor(lType)) {
-          return true;
-        }
+      final PsiType expectedComponent = PsiUtil.extractIterableTypeParameter(lType, false);
+      if (expectedComponent != null &&
+          isMethodCallConversion(context) && TypesUtil.isAssignable(expectedComponent, tupleType.getParameters()[0], context) && 
+          hasDefaultConstructor(lType)) {
+        return true;
+      }
 
-        if (lType instanceof PsiClassType && hasConstructor((PsiClassType)lType, componentTypes, context)) {
-          return true;
-        }
+      if (lType instanceof PsiClassType && hasConstructor((PsiClassType)lType, tupleType.getComponentTypes(), context)) {
+        return true;
       }
     }
     else if (rType instanceof GrMapType) {

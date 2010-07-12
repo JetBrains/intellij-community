@@ -42,7 +42,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -183,7 +182,7 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
   }
 
   @NotNull
-  public GroovyResolveResult[] getMethodVariants() {
+  public GroovyResolveResult[] getMethodVariants(@Nullable GrExpression upToArgument) {
     final GrCodeReferenceElement referenceElement = getReferenceElement();
     if (referenceElement == null) return GroovyResolveResult.EMPTY_ARRAY;
     final GroovyResolveResult[] classResults = referenceElement.multiResolve(false);

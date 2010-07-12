@@ -36,6 +36,11 @@ public class ExcludeFromStubGenerationAction extends AnAction implements DumbAwa
     final PsiFile file = e.getData(DataKeys.PSI_FILE);
 
     assert file != null && file.getLanguage() == GroovyFileType.GROOVY_LANGUAGE;
+
+    doExcludeFromStubGeneration(file);
+  }
+
+  public static void doExcludeFromStubGeneration(PsiFile file) {
     final VirtualFile virtualFile = file.getVirtualFile();
     assert virtualFile != null;
     final Project project = file.getProject();
@@ -46,7 +51,6 @@ public class ExcludeFromStubGenerationAction extends AnAction implements DumbAwa
         configurable.getExcludes().addEntry(new ExcludeEntryDescription(virtualFile, false, true, project));
       }
     });
-
   }
 
   public void update(AnActionEvent e) {
