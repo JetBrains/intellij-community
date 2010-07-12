@@ -12,11 +12,16 @@ class Library extends LazyInitializeableObject implements ClasspathItem {
 
   private Map<String, Object> props = [:]
 
+
   def Library(project, name, initializer) {
+    this(project, name, false, initializer)
+  }
+
+  def Library(project, name, forceInitialization, initializer) {
     this.project = project;
     this.name = name;
 
-    setInitializer({
+    Closure lazyInit = {
       def meta = new InitializingExpando()
       meta.classpath = {Object[] arg ->
         arg.each { classpath << it }
@@ -36,7 +41,14 @@ class Library extends LazyInitializeableObject implements ClasspathItem {
           props[key] = value
         }
       }
-    })
+    }
+
+    if (forceInitialization) {
+      lazyInit.call()
+    }
+    else {
+      setInitializer(lazyInit)
+    }
   }
 
   def String toString() {
