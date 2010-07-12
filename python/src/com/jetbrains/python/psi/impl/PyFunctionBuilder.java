@@ -6,7 +6,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyFunction;
 
@@ -21,6 +20,7 @@ public class PyFunctionBuilder {
   private final String myName;
   private final List<String> myParameters = new ArrayList<String>();
   private final List<String> myStatements = new ArrayList<String>();
+  private final List<String> myDecorators = new ArrayList<String>();
 
   public PyFunctionBuilder(String name) {
     myName = name;
@@ -46,6 +46,10 @@ public class PyFunctionBuilder {
     return (PyFunction) target.add(buildFunction(target.getProject()));
   }
 
+  public PyFunction addFunctionAfter(PsiElement target, PsiElement anchor) {
+    return (PyFunction) target.addAfter(buildFunction(target.getProject()), anchor);
+  }
+
   public PyFunction buildFunction(Project project) {
     String text = buildText(project);
     PyElementGenerator generator = PyElementGenerator.getInstance(project);
@@ -53,7 +57,11 @@ public class PyFunctionBuilder {
   }
 
   private String buildText(Project project) {
-    StringBuilder builder = new StringBuilder("def ");
+    StringBuilder builder = new StringBuilder();
+    for (String decorator : myDecorators) {
+      builder.append(decorator).append("\n");
+    }
+    builder.append("def ");
     builder.append(myName).append("(");
     builder.append(StringUtil.join(myParameters, ", "));
     builder.append("):");
@@ -65,5 +73,9 @@ public class PyFunctionBuilder {
       builder.append("\n").append(indent).append(statement);
     }
     return builder.toString();
+  }
+
+  public void decorate(String decoratorName) {
+    myDecorators.add("@" + decoratorName);
   }
 }

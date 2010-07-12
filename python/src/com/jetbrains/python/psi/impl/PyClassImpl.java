@@ -708,6 +708,9 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   private boolean calculateNewStyleClass() {
+    if (((PyFile) getContainingFile()).getLanguageLevel().isPy3K()) {
+      return true;
+    }
     PyClass objclass = PyBuiltinCache.getInstance(this).getClass("object");
     if (this == objclass) return true; // a rare but possible case
     if (hasNewStyleMetaClass(this)) return true;
@@ -723,7 +726,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   private static boolean hasNewStyleMetaClass(PyClass pyClass) {
     final PsiFile containingFile = pyClass.getContainingFile();
     if (containingFile instanceof PyFile) {
-      final PsiElement element = ((PyFile)containingFile).findExportedName("__metaclass__");
+      final PsiElement element = ((PyFile)containingFile).findExportedName(PyNames.METACLASS);
       if (element instanceof PyTargetExpression) {
         final PyExpression assignedValue = ((PyTargetExpression)element).findAssignedValue();
         if (assignedValue != null && assignedValue.getText().equals("type")) {

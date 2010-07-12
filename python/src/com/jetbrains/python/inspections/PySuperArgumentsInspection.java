@@ -1,10 +1,10 @@
 package com.jetbrains.python.inspections;
 
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
@@ -37,7 +37,7 @@ public class PySuperArgumentsInspection extends PyInspection {
 
     @Override
     public void visitPyCallExpression(PyCallExpression node) {
-      if ("super".equals(node.getCallee().getName())) {
+      if (PyNames.SUPER.equals(node.getCallee().getName())) {
         PyExpression[] arguments = node.getArguments();
         if (arguments.length == 2) {
           if (arguments[0] instanceof PyReferenceExpression && arguments[1] instanceof PyReferenceExpression) {
