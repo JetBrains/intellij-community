@@ -161,14 +161,16 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     synchronized (mySourcesToRecompile) {
       final TIntHashSet pathsToRecompile = mySourcesToRecompile.get(projectId);
       if (_forceCompile || pathsToRecompile != null && !pathsToRecompile.isEmpty()) {
+        if (ourDebugMode) {
+          System.out.println("Analysing potentially recompilable files for " + compiler.getDescription());
+        }
         while (scopeSrcIterator.hasNext()) {
           final VirtualFile file = scopeSrcIterator.next();
           if (!file.isValid()) {
             if (LOG.isDebugEnabled() || ourDebugMode) {
-              final String message = "Skipping invalid file " + file.getPresentableUrl();
-              LOG.debug(message);
+              LOG.debug("Skipping invalid file " + file.getPresentableUrl());
               if (ourDebugMode) {
-                System.out.println(message);
+                System.out.println("\t SKIPPED(INVALID) " + file.getPresentableUrl());
               }
             }
             continue;
@@ -177,16 +179,37 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
           if (_forceCompile) {
             if (compiler.isCompilableFile(file, context) && !configuration.isExcludedFromCompilation(file)) {
               toCompile.add(file);
+              if (ourDebugMode) {
+                System.out.println("\t INCLUDED " + file.getPresentableUrl());
+              }
               selectedForRecompilation.add(file);
               if (pathsToRecompile == null || !pathsToRecompile.contains(fileId)) {
                 addSourceForRecompilation(projectId, file, null);
+              }
+            }
+            else {
+              if (ourDebugMode) {
+                System.out.println("\t NOT COMPILABLE OR EXCLUDED " + file.getPresentableUrl());
               }
             }
           }
           else if (pathsToRecompile.contains(fileId)) {
             if (compiler.isCompilableFile(file, context) && !configuration.isExcludedFromCompilation(file)) {
               toCompile.add(file);
+              if (ourDebugMode) {
+                System.out.println("\t INCLUDED " + file.getPresentableUrl());
+              }
               selectedForRecompilation.add(file);
+            }
+            else {
+              if (ourDebugMode) {
+                System.out.println("\t NOT COMPILABLE OR EXCLUDED " + file.getPresentableUrl());
+              }
+            }
+          }
+          else {
+            if (ourDebugMode) {
+              System.out.println("\t NOT INCLUDED " + file.getPresentableUrl());
             }
           }
         }
