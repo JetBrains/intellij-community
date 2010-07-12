@@ -1,4 +1,5 @@
 import org.jetbrains.jps.*
+import org.codehaus.groovy.ant.Groovy
 
 includeTool << Jps
 
@@ -13,6 +14,10 @@ library("ANT") {
   classpath "$libs/ant-1.7.1.jar"
 }
 
+library("groovy") {
+  classpath "$libs/groovy-all-1.7.1.jar"
+}
+
 library("gant") {
   new File("$gantHome/lib").eachFile {
     classpath it
@@ -21,7 +26,7 @@ library("gant") {
 
 module("JPS") {
   targetLevel ="1.5"
-  classpath antLayout, gant
+  classpath antLayout, gant, groovy
   src "${projectHome}/src"
 }
 
