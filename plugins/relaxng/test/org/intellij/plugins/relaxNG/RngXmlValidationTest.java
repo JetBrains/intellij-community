@@ -27,7 +27,7 @@ import java.io.File;
  * User: sweinreuter
  * Date: 25.07.2007
  */
-public class XmlValidationTest extends HighlightingTestBase {
+public class RngXmlValidationTest extends HighlightingTestBase {
 
   public void testValidDocument() throws Throwable {
     doTest("xslt.rng");

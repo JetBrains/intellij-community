@@ -26,7 +26,7 @@ import org.intellij.plugins.testUtil.CopyFile;
  * User: sweinreuter
  * Date: 25.07.2007
  */
-public class XmlHighlightingTest extends HighlightingTestBase {
+public class RngXmlHighlightingTest extends HighlightingTestBase {
 
   public String getTestDataPath() {
     return "highlighting";
