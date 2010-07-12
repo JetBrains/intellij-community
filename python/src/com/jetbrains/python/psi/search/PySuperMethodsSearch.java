@@ -13,13 +13,19 @@ public class PySuperMethodsSearch extends ExtensibleQueryFactory<PsiElement, PyS
 
   public static class SearchParameters {
     private final PyFunction myDerivedMethod;
+    private final boolean myDeepSearch;
 
-    public SearchParameters(final PyFunction derivedMethod) {
+    public SearchParameters(final PyFunction derivedMethod, boolean deepSearch) {
       myDerivedMethod = derivedMethod;
+      myDeepSearch = deepSearch;
     }
 
     public PyFunction getDerivedMethod() {
       return myDerivedMethod;
+    }
+
+    public boolean isDeepSearch() {
+      return myDeepSearch;
     }
   }
 
@@ -28,7 +34,12 @@ public class PySuperMethodsSearch extends ExtensibleQueryFactory<PsiElement, PyS
   }
 
   public static Query<PsiElement> search(final PyFunction derivedMethod) {
-    final SearchParameters parameters = new SearchParameters(derivedMethod);
+    final SearchParameters parameters = new SearchParameters(derivedMethod, false);
+    return INSTANCE.createUniqueResultsQuery(parameters);
+  }
+
+  public static Query<PsiElement> search(final PyFunction derivedMethod, boolean deepSearch) {
+    final SearchParameters parameters = new SearchParameters(derivedMethod, deepSearch);
     return INSTANCE.createUniqueResultsQuery(parameters);
   }
 }

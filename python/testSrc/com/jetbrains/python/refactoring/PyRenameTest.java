@@ -8,13 +8,11 @@ import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
  * @author yole
  */
 public class PyRenameTest extends PyLightFixtureTestCase {
-  public void testRenameField() throws Exception {  // PY-457
-    myFixture.configureByFile("refactoring/rename/" + getTestName(true) + ".py");
-    myFixture.renameElementAtCaret("qu");
-    myFixture.checkResultByFile("refactoring/rename/" + getTestName(true) + "_after.py");
+  public void testRenameField() {  // PY-457
+    doTest("qu");
   }
 
-  public void testSearchInStrings() throws Exception {  // PY-670
+  public void testSearchInStrings() {  // PY-670
     myFixture.configureByFile("refactoring/rename/" + getTestName(true) + ".py");
     final PsiElement element = TargetElementUtilBase.findTargetElement(myFixture.getEditor(), TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED |
                                                                                         TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
@@ -23,15 +21,21 @@ public class PyRenameTest extends PyLightFixtureTestCase {
     myFixture.checkResultByFile("refactoring/rename/" + getTestName(true) + "_after.py");
   }
 
-  public void testRenameParameter() throws Exception {  // PY-385
-    myFixture.configureByFile("refactoring/rename/" + getTestName(true) + ".py");
-    myFixture.renameElementAtCaret("qu");
-    myFixture.checkResultByFile("refactoring/rename/" + getTestName(true) + "_after.py");
+  public void testRenameParameter() {  // PY-385
+    doTest("qu");
   }
 
-  public void testRenameMultipleDefinitionsLocal() throws Exception {  // PY-727
+  public void testRenameMultipleDefinitionsLocal() {  // PY-727
+    doTest("qu");
+  }
+
+  public void testRenameInheritors() {
+    doTest("qu");
+  }
+
+  private void doTest(final String newName) {
     myFixture.configureByFile("refactoring/rename/" + getTestName(true) + ".py");
-    myFixture.renameElementAtCaret("qu");
+    myFixture.renameElementAtCaret(newName);
     myFixture.checkResultByFile("refactoring/rename/" + getTestName(true) + "_after.py");
   }
 }
