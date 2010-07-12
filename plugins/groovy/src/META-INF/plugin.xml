@@ -16,7 +16,7 @@
 
 <idea-plugin url="http://www.jetbrains.net/confluence/display/GRVY/Groovy+Home">
   <id>org.intellij.groovy</id>
-  <name>JetGroovy</name>
+  <name>Groovy</name>
   <description>Plugin for Groovy language support</description>
   <version>9.0</version>
   <vendor logo="/org/jetbrains/plugins/groovy/images/groovy_16x16.png" url="http://www.jetbrains.com">JetBrains Inc.
