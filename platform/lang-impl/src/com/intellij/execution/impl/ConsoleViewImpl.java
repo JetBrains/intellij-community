@@ -148,6 +148,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   public void foldImmediately() {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    if (myFlushAlarm.getActiveRequestCount() > 0) {
+      myFlushAlarm.cancelAllRequests();
+      myFlushDeferredRunnable.run();
+    }
+    
     myFoldingAlarm.cancelAllRequests();
 
     myPendingFoldRegions.clear();

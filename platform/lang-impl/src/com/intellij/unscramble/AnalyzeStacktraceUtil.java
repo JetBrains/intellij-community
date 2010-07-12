@@ -22,6 +22,7 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
+import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
@@ -61,13 +62,10 @@ public class AnalyzeStacktraceUtil {
   public static void printStacktrace(final ConsoleView consoleView, final String unscrambledTrace) {
     consoleView.clear();
     consoleView.print(unscrambledTrace+"\n", ConsoleViewContentType.ERROR_OUTPUT);
-    consoleView.performWhenNoDeferredOutput(
-      new Runnable() {
-        public void run() {
-          consoleView.scrollTo(0);
-        }
-      }
-    );
+    if (consoleView instanceof ConsoleViewImpl) {
+      ((ConsoleViewImpl)consoleView).foldImmediately();
+    }
+    consoleView.scrollTo(0);
   }
 
   @Nullable
