@@ -14,6 +14,7 @@ package org.zmlx.hg4idea;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
@@ -34,11 +35,15 @@ import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.util.containers.ComparatorDelegate;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import org.zmlx.hg4idea.provider.*;
@@ -51,10 +56,12 @@ import org.zmlx.hg4idea.ui.HgCurrentBranchStatus;
 
 import javax.swing.*;
 import java.io.File;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-public class HgVcs extends AbstractVcs {
+public class HgVcs extends AbstractVcs<CommittedChangeList> {
 
   public static final Topic<HgUpdater> BRANCH_TOPIC =
     new Topic<HgUpdater>("hg4idea.branch", HgUpdater.class);
@@ -212,6 +219,43 @@ public class HgVcs extends AbstractVcs {
   }
 
   @Override
+  public boolean allowsNestedRoots() {
+    return true;
+  }
+
+  @Override
+  public <S> List<S> filterUniqueRoots(final List<S> in, final Convertor<S, VirtualFile> convertor) {
+    Collections.sort(in, new ComparatorDelegate<S, VirtualFile>(convertor, FilePathComparator.getInstance()));
+
+    for (int i = 1; i < in.size(); i++) {
+      final S sChild = in.get(i);
+      final VirtualFile child = convertor.convert(sChild);
+      final VirtualFile childRoot = HgUtil.getHgRootOrNull(myProject, child);
+      if (childRoot == null) {
+        continue;
+      }
+      for (int j = i - 1; j >= 0; --j) {
+        final S sParent = in.get(j);
+        final VirtualFile parent = convertor.convert(sParent);
+        // if the parent is an ancestor of the child and that they share common root, the child is removed
+        if (VfsUtil.isAncestor(parent, child, false) && VfsUtil.isAncestor(childRoot, parent, false)) {
+          in.remove(i);
+          //noinspection AssignmentToForLoopParameter
+          --i;
+          break;
+        }
+      }
+    }
+    return in;
+  }
+
+
+  @Override
+  public RootsConvertor getCustomConvertor() {
+    return HgRootsHandler.getInstance(myProject);
+  }
+
+    @Override
   public boolean isVersionedDirectory(VirtualFile dir) {
     return HgUtil.getNearestHgRoot(dir) != null;
   }
