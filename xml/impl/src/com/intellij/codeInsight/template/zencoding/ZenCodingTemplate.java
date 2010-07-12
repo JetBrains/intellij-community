@@ -94,7 +94,7 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
         }
         else if (c == '\'') inApostrophes = false;
       }
-      else if (i == n - 1 || (i < n - 2 && DELIMS.indexOf(c) >= 0)) {
+      else if (i == n - 1 || (i < n - 2 && DELIMS.indexOf(c) >= 0) || c == ')') {
         String key = templateKeyBuilder.toString();
         templateKeyBuilder = new StringBuilder();
         int num = parseNonNegativeInt(key);
@@ -103,8 +103,9 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
         }
         else {
           TemplateToken token = parseTemplateKey(key, callback);
-          if (token == null) return null;
-          result.add(token);
+          if (token != null) {
+            result.add(token);
+          }
         }
         if (i == n - 1) {
           result.add(new MarkerToken());
