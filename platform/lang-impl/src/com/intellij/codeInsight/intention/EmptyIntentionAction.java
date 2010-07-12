@@ -32,7 +32,7 @@ import java.util.List;
 public final class EmptyIntentionAction implements IntentionAction{
   private final String myName;
 
-  public EmptyIntentionAction(final String name) {
+  public EmptyIntentionAction(@NotNull String name) {
     myName = name;
   }
 
@@ -63,15 +63,11 @@ public final class EmptyIntentionAction implements IntentionAction{
 
     final EmptyIntentionAction that = (EmptyIntentionAction)o;
 
-    if (myName != null ? !myName.equals(that.myName) : that.myName != null) return false;
-
-    return true;
+    return myName.equals(that.myName);
   }
 
   public int hashCode() {
-    int result;
-    result = (myName != null ? myName.hashCode() : 0);
-    return result;
+    return myName.hashCode();
   }
 
   // used by TeamCity plugin
