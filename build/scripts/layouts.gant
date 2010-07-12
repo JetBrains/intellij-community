@@ -279,14 +279,6 @@ def layoutFull(String home, String targetDirectory) {
         }
       }
 
-      dir("Groovypp") {
-        dir("lib") {
-          jar("groovypp.jar") {
-            module("groovypp")
-          }
-        }
-      }
-
     }
   }
 
