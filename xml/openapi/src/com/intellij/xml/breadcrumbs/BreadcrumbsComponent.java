@@ -41,7 +41,6 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     addMouseMotionListener(myMouseListener);
 
     setToolTipText(new String());
-    setBorder(new SideBorder(Color.gray, SideBorder.BOTTOM, true));
   }
 
   public void setItems(@Nullable final List<T> itemsList) {

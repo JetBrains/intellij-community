@@ -1,0 +1,9 @@
+grammar {
+  start = foo
+
+  foo = grammar {
+    x = element bar { parent bar }
+  }
+
+  bar = attribute bar.att { text }
+}

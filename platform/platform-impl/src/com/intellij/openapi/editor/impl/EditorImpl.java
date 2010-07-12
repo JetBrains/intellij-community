@@ -176,7 +176,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private static final int MOUSE_SELECTION_STATE_LINE_SELECTED = 2;
 
   private final MarkupModelListener myMarkupModelListener;
-  private final List<TextChange> mySoftWrapsOnLastRepaint = new ArrayList<TextChange>();
 
   private EditorHighlighter myHighlighter;
   private final TextDrawingCallback myTextDrawingCallback = new MyTextDrawingCallback();
@@ -216,6 +215,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private boolean myEmbeddedIntoDialogWrapper;
   private CachedFontContent myLastCache;
   private boolean mySpacesHaveSameWidth;
+  private boolean mySoftWrapsChanged;
 
   private Point myLastBackgroundPosition = null;
   private Color myLastBackgroundColor = null;
@@ -326,6 +326,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myFoldingModel.flushCaretShift();
     myScrollBarOrientation = VERTICAL_SCROLLBAR_RIGHT;
+
+    mySoftWrapModel.addSoftWrapChangeListener(new SoftWrapChangeListener() {
+      @Override
+      public void softWrapsStateChanged(int changedLogicalLine) {
+        mySoftWrapsChanged = true;
+        mySizeContainer.update(changedLogicalLine, changedLogicalLine, changedLogicalLine);
+      }
+    });
 
     EditorHighlighter highlighter = new EmptyEditorHighlighter(myScheme.getAttributes(HighlighterColors.TEXT));
     setHighlighter(highlighter);
@@ -1692,8 +1700,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     // Perform additional activity if soft wrap is added or removed during repainting.
     // Note: this code lives in this method in assumption that background repainting is the very first activity performed
     //       during whole editor component repaint.
-    List<? extends TextChange> softWrapsAfterRepaint = mySoftWrapModel.getRegisteredSoftWraps();
-    if (!mySoftWrapsOnLastRepaint.equals(softWrapsAfterRepaint)) {
+    if (mySoftWrapsChanged) {
+      mySoftWrapsChanged = false;
+      validateSize();
+
       // Repaint editor to the bottom in order to ensure that its content is shown correctly after new soft wrap introduction.
       repaintToScreenBottom(xyToLogicalPosition(position).line);
 
@@ -1704,8 +1714,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       // Ask caret model to update visual caret position.
       getCaretModel().moveToOffset(getCaretModel().getOffset());
     }
-    mySoftWrapsOnLastRepaint.clear();
-    mySoftWrapsOnLastRepaint.addAll(softWrapsAfterRepaint);
   }
 
   private void paintRectangularSelection(Graphics g) {
@@ -2482,11 +2490,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   public Dimension getContentSize() {
     Dimension size = mySizeContainer.getContentSize();
-    //TODO den move soft wrap-related logic to editor size container
-    return new Dimension(
-      size.width,
-      size.height + (mySettings.getAdditionalLinesCount() + mySoftWrapModel.getSoftWrapsIntroducedLinesNumber()) * getLineHeight()
-    );
+    return new Dimension(size.width, size.height + mySettings.getAdditionalLinesCount() * getLineHeight());
   }
 
   public JScrollPane getScrollPane() {
@@ -2524,10 +2528,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myLastColumnNumber;
   }
 
+  /**
+   * @return    information about total number of lines that can be viewed by user. I.e. this is a number of all document
+   *            lines (considering that single logical document line may be represented on multiple visual lines because of
+   *            soft wraps appliance) minus number of folded lines
+   */
   int getVisibleLineCount() {
-    int line = getDocument().getLineCount() + getSoftWrapModel().getSoftWrapsIntroducedLinesNumber();
-    line -= myFoldingModel.getFoldedLinesCountBefore(getDocument().getTextLength() + 1);
-    return line;
+    return getVisibleLogicalLinesCount() + getSoftWrapModel().getSoftWrapsIntroducedLinesNumber();
+  }
+
+  /**
+   * @return    number of visible logical lines. Generally, that is a total logical lines number minus number of folded lines
+   */
+  private int getVisibleLogicalLinesCount() {
+    return getDocument().getLineCount() - myFoldingModel.getFoldedLinesCountBefore(getDocument().getTextLength() + 1);
   }
 
   @NotNull
@@ -4595,15 +4609,25 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
+  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private class EditorSizeContainer {
+
+    /** Holds logical line widths in pixels. */
     private TIntArrayList myLineWidths;
+
+    /** Holds value that indicates if line widths recalculation should be performed. */
     private volatile boolean myIsDirty;
+
+    /** Holds number of the last logical line affected by the last document change. */
     private int myOldEndLine;
+
     private Dimension mySize;
-    private int myMaxWidth = -1;
+
+    private final Object lock       = new Object();
+    private       int    myMaxWidth = -1;
 
     public synchronized void reset() {
-      int visLinesCount = getVisibleLineCount();
+      int visLinesCount = getDocument().getLineCount();
       myLineWidths = new TIntArrayList(visLinesCount + 300);
       int[] values = new int[visLinesCount];
       Arrays.fill(values, -1);
@@ -4611,6 +4635,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myIsDirty = true;
     }
 
+    @SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext"})
     public synchronized void beforeChange(DocumentEvent e) {
       if (myDocument.isInBulkUpdate()) {
         myMaxWidth = mySize != null ? mySize.width : -1;
@@ -4626,11 +4651,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return offsetToVisualPosition(startLineOffset).line;
     }
 
-    public synchronized void changedUpdate(DocumentEvent e) {
-      int startLine = e.getOldLength() == 0 ? myOldEndLine : getVisualPositionLine(e.getOffset());
-      int newEndLine = e.getNewLength() == 0 ? startLine : getVisualPositionLine(e.getOffset() + e.getNewLength());
-      int oldEndLine = myOldEndLine;
-
+    public synchronized void update(int startLine, int newEndLine, int oldEndLine) {
       final int lineWidthSize = myLineWidths.size();
       if (lineWidthSize == 0) {
         reset();
@@ -4657,12 +4678,21 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }
 
+    public synchronized void changedUpdate(DocumentEvent e) {
+      int startLine = e.getOldLength() == 0 ? myOldEndLine : getVisualPositionLine(e.getOffset());
+      int newEndLine = e.getNewLength() == 0 ? startLine : getVisualPositionLine(e.getOffset() + e.getNewLength());
+      int oldEndLine = myOldEndLine;
+
+      update(startLine, newEndLine, oldEndLine);
+    }
+
+    @SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext", "AssignmentToForLoopParameter"})
     private void validateSizes() {
       if (!myIsDirty) return;
 
-      synchronized (this) {
+      synchronized (lock) {
         if (!myIsDirty) return;
-        int lineCount = myLineWidths.size();
+        int lineCount = Math.min(myLineWidths.size(), myDocument.getLineCount());
 
         if (myMaxWidth != -1 && myDocument.isInBulkUpdate()) {
           mySize = new Dimension(myMaxWidth, getLineHeight() * lineCount);
@@ -4676,24 +4706,52 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         final int fontSize = myScheme.getEditorFontSize();
         final String fontName = myScheme.getEditorFontName();
 
+        List<? extends TextChange> softWraps = getSoftWrapModel().getRegisteredSoftWraps();
+        int softWrapsIndex = -1;
+
         for (int line = 0; line < lineCount; line++) {
           if (myLineWidths.getQuick(line) != -1) continue;
           x = 0;
-          int offset = logicalPositionToOffset(visualToLogicalPosition(new VisualPosition(line, 0)));
+          int offset = myDocument.getLineStartOffset(line);
 
           if (offset >= myDocument.getTextLength()) {
             myLineWidths.set(line, 0);
             break;
           }
 
+          if (softWrapsIndex < 0) {
+            softWrapsIndex = getSoftWrapModel().getSoftWrapIndex(offset);
+            if (softWrapsIndex < 0) {
+              softWrapsIndex = -softWrapsIndex - 1;
+            }
+          }
+
           IterationState state = new IterationState(EditorImpl.this, offset, false);
           int fontType = state.getMergedAttributes().getFontType();
+
+          int maxPreviousSoftWrappedWidth = -1;
 
           while (offset < end && line < lineCount) {
             char c = text.charAt(offset);
             if (offset >= state.getEndOffset()) {
               state.advance();
               fontType = state.getMergedAttributes().getFontType();
+            }
+
+            while (softWrapsIndex < softWraps.size()) {
+              TextChange softWrap = softWraps.get(softWrapsIndex);
+              if (softWrap.getStart() > offset) {
+                break;
+              }
+              softWrapsIndex++;
+              if (softWrap.getStart() == offset) {
+                maxPreviousSoftWrappedWidth = Math.max(maxPreviousSoftWrappedWidth, x);
+                x = getSoftWrapModel().getSoftWrapIndentWidthInPixels(softWrap);
+              }
+            }
+            if (line + 1 >= lineCount) {
+              myLineWidths.set(line, Math.max(x, maxPreviousSoftWrappedWidth));
+              break;
             }
 
             FoldRegion collapsed = state.getCurrentFold();
@@ -4703,6 +4761,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 x += EditorUtil.charWidth(placeholder.charAt(i), fontType, EditorImpl.this);
               }
               offset = collapsed.getEndOffset();
+              line = myDocument.getLineNumber(offset);
             }
             else {
               if (c == '\t') {
@@ -4711,7 +4770,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
               }
               else {
                 if (c == '\n') {
-                  myLineWidths.set(line, x);
+                  myLineWidths.set(line, Math.max(x, maxPreviousSoftWrappedWidth));
                   if (line + 1 >= lineCount || myLineWidths.getQuick(line + 1) != -1) break;
                   offset++;
                   x = 0;
@@ -4732,12 +4791,28 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                            x);    // Last line can be non-zero length and won't be caught by in-loop procedure since latter only react on \n's
         }
 
+        // There is a following possible situation:
+        //   1. Big document is opened at editor;
+        //   2. Soft wraps are calculated for the current visible area;
+        //   2. The user scrolled down;
+        //   3. The user significantly reduced visible area width (say, reduced it twice);
+        //   4. Soft wraps are calculated for the current visible area;
+        // We need to consider only the widths for the logical lines that are completely shown at the current visible area then.
+        // I.e. we shouldn't use widths of the lines that are not shown for max width calculation because previous widths are calculated
+        // for another visible area width.
+        int startToUse = 0;
+        int endToUse = lineCount;
+        if (getSoftWrapModel().isSoftWrappingEnabled()) {
+          Rectangle visibleArea = getScrollingModel().getVisibleArea();
+          startToUse = xyToLogicalPosition(visibleArea.getLocation()).line + 1;
+          endToUse = xyToLogicalPosition(new Point(0, visibleArea.y + visibleArea.height)).line;
+        }
         int maxWidth = 0;
-        for (int i = 0; i < lineCount; i++) {
+        for (int i = startToUse; i < endToUse; i++) {
           maxWidth = Math.max(maxWidth, myLineWidths.getQuick(i));
         }
 
-        mySize = new Dimension(maxWidth, getLineHeight() * lineCount);
+        mySize = new Dimension(maxWidth, getLineHeight() * getVisibleLineCount());
 
         myIsDirty = false;
       }

@@ -23,14 +23,17 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.editor.impl.FoldingModelImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.CompositeConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -57,8 +60,9 @@ public class CodeFoldingConfigurable extends CompositeConfigurable<CodeFoldingOp
 
   public JComponent createComponent() {
     for (CodeFoldingOptionsProvider provider : getConfigurables()) {
-      myFoldingPanel.add(provider.createComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHWEST,
-                                                                            GridBagConstraints.NONE, new Insets(0,0,0,0), 0,0));
+      myFoldingPanel
+        .add(provider.createComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHWEST,
+                                                                GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     }
     return myRootPanel;
   }
@@ -72,19 +76,25 @@ public class CodeFoldingConfigurable extends CompositeConfigurable<CodeFoldingOp
     EditorSettingsExternalizable.getInstance().setFoldingOutlineShown(myCbFolding.isSelected());
     super.apply();
 
+    final List<Pair<Editor, Project>> toUpdate = new ArrayList<Pair<Editor, Project>>();
     for (final Editor editor : EditorFactory.getInstance().getAllEditors()) {
       final Project project = editor.getProject();
       if (project != null && !project.isDefault()) {
-        final CodeFoldingManager foldingManager = CodeFoldingManager.getInstance(project);
-        if (foldingManager != null) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              foldingManager.forceDefaultState(editor);
-            }
-          }, ModalityState.NON_MODAL);
-        }
+        toUpdate.add(Pair.create(editor, project));
       }
     }
+
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        for (Pair<Editor, Project> each : toUpdate) {
+          final CodeFoldingManager foldingManager = CodeFoldingManager.getInstance(each.second);
+          if (foldingManager != null) {
+            foldingManager.buildInitialFoldings(each.first);
+          }
+        }
+        EditorOptionsPanel.reinitAllEditors();
+      }
+    }, ModalityState.NON_MODAL);
   }
 
   public void reset() {

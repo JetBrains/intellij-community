@@ -155,4 +155,8 @@ public class CustomTemplateCallback {
     }
     return element;
   }
+
+  public boolean isInInjectedFragment() {
+    return myInInjectedFragment;
+  }
 }

@@ -114,7 +114,7 @@ public class EditorFragmentComponent extends JPanel {
     setLayout(new BorderLayout());
     add(component);
 
-    final Color borderColor = editor.getColorsScheme().getColor(EditorColors.SELECTED_FOLDING_TREE_COLOR);
+    final Color borderColor = editor.getColorsScheme().getColor(EditorColors.SELECTED_TEARLINE_COLOR);
 
     Border outsideBorder = BorderFactory.createLineBorder(borderColor, 1);
     Border insideBorder = BorderFactory.createEmptyBorder(2, 2, 2, 2);

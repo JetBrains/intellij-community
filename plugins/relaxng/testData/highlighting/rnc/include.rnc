@@ -1,0 +1,3 @@
+include "included.rnc"
+
+start = AddressBook

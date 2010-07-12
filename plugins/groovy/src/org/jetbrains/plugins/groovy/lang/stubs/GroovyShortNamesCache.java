@@ -79,7 +79,7 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
 
   @NotNull
   public PsiClass[] getClassesByFQName(@NotNull @NonNls String name, @NotNull GlobalSearchScope scope) {
-    final Collection<PsiClass> result = getScriptClassesByFQName(name, scope);
+    final Collection<PsiClass> result = new ArrayList<PsiClass>(getScriptClassesByFQName(name, scope));
 
     final Collection<? extends PsiElement> classes = StubIndex.getInstance().get(GrFullClassNameIndex.KEY, name.hashCode(), myProject, new GrSourceFilterScope(scope));
     if (!classes.isEmpty()) {

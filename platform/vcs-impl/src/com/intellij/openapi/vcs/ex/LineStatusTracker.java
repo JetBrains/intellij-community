@@ -216,7 +216,7 @@ public class LineStatusTracker {
     int width = endX - x;
     if (r.height > 0) {
       g.fillRect(x, r.y + 2, width, r.height - 4);
-      g.setColor(gutter.getFoldingColor(false));
+      g.setColor(gutter.getOutlineColor(false));
       UIUtil.drawLine(g, x, r.y + 2, x + width, r.y + 2);
       UIUtil.drawLine(g, x, r.y + 2, x, r.y + r.height - 3);
       UIUtil.drawLine(g, x, r.y + r.height - 3, x + width, r.y + r.height - 3);
@@ -230,7 +230,7 @@ public class LineStatusTracker {
         r.y};
       g.fillPolygon(xPoints, yPoints, 3);
 
-      g.setColor(gutter.getFoldingColor(false));
+      g.setColor(gutter.getOutlineColor(false));
       g.drawPolygon(xPoints, yPoints, 3);
     }
   }

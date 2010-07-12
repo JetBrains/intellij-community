@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="org.intellij.plugins.relaxNG.convert.AdvancedDtdOptions">
+  <grid id="27dc6" binding="myRoot" layout-manager="GridLayoutManager" row-count="9" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+    <margin top="0" left="0" bottom="0" right="0"/>
+    <constraints>
+      <xy x="20" y="20" width="529" height="392"/>
+    </constraints>
+    <properties/>
+    <border type="none" title="DTD Input"/>
+    <children>
+      <component id="60570" class="javax.swing.JCheckBox" binding="myInlineAttlistCheckBox" default-binding="true">
+        <constraints>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="&amp;inline-attlist"/>
+          <toolTipText value="Specifies not to generate definitions for attribute list declarations and instead move attributes declared in attribute list declarations into the definitions generated for element declarations. This is the default behavior when the output module is xsd. Otherwise, the default behaviour is as described in the -i no-inline-attlist parameter.  "/>
+        </properties>
+      </component>
+      <component id="ee970" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <labelFor value="4bcfc"/>
+          <text value="&amp;colon-replacement:"/>
+          <toolTipText value="Replaces colons in element names by chars when constructing the names of definitions used to represent the element declarations and attribute list declarations in the DTD. Trang generates a definition for each element declaration and attlist declaration in the DTD. The name of the definition is based on the name of the element. In RELAX NG, the names of definitions cannot contain colons. However, in the DTD, the element name may contain a colon. By default, Trang will first try to use the element names without prefixes. If this causes a conflict, it will instead replace the colon by a legal name character (it try first to use a period).  "/>
+        </properties>
+      </component>
+      <component id="4bcfc" class="javax.swing.JTextField" binding="myColonReplacement">
+        <constraints>
+          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+            <preferred-size width="150" height="-1"/>
+          </grid>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="c69bb" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <labelFor value="12ad0"/>
+          <text value="&amp;element-define:"/>
+          <toolTipText value="Specifies how to construct the name of the definition representing an element declaration from the name of the element. The name-pattern must contain exactly one percent character. This percent character is replaced by the name of element (after colon replacement) and the result is used as the name of the definition"/>
+        </properties>
+      </component>
+      <component id="12ad0" class="javax.swing.JTextField" binding="myElementDefine">
+        <constraints>
+          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+            <preferred-size width="150" height="-1"/>
+          </grid>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="b63cc" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="1" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <labelFor value="5576"/>
+          <text value="&amp;attlist-define:"/>
+          <toolTipText value="This specifies how to construct the name of the definition representing an attribute list declaration from the name of the element. The name-pattern must contain exactly one percent character. This percent character is replaced by the name of element (after colon replacement) and the result is used as the name of the definition.  "/>
+        </properties>
+      </component>
+      <component id="5576" class="javax.swing.JTextField" binding="myAttlistDefine">
+        <constraints>
+          <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+            <preferred-size width="150" height="-1"/>
+          </grid>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="32a4e" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <labelFor value="bbb31"/>
+          <text value="a&amp;ny-name:"/>
+          <toolTipText value="Specifies the name of the definition generated for the content of elements declared in the DTD as having a content model of ANY."/>
+        </properties>
+      </component>
+      <component id="bbb31" class="javax.swing.JTextField" binding="myAnyName">
+        <constraints>
+          <grid row="4" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+            <preferred-size width="150" height="-1"/>
+          </grid>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="62d5d" class="javax.swing.JCheckBox" binding="myStrictAnyCheckBox" default-binding="true">
+        <constraints>
+          <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="&amp;strict-any"/>
+          <toolTipText value="Preserves the exact semantics of ANY content models by using an explicit choice of references to all declared elements. By default, Trang uses a wildcard that allows any element.  "/>
+        </properties>
+      </component>
+      <component id="b1561" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <labelFor value="79c45"/>
+          <text value="ann&amp;otation-prefix:"/>
+          <toolTipText value="Default values are represented using an annotation attribute prefix:defaultValue where prefix is bound to http://relaxng.org/ns/compatibility/annotations/1.0 as defined by the RELAX NG DTD Compatibility Committee Specification. By default, Trang will use a for prefix unless that conflicts with a prefix used in the DTD.  "/>
+        </properties>
+      </component>
+      <component id="79c45" class="javax.swing.JTextField" binding="myAnnotationPrefix">
+        <constraints>
+          <grid row="6" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+            <preferred-size width="150" height="-1"/>
+          </grid>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="d14ca" class="javax.swing.JCheckBox" binding="myGenerateStartCheckBox" default-binding="true">
+        <constraints>
+          <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="&amp;generate-start"/>
+          <toolTipText value="Specifies whether Trang should generate a start element. DTDs do not indicate what elements are allowed as document elements. Trang assumes that all elements that are defined but never referenced are allowed as document elements.  "/>
+        </properties>
+      </component>
+      <grid id="c0da2" layout-manager="GridLayoutManager" row-count="2" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <grid row="8" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+        <border type="none" title="Namespace Settings"/>
+        <children>
+          <component id="3e6e" class="javax.swing.JLabel">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <labelFor value="577de"/>
+              <text value="&amp;Default:"/>
+            </properties>
+          </component>
+          <vspacer id="827e3">
+            <constraints>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+            </constraints>
+          </vspacer>
+          <component id="577de" class="javax.swing.JTextField" binding="myDefaultNS">
+            <constraints>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+                <preferred-size width="150" height="-1"/>
+              </grid>
+            </constraints>
+            <properties/>
+          </component>
+          <scrollpane id="66236">
+            <constraints>
+              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="18116" class="javax.swing.JTable" binding="myNamespaceMap">
+                <constraints/>
+                <properties>
+                  <preferredScrollableViewportSize width="250" height="70"/>
+                </properties>
+                <clientProperties>
+                  <terminateEditOnFocusLost class="java.lang.Boolean" value="true"/>
+                </clientProperties>
+              </component>
+            </children>
+          </scrollpane>
+          <grid id="f0444" binding="myToolbar" layout-manager="BorderLayout" hgap="0" vgap="0">
+            <constraints>
+              <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="8" fill="2" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children/>
+          </grid>
+        </children>
+      </grid>
+    </children>
+  </grid>
+  <inspectionSuppressions>
+    <suppress inspection="NoLabelFor" id="66236"/>
+  </inspectionSuppressions>
+</form>

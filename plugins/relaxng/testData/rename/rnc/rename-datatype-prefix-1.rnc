@@ -1,0 +1,4 @@
+namespace aaa = "xxx"
+datatypes aaa = "yyy"
+
+start = element foo { <caret>aaa:string }

@@ -1,0 +1,6 @@
+
+foo = grammar {
+  start = parent unresolved
+}
+bar = element bar { empty }
+unresolved = 

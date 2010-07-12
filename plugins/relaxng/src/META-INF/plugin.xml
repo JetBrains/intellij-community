@@ -1,0 +1,93 @@
+<idea-plugin version="2" url="http://www.jetbrains.net/confluence/display/CONTEST/RELAX-NG+Support">
+  <id>RelaxNG-Support</id>
+  <name>RELAX-NG Support</name>
+  <depends>com.intellij.modules.xml</depends>
+
+  <description><![CDATA[
+    Support for RELAX-NG XML schemas. See <a href="http://relaxng.org/">relaxng.org</a> and the corresponding
+    IntelliJ IDEA feature request: <a href="http://www.jetbrains.net/jira/browse/IDEA-13734">IDEA-13734</a>.
+    <p>
+    The plugin provides the following features:
+    </p>
+    <ul>
+    <li> Completion and validation of XML documents associated with RELAX-NG schemas</li>
+    <li> Editing RELAX-NG files in XML and compact syntax, including on-the-fly error checking, completion,
+         documentation lookup and more.</li>
+    <li> Conversion between different schema formats (including W3C XML Schema/XML 1.0 DTDs) using
+         <a href="http://www.thaiopensource.com/relaxng/trang.html">Trang</a></li>
+    </ul>
+  ]]></description>
+  <version>1.5.5</version>
+
+  <change-notes><![CDATA[
+     <ul>
+      <li>extreme index optimization</li>
+      <li>renameable xml prefixes</li>
+      <li>IDEA 9.x compatibility bugfixes</li>
+     </ul>
+     <p>
+      The complete list of changes in earlier versions is available
+      <a href="http://www.jetbrains.net/confluence/display/CONTEST/RELAX-NG+Support#RELAX-NGSupport-VersionHistory">here</a>
+     </p>
+]]></change-notes>
+
+  <vendor email="sascha.weinreuter@cit.de">Sascha Weinreuter</vendor>
+  <idea-version since-build="95.4"  /><!-- 9.x -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <errorHandler implementation="org.intellij.plugins.relaxNG.SimpleErrorReportSubmitter" />
+    <gotoSymbolContributor implementation="org.intellij.plugins.relaxNG.GotoSymbolContributor" />
+    <xml.schemaProvider implementation="org.intellij.plugins.relaxNG.config.NoNamespaceSchemaProvider" />
+    <hectorComponentProvider implementation="org.intellij.plugins.relaxNG.config.NoNamespaceConfigImpl$HectorProvider" />
+
+    <fileTypeFactory implementation="org.intellij.plugins.relaxNG.compact.RncFileType$Factory" />
+    <completionData fileType="RNG Compact" className="org.intellij.plugins.relaxNG.compact.RncCompletionData" />
+    <standardResourceProvider implementation="org.intellij.plugins.relaxNG.ApplicationLoader$ResourceProvider" />
+
+    <annotator language="RELAX-NG" implementationClass="org.intellij.plugins.relaxNG.compact.ReferenceAnnotator" />
+    <annotator language="RELAX-NG" implementationClass="org.intellij.plugins.relaxNG.model.annotation.ModelAnnotator" />
+    <externalAnnotator language="RELAX-NG" implementationClass="org.intellij.plugins.relaxNG.validation.RngSchemaValidator" />
+
+    <lang.parserDefinition language="RELAX-NG" implementationClass="org.intellij.plugins.relaxNG.compact.RncParserDefinition" />
+    <lang.braceMatcher language="RELAX-NG" implementationClass="org.intellij.plugins.relaxNG.compact.RngCompactLanguage$MyPairedBraceMatcher" />
+    <lang.commenter language="RELAX-NG" implementationClass="org.intellij.plugins.relaxNG.compact.RngCompactLanguage$MyCommenter" />
+    <lang.foldingBuilder language="RELAX-NG" implementationClass="org.intellij.plugins.relaxNG.compact.folding.RncFoldingBuilder" />
+    <lang.formatter language="RELAX-NG" implementationClass="org.intellij.plugins.relaxNG.compact.formatting.RncFormattingModelBuilder" />
+    <lang.namesValidator language="RELAX-NG" implementationClass="org.intellij.plugins.relaxNG.compact.RngCompactLanguage$MyNamesValidator" />
+    <lang.syntaxHighlighterFactory key="RELAX-NG" implementationClass="org.intellij.plugins.relaxNG.compact.RngCompactLanguage$MySyntaxHighlighterFactory" />
+
+    <lang.elementManipulator forClass="org.intellij.plugins.relaxNG.compact.psi.RncFileReference" implementationClass="org.intellij.plugins.relaxNG.ProjectLoader$RncFileReferenceManipulator" />
+
+    <lang.documentationProvider language="RELAX-NG" implementationClass="org.intellij.plugins.relaxNG.compact.RngCompactLanguage$MyDocumentationProvider" />
+
+    <fileBasedIndex implementation="org.intellij.plugins.relaxNG.model.resolve.RelaxSymbolIndex" />
+    <include.provider implementation="org.intellij.plugins.relaxNG.model.resolve.RelaxIncludeProvider"/>
+
+    <externalAnnotator language="XML" implementationClass="org.intellij.plugins.relaxNG.validation.RngSchemaValidator" />
+    <lang.documentationProvider language="XML" implementationClass="org.intellij.plugins.relaxNG.RngDocumentationProvider" />
+  </extensions>
+
+  <project-components>
+    <component>
+      <implementation-class>org.intellij.plugins.relaxNG.ProjectLoader</implementation-class>
+    </component>
+    <component>
+      <interface-class>org.intellij.plugins.relaxNG.config.NoNamespaceConfig</interface-class>
+      <implementation-class>org.intellij.plugins.relaxNG.config.NoNamespaceConfigImpl</implementation-class>
+    </component>
+  </project-components>
+
+  <application-components>
+    <component>
+      <implementation-class>org.intellij.plugins.relaxNG.ApplicationLoader</implementation-class>
+    </component>
+  </application-components>
+
+  <actions>
+    <action id="ConvertSchemaAction" class="org.intellij.plugins.relaxNG.convert.ConvertSchemaAction"
+            text="Convert Schema..."
+            description="Converts the selected Schema document (RNG, RNC, XSD, DTD) into another format">
+      <add-to-group group-id="ToolsXmlGroup" anchor="after" relative-to-action="GenerateDTD" />
+    </action>
+  </actions>
+</idea-plugin>

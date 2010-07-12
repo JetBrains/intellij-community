@@ -15,46 +15,57 @@
  */
 package com.intellij.codeInsight.template.zencoding.filters;
 
+import com.intellij.codeInsight.template.zencoding.nodes.GenerationNode;
+import com.intellij.codeInsight.template.zencoding.tokens.TemplateToken;
+import com.intellij.codeInsight.template.zencoding.tokens.XmlTemplateToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
 /**
  * @author Eugene.Kudelevsky
  */
-public class XslZenCodingGenerator extends XmlZenCodingGenerator {
+public class XslZenCodingFilter extends ZenCodingFilter {
   private final XmlZenCodingGenerator myDelegate = new XmlZenCodingGeneratorImpl();
   @NonNls private static final String SELECT_ATTR_NAME = "select";
 
+  @NotNull
   @Override
-  public String toString(@NotNull final XmlTag tag,
-                         @NotNull List<Pair<String, String>> attribute2Value,
-                         final boolean hasChildren,
-                         @NotNull PsiElement context) {
-    for (Pair<String, String> pair : attribute2Value) {
-      if (SELECT_ATTR_NAME.equals(pair.first)) {
-        return myDelegate.toString(tag, attribute2Value, hasChildren, context);
-      }
-    }
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        if (isOurTag(tag, hasChildren)) {
-          XmlAttribute attribute = tag.getAttribute(SELECT_ATTR_NAME);
-          if (attribute != null) {
-            attribute.delete();
+  public GenerationNode filterNode(@NotNull final GenerationNode node) {
+    TemplateToken token = node.getTemplateToken();
+    if (token instanceof XmlTemplateToken) {
+      XmlTemplateToken xmlToken = (XmlTemplateToken)token;
+      XmlDocument document = xmlToken.getFile().getDocument();
+      if (document != null) {
+        final XmlTag tag = document.getRootTag();
+        if (tag != null) {
+          for (Pair<String, String> pair : xmlToken.getAttribute2Value()) {
+            if (SELECT_ATTR_NAME.equals(pair.first)) {
+              return node;
+            }
           }
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+              if (isOurTag(tag, node.getChildren().size() > 0)) {
+                XmlAttribute attribute = tag.getAttribute(SELECT_ATTR_NAME);
+                if (attribute != null) {
+                  attribute.delete();
+                }
+              }
+            }
+          });
+          return node;
         }
       }
-    });
-    return myDelegate.toString(tag, attribute2Value, hasChildren, context);
+    }
+    return node;
   }
 
   private static boolean isOurTag(XmlTag tag, boolean hasChildren) {
@@ -65,17 +76,12 @@ public class XslZenCodingGenerator extends XmlZenCodingGenerator {
     return false;
   }
 
-  @NotNull
-  @Override
-  public String buildAttributesString(@NotNull List<Pair<String, String>> attribute2value, boolean hasChildren, int numberInIteration) {
-    return myDelegate.buildAttributesString(attribute2value, hasChildren, numberInIteration);
-  }
-
   @Override
   public boolean isMyContext(@NotNull PsiElement context) {
     return myDelegate.isMyContext(context);
   }
 
+  @NotNull
   @Override
   public String getSuffix() {
     return "xsl";
