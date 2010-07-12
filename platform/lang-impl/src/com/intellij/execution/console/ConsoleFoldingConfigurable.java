@@ -4,8 +4,9 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.ui.AddDeleteListPanel;
+import com.intellij.ui.AddEditDeleteListPanel;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -20,11 +21,7 @@ public class ConsoleFoldingConfigurable implements SearchableConfigurable {
   private JPanel myMainComponent;
   private MyAddDeleteListPanel myPositivePanel;
   private MyAddDeleteListPanel myNegativePanel;
-  private final ConsoleFoldingSettings mySettings;
-
-  public ConsoleFoldingConfigurable(ConsoleFoldingSettings settings) {
-    mySettings = settings;
-  }
+  private final ConsoleFoldingSettings mySettings = ConsoleFoldingSettings.getSettings();
 
   public JComponent createComponent() {
     if (myMainComponent == null) {
@@ -35,6 +32,10 @@ public class ConsoleFoldingConfigurable implements SearchableConfigurable {
       myMainComponent.add(myNegativePanel);
     }
     return myMainComponent;
+  }
+
+  public void addRule(@NotNull String rule) {
+    myPositivePanel.addRule(rule);
   }
 
   public boolean isModified() {
@@ -59,6 +60,7 @@ public class ConsoleFoldingConfigurable implements SearchableConfigurable {
     myPositivePanel = null;
   }
 
+  @NotNull
   public String getId() {
     return getDisplayName();
   }
@@ -80,20 +82,23 @@ public class ConsoleFoldingConfigurable implements SearchableConfigurable {
     return null;
   }
 
-  private static class MyAddDeleteListPanel extends AddDeleteListPanel {
+  private static class MyAddDeleteListPanel extends AddEditDeleteListPanel<String> {
     private final String myQuery;
 
     public MyAddDeleteListPanel(String title, String query) {
-      super(title, new ArrayList());
+      super(title, new ArrayList<String>());
       myQuery = query;
     }
 
     @Override
     @Nullable
-    protected Object findItemToAdd() {
-      return Messages.showInputDialog(this, myQuery,
-                                      "Folding pattern",
-                                      Messages.getQuestionIcon(), "", null);
+    protected String findItemToAdd() {
+      return showEditDialog("");
+    }
+
+    @Nullable
+    private String showEditDialog(final String initialValue) {
+      return Messages.showInputDialog(this, myQuery, "Folding pattern", Messages.getQuestionIcon(), initialValue, null);
     }
 
     void resetFrom(List<String> patterns) {
@@ -108,6 +113,15 @@ public class ConsoleFoldingConfigurable implements SearchableConfigurable {
       for (Object o : getListItems()) {
         patterns.add((String)o);
       }
+    }
+
+    public void addRule(String rule) {
+      addElement(rule);
+    }
+
+    @Override
+    protected String editSelectedItem(String item) {
+      return showEditDialog(item);
     }
   }
 }

@@ -1,6 +1,7 @@
 package com.intellij.execution.console;
 
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.containers.CollectionFactory;
@@ -22,6 +23,10 @@ public class ConsoleFoldingSettings implements PersistentStateComponent<ConsoleF
     for (CustomizableConsoleFoldingBean regexp : CustomizableConsoleFoldingBean.EP_NAME.getExtensions()) {
       patternList(regexp.negate).add(regexp.substring);
     }
+  }
+
+  public static ConsoleFoldingSettings getSettings() {
+    return ServiceManager.getService(ConsoleFoldingSettings.class);
   }
 
   public boolean shouldFoldLine(String line) {

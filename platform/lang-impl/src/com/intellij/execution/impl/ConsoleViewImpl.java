@@ -19,6 +19,7 @@ package com.intellij.execution.impl;
 import com.intellij.codeInsight.navigation.IncrementalSearchHandler;
 import com.intellij.execution.ConsoleFolding;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.console.FoldLinesWithSubstring;
 import com.intellij.execution.filters.*;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
@@ -762,6 +763,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     final DefaultActionGroup group = new DefaultActionGroup();
     group.add(new ClearAllAction());
     group.add(new CopyAction());
+    group.add(new FoldLinesWithSubstring(myEditor));
     group.addSeparator();
     final ActionManager actionManager = ActionManager.getInstance();
     group.add(actionManager.getAction(DiffActions.COMPARE_WITH_CLIPBOARD));
