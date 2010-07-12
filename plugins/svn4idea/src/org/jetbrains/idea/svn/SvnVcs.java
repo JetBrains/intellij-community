@@ -20,10 +20,7 @@ package org.jetbrains.idea.svn;
 import com.intellij.ide.FrameStateListener;
 import com.intellij.ide.FrameStateManager;
 import com.intellij.idea.RareLogger;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
+import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -373,6 +370,16 @@ public class SvnVcs extends AbstractVcs {
     myAuthNotifier.init();
     mySvnBranchPointsCalculator = new SvnBranchPointsCalculator(myProject);
     mySvnBranchPointsCalculator.activate();
+
+    if (SystemInfo.isWindows) {
+      if (! SVNJNAUtil.isJNAPresent()) {
+        Notifications.Bus.notify(new Notification("SVN_NO_JNA", "Subversion plugin: no JNA",
+          "A problem with JNA initialization for svnkit library. Encryption is not available.", NotificationType.WARNING), NotificationDisplayType.BALLOON, myProject);
+      } else if (! SVNJNAUtil.isWinCryptEnabled()) {
+        Notifications.Bus.notify(new Notification("SVN_NO_CRYPT32", "Subversion plugin: no encryption",
+          "A problem with encryption module (Crypt32.dll) initialization for svnkit library. Encryption is not available.", NotificationType.WARNING), NotificationDisplayType.BALLOON, myProject);
+      }
+    }
 
     // do one time after project loaded
     StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {

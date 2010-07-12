@@ -28,10 +28,8 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.*;
-import org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager;
-import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
-import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.util.jna.SVNJNAUtil;
+import org.tmatesoft.svn.core.internal.wc.*;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 import java.io.File;
@@ -254,13 +252,14 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
 
   // taken from default manager as is
   private Map getHostProperties(String host) {
-      Map globalProps = getServersFile().getProperties("global");
-      String groupName = getGroupName(getServersFile().getProperties("groups"), host);
-      if (groupName != null) {
-          Map hostProps = getServersFile().getProperties(groupName);
-          globalProps.putAll(hostProps);
-      }
-      return globalProps;
+    final SVNCompositeConfigFile serversFile = getServersFile();
+    Map globalProps = serversFile.getProperties("global");
+    String groupName = getGroupName(serversFile.getProperties("groups"), host);
+    if (groupName != null) {
+      Map hostProps = serversFile.getProperties(groupName);
+      globalProps.putAll(hostProps);
+    }
+    return globalProps;
   }
 
   public static boolean checkHostGroup(final String url, final String patterns, final String exceptions) {
@@ -361,17 +360,13 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
   public boolean checkContinueSaveCredentials(final SVNAuthentication auth, final String kind, final String realm) {
     final SVNURL url = auth.getURL();
 
-    //final SVNConfigFile userConfig = new SVNConfigFile(new File(myConfigDirectory, "config"));
-    final boolean authStorageEnabled = isAuthStorageEnabled(url);
     final String storeCredentials = getConfigFile().getPropertyValue("auth", "store-auth-creds");
     if ((Boolean.FALSE.equals(isAuthStorageEnabledMy(url))) || (! isTurned(storeCredentials))) {
-      //userConfig.setPropertyValue("auth", "store-auth-creds", "yes", true);
       ChangesViewBalloonProblemNotifier.showMe(myProject, "Cannot store credentials: forbidden by \"store-auth-creds\"=\"no\"", MessageType.ERROR);
       return false;
     }
     final boolean passwordStorageEnabled = isStorePasswords(url);
     // check can store
-    final String storePasswords = getConfigFile().getPropertyValue("auth", "store-passwords");
     if ((! ISVNAuthenticationManager.SSL.equals(kind)) && (! passwordStorageEnabled)) {
       // but it should be
       //userConfig.setPropertyValue("auth", "store-passwords", "yes", true);
@@ -385,7 +380,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
     }
 
     // check can encrypt
-    if (! SystemInfo.isWindows) {
+    if (! (SystemInfo.isWindows && SVNJNAUtil.isWinCryptEnabled())) {
       if (ISVNAuthenticationManager.SSL.equals(kind)) {
         try {
           if (! isStorePlainTextPassphrases(realm, auth)) {
