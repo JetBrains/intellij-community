@@ -43,14 +43,11 @@ public class HgPushAction extends HgAbstractGlobalAction {
       }
 
       public void execute() {
-        HgPushCommand command = new HgPushCommand(
-          project, dialog.getRepository(), dialog.getTarget()
-        );
-        if (dialog.isRevisionSelected()) {
-          command.setRevision(dialog.getRevision());
-        }
-        HgCommandResult result = command.execute();
-        new HgCommandResultNotifier(project).process(result);
+        HgPushCommand command = new HgPushCommand(project, dialog.getRepository(), dialog.getTarget());
+        command.setRevision(dialog.getRevision());
+        command.setForce(dialog.isForce());
+        command.setBranch(dialog.getBranch());
+        new HgCommandResultNotifier(project).process(command.execute());
       }
     };
   }
