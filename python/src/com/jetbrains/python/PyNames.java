@@ -20,6 +20,9 @@ public class PyNames {
   @NonNls public static final String GETATTR = "__getattr__";
   @NonNls public static final String GETATTRIBUTE = "__getattribute__";
   @NonNls public static final String CLASS = "__class__";
+  @NonNls public static final String METACLASS = "__metaclass__";
+
+  @NonNls public static final String SUPER = "super";
 
   @NonNls public static final String OBJECT = "object";
   @NonNls public static final String NONE = "None";

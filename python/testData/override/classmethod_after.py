@@ -6,4 +6,4 @@ class A:
 class B(A):
     @classmethod
     def foo(cls):
-        <selection>pass</selection>
+        <selection>A.foo(cls)</selection>

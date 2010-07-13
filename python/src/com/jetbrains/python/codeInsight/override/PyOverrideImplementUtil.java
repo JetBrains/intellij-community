@@ -16,8 +16,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +30,9 @@ import java.util.*;
  */
 public class PyOverrideImplementUtil {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.codeInsight.override.PyOverrideImplementUtil");
+
+  private PyOverrideImplementUtil() {
+  }
 
   @Nullable
   public static PyClass getContextClass(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
@@ -90,22 +94,19 @@ public class PyOverrideImplementUtil {
     overrideMethods(editor, pyClass, membersToOverride);
   }
 
-  public static void overrideMethods(final Editor editor, final PyClass pyClass, List<PyMethodMember> membersToOverride) {
-    final List<String> newMembers = generateCode(membersToOverride);
-    if (newMembers.isEmpty()) {
+  public static void overrideMethods(final Editor editor, final PyClass pyClass, final List<PyMethodMember> membersToOverride) {
+    if (membersToOverride == null) {
       return;
     }
-
     new WriteCommandAction(pyClass.getProject(), pyClass.getContainingFile()) {
       protected void run(final Result result) throws Throwable {
-        write(pyClass, newMembers, pyClass.getProject(), editor);
+        write(pyClass, membersToOverride, editor);
       }
     }.execute();
   }
 
   private static void write(@NotNull final PyClass pyClass,
-                            @NotNull final List<String> newMembers,
-                            @NotNull final Project project,
+                            @NotNull final List<PyMethodMember> newMembers,
                             @NotNull final Editor editor) {
     final PyStatementList statementList = pyClass.getStatementList();
     final int offset = editor.getCaretModel().getOffset();
@@ -117,15 +118,11 @@ public class PyOverrideImplementUtil {
     }
 
     PyFunction element = null;
-    for (String newMember : newMembers) {
-      element = PyElementGenerator.getInstance(project).createFromText(PyFunction.class, newMember + "\n    pass");
-      try {
-        element = (PyFunction)statementList.addAfter(element, anchor);
-        element = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(element);
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
+    for (PyMethodMember newMember : newMembers) {
+      PyFunction baseFunction = (PyFunction) newMember.getPsiElement();
+      final PyFunctionBuilder builder = buildOverriddenFunction(pyClass, baseFunction);
+      PyFunction function = builder.addFunctionAfter(statementList, anchor);
+      element = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(function);
     }
     
     PyPsiUtils.removeRedundantPass(statementList);
@@ -135,31 +132,43 @@ public class PyOverrideImplementUtil {
     editor.getSelectionModel().setSelection(start, element.getTextRange().getEndOffset());
   }
 
-  private static List<String> generateCode(final List<PyMethodMember> members) {
-    if (members == null) {
-      return Collections.emptyList();
+  private static PyFunctionBuilder buildOverriddenFunction(PyClass pyClass, PyFunction baseFunction) {
+    PyFunctionBuilder pyFunctionBuilder = new PyFunctionBuilder(baseFunction.getName());
+    final PyDecoratorList decorators = baseFunction.getDecoratorList();
+    if (decorators != null && decorators.findDecorator(PyNames.CLASSMETHOD) != null) {
+      pyFunctionBuilder.decorate(PyNames.CLASSMETHOD);
     }
-    List<String> newMembers = new ArrayList<String>();
-    for (PyMethodMember member : members) {
-      newMembers.add(generateNewMethod(member.getPsiElement()));
+    final PyParameter[] baseParams = baseFunction.getParameterList().getParameters();
+    for (PyParameter parameter : baseParams) {
+      pyFunctionBuilder.parameter(parameter.getText());
     }
-    return newMembers;
-  }
 
-  @NotNull
-  private static String generateNewMethod(@NotNull final PsiElement element) {
-    assert (element instanceof PyFunction);
-    final PyFunction function = (PyFunction)element;
-    final StringBuilder newMethodText = new StringBuilder();
-    final PyDecoratorList decoratorList = function.getDecoratorList();
-    if (decoratorList != null) {
-      for (PyDecorator decorator: decoratorList.getDecorators()) {
-        if ("classmethod".equals(decorator.getCallee().getText())) {
-          newMethodText.append("@classmethod\n");
-        }
+    PyClass baseClass = baseFunction.getContainingClass();
+    assert baseClass != null;
+    StringBuilder statementBody = new StringBuilder();
+    if (baseClass.isNewStyleClass()) {
+      statementBody.append(PyNames.SUPER);
+      statementBody.append("(");
+      final LanguageLevel langLevel = ((PyFile)pyClass.getContainingFile()).getLanguageLevel();
+      if (!langLevel.isPy3K()) {
+        statementBody.append(pyClass.getName()).append(", self");
       }
+      statementBody.append(").").append(baseFunction.getName()).append("(");
+      for (int i = 1; i < baseParams.length; i++) {
+        statementBody.append(baseParams [i].getText());
+      }
+      statementBody.append(")");
     }
-    return newMethodText.append("def ").append(function.getName()).append(function.getParameterList().getText()).append(":").toString();
+    else {
+      statementBody.append(baseClass.getName()).append(".").append(baseFunction.getName()).append("(");
+      for (PyParameter param : baseParams) {
+        statementBody.append(param.getText());
+      }
+      statementBody.append(")");
+    }
+
+    pyFunctionBuilder.statement(statementBody.toString());
+    return pyFunctionBuilder;
   }
 
   @NotNull
@@ -172,8 +181,5 @@ public class PyOverrideImplementUtil {
       }
     }
     return superFunctions.values();
-  }
-
-  private PyOverrideImplementUtil() {
   }
 }

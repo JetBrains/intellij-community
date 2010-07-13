@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.intentions.*;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
@@ -133,7 +134,7 @@ public class UnsupportedFeatures extends PyAnnotator {
       final PsiElement firstChild = node.getFirstChild();
       if (firstChild != null) {
         final String name = firstChild.getText();
-        if ("super".equals(name)) {
+        if (PyNames.SUPER.equals(name)) {
           final PyArgumentList argumentList = node.getArgumentList();
           if (argumentList != null && argumentList.getArguments().length == 0) {
             getHolder().createWarningAnnotation(node, "super() should have arguments in Python 2");

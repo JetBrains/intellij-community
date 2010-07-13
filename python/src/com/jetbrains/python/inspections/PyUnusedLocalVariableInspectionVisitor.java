@@ -26,6 +26,7 @@ import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
 import com.jetbrains.python.psi.impl.PyForStatementNavigator;
 import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,36 +56,20 @@ class PyUnusedLocalVariableInspectionVisitor extends PyInspectionVisitor {
     processScope(PsiTreeUtil.getParentOfType(node, ScopeOwner.class), node);
   }
 
-  class DontPerformException extends RuntimeException {}
+  static class DontPerformException extends RuntimeException {}
 
   private void processScope(final ScopeOwner owner, final PyElement node) {
     if (owner.getContainingFile() instanceof PyExpressionCodeFragment || PydevConsoleRunner.isInPydevConsole(owner)){
       return;
     }
-    // Check for locals() call
-    try {
-      owner.acceptChildren(new PyRecursiveElementVisitor(){
-        @Override
-        public void visitPyCallExpression(final PyCallExpression node) {
-          if ("locals".equals(node.getCallee().getText())){
-            throw new DontPerformException();
-          }
-        }
 
-        @Override
-        public void visitPyFunction(final PyFunction node) {
-          // stop here
-        }
-      });
-    }
-    catch (DontPerformException e) {
-      return;
-    }
+    if (callsLocals(owner)) return;
 
-    // If method overrides others do not mark parameters as unused if they are
-    boolean parametersCanBeUnused = false;
+    // If method overrides others or is overridden, do not mark parameters as unused if they are
+    boolean parametersCanBeUnused = true;
     if (owner instanceof PyFunction) {
-      parametersCanBeUnused = PySuperMethodsSearch.search(((PyFunction)owner)).findFirst() != null;
+      parametersCanBeUnused = PySuperMethodsSearch.search(((PyFunction)owner)).findFirst() == null &&
+                              PyOverridingMethodsSearch.search((PyFunction) owner, true).findFirst() == null;
     }
 
     final Scope scope = owner.getScope();
@@ -115,7 +100,7 @@ class PyUnusedLocalVariableInspectionVisitor extends PyInspectionVisitor {
         }
         final ReadWriteInstruction.ACCESS access = ((ReadWriteInstruction)instruction).getAccess();
         // WriteAccess
-        if (access.isWriteAccess() && (parametersCanBeUnused || !(element != null && element.getParent() instanceof PyNamedParameter))) {
+        if (access.isWriteAccess() && (parametersCanBeUnused || !isParameter(element))) {
           if (!myUsedElements.contains(element)){
             myUnusedElements.add(element);
           }
@@ -183,6 +168,32 @@ class PyUnusedLocalVariableInspectionVisitor extends PyInspectionVisitor {
         }
       }
     }
+  }
+
+  private static boolean callsLocals(ScopeOwner owner) {
+    try {
+      owner.acceptChildren(new PyRecursiveElementVisitor(){
+        @Override
+        public void visitPyCallExpression(final PyCallExpression node) {
+          if ("locals".equals(node.getCallee().getText())){
+            throw new DontPerformException();
+          }
+        }
+
+        @Override
+        public void visitPyFunction(final PyFunction node) {
+          // stop here
+        }
+      });
+    }
+    catch (DontPerformException e) {
+      return true;
+    }
+    return false;
+  }
+
+  private static boolean isParameter(PsiElement element) {
+    return element != null && (element instanceof PyNamedParameter || element.getParent() instanceof PyNamedParameter);
   }
 
   void registerProblems() {

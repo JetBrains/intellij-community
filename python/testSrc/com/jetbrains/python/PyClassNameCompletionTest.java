@@ -12,11 +12,6 @@ public class PyClassNameCompletionTest extends PyLightFixtureTestCase {
   private boolean myOldAutocompleteValue;
 
   @Override
-  protected String getTestDataPath() {
-    return PythonTestUtil.getTestDataPath() + "/completion/className/";
-  }
-
-  @Override
   protected void setUp() throws Exception {
     super.setUp();
     final CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
@@ -30,15 +25,15 @@ public class PyClassNameCompletionTest extends PyLightFixtureTestCase {
     super.tearDown();
   }
 
-  public void testSimple() throws Exception {
+  public void testSimple() {
     doTest();
   }
 
-  public void testReuseExisting() throws Exception {
+  public void testReuseExisting() {
     doTest();
   }
 
-  public void testQualified() throws Exception {
+  public void testQualified() {
     final PyCodeInsightSettings settings = PyCodeInsightSettings.getInstance();
     boolean oldValue = settings.PREFER_FROM_IMPORT;
     settings.PREFER_FROM_IMPORT = false;
@@ -50,10 +45,15 @@ public class PyClassNameCompletionTest extends PyLightFixtureTestCase {
     }
   }
 
-  private void doTest() throws Exception {
-    myFixture.copyDirectoryToProject(getTestName(true), "");
+  public void testFunction() {
+    doTest();
+  }
+
+  private void doTest() {
+    final String path = "/completion/className/" + getTestName(true);
+    myFixture.copyDirectoryToProject(path, "");
     myFixture.configureFromTempProjectFile(getTestName(true) + ".py");
     myFixture.complete(CompletionType.CLASS_NAME);
-    myFixture.checkResultByFile(getTestName(true) + "/" + getTestName(true) + ".after.py");
+    myFixture.checkResultByFile(path + "/" + getTestName(true) + ".after.py");
   }
 }

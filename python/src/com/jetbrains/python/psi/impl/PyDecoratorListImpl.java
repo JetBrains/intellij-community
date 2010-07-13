@@ -32,4 +32,15 @@ public class PyDecoratorListImpl extends PyBaseElementImpl<PyDecoratorListStub> 
     return getStubOrPsiChildren(PyElementTypes.DECORATOR_CALL, decoarray);
     //return decoarray;
   }
+
+  @Override
+  public PyDecorator findDecorator(String name) {
+    final PyDecorator[] decorators = getDecorators();
+    for (PyDecorator decorator : decorators) {
+      if (name.equals(decorator.getCallee().getText())) {
+        return decorator;
+      }
+    }
+    return null;
+  }
 }

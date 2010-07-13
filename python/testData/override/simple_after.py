@@ -3,7 +3,7 @@ class A:
 
 class B(A):
     def doStuff(self):
-        <selection>pass</selection>
+        <selection>A.doStuff(self)</selection>
 
     def otherMethod(self, foo, bar):
         print foo, bar
