@@ -115,7 +115,9 @@ public class GrMapType extends GrLiteralClassType {
     for (Pair<PsiType, PsiType> entry : myOtherEntries) {
       components.add(getInternalCanonicalText(entry.first) + ":" + getInternalCanonicalText(entry.second));
     }
-    return "[" + StringUtil.join(components, ", ") + "]";
+    boolean tooMany = components.size() > 2;
+    final List<String> theFirst = components.subList(0, Math.min(2, components.size()));
+    return "[" + StringUtil.join(theFirst, ", ") + (tooMany ? ",..." : "") + "]";
   }
 
   public boolean isValid() {

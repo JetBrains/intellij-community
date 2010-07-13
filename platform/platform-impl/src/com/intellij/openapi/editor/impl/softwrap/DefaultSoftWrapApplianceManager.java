@@ -214,7 +214,7 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
     int x = myPainter.getMinDrawingWidth(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
     int prevSoftWrapOffset = start;
     for (int i = start; i < end; i++) {
-      int symbolWidth = EditorUtil.textWidth(myEditor, text, i, i + 1, fontType);
+      int symbolWidth = EditorUtil.textWidth(myEditor, text, i, i + 1, fontType, x);
       if (x + symbolWidth >= myVisibleAreaWidth) {
         int offset = calculateSoftWrapOffset(text, i - 1, prevSoftWrapOffset, end);
         if (offset >= end || offset <= prevSoftWrapOffset) {

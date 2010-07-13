@@ -40,6 +40,8 @@ public class GroovyFileTypeLoader extends FileTypeFactory{
   public static Set<String> getCustomGroovyScriptExtensions() {
     final LinkedHashSet<String> strings = new LinkedHashSet<String>();
     strings.add("gdsl");
+    strings.add("gpp");
+    strings.add("grunit");
     for (GroovyScriptTypeEP ep : GroovyScriptType.EP_NAME.getExtensions()) {
       ContainerUtil.addAll(strings, ep.extensions.split(";"));
     }

@@ -53,6 +53,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
+import com.intellij.refactoring.replaceConstructorWithBuilder.ParameterData;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
@@ -911,6 +912,24 @@ public class RefactoringUtil {
       }
     }
     return array;
+  }
+
+  @Nullable
+  public static PsiMethod getChainedConstructor(PsiMethod constructor) {
+    final PsiCodeBlock constructorBody = constructor.getBody();
+    LOG.assertTrue(constructorBody != null);
+    final PsiStatement[] statements = constructorBody.getStatements();
+    if (statements.length == 1 && statements[0] instanceof PsiExpressionStatement) {
+      final PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
+      if (expression instanceof PsiMethodCallExpression) {
+        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+        final PsiReferenceExpression methodExpr = methodCallExpression.getMethodExpression();
+        if ("this".equals(methodExpr.getReferenceName())) {
+          return (PsiMethod)methodExpr.resolve();
+        }
+      }
+    }
+    return null;
   }
 
   public static interface ImplicitConstructorUsageVisitor {

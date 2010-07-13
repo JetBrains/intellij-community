@@ -43,7 +43,7 @@ import java.util.List;
  */
 public class SoftWrapModelImpl implements SoftWrapModelEx {
 
-  private final SoftWrapDataMapper myDataAdjuster;
+  private final SoftWrapDataMapper            myDataAdjuster;
   private final SoftWrapsStorage              myStorage;
   private final SoftWrapPainter               myPainter;
   private final SoftWrapApplianceManager      myApplianceManager;
@@ -54,7 +54,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
   private       int      myActive;
 
   public SoftWrapModelImpl(@NotNull EditorEx editor) {
-    this(editor, new SoftWrapsStorage(editor.getDocument()), new CompositeSoftWrapPainter(editor));
+    this(editor, new SoftWrapsStorage(), new CompositeSoftWrapPainter(editor));
   }
 
   public SoftWrapModelImpl(@NotNull final EditorEx editor, @NotNull SoftWrapsStorage storage, @NotNull SoftWrapPainter painter) {
@@ -278,7 +278,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx {
     }
 
     if (start < end) {
-      result += EditorUtil.textWidth(myEditor, chars, start, end, Font.PLAIN);
+      result += EditorUtil.textWidth(myEditor, chars, start, end, Font.PLAIN, 0);
     }
 
     return result;

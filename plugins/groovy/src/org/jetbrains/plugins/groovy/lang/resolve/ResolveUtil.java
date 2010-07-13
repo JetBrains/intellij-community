@@ -444,7 +444,7 @@ public class ResolveUtil {
     final PsiElement parent = place.getParent();
     GroovyResolveResult[] variants = GroovyResolveResult.EMPTY_ARRAY;
     if (parent instanceof GrCallExpression) {
-      variants = ((GrCallExpression) parent).getMethodVariants();
+      variants = ((GrCallExpression) parent).getMethodVariants(place instanceof GrExpression ? (GrExpression)place : null);
     } else if (parent instanceof GrConstructorInvocation) {
       final PsiClass clazz = ((GrConstructorInvocation) parent).getDelegatedClass();
       if (clazz != null) {

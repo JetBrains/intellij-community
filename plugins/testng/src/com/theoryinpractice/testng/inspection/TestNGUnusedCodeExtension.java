@@ -68,7 +68,9 @@ public class TestNGUnusedCodeExtension extends UnusedCodeExtension {
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
+    if (!ADD_TESTNG_TO_ENTRIES) {
+      DefaultJDOMExternalizer.writeExternal(this, element);
+    }
   }
 
   @Nullable

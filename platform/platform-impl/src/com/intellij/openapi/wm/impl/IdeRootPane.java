@@ -36,6 +36,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarCustomComponentFactory;
@@ -50,7 +51,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -259,6 +259,9 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   void setMemoryIndicatorVisible(final boolean visible) {
     if (myMemoryWidget != null) {
       myMemoryWidget.setShowing(visible);
+      if (!SystemInfo.isMac) {
+        myStatusBar.setBorder(BorderFactory.createEmptyBorder(1, 4, 0, visible ? 0 : 2));
+      }
     }
   }
 

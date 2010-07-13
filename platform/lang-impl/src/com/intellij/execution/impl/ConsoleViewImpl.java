@@ -19,6 +19,7 @@ package com.intellij.execution.impl;
 import com.intellij.codeInsight.navigation.IncrementalSearchHandler;
 import com.intellij.execution.ConsoleFolding;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.console.FoldLinesLikeThis;
 import com.intellij.execution.filters.*;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
@@ -143,6 +144,28 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   public void scrollToEnd() {
     myEditor.getCaretModel().moveToOffset(myEditor.getDocument().getTextLength());
+  }
+
+  public void foldImmediately() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (myFlushAlarm.getActiveRequestCount() > 0) {
+      myFlushAlarm.cancelAllRequests();
+      myFlushDeferredRunnable.run();
+    }
+    
+    myFoldingAlarm.cancelAllRequests();
+
+    myPendingFoldRegions.clear();
+    final FoldingModel model = myEditor.getFoldingModel();
+    model.runBatchFoldingOperation(new Runnable() {
+      public void run() {
+        for (FoldRegion region : model.getAllFoldRegions()) {
+          model.removeFoldRegion(region);
+        }
+      }
+    });
+
+    updateFoldings(0, myEditor.getDocument().getLineCount() - 1, true);
   }
 
   private static class TokenInfo{
@@ -762,6 +785,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     final DefaultActionGroup group = new DefaultActionGroup();
     group.add(new ClearAllAction());
     group.add(new CopyAction());
+    group.add(new FoldLinesLikeThis(myEditor, this));
     group.addSeparator();
     final ActionManager actionManager = ActionManager.getInstance();
     group.add(actionManager.getAction(DiffActions.COMPARE_WITH_CLIPBOARD));
@@ -830,10 +854,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     ApplicationManager.getApplication().assertIsDispatchThread();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     highlightHyperlinks(myEditor, myHyperlinks, myCustomFilter, myPredefinedMessageFilter, line1, endLine);
-    updateFoldings(line1, endLine);
+    updateFoldings(line1, endLine, false);
   }
 
-  private void updateFoldings(final int line1, final int endLine) {
+  private void updateFoldings(final int line1, final int endLine, boolean immediately) {
     final Document document = myEditor.getDocument();
     final CharSequence chars = document.getCharsSequence();
     final int startLine = Math.max(0, line1);
@@ -842,7 +866,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       addFolding(document, chars, line, toAdd);
     }
     if (!toAdd.isEmpty()) {
-      doUpdateFolding(toAdd);
+      doUpdateFolding(toAdd, immediately);
     }
   }
 
@@ -876,7 +900,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
   }
 
-  private void doUpdateFolding(final List<FoldRegion> toAdd) {
+  private void doUpdateFolding(final List<FoldRegion> toAdd, final boolean immediately) {
     assertIsDispatchThread();
     myPendingFoldRegions.addAll(toAdd);
 
@@ -885,7 +909,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       public void run() {
         assertIsDispatchThread();
         final FoldingModel model = myEditor.getFoldingModel();
-        model.runBatchFoldingOperationDoNotCollapseCaret(new Runnable() {
+        final Runnable operation = new Runnable() {
           public void run() {
             assertIsDispatchThread();
             for (FoldRegion region : myPendingFoldRegions) {
@@ -894,10 +918,15 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
             }
             myPendingFoldRegions.clear();
           }
-        });
+        };
+        if (immediately) {
+          model.runBatchFoldingOperation(operation);
+        } else {
+          model.runBatchFoldingOperationDoNotCollapseCaret(operation);
+        }
       }
     };
-    if (myPendingFoldRegions.size() > 100) {
+    if (immediately || myPendingFoldRegions.size() > 100) {
       runnable.run();
     } else {
       myFoldingAlarm.addRequest(runnable, 50);

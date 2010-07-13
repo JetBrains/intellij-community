@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.compiler.generator;
 
+import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
@@ -33,7 +34,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -43,6 +46,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfiguration;
+import org.jetbrains.plugins.groovy.lang.psi.GrClassSubstitutor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -269,7 +273,7 @@ public class GroovyToJavaGenerator {
     }
 
     for (final GrTypeDefinition typeDefinition : file.getTypeDefinitions()) {
-      generatedItemsRelativePaths.add(createJavaSourceFile(outputRootDirectory, typeDefinition, packageDefinition));
+      generatedItemsRelativePaths.add(createJavaSourceFile(outputRootDirectory, GrClassSubstitutor.getSubstitutedClass(typeDefinition), packageDefinition));
     }
 
     return generatedItemsRelativePaths;
@@ -351,20 +355,16 @@ public class GroovyToJavaGenerator {
 
     writePackageStatement(text, packageDefinition);
 
-    GrMembersDeclaration[] membersDeclarations = typeDefinition instanceof GrTypeDefinition
-                                                 ? ((GrTypeDefinition)typeDefinition).getMemberDeclarations()
-                                                 : GrMembersDeclaration.EMPTY_ARRAY; //todo
-
-    boolean isClassDef = typeDefinition instanceof GrClassDefinition;
-    boolean isInterface = typeDefinition instanceof GrInterfaceDefinition;
-    boolean isEnum = typeDefinition instanceof GrEnumTypeDefinition;
-    boolean isAtInterface = typeDefinition instanceof GrAnnotationTypeDefinition;
+    boolean isEnum = typeDefinition.isEnum();
+    boolean isAnnotationType = typeDefinition.isAnnotationType();
+    boolean isInterface = !isAnnotationType && typeDefinition.isInterface();
+    boolean isClassDef = !isInterface && !isEnum && !isAnnotationType && !isScript;
 
     writeClassModifiers(text, typeDefinition.getModifierList(), typeDefinition.isInterface(), toplevel);
 
     if (isInterface) text.append("interface");
     else if (isEnum) text.append("enum");
-    else if (isAtInterface) text.append("@interface");
+    else if (isAnnotationType) text.append("@interface");
     else text.append("class");
 
     text.append(" ").append(typeDefinition.getName());
@@ -376,7 +376,7 @@ public class GroovyToJavaGenerator {
     if (isScript) {
       text.append("extends groovy.lang.Script ");
     }
-    else if (!isEnum && !isAtInterface) {
+    else if (!isEnum && !isAnnotationType) {
       final PsiClassType[] extendsClassesTypes = typeDefinition.getExtendsListTypes();
 
       if (extendsClassesTypes.length > 0) {
@@ -401,28 +401,32 @@ public class GroovyToJavaGenerator {
       writeEnumConstants(text, (GrEnumTypeDefinition)typeDefinition);
     }
 
-    Set<MethodSignature> methodSignatures = new HashSet<MethodSignature>();
+    writeAllMethods(text, collectMethods(typeDefinition, isClassDef), typeDefinition);
 
-
-    List<PsiMethod> methods = new ArrayList<PsiMethod>();
-    ContainerUtil.addAll(methods, typeDefinition.getMethods());
-    if (isClassDef) {
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
-      methods.add(factory.createMethodFromText("public groovy.lang.MetaClass getMetaClass() {}", null));
-      methods.add(factory.createMethodFromText("public void setMetaClass(groovy.lang.MetaClass mc) {}", null));
-      methods.add(factory.createMethodFromText("public Object invokeMethod(String name, Object args) {}", null));
-      methods.add(factory.createMethodFromText("public Object getProperty(String propertyName) {}", null));
-      methods.add(factory.createMethodFromText("public void setProperty(String propertyName, Object newValue) {}", null));
+    if (typeDefinition instanceof GrTypeDefinition) {
+      for (GrMembersDeclaration declaration : ((GrTypeDefinition)typeDefinition).getMemberDeclarations()) {
+        if (declaration instanceof GrVariableDeclaration) {
+          writeVariableDeclarations(text, (GrVariableDeclaration)declaration);
+        }
+      }
+    }
+    for (PsiClass inner : typeDefinition.getInnerClasses()) {
+      writeTypeDefinition(text, inner, null, false);
+      text.append("\n");
     }
 
+    text.append("}");
+  }
 
+  private static void writeAllMethods(StringBuffer text, List<PsiMethod> methods, PsiClass aClass) {
+    Set<MethodSignature> methodSignatures = new HashSet<MethodSignature>();
     for (PsiMethod method : methods) {
       if (LightMethodBuilder.isLightMethod(method, GrClassImplUtil.SYNTHETIC_METHOD_IMPLEMENTATION)) {
         continue;
       }
 
       if (method instanceof GrConstructor) {
-        writeConstructor(text, (GrConstructor)method, isEnum);
+        writeConstructor(text, (GrConstructor)method, aClass.isEnum());
         continue;
       }
 
@@ -455,18 +459,51 @@ public class GroovyToJavaGenerator {
         }
       }
     }
+  }
 
-    for (GrMembersDeclaration declaration : membersDeclarations) {
-      if (declaration instanceof GrVariableDeclaration) {
-        writeVariableDeclarations(text, (GrVariableDeclaration)declaration);
+  private List<PsiMethod> collectMethods(PsiClass typeDefinition, boolean classDef) {
+    List<PsiMethod> methods = new ArrayList<PsiMethod>();
+    ContainerUtil.addAll(methods, typeDefinition.getMethods());
+    if (classDef) {
+      final Collection<MethodSignature> toOverride = OverrideImplementUtil.getMethodSignaturesToOverride(typeDefinition);
+      for (MethodSignature signature : toOverride) {
+        if (signature instanceof MethodSignatureBackedByPsiMethod) {
+          final PsiMethod method = ((MethodSignatureBackedByPsiMethod)signature).getMethod();
+          final PsiClass baseClass = method.getContainingClass();
+          if (isAbstractInJava(method) && baseClass != null && typeDefinition.isInheritor(baseClass, true)) {
+            final LightMethodBuilder builder = new LightMethodBuilder(method.getManager(), method.getName());
+            final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, typeDefinition, PsiSubstitutor.EMPTY);
+            for (PsiParameter parameter : method.getParameterList().getParameters()) {
+              builder.addParameter(parameter.getName(), substitutor.substitute(parameter.getType()));
+            }
+            builder.setReturnType(substitutor.substitute(method.getReturnType()));
+            for (String modifier : JAVA_MODIFIERS) {
+              if (method.hasModifierProperty(modifier)) {
+                builder.addModifier(modifier);
+              }
+            }
+            methods.add(builder);
+          }
+        }
       }
+
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
+      methods.add(factory.createMethodFromText("public groovy.lang.MetaClass getMetaClass() {}", null));
+      methods.add(factory.createMethodFromText("public void setMetaClass(groovy.lang.MetaClass mc) {}", null));
+      methods.add(factory.createMethodFromText("public Object invokeMethod(String name, Object args) {}", null));
+      methods.add(factory.createMethodFromText("public Object getProperty(String propertyName) {}", null));
+      methods.add(factory.createMethodFromText("public void setProperty(String propertyName, Object newValue) {}", null));
     }
-    for (PsiClass inner : typeDefinition.getInnerClasses()) {
-      writeTypeDefinition(text, inner, null, false);
-      text.append("\n");
+    return methods;
+  }
+
+  private static boolean isAbstractInJava(PsiMethod method) {
+    if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      return true;
     }
 
-    text.append("}");
+    final PsiClass psiClass = method.getContainingClass();
+    return psiClass != null && GrClassSubstitutor.getSubstitutedClass(psiClass).isInterface();
   }
 
   private static void appendTypeParameters(StringBuffer text, PsiTypeParameterListOwner typeParameterListOwner) {
@@ -670,7 +707,7 @@ public class GroovyToJavaGenerator {
     if (!JavaPsiFacade.getInstance(method.getProject()).getNameHelper().isIdentifier(name))
       return; //does not have a java image
 
-    boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
+    boolean isAbstract = isAbstractInJava(method);
 
     PsiModifierList modifierList = method.getModifierList();
 

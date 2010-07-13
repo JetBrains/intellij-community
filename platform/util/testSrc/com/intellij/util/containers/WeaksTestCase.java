@@ -47,7 +47,7 @@ public abstract class WeaksTestCase extends TestCase {
     System.gc();
     try {
       List<Object> list = new ArrayList<Object>();
-      while (Runtime.getRuntime().freeMemory() > 10000) {
+      while (Runtime.getRuntime().freeMemory() > 100000) {
         list.add(new byte[1000]);
       }
 

@@ -148,8 +148,8 @@ public class ContainerUtil {
     return hashMap;
   }
 
-  public static <K, V> HashMap<K, Set<V>> classify(Iterator<V> iterator, Convertor<V, K> keyConvertor) {
-    HashMap<K, Set<V>> hashMap = new HashMap<K, Set<V>>();
+  public static <K, V> Map<K, Set<V>> classify(Iterator<V> iterator, Convertor<V, K> keyConvertor) {
+    Map<K, Set<V>> hashMap = new LinkedHashMap<K, Set<V>>();
     while (iterator.hasNext()) {
       V value = iterator.next();
       final K key = keyConvertor.convert(value);

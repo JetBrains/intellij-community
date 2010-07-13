@@ -32,6 +32,10 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 public class GrContainerTypeConverter extends GrTypeConverter {
   @Override
   public Boolean isConvertible(@NotNull PsiType lType, @NotNull PsiType rType, @NotNull GroovyPsiElement context) {
+    if (isMethodCallConversion(context)) {
+      return null;
+    }
+
     if (!isCollectionOrArray(lType) || !isCollectionOrArray(rType)) return null;
 
     final PsiType lComponentType = extractComponentType(lType);

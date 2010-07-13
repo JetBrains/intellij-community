@@ -329,9 +329,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     mySoftWrapModel.addSoftWrapChangeListener(new SoftWrapChangeListener() {
       @Override
-      public void softWrapsStateChanged(int changedLogicalLine) {
+      public void softWrapAdded(@NotNull TextChange softWrap) {
         mySoftWrapsChanged = true;
-        mySizeContainer.update(changedLogicalLine, changedLogicalLine, changedLogicalLine);
+        int softWrapLine = myDocument.getLineNumber(softWrap.getStart());
+        mySizeContainer.update(softWrapLine, softWrapLine, softWrapLine);
       }
     });
 
@@ -1061,7 +1062,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           if (i >= 0) {
             start = i + 1;
           }
-          return new Point(EditorUtil.textWidth(this, softWrapChars, start, column + 1, Font.PLAIN), y);
+          return new Point(EditorUtil.textWidth(this, softWrapChars, start, column + 1, Font.PLAIN, 0), y);
         }
         break;
       }
@@ -1712,7 +1713,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myGutterComponent.repaint(0, clip.y, myGutterComponent.getWidth(), myGutterComponent.getHeight() - clip.y);
 
       // Ask caret model to update visual caret position.
-      getCaretModel().moveToOffset(getCaretModel().getOffset());
+      //TODO den implement
+      //getCaretModel().moveToOffset(getCaretModel().getOffset());
     }
   }
 
@@ -4627,9 +4629,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private       int    myMaxWidth = -1;
 
     public synchronized void reset() {
-      int visLinesCount = getDocument().getLineCount();
-      myLineWidths = new TIntArrayList(visLinesCount + 300);
-      int[] values = new int[visLinesCount];
+      int lineCount = getDocument().getLineCount();
+      myLineWidths = new TIntArrayList(lineCount + 300);
+      int[] values = new int[lineCount];
       Arrays.fill(values, -1);
       myLineWidths.add(values);
       myIsDirty = true;

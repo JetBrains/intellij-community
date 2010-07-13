@@ -30,6 +30,7 @@
     <testFramework implementation="com.intellij.execution.junit.JUnit3Framework"/>
     <testFramework implementation="com.intellij.execution.junit.JUnit4Framework"/>
     <configurationType implementation="com.intellij.execution.junit.JUnitConfigurationType"/>
+    <stacktrace.fold substring="at org.junit.internal.runners."/>
   </extensions>
 
   <extensionPoints>

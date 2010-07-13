@@ -236,7 +236,7 @@ public class SoftWrapDataMapper {
 
     // Return eagerly if there are no soft wraps before the target offset on a line that contains it.
     if (max >= softWraps.size() || softWraps.get(max).getStart() > offset) {
-      int column = toVisualColumnSymbolsNumber(chars, targetLineStartOffset, offset);
+      int column = toVisualColumnSymbolsNumber(chars, targetLineStartOffset, offset, 0);
       LogicalPosition foldingUnawarePosition = new LogicalPosition(
         rawLineStartLogicalPosition.line, column, softWrapIntroducedLinesBefore, 0, 0, 0, 0
       );
@@ -280,8 +280,9 @@ public class SoftWrapDataMapper {
       }
 
       // Assuming that no line feed is contained before target offset on a line that holds it.
-      symbolsOnCurrentLogicalLine++;
-      symbolsOnCurrentVisibleLine++;
+      int columnsForSymbol = toVisualColumnSymbolsNumber(chars.charAt(i), symbolsOnCurrentVisibleLine);
+      symbolsOnCurrentLogicalLine += columnsForSymbol;
+      symbolsOnCurrentVisibleLine += columnsForSymbol;
     }
 
     LogicalPosition foldingUnawarePosition = new LogicalPosition(
@@ -304,8 +305,8 @@ public class SoftWrapDataMapper {
     int foldColumnDiff = 0;
     int softWrapColumnDiff = position.softWrapColumnDiff;
     Document document = myEditor.getDocument();
-    CharSequence text = document.getCharsSequence();
     int targetLine = document.getLineNumber(offset);
+    int lastFoldEndLogicalLine = -1;
     for (FoldRegion foldRegion : foldingModel.getAllFoldRegions()) {
       if (foldRegion.getStartOffset() >= offset) {
         break;
@@ -320,51 +321,50 @@ public class SoftWrapDataMapper {
       foldedLines += Math.min(targetLine, foldingEndLine) - foldingStartLine;
 
       // Process situation when target offset is located inside the folded region.
-      if (offset >= foldRegion.getStartOffset() && offset < foldRegion.getEndOffset()) {
-        // Our purpose is to define folding data in order to point to the visual folding start.
-        int visualFoldingStartColumn = calculateVisualFoldingStartColumn(foldRegion);
-        foldColumnDiff = visualFoldingStartColumn - position.column - softWrapColumnDiff;
-        break;
-      }
-
-      if (foldingEndLine != position.line) {
-        continue;
-      }
-
-      // We know here that offset is at the same line where folding ends and is located after it. Hence, we process that as follows:
-      //   1. Check if the folding is single-line;
-      //   2.1. Process as follows if the folding is single-line:
-      //     3.1. Calculate column difference introduced by the folding;
-      //   2.2. Process as follows if the folding is multi-line:
-      //     3.2. Calculate visual column of folding start;
-      //     4.2. Calculate number of columns between target offset and folding end;
-      //     5.1. Calculate folding placeholder width in columns;
-      //     6.1. Calculate resulting offset visual column;
-      //     7.1. Calculate resulting folding column diff;
-
-      if (foldingStartLine == foldingEndLine) {
-        foldColumnDiff = toVisualColumnSymbolsNumber(foldRegion.getPlaceholderText())
-                         - toVisualColumnSymbolsNumber(text, foldRegion.getStartOffset(), foldRegion.getEndOffset());
-      }
-      else {
-        int endOffsetOfLineWithFoldingEnd = document.getLineEndOffset(foldingEndLine);
-        int columnsBetweenFoldingEndAndOffset = toVisualColumnSymbolsNumber(text, foldRegion.getEndOffset(), endOffsetOfLineWithFoldingEnd);
-        LogicalPosition foldingEndLineEndPosition = myEditor.offsetToLogicalPosition(endOffsetOfLineWithFoldingEnd);
-        if (position.column > foldingEndLineEndPosition.column) {
-          columnsBetweenFoldingEndAndOffset += position.column - foldingEndLineEndPosition.column;
+      if (offset >= foldRegion.getStartOffset()) {
+        if (offset < foldRegion.getEndOffset()) {
+          // Our purpose is to define folding data in order to point to the visual folding start.
+          int visualFoldingStartColumn = calculateVisualFoldingStartColumn(foldRegion);
+          int diff = visualFoldingStartColumn - position.column - softWrapColumnDiff;
+          if (lastFoldEndLogicalLine == foldingStartLine) {
+            foldColumnDiff += diff;
+          }
+          else {
+            foldColumnDiff = diff;
+          }
+          return new LogicalPosition(
+            position.line, position.column, position.softWrapLinesBeforeCurrentLogicalLine, position.softWrapLinesOnCurrentLogicalLine,
+            softWrapColumnDiff, foldedLines, foldColumnDiff
+          );
         }
-        int visualFoldingStartColumn = calculateVisualFoldingStartColumn(foldRegion);
-        int foldingPlaceholderWidth = toVisualColumnSymbolsNumber(foldRegion.getPlaceholderText());
-        int visual = columnsBetweenFoldingEndAndOffset + visualFoldingStartColumn + foldingPlaceholderWidth;
-        foldColumnDiff = visual - position.column;
-        break;
+
+        int diff = getFoldColumnDiff(foldRegion);
+        if (lastFoldEndLogicalLine == foldingStartLine) {
+          foldColumnDiff += diff;
+        }
+        else {
+          foldColumnDiff = diff;
+        }
+        lastFoldEndLogicalLine = foldingEndLine;
       }
+    }
+
+    if (lastFoldEndLogicalLine != position.line) {
+      foldColumnDiff = 0;
     }
 
     return new LogicalPosition(
       position.line, position.column, position.softWrapLinesBeforeCurrentLogicalLine, position.softWrapLinesOnCurrentLogicalLine,
       softWrapColumnDiff, foldedLines, foldColumnDiff
     );
+  }
+
+  private int getFoldColumnDiff(FoldRegion region) {
+    int visualFoldingStartColumn = calculateVisualFoldingStartColumn(region);
+    LogicalPosition foldEndLogical = myEditor.offsetToLogicalPosition(region.getEndOffset());
+    // Assuming that there is no tabulations symbols at placeholder text.
+    int foldingPlaceholderWidth = region.getPlaceholderText().length();
+    return visualFoldingStartColumn + foldingPlaceholderWidth - foldEndLogical.column;
   }
 
   private int calculateVisualFoldingStartColumn(FoldRegion region) {
@@ -380,6 +380,7 @@ public class SoftWrapDataMapper {
 
     List<TextChangeImpl> softWraps = myStorage.getSoftWraps();
     int startOffsetOfVisualLineWithFoldingStart = logicalLineStartOffset;
+    int softWrapOffsetInColumns = 0;
     for (; softWrapIndex < softWraps.size(); softWrapIndex++) {
       TextChange softWrap = softWraps.get(softWrapIndex);
       if (softWrap.getStart() >= foldingStartOffset) {
@@ -387,25 +388,46 @@ public class SoftWrapDataMapper {
       }
 
       startOffsetOfVisualLineWithFoldingStart = softWrap.getStart();
+      softWrapOffsetInColumns = numberOfSymbolsOnLastVisualLine(softWrap);
     }
 
     assert startOffsetOfVisualLineWithFoldingStart <= foldingStartOffset;
-    return toVisualColumnSymbolsNumber(document.getCharsSequence(), startOffsetOfVisualLineWithFoldingStart, foldingStartOffset);
+    return EditorUtil.textWidthInColumns(
+      myEditor, document.getCharsSequence(), startOffsetOfVisualLineWithFoldingStart, foldingStartOffset, softWrapOffsetInColumns
+    );
   }
 
-  private int toVisualColumnSymbolsNumber(char c) {
+  private static int numberOfSymbolsOnLastVisualLine(TextChange textChange) {
+    int result = 0;
+    for (int i = textChange.getText().length() - 1; i >= 0; i--) {
+      if (i == '\n') {
+        return result;
+      }
+      else {
+        result++;
+      }
+    }
+    return result;
+  }
+
+  private int toVisualColumnSymbolsNumber(char c, int offsetInColumns) {
     myCharBuffer.clear();
     myCharBuffer.put(c);
     myCharBuffer.flip();
-    return toVisualColumnSymbolsNumber(myCharBuffer, 0, 1);
+    return toVisualColumnSymbolsNumber(myCharBuffer, 0, 1, offsetInColumns);
   }
 
-  private int toVisualColumnSymbolsNumber(CharSequence text) {
-    return toVisualColumnSymbolsNumber(text, 0, text.length());
-  }
-
-  private int toVisualColumnSymbolsNumber(CharSequence text, int start, int end) {
-    return EditorUtil.calcColumnNumber(myEditor, text, start, end);
+  private int toVisualColumnSymbolsNumber(CharSequence text, int start, int end, int offsetInColumns) {
+    int result = 0;
+    for (int i = start; i < end; i++) {
+      if (text.charAt(i) == '\t') {
+        result += EditorUtil.tabWidthInColumns(myEditor, offsetInColumns + result);
+      }
+      else {
+        result++;
+      }
+    }
+    return result;
   }
 
   private class Context {
@@ -420,6 +442,12 @@ public class SoftWrapDataMapper {
     public int targetSoftWrapLines;
     public int symbolsOnCurrentLogicalLine;
     public int symbolsOnCurrentVisualLine;
+    /**
+     * There is a possible case that single tabulation symbols is shown in more than one visual column (IntelliJ editor is configured
+     * to show white spaces and tabulations and tab size is more than one). We keep track in number of such excessive visual
+     * columns used to show tabulations on a current visual line.
+     */
+    public int excessiveTabColumns;
 
     Context(LogicalPosition softWrapUnawareLogicalPosition, VisualPosition targetVisualPosition, int softWrapLinesBefore,
             int softWrapLinesOnCurrentLineBeforeTargetSoftWrap, int visualLineBeforeSoftWrapAppliance, FoldingModel foldingModel)
@@ -449,13 +477,14 @@ public class SoftWrapDataMapper {
         else {
           targetSoftWrapLines++;
           symbolsOnCurrentVisualLine = 0;
+          excessiveTabColumns = 0;
           return null;
         }
       }
 
       // Just update information about tracked symbols number if current visual line is too low.
       if (targetVisualPosition.line > visualLineBeforeSoftWrapAppliance + targetSoftWrapLines) {
-        symbolsOnCurrentVisualLine += toVisualColumnSymbolsNumber(c);
+        symbolsOnCurrentVisualLine += toVisualColumnSymbolsNumber(c, symbolsOnCurrentVisualLine);
         return null;
       }
 
@@ -467,7 +496,7 @@ public class SoftWrapDataMapper {
       }
 
       // Process non-line feed inside soft wrap.
-      symbolsOnCurrentVisualLine += toVisualColumnSymbolsNumber(c);
+      symbolsOnCurrentVisualLine++; // Don't expect tabulation to be used inside soft wrap text.
       if (targetVisualPosition.column <= symbolsOnCurrentVisualLine) {
         return build();
       }
@@ -493,8 +522,9 @@ public class SoftWrapDataMapper {
 
       // Just update information about tracked symbols number if current visual line is too low.
       if (targetVisualPosition.line > visualLineBeforeSoftWrapAppliance + targetSoftWrapLines) {
-        symbolsOnCurrentVisualLine += toVisualColumnSymbolsNumber(c);
-        symbolsOnCurrentLogicalLine++;
+        int columnsForSymbol = toVisualColumnSymbolsNumber(c, symbolsOnCurrentVisualLine);
+        symbolsOnCurrentVisualLine += columnsForSymbol;
+        symbolsOnCurrentLogicalLine += columnsForSymbol;
         return null;
       }
 
@@ -504,9 +534,14 @@ public class SoftWrapDataMapper {
         return build();
       }
 
-      symbolsOnCurrentVisualLine += toVisualColumnSymbolsNumber(c);
-      symbolsOnCurrentLogicalLine++;
-
+      int columnsForSymbol = toVisualColumnSymbolsNumber(c, symbolsOnCurrentVisualLine);
+      int diffInColumns = targetVisualPosition.column - symbolsOnCurrentVisualLine;
+      int incrementToUse = columnsForSymbol;
+      if (columnsForSymbol >= diffInColumns) {
+        incrementToUse = Math.min(columnsForSymbol, diffInColumns);
+      }
+      symbolsOnCurrentVisualLine += incrementToUse;
+      symbolsOnCurrentLogicalLine += incrementToUse;
 
       if (targetVisualPosition.column <= symbolsOnCurrentVisualLine) {
         return build();
