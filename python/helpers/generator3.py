@@ -19,7 +19,7 @@ all this too.
 """
 
 from datetime import datetime
-OUR_OWN_DATETIME = datetime(2010, 7, 9, 16, 1, 5) # datetime.now() of edit time
+OUR_OWN_DATETIME = datetime(2010, 7, 13, 4, 43, 5) # datetime.now() of edit time
 # we could use script's ctime, but the actual running copy may have it all wrong.
 #
 # Note: DON'T FORGET TO UPDATE!
@@ -547,6 +547,7 @@ class ModuleRedeclarator(object):
     PREDEFINED_BUILTIN_SIGS[("super", "__init__")] = "(self, type1=None, type2=None)"
     PREDEFINED_BUILTIN_SIGS[(None, "min")] = "(*args, key)"
     PREDEFINED_BUILTIN_SIGS[(None, "max")] = "(*args, key)"
+    PREDEFINED_BUILTIN_SIGS[(None, "open")] = "(file, mode='r', buffering=None, encoding=None, errors=None, newline=None, closefd=True)"
 
   if version == (2, 5):
     PREDEFINED_BUILTIN_SIGS[("unicode", "splitlines")] = "(keepends=None)" # a typo in docstring there
@@ -1123,7 +1124,7 @@ class ModuleRedeclarator(object):
       a_deleter = "lambda self: None"
       for item_name in sortedNoCase(properties.keys()):
         prop_key = (p_name, item_name)
-        if known_props.has_key(prop_key):
+        if prop_key in known_props:
           prop_descr = known_props.get(prop_key, None)
           if prop_descr is None:
             continue # explicitly omitted
