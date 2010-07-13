@@ -36,6 +36,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/forms_rt/forms_rt.iml" filepath="$PROJECT_DIR$/platform/forms_rt/forms_rt.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/generate-tostring/generate-tostring.iml" filepath="$PROJECT_DIR$/plugins/generate-tostring/generate-tostring.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/git4idea/git4idea.iml" filepath="$PROJECT_DIR$/plugins/git4idea/git4idea.iml" group="plugins/VCS" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/groovy/rt/groovy-rt.iml" filepath="$PROJECT_DIR$/plugins/groovy/rt/groovy-rt.iml" group="plugins/Groovy" />
       <module fileurl="file://$PROJECT_DIR$/plugins/hg4idea/hg4idea.iml" filepath="$PROJECT_DIR$/plugins/hg4idea/hg4idea.iml" group="plugins/VCS" />
       <module fileurl="file://$PROJECT_DIR$/platform/icons/icons.iml" filepath="$PROJECT_DIR$/platform/icons/icons.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/java/idea-ui/idea-ui.iml" filepath="$PROJECT_DIR$/java/idea-ui/idea-ui.iml" group="java" />
