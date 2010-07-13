@@ -222,7 +222,8 @@ public class PyPropertyDefinitionInspection extends PyInspection {
       if (callable != null) {
         // signature: at least two params, more optionals ok; first arg 'self'
         final PyParameterList param_list = callable.getParameterList();
-        if (myTwoParamList != null && ! param_list.isCompatibleTo(myTwoParamList.get())) {
+        final PyParameterList two_parameters_list = myTwoParamList.get();
+        if (two_parameters_list != null && !param_list.isCompatibleTo(two_parameters_list)) {
           registerProblem(being_checked, PyBundle.message("INSP.setter.signature.advice"));
         }
         checkForSelf(param_list);
@@ -240,7 +241,8 @@ public class PyPropertyDefinitionInspection extends PyInspection {
 
     private void checkOneParameter(Callable callable, PsiElement being_checked, boolean is_getter) {
       final PyParameterList param_list = callable.getParameterList();
-      if (myOneParamList != null && ! param_list.isCompatibleTo(myOneParamList.get())) {
+      final PyParameterList one_parameter_list = myOneParamList.get();
+      if (one_parameter_list != null && ! param_list.isCompatibleTo(one_parameter_list)) {
         if (is_getter) registerProblem(being_checked, PyBundle.message("INSP.getter.signature.advice"));
         else registerProblem(being_checked, PyBundle.message("INSP.deleter.signature.advice"));
       }
