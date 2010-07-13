@@ -12,6 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
@@ -19,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
+import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.*;
 
@@ -40,7 +42,7 @@ public final class HgCommandService {
 
   static final Logger LOG = Logger.getInstance(HgCommandService.class.getName());
 
-  private static final List<String> DEFAULT_OPTIONS = Arrays.asList(
+  static final List<String> DEFAULT_OPTIONS = Arrays.asList(
     "--config", "ui.merge=internal:merge"
   );
 
@@ -77,6 +79,11 @@ public final class HgCommandService {
   @Nullable
   HgCommandResult execute(VirtualFile repo, List<String> hgOptions,
     String operation, List<String> arguments, Charset charset) {
+    return execute(repo, hgOptions, operation, arguments, charset, false);
+  }
+
+  HgCommandResult execute(VirtualFile repo, List<String> hgOptions,
+    String operation, List<String> arguments, Charset charset, boolean suppressCommandOutput) {
 
     if (!validator.check(mySettings)) {
       return null;
@@ -134,6 +141,17 @@ public final class HgCommandService {
     }
     String warnings = warningReceiver.getWarnings();
     result.setWarnings(warnings);
+
+    // logging to the Version Control console (without extensions and configs)
+    final String cmdString = String.format("%s %s %s", HgVcs.HG_EXECUTABLE_FILE_NAME, operation,
+            StringUtils.join(arguments, " "));
+    final HgVcs hgVcs = HgVcs.getInstance(myProject);
+    hgVcs.showMessageInConsole(cmdString, ConsoleViewContentType.USER_INPUT.getAttributes());
+    if (!suppressCommandOutput) {
+      hgVcs.showMessageInConsole(result.getRawOutput(), ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
+    }
+    hgVcs.showMessageInConsole(result.getRawError(), ConsoleViewContentType.ERROR_OUTPUT.getAttributes());
+
     return result;
 
   }

@@ -13,8 +13,10 @@
 package org.zmlx.hg4idea;
 
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
@@ -46,6 +48,7 @@ import com.intellij.util.containers.ComparatorDelegate;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.provider.*;
 import org.zmlx.hg4idea.provider.annotate.HgAnnotationProvider;
 import org.zmlx.hg4idea.provider.commit.HgCheckinEnvironment;
@@ -101,16 +104,19 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private ScheduledFuture<?> changesUpdaterScheduledFuture;
   private final HgGlobalSettings globalSettings;
   private final HgProjectSettings projectSettings;
+  private final ProjectLevelVcsManager myVcsManager;
 
   private boolean started = false;
   private HgVFSListener myVFSListener;
   private VirtualFileListener myDirStateChangeListener;
 
   public HgVcs(Project project,
-    HgGlobalSettings globalSettings, HgProjectSettings projectSettings) {
+    HgGlobalSettings globalSettings, HgProjectSettings projectSettings,
+    ProjectLevelVcsManager vcsManager) {
     super(project, VCS_NAME);
     this.globalSettings = globalSettings;
     this.projectSettings = projectSettings;
+    myVcsManager = vcsManager;
     configurable = new HgProjectConfigurable(projectSettings);
     changeProvider = new HgChangeProvider(project, getKeyInstanceMethod());
     rollbackEnvironment = new HgRollbackEnvironment(project);
@@ -388,4 +394,10 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   public HgGlobalSettings getGlobalSettings() {
     return globalSettings;
   }
+
+  public void showMessageInConsole(String message, final TextAttributes style) {
+    myVcsManager.addMessageToConsoleWindow(message, style);
+  }
+
+
 }

@@ -22,6 +22,7 @@ import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgRevisionNumber;
 
 import java.io.File;
+import java.nio.charset.Charset;
 import java.util.*;
 
 public class HgStatusCommand {
@@ -135,7 +136,7 @@ public class HgStatusCommand {
       arguments.add(file);
     }
 
-    HgCommandResult result = service.execute(repo, "status", arguments);
+    HgCommandResult result = service.execute(repo, HgCommandService.DEFAULT_OPTIONS, "status", arguments, Charset.defaultCharset(), true);
     Set<HgChange> changes = new HashSet<HgChange>();
     HgChange previous = null;
     if (result == null) {

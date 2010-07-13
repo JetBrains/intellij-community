@@ -16,6 +16,7 @@
     <orderEntry type="module" module-name="platform-api" />
     <orderEntry type="module" module-name="vcs-impl" />
     <orderEntry type="module" module-name="platform-impl" />
+    <orderEntry type="module" module-name="lang-api" />
   </component>
 </module>
 
