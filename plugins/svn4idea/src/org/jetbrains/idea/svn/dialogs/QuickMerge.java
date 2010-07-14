@@ -470,7 +470,12 @@ public class QuickMerge {
         } else {
           final List<CommittedChangeList> lists = dialog.getSelected();
           if (lists.isEmpty()) return;
-          final MergerFactory factory = new ChangeListsMergerFactory(lists);
+          final MergerFactory factory = new ChangeListsMergerFactory(lists) {
+            @Override
+            public IMerger createMerger(SvnVcs vcs, File target, UpdateEventHandler handler, SVNURL currentBranchUrl, String branchName) {
+              return new GroupMerger(vcs, lists, target, handler, currentBranchUrl, branchName, false, false, false);
+            }
+          };
           context.next(new LocalChangesPrompt(false, lists, myCopyPoint), new MergeTask(factory, myMergeTitle));
         }
       }
