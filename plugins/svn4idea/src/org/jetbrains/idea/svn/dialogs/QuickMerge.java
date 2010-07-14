@@ -37,6 +37,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.NestedCopyType;
 import org.jetbrains.idea.svn.SvnBranchConfigurationManager;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.ChangeListsMergerFactory;
@@ -154,7 +155,8 @@ public class QuickMerge {
     boolean switchedFound = false;
     for (WCInfo wcInfo : infoList) {
       try {
-        if (FileUtil.isAncestor(new File(myWcInfo.getPath()), new File(wcInfo.getPath()), true)) {
+        if (FileUtil.isAncestor(new File(myWcInfo.getPath()), new File(wcInfo.getPath()), true)
+            && NestedCopyType.switched.equals(wcInfo.getType())) {
           switchedFound = true;
           break;
         }
