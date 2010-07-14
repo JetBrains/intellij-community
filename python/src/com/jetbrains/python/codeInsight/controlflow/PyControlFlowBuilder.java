@@ -33,12 +33,14 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyFunction(final PyFunction node) {
-    // Stop here
+    // Create node and stop here
+    myBuilder.startNode(node);
   }
 
   @Override
   public void visitPyClass(final PyClass node) {
-    // Stop here
+    // Create node and stop here
+    myBuilder.startNode(node);
   }
 
   @Override
