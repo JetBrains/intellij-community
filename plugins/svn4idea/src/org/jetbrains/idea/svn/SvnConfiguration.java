@@ -303,7 +303,11 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
     }
     final Element supportedVersion = element.getChild("supportedVersion");
     if (supportedVersion != null) {
-      mySupportOptions = new SvnSupportOptions(Long.parseLong(supportedVersion.getText()));
+      try {
+        mySupportOptions = new SvnSupportOptions(Long.parseLong(supportedVersion.getText().trim()));
+      } catch (NumberFormatException e) {
+        mySupportOptions = new SvnSupportOptions(null);
+      }
     }
     final Attribute maxAnnotateRevisions = element.getAttribute("maxAnnotateRevisions");
     if (maxAnnotateRevisions != null) {
