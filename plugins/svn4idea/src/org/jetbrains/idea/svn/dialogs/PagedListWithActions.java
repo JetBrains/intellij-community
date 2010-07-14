@@ -71,15 +71,13 @@ public class PagedListWithActions<T> {
       final List<T> data = myEngine.next();
       myComponentManager.setData(data);
       myComponentManager.refresh();
-      /*myList.setListData(ArrayUtil.toObjectArray(data));
-      myList.revalidate();
-      myList.repaint();*/
     }
 
     @Override
     public void update(AnActionEvent e) {
       super.update(e);
       e.getPresentation().setEnabled(myEngine.hasNext());
+      e.getPresentation().setVisible(myEngine.hasNext());
     }
   }
 
@@ -99,6 +97,7 @@ public class PagedListWithActions<T> {
     public void update(AnActionEvent e) {
       super.update(e);
       e.getPresentation().setEnabled(myEngine.hasPrevious());
+      e.getPresentation().setVisible(myEngine.hasPrevious());
     }
   }
 
