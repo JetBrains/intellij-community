@@ -226,8 +226,7 @@ public class RenameGroovyPropertyProcessor extends RenameJavaVariableProcessor {
                              String newName,
                              Map<? extends PsiElement, String> allRenames,
                              List<UsageInfo> result) {
-    super
-      .findCollisions(element, newName, allRenames, result);    //To change body of overridden methods use File | Settings | File Templates.
+    super.findCollisions(element, newName, allRenames, result);
   }
 
 

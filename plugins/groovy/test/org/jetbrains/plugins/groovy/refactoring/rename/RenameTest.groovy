@@ -295,5 +295,22 @@ foo()
 """
   }
 
+  public void testRenameAliasImportedField() {
+    myFixture.addFileToProject("Foo.groovy", """class Foo {
+public static bar
+}""")
+    myFixture.configureByText("a.groovy", """
+import static Foo.ba<caret>r as foo
+
+print foo
+foo = 4""")
+
+    myFixture.renameElement myFixture.findClass("Foo").getFields()[0], "newName"
+    myFixture.checkResult """
+import static Foo.newName as foo
+
+print foo
+foo = 4"""
+  }
 
 }
