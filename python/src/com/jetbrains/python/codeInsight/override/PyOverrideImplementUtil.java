@@ -11,11 +11,15 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
@@ -146,6 +150,15 @@ public class PyOverrideImplementUtil {
     PyClass baseClass = baseFunction.getContainingClass();
     assert baseClass != null;
     StringBuilder statementBody = new StringBuilder();
+
+    String[] paramTexts = ContainerUtil.map(baseParams, new Function<PyParameter, String>() {
+      @Override
+      public String fun(PyParameter pyParameter) {
+        return pyParameter.getText();
+      }
+    }, ArrayUtil.EMPTY_STRING_ARRAY);
+    int startIndex = 0;
+
     if (baseClass.isNewStyleClass()) {
       statementBody.append(PyNames.SUPER);
       statementBody.append("(");
@@ -154,18 +167,13 @@ public class PyOverrideImplementUtil {
         statementBody.append(pyClass.getName()).append(", self");
       }
       statementBody.append(").").append(baseFunction.getName()).append("(");
-      for (int i = 1; i < baseParams.length; i++) {
-        statementBody.append(baseParams [i].getText());
-      }
-      statementBody.append(")");
+      startIndex = 1;
     }
     else {
       statementBody.append(baseClass.getName()).append(".").append(baseFunction.getName()).append("(");
-      for (PyParameter param : baseParams) {
-        statementBody.append(param.getText());
-      }
-      statementBody.append(")");
     }
+    statementBody.append(StringUtil.join(paramTexts, startIndex, paramTexts.length, ", "));
+    statementBody.append(")");
 
     pyFunctionBuilder.statement(statementBody.toString());
     return pyFunctionBuilder;
