@@ -20,9 +20,6 @@ public class PyReachingDefsDfaInstance implements DfaMapInstance<ScopeVariable> 
 
   public DFAMap<ScopeVariable> fun(DFAMap<ScopeVariable> map, Instruction instruction) {
     final PsiElement element = instruction.getElement();
-    //if (element == null || element.getUserData(ReferenceCompletionUtil.REFERENCE_BEING_COMPLETED)!=null){
-    //  return map;
-    //}
 
     // Process readwrite instruction
     if (instruction instanceof ReadWriteInstruction) {
