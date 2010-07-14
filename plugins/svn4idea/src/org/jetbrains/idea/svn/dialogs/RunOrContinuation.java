@@ -63,7 +63,9 @@ public abstract class RunOrContinuation<T> {
       }
       @Override
       public void onSuccess() {
-        if ((! myWasCanceled) && (! refT.isNull())) processResult(refT.get());
+        if (! myWasCanceled) {
+          processResult(refT.get());
+        }
       }
     });
   }
