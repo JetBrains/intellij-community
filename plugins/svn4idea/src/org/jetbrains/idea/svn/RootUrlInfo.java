@@ -25,7 +25,7 @@ public class RootUrlInfo implements RootUrlPair {
   private final String myRepositoryUrl;
   private final SVNURL myAbsoluteUrlAsUrl;
   private final WorkingCopyFormat myFormat;
-  private final boolean myRepoSupportsMergeInfo;
+  private boolean myRepoSupportsMergeInfo;
 
   private final File myIoFile;
   private final VirtualFile myVfile;
@@ -94,5 +94,9 @@ public class RootUrlInfo implements RootUrlPair {
 
   public boolean isRepoSupportsMergeInfo() {
     return myRepoSupportsMergeInfo;
+  }
+
+  public void setRepoSupportsMergeInfo(boolean repoSupportsMergeInfo) {
+    myRepoSupportsMergeInfo = repoSupportsMergeInfo;
   }
 }
