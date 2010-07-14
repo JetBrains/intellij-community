@@ -22,6 +22,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Ref;
@@ -31,7 +32,9 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.StringLenComparator;
+import com.intellij.openapi.vcs.impl.VcsInitObject;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -529,20 +532,25 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateCompone
     final SvnMapping mapping = new SvnMapping();
     final SvnMapping realMapping = new SvnMapping();
 
-    try {
-      fillMapping(mapping, state.getMappingRoots());
-      fillMapping(realMapping, state.getMoreRealMappingRoots());
-    } catch (ProcessCanceledException e) {
-      throw e;
-    } catch (Throwable t) {
-      LOG.info(t);
-      return;
-    }
+    ((ProjectLevelVcsManagerImpl) ProjectLevelVcsManager.getInstance(myProject)).addInitializationRequest(
+      VcsInitObject.AFTER_COMMON, new DumbAwareRunnable() {
+        public void run() {
+          try {
+            fillMapping(mapping, state.getMappingRoots());
+            fillMapping(realMapping, state.getMoreRealMappingRoots());
+          } catch (ProcessCanceledException e) {
+            throw e;
+          } catch (Throwable t) {
+            LOG.info(t);
+            return;
+          }
 
-    synchronized (myMonitor) {
-      myMapping.copyFrom(mapping);
-      myMoreRealMapping.copyFrom(realMapping);
-    }
+          synchronized (myMonitor) {
+            myMapping.copyFrom(mapping);
+            myMoreRealMapping.copyFrom(realMapping);
+          }
+        }
+    });
   }
 
   private void fillMapping(final SvnMapping mapping, final List<SvnCopyRootSimple> list) {
