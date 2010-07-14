@@ -273,28 +273,10 @@ public class PythonSdkType extends SdkType {
         }
       }
     }
-    // fix skeletons as needed
-    final String path = findSkeletonsPath(currentSdk);
-    if (path != null) {
-      File stubs_dir = new File(path);
-      if (!stubs_dir.exists() || stubs_dir.list().length == 0) {
-        final ProgressManager progman = ProgressManager.getInstance();
-        final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
-        final Task.Modal setup_task = new Task.Modal(project, "Setting up library files", false) {
 
-          public void run(@NotNull final ProgressIndicator indicator) {
-            try {
-              generateSkeletons(indicator, currentSdk.getHomePath());
-            }
-            catch (Exception e) {
-              LOG.error(e);
-            }
-          }
+    // Don't fix skeletons here, PythonSdkUpdater will take care of that (see PY-1226 - no progress will be displayed if skeletons
+    // generation is invoked from here
 
-        };
-        progman.run(setup_task);
-      }
-    }
     return null;
   }
 
@@ -359,7 +341,7 @@ public class PythonSdkType extends SdkType {
           sdkModificator.removeAllRoots();
           updateSdkRootsFromSysPath(sdkModificator, indicator);
           if (!ApplicationManager.getApplication().isUnitTestMode()) {
-            generateSkeletons(indicator, sdk.getHomePath());
+            generateSkeletons(indicator, sdk.getHomePath(), getSkeletonsPath(sdk.getHomePath()));
           }
           //sdkModificator.commitChanges() must happen outside, in dispatch thread.
           sdkModificatorRef.set(sdkModificator);
@@ -446,8 +428,7 @@ public class PythonSdkType extends SdkType {
     }
   }
 
-  public static void generateSkeletons(@Nullable ProgressIndicator indicator, String homePath) {
-    final String skeletonsPath = getSkeletonsPath(homePath);
+  public static void generateSkeletons(@Nullable ProgressIndicator indicator, String homePath, final String skeletonsPath) {
     final File stubs_dir = new File(skeletonsPath);
     if (!stubs_dir.exists()) stubs_dir.mkdirs();
 
@@ -463,7 +444,7 @@ public class PythonSdkType extends SdkType {
 
   private static String getSkeletonsPath(String bin_path) {
     String sep = File.separator;
-    return PathManager.getSystemPath() + sep + SKELETON_DIR_NAME + sep + bin_path.hashCode() + sep;
+    return PathManager.getSystemPath() + sep + SKELETON_DIR_NAME + sep + FileUtil.toSystemIndependentName(bin_path).hashCode() + sep;
   }
 
   public static List<String> getSysPath(String bin_path) {
