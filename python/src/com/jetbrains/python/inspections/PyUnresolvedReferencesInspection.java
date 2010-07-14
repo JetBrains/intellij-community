@@ -30,6 +30,7 @@ import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -49,12 +50,6 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
   private static Condition<PsiElement> IS_IMPORT_STATEMENT = new Condition<PsiElement>() {
     public boolean value(PsiElement psiElement) {
       return psiElement instanceof PyImportStatement;
-    }
-  };
-
-  private static Condition<PsiElement> IS_FROM_IMPORT_STATEMENT = new Condition<PsiElement>() {
-    public boolean value(PsiElement psiElement) {
-      return psiElement instanceof PyFromImportStatement;
     }
   };
 
@@ -84,11 +79,10 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       super(holder);
     }
 
-    @NotNull
-    static Collection<LocalQuickFix> proposeImportFixes(final PyElement node, String ref_text) {
-      PsiFile exisitng_import_file = null; // if there's a matching existing import, this it the file it imports
-      ImportFromExistingFix fix = null;
-      Collection<LocalQuickFix> fixes = new HashSet<LocalQuickFix>(2);
+    @Nullable
+    static LocalQuickFix proposeImportFix(final PyElement node, String ref_text) {
+      PsiFile existing_import_file = null; // if there's a matching existing import, this it the file it imports
+      ImportFromExistingFix fix = new ImportFromExistingFix(node, ref_text, !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT);
       Set<String> seen_file_names = new HashSet<String>(); // true import names
       // maybe the name is importable via some existing 'import foo' statement, and only needs a qualifier.
       // walk up collecting all such statements and analyzing
@@ -107,45 +101,16 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
                 String name = ielt.getImportReference().getReferencedName(); // ref is ok or matching would fail
                 seen_file_names.add(name);
                 PsiElement res = dst_file.findExportedName(ref_text);
-                if (res != null && !(res instanceof PyFile)) {
-                  exisitng_import_file = dst_file;
+                if (res != null && !(res instanceof PyFile) && res.getContainingFile().equals(dst_file)) {
+                  existing_import_file = dst_file;
                   fix.addImport(res, dst_file, ielt);
-                  fixes.add(fix);
                 }
               }
             }
           }
         }
       }
-      // maybe the name is importable via some existing 'from foo import ...' statement, and only needs another name to be imported.
-      // walk up collecting all such statements and analyzing
-      CollectProcessor from_import_prc = new CollectProcessor(IS_FROM_IMPORT_STATEMENT);
-      PyResolveUtil.treeCrawlUp(from_import_prc, node);
-      result = from_import_prc.getResult();
-      if (result.size() > 0) {
-        if (fix == null) fix = new ImportFromExistingFix(node, ref_text, false); // it could have been created before, or not
-        for (PsiElement stmt : from_import_prc.getResult()) {
-          PyFromImportStatement from_stmt = (PyFromImportStatement)stmt;
-          PyImportElement[] ielts = from_stmt.getImportElements();
-          if (ielts != null && ielts.length > 0) {
-            final PyReferenceExpression src = from_stmt.getImportSource();
-            if (src != null) {
-              PsiElement dst = src.getReference().resolve();
-              if (dst instanceof PyFile) {
-                PyFile dst_file = (PyFile)dst;
-                String name = from_stmt.getImportSource().getReferencedName(); // source is ok, else it won't match and we'd not be adding it
-                seen_file_names.add(name);
-                PsiElement res = dst_file.findExportedName(ref_text);
-                if (res != null && !(res instanceof PyFile)) {
-                  exisitng_import_file = dst_file;
-                  fix.addImport(res, dst_file, ielts[ielts.length-1]); // last element; action expects to add to tail
-                  fixes.add(fix);
-                }
-              }
-            }
-          }
-        }
-      }
+
       // maybe some unimported file has it, too
       ProgressManager.checkCanceled(); // before expensive index searches
       // NOTE: current indices have limitations, only finding direct definitions of classes and functions.
@@ -156,31 +121,28 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       symbols.addAll(PyFunctionNameIndex.find(ref_text, project));
       // NOTE: possible CPU hog 
       if (symbols.size() > 0) {
-        if (fix == null) { // it might have been created in the previous scan, or not.
-          fix = new ImportFromExistingFix(node, ref_text, !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT);
-        }
         for (PsiElement symbol : symbols) {
           if (isTopLevel(symbol)) { // we only want top-level symbols
             PsiFile srcfile = symbol.getContainingFile();
-            if (srcfile != null && srcfile != exisitng_import_file) {
+            if (srcfile != null && srcfile != existing_import_file) {
               VirtualFile vfile = srcfile.getVirtualFile();
               if (vfile != null) {
                 String import_path = ResolveImportUtil.findShortestImportableName(node, vfile);
                 if (import_path != null && !seen_file_names.contains(import_path)) {
                   // a new, valid hit
-                  fix.addImport(symbol, srcfile, null, import_path, proposeAsName(node.getContainingFile(), ref_text, import_path));
+                  fix.addImport(symbol, srcfile, import_path, proposeAsName(node.getContainingFile(), ref_text, import_path));
                   seen_file_names.add(import_path); // just in case, again
                 }
               }
             }
           }
         }
-        fix.sortCandidates();
-        if (!fixes.contains(fix)) {
-          fixes.add(fix);
-        }
       }
-      return fixes;
+      if (fix.hasCandidates()) {
+        fix.sortCandidates();
+        return fix;
+      }
+      return null;
     }
 
     private static boolean isTopLevel(PsiElement symbol) {
@@ -344,12 +306,11 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         }
         // look in other imported modules for this whole name
         if (ref_is_importable) {
-          Collection<LocalQuickFix> import_fixes = proposeImportFixes(node, ref_text);
-          if (import_fixes.size() > 0) {
-            actions.addAll(import_fixes);
-            Object first_action = import_fixes.iterator().next();
-            if (first_action instanceof HintAction) {
-              hint_action = ((HintAction)first_action);
+          LocalQuickFix import_fix = proposeImportFix(node, ref_text);
+          if (import_fix != null) {
+            actions.add(import_fix);
+            if (import_fix instanceof HintAction) {
+              hint_action = ((HintAction)import_fix);
             }
           }
         }

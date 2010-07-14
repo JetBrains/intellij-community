@@ -1,14 +1,16 @@
 package com.jetbrains.python.actions;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonDocStringFinder;
+import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * Does the actual job of adding an import statement into a file.
@@ -96,4 +98,29 @@ public class AddImportHelper {
     }
   }
 
+  public static void addImportFrom(PsiFile file, String path, final String name) {
+    final List<PyFromImportStatement> existingImports = ((PyFile)file).getFromImports();
+    for (PyFromImportStatement existingImport : existingImports) {
+      final PyQualifiedName qName = existingImport.getImportSourceQName();
+      if (qName != null && qName.toString().equals(path)) {
+        PyImportElement importElement = PyElementGenerator.getInstance(file.getProject()).createImportElement(name);
+        existingImport.add(importElement);
+        return;
+      }
+    }
+    addImportFromStatement(file, path, name, null);
+  }
+
+  public static void addImport(final PsiNamedElement target, final PsiFile file, final PyElement element) {
+    final boolean useQualified = !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT;
+    final String path = ResolveImportUtil.findShortestImportableName(element, target.getContainingFile().getVirtualFile());
+    if (useQualified) {
+      addImportStatement(file, path, null);
+      final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(file.getProject());
+      element.replace(elementGenerator.createExpressionFromText(path + "." + target.getName()));
+    }
+    else {
+      addImportFrom(file, path, target.getName());
+    }
+  }
 }

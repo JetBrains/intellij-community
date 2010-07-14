@@ -27,7 +27,8 @@ import java.util.List;
  * Handles cases when an unresolved name may be imported from one of existing imported modules.
  * The object contains a list of import candidates and serves only to show the initial hint;
  * the actual work is done in ImportFromExistingAction..
- * User: dcheryasov
+ *
+ * @author dcheryasov
  */
 public class ImportFromExistingFix implements HintAction, LocalQuickFix {
 
@@ -67,15 +68,12 @@ public class ImportFromExistingFix implements HintAction, LocalQuickFix {
    * Adds another import source.
    * @param importable an element that could be imported either from import element or from file.
    * @param file the file which is the source of the importable
-   * @param importElement an existing import element that can be a source for the importable.
    * @param path import path for the file, as a qualified name (a.b.c)
    * @param asName name to use to import the path as: "import path as asName"
    */
-  public void addImport(
-    @NotNull PsiElement importable, @NotNull PsiFile file,
-    @Nullable PyImportElement importElement, @Nullable String path, @Nullable String asName
+  public void addImport(@NotNull PsiElement importable, @NotNull PsiFile file, @Nullable String path, @Nullable String asName
   ) {
-    myImports.add(new ImportCandidateHolder(importable, file, importElement, path, asName));
+    myImports.add(new ImportCandidateHolder(importable, file, null, path, asName));
   }
 
   @NotNull
@@ -143,5 +141,9 @@ public class ImportFromExistingFix implements HintAction, LocalQuickFix {
 
   public void sortCandidates() {
     Collections.sort(myImports);
+  }
+
+  public boolean hasCandidates() {
+    return !myImports.isEmpty();
   }
 }

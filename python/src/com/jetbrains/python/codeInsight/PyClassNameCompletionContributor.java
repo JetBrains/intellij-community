@@ -22,14 +22,11 @@ import com.intellij.psi.stubs.StubIndexKey;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.actions.AddImportHelper;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
-import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.List;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
@@ -113,31 +110,8 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
     new WriteCommandAction(context.getProject(), context.getFile()) {
       @Override
       protected void run(Result result) throws Throwable {
-        addImport((PsiNamedElement) item.getObject(), context.getFile(), (PyElement) ref.getElement());
+        AddImportHelper.addImport((PsiNamedElement) item.getObject(), context.getFile(), (PyElement) ref.getElement());
       }
     }.execute();
   }
-
-  private static void addImport(final PsiNamedElement target, final PsiFile file, final PyElement element) {
-    final boolean useQualified = !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT;
-    final String path = ResolveImportUtil.findShortestImportableName(element, target.getContainingFile().getVirtualFile());
-    final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(file.getProject());
-    if (useQualified) {
-      AddImportHelper.addImportStatement(file, path, null);
-      element.replace(elementGenerator.createExpressionFromText(path + "." + target.getName()));
-    }
-    else {
-      final List<PyFromImportStatement> existingImports = ((PyFile)file).getFromImports();
-      for (PyFromImportStatement existingImport : existingImports) {
-        final PyQualifiedName qName = existingImport.getImportSourceQName();
-        if (qName != null && qName.toString().equals(path)) {
-          PyImportElement importElement = elementGenerator.createImportElement(target.getName());
-          existingImport.add(importElement);
-          return;
-        }
-      }
-      AddImportHelper.addImportFromStatement(file, path, target.getName(), null);
-    }
-  }
-
 }

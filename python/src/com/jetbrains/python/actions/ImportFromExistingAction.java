@@ -133,7 +133,7 @@ public class ImportFromExistingAction implements QuestionAction {
         myTarget.replace(gen.createExpressionFromText(qual_name + "." + myName));
       }
       else {
-        AddImportHelper.addImportFromStatement(myTarget.getContainingFile(), item.getPath(), myName, null);
+        AddImportHelper.addImportFrom(myTarget.getContainingFile(), item.getPath(), myName);
       }
     }
   }
