@@ -179,21 +179,20 @@ public class TagNameReference implements PsiReference {
     final PsiElement element = getElement();
     if(!myStartTagFlag){
       if (element instanceof XmlTag) {
-        return new LookupElement[]{createClosingTagLookupElement((XmlTag)element)};
+        return new LookupElement[]{createClosingTagLookupElement((XmlTag)element, false)};
       }
       return ArrayUtil.EMPTY_STRING_ARRAY;
     }
-    return getTagNameVariants((XmlTag)element);
+    return getTagNameVariants((XmlTag)element, ((XmlTag)element).getNamespacePrefix());
   }
 
-  protected LookupElement createClosingTagLookupElement(XmlTag tag) {
-    LookupElementBuilder builder = LookupElementBuilder.create(myNameElement.getText().contains(":") ? tag.getLocalName() : tag.getName());
+  public LookupElement createClosingTagLookupElement(XmlTag tag, boolean includePrefix) {
+    LookupElementBuilder builder = LookupElementBuilder.create(includePrefix || !myNameElement.getText().contains(":") ? tag.getName() : tag.getLocalName());
     return TailTypeDecorator.withTail(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE.applyPolicy(builder),
                                       TailType.createSimpleTailType('>'));
   }
 
-  public static LookupElement[] getTagNameVariants(final @NotNull XmlTag tag) {
-    final String prefix = tag.getNamespacePrefix();
+  public static LookupElement[] getTagNameVariants(final @NotNull XmlTag tag, final String prefix) {
     final List<String> namespaces;
     if (prefix.isEmpty()) {
       namespaces = new ArrayList<String>(Arrays.asList(tag.knownNamespaces()));
@@ -376,7 +375,7 @@ public class TagNameReference implements PsiReference {
   }
 
   @Nullable
-  static PsiReference createTagNameReference(XmlElement element, @NotNull ASTNode nameElement, boolean startTagFlag) {
+  static TagNameReference createTagNameReference(XmlElement element, @NotNull ASTNode nameElement, boolean startTagFlag) {
     final XmlExtension extension = XmlExtension.getExtensionByElement(element);
     return extension == null ? null : extension.createTagNameReference(nameElement, startTagFlag);
   }
