@@ -38,7 +38,8 @@ public class TemplateNode extends ZenCodingNode {
 
   @NotNull
   @Override
-  public List<GenerationNode> expand(int numberInIteration) {
-    return Arrays.asList(new GenerationNode(myTemplateToken, new ArrayList<GenerationNode>(), numberInIteration));
+  public List<GenerationNode> expand(int numberInIteration, String surroundedText) {
+    GenerationNode node = new GenerationNode(myTemplateToken, new ArrayList<GenerationNode>(), numberInIteration, surroundedText);
+    return Arrays.asList(node);
   }
 }

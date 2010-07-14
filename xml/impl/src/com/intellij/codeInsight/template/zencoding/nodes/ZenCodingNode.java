@@ -24,5 +24,5 @@ import java.util.List;
  */
 public abstract class ZenCodingNode {
   @NotNull
-  public abstract List<GenerationNode> expand(int numberInIteration);
+  public abstract List<GenerationNode> expand(int numberInIteration, String surroundedText);
 }

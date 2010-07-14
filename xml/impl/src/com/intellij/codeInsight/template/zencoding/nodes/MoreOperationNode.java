@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.template.zencoding.nodes;
 
+import com.intellij.openapi.util.text.LineTokenizer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -42,9 +43,6 @@ public class MoreOperationNode extends ZenCodingNode {
   }
 
   private static void addChildrenToAllLeafs(GenerationNode root, Collection<GenerationNode> children) {
-    if (!root.isToInsertChildren()) {
-      return;
-    }
     if (root.isLeaf()) {
       root.addChildren(children);
     }
@@ -57,25 +55,37 @@ public class MoreOperationNode extends ZenCodingNode {
 
   @NotNull
   @Override
-  public List<GenerationNode> expand(int numberInIteration) {
-    if (myLeftOperand instanceof MulOperationNode) {
-      MulOperationNode mul = (MulOperationNode)myLeftOperand;
-      ZenCodingNode node = mul.getLeftOperand();
-      int count = mul.getRightOperand();
+  public List<GenerationNode> expand(int numberInIteration, String surroundedText) {
+    if (myLeftOperand instanceof MulOperationNode || (myLeftOperand instanceof UnaryMulOperationNode && surroundedText != null)) {
       List<GenerationNode> result = new ArrayList<GenerationNode>();
-      for (int i = 0; i < count; i++) {
-        List<GenerationNode> parentNodes = node.expand(i);
-        List<GenerationNode> innerNodes = myRightOperand.expand(i);
-        for (GenerationNode parentNode : parentNodes) {
-          addChildrenToAllLeafs(parentNode, innerNodes);
+      if (myLeftOperand instanceof MulOperationNode) {
+        MulOperationNode mul = (MulOperationNode)myLeftOperand;
+        for (int i = 0; i < mul.getRightOperand(); i++) {
+          List<GenerationNode> parentNodes = mul.getLeftOperand().expand(i, surroundedText);
+          List<GenerationNode> innerNodes = myRightOperand.expand(i, surroundedText);
+          for (GenerationNode parentNode : parentNodes) {
+            addChildrenToAllLeafs(parentNode, innerNodes);
+          }
+          result.addAll(parentNodes);
         }
-        result.addAll(parentNodes);
+      }
+      else {
+        UnaryMulOperationNode unaryMul = (UnaryMulOperationNode)myLeftOperand;
+        String[] lines = LineTokenizer.tokenize(surroundedText, false);
+        for (int i = 0; i < lines.length; i++) {
+          List<GenerationNode> parentNodes = unaryMul.getOperand().expand(i, lines[i]);
+          List<GenerationNode> innerNodes = myRightOperand.expand(i, lines[i]);
+          for (GenerationNode parentNode : parentNodes) {
+            addChildrenToAllLeafs(parentNode, innerNodes);
+          }
+          result.addAll(parentNodes);
+        }
       }
       return result;
     }
-    List<GenerationNode> leftGenNodes = myLeftOperand.expand(numberInIteration);
+    List<GenerationNode> leftGenNodes = myLeftOperand.expand(numberInIteration, surroundedText);
     for (GenerationNode leftGenNode : leftGenNodes) {
-      List<GenerationNode> rightGenNodes = myRightOperand.expand(numberInIteration);
+      List<GenerationNode> rightGenNodes = myRightOperand.expand(numberInIteration, surroundedText);
       addChildrenToAllLeafs(leftGenNode, rightGenNodes);
     }
     return leftGenNodes;

@@ -24,7 +24,6 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -114,13 +113,19 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     return new PsiParameter[]{getSyntheticItParameter()};
   }
 
+  @Override
+  @Nullable
+  public PsiElement getArrow() {
+    return findChildByType(GroovyTokenTypes.mCLOSABLE_BLOCK_OP);
+  }
+
   public GrParameterListImpl getParameterList() {
     return findChildByClass(GrParameterListImpl.class);
   }
 
   public void addParameter(GrParameter parameter) {
     GrParameterList parameterList = getParameterList();
-    if (findChildByType(GroovyTokenTypes.mCLOSABLE_BLOCK_OP) == null) {
+    if (getArrow() == null) {
       ASTNode next = parameterList.getNode().getTreeNext();
       getNode().addLeaf(GroovyTokenTypes.mCLOSABLE_BLOCK_OP, "->", next);
       getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", next);
@@ -130,7 +135,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   }
 
   public boolean hasParametersSection() {
-    return findChildByType(GroovyElementTypes.mCLOSABLE_BLOCK_OP) != null;
+    return getArrow() != null;
   }
 
   public PsiType getType() {

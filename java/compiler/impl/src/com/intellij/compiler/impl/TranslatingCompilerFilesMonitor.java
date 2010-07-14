@@ -85,6 +85,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   private static final FileAttribute ourSourceFileAttribute = new FileAttribute("_make_source_file_info_", 3);
   private static final FileAttribute ourOutputFileAttribute = new FileAttribute("_make_output_file_info_", 3);
 
+  private final Object myDataLock = new Object();
   private final TIntObjectHashMap<TIntHashSet> mySourcesToRecompile = new TIntObjectHashMap<TIntHashSet>(); // ProjectId->set of source file paths
   private PersistentHashMap<Integer, TIntObjectHashMap<Pair<Integer, Integer>>> myOutputRootsStorage; // ProjectId->map[moduleId->Pair(outputDirId, testOutputDirId)]
   private final TIntObjectHashMap<Map<String, SourceUrlClassNamePair>> myOutputsToDelete = new TIntObjectHashMap<Map<String, SourceUrlClassNamePair>>(); // Map: projectId -> Map{output path -> [sourceUrl; classname]}
@@ -158,7 +159,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     final CompilerConfiguration configuration = CompilerConfiguration.getInstance(project);
     final boolean _forceCompile = forceCompile || isRebuild;
     final Set<VirtualFile> selectedForRecompilation = new HashSet<VirtualFile>();
-    synchronized (mySourcesToRecompile) {
+    synchronized (myDataLock) {
       final TIntHashSet pathsToRecompile = mySourcesToRecompile.get(projectId);
       if (_forceCompile || pathsToRecompile != null && !pathsToRecompile.isEmpty()) {
         if (ourDebugMode) {
@@ -214,10 +215,8 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
           }
         }
       }
-    }
-    // it is important that files to delete are collected after the files to compile (see what happens if forceCompile == true)
-    if (!isRebuild) {
-      synchronized (myOutputsToDelete) {
+      // it is important that files to delete are collected after the files to compile (see what happens if forceCompile == true)
+      if (!isRebuild) {
         final Map<String, SourceUrlClassNamePair> outputsToDelete = myOutputsToDelete.get(projectId);
         if (outputsToDelete != null) {
           final VirtualFileManager vfm = VirtualFileManager.getInstance();
@@ -233,6 +232,16 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
                 continue; // do not collect files that were compiled by another compiler
               }
               if (!selectedForRecompilation.contains(srcFile)) {
+                if (!isMarkedForRecompilation(projectId, getFileId(srcFile))) {
+                  if (LOG.isDebugEnabled() || ourDebugMode) {
+                    final String message = "Found zombie entry (output is marked, but source is present and up-to-date): " + outputPath;
+                    LOG.debug(message);
+                    if (ourDebugMode) {
+                      System.out.println(message);
+                    }
+                  }
+                  zombieEntries.add(outputPath);
+                }
                 continue;
               }
             }
@@ -397,7 +406,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       final DataInputStream is = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
       try {
         final int projectsCount = is.readInt();
-        synchronized (myOutputsToDelete) {
+        synchronized (myDataLock) {
           for (int idx = 0; idx < projectsCount; idx++) {
             final int projectId = is.readInt();
             final int size = is.readInt();
@@ -429,7 +438,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
     catch (IOException e) {
       LOG.info(e);
-      myOutputsToDelete.clear();
+      synchronized (myDataLock) {
+        myOutputsToDelete.clear();
+      }
       FileUtil.delete(file);
     }
 
@@ -503,7 +514,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       FileUtil.createParentDirs(file);
       final DataOutputStream os = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
       try {
-        synchronized (myOutputsToDelete) {
+        synchronized (myDataLock) {
           final int[] keys = myOutputsToDelete.keys();
           os.writeInt(keys.length);
           for (int projectId : keys) {
@@ -1152,7 +1163,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         }
       }
       myConnections.remove(project).disconnect();
-      synchronized (mySourcesToRecompile) {
+      synchronized (myDataLock) {
         mySourcesToRecompile.remove(projectId);
       }
     }
@@ -1317,7 +1328,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     final SourceFileInfo srcInfo = preloadedInfo != null? preloadedInfo : loadSourceInfo(srcFile);
 
     final boolean alreadyMarked;
-    synchronized (mySourcesToRecompile) {
+    synchronized (myDataLock) {
       TIntHashSet set = mySourcesToRecompile.get(projectId);
       if (set == null) {
         set = new TIntHashSet();
@@ -1341,7 +1352,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   }
 
   private void removeSourceForRecompilation(final int projectId, final int srcId) {
-    synchronized (mySourcesToRecompile) {
+    synchronized (myDataLock) {
       TIntHashSet set = mySourcesToRecompile.get(projectId);
       if (set != null) {
         set.remove(srcId);
@@ -1357,7 +1368,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   }
   
   private boolean isMarkedForRecompilation(int projectId, final int srcId) {
-    synchronized (mySourcesToRecompile) {
+    synchronized (myDataLock) {
       final TIntHashSet set = mySourcesToRecompile.get(projectId);
       return set != null && set.contains(srcId);
     }

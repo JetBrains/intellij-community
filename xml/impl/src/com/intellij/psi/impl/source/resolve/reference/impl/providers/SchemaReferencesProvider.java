@@ -679,7 +679,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
       final XmlAttributeValue attributeValue = (XmlAttributeValue)element;
       final String prefix = XmlUtil.findPrefixByQualifiedName(attributeValue.getValue());
       if (prefix.length() > 0) {
-        return new SchemaPrefixReference(attributeValue, TextRange.from(1, prefix.length()), prefix);
+        return new SchemaPrefixReference(attributeValue, TextRange.from(1, prefix.length()), prefix, null);
       }
     }
     return null;
