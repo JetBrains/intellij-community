@@ -56,7 +56,7 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
     return myCallState.get() != null && myCallState.get().isWasCancelled();
   }
 
-  public SVNAuthentication requestClientAuthentication(String kind,
+  public SVNAuthentication requestClientAuthentication(final String kind,
                                                        final SVNURL url,
                                                        final String realm,
                                                        SVNErrorMessage errorMessage,
@@ -175,7 +175,11 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
     final boolean wasCanceled = result[0] == null;
     callState.setWasCancelled(wasCanceled);
     if ((! wasCanceled) && (ISVNAuthenticationManager.USERNAME != kind) && (result[0].isStorageAllowed())) {
-      myManager.checkContinueSaveCredentials(result[0], kind, realm);
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        public void run() {
+          myManager.checkContinueSaveCredentials(result[0], kind, realm);
+        }
+      });
     }
     return result[0];
   }
