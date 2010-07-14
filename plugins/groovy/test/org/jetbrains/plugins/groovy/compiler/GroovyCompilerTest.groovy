@@ -29,7 +29,7 @@ import junit.framework.AssertionFailedError
 public class GroovyCompilerTest extends GroovyCompilerTestCase {
   @Override protected void setUp() {
     super.setUp();
-    addGroovyLibrary(myModule, getName().contains("1_7"));
+    addGroovyLibrary(myModule);
   }
 
   public void testPlainGroovy() throws Throwable {
@@ -266,7 +266,7 @@ public class GroovyCompilerTest extends GroovyCompilerTestCase {
 
     Module dep = addDependentModule();
 
-    addGroovyLibrary(dep, false);
+    addGroovyLibrary(dep);
 
     assertEmpty(make());
     assertOutput("Bar", "239", dep);

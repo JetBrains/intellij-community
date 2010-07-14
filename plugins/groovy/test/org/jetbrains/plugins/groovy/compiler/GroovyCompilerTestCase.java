@@ -18,7 +18,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.compiler.*;
@@ -44,7 +44,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
-import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -80,8 +79,8 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
     super.tuneFixture(moduleBuilder);
   }
 
-  protected static void addGroovyLibrary(final Module to, boolean version17) {
-    final String root = version17 ? TestUtils.getRealGroovy1_7LibraryHome() : PathManager.getHomePath() + "/community/lib/";
+  protected static void addGroovyLibrary(final Module to) {
+    final String root = PluginPathManager.getPluginHomePath("groovy") + "/../../lib/";
     final File[] groovyJars = GroovyUtils.getFilesInDirectoryByPattern(root, GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN);
     assert groovyJars.length == 1;
     PsiTestUtil.addLibrary(to, "groovy", root, groovyJars[0].getName());
