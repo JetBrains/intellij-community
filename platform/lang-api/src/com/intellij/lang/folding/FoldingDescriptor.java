@@ -32,9 +32,8 @@ import java.util.Set;
  * Defines a single folding region in the code.
  *
  * @author max
- * @author Konstantin Bulenkov
  * @see FoldingBuilder
- */                                                    
+ */
 public class FoldingDescriptor {
   public static final FoldingDescriptor[] EMPTY = new FoldingDescriptor[0];
 
@@ -42,7 +41,6 @@ public class FoldingDescriptor {
   private final TextRange myRange;
   @Nullable private final FoldingGroup myGroup;
   private Set<Object> myDependencies;
-  private String myText;
 
   /**
    * Creates a folding region related to the specified AST node and covering the specified
@@ -88,7 +86,7 @@ public class FoldingDescriptor {
   /**
    * @return the node to which the folding region is related.
    */
-  @NotNull 
+  @NotNull
   public ASTNode getElement() {
     return myElement;
   }
@@ -109,38 +107,19 @@ public class FoldingDescriptor {
 
   @Nullable
   public String getPlaceholderText() {
-    if (myText == null) {
-      final FoldingBuilder builder = getFoldingBuilder();
-      return builder == null ? null : builder.getPlaceholderText(myElement);
-    } else {
-      return myText;
+    final PsiElement psiElement = myElement.getPsi();
+    if (psiElement == null) return null;
+
+    final Language lang = psiElement.getLanguage();
+    final FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(lang);
+    if (foldingBuilder != null) {
+      return foldingBuilder.getPlaceholderText(myElement);
     }
+    return null;
   }
 
-  @Nullable
-  protected FoldingBuilder getFoldingBuilder() {
-    final PsiElement psi = myElement.getPsi();
-    if (psi == null) return null;
-
-    final Language lang = psi.getLanguage();
-    return LanguageFolding.INSTANCE.forLanguage(lang);
-  }
-
-  public boolean isCollapsedByDefault() {
-    final FoldingBuilder builder = getFoldingBuilder();
-    return builder == null ? false : builder.isCollapsedByDefault(myElement);
-  }
-  
   @NotNull
   public Set<Object> getDependencies() {
     return myDependencies;
-  }
-
-  public String getText() {
-    return myText;
-  }
-
-  public void setText(String text) {
-    myText = text;
   }
 }
