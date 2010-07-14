@@ -18,7 +18,6 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.completion.proc.VariablesProcessor;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import static com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind.*;
 import com.intellij.codeInsight.intention.impl.CreateClassDialog;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
@@ -65,6 +64,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind.*;
 
 /**
  * @author mike
@@ -583,7 +584,7 @@ public class CreateFromUsageUtils {
     if (expectedTypes.length == 0 && !typesList.isEmpty()) {
       List<ExpectedTypeInfo> union = new ArrayList<ExpectedTypeInfo>();
       for (ExpectedTypeInfo[] aTypesList : typesList) {
-        union.addAll(Arrays.asList((ExpectedTypeInfo[])aTypesList));
+        ContainerUtil.addAll(union, (ExpectedTypeInfo[])aTypesList);
       }
       expectedTypes = union.toArray(new ExpectedTypeInfo[union.size()]);
     }
@@ -633,7 +634,7 @@ public class CreateFromUsageUtils {
     if (expectedTypes.length == 0 && !typesList.isEmpty()) {
       List<ExpectedTypeInfo> union = new ArrayList<ExpectedTypeInfo>();
       for (ExpectedTypeInfo[] aTypesList : typesList) {
-        union.addAll(Arrays.asList((ExpectedTypeInfo[])aTypesList));
+        ContainerUtil.addAll(union, (ExpectedTypeInfo[])aTypesList);
       }
       expectedTypes = union.toArray(new ExpectedTypeInfo[union.size()]);
     }

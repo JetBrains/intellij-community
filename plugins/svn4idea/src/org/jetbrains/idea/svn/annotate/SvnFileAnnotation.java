@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.svn.annotate;
 
-import com.intellij.openapi.editor.EditorGutterAction;
 import com.intellij.openapi.vcs.annotate.*;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -30,10 +29,8 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.ShowAllSubmittedFilesAction;
 import org.jetbrains.idea.svn.history.SvnFileRevision;
 
-import java.awt.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.List;
 
 public class SvnFileAnnotation implements FileAnnotation {
   private final String myContents;
@@ -45,7 +42,7 @@ public class SvnFileAnnotation implements FileAnnotation {
   private final List<AnnotationListener> myListeners = new ArrayList<AnnotationListener>();
   private final Map<Long, SvnFileRevision> myRevisionMap = new HashMap<Long, SvnFileRevision>();
 
-  private final LineAnnotationAspect DATE_ASPECT = new LineAnnotationAspectAdapter() {
+  private final LineAnnotationAspect DATE_ASPECT = new SvnAnnotationAspect() {
     public String getValue(int lineNumber) {
       if (myInfos.size() <= lineNumber || lineNumber < 0) {
         return "";
@@ -57,8 +54,19 @@ public class SvnFileAnnotation implements FileAnnotation {
     }
   };
 
-  private final LineAnnotationAspect REVISION_ASPECT = new RevisionAnnotationAspect();
-  private final LineAnnotationAspect ORIGINAL_REVISION_ASPECT = new RevisionAnnotationAspect() {
+  private final LineAnnotationAspect REVISION_ASPECT = new SvnAnnotationAspect() {
+    public String getValue(int lineNumber) {
+      if (myInfos.size() <= lineNumber || lineNumber < 0) {
+        return "";
+      }
+      else {
+        final long revision = getRevision(lineNumber);
+        return (revision == -1) ? "" : String.valueOf(revision);
+      }
+    }
+  };
+
+  private final LineAnnotationAspect ORIGINAL_REVISION_ASPECT = new SvnAnnotationAspect() {
     @Override
     public String getValue(int lineNumber) {
       final long value = myInfos.originalRevision(lineNumber);
@@ -86,7 +94,7 @@ public class SvnFileAnnotation implements FileAnnotation {
     }
   };
 
-  private final LineAnnotationAspect AUTHOR_ASPECT = new LineAnnotationAspectAdapter() {
+  private final LineAnnotationAspect AUTHOR_ASPECT = new SvnAnnotationAspect() {
     public String getValue(int lineNumber) {
       if (myInfos.size() <= lineNumber || lineNumber < 0) {
         return "";
@@ -280,28 +288,14 @@ public class SvnFileAnnotation implements FileAnnotation {
     };
   }
 
-  private class RevisionAnnotationAspect extends LineAnnotationAspectAdapter implements EditorGutterAction {
-    public String getValue(int lineNumber) {
-      if (myInfos.size() <= lineNumber || lineNumber < 0) {
-        return "";
-      }
-      else {
-        final long revision = getRevision(lineNumber);
-        return (revision == -1) ? "" : String.valueOf(revision);
-      }
-    }
-
-    public Cursor getCursor(final int lineNum) {
-      final long revision = getRevision(lineNum);
-      return (revision == -1) ? Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR) : Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
-    }
-
+  private abstract class SvnAnnotationAspect extends LineAnnotationAspectAdapter {
     protected long getRevision(final int lineNum) {
       final LineInfo lineInfo = myInfos.get(lineNum);
       return (lineInfo == null) ? -1 : lineInfo.getRevision();
     }
 
-    public void doAction(int lineNum) {
+    @Override
+    protected void showAffectedPaths(int lineNum) {
       if (lineNum >= 0 && lineNum < myInfos.size()) {
         SvnFileRevision svnRevision = myRevisionMap.get(getRevision(lineNum));
         if (svnRevision != null) {

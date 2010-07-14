@@ -63,8 +63,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.psi.JavaTokenType.*;
-
 public class RefactoringUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.RefactoringUtil");
   public static final int EXPR_COPY_SAFE = 0;
@@ -911,6 +909,24 @@ public class RefactoringUtil {
       }
     }
     return array;
+  }
+
+  @Nullable
+  public static PsiMethod getChainedConstructor(PsiMethod constructor) {
+    final PsiCodeBlock constructorBody = constructor.getBody();
+    LOG.assertTrue(constructorBody != null);
+    final PsiStatement[] statements = constructorBody.getStatements();
+    if (statements.length == 1 && statements[0] instanceof PsiExpressionStatement) {
+      final PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
+      if (expression instanceof PsiMethodCallExpression) {
+        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+        final PsiReferenceExpression methodExpr = methodCallExpression.getMethodExpression();
+        if ("this".equals(methodExpr.getReferenceName())) {
+          return (PsiMethod)methodExpr.resolve();
+        }
+      }
+    }
+    return null;
   }
 
   public static interface ImplicitConstructorUsageVisitor {

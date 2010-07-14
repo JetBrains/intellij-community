@@ -20,47 +20,37 @@ import junit.framework.TestCase;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public abstract class WeaksTestCase extends TestCase {
-  protected final List<Object> myHolder = new ArrayList<Object>();
-
-  protected void checkSameElements(Iterator holderIterator, Iterator collectionIterator) {
-    while (holderIterator.hasNext() && collectionIterator.hasNext()) {
-      assertSame(holderIterator.next(), collectionIterator.next());
+  protected static final boolean JVM_IS_GC_CAPABLE = isJvmGcCapable();
+  private static boolean isJvmGcCapable() {
+    List<Object> list = new ArrayList<Object>();
+    Object o = new Object();
+    list.add(o);
+    WeakReference<Object> wr = new WeakReference<Object>(o);
+    assertSame(o, wr.get());
+    o = null;
+    list.clear();
+    gc();
+    boolean cleared = wr.get() == null;
+    if (!cleared) {
+      System.out.println("GC INCAPABLE JVM DETECTED");
     }
-    assertEquals(holderIterator.hasNext(), collectionIterator.hasNext());
+    return cleared;
   }
 
-  //protected void checkSameElements(ArrayList elementsHolder, WeakCollection collection) {
-  //  for (int i = 0; i < elementsHolder.size(); i++) {
-  //    assertSame(String.valueOf(i), elementsHolder.get(i), collection.get(i));
-  //  }
-  //  final Iterator iterator = elementsHolder.iterator();
-  //  collection.forEach(new WeakCollection.Procedure() {
-  //    public boolean execute(Object object, Iterator it) {
-  //      assertSame(iterator.next(), object);
-  //      return true;
-  //    }
-  //  });
-  //}
 
-  protected void gc() {
-    System.gc();
-    int[][] ints = new int[1000000][];
-    for(int i = 0; i < 1000000; i++){
-      ints[i] = new int[0];
-    }
+  protected final List<Object> myHolder = new ArrayList<Object>();
 
+  protected static void gc() {
     System.gc();
-    ints = null;
     System.gc();
 
-    WeakReference weakReference = new WeakReference(new Object());
+    WeakReference<Object> weakReference = new WeakReference<Object>(new Object());
     do {
       System.gc();
-    }
+    } 
     while (weakReference.get() != null);
   }
 
@@ -94,13 +84,13 @@ public abstract class WeaksTestCase extends TestCase {
       assertNull(references[i]);
   }
 
-  private int nextValidIndex(int validIndex, WeakReferenceArray collection) {
+  private static int nextValidIndex(int validIndex, WeakReferenceArray collection) {
     validIndex++;
     while (validIndex < collection.size() && collection.get(validIndex) == null) validIndex++;
     return validIndex;
   }
 
-  protected void addElement(Object o, WeakReferenceArray array) {
+  protected void addElement(Object o, WeakReferenceArray<Object> array) {
     myHolder.add(o);
     array.add(o);
   }

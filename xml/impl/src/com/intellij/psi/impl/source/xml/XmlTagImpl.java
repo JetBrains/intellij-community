@@ -751,14 +751,14 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     }
     if (parentElement instanceof XmlTag) {
       if (known.isEmpty()) return ((XmlTag)parentElement).knownNamespaces();
-      known.addAll(Arrays.asList(((XmlTag)parentElement).knownNamespaces()));
+      ContainerUtil.addAll(known, ((XmlTag)parentElement).knownNamespaces());
     }
     else {
       final XmlFile xmlFile = XmlExtension.getExtensionByElement(this).getContainingFile(this);
       final XmlTag rootTag = xmlFile.getDocument().getRootTag();
       if (rootTag != null && rootTag != this) {
         if (known.isEmpty()) return rootTag.knownNamespaces();
-        known.addAll(Arrays.asList(rootTag.knownNamespaces()));
+        ContainerUtil.addAll(known, rootTag.knownNamespaces());
       }
     }
     return ArrayUtil.toStringArray(known);

@@ -19,15 +19,13 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.MergedObject;
 import com.intellij.util.xml.StableElement;
-import net.sf.cglib.proxy.InvocationHandler;
 import net.sf.cglib.proxy.AdvancedProxy;
+import net.sf.cglib.proxy.InvocationHandler;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -48,7 +46,7 @@ class StableInvocationHandler<T> implements InvocationHandler, StableElement {
     myValidator = validator;
     final Class superClass = initial.getClass().getSuperclass();
     final Set<Class> classes = new HashSet<Class>();
-    classes.addAll(Arrays.asList(initial.getClass().getInterfaces()));
+    ContainerUtil.addAll(classes, initial.getClass().getInterfaces());
     ContainerUtil.addIfNotNull(superClass, classes);
     classes.remove(MergedObject.class);
     myClasses = classes;

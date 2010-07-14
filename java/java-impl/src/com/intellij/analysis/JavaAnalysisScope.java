@@ -28,11 +28,11 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.PackageScope;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -111,7 +111,7 @@ public class JavaAnalysisScope extends AnalysisScope {
       final Set<PsiDirectory> dirs = new HashSet<PsiDirectory>();
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
-          dirs.addAll(Arrays.asList(pack.getDirectories(GlobalSearchScope.projectScope(myElement.getProject()))));
+          ContainerUtil.addAll(dirs, pack.getDirectories(GlobalSearchScope.projectScope(myElement.getProject())));
         }
       });
       for (PsiDirectory dir : dirs) {

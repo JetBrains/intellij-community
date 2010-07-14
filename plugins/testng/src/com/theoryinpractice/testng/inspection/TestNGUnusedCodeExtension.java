@@ -30,8 +30,8 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierListOwner;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class TestNGUnusedCodeExtension extends UnusedCodeExtension {
    public boolean ADD_TESTNG_TO_ENTRIES = true;
@@ -68,7 +68,9 @@ public class TestNGUnusedCodeExtension extends UnusedCodeExtension {
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
+    if (!ADD_TESTNG_TO_ENTRIES) {
+      DefaultJDOMExternalizer.writeExternal(this, element);
+    }
   }
 
   @Nullable

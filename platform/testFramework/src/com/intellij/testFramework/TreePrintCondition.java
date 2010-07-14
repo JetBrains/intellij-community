@@ -16,8 +16,8 @@
 package com.intellij.testFramework;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.util.containers.ContainerUtil;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -28,7 +28,7 @@ public abstract class TreePrintCondition implements Condition<String> {
     protected Set<String> mySet = new HashSet<String>();
 
     public SetBased(String... elements) {
-      mySet.addAll(Arrays.asList(elements));
+      ContainerUtil.addAll(mySet, elements);
     }
   }
 

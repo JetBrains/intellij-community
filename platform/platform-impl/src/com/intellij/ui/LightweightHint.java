@@ -96,7 +96,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
       final Point layeredPanePoint = SwingUtilities.convertPoint(parentComponent, x, y, layeredPane);
 
       myComponent.setBounds(layeredPanePoint.x, layeredPanePoint.y, preferredSize.width, preferredSize.height);
-      layeredPane.add(myComponent, Integer.valueOf(250 + layeredPane.getComponentCount()));
+      layeredPane.add(myComponent, JLayeredPane.POPUP_LAYER);
 
       myComponent.validate();
       myComponent.repaint();
@@ -109,6 +109,9 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
         .setMovable(myForceShowAsPopup)
         .setTitle(myTitle)
         .setShowShadow(false)
+        .setCancelKeyEnabled(false)
+        .setCancelOnClickOutside(false)
+        .setCancelOnOtherWindowOpen(false)
         .createPopup();
 
       beforeShow();

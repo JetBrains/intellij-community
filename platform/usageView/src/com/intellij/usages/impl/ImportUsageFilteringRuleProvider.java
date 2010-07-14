@@ -22,17 +22,17 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.usageView.UsageViewBundle;
-import com.intellij.usages.rules.ImportFilteringRule;
 import com.intellij.usages.UsageView;
+import com.intellij.usages.rules.ImportFilteringRule;
 import com.intellij.usages.rules.UsageFilteringRule;
 import com.intellij.usages.rules.UsageFilteringRuleProvider;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -43,7 +43,7 @@ public class ImportUsageFilteringRuleProvider implements UsageFilteringRuleProvi
   public UsageFilteringRule[] getActiveRules(@NotNull final Project project) {
     final List<UsageFilteringRule> rules = new ArrayList<UsageFilteringRule>();
     if (!ImportFilteringUsageViewSetting.getInstance().SHOW_IMPORTS) {
-      rules.addAll(Arrays.asList(Extensions.getExtensions(ImportFilteringRule.EP_NAME)));
+      ContainerUtil.addAll(rules, Extensions.getExtensions(ImportFilteringRule.EP_NAME));
     }
     return rules.toArray(new UsageFilteringRule[rules.size()]);
   }

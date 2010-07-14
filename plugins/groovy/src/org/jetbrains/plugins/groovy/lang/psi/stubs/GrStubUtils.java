@@ -18,9 +18,13 @@ package org.jetbrains.plugins.groovy.lang.psi.stubs;
 
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.util.containers.ContainerUtil;
 
-import java.util.*;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -40,7 +44,7 @@ public class GrStubUtils {
         namedParameterSetArray[j] = dataStream.readUTF();
       }
       Set<String> curSet = new HashSet<String>();
-      curSet.addAll(Arrays.asList(namedParameterSetArray));
+      ContainerUtil.addAll(curSet, namedParameterSetArray);
       collArray.add(curSet);
     }
     return collArray;

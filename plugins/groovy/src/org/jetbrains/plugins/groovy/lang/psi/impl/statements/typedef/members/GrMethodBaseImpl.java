@@ -65,7 +65,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyBaseElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
@@ -362,9 +361,7 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
 
   @NotNull
   public GrModifierList getModifierList() {
-    GrModifierListImpl list = findChildByClass(GrModifierListImpl.class);
-    assert list != null;
-    return list;
+    return (GrModifierList)findNotNullChildByType(GroovyElementTypes.MODIFIERS);
   }
 
   public boolean hasModifierProperty(@NonNls @NotNull String name) {

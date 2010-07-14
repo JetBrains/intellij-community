@@ -26,9 +26,9 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
+import com.intellij.ui.ShiftTabAction;
 import com.intellij.util.Function;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
-import org.intellij.plugins.intelliLang.util.ShiftTabAction;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 

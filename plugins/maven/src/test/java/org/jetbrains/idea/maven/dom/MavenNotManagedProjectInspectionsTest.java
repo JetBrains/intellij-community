@@ -19,11 +19,19 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.testFramework.PsiTestUtil;
 
+import java.io.File;
+
 public class MavenNotManagedProjectInspectionsTest extends MavenDomTestCase {
+  @Override
+  protected void setUpInWriteAction() throws Exception {
+    super.setUpInWriteAction();
+    setRepositoryPath(new File(myDir, "repo").getPath());
+  }
+
   public void testWorkForNonMavenProjects() throws Throwable {
     Module m = createModule("module");
     PsiTestUtil.addContentRoot(m, myProjectRoot);
-    
+
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -44,7 +52,7 @@ public class MavenNotManagedProjectInspectionsTest extends MavenDomTestCase {
     checkHighlighting(); // should not fail nor highlight errors
   }
 
-  public void testEnabligInspectionForNonMavenProjectsAfterImport() throws Throwable {
+  public void testEnablingInspectionForNonMavenProjectsAfterImport() throws Throwable {
     if (ignore()) return;
     // can not reproduce in tests because of StartupManager.runWhenProjectIsInitialized
     // relies on ProjectManager.isProjectOpen. In tests the project is never being opened.

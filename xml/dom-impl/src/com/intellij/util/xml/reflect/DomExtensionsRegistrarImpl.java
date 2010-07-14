@@ -15,8 +15,9 @@
  */
 package com.intellij.util.xml.reflect;
 
-import com.intellij.util.SmartList;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.XmlName;
 import gnu.trove.THashSet;
@@ -24,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
 import java.lang.reflect.Type;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -102,7 +102,7 @@ public class DomExtensionsRegistrarImpl implements DomExtensionsRegistrar {
   }
 
   public final void addDependencies(Object[] deps) {
-    myDependencies.addAll(Arrays.asList(deps));
+    ContainerUtil.addAll(myDependencies, deps);
   }
 
   public Object[] getDependencies() {

@@ -18,6 +18,7 @@ package com.intellij.ui;
 
 import com.intellij.CommonBundle;
 import com.intellij.ui.components.JBList;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -33,7 +34,7 @@ import java.util.List;
  * @author anna
  * @since 5.1
  */
-public abstract class AddDeleteListPanel extends PanelWithButtons {
+public abstract class AddDeleteListPanel<T> extends PanelWithButtons {
   private final String myTitle;
   protected JButton myAddButton = new JButton(CommonBundle.message("button.add"));
   protected JButton myDeleteButton = new JButton(CommonBundle.message("button.delete"));
@@ -41,7 +42,7 @@ public abstract class AddDeleteListPanel extends PanelWithButtons {
   protected JList myList = new JBList(myListModel);
 
   public AddDeleteListPanel(final String title,
-                            final List initialList) {
+                            final List<T> initialList) {
     myTitle = title;
     for (Object o : initialList) {
       if (o != null) {
@@ -56,11 +57,7 @@ public abstract class AddDeleteListPanel extends PanelWithButtons {
     });
     myAddButton.addActionListener(new ActionListener(){
       public void actionPerformed(ActionEvent e) {
-        final Object itemToAdd = findItemToAdd();
-        if (itemToAdd != null){
-          myListModel.addElement(itemToAdd);
-          myList.setSelectedValue(itemToAdd, true);
-        }
+        addElement(findItemToAdd());
       }
     });
     myDeleteButton.addActionListener(new ActionListener() {
@@ -71,7 +68,15 @@ public abstract class AddDeleteListPanel extends PanelWithButtons {
     initPanel();
   }
 
-  protected abstract Object findItemToAdd();
+  protected void addElement(@Nullable T itemToAdd) {
+    if (itemToAdd != null){
+      myListModel.addElement(itemToAdd);
+      myList.setSelectedValue(itemToAdd, true);
+    }
+  }
+
+  @Nullable
+  protected abstract T findItemToAdd();
 
   public Object [] getListItems(){
     List<Object> items = new ArrayList<Object>();

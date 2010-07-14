@@ -35,10 +35,10 @@ import com.intellij.refactoring.util.usageInfo.DefaultConstructorImplicitUsageIn
 import com.intellij.refactoring.util.usageInfo.NoConstructorClassUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Set;
 
 /**
@@ -101,7 +101,7 @@ class JavaChangeSignatureUsageSearcher {
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     final Set<PsiParameter> deletedOrRenamedParameters = new HashSet<PsiParameter>();
     if (isOriginal) {
-      deletedOrRenamedParameters.addAll(Arrays.asList(parameters));
+      ContainerUtil.addAll(deletedOrRenamedParameters, parameters);
       for (ParameterInfo parameterInfo : myChangeInfo.getNewParameters()) {
         if (parameterInfo.getOldIndex() >= 0 && parameterInfo.getOldIndex() < parameters.length) {
           final PsiParameter parameter = parameters[parameterInfo.getOldIndex()];

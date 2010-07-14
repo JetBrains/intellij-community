@@ -54,12 +54,16 @@ public class RenameClassTest extends MultiFileTestCase {
   }
 
   public void testAutomaticRenameVars() throws Exception {
+    doRenameClass("XX", "Y");
+  }
+
+  private void doRenameClass(final String className, final String newName) throws Exception {
     doTest(new PerformAction() {
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
-        PsiClass aClass = myJavaFacade.findClass("XX", GlobalSearchScope.allScope(getProject()));
+        PsiClass aClass = myJavaFacade.findClass(className, GlobalSearchScope.allScope(getProject()));
         assertNotNull("Class XX not found", aClass);
 
-        final RenameProcessor processor = new RenameProcessor(myProject, aClass, "Y", true, true) {
+        final RenameProcessor processor = new RenameProcessor(myProject, aClass, newName, true, true) {
           @Override
           protected boolean showAutomaticRenamingDialog(AutomaticRenamer automaticVariableRenamer) {
             for (PsiNamedElement element : automaticVariableRenamer.getElements()) {
@@ -76,6 +80,10 @@ public class RenameClassTest extends MultiFileTestCase {
         FileDocumentManager.getInstance().saveAllDocuments();
       }
     });
+  }
+
+  public void testAutomaticRenameInheritors() throws Exception {
+    doRenameClass("MyClass", "MyClass1");
   }
 
   public void testAutomaticRenameVarsCollision() throws Exception {

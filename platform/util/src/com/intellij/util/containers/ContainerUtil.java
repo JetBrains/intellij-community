@@ -148,8 +148,8 @@ public class ContainerUtil {
     return hashMap;
   }
 
-  public static <K, V> HashMap<K, Set<V>> classify(Iterator<V> iterator, Convertor<V, K> keyConvertor) {
-    HashMap<K, Set<V>> hashMap = new HashMap<K, Set<V>>();
+  public static <K, V> Map<K, Set<V>> classify(Iterator<V> iterator, Convertor<V, K> keyConvertor) {
+    Map<K, Set<V>> hashMap = new LinkedHashMap<K, Set<V>>();
     while (iterator.hasNext()) {
       V value = iterator.next();
       final K key = keyConvertor.convert(value);
@@ -422,13 +422,20 @@ public class ContainerUtil {
     list.set(index2, e1);
   }
 
-  public static <T> ArrayList<T> collect(Iterator<?> iterator, FilteringIterator.InstanceOf<T> instanceOf) {
-    return collect(FilteringIterator.create(iterator, instanceOf));
+  public static <T> ArrayList<T> collect(@NotNull Iterator<?> iterator, @NotNull FilteringIterator.InstanceOf<T> instanceOf) {
+    return collect(FilteringIterator.create((Iterator<T>)iterator, instanceOf));
   }
 
-  public static <T> void addAll(Collection<T> collection, Enumeration<T> enumeration) {
+  public static <T> void addAll(@NotNull Collection<T> collection, @NotNull Enumeration<T> enumeration) {
     while (enumeration.hasMoreElements()) {
       T element = enumeration.nextElement();
+      collection.add(element);
+    }
+  }
+
+  public static <T> void addAll(@NotNull Collection<T> collection, @NotNull T... elements) {
+    //noinspection ManualArrayToCollectionCopy
+    for (T element : elements) {
       collection.add(element);
     }
   }

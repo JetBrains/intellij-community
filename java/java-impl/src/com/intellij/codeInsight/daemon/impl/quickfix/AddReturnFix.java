@@ -26,12 +26,11 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
 
 public class AddReturnFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AddReturnFix");
@@ -106,8 +105,8 @@ public class AddReturnFix implements IntentionAction {
       }
     }
     PsiParameter[] parameters = method.getParameterList().getParameters();
-    variables.addAll(Arrays.asList(parameters));
-    return (PsiVariable[]) variables.toArray(new PsiVariable[variables.size()]);
+    ContainerUtil.addAll(variables, parameters);
+    return (PsiVariable[])variables.toArray(new PsiVariable[variables.size()]);
   }
 
   public boolean startInWriteAction() {

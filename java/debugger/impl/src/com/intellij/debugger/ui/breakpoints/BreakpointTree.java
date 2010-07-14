@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Icons;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -468,7 +469,7 @@ public class BreakpointTree extends CheckboxTree {
 
   public void setBreakpoints(Breakpoint[] breakpoints) {
     myBreakpoints.clear();
-    myBreakpoints.addAll(Arrays.asList(breakpoints));
+    ContainerUtil.addAll(myBreakpoints, breakpoints);
     rebuildTree();
   }
 

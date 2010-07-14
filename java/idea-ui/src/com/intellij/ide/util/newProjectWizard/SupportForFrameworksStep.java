@@ -5,11 +5,11 @@
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
-import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ProjectBundle;
@@ -17,6 +17,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -58,6 +59,12 @@ public class SupportForFrameworksStep extends ModuleWizardStep {
 
   public Icon getIcon() {
     return ICON;
+  }
+
+  @Override
+  public void disposeUIResources() {
+    Disposer.dispose(mySupportForFrameworksPanel);
+    super.disposeUIResources();
   }
 
   @NonNls

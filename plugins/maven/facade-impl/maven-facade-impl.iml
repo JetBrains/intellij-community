@@ -41,10 +41,12 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/maven-embedder-1.0-SNAPSHOT.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/maven-embedder-1.1-SNAPSHOT.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="file://$MODULE_DIR$/../../../../../maven/idea-embedder/src/main/java" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">

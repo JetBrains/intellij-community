@@ -229,6 +229,10 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
 
 
   void buildStructure(final Node root) throws Exception {
+    buildStructure(root, true);
+  }
+
+  void buildStructure(final Node root, final boolean activate) throws Exception {
     doAndWaitForBuilder(new Runnable() {
       public void run() {
         myCom = root.addChild("com");
@@ -239,7 +243,9 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
         myRunner = root.addChild("xunit").addChild("runner");
         myRcp = root.addChild("org").addChild("eclipse").addChild("rcp");
 
-        getBuilder().getUi().activate(true);
+        if (activate) {
+          getBuilder().getUi().activate(true);
+        }
       }
     });
   }

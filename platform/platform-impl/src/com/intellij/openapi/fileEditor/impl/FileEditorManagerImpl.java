@@ -75,7 +75,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -695,12 +694,13 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       public void run() {
         VirtualFile file = descriptor.getFile();
         final FileEditor[] editors = openFile(file, focusEditor);
-        result.addAll(Arrays.asList(editors));
+        ContainerUtil.addAll(result, editors);
 
         boolean navigated = false;
         for (final FileEditor editor : editors) {
-          if (editor instanceof NavigatableFileEditor && getSelectedEditor(descriptor.getFile()) == editor) { // try to navigate opened editor
-            navigated = navigateAndSelectEditor((NavigatableFileEditor) editor,  descriptor);
+          if (editor instanceof NavigatableFileEditor &&
+              getSelectedEditor(descriptor.getFile()) == editor) { // try to navigate opened editor
+            navigated = navigateAndSelectEditor((NavigatableFileEditor)editor, descriptor);
             if (navigated) break;
           }
         }
@@ -708,7 +708,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         if (!navigated) {
           for (final FileEditor editor : editors) {
             if (editor instanceof NavigatableFileEditor && getSelectedEditor(descriptor.getFile()) != editor) { // try other editors
-              if (navigateAndSelectEditor((NavigatableFileEditor) editor, descriptor)) {
+              if (navigateAndSelectEditor((NavigatableFileEditor)editor, descriptor)) {
                 break;
               }
             }
@@ -882,7 +882,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     List<EditorWithProviderComposite> editorComposites = getEditorComposites(file);
     List<FileEditor> editors = new ArrayList<FileEditor>();
     for (EditorWithProviderComposite composite : editorComposites) {
-      editors.addAll(Arrays.asList(composite.getEditors()));
+      ContainerUtil.addAll(editors, composite.getEditors());
     }
     return editors.toArray(new FileEditor[editors.size()]);
   }
@@ -908,23 +908,17 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     final EditorWithProviderComposite[] editorsComposites = getSplitters().getEditorsComposites();
     for (EditorWithProviderComposite editorsComposite : editorsComposites) {
       final FileEditor[] editors = editorsComposite.getEditors();
-      result.addAll(Arrays.asList(editors));
+      ContainerUtil.addAll(result, editors);
     }
     return result.toArray(new FileEditor[result.size()]);
   }
 
   public void showEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent) {
-    final EditorComposite composite = getEditorComposite(editor);
-    if (composite != null) {
-      composite.getPane(editor).addInfo(annotationComponent);
-    }
+    addTopComponent(editor, annotationComponent);
   }
 
   public void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent) {
-    final EditorComposite composite = getEditorComposite(editor);
-    if (composite != null) {
-      composite.getPane(editor).removeInfo(annotationComponent);
-    }
+    removeTopComponent(editor, annotationComponent);
   }
 
   public void addTopComponent(@NotNull final FileEditor editor, @NotNull final JComponent component) {

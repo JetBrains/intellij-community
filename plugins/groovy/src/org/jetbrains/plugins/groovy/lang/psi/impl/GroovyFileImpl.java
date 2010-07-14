@@ -30,7 +30,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.scope.BaseScopeProcessor;
-import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubElement;
@@ -38,6 +37,7 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -61,7 +61,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -206,7 +205,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   private List<String> getImplicitlyImportedPackages() {
     final ArrayList<String> result = new ArrayList<String>();
     result.add(getPackageName());
-    result.addAll(Arrays.asList(IMPLICITLY_IMPORTED_PACKAGES));
+    ContainerUtil.addAll(result, IMPLICITLY_IMPORTED_PACKAGES);
     if (isScript()) {
       result.addAll(GroovyScriptType.getScriptType(this).appendImplicitImports(this));
     }

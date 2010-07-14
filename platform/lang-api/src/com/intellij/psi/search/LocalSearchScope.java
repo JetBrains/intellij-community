@@ -21,10 +21,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 public class LocalSearchScope extends SearchScope {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.search.LocalSearchScope");
@@ -60,7 +64,7 @@ public class LocalSearchScope extends SearchScope {
     for (final PsiElement element : scope) {
       LOG.assertTrue(element.getContainingFile() != null);
       if (element instanceof PsiFile) {
-        localScope.addAll(Arrays.asList(((PsiFile)element).getPsiRoots()));
+        ContainerUtil.addAll(localScope, ((PsiFile)element).getPsiRoots());
       }
       else {
         localScope.add(element);

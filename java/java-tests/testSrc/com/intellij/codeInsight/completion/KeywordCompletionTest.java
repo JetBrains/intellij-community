@@ -1,8 +1,6 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 
 /**
@@ -109,15 +107,8 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   }
 
   public void testExtends_12() throws Exception {
-    final LanguageLevel level = LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).getLanguageLevel();
-    try {
-      LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
-      configureByFile(BASE_PATH + "/extends-12.java");
-      checkResultByFile(BASE_PATH + "/extends-12-result.java");
-    }
-    finally {
-      LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(level);
-    }
+    configureByFile(BASE_PATH + "/extends-12.java");
+    checkResultByFile(BASE_PATH + "/extends-12-result.java");
   }
 
   public void testSynchronized_1() throws Exception {

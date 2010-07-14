@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,9 +43,9 @@ public abstract class ExpandableItemsHandlerFactory {
 
   @Nullable
   private static ExpandableItemsHandlerFactory getInstance() {
-    return null;
-    //if (ApplicationManager.getApplication() == null) return null; // test code or no idea environment available (gui designer etc.)
-    //return ServiceManager.getService(ExpandableItemsHandlerFactory.class);
+    if (!Registry.is("ide.windowSystem.showListItemsPopup") || ApplicationManager.getApplication() == null) return null;
+
+    return ServiceManager.getService(ExpandableItemsHandlerFactory.class);
   }
 
   protected abstract ExpandableItemsHandler<Integer> doInstall(JList list);

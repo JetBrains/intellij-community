@@ -45,6 +45,7 @@ public class RootConfigurationAccessor {
     return ProjectRootManager.getInstance(project).getProjectJdk();
   }
 
+  @Nullable
   public String getProjectSdkName(final Project project) {
     return ProjectRootManager.getInstance(project).getProjectJdkName();
   }

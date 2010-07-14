@@ -68,13 +68,7 @@ public abstract class GitTextHandler extends GitHandler {
    * {@inheritDoc}
    */
   protected void startHandlingStreams() {
-    myHandler = new OSProcessHandler(myProcess, myCommandLine.getCommandLineString()) {
-      @Override
-      public Charset getCharset() {
-        Charset charset = GitTextHandler.this.getCharset();
-        return charset == null ? super.getCharset() : charset;
-      }
-    };
+    myHandler = new MyOSProcessHandler(myProcess, myCommandLine.getCommandLineString(), getCharset());
     myHandler.addProcessListener(new ProcessListener() {
       public void startNotified(final ProcessEvent event) {
         // do nothing
@@ -130,7 +124,23 @@ public abstract class GitTextHandler extends GitHandler {
    * {@inheritDoc}
    */
   protected void waitForProcess() {
-    myHandler.waitFor();
+    OSProcessHandler handler = myHandler;
     myHandler = null;
+    handler.waitFor();
+  }
+
+  private static class MyOSProcessHandler extends OSProcessHandler {
+    private final Charset myCharset;
+
+    public MyOSProcessHandler(Process process, String commandLine, Charset charset) {
+      super(process, commandLine);
+      myCharset = charset;
+    }
+
+    @Override
+    public Charset getCharset() {
+      Charset charset = myCharset;
+      return charset == null ? super.getCharset() : charset;
+    }
   }
 }

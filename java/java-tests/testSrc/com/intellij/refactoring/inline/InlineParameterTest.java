@@ -246,6 +246,19 @@ public class InlineParameterTest extends LightCodeInsightTestCase {
     }
   }
 
+  public void testInlineLocalParamDef() throws Exception {
+    doTest(false);
+  }
+
+  public void testParameterDefWithWriteAccess()  throws Exception {
+    try {
+      doTest(false);
+    }
+    catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
+      assertEquals("Method has no usages", e.getMessage());
+    }
+  }
+
   private void doTest(final boolean createLocal) throws Exception {
     getProject().putUserData(InlineParameterExpressionProcessor.CREATE_LOCAL_FOR_TESTS,createLocal);
 

@@ -16,7 +16,7 @@
 
 <idea-plugin url="http://www.jetbrains.net/confluence/display/GRVY/Groovy+Home">
   <id>org.intellij.groovy</id>
-  <name>JetGroovy</name>
+  <name>Groovy</name>
   <description>Plugin for Groovy language support</description>
   <version>9.0</version>
   <vendor logo="/org/jetbrains/plugins/groovy/images/groovy_16x16.png" url="http://www.jetbrains.com">JetBrains Inc.
@@ -72,7 +72,16 @@
 
     <membersContributor implementation="org.jetbrains.plugins.groovy.gant.GantMemberContributor"/>
 
-    <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.impl.GrContainerTypeConverter"/> 
+    <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.impl.GrContainerTypeConverter"/>
+
+    <libraryManager implementation="org.jetbrains.plugins.groovy.gpp.GppLibraryManager" order="first"/>
+    <typeConverter implementation="org.jetbrains.plugins.groovy.gpp.GppTypeConverter"/>
+    <expectedTypesContributor implementation="org.jetbrains.plugins.groovy.gpp.GppExpectedTypesContributor"/>
+    <variableEnhancer implementation="org.jetbrains.plugins.groovy.gpp.GppClosureParameterTypeProvider"/>
+    <classSubstitutor implementation="org.jetbrains.plugins.groovy.gpp.GppClassSubstitutor"/>
+    <nonCodeProcessor implementation="org.jetbrains.plugins.groovy.gpp.GppStdLibSupport"/>
+    <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gpp.GppPositionManager"/>
+    
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -96,6 +105,9 @@
     <renameHandler implementation="org.jetbrains.plugins.groovy.refactoring.rename.PropertyRenameHandler"/>
     <renamePsiElementProcessor implementation="org.jetbrains.plugins.groovy.refactoring.rename.RenameGroovyPropertyProcessor"
                                order="first"/>
+    <renamePsiElementProcessor implementation="org.jetbrains.plugins.groovy.refactoring.rename.RenameAliasImportedClassProcessor" order="first"/>
+    <renamePsiElementProcessor implementation="org.jetbrains.plugins.groovy.refactoring.rename.RenameAliasImportedMethodProcessor" order="first"/>
+    <renamePsiElementProcessor implementation="org.jetbrains.plugins.groovy.refactoring.rename.RenameAliasImportedFieldProcessor" order="first"/>
     <applicationService serviceInterface="org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings"
                         serviceImplementation="org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings"/>
 
@@ -206,7 +218,6 @@
 
     <stubElementTypeHolder class="org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes"/>
     <!--Stubs index-->
-    <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrShortClassNameIndex"/>
     <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullClassNameIndex"/>
     <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullScriptNameIndex"/>
     <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFieldNameIndex"/>
@@ -254,6 +265,12 @@
     <fileBasedIndex implementation="org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex"/>
 
     <patterns.patternClass className="org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns" alias="groovy"/>
+
+    <stacktrace.fold substring="at org.codehaus.groovy."/>
+    <stacktrace.fold substring="at groovy."/>
+    <stacktrace.fold substring="at org.codehaus.groovy.runtime.DefaultGroovyMethods." negate="true"/>
+    <stacktrace.fold substring="at org.codehaus.groovy.vmplugin.v5.PluginDefaultGroovyMethods." negate="true"/>
+    <stacktrace.fold substring="at org.codehaus.groovy.runtime.DefaultGroovyMethodsSupport." negate="true"/>
 
     <!-- control flow -->
     <intentionAction>
@@ -431,8 +448,18 @@
       <className>org.jetbrains.plugins.groovy.intentions.style.ReplaceAbstractClassInstanceByMapIntention</className>
     </intentionAction>
 
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy</categoryKey>
+      <className>org.jetbrains.plugins.groovy.grape.GrabDependencies</className>
+    </intentionAction>
+
+
     <projectService serviceInterface="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper"
                     serviceImplementation="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper"/>
+
+    <java.programPatcher implementation="org.jetbrains.plugins.groovy.debugger.GroovyHotSwapper"/>
+    <psi.referenceContributor implementation="org.jetbrains.plugins.groovy.gpp.GppReferenceContributor"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">

@@ -37,6 +37,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.makeStatic.MakeStaticHandler;
 import com.intellij.refactoring.move.MoveInstanceMembersUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -131,8 +132,8 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
   @Nullable
   private static String collectSuitableVariables(final PsiMethod method, final List<PsiVariable> suitableVariables) {
     final List<PsiVariable> allVariables = new ArrayList<PsiVariable>();
-    allVariables.addAll(Arrays.asList(method.getParameterList().getParameters()));
-    allVariables.addAll(Arrays.asList(method.getContainingClass().getFields()));
+    ContainerUtil.addAll(allVariables, method.getParameterList().getParameters());
+    ContainerUtil.addAll(allVariables, method.getContainingClass().getFields());
     boolean classTypesFound = false;
     boolean resolvableClassesFound = false;
     boolean classesInProjectFound = false;

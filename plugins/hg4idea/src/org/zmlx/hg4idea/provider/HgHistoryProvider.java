@@ -23,22 +23,23 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileRevision;
+import org.zmlx.hg4idea.HgUtil;
 import org.zmlx.hg4idea.command.HgLogCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 
 public class HgHistoryProvider implements VcsHistoryProvider {
 
   private static final int DEFAULT_LIMIT = 500;
 
-  private final Project project;
+  private final Project myProject;
 
   public HgHistoryProvider(Project project) {
-    this.project = project;
+    myProject = project;
   }
 
   public VcsDependentHistoryComponents getUICustomization(VcsHistorySession session,
@@ -59,51 +60,22 @@ public class HgHistoryProvider implements VcsHistoryProvider {
   }
 
   public VcsHistorySession createSessionFor(FilePath filePath) throws VcsException {
-    final VirtualFile vcsRoot = VcsUtil.getVcsRootFor(project, filePath);
+    final VirtualFile vcsRoot = VcsUtil.getVcsRootFor(myProject, filePath);
     if (vcsRoot == null) {
       return null;
     }
-    HgFile hgFile = new HgFile(vcsRoot, filePath);
-    List<HgFileRevision> revisions = getHistory(filePath, vcsRoot, project, DEFAULT_LIMIT);
-    final List<VcsFileRevision> result = new LinkedList<VcsFileRevision>(revisions);
-    return new VcsHistorySession() {
-      public VcsRevisionNumber getCurrentRevisionNumber() {
-        return new HgWorkingCopyRevisionsCommand(project).firstParent(vcsRoot);
-      }
-
-      public HistoryAsTreeProvider getHistoryAsTreeProvider() {
-        return null;
-      }
-
-      public List<VcsFileRevision> getRevisionList() {
-        return result;
-      }
-
-      public boolean isCurrentRevision(VcsRevisionNumber vcsRevisionNumber) {
-        return vcsRevisionNumber.equals(getCurrentRevisionNumber());
-      }
-
-      public boolean shouldBeRefreshed() {
-        return false;
-      }
-
-      public boolean allowAsyncRefresh() {
-        return false;
-      }
-
-      public boolean isContentAvailable(VcsFileRevision vcsFileRevision) {
-        return false;
-      }
-    };
+    final List<VcsFileRevision> revisions = new ArrayList<VcsFileRevision>();
+    revisions.addAll(getHistory(filePath, vcsRoot, myProject, DEFAULT_LIMIT));
+    return createAppendableSession(vcsRoot, revisions);
   }
 
   public void reportAppendableHistory(FilePath filePath, final VcsAppendableHistorySessionPartner partner) throws VcsException {
-    final VirtualFile vcsRoot = VcsUtil.getVcsRootFor(project, filePath);
-    List<HgFileRevision> history = getHistory(filePath, vcsRoot, this.project, DEFAULT_LIMIT);
+    final VirtualFile vcsRoot = HgUtil.getHgRootOrThrow(myProject, filePath);
 
+    final List<HgFileRevision> history = getHistory(filePath, vcsRoot, myProject, DEFAULT_LIMIT);
     if (history.size() == 0) return;
-    
-    final VcsAbstractHistorySession emptySession = createAppendableSession(vcsRoot);
+
+    final VcsAbstractHistorySession emptySession = createAppendableSession(vcsRoot, Collections.<VcsFileRevision>emptyList());
     partner.reportCreatedEmptySession(emptySession);
 
     for (HgFileRevision hgFileRevision : history) {
@@ -112,11 +84,11 @@ public class HgHistoryProvider implements VcsHistoryProvider {
     partner.finished();
   }
 
-  private VcsAbstractHistorySession createAppendableSession(final VirtualFile vcsRoot) {
-    return new VcsAbstractHistorySession(Collections.<VcsFileRevision>emptyList()) {
+  private VcsAbstractHistorySession createAppendableSession(final VirtualFile vcsRoot, List<VcsFileRevision> revisions) {
+    return new VcsAbstractHistorySession(revisions) {
       @Nullable
       protected VcsRevisionNumber calcCurrentRevisionNumber() {
-        return new HgWorkingCopyRevisionsCommand(project).firstParent(vcsRoot);
+        return new HgWorkingCopyRevisionsCommand(myProject).firstParent(vcsRoot);
       }
 
       public HistoryAsTreeProvider getHistoryAsTreeProvider() {
@@ -125,16 +97,15 @@ public class HgHistoryProvider implements VcsHistoryProvider {
 
       @Override
       public VcsHistorySession copy() {
-        return createAppendableSession(vcsRoot);
+        return createAppendableSession(vcsRoot, getRevisionList());
       }
     };
   }
 
-  private List<HgFileRevision> getHistory(FilePath filePath, VirtualFile vcsRoot, Project project, int limit) {
-    HgLogCommand logCommand = new HgLogCommand(project);
+  private static List<HgFileRevision> getHistory(FilePath filePath, VirtualFile vcsRoot, Project project, int limit) {
+    final HgLogCommand logCommand = new HgLogCommand(project);
     logCommand.setFollowCopies(true);
     logCommand.setIncludeRemoved(true);
-
     return logCommand.execute(new HgFile(vcsRoot, filePath), limit, false);
   }
 

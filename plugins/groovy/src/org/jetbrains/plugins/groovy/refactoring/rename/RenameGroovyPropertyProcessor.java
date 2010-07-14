@@ -35,8 +35,10 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -53,19 +55,20 @@ public class RenameGroovyPropertyProcessor extends RenameJavaVariableProcessor {
   @NotNull
   @Override
   public Collection<PsiReference> findReferences(final PsiElement element) {
-    ArrayList<PsiReference> refs = new ArrayList<PsiReference>();
     if (element instanceof GrField) {
+      ArrayList<PsiReference> refs = new ArrayList<PsiReference>();
+
       GrField field = (GrField)element;
       PsiMethod setter = GroovyPropertyUtils.findSetterForField(field);
       GlobalSearchScope projectScope = GlobalSearchScope.projectScope(element.getProject());
       if (setter != null && setter instanceof GrAccessorMethod) {
-        refs.addAll(MethodReferencesSearch.search(setter, projectScope, true).findAll());
+        refs.addAll(RenameAliasedUsagesUtil.filterAliasedRefs(MethodReferencesSearch.search(setter, projectScope, true).findAll(), setter));
       }
       GrAccessorMethod[] getters = field.getGetters();
       for (GrAccessorMethod getter : getters) {
-        refs.addAll(MethodReferencesSearch.search(getter, projectScope, true).findAll());
+        refs.addAll(RenameAliasedUsagesUtil.filterAliasedRefs(MethodReferencesSearch.search(getter, projectScope, true).findAll(), getter));
       }
-      refs.addAll(ReferencesSearch.search(field, projectScope, true).findAll());
+      refs.addAll(RenameAliasedUsagesUtil.filterAliasedRefs(ReferencesSearch.search(field, projectScope, true).findAll(), field));
       return refs;
     }
     return super.findReferences(element);
@@ -98,10 +101,20 @@ public class RenameGroovyPropertyProcessor extends RenameJavaVariableProcessor {
 
       PsiElement resolved = ref.resolve();
       if (manager.areElementsEquivalent(resolved, getter)) {
-        getterRefs.add(ref);
+        if (isPropertyAccess(element)) {
+          fieldRefs.add(ref);
+        }
+        else {
+          getterRefs.add(ref);
+        }
       }
       else if (manager.areElementsEquivalent(resolved, setter)) {
-        setterRefs.add(ref);
+        if (isPropertyAccess(element)) {
+          fieldRefs.add(ref);
+        }
+        else {
+          setterRefs.add(ref);
+        }
       }
       else if (manager.areElementsEquivalent(resolved, field)) {
         fieldRefs.add(ref);
@@ -114,33 +127,45 @@ public class RenameGroovyPropertyProcessor extends RenameJavaVariableProcessor {
     field.setName(newName);
 
     final PsiMethod newGetter = GroovyPropertyUtils.findGetterForField(field);
-    for (PsiReference ref : getterRefs) {
-      rename(ref, newGetterName, manager, newGetter);
-    }
+    doRename(newGetterName, manager, getterRefs, newGetter);
 
     final PsiMethod newSetter = GroovyPropertyUtils.findSetterForField(field);
-    for (PsiReference ref : setterRefs) {
-      rename(ref, newSetterName, manager, newSetter);
-    }
+    doRename(newSetterName, manager, setterRefs, newSetter);
 
-    for (PsiReference ref : fieldRefs) {
-      rename(ref, newName, manager, field);
-    }
+    doRename(newName, manager, fieldRefs, field);
 
     listener.elementRenamed(field);
   }
 
-  private static void rename(PsiReference ref, String newName, PsiManager manager, PsiMember elementToResolve) {
-    final PsiElement renamed = ref.handleElementRename(newName);
-    final PsiElement newly_resolved = ref.resolve();
-    if (!manager.areElementsEquivalent(newly_resolved, elementToResolve)) {
-      qualify(elementToResolve, renamed, newName);
+  private static void doRename(String newName, PsiManager manager, List<PsiReference> refs, PsiMember member) {
+    for (PsiReference ref : refs) {
+      rename(ref, newName, manager, member);
     }
+  }
+
+  private static void rename(PsiReference ref,
+                             String newName,
+                             PsiManager manager,
+                             PsiMember elementToResolve) {
+    final PsiElement renamed = ref.handleElementRename(newName);
+    PsiElement newly_resolved = ref.resolve();
+    if (!manager.areElementsEquivalent(newly_resolved, elementToResolve)) {
+      if (newly_resolved instanceof PsiMethod) {
+        newly_resolved = GroovyPropertyUtils.findFieldForAccessor((PsiMethod)newly_resolved, false);
+      }
+      if (!manager.areElementsEquivalent(newly_resolved, elementToResolve)) {
+        qualify(elementToResolve, renamed, newName);
+      }
+    }
+  }
+
+  private static boolean isPropertyAccess(PsiElement element) {
+    return !(element.getParent() instanceof GrCall) && (PsiTreeUtil.getParentOfType(element, GrImportStatement.class, true) == null);
   }
 
   private static void qualify(PsiMember member, PsiElement renamed, String name) {
     if (!(renamed instanceof GrReferenceExpression)) return;
-    
+
     final PsiClass clazz = member.getContainingClass();
     if (clazz == null) return;
 
@@ -201,8 +226,7 @@ public class RenameGroovyPropertyProcessor extends RenameJavaVariableProcessor {
                              String newName,
                              Map<? extends PsiElement, String> allRenames,
                              List<UsageInfo> result) {
-    super
-      .findCollisions(element, newName, allRenames, result);    //To change body of overridden methods use File | Settings | File Templates.
+    super.findCollisions(element, newName, allRenames, result);
   }
 
 

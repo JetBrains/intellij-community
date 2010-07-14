@@ -15,15 +15,15 @@
  */
 package com.intellij.openapi.editor.impl.softwrap;
 
-import com.intellij.openapi.editor.TextChange;
-import gnu.trove.TIntHashSet;
+import com.intellij.openapi.editor.ex.SoftWrapChangeListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * Holds registered soft wraps and provides monitoring and management facilities for them.
@@ -35,14 +35,9 @@ import java.util.List;
  */
 public class SoftWrapsStorage {
 
-  private static final Comparator<TextChange> SOFT_WRAPS_BY_OFFSET_COMPARATOR = new Comparator<TextChange>() {
-    public int compare(TextChange c1, TextChange c2) {
-      return c1.getStart() - c2.getEnd();
-    }
-  };
-
-  private final List<TextChange> myWraps = new ArrayList<TextChange>();
-  private final List<TextChange> myWrapsView = Collections.unmodifiableList(myWraps);
+  private final List<TextChangeImpl>        myWraps     = new ArrayList<TextChangeImpl>();
+  private final List<TextChangeImpl>        myWrapsView = Collections.unmodifiableList(myWraps);
+  private final Set<SoftWrapChangeListener> myListeners = new CopyOnWriteArraySet<SoftWrapChangeListener>();
 
   /**
    * @return    <code>true</code> if there is at least one soft wrap registered at the current storage; <code>false</code> otherwise
@@ -51,12 +46,8 @@ public class SoftWrapsStorage {
     return myWraps.isEmpty();
   }
 
-  public boolean hasSoftWrapAt(int offset) {
-    return getSoftWrapIndex(offset) >= 0;
-  }
-
   @Nullable
-  public TextChange getSoftWrap(int offset) {
+  public TextChangeImpl getSoftWrap(int offset) {
     int i = getSoftWrapIndex(offset);
     return i >= 0 ? myWraps.get(i) : null;
   }
@@ -65,7 +56,7 @@ public class SoftWrapsStorage {
    * @return    view for registered soft wraps sorted by offset in ascending order if any; empty collection otherwise
    */
   @NotNull
-  public List<TextChange> getSoftWraps() {
+  public List<TextChangeImpl> getSoftWraps() {
     return myWrapsView;
   }
 
@@ -79,8 +70,26 @@ public class SoftWrapsStorage {
    *                  to position at {@link #myWraps} collection where soft wrap for the given index should be inserted
    */
   public int getSoftWrapIndex(int offset) {
-    TextChange searchKey = new TextChange("", offset);
-    return Collections.binarySearch(myWraps, searchKey, SOFT_WRAPS_BY_OFFSET_COMPARATOR);
+    int start = 0;
+    int end = myWraps.size() - 1;
+
+    // We use custom inline implementation of binary search here because profiling shows that standard Collections.binarySearch()
+    // is a bottleneck. The most probable reason is a big number of interface calls.
+    while (start <= end) {
+      int i = (start + end) >>> 1;
+      TextChangeImpl softWrap = myWraps.get(i);
+      int softWrapOffset = softWrap.getStart();
+      if (softWrapOffset > offset) {
+        end = i - 1;
+      }
+      else if (softWrapOffset < offset) {
+        start = i + 1;
+      }
+      else {
+        return i;
+      }
+    }
+    return -(start + 1);
   }
 
   /**
@@ -90,14 +99,17 @@ public class SoftWrapsStorage {
    * @return            previous soft wrap object stored for the same offset if any; <code>null</code> otherwise
    */
   @Nullable
-  public TextChange storeSoftWrap(TextChange softWrap) {
-    int i = Collections.binarySearch(myWraps, softWrap, SOFT_WRAPS_BY_OFFSET_COMPARATOR);
+  public TextChangeImpl storeOrReplace(TextChangeImpl softWrap) {
+    int i = getSoftWrapIndex(softWrap.getStart());
     if (i >= 0) {
       return myWraps.set(i, softWrap);
     }
 
     i = -i - 1;
     myWraps.add(i, softWrap);
+    for (SoftWrapChangeListener listener : myListeners) {
+      listener.softWrapAdded(softWrap);
+    }
     return null;
   }
 
@@ -109,7 +121,7 @@ public class SoftWrapsStorage {
    * @return        removed soft wrap if the one was found for the given index; <code>null</code> otherwise
    */
   @Nullable
-  public TextChange removeByIndex(int index) {
+  public TextChangeImpl removeByIndex(int index) {
     if (index < 0 || index >= myWraps.size()) {
       return null;
     }
@@ -117,30 +129,19 @@ public class SoftWrapsStorage {
   }
 
   /**
-   * Removes all soft wraps with offsets at [start; end] range registered at the current storage if any.
-   *
-   * @param start   start range offset (inclusive)
-   * @param end     end range offset (exclusive)
-   */
-  public void removeInRange(int start, int end) {
-    int startIndex = getSoftWrapIndex(start);
-    if (startIndex < 0) {
-      startIndex = -startIndex - 1;
-    }
-    int endIndex = startIndex;
-    for (; endIndex < myWraps.size(); endIndex++) {
-      TextChange softWrap = myWraps.get(endIndex);
-      if (softWrap.getStart() >= end) {
-        break;
-      }
-    }
-    myWraps.subList(startIndex, endIndex).clear();
-  }
-
-  /**
    * Removes all soft wraps registered at the current storage.
    */
   public void removeAll() {
     myWraps.clear();
+  }
+
+  /**
+   * Registers given listener within the current model
+   *
+   * @param listener    listener to register
+   * @return            <code>true</code> if given listener was not registered before; <code>false</code> otherwise
+   */
+  public boolean addSoftWrapChangeListener(@NotNull SoftWrapChangeListener listener) {
+    return myListeners.add(listener);
   }
 }

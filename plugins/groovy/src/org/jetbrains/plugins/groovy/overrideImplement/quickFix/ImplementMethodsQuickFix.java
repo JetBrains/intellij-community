@@ -51,7 +51,7 @@ public class ImplementMethodsQuickFix implements IntentionAction {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    GroovyOverrideImplementUtil.invokeOverrideImplement(project, editor, file, true);
+    GroovyOverrideImplementUtil.invokeOverrideImplement(editor, file, true);
   }
 
   public boolean startInWriteAction() {

@@ -105,6 +105,9 @@ public class BrowserUtil {
           commandLine[commandLine.length - 1] = escapeUrl(urlString);
         }
         Runtime.getRuntime().exec(commandLine);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Browser launched with command line: " + Arrays.toString(commandLine));
+        }
       }
       else {
         showErrorMessage(IdeBundle.message("error.malformed.url", url), CommonBundle.getErrorTitle());
@@ -204,7 +207,7 @@ public class BrowserUtil {
       if (url == null) return false;
 
       desktopClass.getMethod("browse", new Class[]{URI.class}).invoke(desktop, url.toURI());
-
+      LOG.debug("Browser launched using JDK 1.6 API");
       return true;
     }
     catch (Exception e) {
@@ -348,6 +351,7 @@ public class BrowserUtil {
   }
 
   public static void launchBrowser(@NonNls String url) {
+    LOG.debug("Launch browser: " + url);
     if (url.startsWith("jar:")) {
       url = extractFiles(url);
       if (url == null) return;

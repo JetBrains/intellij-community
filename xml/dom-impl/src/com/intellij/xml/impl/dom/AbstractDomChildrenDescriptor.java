@@ -48,10 +48,18 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
 
     final CustomDomChildrenDescription customDescription = domElement.getGenericInfo().getCustomNameChildrenDescription();
     if (customDescription != null) {
+      final XmlTag xmlTag = domElement.getXmlTag();
       for (final EvaluatedXmlName name : customDescription.getTagNameDescriptor().getCompletionVariants(domElement)) {
         xmlElementDescriptors.add(new AbstractDomChildrenDescriptor(myManager) {
           @Override
           public String getDefaultName() {
+            final String ns = xmlTag != null? name.getNamespace(xmlTag, (XmlFile)xmlTag.getContainingFile()) : null;
+            if (ns != null) {
+              final String prefix = xmlTag.getPrefixByNamespace(ns);
+              if (prefix != null) {
+                return prefix + ":" + name.getXmlName().getLocalName();
+              }
+            }
             return name.getXmlName().getLocalName();
           }
 

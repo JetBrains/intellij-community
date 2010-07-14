@@ -184,6 +184,7 @@ public class DocumentBasedFormattingModel implements FormattingModel {
   }
 
   private void createWhiteSpace(final int whiteSpaceLength, StringBuffer buffer) {
+    if (whiteSpaceLength < 0) return;
     final CodeStyleSettings.IndentOptions indentOptions = getIndentOptions();
     if (indentOptions.USE_TAB_CHARACTER) {
       int tabs = whiteSpaceLength / indentOptions.TAB_SIZE;

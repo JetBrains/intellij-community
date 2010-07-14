@@ -111,7 +111,7 @@ public class FilteringIterator<Dom, E extends Dom> implements Iterator<E> {
   }
 
   public static <T> Iterator<T> createInstanceOf(Iterator<?> iterator, Class<T> aClass) {
-    return create(iterator, instanceOf(aClass));
+    return create((Iterator<T>)iterator, instanceOf(aClass));
   }
 
   public static class InstanceOf<T> implements Condition {

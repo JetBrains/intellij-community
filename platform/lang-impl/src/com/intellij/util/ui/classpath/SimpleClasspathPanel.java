@@ -35,6 +35,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Icons;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -135,7 +136,7 @@ public class SimpleClasspathPanel extends JPanel {
     final THashSet<VirtualFile> result = new THashSet<VirtualFile>();
     for (final Enumeration<?> enumeration = myListModel.elements(); enumeration.hasMoreElements(); ) {
       final Library library = (Library)enumeration.nextElement();
-      result.addAll(Arrays.asList(library.getFiles(OrderRootType.CLASSES)));
+      ContainerUtil.addAll(result, library.getFiles(OrderRootType.CLASSES));
     }
     return result;
   }

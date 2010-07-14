@@ -41,7 +41,7 @@ public class HgLogCommand extends HgRevisionsCommand {
   }
 
   @Override
-  protected HgCommandResult execute(HgCommandService service, VirtualFile repo,
+  public HgCommandResult execute(HgCommandService service, VirtualFile repo,
     String template, int limit, HgFile hgFile) {
     List<String> arguments = new LinkedList<String>();
     if (followCopies) {

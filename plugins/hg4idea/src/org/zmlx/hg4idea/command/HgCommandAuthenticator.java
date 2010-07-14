@@ -12,21 +12,30 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
+import com.intellij.ide.passwordSafe.PasswordSafe;
+import com.intellij.ide.passwordSafe.PasswordSafeException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
+import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgGlobalSettings;
+import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.ui.HgUsernamePasswordDialog;
 
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Base class for any command interacting with a remote repository and which needs authentication.
  */
 class HgCommandAuthenticator {
+
+  private static final Logger LOG = Logger.getInstance(HgCommandAuthenticator.class.getName());
 
   @Nullable
   protected HgCommandResult executeCommandAndAuthenticateIfNecessary(Project project, VirtualFile localRepository, String remoteRepository, String command, List<String> arguments) {
@@ -47,8 +56,20 @@ class HgCommandAuthenticator {
             hgUrl.setUsername( runnable.getUserName() );
             hgUrl.setPassword(String.valueOf( runnable.getPassword() ));
 
-            arguments.set(arguments.size() - 1, hgUrl.asString());
+            arguments.set(0, hgUrl.asString());
             result = service.execute(localRepository, command, arguments);
+
+            if (result != null && result.getExitValue() == 0) {
+              final String key = keyForUrlAndLogin(runnable.getURL(), runnable.getUserName());
+              try {
+                PasswordSafe.getInstance().storePassword(project, HgCommandAuthenticator.class, key, runnable.getPassword());
+                HgVcs.getInstance(project).getGlobalSettings().addRememberedUrl(runnable.getURL(), runnable.getUserName());
+              }
+              catch (PasswordSafeException e) {
+                LOG.error("Couldn't store the password for key [" + key + "]", e);
+              }
+            }
+
           }
         }
       } catch (URISyntaxException e) {
@@ -62,9 +83,11 @@ class HgCommandAuthenticator {
 
     private final HgUrl hgUrl;
     private String userName;
-    private char[] password;
+    private String myPassword;
     private Project project;
     private boolean ok = false;
+    private static final Logger LOG = Logger.getInstance(GetPasswordRunnable.class.getName());
+    private String myURL;
 
     public GetPasswordRunnable(Project project, HgUrl hgUrl) {
       this.hgUrl = hgUrl;
@@ -72,13 +95,50 @@ class HgCommandAuthenticator {
     }
 
     public void run() {
-      final HgUsernamePasswordDialog dialog = new HgUsernamePasswordDialog(project, hgUrl.getUsername());
-      dialog.show();
 
+      // get the string representation of the url
+      @Nullable String stringUrl = null;
+      try {
+        stringUrl = hgUrl.asString();
+      }
+      catch (URISyntaxException e) {
+        LOG.warn("Couldn't parse hgUrl: [" + hgUrl + "]", e);
+      }
+
+      // find if we've already been here
+      final HgGlobalSettings hgGlobalSettings = HgVcs.getInstance(project).getGlobalSettings();
+      final Map<String, List<String>> urls = hgGlobalSettings.getRememberedUrls();
+      @Nullable List<String> rememberedLoginsForUrl = urls.get(stringUrl);
+
+      String login = hgUrl.getUsername();
+      if (StringUtils.isBlank(login)) {
+        // find the last used login
+        if (rememberedLoginsForUrl != null && !rememberedLoginsForUrl.isEmpty()) {
+          login = rememberedLoginsForUrl.get(0);
+        }
+      }
+
+      String password = hgUrl.getPassword();
+      if (StringUtils.isBlank(password) && stringUrl != null) {
+        // if we've logged in with this login, search for password
+        final String key = keyForUrlAndLogin(stringUrl, login);
+        try {
+          password = PasswordSafe.getInstance().getPassword(project, HgCommandAuthenticator.class, key);
+        } catch (PasswordSafeException e) {
+          LOG.error("Couldn't get password for key [" + key + "]", e);
+        }
+      }
+      
+      final HgUsernamePasswordDialog dialog = new HgUsernamePasswordDialog(project, login, password);
+      dialog.show();
       if (dialog.isOK()) {
         userName = dialog.getUsername();
-        password = dialog.getPassword();
+        myPassword = dialog.getPassword();
         ok = true;
+
+        if (dialog.isRememberPassword() && stringUrl != null) {
+          myURL = stringUrl;
+        }
       }
     }
 
@@ -86,13 +146,21 @@ class HgCommandAuthenticator {
       return userName;
     }
 
-    public char[] getPassword() {
-      return password.clone();
+    public String getPassword() {
+      return myPassword;
     }
 
     public boolean isOk() {
       return ok;
     }
+
+    public String getURL() {
+      return myURL;
+    }
+  }
+
+  private static String keyForUrlAndLogin(String stringUrl, String login) {
+    return stringUrl + login;
   }
 
 }

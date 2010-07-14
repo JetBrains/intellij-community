@@ -25,6 +25,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.text.StringTokenizer;
 import org.jetbrains.annotations.NonNls;
@@ -37,7 +38,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -167,7 +167,7 @@ public class ClassloaderUtil {
     final ClassLoader loader = ClassloaderUtil.class.getClassLoader();
     if (loader instanceof URLClassLoader) {
       URLClassLoader urlClassLoader = (URLClassLoader)loader;
-      aClasspathElements.addAll(Arrays.asList(urlClassLoader.getURLs()));
+      ContainerUtil.addAll(aClasspathElements, urlClassLoader.getURLs());
     }
     else {
       try {

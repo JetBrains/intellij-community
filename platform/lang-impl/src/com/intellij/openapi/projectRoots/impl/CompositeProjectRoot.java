@@ -22,11 +22,11 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -48,7 +48,7 @@ class CompositeProjectRoot implements ProjectRoot {
   public VirtualFile[] getVirtualFiles() {
     List<VirtualFile> result = new ArrayList<VirtualFile>();
     for (ProjectRoot root : myRoots) {
-      result.addAll(Arrays.asList(root.getVirtualFiles()));
+      ContainerUtil.addAll(result, root.getVirtualFiles());
     }
 
     return VfsUtil.toVirtualFileArray(result);
@@ -57,7 +57,7 @@ class CompositeProjectRoot implements ProjectRoot {
   public String[] getUrls() {
     final List<String> result = new ArrayList<String>();
     for (ProjectRoot root : myRoots) {
-      result.addAll(Arrays.asList(root.getUrls()));
+      ContainerUtil.addAll(result, root.getUrls());
     }
     return ArrayUtil.toStringArray(result);
   }

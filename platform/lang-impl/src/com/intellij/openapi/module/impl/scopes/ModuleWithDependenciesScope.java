@@ -21,10 +21,10 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBundle;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -58,7 +58,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
       myModules = new LinkedHashSet<Module>();
       myModules.add(myModule);
       Module[] dependencies = ModuleRootManager.getInstance(myModule).getDependencies(myIncludeTests);
-      myModules.addAll(Arrays.asList(dependencies));
+      ContainerUtil.addAll(myModules, dependencies);
       for (Module dependency : dependencies) {
         addExportedModules(dependency);
       }

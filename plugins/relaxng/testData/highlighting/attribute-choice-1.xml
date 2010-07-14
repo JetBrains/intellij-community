@@ -1,0 +1,3 @@
+<attribute-choice xmlns="urn:test:simple.rng" type="a">
+  <a />
+</attribute-choice>

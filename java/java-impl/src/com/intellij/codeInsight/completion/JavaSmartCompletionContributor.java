@@ -369,7 +369,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
 
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
-            infos.addAll(Arrays.asList(getExpectedTypes(parameters)));
+            ContainerUtil.addAll(infos, getExpectedTypes(parameters));
             for (PsiType type : ExpectedTypesGetter.getExpectedTypes(identifierCopy, true)) {
               if (type instanceof PsiClassType) {
                 final PsiClassType classType = (PsiClassType)type;

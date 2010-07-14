@@ -31,6 +31,7 @@ import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -171,7 +172,7 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
       for (Object extension : Extensions.getExtensions(ExtensionPoints.DEAD_CODE_TOOL)) {
         final String[] ignoredAnnotations = ((UnusedCodeExtension)extension).getIgnoreAnnotations();
         if (ignoredAnnotations != null) {
-          annotations.addAll(Arrays.asList(ignoredAnnotations));
+          ContainerUtil.addAll(annotations, ignoredAnnotations);
         }
       }
       ANNOTATIONS = annotations;

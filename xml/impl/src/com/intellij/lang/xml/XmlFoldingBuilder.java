@@ -30,11 +30,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -119,7 +119,7 @@ public class XmlFoldingBuilder implements FoldingBuilder, DumbAware {
           if (foldingBuilder != null) {
             final FoldingDescriptor[] foldingDescriptors = foldingBuilder.buildFoldRegions(child.getNode(), document);
 
-            foldings.addAll(Arrays.asList(foldingDescriptors));
+            ContainerUtil.addAll(foldings, foldingDescriptors);
           }
         }
       }

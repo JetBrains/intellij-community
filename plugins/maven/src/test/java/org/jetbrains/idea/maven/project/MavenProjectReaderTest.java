@@ -1530,11 +1530,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
   private void assertActiveProfiles(List<String> explicitProfiles, String... expected) {
     MavenProjectReaderResult result =
       readProject(myProjectPom, new NullProjectLocator(), explicitProfiles.toArray(new String[explicitProfiles.size()]));
-    assertUnorderedElementsAreEqual(ContainerUtil.map(result.activatedProfiles, new Function<MavenProfile, String>() {
-      public String fun(MavenProfile profile) {
-        return profile.getId();
-      }
-    }), expected);
+    assertUnorderedElementsAreEqual(result.activatedProfiles, expected);
   }
 
   private static class NullProjectLocator implements MavenProjectReaderProjectLocator {

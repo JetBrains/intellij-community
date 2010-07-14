@@ -24,6 +24,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.CharArrayUtil;
 
@@ -228,9 +229,11 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
       final Set<PsiFile> fileSet = new HashSet<PsiFile>();
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
-          fileSet.addAll(Arrays.asList(manager.getCacheManager().getFilesWithWord(words.get(0), UsageSearchContext.IN_PLAIN_TEXT, scope, true)));
+          ContainerUtil
+            .addAll(fileSet, manager.getCacheManager().getFilesWithWord(words.get(0), UsageSearchContext.IN_PLAIN_TEXT, scope, true));
           for (int i = 1; i < words.size(); i++) {
-            fileSet.retainAll(Arrays.asList(manager.getCacheManager().getFilesWithWord(words.get(i), UsageSearchContext.IN_PLAIN_TEXT, scope, true)));
+            fileSet.retainAll(
+              Arrays.asList(manager.getCacheManager().getFilesWithWord(words.get(i), UsageSearchContext.IN_PLAIN_TEXT, scope, true)));
           }
         }
       });

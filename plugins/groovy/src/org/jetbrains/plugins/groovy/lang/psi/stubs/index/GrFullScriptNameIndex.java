@@ -35,6 +35,11 @@ public class GrFullScriptNameIndex extends IntStubIndexExtension<GroovyFile> {
     return ourInstance;
   }
 
+  @Override
+  public int getVersion() {
+    return super.getVersion() + 1;
+  }
+
   public StubIndexKey<Integer, GroovyFile> getKey() {
     return KEY;
   }

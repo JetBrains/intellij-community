@@ -51,6 +51,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -110,7 +111,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     delegateFieldName = calculateDelegateFieldName();
     requiresBackpointer = new BackpointerUsageVisitor(fields, innerClasses, methods, sourceClass).backpointerRequired();
     if (requiresBackpointer) {
-      typeParams.addAll(Arrays.asList(sourceClass.getTypeParameters()));
+      ContainerUtil.addAll(typeParams, sourceClass.getTypeParameters());
     }
     else {
       final Set<PsiTypeParameter> typeParamSet = new HashSet<PsiTypeParameter>();

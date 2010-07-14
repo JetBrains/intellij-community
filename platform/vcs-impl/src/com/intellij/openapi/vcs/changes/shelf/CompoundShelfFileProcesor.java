@@ -22,9 +22,13 @@ import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
 
 public class CompoundShelfFileProcesor {
   private final String mySubdirName;
@@ -96,7 +100,7 @@ public class CompoundShelfFileProcesor {
     for (StreamProvider serverStreamProvider : myServerStreamProviders) {
       if (serverStreamProvider.isEnabled()) {
         String[] subFiles = serverStreamProvider.listSubFiles(FILE_SPEC);
-        result.addAll(Arrays.asList(subFiles));
+        ContainerUtil.addAll(result, subFiles);
       }
     }
     return new ArrayList<String>(result);

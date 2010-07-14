@@ -28,11 +28,15 @@ import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColorSettingsPage {
   private static final AttributesDescriptor[] ourDescriptors = {
@@ -124,10 +128,13 @@ public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColor
   @NotNull
   public AttributesDescriptor[] getAttributeDescriptors() {
     List<AttributesDescriptor> descriptors = new ArrayList<AttributesDescriptor>();
-    descriptors.addAll(Arrays.asList(ourDescriptors));
-    descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.color.descriptor.full.coverage"), CodeInsightColors.LINE_FULL_COVERAGE));
-    descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.color.descriptor.partial.coverage"), CodeInsightColors.LINE_PARTIAL_COVERAGE));
-    descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.color.descriptor.none.coverage"), CodeInsightColors.LINE_NONE_COVERAGE));
+    ContainerUtil.addAll(descriptors, ourDescriptors);
+    descriptors.add(
+      new AttributesDescriptor(OptionsBundle.message("options.java.color.descriptor.full.coverage"), CodeInsightColors.LINE_FULL_COVERAGE));
+    descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.color.descriptor.partial.coverage"),
+                                             CodeInsightColors.LINE_PARTIAL_COVERAGE));
+    descriptors.add(
+      new AttributesDescriptor(OptionsBundle.message("options.java.color.descriptor.none.coverage"), CodeInsightColors.LINE_NONE_COVERAGE));
     return descriptors.toArray(new AttributesDescriptor[descriptors.size()]);
   }
 

@@ -20,7 +20,6 @@
  */
 package com.intellij.execution.junit2.inspection;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.deadCode.UnusedCodeExtension;
 import com.intellij.codeInspection.reference.RefElement;
@@ -31,13 +30,8 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
-import org.junit.runners.Parameterized;
-
-import java.util.Arrays;
 
 public class JUnitUnusedCodeExtension extends UnusedCodeExtension {
   public boolean ADD_JUNIT_TO_ENTRIES = true;
@@ -80,6 +74,8 @@ public class JUnitUnusedCodeExtension extends UnusedCodeExtension {
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
+    if (!ADD_JUNIT_TO_ENTRIES) {
+      DefaultJDOMExternalizer.writeExternal(this, element);
+    }
   }
 }

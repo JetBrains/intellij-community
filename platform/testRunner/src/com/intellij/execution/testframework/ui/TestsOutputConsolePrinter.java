@@ -16,6 +16,7 @@
 package com.intellij.execution.testframework.ui;
 
 import com.intellij.execution.filters.HyperlinkInfo;
+import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -108,6 +109,9 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
     }
     myCurrentPrintable.printOn(this);
     scrollToBeginning();
+    if (myConsole instanceof ConsoleViewImpl) {
+      ((ConsoleViewImpl)myConsole).foldImmediately();
+    }
   }
 
   public void printHyperlink(final String text, final HyperlinkInfo info) {

@@ -6,10 +6,8 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiMethod;
@@ -241,39 +239,33 @@ public class NormalCompletionTest extends LightCompletionTestCase {
   }
 
   public void testSwitchEnumLabel() throws Exception {
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
     configureByFile("/codeInsight/completion/normal/SwitchEnumLabel.java");
     assertEquals(3, myItems.length);
   }
 
   public void testMethodInAnnotation() throws Exception {
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
     configureByFile("/codeInsight/completion/normal/Annotation.java");
     checkResultByFile("/codeInsight/completion/normal/Annotation_after.java");
   }
 
   public void testMethodInAnnotation2() throws Exception {
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
     configureByFile("/codeInsight/completion/normal/Annotation2.java");
     checkResultByFile("/codeInsight/completion/normal/Annotation2_after.java");
   }
 
   public void testMethodInAnnotation3() throws Exception {
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
 
     configureByFile("/codeInsight/completion/normal/Annotation3.java");
     checkResultByFile("/codeInsight/completion/normal/Annotation3_after.java");
   }
 
   public void testMethodInAnnotation5() throws Exception {
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
 
     configureByFile("/codeInsight/completion/normal/Annotation5.java");
     checkResultByFile("/codeInsight/completion/normal/Annotation5_after.java");
   }
 
   public void testMethodInAnnotation7() throws Exception {
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
 
     configureByFile("/codeInsight/completion/normal/Annotation7.java");
     selectItem(myItems[0]);
@@ -281,19 +273,16 @@ public class NormalCompletionTest extends LightCompletionTestCase {
   }
 
   public void testEnumInAnnotation() throws Exception {
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
     configureByFile("/codeInsight/completion/normal/Annotation4.java");
     checkResultByFile("/codeInsight/completion/normal/Annotation4_after.java");
   }
 
   public void testSecondAttribute() throws Exception {
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
     configureByFile("/codeInsight/completion/normal/Annotation6.java");
     checkResultByFile("/codeInsight/completion/normal/Annotation6_after.java");
   }
 
   public void testIDEADEV6408() throws Exception {
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
     configureByFile("/codeInsight/completion/normal/IDEADEV6408.java");
     assertEquals(2, myItems.length);
   }
@@ -334,22 +323,18 @@ public class NormalCompletionTest extends LightCompletionTestCase {
   }
 
   public void testPackageInAnnoParam() throws Throwable {
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
     doTest();
   }
   
   public void testClassLiteralInAnnoParam() throws Throwable {
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
     doTest();
   }
 
   public void testAtUnderClass() throws Throwable {
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
     doTest();
   }
 
   public void testAtUnderClassNoModifiers() throws Throwable {
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
     doTest();
   }
 

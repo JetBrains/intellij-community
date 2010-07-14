@@ -114,7 +114,7 @@ public class PsiElementRenameHandler implements RenameHandler {
     return true;//CommonRefactoringUtil.checkReadOnlyStatus(project, element);
   }
 
-  private static void showErrorMessage(Project project, Editor editor, String message) {
+  private static void showErrorMessage(Project project, @Nullable Editor editor, String message) {
     CommonRefactoringUtil.showErrorHint(project, editor, message, RefactoringBundle.message("rename.title"), null);
   }
 

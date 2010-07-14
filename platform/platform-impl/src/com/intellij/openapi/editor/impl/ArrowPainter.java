@@ -29,10 +29,10 @@ import java.awt.*;
  */
 public class ArrowPainter {
 
-  private final ColorHolder myColorHolder;
+  private final ColorProvider myColorHolder;
   private final Computable<Integer> myHeightProvider;
 
-  public ArrowPainter(@NotNull ColorHolder colorHolder, @NotNull Computable<Integer> heightProvider) {
+  public ArrowPainter(@NotNull ColorProvider colorHolder, @NotNull Computable<Integer> heightProvider) {
     myColorHolder = colorHolder;
     myHeightProvider = heightProvider;
   }

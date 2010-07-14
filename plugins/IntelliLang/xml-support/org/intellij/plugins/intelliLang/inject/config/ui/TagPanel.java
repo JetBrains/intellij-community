@@ -24,11 +24,11 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.LanguageTextField;
 import org.intellij.lang.regexp.RegExpLanguage;
 import org.intellij.plugins.intelliLang.inject.config.AbstractTagInjection;
 import org.intellij.plugins.intelliLang.inject.config.JspSupportProxy;
 import org.intellij.plugins.intelliLang.inject.config.XmlTagInjection;
-import org.intellij.plugins.intelliLang.util.LanguageTextField;
 
 import javax.swing.*;
 import java.util.ArrayList;

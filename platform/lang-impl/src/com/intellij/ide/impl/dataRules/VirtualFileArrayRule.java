@@ -34,9 +34,9 @@ import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.usages.rules.UsageInFiles;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -105,7 +105,7 @@ public class VirtualFileArrayRule implements GetDataRule {
 
         if (usage instanceof UsageInFiles) {
           UsageInFiles usageInFiles = (UsageInFiles)usage;
-          result.addAll(Arrays.asList(usageInFiles.getFiles()));
+          ContainerUtil.addAll(result, usageInFiles.getFiles());
         }
       }
     }
@@ -115,7 +115,7 @@ public class VirtualFileArrayRule implements GetDataRule {
         if (!usageTarget.isValid()) continue;
         VirtualFile[] files = usageTarget.getFiles();
         if (files != null) {
-          result.addAll(Arrays.asList(files));
+          ContainerUtil.addAll(result, files);
         }
       }
     }
@@ -173,7 +173,7 @@ public class VirtualFileArrayRule implements GetDataRule {
   private static Object getFilesFromModules(Module[] selectedModules) {
     ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
     for (Module selectedModule : selectedModules) {
-      result.addAll(Arrays.asList(ModuleRootManager.getInstance(selectedModule).getContentRoots()));
+      ContainerUtil.addAll(result, ModuleRootManager.getInstance(selectedModule).getContentRoots());
     }
     return VfsUtil.toVirtualFileArray(result);
   }

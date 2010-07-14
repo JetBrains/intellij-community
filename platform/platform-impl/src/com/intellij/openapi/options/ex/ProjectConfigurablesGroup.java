@@ -17,10 +17,10 @@ package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -88,8 +88,8 @@ public class ProjectConfigurablesGroup implements ConfigurableGroup {
 
   static List<Configurable> buildConfigurablesList(final Configurable[] extensions, final Configurable[] components, ConfigurableFilter filter) {
     List<Configurable> result = new ArrayList<Configurable>();
-    result.addAll(Arrays.asList(extensions));
-    result.addAll(Arrays.asList(components));
+    ContainerUtil.addAll(result, extensions);
+    ContainerUtil.addAll(result, components);
 
     final Iterator<Configurable> iterator = result.iterator();
     while (iterator.hasNext()) {

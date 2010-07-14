@@ -63,6 +63,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -649,7 +650,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
           result.add(new Separator(ProjectBundle.message("add.group.facet.separator")));
         }
 
-        result.addAll(Arrays.asList(facets));
+        ContainerUtil.addAll(result, facets);
 
         return result.toArray(new AnAction[result.size()]);
       }

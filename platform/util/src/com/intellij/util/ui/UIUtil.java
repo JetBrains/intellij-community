@@ -889,20 +889,23 @@ public class UIUtil {
     });
   }
 
-  public static void drawVDottedLine(Graphics2D g, int lineX, int startY, int endY, final Color bgColor, final Color fgColor) {
-    g.setColor(bgColor);
-    drawLine(g, lineX, startY, lineX, endY);
+  public static void drawVDottedLine(Graphics2D g, int lineX, int startY, int endY, @Nullable final Color bgColor, final Color fgColor) {
+    if (bgColor != null) {
+      g.setColor(bgColor);
+      drawLine(g, lineX, startY, lineX, endY);
+    }
 
     g.setColor(fgColor);
-
     for (int i = (startY / 2) * 2; i < endY; i += 2) {
       g.drawRect(lineX, i, 0, 0);
     }
   }
 
-  public static void drawHDottedLine(Graphics2D g, int startX, int endX, int lineY, final Color bgColor, final Color fgColor) {
-    g.setColor(bgColor);
-    drawLine(g, startX, lineY, endX, lineY);
+  public static void drawHDottedLine(Graphics2D g, int startX, int endX, int lineY, @Nullable final Color bgColor, final Color fgColor) {
+    if (bgColor != null) {
+      g.setColor(bgColor);
+      drawLine(g, startX, lineY, endX, lineY);
+    }
 
     g.setColor(fgColor);
 
@@ -911,7 +914,7 @@ public class UIUtil {
     }
   }
 
-  public static void drawDottedLine(Graphics2D g, int x1, int y1, int x2, int y2, final Color bgColor, final Color fgColor) {
+  public static void drawDottedLine(Graphics2D g, int x1, int y1, int x2, int y2, @Nullable final Color bgColor, final Color fgColor) {
     if (x1 == x2) {
       drawVDottedLine(g, x1, y1, y2, bgColor, fgColor);
     }

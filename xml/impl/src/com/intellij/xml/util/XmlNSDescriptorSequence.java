@@ -19,13 +19,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -67,9 +67,9 @@ public class XmlNSDescriptorSequence implements XmlNSDescriptor{
   public XmlElementDescriptor[] getRootElementsDescriptors(@Nullable final XmlDocument document) {
     final List<XmlElementDescriptor> descriptors = new ArrayList<XmlElementDescriptor>();
     final Iterator iterator = sequence.iterator();
-    while(iterator.hasNext()){
-      final XmlNSDescriptor descriptor = (XmlNSDescriptor) iterator.next();
-      descriptors.addAll(Arrays.asList(descriptor.getRootElementsDescriptors(document)));
+    while(iterator.hasNext()) {
+      final XmlNSDescriptor descriptor = (XmlNSDescriptor)iterator.next();
+      ContainerUtil.addAll(descriptors, descriptor.getRootElementsDescriptors(document));
     }
 
     return descriptors.toArray(new XmlElementDescriptor[descriptors.size()]);
@@ -139,9 +139,9 @@ public class XmlNSDescriptorSequence implements XmlNSDescriptor{
   public Object[] getDependences(){
     final List<Object> ret = new ArrayList<Object>();
     final Iterator iterator = sequence.iterator();
-    while(iterator.hasNext()){
-      final XmlNSDescriptor descriptor = (XmlNSDescriptor) iterator.next();
-      ret.addAll(Arrays.asList(descriptor.getDependences()));
+    while(iterator.hasNext()) {
+      final XmlNSDescriptor descriptor = (XmlNSDescriptor)iterator.next();
+      ContainerUtil.addAll(ret, descriptor.getDependences());
     }
     return ret.toArray();
   }

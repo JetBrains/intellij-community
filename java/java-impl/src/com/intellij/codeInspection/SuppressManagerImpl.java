@@ -23,8 +23,8 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.impl.actions.SuppressByJavaCommentFix;
 import com.intellij.codeInsight.daemon.impl.actions.SuppressAllForClassFix;
+import com.intellij.codeInsight.daemon.impl.actions.SuppressByJavaCommentFix;
 import com.intellij.codeInsight.daemon.impl.actions.SuppressFix;
 import com.intellij.codeInsight.daemon.impl.actions.SuppressForClassFix;
 import com.intellij.openapi.application.ApplicationManager;
@@ -44,6 +44,7 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.annotation.Generated;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -86,6 +87,8 @@ public class SuppressManagerImpl extends SuppressManager {
 
   @Nullable
   public PsiElement getAnnotationMemberSuppressedIn(@NotNull final PsiModifierListOwner owner, final String inspectionToolID) {
+    final PsiAnnotation generatedAnnotation = AnnotationUtil.findAnnotation(owner, Generated.class.getName());
+    if (generatedAnnotation != null) return generatedAnnotation;
     PsiModifierList modifierList = owner.getModifierList();
     Collection<String> suppressedIds = getInspectionIdsSuppressedInAnnotation(modifierList);
     for (String ids : suppressedIds) {

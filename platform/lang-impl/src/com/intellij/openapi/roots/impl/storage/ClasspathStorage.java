@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
@@ -39,7 +40,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.fs.FileSystem;
 import com.intellij.util.io.fs.IFile;
 import com.intellij.util.messages.MessageBus;
@@ -264,7 +265,7 @@ public class ClasspathStorage implements StateStorage {
   public static List<ClasspathStorageProvider> getProviders() {
     final List<ClasspathStorageProvider> list = new ArrayList<ClasspathStorageProvider>();
     list.add(new DefaultStorageProvider());
-    list.addAll(Arrays.asList(Extensions.getExtensions(ClasspathStorageProvider.EXTENSION_POINT_NAME)));
+    ContainerUtil.addAll(list, Extensions.getExtensions(ClasspathStorageProvider.EXTENSION_POINT_NAME));
     return list;
   }
 

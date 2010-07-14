@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.editor.impl.softwrap;
 
-import com.intellij.openapi.editor.impl.ColorHolder;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.ColorProvider;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import org.jetbrains.annotations.NotNull;
@@ -43,11 +43,11 @@ public class TextBasedSoftWrapPainter implements SoftWrapPainter {
   private final Map<SoftWrapDrawingType, Integer> myVGaps = new EnumMap<SoftWrapDrawingType, Integer>(SoftWrapDrawingType.class);
 
   private final TextDrawingCallback myDrawingCallback;
-  private final ColorHolder myColorHolder;
+  private final ColorProvider myColorHolder;
   private final boolean myCanUse;
 
   public TextBasedSoftWrapPainter(Map<SoftWrapDrawingType, Character> symbols, Editor editor, TextDrawingCallback drawingCallback,
-                                  ColorHolder colorHolder)
+                                  ColorProvider colorHolder)
     throws IllegalArgumentException
   {
     if (symbols.size() != SoftWrapDrawingType.values().length) {

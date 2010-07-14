@@ -241,4 +241,76 @@ def foo(p) {
     assert usages[1].isNonCodeUsage
   }
 
+  public void testRenameAliasImportedProperty() {
+    myFixture.addFileToProject("Foo.groovy", """class Foo {
+static def bar
+}""")
+    myFixture.configureByText("a.groovy", """
+import static Foo.ba<caret>r as foo
+
+print foo
+print getFoo()
+setFoo(2)
+foo = 4""")
+
+    myFixture.renameElement myFixture.findClass("Foo").getFields()[0], "newName"
+    myFixture.checkResult """
+import static Foo.newName as foo
+
+print foo
+print getFoo()
+setFoo(2)
+foo = 4"""
+  }
+
+  public void testRenameAliasImportedClass() {
+    myFixture.addFileToProject("Foo.groovy", """class Foo {
+static def bar
+}""")
+    myFixture.configureByText("a.groovy", """
+import Foo as Bar
+Bar bar = new Bar()
+""")
+
+    myFixture.renameElement myFixture.findClass("Foo"), "F"
+    myFixture.checkResult """
+import F as Bar
+Bar bar = new Bar()
+"""
+  }
+
+  public void testRenameAliasImportedMethod() {
+    myFixture.addFileToProject("Foo.groovy", """class Foo {
+static def bar(){}
+}""")
+    myFixture.configureByText("a.groovy", """
+import static Foo.bar as foo
+foo()
+""")
+
+    myFixture.renameElement myFixture.findClass("Foo").findMethodsByName("bar", false)[0], "b"
+    myFixture.checkResult """
+import static Foo.b as foo
+foo()
+"""
+  }
+
+  public void testRenameAliasImportedField() {
+    myFixture.addFileToProject("Foo.groovy", """class Foo {
+public static bar
+}""")
+    myFixture.configureByText("a.groovy", """
+import static Foo.ba<caret>r as foo
+
+print foo
+foo = 4""")
+
+    myFixture.renameElement myFixture.findClass("Foo").getFields()[0], "newName"
+    myFixture.checkResult """
+import static Foo.newName as foo
+
+print foo
+foo = 4"""
+  }
+
 }

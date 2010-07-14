@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenModel;
-import org.jetbrains.idea.maven.model.MavenProfile;
 import org.jetbrains.idea.maven.model.MavenProjectProblem;
 
 import java.io.Serializable;
@@ -44,12 +43,12 @@ public class MavenWrapperExecutionResult implements Serializable {
     public final MavenModel mavenModel;
     public final Map<String, String> mavenModelMap;
     public final NativeMavenProjectHolder nativeMavenProject;
-    public final Collection<MavenProfile> activatedProfiles;
+    public final Collection<String> activatedProfiles;
 
     public ProjectData(MavenModel mavenModel,
                        Map<String, String> mavenModelMap,
                        NativeMavenProjectHolder nativeMavenProject,
-                       Collection<MavenProfile> activatedProfiles) {
+                       Collection<String> activatedProfiles) {
       this.mavenModel = mavenModel;
       this.mavenModelMap = mavenModelMap;
       this.nativeMavenProject = nativeMavenProject;

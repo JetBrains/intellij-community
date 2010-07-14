@@ -142,6 +142,10 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
    */
   private final GitMergeProvider myMergeProvider;
   /**
+   * reverse merge provider
+   */
+  private final GitMergeProvider myReverseMergeProvider;
+  /**
    * a VFS listener that tracks file addition, deletion, and renaming.
    */
   private GitVFSListener myVFSListener;
@@ -220,6 +224,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     myConfigurable = new GitVcsConfigurable(mySettings, myProject);
     myUpdateEnvironment = new GitUpdateEnvironment(myProject, this, mySettings);
     myMergeProvider = new GitMergeProvider(myProject);
+    myReverseMergeProvider = new GitMergeProvider(myProject, true);
     myCommittedChangeListProvider = new GitCommittedChangeListProvider(myProject);
     myOutgoingChangesProvider = new GitOutgoingChangesProvider(myProject);
     myTreeDiffProvider = new GitTreeDiffProvider(myProject);
@@ -285,6 +290,14 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
    */
   public void removeGitRootsListener(GitRootsListener listener) {
     myRootListeners.removeListener(listener);
+  }
+
+  /**
+   * @return a reverse merge provider for git (with reversed meaning of "theirs" and "yours", needed for the rebase and unstash)
+   */
+  @NotNull
+  public MergeProvider getReverseMergeProvider() {
+    return myReverseMergeProvider;
   }
 
   /**

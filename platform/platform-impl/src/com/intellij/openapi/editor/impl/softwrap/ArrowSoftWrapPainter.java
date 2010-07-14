@@ -18,7 +18,7 @@ package com.intellij.openapi.editor.impl.softwrap;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.ArrowPainter;
-import com.intellij.openapi.editor.impl.ColorHolder;
+import com.intellij.openapi.editor.impl.ColorProvider;
 import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,7 +43,7 @@ public class ArrowSoftWrapPainter implements SoftWrapPainter {
 
   public ArrowSoftWrapPainter(Editor editor) {
     myEditor = editor;
-    myArrowPainter = new ArrowPainter(ColorHolder.byColor(myEditor.getColorsScheme().getDefaultForeground()), myHeightProvider);
+    myArrowPainter = new ArrowPainter(ColorProvider.byColor(myEditor.getColorsScheme().getDefaultForeground()), myHeightProvider);
   }
 
   @Override
@@ -59,7 +59,7 @@ public class ArrowSoftWrapPainter implements SoftWrapPainter {
         end = myEditor.getScrollingModel().getVisibleArea().width;
         result = end - start;
         break;
-      case AFTER_SOFT_WRAP_LINE_FEED:
+      case AFTER_SOFT_WRAP:
         start = 0;
         end = x;
         result = 0;
@@ -74,7 +74,7 @@ public class ArrowSoftWrapPainter implements SoftWrapPainter {
   public int getDrawingHorizontalOffset(@NotNull Graphics g, @NotNull SoftWrapDrawingType drawingType, int x, int y, int lineHeight) {
     switch (drawingType) {
       case BEFORE_SOFT_WRAP_LINE_FEED: return myEditor.getScrollingModel().getVisibleArea().width - x;
-      case AFTER_SOFT_WRAP_LINE_FEED: return 0;
+      case AFTER_SOFT_WRAP: return 0;
       default: throw new IllegalStateException("Soft wrap arrow painting is not set up for drawing type " + drawingType);
     }
   }

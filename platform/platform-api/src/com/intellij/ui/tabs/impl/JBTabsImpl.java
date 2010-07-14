@@ -235,7 +235,7 @@ public class JBTabsImpl extends JComponent
     add(mySingleRowLayout.myRightGhost);
 
 
-    new LazyUiDisposable<JBTabsImpl>(parent, this, this, project) {
+    new LazyUiDisposable<JBTabsImpl>(parent, this, this) {
       protected void initialize(@NotNull Disposable parent, @NotNull JBTabsImpl child, @Nullable Project project) {
         myProject = project;
 

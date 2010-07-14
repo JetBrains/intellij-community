@@ -15,24 +15,30 @@
  */
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.PathsList;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 
 /**
  * @author nik
  */
 public class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.OrderRootsEnumeratorImpl");
   private final OrderEnumeratorBase myOrderEnumerator;
   private final OrderRootType myRootType;
   private boolean myUsingCache;
+  private NotNullFunction<OrderEntry, VirtualFile[]> myCustomRootProvider;
 
   public OrderRootsEnumeratorImpl(OrderEnumeratorBase orderEnumerator, OrderRootType rootType) {
     myOrderEnumerator = orderEnumerator;
@@ -43,6 +49,7 @@ public class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
   @Override
   public VirtualFile[] getRoots() {
     if (myUsingCache) {
+      checkCanUseCache();
       final OrderRootsCache cache = myOrderEnumerator.getCache();
       if (cache != null) {
         final int flags = myOrderEnumerator.getFlags();
@@ -63,6 +70,7 @@ public class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
   @Override
   public String[] getUrls() {
     if (myUsingCache) {
+      checkCanUseCache();
       final OrderRootsCache cache = myOrderEnumerator.getCache();
       if (cache != null) {
         final int flags = myOrderEnumerator.getFlags();
@@ -76,6 +84,10 @@ public class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
       }
     }
     return ArrayUtil.toStringArray(computeRootsUrls());
+  }
+
+  private void checkCanUseCache() {
+    LOG.assertTrue(myCustomRootProvider == null, "Caching not supported for OrderRootsEnumerator with 'usingCustomRootProvider' option");
   }
 
   private Collection<VirtualFile> computeRoots() {
@@ -97,7 +109,7 @@ public class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
           }
         }
         else {
-          Collections.addAll(result, orderEntry.getFiles(myRootType));
+          Collections.addAll(result, myCustomRootProvider != null ? myCustomRootProvider.fun(orderEntry) : orderEntry.getFiles(myRootType));
         }
         return true;
       }
@@ -148,6 +160,12 @@ public class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
   @Override
   public OrderRootsEnumerator usingCache() {
     myUsingCache = true;
+    return this;
+  }
+
+  @Override
+  public OrderRootsEnumerator usingCustomRootProvider(@NotNull NotNullFunction<OrderEntry, VirtualFile[]> provider) {
+    myCustomRootProvider = provider;
     return this;
   }
 

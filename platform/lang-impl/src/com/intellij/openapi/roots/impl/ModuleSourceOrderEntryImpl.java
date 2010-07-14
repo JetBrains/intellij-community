@@ -29,8 +29,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  *  @author dsl
@@ -72,14 +70,6 @@ public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements Mo
 
   public String getPresentableName() {
     return ProjectBundle.message("project.root.module.source");
-  }
-
-  void addExportedFiles(OrderRootType type, List<VirtualFile> result) {
-    result.addAll(Arrays.asList(getFiles(type)));
-  }
-
-  void addExportedUrls(OrderRootType type, List<String> result) {
-    result.addAll(Arrays.asList(getUrls(type)));
   }
 
 

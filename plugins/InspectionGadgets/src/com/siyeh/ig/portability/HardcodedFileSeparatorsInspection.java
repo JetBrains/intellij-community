@@ -15,22 +15,22 @@
  */
 package com.siyeh.ig.portability;
 
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiType;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.portability.mediatype.*;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TimeZone;
@@ -100,7 +100,7 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
      */
     private static final Set<String> timeZoneIds = new HashSet();
     static {
-        timeZoneIds.addAll(Arrays.asList(TimeZone.getAvailableIDs()));
+      ContainerUtil.addAll(timeZoneIds, TimeZone.getAvailableIDs());
     }
 
     /**

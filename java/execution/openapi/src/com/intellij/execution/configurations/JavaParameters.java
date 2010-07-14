@@ -21,10 +21,12 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.util.NotNullFunction;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
 
@@ -64,8 +66,21 @@ public class JavaParameters extends SimpleJavaParameters {
     }
 
     setDefaultCharset(module.getProject());
-    configureEnumerator(OrderEnumerator.orderEntries(module).runtimeOnly().recursively(), classPathType)
-      .classes().collectPaths(getClassPath());
+    configureEnumerator(OrderEnumerator.orderEntries(module).runtimeOnly().recursively(), classPathType, jdk).collectPaths(getClassPath());
+  }
+
+  @Nullable
+  private static NotNullFunction<OrderEntry, VirtualFile[]> computeRootProvider(int classPathType, final Sdk jdk) {
+    return (classPathType & JDK_ONLY) == 0 ? null : new NotNullFunction<OrderEntry, VirtualFile[]>() {
+      @NotNull
+      @Override
+      public VirtualFile[] fun(OrderEntry orderEntry) {
+          if (orderEntry instanceof JdkOrderEntry) {
+            return jdk.getRootProvider().getFiles(OrderRootType.CLASSES);
+          }
+          return orderEntry.getFiles(OrderRootType.CLASSES);
+        }
+      };
   }
 
   public void setDefaultCharset(final Project project) {
@@ -102,17 +117,21 @@ public class JavaParameters extends SimpleJavaParameters {
     if ((classPathType & CLASSES_ONLY) == 0) {
       return;
     }
-
-    configureEnumerator(OrderEnumerator.orderEntries(project).runtimeOnly(), classPathType).classes().collectPaths(getClassPath());
+    configureEnumerator(OrderEnumerator.orderEntries(project).runtimeOnly(), classPathType, jdk).collectPaths(getClassPath());
   }
 
-  private static OrderEnumerator configureEnumerator(OrderEnumerator enumerator, int classPathType) {
+  private static OrderRootsEnumerator configureEnumerator(OrderEnumerator enumerator, int classPathType, Sdk jdk) {
     if ((classPathType & JDK_ONLY) == 0) {
       enumerator = enumerator.withoutSdk();
     }
     if ((classPathType & TESTS_ONLY) == 0) {
       enumerator = enumerator.productionOnly();
     }
-    return enumerator;
+    OrderRootsEnumerator rootsEnumerator = enumerator.classes();
+    final NotNullFunction<OrderEntry, VirtualFile[]> provider = computeRootProvider(classPathType, jdk);
+    if (provider != null) {
+      rootsEnumerator = rootsEnumerator.usingCustomRootProvider(provider);
+    }
+    return rootsEnumerator;
   }
 }

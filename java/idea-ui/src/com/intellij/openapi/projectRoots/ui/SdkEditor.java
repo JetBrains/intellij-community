@@ -18,13 +18,12 @@ package com.intellij.openapi.projectRoots.ui;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ui.configuration.OrderRootTypeUIFactory;
 import com.intellij.openapi.ui.Messages;
@@ -32,9 +31,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.navigation.History;
@@ -75,7 +72,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
   // GUI components
   private JPanel myMainPanel;
   private TabbedPaneWrapper myTabbedPane;
-  private final NotifiableSdkModel mySdkModel;
+  private final SdkModel mySdkModel;
   private JLabel myHomeFieldLabel;
   private String myVersionString;
 
@@ -85,7 +82,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
 
   private final Disposable myDisposable = Disposer.newDisposable();
 
-  public SdkEditor(NotifiableSdkModel sdkModel, History history, final ProjectJdkImpl sdk) {
+  public SdkEditor(SdkModel sdkModel, History history, final ProjectJdkImpl sdk) {
     mySdkModel = sdkModel;
     myHistory = history;
     mySdk = sdk;
@@ -218,7 +215,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
     else{
       final SdkModificator sdkModificator = mySdk.getSdkModificator();
       for (OrderRootType type : myPathEditors.keySet()) {
-        myPathEditors.get(type).reset(sdkModificator.getRoots(type));
+        myPathEditors.get(type).reset(sdkModificator);
       }
       sdkModificator.commitChanges();
       setHomePathValue(mySdk.getHomePath().replace('/', File.separatorChar));
@@ -275,28 +272,9 @@ public class SdkEditor implements Configurable, Place.Navigator {
     myHomeComponent.getTextField().setForeground(fg);
   }
 
-  @Nullable
-  public static String selectSdkHome(final Component parentComponent, final SdkType sdkType){
-    final FileChooserDescriptor descriptor = sdkType.getHomeChooserDescriptor();
-    VirtualFile[] files = FileChooser.chooseFiles(parentComponent, descriptor, getSuggestedSdkRoot(sdkType));
-    if (files.length != 0){
-      final String path = files[0].getPath();
-      if (sdkType.isValidSdkHome(path)) return path;
-      return SystemInfo.isMac && sdkType.isValidSdkHome(path + SdkType.MAC_HOME_PATH) ? path + SdkType.MAC_HOME_PATH : null;
-    }
-    return null;
-  }
-
-  @Nullable
-  private static VirtualFile getSuggestedSdkRoot(SdkType sdkType) {
-    final String homepath = sdkType.suggestHomePath();
-    if (homepath == null) return null;
-    return LocalFileSystem.getInstance().findFileByPath(homepath);
-  }
-
   private void doSelectHomePath(){
     final SdkType sdkType = mySdk.getSdkType();
-    final String homePath = selectSdkHome(myHomeComponent, sdkType);
+    final String homePath = SdkConfigurationUtil.selectSdkHome(myHomeComponent, sdkType);
     doSetHomePath(homePath, sdkType);
   }
 

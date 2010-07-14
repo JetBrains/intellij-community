@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.patterns.ElementPattern;
@@ -29,6 +28,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +41,6 @@ import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesPr
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import java.util.Arrays;
 import java.util.Set;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
@@ -74,7 +73,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
         final THashSet<TypeConstraint> _infos = new THashSet<TypeConstraint>();
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
-            _infos.addAll(Arrays.asList(getExpectedTypes(params)));
+            ContainerUtil.addAll(_infos, getExpectedTypes(params));
           }
         });
         final Set<TypeConstraint> infos = ApplicationManager.getApplication().runReadAction(new Computable<Set<TypeConstraint>>() {
@@ -90,18 +89,26 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
           ((GrReferenceElement)reference).processVariants(new Consumer<Object>() {
             public void consume(Object variant) {
               PsiType type = null;
-              if (variant instanceof PsiElement) {
-                type = getTypeByElement((PsiElement)variant, position);
+
+              final Object o;
+              if (variant instanceof LookupElement) {
+                o = ((LookupElement)variant).getObject();
               }
-              else if (variant instanceof String) {
-                if ("true".equals(variant) || "false".equals(variant)) {
+              else {
+                o = variant;
+              }
+              if (o instanceof PsiElement) {
+                type = getTypeByElement((PsiElement)o, position);
+              }
+              else if (o instanceof String) {
+                if ("true".equals(o) || "false".equals(o)) {
                   type = PsiType.BOOLEAN;
                 }
               }
               if (type == null) return;
               for (TypeConstraint info : infos) {
                 if (info.satisfied(type, position.getManager(), GlobalSearchScope.allScope(position.getProject()))) {
-                  final LookupElement lookupElement = LookupItemUtil.objectToLookupItem(variant);
+                  final LookupElement lookupElement = GroovyCompletionUtil.getLookupElement(o);
                   result.addElement(lookupElement);
                   break;
                 }

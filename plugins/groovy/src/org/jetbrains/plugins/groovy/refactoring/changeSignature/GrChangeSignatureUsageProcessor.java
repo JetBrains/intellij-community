@@ -67,7 +67,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.DefaultGroovyVariableNameValidator;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -196,7 +195,8 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       else {
         PsiType type = newReturnType.getType(context, method.getManager());
         final PsiType oldReturnType = method.getReturnType();
-        if (!TypesUtil.isAssignable(type, oldReturnType, context.getManager(), context.getResolveScope())) { //todo ask for replace covariant type 
+        if (!TypesUtil
+          .isAssignable(type, oldReturnType, context.getManager(), context.getResolveScope())) { //todo ask for replace covariant type
           method.setReturnType(substitutor.substitute(type));
         }
       }
@@ -207,7 +207,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     GrParameter[] oldParameters = parameterList.getParameters();
 
     Set<GrParameter> toRemove = new HashSet<GrParameter>(oldParameters.length);
-    toRemove.addAll(Arrays.asList(oldParameters));
+    ContainerUtil.addAll(toRemove, oldParameters);
 
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(method.getProject());
     GrParameter anchor = null;

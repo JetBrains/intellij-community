@@ -26,6 +26,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 
 import java.util.*;
@@ -52,9 +53,9 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
     PsiClass[] classes = cache.getClassesByName(name, scope);
 
     List<PsiMember> result = new ArrayList<PsiMember>();
-    result.addAll(Arrays.asList(methods));
-    result.addAll(Arrays.asList(fields));
-    result.addAll(Arrays.asList(classes));
+    ContainerUtil.addAll(result, methods);
+    ContainerUtil.addAll(result, fields);
+    ContainerUtil.addAll(result, classes);
     filterOutNonOpenable(result);
     PsiMember[] array = result.toArray(new PsiMember[result.size()]);
     Arrays.sort(array, MyComparator.INSTANCE);

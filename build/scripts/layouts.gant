@@ -172,6 +172,9 @@ def layoutFull(String home, String targetDirectory) {
 
       layoutPlugin("SpellChecker", "spellchecker", "spellchecker-core")
 
+      layoutPlugin("RelaxNG-Support", "relaxng") {
+        fileset(dir: "$home/plugins/relaxng/lib", includes: "**/*.jar")
+      }
 
       layoutPlugin("maven") {
         jar("maven-facade-api.jar") {
@@ -264,17 +267,15 @@ def layoutFull(String home, String targetDirectory) {
           dir("standardDsls") {
             fileset(dir: "$home/plugins/groovy/resources/standardDsls")
           }
+          dir("agent") {
+            fileset(dir: "${home}/plugins/groovy/hotswap") {
+              include(name: "gragent.jar")
+            }
+          }
+
 
           fileset(dir: "$home/plugins/groovy/resources/conf")
           fileset(dir: "${home}/plugins/groovy/lib")
-        }
-      }
-
-      dir("Groovypp") {
-        dir("lib") {
-          jar("groovypp.jar") {
-            module("groovypp")
-          }
         }
       }
 

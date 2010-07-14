@@ -24,7 +24,6 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnnotationMethodNameIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFieldNameIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrMethodNameIndex;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrShortClassNameIndex;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -37,7 +36,6 @@ import java.util.Set;
 public class GroovyGoToSymbolContributor implements ChooseByNameContributor {
   public String[] getNames(Project project, boolean includeNonProjectItems) {
     Set<String> symbols = new HashSet<String>();
-    symbols.addAll(StubIndex.getInstance().getAllKeys(GrShortClassNameIndex.KEY, project));
     symbols.addAll(StubIndex.getInstance().getAllKeys(GrFieldNameIndex.KEY, project));
     symbols.addAll(StubIndex.getInstance().getAllKeys(GrMethodNameIndex.KEY, project));
     symbols.addAll(StubIndex.getInstance().getAllKeys(GrAnnotationMethodNameIndex.KEY, project));
@@ -48,7 +46,6 @@ public class GroovyGoToSymbolContributor implements ChooseByNameContributor {
     GlobalSearchScope scope = includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
 
     List<NavigationItem> symbols = new ArrayList<NavigationItem>();
-    symbols.addAll(StubIndex.getInstance().get(GrShortClassNameIndex.KEY, name, project, scope));
     symbols.addAll(StubIndex.getInstance().get(GrFieldNameIndex.KEY, name, project, scope));
     symbols.addAll(StubIndex.getInstance().get(GrMethodNameIndex.KEY, name, project, scope));
     symbols.addAll(StubIndex.getInstance().get(GrAnnotationMethodNameIndex.KEY, name, project, scope));

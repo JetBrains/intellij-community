@@ -25,12 +25,16 @@ import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Maxim.Medvedev
@@ -60,7 +64,7 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
 
     final ChangeSignatureUsageProcessor[] processors = ChangeSignatureUsageProcessor.EP_NAME.getExtensions();
     for (ChangeSignatureUsageProcessor processor : processors) {
-      infos.addAll(Arrays.asList(processor.findUsages(myChangeInfo)));
+      ContainerUtil.addAll(infos, processor.findUsages(myChangeInfo));
     }
     infos = filterUsages(infos);
     return infos.toArray(new UsageInfo[infos.size()]);

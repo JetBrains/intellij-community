@@ -339,7 +339,10 @@ public class JavaDocInfoGenerator {
     generateTypeParametersSection(buffer, result);
   }
 
+  @Nullable
   private static Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> findInHierarchy(PsiClass psiClass, final DocTagLocator<PsiDocTag> locator) {
+    final Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> inClassComment = findInClassComment(psiClass, locator);
+    if (inClassComment != null) return inClassComment;
     for (final PsiClass superClass : psiClass.getSupers()) {
       final Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> pair = findInClassComment(superClass, locator);
       if (pair != null) return pair;
@@ -348,7 +351,7 @@ public class JavaDocInfoGenerator {
       final Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> pair = findInClassComment(superInterface, locator);
       if (pair != null) return pair;
     }
-    return findInClassComment(psiClass, locator);
+    return null;
   }
 
   private static Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> findInClassComment(final PsiClass psiClass, final DocTagLocator<PsiDocTag> locator) {

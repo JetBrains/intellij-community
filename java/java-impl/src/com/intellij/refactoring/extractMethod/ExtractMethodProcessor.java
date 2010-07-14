@@ -15,9 +15,11 @@
  */
 package com.intellij.refactoring.extractMethod;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.codeInsight.intention.impl.AddNullableNotNullAnnotationFix;
 import com.intellij.codeInspection.dataFlow.RunnerResult;
 import com.intellij.codeInspection.dataFlow.StandardDataFlowRunner;
 import com.intellij.codeInspection.dataFlow.StandardInstructionVisitor;
@@ -920,6 +922,18 @@ public class ExtractMethodProcessor implements MatchProvider {
       throwsList.add(JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createReferenceElementByType(exception));
     }
 
+    if (myNullConditionalCheck) {
+      final boolean isNullCheckReturnNull = (myHasExpressionOutput ? 1 : 0) + (myGenerateConditionalExit ? 1 : 0) + myOutputVariables.length <= 1;
+      if (isNullCheckReturnNull && PsiUtil.isLanguageLevel5OrHigher(myElements[0])) {
+        final PsiClass nullableAnnotationClass =
+          JavaPsiFacade.getInstance(myProject).findClass(AnnotationUtil.NULLABLE, GlobalSearchScope.allScope(myProject));
+        if (nullableAnnotationClass != null) {
+          new AddNullableNotNullAnnotationFix(AnnotationUtil.NULLABLE, newMethod, AnnotationUtil.NOT_NULL)
+            .invoke(myProject, myEditor, myTargetClass.getContainingFile());
+        }
+      }
+    }
+
     return (PsiMethod)myStyleManager.reformat(newMethod);
   }
 
@@ -1067,7 +1081,11 @@ public class ExtractMethodProcessor implements MatchProvider {
         }
         if (success) {
           myTargetClass = newTargetClass;
-          inputVariables.addAll(array);
+          for (PsiVariable variable : array) {
+            if (!inputVariables.contains(variable)) {
+              inputVariables.addAll(array);
+            }
+          }
           myNeedChangeContext = true;
         }
       }

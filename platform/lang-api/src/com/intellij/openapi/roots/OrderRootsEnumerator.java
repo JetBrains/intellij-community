@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.PathsList;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,8 +55,18 @@ public interface OrderRootsEnumerator {
 
   /**
    * If roots for this enumerator are already evaluated the cached result will be used. Otherwise roots will be evaluated and cached for
-   * subsequent calls
+   * subsequent calls. <p>
+   * Caching is not supported if {@link OrderEnumerator#satisfying}, {@link OrderEnumerator#using} or {@link #usingCustomRootProvider}
+   * option is used
    * @return this instance
    */
   OrderRootsEnumerator usingCache();
+
+  /**
+   * Use <code>provider</code> to obtain roots of an library or jdk order entry instead of {@link OrderEntry#getFiles(OrderRootType)} method. Note that
+   * this option won't affect result of {@link #getUrls()} method
+   * @param provider function to evaluate roots for an order entry
+   * @return this instance
+   */
+  OrderRootsEnumerator usingCustomRootProvider(@NotNull NotNullFunction<OrderEntry, VirtualFile[]> provider);
 }

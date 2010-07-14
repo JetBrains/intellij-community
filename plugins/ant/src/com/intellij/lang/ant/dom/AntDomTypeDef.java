@@ -15,13 +15,14 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericAttributeValue;
+import org.apache.tools.ant.Task;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -29,6 +30,7 @@ import java.util.List;
  *         Date: Jul 1, 2010
  */
 public abstract class AntDomTypeDef extends AntDomNamedElement{
+  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.dom.AntDomTypeDef");
 
   @Attribute("classname")
   public abstract GenericAttributeValue<String> getClassName();
@@ -46,11 +48,64 @@ public abstract class AntDomTypeDef extends AntDomNamedElement{
 
   @Attribute("classpath")
   @Convert(value = AntMultiPathStringConverter.class)
-  public abstract GenericAttributeValue<List<PsiFileSystemItem>> getClasspathString();
+  public abstract GenericAttributeValue<List<File>> getClasspath();
 
-  public final List<File> getClasspath() {
-    // todo: calc classpath basing on the corresponding attribute and nested elements 
-    return new ArrayList<File>();
+  @Attribute("classpathref")
+  @Convert(value = AntDomRefIdConverter.class)
+  public abstract GenericAttributeValue<AntDomElement> getClasspathRef();
+
+  @Attribute("loaderref")
+  public abstract GenericAttributeValue<String> getLoaderRef();
+
+  @Attribute("uri")
+  public abstract GenericAttributeValue<String> getUri();
+
+  @Attribute("adapter")
+  public abstract GenericAttributeValue<String> getAdapter();
+
+  @Attribute("adaptto")
+  public abstract GenericAttributeValue<String> getAdaptto();
+
+
+  private boolean isTask(final Class clazz) {
+    if ("taskdef".equals(getXmlTag().getName())) { // in taskdef, the adapter is always set to Task
+      return true;
+    }
+
+    final String adaptto = getAdaptto().getStringValue();
+    if (adaptto != null && isAssignableFrom(adaptto, clazz)) {
+      return isAssignableFrom(Task.class.getName(), clazz);
+    }
+
+    final String adapter = getAdapter().getStringValue();
+    if (adapter != null) {
+      try {
+        final Class adapterClass = clazz.getClassLoader().loadClass(adapter);
+        return isAssignableFrom(Task.class.getName(), adapterClass);
+      }
+      catch (ClassNotFoundException ignored) {
+      }
+      catch (NoClassDefFoundError ignored) {
+      }
+      catch (UnsupportedClassVersionError ignored) {
+      }
+    }
+
+    return isAssignableFrom(Task.class.getName(), clazz);
   }
+
+  private static boolean isAssignableFrom(final String baseClassName, final Class clazz) {
+    try {
+      final ClassLoader loader = clazz.getClassLoader();
+      if (loader != null) {
+        final Class baseClass = loader.loadClass(baseClassName);
+        return baseClass.isAssignableFrom(clazz);
+      }
+    }
+    catch (ClassNotFoundException ignored) {
+    }
+    return false;
+  }
+
 
 }

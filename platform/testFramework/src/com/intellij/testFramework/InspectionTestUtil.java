@@ -129,16 +129,21 @@ expected:
     return Comparing.equal(reportedFile.getName(), expectedProblem.getChildText("file"));
   }
 
-  public static void compareToolResults(InspectionTool tool, boolean checkRange, String testDir) throws Exception {
+  public static void compareToolResults(InspectionTool tool, boolean checkRange, String testDir) {
     final Element root = new Element("problems");
     final Document doc = new Document(root);
     tool.updateContent();  //e.g. dead code need check for reachables
     tool.exportResults(root);
 
     File file = new File(testDir + "/expected.xml");
-    Document expectedDocument = JDOMUtil.loadDocument(file);
+    try {
+      Document expectedDocument = JDOMUtil.loadDocument(file);
 
-    compareWithExpected(expectedDocument, doc, checkRange);
+      compareWithExpected(expectedDocument, doc, checkRange);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public static void runTool(final InspectionTool tool, final AnalysisScope scope, GlobalInspectionContextImpl globalContext, final InspectionManagerEx inspectionManager) {

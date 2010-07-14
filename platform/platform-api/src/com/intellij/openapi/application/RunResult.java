@@ -64,7 +64,7 @@ public class RunResult<T> extends Result<T> {
     return this;
   }
 
-  public void throwException() throws Exception {
+  public RunResult<T> throwException() {
     if (hasException()) {
       if (myThrowable instanceof RuntimeException) {
         throw (RuntimeException)myThrowable;
@@ -75,6 +75,7 @@ public class RunResult<T> extends Result<T> {
 
       throw new RuntimeException(myThrowable);
     }
+    return this;
   }
 
   public boolean hasException() {

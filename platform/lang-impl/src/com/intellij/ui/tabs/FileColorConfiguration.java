@@ -16,6 +16,8 @@
 
 package com.intellij.ui.tabs;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +56,7 @@ class FileColorConfiguration implements Cloneable {
     myColorName = colorName;
   }
 
-  public boolean isValid() {
+  public boolean isValid(Project project) {
     if (myScopeName == null || myScopeName.length() == 0) {
       return false;
     }
@@ -63,11 +65,15 @@ class FileColorConfiguration implements Cloneable {
       return false;
     }
 
-    return true;
+    if (project != null) {
+      return NamedScopeManager.getScope(project, myScopeName) != null;
+    } else {
+      return true;
+    }
   }
 
   public void save(@NotNull final Element e) {
-    if (!isValid()) {
+    if (!isValid(null)) {
       return;
     }
 

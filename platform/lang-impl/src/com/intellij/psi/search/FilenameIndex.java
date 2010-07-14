@@ -16,9 +16,6 @@
 
 package com.intellij.psi.search;
 
-import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -99,5 +96,37 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
     public boolean acceptInput(final VirtualFile file) {
       return true;
     }
+  }
+
+  /**
+   * Returns all files in the project by extension
+   * @author Konstantin Bulenkov
+   *
+   * @param project current project
+   * @param ext file extension without leading dot e.q. "txt", "wsdl"
+   * @return all files with provided extension
+   */
+  @NotNull
+  public static Collection<VirtualFile> getAllFilesByExt(@NotNull Project project, @NotNull String ext) {
+      return getAllFilesByExt(project, ext, GlobalSearchScope.allScope(project));
+  }
+
+  @NotNull
+  public static Collection<VirtualFile> getAllFilesByExt(@NotNull Project project, @NotNull String ext, @NotNull GlobalSearchScope searchScope) {
+    int len = ext.length();
+
+    if (len == 0) return Collections.emptyList();
+
+    ext = "." + ext;
+    len++;
+
+    final List<VirtualFile> files = new ArrayList<VirtualFile>();
+    for (String name : getAllFilenames(project)) {
+      final int length = name.length();
+      if (length > len && name.substring(length - len).equalsIgnoreCase(ext)) {
+        files.addAll(getVirtualFilesByName(project, name, searchScope));
+      }
+    }
+    return files;
   }
 }

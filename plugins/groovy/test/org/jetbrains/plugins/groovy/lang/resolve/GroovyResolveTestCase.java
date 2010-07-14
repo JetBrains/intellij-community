@@ -41,12 +41,18 @@ public abstract class GroovyResolveTestCase extends LightGroovyTestCase {
     }
   }
 
-  protected PsiReference configureByFile(@NonNls String filePath, @Nullable String newFilePath) throws IOException {
+  protected PsiReference configureByFile(@NonNls String filePath, @Nullable String newFilePath) {
     filePath = StringUtil.trimStart(filePath, getTestName(true) + "/");
     final VirtualFile vFile = myFixture.getTempDirFixture().getFile(filePath);
     assertNotNull("file " + filePath + " not found", vFile);
 
-    String fileText = StringUtil.convertLineSeparators(VfsUtil.loadText(vFile));
+    String fileText;
+    try {
+      fileText = StringUtil.convertLineSeparators(VfsUtil.loadText(vFile));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
 
     int offset = fileText.indexOf(MARKER);
     assertTrue(offset >= 0);
@@ -64,7 +70,7 @@ public abstract class GroovyResolveTestCase extends LightGroovyTestCase {
     return ref;
   }
 
-  protected PsiReference configureByFile(@NonNls String filePath) throws Exception {
+  protected PsiReference configureByFile(@NonNls String filePath) {
     return configureByFile(filePath, null);
   }
 

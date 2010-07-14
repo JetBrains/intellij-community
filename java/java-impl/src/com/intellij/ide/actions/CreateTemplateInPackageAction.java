@@ -17,7 +17,9 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeView;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -33,7 +35,7 @@ import javax.swing.*;
 /**
  * @author peter
  */
-public abstract class CreateTemplateInPackageAction<T extends PsiElement> extends AnAction {
+public abstract class CreateTemplateInPackageAction<T extends PsiElement> extends CreateFromTemplateAction<T> {
   private final boolean myinSourceOnly;
 
   protected CreateTemplateInPackageAction(String text, String description, Icon icon, boolean inSourceOnly) {
@@ -41,54 +43,21 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
     myinSourceOnly = inSourceOnly;
   }
 
-  public final void actionPerformed(final AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
+  @Override
+  @Nullable
+  protected T createFile(String name, String templateName, PsiDirectory dir) {
+    return checkOrCreate(name, dir, templateName, false);
+  }
 
-    final IdeView view = LangDataKeys.IDE_VIEW.getData(dataContext);
-    if (view == null) {
-      return;
-    }
-
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-
-    final PsiDirectory dir = view.getOrChooseDirectory();
-    if (dir == null) return;
-
-    final T createdElement = buildDialog(project, dir).show(getErrorTitle(), new CreateFileFromTemplateDialog.FileCreator<T>() {
-      public void checkBeforeCreate(@NotNull String name, @NotNull String templateName) {
-        CreateTemplateInPackageAction.this.checkOrCreate(name, dir, templateName, true);
-      }
-
-      public T createFile(@NotNull String name, @NotNull String templateName) {
-        return CreateTemplateInPackageAction.this.checkOrCreate(name, dir, templateName, false);
-      }
-
-      @NotNull
-      public String getActionName(@NotNull String name, @NotNull String templateName) {
-        return CreateTemplateInPackageAction.this.getActionName(dir, name, templateName);
-      }
-    });
-    if (createdElement != null) {
-      view.selectElement(createdElement);
-    }
+  @Override
+  protected void checkBeforeCreate(String name, String templateName, PsiDirectory dir) {
+    checkOrCreate(name, dir, templateName, true);
   }
 
   @Nullable
   protected abstract PsiElement getNavigationElement(@NotNull T createdElement);
 
-  @NotNull
-  protected abstract CreateFileFromTemplateDialog.Builder buildDialog(Project project, PsiDirectory directory);
-
-  public void update(final AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
-    final Presentation presentation = e.getPresentation();
-
-    final boolean enabled = isAvailable(dataContext);
-
-    presentation.setVisible(enabled);
-    presentation.setEnabled(enabled);
-  }
-
+  @Override
   protected boolean isAvailable(final DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     final IdeView view = LangDataKeys.IDE_VIEW.getData(dataContext);
@@ -150,7 +119,4 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
 
   protected abstract T doCreate(final PsiDirectory dir, final String className, String templateName) throws IncorrectOperationException;
 
-  protected abstract String getActionName(PsiDirectory directory, String newName, String templateName);
-
-  protected abstract String getErrorTitle();
 }

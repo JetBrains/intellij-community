@@ -13,6 +13,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.*;
 
@@ -153,7 +154,7 @@ public class ClassTypeArgumentMigrationProcessor {
     private final Set<PsiTypeParameter> myTypeParams = new HashSet<PsiTypeParameter>();
 
     private TypeParameterSearcher(final PsiTypeParameter[] set) {
-      myTypeParams.addAll(Arrays.asList(set));
+      ContainerUtil.addAll(myTypeParams, set);
     }
 
     public Boolean visitType(final PsiType type) {

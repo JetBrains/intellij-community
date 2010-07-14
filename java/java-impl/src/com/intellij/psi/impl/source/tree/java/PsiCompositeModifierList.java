@@ -23,10 +23,10 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.impl.light.LightModifierList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class PsiCompositeModifierList extends LightModifierList {
@@ -41,7 +41,7 @@ public class PsiCompositeModifierList extends LightModifierList {
   public PsiAnnotation[] getAnnotations() {
     List<PsiAnnotation> annotations = new ArrayList<PsiAnnotation>();
     for (PsiModifierList list : mySublists) {
-      annotations.addAll(Arrays.asList(list.getAnnotations()));
+      ContainerUtil.addAll(annotations, list.getAnnotations());
     }
     return annotations.toArray(new PsiAnnotation[annotations.size()]);
   }

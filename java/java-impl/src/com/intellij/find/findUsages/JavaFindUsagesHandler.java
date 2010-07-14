@@ -49,7 +49,10 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 
 /**
  * @author peter
@@ -186,10 +189,10 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
           if (doSearch) {
             final List<PsiElement> elements = new ArrayList<PsiElement>();
             if (getter != null) {
-              elements.addAll(Arrays.asList(SuperMethodWarningUtil.checkSuperMethods(getter, ACTION_STRING)));
+              ContainerUtil.addAll(elements, SuperMethodWarningUtil.checkSuperMethods(getter, ACTION_STRING));
             }
             if (setter != null) {
-              elements.addAll(Arrays.asList(SuperMethodWarningUtil.checkSuperMethods(setter, ACTION_STRING)));
+              ContainerUtil.addAll(elements, SuperMethodWarningUtil.checkSuperMethods(setter, ACTION_STRING));
             }
             return elements.toArray(new PsiElement[elements.size()]);
           }
@@ -415,7 +418,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         PsiClass[] classes = JavaDirectoryService.getInstance().getClasses(dir);
-        array.addAll(Arrays.asList(classes));
+        ContainerUtil.addAll(array, classes);
         if (includeSubdirs) {
           PsiDirectory[] dirs = dir.getSubdirectories();
           for (PsiDirectory directory : dirs) {

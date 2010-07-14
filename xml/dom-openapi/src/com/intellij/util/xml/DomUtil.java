@@ -273,7 +273,7 @@ public class DomUtil {
 
   public static Collection<Class> getAllInterfaces(final Class aClass, final Collection<Class> result) {
     final Class[] interfaces = ReflectionCache.getInterfaces(aClass);
-    result.addAll(Arrays.asList(interfaces));
+    ContainerUtil.addAll(result, interfaces);
     if (aClass.getSuperclass() != null) {
       getAllInterfaces(aClass.getSuperclass(), result);
     }

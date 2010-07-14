@@ -16,6 +16,7 @@
 
 package com.intellij.psi.impl.source.resolve.reference.impl.manipulators;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.AbstractElementManipulator;
 import com.intellij.psi.xml.XmlText;
@@ -27,14 +28,27 @@ import com.intellij.util.IncorrectOperationException;
 public class XmlTextManipulator extends AbstractElementManipulator<XmlText> {
 
   public XmlText handleContentChange(XmlText text, TextRange range, String newContent) throws IncorrectOperationException {
-
-    final StringBuilder replacement = new StringBuilder(text.getValue());
-    replacement.replace(
-      range.getStartOffset(),
-      range.getEndOffset(),
-      newContent
-    );
-    text.setValue(replacement.toString());
+    final String newValue;
+    final String value = text.getValue();
+    if (range.equals(getRangeInElement(text))) {
+      newValue = newContent;
+    }
+    else {
+      final StringBuilder replacement = new StringBuilder(value);
+      replacement.replace(
+        range.getStartOffset(),
+        range.getEndOffset(),
+        newContent
+      );
+      newValue = replacement.toString();
+    }
+    if (Comparing.equal(value, newValue)) return text;
+    if (newValue.length() > 0) {
+      text.setValue(newValue);
+    }
+    else {
+      text.deleteChildRange(text.getFirstChild(), text.getLastChild());
+    }
     return text;
   }
 

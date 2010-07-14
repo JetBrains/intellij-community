@@ -256,7 +256,7 @@ public class RootModelImpl implements ModifiableRootModel {
     final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
 
     for (OrderEntry orderEntry : getOrderEntries()) {
-      result.addAll(Arrays.asList(orderEntry.getFiles(type)));
+      ContainerUtil.addAll(result, orderEntry.getFiles(type));
     }
     return ContainerUtil.toArray(result, new VirtualFile[result.size()]);
   }
@@ -266,7 +266,7 @@ public class RootModelImpl implements ModifiableRootModel {
     final ArrayList<String> result = new ArrayList<String>();
 
     for (OrderEntry orderEntry : getOrderEntries()) {
-      result.addAll(Arrays.asList(orderEntry.getUrls(type)));
+      ContainerUtil.addAll(result, orderEntry.getUrls(type));
     }
     return ContainerUtil.toArray(result, new String[result.size()]);
   }
@@ -434,7 +434,7 @@ public class RootModelImpl implements ModifiableRootModel {
     assertWritable();
     assertValidRearrangement(newEntries);
     myOrderEntries.clear();
-    myOrderEntries.addAll(Arrays.asList(newEntries));
+    ContainerUtil.addAll(myOrderEntries, newEntries);
   }
 
   private void assertValidRearrangement(OrderEntry[] newEntries) {

@@ -146,6 +146,9 @@ public interface ModifiableRootModel extends ModuleRootModel {
    */
   void inheritSdk();
 
+  /**
+   * @deprecated see {@link ModuleRootManager#getFiles(OrderRootType)} for replacement
+   */
   @NotNull VirtualFile[] getOrderedRoots(OrderRootType type);
 
 
@@ -155,6 +158,9 @@ public interface ModifiableRootModel extends ModuleRootModel {
 
   boolean isChanged();
 
+  /**
+   * @deprecated see {@link ModuleRootManager#getUrls(OrderRootType)} for replacement
+   */
   @NotNull String[] getOrderedRootUrls(OrderRootType type);
 
   boolean isExcludeExplodedDirectory();

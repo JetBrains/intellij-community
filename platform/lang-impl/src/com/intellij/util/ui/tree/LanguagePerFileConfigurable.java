@@ -49,7 +49,7 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
   private final String myTreeTableTitle;
   private final String myOverrideQuestion;
   private final String myOverrideTitle;
-  private final AbstractFileTreeTable<T> myTreeView;
+  private AbstractFileTreeTable<T> myTreeView;
   private JScrollPane myTreePanel;
   private JPanel myPanel;
   private JLabel myLabel;
@@ -62,10 +62,10 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
     myOverrideQuestion = overrideQuestion;
     myOverrideTitle = overrideTitle;
     myLabel.setText(caption);
-    myTreeView = new MyTreeTable();
   }
 
   public JComponent createComponent() {
+    myTreeView = new MyTreeTable();
     myTreePanel.setViewportView(myTreeView);
     return myPanel;
   }

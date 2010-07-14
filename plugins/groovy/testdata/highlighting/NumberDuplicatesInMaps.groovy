@@ -1,0 +1,1 @@
+def map = [1:'d', <warning descr="Duplicate element in the map">(1)</warning>:'sd']

@@ -20,14 +20,18 @@ import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Contributor-based goto model
@@ -51,7 +55,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
     Set<String> names = new HashSet<String>();
     for (ChooseByNameContributor contributor : myContributors) {
       try {
-        names.addAll(Arrays.asList(contributor.getNames(myProject, checkBoxState)));
+        ContainerUtil.addAll(names, contributor.getNames(myProject, checkBoxState));
       }
       catch(ProcessCanceledException ex) {
         // index corruption detected, ignore

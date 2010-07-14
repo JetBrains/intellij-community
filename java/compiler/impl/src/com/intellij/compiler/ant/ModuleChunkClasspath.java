@@ -25,11 +25,11 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OrderedSet;
 import gnu.trove.TObjectHashingStrategy;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -232,7 +232,7 @@ public class ModuleChunkClasspath extends Path {
     final Set<String> jdkUrls = options.getAllJdkUrls();
 
     final OrderedSet<String> urls = new OrderedSet<String>();
-    urls.addAll(Arrays.asList(extension.getOutputRootUrls(forTest)));
+    ContainerUtil.addAll(urls, extension.getOutputRootUrls(forTest));
     urls.removeAll(jdkUrls);
     return ArrayUtil.toStringArray(urls);
   }

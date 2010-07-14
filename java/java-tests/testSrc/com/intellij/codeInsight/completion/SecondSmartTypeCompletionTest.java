@@ -9,12 +9,8 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
-
-import java.util.Arrays;
 
 @SuppressWarnings({"ALL"})
 public class SecondSmartTypeCompletionTest extends LightCompletionTestCase {
@@ -160,7 +156,7 @@ public class SecondSmartTypeCompletionTest extends LightCompletionTestCase {
 
   protected void checkResultByFile(@NonNls final String filePath) throws Exception {
     if (myItems != null) {
-      System.out.println("items = " + Arrays.asList(myItems));
+      //System.out.println("items = " + Arrays.asList(myItems));
     }
     super.checkResultByFile(filePath);
   }
@@ -176,11 +172,6 @@ public class SecondSmartTypeCompletionTest extends LightCompletionTestCase {
     complete(2);
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
     myItems = lookup == null ? null : lookup.getItems().toArray(LookupElement.EMPTY_ARRAY);
-  }
-
-  protected void setUp() throws Exception {
-    super.setUp();
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
   }
 
   protected void tearDown() throws Exception {

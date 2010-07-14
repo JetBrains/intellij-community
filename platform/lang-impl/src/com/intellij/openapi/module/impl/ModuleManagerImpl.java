@@ -18,6 +18,10 @@ package com.intellij.openapi.module.impl;
 
 import com.intellij.ProjectTopics;
 import com.intellij.ide.highlighter.ModuleFileType;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,7 +37,6 @@ import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -276,7 +279,18 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
               }
               message = ProjectBundle.message("module.unknown.type.multiple.error", modulesBuilder.toString());
             }
-            Messages.showWarningDialog(myProject, message, ProjectBundle.message("module.unknown.type.title"));
+            // it is not modal warning at all
+            //Messages.showWarningDialog(myProject, message, ProjectBundle.message("module.unknown.type.title"));
+            Notifications.Bus.notify(
+              new Notification(
+                "Module Manager",
+                ProjectBundle.message("module.unknown.type.title"),
+                message,
+                NotificationType.WARNING
+              ), 
+              NotificationDisplayType.STICKY_BALLOON,
+              myProject
+            );
           }
         }
       };

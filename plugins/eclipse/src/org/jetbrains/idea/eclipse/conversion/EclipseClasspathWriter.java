@@ -104,7 +104,7 @@ public class EclipseClasspathWriter {
       final String libraryName = libraryOrderEntry.getLibraryName();
       final EclipseModuleManager eclipseModuleManager = EclipseModuleManager.getInstance(libraryOrderEntry.getOwnerModule());
       if (libraryOrderEntry.isModuleLevel()) {
-        final String[] files = libraryOrderEntry.getUrls(OrderRootType.CLASSES);
+        final String[] files = libraryOrderEntry.getRootUrls(OrderRootType.CLASSES);
         if (files.length > 0) {
           if (libraryName != null &&
               libraryName.contains(IdeaXml.JUNIT) &&
@@ -133,7 +133,7 @@ public class EclipseClasspathWriter {
             String eclipseSrcVariablePath = null;
 
             boolean addSrcRoots = true;
-            final String[] srcFiles = libraryOrderEntry.getUrls(OrderRootType.SOURCES);
+            final String[] srcFiles = libraryOrderEntry.getRootUrls(OrderRootType.SOURCES);
             if (srcFiles.length == 0) {
               srcRelativePath = null;
             }
@@ -159,7 +159,7 @@ public class EclipseClasspathWriter {
                 }
               }
             }
-            if (addSrcRoots) setOrRemoveAttribute(orderEntry, EclipseXml.SOURCEPATH_ATTR, eclipseSrcVariablePath != null ? eclipseSrcVariablePath : srcRelativePath);
+            setOrRemoveAttribute(orderEntry, EclipseXml.SOURCEPATH_ATTR, addSrcRoots ? (eclipseSrcVariablePath != null ? eclipseSrcVariablePath : srcRelativePath) : null);
 
             EJavadocUtil.setupJavadocAttributes(orderEntry, libraryOrderEntry, myModel);
             setExported(orderEntry, libraryOrderEntry);

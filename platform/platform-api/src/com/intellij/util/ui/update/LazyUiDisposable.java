@@ -15,17 +15,17 @@
  */
 package com.intellij.util.ui.update;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.ide.DataManager;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -35,23 +35,16 @@ public abstract class LazyUiDisposable<T extends Disposable> implements Activata
 
   private boolean myWasEverShown;
 
-  private Disposable myParent;
-  private T myChild;
-
-  private Project myProject;
+  private final Disposable myParent;
+  private final T myChild;
 
   public LazyUiDisposable(@Nullable Disposable parent, @NotNull JComponent ui, @NotNull T child) {
-    this(parent, ui, child, null);
-  }
-
-  public LazyUiDisposable(@Nullable Disposable parent, @NotNull JComponent ui, @NotNull T child, @Nullable Project project) {
     if (Boolean.TRUE.toString().equalsIgnoreCase(System.getProperty("idea.is.internal"))) {
       myAllocation = new Exception();
     }
 
     myParent = parent;
     myChild = child;
-    myProject = project;
 
     new UiNotifyConnector.Once(ui, this);
   }

@@ -34,47 +34,47 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
     return createAnnotation(elt.getTextRange(), HighlightSeverity.ERROR, message);
   }
 
-  public Annotation createErrorAnnotation(ASTNode node, String message) {
+  public Annotation createErrorAnnotation(@NotNull ASTNode node, String message) {
     return createAnnotation(node.getTextRange(), HighlightSeverity.ERROR, message);
   }
 
-  public Annotation createErrorAnnotation(TextRange range, String message) {
+  public Annotation createErrorAnnotation(@NotNull TextRange range, String message) {
     return createAnnotation(range, HighlightSeverity.ERROR, message);
   }
 
-  public Annotation createWarningAnnotation(PsiElement elt, String message) {
+  public Annotation createWarningAnnotation(@NotNull PsiElement elt, String message) {
     return createAnnotation(elt.getTextRange(), HighlightSeverity.WARNING, message);
   }
 
-  public Annotation createWarningAnnotation(ASTNode node, String message) {
+  public Annotation createWarningAnnotation(@NotNull ASTNode node, String message) {
     return createAnnotation(node.getTextRange(), HighlightSeverity.WARNING, message);
   }
 
-  public Annotation createWarningAnnotation(TextRange range, String message) {
+  public Annotation createWarningAnnotation(@NotNull TextRange range, String message) {
     return createAnnotation(range, HighlightSeverity.WARNING, message);
   }
 
-  public Annotation createInformationAnnotation(PsiElement elt, String message) {
+  public Annotation createInformationAnnotation(@NotNull PsiElement elt, String message) {
     return createAnnotation(elt.getTextRange(), HighlightSeverity.INFO, message);
   }
 
-  public Annotation createInformationAnnotation(ASTNode node, String message) {
+  public Annotation createInformationAnnotation(@NotNull ASTNode node, String message) {
     return createAnnotation(node.getTextRange(), HighlightSeverity.INFO, message);
   }
 
-  public Annotation createInformationAnnotation(TextRange range, String message) {
+  public Annotation createInformationAnnotation(@NotNull TextRange range, String message) {
     return createAnnotation(range, HighlightSeverity.INFO, message);
   }
 
-  public Annotation createInfoAnnotation(PsiElement elt, String message) {
+  public Annotation createInfoAnnotation(@NotNull PsiElement elt, String message) {
     return createAnnotation(elt.getTextRange(), HighlightSeverity.INFORMATION, message);
   }
 
-  public Annotation createInfoAnnotation(ASTNode node, String message) {
+  public Annotation createInfoAnnotation(@NotNull ASTNode node, String message) {
     return createAnnotation(node.getTextRange(), HighlightSeverity.INFORMATION, message);
   }
 
-  public Annotation createInfoAnnotation(TextRange range, String message) {
+  public Annotation createInfoAnnotation(@NotNull TextRange range, String message) {
     return createAnnotation(range, HighlightSeverity.INFORMATION, message);
   }
 

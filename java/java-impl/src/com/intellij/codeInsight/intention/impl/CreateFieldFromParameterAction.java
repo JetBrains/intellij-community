@@ -32,7 +32,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -41,6 +40,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -167,7 +167,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
 
     if (isInteractive) {
       List<String> namesList = new ArrayList<String>();
-      namesList.addAll(Arrays.asList(names));
+      ContainerUtil.addAll(namesList, names);
       String defaultName = styleManager.propertyNameToVariableName(propertyName, kind);
       if (namesList.contains(defaultName)) {
         Collections.swap(namesList, 0, namesList.indexOf(defaultName));

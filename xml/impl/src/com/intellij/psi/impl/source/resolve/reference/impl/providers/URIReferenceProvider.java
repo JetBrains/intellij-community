@@ -33,13 +33,13 @@ import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -127,7 +127,7 @@ public class URIReferenceProvider extends PsiReferenceProvider {
         offset = text.indexOf(url);
         if (isUrlText(url, element.getProject())) refs.add(new DependentNSReference(element, new TextRange(offset,offset + url.length()), urlReference));
         else {
-          refs.addAll(Arrays.asList(new FileReferenceSet(url, element, offset, this, false).getAllReferences()));
+          ContainerUtil.addAll(refs, new FileReferenceSet(url, element, offset, this, false).getAllReferences());
         }
       }
 

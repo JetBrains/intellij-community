@@ -18,6 +18,7 @@ package com.intellij.ide.structureView.impl.java;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.AddAllMembersProcessor;
 import com.intellij.psi.*;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,10 +42,10 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
 
     List<PsiElement> children = Arrays.asList(aClass.getChildren());
     Collection<PsiElement> ownChildren = new THashSet<PsiElement>();
-    ownChildren.addAll(Arrays.asList(aClass.getFields()));
-    ownChildren.addAll(Arrays.asList(aClass.getMethods()));
-    ownChildren.addAll(Arrays.asList(aClass.getInnerClasses()));
-    ownChildren.addAll(Arrays.asList(aClass.getInitializers()));
+    ContainerUtil.addAll(ownChildren, aClass.getFields());
+    ContainerUtil.addAll(ownChildren, aClass.getMethods());
+    ContainerUtil.addAll(ownChildren, aClass.getInnerClasses());
+    ContainerUtil.addAll(ownChildren, aClass.getInitializers());
     Collection<PsiElement> inherited = new LinkedHashSet<PsiElement>(children);
 
     aClass.processDeclarations(new AddAllMembersProcessor(inherited, aClass), ResolveState.initial(), null, aClass);

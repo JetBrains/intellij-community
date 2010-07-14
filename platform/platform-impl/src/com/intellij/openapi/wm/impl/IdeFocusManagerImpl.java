@@ -18,6 +18,7 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Expirable;
 import com.intellij.openapi.wm.FocusCommand;
+import com.intellij.openapi.wm.FocusRequestor;
 import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,6 +79,11 @@ public class IdeFocusManagerImpl extends IdeFocusManager {
   @Override
   public Expirable getTimestamp(boolean trackOnlyForcedCommands) {
     return getGlobalInstance().getTimestamp(trackOnlyForcedCommands);
+  }
+
+  @Override
+  public FocusRequestor getFurtherRequestor() {
+    return getGlobalInstance().getFurtherRequestor();
   }
 
   public boolean isFocusBeingTransferred() {

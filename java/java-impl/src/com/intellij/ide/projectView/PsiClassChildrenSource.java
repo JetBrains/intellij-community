@@ -17,8 +17,8 @@ package com.intellij.ide.projectView;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
 
-import java.util.Arrays;
 import java.util.List;
 
 public interface PsiClassChildrenSource {
@@ -30,19 +30,19 @@ public interface PsiClassChildrenSource {
 
   PsiClassChildrenSource METHODS = new PsiClassChildrenSource() {
     public void addChildren(PsiClass psiClass, List<PsiElement> children) {
-      children.addAll(Arrays.asList(psiClass.getMethods()));
+      ContainerUtil.addAll(children, psiClass.getMethods());
     }
   };
 
   PsiClassChildrenSource FIELDS = new PsiClassChildrenSource() {
     public void addChildren(PsiClass psiClass, List<PsiElement> children) {
-      children.addAll(Arrays.asList(psiClass.getFields()));
+      ContainerUtil.addAll(children, psiClass.getFields());
     }
   };
 
   PsiClassChildrenSource CLASSES = new PsiClassChildrenSource() {
     public void addChildren(PsiClass psiClass, List<PsiElement> children) {
-      children.addAll(Arrays.asList(psiClass.getInnerClasses()));
+      ContainerUtil.addAll(children, psiClass.getInnerClasses());
     }
   };
 

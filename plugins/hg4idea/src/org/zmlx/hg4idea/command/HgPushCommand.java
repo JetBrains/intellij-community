@@ -23,35 +23,51 @@ import java.util.List;
 
 public class HgPushCommand {
 
-  private final Project project;
-  private final VirtualFile repo;
-  private final String destination;
+  private final Project myProject;
+  private final VirtualFile myRepo;
+  private final String myDestination;
   private final HgCommandAuthenticator authenticator = new HgCommandAuthenticator();
 
-  private String revision;
+  private String myRevision;
+  private boolean myForce;
+  private HgTagBranch myBranch;
 
   public HgPushCommand(Project project, @NotNull VirtualFile repo, String destination) {
-    this.project = project;
-    this.repo = repo;
-    this.destination = destination;
+    myProject = project;
+    myRepo = repo;
+    myDestination = destination;
   }
 
   public void setRevision(String revision) {
-    this.revision = revision;
+    myRevision = revision;
+  }
+
+  public void setForce(boolean force) {
+    myForce = force;
+  }
+
+  public void setBranch(HgTagBranch branch) {
+    myBranch = branch;
   }
 
   public HgCommandResult execute() {
-    List<String> arguments = new LinkedList<String>();
-    if (StringUtils.isNotBlank(revision)) {
+    final List<String> arguments = new LinkedList<String>();
+    if (StringUtils.isNotBlank(myRevision)) {
       arguments.add("-r");
-      arguments.add(revision);
+      arguments.add(myRevision);
     }
-    arguments.add(destination);
+    if (myBranch != null) {
+      arguments.add("-b");
+      arguments.add(myBranch.getName());
+    }
+    if (myForce) {
+      arguments.add("-f");
+    }
+    arguments.add(myDestination);
 
-    HgCommandResult result = authenticator.executeCommandAndAuthenticateIfNecessary(project, repo, destination, "push", arguments);
-
-    project.getMessageBus().syncPublisher(HgVcs.OUTGOING_TOPIC).update(project);
-
+    final HgCommandResult result = authenticator.executeCommandAndAuthenticateIfNecessary(myProject, myRepo, myDestination, "push", arguments);
+    myProject.getMessageBus().syncPublisher(HgVcs.OUTGOING_TOPIC).update(myProject);
     return result;
   }
+
 }

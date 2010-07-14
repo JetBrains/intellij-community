@@ -32,6 +32,7 @@ import com.intellij.psi.util.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +62,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipWhitespaces;
@@ -255,12 +259,12 @@ public class GroovyCompletionContributor extends CompletionContributor {
         //costructor call
         if (call instanceof GrConstructorCall) {
           GrConstructorCall constructorCall = (GrConstructorCall)call;
-          results.addAll(Arrays.asList(constructorCall.multiResolveConstructor()));
-          results.addAll(Arrays.asList(constructorCall.multiResolveClass()));
+          ContainerUtil.addAll(results, constructorCall.multiResolveConstructor());
+          ContainerUtil.addAll(results, constructorCall.multiResolveClass());
         }
         else if (call instanceof GrCallExpression) {
           GrCallExpression constructorCall = (GrCallExpression)call;
-          results.addAll(Arrays.asList(constructorCall.getMethodVariants()));
+          ContainerUtil.addAll(results, constructorCall.getMethodVariants(null));
           final PsiType type = ((GrCallExpression)call).getType();
           if (type instanceof PsiClassType) {
             final PsiClass psiClass = ((PsiClassType)type).resolve();
@@ -270,7 +274,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
         else if (call instanceof GrApplicationStatement) {
           final GrExpression element = ((GrApplicationStatement)call).getFunExpression();
           if (element instanceof GrReferenceElement) {
-            results.addAll(Arrays.asList(((GrReferenceElement)element).multiResolve(true)));
+            ContainerUtil.addAll(results, ((GrReferenceElement)element).multiResolve(true));
           }
         }
 

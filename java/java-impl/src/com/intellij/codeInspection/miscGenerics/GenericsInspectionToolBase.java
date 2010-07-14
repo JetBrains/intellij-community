@@ -19,10 +19,10 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.psi.*;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -36,7 +36,7 @@ public abstract class GenericsInspectionToolBase extends BaseLocalInspectionTool
     for (PsiClassInitializer initializer : initializers) {
       final ProblemDescriptor[] localDescriptions = getDescriptions(initializer, manager, isOnTheFly);
       if (localDescriptions != null) {
-        descriptors.addAll(Arrays.asList(localDescriptions));
+        ContainerUtil.addAll(descriptors, localDescriptions);
       }
     }
     if (descriptors.isEmpty()) return null;

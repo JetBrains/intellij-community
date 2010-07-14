@@ -28,10 +28,14 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class CompositeScope extends UserDataHolderBase implements CompileScope{
   private final List<CompileScope> myScopes = new ArrayList<CompileScope>();
@@ -65,7 +69,7 @@ public class CompositeScope extends UserDataHolderBase implements CompileScope{
     for (CompileScope scope : myScopes) {
       final VirtualFile[] files = scope.getFiles(fileType, inSourceOnly);
       if (files.length > 0) {
-        allFiles.addAll(Arrays.asList(files));
+        ContainerUtil.addAll(allFiles, files);
       }
     }
     return VfsUtil.toVirtualFileArray(allFiles);
@@ -84,7 +88,7 @@ public class CompositeScope extends UserDataHolderBase implements CompileScope{
   public Module[] getAffectedModules() {
     Set<Module> modules = new HashSet<Module>();
     for (final CompileScope compileScope : myScopes) {
-      modules.addAll(Arrays.asList(compileScope.getAffectedModules()));
+      ContainerUtil.addAll(modules, compileScope.getAffectedModules());
     }
     return modules.toArray(new Module[modules.size()]);
   }

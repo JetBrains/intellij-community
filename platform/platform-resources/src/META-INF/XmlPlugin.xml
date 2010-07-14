@@ -40,13 +40,15 @@
     <extensionPoint name="xml.implicitNamespaceDescriptorProvider"
                     interface="com.intellij.javaee.ImplicitNamespaceDescriptorProvider"/>
 
-    <extensionPoint name="xml.zenCodingFilter" interface="com.intellij.codeInsight.template.zencoding.ZenCodingFilter"/>
+    <extensionPoint name="xml.zenCodingGenerator" interface="com.intellij.codeInsight.template.zencoding.filters.ZenCodingGenerator"/>
+    <extensionPoint name="xml.zenCodingFilter" interface="com.intellij.codeInsight.template.zencoding.filters.ZenCodingFilter"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
     <fileTypeFactory implementation="com.intellij.xml.XmlFileTypeFactory"/>
 
-    <renameHandler implementation="com.intellij.xml.refactoring.XmlTagRenameHandler"/>
+    <renameHandler id="xmlTagRenameHandler" implementation="com.intellij.xml.refactoring.XmlTagRenameHandler"/>
+    <renameHandler implementation="com.intellij.xml.refactoring.SchemaPrefixRenameHandler" order="before xmlTagRenameHandler"/>
 
     <lang.literalEscaper language="XML" implementationClass="com.intellij.lang.xml.XmlLiteralEscaper"/>
 
@@ -296,7 +298,14 @@
       <category>XML</category>
       <className>com.intellij.xml.actions.XmlSplitTagAction</className>
     </intentionAction>
-
+    <intentionAction>
+      <category>XML</category>
+      <className>com.intellij.codeInsight.daemon.impl.analysis.AddSchemaPrefixIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <category>XML</category>
+      <className>com.intellij.codeInsight.daemon.impl.analysis.ConvertSchemaPrefixToDefaultIntention</className>
+    </intentionAction>
     <lang.implementationTextSelectioner language="XML"
                                         implementationClass="com.intellij.codeInsight.hint.XmlImplementationTextSelectioner"/>
     <basicWordSelectionFilter implementation="com.intellij.codeInsight.editorActions.XmlBasicWordSelectionFilter"/>
@@ -323,9 +332,10 @@
 
   <actions>
     <group id="NewXml" text="XML">
-      <action id="NewHtmlType" class="com.intellij.ide.actions.CreateHtmlAction" text="HTML File"/>
-      <action id="NewHtml5Type" class="com.intellij.ide.actions.CreateHtml5Action" text="HTML5 File"/>
-      <action id="NewXhtmlType" class="com.intellij.ide.actions.CreateXhtmlAction" text="XHTML File"/>
+      <!--<action id="NewHtmlType" class="com.intellij.ide.actions.CreateHtmlAction" text="HTML File"/>-->
+      <!--<action id="NewHtml5Type" class="com.intellij.ide.actions.CreateHtml5Action" text="HTML5 File"/>-->
+      <!--<action id="NewXhtmlType" class="com.intellij.ide.actions.CreateXhtmlAction" text="XHTML File"/>-->
+      <action id="NewHtmlFile" class="com.intellij.ide.actions.CreateHtmlFileAction"/>
       <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFromTemplate"/>
     </group>
 

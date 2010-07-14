@@ -7,7 +7,6 @@ package com.intellij.xml.breadcrumbs;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.ui.SideBorder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +40,6 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     addMouseMotionListener(myMouseListener);
 
     setToolTipText(new String());
-    setBorder(new SideBorder(Color.gray, SideBorder.BOTTOM, true));
   }
 
   public void setItems(@Nullable final List<T> itemsList) {

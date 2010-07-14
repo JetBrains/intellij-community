@@ -18,10 +18,8 @@ package com.intellij.execution.actions;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,15 +42,7 @@ public class RunContextAction extends BaseRunConfigurationAction {
     }
     runManager.setActiveConfiguration(configuration);
 
-    final ProgramRunner runner = getRunner(configuration.getConfiguration());
-    if (runner != null) {
-      try {
-        runner.execute(myExecutor, new ExecutionEnvironment(runner, configuration, context.getProject()));
-      }
-      catch (ExecutionException e) {
-        Messages.showErrorDialog(context.getProject(), e.getMessage(), ExecutionBundle.message("error.common.title"));
-      }
-    }
+    ProgramRunnerUtil.executeConfiguration(context.getProject(), configuration, myExecutor);
   }
 
   @Override

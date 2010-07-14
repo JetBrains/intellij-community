@@ -34,7 +34,6 @@ import git4idea.commands.GitFileUtils;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.StringScanner;
 import git4idea.i18n.GitBundle;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -55,9 +54,9 @@ public class GitMergeProvider implements MergeProvider2 {
    */
   private final Project myProject;
   /**
-   * A revision number for a revision being merged with.
+   * If true the merge provider has a reverse meaning
    */
-  @NonNls private static final String THEIRS_REVISION = "Theirs";
+  private final boolean myReverse;
   /**
    * The revision that designates common parent for the files during the merge
    */
@@ -77,7 +76,18 @@ public class GitMergeProvider implements MergeProvider2 {
    * @param project a project for the provider
    */
   public GitMergeProvider(Project project) {
+    this(project, false);
+  }
+
+  /**
+   * A merge provider
+   *
+   * @param project a project for the provider
+   * @param reverse if true, yours and theirs take a reverse meaning
+   */
+  public GitMergeProvider(Project project, boolean reverse) {
     myProject = project;
+    myReverse = reverse;
   }
 
   /**
@@ -87,14 +97,15 @@ public class GitMergeProvider implements MergeProvider2 {
   public MergeData loadRevisions(final VirtualFile file) throws VcsException {
     final MergeData mergeData = new MergeData();
     if (file == null) return mergeData;
+    final VirtualFile root = GitUtil.getGitRoot(file);
     final FilePath path = VcsUtil.getFilePath(file.getPath());
 
     VcsRunnable runnable = new VcsRunnable() {
       @SuppressWarnings({"ConstantConditions"})
       public void run() throws VcsException {
         GitFileRevision original = new GitFileRevision(myProject, path, new GitRevisionNumber(":" + ORIGINAL_REVISION_NUM));
-        GitFileRevision current = new GitFileRevision(myProject, path, new GitRevisionNumber(":" + YOURS_REVISION_NUM));
-        GitFileRevision last = new GitFileRevision(myProject, path, new GitRevisionNumber(":" + THEIRS_REVISION_NUM));
+        GitFileRevision current = new GitFileRevision(myProject, path, new GitRevisionNumber(":" + yoursRevision()));
+        GitFileRevision last = new GitFileRevision(myProject, path, new GitRevisionNumber(":" + theirsRevision()));
         try {
           try {
             mergeData.ORIGINAL = original.getContent();
@@ -106,7 +117,12 @@ public class GitMergeProvider implements MergeProvider2 {
           }
           mergeData.CURRENT = current.getContent();
           mergeData.LAST = last.getContent();
-          mergeData.LAST_REVISION_NUMBER = new GitRevisionNumber(THEIRS_REVISION);
+          try {
+            mergeData.LAST_REVISION_NUMBER = GitRevisionNumber.resolve(myProject, root, myReverse ? "HEAD" : "MERGE_HEAD");
+          }
+          catch (VcsException e) {
+            // ignore exception, the null value will be used
+          }
         }
         catch (IOException e) {
           throw new IllegalStateException("Failed to load file content", e);
@@ -117,6 +133,19 @@ public class GitMergeProvider implements MergeProvider2 {
     return mergeData;
   }
 
+  /**
+   * @return number for "yours" revision  (taking {@code revsere} flag in account)
+   */
+  private int yoursRevision() {
+    return myReverse ? THEIRS_REVISION_NUM : YOURS_REVISION_NUM;
+  }
+
+  /**
+   * @return number for "theirs" revision (taking {@code revsere} flag in account)
+   */
+  private int theirsRevision() {
+    return myReverse ? YOURS_REVISION_NUM : THEIRS_REVISION_NUM;
+  }
 
   /**
    * {@inheritDoc}
@@ -183,7 +212,8 @@ public class GitMergeProvider implements MergeProvider2 {
       /**
        * the file was deleted on the branch
        */
-      DELETED, }
+      DELETED,
+    }
   }
 
 
@@ -230,17 +260,14 @@ public class GitMergeProvider implements MergeProvider2 {
               c.myRoot = root;
               cs.put(file, c);
             }
-            switch (source) {
-              case ORIGINAL_REVISION_NUM:
-                break;
-              case THEIRS_REVISION_NUM:
-                c.myStatusTheirs = Conflict.Status.MODIFIED;
-                break;
-              case YOURS_REVISION_NUM:
-                c.myStatusYours = Conflict.Status.MODIFIED;
-                break;
-              default:
-                throw new IllegalStateException("Unknown revision " + source + " for the file: " + file);
+            if (source == theirsRevision()) {
+              c.myStatusTheirs = Conflict.Status.MODIFIED;
+            }
+            else if (source == yoursRevision()) {
+              c.myStatusYours = Conflict.Status.MODIFIED;
+            }
+            else if (source != ORIGINAL_REVISION_NUM) {
+              throw new IllegalStateException("Unknown revision " + source + " for the file: " + file);
             }
           }
           for (VirtualFile f : files) {

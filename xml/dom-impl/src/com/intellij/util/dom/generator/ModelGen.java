@@ -15,21 +15,25 @@
  */
 package com.intellij.util.dom.generator;
 
-import org.jdom.Element;
+import com.intellij.util.containers.ContainerUtil;
+import org.apache.xerces.xni.XMLResourceIdentifier;
+import org.apache.xerces.xni.XNIException;
+import org.apache.xerces.xni.parser.XMLEntityResolver;
+import org.apache.xerces.xni.parser.XMLInputSource;
 import org.jdom.Document;
+import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-import org.apache.xerces.xni.parser.XMLEntityResolver;
-import org.apache.xerces.xni.parser.XMLInputSource;
-import org.apache.xerces.xni.XMLResourceIdentifier;
-import org.apache.xerces.xni.XNIException;
 
-import java.util.*;
+import java.io.CharArrayReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.CharArrayReader;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Gregory.Shrago
@@ -175,7 +179,7 @@ public class ModelGen {
     };
     ArrayList<File> files = new ArrayList<File>();
     for (File root : modelRoots) {
-      files.addAll(Arrays.asList(root.listFiles()));
+      ContainerUtil.addAll(files, root.listFiles());
     }
     loader.loadModel(model, files, resolver);
     Util.log(model.jtMap.size() + " java types loaded");

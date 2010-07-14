@@ -27,13 +27,13 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.StringTokenizer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -113,17 +113,18 @@ public class LibraryUtil {
           final Library library = ((LibraryOrderEntry)entry).getLibrary();
           if (library != null) {
             VirtualFile[] files = includeSourceFiles ? library.getFiles(OrderRootType.SOURCES) : null;
-            if (files == null || files.length == 0){
+            if (files == null || files.length == 0) {
               files = library.getFiles(OrderRootType.CLASSES);
             }
-            roots.addAll(Arrays.asList(files));
+            ContainerUtil.addAll(roots, files);
           }
-        } else if (includeJdk && entry instanceof JdkOrderEntry){
-          VirtualFile[] files = includeSourceFiles ? entry.getFiles(OrderRootType.SOURCES) : null;
-          if (files == null || files.length == 0){
-            files = entry.getFiles(OrderRootType.CLASSES);
+        } else if (includeJdk && entry instanceof JdkOrderEntry) {
+          JdkOrderEntry jdkEntry = (JdkOrderEntry)entry;
+          VirtualFile[] files = includeSourceFiles ? jdkEntry.getRootFiles(OrderRootType.SOURCES) : null;
+          if (files == null || files.length == 0) {
+            files = jdkEntry.getRootFiles(OrderRootType.CLASSES);
           }
-          roots.addAll(Arrays.asList(files));
+          ContainerUtil.addAll(roots, files);
         }
       }
     }

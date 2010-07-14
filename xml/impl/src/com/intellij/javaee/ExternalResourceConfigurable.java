@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AddEditRemovePanel;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.XmlBundle;
@@ -36,7 +37,6 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -162,7 +162,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
 
     myIgnoredUrls = new ArrayList<String>();
     final String[] ignoredResources = manager.getIgnoredResources();
-    myIgnoredUrls.addAll(Arrays.asList(ignoredResources));
+    ContainerUtil.addAll(myIgnoredUrls, ignoredResources);
 
     Collections.sort(myIgnoredUrls);
 

@@ -18,18 +18,14 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
-import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.ConcurrentHashMap;
-import com.intellij.util.containers.FactoryMap;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex;
@@ -56,6 +52,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProc
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author ven
@@ -63,28 +60,6 @@ import java.util.*;
 @SuppressWarnings({"StringBufferReplaceableByString"})
 public class ResolveUtil {
   public static final PsiScopeProcessor.Event DECLARATION_SCOPE_PASSED = new PsiScopeProcessor.Event() {};
-  private static final Key<CachedValue<FactoryMap<PsiType, Map<String, PsiType>>>> SUPER_TYPES = Key.create("SUPER_TYPES");
-
-  private static final TObjectHashingStrategy<PsiType> RAW_TYPE_HASHING_STRATEGY = new TObjectHashingStrategy<PsiType>() {
-    @Override
-    public int computeHashCode(PsiType object) {
-      return stringify(object).hashCode();
-    }
-
-    @Override
-    public boolean equals(PsiType o1, PsiType o2) {
-      return stringify(o1).equals(stringify(o2));
-    }
-
-    private String stringify(PsiType type) {
-      final PsiClass cls = PsiUtil.resolveClassInType(type);
-      if (cls instanceof PsiTypeParameter) {
-        return cls.getName() + cls.getSuperClass().getName();
-      }
-      return rawCanonicalText(type);
-    }
-
-  };
 
   private ResolveUtil() {
   }
@@ -186,46 +161,47 @@ public class ResolveUtil {
     return true;
   }
 
-  private static void collectSuperTypes(PsiType type, Map<String, PsiType> visited) {
+  private static void collectSuperTypes(PsiType type, Map<String, PsiType> visited, Project project) {
     String qName = rawCanonicalText(type);
 
     if (visited.put(qName, type) != null) {
       return;
     }
 
-    for (PsiType superType : type.getSuperTypes()) {
-      collectSuperTypes(TypeConversionUtil.erasure(superType), visited);
+    final PsiType[] superTypes = type.getSuperTypes();
+    for (PsiType superType : superTypes) {
+      collectSuperTypes(TypeConversionUtil.erasure(superType), visited, project);
+    }
+
+    if (type instanceof PsiArrayType && superTypes.length == 0) {
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      collectSuperTypes(factory.createTypeFromText(CommonClassNames.JAVA_LANG_COMPARABLE, null), visited, project);
+      collectSuperTypes(factory.createTypeFromText(CommonClassNames.JAVA_IO_SERIALIZABLE, null), visited, project);
     }
 
   }
 
   public static Map<String, PsiType> getAllSuperTypes(PsiType base, final PsiElement place) {
     final Project project = place.getProject();
-    return CachedValuesManager.getManager(project).getCachedValue(project, SUPER_TYPES, new CachedValueProvider<FactoryMap<PsiType, Map<String, PsiType>>>() {
-      @Override
-      public Result<FactoryMap<PsiType, Map<String, PsiType>>> compute() {
-        final FactoryMap<PsiType, Map<String, PsiType>> map = new ConcurrentFactoryMap<PsiType, Map<String, PsiType>>() {
+    final Map<String, Map<String, PsiType>> cache =
+      CachedValuesManager.getManager(project).getCachedValue(project, new CachedValueProvider<Map<String, Map<String, PsiType>>>() {
+        @Override
+        public Result<Map<String, Map<String, PsiType>>> compute() {
+          final Map<String, Map<String, PsiType>> result = new ConcurrentHashMap<String, Map<String, PsiType>>();
+          return Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, ProjectRootManager.getInstance(project));
+        }
+      });
 
-          @Override
-          protected Map<PsiType, Map<String, PsiType>> createMap() {
-            return new ConcurrentHashMap<PsiType, Map<String, PsiType>>(RAW_TYPE_HASHING_STRATEGY);
-          }
-
-          @Override
-          protected Map<String, PsiType> create(PsiType key) {
-            final HashMap<String, PsiType> visited = new HashMap<String, PsiType>();
-            collectSuperTypes(key, visited);
-            if (key instanceof PsiArrayType) {
-              final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-              collectSuperTypes(factory.createTypeFromText(CommonClassNames.JAVA_LANG_COMPARABLE, null), visited);
-              collectSuperTypes(factory.createTypeFromText(CommonClassNames.JAVA_IO_SERIALIZABLE, null), visited);
-            }
-            return visited;
-          }
-        };
-        return Result.create(map, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, ProjectRootManager.getInstance(project));
-      }
-    }, false).get(base);
+    final PsiClass cls = PsiUtil.resolveClassInType(base);
+    //noinspection ConstantConditions
+    String key = cls instanceof PsiTypeParameter ? cls.getName() + cls.getSuperClass().getName() : rawCanonicalText(base);
+    Map<String, PsiType> result = cache.get(key);
+    if (result == null) {
+      result = new HashMap<String, PsiType>();
+      collectSuperTypes(base, result, project);
+      cache.put(key, result);
+    }
+    return result;
   }
 
   public static boolean isInheritor(PsiType type, @NotNull String baseClass, PsiElement place) {
@@ -354,31 +330,10 @@ public class ResolveUtil {
 
   public static boolean processCategoryMembers(PsiElement place, ResolverProcessor processor) {
     PsiElement prev = null;
+    Ref<Boolean> result = new Ref<Boolean>(null);
     while (place != null) {
       if (place instanceof GrMember) break;
-
-      if (place instanceof GrMethodCallExpression) {
-        final GrMethodCallExpression call = (GrMethodCallExpression)place;
-        final GrExpression invoked = call.getInvokedExpression();
-        if (invoked instanceof GrReferenceExpression && "use".equals(((GrReferenceExpression)invoked).getReferenceName())) {
-          final GrClosableBlock[] closures = call.getClosureArguments();
-          if (closures.length == 1 && closures[0].equals(prev)) {
-            if (useCategoryClass(call)) {
-              final GrArgumentList argList = call.getArgumentList();
-              if (argList != null) {
-                final GrExpression[] args = argList.getExpressionArguments();
-                if (args.length == 1 && args[0] instanceof GrReferenceExpression) {
-                  final PsiElement resolved = ((GrReferenceExpression)args[0]).resolve();
-                  if (resolved instanceof PsiClass &&
-                      !resolved.processDeclarations(processor, ResolveState.initial().put(ResolverProcessor.RESOLVE_CONTEXT, call), null, place)) {
-                    return false;
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+      if (categoryIteration(place, processor, prev, result)) return result.get();
 
       prev = place;
       place = place.getContext();
@@ -387,20 +342,38 @@ public class ResolveUtil {
     return true;
   }
 
-  private static boolean useCategoryClass(GrMethodCallExpression call) {
+  private static boolean categoryIteration(PsiElement place, ResolverProcessor processor, PsiElement prev, Ref<Boolean> result) {
+    if (!(place instanceof GrMethodCallExpression)) return false;
 
-    final PsiMethod resolved = call.resolveMethod();
-    if (resolved instanceof GrGdkMethod) {
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(call.getProject()).getElementFactory();
-      final GlobalSearchScope scope = call.getResolveScope();
-      final PsiType[] parametersType =
-        {factory.createTypeByFQClassName("java.lang.Class", scope), factory.createTypeByFQClassName("groovy.lang.Closure", scope)};
-      final MethodSignature pattern =
-        MethodSignatureUtil.createMethodSignature("use", parametersType, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
-      return resolved.getSignature(PsiSubstitutor.EMPTY).equals(pattern);
+    final GrMethodCallExpression call = (GrMethodCallExpression)place;
+    final GrExpression invoked = call.getInvokedExpression();
+    if (!(invoked instanceof GrReferenceExpression) || !"use".equals(((GrReferenceExpression)invoked).getReferenceName())) return false;
+
+    final GrClosableBlock[] closures = call.getClosureArguments();
+    if (closures.length != 1 || !closures[0].equals(prev)) return false;
+
+    if (!useCategoryClass(call)) return false;
+
+    final GrArgumentList argList = call.getArgumentList();
+    if (argList == null) return false;
+
+    result.set(Boolean.TRUE);
+    final GrExpression[] args = argList.getExpressionArguments();
+    for (GrExpression arg : args) {
+      if (arg instanceof GrReferenceExpression) {
+        final PsiElement resolved = ((GrReferenceExpression)arg).resolve();
+        if (resolved instanceof PsiClass) {
+          if (!resolved.processDeclarations(processor, ResolveState.initial().put(ResolverProcessor.RESOLVE_CONTEXT, call), null, place)) {
+            result.set(Boolean.FALSE);
+          }
+        }
+      }
     }
+    return true;
+  }
 
-    return false;
+  private static boolean useCategoryClass(GrMethodCallExpression call) {
+    return call.resolveMethod() instanceof GrGdkMethod;
   }
 
   public static PsiElement[] mapToElements(GroovyResolveResult[] candidates) {
@@ -471,7 +444,7 @@ public class ResolveUtil {
     final PsiElement parent = place.getParent();
     GroovyResolveResult[] variants = GroovyResolveResult.EMPTY_ARRAY;
     if (parent instanceof GrCallExpression) {
-      variants = ((GrCallExpression) parent).getMethodVariants();
+      variants = ((GrCallExpression) parent).getMethodVariants(place instanceof GrExpression ? (GrExpression)place : null);
     } else if (parent instanceof GrConstructorInvocation) {
       final PsiClass clazz = ((GrConstructorInvocation) parent).getDelegatedClass();
       if (clazz != null) {

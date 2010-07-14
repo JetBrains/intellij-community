@@ -307,6 +307,18 @@ public class VfsUtil {
     return components;
   }
 
+  @Nullable
+  public static VirtualFile findRelativeFile(@NotNull VirtualFile base, String ... path) {
+    VirtualFile file = base;
+
+    for (String pathElement : path) {
+      file = file.findChild(pathElement);
+      if (file == null) return null;
+    }
+
+    return file;
+  }
+
   @SuppressWarnings({"HardCodedStringLiteral"})
   @Nullable
   public static VirtualFile findRelativeFile(@NotNull String uri, VirtualFile base) {

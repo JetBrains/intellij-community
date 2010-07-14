@@ -172,7 +172,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       }
       if (!resolveResult.isAccessible()) {
         String message = GroovyBundle.message("cannot.access", referenceExpression.getReferenceName());
-        final Annotation annotation = myHolder.createWarningAnnotation(referenceExpression.getReferenceNameElement(), message);
+        final Annotation annotation = myHolder.createWarningAnnotation(getElementToHighlight(referenceExpression), message);
         if (resolved instanceof PsiMember) {
           registerAccessFix(annotation, referenceExpression, ((PsiMember)resolved));
         }
@@ -271,7 +271,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       return;
     }
 
-    annotation.registerFix(new GroovyStaticImportMethodFix((GrCall)referenceExpression.getParent()));
+    annotation.registerFix(new GroovyStaticImportMethodFix((GrMethodCall)referenceExpression.getParent()));
   }
 
   @Override
@@ -510,7 +510,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     else {
       final GroovyResolveResult[] results = newExpression.multiResolveConstructor();
       final GrArgumentList argList = newExpression.getArgumentList();
-      PsiElement toHighlight = argList != null ? argList : refElement.getReferenceNameElement();
+      PsiElement toHighlight = argList != null ? argList : getElementToHighlight(refElement);
 
       if (results.length > 0) {
         String message = GroovyBundle.message("ambiguous.constructor.call");
@@ -1285,7 +1285,9 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
   private static void highlightMemberResolved(AnnotationHolder holder, GrReferenceExpression refExpr, PsiMember member) {
     boolean isStatic = member.hasModifierProperty(GrModifier.STATIC);
-    Annotation annotation = holder.createInfoAnnotation(refExpr.getReferenceNameElement(), null);
+    final PsiElement refNameElement = refExpr.getReferenceNameElement();
+    if (refNameElement == null) return;
+    Annotation annotation = holder.createInfoAnnotation(refNameElement, null);
 
     if (member instanceof PsiField || member instanceof GrAccessorMethod) {
       annotation.setTextAttributes(isStatic ? DefaultHighlighter.STATIC_FIELD : DefaultHighlighter.INSTANCE_FIELD);
@@ -1411,12 +1413,11 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
   private static void checkSingleResolvedElement(AnnotationHolder holder, GrReferenceElement refElement, GroovyResolveResult resolveResult, boolean highlightError) {
     final PsiElement resolved = resolveResult.getElement();
+    final PsiElement toHighlight = getElementToHighlight(refElement);
     if (resolved == null) {
       String message = GroovyBundle.message("cannot.resolve", refElement.getReferenceName());
 
       // Register quickfix
-      final PsiElement nameElement = refElement.getReferenceNameElement();
-      final PsiElement toHighlight = nameElement != null ? nameElement : refElement;
 
       final Annotation annotation;
       if (highlightError) {
@@ -1434,8 +1435,14 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
     else if (!resolveResult.isAccessible()) {
       String message = GroovyBundle.message("cannot.access", refElement.getReferenceName());
-      holder.createWarningAnnotation(refElement.getReferenceNameElement(), message);
+      holder.createWarningAnnotation(toHighlight, message);
     }
+  }
+
+  @NotNull
+  private static PsiElement getElementToHighlight(@NotNull GrReferenceElement refElement) {
+    final PsiElement refNameElement = refElement.getReferenceNameElement();
+    return refNameElement != null ? refNameElement : refElement;
   }
 
   private static void checkDefaultMapConstructor(AnnotationHolder holder, GrArgumentList argList, PsiElement element) {

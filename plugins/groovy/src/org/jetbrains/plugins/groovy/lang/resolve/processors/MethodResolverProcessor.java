@@ -33,8 +33,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.DominanceAwareMethod;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -50,6 +53,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
   @Nullable
   private final PsiType[] myArgumentTypes;
   private final PsiType[] myTypeArguments;
+  private final boolean myAllVariants;
 
   private final Set<GroovyResolveResult> myInapplicableCandidates = new LinkedHashSet<GroovyResolveResult>();
   private final boolean myIsConstructor;
@@ -57,11 +61,15 @@ public class MethodResolverProcessor extends ResolverProcessor {
   private boolean myStopExecuting = false;
 
   public MethodResolverProcessor(String name, GroovyPsiElement place, boolean isConstructor, PsiType thisType, @Nullable PsiType[] argumentTypes, PsiType[] typeArguments) {
+    this(name, place, isConstructor, thisType, argumentTypes, typeArguments, false);
+  }
+  public MethodResolverProcessor(String name, GroovyPsiElement place, boolean isConstructor, PsiType thisType, @Nullable PsiType[] argumentTypes, PsiType[] typeArguments, boolean allVariants) {
     super(name, EnumSet.of(ResolveKind.METHOD, ResolveKind.PROPERTY), place, PsiType.EMPTY_ARRAY);
     myIsConstructor = isConstructor;
     myThisType = thisType;
     myArgumentTypes = argumentTypes;
     myTypeArguments = typeArguments;
+    myAllVariants = allVariants;
   }
 
   public boolean execute(PsiElement element, ResolveState state) {
@@ -71,14 +79,14 @@ public class MethodResolverProcessor extends ResolverProcessor {
     PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
     if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) element;
-      
+
       if (method.isConstructor() != myIsConstructor) return true;
       if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
       substitutor = obtainSubstitutor(substitutor, method);
       boolean isAccessible = isAccessible(method);
       GroovyPsiElement fileResolveContext = state.get(RESOLVE_CONTEXT);
       boolean isStaticsOK = isStaticsOK(method, fileResolveContext);
-      if (PsiUtil.isApplicable(myArgumentTypes, method, substitutor, fileResolveContext instanceof GrMethodCallExpression, (GroovyPsiElement)myPlace) && isStaticsOK) {
+      if (!myAllVariants && PsiUtil.isApplicable(myArgumentTypes, method, substitutor, fileResolveContext instanceof GrMethodCallExpression, (GroovyPsiElement)myPlace) && isStaticsOK) {
         myCandidates.add(new GroovyResolveResultImpl(method, fileResolveContext, substitutor, isAccessible, isStaticsOK));
       } else {
         myInapplicableCandidates.add(new GroovyResolveResultImpl(method, fileResolveContext, substitutor, isAccessible, isStaticsOK));
@@ -124,16 +132,33 @@ public class MethodResolverProcessor extends ResolverProcessor {
     if (typeParameters.length == 0) return partialSubstitutor;
 
     if (argumentsSupplied()) {
-      final PsiParameter[] parameters = method.getParameterList().getParameters();
-      final int max = Math.max(parameters.length, argTypes.length);
+      final GrClosureSignature erasedSignature = GrClosureSignatureUtil.createSignatureWithErasedParameterTypes(method);
+
+      final GrClosureSignature signature = GrClosureSignatureUtil.createSignature(method, partialSubstitutor);
+      final GrClosureParameter[] params = signature.getParameters();
+
+      final GrClosureSignatureUtil.ArgInfo<PsiType>[] argInfos =
+        GrClosureSignatureUtil.mapArgTypesToParameters(erasedSignature, argTypes, (GroovyPsiElement)myPlace);
+      if (argInfos ==  null) return partialSubstitutor;
+
+      int max = Math.max(params.length, argTypes.length);
+
       PsiType[] parameterTypes = new PsiType[max];
       PsiType[] argumentTypes = new PsiType[max];
-      for (int i = 0; i < parameterTypes.length; i++) {
-        final PsiType paramType = handleVarargs(argTypes, parameters, i);
-        parameterTypes[i] = paramType;
-        argumentTypes[i] = handleConversion(paramType, argTypes, i);
+      int i = 0;
+      for (int paramIndex = 0; paramIndex < argInfos.length; paramIndex++) {
+        GrClosureSignatureUtil.ArgInfo<PsiType> argInfo = argInfos[paramIndex];
+        final List<PsiType> psiTypes = argInfo.args;
+        PsiType paramType = params[paramIndex].getType();
+        if (argInfo.isMultiArg) {
+          if (paramType instanceof PsiArrayType) paramType = ((PsiArrayType)paramType).getComponentType();
+        }
+        for (PsiType type : psiTypes) {
+          parameterTypes[i] = paramType;
+          argumentTypes[i] = handleConversion(paramType, type);
+          i++;
+        }
       }
-
       final PsiResolveHelper helper = JavaPsiFacade.getInstance(method.getProject()).getResolveHelper();
       PsiSubstitutor substitutor = helper.inferTypeArguments(typeParameters, parameterTypes, argumentTypes, LanguageLevel.HIGHEST);
       for (PsiTypeParameter typeParameter : typeParameters) {
@@ -148,40 +173,13 @@ public class MethodResolverProcessor extends ResolverProcessor {
     return partialSubstitutor;
   }
 
-  private PsiType handleConversion(PsiType paramType, PsiType[] argTypes, int i) {
-    if (i < argTypes.length) {
-      PsiType argType = argTypes[i];
-      final GroovyPsiElement context = (GroovyPsiElement)myPlace;
-      if (!TypesUtil.isAssignable(TypeConversionUtil.erasure(paramType), argType, context.getManager(), context.getResolveScope(), false) &&
-          TypesUtil.isAssignableByMethodCallConversion(paramType, argType, context)) {
-        return paramType;
-      }
-      return argType;
+  private PsiType handleConversion(PsiType paramType, PsiType argType) {
+    final GroovyPsiElement context = (GroovyPsiElement)myPlace;
+    if (!TypesUtil.isAssignable(TypeConversionUtil.erasure(paramType), argType, context.getManager(), context.getResolveScope(), false) &&
+        TypesUtil.isAssignableByMethodCallConversion(paramType, argType, context)) {
+      return paramType;
     }
-    return PsiType.NULL;
-  }
-
-  @NotNull
-  private static PsiType handleVarargs(PsiType[] argTypes, PsiParameter[] parameters, int index) {
-    if (index < parameters.length) {
-      final PsiType type = parameters[index].getType();
-      if (argTypes.length == parameters.length &&
-          type instanceof PsiEllipsisType &&
-          !(argTypes[argTypes.length - 1] instanceof PsiArrayType)) {
-        return ((PsiEllipsisType) type).getComponentType();
-      }
-      return type;
-    }
-
-    if (parameters.length > 0) {
-      final PsiType lastParameterType = parameters[parameters.length - 1].getType();
-      if (argTypes.length > parameters.length && lastParameterType instanceof PsiEllipsisType) {
-        return ((PsiEllipsisType) lastParameterType).getComponentType();
-      }
-      return lastParameterType;
-    }
-
-    return PsiType.NULL;
+    return argType;
   }
 
   private PsiSubstitutor inferFromContext(PsiTypeParameter typeParameter, PsiType lType, PsiSubstitutor substitutor, PsiResolveHelper helper) {
@@ -213,6 +211,10 @@ public class MethodResolverProcessor extends ResolverProcessor {
 
   @NotNull
   public GroovyResolveResult[] getCandidates() {
+    if (myAllVariants) {
+      return myInapplicableCandidates.toArray(new GroovyResolveResult[myInapplicableCandidates.size()]);
+    }
+
     if (!myCandidates.isEmpty()) {
       return filterCandidates();
     }

@@ -16,15 +16,18 @@
 
 package org.jetbrains.idea.eclipse.config;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -44,12 +47,13 @@ public class EclipseModuleManager implements PersistentStateComponent<Element>{
   @NonNls private static final String CONELEMENT = "conelement";
   @NonNls private static final String FORCED_JDK = "forced_jdk";
   private CachedXmlDocumentSet myDocumentSet;
-  private final Map<String, String> myEclipseVariablePaths = new HashMap<String, String>();
-  private final Set<String> myEclipseUrls = new HashSet<String>();
-  private final Set<String> myUnknownCons = new HashSet<String>();
+  private final Map<String, String> myEclipseVariablePaths = new LinkedHashMap<String, String>();
+  private final Set<String> myEclipseUrls = new LinkedHashSet<String>();
+  private final Set<String> myUnknownCons = new LinkedHashSet<String>();
   private boolean myForceConfigureJDK = false;
-  private static final String SRC_PREFIX = "src:";
-  private static final String SRC_LINK_PREFIX = "linksrc:";
+  @NonNls private static final String SRC_PREFIX = "src:";
+  @NonNls private static final String SRC_LINK_PREFIX = "linksrc:";
+  @NonNls private static final String PREFIX_ATTR = "kind";
   private final Module myModule;
   @NonNls private static final String LIBELEMENT = "libelement";
 
@@ -118,7 +122,7 @@ public class EclipseModuleManager implements PersistentStateComponent<Element>{
   }
 
   public Element getState() {
-    if (ClasspathStorage.getStorageType(myModule) != EclipseClasspathStorageProvider.ID) {
+    if (!ClasspathStorage.getStorageType(myModule).equals(EclipseClasspathStorageProvider.ID)) {
       if (!myEclipseUrls.isEmpty() || !myEclipseVariablePaths.isEmpty() || myForceConfigureJDK || !myUnknownCons.isEmpty()) {
         Element root = new Element("EclipseModuleSettings");
         for (String eclipseUrl : myEclipseUrls) {
@@ -128,7 +132,15 @@ public class EclipseModuleManager implements PersistentStateComponent<Element>{
         }
         for (String var : myEclipseVariablePaths.keySet()) {
           Element varElement = new Element(VARELEMENT);
-          varElement.setAttribute(VAR_ATTRIBUTE, var);
+          if (var.startsWith(SRC_PREFIX)) {
+            varElement.setAttribute(VAR_ATTRIBUTE, StringUtil.trimStart(var, SRC_PREFIX));
+            varElement.setAttribute(PREFIX_ATTR, SRC_PREFIX);
+          } else if (var.startsWith(SRC_LINK_PREFIX)) {
+            varElement.setAttribute(VAR_ATTRIBUTE, StringUtil.trimStart(var, SRC_LINK_PREFIX));
+            varElement.setAttribute(PREFIX_ATTR, SRC_LINK_PREFIX);
+          } else {
+            varElement.setAttribute(VAR_ATTRIBUTE, var);
+          }
           varElement.setAttribute(VALUE_ATTR, myEclipseVariablePaths.get(var));
           root.addContent(varElement);
         }
@@ -153,7 +165,8 @@ public class EclipseModuleManager implements PersistentStateComponent<Element>{
     }
 
     for (Object o : state.getChildren(VARELEMENT)) {
-      myEclipseVariablePaths.put(((Element)o).getAttributeValue(VAR_ATTRIBUTE), ((Element)o).getAttributeValue(VALUE_ATTR));
+      final String prefix = ((Element)o).getAttributeValue(PREFIX_ATTR);
+      myEclipseVariablePaths.put(((Element)o).getAttributeValue(VAR_ATTRIBUTE), (prefix != null ? prefix : "") + ((Element)o).getAttributeValue(VALUE_ATTR));
     }
 
     for (Object o : state.getChildren(CONELEMENT)) {

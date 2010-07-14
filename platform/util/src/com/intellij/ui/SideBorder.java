@@ -66,24 +66,24 @@ public class SideBorder extends LineBorder {
     g.setColor(getLineColor());
     for(i = 0; i < getThickness(); i++){
       if ((mySideMask & LEFT) != 0){
-        drawLine(g, x + i, y + i, x + i, height - i - i - 1);
+        drawLine(c, g, x + i, y + i, x + i, height - i - i - 1);
       }
       if ((mySideMask & TOP) != 0){
-        drawLine(g, x + i, y + i, width - i - i - 1, y + i);
+        drawLine(c, g, x + i, y + i, width - i - i - 1, y + i);
       }
       if ((mySideMask & RIGHT) != 0){
-        drawLine(g, width - i - i - 1, y + i, width - i - i - 1, height - i - i - 1);
+        drawLine(c, g, width - i - i - 1, y + i, width - i - i - 1, height - i - i - 1);
       }
       if ((mySideMask & BOTTOM) != 0){
-        drawLine(g, x + i, height - i - i - 1, width - i - i - 1, height - i - i - 1);
+        drawLine(c, g, x + i, height - i - i - 1, width - i - i - 1, height - i - i - 1);
       }
     }
     g.setColor(oldColor);
   }
 
-  private void drawLine(Graphics g, int x1, int y1, int x2, int y2) {
+  private void drawLine(Component c, Graphics g, int x1, int y1, int x2, int y2) {
     if (myDotted) {
-      UIUtil.drawDottedLine((Graphics2D)g, x1, y1, x2, y2, ((Graphics2D)g).getBackground(), getLineColor());
+      UIUtil.drawDottedLine((Graphics2D)g, x1, y1, x2, y2, null, getLineColor());
     }
     else {
       UIUtil.drawLine(g, x1, y1, x2, y2);

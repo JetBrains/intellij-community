@@ -16,12 +16,12 @@
 package com.siyeh.ig.resources;
 
 import com.intellij.psi.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -58,8 +58,8 @@ public class JDBCResourceInspection extends ResourceInspection{
     private static final Set<String> creationMethodNameSet =
             new HashSet<String>(9);
 
-    static{
-        creationMethodNameSet.addAll(Arrays.asList(creationMethodName));
+    static {
+      ContainerUtil.addAll(creationMethodNameSet, creationMethodName);
     }
 
     @NotNull

@@ -13,7 +13,6 @@ import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspec
 import com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclaration;
 import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
-import com.intellij.idea.Bombed;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageAnnotators;
 import com.intellij.lang.annotation.AnnotationHolder;
@@ -35,7 +34,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.Calendar;
 import java.util.List;
 
 import static com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase.filter;
@@ -46,7 +44,6 @@ import static com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase.filter;
  */
 public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advHighlighting";
-  private LanguageLevel myOldLanguageLevel;
   private UnusedSymbolLocalInspection myUnusedSymbolLocalInspection;
 
   private void doTest(boolean checkWarnings, boolean checkInfos) throws Exception {
@@ -55,14 +52,9 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
 
   protected void setUp() throws Exception {
     super.setUp();
-    myOldLanguageLevel = LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).getLanguageLevel();
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_4);
+    setLanguageLevel(LanguageLevel.JDK_1_4);
   }
 
-  protected void tearDown() throws Exception {
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(myOldLanguageLevel);
-    super.tearDown();
-  }
 
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     myUnusedSymbolLocalInspection = new UnusedSymbolLocalInspection();
@@ -283,7 +275,6 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     assertFalse(list.toString(), list.contains(annotator));
   }
 
-  @Bombed(month = Calendar.DECEMBER, day=31, user="cdr")
   public void testSOEForTypeOfHugeBinaryExpression() throws IOException {
     configureFromFileText("a.java", "class A { String s = \"\"; }");
     assertEmpty(filter(doHighlighting(), HighlightSeverity.ERROR));
@@ -298,6 +289,8 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
       PsiExpression expression = field.getInitializer();
       binary.getLOperand().replace(expression);
       binary.getROperand().replace(literal);
+
+      //UIUtil.dispatchAllInvocationEvents();
 
       expression.replace(binary);
       PostprocessReformattingAspect.getInstance(getProject()).clear(); // OOM otherwise

@@ -25,11 +25,11 @@ import com.intellij.packaging.elements.ComplexPackagingElementType;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.util.Icons;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -65,8 +65,8 @@ public class LibraryElementType extends ComplexPackagingElementType<LibraryPacka
 
   private static List<Library> getAllLibraries(ArtifactEditorContext context) {
     List<Library> libraries = new ArrayList<Library>();
-    libraries.addAll(Arrays.asList(LibraryTablesRegistrar.getInstance().getLibraryTable().getLibraries()));
-    libraries.addAll(Arrays.asList(LibraryTablesRegistrar.getInstance().getLibraryTable(context.getProject()).getLibraries()));
+    ContainerUtil.addAll(libraries, LibraryTablesRegistrar.getInstance().getLibraryTable().getLibraries());
+    ContainerUtil.addAll(libraries, LibraryTablesRegistrar.getInstance().getLibraryTable(context.getProject()).getLibraries());
     return libraries;
   }
 

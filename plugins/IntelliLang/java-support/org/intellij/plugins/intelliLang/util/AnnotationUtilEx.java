@@ -23,11 +23,11 @@ import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -284,13 +284,13 @@ public class AnnotationUtilEx {
       }
     };
     if (listOwner instanceof PsiMethod) {
-      all.addAll(Arrays.asList(modifierList.getAnnotations()));
+      ContainerUtil.addAll(all, modifierList.getAnnotations());
       SuperMethodsSearch.search((PsiMethod)listOwner, null, true, true).forEach(new Processor<MethodSignatureBackedByPsiMethod>() {
-            public boolean process(final MethodSignatureBackedByPsiMethod superMethod) {
-              all.addAll(Arrays.asList(superMethod.getMethod().getModifierList().getAnnotations()));
-              return true;
-            }
-          });
+        public boolean process(final MethodSignatureBackedByPsiMethod superMethod) {
+          ContainerUtil.addAll(all, superMethod.getMethod().getModifierList().getAnnotations());
+          return true;
+        }
+      });
       return all.toArray(new PsiAnnotation[all.size()]);
     }
     if (listOwner instanceof PsiParameter) {
@@ -300,13 +300,13 @@ public class AnnotationUtilEx {
       if (declarationScope instanceof PsiMethod && parameter.getParent() == (parameterList = ((PsiMethod)declarationScope).getParameterList())) {
         PsiMethod method = (PsiMethod)declarationScope;
         final int parameterIndex = parameterList.getParameterIndex(parameter);
-        all.addAll(Arrays.asList(modifierList.getAnnotations()));
+        ContainerUtil.addAll(all, modifierList.getAnnotations());
         SuperMethodsSearch.search(method, null, true, true).forEach(new Processor<MethodSignatureBackedByPsiMethod>() {
           public boolean process(final MethodSignatureBackedByPsiMethod superMethod) {
             PsiParameter superParameter = superMethod.getMethod().getParameterList().getParameters()[parameterIndex];
             PsiModifierList modifierList = superParameter.getModifierList();
             if (modifierList != null) {
-              all.addAll(Arrays.asList(modifierList.getAnnotations()));
+              ContainerUtil.addAll(all, modifierList.getAnnotations());
             }
             return true;
           }

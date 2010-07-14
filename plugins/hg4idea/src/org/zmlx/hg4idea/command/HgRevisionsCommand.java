@@ -16,6 +16,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.lang.StringUtils;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileRevision;
 import org.zmlx.hg4idea.HgRevisionNumber;
@@ -55,6 +56,7 @@ abstract class HgRevisionsCommand {
     this.project = project;
   }
 
+  @Nullable
   protected abstract HgCommandResult execute(
     HgCommandService service, VirtualFile repo, String template, int limit, HgFile hgFile
   );

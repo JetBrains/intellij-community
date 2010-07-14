@@ -46,7 +46,7 @@ import java.util.Comparator;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-final class ToolWindowsPane extends JLayeredPane {
+final class ToolWindowsPane extends JLayeredPane implements Disposable {
   private static final Logger LOG=Logger.getInstance("#com.intellij.openapi.wm.impl.ToolWindowsPane");
 
   private final IdeFrameImpl myFrame;
@@ -96,10 +96,12 @@ final class ToolWindowsPane extends JLayeredPane {
     // Splitters
 
     myVerticalSplitter = new ThreeComponentsSplitter(true);
+    Disposer.register(this, myVerticalSplitter);
     myVerticalSplitter.setDividerWidth(0);
     myVerticalSplitter.setDividerMouseZoneSize(Registry.intValue("ide.splitter.mouseZone"));
     myVerticalSplitter.setBackground(Color.gray);
     myHorizontalSplitter = new ThreeComponentsSplitter(false);
+    Disposer.register(this, myHorizontalSplitter);
     myHorizontalSplitter.setDividerWidth(0);
     myHorizontalSplitter.setDividerMouseZoneSize(Registry.intValue("ide.splitter.mouseZone"));
     myHorizontalSplitter.setBackground(Color.gray);
@@ -1177,5 +1179,9 @@ final class ToolWindowsPane extends JLayeredPane {
   public void setStripesOverlayed(boolean stripesOverlayed) {
     myStripesOverlayed = stripesOverlayed;
     updateToolStripesVisibility();
+  }
+
+  @Override
+   public void dispose() {
   }
 }

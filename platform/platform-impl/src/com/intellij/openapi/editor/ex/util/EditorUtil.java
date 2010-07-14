@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.impl.IterationState;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.List;
@@ -59,16 +60,23 @@ public class EditorUtil {
     }
 
     int visualLinesToSkip = line - resVisStart.line;
-    List<TextChange> softWraps = editor.getSoftWrapModel().getSoftWrapsForLine(resultLogLine);
+    List<? extends TextChange> softWraps = editor.getSoftWrapModel().getSoftWrapsForLine(resultLogLine);
     for (int i = 0; i < softWraps.size(); i++) {
       TextChange softWrap = softWraps.get(i);
+      CharSequence text = document.getCharsSequence();
+      if (visualLinesToSkip <= 0) {
+        int result = editor.offsetToVisualPosition(softWrap.getStart() - 1).column;
+        // We need to add width of the next symbol because current result column points to the last symbol before the soft wrap.
+        return  result + textWidthInColumns(editor, text, softWrap.getStart() - 1, softWrap.getStart(), result);
+      }
+
       int softWrapLineFeeds = StringUtil.countNewLines(softWrap.getText());
       if (softWrapLineFeeds < visualLinesToSkip) {
         visualLinesToSkip -= softWrapLineFeeds;
         continue;
       }
 
-      // Target visual column is the one just before line feed introduced by the next line feed.
+      // Target visual column is located on the last visual line of the current soft wrap.
       if (softWrapLineFeeds == visualLinesToSkip) {
         if (i >= softWraps.size() - 1) {
           return resVisEnd.column;
@@ -77,11 +85,11 @@ public class EditorUtil {
         TextChange nextSoftWrap = softWraps.get(i + 1);
         int result = editor.offsetToVisualPosition(nextSoftWrap.getStart() - 1).column;
 
-        // We need to add '1' because current column points to the last symbol before the next soft wrap;
-        result++;
+        // We need to add symbol width because current column points to the last symbol before the next soft wrap;
+        result += textWidthInColumns(editor, text, nextSoftWrap.getStart() - 1, nextSoftWrap.getStart(), result);
 
         int lineFeedIndex = StringUtil.indexOf(nextSoftWrap.getText(), '\n');
-        result += calcColumnNumber(editor, nextSoftWrap.getText(), 0, lineFeedIndex);
+        result += textWidthInColumns(editor, nextSoftWrap.getText(), 0, lineFeedIndex, result);
         return result;
       }
 
@@ -102,7 +110,8 @@ public class EditorUtil {
         }
       }
       int result = editor.offsetToVisualPosition(softWrap.getStart() - 1).column; // Column of the symbol just before the soft wrap
-      result++; // Because we calculated column of the symbol just before the soft wrap
+      // Target visual column is located on the last visual line of the current soft wrap.
+      result += textWidthInColumns(editor, text, softWrap.getStart() - 1, softWrap.getStart(), result);
       result += calcColumnNumber(editor, softWrap.getText(), softWrapStartOffset, softWrapEndOffset);
       return result;
     }
@@ -295,6 +304,75 @@ public class EditorUtil {
 
     int nTabs = x / tabSize;
     return (nTabs + 1) * tabSize;
+  }
+
+  /**
+   * Allows to answer how many columns are used to represent tabulation symbols that is started at the given visual column
+   * at the given editor.
+   *
+   * @param visualColumn    visual column where target tabulation symbol starts
+   * @param editor          target editor where tabulation symbol is to be represented
+   * @return                number of visual columns required to represent tabulation symbols that starts at the given column
+   */
+  public static int tabWidthInColumns(@NotNull Editor editor, int visualColumn) {
+    if (!editor.getSettings().isWhitespacesShown()) {
+      return 1;
+    }
+    int tabSize = getTabSize(editor);
+    int tabsNumber = visualColumn / tabSize;
+    return (tabsNumber + 1) * tabSize - visualColumn;
+  }
+
+  public static int textWidthInColumns(@NotNull Editor editor, CharSequence text, int start, int end, int columnOffset) {
+    int result = 0;
+    for (int i = start; i < end; i++) {
+      if (text.charAt(i) == '\t') {
+        result += tabWidthInColumns(editor, columnOffset + result);
+      }
+      else {
+        result++;
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Allows to answer what width in pixels is required to draw fragment of the given char array from <code>[start; end)</code> interval
+   * at the given editor.
+   * <p/>
+   * Tabulation symbols is processed specially, i.e. it's ta
+   * <p/>
+   * <b>Note:</b> it's assumed that target text fragment remains to the single line, i.e. line feed symbols within it are not
+   * treated specially.
+   *
+   * @param editor    editor that will be used for target text representation
+   * @param text      target text holder
+   * @param start     offset within the given char array that points to target text start (inclusive)
+   * @param end       offset within the given char array that points to target text end (exclusive)
+   * @param fontType  font type to use for target text representation
+   * @param x         <code>'x'</code> coordinate that should be used as a starting point for target text representation.
+   *                  It's necessity is implied by the fact that IDEA editor may represent tabulation symbols in any range
+   *                  from <code>[1; tab size]</code> (check {@link #nextTabStop(int, Editor)} for more details)
+   * @return          width in pixels required for target text representation
+   */
+  public static int textWidth(@NotNull Editor editor, char[] text, int start, int end, int fontType, int x) {
+    int result = 0;
+    for (int i = start; i < end; i++) {
+      char c = text[i];
+      if (c != '\t') {
+        FontInfo font = fontForChar(c, fontType, editor);
+        result += font.charWidth(c, editor.getContentComponent());
+        continue;
+      }
+
+      if (editor.getSettings().isWhitespacesShown()) {
+        result += nextTabStop(x + result, editor) - result - x;
+      }
+      else {
+        result += getSpaceWidth(fontType, editor);
+      }
+    }
+    return result;
   }
 }
 

@@ -20,6 +20,8 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -31,19 +33,16 @@ import java.awt.*;
  * @author Dmitry Avdeev
  */
 public class EditorNotificationPanel extends JPanel {
-
   protected final JLabel myLabel = new JLabel();
   protected final JPanel myLinksPanel;
 
   public EditorNotificationPanel() {
     super(new BorderLayout());
-
-    setBackground(LightColors.YELLOW);
-    setBorder(new SideBorder(Color.gray, SideBorder.BOTTOM, true));
+    setBorder(BorderFactory.createEmptyBorder(1, 15, 1, 15));
 
     setPreferredSize(new Dimension(-1, 24));
+    
     add(myLabel, BorderLayout.CENTER);
-    myLabel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
 
     myLinksPanel = new JPanel(new FlowLayout());
     myLinksPanel.setBackground(LightColors.YELLOW);
@@ -52,6 +51,12 @@ public class EditorNotificationPanel extends JPanel {
 
   public void setText(String text) {
     myLabel.setText(text);
+  }
+
+  @Override
+  public Color getBackground() {
+    Color color = EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.NOTIFICATION_BACKGROUND);
+    return color == null ? new Color(0xffffcc) : color;
   }
 
   public HyperlinkLabel createActionLabel(final String text, @NonNls final String actionId) {
@@ -63,7 +68,7 @@ public class EditorNotificationPanel extends JPanel {
   }
 
   public HyperlinkLabel createActionLabel(final String text, final Runnable action) {
-    HyperlinkLabel label = new HyperlinkLabel(text, Color.BLUE, LightColors.YELLOW, Color.BLUE);
+    HyperlinkLabel label = new HyperlinkLabel(text, Color.BLUE, getBackground(), Color.BLUE);
     label.addHyperlinkListener(new HyperlinkListener() {
       public void hyperlinkUpdate(final HyperlinkEvent e) {
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {

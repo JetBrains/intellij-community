@@ -21,16 +21,16 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -39,7 +39,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -126,12 +125,12 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
       members = chooseMembers(allMembers, true, false, project);
       if (members == null) return null;
     }
-    if (baseConstructors != null){
+    if (baseConstructors != null) {
       ArrayList<ClassMember> array = new ArrayList<ClassMember>();
       for (PsiMethod baseConstructor : baseConstructors) {
         array.add(new PsiMethodMember(baseConstructor));
       }
-      array.addAll(Arrays.asList(members));
+      ContainerUtil.addAll(array, members);
       members = array.toArray(new ClassMember[array.size()]);
     }
 

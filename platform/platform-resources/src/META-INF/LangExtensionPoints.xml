@@ -442,4 +442,7 @@
   <extensionPoint name="typeIcon" beanClass="com.intellij.ide.TypeIconEP"/>
 
   <extensionPoint name="analyzeStacktraceFilter" interface="com.intellij.execution.filters.Filter" area="IDEA_PROJECT"/>
+
+  <extensionPoint name="stacktrace.fold" beanClass="com.intellij.execution.console.CustomizableConsoleFoldingBean"/>
+
 </extensionPoints>

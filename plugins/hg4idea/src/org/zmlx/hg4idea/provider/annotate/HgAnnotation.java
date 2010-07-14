@@ -14,10 +14,7 @@ package org.zmlx.hg4idea.provider.annotate;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.annotate.AnnotationListener;
-import com.intellij.openapi.vcs.annotate.AnnotationSourceSwitcher;
-import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
+import com.intellij.openapi.vcs.annotate.*;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -108,7 +105,7 @@ public class HgAnnotation implements FileAnnotation {
     return result;
   }
 
-  class HgLineAnnotationAspect implements LineAnnotationAspect {
+  class HgLineAnnotationAspect extends LineAnnotationAspectAdapter {
     private final FIELD aspectType;
 
     public HgLineAnnotationAspect(FIELD aspectType) {
@@ -125,8 +122,9 @@ public class HgAnnotation implements FileAnnotation {
         : annotationLine.get(aspectType).toString();
     }
 
-    public String getTooltipText(int lineNumber) {
-      return null;
+    @Override
+    protected void showAffectedPaths(int lineNum) {
+      // todo 
     }
   }
 

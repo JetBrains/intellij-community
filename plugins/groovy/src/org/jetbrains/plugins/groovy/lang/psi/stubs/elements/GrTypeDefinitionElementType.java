@@ -18,6 +18,8 @@ package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex;
+import com.intellij.psi.impl.java.stubs.index.JavaShortClassNameIndex;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
@@ -36,7 +38,6 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.impl.GrTypeDefinitionStubImpl
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnnotatedMemberIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnonymousClassIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullClassNameIndex;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrShortClassNameIndex;
 
 import java.io.IOException;
 import java.util.List;
@@ -121,11 +122,12 @@ public abstract class GrTypeDefinitionElementType<TypeDef extends GrTypeDefiniti
     else {
       String shortName = stub.getName();
       if (shortName != null) {
-        sink.occurrence(GrShortClassNameIndex.KEY, shortName);
+        sink.occurrence(JavaShortClassNameIndex.KEY, shortName);
       }
       final String fqn = stub.getQualifiedName();
       if (fqn != null) {
         sink.occurrence(GrFullClassNameIndex.KEY, fqn.hashCode());
+        sink.occurrence(JavaFullClassNameIndex.KEY, fqn.hashCode());
       }
     }
 

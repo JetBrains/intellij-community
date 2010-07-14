@@ -29,10 +29,8 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Time;
-import com.intellij.util.concurrency.ReadWriteLock;
-import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
-import com.intellij.util.concurrency.Sync;
 import com.intellij.util.concurrency.WorkerThread;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.enumeration.EnumerationCopy;
 import com.intellij.util.ui.UIUtil;
@@ -50,7 +48,10 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class AbstractTreeUi {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.treeView.AbstractTreeBuilder");
@@ -85,7 +86,10 @@ public class AbstractTreeUi {
   private ProgressIndicator myProgress;
   private static final int WAIT_CURSOR_DELAY = 100;
   private AbstractTreeNode<Object> TREE_NODE_WRAPPER;
-  private boolean myRootNodeWasInitialized = false;
+
+  private boolean myRootNodeWasQueuedToInitialize = false;
+  private boolean myRootNodeInitialized = false;
+
   private final Map<Object, List<NodeAction>> myNodeActions = new HashMap<Object, List<NodeAction>>();
   private boolean myUpdateFromRootRequested;
   private boolean myWasEverShown;
@@ -126,7 +130,7 @@ public class AbstractTreeUi {
 
   private final RegistryValue myYeildingUpdate = Registry.get("ide.tree.yeildingUiUpdate");
   private final RegistryValue myShowBusyIndicator = Registry.get("ide.tree.showBusyIndicator");
-  private final RegistryValue myWaitForReadyTime = Registry.get("ide.tree.waitForReadyTimout");
+  private final RegistryValue myWaitForReadyTime = Registry.get("ide.tree.waitForReadyTimeout");
 
   private boolean myWasEverIndexNotReady;
   private boolean myShowing;
@@ -146,7 +150,7 @@ public class AbstractTreeUi {
   private BusyObject.Impl myBusyObject = new BusyObject.Impl() {
     @Override
     protected boolean isReady() {
-      return AbstractTreeUi.this.isReady();
+      return AbstractTreeUi.this.isReady(true);
     }
   };
 
@@ -160,7 +164,7 @@ public class AbstractTreeUi {
   private SimpleTimerTask myCleanupTask;
 
   private AtomicBoolean myCancelRequest = new AtomicBoolean();
-  private ReadWriteLock myStateLock = new ReentrantWriterPreferenceReadWriteLock();
+  private Lock myStateLock = new ReentrantLock();
 
   private AtomicBoolean myResettingToReadyNow = new AtomicBoolean();
 
@@ -173,6 +177,14 @@ public class AbstractTreeUi {
   private boolean myReleaseRequested;
 
   private Set<Object> myRevalidatedObjects = new HashSet<Object>();
+
+  private Alarm myMaybeReady = new Alarm();
+  private Runnable myMaybeReadyRunnable = new Runnable() {
+    @Override
+    public void run() {
+      maybeReady();
+    }
+  };
 
   protected void init(AbstractTreeBuilder builder,
                       JTree tree,
@@ -193,7 +205,7 @@ public class AbstractTreeUi {
 
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       public void run() {
-        if (!myRootNodeWasInitialized) {
+        if (!wasRootNodeInitialized()) {
           if (myRootNode.getChildCount() == 0) {
             insertLoadingNode(myRootNode, true);
           }
@@ -247,7 +259,7 @@ public class AbstractTreeUi {
 
     if (myTree instanceof com.intellij.ui.treeStructure.Tree) {
       final com.intellij.ui.treeStructure.Tree tree = (Tree)myTree;
-      final boolean isBusy = !isReady() || forcedBusy;
+      final boolean isBusy = !isReady(true) || forcedBusy;
       if (isBusy && tree.isShowing()) {
         tree.setPaintBusy(true);
         myBusyAlarm.cancelAllRequests();
@@ -390,7 +402,7 @@ public class AbstractTreeUi {
 
   private void releaseNow() {
     try {
-      myStateLock.writeLock().acquire();
+      acquireLock();
 
       myTree.removeTreeExpansionListener(myExpansionListener);
       myTree.removeTreeSelectionListener(mySelectionListener);
@@ -426,7 +438,7 @@ public class AbstractTreeUi {
     catch (InterruptedException e) {
       LOG.info(e);
     } finally {
-      myStateLock.writeLock().release();
+      releaseLock();
     }
   }
 
@@ -597,7 +609,7 @@ public class AbstractTreeUi {
 
   private boolean initRootNodeNowIfNeeded(final TreeUpdatePass pass) {
     boolean wasCleanedUp = false;
-    if (myRootNodeWasInitialized) {
+    if (myRootNodeWasQueuedToInitialize) {
       Object root = getTreeStructure().getRootElement();
       assert root != null : "Root element cannot be null";
 
@@ -614,7 +626,9 @@ public class AbstractTreeUi {
       wasCleanedUp = true;
     }
 
-    myRootNodeWasInitialized = true;
+    if (myRootNodeWasQueuedToInitialize) return wasCleanedUp;
+
+    myRootNodeWasQueuedToInitialize = true;
 
     final Object rootElement = getTreeStructure().getRootElement();
     addNodeAction(rootElement, new NodeAction() {
@@ -660,11 +674,19 @@ public class AbstractTreeUi {
     };
 
     if (bgLoading) {
-      queueToBackground(build, update, rootDescriptor);
+      queueToBackground(build, update, rootDescriptor).doWhenProcessed(new Runnable() {
+        @Override
+        public void run() {
+          myRootNodeInitialized = true;
+          processNodeActionsIfReady(myRootNode);
+        }
+      });
     }
     else {
       build.run();
       update.run();
+      myRootNodeInitialized = true;
+      processNodeActionsIfReady(myRootNode);
     }
 
     return wasCleanedUp;
@@ -828,7 +850,7 @@ public class AbstractTreeUi {
     try {
       final Ref<Boolean> update = new Ref<Boolean>();
       try {
-        myStateLock.readLock().acquire();
+        acquireLock();
         execute(new Runnable() {
           public void run() {
             nodeDescriptor.setUpdateCount(nodeDescriptor.getUpdateCount() + 1);
@@ -841,7 +863,7 @@ public class AbstractTreeUi {
       } catch (ProcessCanceledException e) {
         throw e;        
       } finally {
-        myStateLock.readLock().release();
+        releaseLock();
       }
       return update.get();
     }
@@ -1414,7 +1436,7 @@ public class AbstractTreeUi {
   private Object[] getChildrenFor(final Object element) {
     final Ref<Object[]> passOne = new Ref<Object[]>();
     try {
-      myStateLock.readLock().acquire();
+      acquireLock();
       execute(new Runnable() {
         public void run() {
           passOne.set(getTreeStructure().getChildElements(element));
@@ -1428,7 +1450,7 @@ public class AbstractTreeUi {
     catch (InterruptedException e) {
       throw new ProcessCanceledException();
     } finally {
-      myStateLock.readLock().release();
+      releaseLock();
     }
 
     if (!Registry.is("ide.tree.checkStructure")) return passOne.get();
@@ -1713,6 +1735,8 @@ public class AbstractTreeUi {
   }
 
   private void resetIncompleteNode(DefaultMutableTreeNode node) {
+    if (myReleaseRequested) return;
+
     addToCancelled(node);
 
     if (!isExpanded(node, false)) {
@@ -1731,8 +1755,12 @@ public class AbstractTreeUi {
     myYeildingNow = true;
     yield(new Runnable() {
       public void run() {
+        if (isReleased()) return;
+
         runOnYieldingDone(new Runnable() {
           public void run() {
+            if (isReleased()) return;
+
             executeYieldingRequest(runnable, pass);
           }
         });
@@ -1751,15 +1779,46 @@ public class AbstractTreeUi {
   }
 
   public boolean isReady() {
+    return isReady(false);
+  }
+
+  public boolean isReady(boolean attempt) {
+    Boolean ready = _isReady(attempt);
+    return ready != null && ready.booleanValue();
+  }
+
+  @Nullable
+  public Boolean _isReady(boolean attempt) {
+    Boolean ready = checkValue(new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        return Boolean.valueOf(isIdle() && !hasPendingWork() && !isNodeActionsPending());
+      }
+    }, attempt, null);
+
+    return ready != null && ready.booleanValue();
+  }
+
+  private Boolean checkValue(Computable<Boolean> computable, boolean attempt, Boolean defaultValue) {
+    boolean toRelease = true;
     try {
-      myStateLock.readLock().acquire();
-      return isIdle() && !hasPendingWork() && !isNodeActionsPending();
+      if (attempt) {
+        if (!attemptLock()) {
+          toRelease = false;
+          return defaultValue != null ? defaultValue : computable.compute();
+        }
+      } else {
+        acquireLock();
+      }
+      return computable.compute();
     }
     catch (InterruptedException e) {
       LOG.info(e);
-      return false;
+      return defaultValue;
     } finally {
-      myStateLock.readLock().release();
+      if (toRelease) {
+        releaseLock();
+      }
     }
   }
 
@@ -1822,7 +1881,8 @@ public class AbstractTreeUi {
 
     if (isReleased()) return;
 
-    if (isReady()) {
+    Boolean ready = _isReady(true);
+    if (ready != null && ready.booleanValue()) {
       myRevalidatedObjects.clear();
 
       setCancelRequested(false);
@@ -1867,7 +1927,14 @@ public class AbstractTreeUi {
           }
         }
       }
+    } else if (ready == null) {
+      scheduleMaybeReady();
     }
+  }
+
+  private void scheduleMaybeReady() {
+    myMaybeReady.cancelAllRequests();
+    myMaybeReady.addRequest(myMaybeReadyRunnable, Registry.intValue("ide.tree.waitForReadySchedule"));
   }
 
   private void flushPendingNodeActions() {
@@ -2155,9 +2222,9 @@ public class AbstractTreeUi {
   private void setCancelRequested(boolean requested) {
     try {
       if (isUnitTestingMode()) {
-        myStateLock.writeLock().acquire(); // in unit tests there should be solid sync, in production it's ok to have race conditions (to avoid blocking on acquire())
+        acquireLock();
       } else {
-        myStateLock.writeLock().attempt(Sync.ONE_SECOND);
+        attemptLock();
       }
       myCancelRequest.set(requested);
     }
@@ -2165,9 +2232,22 @@ public class AbstractTreeUi {
       return;
     }
     finally {
-      myStateLock.writeLock().release();
+      releaseLock();
     }
   }
+
+  private boolean attemptLock() throws InterruptedException {
+    return myStateLock.tryLock(Registry.intValue("ide.tree.uiLockAttempt"), TimeUnit.MILLISECONDS);
+  }
+
+  private void acquireLock() throws InterruptedException {
+    myStateLock.lock();
+  }
+
+  private void releaseLock() {
+    myStateLock.unlock();
+  }
+
 
   public ActionCallback batch(final Progressive progressive) {
     assertIsDispatchThread();
@@ -2215,21 +2295,18 @@ public class AbstractTreeUi {
   }
 
   public boolean isCancelProcessed() {
-    try {
-      myStateLock.readLock().acquire();
-      return myCancelRequest.get() || myResettingToReadyNow.get();
-    }
-    catch (InterruptedException e) {
-      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-    } finally {
-      myStateLock.readLock().release();
-    }
+    Boolean processed = checkValue(new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        return Boolean.valueOf(myCancelRequest.get() || myResettingToReadyNow.get());
+      }
+    }, true, null);
 
-    return false;
+    return processed != null && processed.booleanValue();
   }
 
   public boolean isToPaintSelection() {
-    return isReady() || !mySelectionIsAdjusted;
+    return isReady(true) || !mySelectionIsAdjusted;
   }
 
   public boolean isReleaseRequested() {
@@ -3349,11 +3426,7 @@ public class AbstractTreeUi {
   }
 
   public boolean wasRootNodeInitialized() {
-    return myRootNodeWasInitialized;
-  }
-
-  private boolean isRootNodeBuilt() {
-    return myRootNodeWasInitialized && isNodeBeingBuilt(myRootNode);
+    return myRootNodeWasQueuedToInitialize && myRootNodeInitialized;
   }
 
   public void select(final Object[] elements, @Nullable final Runnable onDone) {
@@ -3418,13 +3491,20 @@ public class AbstractTreeUi {
     final boolean oldCanProcessDeferredSelection = myCanProcessDeferredSelections;
 
     if (!deferred && wasRootNodeInitialized() && willAffectSelection) {
-      myCanProcessDeferredSelections = false;
+      getReady(this).doWhenDone(new Runnable() {
+        @Override
+        public void run() {
+          myCanProcessDeferredSelections = false;
+        }
+      });
     }
 
     if (!checkDeferred(deferred, onDone)) return;
 
     if (!deferred && oldCanProcessDeferredSelection && !myCanProcessDeferredSelections) {
-      getTree().clearSelection();
+      if (!addToSelection) {
+        getTree().clearSelection();
+      }
     }
 
 
@@ -3453,7 +3533,7 @@ public class AbstractTreeUi {
 
         Set<Object> toSelect = new HashSet<Object>();
         myTree.clearSelection();
-        toSelect.addAll(Arrays.asList(elements));
+        ContainerUtil.addAll(toSelect, elements);
         if (addToSelection) {
           toSelect.addAll(currentElements);
         }
@@ -3489,7 +3569,7 @@ public class AbstractTreeUi {
           }, originalRows, deferred, scrollToVisible, canSmartExpand);
         }
         else {
-          addToDeferred(elementsToSelect, onDone);
+          addToDeferred(elementsToSelect, onDone, addToSelection);
         }
       }
     });
@@ -3505,11 +3585,13 @@ public class AbstractTreeUi {
   }
 
 
-  private void addToDeferred(final Object[] elementsToSelect, final Runnable onDone) {
-    myDeferredSelections.clear();
+  private void addToDeferred(final Object[] elementsToSelect, final Runnable onDone, final boolean addToSelection) {
+    if (!addToSelection) {
+      myDeferredSelections.clear();
+    }
     myDeferredSelections.add(new Runnable() {
       public void run() {
-        select(elementsToSelect, onDone, false, true);
+        select(elementsToSelect, onDone, addToSelection, true);
       }
     });
   }
@@ -4017,7 +4099,7 @@ public class AbstractTreeUi {
   }
 
   public final boolean isNodeBeingBuilt(Object node) {
-    return getParentBuiltNode(node) != null;
+    return getParentBuiltNode(node) != null || (myRootNode == node && !wasRootNodeInitialized());
   }
 
   public final DefaultMutableTreeNode getParentBuiltNode(Object node) {
@@ -4219,7 +4301,9 @@ public class AbstractTreeUi {
     myTree.clearSelection();
     getRootNode().removeAllChildren();
 
-    myRootNodeWasInitialized = false;
+    myRootNodeWasQueuedToInitialize = false;
+    myRootNodeInitialized = false;
+
     clearNodeActions();
     myElementToNodeMap.clear();
     myDeferredSelections.clear();

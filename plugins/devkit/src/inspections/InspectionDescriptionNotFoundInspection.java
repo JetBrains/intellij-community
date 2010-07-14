@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +36,6 @@ import org.jetbrains.idea.devkit.inspections.quickfix.CreateHtmlDescriptionFix;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -119,7 +119,7 @@ public class InspectionDescriptionNotFoundInspection extends DevKitInspectionBas
         if (parent != null) result.add(parent.getVirtualFile());
       }
     } else {
-      result.addAll(Arrays.asList(ModuleRootManager.getInstance(module).getSourceRoots()));
+      ContainerUtil.addAll(result, ModuleRootManager.getInstance(module).getSourceRoots());
     }
     return result;
   }

@@ -23,10 +23,10 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -261,7 +261,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     myLineSeparatorsConversion = s.LINE_SEPARATORS_CONVERSION;
     myAskBeforeLineSeparatorConversion = s.LINE_SEPARATORS_CONVERSION_ASK;
     myCommitAuthors.clear();
-    myCommitAuthors.addAll(Arrays.asList(s.PREVIOUS_COMMIT_AUTHORS));
+    ContainerUtil.addAll(myCommitAuthors, s.PREVIOUS_COMMIT_AUTHORS);
     myPushActiveBranchesRebaseSavePolicy = s.PUSH_ACTIVE_BRANCHES_REBASE_SAVE_POLICY;
     mySshExecutable = s.SSH_EXECUTABLE;
     myUpdateChangesPolicy = s.UPDATE_CHANGES_POLICY;

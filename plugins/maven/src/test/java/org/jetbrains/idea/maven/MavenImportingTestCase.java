@@ -185,7 +185,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   private void assertModuleLibDepPath(LibraryOrderEntry lib, OrderRootType type, List<String> paths) {
     if (paths == null) return;
-    assertUnorderedElementsAreEqual(lib.getUrls(type), ArrayUtil.toStringArray(paths));
+    assertUnorderedElementsAreEqual(lib.getRootUrls(type), ArrayUtil.toStringArray(paths));
     // also check the library because it may contain slight different set of urls (e.g. with duplicates)
     assertUnorderedElementsAreEqual(lib.getLibrary().getUrls(type), ArrayUtil.toStringArray(paths));
   }

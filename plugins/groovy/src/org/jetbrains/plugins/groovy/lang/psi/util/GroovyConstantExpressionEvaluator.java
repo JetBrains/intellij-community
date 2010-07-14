@@ -15,11 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
-import com.intellij.psi.impl.ConstantExpressionEvaluator;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiConstantEvaluationHelper;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.ConstantExpressionEvaluator;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 
 /**
@@ -29,6 +30,9 @@ public class GroovyConstantExpressionEvaluator implements ConstantExpressionEval
 
   @Nullable
   public static Object evaluate(@Nullable GrExpression expression) {
+    if (expression instanceof GrParenthesizedExpression) {
+      return evaluate(((GrParenthesizedExpression)expression).getOperand());
+    }
     if (expression instanceof GrLiteral) {
       return ((GrLiteral)expression).getValue();
     }

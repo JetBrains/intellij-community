@@ -112,15 +112,6 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
   }
 
   /**
-   * Allows to answer if current position points to soft wrap-introduced visual line.
-   *
-   * @return    <code>true</code> if current position points to soft wrap-introduced visual line; <code>false</code> otherwise
-   */
-  public boolean isOnSoftWrappedLine() {
-    return softWrapColumnDiff != 0;
-  }
-
-  /**
    * Builds visual position based on a state of the current logical position.
    * <p/>
    * Such visual position is considered to make sense only if current logical position
@@ -149,7 +140,7 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
   @NonNls
   public String toString() {
     return "LogicalPosition: line=" + line + " column=" + column + "; visual position aware=" + visualPositionAware
-           + " soft wrap: lines=" + (softWrapLinesBeforeCurrentLogicalLine + softWrapLinesOnCurrentLogicalLine) + " (before=" +
+           + "; soft wrap: lines=" + (softWrapLinesBeforeCurrentLogicalLine + softWrapLinesOnCurrentLogicalLine) + " (before=" +
            softWrapLinesBeforeCurrentLogicalLine + "; current=" + softWrapLinesOnCurrentLogicalLine
            + ") columns diff=" + softWrapColumnDiff + "; folding: lines = " + foldedLines + " columns diff=" + foldingColumnDiff;
   }

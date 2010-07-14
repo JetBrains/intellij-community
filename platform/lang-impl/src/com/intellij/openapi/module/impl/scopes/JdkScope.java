@@ -24,9 +24,9 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.LinkedHashSet;
 
 /**
@@ -41,7 +41,7 @@ public class JdkScope extends GlobalSearchScope {
     super(project);
     myIndex = ProjectRootManager.getInstance(project).getFileIndex();
     myJdkName = jdk.getJdkName();
-    myEntries.addAll(Arrays.asList(jdk.getFiles(OrderRootType.CLASSES)));
+    ContainerUtil.addAll(myEntries, jdk.getRootFiles(OrderRootType.CLASSES));
   }
 
   public int hashCode() {

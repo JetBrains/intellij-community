@@ -278,4 +278,6 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testCollectionAssignments() throws Exception {
     doTest(new GroovyAssignabilityCheckInspection());
   }
+
+  public void testNumberDuplicatesInMaps() throws Exception {doTest();}
 }

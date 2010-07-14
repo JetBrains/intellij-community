@@ -16,16 +16,6 @@
 
 package org.intellij.lang.xpath.xslt.impl.references;
 
-import org.intellij.lang.xpath.completion.NamespaceLookup;
-import org.intellij.lang.xpath.psi.impl.ResolveUtil;
-import org.intellij.lang.xpath.xslt.XsltSupport;
-import org.intellij.lang.xpath.xslt.impl.XsltChecker;
-import org.intellij.lang.xpath.xslt.context.XsltNamespaceContext;
-import org.intellij.lang.xpath.xslt.psi.impl.ImplicitModeElement;
-import org.intellij.lang.xpath.xslt.util.MatchTemplateMatcher;
-import org.intellij.lang.xpath.xslt.util.QNameUtil;
-import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
-
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -33,6 +23,16 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
+import org.intellij.lang.xpath.completion.NamespaceLookup;
+import org.intellij.lang.xpath.psi.impl.ResolveUtil;
+import org.intellij.lang.xpath.xslt.XsltSupport;
+import org.intellij.lang.xpath.xslt.context.XsltNamespaceContext;
+import org.intellij.lang.xpath.xslt.impl.XsltChecker;
+import org.intellij.lang.xpath.xslt.psi.impl.ImplicitModeElement;
+import org.intellij.lang.xpath.xslt.util.MatchTemplateMatcher;
+import org.intellij.lang.xpath.xslt.util.QNameUtil;
+import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,13 +70,13 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
         if (containingFile instanceof XmlFile && XsltSupport.isXsltFile(containingFile)) {
             final List<Object> l = new ArrayList<Object>();
             if (!myImplicitModeElement.hasPrefix()) {
-                final Object[] prefixes = PrefixReference.getPrefixCompletions(myAttribute);
-                l.addAll(Arrays.asList(prefixes));
+              final Object[] prefixes = PrefixReference.getPrefixCompletions(myAttribute);
+              ContainerUtil.addAll(l, prefixes);
             }
 
             if (myImplicitModeElement.getQName() != null) {
-                final PsiElement[] modes = ResolveUtil.collect(getMatcher().variantMatcher());
-                l.addAll(Arrays.asList(modes));
+              final PsiElement[] modes = ResolveUtil.collect(getMatcher().variantMatcher());
+              ContainerUtil.addAll(l, modes);
             }
           return ArrayUtil.toObjectArray(l);
         }

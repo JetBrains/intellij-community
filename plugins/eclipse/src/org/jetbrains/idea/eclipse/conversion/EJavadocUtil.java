@@ -196,9 +196,9 @@ public class EJavadocUtil {
 
   static void setupJavadocAttributes(Element orderEntry, LibraryOrderEntry libraryOrderEntry, final ModuleRootModel model) {
     final List<String> eclipseUrls = new ArrayList<String>();
-    final String[] docUrls = libraryOrderEntry.getUrls(JavadocOrderRootType.getInstance());
-    for (String docUrl : docUrls) {
-      eclipseUrls.add(toEclipseJavadocPath(model, docUrl));
+    final String[] docUrls = libraryOrderEntry.getRootUrls(JavadocOrderRootType.getInstance());
+    if (docUrls.length > 0) {
+      eclipseUrls.add(toEclipseJavadocPath(model, docUrls[0]));
     }
 
     final List children = new ArrayList(orderEntry.getChildren(ATTRIBUTES_TAG));

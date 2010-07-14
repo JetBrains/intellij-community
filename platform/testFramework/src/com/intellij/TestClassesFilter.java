@@ -15,8 +15,6 @@
  */
 package com.intellij;
 
-import com.intellij.openapi.util.text.StringUtil;
-
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
@@ -139,14 +137,6 @@ public class TestClassesFilter {
           currentGroupName = line.substring(1, line.length() - 1);
         }
         else {
-          final int commentStart = line.indexOf("#");
-          if (commentStart >= 0) {
-            line = line.substring(0, commentStart);
-          }
-          if (StringUtil.isEmpty(line)) {
-            continue;
-          }
-
           if (!groupNameToPatternsMap.containsKey(currentGroupName)) {
             groupNameToPatternsMap.put(currentGroupName, new ArrayList<String>());
           }
@@ -199,7 +189,7 @@ public class TestClassesFilter {
   }
 
   private static boolean isAllExcludeDefinedGroup(String groupName) {
-    return StringUtil.isEmpty(groupName) || ALL_EXCLUDE_DEFINED.equalsIgnoreCase(groupName.trim());
+    return groupName == null || ALL_EXCLUDE_DEFINED.equalsIgnoreCase(groupName.trim());
   }
 
   private List<Pattern> collectPatternsFor(String groupName) {

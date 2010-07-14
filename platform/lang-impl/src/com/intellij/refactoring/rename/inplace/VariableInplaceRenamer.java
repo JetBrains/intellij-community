@@ -62,9 +62,13 @@ import com.intellij.util.containers.Stack;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author ven
@@ -75,7 +79,7 @@ public class VariableInplaceRenamer {
     "com.intellij.rename.inplace.resolveSnapshotProvider"
   );
 
-  private final PsiNameIdentifierOwner myElementToRename;
+  private final PsiNamedElement myElementToRename;
   @NonNls private static final String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
   @NonNls private static final String OTHER_VARIABLE_NAME = "OtherVariable";
   private ArrayList<RangeHighlighter> myHighlighters;
@@ -84,7 +88,7 @@ public class VariableInplaceRenamer {
 
   private static final Stack<VariableInplaceRenamer> ourRenamersStack = new Stack<VariableInplaceRenamer>();
 
-  public VariableInplaceRenamer(PsiNameIdentifierOwner elementToRename, Editor editor) {
+  public VariableInplaceRenamer(@NotNull PsiNamedElement elementToRename, Editor editor) {
     myElementToRename = elementToRename;
     myEditor = /*(editor instanceof EditorWindow)? ((EditorWindow)editor).getDelegate() : */editor;
     myProject = myElementToRename.getProject();
@@ -97,14 +101,7 @@ public class VariableInplaceRenamer {
     
     final Collection<PsiReference> refs = ReferencesSearch.search(myElementToRename).findAll();
 
-    PsiFile myEditorFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
-    // Note, that myEditorFile can be different from myElement.getContainingFile() e.g. in injections: myElement declaration in one 
-    // file / usage in another !
-    final PsiReference reference = (myEditorFile != null ? 
-      myEditorFile:myElementToRename.getContainingFile()).findReferenceAt(myEditor.getCaretModel().getOffset());
-    if (reference != null && !refs.contains(reference)) {
-      refs.add(reference);
-    }
+    addReferenceAtCaret(refs);
 
     final FileViewProvider fileViewProvider = myElementToRename.getContainingFile().getViewProvider();
     VirtualFile file = getTopLevelVirtualFile(fileViewProvider);
@@ -164,7 +161,7 @@ public class VariableInplaceRenamer {
       resolveSnapshotProvider.createSnapshot(scope):null;
     final TemplateBuilderImpl builder = new TemplateBuilderImpl(scope);
 
-    final PsiElement nameIdentifier = myElementToRename.getNameIdentifier();
+    PsiElement nameIdentifier = myElementToRename instanceof PsiNameIdentifierOwner ? ((PsiNameIdentifierOwner)myElementToRename).getNameIdentifier() : null;
     PsiElement selectedElement = getSelectedInEditorElement(nameIdentifier, refs, myEditor.getCaretModel().getOffset());
     if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, myElementToRename)) return true;
 
@@ -241,6 +238,17 @@ public class VariableInplaceRenamer {
     return true;
   }
 
+  protected void addReferenceAtCaret(Collection<PsiReference> refs) {
+    PsiFile myEditorFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+    // Note, that myEditorFile can be different from myElement.getContainingFile() e.g. in injections: myElement declaration in one
+    // file / usage in another !
+    final PsiReference reference = (myEditorFile != null ?
+      myEditorFile:myElementToRename.getContainingFile()).findReferenceAt(myEditor.getCaretModel().getOffset());
+    if (reference != null && !refs.contains(reference)) {
+      refs.add(reference);
+    }
+  }
+
   public void performAutomaticRename(final String newName, final PsiElement elementToRename) {
     for (AutomaticRenamerFactory renamerFactory : Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
       if (renamerFactory.isApplicable(elementToRename)) {
@@ -315,10 +323,12 @@ public class VariableInplaceRenamer {
 
   private void collectElementsToHighlight(Map<TextRange, TextAttributes> rangesToHighlight, Collection<PsiReference> refs) {
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
-    PsiElement nameId = myElementToRename.getNameIdentifier();
-    LOG.assertTrue(nameId != null);
-    rangesToHighlight.put(nameId.getTextRange().shiftRight(PsiUtilBase.findInjectedElementOffsetInRealDocument(nameId)), colorsManager.getGlobalScheme().getAttributes(EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES));
-    
+    if (myElementToRename instanceof PsiNameIdentifierOwner) {
+      PsiElement nameId = ((PsiNameIdentifierOwner)myElementToRename).getNameIdentifier();
+      LOG.assertTrue(nameId != null);
+      rangesToHighlight.put(nameId.getTextRange().shiftRight(PsiUtilBase.findInjectedElementOffsetInRealDocument(nameId)), colorsManager.getGlobalScheme().getAttributes(EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES));
+    }
+
     for (PsiReference ref : refs) {
       final PsiElement element = ref.getElement();
       TextRange range = ref.getRangeInElement().shiftRight(
@@ -350,7 +360,7 @@ public class VariableInplaceRenamer {
     }
   }
 
-  private static PsiElement getSelectedInEditorElement(final PsiElement nameIdentifier, final Collection<PsiReference> refs, final int offset) {
+  private static PsiElement getSelectedInEditorElement(@Nullable PsiElement nameIdentifier, final Collection<PsiReference> refs, final int offset) {
     if (nameIdentifier != null) {
       final TextRange range = nameIdentifier.getTextRange()/*.shiftRight(PsiUtilBase.findInjectedElementOffsetInRealDocument(nameIdentifier))*/;
       if (contains(range, offset)) return nameIdentifier;
@@ -358,8 +368,7 @@ public class VariableInplaceRenamer {
 
     for (PsiReference ref : refs) {
       final PsiElement element = ref.getElement();
-      final TextRange range = element.getTextRange()/*.shiftRight(PsiUtilBase.findInjectedElementOffsetInRealDocument(ref.getElement()))*/;
-      if (contains(range, offset)) return element;
+      if (contains(ref.getRangeInElement().shiftRight(element.getTextRange().getStartOffset()), offset)) return element;
     }
 
     LOG.assertTrue(false);

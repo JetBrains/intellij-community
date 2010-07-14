@@ -16,7 +16,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.lang.StringUtils;
+import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.HgShowConfigCommand;
+import org.zmlx.hg4idea.command.HgTagBranch;
+import org.zmlx.hg4idea.command.HgTagBranchCommand;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -26,20 +30,25 @@ import javax.swing.event.DocumentListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
+import java.util.List;
 
 public class HgPushDialog extends DialogWrapper {
 
-  private final Project project;
+  private final Project myProject;
 
   private JPanel contentPanel;
   private JTextField repositoryTxt;
   private JCheckBox revisionCbx;
   private JTextField revisionTxt;
   private HgRepositorySelectorComponent hgRepositorySelectorComponent;
+  private JCheckBox forceCheckBox;
+  private JCheckBox branchCheckBox;
+  private JComboBox branchComboBox;
 
   public HgPushDialog(Project project) {
     super(project, false);
-    this.project = project;
+    myProject = project;
+
     hgRepositorySelectorComponent.setTitle("Select repository to push from");
     hgRepositorySelectorComponent.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -47,30 +56,13 @@ public class HgPushDialog extends DialogWrapper {
       }
     });
 
-    revisionCbx.addChangeListener(new ChangeListener() {
-      public void stateChanged(ChangeEvent e) {
-        update();
-      }
-    });
+    final UpdatingListener updatingListener = new UpdatingListener();
+    revisionCbx.addChangeListener(updatingListener);
+    branchCheckBox.addChangeListener(updatingListener);
+    repositoryTxt.getDocument().addDocumentListener(updatingListener);
+    revisionTxt.getDocument().addDocumentListener(updatingListener);
 
-    DocumentListener documentListener = new DocumentListener() {
-      public void insertUpdate(DocumentEvent e) {
-        update();
-      }
-
-      public void removeUpdate(DocumentEvent e) {
-        update();
-      }
-
-      public void changedUpdate(DocumentEvent e) {
-        update();
-      }
-    };
-
-    repositoryTxt.getDocument().addDocumentListener(documentListener);
-    revisionTxt.getDocument().addDocumentListener(documentListener);
-
-    setTitle("Push");
+    setTitle(HgVcsMessages.message("hg4idea.push.dialog.title"));
     init();
   }
 
@@ -87,34 +79,70 @@ public class HgPushDialog extends DialogWrapper {
     return repositoryTxt.getText();
   }
 
-  public boolean isRevisionSelected() {
-    return revisionCbx.isSelected();
-  }
-
+  @Nullable
   public String getRevision() {
-    return revisionTxt.getText();
+    return revisionCbx.isSelected() ? revisionTxt.getText() : null;
   }
 
-  private void updateRepository() {
-    VirtualFile repo = hgRepositorySelectorComponent.getRepository();
-    HgShowConfigCommand configCommand = new HgShowConfigCommand(project);
-    String defaultPath = configCommand.getDefaultPath(repo);
-    repositoryTxt.setText(defaultPath);
-    update();
+  @Nullable
+  public HgTagBranch getBranch() {
+    return branchCheckBox.isSelected() ? (HgTagBranch) branchComboBox.getSelectedItem() : null;
+  }
+
+  public boolean isForce() {
+    return forceCheckBox.isSelected();
   }
 
   protected JComponent createCenterPanel() {
     return contentPanel;
   }
 
+  private void updateRepository() {
+    final VirtualFile repo = hgRepositorySelectorComponent.getRepository();
+    final HgShowConfigCommand configCommand = new HgShowConfigCommand(myProject);
+    final String defaultPath = configCommand.getDefaultPath(repo);
+    repositoryTxt.setText(defaultPath);
+    loadBranches(repo);
+    update();
+  }
+
+  private void loadBranches(VirtualFile root) {
+    final List<HgTagBranch> branches = new HgTagBranchCommand(myProject, root).listBranches();
+    branchComboBox.setModel(new DefaultComboBoxModel(branches.toArray()));
+  }
+
   private void update() {
     setOKActionEnabled(validateOptions());
     revisionTxt.setEnabled(revisionCbx.isSelected());
+    branchComboBox.setEnabled(branchCheckBox.isSelected());
   }
 
   private boolean validateOptions() {
     return StringUtils.isNotBlank(repositoryTxt.getText())
-      && !(revisionCbx.isSelected() && StringUtils.isBlank(revisionTxt.getText()));
+      && !(revisionCbx.isSelected() && StringUtils.isBlank(revisionTxt.getText()))
+      && !(branchCheckBox.isSelected() && (branchComboBox.getSelectedItem() == null));
+  }
+
+  /**
+   * Updates the form on every change.
+   */
+  private class UpdatingListener implements ChangeListener, DocumentListener {
+
+    public void stateChanged(ChangeEvent e) {
+      update();
+    }
+
+    public void insertUpdate(DocumentEvent e) {
+      update();
+    }
+
+    public void removeUpdate(DocumentEvent e) {
+      update();
+    }
+
+    public void changedUpdate(DocumentEvent e) {
+      update();
+    }
   }
 
 }

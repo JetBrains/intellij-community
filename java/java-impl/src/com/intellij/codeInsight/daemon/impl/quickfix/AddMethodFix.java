@@ -28,11 +28,11 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class AddMethodFix extends IntentionAndQuickFixAction {
@@ -51,7 +51,7 @@ public class AddMethodFix extends IntentionAndQuickFixAction {
 
   public AddMethodFix(@NonNls @NotNull String methodText, @NotNull PsiClass implClass, @NotNull String... exceptions) {
     this(createMethod(methodText, implClass), implClass);
-    myExceptions.addAll(Arrays.asList(exceptions));
+    ContainerUtil.addAll(myExceptions, exceptions);
   }
 
   private static PsiMethod createMethod(final String methodText, final PsiClass implClass) {

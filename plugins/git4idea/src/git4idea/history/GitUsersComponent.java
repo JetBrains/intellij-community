@@ -136,8 +136,8 @@ public class GitUsersComponent {
             }
           }
 
-          for (String s : toUpdate.keySet()) {
-            myState.put(s, toUpdate.get(s));
+          for (Map.Entry<String, UsersData> entry : toUpdate.entrySet()) {
+            myState.put(entry.getKey(), entry.getValue());
           }
           if (! toUpdate.isEmpty()) {
             myState.force();

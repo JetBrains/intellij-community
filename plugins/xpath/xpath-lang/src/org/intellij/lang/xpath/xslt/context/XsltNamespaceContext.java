@@ -27,7 +27,10 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.impl.source.xml.SchemaPrefix;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.xpath.context.NamespaceContext;
 import org.jetbrains.annotations.NotNull;
@@ -97,7 +100,7 @@ public class XsltNamespaceContext implements NamespaceContext {
             final XmlAttribute attribute = parent.getAttribute(name, null);
             if (attribute != null) {
               final TextRange textRange = TextRange.from("xmlns:".length(), prefix.length());
-              return new SchemaPrefix(attribute, textRange, prefix, attribute) {
+              return new SchemaPrefix(attribute, textRange, prefix) {
                 @Override
                 public boolean equals(Object obj) {
                   if (obj instanceof SchemaPrefix) {

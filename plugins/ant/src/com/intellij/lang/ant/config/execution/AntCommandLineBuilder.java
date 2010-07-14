@@ -34,11 +34,11 @@ import com.intellij.rt.ant.execution.IdeaInputHandler;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.config.AbstractProperty;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class AntCommandLineBuilder {
@@ -173,7 +173,7 @@ public class AntCommandLineBuilder {
   }
 
   public void addTargets(String[] targets) {
-    myTargets.addAll(Arrays.asList(targets));
+    ContainerUtil.addAll(myTargets, targets);
   }
 
   public String[] getTargets() {

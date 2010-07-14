@@ -23,13 +23,20 @@ import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.JdkOrderEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.util.*;
+import com.intellij.util.Chunk;
+import com.intellij.util.JarClasspathHelper;
+import com.intellij.util.PathsList;
+import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OrderedSet;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
@@ -178,7 +185,7 @@ public class ModuleChunk extends Chunk<Module> {
     final Set<Module> modules = getNodes();
     Set<VirtualFile> roots = new HashSet<VirtualFile>();
     for (final Module module : modules) {
-      roots.addAll(Arrays.asList(myContext.getSourceRoots(module)));
+      ContainerUtil.addAll(roots, myContext.getSourceRoots(module));
     }
     return VfsUtil.toVirtualFileArray(roots);
   }

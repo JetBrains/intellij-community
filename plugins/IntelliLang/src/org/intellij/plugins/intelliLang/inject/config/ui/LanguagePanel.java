@@ -26,10 +26,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.ShiftTabAction;
 import com.intellij.ui.SimpleTextAttributes;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
-import org.intellij.plugins.intelliLang.util.ShiftTabAction;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
