@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.template.zencoding.nodes;
 
+import com.intellij.openapi.util.text.LineTokenizer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -23,30 +24,28 @@ import java.util.List;
 /**
  * @author Eugene.Kudelevsky
  */
-public class AddOperationNode extends ZenCodingNode {
-  private final ZenCodingNode myLeftOperand;
-  private final ZenCodingNode myRightOperand;
+public class UnaryMulOperationNode extends ZenCodingNode {
+  private final ZenCodingNode myOperand;
 
-  public AddOperationNode(ZenCodingNode leftOperand, ZenCodingNode rightOperand) {
-    myLeftOperand = leftOperand;
-    myRightOperand = rightOperand;
+  public UnaryMulOperationNode(ZenCodingNode operand) {
+    myOperand = operand;
   }
 
-  public ZenCodingNode getLeftOperand() {
-    return myLeftOperand;
-  }
-
-  public ZenCodingNode getRightOperand() {
-    return myRightOperand;
+  public ZenCodingNode getOperand() {
+    return myOperand;
   }
 
   @NotNull
   @Override
   public List<GenerationNode> expand(int numberInIteration, String surroundedText) {
+    if (surroundedText == null) {
+      return myOperand.expand(numberInIteration, surroundedText);
+    }
+    String[] lines = LineTokenizer.tokenize(surroundedText, false);
     List<GenerationNode> result = new ArrayList<GenerationNode>();
-    List<GenerationNode> leftNodes = myLeftOperand.expand(numberInIteration, null);
-    result.addAll(leftNodes);
-    result.addAll(myRightOperand.expand(numberInIteration, surroundedText));
+    for (int i = 0; i < lines.length; i++) {
+      result.addAll(myOperand.expand(i, lines[i]));
+    }
     return result;
   }
 }

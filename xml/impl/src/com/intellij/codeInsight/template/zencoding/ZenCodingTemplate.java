@@ -94,7 +94,7 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
         }
         else if (c == '\'') inApostrophes = false;
       }
-      else if (i == n - 1 || (i < n - 2 && DELIMS.indexOf(c) >= 0) || c == ')') {
+      else if (i == n - 1 || (c == ')' || c == '*' || i < n - 2 && DELIMS.indexOf(c) >= 0)) {
         String key = templateKeyBuilder.toString();
         templateKeyBuilder = new StringBuilder();
         int num = parseNonNegativeInt(key);
@@ -266,12 +266,12 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
     ZenCodingGenerator generator = findApplicableGenerator(node, context);
     List<ZenCodingFilter> filters = getFilters(node, context);
 
-    List<GenerationNode> genNodes = node.expand(-1);
+    List<GenerationNode> genNodes = node.expand(-1, surroundedText);
     LiveTemplateBuilder builder = new LiveTemplateBuilder();
     int end = -1;
     for (int i = 0, genNodesSize = genNodes.size(); i < genNodesSize; i++) {
       GenerationNode genNode = genNodes.get(i);
-      TemplateImpl template = genNode.generate(callback, surroundedText, generator, filters);
+      TemplateImpl template = genNode.generate(callback, generator, filters);
       int e = builder.insertTemplate(builder.length(), template, null);
       if (end == -1 && end < builder.length()) {
         end = e;
@@ -387,7 +387,7 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
 
     @Nullable
     private ZenCodingNode parseAddOrMore() {
-      ZenCodingNode mul = parseMul(true);
+      ZenCodingNode mul = parseMul();
       if (mul == null) {
         return null;
       }
@@ -416,17 +416,17 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
     }
 
     @Nullable
-    private ZenCodingNode parseMul(boolean canBeSingle) {
+    private ZenCodingNode parseMul() {
       ZenCodingNode exp = parseExpressionInBraces();
       if (exp == null) {
         return null;
       }
       ZenCodingToken operationToken = nextToken();
       if (!(operationToken instanceof OperationToken)) {
-        return canBeSingle ? exp : null;
+        return exp;
       }
       if (((OperationToken)operationToken).getSign() != '*') {
-        return canBeSingle ? exp : null;
+        return exp;
       }
       myIndex++;
       ZenCodingToken numberToken = nextToken();
@@ -434,7 +434,7 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
         myIndex++;
         return new MulOperationNode(exp, ((NumberToken)numberToken).getNumber());
       }
-      return null;
+      return new UnaryMulOperationNode(exp);
     }
 
     @Nullable

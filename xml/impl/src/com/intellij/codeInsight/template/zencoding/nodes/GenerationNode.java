@@ -56,16 +56,13 @@ public class GenerationNode {
   private final TemplateToken myTemplateToken;
   private final List<GenerationNode> myChildren;
   private final int myNumberInIteration;
-  private boolean myToInsertChildren = true;
+  private final String mySurroundedText;
 
-  public GenerationNode(TemplateToken templateToken, List<GenerationNode> children, int numberInIteration) {
+  public GenerationNode(TemplateToken templateToken, List<GenerationNode> children, int numberInIteration, String surroundedText) {
     myTemplateToken = templateToken;
     myChildren = children;
     myNumberInIteration = numberInIteration;
-  }
-
-  public void setToInsertChildren(boolean toInsertChildren) {
-    myToInsertChildren = toInsertChildren;
+    mySurroundedText = surroundedText;
   }
 
   public List<GenerationNode> getChildren() {
@@ -73,20 +70,11 @@ public class GenerationNode {
   }
 
   public void addChildren(Collection<GenerationNode> child) {
-    for (GenerationNode node : child) {
-      if (!myToInsertChildren) {
-        node.myToInsertChildren = false;
-      }
-    }
     myChildren.addAll(child);
   }
 
   public boolean isLeaf() {
     return myChildren.size() == 0;
-  }
-
-  public boolean isToInsertChildren() {
-    return myToInsertChildren;
   }
 
   private boolean isBlockTag() {
@@ -105,7 +93,6 @@ public class GenerationNode {
 
   @NotNull
   public TemplateImpl generate(@NotNull CustomTemplateCallback callback,
-                               @Nullable String surroundedText,
                                @Nullable ZenCodingGenerator generator,
                                @NotNull Collection<ZenCodingFilter> filters) {
     GenerationNode generationNode = this;
@@ -114,14 +101,14 @@ public class GenerationNode {
     }
 
     if (generationNode != this) {
-      return generationNode.generate(callback, surroundedText, generator, Collections.<ZenCodingFilter>emptyList());
+      return generationNode.generate(callback, generator, Collections.<ZenCodingFilter>emptyList());
     }
 
     LiveTemplateBuilder builder = new LiveTemplateBuilder();
     int end = -1;
 
     boolean hasChildren = myChildren.size() > 0;
-    String txt = !hasChildren && myToInsertChildren ? surroundedText : null;
+    String txt = hasChildren ? null : mySurroundedText;
 
     TemplateImpl parentTemplate;
     Map<String, String> predefinedValues;
@@ -176,7 +163,7 @@ public class GenerationNode {
 
     for (int i = 0, myChildrenSize = myChildren.size(); i < myChildrenSize; i++) {
       GenerationNode child = myChildren.get(i);
-      TemplateImpl childTemplate = child.generate(callback, surroundedText, generator, filters);
+      TemplateImpl childTemplate = child.generate(callback, generator, filters);
 
       boolean blockTag = child.isBlockTag();
 
