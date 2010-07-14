@@ -7,16 +7,46 @@ import org.jetbrains.jps.Project
  * @author nik
  */
 class TeamcityBuildInfoPrinter implements BuildInfoPrinter {
+  def escapedChar(char c) {
+    switch (c) {
+      case '\n': return 'n';
+      case '\r': return 'r';
+      case '\u0085': return 'x'; // next-line character
+      case '\u2028': return 'l'; // line-separator character
+      case '\u2029': return 'p'; // paragraph-separator character
+      case '|': return '|';
+      case '\'': return '\'';
+      case '[': return '[';
+      case ']': return ']';
+    }
+    
+    return 0;
+  }
+
+  def escape(String text) {
+    StringBuilder escaped = new StringBuilder();
+    for (char c: text.toCharArray()) {
+      Character escChar = escapedChar(c);
+      if (escChar == 0) {
+        escaped.append(c);
+      } else {
+        escaped.append('|').append(escChar);
+      }
+    }
+
+    return escaped.toString();
+  }
+
   def printProgressMessage(Project project, String message) {
-    println "##teamcity[progressMessage '$message']"
+    def escapedMessage = escape(message)
+    println "##teamcity[progressMessage '$escapedMessage']"
   }
 
   def printCompilationErrors(Project project, String compilerName, String messages) {
-    println "##teamcity[compilationStarted compiler='$compilerName']"
-    messages.split("\n").each {
-      println "##teamcity[message text='$it' status='ERROR']"
-    }
-    println "##teamcity[compilationFinished compiler='$compilerName']"
+    def escapedCompiler = escape(compilerName)
+    def escapedOutput = escape(messages)
+    println "##teamcity[compilationStarted compiler='$escapedCompiler']"
+    println "##teamcity[message text='$escapedOutput' status='ERROR']"
+    println "##teamcity[compilationFinished compiler='$escapedCompiler']"
   }
-
 }
