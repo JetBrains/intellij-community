@@ -135,7 +135,7 @@ public class PatternBasedInjectionHelper {
     if (StringUtil.isNotEmpty(name)) result.append(".withLocalName(string().matches(\"").append(name).append("\"))");
     if (StringUtil.isNotEmpty(namespace)) result.append(".withNamespace(string().matches(\"").append(namespace).append("\"))");
     if (StringUtil.isNotEmpty(injection.getTagName()) || StringUtil.isNotEmpty(injection.getTagNamespace())) {
-      result.append(".inside(").append(getPatternString((AbstractTagInjection)injection)).append(")");
+      result.append(".withParent(").append(getPatternString((AbstractTagInjection)injection)).append(")");
     }
     return result.toString();
   }

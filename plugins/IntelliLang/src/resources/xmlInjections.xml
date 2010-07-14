@@ -2,22 +2,22 @@
 <component name="LanguageInjectionConfiguration">
   <injection language="XPath" injector-id="xml">
     <display-name>JAXB attribute node</display-name>
-    <place><![CDATA[xmlAttribute().withLocalName(string().matches("node")).inside(xmlTag().withLocalName(string().matches("bindings")).withNamespace(string().matches("http://java.sun.com/xml/ns/jaxb")))]]></place>
+    <place><![CDATA[xmlAttribute().withLocalName(string().matches("node")).withParent(xmlTag().withLocalName(string().matches("bindings")).withNamespace(string().matches("http://java.sun.com/xml/ns/jaxb")))]]></place>
   </injection>
   <injection language="JavaScript" injector-id="xml">
     <display-name>*/@href</display-name>
     <value-pattern>^javascript:(.+)</value-pattern>
-    <place><![CDATA[xmlAttribute().withLocalName(string().matches("href")).inside(xmlTag().withNamespace(string().matches("http://www.w3.org/1999/xhtml")))]]></place>
+    <place><![CDATA[xmlAttribute().withLocalName(string().matches("href")).withParent(xmlTag().withNamespace(string().matches("http://www.w3.org/1999/xhtml")))]]></place>
   </injection>
   <injection language="JavaScript" injector-id="xml">
     <display-name>*/@on.*</display-name>
-    <place><![CDATA[xmlAttribute().withLocalName(string().matches("on.*")).inside(xmlTag().withNamespace(string().matches("http://www.w3.org/1999/xhtml")))]]></place>
+    <place><![CDATA[xmlAttribute().withLocalName(string().matches("on.*")).withParent(xmlTag().withNamespace(string().matches("http://www.w3.org/1999/xhtml")))]]></place>
   </injection>
   <injection language="CSS" injector-id="xml">
     <display-name>*/@style</display-name>
     <prefix>dummy_selector {</prefix>
     <suffix>}</suffix>
-    <place><![CDATA[xmlAttribute().withLocalName(string().matches("style")).inside(xmlTag().withNamespace(string().matches("http://www.w3.org/1999/xhtml")))]]></place>
+    <place><![CDATA[xmlAttribute().withLocalName(string().matches("style")).withParent(xmlTag().withNamespace(string().matches("http://www.w3.org/1999/xhtml")))]]></place>
   </injection>
   <injection language="EJBQL" injector-id="xml">
     <display-name>ejb-ql</display-name>
@@ -35,7 +35,7 @@
   </injection>
   <injection language="EJBQL" injector-id="xml">
     <display-name>entity-query/@ejbql</display-name>
-    <place><![CDATA[xmlAttribute().withLocalName(string().matches("ejbql")).inside(xmlTag().withLocalName(string().matches("entity-query")).withNamespace(string().matches("http://jboss.com/products/seam/framework")))]]></place>
+    <place><![CDATA[xmlAttribute().withLocalName(string().matches("ejbql")).withParent(xmlTag().withLocalName(string().matches("entity-query")).withNamespace(string().matches("http://jboss.com/products/seam/framework")))]]></place>
   </injection>
   <injection language="SQL" injector-id="xml">
     <display-name>mapped-statement</display-name>
@@ -43,7 +43,7 @@
   </injection>
   <injection language="XPath" injector-id="xml">
     <display-name>out|if|forEach|set|when/@select</display-name>
-    <place><![CDATA[xmlAttribute().withLocalName(string().matches("select")).inside(xmlTag().withLocalName(string().matches("out|if|forEach|set|when")).withNamespace(string().matches("http://java.sun.com/jsp/jstl/xml")))]]></place>
+    <place><![CDATA[xmlAttribute().withLocalName(string().matches("select")).withParent(xmlTag().withLocalName(string().matches("out|if|forEach|set|when")).withNamespace(string().matches("http://java.sun.com/jsp/jstl/xml")))]]></place>
   </injection>
   <injection language="HQL" injector-id="xml">
     <display-name>query</display-name>
@@ -55,7 +55,7 @@
   </injection>
   <injection language="SQL" injector-id="xml">
     <display-name>query|update/@sql</display-name>
-    <place><![CDATA[xmlAttribute().withLocalName(string().matches("sql")).inside(xmlTag().withLocalName(string().matches("query|update")).withNamespace(string().matches("http://java.sun.com/jsp/jstl/sql")))]]></place>
+    <place><![CDATA[xmlAttribute().withLocalName(string().matches("sql")).withParent(xmlTag().withLocalName(string().matches("query|update")).withNamespace(string().matches("http://java.sun.com/jsp/jstl/sql")))]]></place>
   </injection>
   <injection language="JavaScript" injector-id="xml">
     <display-name>script</display-name>
@@ -80,7 +80,7 @@
     <display-name>Bare Tapestry EL in attribute value</display-name>
     <prefix>${</prefix>
     <suffix>}</suffix>
-    <place><![CDATA[xmlAttribute().withLocalName(not(string().matches("id|type"))).withText(string().matches("[^${}/\\]+")).inside(xmlTag().withNamespace(string().matches("http://tapestry.apache.org/schema/tapestry_5_1_0.xsd|http://tapestry.apache.org/schema/tapestry_5_0_0.xsd")))]]></place>
+    <place><![CDATA[xmlAttribute().withLocalName(not(string().matches("id|type"))).withText(string().matches("[^${}/\\]+")).withParent(xmlTag().withNamespace(string().matches("http://tapestry.apache.org/schema/tapestry_5_1_0.xsd|http://tapestry.apache.org/schema/tapestry_5_0_0.xsd")))]]></place>
     <place><![CDATA[xmlAttribute().withLocalName(not(string().matches("id|type"))).withText(string().matches("[^${}/\\]+")).withNamespace(string().matches("http://tapestry.apache.org/schema/tapestry_5_1_0.xsd|http://tapestry.apache.org/schema/tapestry_5_0_0.xsd"))]]></place>
   </injection>
    <!--jsf component libraries-->
@@ -88,12 +88,12 @@
     <display-name>CSS in jsf</display-name>
     <prefix>inline.style {</prefix>
     <suffix>}</suffix>
-    <place><![CDATA[xmlAttribute().withLocalName(string().matches(".*Style")).inside(xmlTag().withNamespace(string().matches("http://richfaces.org/rich|http://richfaces.org/a4j|http://richfaces.ajax4jsf.org/rich|https://ajax4jsf.dev.java.net/ajax")))]]></place>
+    <place><![CDATA[xmlAttribute().withLocalName(string().matches(".*Style")).withParent(xmlTag().withNamespace(string().matches("http://richfaces.org/rich|http://richfaces.org/a4j|http://richfaces.ajax4jsf.org/rich|https://ajax4jsf.dev.java.net/ajax")))]]></place>
   </injection>
   <injection language="CSS" injector-id="xml">
     <display-name>CSS in rich faces</display-name>
     <prefix>inline.style {</prefix>
     <suffix>}</suffix>
-    <place><![CDATA[xmlAttribute().withLocalName(string().matches("style")).inside(xmlTag().withNamespace(string().matches("http://richfaces.org/rich|http://richfaces.org/a4j|http://richfaces.ajax4jsf.org/rich|https://ajax4jsf.dev.java.net/ajax")))]]></place>
+    <place><![CDATA[xmlAttribute().withLocalName(string().matches("style")).withParent(xmlTag().withNamespace(string().matches("http://richfaces.org/rich|http://richfaces.org/a4j|http://richfaces.ajax4jsf.org/rich|https://ajax4jsf.dev.java.net/ajax")))]]></place>
   </injection>
 </component>
