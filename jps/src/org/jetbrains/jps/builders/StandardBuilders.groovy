@@ -1,6 +1,7 @@
 package org.jetbrains.jps.builders
 
 import org.jetbrains.jps.*
+import org.jetbrains.jps.builders.javacApi.Java16ApiCompilerRunner
 
 /**
  * @author max
@@ -10,11 +11,18 @@ class JavacBuilder implements ModuleBuilder {
   def processModule(ModuleChunk module, ModuleBuildState state) {
     if (state.sourceRoots.isEmpty()) return;
 
-    def project = module.project
-    def ant = project.binding.ant
-
-    def sourceLevel = module["sourceLevel"]
-    def targetLevel = module["targetLevel"]
+    String sourceLevel = module["sourceLevel"]
+    String targetLevel = module["targetLevel"]
+    String customArgs = module["javac_args"]
+    def javacExecutable = getJavacExecutable(module)
+    if (module.project.builder.useInProcessJavac) {
+      if (javacExecutable != null) {
+        module.project.warning("In-process Javac instead of '${javacExecutable}' will be used for '${module.name}'")
+      }
+      if (Java16ApiCompilerRunner.compile(module, state, sourceLevel, targetLevel, customArgs)) {
+        return
+      }
+    }
 
     def params = [:]
     params.destdir = state.targetFolder
@@ -25,17 +33,12 @@ class JavacBuilder implements ModuleBuilder {
     params.fork = "true"
     params.debug = "on"
 
-    def customJavac = module["javac"]
-    def jdk = module.getSdk()
-    if (customJavac != null) {
-      params.executable = customJavac
-    }
-    else if (jdk instanceof JavaSdk) {
-      params.executable = jdk.getJavacExecutable()
+    if (javacExecutable != null) {
+      params.executable = javacExecutable
     }
 
-    def customArgs = module["javac_args"]
-    ant.javac (params) {
+    def ant = module.project.binding.ant
+    ant.javac(params) {
       if (customArgs) {
         compilerarg(line: customArgs)
       }
@@ -58,6 +61,18 @@ class JavacBuilder implements ModuleBuilder {
         }
       }
     }
+  }
+
+  private String getJavacExecutable(ModuleChunk module) {
+    def customJavac = module["javac"]
+    def jdk = module.getSdk()
+    if (customJavac != null) {
+      return customJavac
+    }
+    else if (jdk instanceof JavaSdk) {
+      return jdk.getJavacExecutable()
+    }
+    return null
   }
 }
 
@@ -100,7 +115,7 @@ class GroovycBuilder implements ModuleBuilder {
   }
 
   def processModule(ModuleChunk module, ModuleBuildState state) {
-    if (state.sourceRoots.isEmpty()) return;
+    if (!GroovyFileSearcher.containGroovyFiles(state.sourceRoots)) return
 
     def project = module.project
     def ant = project.binding.ant
@@ -144,7 +159,7 @@ class GroovyStubGenerator implements ModuleBuilder {
   }
 
   def processModule(ModuleChunk module, ModuleBuildState state) {
-    if (state.sourceRoots.isEmpty()) return
+    if (!GroovyFileSearcher.containGroovyFiles(state.sourceRoots)) return
 
     def project = module.project
     def ant = project.binding.ant
