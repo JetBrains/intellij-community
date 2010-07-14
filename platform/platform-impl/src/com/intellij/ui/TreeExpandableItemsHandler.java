@@ -157,12 +157,6 @@ public class TreeExpandableItemsHandler extends AbstractExpandableItemsHandler<I
   }
 
   @Override
-  protected boolean doPaintBorder(final Integer row) {
-    final TreeUI ui = myComponent.getUI();
-    return (!(ui instanceof UIUtil.MacTreeUI) || !((UIUtil.MacTreeUI)ui).isWideSelection()) || !myComponent.isRowSelected(row);
-  }
-
-  @Override
   protected void doPaintTooltipImage(final Component rComponent, final Rectangle cellBounds, final int height, final Graphics2D g, Integer key) {
     if (myComponent.isRowSelected(key) && rComponent instanceof JComponent) {
       if (myComponent.hasFocus()) {
