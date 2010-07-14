@@ -132,6 +132,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   private ChangeProvider myChangeProvider;
   private MergeProvider myMergeProvider;
+  private final WorkingCopiesContent myWorkingCopiesContent;
 
   @NonNls public static final String LOG_PARAMETER_NAME = "javasvn.log";
   public static final String pathToEntries = SvnUtil.SVN_ADMIN_DIR_NAME + File.separatorChar + SvnUtil.ENTRIES_FILE_NAME;
@@ -221,6 +222,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     }
 
     myFrameStateListener = new MyFrameStateListener(changeListManager, vcsDirtyScopeManager);
+    myWorkingCopiesContent = new WorkingCopiesContent(this);
   }
 
   public void postStartup() {
@@ -228,6 +230,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     myCopiesRefreshManager = new SvnCopiesRefreshManager(myProject, (SvnFileUrlMappingImpl) getSvnFileUrlMapping());
 
     invokeRefreshSvnRoots(true);
+    myWorkingCopiesContent.activate();
   }
 
   public void invokeRefreshSvnRoots(final boolean asynchronous) {
@@ -472,6 +475,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     myAuthNotifier.clear();
 
     mySvnBranchPointsCalculator = null;
+    myWorkingCopiesContent.deactivate();
   }
 
   public VcsShowConfirmationOption getAddConfirmation() {
