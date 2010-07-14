@@ -200,7 +200,7 @@ class JetBrainsInstrumentations implements ModuleBuilder {
     def project = module.project
     def ant = project.binding.ant
 
-    ant.jb_instrumentations(destdir: state.targetFolder, failonerror: "false") {
+    ant.jb_instrumentations(destdir: state.targetFolder, failonerror: "false", includeAntRuntime: "false") {
       state.sourceRoots.each {
         src(path: it)
       }
