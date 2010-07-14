@@ -148,7 +148,14 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return AllVcses.getInstance(myProject).getByName(name);
   }
 
-  public AbstractVcs[] getAllVcss() {
+  @Nullable
+  public VcsDescriptor getDescriptor(final String name) {
+    if (name == null) return null;
+    if (myProject.isDisposed()) return null;
+    return AllVcses.getInstance(myProject).getDescriptor(name);
+  }
+
+  public VcsDescriptor[] getAllVcss() {
     return AllVcses.getInstance(myProject).getAll();
   }
 

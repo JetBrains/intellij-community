@@ -23,7 +23,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import javax.swing.*;
 import java.io.File;
 import java.util.Collection;
-import java.util.List;
 
 /**
  * Interface for working with the checkin dialog user interface (retrieving the files
@@ -71,13 +70,9 @@ public interface CheckinProjectPanel extends Refreshable {
   Project getProject();
 
   /**
-   * Returns the list of version control systems files from which are included in the
-   * commit operation.
-   *
-   * @return the list of affected VCSes.
-   * @since 5.1
+   * Checks whether any changes under vcs are included into commit operation
    */
-  List<AbstractVcs> getAffectedVcses();
+  boolean vcsIsAffected(final String name);
 
   /**
    * Returns the list of roots for the check-in (roots of all modules under version control

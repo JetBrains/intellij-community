@@ -59,6 +59,7 @@ import git4idea.diff.GitDiffProvider;
 import git4idea.diff.GitTreeDiffProvider;
 import git4idea.history.GitHistoryProvider;
 import git4idea.history.GitUsersComponent;
+import git4idea.history.browser.GitProjectLogManager;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitMergeProvider;
 import git4idea.rollback.GitRollbackEnvironment;
@@ -467,6 +468,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
       myGitIgnoreTracker = new GitIgnoreTracker(myProject, this);
     }
     GitUsersComponent.getInstance(myProject).activate();
+    GitProjectLogManager.getInstance(myProject).activate();
   }
 
   /**
@@ -491,6 +493,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
       myConfigTracker = null;
     }
     GitUsersComponent.getInstance(myProject).deactivate();
+    GitProjectLogManager.getInstance(myProject).deactivate();
   }
 
   /**

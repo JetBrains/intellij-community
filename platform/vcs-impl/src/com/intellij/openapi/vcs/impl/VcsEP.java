@@ -16,12 +16,12 @@
 
 package com.intellij.openapi.vcs.impl;
 
+import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.components.BaseComponent;
 import com.intellij.util.xmlb.annotations.Attribute;
 
 /**
@@ -37,9 +37,12 @@ public class VcsEP extends AbstractExtensionPointBean {
   public String name;
   @Attribute("vcsClass")
   public String vcsClass;
-  
-  private AbstractVcs myVcs;
+  @Attribute("displayName")
+  public String displayName;
+  @Attribute("administrativeAreaName")
+  public String administrativeAreaName;
 
+  private AbstractVcs myVcs;
 
   public AbstractVcs getVcs(Project project) {
     if (myVcs == null) {
@@ -60,5 +63,9 @@ public class VcsEP extends AbstractExtensionPointBean {
       }
     }
     return myVcs;
+  }
+
+  public VcsDescriptor createDescriptor() {
+    return new VcsDescriptor(administrativeAreaName, displayName, name);
   }
 }

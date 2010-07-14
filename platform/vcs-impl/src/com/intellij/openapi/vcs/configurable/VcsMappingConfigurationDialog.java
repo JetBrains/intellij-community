@@ -22,13 +22,19 @@ import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsDirectoryMapping;
+import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author yole
@@ -42,10 +48,18 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
   private UnnamedConfigurable myVcsConfigurable;
   private VcsDirectoryMapping myMappingCopy;
   private JComponent myVcsConfigurableComponent;
+  private ProjectLevelVcsManager myVcsManager;
+  private final Map<String, VcsDescriptor> myVcses;
 
   public VcsMappingConfigurationDialog(final Project project, final String title) {
     super(project, false);
     myProject = project;
+    myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
+    final VcsDescriptor[] vcsDescriptors = myVcsManager.getAllVcss();
+    myVcses = new HashMap<String, VcsDescriptor>();
+    for (VcsDescriptor vcsDescriptor : vcsDescriptors) {
+      myVcses.put(vcsDescriptor.getName(), vcsDescriptor);
+    }
     myVCSComboBox.setModel(VcsDirectoryConfigurationPanel.buildVcsWrappersModel(project));
     myDirectoryTextField.addActionListener(new MyBrowseFolderListener("Select Directory", "Select directory to map to a VCS",
                                                                       myDirectoryTextField, project,
@@ -66,14 +80,14 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
 
   public void setMapping(VcsDirectoryMapping mapping) {
     myMappingCopy = new VcsDirectoryMapping(mapping.getDirectory(), mapping.getVcs(), mapping.getRootSettings());
-    myVCSComboBox.setSelectedItem(VcsWrapper.fromName(myProject, mapping.getVcs()));
+    myVCSComboBox.setSelectedItem(myVcses.get(mapping.getVcs()));
     myDirectoryTextField.setText(FileUtil.toSystemDependentName(mapping.getDirectory()));
     updateVcsConfigurable();
   }
 
   public void saveToMapping(VcsDirectoryMapping mapping) {
-    VcsWrapper wrapper = (VcsWrapper) myVCSComboBox.getSelectedItem();
-    mapping.setVcs(wrapper.getOriginal() == null ? "" : wrapper.getOriginal().getName());
+    VcsDescriptor wrapper = (VcsDescriptor) myVCSComboBox.getSelectedItem();
+    mapping.setVcs((wrapper == null) || wrapper.isNone() ? "" : wrapper.getName());
     mapping.setDirectory(FileUtil.toSystemIndependentName(myDirectoryTextField.getText()));
     mapping.setRootSettings(myMappingCopy.getRootSettings());
   }
@@ -84,13 +98,16 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
       myVcsConfigurable.disposeUIResources();
       myVcsConfigurable = null;
     }
-    VcsWrapper wrapper = (VcsWrapper) myVCSComboBox.getSelectedItem();
-    if (wrapper.getOriginal() != null) {
-      UnnamedConfigurable configurable = wrapper.getOriginal().getRootConfigurable(myMappingCopy);
-      if (configurable != null) {
-        myVcsConfigurable = configurable;
-        myVcsConfigurableComponent = myVcsConfigurable.createComponent();
-        myVcsConfigurablePlaceholder.add(myVcsConfigurableComponent, BorderLayout.CENTER);
+    VcsDescriptor wrapper = (VcsDescriptor) myVCSComboBox.getSelectedItem();
+    if (wrapper != null && (! wrapper.isNone())) {
+      final AbstractVcs vcs = myVcsManager.findVcsByName(wrapper.getName());
+      if (vcs != null) {
+        UnnamedConfigurable configurable = vcs.getRootConfigurable(myMappingCopy);
+        if (configurable != null) {
+          myVcsConfigurable = configurable;
+          myVcsConfigurableComponent = myVcsConfigurable.createComponent();
+          myVcsConfigurablePlaceholder.add(myVcsConfigurableComponent, BorderLayout.CENTER);
+        }
       }
     }
     pack();
@@ -137,13 +154,21 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
     protected void onFileChoosen(final VirtualFile chosenFile) {
       String oldText = myDirectoryTextField.getText();
       super.onFileChoosen(chosenFile);
-      final VcsWrapper wrapper = (VcsWrapper)myVCSComboBox.getSelectedItem();
-      if (oldText.length() == 0 && wrapper.getOriginal() == null) {
-        for(AbstractVcs vcs: ProjectLevelVcsManager.getInstance(myProject).getAllVcss()) {
-          if (vcs.isVersionedDirectory(chosenFile)) {
-            myVCSComboBox.setSelectedItem(new VcsWrapper(vcs));
-            break;
+      final VcsDescriptor wrapper = (VcsDescriptor) myVCSComboBox.getSelectedItem();
+      if (oldText.length() == 0 && (wrapper == null || wrapper.isNone())) {
+        VcsDescriptor probableVcs = null;
+        for(VcsDescriptor vcs: myVcses.values()) {
+          if (vcs.probablyUnderVcs(chosenFile)) {
+            if (probableVcs != null) {
+              probableVcs = null;
+              break;
+            }
+            probableVcs = vcs;
           }
+        }
+        if (probableVcs != null) {
+          // todo none
+          myVCSComboBox.setSelectedItem(probableVcs);
         }
       }
     }
@@ -155,8 +180,8 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
     }
 
     public void actionPerformed(ActionEvent e) {
-      VcsWrapper wrapper = (VcsWrapper) myVCSComboBox.getSelectedItem();
-      new VcsConfigurationsDialog(myProject, null, wrapper.getOriginal()).show();
+      VcsDescriptor wrapper = (VcsDescriptor) myVCSComboBox.getSelectedItem();
+      new VcsConfigurationsDialog(myProject, null, wrapper).show();
     }
   }
 }

@@ -848,6 +848,17 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     return myProject;
   }
 
+  @Override
+  public boolean vcsIsAffected(String name) {
+    // tod +- performance?
+    if (! ProjectLevelVcsManager.getInstance(myProject).checkVcsIsActive(name)) return false;
+    final List<AbstractVcs> affected = myBrowserExtender.getAffectedVcses();
+    for (AbstractVcs vcs : affected) {
+      if (Comparing.equal(vcs.getName(), name)) return true;
+    }
+    return false;
+  }
+
   public void setCommitMessage(final String currentDescription) {
     setCommitMessageText(currentDescription);
     myCommitMessageArea.requestFocusInMessage();

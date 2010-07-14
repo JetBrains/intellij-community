@@ -62,24 +62,23 @@ public class GitUsersComponent {
   private volatile boolean myIsActive;
   private final ControlledCycle myControlledCycle;
   private final VcsListener myVcsListener;
-  private final GitVcs myVcs;
+  private GitVcs myVcs;
   private final ProjectLevelVcsManager myManager;
   private final File myFile;
 
-  public GitUsersComponent(final ProjectLevelVcsManager manager) {
-    myVcs = (GitVcs) manager.findVcsByName(GitVcs.getKey().getName());
+  public GitUsersComponent(final Project project, final ProjectLevelVcsManager manager) {
     myManager = manager;
     myLock = new Object();
 
     final File vcsFile = new File(PathManager.getSystemPath(), "vcs");
     File file = new File(vcsFile, "git_users");
     file.mkdirs();
-    myFile = new File(file, myVcs.getProject().getLocationHash());
+    myFile = new File(file, project.getLocationHash());
 
     myAccessMap = new HashMap<VirtualFile, Pair<String, LowLevelAccess>>();
 
     // every 10 seconds is ok to check
-    myControlledCycle = new ControlledCycle(myVcs.getProject(), new MyRefresher(), "Git users loader");
+    myControlledCycle = new ControlledCycle(project, new MyRefresher(), "Git users loader");
     myVcsListener = new VcsListener() {
       public void directoryMappingChanged() {
         final VirtualFile[] currentRoots = myManager.getRootsUnderVcs(myVcs);
@@ -153,6 +152,7 @@ public class GitUsersComponent {
   }
 
   public void activate() {
+    myVcs = (GitVcs) myManager.findVcsByName(GitVcs.getKey().getName());
     try {
       myState = new PersistentHashMap<String, UsersData>(myFile, new EnumeratorStringDescriptor(), createExternalizer());
     }
@@ -178,6 +178,7 @@ public class GitUsersComponent {
       myAccessMap.clear();
     }
     myManager.removeVcsListener(myVcsListener);
+    myVcs = null;
     myIsActive = false;
   }
 

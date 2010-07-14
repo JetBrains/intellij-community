@@ -16,7 +16,9 @@
 package com.intellij.openapi.vcs.impl.projectlevelman;
 
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Irina.Chernushina
@@ -25,6 +27,8 @@ public interface AllVcsesI {
   void registerManually(@NotNull AbstractVcs vcs);
   void unregisterManually(@NotNull AbstractVcs vcs);
   AbstractVcs getByName(String name);
-  AbstractVcs[] getAll();
+  @Nullable
+  VcsDescriptor getDescriptor(final String name);
+  VcsDescriptor[] getAll();
   boolean isEmpty();
 }

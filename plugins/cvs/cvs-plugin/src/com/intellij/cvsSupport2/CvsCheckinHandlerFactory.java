@@ -35,7 +35,7 @@ class CvsCheckinHandlerFactory extends CheckinHandlerFactory {
     return new CheckinHandler() {
       @Nullable
       public RefreshableOnComponent getAfterCheckinConfigurationPanel(Disposable parentDisposable) {
-        if (panel.getAffectedVcses().contains(CvsVcs2.getInstance(panel.getProject()))) {
+        if (panel.vcsIsAffected("CVS")) {
           return new AdditionalOptionsPanel(true, CvsConfiguration.getInstance(panel.getProject()));
         }
         else {

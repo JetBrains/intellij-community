@@ -23,7 +23,7 @@
   <idea-version since-build="96.0" until-build="97.0" />
 
   <extensions defaultExtensionNs="com.intellij">
-    <vcs name="hg4idea" vcsClass="org.zmlx.hg4idea.HgVcs"/>
+    <vcs name="hg4idea" vcsClass="org.zmlx.hg4idea.HgVcs" displayName="Mercurial" administrativeAreaName=".hg"/>
     <checkoutProvider implementation="org.zmlx.hg4idea.provider.HgCheckoutProvider"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
 
