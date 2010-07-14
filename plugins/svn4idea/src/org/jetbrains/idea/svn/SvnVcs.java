@@ -896,7 +896,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       final File file = info.getIoFile();
       infos.add(new WCInfo(file.getAbsolutePath(), info.getAbsoluteUrlAsUrl(),
         SvnFormatSelector.getWorkingCopyFormat(file), info.getRepositoryUrl(), SvnUtil.isWorkingCopyRoot(file), info.getType(),
-        SvnUtil.getDepth(this, file)));
+        SvnUtil.getDepth(this, file), info.isRepoSupportsMergeInfo()));
     }
     return infos;
   }
