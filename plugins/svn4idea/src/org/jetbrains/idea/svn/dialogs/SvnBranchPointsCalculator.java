@@ -43,21 +43,25 @@ import java.util.*;
 
 public class SvnBranchPointsCalculator {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.dialogs.SvnBranchPointsCalculator");
-  private final FactsCalculator<KeyData, WrapperInvertor<BranchCopyData>> myCalculator;
-
+  private FactsCalculator<KeyData, WrapperInvertor<BranchCopyData>> myCalculator;
   private PersistentHolder myPersistentHolder;
+  private File myFile;
+  private final Project myProject;
 
   public SvnBranchPointsCalculator(final Project project) {
+    myProject = project;
     final File vcs = new File(PathManager.getSystemPath(), "vcs");
     File file = new File(vcs, "svn_copy_sources");
     file.mkdirs();
-    file = new File(file, project.getLocationHash());
+    myFile = file;
+    myFile = new File(file, project.getLocationHash());
+  }
 
-    // todo when will it die?
+  public void activate() {
     ValueHolder<WrapperInvertor<BranchCopyData>, KeyData> cache = null;
 
     try {
-      myPersistentHolder = new PersistentHolder(file);
+      myPersistentHolder = new PersistentHolder(myFile);
       cache = new ValueHolder<WrapperInvertor<BranchCopyData>, KeyData>() {
         public WrapperInvertor<BranchCopyData> getValue(KeyData dataHolder) {
           try {
@@ -93,7 +97,13 @@ public class SvnBranchPointsCalculator {
       };
     }
 
-    myCalculator = new FactsCalculator<KeyData, WrapperInvertor<BranchCopyData>>(project, "Looking for branch origin", cache, new Loader(project));
+    myCalculator = new FactsCalculator<KeyData, WrapperInvertor<BranchCopyData>>(myProject, "Looking for branch origin", cache, new Loader(myProject));
+  }
+
+  public void deactivate() {
+    myPersistentHolder.close();
+    myCalculator = null;
+    myPersistentHolder = null;
   }
 
   private static class BranchDataExternalizer implements DataExternalizer<TreeMap<String,BranchCopyData>> {
@@ -190,6 +200,15 @@ public class SvnBranchPointsCalculator {
 
       for (String key : myForSearchMap.keySet()) {
         Collections.sort((List<String>) myForSearchMap.get(key));
+      }
+    }
+
+    public void close() {
+      try {
+        myPersistentMap.close();
+      }
+      catch (IOException e) {
+        LOG.info(e);
       }
     }
 

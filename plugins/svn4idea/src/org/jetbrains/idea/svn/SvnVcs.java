@@ -372,6 +372,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
     myAuthNotifier.init();
     mySvnBranchPointsCalculator = new SvnBranchPointsCalculator(myProject);
+    mySvnBranchPointsCalculator.activate();
 
     // do one time after project loaded
     StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
@@ -474,6 +475,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     myAuthNotifier.stop();
     myAuthNotifier.clear();
 
+    mySvnBranchPointsCalculator.deactivate();
     mySvnBranchPointsCalculator = null;
     myWorkingCopiesContent.deactivate();
   }
