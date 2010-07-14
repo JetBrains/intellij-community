@@ -90,7 +90,6 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       PyResolveUtil.treeCrawlUp(import_prc, node);
       List<PsiElement> result = import_prc.getResult();
       if (result.size() > 0) {
-        fix = new ImportFromExistingFix(node, ref_text, true); // initially it is almost as lightweight as a plain list
         for (PsiElement stmt : import_prc.getResult()) {
           for (PyImportElement ielt : ((PyImportStatement)stmt).getImportElements()) {
             final PyReferenceExpression src = ielt.getImportReference();
