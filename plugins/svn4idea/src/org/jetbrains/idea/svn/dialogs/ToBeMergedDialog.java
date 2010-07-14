@@ -38,6 +38,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TableViewSpeedSearch;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.ColumnInfo;
@@ -176,6 +177,15 @@ public class ToBeMergedDialog extends DialogWrapper {
       public void valueChanged(ListSelectionEvent e) {
         super.valueChanged(e);
         selectionListener.valueChanged(e);
+      }
+    };
+    new TableViewSpeedSearch(myRevisionsList) {
+      @Override
+      protected String getElementText(Object element) {
+        if (element instanceof CommittedChangeList) {
+          return ((CommittedChangeList) element).getComment();
+        }
+        return null;
       }
     };
     final ListTableModel<CommittedChangeList> flatModel = new ListTableModel<CommittedChangeList>(FAKE_COLUMN);
