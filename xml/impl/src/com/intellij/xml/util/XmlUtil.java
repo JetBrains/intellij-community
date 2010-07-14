@@ -950,9 +950,8 @@ public class XmlUtil {
   private static final String HTML5_SCHEMA_LOCATION;
   
   static {
-    URL schemaLocation = XmlUtil.class.getResource(ExternalResourceManagerImpl.STANDARD_SCHEMAS + "html5/xhtml5.xsd");
-    VirtualFile relativeFile = schemaLocation != null ?
-                               VfsUtil.findRelativeFile(VfsUtil.fixURLforIDEA(schemaLocation.toExternalForm()), null):null;
+    URL schemaLocationURL = XmlUtil.class.getResource(ExternalResourceManagerImpl.STANDARD_SCHEMAS + "html5/xhtml5.xsd");
+    VirtualFile relativeFile = schemaLocationURL != null ? VfsUtil.findFileByURL(schemaLocationURL):null;
     HTML5_SCHEMA_LOCATION = relativeFile != null ? relativeFile.getPath():"";
   }
   
