@@ -7,7 +7,7 @@ import java.util.List;
  * @author nik
  */
 public class GroovyFileSearcher {
-  public static boolean containGroovyFiles(List<CharSequence> paths) {
+  public static boolean containGroovyFiles(List<? extends CharSequence> paths) {
     for (CharSequence path : paths) {
       //toString is necessary to convert GString to String
       if (containGroovyFiles(new File(path.toString()))) {
