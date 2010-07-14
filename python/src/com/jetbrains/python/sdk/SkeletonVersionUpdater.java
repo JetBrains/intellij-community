@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -35,8 +34,7 @@ public class SkeletonVersionUpdater implements ProjectComponent {
                 LOG.info("Could not find skeletons path for SDK path " + sdk.getHomePath());
               }
               else {
-                PythonSdkType.generateBuiltinStubs(sdk.getHomePath(), path);
-                PythonSdkType.generateBinarySkeletons(sdk.getHomePath(), path, ProgressManager.getInstance().getProgressIndicator());
+                PythonSdkType.generateSkeletons(ProgressManager.getInstance().getProgressIndicator(), sdk.getHomePath());
               }
             }
           }

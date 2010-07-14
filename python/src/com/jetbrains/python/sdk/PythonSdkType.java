@@ -277,15 +277,14 @@ public class PythonSdkType extends SdkType {
     final String path = findSkeletonsPath(currentSdk);
     if (path != null) {
       File stubs_dir = new File(path);
-      if (!stubs_dir.exists()) {
+      if (!stubs_dir.exists() || stubs_dir.list().length == 0) {
         final ProgressManager progman = ProgressManager.getInstance();
         final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
         final Task.Modal setup_task = new Task.Modal(project, "Setting up library files", false) {
 
           public void run(@NotNull final ProgressIndicator indicator) {
             try {
-              generateBuiltinStubs(currentSdk.getHomePath(), path);
-              generateBinarySkeletons(currentSdk.getHomePath(), path, indicator);
+              generateSkeletons(indicator, currentSdk.getHomePath());
             }
             catch (Exception e) {
               LOG.error(e);
@@ -358,7 +357,10 @@ public class PythonSdkType extends SdkType {
         try {
           final SdkModificator sdkModificator = sdk.getSdkModificator();
           sdkModificator.removeAllRoots();
-          setupSdkPaths(sdkModificator, indicator);
+          updateSdkRootsFromSysPath(sdkModificator, indicator);
+          if (!ApplicationManager.getApplication().isUnitTestMode()) {
+            generateSkeletons(indicator, sdk.getHomePath());
+          }
           //sdkModificator.commitChanges() must happen outside, in dispatch thread.
           sdkModificatorRef.set(sdkModificator);
         }
@@ -387,7 +389,7 @@ public class PythonSdkType extends SdkType {
    */
   public static final OrderRootType BUILTIN_ROOT_TYPE = OrderRootType.CLASSES;
 
-  public static void setupSdkPaths(SdkModificator sdkModificator, ProgressIndicator indicator) {
+  public static void updateSdkRootsFromSysPath(SdkModificator sdkModificator, ProgressIndicator indicator) {
     Application application = ApplicationManager.getApplication();
     boolean not_in_unit_test_mode = (application != null && !application.isUnitTestMode());
 
@@ -395,7 +397,6 @@ public class PythonSdkType extends SdkType {
     assert bin_path != null;
     String working_dir = new File(bin_path).getParent();
     final String sep = File.separator;
-    @NonNls final String stubs_path = PathManager.getSystemPath() + sep + SKELETON_DIR_NAME + sep + bin_path.hashCode() + sep;
     // we have a number of lib dirs, those listed in python's sys.path
     if (indicator != null) {
       indicator.setText("Adding library roots");
@@ -426,16 +427,12 @@ public class PythonSdkType extends SdkType {
           LOG.info("Bogus sys.path entry " + path);
         }
       }
-      if (indicator != null) {
-        indicator.setText("Generating skeletons of __builtins__");
-        indicator.setText2("");
-      }
-      if (not_in_unit_test_mode) {
-        generateBuiltinStubs(bin_path, stubs_path);
-        final VirtualFile builtins_root = LocalFileSystem.getInstance().refreshAndFindFileByPath(stubs_path);
-        assert builtins_root != null;
-        sdkModificator.addRoot(builtins_root, BUILTIN_ROOT_TYPE);
-      }
+      @NonNls final String stubs_path = getSkeletonsPath(bin_path);
+      new File(stubs_path).mkdirs();      
+      final VirtualFile builtins_root = LocalFileSystem.getInstance().refreshAndFindFileByPath(stubs_path);
+      assert builtins_root != null;
+      sdkModificator.addRoot(builtins_root, OrderRootType.SOURCES);
+      sdkModificator.addRoot(builtins_root, OrderRootType.CLASSES);
     }
     // Add python-django installed as package in Linux
     if (SystemInfo.isLinux && not_in_unit_test_mode) {
@@ -445,13 +442,26 @@ public class PythonSdkType extends SdkType {
         sdkModificator.addRoot(file, OrderRootType.CLASSES);
       }
     }
+  }
 
-    if (not_in_unit_test_mode) {
-      // regenerate stubs, existing or not
-      final File stubs_dir = new File(stubs_path);
-      if (!stubs_dir.exists()) stubs_dir.mkdirs();
-      generateBinarySkeletons(bin_path, stubs_path, indicator);
+  public static void generateSkeletons(@Nullable ProgressIndicator indicator, String homePath) {
+    final String skeletonsPath = getSkeletonsPath(homePath);
+    final File stubs_dir = new File(skeletonsPath);
+    if (!stubs_dir.exists()) stubs_dir.mkdirs();
+
+    if (indicator != null) {
+      indicator.setText("Generating skeletons of __builtins__ for interpreter " + homePath);
+      indicator.setText2("");
     }
+    generateBuiltinSkeletons(homePath, skeletonsPath);
+
+    // regenerate stubs, existing or not
+    generateBinarySkeletons(homePath, skeletonsPath, indicator);
+  }
+
+  private static String getSkeletonsPath(String bin_path) {
+    String sep = File.separator;
+    return PathManager.getSystemPath() + sep + SKELETON_DIR_NAME + sep + bin_path.hashCode() + sep;
   }
 
   private static List<String> getSysPath(String sdk_path, String bin_path) {
@@ -491,7 +501,7 @@ public class PythonSdkType extends SdkType {
   private final static String GENERATOR3 = "generator3.py";
   private final static String FIND_BINARIES = "find_binaries.py";
 
-  public static void generateBuiltinStubs(String binary_path, final String stubsRoot) {
+  public static void generateBuiltinSkeletons(String binary_path, final String stubsRoot) {
     new File(stubsRoot).mkdirs();
 
 
@@ -521,7 +531,7 @@ public class PythonSdkType extends SdkType {
    */
   public static void generateBinarySkeletons(final String binaryPath, final String stubsRoot, ProgressIndicator indicator) {
     if (indicator != null) {
-      indicator.setText("Generating skeletons of binary libs");
+      indicator.setText("Generating skeletons of binary libs for interpreter " + binaryPath);
     }
     final String parent_dir = new File(binaryPath).getParent();
 
