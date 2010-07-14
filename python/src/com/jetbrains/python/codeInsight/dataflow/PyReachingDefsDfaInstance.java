@@ -2,7 +2,6 @@ package com.jetbrains.python.codeInsight.dataflow;
 
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.codeInsight.dataflow.map.DFAMap;
-import com.intellij.codeInsight.dataflow.DfaInstance;
 import com.intellij.codeInsight.dataflow.map.DfaMapInstance;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
