@@ -318,6 +318,7 @@ public class QuickMerge {
           final LocalChangeList newList = listManager.addChangeList(name, null);
           listManager.setDefaultChangeList(newList);
           updateDefaultList = true;
+          break;
         }
         if (changeList.getChanges().isEmpty()) {
           if (! changeList.isDefault()) {
