@@ -305,7 +305,7 @@
       <implementation-class>com.jetbrains.python.PythonPsiManager</implementation-class>
     </component>
     <component>
-      <implementation-class>com.jetbrains.python.sdk.SkeletonVersionUpdater</implementation-class>
+      <implementation-class>com.jetbrains.python.sdk.PythonSdkUpdater</implementation-class>
     </component>
   </project-components>
 

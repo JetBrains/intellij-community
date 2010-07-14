@@ -395,14 +395,13 @@ public class PythonSdkType extends SdkType {
 
     String bin_path = sdkModificator.getHomePath();
     assert bin_path != null;
-    String working_dir = new File(bin_path).getParent();
     final String sep = File.separator;
     // we have a number of lib dirs, those listed in python's sys.path
     if (indicator != null) {
       indicator.setText("Adding library roots");
     }
     // Add folders from sys.path
-    final List<String> paths = getSysPath(working_dir, bin_path);
+    final List<String> paths = getSysPath(bin_path);
     if ((paths != null) && paths.size() > 0) {
       // add every path as root.
       for (String path : paths) {
@@ -410,29 +409,13 @@ public class PythonSdkType extends SdkType {
         if (indicator != null) {
           indicator.setText2(path);
         }
-        VirtualFile child = LocalFileSystem.getInstance().findFileByPath(path);
-        if (child != null) {
-          @NonNls String suffix = child.getExtension();
-          if (suffix != null) suffix = suffix.toLowerCase(); // Why on earth empty suffix is null and not ""?
-          if ((!child.isDirectory()) && ("zip".equals(suffix) || "egg".equals(suffix))) {
-            // a .zip / .egg file must have its root extracted first
-            child = JarFileSystem.getInstance().getJarRootForLocalFile(child);
-          }
-          if (child != null) {
-            sdkModificator.addRoot(child, OrderRootType.SOURCES);
-            sdkModificator.addRoot(child, OrderRootType.CLASSES);
-          }
-        }
-        else {
-          LOG.info("Bogus sys.path entry " + path);
-        }
+        addSdkRoot(sdkModificator, path);
       }
       @NonNls final String stubs_path = getSkeletonsPath(bin_path);
       new File(stubs_path).mkdirs();      
       final VirtualFile builtins_root = LocalFileSystem.getInstance().refreshAndFindFileByPath(stubs_path);
       assert builtins_root != null;
-      sdkModificator.addRoot(builtins_root, OrderRootType.SOURCES);
-      sdkModificator.addRoot(builtins_root, OrderRootType.CLASSES);
+      sdkModificator.addRoot(builtins_root, BUILTIN_ROOT_TYPE);
     }
     // Add python-django installed as package in Linux
     if (SystemInfo.isLinux && not_in_unit_test_mode) {
@@ -441,6 +424,25 @@ public class PythonSdkType extends SdkType {
         sdkModificator.addRoot(file, OrderRootType.SOURCES);
         sdkModificator.addRoot(file, OrderRootType.CLASSES);
       }
+    }
+  }
+
+  public static void addSdkRoot(SdkModificator sdkModificator, String path) {
+    VirtualFile child = LocalFileSystem.getInstance().findFileByPath(path);
+    if (child != null) {
+      @NonNls String suffix = child.getExtension();
+      if (suffix != null) suffix = suffix.toLowerCase(); // Why on earth empty suffix is null and not ""?
+      if ((!child.isDirectory()) && ("zip".equals(suffix) || "egg".equals(suffix))) {
+        // a .zip / .egg file must have its root extracted first
+        child = JarFileSystem.getInstance().getJarRootForLocalFile(child);
+      }
+      if (child != null) {
+        sdkModificator.addRoot(child, OrderRootType.SOURCES);
+        sdkModificator.addRoot(child, OrderRootType.CLASSES);
+      }
+    }
+    else {
+      LOG.info("Bogus sys.path entry " + path);
     }
   }
 
@@ -464,7 +466,8 @@ public class PythonSdkType extends SdkType {
     return PathManager.getSystemPath() + sep + SKELETON_DIR_NAME + sep + bin_path.hashCode() + sep;
   }
 
-  private static List<String> getSysPath(String sdk_path, String bin_path) {
+  public static List<String> getSysPath(String bin_path) {
+    String working_dir = new File(bin_path).getParent();
     Application application = ApplicationManager.getApplication();
     if (application != null && !application.isUnitTestMode()) {
       String scriptFile = PythonHelpersLocator.getHelperPath("syspath.py");
@@ -476,7 +479,7 @@ public class PythonSdkType extends SdkType {
     }
     else { // mock sdk
       List<String> ret = new ArrayList<String>(1);
-      ret.add(sdk_path);
+      ret.add(working_dir);
       return ret;
     }
   }
