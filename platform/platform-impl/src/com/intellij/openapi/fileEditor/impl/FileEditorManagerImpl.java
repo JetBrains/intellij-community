@@ -495,7 +495,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       if (DumbService.getInstance(myProject).isDumb()) {
         final List<FileEditorProvider> dumbAware = ContainerUtil.findAll(providers, new Condition<FileEditorProvider>() {
           public boolean value(FileEditorProvider fileEditorProvider) {
-            return fileEditorProvider instanceof DumbAware;
+            return DumbService.isDumbAware(fileEditorProvider);
           }
         });
         providers = dumbAware.toArray(new FileEditorProvider[dumbAware.size()]);
@@ -520,7 +520,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
           editors[i] = editor;
           // Register PropertyChangeListener into editor
           editor.addPropertyChangeListener(myEditorPropertyChangeListener);
-          editor.putUserData(DUMB_AWARE, provider instanceof DumbAware);
+          editor.putUserData(DUMB_AWARE, DumbService.isDumbAware(provider));
 
           if (current && editor instanceof TextEditorImpl) {
             ((TextEditorImpl)editor).initFolding();

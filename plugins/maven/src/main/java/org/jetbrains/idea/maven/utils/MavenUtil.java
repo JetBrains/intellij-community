@@ -129,7 +129,7 @@ public class MavenUtil {
   }
 
   public static void runDumbAware(final Project project, final Runnable r) {
-    if (r instanceof DumbAware) {
+    if (DumbService.isDumbAware(r)) {
       r.run();
     }
     else {

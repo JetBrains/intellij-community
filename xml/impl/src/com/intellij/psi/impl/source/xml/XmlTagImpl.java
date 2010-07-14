@@ -437,7 +437,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     XmlElementDescriptor elementDescriptor = null;
     final XmlNSDescriptor nsDescriptor = getNSDescriptor(namespace, false);
     if (nsDescriptor != null) {
-      if (!DumbService.getInstance(getProject()).isDumb() || nsDescriptor instanceof DumbAware) {
+      if (!DumbService.getInstance(getProject()).isDumb() || DumbService.isDumbAware(nsDescriptor)) {
         elementDescriptor = nsDescriptor.getElementDescriptor(this);
       }
     }

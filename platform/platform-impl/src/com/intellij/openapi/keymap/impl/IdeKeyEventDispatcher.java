@@ -505,7 +505,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
       ActionUtil.performDumbAwareUpdate(action, actionEvent, true);
 
-      if (dumb && !(action instanceof DumbAware)) {
+      if (dumb && !action.isDumbAware()) {
         if (Boolean.FALSE.equals(presentation.getClientProperty(ActionUtil.WOULD_BE_ENABLED_IF_NOT_DUMB_MODE))) {
           continue;
         }

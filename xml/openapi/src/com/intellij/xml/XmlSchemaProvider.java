@@ -47,7 +47,7 @@ public abstract class XmlSchemaProvider {
     final boolean dumb = DumbService.getInstance(file.getProject()).isDumb();
 
     for (XmlSchemaProvider provider: Extensions.getExtensions(EP_NAME)) {
-      if (dumb && !(provider instanceof DumbAware)) {
+      if (dumb && !DumbService.isDumbAware(provider)) {
         continue;
       }
 

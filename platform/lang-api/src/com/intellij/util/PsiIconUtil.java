@@ -36,7 +36,7 @@ public class PsiIconUtil {
   public static Icon getProvidersIcon(PsiElement element, int flags) {
     final boolean dumb = DumbService.getInstance(element.getProject()).isDumb();
     for (final IconProvider iconProvider : getIconProviders()) {
-      if (dumb && !(iconProvider instanceof DumbAware)) {
+      if (dumb && !DumbService.isDumbAware(iconProvider)) {
         continue;
       }
 

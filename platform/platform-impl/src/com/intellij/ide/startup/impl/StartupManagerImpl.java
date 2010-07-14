@@ -128,7 +128,7 @@ public class StartupManagerImpl extends StartupManagerEx {
     final List<Runnable> nonDumbAware = CollectionFactory.arrayList();
 
     for (Runnable each : myPostStartupActivities) {
-      if (each instanceof DumbAware) {
+      if (DumbService.isDumbAware(each)) {
         dumbAware.add(each);
       }
       else {
@@ -186,7 +186,7 @@ public class StartupManagerImpl extends StartupManagerEx {
     final Runnable runnable;
 
     final Application application = ApplicationManager.getApplication();
-    if (action instanceof DumbAware) {
+    if (DumbService.isDumbAware(action)) {
       runnable = new DumbAwareRunnable() {
         public void run() {
           application.runWriteAction(action);
