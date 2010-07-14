@@ -17,6 +17,7 @@ package com.intellij.util;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 
@@ -37,14 +38,14 @@ public class CalculateContinuation<T> {
             public void run() {
               consumer.consume(e);
             }
-          });
+          }, ModalityState.NON_MODAL);
         }
 
         application.invokeLater(new Runnable() {
           public void run() {
             consumer.consume(t.get());
           }
-        });
+        }, ModalityState.NON_MODAL);
       }
     });
   }

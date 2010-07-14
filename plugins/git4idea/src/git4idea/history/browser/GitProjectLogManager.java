@@ -163,13 +163,10 @@ public class GitProjectLogManager {
         }, new CatchingConsumer<String, Exception>() {
           public void consume(Exception e) {
             //should not
+            LOG.info(e);
           }
           public void consume(final String caption) {
-            new AbstractCalledLater(myProject, ModalityState.NON_MODAL) {
-              public void run() {
-                content.setDisplayName(caption);
-              }
-            }.callMe();
+            content.setDisplayName(caption);
           }
         });
       }
