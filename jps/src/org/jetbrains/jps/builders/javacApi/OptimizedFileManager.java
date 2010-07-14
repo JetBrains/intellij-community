@@ -26,13 +26,20 @@ public class OptimizedFileManager extends DefaultFileManager  {
   public OptimizedFileManager() {
     super(new Context(), true, null);
     try {
-      final Field field = DefaultFileManager.class.getDeclaredField("archives");
-      field.setAccessible(true);
-      myArchives = (Map<File, Archive>) field.get(this);
+      final Field archivesField = DefaultFileManager.class.getDeclaredField("archives");
+      archivesField.setAccessible(true);
+      myArchives = (Map<File, Archive>) archivesField.get(this);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
-    myUseZipFileIndex = System.getProperty("useJavaUtilZip") == null;
+
+    try {
+      final Field useZipFileIndexField = DefaultFileManager.class.getDeclaredField("useZipFileIndex");
+      useZipFileIndexField.setAccessible(true);
+      myUseZipFileIndex = (Boolean) useZipFileIndexField.get(this);
+    } catch (Exception e) {
+      myUseZipFileIndex = false;
+    }
   }
 
   @Override
