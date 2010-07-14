@@ -98,7 +98,7 @@ public class ChangesUtil {
     }
   }
 
-  public static Collection<FilePath> getPaths(final List<Change> changes) {
+  public static Collection<FilePath> getPaths(final Collection<Change> changes) {
     final Adder adder = new Adder();
     for (Change change : changes) {
       ContentRevision beforeRevision = change.getBeforeRevision();
