@@ -20,7 +20,6 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInspection.ex.DescriptorProviderInspection;
 import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageAnnotators;
@@ -106,17 +105,17 @@ public class AnnotatorBasedInspection extends GlobalInspectionTool {
         }
 
         @Override
-        public Annotation createWarningAnnotation(PsiElement elt, String message) {
+        public Annotation createWarningAnnotation(@NotNull PsiElement elt, String message) {
           return createProblem(elt, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, HighlightSeverity.WARNING, null);
         }
 
         @Override
-        public Annotation createInfoAnnotation(PsiElement elt, String message) {
+        public Annotation createInfoAnnotation(@NotNull PsiElement elt, String message) {
           return super.createInfoAnnotation(elt, message);
         }
 
         @Override
-        public Annotation createInformationAnnotation(PsiElement elt, String message) {
+        public Annotation createInformationAnnotation(@NotNull PsiElement elt, String message) {
           return createProblem(elt, message, ProblemHighlightType.INFORMATION, HighlightSeverity.INFORMATION, null);
         }
 
@@ -131,22 +130,22 @@ public class AnnotatorBasedInspection extends GlobalInspectionTool {
         }
 
         @Override
-        public Annotation createErrorAnnotation(ASTNode node, String message) {
+        public Annotation createErrorAnnotation(@NotNull ASTNode node, String message) {
           return createErrorAnnotation(node.getPsi(), message);
         }
 
         @Override
-        public Annotation createWarningAnnotation(ASTNode node, String message) {
+        public Annotation createWarningAnnotation(@NotNull ASTNode node, String message) {
           return createWarningAnnotation(node.getPsi(), message);
         }
 
         @Override
-        public Annotation createInformationAnnotation(ASTNode node, String message) {
+        public Annotation createInformationAnnotation(@NotNull ASTNode node, String message) {
           return createInformationAnnotation(node.getPsi(), message);
         }
 
         @Override
-        public Annotation createInfoAnnotation(ASTNode node, String message) {
+        public Annotation createInfoAnnotation(@NotNull ASTNode node, String message) {
           return createInfoAnnotation(node.getPsi(), message);
         }
 
