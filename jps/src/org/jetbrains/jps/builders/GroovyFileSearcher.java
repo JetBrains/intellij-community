@@ -9,7 +9,6 @@ import java.util.List;
 public class GroovyFileSearcher {
   public static boolean containGroovyFiles(List<? extends CharSequence> paths) {
     for (CharSequence path : paths) {
-      //toString is necessary to convert GString to String
       if (containGroovyFiles(new File(path.toString()))) {
         return true;
       }
@@ -18,13 +17,11 @@ public class GroovyFileSearcher {
   }
 
   private static boolean containGroovyFiles(File file) {
-    if (file.isDirectory()) {
-      final File[] files = file.listFiles();
-      if (files != null) {
-        for (File child : files) {
-          if (containGroovyFiles(child)) {
-            return true;
-          }
+    final File[] files = file.listFiles();
+    if (files != null) {
+      for (File child : files) {
+        if (containGroovyFiles(child)) {
+          return true;
         }
       }
       return false;
