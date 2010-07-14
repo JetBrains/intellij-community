@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.xml;
 
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -52,10 +53,13 @@ public class SchemaPrefixReference extends PsiReferenceBase<XmlElement> {
   };
 
   private final String myName;
+  @Nullable
+  private final TagNameReference myTagNameReference;
 
-  public SchemaPrefixReference(XmlElement element, TextRange range, String name) {
+  public SchemaPrefixReference(XmlElement element, TextRange range, String name, @Nullable TagNameReference tagNameReference) {
     super(element, range, true);
     myName = name;
+    myTagNameReference = tagNameReference;
   }
 
   public String getNamespacePrefix() {
@@ -68,6 +72,9 @@ public class SchemaPrefixReference extends PsiReferenceBase<XmlElement> {
 
   @NotNull
   public Object[] getVariants() {
+    if (myTagNameReference != null) {
+      return new LookupElement[]{ myTagNameReference.createClosingTagLookupElement(myTagNameReference.getTagElement(), true)};
+    }
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
