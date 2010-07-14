@@ -27,8 +27,6 @@ class Project {
   final Map<String, Library> libraries = [:]
   final Map<String, Artifact> artifacts = [:]
 
-  Closure stagePrinter;
-
   String targetFolder = "."
 
   boolean dryRun = false
@@ -116,12 +114,7 @@ class Project {
   }
 
   def stage(String message) {
-    if (stagePrinter != null) {
-      stagePrinter(message)
-    }
-    else {
-      info(message)
-    }
+    builder.buildInfoPrinter.printProgressMessage(this, message)
   }
 
   def info(String message) {

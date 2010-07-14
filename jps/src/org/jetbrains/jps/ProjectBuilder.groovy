@@ -3,10 +3,10 @@ package org.jetbrains.jps
 import org.codehaus.gant.GantBinding
 import org.jetbrains.jps.dag.DagBuilder
 import org.jetbrains.jps.builders.*
-import org.jetbrains.jps.timing.BuildTiming
-
-import org.jetbrains.jps.timing.DummyBuildTiming
-import org.jetbrains.jps.timing.BuildTimingImpl
+import org.jetbrains.jps.listeners.JpsBuildListener
+import org.jetbrains.jps.listeners.BuildStatisticsListener
+import org.jetbrains.jps.listeners.BuildInfoPrinter
+import org.jetbrains.jps.listeners.DefaultBuildInfoPrinter
 
 /**
  * @author max
@@ -29,7 +29,9 @@ class ProjectBuilder {
   final CustomTasksBuilder preTasksBuilder = new CustomTasksBuilder()
   final CustomTasksBuilder postTasksBuilder = new CustomTasksBuilder()
 
-  BuildTiming timing = new BuildTimingImpl()
+  final List<JpsBuildListener> listeners = [new BuildStatisticsListener()]
+  BuildInfoPrinter buildInfoPrinter = new DefaultBuildInfoPrinter()
+  boolean useInProcessJavac
 
   def ProjectBuilder(GantBinding binding, Project project) {
     this.project = project
@@ -73,22 +75,22 @@ class ProjectBuilder {
   }
 
   public def buildAll() {
-    timing.onBuildStarted(project)
+    listeners*.onBuildStarted(project)
     buildChunks()
     chunks.each {
       makeChunk(it)
       makeChunkTests(it)
     }
-    timing.onBuildFinished(project)
+    listeners*.onBuildFinished(project)
   }
 
   public def buildProduction() {
-    timing.onBuildStarted(project)
+    listeners*.onBuildStarted(project)
     buildChunks()
     chunks.each {
       makeChunk(it)
     }
-    timing.onBuildFinished(project)
+    listeners*.onBuildFinished(project)
   }
 
   def preModuleBuildTask(String moduleName, Closure task) {
@@ -175,16 +177,16 @@ class ProjectBuilder {
     )
 
     if (!project.dryRun) {
+      listeners*.onCompilationStarted(chunk)
       builders().each {
-        timing.onModuleBuilderStarted(it, chunk)
+        listeners*.onModuleBuilderStarted(it, chunk)
         it.processModule(chunk, state)
-        timing.onModuleBuilderFinished(it, chunk)
+        listeners*.onModuleBuilderFinished(it, chunk)
       }
-      timing.onCompilationStarted(chunk)
       state.tempRootsToDelete.each {
         binding.ant.delete(dir: it)
       }
-      timing.onCompilationFinished(chunk)
+      listeners*.onCompilationFinished(chunk)
     }
 
     chunk.modules.each {
