@@ -307,8 +307,14 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     }
   }
 
+  private static boolean stopGdsl = false;
+
   @Nullable
   private static GroovyDslExecutor createExecutor(String text, VirtualFile vfile, final Project project) {
+    if (stopGdsl) {
+      return null;
+    }
+
     try {
       return new GroovyDslExecutor(text, vfile.getName());
     }
@@ -323,6 +329,16 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
         return null;
       }
       invokeDslErrorPopup(e, project, vfile);
+
+      if (e instanceof OutOfMemoryError) {
+        stopGdsl = true;
+        throw (Error)e;
+      }
+      if (e instanceof NoClassDefFoundError) {
+        stopGdsl = true;
+        throw (NoClassDefFoundError) e;
+      }
+
       return null;
     }
   }
@@ -330,6 +346,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     if (!isActivated(vfile)) {
       return;
     }
+    disableFile(vfile);
 
     final StringWriter writer = new StringWriter();
     //noinspection IOResourceOpenedButNotSafelyClosed
@@ -349,8 +366,6 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
                            notification.expire();
                          }
                        }));
-
-    disableFile(vfile);
   }
 
 }
