@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.SystemProperties;
+import org.jetbrains.idea.svn.SvnAuthenticationManager;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -35,9 +36,11 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
   private final Project myProject;
   private static final ThreadLocal<MyCallState> myCallState = new ThreadLocal<MyCallState>();
   private final SvnVcs myVcs;
+  private final SvnAuthenticationManager myManager;
 
-  public SvnInteractiveAuthenticationProvider(final SvnVcs vcs) {
+  public SvnInteractiveAuthenticationProvider(final SvnVcs vcs, SvnAuthenticationManager manager) {
     myVcs = vcs;
+    myManager = manager;
     myProject = vcs.getProject();
   }
 
@@ -83,7 +86,7 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
           }
           dialog.show();
           if (dialog.isOK()) {
-            result[0] = new SVNPasswordAuthentication(dialog.getUserName(), dialog.getPassword(), dialog.isSaveAllowed());
+            result[0] = new SVNPasswordAuthentication(dialog.getUserName(), dialog.getPassword(), dialog.isSaveAllowed(), url, false);
           }
         }
       };
@@ -104,7 +107,7 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
           }
           dialog.show();
           if (dialog.isOK()) {
-            result[0] = new SVNUserNameAuthentication(dialog.getUserName(), dialog.isSaveAllowed());
+            result[0] = new SVNUserNameAuthentication(dialog.getUserName(), dialog.isSaveAllowed(), url, false);
           }
         }
       };
@@ -129,10 +132,11 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
                 passphrase = null;
               }
               result[0] =
-                new SVNSSHAuthentication(dialog.getUserName(), new File(dialog.getKeyFile()), passphrase, port, dialog.isSaveAllowed());
+                new SVNSSHAuthentication(dialog.getUserName(), new File(dialog.getKeyFile()), passphrase, port, dialog.isSaveAllowed(),
+                                         url, false);
             }
             else {
-              result[0] = new SVNSSHAuthentication(dialog.getUserName(), dialog.getPassword(), port, dialog.isSaveAllowed());
+              result[0] = new SVNSSHAuthentication(dialog.getUserName(), dialog.getPassword(), port, dialog.isSaveAllowed(), url, false);
             }
           }
         }
@@ -150,7 +154,7 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
           dialog.show();
           if (dialog.isOK()) {
             result[0] = new SVNSSLAuthentication(new File(dialog.getCertificatePath()), String.valueOf(dialog.getCertificatePassword()),
-                                                 dialog.getSaveAuth());
+                                                 dialog.getSaveAuth(), url, false);
           }
         }
       };
@@ -168,7 +172,11 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
       }
       log("3 authentication result: " + result[0]);
     }
-    callState.setWasCancelled(result[0] == null);
+    final boolean wasCanceled = result[0] == null;
+    callState.setWasCancelled(wasCanceled);
+    if ((! wasCanceled) && (ISVNAuthenticationManager.USERNAME != kind) && (result[0].isStorageAllowed())) {
+      myManager.checkContinueSaveCredentials(result[0], kind, realm);
+    }
     return result[0];
   }
 

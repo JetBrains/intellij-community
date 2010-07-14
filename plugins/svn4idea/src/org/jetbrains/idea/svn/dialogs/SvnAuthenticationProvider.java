@@ -20,14 +20,16 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.SystemProperties;
+import org.jetbrains.idea.svn.SvnAuthenticationManager;
 import org.jetbrains.idea.svn.SvnAuthenticationNotifier;
-import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.auth.*;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
+import org.tmatesoft.svn.core.auth.SVNAuthentication;
+import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
 
-import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.security.cert.X509Certificate;
 
@@ -40,10 +42,10 @@ public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
   private final SvnAuthenticationNotifier myAuthenticationNotifier;
   private final SvnInteractiveAuthenticationProvider mySvnInteractiveAuthenticationProvider;
 
-  public SvnAuthenticationProvider(final SvnVcs svnVcs) {
+  public SvnAuthenticationProvider(final SvnVcs svnVcs, final SvnAuthenticationManager manager) {
     myProject = svnVcs.getProject();
     myAuthenticationNotifier = svnVcs.getAuthNotifier();
-    mySvnInteractiveAuthenticationProvider = new SvnInteractiveAuthenticationProvider(svnVcs);
+    mySvnInteractiveAuthenticationProvider = new SvnInteractiveAuthenticationProvider(svnVcs, manager);
   }
 
   private void log(final String s) {
