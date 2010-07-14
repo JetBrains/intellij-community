@@ -495,7 +495,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
-  List<VirtualFile> getUnversionedFiles() {
+  public List<VirtualFile> getUnversionedFiles() {
     return myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).getFiles();
   }
 
