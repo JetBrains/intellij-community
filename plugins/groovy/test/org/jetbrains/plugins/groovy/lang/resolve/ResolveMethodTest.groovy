@@ -297,8 +297,8 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertNull(ref.resolve());
   }
 
-  public void testGrvy723() throws Exception {
-    PsiReference ref = configureByFile("GRVY723/A.groovy");
+  public void testPrivateScriptMethod() throws Exception {
+    PsiReference ref = configureByFile("A.groovy");
     assertNotNull(ref.resolve());
   }
 
@@ -418,8 +418,8 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertTrue(resolved instanceof PsiMethod);
   }
 
-  public void testMethodPointer() throws Exception {
-    PsiReference ref = configureByFile("methodpointer/A.groovy");
+  public void testMethodPointer1() throws Exception {
+    PsiReference ref = configureByFile("A.groovy");
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof PsiMethod);
   }
