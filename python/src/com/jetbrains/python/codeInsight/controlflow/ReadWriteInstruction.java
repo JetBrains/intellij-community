@@ -2,6 +2,7 @@ package com.jetbrains.python.codeInsight.controlflow;
 
 import com.intellij.codeInsight.controlflow.ControlFlowBuilder;
 import com.intellij.codeInsight.controlflow.impl.InstructionImpl;
+import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.PyElement;
 import org.jetbrains.annotations.NonNls;
 
@@ -32,7 +33,7 @@ public class ReadWriteInstruction extends InstructionImpl {
   private final ACCESS myAccess;
 
   private ReadWriteInstruction(final ControlFlowBuilder builder,
-                              final PyElement element,
+                              final PsiElement element,
                               final String name,
                               final ACCESS access) {
     super(builder, element);
@@ -73,7 +74,7 @@ public class ReadWriteInstruction extends InstructionImpl {
   }
 
   public static ReadWriteInstruction newInstruction(final ControlFlowBuilder builder,
-                              final PyElement element,
+                              final PsiElement element,
                               final String name,
                               final ACCESS access) {
     return new ReadWriteInstruction(builder, element, name, access);

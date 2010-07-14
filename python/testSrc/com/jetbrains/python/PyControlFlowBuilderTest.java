@@ -135,6 +135,10 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
     doTest();
   }
 
+  public void testLambda() throws Exception {
+    doTest();
+  }
+
   public void testSelf() throws Exception {
     final String testName = getTestName(false).toLowerCase();
     configureByFile(testName + ".py");

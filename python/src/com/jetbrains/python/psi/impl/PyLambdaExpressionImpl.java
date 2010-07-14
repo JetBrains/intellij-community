@@ -10,6 +10,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -33,9 +34,14 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
   }
 
   public PyType getReturnType() {
-    PyExpression body = PsiTreeUtil.getChildOfType(this, PyExpression.class);
+    final PyExpression body = getBody();
     if (body != null) return body.getType(TypeEvalContext.fast()); // or slow?
     else return null;
+  }
+
+  @Nullable
+  public PyExpression getBody() {
+    return PsiTreeUtil.getChildOfType(this, PyExpression.class);
   }
 
   public PyFunction asMethod() {

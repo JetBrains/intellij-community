@@ -18,20 +18,22 @@
 17(18) WRITE ACCESS: methodList
 18(19) element: PyAssignmentStatement
 19(20) READ ACCESS: collapse
-20(21) WRITE ACCESS: s
-21(22) READ ACCESS: s
-22(23) WRITE ACCESS: s
-23(24) READ ACCESS: s
-24(25) WRITE ACCESS: processFunc
-25(26) element: PyPrintStatement
-26(27) element: PyListCompExpression
-27(28) READ ACCESS: methodList
-28(29) WRITE ACCESS: method
-29(30) READ ACCESS: method
-30(31) READ ACCESS: spacing
-31(32) READ ACCESS: processFunc
-32(33) READ ACCESS: str
-33(34) READ ACCESS: getattr
-34(35) READ ACCESS: object
-35(36) READ ACCESS: method
-36() element: null
+20(21) element: PyLambdaExpression
+21(22) WRITE ACCESS: s
+22(23) READ ACCESS: s
+23(24) element: PyLambdaExpression
+24(25) WRITE ACCESS: s
+25(26) READ ACCESS: s
+26(27) WRITE ACCESS: processFunc
+27(28) element: PyPrintStatement
+28(29) element: PyListCompExpression
+29(30) READ ACCESS: methodList
+30(31) WRITE ACCESS: method
+31(32) READ ACCESS: method
+32(33) READ ACCESS: spacing
+33(34) READ ACCESS: processFunc
+34(35) READ ACCESS: str
+35(36) READ ACCESS: getattr
+36(37) READ ACCESS: object
+37(38) READ ACCESS: method
+38() element: null
