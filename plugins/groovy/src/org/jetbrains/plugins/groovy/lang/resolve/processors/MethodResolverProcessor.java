@@ -138,7 +138,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
       final GrClosureParameter[] params = signature.getParameters();
 
       final GrClosureSignatureUtil.ArgInfo<PsiType>[] argInfos =
-        GrClosureSignatureUtil.mapArgTypesToParameters(erasedSignature, argTypes, (GroovyPsiElement)myPlace);
+        GrClosureSignatureUtil.mapArgTypesToParameters(erasedSignature, argTypes, (GroovyPsiElement)myPlace, myAllVariants);
       if (argInfos ==  null) return partialSubstitutor;
 
       int max = Math.max(params.length, argTypes.length);
@@ -147,15 +147,21 @@ public class MethodResolverProcessor extends ResolverProcessor {
       PsiType[] argumentTypes = new PsiType[max];
       int i = 0;
       for (int paramIndex = 0; paramIndex < argInfos.length; paramIndex++) {
-        GrClosureSignatureUtil.ArgInfo<PsiType> argInfo = argInfos[paramIndex];
-        final List<PsiType> psiTypes = argInfo.args;
         PsiType paramType = params[paramIndex].getType();
-        if (argInfo.isMultiArg) {
-          if (paramType instanceof PsiArrayType) paramType = ((PsiArrayType)paramType).getComponentType();
-        }
-        for (PsiType type : psiTypes) {
+
+        GrClosureSignatureUtil.ArgInfo<PsiType> argInfo = argInfos[paramIndex];
+        if (argInfo != null) {
+          if (argInfo.isMultiArg) {
+            if (paramType instanceof PsiArrayType) paramType = ((PsiArrayType)paramType).getComponentType();
+          }
+          for (PsiType type : argInfo.args) {
+            argumentTypes[i] = handleConversion(paramType, type);
+            parameterTypes[i] = paramType;
+            i++;
+          }
+        } else {
           parameterTypes[i] = paramType;
-          argumentTypes[i] = handleConversion(paramType, type);
+          argumentTypes[i] = PsiType.NULL;
           i++;
         }
       }
