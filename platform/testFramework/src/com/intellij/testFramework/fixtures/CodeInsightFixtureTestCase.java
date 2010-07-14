@@ -17,6 +17,7 @@ package com.intellij.testFramework.fixtures;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.EmptyModuleFixtureBuilder;
 import org.jetbrains.annotations.NonNls;
@@ -72,5 +73,9 @@ public abstract class CodeInsightFixtureTestCase extends UsefulTestCase {
   @NonNls
   protected final String getTestDataPath() {
     return PathManager.getHomePath().replace(File.separatorChar, '/') + getBasePath();
+  }
+
+  protected Project getProject() {
+    return myFixture.getProject();
   }
 }
