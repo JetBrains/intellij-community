@@ -1,13 +1,14 @@
 package org.jetbrains.jps.idea
 
-import org.jetbrains.jps.Project
 import org.jetbrains.jps.Library
+import org.jetbrains.jps.MacroExpansion
+import org.jetbrains.jps.Project
 import org.jetbrains.jps.artifacts.Artifact
 
 /**
  * @author max
  */
-public class IdeaProjectLoader {
+public class IdeaProjectLoader implements MacroExpansion {
   private int libraryCount = 0
   Project project
   private String projectBasePath
@@ -27,12 +28,14 @@ public class IdeaProjectLoader {
     return null
   }
 
-  public static void loadFromPath(Project project, String path, Map<String, String> pathVariables) {
-    new IdeaProjectLoader(project, pathVariables).doLoadFromPath(path)
+  public static MacroExpansion loadFromPath(Project project, String path, Map<String, String> pathVariables) {
+    def loader = new IdeaProjectLoader(project, pathVariables)
+    loader.doLoadFromPath(path);
+    return loader;
   }
 
-  public static void loadFromPath(Project project, String path) {
-    loadFromPath(project, path, [:])
+  public static MacroExpansion loadFromPath(Project project, String path) {
+    return loadFromPath(project, path, [:])
   }
 
   private def IdeaProjectLoader(Project project, Map<String, String> pathVariables) {
@@ -248,7 +251,7 @@ public class IdeaProjectLoader {
     def moduleFile = new File(imlPath)
     if (!moduleFile.exists()) {
       project.error("Module file $imlPath not found")
-      return 
+      return
     }
 
     def moduleBasePath = moduleFile.getParentFile().getAbsolutePath()
@@ -293,7 +296,7 @@ public class IdeaProjectLoader {
               }
 
               if (libraryName != null) {
-                project.modules[currentModuleName].libraries[libraryName] = moduleLibrary 
+                project.modules[currentModuleName].libraries[libraryName] = moduleLibrary
               }
               break;
 
