@@ -29,6 +29,9 @@ public class PythonSdkUpdater implements ProjectComponent {
   public static int SKELETONS_VERSION = 3;
 
   public PythonSdkUpdater(final Project project, StartupManager startupManager) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
     startupManager.registerStartupActivity(new Runnable() {
       public void run() {
         final File skeletonDir = new File(PathManager.getSystemPath(), PythonSdkType.SKELETON_DIR_NAME);
@@ -50,7 +53,7 @@ public class PythonSdkUpdater implements ProjectComponent {
         }
         final Module[] modules = ModuleManager.getInstance(project).getModules();
         if (modules.length > 0) {
-          updateSysPath(modules [0]);
+          updateSysPath(modules[0]);
         }
       }
     });
