@@ -182,7 +182,7 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
 
   public String getConfigurationDirectory() {
     if (myConfigurationDirectory == null || isUseDefaultConfiguation()) {
-      myConfigurationDirectory = SVNWCUtil.getDefaultConfigurationDirectory().getAbsolutePath();
+      myConfigurationDirectory = IdeaSubversionConfigurationDirectory.getPath();
     }
     return myConfigurationDirectory;
   }
@@ -193,7 +193,7 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
 
   public void setConfigurationDirectory(String path) {
     myConfigurationDirectory = path;
-    File dir = path == null ? SVNWCUtil.getDefaultConfigurationDirectory() : new File(path);
+    File dir = path == null ? new File(IdeaSubversionConfigurationDirectory.getPath()) : new File(path);
     SVNConfigFile.createDefaultConfiguration(dir);
 
     myOptions = null;
