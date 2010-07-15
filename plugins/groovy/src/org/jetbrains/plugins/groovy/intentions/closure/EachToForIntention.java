@@ -69,12 +69,13 @@ public class EachToForIntention extends Intention {
     StringBuilder builder = new StringBuilder();
     builder.append("for (").append(var).append(" in ").append(qualifier.getText()).append(") {\n");
     String text = block.getText();
-    int index = text.indexOf("->");
-    if (index == -1) {
-      index = 1;
+    final PsiElement blockArrow = block.getArrow();
+    int index;
+    if (blockArrow != null) {
+      index = blockArrow.getStartOffsetInParent() + blockArrow.getTextLength();
     }
     else {
-      index += 2;
+      index = 1;
     }
     while (index < text.length() && Character.isWhitespace(text.charAt(index))) index++;
     text = text.substring(index, text.length() - 1);

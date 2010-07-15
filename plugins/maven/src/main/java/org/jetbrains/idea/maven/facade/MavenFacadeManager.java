@@ -130,6 +130,7 @@ public class MavenFacadeManager {
         myFacade.set(myLogger, myDownloadListener);
       }
       catch (Exception e) {
+        if (e instanceof RuntimeException) throw (RuntimeException)e;
         throw new RuntimeException(e);
       }
     }

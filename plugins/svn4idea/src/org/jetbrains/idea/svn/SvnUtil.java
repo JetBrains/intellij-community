@@ -614,4 +614,13 @@ public class SvnUtil {
     }
     return null;
   }
+
+  public static boolean doesRepositorySupportMergeinfo(final SvnVcs vcs, final SVNURL url) {
+    try {
+      return vcs.createRepository(url).hasCapability(SVNCapability.MERGE_INFO);
+    }
+    catch (SVNException e) {
+      return false;
+    }
+  }
 }

@@ -26,7 +26,7 @@ import java.util.List;
  * @author Maxim.Medvedev
  */
 public abstract class GrIntentionTestCase extends LightCodeInsightFixtureTestCase {
-  protected void doTest(String hint, boolean intentionExists) throws Exception {
+  protected void doTest(String hint, boolean intentionExists) {
     myFixture.configureByFile(getTestName(false) + ".groovy");
     final List<IntentionAction> list = myFixture.filterAvailableIntentions(hint);
     if (intentionExists) {

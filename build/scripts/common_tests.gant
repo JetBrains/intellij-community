@@ -6,7 +6,7 @@ requireProperty("out", "$home/out/classes")
 
 target(compile: "Compile project") {
   loadProject()
-  project["javac"] = "$jdkHome/bin/javac"
+  project.builder.useInProcessJavac = true
   project.targetFolder = out
   ant.delete(dir: "$home/reports")
   project.clean()

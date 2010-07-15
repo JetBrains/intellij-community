@@ -162,12 +162,13 @@ public class VariableInplaceRenamer {
     final TemplateBuilderImpl builder = new TemplateBuilderImpl(scope);
 
     PsiElement nameIdentifier = myElementToRename instanceof PsiNameIdentifierOwner ? ((PsiNameIdentifierOwner)myElementToRename).getNameIdentifier() : null;
-    PsiElement selectedElement = getSelectedInEditorElement(nameIdentifier, refs, myEditor.getCaretModel().getOffset());
+    int offset = myEditor.getCaretModel().getOffset();
+    PsiElement selectedElement = getSelectedInEditorElement(nameIdentifier, refs, offset);
     if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, myElementToRename)) return true;
 
     if (nameIdentifier != null) addVariable(nameIdentifier, selectedElement, builder);
     for (PsiReference ref : refs) {
-      addVariable(ref, selectedElement, builder);
+      addVariable(ref, selectedElement, builder, offset);
     }
     
     final PsiElement scope1 = scope;
@@ -379,8 +380,9 @@ public class VariableInplaceRenamer {
     return range.getStartOffset() <= offset && offset <= range.getEndOffset();
   }
 
-  private void addVariable(final PsiReference reference, final PsiElement selectedElement, final TemplateBuilderImpl builder) {
-    if (reference.getElement() == selectedElement) {
+  private void addVariable(final PsiReference reference, final PsiElement selectedElement, final TemplateBuilderImpl builder, int offset) {
+    if (reference.getElement() == selectedElement &&
+        contains(reference.getRangeInElement().shiftRight(selectedElement.getTextRange().getStartOffset()), offset)) {
       Expression expression = new MyExpression(myElementToRename.getName());
       builder.replaceElement(reference, PRIMARY_VARIABLE_NAME, expression, true);
     }

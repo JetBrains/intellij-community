@@ -375,7 +375,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       final Color treeFg = UIManager.getColor("Tree.foreground");
       label.setForeground(new Color(treeFg.getRed(), treeFg.getGreen(), treeFg.getBlue(), 180));
       final ToolWindowFactory factory = bean.getToolWindowFactory();
-      final ToolWindowImpl toolWindow = (ToolWindowImpl)registerToolWindow(bean.id, label, toolWindowAnchor, myProject, factory instanceof DumbAware);
+      final ToolWindowImpl toolWindow = (ToolWindowImpl)registerToolWindow(bean.id, label, toolWindowAnchor, myProject, DumbService.isDumbAware(factory));
       toolWindow.setContentFactory(factory);
       if (bean.icon != null) {
         Icon icon = IconLoader.findIcon(bean.icon, factory.getClass());

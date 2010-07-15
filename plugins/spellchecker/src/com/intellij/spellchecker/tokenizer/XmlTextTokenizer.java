@@ -32,6 +32,7 @@ public class XmlTextTokenizer extends Tokenizer<XmlText> {
   @Nullable
   @Override
   public Token[] tokenize(@NotNull XmlText element) {
+    if(element.getContainingFile().getContext() != null) return null; // outer element should care of spell checking
     List<Pair<PsiElement,TextRange>> list = ((PsiLanguageInjectionHost)element).getInjectedPsi();
     if (list != null && list.size() > 0) return null;
     return new Token[]{new Token<XmlText>(element, element.getText(),false, SplitterFactory.getInstance().getPlainTextSplitter())};

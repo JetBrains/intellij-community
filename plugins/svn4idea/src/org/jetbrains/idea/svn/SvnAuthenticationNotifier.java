@@ -33,7 +33,6 @@ import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -51,7 +50,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
   private Timer myTimer;
 
   public SvnAuthenticationNotifier(final SvnVcs svnVcs) {
-    super(svnVcs.getProject(), ourGroupId, "Not Logged To Subversion", NotificationType.ERROR);
+    super(svnVcs.getProject(), ourGroupId, "Not Logged In to Subversion", NotificationType.ERROR);
     myVcs = svnVcs;
     myRootsToWorkingCopies = myVcs.getRootsToWorkingCopies();
     myCopiesPassiveResults = Collections.synchronizedMap(new HashMap<SVNURL, Boolean>());
@@ -178,13 +177,13 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
   @NotNull
   @Override
   protected String getNotificationContent(AuthenticationRequest obj) {
-    return "<a href=\"\">Click to fix.</a> Not logged to Subversion '" + obj.getRealm() + "' (" + obj.getUrl().toDecodedString() + ")";
+    return "<a href=\"\">Click to fix.</a> Not logged In to Subversion '" + obj.getRealm() + "' (" + obj.getUrl().toDecodedString() + ")";
   }
 
   @NotNull
   @Override
   protected String getToString(AuthenticationRequest obj) {
-    return "Click to fix. Not logged to Subversion '" + obj.getRealm() + "' (" + obj.getUrl().toDecodedString() + ")";
+    return "Click to fix. Not logged In to Subversion '" + obj.getRealm() + "' (" + obj.getUrl().toDecodedString() + ")";
   }
 
   public static class AuthenticationRequest {
@@ -242,18 +241,18 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
 
   public static boolean passiveValidation(final Project project, final SVNURL url) {
     final SvnConfiguration configuration = SvnConfiguration.getInstance(project);
-    final ISVNAuthenticationManager passiveManager = configuration.getPassiveAuthenticationManager();
+    final SvnAuthenticationManager passiveManager = configuration.getPassiveAuthenticationManager();
     return validationImpl(project, url, configuration, passiveManager, false, null, null);
   }
 
   public static boolean interactiveValidation(final Project project, final SVNURL url, final String realm, final String kind) {
     final SvnConfiguration configuration = SvnConfiguration.getInstance(project);
-    final ISVNAuthenticationManager passiveManager = configuration.getInteractiveManager(SvnVcs.getInstance(project));
+    final SvnAuthenticationManager passiveManager = configuration.getInteractiveManager(SvnVcs.getInstance(project));
     return validationImpl(project, url, configuration, passiveManager, true, realm, kind);
   }
 
   private static boolean validationImpl(final Project project, final SVNURL url,
-                                        final SvnConfiguration configuration, final ISVNAuthenticationManager manager,
+                                        final SvnConfiguration configuration, final SvnAuthenticationManager manager,
                                         final boolean checkWrite, final String realm, final String kind/*, final boolean passive*/) {
     SvnInteractiveAuthenticationProvider.clearCallState();
     try {
@@ -283,7 +282,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
 
     final SvnVcs svnVcs = SvnVcs.getInstance(project);
 
-    final SvnInteractiveAuthenticationProvider provider = new SvnInteractiveAuthenticationProvider(svnVcs);
+    final SvnInteractiveAuthenticationProvider provider = new SvnInteractiveAuthenticationProvider(svnVcs, manager);
     final SVNAuthentication svnAuthentication = provider.requestClientAuthentication(kind, url, realm, null, null, true);
     if (svnAuthentication != null) {
       configuration.acknowledge(kind, realm, svnAuthentication);

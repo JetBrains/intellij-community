@@ -15,9 +15,9 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
@@ -38,6 +38,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TableViewSpeedSearch;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.ColumnInfo;
@@ -75,7 +76,9 @@ public class ToBeMergedDialog extends DialogWrapper {
     setTitle(title);
     myProject = project;
 
-    myListsEngine = new BasePageEngine<CommittedChangeList>(lists, ourPageSize);
+    // todo removing pages for a while
+    //myListsEngine = new BasePageEngine<CommittedChangeList>(lists, ourPageSize);
+    myListsEngine = new BasePageEngine<CommittedChangeList>(lists, lists.size());
 
     myPanel = new JPanel(new BorderLayout());
     myWiseSelection = new QuantitySelection<Long>(true);
@@ -174,6 +177,15 @@ public class ToBeMergedDialog extends DialogWrapper {
       public void valueChanged(ListSelectionEvent e) {
         super.valueChanged(e);
         selectionListener.valueChanged(e);
+      }
+    };
+    new TableViewSpeedSearch(myRevisionsList) {
+      @Override
+      protected String getElementText(Object element) {
+        if (element instanceof CommittedChangeList) {
+          return ((CommittedChangeList) element).getComment();
+        }
+        return null;
       }
     };
     final ListTableModel<CommittedChangeList> flatModel = new ListTableModel<CommittedChangeList>(FAKE_COLUMN);
@@ -299,7 +311,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     return myPanel;
   }
 
-  private class MySelectAll extends AnAction {
+  private class MySelectAll extends DumbAwareAction {
     private MySelectAll() {
       super("Select All", "Select All", IconLoader.getIcon("/actions/selectall.png"));
     }
@@ -311,7 +323,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     }
   }
 
-  private class MyUnselectAll extends AnAction {
+  private class MyUnselectAll extends DumbAwareAction {
     private MyUnselectAll() {
       super("Unselect All", "Unselect All", IconLoader.getIcon("/actions/unselectall.png"));
     }

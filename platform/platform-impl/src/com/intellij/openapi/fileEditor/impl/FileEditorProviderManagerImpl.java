@@ -71,7 +71,7 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
     final boolean dumb = DumbService.getInstance(project).isDumb();
     for(int i = myProviders.size() -1 ; i >= 0; i--){
       FileEditorProvider provider=myProviders.get(i);
-      if((!dumb || provider instanceof DumbAware) && provider.accept(project, file)){
+      if((!dumb || DumbService.isDumbAware(provider)) && provider.accept(project, file)){
         mySharedProviderList.add(provider);
         doNotShowTextEditor |= provider.getPolicy() == FileEditorPolicy.HIDE_DEFAULT_EDITOR;
       }

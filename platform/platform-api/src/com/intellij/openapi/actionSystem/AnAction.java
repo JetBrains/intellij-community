@@ -17,6 +17,7 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
@@ -297,5 +298,9 @@ public abstract class AnAction {
 
   public void setTransparentUpdate(boolean transparentUpdate) {
     myTransparentUpdate = transparentUpdate;
+  }
+
+  public boolean isDumbAware() {
+    return this instanceof DumbAware;
   }
 }
