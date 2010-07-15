@@ -73,6 +73,8 @@
         <string>true</string>
         <key>apple.awt.graphics.UseQuartz</key>
         <string>true</string>
+        <key>idea.use.native.mac.filechooser</key>
+        <string>true</string>
         <key>apple.awt.fullscreencapturealldisplays</key>
         <string>false</string>
         <key>idea.platform.prefix</key>
