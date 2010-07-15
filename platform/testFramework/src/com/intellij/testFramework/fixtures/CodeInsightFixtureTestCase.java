@@ -16,6 +16,7 @@
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.UsefulTestCase;
@@ -77,5 +78,9 @@ public abstract class CodeInsightFixtureTestCase extends UsefulTestCase {
 
   protected Project getProject() {
     return myFixture.getProject();
+  }
+
+  protected Editor getEditor() {
+    return myFixture.getEditor();
   }
 }
