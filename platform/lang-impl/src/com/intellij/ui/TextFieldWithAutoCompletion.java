@@ -97,23 +97,28 @@ public class TextFieldWithAutoCompletion extends EditorTextField {
     }
 
     public void actionPerformed(final AnActionEvent e) {
-      final Editor editor = getEditor();
-      assert editor != null;
-
-      editor.getSelectionModel().removeSelection();
-      final String lookupPrefix = getCurrentLookupPrefix(getCurrentTextPrefix());
-      final LookupImpl lookup =
-        (LookupImpl)LookupManager.getInstance(getProject()).createLookup(editor,
-                                                                         calcLookupItems(lookupPrefix),
-                                                                         lookupPrefix != null ? lookupPrefix : "",
-                                                                         LookupArranger.DEFAULT);
-      final String advertisementText = getAdvertisementText();
-      if (!StringUtil.isEmpty(advertisementText)) {
-        lookup.setAdvertisementText(advertisementText);
-        lookup.refreshUi();
-      }
-      lookup.show();
+      showLookup();
     }
+  }
+
+  public void showLookup() {
+    if (LookupManager.getInstance(getProject()).getActiveLookup() != null) return;
+    final Editor editor = getEditor();
+    assert editor != null;
+
+    editor.getSelectionModel().removeSelection();
+    final String lookupPrefix = getCurrentLookupPrefix(getCurrentTextPrefix());
+    final LookupImpl lookup =
+      (LookupImpl)LookupManager.getInstance(getProject()).createLookup(editor,
+                                                                       calcLookupItems(lookupPrefix),
+                                                                       lookupPrefix != null ? lookupPrefix : "",
+                                                                       LookupArranger.DEFAULT);
+    final String advertisementText = getAdvertisementText();
+    if (!StringUtil.isEmpty(advertisementText)) {
+      lookup.setAdvertisementText(advertisementText);
+      lookup.refreshUi();
+    }
+    lookup.show();
   }
 
   public void setAdvertisementText(@Nullable String text) {
