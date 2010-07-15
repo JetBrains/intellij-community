@@ -1,20 +1,22 @@
 package com.jetbrains.python.inspections;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 /**
  * @author oleg
  */
 public class PyUnusedLocalVariableInspection extends PyInspection {
   private final ThreadLocal<PyUnusedLocalVariableInspectionVisitor> myLastVisitor = new ThreadLocal<PyUnusedLocalVariableInspectionVisitor>();
+
+  public boolean ignoreTupleUnpacking = true;
 
   @NotNull
   @Nls
@@ -24,7 +26,7 @@ public class PyUnusedLocalVariableInspection extends PyInspection {
 
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    final PyUnusedLocalVariableInspectionVisitor visitor = new PyUnusedLocalVariableInspectionVisitor(holder);
+    final PyUnusedLocalVariableInspectionVisitor visitor = new PyUnusedLocalVariableInspectionVisitor(holder, ignoreTupleUnpacking);
     myLastVisitor.set(visitor);
     return visitor;
   }
@@ -35,5 +37,10 @@ public class PyUnusedLocalVariableInspection extends PyInspection {
     assert visitor != null;
     visitor.registerProblems();
     myLastVisitor.remove();
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel("Ignore variables used in tuple unpacking", this, "ignoreTupleUnpacking");
   }
 }

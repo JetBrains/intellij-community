@@ -16,17 +16,17 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
     doTest(getTestName(true), inspection);
   }
 
-  private void doTest(String testName, LocalInspectionTool localInspectionTool) throws Exception {
+  private void doTest(String testName, LocalInspectionTool localInspectionTool) {
     myFixture.testInspection("inspections/" + testName, new LocalInspectionToolWrapper(localInspectionTool));
   }
 
-  private void doTestWithPy3k(String testName, LocalInspectionTool localInspectionTool) throws Throwable {
+  private void doTestWithPy3k(String testName, LocalInspectionTool localInspectionTool) {
     doTestWithLanguageLevel(testName, localInspectionTool, LanguageLevel.PYTHON30);
   }
 
   private void doTestWithLanguageLevel(String testName,
                                        LocalInspectionTool localInspectionTool,
-                                       LanguageLevel languageLevel) throws Throwable {
+                                       LanguageLevel languageLevel) {
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), languageLevel);
     try {
       doTest(testName, localInspectionTool);
@@ -36,7 +36,7 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
     }
   }
 
-  public void testPyMethodFirstArgAssignmentInspection() throws Throwable {
+  public void testPyMethodFirstArgAssignmentInspection() {
     LocalInspectionTool inspection = new PyMethodFirstArgAssignmentInspection();
     doTest(getTestName(false), inspection);
   }
@@ -86,9 +86,14 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
     doTest(getTestName(false), inspection);
   }
 
-  public void testPyUnusedLocalVariableInspection() throws Throwable {
-    LocalInspectionTool inspection = new PyUnusedLocalVariableInspection();
+  public void testPyUnusedLocalVariableInspection() {
+    PyUnusedLocalVariableInspection inspection = new PyUnusedLocalVariableInspection();
+    inspection.ignoreTupleUnpacking = false;
     doTest(getTestName(false), inspection);
+  }
+
+  public void testPyUnusedVariableTupleUnpacking() {
+    doHighlightingTest(PyUnusedLocalVariableInspection.class);
   }
 
   public void testPyDictCreationInspection() throws Throwable {
@@ -125,7 +130,7 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   public void testPyExceptClausesOrderInspection() throws Throwable {
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON26);
     try {
-      myFixture.configureByFile("inspections/" + getTestName(true) + "/test.py");
+      myFixture.configureByFile("inspections/" + getTestName(false) + "/test.py");
       myFixture.enableInspections(PyExceptClausesOrderInspection.class);
       myFixture.checkHighlighting(true, false, false);
     }
@@ -215,7 +220,7 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
     doHighlightingTest(PyCallingNonCallableInspection.class);
   }
 
-  private void doHighlightingTest(final Class<? extends PyInspection> inspectionClass) throws Exception {
+  private void doHighlightingTest(final Class<? extends PyInspection> inspectionClass) {
     myFixture.configureByFile("inspections/" + getTestName(true) + "/test.py");
     myFixture.enableInspections(inspectionClass);
     myFixture.checkHighlighting(true, false, false);

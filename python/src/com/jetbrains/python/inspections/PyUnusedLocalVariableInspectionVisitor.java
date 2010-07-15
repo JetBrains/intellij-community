@@ -37,11 +37,13 @@ import java.util.Set;
  * @author oleg
  */
 class PyUnusedLocalVariableInspectionVisitor extends PyInspectionVisitor {
+  private final boolean myIgnoreTupleUnpacking;
   private final HashSet<PsiElement> myUnusedElements;
   private final HashSet<PsiElement> myUsedElements;
 
-  public PyUnusedLocalVariableInspectionVisitor(final ProblemsHolder holder) {
+  public PyUnusedLocalVariableInspectionVisitor(final ProblemsHolder holder, boolean ignoreTupleUnpacking) {
     super(holder);
+    myIgnoreTupleUnpacking = ignoreTupleUnpacking;
     myUnusedElements = new HashSet<PsiElement>();
     myUsedElements = new HashSet<PsiElement>();
   }
@@ -215,14 +217,34 @@ class PyUnusedLocalVariableInspectionVisitor extends PyInspectionVisitor {
         registerWarning(element, PyBundle.message("INSP.unused.locals.parameter.isnot.used", name));
       }
       else {
-        if (PyForStatementNavigator.getPyForStatementByIterable(element) != null){
+        if (myIgnoreTupleUnpacking && isTupleUnpacking(element)) {
+          continue;
+        }
+        if (PyForStatementNavigator.getPyForStatementByIterable(element) != null) {
           registerProblem(element, PyBundle.message("INSP.unused.locals.local.variable.isnot.used", name),
                           ProblemHighlightType.LIKE_UNUSED_SYMBOL, null, new ReplaceWithWildCard());
-        } else {
+        }
+        else {
           registerWarning(element, PyBundle.message("INSP.unused.locals.local.variable.isnot.used", name));
         }
       }
     }
+  }
+
+  private boolean isTupleUnpacking(PsiElement element) {
+    if (!(element instanceof PyTargetExpression)) {
+      return false;
+    }
+    if (element.getParent() instanceof PyTupleExpression) {
+      // if all the items of the tuple are unused, we still highlight all of them; if some are unused, we ignore
+      PyTupleExpression tuple = (PyTupleExpression) element.getParent();
+      for (PyExpression expression : tuple.getElements()) {
+        if (!myUnusedElements.contains(expression)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   private void registerWarning(final PsiElement element, final String msg) {
