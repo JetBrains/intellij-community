@@ -37,7 +37,14 @@ public class PythonSdkUpdater implements ProjectComponent {
         final File skeletonDir = new File(PathManager.getSystemPath(), PythonSdkType.SKELETON_DIR_NAME);
         final File versionFile = new File(skeletonDir, "version");
         boolean versionUpdated = false;
-        if (!versionFile.exists() || readVersion(versionFile) != SKELETONS_VERSION) {
+        int version = versionFile.exists() ? readVersion(versionFile) : -1;
+        if (version != SKELETONS_VERSION) {
+          if (version == -1) {
+            LOG.info("Version file " + versionFile.getPath() +  " did not exist, rebuilding all skeletons");
+          }
+          else {
+            LOG.info("Skeletons version incremented from " + version + " to " + SKELETONS_VERSION + ", rebuilding all skeletons");
+          }
           writeVersion(versionFile, SKELETONS_VERSION);
           versionUpdated = true;
         }
@@ -48,10 +55,7 @@ public class PythonSdkUpdater implements ProjectComponent {
             LOG.info("Could not find skeletons path for SDK path " + sdk.getHomePath());
           }
           else if (versionUpdated || !new File(skeletonsPath).isDirectory()) {
-            if (versionUpdated) {
-              LOG.info("Rebuilding skeletons for " + sdk.getHomePath() + " because version has been updated");
-            }
-            else {
+            if (!versionUpdated) {
               LOG.info("Rebuilding skeletons for " + sdk.getHomePath() + " because skeletons directory " + skeletonsPath + " was not found");
             }
             PythonSdkType.generateSkeletons(ProgressManager.getInstance().getProgressIndicator(), sdk.getHomePath(), skeletonsPath);
