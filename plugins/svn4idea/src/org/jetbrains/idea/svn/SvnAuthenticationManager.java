@@ -362,7 +362,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
 
     final String storeCredentials = getConfigFile().getPropertyValue("auth", "store-auth-creds");
     if ((Boolean.FALSE.equals(isAuthStorageEnabledMy(url))) || (! isTurned(storeCredentials))) {
-      ChangesViewBalloonProblemNotifier.showMe(myProject, "Cannot store credentials: forbidden by \"store-auth-creds\"=\"no\"", MessageType.ERROR);
+      ChangesViewBalloonProblemNotifier.showMe(myProject, "Cannot store credentials: forbidden by \"store-auth-creds=no\"", MessageType.ERROR);
       return false;
     }
     final boolean passwordStorageEnabled = isStorePasswords(url);
@@ -370,12 +370,12 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
     if ((! ISVNAuthenticationManager.SSL.equals(kind)) && (! passwordStorageEnabled)) {
       // but it should be
       //userConfig.setPropertyValue("auth", "store-passwords", "yes", true);
-      ChangesViewBalloonProblemNotifier.showMe(myProject, "Cannot store password: forbidden by \"store-passwords\"=\"no\"", MessageType.ERROR);
+      ChangesViewBalloonProblemNotifier.showMe(myProject, "Cannot store password: forbidden by \"store-passwords=no\"", MessageType.ERROR);
       return false;
     }
     if (ISVNAuthenticationManager.SSL.equals(kind) && (! isStoreSSLClientCertificatePassphrases(url))) {
       //setPropertyForHost(url.getHost(), "store-ssl-client-cert-pp", "yes");
-      ChangesViewBalloonProblemNotifier.showMe(myProject, "Cannot store passphrase: forbidden by \"store-ssl-client-cert-pp\"=\"no\"", MessageType.ERROR);
+      ChangesViewBalloonProblemNotifier.showMe(myProject, "Cannot store passphrase: forbidden by \"store-ssl-client-cert-pp=no\"", MessageType.ERROR);
       return false;
     }
 
@@ -390,7 +390,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
                 Messages.showWarningDialog(myProject, "Your passphrase for client certificate:\n\n" +
               svnsslAuthentication.getCertificateFile().getPath() +
               "\n\ncan only be stored to disk unencrypted. (Encryption is not supported)\n\n" +
-              "But storage in plain text is not allowed.\nTo allow plain text passphrases caching, set \"store-ssl-client-cert-pp-plaintext\"=\"yes\"",
+              "But storage in plain text is not allowed.\nTo allow plain text passphrases caching, set \"store-ssl-client-cert-pp-plaintext=yes\"",
               "Cannot save passphrase");
               }
             });
@@ -411,7 +411,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
               public void run() {
                 Messages.showWarningDialog(myProject, "Your password for authentication realm:\n\n" + realm +
               "\n\ncan only be stored to disk unencrypted. (Encryption is not supported)\n\n" +
-              "But storage in plain text is not allowed.\nTo allow plain text passwords caching, set \"store-plaintext-passwords\"=\"yes\"",
+              "But storage in plain text is not allowed.\nTo allow plain text passwords caching, set \"store-plaintext-passwords=yes\"",
               "Cannot save password");
               }
             });
