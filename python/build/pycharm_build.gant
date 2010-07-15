@@ -341,8 +341,11 @@ def buildTarGz() {
     tarfileset(dir: "$home/python/build", fullpath: "$tarRoot/bin/pycharm.vmoptions") {
       include(name: "pycharm.vmoptions")
     }
-    tarfileset(dir: "$home/python/resources", fullpath: "$tarRoot/bin/pycharm.png") {
+    tarfileset(dir: "$home/python/resources", prefix: "$tarRoot/bin") {
+      include(name: "PyCharm_16.png")
       include(name: "PyCharm_32.png")
+      include(name: "PyCharm_48.png")
+      include(name: "PyCharm_128.png")
     }
     tarfileset(dir: "$home/python/help", includes: "pycharmhelp.jar", prefix: "$tarRoot/help")
   }
