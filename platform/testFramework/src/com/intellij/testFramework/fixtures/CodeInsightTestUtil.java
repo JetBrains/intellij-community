@@ -24,6 +24,9 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.codeInsight.template.impl.actions.ListTemplatesAction;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.surroundWith.Surrounder;
@@ -31,7 +34,12 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
+import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -139,4 +147,40 @@ public class CodeInsightTestUtil {
     fixture.checkResultByFile(after, false);
   }
 
+
+  public static void doInlineRename(VariableInplaceRenameHandler handler, final Editor editor, PsiElement element, final String newName) {
+    VariableInplaceRenamer renamer = null;
+    Project project = editor.getProject();
+    TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(project);
+    try {
+      templateManager.setTemplateTesting(true);
+      renamer = handler.doRename(element, editor, null);
+      TemplateState state = TemplateManagerImpl.getTemplateState(editor);
+      final TextRange range = state.getCurrentVariableRange();
+      assert range != null;
+      new WriteCommandAction.Simple(project) {
+        @Override
+        protected void run() throws Throwable {
+          editor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), newName);
+        }
+      }.execute().throwException();
+    }
+    finally {
+      assert renamer != null;
+      renamer.finish();
+
+      TemplateManagerImpl.getTemplateState(editor).gotoEnd();
+      renamer.performAutomaticRename(newName, element);
+      templateManager.setTemplateTesting(false);
+    }
+
+  }
+
+  public static void doInlineRenameTest(VariableInplaceRenameHandler handler, String file,
+                                         String extension, String newName,
+                                         CodeInsightTestFixture fixture) {
+    fixture.configureByFile(file + "." + extension);
+    doInlineRename(handler, fixture.getEditor(), fixture.getElementAtCaret(), newName);
+    fixture.checkResultByFile(file + "_after." + extension);
+  }
 }
