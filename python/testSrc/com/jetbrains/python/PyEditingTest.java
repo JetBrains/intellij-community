@@ -12,8 +12,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 
-import java.io.IOException;
-
 /**
  * @author yole
  */
@@ -62,27 +60,27 @@ public class PyEditingTest extends PyLightFixtureTestCase {
     assertEquals("''", doTestTyping("''", 1, '\''));
   }
 
-  public void testGreedyBackspace() throws Exception {  // PY-254
-    myFixture.configureByFile("/editing/py254.py");
-    myFixture.getEditor().getCaretModel().moveToLogicalPosition(new LogicalPosition(4, 8));
-    CommandProcessor.getInstance().executeCommand(myFixture.getProject(), new Runnable() {
-      public void run() {
-        myFixture.performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE);
-      }
-    }, "", null);
-    // this should not modify the text, so we can check against the same file 
-    myFixture.checkResultByFile("/editing/py254.py", true);
+  public void testGreedyBackspace() {  // PY-254
+    doTestBackspace("py254", new LogicalPosition(4, 8));
   }
 
-  public void testUnindentBackspace() throws Exception {  // PY-853
-    myFixture.configureByFile("/editing/smartUnindent.before.py");
-    myFixture.getEditor().getCaretModel().moveToLogicalPosition(new LogicalPosition(1, 4));
+  public void testUnindentBackspace() {  // PY-853
+    doTestBackspace("smartUnindent", new LogicalPosition(1, 4));
+  }
+
+  public void testUnindentTab() {  // PY-1270
+    doTestBackspace("unindentTab", new LogicalPosition(4, 4));
+  }
+
+  private void doTestBackspace(final String fileName, final LogicalPosition pos) {
+    myFixture.configureByFile("/editing/" + fileName + ".before.py");
+    myFixture.getEditor().getCaretModel().moveToLogicalPosition(pos);
     CommandProcessor.getInstance().executeCommand(myFixture.getProject(), new Runnable() {
       public void run() {
         myFixture.performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE);
       }
     }, "", null);
-    myFixture.checkResultByFile("/editing/smartUnindent.after.py", true);
+    myFixture.checkResultByFile("/editing/" + fileName + ".after.py", true);
   }
 
   public void testUncommentWithSpace() throws Exception {   // PY-980
