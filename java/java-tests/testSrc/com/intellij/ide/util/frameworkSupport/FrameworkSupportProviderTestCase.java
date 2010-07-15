@@ -4,13 +4,11 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetTypeId;
 import com.intellij.facet.ui.FacetBasedFrameworkSupportProvider;
-import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
-import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
-import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportCommunicator;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelImpl;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PsiTestUtil;
@@ -49,26 +47,30 @@ public abstract class FrameworkSupportProviderTestCase extends IdeaTestCase {
       communicator.onFrameworkSupportAdded(myModule, model, selectedConfigurables, myFrameworkSupportModel);
     }
     model.commit();
+    for (FrameworkSupportConfigurable configurable : myConfigurables.values()) {
+      Disposer.dispose(configurable);
+    }
   }
 
-  protected void selectFramework(@NotNull FacetTypeId<?> id) {
-    selectFramework(FacetBasedFrameworkSupportProvider.getProviderId(id));
+  protected FrameworkSupportConfigurable selectFramework(@NotNull FacetTypeId<?> id) {
+    return selectFramework(FacetBasedFrameworkSupportProvider.getProviderId(id));
   }
 
-  protected void selectFramework(@NotNull String id) {
+  protected FrameworkSupportConfigurable selectFramework(@NotNull String id) {
     for (FrameworkSupportProvider provider : FrameworkSupportProvider.EXTENSION_POINT.getExtensions()) {
       if (provider.getId().equals(id)) {
-        selectFramework(provider);
-        return;
+        return selectFramework(provider);
       }
     }
     fail("Framework provider with id='" + id + "' not found");
+    return null;
   }
 
-  protected void selectFramework(@NotNull FrameworkSupportProvider provider) {
+  protected FrameworkSupportConfigurable selectFramework(@NotNull FrameworkSupportProvider provider) {
     final FrameworkSupportConfigurable configurable = getOrCreateConfigurable(provider);
     configurable.onFrameworkSelectionChanged(true);
     mySelected.add(provider);
+    return configurable;
   }
 
   private FrameworkSupportConfigurable getOrCreateConfigurable(FrameworkSupportProvider provider) {
