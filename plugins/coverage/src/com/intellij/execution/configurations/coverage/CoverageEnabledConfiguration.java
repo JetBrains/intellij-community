@@ -50,6 +50,7 @@ public class CoverageEnabledConfiguration implements JDOMExternalizable{
   
   private static final Logger LOG = Logger.getInstance("com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration");
   public static final Icon WITH_COVERAGE_CONFIGURATION = IconLoader.getIcon("/runConfigurations/withCoverageLayer.png");
+  @NonNls private static final String COVERAGE_MERGE_SUITE_ATT_NAME = "merge_suite";
 
   private boolean myIsCoverageEnabled = false;
   private ClassFilter[] myCoveragePatterns;
@@ -98,6 +99,8 @@ public class CoverageEnabledConfiguration implements JDOMExternalizable{
 
     final String mergeAttribute = element.getAttributeValue(COVERAGE_MERGE_ATTRIBUTE_NAME);
     myIsMergeWithPreviousResults = mergeAttribute != null && Boolean.valueOf(mergeAttribute).booleanValue();
+
+    mySuiteToMergeWith = element.getAttributeValue(COVERAGE_MERGE_SUITE_ATT_NAME);
 
     final String collectLineInfoAttribute = element.getAttributeValue(TRACK_PER_TEST_COVERAGE_ATTRIBUTE_NAME);
     myTrackPerTestCoverage = collectLineInfoAttribute == null || Boolean.valueOf(collectLineInfoAttribute).booleanValue();
@@ -188,6 +191,9 @@ public class CoverageEnabledConfiguration implements JDOMExternalizable{
   public void writeExternal(Element element) throws WriteExternalException {
     element.setAttribute(COVERAGE_ENABLED_ATTRIBUTE_NAME, String.valueOf(myIsCoverageEnabled));
     element.setAttribute(COVERAGE_MERGE_ATTRIBUTE_NAME, String.valueOf(myIsMergeWithPreviousResults));
+    if (myIsMergeWithPreviousResults && mySuiteToMergeWith != null) {
+      element.setAttribute(COVERAGE_MERGE_SUITE_ATT_NAME, mySuiteToMergeWith);
+    }
     if (!myTrackPerTestCoverage) element.setAttribute(TRACK_PER_TEST_COVERAGE_ATTRIBUTE_NAME, String.valueOf(myTrackPerTestCoverage));
     if (mySampling) element.setAttribute(SAMPLING_COVERAGE_ATTRIBUTE_NAME, String.valueOf(mySampling));
     if (myTrackTestFolders) element.setAttribute(TRACK_TEST_FOLDERS, String.valueOf(myTrackTestFolders));
