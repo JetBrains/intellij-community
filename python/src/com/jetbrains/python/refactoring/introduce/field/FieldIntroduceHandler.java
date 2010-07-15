@@ -14,6 +14,7 @@ import com.intellij.util.Function;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.actions.AddFieldQuickFix;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
 import com.jetbrains.python.refactoring.introduce.variable.VariableIntroduceHandler;
@@ -74,15 +75,29 @@ public class FieldIntroduceHandler extends IntroduceHandler {
     final PsiElement expr = expression instanceof PyClass ? expression : expression.getParent();    
     PsiElement anchor = PyUtil.getContainingClassOrSelf(expr);
     assert anchor instanceof PyClass;
+    final PyClass clazz = (PyClass)anchor;
+    final Project project = anchor.getProject();
     if (initInConstructor == InitPlace.CONSTRUCTOR) {
-      final Project project = anchor.getProject();
-      final PyClass clazz = (PyClass)anchor;
-      AddFieldQuickFix.addFieldToInit(project, clazz, "", new AddFieldDeclaration(declaration));
-      final PyFunction init = clazz.findMethodByName(PyNames.INIT, false);
-      final PyStatementList statements = init != null ? init.getStatementList() : null;
-      return statements != null ? statements.getLastChild() :  null; 
+      return AddFieldQuickFix.addFieldToInit(project, clazz, "", new AddFieldDeclaration(declaration));
+    } else if (initInConstructor == InitPlace.SET_UP) {
+      return addFieldToSetUp(project, clazz, declaration);
     }
     return VariableIntroduceHandler.doIntroduceVariable(expression, declaration, occurrences, replaceAll);
+  }
+
+  @Nullable
+  private static PsiElement addFieldToSetUp(Project project, PyClass clazz, PsiElement declaration) {
+    final PyFunction init = clazz.findMethodByName(PythonUnitTestUtil.TESTCASE_SETUP_NAME, false);
+    if (init != null) {
+      return AddFieldQuickFix.appendToInit(init, new AddFieldDeclaration(declaration));
+    }
+    final PyFunctionBuilder builder = new PyFunctionBuilder(PythonUnitTestUtil.TESTCASE_SETUP_NAME);
+    builder.parameter(PyNames.CANONICAL_SELF);
+    PyFunction setUp = builder.buildFunction(project);
+    final PyStatementList statements = clazz.getStatementList();
+    final PsiElement anchor = statements.getFirstChild();
+    setUp = (PyFunction)statements.addBefore(setUp, anchor);
+    return AddFieldQuickFix.appendToInit(setUp, new AddFieldDeclaration(declaration));
   }
 
   @Override

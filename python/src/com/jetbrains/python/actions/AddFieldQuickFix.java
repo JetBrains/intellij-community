@@ -43,7 +43,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
   }
 
   @Nullable
-  private static PsiElement appendToInit(PyFunction init, Function<String, PyStatement> callback) {
+  public static PsiElement appendToInit(PyFunction init, Function<String, PyStatement> callback) {
     // add this field as the last stmt of the constructor
     final PyStatementList stmt_list = init.getStatementList();
     PyStatement[] stmts = stmt_list.getStatements(); // NOTE: rather wasteful, consider iterable stmt list

@@ -110,4 +110,11 @@
       </vspacer>
     </children>
   </grid>
+  <buttonGroups>
+    <group name="placeButtonGroup">
+      <member id="2a16a"/>
+      <member id="9196d"/>
+      <member id="7fc5b"/>
+    </group>
+  </buttonGroups>
 </form>

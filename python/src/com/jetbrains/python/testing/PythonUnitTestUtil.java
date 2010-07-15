@@ -13,6 +13,7 @@ import java.util.List;
  */
 public class PythonUnitTestUtil {
   private static final String TESTCASE_CLASS_NAME = "TestCase";
+  public static final String TESTCASE_SETUP_NAME = "setUp";
   private static final String UNITTEST_FILE_NAME = "unittest.py";
   private static final String TESTCASE_METHOD_PREFIX = "test";
 
