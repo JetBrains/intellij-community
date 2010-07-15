@@ -58,7 +58,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
 
   @Override
   protected ISVNAuthenticationProvider createCacheAuthenticationProvider(File authDir, String userName) {
-    myPersistentAuthenticationProviderProxy = new PersistentAuthenticationProviderProxy(super.createCacheAuthenticationProvider(authDir, userName));
+    myPersistentAuthenticationProviderProxy = new PersistentAuthenticationProviderProxy(super.createCacheAuthenticationProvider(authDir, userName), authDir);
     return myPersistentAuthenticationProviderProxy;
   }
 
@@ -66,10 +66,12 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
     private final Map<SvnAuthWrapperEqualable, Long> myRewritePreventer;
     private static final long ourRefreshInterval = 6000 * 1000;
     private final ISVNAuthenticationProvider myDelegate;
+    private final File myAuthDir;
     private Project myProject;
 
-    private PersistentAuthenticationProviderProxy(final ISVNAuthenticationProvider delegate) {
+    private PersistentAuthenticationProviderProxy(final ISVNAuthenticationProvider delegate, final File authDir) {
       myDelegate = delegate;
+      myAuthDir = authDir;
       myRewritePreventer = new SoftHashMap<SvnAuthWrapperEqualable, Long>();
     }
 
@@ -92,8 +94,16 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
         final SvnAuthWrapperEqualable newKey = new SvnAuthWrapperEqualable(auth);
         final Long recent = myRewritePreventer.get(newKey);
         final long currTime = System.currentTimeMillis();
-        if (recent == null || ((recent != null) && ((currTime - recent.longValue()) > ourRefreshInterval))) {
+        File dir = new File(myAuthDir, kind);
+        String fileName = SVNFileUtil.computeChecksum(realm);
+        File authFile = new File(dir, fileName);
+
+        if ((! authFile.exists()) || recent == null || ((recent != null) && ((currTime - recent.longValue()) > ourRefreshInterval))) {
           ((IPersistentAuthenticationProvider) myDelegate).saveAuthentication(auth, kind, realm);
+
+          // do not make password file readonly
+          authFile.setWritable(true, false);
+
           myRewritePreventer.put(newKey, currTime);
         }
       }
