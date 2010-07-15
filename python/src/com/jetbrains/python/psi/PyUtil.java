@@ -60,6 +60,23 @@ public class PyUtil {
   }
 
 
+  @NotNull
+  public static Set<PsiElement> getComments(PsiElement start) {
+    final Set<PsiElement> comments = new HashSet<PsiElement>();
+    PsiElement seeker = start.getPrevSibling();
+    if (seeker == null) seeker = start.getParent().getPrevSibling();
+    while (seeker instanceof PsiWhiteSpace || seeker instanceof PsiComment) {
+      if (seeker instanceof PsiComment) {
+        comments.add(seeker);
+      }
+      seeker = seeker.getPrevSibling();
+    }
+    if (seeker instanceof PyExpressionStatement && seeker.getFirstChild() instanceof PyStringLiteralExpression) {
+      comments.add(seeker);
+    }
+    return comments;
+  }
+
   @Nullable
   public static PsiElement getFirstNonCommentAfter(PsiElement start) {
     PsiElement seeker = start;
