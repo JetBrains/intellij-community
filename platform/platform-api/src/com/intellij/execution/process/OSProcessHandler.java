@@ -19,7 +19,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
-import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 
 import java.io.*;
@@ -231,23 +230,14 @@ public class OSProcessHandler extends ProcessHandler {
   }
 
   private abstract static class ReadProcessThread implements Runnable {
-    private static final int NOTIFY_TEXT_DELAY = 300;
-
     private final Reader myReader;
+    private boolean skipLF = false;
 
-    private final StringBuffer myBuffer = new StringBuffer();
-    private final Alarm myAlarm;
-
-    private boolean myIsClosed = false;
     private boolean myIsProcessTerminated = false;
+    private final char[] myBuffer = new char[8192];
 
     public ReadProcessThread(final Reader reader) {
       myReader = reader;
-      myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
-    }
-
-    public synchronized boolean isProcessTerminated() {
-      return myIsProcessTerminated;
     }
 
     public synchronized void setProcessTerminated(boolean isProcessTerminated) {
@@ -255,103 +245,67 @@ public class OSProcessHandler extends ProcessHandler {
     }
 
     public void run() {
-      Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
       try {
-        myAlarm.addRequest(new Runnable() {
-          public void run() {
-            if(!isClosed()) {
-              myAlarm.addRequest(this, NOTIFY_TEXT_DELAY);
-              checkTextAvailable();
-            }
-          }
-        }, NOTIFY_TEXT_DELAY);
-
-        try {
-          while (!isClosed()) {
-            final int c = readNextByte();
-            if (c == -1) {
-              break;
-            }
-            synchronized (myBuffer) {
-              myBuffer.append((char)c);
-            }
-            if (c == '\n') { // not by '\r' because of possible '\n'
-              checkTextAvailable();
-            }
-          }
-        }
-        catch (Exception e) {
-          LOG.error(e);
-          e.printStackTrace();
-        }
-
-        close();
-      }
-      finally {
-        Thread.currentThread().setPriority(Thread.NORM_PRIORITY);
-      }
-    }
-
-    private int readNextByte() {
-      try {
-        while(!myReader.ready()) {
-          if (isProcessTerminated()) {
-            return -1;
-          }
+        while (readAvailable()) {
           try {
-            Thread.sleep(1L);
+            Thread.sleep(50L);
           }
           catch (InterruptedException ignore) {
           }
         }
-        return myReader.read();
       }
-      catch (IOException e) {
-        return -1; // When process terminated Process.getInputStream()'s underlaying stream becomes closed on Linux.
-      }
-    }
-
-    private void checkTextAvailable() {
-      synchronized (myBuffer) {
-        if (myBuffer.length() == 0) return;
-        // warning! Since myBuffer is reused, do not use myBuffer.toString() to fetch the string
-        // because the created string will get StringBuffer's internal char array as a buffer which is possibly too large.
-        final String s = myBuffer.substring(0, myBuffer.length());
-        myBuffer.setLength(0);
-        textAvailable(s);
+      catch (Exception e) {
+        LOG.error(e);
       }
     }
 
-    private void close() {
-      synchronized (this) {
-        if (isClosed()) {
-          return;
+    private synchronized boolean readAvailable() throws IOException {
+      char[] buffer = myBuffer;
+      StringBuilder token = new StringBuilder();
+      while (myReader.ready()) {
+        int n = myReader.read(buffer);
+        if (n <= 0) break;
+
+        for (int i = 0; i < n; i++) {
+          char c = buffer[i];
+          if (skipLF && c != '\n') {
+            token.append('\r');
+          }
+
+          if (c == '\r') {
+            skipLF = true;
+          }
+          else {
+            skipLF = false;
+            token.append(c);
+          }
+
+          if (c == '\n') {
+            textAvailable(token.toString());
+            token.setLength(0);
+          }
         }
-        myIsClosed = true;
       }
-      //try {
-      //  if(Thread.currentThread() != this) {
-      //    join(0);
-      //  }
-      //}
-      //catch (InterruptedException e) {
-      //}
-      // must close after the thread finished its execution, cause otherwise
-      // the thread will try to read from the closed (and nulled) stream
-      try {
-        myReader.close();
+
+      if (token.length() != 0) {
+        textAvailable(token.toString());
+        token.setLength(0);
       }
-      catch (IOException e1) {
-        // supressed
+
+      if (myIsProcessTerminated) {
+        try {
+          myReader.close();
+        }
+        catch (IOException e1) {
+          // supressed
+        }
+
+        return false;
       }
-      checkTextAvailable();
+
+      return true;
     }
 
     protected abstract void textAvailable(final String s);
-
-    private synchronized boolean isClosed() {
-      return myIsClosed;
-    }
-
   }
 }
