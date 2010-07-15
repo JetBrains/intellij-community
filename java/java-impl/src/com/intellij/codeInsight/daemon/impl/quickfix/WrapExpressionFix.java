@@ -45,8 +45,13 @@ public class WrapExpressionFix implements IntentionAction {
 
   @Nullable
   private static PsiClassType getClassType(PsiType type, PsiElement place) {
-    return (PsiClassType)(type instanceof PsiClassType ?
-                          type : ((PsiPrimitiveType)type).getBoxedType(place.getManager(), GlobalSearchScope.allScope(place.getProject())));
+    if (type instanceof PsiClassType) {
+      return (PsiClassType)type;
+    }
+    else if (type instanceof PsiPrimitiveType){
+      return ((PsiPrimitiveType)type).getBoxedType(place.getManager(), GlobalSearchScope.allScope(place.getProject()));
+    }
+    return null;
   }
 
   @NotNull
@@ -134,9 +139,8 @@ public class WrapExpressionFix implements IntentionAction {
           }
           paramType = substitutor != null ? substitutor.substitute(paramType) : paramType;
           if (paramType.isAssignableFrom(exprType)) continue;
-          if (expectedType == null && findWrapper(exprType,
-                                                  getClassType(paramType, expression),
-                                                  paramType instanceof PsiPrimitiveType) != null) {
+          final PsiClassType classType = getClassType(paramType, expression);
+          if (expectedType == null && classType != null && findWrapper(exprType, classType, paramType instanceof PsiPrimitiveType) != null) {
             expectedType = paramType;
             expr = expression;
           } else {
