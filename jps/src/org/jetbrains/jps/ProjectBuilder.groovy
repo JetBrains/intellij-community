@@ -249,7 +249,7 @@ class ProjectBuilder {
 
   private def chunkOutput(ModuleChunk chunk) {
     if (outputs[chunk] == null) {
-      binding.project.warning("Dependency module ${chunk.name} haven't yet been built, now building it");
+      project.info("Dependency module ${chunk.name} haven't yet been built, now building it");
       makeChunk(chunk)
     }
     return outputs[chunk]

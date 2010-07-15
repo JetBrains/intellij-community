@@ -46,6 +46,7 @@ class Java16ApiCompiler {
       options << targetLevel
     }
     options << "-g"
+    options << "-nowarn"
 //    options << "-verbose"
 
     List<File> filesToCompile = []
