@@ -18,10 +18,10 @@ package com.intellij.xml.refactoring;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
+import com.intellij.psi.impl.source.xml.PossiblePrefixReference;
 import com.intellij.psi.impl.source.xml.SchemaPrefix;
-import com.intellij.psi.impl.source.xml.SchemaPrefixReference;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import org.jetbrains.annotations.Nullable;
@@ -35,25 +35,17 @@ public class SchemaPrefixRenameHandler extends VariableInplaceRenameHandler {
   
   @Override
   protected boolean isAvailable(PsiElement element, Editor editor, PsiFile file) {
-    SchemaPrefixReference ref = getReference(file, editor);
-    return ref != null && ref.resolve() != null;
+    PossiblePrefixReference ref = getReference(file, editor);
+    return ref != null && ref.resolve() instanceof SchemaPrefix;
   }
 
   @Nullable
-  private static SchemaPrefixReference getReference(PsiFile file, Editor editor) {
+  private static PossiblePrefixReference getReference(PsiFile file, Editor editor) {
     if (file != null && editor != null) {
       int offset = editor.getCaretModel().getOffset();
       PsiReference reference = file.findReferenceAt(offset);
-      if (reference instanceof PsiMultiReference) {
-        PsiReference[] references = ((PsiMultiReference)reference).getReferences();
-        for (PsiReference psiReference : references) {
-          if (psiReference instanceof SchemaPrefixReference) {
-            return (SchemaPrefixReference)psiReference;
-          }
-        }
-      }
-      if (reference instanceof SchemaPrefixReference) {
-        return (SchemaPrefixReference)reference;
+      if (reference instanceof PossiblePrefixReference) {
+        return (PossiblePrefixReference)reference;
       }
     }
     return null;
@@ -62,11 +54,11 @@ public class SchemaPrefixRenameHandler extends VariableInplaceRenameHandler {
 
   @Override
   protected VariableInplaceRenamer createRenamer(PsiElement elementToRename, Editor editor) {
-    SchemaPrefixReference reference = getReference(elementToRename.getContainingFile(), editor);
+    PossiblePrefixReference reference = getReference(elementToRename.getContainingFile(), editor);
     if (reference != null) {
-      SchemaPrefix prefix = reference.resolve();
-      if (prefix != null) {
-        return new VariableInplaceRenamer(prefix, editor) {
+      PsiElement prefix = reference.resolve();
+      if (prefix instanceof SchemaPrefix) {
+        return new VariableInplaceRenamer((PsiNamedElement)prefix, editor) {
           @Override
           protected void addReferenceAtCaret(Collection<PsiReference> refs) {}
 

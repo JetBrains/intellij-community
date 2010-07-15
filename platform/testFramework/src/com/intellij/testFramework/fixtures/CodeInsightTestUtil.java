@@ -148,7 +148,9 @@ public class CodeInsightTestUtil {
   }
 
 
-  public static void doInlineRename(VariableInplaceRenameHandler handler, final Editor editor, PsiElement element, final String newName) {
+  public static void doInlineRename(VariableInplaceRenameHandler handler, final String newName, CodeInsightTestFixture fixture) {
+    final Editor editor = fixture.getEditor();
+    PsiElement element = fixture.getElementAtCaret();
     VariableInplaceRenamer renamer = null;
     Project project = editor.getProject();
     TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(project);
@@ -180,7 +182,7 @@ public class CodeInsightTestUtil {
                                          String extension, String newName,
                                          CodeInsightTestFixture fixture) {
     fixture.configureByFile(file + "." + extension);
-    doInlineRename(handler, fixture.getEditor(), fixture.getElementAtCaret(), newName);
+    doInlineRename(handler, newName, fixture);
     fixture.checkResultByFile(file + "_after." + extension);
   }
 }

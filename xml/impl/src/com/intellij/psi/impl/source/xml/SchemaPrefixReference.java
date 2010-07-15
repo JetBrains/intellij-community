@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Konstantin Bulenkov
  */
-public class SchemaPrefixReference extends PsiReferenceBase<XmlElement> {
+public class SchemaPrefixReference extends PsiReferenceBase<XmlElement> implements PossiblePrefixReference {
 
   private final NullableLazyValue<SchemaPrefix> myPrefix = new NullableLazyValue<SchemaPrefix>() {
     @Override
@@ -109,5 +109,10 @@ public class SchemaPrefixReference extends PsiReferenceBase<XmlElement> {
       return new SchemaPrefix(declaration, textRange, name);
     }
     return null;
+  }
+
+  @Override
+  public boolean isPrefixReference() {
+    return true;
   }
 }
