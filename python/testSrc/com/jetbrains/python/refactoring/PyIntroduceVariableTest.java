@@ -23,7 +23,7 @@ public class PyIntroduceVariableTest extends PyLightFixtureTestCase {
   private void doTest() throws Exception {
     myFixture.configureByFile(getTestName(true) + ".py");
     VariableIntroduceHandler handler = new VariableIntroduceHandler();
-    handler.performAction(myFixture.getProject(),  myFixture.getEditor(), myFixture.getFile(), "a", true, false);
+    handler.performAction(myFixture.getProject(),  myFixture.getEditor(), myFixture.getFile(), "a", true, false, false);
     myFixture.checkResultByFile(getTestName(true) + ".after.py");
   }
 }

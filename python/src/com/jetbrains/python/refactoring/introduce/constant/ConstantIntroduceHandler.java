@@ -23,11 +23,12 @@ public class ConstantIntroduceHandler extends IntroduceHandler {
     super(new ConstantValidator(), PyBundle.message("refactoring.introduce.constant.dialog.title"));
   }
 
+  @Override
   protected PsiElement addDeclaration(@NotNull final PsiElement expression,
                                       @NotNull final PsiElement declaration,
                                       @NotNull final List<PsiElement> occurrences,
                                       final boolean replaceAll,
-                                      boolean initInConstructor) {
+                                      InitPlace initInConstructor) {
     PsiElement anchor;
     anchor = expression.getContainingFile();
     assert anchor instanceof PyFile;

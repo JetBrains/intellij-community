@@ -5,7 +5,6 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorComboBoxRenderer;
 import com.intellij.ui.EditorTextField;
@@ -30,7 +29,10 @@ public class PyIntroduceDialog extends DialogWrapper implements PyIntroduceSetti
   private JLabel myNameLabel;
   private ComboBox myNameComboBox;
   private JCheckBox myReplaceAll;
-  private JCheckBox myInitialzeInConstructor;
+  private JRadioButton mySamePlace;
+  private JRadioButton myConstructor;
+  private JRadioButton mySetUp;
+  private JPanel myPlaceSelector;
 
   private final Project myProject;
   private final int myOccurrencesCount;
@@ -45,7 +47,8 @@ public class PyIntroduceDialog extends DialogWrapper implements PyIntroduceSetti
                            final int occurrencesCount,
                            final String[] possibleNames,
                            final String helpId,
-                           boolean hasConstructor) {
+                           boolean hasConstructor,
+                           boolean isTestClass) {
     super(project, true);
     myOccurrencesCount = occurrencesCount;
     myValidator = validator;
@@ -57,7 +60,7 @@ public class PyIntroduceDialog extends DialogWrapper implements PyIntroduceSetti
     setModal(true);
     setTitle(caption);
     init();
-    setupDialog(hasConstructor);
+    setupDialog(hasConstructor, isTestClass);
     updateControls();
   }
 
@@ -100,12 +103,13 @@ public class PyIntroduceDialog extends DialogWrapper implements PyIntroduceSetti
     }
   }
 
-  private void setupDialog(boolean hasConstructor) {
+  private void setupDialog(boolean hasConstructor, boolean isTest) {
     myReplaceAll.setMnemonic(KeyEvent.VK_A);
     myNameLabel.setLabelFor(myNameComboBox);
-    myInitialzeInConstructor.setText(RefactoringBundle.message("initialize.in.border.title") + " " + RefactoringBundle.message("class.constructors.radio"));
-    myInitialzeInConstructor.setVisible(hasConstructor);
-
+    myPlaceSelector.setVisible(hasConstructor);
+    mySetUp.setVisible(isTest);
+    mySamePlace.setSelected(true);
+    
     // Replace occurences check box setup
     if (myOccurrencesCount > 1) {
       myReplaceAll.setSelected(false);
@@ -153,7 +157,9 @@ public class PyIntroduceDialog extends DialogWrapper implements PyIntroduceSetti
     setErrorText(!nameValid ? PyBundle.message("refactoring.introduce.name.error") : null);
   }
 
-  public boolean initInConstructor() {
-    return myInitialzeInConstructor.isSelected();
+  public IntroduceHandler.InitPlace getInitPlace() {
+    if (myConstructor.isSelected()) return IntroduceHandler.InitPlace.CONSTRUCTOR;
+    if (mySetUp.isSelected())  return IntroduceHandler.InitPlace.SET_UP;
+    return IntroduceHandler.InitPlace.SAME_METHOD;
   }
 }
