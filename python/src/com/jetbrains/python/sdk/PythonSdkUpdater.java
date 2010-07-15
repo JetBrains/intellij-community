@@ -48,6 +48,12 @@ public class PythonSdkUpdater implements ProjectComponent {
             LOG.info("Could not find skeletons path for SDK path " + sdk.getHomePath());
           }
           else if (versionUpdated || !new File(skeletonsPath).isDirectory()) {
+            if (versionUpdated) {
+              LOG.info("Rebuilding skeletons for " + sdk.getHomePath() + " because version has been updated");
+            }
+            else {
+              LOG.info("Rebuilding skeletons for " + sdk.getHomePath() + " because skeletons directory " + skeletonsPath + " was not found");
+            }
             PythonSdkType.generateSkeletons(ProgressManager.getInstance().getProgressIndicator(), sdk.getHomePath(), skeletonsPath);
           }
         }
