@@ -28,24 +28,25 @@ public class CompositeDocumentationProvider implements DocumentationProvider, Ex
 
   private final List<DocumentationProvider> myProviders;
 
-  public CompositeDocumentationProvider (DocumentationProvider ... documentationProviders) {
-    this(Arrays.asList(documentationProviders));
+  public static DocumentationProvider wrapProviders(Collection<DocumentationProvider> providers) {
+    ArrayList<DocumentationProvider> list = new ArrayList<DocumentationProvider>();
+    for (DocumentationProvider provider : providers) {
+      if (provider instanceof CompositeDocumentationProvider) {
+        list.addAll(((CompositeDocumentationProvider)provider).getProviders());
+      }
+      else if (provider != null) {
+        list.add(provider);
+      }
+    }
+    return list.size() == 1 ? list.get(0) : new CompositeDocumentationProvider(Collections.unmodifiableList(list));
   }
 
-  public CompositeDocumentationProvider(Collection<DocumentationProvider> providers) {
-    myProviders = new ArrayList<DocumentationProvider>(providers);
-  }
-
-  public void inject (DocumentationProvider provider) {
-    myProviders.add ( provider );
-  }
-
-  public void remove (DocumentationProvider provider) {
-    myProviders.remove ( provider );
+  private CompositeDocumentationProvider(List<DocumentationProvider> providers) {
+    myProviders = providers;
   }
 
   public List<DocumentationProvider> getProviders() {
-    return Collections.unmodifiableList(myProviders);
+    return myProviders;
   }
 
   public String getQuickNavigateInfo(PsiElement element) {
