@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.html.HtmlTag;
+import com.intellij.psi.impl.source.xml.SchemaPrefix;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.tree.IElementType;
@@ -62,6 +63,9 @@ public class XmlDocumentationProvider implements DocumentationProvider {
 
   @Nullable
   public String getQuickNavigateInfo(PsiElement element) {
+    if (element instanceof SchemaPrefix) {
+      return ((SchemaPrefix)element).getQuickNavigateInfo();
+    }
     final String name = ElementDescriptionUtil.getElementDescription(element, UsageViewShortNameLocation.INSTANCE);
     if (StringUtil.isEmpty(name)) return null;
     final String typeName = ElementDescriptionUtil.getElementDescription(element, UsageViewTypeLocation.INSTANCE);

@@ -904,4 +904,32 @@ public class PsiUtil {
     }
     return false;
   }
+
+  public static GrReferenceExpression qualifyMemberReference(GrReferenceExpression refExpr, PsiMember member, String name) {
+    assert refExpr.getQualifierExpression() == null;
+
+    final PsiClass clazz = member.getContainingClass();
+    assert clazz != null;
+
+    final PsiElement replaced;
+    if (member.hasModifierProperty(GrModifier.STATIC)) {
+      final GrReferenceExpression newRefExpr = GroovyPsiElementFactory.getInstance(member.getProject())
+        .createReferenceExpressionFromText(clazz.getQualifiedName() + "." + name);
+      replaced = refExpr.replace(newRefExpr);
+    }
+    else {
+      final PsiClass containingClass = PsiTreeUtil.getParentOfType(refExpr, PsiClass.class);
+      if (member.getManager().areElementsEquivalent(containingClass, clazz)) {
+        final GrReferenceExpression newRefExpr = GroovyPsiElementFactory.getInstance(member.getProject())
+          .createReferenceExpressionFromText("this." + name);
+        replaced = refExpr.replace(newRefExpr);
+      }
+      else {
+        final GrReferenceExpression newRefExpr = GroovyPsiElementFactory.getInstance(member.getProject())
+          .createReferenceExpressionFromText(clazz.getName() + ".this." + name);
+        replaced = refExpr.replace(newRefExpr);
+      }
+    }
+    return (GrReferenceExpression)replaced;
+  }
 }
