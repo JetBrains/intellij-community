@@ -63,9 +63,9 @@ public class PullUpConflictsUtil {
   }
 
   public static MultiMap<PsiElement, String> checkConflicts(final MemberInfo[] infos,
-                                                            PsiClass subclass,
+                                                            final PsiClass subclass,
                                                             @Nullable PsiClass superClass,
-                                                            PsiPackage targetPackage,
+                                                            final PsiPackage targetPackage,
                                                             PsiDirectory targetDirectory,
                                                             final InterfaceContainmentVerifier interfaceContainmentVerifier,
                                                             boolean movedMembers2Super) {
@@ -143,6 +143,31 @@ public class PullUpConflictsUtil {
     }
     RefactoringConflictsUtil.analyzeModuleConflicts(subclass.getProject(), checkModuleConflictsList,
                                            new UsageInfo[0], targetRepresentativeElement, conflicts);
+    for (final PsiMethod abstractMethod : abstractMethods) {
+      abstractMethod.accept(new ClassMemberReferencesVisitor(subclass) {
+        @Override
+        protected void visitClassMemberReferenceElement(PsiMember classMember, PsiJavaCodeReferenceElement classMemberReference) {
+          if (classMember != null && willBeMoved(classMember, movedMembers)) {
+            boolean isAccessible = false;
+            if (classMember.hasModifierProperty(PsiModifier.PRIVATE)) {
+              isAccessible = true;
+            }
+            else if (classMember.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) &&
+                     !Comparing.strEqual(targetPackage.getQualifiedName(), StringUtil.getPackageName(subclass.getQualifiedName()))) {
+              isAccessible = true;
+            }
+            if (isAccessible) {
+              String message = RefactoringUIUtil.getDescription(abstractMethod, false) +
+                               " uses " +
+                               RefactoringUIUtil.getDescription(classMember, true) +
+                               " which won't be accessible from the subclass.";
+              message = CommonRefactoringUtil.capitalize(message);
+              conflicts.putValue(classMember, message);
+            }
+          }
+        }
+      });
+    }
     return conflicts;
   }
 
