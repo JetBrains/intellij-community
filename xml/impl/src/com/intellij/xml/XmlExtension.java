@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.xml.SchemaPrefix;
 import com.intellij.psi.impl.source.xml.TagNameReference;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -156,7 +157,7 @@ public abstract class XmlExtension {
   }
 
   @Nullable
-  public abstract XmlAttribute getPrefixDeclaration(final XmlTag context, String namespacePrefix);
+  public abstract SchemaPrefix getPrefixDeclaration(final XmlTag context, String namespacePrefix);
 
   public SearchScope getNsPrefixScope(XmlAttribute declaration) {
     return new LocalSearchScope(declaration.getParent());

@@ -4,6 +4,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Representation of the "hg init"
  */
@@ -16,7 +19,10 @@ public class HgInitCommand {
   }
 
   public boolean execute(@NotNull VirtualFile repositoryRoot) {
-    return HgCommandService.getInstance(myProject).execute(repositoryRoot, "init", null) != null;
+    final List<String> args = new ArrayList<String>(1);
+    args.add(repositoryRoot.getPath());
+    final HgCommandResult result = HgCommandService.getInstance(myProject).execute(null, "init", args);
+    return result != null && !HgErrorUtil.isAbort(result);
   }
 
 }

@@ -9,6 +9,8 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.rename.RenameProcessor
 import com.intellij.refactoring.rename.RenameUtil
+import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler
+import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
@@ -311,6 +313,25 @@ import static Foo.newName as foo
 
 print foo
 foo = 4"""
+  }
+
+  public void testInplaceRename() {
+   doInplaceRenameTest();
+  }
+
+  public void testInplaceRenameWithGetter() {
+   doInplaceRenameTest();
+  }
+
+  public void testInplaceRenameWithStaticField() {
+   doInplaceRenameTest();
+  }
+
+  private def doInplaceRenameTest() {
+    String prefix = TestUtils.getTestDataPath() + "groovy/refactoring/rename/" + getTestName(false)
+    myFixture.configureByFile prefix + ".groovy";
+    CodeInsightTestUtil.doInlineRename(new VariableInplaceRenameHandler(), "foo", myFixture);
+    myFixture.checkResultByFile prefix + "_after.groovy"
   }
 
 }

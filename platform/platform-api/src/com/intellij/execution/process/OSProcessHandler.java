@@ -20,8 +20,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.Consumer;
-import com.intellij.util.concurrency.Semaphore;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -29,7 +27,6 @@ import java.util.concurrent.*;
 
 public class OSProcessHandler extends ProcessHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.OSProcessHandler");
-  private static final ReaderThread ourReaderThread;
   private final Process myProcess;
   private final String myCommandLine;
 
@@ -48,14 +45,6 @@ public class OSProcessHandler extends ProcessHandler {
     }
   }
 
-  static {
-    ourReaderThread = new ReaderThread();
-    ourReaderThread.setDaemon(true);
-    ourReaderThread.setName("OSProcessHandler streams reader");
-    ourReaderThread.start();
-  }
-
-  /**
   /**
    * Override this method in order to execute the task with a custom pool
    *
@@ -73,6 +62,13 @@ public class OSProcessHandler extends ProcessHandler {
       ExecutorServiceHolder.ourThreadExecutorsService = ExecutorServiceHolder.createServiceImpl();
     }
     return ExecutorServiceHolder.ourThreadExecutorsService.submit(task);
+  }
+
+  protected static void shutdownExecutorService() {
+    final Application application = ApplicationManager.getApplication();
+    if (application == null) {
+      ExecutorServiceHolder.ourThreadExecutorsService.shutdown();
+    }
   }
 
   public OSProcessHandler(final Process process, final String commandLine) {
@@ -121,13 +117,13 @@ public class OSProcessHandler extends ProcessHandler {
   }
 
   public void startNotify() {
-    final ReadProcessRequest stdoutThread = new ReadProcessRequest(createProcessOutReader()) {
+    final ReadProcessThread stdoutThread = new ReadProcessThread(createProcessOutReader()) {
       protected void textAvailable(String s) {
         notifyTextAvailable(s, ProcessOutputTypes.STDOUT);
       }
     };
 
-    final ReadProcessRequest stderrThread = new ReadProcessRequest(createProcessErrReader()) {
+    final ReadProcessThread stderrThread = new ReadProcessThread(createProcessErrReader()) {
       protected void textAvailable(String s) {
         notifyTextAvailable(s, ProcessOutputTypes.STDERR);
       }
@@ -138,8 +134,8 @@ public class OSProcessHandler extends ProcessHandler {
     addProcessListener(new ProcessAdapter() {
       public void startNotified(final ProcessEvent event) {
         try {
-          final Semaphore outSemaphore = stdoutThread.schedule();
-          final Semaphore errSemaphore = stderrThread.schedule();
+          final Future<?> stdOutReadingFuture = executeOnPooledThread(stdoutThread);
+          final Future<?> stdErrReadingFuture = executeOnPooledThread(stderrThread);
 
           myWaitFor.setTerminationCallback(new Consumer<Integer>() {
             @Override
@@ -149,8 +145,13 @@ public class OSProcessHandler extends ProcessHandler {
                 stderrThread.setProcessTerminated(true);
                 stdoutThread.setProcessTerminated(true);
 
-                outSemaphore.waitFor();
-                errSemaphore.waitFor();
+                stdErrReadingFuture.get();
+                stdOutReadingFuture.get();
+              }
+              catch (InterruptedException e) {
+              }
+              catch (ExecutionException e) {
+                LOG.error(e);
               }
               finally {
                 onOSProcessTerminated(exitCode);
@@ -228,56 +229,38 @@ public class OSProcessHandler extends ProcessHandler {
     return EncodingManager.getInstance().getDefaultCharset();
   }
 
-  private abstract class ReadProcessRequest {
+  private abstract static class ReadProcessThread implements Runnable {
     private final Reader myReader;
     private boolean skipLF = false;
 
-    private boolean myIsClosed = false;
-    private volatile boolean myIsProcessTerminated = false;
-    private final Semaphore mySemaphore = new Semaphore();
-    private final BlockingQueue<String> myNotificationQueue = new LinkedBlockingQueue<String>();
+    private boolean myIsProcessTerminated = false;
+    private final char[] myBuffer = new char[8192];
 
-    public ReadProcessRequest(final Reader reader) {
+    public ReadProcessThread(final Reader reader) {
       myReader = reader;
     }
 
-    public boolean isProcessTerminated() {
-      return myIsProcessTerminated;
-    }
-
-    public void setProcessTerminated(boolean isProcessTerminated) {
+    public synchronized void setProcessTerminated(boolean isProcessTerminated) {
       myIsProcessTerminated = isProcessTerminated;
     }
 
-    public Semaphore schedule() {
-      ourReaderThread.addRequest(this);
-
-      executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
+    public void run() {
+      try {
+        while (readAvailable()) {
           try {
-            while (true) {
-              final String token = myNotificationQueue.take();
-              if (token.isEmpty()) break;
-              textAvailable(token);
-            }
+            Thread.sleep(50L);
           }
-          catch (InterruptedException e) {
-            // Ignore 
-          }
-          finally {
-            mySemaphore.up();
+          catch (InterruptedException ignore) {
           }
         }
-      });
-
-      mySemaphore.down();
-      return mySemaphore;
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
     }
 
-    public void readAvailable(char[] buffer) throws IOException {
-      int fairCount = 0;
-      boolean checkForTermination = true;
+    private synchronized boolean readAvailable() throws IOException {
+      char[] buffer = myBuffer;
       StringBuilder token = new StringBuilder();
       while (myReader.ready()) {
         int n = myReader.read(buffer);
@@ -298,98 +281,31 @@ public class OSProcessHandler extends ProcessHandler {
           }
 
           if (c == '\n') {
-            myNotificationQueue.offer(token.toString());
+            textAvailable(token.toString());
             token.setLength(0);
           }
-        }
-
-        if (++fairCount > 10) {
-          checkForTermination = false;
-          break;
         }
       }
 
       if (token.length() != 0) {
-        myNotificationQueue.offer(token.toString());
+        textAvailable(token.toString());
         token.setLength(0);
       }
 
-      if (checkForTermination && isProcessTerminated()) {
-        close();
-      }
-    }
+      if (myIsProcessTerminated) {
+        try {
+          myReader.close();
+        }
+        catch (IOException e1) {
+          // supressed
+        }
 
-    private void close() {
-      LOG.assertTrue(!myIsClosed);
-      myIsClosed = true;
+        return false;
+      }
 
-      try {
-        myReader.close();
-      }
-      catch (IOException e1) {
-        // supressed
-      }
-      finally {
-        myNotificationQueue.offer("");
-      }
+      return true;
     }
 
     protected abstract void textAvailable(final String s);
-
-    private boolean isClosed() {
-      return myIsClosed;
-    }
-  }
-
-  private static class ReaderThread extends Thread {
-    private final BlockingQueue<ReadProcessRequest> queue = new LinkedBlockingQueue<ReadProcessRequest>();
-    private final char[] myBuffer = new char[8192];
-    
-
-    @Override
-    public void run() {
-      while (true) {
-        ReadProcessRequest request = takeRequest();
-        if (request == null) return;
-
-        processRequest(request);
-        if (!request.isClosed()) addRequest(request);
-
-        //noinspection UnusedAssignment
-        request = null;  //leak?
-
-        try {
-          Thread.sleep(1L);
-        }
-        catch (InterruptedException e) {
-          // ignore
-        }
-      }
-    }
-
-
-    private void processRequest(ReadProcessRequest request) {
-      try {
-        request.readAvailable(myBuffer);
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-    }
-
-    @Nullable
-    private ReadProcessRequest takeRequest() {
-      try {
-        return queue.take();
-      }
-      catch (InterruptedException e) {
-        return null;
-      }
-    }
-
-    public void addRequest(ReadProcessRequest request) {
-      queue.offer(request);
-    }
-
   }
 }
