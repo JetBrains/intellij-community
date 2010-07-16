@@ -44,7 +44,7 @@ public class SchemaPrefixReference extends PsiReferenceBase<XmlElement> implemen
       }
       else if (myElement instanceof XmlAttributeValue &&
                ((XmlAttribute)((XmlAttributeValue)myElement).getParent()).getLocalName().equals("prefix")) {
-        return new SchemaPrefix((XmlAttribute)myElement.getParent(), getRangeInElement().shiftRight(myElement.getStartOffsetInParent()), myName);
+        return SchemaPrefix.createJspPrefix((XmlAttributeValue)SchemaPrefixReference.this.myElement, myName);
       }
       else {
         return resolvePrefix(myElement, myName);
@@ -56,6 +56,13 @@ public class SchemaPrefixReference extends PsiReferenceBase<XmlElement> implemen
   @Nullable
   private final TagNameReference myTagNameReference;
 
+  /**
+   *
+   * @param element XmlAttribute || XmlAttributeValue
+   * @param range
+   * @param name
+   * @param tagNameReference
+   */
   public SchemaPrefixReference(XmlElement element, TextRange range, String name, @Nullable TagNameReference tagNameReference) {
     super(element, range, true);
     myName = name;
@@ -102,13 +109,7 @@ public class SchemaPrefixReference extends PsiReferenceBase<XmlElement> implemen
   @Nullable
   public static SchemaPrefix resolvePrefix(PsiElement element, String name) {
     XmlExtension extension = XmlExtension.getExtension(element.getContainingFile());
-    final XmlAttribute declaration = extension.getPrefixDeclaration(PsiTreeUtil.getParentOfType(element, XmlTag.class, false), name);
-    if (declaration != null) {
-      final String prefix = declaration.getNamespacePrefix();
-      final TextRange textRange = TextRange.from(prefix.length() + 1, name.length());
-      return new SchemaPrefix(declaration, textRange, name);
-    }
-    return null;
+    return extension.getPrefixDeclaration(PsiTreeUtil.getParentOfType(element, XmlTag.class, false), name);
   }
 
   @Override
