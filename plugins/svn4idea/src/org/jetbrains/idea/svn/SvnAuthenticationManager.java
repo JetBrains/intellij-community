@@ -102,7 +102,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
           ((IPersistentAuthenticationProvider) myDelegate).saveAuthentication(auth, kind, realm);
 
           // do not make password file readonly
-          authFile.setWritable(true, false);
+          //authFile.setWritable(true, false);
 
           myRewritePreventer.put(newKey, currTime);
         }
