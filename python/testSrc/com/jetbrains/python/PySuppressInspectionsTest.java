@@ -4,7 +4,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.inspections.PyInspection;
 import com.jetbrains.python.inspections.PyUnresolvedReferencesInspection;
-import com.jetbrains.python.inspections.PyUnusedLocalVariableInspection;
+import com.jetbrains.python.inspections.PyUnusedLocalInspection;
 
 /**
  * @author yole
@@ -23,7 +23,7 @@ public class PySuppressInspectionsTest extends PyLightFixtureTestCase {
   }
 
   public void testSuppressedUnusedLocal() throws Exception {
-    doTestHighlighting(PyUnusedLocalVariableInspection.class);
+    doTestHighlighting(PyUnusedLocalInspection.class);
   }
 
   private void doTestHighlighting(final Class<? extends PyInspection> inspectionClass) throws Exception {

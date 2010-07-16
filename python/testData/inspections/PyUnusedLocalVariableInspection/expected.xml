@@ -37,6 +37,10 @@
   </problem>
   <problem>
     <file>test.py</file>
+    <line>51</line>
+  <description>"Local function 'test' is not used"</description>
+  </problem>  <problem>
+    <file>test.py</file>
     <line>83</line>
   <description>"Parameter 'x' value is not used"</description>
   </problem>

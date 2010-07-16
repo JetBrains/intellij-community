@@ -36,12 +36,12 @@ import java.util.Set;
 /**
  * @author oleg
  */
-class PyUnusedLocalVariableInspectionVisitor extends PyInspectionVisitor {
+class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
   private final boolean myIgnoreTupleUnpacking;
   private final HashSet<PsiElement> myUnusedElements;
   private final HashSet<PsiElement> myUsedElements;
 
-  public PyUnusedLocalVariableInspectionVisitor(final ProblemsHolder holder, boolean ignoreTupleUnpacking) {
+  public PyUnusedLocalInspectionVisitor(final ProblemsHolder holder, boolean ignoreTupleUnpacking) {
     super(holder);
     myIgnoreTupleUnpacking = ignoreTupleUnpacking;
     myUnusedElements = new HashSet<PsiElement>();
@@ -81,14 +81,18 @@ class PyUnusedLocalVariableInspectionVisitor extends PyInspectionVisitor {
     // Iteration over write accesses
     for (int i = 0; i < instructions.length; i++) {
       final Instruction instruction = instructions[i];
-      if (instruction instanceof ReadWriteInstruction) {
+      final PsiElement element = instruction.getElement();
+      if (element instanceof PyFunction && owner instanceof PyFunction){
+        if (!myUsedElements.contains(element)){
+          myUnusedElements.add(element);
+        }
+      }
+      else if (instruction instanceof ReadWriteInstruction) {
         final String name = ((ReadWriteInstruction)instruction).getName();
         // Ignore empty, wildcards or global names
         if (name == null || "_".equals(name) || scope.isGlobal(name)) {
           continue;
         }
-        final PsiElement element = instruction.getElement();
-
         // Ignore elements out of scope
         if (element == null || !PsiTreeUtil.isAncestor(node, element, false)){
           continue;
@@ -151,20 +155,36 @@ class PyUnusedLocalVariableInspectionVisitor extends PyInspectionVisitor {
           }
 
           PyControlFlowUtil
-            .iterateWriteAccessFor(name, number, instructions, new Function<ReadWriteInstruction, PyControlFlowUtil.Operation>() {
-              public PyControlFlowUtil.Operation fun(final ReadWriteInstruction rwInstr) {
-                final PsiElement instrElement = rwInstr.getElement();
-                // Ignore elements out of scope
-                if (instrElement == null || !PsiTreeUtil.isAncestor(node, instrElement, false)){
+            .iteratePrev(number, instructions, new Function<Instruction, PyControlFlowUtil.Operation>() {
+              public PyControlFlowUtil.Operation fun(final Instruction inst) {
+                final PsiElement element = inst.getElement();
+                // Mark function as used
+                if (element instanceof PyFunction){
+                  if (name.equals(((PyFunction)element).getName())){
+                    myUsedElements.add(element);
+                    myUnusedElements.remove(element);
+                    return PyControlFlowUtil.Operation.CONTINUE;
+                  }
+                }
+                // Mark write access as used
+                else if (inst instanceof ReadWriteInstruction) {
+                  final ReadWriteInstruction rwInstruction = (ReadWriteInstruction)inst;
+                  if (!name.equals(rwInstruction.getName()) || !rwInstruction.getAccess().isWriteAccess()) {
+                    return PyControlFlowUtil.Operation.NEXT;
+                  }
+                  // Ignore elements out of scope
+                  if (element == null || !PsiTreeUtil.isAncestor(node, element, false)) {
+                    return PyControlFlowUtil.Operation.CONTINUE;
+                  }
+                  myUsedElements.add(element);
+                  myUnusedElements.remove(element);
+                  // In case when assignment is inside try part we should move further
+                  if (PsiTreeUtil.getParentOfType(element, PyTryPart.class) != null) {
+                    return PyControlFlowUtil.Operation.NEXT;
+                  }
                   return PyControlFlowUtil.Operation.CONTINUE;
                 }
-                myUsedElements.add(instrElement);
-                myUnusedElements.remove(instrElement);
-                // In case when assignment is inside try part we should move further
-                if (PsiTreeUtil.getParentOfType(instrElement, PyTryPart.class) != null){
-                  return PyControlFlowUtil.Operation.NEXT;
-                }
-                return PyControlFlowUtil.Operation.CONTINUE;
+                return PyControlFlowUtil.Operation.NEXT;
               }
             });
         }
@@ -172,7 +192,7 @@ class PyUnusedLocalVariableInspectionVisitor extends PyInspectionVisitor {
     }
   }
 
-  private static boolean callsLocals(ScopeOwner owner) {
+  private static boolean callsLocals(final ScopeOwner owner) {
     try {
       owner.acceptChildren(new PyRecursiveElementVisitor(){
         @Override
@@ -201,31 +221,40 @@ class PyUnusedLocalVariableInspectionVisitor extends PyInspectionVisitor {
   void registerProblems() {
     // Register problems
     for (PsiElement element : myUnusedElements) {
-      final String name = element.getText();
-      if (element instanceof PyNamedParameter || element.getParent() instanceof PyNamedParameter) {
-        // Ignore unused self parameters as obligatory
-        if ("self".equals(name) && PyPsiUtils.isMethodContext(element)) {
-          continue;
-        }
-        // cls for @classmethod decorated methods
-        if ("cls".equals(name)) {
-          final Set<PyFunction.Flag> flagSet = PyUtil.detectDecorationsAndWrappersOf(PsiTreeUtil.getParentOfType(element, PyFunction.class));
-          if (flagSet.contains(PyFunction.Flag.CLASSMETHOD)) {
+      // Local function
+      if (element instanceof PyFunction){
+        registerWarning(((PyFunction)element).getNameIdentifier(),
+                        PyBundle.message("INSP.unused.locals.local.function.isnot.used",
+                        ((PyFunction)element).getName()));
+      } 
+      // Local variable or parameter
+      else {
+        final String name = element.getText();
+        if (element instanceof PyNamedParameter || element.getParent() instanceof PyNamedParameter) {
+          // Ignore unused self parameters as obligatory
+          if ("self".equals(name) && PyPsiUtils.isMethodContext(element)) {
             continue;
           }
-        }
-        registerWarning(element, PyBundle.message("INSP.unused.locals.parameter.isnot.used", name));
-      }
-      else {
-        if (myIgnoreTupleUnpacking && isTupleUnpacking(element)) {
-          continue;
-        }
-        if (PyForStatementNavigator.getPyForStatementByIterable(element) != null) {
-          registerProblem(element, PyBundle.message("INSP.unused.locals.local.variable.isnot.used", name),
-                          ProblemHighlightType.LIKE_UNUSED_SYMBOL, null, new ReplaceWithWildCard());
+          // cls for @classmethod decorated methods
+          if ("cls".equals(name)) {
+            final Set<PyFunction.Flag> flagSet = PyUtil.detectDecorationsAndWrappersOf(PsiTreeUtil.getParentOfType(element, PyFunction.class));
+            if (flagSet.contains(PyFunction.Flag.CLASSMETHOD)) {
+              continue;
+            }
+          }
+          registerWarning(element, PyBundle.message("INSP.unused.locals.parameter.isnot.used", name));
         }
         else {
-          registerWarning(element, PyBundle.message("INSP.unused.locals.local.variable.isnot.used", name));
+          if (myIgnoreTupleUnpacking && isTupleUnpacking(element)) {
+            continue;
+          }
+          if (PyForStatementNavigator.getPyForStatementByIterable(element) != null) {
+            registerProblem(element, PyBundle.message("INSP.unused.locals.local.variable.isnot.used", name),
+                            ProblemHighlightType.LIKE_UNUSED_SYMBOL, null, new ReplaceWithWildCard());
+          }
+          else {
+            registerWarning(element, PyBundle.message("INSP.unused.locals.local.variable.isnot.used", name));
+          }
         }
       }
     }

@@ -13,8 +13,8 @@ import javax.swing.*;
 /**
  * @author oleg
  */
-public class PyUnusedLocalVariableInspection extends PyInspection {
-  private final ThreadLocal<PyUnusedLocalVariableInspectionVisitor> myLastVisitor = new ThreadLocal<PyUnusedLocalVariableInspectionVisitor>();
+public class PyUnusedLocalInspection extends PyInspection {
+  private final ThreadLocal<PyUnusedLocalInspectionVisitor> myLastVisitor = new ThreadLocal<PyUnusedLocalInspectionVisitor>();
 
   public boolean ignoreTupleUnpacking = true;
 
@@ -26,14 +26,14 @@ public class PyUnusedLocalVariableInspection extends PyInspection {
 
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    final PyUnusedLocalVariableInspectionVisitor visitor = new PyUnusedLocalVariableInspectionVisitor(holder, ignoreTupleUnpacking);
+    final PyUnusedLocalInspectionVisitor visitor = new PyUnusedLocalInspectionVisitor(holder, ignoreTupleUnpacking);
     myLastVisitor.set(visitor);
     return visitor;
   }
 
   @Override
   public void inspectionFinished(LocalInspectionToolSession session) {
-    final PyUnusedLocalVariableInspectionVisitor visitor = myLastVisitor.get();
+    final PyUnusedLocalInspectionVisitor visitor = myLastVisitor.get();
     assert visitor != null;
     visitor.registerProblems();
     myLastVisitor.remove();
