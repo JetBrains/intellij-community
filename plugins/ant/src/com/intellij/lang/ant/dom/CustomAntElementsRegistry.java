@@ -32,8 +32,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.LocalTimeCounter;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.xml.XmlName;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -63,13 +63,7 @@ public class CustomAntElementsRegistry {
   private final Map<String, ClassLoader> myNamedLoaders = new HashMap<String, ClassLoader>();
 
   private CustomAntElementsRegistry(final AntDomProject antProject) {
-    antProject.accept(new BaseVisitor() {
-      public void visitTypeDef(AntDomTypeDef typedef) {
-        // if loaderRef attribute is specified, make sure the loader is built and stored
-        rememberNamedClassLoader(typedef, antProject);
-        defineCustomElements(typedef, antProject);
-      }
-    });
+    antProject.accept(new CustomTagDefinitionFinder(antProject));
   }
 
   public static CustomAntElementsRegistry getInstance(AntDomProject antProject) {
@@ -108,69 +102,6 @@ public class CustomAntElementsRegistry {
     return myErrors.get(xmlName);
   }
 
-  private static class BaseVisitor extends AntDomRecursiveVisitor {
-    public void visitInclude(AntDomInclude includeTag) {
-      processInclude(includeTag);
-    }
-
-    public void visitImport(AntDomImport importTag) {
-      processInclude(importTag);
-    }
-
-    private void processInclude(AntDomIncludingDirective directive) {
-      final PsiFileSystemItem item = directive.getFile().getValue();
-      if (item instanceof PsiFile) {
-        final AntDomProject slaveProject = AntSupport.getAntDomProject((PsiFile)item);
-        if (slaveProject != null) {
-          slaveProject.accept(this);
-        }
-      }
-    }
-  }
-
-  private void defineCustomElements(AntDomTypeDef typedef, final AntDomProject antProject) {
-    final String uri = typedef.getUri().getStringValue();
-
-    final String customTagName = typedef.getName().getStringValue();
-    final String classname = typedef.getClassName().getStringValue();
-    if (classname != null && customTagName != null) {
-      registerElement(typedef, customTagName, uri, classname, getClassLoader(typedef, antProject));
-    }
-    else {
-      final XmlElement xmlElement = antProject.getXmlElement();
-      final Project project = xmlElement != null? xmlElement.getProject() : null;
-      if (project != null) {
-        final String resource = typedef.getResource().getStringValue();
-        if (resource != null) {
-          final ClassLoader loader = getClassLoader(typedef, antProject);
-          if (loader != null) {
-            final InputStream stream = loader.getResourceAsStream(resource);
-            if (stream != null) {
-              loadFromStream(typedef, uri, resource, loader, stream, project);
-            }
-          }
-        }
-        else {
-          final PsiFileSystemItem file = typedef.getFile().getValue();
-          if (file instanceof PsiFile) {
-            final VirtualFile vf = file.getVirtualFile();
-            if (vf != null) {
-              try {
-                final InputStream stream = vf.getInputStream();
-                if (stream != null) {
-                  loadFromStream(typedef, uri, file.getName(), getClassLoader(typedef, antProject), stream, project);
-                }
-              }
-              catch (IOException e) {
-                LOG.info(e);
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
   private void rememberNamedClassLoader(AntDomTypeDef typedef, AntDomProject antProject) {
     final String loaderRef = typedef.getLoaderRef().getStringValue();
     if (loaderRef != null) {
@@ -189,82 +120,35 @@ public class CustomAntElementsRegistry {
     return createClassLoader(collectUrls(typedef), antProject);
   }
 
-  private void loadFromStream(AntDomTypeDef typedef, String nsPrefix, String resource, ClassLoader loader, InputStream stream, final Project project) {
-    if (isXmlFormat(typedef, resource)) {
-      // todo
-      //loadAntlibStream(stream, nsPrefix, project);
+  @Nullable
+  private static PsiFile loadContentAsFile(PsiFile originalFile, LanguageFileType fileType) {
+    final VirtualFile vFile = originalFile.getVirtualFile();
+    if (vFile == null) {
+      return null;
     }
-    else {
-      final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-      try {
-        int nextByte;
-        try {
-          while ((nextByte = stream.read()) >= 0) {
-            builder.append((char)nextByte);
-          }
-        }
-        finally {
-          stream.close();
-        }
-        final PropertiesFile propFile = (PropertiesFile)createDummyFile("dummy.properties", StdFileTypes.PROPERTIES, builder, project);
-        for (final Property property : propFile.getProperties()) {
-          registerElement(typedef, property.getUnescapedKey(), nsPrefix, property.getValue(), loader);
-        }
-      }
-      catch (IOException e) {
-        LOG.info(e);
-      }
-      finally {
-        StringBuilderSpinAllocator.dispose(builder);
-      }
-    }
-  }
-
-  /*
-  static void loadAntlibStream(@NotNull final InputStream antlibStream, final String nsPrefix, Project project) {
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
-      int nextByte;
-      while ((nextByte = antlibStream.read()) >= 0) {
-        builder.append((char)nextByte);
-      }
-      antlibStream.close();
-      final XmlFile xmlFile = (XmlFile)createDummyFile("dummy.xml", StdFileTypes.XML, builder, project);
-      final XmlDocument document = xmlFile.getDocument();
-      if (document != null) {
-        final XmlTag rootTag = document.getRootTag();
-        if (rootTag == null) return;
-        for (final XmlTag tag : rootTag.getSubTags()) {
-          if (nsPrefix != null && nsPrefix.length() > 0) {
-            try {
-              tag.setName(nsPrefix + ':' + tag.getLocalName());
-            }
-            catch (IncorrectOperationException e) {
-              continue;
-            }
-          }
-          final AntElement newElement = AntElementFactory.createAntElement(element, tag);
-          if (newElement instanceof AntTypeDef) {
-            for (final AntTypeDefinition def : ((AntTypeDef)newElement).getDefinitions()) {
-              if (element instanceof AntTypeDefImpl) {
-                final AntTypeDefImpl td = ((AntTypeDefImpl)element);
-                final AntTypeDefinition[] defs = td.myNewDefinitions != null ? td.myNewDefinitions : AntTypeDefinition.EMPTY_ARRAY;
-                td.myNewDefinitions = ArrayUtil.append(defs, def);
-              }
-            }
-          }
-        }
-      }
+      return loadContentAsFile(originalFile.getProject(), vFile.getInputStream(), fileType);
     }
     catch (IOException e) {
       LOG.info(e);
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(builder);
-    }
+    return null;
   }
-  */
 
+  private static PsiFile loadContentAsFile(Project project, InputStream stream, LanguageFileType fileType) throws IOException {
+    final StringBuilder builder = new StringBuilder();
+    try {
+      int nextByte;
+      while ((nextByte = stream.read()) >= 0) {
+        builder.append((char)nextByte);
+      }
+    }
+    finally {
+      stream.close();
+    }
+    final PsiFileFactory factory = PsiFileFactory.getInstance(project);
+    return factory.createFileFromText("_ant_dummy__." + fileType.getDefaultExtension(), fileType, builder, LocalTimeCounter.currentTime(), false, false);
+  }
 
   private void registerElement(AntDomTypeDef typedef, String customTagName, String nsUri, String classname, ClassLoader loader) {
     Class clazz = null;
@@ -365,4 +249,151 @@ public class CustomAntElementsRegistry {
   }
 
 
+  private class CustomTagDefinitionFinder extends AntDomRecursiveVisitor {
+
+    private final Set<String> processedAntlibs = new HashSet<String>();
+    private final AntDomProject myAntProject;
+
+    public CustomTagDefinitionFinder(AntDomProject antProject) {
+      myAntProject = antProject;
+    }
+
+    public void visitAntDomElement(AntDomElement element) {
+      final String uri = element.getXmlElementNamespace();
+      if (!processedAntlibs.contains(uri)) {
+        processedAntlibs.add(uri);
+        final String antLibResource = AntDomAntlib.toAntlibResource(uri);
+        if (antLibResource != null) {
+          final XmlElement xmlElement = element.getXmlElement();
+          if (xmlElement != null) {
+            final ClassLoader loader = myAntProject.getClassLoader();
+            final InputStream stream = loader.getResourceAsStream(antLibResource);
+            if (stream != null) {
+              try {
+                final XmlFile xmlFile = (XmlFile)loadContentAsFile(xmlElement.getProject(), stream, StdFileTypes.XML);
+                if (xmlFile != null) {
+                  loadDefinitionsFromAntlib(xmlFile, uri, loader, null);
+                }
+              }
+              catch (IOException e) {
+                LOG.info(e);
+              }
+            }
+          }
+        }
+      }
+      super.visitAntDomElement(element);
+    }
+
+    public void visitTypeDef(AntDomTypeDef typedef) {
+      // if loaderRef attribute is specified, make sure the loader is built and stored
+      rememberNamedClassLoader(typedef, myAntProject);
+      defineCustomElements(typedef, myAntProject);
+    }
+
+    public void visitInclude(AntDomInclude includeTag) {
+      processInclude(includeTag);
+    }
+
+    public void visitImport(AntDomImport importTag) {
+      processInclude(importTag);
+    }
+
+    private void processInclude(AntDomIncludingDirective directive) {
+      final PsiFileSystemItem item = directive.getFile().getValue();
+      if (item instanceof PsiFile) {
+        final AntDomProject slaveProject = AntSupport.getAntDomProject((PsiFile)item);
+        if (slaveProject != null) {
+          slaveProject.accept(this);
+        }
+      }
+    }
+
+    private void defineCustomElements(AntDomTypeDef typedef, final AntDomProject antProject) {
+      final String uri = typedef.getUri().getStringValue();
+      final String customTagName = typedef.getName().getStringValue();
+      final String classname = typedef.getClassName().getStringValue();
+
+      if (classname != null && customTagName != null) {
+        registerElement(typedef, customTagName, uri, classname, getClassLoader(typedef, antProject));
+      }
+      else {
+        XmlFile xmlFile = null;
+        PropertiesFile propFile = null;
+        ClassLoader loader = null;
+
+        final XmlElement xmlElement = antProject.getXmlElement();
+        final Project project = xmlElement != null? xmlElement.getProject() : null;
+        if (project != null) {
+          final String resource = typedef.getResource().getStringValue();
+          if (resource != null) {
+            loader = getClassLoader(typedef, antProject);
+            if (loader != null) {
+              final InputStream stream = loader.getResourceAsStream(resource);
+              if (stream != null) {
+                try {
+                  if (isXmlFormat(typedef, resource)) {
+                    xmlFile = (XmlFile)loadContentAsFile(project, stream, StdFileTypes.XML);
+                  }
+                  else {
+                    propFile = (PropertiesFile)loadContentAsFile(project, stream, StdFileTypes.PROPERTIES);
+                  }
+                }
+                catch (IOException e) {
+                  LOG.info(e);
+                }
+              }
+            }
+          }
+          else {
+            final PsiFileSystemItem file = typedef.getFile().getValue();
+            if (file instanceof PsiFile) {
+              if (isXmlFormat(typedef, file.getName())) {
+                xmlFile = file instanceof XmlFile ? (XmlFile)file : (XmlFile)loadContentAsFile((PsiFile)file, StdFileTypes.XML);
+              }
+              else { // assume properties format
+                propFile = file instanceof PropertiesFile ? (PropertiesFile)file : (PropertiesFile)loadContentAsFile((PsiFile)file, StdFileTypes.PROPERTIES);
+              }
+            }
+          }
+
+          if (propFile != null) {
+            if (loader == null) { // if not initialized yet
+              loader = getClassLoader(typedef, antProject);
+            }
+            for (final Property property : propFile.getProperties()) {
+              registerElement(typedef, property.getUnescapedKey(), uri, property.getValue(), loader);
+            }
+          }
+
+          if (xmlFile != null) {
+            loadDefinitionsFromAntlib(xmlFile, uri, loader != null? loader : getClassLoader(typedef, antProject), typedef);
+          }
+        }
+      }
+    }
+
+    private void loadDefinitionsFromAntlib(XmlFile xmlFile, String uri, ClassLoader loader, @Nullable AntDomTypeDef typedef) {
+      final AntDomAntlib antLib = AntSupport.getAntLib(xmlFile);
+      if (antLib != null) {
+        final List<AntDomTypeDef> defs = new ArrayList<AntDomTypeDef>();
+        defs.addAll(antLib.getTaskdefs());
+        defs.addAll(antLib.getTypedefs());
+        if (!defs.isEmpty()) {
+          for (AntDomTypeDef def : defs) {
+            final String tagName = def.getName().getStringValue();
+            if (tagName == null) {
+              continue;
+            }
+            final String className = def.getClassName().getStringValue();
+            if (className == null) {
+              continue;
+            }
+            registerElement(typedef != null? typedef : def, tagName, uri, className, loader);
+          }
+        }
+      }
+    }
+
+  }
 }

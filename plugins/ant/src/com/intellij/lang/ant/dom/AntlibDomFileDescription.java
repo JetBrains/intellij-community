@@ -15,9 +15,7 @@
  */
 package com.intellij.lang.ant.dom;
 
-import com.intellij.lang.ant.ForcedAntFileAttribute;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -28,28 +26,22 @@ import org.jetbrains.annotations.Nullable;
  * @author Eugene Zhuravlev
  *         Date: Apr 6, 2010
  */
-public class AntDomFileDescription extends AntFileDescription<AntDomProject> {
-  private static final String ROOT_TAG_NAME = "project";
+public class AntlibDomFileDescription extends AntFileDescription<AntDomAntlib> {
+  private static final String ROOT_TAG_NAME = "antlib";
 
-  public AntDomFileDescription() {
-    super(AntDomProject.class, ROOT_TAG_NAME);
+  public AntlibDomFileDescription() {
+    super(AntDomAntlib.class, ROOT_TAG_NAME);
   }
 
   public boolean isMyFile(@NotNull XmlFile file, @Nullable Module module) {
-    return super.isMyFile(file, module) && isAntFile(file);
+    return super.isMyFile(file, module) && isAntLibFile(file);
   }
 
-  public static boolean isAntFile(final XmlFile xmlFile) {
+  public static boolean isAntLibFile(final XmlFile xmlFile) {
     final XmlDocument document = xmlFile.getDocument();
     if (document != null) {
       final XmlTag tag = document.getRootTag();
-      if (tag != null && ROOT_TAG_NAME.equals(tag.getName()) && tag.getContext() instanceof XmlDocument) {
-        return true;
-      }
-      final VirtualFile vFile = xmlFile.getOriginalFile().getVirtualFile();
-      if (vFile != null && ForcedAntFileAttribute.isAntFile(vFile)) {
-        return true;
-      }
+      return tag != null && ROOT_TAG_NAME.equals(tag.getName()) && tag.getContext() instanceof XmlDocument;
     }
     return false;
   }
