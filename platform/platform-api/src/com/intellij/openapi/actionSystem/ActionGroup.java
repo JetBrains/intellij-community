@@ -174,7 +174,8 @@ public abstract class ActionGroup extends AnAction {
       if (myDumbAware == null) {
         try {
           Method updateMethod = getClass().getMethod("update", AnActionEvent.class);
-          myDumbAware = updateMethod.getDeclaringClass().equals(AnAction.class);
+          Class<?> declaringClass = updateMethod.getDeclaringClass();
+          myDumbAware = AnAction.class.equals(declaringClass) || ActionGroup.class.equals(declaringClass);
         }
         catch (NoSuchMethodException e) {
           myDumbAware = Boolean.FALSE;
