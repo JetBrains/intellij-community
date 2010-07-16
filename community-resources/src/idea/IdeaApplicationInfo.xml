@@ -1,5 +1,5 @@
 <component>
-  <version codename="Community Edition" major="9" minor="0.3" eap="true" update-channel="maiaEAP"/>
+  <version codename="Community Edition" major="9" minor="0.3" eap="false" update-channel="idea90"/>
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
   <install-over minbuild="0" maxbuild="0" version="9.0"/>
   <logo url="/idea_community_logo.png" textcolor="FFFFFF"/>
