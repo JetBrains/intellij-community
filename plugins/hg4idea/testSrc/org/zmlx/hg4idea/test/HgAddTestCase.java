@@ -18,7 +18,7 @@ import org.testng.annotations.Test;
 /**
  * Tests adding files to the Mercurial repository.
  */
-public class HgAddTestCase extends AbstractHgTestCase {
+public class HgAddTestCase extends HgAbstractTestCase {
 
   /**
    * 1. Create a file in the file system.

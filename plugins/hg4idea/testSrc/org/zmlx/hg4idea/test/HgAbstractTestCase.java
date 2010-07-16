@@ -34,7 +34,7 @@ import static org.testng.Assert.assertTrue;
 /**
  * The ancestor of all hg4idea test cases.
  */
-public abstract class AbstractHgTestCase extends AbstractVcsTestCase {
+public abstract class HgAbstractTestCase extends AbstractVcsTestCase {
 
   public static final String HG_EXECUTABLE_PATH = "IDEA_TEST_HG_EXECUTABLE_PATH";
 

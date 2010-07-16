@@ -17,7 +17,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 import org.zmlx.hg4idea.command.HgResolveCommand;
 
-public class HgResolveConflictTestCase extends AbstractHgTestCase {
+public class HgResolveConflictTestCase extends HgAbstractTestCase {
 
   public static final String BASE = "one\n" +
     "conflicting\n" +

@@ -20,7 +20,7 @@ import java.util.List;
 
 import static org.testng.Assert.assertEquals;
 
-public class HgLogTestCase extends AbstractHgTestCase {
+public class HgLogTestCase extends HgAbstractTestCase {
   
   @Test
   public void testCommitMessagesWithMultipleLines() throws Exception {

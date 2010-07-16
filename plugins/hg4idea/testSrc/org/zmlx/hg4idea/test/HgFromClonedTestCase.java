@@ -25,7 +25,7 @@ import java.io.File;
 
 import static org.testng.Assert.assertTrue;
 
-public class HgFromClonedTestCase extends AbstractHgTestCase {
+public class HgFromClonedTestCase extends HgAbstractTestCase {
 
   protected File remoteRepo;
   protected File projectRepo;
