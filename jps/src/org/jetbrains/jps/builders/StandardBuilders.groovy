@@ -14,13 +14,15 @@ class JavacBuilder implements ModuleBuilder {
     String sourceLevel = module["sourceLevel"]
     String targetLevel = module["targetLevel"]
     String customArgs = module["javac_args"]
-    def javacExecutable = getJavacExecutable(module)
     if (module.project.builder.useInProcessJavac) {
-      if (javacExecutable != null) {
-        module.project.warning("In-process Javac instead of '${javacExecutable}' will be used for '${module.name}'")
+      String version = System.getProperty("java.version")
+      if (sourceLevel == null || version.startsWith(sourceLevel)) {
+        if (Java16ApiCompilerRunner.compile(module, state, sourceLevel, targetLevel, customArgs)) {
+          return
+        }
       }
-      if (Java16ApiCompilerRunner.compile(module, state, sourceLevel, targetLevel, customArgs)) {
-        return
+      else {
+        module.project.info("In-process Javac won't be used for '${module.name}', because Java version ($version) doesn't match to source level ($sourceLevel)")
       }
     }
 
@@ -33,6 +35,7 @@ class JavacBuilder implements ModuleBuilder {
     params.fork = "true"
     params.debug = "on"
 
+    def javacExecutable = getJavacExecutable(module)
     if (javacExecutable != null) {
       params.executable = javacExecutable
     }
