@@ -24,7 +24,7 @@ import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.vcsUtil.VcsUtil;
 import org.testng.annotations.BeforeMethod;
-import org.zmlx.hg4idea.org.zmlx.hg4idea.test.TestChangeListManager;
+import org.zmlx.hg4idea.test.TestChangeListManager;
 
 import java.io.*;
 

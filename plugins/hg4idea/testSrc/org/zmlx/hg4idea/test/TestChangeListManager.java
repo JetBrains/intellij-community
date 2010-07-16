@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zmlx.hg4idea.org.zmlx.hg4idea.test;
+package org.zmlx.hg4idea.test;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
