@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier;
 import com.intellij.util.containers.SoftHashMap;
 import com.intellij.util.net.HttpConfigurable;
@@ -33,6 +34,7 @@ import org.tmatesoft.svn.core.internal.wc.*;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -58,7 +60,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
 
   @Override
   protected ISVNAuthenticationProvider createCacheAuthenticationProvider(File authDir, String userName) {
-    myPersistentAuthenticationProviderProxy = new PersistentAuthenticationProviderProxy(super.createCacheAuthenticationProvider(authDir, userName));
+    myPersistentAuthenticationProviderProxy = new PersistentAuthenticationProviderProxy(super.createCacheAuthenticationProvider(authDir, userName), authDir);
     return myPersistentAuthenticationProviderProxy;
   }
 
@@ -66,10 +68,12 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
     private final Map<SvnAuthWrapperEqualable, Long> myRewritePreventer;
     private static final long ourRefreshInterval = 6000 * 1000;
     private final ISVNAuthenticationProvider myDelegate;
+    private final File myAuthDir;
     private Project myProject;
 
-    private PersistentAuthenticationProviderProxy(final ISVNAuthenticationProvider delegate) {
+    private PersistentAuthenticationProviderProxy(final ISVNAuthenticationProvider delegate, final File authDir) {
       myDelegate = delegate;
+      myAuthDir = authDir;
       myRewritePreventer = new SoftHashMap<SvnAuthWrapperEqualable, Long>();
     }
 
@@ -92,8 +96,16 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
         final SvnAuthWrapperEqualable newKey = new SvnAuthWrapperEqualable(auth);
         final Long recent = myRewritePreventer.get(newKey);
         final long currTime = System.currentTimeMillis();
-        if (recent == null || ((recent != null) && ((currTime - recent.longValue()) > ourRefreshInterval))) {
+        File dir = new File(myAuthDir, kind);
+        String fileName = SVNFileUtil.computeChecksum(realm);
+        File authFile = new File(dir, fileName);
+
+        if ((! authFile.exists()) || recent == null || ((recent != null) && ((currTime - recent.longValue()) > ourRefreshInterval))) {
           ((IPersistentAuthenticationProvider) myDelegate).saveAuthentication(auth, kind, realm);
+
+          // do not make password file readonly
+          setWriteable(authFile);
+
           myRewritePreventer.put(newKey, currTime);
         }
       }
@@ -102,6 +114,29 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
         if (myProject == null) return;
           ApplicationManager.getApplication().invokeLater(new ChangesViewBalloonProblemNotifier(myProject,
                 "<b>Problem when storing Subversion credentials:</b>&nbsp;" + e.getMessage(), MessageType.ERROR));
+      }
+    }
+
+    private final static int maxAttempts = 10;
+    private void setWriteable(final File file) {
+      if (! file.exists()) return;
+      if (file.getParentFile() == null) {
+        return;
+      }
+      for (int i = 0; i < maxAttempts; i++) {
+        final File parent = file.getParentFile();
+        try {
+          final File tempFile = File.createTempFile("123", "1", parent);
+          FileUtil.delete(tempFile);
+          if (! file.renameTo(tempFile)) continue;
+          if (! file.createNewFile()) continue;
+          FileUtil.copy(tempFile, file);
+          FileUtil.delete(tempFile);
+          return;
+        }
+        catch (IOException e) {
+          //
+        }
       }
     }
   }
@@ -345,6 +380,10 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
     return value == null || "yes".equalsIgnoreCase(value) || "on".equalsIgnoreCase(value) || "true".equalsIgnoreCase(value);
   }
 
+  public boolean authCredsOn(final SVNURL url) {
+    return ! ((Boolean.FALSE.equals(isAuthStorageEnabledMy(url))) || (! isTurned(getConfigFile().getPropertyValue("auth", "store-auth-creds"))));
+  }
+
   @Nullable
   protected Boolean isAuthStorageEnabledMy(SVNURL url) {
       String host = url != null ? url.getHost() : null;
@@ -362,7 +401,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
 
     final String storeCredentials = getConfigFile().getPropertyValue("auth", "store-auth-creds");
     if ((Boolean.FALSE.equals(isAuthStorageEnabledMy(url))) || (! isTurned(storeCredentials))) {
-      ChangesViewBalloonProblemNotifier.showMe(myProject, "Cannot store credentials: forbidden by \"store-auth-creds\"=\"no\"", MessageType.ERROR);
+      ChangesViewBalloonProblemNotifier.showMe(myProject, "Cannot store credentials: forbidden by \"store-auth-creds=no\"", MessageType.ERROR);
       return false;
     }
     final boolean passwordStorageEnabled = isStorePasswords(url);
@@ -370,12 +409,12 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
     if ((! ISVNAuthenticationManager.SSL.equals(kind)) && (! passwordStorageEnabled)) {
       // but it should be
       //userConfig.setPropertyValue("auth", "store-passwords", "yes", true);
-      ChangesViewBalloonProblemNotifier.showMe(myProject, "Cannot store password: forbidden by \"store-passwords\"=\"no\"", MessageType.ERROR);
+      ChangesViewBalloonProblemNotifier.showMe(myProject, "Cannot store password: forbidden by \"store-passwords=no\"", MessageType.ERROR);
       return false;
     }
     if (ISVNAuthenticationManager.SSL.equals(kind) && (! isStoreSSLClientCertificatePassphrases(url))) {
       //setPropertyForHost(url.getHost(), "store-ssl-client-cert-pp", "yes");
-      ChangesViewBalloonProblemNotifier.showMe(myProject, "Cannot store passphrase: forbidden by \"store-ssl-client-cert-pp\"=\"no\"", MessageType.ERROR);
+      ChangesViewBalloonProblemNotifier.showMe(myProject, "Cannot store passphrase: forbidden by \"store-ssl-client-cert-pp=no\"", MessageType.ERROR);
       return false;
     }
 
@@ -390,7 +429,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
                 Messages.showWarningDialog(myProject, "Your passphrase for client certificate:\n\n" +
               svnsslAuthentication.getCertificateFile().getPath() +
               "\n\ncan only be stored to disk unencrypted. (Encryption is not supported)\n\n" +
-              "But storage in plain text is not allowed.\nTo allow plain text passphrases caching, set \"store-ssl-client-cert-pp-plaintext\"=\"yes\"",
+              "But storage in plain text is not allowed.\nTo allow plain text passphrases caching, set \"store-ssl-client-cert-pp-plaintext=yes\"",
               "Cannot save passphrase");
               }
             });
@@ -411,7 +450,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
               public void run() {
                 Messages.showWarningDialog(myProject, "Your password for authentication realm:\n\n" + realm +
               "\n\ncan only be stored to disk unencrypted. (Encryption is not supported)\n\n" +
-              "But storage in plain text is not allowed.\nTo allow plain text passwords caching, set \"store-plaintext-passwords\"=\"yes\"",
+              "But storage in plain text is not allowed.\nTo allow plain text passwords caching, set \"store-plaintext-passwords=yes\"",
               "Cannot save password");
               }
             });
