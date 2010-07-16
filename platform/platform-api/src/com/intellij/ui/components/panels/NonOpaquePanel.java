@@ -58,7 +58,16 @@ public class NonOpaquePanel extends Wrapper {
     super.setOpaque(isOpaque);
 
     if (!isOpaque && UIUtil.isUnderNimbusLookAndFeel()) {
-      setBackground(TRANSPARENT);      
+      if (UIUtil.isUnderNimbusLookAndFeel()) {
+        setBackground(TRANSPARENT);
+      }
+    }
+  }
+
+  public static void setTransparent(JComponent c) {
+    c.setOpaque(false);
+    if (UIUtil.isUnderNimbusLookAndFeel()) {
+      c.setBackground(TRANSPARENT);
     }
   }
 }
