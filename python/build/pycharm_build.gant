@@ -370,7 +370,7 @@ def layoutFull(String target, Set usedJars) {
       jar("extensions.jar") { module("extensions")}
 
       jar("pycharm.jar") {
-        implementationModules.each { module it}
+        implementationModules.each { module it }
         zipfileset(src: "${home}/lib/client-api.jar")
         zipfileset(src: "${home}/lib/ideaLicenseDecoder.jar")
       }
@@ -386,6 +386,7 @@ def layoutFull(String target, Set usedJars) {
 
       jar("resources_en.jar") {
         module("platform-resources-en")
+        zipfileset(src: "$home/python/resources/tips", prefix: "tips")
       }
 
       jar("icons.jar") { module("icons") }

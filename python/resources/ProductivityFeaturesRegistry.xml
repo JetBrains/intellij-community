@@ -151,6 +151,7 @@
       successive-show="7">
       <dependency id="codeassists.quickjavadoc"/>
     </feature>
+    <!-- TODO uncomment when Python specific tips are provided (PY-1292)
     <feature
       id="codeassists.surroundwith.statement"
       tip-file="RSurroundWith.html"
@@ -179,6 +180,7 @@
       successive-show="5"
       min-usage-count="3"
       />
+      -->
   </group>
 
   <group id="refactoring">
