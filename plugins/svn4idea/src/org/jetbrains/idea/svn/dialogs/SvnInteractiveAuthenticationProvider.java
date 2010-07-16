@@ -71,13 +71,15 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
     final SVNAuthentication[] result = new SVNAuthentication[1];
     Runnable command = null;
 
+    final boolean authCredsOn = authMayBeStored && myManager.authCredsOn(url);
+
     final String userName =
       previousAuth != null && previousAuth.getUserName() != null ? previousAuth.getUserName() : SystemProperties.getUserName();
     if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {// || ISVNAuthenticationManager.USERNAME.equals(kind)) {
       command = new Runnable() {
         public void run() {
           SimpleCredentialsDialog dialog = new SimpleCredentialsDialog(myProject);
-          dialog.setup(realm, userName, authMayBeStored);
+          dialog.setup(realm, userName, authCredsOn);
           if (previousAuth == null) {
             dialog.setTitle(SvnBundle.message("dialog.title.authentication.required"));
           }
@@ -98,8 +100,8 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
       command = new Runnable() {
         public void run() {
           UserNameCredentialsDialog dialog = new UserNameCredentialsDialog(myProject);
-          dialog.setup(realm, userName, authMayBeStored);
-          if (previousAuth == null) {
+          dialog.setup(realm, userName, authCredsOn);
+          if (previousAuth == null) {                                                               
             dialog.setTitle(SvnBundle.message("dialog.title.authentication.required"));
           }
           else {
@@ -115,8 +117,7 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
     else if (ISVNAuthenticationManager.SSH.equals(kind)) {
       command = new Runnable() {
         public void run() {
-          SSHCredentialsDialog dialog = new SSHCredentialsDialog(myProject);
-          dialog.setup(realm, userName, authMayBeStored, url.getPort());
+          SSHCredentialsDialog dialog = new SSHCredentialsDialog(myProject, realm, userName, authCredsOn, url.getPort());
           if (previousAuth == null) {
             dialog.setTitle(SvnBundle.message("dialog.title.authentication.required"));
           }
@@ -144,7 +145,7 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
     } else if (ISVNAuthenticationManager.SSL.equals(kind)) {
       command = new Runnable() {
         public void run() {
-          final SSLCredentialsDialog dialog = new SSLCredentialsDialog(myProject, realm, authMayBeStored);
+          final SSLCredentialsDialog dialog = new SSLCredentialsDialog(myProject, realm, authCredsOn);
           if (previousAuth == null) {
             dialog.setTitle(SvnBundle.message("dialog.title.authentication.required"));
           }

@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier;
 import com.intellij.util.containers.SoftHashMap;
 import com.intellij.util.net.HttpConfigurable;
@@ -33,6 +34,7 @@ import org.tmatesoft.svn.core.internal.wc.*;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -102,7 +104,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
           ((IPersistentAuthenticationProvider) myDelegate).saveAuthentication(auth, kind, realm);
 
           // do not make password file readonly
-          //authFile.setWritable(true, false);
+          setWriteable(authFile);
 
           myRewritePreventer.put(newKey, currTime);
         }
