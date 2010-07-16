@@ -476,6 +476,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   public void advanceLexer() {
+    if (eof()) return;
+
     if (!myTokenTypeChecked) {
       LOG.assertTrue(eof(), "Probably a bug: eating token without its type checking");
     }
