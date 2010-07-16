@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.dialogs;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.svn.SvnBundle;
 
@@ -130,6 +131,12 @@ public class SimpleCredentialsDialog extends DialogWrapper implements DocumentLi
     myAllowSaveCheckBox = new JCheckBox(SvnBundle.message("checkbox.auth.keep.for.current.session"));
     panel.add(myAllowSaveCheckBox, gb);
     gb.gridy += 1;
+    if (! myAllowSave) {
+      final JLabel cannotSaveLabel = new JLabel(SvnBundle.message("svn.cannot.save.credentials.store-auth-creds"));
+      cannotSaveLabel.setForeground(UIUtil.getInactiveTextColor());
+      panel.add(cannotSaveLabel, gb);
+      gb.gridy += 1;
+    }
     panel.add(new JSeparator(), gb);
 
     myAllowSaveCheckBox.setSelected(false);

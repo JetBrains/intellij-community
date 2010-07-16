@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier;
 import com.intellij.util.containers.SoftHashMap;
 import com.intellij.util.net.HttpConfigurable;
@@ -33,6 +34,7 @@ import org.tmatesoft.svn.core.internal.wc.*;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -102,7 +104,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
           ((IPersistentAuthenticationProvider) myDelegate).saveAuthentication(auth, kind, realm);
 
           // do not make password file readonly
-          authFile.setWritable(true, false);
+          setWriteable(authFile);
 
           myRewritePreventer.put(newKey, currTime);
         }
@@ -112,6 +114,29 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
         if (myProject == null) return;
           ApplicationManager.getApplication().invokeLater(new ChangesViewBalloonProblemNotifier(myProject,
                 "<b>Problem when storing Subversion credentials:</b>&nbsp;" + e.getMessage(), MessageType.ERROR));
+      }
+    }
+
+    private final static int maxAttempts = 10;
+    private void setWriteable(final File file) {
+      if (! file.exists()) return;
+      if (file.getParentFile() == null) {
+        return;
+      }
+      for (int i = 0; i < maxAttempts; i++) {
+        final File parent = file.getParentFile();
+        try {
+          final File tempFile = File.createTempFile("123", "1", parent);
+          FileUtil.delete(tempFile);
+          if (! file.renameTo(tempFile)) continue;
+          if (! file.createNewFile()) continue;
+          FileUtil.copy(tempFile, file);
+          FileUtil.delete(tempFile);
+          return;
+        }
+        catch (IOException e) {
+          //
+        }
       }
     }
   }
@@ -353,6 +378,10 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
   // default = yes
   private boolean isTurned(final String value) {
     return value == null || "yes".equalsIgnoreCase(value) || "on".equalsIgnoreCase(value) || "true".equalsIgnoreCase(value);
+  }
+
+  public boolean authCredsOn(final SVNURL url) {
+    return ! ((Boolean.FALSE.equals(isAuthStorageEnabledMy(url))) || (! isTurned(getConfigFile().getPropertyValue("auth", "store-auth-creds"))));
   }
 
   @Nullable

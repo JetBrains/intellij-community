@@ -198,6 +198,8 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
 
     myOptions = null;
     myAuthManager = null;
+    myPassiveAuthManager = null;
+    myInteractiveManager = null;
     RUNTIME_AUTH_CACHE.clear();
   }
 
@@ -205,6 +207,8 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
     myIsUseDefaultConfiguration = useDefault;
     myOptions = null;
     myAuthManager = null;
+    myPassiveAuthManager = null;
+    myInteractiveManager = null;
     RUNTIME_AUTH_CACHE.clear();
   }
 
