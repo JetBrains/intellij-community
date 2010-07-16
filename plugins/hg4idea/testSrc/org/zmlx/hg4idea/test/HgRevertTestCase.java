@@ -1,6 +1,7 @@
-package org.zmlx.hg4idea;
+package org.zmlx.hg4idea.test;
 
 import org.testng.annotations.Test;
+import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.command.HgCatCommand;
 import org.zmlx.hg4idea.command.HgRevertCommand;
 

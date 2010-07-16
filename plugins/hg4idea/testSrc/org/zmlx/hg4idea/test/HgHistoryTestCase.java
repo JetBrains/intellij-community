@@ -1,10 +1,11 @@
-package org.zmlx.hg4idea;
+package org.zmlx.hg4idea.test;
 
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistorySession;
 import com.intellij.vcsUtil.VcsUtil;
 import org.testng.annotations.Test;
+import org.zmlx.hg4idea.HgVcs;
 
 import java.io.File;
 import java.util.Collection;
