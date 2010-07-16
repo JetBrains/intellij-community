@@ -39,14 +39,14 @@ class TeamcityBuildInfoPrinter implements BuildInfoPrinter {
 
   def printProgressMessage(Project project, String message) {
     def escapedMessage = escape(message)
-    println "##teamcity[progressMessage '$escapedMessage']"
+    project.info("##teamcity[progressMessage '$escapedMessage']");
   }
 
   def printCompilationErrors(Project project, String compilerName, String messages) {
     def escapedCompiler = escape(compilerName)
     def escapedOutput = escape(messages)
-    println "##teamcity[compilationStarted compiler='$escapedCompiler']"
-    println "##teamcity[message text='$escapedOutput' status='ERROR']"
-    println "##teamcity[compilationFinished compiler='$escapedCompiler']"
+    project.info("##teamcity[compilationStarted compiler='$escapedCompiler']");
+    project.info("##teamcity[message text='$escapedOutput' status='ERROR']");
+    project.info("##teamcity[compilationFinished compiler='$escapedCompiler']");
   }
 }
