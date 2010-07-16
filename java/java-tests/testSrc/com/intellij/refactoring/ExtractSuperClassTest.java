@@ -54,6 +54,13 @@ public class ExtractSuperClassTest extends CodeInsightTestCase {
            new RefactoringTestUtil.MemberDescriptor("xx", PsiMethod.class));
   }
 
+  public void testConflictAbstractPackageLocalMethod() throws Exception {
+    doTest("a.Test", "TestSubclass",
+           new String[] {"Can't make method <b><code>x()</code></b> abstract as it won't be accessible from the subclass."},
+           "b",
+           new RefactoringTestUtil.MemberDescriptor("x", PsiMethod.class, true));
+  }
+
   public void testConflictUsingPackageLocalMethod() throws Exception {
     doTest("a.Test", "TestSubclass",
            new String[] {"method <b><code>Sup.foo()</code></b> won't be accessible"},

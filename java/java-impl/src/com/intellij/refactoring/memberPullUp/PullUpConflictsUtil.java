@@ -144,6 +144,8 @@ public class PullUpConflictsUtil {
     RefactoringConflictsUtil.analyzeModuleConflicts(subclass.getProject(), checkModuleConflictsList,
                                            new UsageInfo[0], targetRepresentativeElement, conflicts);
     for (final PsiMethod abstractMethod : abstractMethods) {
+      final boolean toDifferentPackage =
+        !Comparing.strEqual(targetPackage.getQualifiedName(), StringUtil.getPackageName(subclass.getQualifiedName()));
       abstractMethod.accept(new ClassMemberReferencesVisitor(subclass) {
         @Override
         protected void visitClassMemberReferenceElement(PsiMember classMember, PsiJavaCodeReferenceElement classMemberReference) {
@@ -153,7 +155,7 @@ public class PullUpConflictsUtil {
               isAccessible = true;
             }
             else if (classMember.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) &&
-                     !Comparing.strEqual(targetPackage.getQualifiedName(), StringUtil.getPackageName(subclass.getQualifiedName()))) {
+                     toDifferentPackage) {
               isAccessible = true;
             }
             if (isAccessible) {
@@ -167,6 +169,12 @@ public class PullUpConflictsUtil {
           }
         }
       });
+      if (abstractMethod.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) && toDifferentPackage) {
+        String message = "Can't make " + RefactoringUIUtil.getDescription(abstractMethod, false) +
+                         " abstract as it won't be accessible from the subclass.";
+        message = CommonRefactoringUtil.capitalize(message);
+        conflicts.putValue(abstractMethod, message);
+      }
     }
     return conflicts;
   }
