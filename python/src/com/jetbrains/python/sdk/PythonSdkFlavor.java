@@ -92,4 +92,7 @@ public abstract class PythonSdkFlavor {
   }
 
   private static final String PYTHONPATH = "PYTHONPATH";
+
+  public void addPredefinedEnvironmentVariables(Map<String, String> envs) {
+  }
 }

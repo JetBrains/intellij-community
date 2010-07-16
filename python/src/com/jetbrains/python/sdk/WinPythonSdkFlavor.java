@@ -2,11 +2,13 @@ package com.jetbrains.python.sdk;
 
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author yole
@@ -38,5 +40,11 @@ public class WinPythonSdkFlavor extends PythonSdkFlavor {
         }
       }
     }
+  }
+
+  @Override
+  public void addPredefinedEnvironmentVariables(Map<String, String> envs) {
+    final String encoding = EncodingManager.getInstance().getDefaultCharset().name();
+    envs.put("PYTHONIOENCODING", encoding);
   }
 }

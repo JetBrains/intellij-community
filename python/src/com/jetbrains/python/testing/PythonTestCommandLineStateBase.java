@@ -15,7 +15,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.facet.PythonPathContributingFacet;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
@@ -25,7 +24,10 @@ import com.jetbrains.python.sdk.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.Map;
 
 /**
  * @author yole
@@ -55,14 +57,7 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
       cmd.setWorkDirectory(myConfiguration.getWorkingDirectory());
     }
 
-    Map<String, String> envs = myConfiguration.getEnvs();
-    if (envs == null)
-      envs = new HashMap<String, String>();
-    else
-      envs = new HashMap<String, String>(envs);
-
-    envs.put(PYTHONUNBUFFERED, "1");
-    cmd.setEnvParams(envs);
+    initEnvironment(cmd);
 
     Collection<String> pythonPathList = buildPythonPath();
     String pythonPath = StringUtil.join(pythonPathList, File.pathSeparator);
@@ -77,6 +72,12 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
     cmd.setPassParentEnvs(myConfiguration.isPassParentEnvs());
 
     return cmd;
+  }
+
+  @Override
+  protected void addPredefinedEnvironmentVariables(Map<String, String> envs) {
+    super.addPredefinedEnvironmentVariables(envs);
+    envs.put(PYTHONUNBUFFERED, "1");
   }
 
   protected Collection<String> buildPythonPath() {

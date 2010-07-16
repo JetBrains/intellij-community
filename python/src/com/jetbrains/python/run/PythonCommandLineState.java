@@ -16,9 +16,12 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.HashMap;
+import com.jetbrains.python.sdk.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Leonid Shalupov
@@ -91,9 +94,27 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
     buildCommandLineParameters(commandLine);
 
-    commandLine.setEnvParams(myConfig.getEnvs());
-    commandLine.setPassParentEnvs(myConfig.isPassParentEnvs());
+    initEnvironment(commandLine);
     return commandLine;
+  }
+
+  protected void initEnvironment(GeneralCommandLine commandLine) {
+    Map<String, String> envs = myConfig.getEnvs();
+    if (envs == null)
+      envs = new HashMap<String, String>();
+    else
+      envs = new HashMap<String, String>(envs);
+
+    addPredefinedEnvironmentVariables(envs);
+    commandLine.setEnvParams(envs);
+    commandLine.setPassParentEnvs(myConfig.isPassParentEnvs());
+  }
+
+  protected void addPredefinedEnvironmentVariables(Map<String, String> envs) {
+    final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(myConfig.getInterpreterPath());
+    if (flavor != null) {
+      flavor.addPredefinedEnvironmentVariables(envs);
+    }
   }
 
   protected void setRunnerPath(GeneralCommandLine commandLine) throws ExecutionException {
