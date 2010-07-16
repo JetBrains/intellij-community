@@ -116,6 +116,29 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
                 "<b>Problem when storing Subversion credentials:</b>&nbsp;" + e.getMessage(), MessageType.ERROR));
       }
     }
+
+    private final static int maxAttempts = 10;
+    private void setWriteable(final File file) {
+      if (! file.exists()) return;
+      if (file.getParentFile() == null) {
+        return;
+      }
+      for (int i = 0; i < maxAttempts; i++) {
+        final File parent = file.getParentFile();
+        try {
+          final File tempFile = File.createTempFile("123", "1", parent);
+          FileUtil.delete(tempFile);
+          if (! file.renameTo(tempFile)) continue;
+          if (! file.createNewFile()) continue;
+          FileUtil.copy(tempFile, file);
+          FileUtil.delete(tempFile);
+          return;
+        }
+        catch (IOException e) {
+          //
+        }
+      }
+    }
   }
 
   public boolean haveStoredCredentials(final String kind, final SVNURL url, final String realm, final SVNErrorMessage errorMessage,
