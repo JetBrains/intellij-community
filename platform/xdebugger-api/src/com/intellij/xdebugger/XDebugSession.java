@@ -16,6 +16,7 @@
 
 package com.intellij.xdebugger;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.openapi.project.Project;
@@ -113,6 +114,7 @@ public interface XDebugSession extends AbstractDebuggerSession {
   void addSessionListener(@NotNull XDebugSessionListener listener);
   void removeSessionListener(@NotNull XDebugSessionListener listener);
 
+  void reportError(String message);
 
   @NotNull
   String getSessionName();
