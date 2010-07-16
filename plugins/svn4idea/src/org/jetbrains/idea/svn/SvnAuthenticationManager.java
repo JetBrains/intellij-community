@@ -380,6 +380,10 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
     return value == null || "yes".equalsIgnoreCase(value) || "on".equalsIgnoreCase(value) || "true".equalsIgnoreCase(value);
   }
 
+  public boolean authCredsOn(final SVNURL url) {
+    return ! ((Boolean.FALSE.equals(isAuthStorageEnabledMy(url))) || (! isTurned(getConfigFile().getPropertyValue("auth", "store-auth-creds"))));
+  }
+
   @Nullable
   protected Boolean isAuthStorageEnabledMy(SVNURL url) {
       String host = url != null ? url.getHost() : null;
