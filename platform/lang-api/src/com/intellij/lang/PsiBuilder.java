@@ -53,7 +53,7 @@ public interface PsiBuilder extends UserDataHolder {
   IElementType getTokenType();
 
   /**
-   * Sets optional remapper that can changs the type of freshly lexed tokens.
+   * Sets optional remapper that can change the type of freshly lexed tokens.
    * Output of getTokenType() is affected by it.
    * @param remapper the remapper object, or null.
    */
@@ -111,16 +111,24 @@ public interface PsiBuilder extends UserDataHolder {
     void done(IElementType type);
 
     /**
+     * Like done(), but collapses all tokens between start and end markers into single leaf node of given type.
+     *
+     * @param type the type of the node in the AST tree.
+     */
+    void collapse(IElementType type);
+
+    /**
      * TODO doc
-     * @param type
-     * @param before
+     * @param type the type of the node in the AST tree.
+     * @param before marker to complete this one before.
      */
     void doneBefore(IElementType type, Marker before);
 
     /**
      * TODO doc
-     * @param type
-     * @param before
+     * @param type the type of the node in the AST tree.
+     * @param before marker to complete this one before.
+     * @param errorMessage for error element.
      */
     void doneBefore(IElementType type, Marker before, String errorMessage);
 
@@ -128,7 +136,7 @@ public interface PsiBuilder extends UserDataHolder {
      * Completes this marker and labels it as error element with specified message. Before calling this method,
      * all markers added after the beginning of this marker must be either dropped or completed.
      *
-     * @param message for error element
+     * @param message for error element.
      */
     void error(String message);
   }
@@ -162,7 +170,7 @@ public interface PsiBuilder extends UserDataHolder {
   ASTNode getTreeBuilt();
 
   /**
-   * Same as {@link #getTreeBuilt()} but returns a light tree, which is build faster, produces less garbage but is uncapable of creating a PSI over.
+   * Same as {@link #getTreeBuilt()} but returns a light tree, which is build faster, produces less garbage but is incapable of creating a PSI over.
    * @return the light tree built.
    */
   FlyweightCapableTreeStructure<LighterASTNode> getLightTree();

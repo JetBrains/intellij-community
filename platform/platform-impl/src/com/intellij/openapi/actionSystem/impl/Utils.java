@@ -182,7 +182,7 @@ public class Utils{
         continue;
       }
       final Project project = PlatformDataKeys.PROJECT.getData(context);
-      if (project != null && DumbService.getInstance(project).isDumb() && !(anAction instanceof DumbAware) && !(anAction instanceof ActionGroup)) {
+      if (project != null && DumbService.getInstance(project).isDumb() && !anAction.isDumbAware()) {
         continue;
       }
 

@@ -117,6 +117,22 @@ public class IdeaSpecificSettings {
         modifiableModel.commit();
       }
     }
+    overrideModulesScopes(root, model);
+  }
+
+  private static void overrideModulesScopes(Element root, ModifiableRootModel model) {
+    for (Object o : root.getChildren("module")) {
+      final String moduleName = ((Element)o).getAttributeValue("name");
+      final String scope = ((Element)o).getAttributeValue("scope");
+      if (scope != null) {
+        for (OrderEntry entry : model.getOrderEntries()) {
+          if (entry instanceof ModuleOrderEntry && Comparing.strEqual(((ModuleOrderEntry)entry).getModuleName(), moduleName)) {
+            ((ModuleOrderEntry)entry).setScope(DependencyScope.valueOf(scope));
+            break;
+          }
+        }
+      }
+    }
   }
 
   private static void appendLibraryScope(ModifiableRootModel model, Element libElement, Library libraryByName) {
@@ -238,6 +254,16 @@ public class IdeaSpecificSettings {
     }
 
     for (OrderEntry entry : model.getOrderEntries()) {
+      if (entry instanceof ModuleOrderEntry) {
+        final DependencyScope scope = ((ModuleOrderEntry)entry).getScope();
+        if (!scope.equals(DependencyScope.COMPILE)) {
+          Element element = new Element("module");
+          element.setAttribute("name", ((ModuleOrderEntry)entry).getModuleName());
+          element.setAttribute("scope", scope.name());
+          root.addContent(element);
+          isModified = true;
+        }
+      }
       if (!(entry instanceof LibraryOrderEntry)) continue;
 
       final Element element = new Element("lib");

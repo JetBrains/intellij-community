@@ -581,7 +581,14 @@ public class Messages {
         if (messageComponent.getCaret() != null) {
           messageComponent.setCaretPosition(0);
         }
-        messageComponent.setBackground(UIUtil.getOptionPaneBackground());
+
+        if (UIUtil.isUnderNimbusLookAndFeel()) {
+          messageComponent.setOpaque(false);
+          messageComponent.setBackground(new Color(0, 0, 0, 0));
+        } else {
+          messageComponent.setBackground(UIUtil.getOptionPaneBackground());
+        }
+
         messageComponent.setForeground(label.getForeground());
 
         final Dimension screenSize = messageComponent.getToolkit().getScreenSize();

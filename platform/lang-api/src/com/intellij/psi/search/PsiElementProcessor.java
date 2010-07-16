@@ -118,9 +118,13 @@ public interface PsiElementProcessor<T extends PsiElement> {
       return myFoundElement;
     }
 
-    public boolean execute(T element) {
+    public boolean setFound(T element) {
       myFoundElement = element;
       return false;
+    }
+
+    public boolean execute(T element) {
+      return setFound(element);
     }
   }
 

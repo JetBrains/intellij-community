@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -26,7 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.*;
 
-public class VcsGroupsWrapper extends DefaultActionGroup {
+public class VcsGroupsWrapper extends DefaultActionGroup implements DumbAware {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.actions.DefaultActionGroup");
 

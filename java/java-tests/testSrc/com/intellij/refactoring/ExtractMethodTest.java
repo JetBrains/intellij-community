@@ -168,6 +168,12 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+
+  public void testConflictingAnonymous() throws Exception {
+    doTest();
+  }
+
+
   public void testFinalParamUsedInsideAnon() throws Exception {
     CodeStyleSettingsManager.getSettings(getProject()).GENERATE_FINAL_PARAMETERS = false;
     doTest();

@@ -30,6 +30,30 @@ if [ -z "$IDEA_JDK" ]; then
   fi
 fi
 
+VERSION_LOG='/tmp/java.version.log'
+$IDEA_JDK/bin/java -version 2> $VERSION_LOG
+grep 'OpenJDK' $VERSION_LOG
+OPEN_JDK=$?
+grep '64-Bit' $VERSION_LOG
+BITS=$?
+rm /tmp/java.version.log
+if [ $OPEN_JDK -eq 0 ]; then
+  echo WARNING: You are launching IDE using OpenJDK Java runtime
+  echo
+  echo          THIS IS STRICTLY UNSUPPORTED DUE TO KNOWN PERFORMANCE AND GRAPHICS PROBLEMS
+  echo
+  echo NOTE:    If you have both Sun JDK and OpenJDK installed
+  echo          please validate either IDEA_JDK or JDK_HOME points to valid Sun JDK installation
+  echo
+  echo Press Enter to continue.
+  read IGNORE
+fi
+if [ $BITS -eq 0 ]; then
+  BITS="64"
+else
+  BITS=""
+fi
+
 #--------------------------------------------------------------------------
 #   Ensure the IDEA_HOME var for this script points to the
 #   home directory where IntelliJ IDEA is installed on your system.

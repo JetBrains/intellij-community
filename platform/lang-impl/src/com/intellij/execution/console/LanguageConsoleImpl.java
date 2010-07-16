@@ -197,7 +197,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
     myHistoryViewer.getContentComponent().addKeyListener(new KeyAdapter() {
       public void keyTyped(KeyEvent event) {
-        if (UIUtil.isReallyTypedEvent(event)) {
+        if (myFullEditor == null && UIUtil.isReallyTypedEvent(event)) {
           myConsoleEditor.getContentComponent().requestFocus();
           myConsoleEditor.processKeyTyped(event);
         }

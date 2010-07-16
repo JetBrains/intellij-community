@@ -17,6 +17,7 @@
 package com.intellij.psi;
 
 /**
+ * Can be implemented by {@link com.intellij.psi.PsiReference}
  * @author Dmitry Avdeev
  */
 public interface ResolvingHint {

@@ -726,6 +726,10 @@ public class ExtractMethodProcessor implements MatchProvider {
     myExtractedMethod = (PsiMethod)myTargetClass.addAfter(newMethod, myAnchor);
     if (myNeedChangeContext) {
       ChangeContextUtil.decodeContextInfo(myExtractedMethod, myTargetClass, RefactoringUtil.createThisExpression(myManager, null));
+      if (myMethodCall.resolveMethod() != myExtractedMethod) {
+        final PsiReferenceExpression methodExpression = myMethodCall.getMethodExpression();
+        methodExpression.setQualifierExpression(RefactoringUtil.createThisExpression(myManager, myTargetClass));
+      }
     }
 
   }

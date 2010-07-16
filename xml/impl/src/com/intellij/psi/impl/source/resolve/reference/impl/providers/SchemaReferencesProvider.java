@@ -674,7 +674,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
   }
 
   @Nullable
-  public static PsiReference createSchemaPrefixReference(final PsiElement element) {
+  private static PsiReference createSchemaPrefixReference(final PsiElement element) {
     if (element instanceof XmlAttributeValue) {
       final XmlAttributeValue attributeValue = (XmlAttributeValue)element;
       final String prefix = XmlUtil.findPrefixByQualifiedName(attributeValue.getValue());

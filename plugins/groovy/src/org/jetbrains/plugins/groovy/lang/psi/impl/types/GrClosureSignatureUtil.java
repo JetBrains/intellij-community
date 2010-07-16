@@ -125,7 +125,7 @@ public class GrClosureSignatureUtil {
   }
 
   public static boolean isSignatureApplicable(GrClosureSignature signature, PsiType[] args, GroovyPsiElement context) {
-    if (mapArgTypesToParameters(signature, args, context) != null) return true;
+    if (mapArgTypesToParameters(signature, args, context, false) != null) return true;
 
     if (args.length == 1) {
       final GrClosureParameter[] parameters = signature.getParameters();
@@ -133,27 +133,30 @@ public class GrClosureSignatureUtil {
       PsiType arg = args[0];
       if (arg instanceof GrTupleType) {
         args = ((GrTupleType)arg).getComponentTypes();
-        if (mapArgTypesToParameters(signature, args, context) != null) return true;
+        if (mapArgTypesToParameters(signature, args, context, false) != null) return true;
       }
     }
     return false;
   }
 
-  public static ArgInfo<PsiType>[] mapArgTypesToParameters(GrClosureSignature signature, PsiType[] args, GroovyPsiElement context) {
-    return mapParametersToArguments(signature, args, (Function<PsiType, PsiType>)Function.ID, context);
+  public static ArgInfo<PsiType>[] mapArgTypesToParameters(GrClosureSignature signature,
+                                                           PsiType[] args,
+                                                           GroovyPsiElement context,
+                                                           boolean partial) {
+    return mapParametersToArguments(signature, args, (Function<PsiType, PsiType>)Function.ID, context, partial);
   }
 
   @Nullable
   private static <Arg> ArgInfo<Arg>[] mapParametersToArguments(GrClosureSignature signature,
                                                                Arg[] args,
                                                                Function<Arg, PsiType> typeComputer,
-                                                               GroovyPsiElement context) {
+                                                               GroovyPsiElement context, boolean partial) {
     GrClosureParameter[] params = signature.getParameters();
     if (args.length > params.length && !signature.isVarargs()) return null;
     int optional = getOptionalParamCount(signature, false);
     int notOptional = params.length - optional;
     if (signature.isVarargs()) notOptional--;
-    if (notOptional > args.length) return null;
+    if (notOptional > args.length && !partial) return null;
 
     final ArgInfo<Arg>[] map = mapSimple(params, args, typeComputer, context);
     if (map != null) return map;
@@ -374,7 +377,7 @@ public class GrClosureSignatureUtil {
         public PsiType fun(InnerArg o) {
           return o.type;
         }
-      }, list);
+      }, list, false);
     if (innerMap == null) return null;
     
     ArgInfo<PsiElement>[] map = new ArgInfo[innerMap.length];

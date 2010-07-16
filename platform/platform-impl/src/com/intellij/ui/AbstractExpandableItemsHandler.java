@@ -99,8 +99,26 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
         public void componentMoved(ComponentEvent e) {
           handleSelectionChange(myKey);
         }
+
+        @Override
+        public void componentResized(ComponentEvent e) {
+          handleSelectionChange(myKey);
+        }
       }
     );
+
+    myComponent.addHierarchyBoundsListener(new HierarchyBoundsAdapter() {
+      @Override
+      public void ancestorMoved(HierarchyEvent e) {
+        handleSelectionChange(myKey);
+      }
+
+      @Override
+      public void ancestorResized(HierarchyEvent e) {
+        handleSelectionChange(myKey);
+      }
+    });
+
     myComponent.addHierarchyListener(
       new HierarchyListener() {
         public void hierarchyChanged(HierarchyEvent e) {

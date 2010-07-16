@@ -55,6 +55,8 @@ public class ExecutionUtil {
     String error = e.getMessage();
     HyperlinkListener listener = null;
 
+    LOG.debug(error);
+
     if (error.contains("87") && e instanceof ProcessNotCreatedException) {
       final String commandLineString = ((ProcessNotCreatedException)e).getCommandLine().getCommandLineString();
       if (commandLineString.length() > 1024 * 32) {

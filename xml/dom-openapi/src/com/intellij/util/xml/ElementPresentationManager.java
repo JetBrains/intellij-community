@@ -190,7 +190,7 @@ public abstract class ElementPresentationManager {
 
       for (final IconProvider provider : IconProvider.EXTENSION_POINT_NAME.getExtensions()) {
         if (provider instanceof DomIconProvider) {
-          if (dumb && !(provider instanceof DumbAware)) {
+          if (dumb && !DumbService.isDumbAware(provider)) {
             continue;
           }
 

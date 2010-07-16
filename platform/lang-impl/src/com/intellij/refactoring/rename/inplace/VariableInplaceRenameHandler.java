@@ -67,7 +67,9 @@ public class VariableInplaceRenameHandler implements RenameHandler {
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, final DataContext dataContext) {
     PsiElement element = PsiElementRenameHandler.getElement(dataContext);
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    doRename(element, editor, dataContext);
+    if (checkAvailable(element, editor, dataContext)) {
+      doRename(element, editor, dataContext);
+    }
   }
 
   public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, final DataContext dataContext) {
@@ -75,10 +77,12 @@ public class VariableInplaceRenameHandler implements RenameHandler {
     if (element == null) element = PsiElementRenameHandler.getElement(dataContext);
     LOG.assertTrue(element != null);
     Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-    doRename(element, editor, dataContext);
+    if (checkAvailable(element, editor, dataContext)) {
+      doRename(element, editor, dataContext);
+    }
   }
 
-  private void doRename(final PsiElement elementToRename, final Editor editor, final DataContext dataContext) {
+  boolean checkAvailable(final PsiElement elementToRename, final Editor editor, final DataContext dataContext) {
     if (!isAvailableOnDataContext(dataContext)) {
       LOG.error("Recursive invocation");
       RenameHandlerRegistry.getInstance().getRenameHandler(dataContext).invoke(
@@ -86,8 +90,13 @@ public class VariableInplaceRenameHandler implements RenameHandler {
         editor,
         elementToRename.getContainingFile(), dataContext
       );
-      return;
+      return false;
     }
+    return true;
+  }
+
+  @Nullable
+  public VariableInplaceRenamer doRename(final PsiElement elementToRename, final Editor editor, final DataContext dataContext) {
 
     VariableInplaceRenamer renamer = createRenamer(elementToRename, editor);
     boolean startedRename = renamer == null ? false : renamer.performInplaceRename();
@@ -107,6 +116,7 @@ public class VariableInplaceRenameHandler implements RenameHandler {
         ourPreventInlineRenameFlag.set(null);
       }
     }
+    return renamer;
   }
 
   @Nullable

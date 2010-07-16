@@ -87,7 +87,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
 
     for (ChooseByNameContributor contributor : myContributors) {
       try {
-        if (dumb && !(contributor instanceof DumbAware)) {
+        if (dumb && !DumbService.isDumbAware(contributor)) {
           continue;
         }
 

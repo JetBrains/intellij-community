@@ -148,7 +148,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         result.setResult(initializationContext);
 
         for (final CompletionContributor contributor : CompletionContributor.forLanguage(PsiUtilBase.getLanguageInEditor(editor, project))) {
-          if (DumbService.getInstance(project).isDumb() && !(contributor instanceof DumbAware)) {
+          if (DumbService.getInstance(project).isDumb() && !DumbService.isDumbAware(contributor)) {
             continue;
           }
 

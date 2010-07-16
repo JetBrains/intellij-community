@@ -19,10 +19,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowManager;
 
-public class CodeEditorActionGroup extends DefaultActionGroup {
+public class CodeEditorActionGroup extends DefaultActionGroup implements DumbAware {
   public CodeEditorActionGroup() {
     super();
   }

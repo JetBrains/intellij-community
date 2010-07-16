@@ -33,8 +33,13 @@ public class TextSplitter extends BaseSplitter {
     if (text == null || StringUtil.isEmpty(text)) {
       return null;
     }
-    Matcher matcher;
     List<CheckArea> results = new ArrayList<CheckArea>();
+    doSplit(text, range, results);
+    return (results.size() == 0) ? null : results;
+  }
+
+  protected void doSplit(@NotNull String text, @NotNull TextRange range, List<CheckArea> results) {
+    Matcher matcher;
     final WordSplitter ws = SplitterFactory.getInstance().getWordSplitter();
     matcher = EXTENDED_WORD_AND_SPECIAL.matcher(text.substring(range.getStartOffset(), range.getEndOffset()));
     while (matcher.find()) {
@@ -45,7 +50,5 @@ public class TextSplitter extends BaseSplitter {
         results.addAll(res);
       }
     }
-    return (results.size() == 0) ? null : results;
   }
-
 }
