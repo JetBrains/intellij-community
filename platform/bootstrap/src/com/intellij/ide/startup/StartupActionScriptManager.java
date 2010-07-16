@@ -146,8 +146,10 @@ public class StartupActionScriptManager {
         }
 
       if (!mySource.exists()) {
-        //noinspection HardCodedStringLiteral
-        LOG.error("Source file " + mySource.getAbsolutePath() + " does not exist for action " + this);
+        // NOTE: Please don't use LOG.error here - this will block IDEA startup in case of problems with plugin installation (IDEA-54045)
+
+        //noinspection HardCodedStringLiteral,UseOfSystemOutOrSystemErr
+        System.out.println("Source file " + mySource.getAbsolutePath() + " does not exist for action " + this);
       }
       else if (!canCreateFile(myDestination)) {
         JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
