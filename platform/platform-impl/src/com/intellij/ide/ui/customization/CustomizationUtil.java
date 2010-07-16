@@ -138,6 +138,11 @@ public class CustomizationUtil {
     public void update(AnActionEvent e) {
       myGroup.update(e);
     }
+
+    @Override
+    public boolean isDumbAware() {
+      return myGroup.isDumbAware();
+    }
   }
 
   public static void optimizeSchema(final JTree tree, final CustomActionsSchema schema) {

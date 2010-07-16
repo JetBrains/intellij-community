@@ -19,11 +19,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 
-public class CommanderViewActionGroup extends DefaultActionGroup {
+public class CommanderViewActionGroup extends DefaultActionGroup  implements DumbAware {
   public CommanderViewActionGroup() {
     super();
   }

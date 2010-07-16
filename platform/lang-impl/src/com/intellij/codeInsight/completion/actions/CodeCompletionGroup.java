@@ -18,11 +18,12 @@ package com.intellij.codeInsight.completion.actions;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 
-public class CodeCompletionGroup extends DefaultActionGroup {
+public class CodeCompletionGroup extends DefaultActionGroup implements DumbAware {
 
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();

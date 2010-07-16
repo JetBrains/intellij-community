@@ -329,6 +329,11 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         super.update(e);
         myButtonPanel.update();
       }
+
+      @Override
+      public boolean isDumbAware() {
+        return true;
+      }
     };
 
     AnAction[] actions = createActions();

@@ -82,6 +82,11 @@ public abstract class ActionGroup extends AnAction {
   public void actionPerformed(AnActionEvent e){
   }
 
+  @Override
+  public void update(AnActionEvent e) {
+    super.update(e);
+  }
+
   /**
    * @return true if {@link #actionPerformed(AnActionEvent)} should be called
    */

@@ -22,6 +22,7 @@ import com.intellij.facet.FacetTypeRegistry;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -30,7 +31,7 @@ import java.util.Comparator;
 /**
  * @author nik
 */
-public class AddFacetActionGroup extends ActionGroup {
+public class AddFacetActionGroup extends ActionGroup implements DumbAware {
   private final boolean myFromPopup;
   private final FacetEditorFacade myEditor;
   private AnAction[] myCachedChildren;
