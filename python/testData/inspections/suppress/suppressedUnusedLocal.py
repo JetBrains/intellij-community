@@ -1,3 +1,3 @@
 def foo():
-    #noinspection PyUnusedLocalVariable
+    #noinspection PyUnusedLocal
     status = None
