@@ -402,7 +402,14 @@ public class RefactoringUtil {
   }
 
   public static void renameVariableReferences(PsiVariable variable, String newName, SearchScope scope) throws IncorrectOperationException {
-    for (PsiReference reference : ReferencesSearch.search(variable, scope)) {
+    renameVariableReferences(variable, newName, scope, false);
+  }
+
+  public static void renameVariableReferences(PsiVariable variable,
+                                              String newName,
+                                              SearchScope scope,
+                                              final boolean ignoreAccessScope) throws IncorrectOperationException {
+    for (PsiReference reference : ReferencesSearch.search(variable, scope, ignoreAccessScope)) {
       reference.handleElementRename(newName);
     }
   }
