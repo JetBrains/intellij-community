@@ -254,8 +254,8 @@ public class FileBasedStorage extends XmlElementStorage {
 
   private Document processReadException(final Exception e) {
     myBlockSavingTheContent = isProjectOrModuleFile();
-    LOG.warn(e);
     if (!ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      LOG.warn(e);
       SwingUtilities.invokeLater(new Runnable(){
         public void run() {
           JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),

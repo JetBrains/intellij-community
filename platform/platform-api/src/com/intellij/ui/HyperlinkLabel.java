@@ -51,7 +51,7 @@ public class HyperlinkLabel extends HighlightableComponent {
     myTextEffectColor = textEffectColor;
     enforceBackgroundOutsideText(textBackgroundColor);
     setHyperlinkText(text);
-    enableEvents(AWTEvent.MOUSE_EVENT_MASK);
+    enableEvents(AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
   }
 
   public void addNotify() {
@@ -60,7 +60,11 @@ public class HyperlinkLabel extends HighlightableComponent {
   }
 
   public void setHyperlinkText(String text) {
-    prepareText(text, myTextForegroundColor, myTextBackgroundColor, myTextEffectColor);
+    setHyperlinkText("", text, "");
+  }
+
+  public void setHyperlinkText(String beforeLinkText, String linkText, String afterLinkText) {
+    prepareText(beforeLinkText, linkText, afterLinkText);
     revalidate();
     adjustSize();
   }
@@ -72,24 +76,34 @@ public class HyperlinkLabel extends HighlightableComponent {
 
 
   protected void processMouseEvent(MouseEvent e) {
-    if (e.getID() == MouseEvent.MOUSE_ENTERED) {
-      setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-    }
-    else if (e.getID() == MouseEvent.MOUSE_EXITED) {
+    if (e.getID() == MouseEvent.MOUSE_EXITED) {
       setCursor(Cursor.getDefaultCursor());
     }
-    else if (UIUtil.isActionClick(e, MouseEvent.MOUSE_PRESSED)) {
+    else if (UIUtil.isActionClick(e, MouseEvent.MOUSE_PRESSED) && isOnLink(e.getX())) {
       fireHyperlinkEvent();
     }
     super.processMouseEvent(e);
   }
 
-  private void prepareText(String text, final Color textForegroundColor, final Color textBackgroundColor, final Color textEffectColor) {
+  @Override
+  protected void processMouseMotionEvent(MouseEvent e) {
+    if (e.getID() == MouseEvent.MOUSE_MOVED) {
+      setCursor(isOnLink(e.getX()) ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) : Cursor.getDefaultCursor());
+    }
+    super.processMouseMotionEvent(e);
+  }
+
+  private boolean isOnLink(int x) {
+    return findRegionByX(x) != null;
+  }
+
+  private void prepareText(String beforeLinkText, String linkText, String afterLinkText) {
     setFont(UIUtil.getLabelFont());
     myHighlightedText = new HighlightedText();
-    myHighlightedText.appendText(text, new TextAttributes(
-      textForegroundColor, textBackgroundColor, textEffectColor, EffectType.LINE_UNDERSCORE, Font.PLAIN
-    ));
+    myHighlightedText.appendText(beforeLinkText, null);
+    myHighlightedText.appendText(linkText, new TextAttributes(myTextForegroundColor, myTextBackgroundColor, myTextEffectColor,
+                                                          EffectType.LINE_UNDERSCORE, Font.PLAIN));
+    myHighlightedText.appendText(afterLinkText, null);
     myHighlightedText.applyToComponent(this);
     adjustSize();
   }

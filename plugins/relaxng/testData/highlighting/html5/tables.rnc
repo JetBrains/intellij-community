@@ -1,0 +1,224 @@
+datatypes w = "http://whattf.org/datatype-draft"
+
+# #####################################################################
+##  RELAX NG Schema for HTML 5: Tables                                #
+# #####################################################################
+
+# #####################################################################
+## Table Envelope
+
+## Table Datatypes
+
+#	tables.data.multilen =
+#		(	common.data.integer.positive
+#		|	common.data.percent
+#		|	xsd:token { pattern = "[0-9]+\*" } #REVISIT should this one be string? 
+#		)
+
+## Table Alignment Attributes
+
+	tables.attrs.alignment =
+		(	tables.attrs.align?
+		&	tables.attrs.char?
+		&	tables.attrs.valign?
+		)
+		tables.attrs.align =
+			attribute align {
+				(	w:string "left" 
+				|	w:string "center"
+				|	w:string "right"
+				|	w:string "justify"
+				|	w:string "char"
+				)
+			}
+		tables.attrs.char =
+			attribute char {
+				xsd:string { pattern = "." }
+			}
+		tables.attrs.valign =
+			attribute valign {
+				(	w:string "top"
+				|	w:string "middle"
+				|	w:string "bottom"
+				|	w:string "baseline"
+				)
+			}
+
+## Data Table: <table>
+
+	table.elem =
+		element table { table.inner & table.attrs }
+	table.attrs =
+		(	common.attrs
+		&	table.attrs.summary? # obsolete
+		&	common.attrs.aria?
+		)
+		table.attrs.summary =
+			attribute summary {
+				string
+			}
+	table.inner =
+		(	caption.elem?
+		,	colgroup.elem*
+		,	thead.elem?
+		,	(	(	tfoot.elem
+				,	( tbody.elem* | tr.elem+ )
+				)
+			|	(	( tbody.elem* | tr.elem+ )
+				,	tfoot.elem?
+				)
+			)
+		) 
+
+	common.elem.flow |= table.elem
+
+## Table Caption: <caption>
+
+	caption.elem =
+		element caption { caption.inner & caption.attrs }
+	caption.attrs =
+		(	common.attrs
+		&	common.attrs.aria.implicit.region?
+		)
+	caption.inner =
+		( common.inner.flow )
+
+# #####################################################################
+## Table Super Structure
+
+## Table Column Group: <colgroup>
+
+	colgroup.elem =
+		element colgroup { colgroup.inner & colgroup.attrs }
+	colgroup.attrs =
+		( common.attrs )
+		colgroup.attrs.span =
+			attribute span {
+				common.data.integer.positive
+			}
+	colgroup.inner =
+		(	col.elem*
+		|	colgroup.attrs.span?
+		)
+
+## Table Column: <col>
+
+	col.elem =
+		element col { col.inner & col.attrs }
+	col.attrs =
+		(	common.attrs
+		&	col.attrs.span?
+		)
+		col.attrs.span =
+			attribute span {
+				common.data.integer.positive
+			}
+	col.inner =
+		( empty )
+
+## Table Header Row Group
+
+	thead.elem =
+		element thead { thead.inner & thead.attrs }
+	thead.attrs =
+		( common.attrs )
+	thead.inner =
+		( tr.elem* )
+
+## Table Footer Row Group
+
+	tfoot.elem =
+		element tfoot { tfoot.inner & tfoot.attrs }
+	tfoot.attrs =
+		( common.attrs )
+	tfoot.inner =
+		( tr.elem* )
+
+## Table Row Group
+
+	tbody.elem =
+		element tbody { tbody.inner & tbody.attrs }
+	tbody.attrs =
+		( common.attrs )
+	tbody.inner =
+		( tr.elem* )
+
+# #####################################################################
+## Cell Structure
+
+## Table Row
+
+	tr.elem =
+		element tr { tr.inner & tr.attrs }
+	tr.attrs =
+		(	common.attrs
+		&	common.attrs.aria?
+		)
+	tr.inner =
+		( ( td.elem | th.elem )* )
+
+## Common Table Cell Attributes
+
+	tables.attrs.cell-structure =
+		(	tables.attrs.colspan?
+		&	tables.attrs.rowspan?
+		)
+		tables.attrs.colspan =
+			attribute colspan {
+				common.data.integer.positive
+			}
+		tables.attrs.rowspan =
+			attribute rowspan {
+				common.data.integer.non-negative
+			}
+
+	tables.attrs.access-headers =
+		( tables.attrs.headers? )
+		tables.attrs.headers =
+			attribute headers {
+				common.data.idrefs
+			}
+
+	tables.attrs.define-headers =
+		( tables.attrs.scope? )
+		tables.attrs.scope =
+			attribute scope {
+				(	w:string "row"
+				|	w:string "col"
+				|	w:string "rowgroup"
+				|	w:string "colgroup"
+				)
+			}
+		tables.attrs.abbr =
+			attribute abbr {
+				text
+			}
+
+## Table Data Cell: <td>
+
+	td.elem =
+		element td { td.inner & td.attrs }
+	td.attrs =
+		(	common.attrs
+		&	tables.attrs.cell-structure
+		&	tables.attrs.headers?
+#		&	tables.attrs.alignment
+		&	common.attrs.aria?
+		)
+	td.inner =
+		( common.inner.flow )
+
+## Table Header Cells: <th>
+
+	th.elem =
+		element th { th.inner & th.attrs }
+	th.attrs =
+		(	common.attrs
+		&	tables.attrs.cell-structure
+		&	tables.attrs.scope?
+		&	tables.attrs.headers?
+#		&	tables.attrs.alignment
+		&	common.attrs.aria.implicit.th?
+		)
+	th.inner =
+		( common.inner.phrasing )

@@ -24,6 +24,8 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.RoamingTypeDisabled;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.JBReentrantReadWriteLock;
 import com.intellij.util.concurrency.LockFactory;
 import com.intellij.util.containers.HashMap;
@@ -60,6 +62,8 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
   public static final String PROJECT_DIR_MACRO_NAME = "PROJECT_DIR";
   @NonNls
   public static final String MODULE_DIR_MACRO_NAME = "MODULE_DIR";
+  @NonNls
+  public static final String USER_HOME_MACRO_NAME = "USER_HOME";
 
   private static final Set<String> ourSystemMacroNames = new HashSet<String>();
   @NonNls public static final String EXT_FILE_NAME = "path.macros";
@@ -68,6 +72,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
     ourSystemMacroNames.add(APPLICATION_HOME_MACRO_NAME);
     ourSystemMacroNames.add(PROJECT_DIR_MACRO_NAME);
     ourSystemMacroNames.add(MODULE_DIR_MACRO_NAME);
+    ourSystemMacroNames.add(USER_HOME_MACRO_NAME);
   }
 
   private static final Set<String> ourToolsMacros = new HashSet<String>();
@@ -110,6 +115,10 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
     ourToolsMacros.add("Prompt");
     ourToolsMacros.add("SourcepathEntry");
     ourToolsMacros.add("Sourcepath");
+  }
+
+  public PathMacrosImpl() {
+    setMacro(USER_HOME_MACRO_NAME, FileUtil.toSystemIndependentName(SystemProperties.getUserHome()));
   }
 
   public static PathMacrosImpl getInstanceEx() {

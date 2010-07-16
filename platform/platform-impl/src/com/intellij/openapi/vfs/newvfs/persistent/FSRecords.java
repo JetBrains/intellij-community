@@ -1264,4 +1264,8 @@ public class FSRecords implements Disposable, Forceable {
       dataInputStream.close();
     }
   }
+
+  public static RuntimeException handleError(Throwable e) {
+    return DbConnection.handleError(e);   
+  }
 }

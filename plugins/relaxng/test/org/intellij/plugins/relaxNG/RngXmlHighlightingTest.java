@@ -43,6 +43,7 @@ public class RngXmlHighlightingTest extends HighlightingTestBase {
     m.addResource("http://www.w3.org/1999/XSL/Format", toAbsolutePath("highlighting/rnc/fo/main.rnc"));
     m.addResource("http://docbook.org/ns/docbook", toAbsolutePath("highlighting/docbook.rng"));
     m.addResource("urn:intelliForm:AttachmentFilter", toAbsolutePath("highlighting/attachment-filter.rng"));
+    m.addResource("http://www.w3.org/1999/xhtml/html5", toAbsolutePath("highlighting/html5/xhtml5.rnc"));
 
     m.addIgnoredResource("urn:intelliForm:Spaces");
     m.addIgnoredResource("http://www.w3.org/1999/xlink");
@@ -162,5 +163,13 @@ public class RngXmlHighlightingTest extends HighlightingTestBase {
 
   public void testDocBookSchema() throws Throwable {
     doHighlightingTest("docbook.rng");
+  }
+
+  public void testHtml5() throws Throwable {
+    doHighlightingTest("Html5.xml");
+  }
+
+  public void testHtml5_2() throws Throwable {
+    doHighlightingTest("Html5_2.xml");
   }
 }

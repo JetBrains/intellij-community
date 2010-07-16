@@ -1,0 +1,140 @@
+# #####################################################################
+##  RELAX NG Schema for HTML 5: Sectioning Markup                     #
+# #####################################################################
+
+# #####################################################################
+## Headings
+
+## Heading (Rank 1): <h1>
+
+	h1.elem =
+		element h1 { h1.inner & h1.attrs }
+	h1.attrs =
+		(	common.attrs
+		&	common.attrs.aria.implicit.structure?
+		)
+	h1.inner =
+		( common.inner.phrasing )
+
+	common.elem.flow |= h1.elem
+
+## Heading (Rank 2): <h2>
+
+	h2.elem =
+		element h2 { h2.inner & h2.attrs }
+	h2.attrs =
+		(	common.attrs
+		&	common.attrs.aria.implicit.structure?
+		)
+	h2.inner =
+		( common.inner.phrasing )
+
+	common.elem.flow |= h2.elem
+
+## Heading (Rank 3): <h3>
+
+	h3.elem =
+		element h3 { h3.inner & h3.attrs }
+	h3.attrs =
+		(	common.attrs
+		&	common.attrs.aria.implicit.structure?
+		)
+	h3.inner =
+		( common.inner.phrasing )
+
+	common.elem.flow |= h3.elem
+
+## Heading (Rank 4): <h4>
+
+	h4.elem =
+		element h4 { h4.inner & h4.attrs }
+	h4.attrs =
+		(	common.attrs
+		&	common.attrs.aria.implicit.structure?
+		)
+	h4.inner =
+		( common.inner.phrasing )
+
+	common.elem.flow |= h4.elem
+
+## Heading (Rank 5): <h5>
+
+	h5.elem =
+		element h5 { h5.inner & h5.attrs }
+	h5.attrs =
+		(	common.attrs
+		&	common.attrs.aria.implicit.structure?
+		)
+	h5.inner =
+		( common.inner.phrasing )
+
+	common.elem.flow |= h5.elem
+
+## Heading (Rank 6): <h6>
+
+	h6.elem =
+		element h6 { h6.inner & h6.attrs }
+	h6.attrs =
+		(	common.attrs
+		&	common.attrs.aria.implicit.structure?
+		)
+	h6.inner =
+		( common.inner.phrasing )
+
+	common.elem.flow |= h6.elem
+
+## Heading Group: <hgroup>
+
+	hgroup.elem =
+		element hgroup { hgroup.inner & hgroup.attrs }
+	hgroup.attrs =
+		(	common.attrs
+		&	common.attrs.aria.implicit.structure?
+		)
+	hgroup.inner =
+		(	h1.elem
+		|	h2.elem
+		|	h3.elem
+		|	h4.elem
+		|	h5.elem
+		|	h6.elem
+		)+
+
+	common.elem.flow |= hgroup.elem
+
+# #####################################################################
+## Section Meta
+
+## Contact Info: <address>
+
+	address.elem =
+		element address { address.inner & address.attrs }
+	address.attrs =
+		(	common.attrs
+		&	common.attrs.aria.implicit.region?
+		)
+	address.inner = 
+		( common.inner.flow )
+
+	common.elem.flow |= address.elem
+
+# #####################################################################
+## Quotations	
+
+## Block Quotes: <blockquote>
+
+	blockquote.elem =
+		element blockquote { blockquote.inner & blockquote.attrs }
+	blockquote.attrs =
+		(	common.attrs
+		&	blockquote.attrs.cite?
+		&	common.attrs.aria?
+		)
+		blockquote.attrs.cite =
+			attribute cite {
+				common.data.uri
+			}
+	blockquote.inner =
+		( common.inner.flow )
+
+	common.elem.flow |= blockquote.elem

@@ -38,7 +38,7 @@ public class PathMacrosCollector extends PathMacroMap {
   private final Matcher myMatcher;
 
   private static final Set<String> ourSystemMacroNames = new HashSet<String>(
-    Arrays.asList(PathMacrosImpl.APPLICATION_HOME_MACRO_NAME, PathMacrosImpl.MODULE_DIR_MACRO_NAME, PathMacrosImpl.PROJECT_DIR_MACRO_NAME));
+    Arrays.asList(PathMacrosImpl.APPLICATION_HOME_MACRO_NAME, PathMacrosImpl.MODULE_DIR_MACRO_NAME, PathMacrosImpl.PROJECT_DIR_MACRO_NAME, PathMacrosImpl.USER_HOME_MACRO_NAME));
   private static final String FILE_PROTOCOL = "file:";
   private static final String JAR_PROTOCOL = "jar:";
 
