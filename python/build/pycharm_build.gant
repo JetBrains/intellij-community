@@ -108,7 +108,7 @@ def zipSources() {
 target('default': "Build artifacts") {
 
   def modules = [
-          "python", "python-ide", platformApiModules(), platformImplementationModules(), pluginFilter
+          "python", "python-ide", "python-pydev", platformApiModules(), platformImplementationModules(), pluginFilter
   ].flatten()
   
   loadProject()
