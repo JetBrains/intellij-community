@@ -64,11 +64,9 @@ public class JavaCoverageEngine extends CoverageEngine {
                                            boolean coverageByTestEnabled,
                                            boolean tracingEnabled,
                                            boolean trackTestFolders) {
-    if (covRunner.acceptsCoverageProvider(this)) {
-      return createSuite(covRunner, name, coverageDataFileProvider, filters, lastCoverageTimeStamp, suiteToMerge, coverageByTestEnabled,
-                         tracingEnabled, trackTestFolders);
-    }
-    return null;
+
+    return createSuite(covRunner, name, coverageDataFileProvider, filters, lastCoverageTimeStamp, suiteToMerge, coverageByTestEnabled,
+                       tracingEnabled, trackTestFolders);
   }
 
   @Override
@@ -76,7 +74,7 @@ public class JavaCoverageEngine extends CoverageEngine {
                                            @NotNull final String name,
                                            @NotNull final CoverageFileProvider coverageDataFileProvider,
                                            @NotNull final CoverageEnabledConfiguration config) {
-    if (config instanceof JavaCoverageEnabledConfiguration && covRunner.acceptsCoverageProvider(this)) {
+    if (config instanceof JavaCoverageEnabledConfiguration) {
       final JavaCoverageEnabledConfiguration javaConfig = (JavaCoverageEnabledConfiguration)config;
       return createSuite(covRunner, name, coverageDataFileProvider,
                          javaConfig.getPatterns(),
@@ -92,10 +90,7 @@ public class JavaCoverageEngine extends CoverageEngine {
   @Nullable
   @Override
   public CoverageSuite createEmptyCoverageSuite(@NotNull CoverageRunner coverageRunner) {
-    if (coverageRunner.acceptsCoverageProvider(this)) {
-      return new JavaCoverageSuite(this);
-    }
-    return null;
+    return new JavaCoverageSuite(this);
   }
 
   @NotNull

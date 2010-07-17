@@ -194,7 +194,7 @@ public class CoverageConfigurable<T extends ModuleBasedConfiguration & CommonJav
     LOG.assertTrue(javaCoverageEnabledConfiguration != null);
     final JavaCoverageEngine provider = javaCoverageEnabledConfiguration.getCoverageProvider();
     for (CoverageRunner runner : Extensions.getExtensions(CoverageRunner.EP_NAME)) {
-      if (runner.acceptsCoverageProvider(provider)) {
+      if (runner.acceptsCoverageEngine(provider)) {
         runnersModel.addElement(new CoverageRunnerItem(runner));
       }
     }

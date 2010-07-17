@@ -20,7 +20,7 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
   private static final Logger LOG = Logger.getInstance("#" + JavaCoverageRunner.class.getName());
 
   @Override
-  public boolean acceptsCoverageProvider(@NotNull CoverageEngine engine) {
+  public boolean acceptsCoverageEngine(@NotNull CoverageEngine engine) {
     return engine instanceof JavaCoverageEngine;
   }
 
