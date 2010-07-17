@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.*;
+import java.util.Collection;
 
 /**
  * Created by IntelliJ IDEA.
@@ -45,7 +46,7 @@ public class PyIntroduceDialog extends DialogWrapper implements PyIntroduceSetti
                            @NotNull final String caption,
                            @NotNull final IntroduceValidator validator,
                            final int occurrencesCount,
-                           final String[] possibleNames,
+                           final Collection<String> possibleNames,
                            final String helpId,
                            boolean hasConstructor,
                            boolean isTestClass) {
@@ -69,7 +70,7 @@ public class PyIntroduceDialog extends DialogWrapper implements PyIntroduceSetti
     return myHelpId;
   }
 
-  private void setUpNameComboBox(String[] possibleNames) {
+  private void setUpNameComboBox(Collection<String> possibleNames) {
     final EditorComboBoxEditor comboEditor = new StringComboboxEditor(myProject, PythonFileType.INSTANCE, myNameComboBox);
 
     myNameComboBox.setEditor(comboEditor);

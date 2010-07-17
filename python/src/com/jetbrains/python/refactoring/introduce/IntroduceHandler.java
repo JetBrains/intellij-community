@@ -18,9 +18,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
-import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -31,10 +29,7 @@ import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Alexey.Ivanov
@@ -72,28 +67,42 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
   }
 
-  protected String[] getSuggestedNames(@NotNull final PyExpression expression) {
-    Collection<String> res = new HashSet<String>();
+  public Collection<String> getSuggestedNames(@NotNull final PyExpression expression) {
+    Collection<String> candidates = new HashSet<String>();
     String text = expression.getText();
     if (text != null) {
-      for (String name : NameSuggestorUtil.generateNames(text)) {
-        if (myValidator.checkPossibleName(name, expression)) {
-          res.add(name);
-        }
-      }
+      candidates.addAll(NameSuggestorUtil.generateNames(text));
     }
     PyType type = expression.getType(TypeEvalContext.fast());
     if (type != null) {
       final String typeName = type.getName();
       if (typeName != null) {
-        for (String name : NameSuggestorUtil.generateNamesByType(typeName)) {
-          if (myValidator.checkPossibleName(name, expression)) {
-            res.add(name);
-          }
+        candidates.addAll(NameSuggestorUtil.generateNamesByType(typeName));
+      }
+    }
+    final PyKeywordArgument kwArg = PsiTreeUtil.getParentOfType(expression, PyKeywordArgument.class);
+    if (kwArg != null && kwArg.getValueExpression() == expression) {
+      candidates.add(kwArg.getKeyword());
+    }
+
+    final PyArgumentList argList = PsiTreeUtil.getParentOfType(expression, PyArgumentList.class);
+    if (argList != null) {
+      final PyArgumentList.AnalysisResult result = argList.analyzeCall();
+      if (result.getMarkedCallee() != null && !result.isImplicitlyResolved()) {
+        final PyNamedParameter namedParameter = result.getPlainMappedParams().get(expression);
+        if (namedParameter != null) {
+          candidates.add(namedParameter.getName());
         }
       }
     }
-    return ArrayUtil.toStringArray(res);
+    
+    Collection<String> res = new HashSet<String>();
+    for (String name : candidates) {
+      if (myValidator.checkPossibleName(name, expression)) {
+        res.add(name);
+      }
+    }
+    return res;
   }
 
   public void performAction(@NotNull final Project project, Editor editor, PsiFile file, String name, boolean replaceAll, boolean hasConstructor, boolean isTestClass) {
@@ -202,7 +211,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     else {
       occurrences = Collections.emptyList();
     }
-    String[] possibleNames = getSuggestedNames(expression);
+    Collection<String> possibleNames = getSuggestedNames(expression);
     replaceAll &= occurrences.size() > 0;
     InitPlace initInConstructor = InitPlace.SAME_METHOD;
     if (name == null) {

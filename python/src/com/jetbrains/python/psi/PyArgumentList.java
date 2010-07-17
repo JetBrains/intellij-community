@@ -30,6 +30,7 @@ public interface PyArgumentList extends PyElement {
    * Tries to map the argument list to callee's idea of parameters.
    * @return a result object with mappings and diagnostic flags.
    */
+  @NotNull
   AnalysisResult analyzeCall();
 
   /**
