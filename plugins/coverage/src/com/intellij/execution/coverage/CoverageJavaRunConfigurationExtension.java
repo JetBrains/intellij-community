@@ -5,7 +5,7 @@
 package com.intellij.execution.coverage;
 
 import com.intellij.coverage.CoverageDataManager;
-import com.intellij.coverage.CoverageSupportProvider;
+import com.intellij.coverage.CoverageEngine;
 import com.intellij.coverage.IDEACoverageRunner;
 import com.intellij.coverage.listeners.CoverageListener;
 import com.intellij.execution.CommonJavaRunConfigurationParameters;
@@ -44,7 +44,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
   }
 
   public String getEditorTitle() {
-    return CoverageSupportProvider.getEditorTitle();
+    return CoverageEngine.getEditorTitle();
   }
 
   @Override
@@ -57,7 +57,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
     if (!isApplicableFor(runConfiguration)) {
       return null;
     }
-    return CoverageSupportProvider.getIcon(runConfiguration);
+    return CoverageEngine.getIcon(runConfiguration);
   }
 
   public <T extends ModuleBasedConfiguration & CommonJavaRunConfigurationParameters> void updateJavaParameters(T configuration, JavaParameters params, RunnerSettings runnerSettings) {

@@ -42,8 +42,8 @@ import java.util.*;
 /**
  * @author Roman.Chernyatchik
  */
-public class JavaCoverageSupportProvider extends CoverageSupportProvider {
-  private static final Logger LOG = Logger.getInstance(JavaCoverageSupportProvider.class.getName());
+public class JavaCoverageEngine extends CoverageEngine {
+  private static final Logger LOG = Logger.getInstance(JavaCoverageEngine.class.getName());
 
   @Override
   public CoverageEnabledConfiguration createCoverageEnabledConfiguration(final ModuleBasedConfiguration conf) {

@@ -14,7 +14,7 @@
     <runConfigurationExtension implementation="com.intellij.execution.coverage.CoverageJavaRunConfigurationExtension"/>
     <!--<coverageRunner implementation="com.intellij.coverage.CoberturaCoverageRunner"/>-->
     <coverageRunner implementation="com.intellij.coverage.IDEACoverageRunner"/>
-    <coverageSupport implementation="com.intellij.coverage.JavaCoverageSupportProvider" order = "last"/>
+    <coverageEngine implementation="com.intellij.coverage.JavaCoverageEngine" order = "last"/>
     <projectViewNodeDecorator implementation="com.intellij.coverage.CoverageProjectViewClassNodeDecorator"/>
     <junitListener implementation="com.intellij.coverage.listeners.IDEAJUnitCoverageListener"/>
 

@@ -33,12 +33,12 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
   private static final String MERGE_SUITE = "MERGE_SUITE";
   @NonNls
   private static final String COVERAGE_RUNNER = "RUNNER";
-  private final CoverageSupportProvider myCoverageSupportProvider;
+  private final CoverageEngine myCoverageEngine;
 
   //read external only
-  public JavaCoverageSuite(@NotNull final JavaCoverageSupportProvider coverageSupportProvider) {
+  public JavaCoverageSuite(@NotNull final JavaCoverageEngine coverageSupportProvider) {
     super();
-    myCoverageSupportProvider = coverageSupportProvider;
+    myCoverageEngine = coverageSupportProvider;
   }
 
   public JavaCoverageSuite(final String name,
@@ -50,14 +50,14 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
                            final boolean tracingEnabled,
                            final boolean trackTestFolders,
                            final CoverageRunner coverageRunner,
-                           @NotNull final JavaCoverageSupportProvider coverageSupportProvider) {
+                           @NotNull final JavaCoverageEngine coverageSupportProvider) {
     super(name, coverageDataFileProvider, lastCoverageTimeStamp, coverageByTestEnabled,
           tracingEnabled, trackTestFolders,
           coverageRunner != null ? coverageRunner : CoverageRunner.getInstance(IDEACoverageRunner.class));
 
     myFilters = filters;
     mySuiteToMerge = suiteToMerge;
-    myCoverageSupportProvider = coverageSupportProvider;
+    myCoverageEngine = coverageSupportProvider;
   }
 
   @NotNull
@@ -149,8 +149,8 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
   }
 
   @NotNull
-  public CoverageSupportProvider getCoverageProvider() {
-    return myCoverageSupportProvider;
+  public CoverageEngine getCoverageEngine() {
+    return myCoverageEngine;
   }
 
   @Nullable

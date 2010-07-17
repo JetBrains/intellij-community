@@ -17,8 +17,8 @@
 package com.intellij.execution.configurations.coverage;
 
 import com.intellij.coverage.CoverageRunner;
+import com.intellij.coverage.JavaCoverageEngine;
 import com.intellij.coverage.JavaCoverageRunner;
-import com.intellij.coverage.JavaCoverageSupportProvider;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.SimpleJavaParameters;
@@ -53,10 +53,10 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
   @NonNls private static final String COVERAGE_MERGE_ATTRIBUTE_NAME = "merge";
   @NonNls private static final String COVERAGE_MERGE_SUITE_ATT_NAME = "merge_suite";
 
-  private JavaCoverageSupportProvider myCoverageProvider;
+  private JavaCoverageEngine myCoverageProvider;
 
   public JavaCoverageEnabledConfiguration(final ModuleBasedConfiguration configuration,
-                                          final JavaCoverageSupportProvider coverageProvider) {
+                                          final JavaCoverageEngine coverageProvider) {
     super(configuration);
     myCoverageProvider = coverageProvider;
   }
@@ -91,7 +91,7 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
 
 
   @NotNull
-  public JavaCoverageSupportProvider getCoverageProvider() {
+  public JavaCoverageEngine getCoverageProvider() {
     return myCoverageProvider;
   }
 
