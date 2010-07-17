@@ -12,7 +12,6 @@ import com.intellij.execution.process.DefaultJavaProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.ide.BrowserUtil;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -59,11 +58,11 @@ public class CoberturaCoverageRunner extends JavaCoverageRunner {
     javaParameters.getClassPath().add(PathManager.getLibPath() + File.separator + "cobertura.jar");
   }
 
-  public void generateReport(@NotNull final Project project,
-                             @NotNull DataContext dataContext, @NotNull CoverageSuite currentSuite, boolean trackTestFolders,
-                             @NotNull final String binaryFilePath,
-                             final String outputDirectory,
-                             final boolean openInBrowser) {
+  protected void generateJavaReport(@NotNull final Project project,
+                                    boolean trackTestFolders,
+                                    @NotNull final String binaryFilePath,
+                                    final String outputDirectory,
+                                    final boolean openInBrowser) {
     try {
       final JavaParameters javaParameters = new JavaParameters();
       javaParameters.setMainClass("net.sourceforge.cobertura.reporting.Main");

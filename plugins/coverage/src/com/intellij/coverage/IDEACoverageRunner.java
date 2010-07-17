@@ -7,7 +7,6 @@ package com.intellij.coverage;
 import com.intellij.CommonBundle;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.ide.BrowserUtil;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -81,15 +80,16 @@ public class IDEACoverageRunner extends JavaCoverageRunner {
   }
 
   @Override
-  public void generateReport(@NotNull final Project project,
-                             @NotNull DataContext dataContext, @NotNull CoverageSuite currentSuite, final boolean trackTestFolders,
-                             @NotNull final String coverageDataFileName,
-                             final String outputDir,
-                             final boolean openInBrowser) {
+  public void generateJavaReport(@NotNull final Project project,
+                                 final boolean trackTestFolders,
+                                 @NotNull final String coverageDataFileName,
+                                 final String outputDir,
+                                 final boolean openInBrowser) {
+
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Generating coverage report ...") {
       final Exception[] myExceptions = new Exception[1];
 
-      
+
       public void run(@NotNull final ProgressIndicator indicator) {
         try {
           final HTMLReportBuilder builder = ReportBuilderFactory.createHTMLReportBuilder();

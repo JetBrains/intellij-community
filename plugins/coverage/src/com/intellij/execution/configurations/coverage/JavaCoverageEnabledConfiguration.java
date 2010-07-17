@@ -51,6 +51,8 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
 
   @NonNls private static final String COVERAGE_PATTERN_ELEMENT_NAME = "pattern";
   @NonNls private static final String COVERAGE_MERGE_ATTRIBUTE_NAME = "merge";
+  @NonNls private static final String COVERAGE_MERGE_SUITE_ATT_NAME = "merge_suite";
+
   private JavaCoverageSupportProvider myCoverageProvider;
 
   public JavaCoverageEnabledConfiguration(final ModuleBasedConfiguration configuration,
@@ -138,6 +140,8 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
     final String mergeAttribute = element.getAttributeValue(COVERAGE_MERGE_ATTRIBUTE_NAME);
     myIsMergeWithPreviousResults = mergeAttribute != null && Boolean.valueOf(mergeAttribute).booleanValue();
 
+    mySuiteToMergeWith = element.getAttributeValue(COVERAGE_MERGE_SUITE_ATT_NAME);
+
     // coverage patters
     final List children = element.getChildren(COVERAGE_PATTERN_ELEMENT_NAME);
     if (children.size() > 0) {
@@ -156,9 +160,13 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
 
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
-    
+
     // merge with prev
     element.setAttribute(COVERAGE_MERGE_ATTRIBUTE_NAME, String.valueOf(myIsMergeWithPreviousResults));
+
+    if (myIsMergeWithPreviousResults && mySuiteToMergeWith != null) {
+      element.setAttribute(COVERAGE_MERGE_SUITE_ATT_NAME, mySuiteToMergeWith);
+    }
 
     // patterns
     if (myCoveragePatterns != null) {
