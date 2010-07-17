@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
+import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.io.FileUtil;
@@ -72,17 +73,22 @@ public class PythonSdkUpdater implements ProjectComponent {
   private static void updateSysPath(Module module) {
     final Sdk sdk = PythonSdkType.findPythonSdk(module);
     if (sdk != null) {
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        public void run() {
-          final List<String> sysPath = PythonSdkType.getSysPath(sdk.getHomePath());
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              updateSdkPath(sdk, sysPath);
+      final SdkType sdkType = sdk.getSdkType();
+      if (sdkType instanceof PythonSdkType) {
+        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+          public void run() {
+            final List<String> sysPath = ((PythonSdkType)sdkType).getSysPath(sdk.getHomePath());
+            if (sysPath != null) {
+              ApplicationManager.getApplication().invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                  updateSdkPath(sdk, sysPath);
+                }
+              });
             }
-          });
-        }
-      });
+          }
+        });
+      }
     }
   }
 
