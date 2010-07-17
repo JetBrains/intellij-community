@@ -7,10 +7,10 @@ import org.jetbrains.annotations.NotNull;
 
 public class PyValueModifier extends XValueModifier {
 
-  private final PyDebugProcess myDebugProcess;
+  private final IPyDebugProcess myDebugProcess;
   private final PyDebugValue myVariable;
 
-  public PyValueModifier(final PyDebugProcess debugProcess, final PyDebugValue variable) {
+  public PyValueModifier(final IPyDebugProcess debugProcess, final PyDebugValue variable) {
     myDebugProcess = debugProcess;
     myVariable = variable;
   }

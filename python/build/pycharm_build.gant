@@ -375,6 +375,10 @@ def layoutFull(String target, Set usedJars) {
         zipfileset(src: "${home}/lib/ideaLicenseDecoder.jar")
       }
 
+      jar("pycharm-pydev.jar") {
+        module("pycharm-pydev")
+      }
+
       jar("bootstrap.jar") { module("bootstrap")}
       jar("resources.jar") {
         module("platform-resources")
@@ -396,9 +400,15 @@ def layoutFull(String target, Set usedJars) {
         fileset(file: it)
       }
 
-      fileset(dir: "$home/community/lib/src") {
-        include(name: "trove4j_changes.txt")
-        include(name: "trove4j_src.jar")
+      dir("src") {
+        fileset(dir: "$home/community/lib/src") {
+          include(name: "trove4j_changes.txt")
+          include(name: "trove4j_src.jar")
+        }
+
+        jar("pycharm-pydev-src.zip") {
+          fileset(dir: "$home/python/pydevSrc")
+        }
       }
     }
 

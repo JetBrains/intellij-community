@@ -25,14 +25,14 @@ public class PyDebugValue extends XValue {
   private final String myValue;
   private final boolean myContainer;
   private final PyDebugValue myParent;
-  private final PyDebugProcess myDebugProcess;
+  private final IPyDebugProcess myDebugProcess;
 
   public PyDebugValue(final String name, final String type, final String value, final boolean container) {
     this(name, type, value, container, null, null);
   }
 
   public PyDebugValue(final String name, final String type, final String value, final boolean container,
-                      final PyDebugValue parent, final PyDebugProcess debugProcess) {
+                      final PyDebugValue parent, final IPyDebugProcess debugProcess) {
     myName = name;
     myType = type;
     myValue = value;
