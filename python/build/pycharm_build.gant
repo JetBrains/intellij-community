@@ -376,7 +376,7 @@ def layoutFull(String target, Set usedJars) {
       }
 
       jar("pycharm-pydev.jar") {
-        module("pycharm-pydev")
+        module("python-pydev")
       }
 
       jar("bootstrap.jar") { module("bootstrap")}
