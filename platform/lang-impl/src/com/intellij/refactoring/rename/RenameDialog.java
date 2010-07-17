@@ -50,7 +50,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
-import java.util.List;
 
 public class RenameDialog extends RefactoringDialog {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameDialog");
@@ -135,7 +134,7 @@ public class RenameDialog extends RefactoringDialog {
   }
 
   public String[] getSuggestedNames() {
-    List<String> result = new ArrayList<String>();
+    Set<String> result = new HashSet<String>();
     final NameSuggestionProvider[] providers = Extensions.getExtensions(NameSuggestionProvider.EP_NAME);
     for(NameSuggestionProvider provider: providers) {
       SuggestedNameInfo info = provider.getSuggestedNames(myPsiElement, myNameSuggestionContext, result);

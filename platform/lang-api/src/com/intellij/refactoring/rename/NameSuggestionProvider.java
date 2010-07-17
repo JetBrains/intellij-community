@@ -23,7 +23,7 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.List;
+import java.util.Set;
 
 /**
  * @author yole
@@ -32,7 +32,7 @@ public interface NameSuggestionProvider {
   ExtensionPointName<NameSuggestionProvider> EP_NAME = ExtensionPointName.create("com.intellij.nameSuggestionProvider");
 
   @Nullable
-  SuggestedNameInfo getSuggestedNames(PsiElement element, PsiElement nameSuggestionContext, List<String> result);
+  SuggestedNameInfo getSuggestedNames(PsiElement element, PsiElement nameSuggestionContext, Set<String> result);
 
   @Nullable
   Collection<LookupElement> completeName(PsiElement element, final PsiElement nameSuggestionContext, final String prefix);

@@ -65,10 +65,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author ven
@@ -407,13 +404,14 @@ public class VariableInplaceRenamer {
 
     private MyExpression(String name) {
       myName = name;
-      List<String> names = new ArrayList<String>();
+      Set<String> names = new HashSet<String>();
       for(NameSuggestionProvider provider: Extensions.getExtensions(NameSuggestionProvider.EP_NAME)) {
         provider.getSuggestedNames(myElementToRename, myElementToRename, names);
       }
       myLookupItems = new LookupElement[names.size()];
+      final Iterator<String> iterator = names.iterator();
       for (int i = 0; i < myLookupItems.length; i++) {
-        myLookupItems[i] = LookupElementBuilder.create(names.get(i));
+        myLookupItems[i] = LookupElementBuilder.create(iterator.next());
       }
     }
 
