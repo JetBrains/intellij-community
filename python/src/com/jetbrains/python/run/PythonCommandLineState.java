@@ -82,9 +82,13 @@ public abstract class PythonCommandLineState extends CommandLineState {
       }
     }
 
-    final ColoredProcessHandler processHandler = new ColoredProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString());
+    final ColoredProcessHandler processHandler = createProcess(commandLine.createProcess(), commandLine);
     ProcessTerminatedListener.attach(processHandler);
     return processHandler;
+  }
+
+  protected ColoredProcessHandler createProcess(Process process, GeneralCommandLine commandLine) throws ExecutionException {
+    return new ColoredProcessHandler(process, commandLine.getCommandLineString());
   }
 
   protected GeneralCommandLine generateCommandLine() throws ExecutionException {
@@ -118,11 +122,16 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   protected void setRunnerPath(GeneralCommandLine commandLine) throws ExecutionException {
+    String interpreterPath = getInterpreterPath();
+    commandLine.setExePath(interpreterPath);
+  }
+
+  protected String getInterpreterPath() throws ExecutionException {
     String interpreterPath = myConfig.getInterpreterPath();
     if (interpreterPath == null) {
       throw new ExecutionException("Cannot find Python interpreter for this run configuration");
     }
-    commandLine.setExePath(interpreterPath);
+    return interpreterPath;
   }
 
   protected void buildCommandLineParameters(GeneralCommandLine commandLine) {
