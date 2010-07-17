@@ -9,6 +9,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiElementFilter;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -259,8 +261,20 @@ public class PyPropertyDefinitionInspection extends PyInspection {
     }
 
     private void checkReturnValueAllowed(Callable callable, PsiElement being_checked, boolean allowed, String message) {
-      PyType type = callable.getReturnType();
-      if (!allowed ^ (type instanceof PyNoneType)) {
+      boolean hasReturns;
+      if (callable instanceof PyFunction) {
+        final PsiElement[] returnStatements = PsiTreeUtil.collectElements(callable, new PsiElementFilter() {
+          @Override
+          public boolean isAccepted(PsiElement element) {
+            return element instanceof PyReturnStatement;
+          }
+        });
+        hasReturns = returnStatements.length > 0; 
+      }
+      else {
+        hasReturns = !(callable.getReturnType() instanceof PyNoneType);
+      }
+      if (allowed ^ hasReturns) {
         registerProblem(being_checked, message);
       }
     }
