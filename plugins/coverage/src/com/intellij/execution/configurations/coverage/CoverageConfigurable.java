@@ -20,6 +20,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageRunner;
 import com.intellij.coverage.CoverageSuite;
+import com.intellij.coverage.JavaCoverageSupportProvider;
 import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
@@ -188,8 +189,14 @@ public class CoverageConfigurable<T extends ModuleBasedConfiguration & CommonJav
 
     final DefaultComboBoxModel runnersModel = new DefaultComboBoxModel();
     myCoverageRunnerCb = new JComboBox(runnersModel);
+
+    final JavaCoverageEnabledConfiguration javaCoverageEnabledConfiguration = JavaCoverageEnabledConfiguration.getFrom(myConfig);
+    LOG.assertTrue(javaCoverageEnabledConfiguration != null);
+    final JavaCoverageSupportProvider provider = javaCoverageEnabledConfiguration.getCoverageProvider();
     for (CoverageRunner runner : Extensions.getExtensions(CoverageRunner.EP_NAME)) {
-      runnersModel.addElement(new CoverageRunnerItem(runner));
+      if (runner.acceptsCoverageProvider(provider)) {
+        runnersModel.addElement(new CoverageRunnerItem(runner));
+      }
     }
     myCoverageRunnerCb.setRenderer(new DefaultListCellRenderer(){
       @Override
