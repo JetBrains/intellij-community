@@ -1,6 +1,5 @@
 package com.jetbrains.python.testing;
 
-import com.intellij.psi.PsiFile;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
@@ -12,9 +11,7 @@ import java.util.List;
  * @author Leonid Shalupov
  */
 public class PythonUnitTestUtil {
-  private static final String TESTCASE_CLASS_NAME = "TestCase";
   public static final String TESTCASE_SETUP_NAME = "setUp";
-  private static final String UNITTEST_FILE_NAME = "unittest.py";
   private static final String TESTCASE_METHOD_PREFIX = "test";
 
   private PythonUnitTestUtil() {
@@ -48,17 +45,10 @@ public class PythonUnitTestUtil {
     for (PyClass ancestor : cls.iterateAncestors()) {
       if (ancestor == null) continue;
 
-      final String name = ancestor.getName();
-      if (name == null || !name.equals(TESTCASE_CLASS_NAME)) {
-        continue;
+      String qName = ancestor.getQualifiedName();
+      if ("unittest.TestCase".equals(qName) || "unittest.case.TestCase".equals(qName)) {
+        return true;
       }
-
-      final PsiFile containingFile = ancestor.getContainingFile();
-      if (!(containingFile instanceof PyFile) || !containingFile.getName().equals(UNITTEST_FILE_NAME)) {
-        continue;
-      }
-
-      return true;
     }
 
     return false;
