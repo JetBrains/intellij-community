@@ -17,6 +17,15 @@ public class PythonFindUsagesProvider implements FindUsagesProvider {
   }
 
   public String getHelpId(@NotNull PsiElement psiElement) {
+    if (psiElement instanceof PyClass) {
+      return "reference.dialogs.findUsages.class";
+    }
+    if (psiElement instanceof PyFunction) {
+      return "reference.dialogs.findUsages.method";
+    }
+    if (psiElement instanceof PyReferenceExpression || psiElement instanceof PyTargetExpression) {
+      return "reference.dialogs.findUsages.variable";
+    }
     return null;
   }
 
