@@ -463,6 +463,9 @@ public class ResolveImportUtil {
     }
 
     public boolean visitRoot(final VirtualFile root) {
+      if (!root.isValid()) {
+        return true;
+      }
       PsiElement module = root.isDirectory() ? psiManager.findDirectory(root) : psiManager.findFile(root);
       for (String component : qualifiedName.getComponents()) {
         if (component == null) {
