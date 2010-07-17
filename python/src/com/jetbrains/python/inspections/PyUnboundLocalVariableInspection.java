@@ -4,6 +4,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
@@ -73,11 +74,14 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
               continue;
             }
             // Ingore builtin elements here
-            final String fileName = element.getContainingFile().getName();
-            if (PyBuiltinCache.BUILTIN_FILE.equals(fileName) || PyBuiltinCache.BUILTIN_FILE_3K.equals(fileName)){
-              continue;
+            final PsiFile containingFile = element.getContainingFile();
+            if (containingFile != null) {
+              final String fileName = containingFile.getName();
+              if (PyBuiltinCache.BUILTIN_FILE.equals(fileName) || PyBuiltinCache.BUILTIN_FILE_3K.equals(fileName)){
+                continue;
+              }
             }
-            if (PyAssignmentStatementNavigator.getStatementByTarget(element)!=null){
+            if (PyAssignmentStatementNavigator.getStatementByTarget(element) != null) {
               resolves2LocalVariable = true;
               resolve2Scope = PsiTreeUtil.isAncestor(owner, element, false);
               break;
