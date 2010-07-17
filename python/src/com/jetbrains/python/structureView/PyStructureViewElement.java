@@ -129,10 +129,15 @@ public class PyStructureViewElement implements StructureViewTreeElement {
             return true;
           }
         }
+        else if (e instanceof PyFile) {
+          return true;
+        }
       }
     }
     return false;
   }
+
+
 
   public ItemPresentation getPresentation() {
     return new ItemPresentation() {
