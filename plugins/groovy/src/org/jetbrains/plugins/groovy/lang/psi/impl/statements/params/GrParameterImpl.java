@@ -32,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrCatchClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrRangeExpression;
@@ -89,7 +90,7 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
         }
       }
     } else if (parent instanceof GrCatchClause) {
-      return factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_THROWABLE, getResolveScope()); 
+      return factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_THROWABLE, getResolveScope());
     }
 
     return GrVariableEnhancer.getEnhancedType(this);
@@ -112,6 +113,10 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
       PsiClassType stringType =
         JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName("java.lang.String", getResolveScope());
       return stringType.createArrayType();
+    }
+    if (getParent() instanceof GrForClause) { //inside for loop
+      final PsiType typeGroovy = getTypeGroovy();
+      if (typeGroovy != null) return typeGroovy;
     }
     return type;
   }
