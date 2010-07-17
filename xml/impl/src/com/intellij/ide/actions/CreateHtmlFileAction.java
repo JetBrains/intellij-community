@@ -15,20 +15,13 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.CommonBundle;
-import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -49,28 +42,7 @@ public class CreateHtmlFileAction extends CreateFromTemplateAction<PsiFile> {
   protected PsiFile createFile(String name, String templateName, PsiDirectory dir) {
     PropertiesComponent.getInstance(dir.getProject()).setValue(DEFAULT_HTML_TEMPLATE_PROPERTY, templateName);
 
-    final FileTemplate template = FileTemplateManager.getInstance().getInternalTemplate(templateName);
-
-    PsiElement element;
-    try {
-      element = FileTemplateUtil
-        .createFromTemplate(template, name, FileTemplateManager.getInstance().getDefaultProperties(), dir);
-      final PsiFile psiFile = element.getContainingFile();
-
-      final VirtualFile virtualFile = psiFile.getVirtualFile();
-      if (virtualFile != null) {
-        FileEditorManager.getInstance(dir.getProject()).openFile(virtualFile, true);
-        return psiFile;
-      }
-    }
-    catch (IncorrectOperationException e) {
-      throw e;
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
-
-    return null;
+    return createFileFromTemplate(name, templateName, dir);
   }
 
   @Override
@@ -78,29 +50,22 @@ public class CreateHtmlFileAction extends CreateFromTemplateAction<PsiFile> {
     dir.checkCreateFile(name);
   }
 
-  @NotNull
   @Override
-  protected CreateFileFromTemplateDialog.Builder buildDialog(Project project, PsiDirectory directory) {
-    final CreateFileFromTemplateDialog.Builder builder =
-      CreateFileFromTemplateDialog.createDialog(project, XmlBundle.message("new.html.file.action"));
-    builder.addKind("HTML file", StdFileTypes.HTML.getIcon(), FileTemplateManager.INTERNAL_HTML_TEMPLATE_NAME);
-    builder.addKind("HTML5 file", StdFileTypes.HTML.getIcon(), FileTemplateManager.INTERNAL_HTML5_TEMPLATE_NAME);
-    builder.addKind("XHTML file", StdFileTypes.HTML.getIcon(), FileTemplateManager.INTERNAL_XHTML_TEMPLATE_NAME);
-    return builder;
+  protected void buildDialog(Project project, PsiDirectory directory, CreateFileFromTemplateDialog.Builder builder) {
+    builder
+      .setTitle(XmlBundle.message("new.html.file.action"))
+      .addKind("HTML file", StdFileTypes.HTML.getIcon(), FileTemplateManager.INTERNAL_HTML_TEMPLATE_NAME)
+      .addKind("HTML5 file", StdFileTypes.HTML.getIcon(), FileTemplateManager.INTERNAL_HTML5_TEMPLATE_NAME)
+      .addKind("XHTML file", StdFileTypes.HTML.getIcon(), FileTemplateManager.INTERNAL_XHTML_TEMPLATE_NAME);
   }
 
   @Override
-  protected String getDefaultTempalteName(@NotNull PsiDirectory dir) {
+  protected String getDefaultTemplateName(@NotNull PsiDirectory dir) {
     return PropertiesComponent.getInstance(dir.getProject()).getValue(DEFAULT_HTML_TEMPLATE_PROPERTY);
   }
 
   @Override
   protected String getActionName(PsiDirectory directory, String newName, String templateName) {
     return XmlBundle.message("new.html.file.action");
-  }
-
-  @Override
-  protected String getErrorTitle() {
-    return CommonBundle.getErrorTitle();
   }
 }

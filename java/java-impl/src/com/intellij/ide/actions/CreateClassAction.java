@@ -39,18 +39,16 @@ public class CreateClassAction extends CreateTemplateInPackageAction<PsiClass> {
     super(IdeBundle.message("action.create.new.class"), IdeBundle.message("action.create.new.class"), Icons.CLASS_ICON, true);
   }
 
-  @NotNull
   @Override
-  protected CreateFileFromTemplateDialog.Builder buildDialog(Project project, final PsiDirectory directory) {
-    final CreateFileFromTemplateDialog.Builder builder = CreateFileFromTemplateDialog.
-      createDialog(project, IdeBundle.message("action.create.new.class"));
-    builder.addKind("Class", Icons.CLASS_ICON, JavaTemplateUtil.INTERNAL_CLASS_TEMPLATE_NAME);
-    builder.addKind("Interface", Icons.INTERFACE_ICON, JavaTemplateUtil.INTERNAL_INTERFACE_TEMPLATE_NAME);
+  protected void buildDialog(Project project, PsiDirectory directory, CreateFileFromTemplateDialog.Builder builder) {
+    builder
+      .setTitle(IdeBundle.message("action.create.new.class"))
+      .addKind("Class", Icons.CLASS_ICON, JavaTemplateUtil.INTERNAL_CLASS_TEMPLATE_NAME)
+      .addKind("Interface", Icons.INTERFACE_ICON, JavaTemplateUtil.INTERNAL_INTERFACE_TEMPLATE_NAME);
     if (LanguageLevelProjectExtension.getInstance(project).getLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0) {
       builder.addKind("Enum", Icons.ENUM_ICON, JavaTemplateUtil.INTERNAL_ENUM_TEMPLATE_NAME);
       builder.addKind("Annotation", Icons.ANNOTATION_TYPE_ICON, JavaTemplateUtil.INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME);
     }
-    return builder;
   }
 
   @Override

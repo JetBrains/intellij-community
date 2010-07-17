@@ -49,7 +49,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
 
   private ElementCreator myCreator;
 
-  private CreateFileFromTemplateDialog(@NotNull Project project, @NotNull final String title) {
+  private CreateFileFromTemplateDialog(@NotNull Project project) {
     super(project, true);
 
     myKindCombo.setRenderer(new DefaultListCellRenderer() {
@@ -63,8 +63,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
       }
     });
 
-    setTitle(title);
-    //myNameLabel.setText(prompt);
+      //myNameLabel.setText(prompt);
 
     new ComboboxSpeedSearch(myKindCombo) {
       @Override
@@ -132,10 +131,16 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     return myNameField;
   }
 
-  public static <T extends PsiElement> Builder createDialog(@NotNull final Project project, @NotNull final String title) {
-    final CreateFileFromTemplateDialog dialog = new CreateFileFromTemplateDialog(project, title);
+  public static <T extends PsiElement> Builder createDialog(@NotNull final Project project) {
+    final CreateFileFromTemplateDialog dialog = new CreateFileFromTemplateDialog(project);
 
     return new Builder() {
+
+      @Override
+      public Builder setTitle(String title) {
+        dialog.setTitle(title);
+        return this;
+      }
 
       public Builder addKind(@NotNull String name, @Nullable Icon icon, @NotNull String templateName) {
         dialog.myKindCombo.addItem(new Trinity<String, Icon, String>(name, icon, templateName));
@@ -190,6 +195,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
   }
 
   public interface Builder {
+    Builder setTitle(String title);
     Builder addKind(@NotNull String kind, @Nullable Icon icon, @NotNull String templateName);
     @Nullable
     <T extends PsiElement> T show(@NotNull String errorTitle, @Nullable String selectedItem, @NotNull FileCreator<T> creator);
