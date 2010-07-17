@@ -6,6 +6,7 @@ import com.jetbrains.python.PythonHelpersLocator;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -23,6 +24,19 @@ public class PythonUnitTestCommandLineState extends PythonTestCommandLineStateBa
   protected void addTestRunnerParameters(GeneralCommandLine cmd) {
     cmd.addParameter(new File(PythonHelpersLocator.getHelpersRoot(), UTRUNNER_PY).getAbsolutePath());
     cmd.addParameters(getTestSpecs());
+  }
+
+  @Override
+  protected Collection<String> buildPythonPath() {
+    List<String> pythonPath = new ArrayList<String>(super.buildPythonPath());
+    // the first entry is the helpers path; add script directory as second entry
+    if (myConfig.getTestType() == PythonUnitTestRunConfiguration.TestType.TEST_FOLDER) {
+      pythonPath.add(1, myConfig.getFolderName());
+    }
+    else {
+      pythonPath.add(1, new File(myConfig.getWorkingDirectory(), myConfig.getScriptName()).getParent());
+    }
+    return pythonPath;
   }
 
   private List<String> getTestSpecs() {
