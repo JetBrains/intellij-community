@@ -1,5 +1,6 @@
 package com.jetbrains.python.testing.pytest;
 
+import com.intellij.execution.Location;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.PsiFile;
@@ -15,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class PyTestRunnableScriptFilter implements RunnableScriptFilter {
-  public boolean isRunnableScript(PsiFile script, @NotNull Module module) {
+  public boolean isRunnableScript(PsiFile script, @NotNull Module module, Location location) {
     return isPyTestInstalled(module) && isPyTestScript(script);
   }
 

@@ -37,7 +37,7 @@ public class PythonRunConfigurationProducer extends RuntimeConfigurationProducer
     Module module = ModuleUtil.findModuleForPsiElement(script);
     if (module != null) {
       for (RunnableScriptFilter f : Extensions.getExtensions(RunnableScriptFilter.EP_NAME)) {
-        if (f.isRunnableScript(script, module)) {
+        if (f.isRunnableScript(script, module, location)) {
           return null;
         }
       }
