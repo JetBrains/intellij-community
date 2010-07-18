@@ -26,6 +26,7 @@ public class MacPythonSdkFlavor extends PythonSdkFlavor {
   private static void collectPythonInstallations(String pythonPath, List<String> candidates) {
     VirtualFile rootVDir = LocalFileSystem.getInstance().findFileByPath(pythonPath);
     if (rootVDir != null) {
+      rootVDir.refresh(false, false);
       for (VirtualFile dir : rootVDir.getChildren()) {
         final String dir_name = dir.getName().toLowerCase();
         if (dir.isDirectory()) {

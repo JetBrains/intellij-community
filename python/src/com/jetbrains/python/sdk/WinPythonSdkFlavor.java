@@ -33,6 +33,7 @@ public class WinPythonSdkFlavor extends PythonSdkFlavor {
   private static void findSubdirInstallations(Collection<String> candidates, String rootDir, String dir_prefix, String exe_name) {
     VirtualFile rootVDir = LocalFileSystem.getInstance().findFileByPath(rootDir);
     if (rootVDir != null) {
+      rootVDir.refresh(false, false);
       for (VirtualFile dir : rootVDir.getChildren()) {
         if (dir.isDirectory() && dir.getName().toLowerCase().startsWith(dir_prefix)) {
           VirtualFile python_exe = dir.findChild(exe_name);
