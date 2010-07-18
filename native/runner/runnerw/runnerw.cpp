@@ -119,7 +119,16 @@ int main(int argc, char * argv[]) {
 
 	for (int i = 2; i < argc; i++) {
 		args += " ";
-		args += argv[i];
+		if (strchr(argv [i], ' '))
+		{
+			args += "\"";
+			args += argv[i];
+			args += "\"";
+		}
+		else 
+		{
+			args += argv[i];
+		}
 	}
 
 	if (app.length() == 0) {
