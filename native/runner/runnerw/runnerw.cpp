@@ -10,7 +10,7 @@ void PrintUsage() {
 	printf("\n");
 	printf("Runner invokes console application as a process with inherited input and output streams.\n");
 	printf("Input stream is scanned for presence of 2 char 255(IAC) and 243(BRK) sequence and generates Ctrl-Break event in that case.\n");
-	printf("Also in case of all type of event(Ctrl-C, Close, Shutdown etc) Ctrl-Break event is generated.");
+	printf("Also in case of all type of event(Ctrl-C, Close, Shutdown etc) Ctrl-Break event is generated.\n");
 
 	exit(0);
 }
@@ -35,8 +35,8 @@ void CtrlBreak() {
 
 BOOL is_iac = FALSE;
 
-char IAC = 255;
-char BRK = 243;
+char IAC = 'a';
+char BRK = 'b';
 
 BOOL Scan(char buf[], int count) {
 	for (int i = 0; i<count; i++) {
@@ -89,8 +89,6 @@ int main(int argc, char * argv[]) {
 		PrintUsage();
 	}
 
-	char buf[1024];
-
 	STARTUPINFO si;
 	SECURITY_ATTRIBUTES sa;
 	PROCESS_INFORMATION pi;
@@ -137,6 +135,7 @@ int main(int argc, char * argv[]) {
 	unsigned long b_write;
 	unsigned long avail;
 
+        char buf[1];
 	memset(buf, 0, sizeof(buf));
 
 	for (;;) {
@@ -145,15 +144,12 @@ int main(int argc, char * argv[]) {
 		if (exit != STILL_ACTIVE)
 			break;
 
-		PeekNamedPipe(GetStdHandle(STD_INPUT_HANDLE), buf, 1023, &b_read, &avail, NULL);
-
-		if (b_read != 0) {
-			memset(buf, 0, sizeof(buf));
-			ReadFile(GetStdHandle(STD_INPUT_HANDLE), buf, 1023, &b_read, NULL);
-			Scan(buf, b_read);
-
-			WriteFile(write_stdin, buf, b_read, &b_write, NULL);
-		}
+		 char c;
+		 std::cin >> c;
+//         char c = fgetc();
+         buf[0] = c;
+         Scan(buf, 1);
+         WriteFile(write_stdin, buf, 1, &b_write, NULL);
 	}
 
 	CloseHandle(pi.hThread);

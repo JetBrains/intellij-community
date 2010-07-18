@@ -1,35 +1,32 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/types.h>
 #include <fcntl.h>
-#include <string>
 #include <signal.h>
 
-void PrintUsage() {
-	printf("Usage: runnerw.exe <app> <args>\n");
+void print_usage() {
+	printf("Usage: runneru <app> <args>\n");
 	printf("where <app> is console application and <args> it's arguments.\n");
 	printf("\n");
 	printf(
-			"Runner invokes console application as a process with inherited input and output streams.\n");
+			"Runner executes an application as a process with inherited input and output streams.\n");
 	printf(
-			"Input stream is scanned for presence of 2 char 255(IAC) and 243(BRK) sequence and generates Ctrl-Break event in that case.\n");
-	printf(
-			"Also in case of all type of event(Ctrl-C, Close, Shutdown etc) Ctrl-Break event is generated.");
-
+			"Input stream is scanned for presence of 2 char 255(IAC) and 243(BRK) sequence and generates Ctrl-C(SIGING) event in that case.\n");
+	
 	exit(0);
 }
 
-void SigintHandler(int sig)
+void sigint_handler(int sig)
 {
 	kill(0, SIGINT);
 	signal(SIGINT, SIG_DFL);
 	kill(getpid(), SIGINT);
 }
 
-void Break(int pid) {
+void generate_break(int pid) {
 	kill(0, SIGINT);
-//	kill(pid, SIGTERM);
 	exit(0);
 }
 
@@ -38,11 +35,8 @@ char BRK = 243;
 
 int main(int argc, char **argv) {
 	if (argc < 2) {
-		PrintUsage();
+		print_usage();
 	}
-
-	std::string app(argv[1]);
-	std::string args("");
 
 	char* argv2[argc];
 
@@ -51,16 +45,16 @@ int main(int argc, char **argv) {
 	}
 	argv2[argc-1]=0;
 
-	if (app.length() == 0) {
-		PrintUsage();
+	if (strlen(argv[0]) == 0) {
+		print_usage();
 	}
 
-	int par2child[2]; /* Pipe toward child */
+	int write_pipe[2]; /* Pipe toward child */
 
-	signal(SIGINT, &SigintHandler);
+	signal(SIGINT, &sigint_handler);
 
 	/* Open pipes */
-	if (pipe(par2child) == -1) {
+	if (pipe(write_pipe) == -1) {
 		perror("pipe");
 		exit(1);
 	}
@@ -75,27 +69,25 @@ int main(int argc, char **argv) {
 	case 0:
 		/* Child section */
 
-
-		if (dup2(par2child[0], STDIN_FILENO) == -1
-				) {
+		if (dup2(write_pipe[0], STDIN_FILENO) == -1) {
 			perror("dup2");
 			exit(1);
 		}
 
 		/* Close unused fildes. */
-		close(par2child[0]);
-		close(par2child[1]);
+		close(write_pipe[0]);
+		close(write_pipe[1]);
 
 		/* Exec! */
 
-		execv(app.c_str(), argv2);
+		execv(argv[0], argv2);
 
 		perror("execv");
 		exit(1);
 
 	default:
 
-		close(par2child[0]);
+		close(write_pipe[0]);
 
 		int is_iac = 0;
 		char buf[1];
@@ -104,7 +96,7 @@ int main(int argc, char **argv) {
 
 			if (is_iac) {
 				if (c == BRK) {
-					Break(pid);
+					generate_break(pid);
 				} else {
 					is_iac = 0;
 				}
@@ -113,7 +105,7 @@ int main(int argc, char **argv) {
 				is_iac = 1;
 			}
 			buf[0] = c;
-			write(par2child[1], buf, 1);
+			write(write_pipe[1], buf, 1);
 		}
 
 	}
