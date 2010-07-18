@@ -100,10 +100,16 @@ public class PyStubsTest extends PyLightFixtureTestCase {
       // properties by call
       pyClass = classes.get(1);
       assertEquals("BarClass", pyClass.getName());
+
       Property prop = pyClass.findProperty("value");
       Maybe<PyFunction> maybe_function = prop.getGetter();
       assertTrue(maybe_function.isDefined());
       assertEquals(pyClass.getMethods()[0], maybe_function.value());
+
+      Property setvalueProp = pyClass.findProperty("setvalue");
+      Maybe<PyFunction> setter = setvalueProp.getSetter();
+      assertTrue(setter.isDefined());
+      assertEquals("__set", setter.value().getName());
 
       // properties by decorator
       pyClass = classes.get(2);
