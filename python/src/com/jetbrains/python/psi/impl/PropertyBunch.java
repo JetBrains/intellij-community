@@ -107,7 +107,7 @@ public abstract class PropertyBunch<MType> {
     if (call != null) {
       PyArgumentList arglist = call.getArgumentList();
       if (arglist != null) {
-        PyReferenceExpression[] accessors = new PyReferenceExpression[3];
+        PyExpression[] accessors = new PyExpression[3];
         String doc = null;
         int position = 0;
         String[] keywords = new String[] { "fget", "fset", "fdel", "doc" };
@@ -124,8 +124,8 @@ public abstract class PropertyBunch<MType> {
           }
 
           arg = PyUtil.peelArgument(arg);
-          if (index < 3 && arg instanceof PyReferenceExpression) {
-            accessors [index] = (PyReferenceExpression)arg;
+          if (index < 3) {
+            accessors [index] = arg;
           }
           else if (index == 3 && arg instanceof PyStringLiteralExpression) {
             doc = ((PyStringLiteralExpression)arg).getStringValue();
@@ -141,7 +141,11 @@ public abstract class PropertyBunch<MType> {
     return false;
   }
 
-  private static <MType> Maybe<MType> translateIfSet(PropertyBunch<MType> target, PyReferenceExpression accessor) {
-    return new Maybe<MType>(accessor == null ? null : target.translate(accessor));
+  private static <MType> Maybe<MType> translateIfSet(PropertyBunch<MType> target, PyExpression accessor) {
+    // TODO[yole] I don't quite understand this subtle distinction (why an accessor defined with lambda must be treated as defined=false)
+    if (accessor != null && !(accessor instanceof PyReferenceExpression)) {
+      return new Maybe<MType>();
+    }
+    return new Maybe<MType>(accessor == null ? null : target.translate((PyReferenceExpression) accessor));
   }
 }
