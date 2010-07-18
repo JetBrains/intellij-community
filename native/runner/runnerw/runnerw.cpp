@@ -38,14 +38,15 @@ void CtrlBreak() {
 
 BOOL is_iac = FALSE;
 
-char IAC = 255;
-char BRK = 243;
+char IAC = 5;
+char BRK = 3;
 
 BOOL Scan(char buf[], int count) {
 	for (int i = 0; i < count; i++) {
 		if (is_iac) {
 			if (buf[i] == BRK) {
 				CtrlBreak();
+				return TRUE;
 			} else {
 				is_iac = FALSE;
 			}
@@ -71,6 +72,41 @@ BOOL CtrlHandler(DWORD fdwCtrlType) {
 	default:
 		return FALSE;
 	}
+}
+
+struct StdInThreadParams
+{
+	HANDLE hEvent;
+	HANDLE write_stdin;
+};
+
+DWORD WINAPI StdInThread(void *param)
+{
+	StdInThreadParams *threadParams = (StdInThreadParams *) param;
+	char buf[1];
+	memset(buf, 0, sizeof(buf));
+
+	HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE);
+	while(true)
+	{
+		DWORD cbRead = 0;
+		DWORD cbWrite = 0;
+
+		char c;
+		ReadFile(hStdin, &c, 1, &cbRead, NULL);
+		if (cbRead > 0)
+		{
+			buf[0] = c;
+			bool ctrlBroken = Scan(buf, 1);
+			WriteFile(threadParams->write_stdin, buf, 1, &cbWrite, NULL);
+			if (ctrlBroken)
+			{
+				SetEvent(threadParams->hEvent);
+				break;
+			}
+		}
+	}
+	return 0;
 }
 
 int main(int argc, char * argv[]) {
@@ -133,27 +169,34 @@ int main(int argc, char * argv[]) {
 
 	unsigned long exit = 0;
 	unsigned long b_read;
-	unsigned long b_write;
 	unsigned long avail;
 
-	char buf[1];
-	memset(buf, 0, sizeof(buf));
+	HANDLE threadEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
-	for (;;) {
-		GetExitCodeProcess(pi.hProcess, &exit);
+	StdInThreadParams params;
+	params.hEvent = threadEvent;
+	params.write_stdin = write_stdin;
 
-		if (exit != STILL_ACTIVE)
+	CreateThread(NULL, 0, &StdInThread, &params, 0, NULL);
+
+	HANDLE objects_to_wait[2];
+	objects_to_wait[0] = threadEvent;
+	objects_to_wait[1] = pi.hProcess;
+
+	while(true)
+	{
+		int rc = WaitForMultipleObjects(2, objects_to_wait, FALSE, INFINITE);
+		if (rc == WAIT_OBJECT_0 + 1)
+		{
 			break;
-
-		char c;
-		std::cin >> c;
-		buf[0] = c;
-		Scan(buf, 1);
-		WriteFile(write_stdin, buf, 1, &b_write, NULL);
+		}
 	}
+
+	GetExitCodeProcess(pi.hProcess, &exit);
 
 	CloseHandle(pi.hThread);
 	CloseHandle(pi.hProcess);
 	CloseHandle(newstdin);
 	CloseHandle(write_stdin);
+	return exit;
 }
