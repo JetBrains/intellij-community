@@ -34,7 +34,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     PyArgumentList arglist = findArgumentList(context);
     if (arglist != null) {
       PyArgumentList.AnalysisResult result = arglist.analyzeCall();
-      if (result != null && result.getMarkedCallee() != null) {
+      if (result.getMarkedCallee() != null && !result.isImplicitlyResolved()) {
         context.setItemsToShow(new Object[] { result });
         return arglist;
       }
