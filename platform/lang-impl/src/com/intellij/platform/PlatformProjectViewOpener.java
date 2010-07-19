@@ -25,6 +25,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowType;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -43,7 +44,7 @@ public class PlatformProjectViewOpener implements DirectoryProjectConfigurator {
               public void run() {
                 if (project.isDisposed()) return;
                 final ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW);
-                if (toolWindow != null) {
+                if (toolWindow != null && toolWindow.getType() != ToolWindowType.SLIDING) {
                   toolWindow.activate(null);
                 }
               }

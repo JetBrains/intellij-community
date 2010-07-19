@@ -22,7 +22,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/svnkit.jar!/" />
         </CLASSES>
-        <JAVADOC />
         <SOURCES>
           <root url="jar://$MODULE_DIR$/lib/svnkitsrc.zip!/" />
         </SOURCES>
@@ -33,8 +32,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/trilead.jar!/" />
         </CLASSES>
-        <JAVADOC />
-        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="platform-impl" />
@@ -43,8 +40,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/jna.jar!/" />
         </CLASSES>
-        <JAVADOC />
-        <SOURCES />
       </library>
     </orderEntry>
   </component>

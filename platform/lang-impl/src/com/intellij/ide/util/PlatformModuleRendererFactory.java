@@ -28,38 +28,40 @@ import java.awt.*;
  */
 public class PlatformModuleRendererFactory extends ModuleRendererFactory {
   public DefaultListCellRenderer getModuleRenderer() {
-    return new DefaultListCellRenderer() {
-      public Component getListCellRendererComponent(final JList list,
-                                                    final Object value,
-                                                    final int index,
-                                                    final boolean isSelected,
-                                                    final boolean cellHasFocus) {
-        final Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-
-        String text = "";
-        if (value instanceof NavigationItem) {
-          final ItemPresentation presentation = ((NavigationItem)value).getPresentation();
-          if (presentation != null) {
-            String containerText = presentation.getLocationString();
-            if (containerText != null && containerText.length() > 0) {
-              text = " " + containerText;
-            }
-          }
-        }
-
-
-        setText(text);
-        setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 2));
-        setHorizontalTextPosition(SwingConstants.LEFT);
-        setBackground(isSelected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());
-        setForeground(isSelected ? UIUtil.getListSelectionForeground() : UIUtil.getInactiveTextColor());
-        return component;
-      }
-    };
+    return new PlatformModuleRenderer();
   }
 
   @Override
   public boolean rendersLocationString() {
     return true;
+  }
+
+  public static class PlatformModuleRenderer extends DefaultListCellRenderer {
+    public Component getListCellRendererComponent(final JList list,
+                                                  final Object value,
+                                                  final int index,
+                                                  final boolean isSelected,
+                                                  final boolean cellHasFocus) {
+      final Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+
+      String text = "";
+      if (value instanceof NavigationItem) {
+        final ItemPresentation presentation = ((NavigationItem)value).getPresentation();
+        if (presentation != null) {
+          String containerText = presentation.getLocationString();
+          if (containerText != null && containerText.length() > 0) {
+            text = " " + containerText;
+          }
+        }
+      }
+
+
+      setText(text);
+      setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 2));
+      setHorizontalTextPosition(SwingConstants.LEFT);
+      setBackground(isSelected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());
+      setForeground(isSelected ? UIUtil.getListSelectionForeground() : UIUtil.getInactiveTextColor());
+      return component;
+    }
   }
 }

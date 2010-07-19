@@ -26,8 +26,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/gradle-open-api-0.8.jar!/" />
         </CLASSES>
-        <JAVADOC />
-        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="java-impl" />
