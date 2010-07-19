@@ -1,5 +1,6 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <xi:include href="/componentSets/Xml.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="/META-INF/XmlActions.xml" xpointer="xpointer(/component/*)"/>
 
   <extensionPoints>
 
