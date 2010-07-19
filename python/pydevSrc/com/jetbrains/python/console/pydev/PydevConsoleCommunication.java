@@ -1,7 +1,9 @@
 package com.jetbrains.python.console.pydev;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -47,6 +49,7 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
   private static final Logger LOG = Logger.getInstance(PydevConsoleCommunication.class.getName());
   private final Project myProject;
   public static final int MAX_ATTEMPTS = 1;
+  public static final long TIMEOUT = (long)(10e9);
 
   /**
    * Initializes the xml-rpc communication.
@@ -217,7 +220,7 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
     }
     else {
       //create a thread that'll keep locked until an answer is received from the server.
-      new Task.Backgroundable(myProject, "Pydev Console Communication", false) {
+      new Task.Backgroundable(myProject, "REPL Communication", false) {
 
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
@@ -268,7 +271,7 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
 
             firstCommWorked = true;
 
-            String errorContents = executed.first;
+          String errorContents = executed.first;
             boolean more = executed.second;
 
             if (errorContents == null) {
@@ -284,18 +287,45 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
 
       }.queue();
 
-      //busy loop until we have a response
-      while (nextResponse == null) {
-        synchronized (lock2) {
-          try {
-            lock2.wait(20);
+
+      //busy loop waiting for the answer (or having the console die).
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+        @Override
+        public void run() {
+          final ProgressManager progressManager = ProgressManager.getInstance();
+          if (progressManager.hasProgressIndicator()){
+            progressManager.getProgressIndicator().setText("Waiting for REPL response with " + (int)(TIMEOUT/10e8) + "s timeout");
           }
-          catch (InterruptedException e) {
-            LOG.error(e);
+          final long startTime = System.nanoTime();
+          while (nextResponse == null) {
+            try {
+              ProgressManager.checkCanceled();
+            }
+            catch (ProcessCanceledException e) {
+              LOG.debug("Canceled");
+              nextResponse = new InterpreterResponse("", "Canceled", false, false);
+            }
+
+            final long time = System.nanoTime() - startTime;
+            if (progressManager.hasProgressIndicator()){
+              progressManager.getProgressIndicator().setFraction(((double)time) / TIMEOUT);
+            }
+            if (time > TIMEOUT){
+              LOG.debug("Timeout exceeded");
+              nextResponse = new InterpreterResponse("", "Timeout exceeded", false, false);
+            }
+            synchronized (lock2) {
+              try {
+                lock2.wait(20);
+              }
+              catch (InterruptedException e) {
+                LOG.error(e);
+              }
+            }
           }
+          onResponseReceived.call(nextResponse);
         }
-      }
-      onResponseReceived.call(nextResponse);
+      }, "Waiting for REPL response", false, myProject);
     }
   }
 
