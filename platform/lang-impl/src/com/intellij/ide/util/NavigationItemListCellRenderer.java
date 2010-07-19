@@ -67,13 +67,14 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
     final Color listBg = leftCellRendererComponent.getBackground();
     add(leftCellRendererComponent, BorderLayout.WEST);
 
-    setBackground(isSelected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());
+    setBackground(isSelected ? UIUtil.getListSelectionBackground() : listBg);
 
     if  (hasRightRenderer){
       final DefaultListCellRenderer moduleRenderer = factory.getModuleRenderer();
 
       final Component rightCellRendererComponent =
         moduleRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      ((JComponent)rightCellRendererComponent).setOpaque(false);
       rightCellRendererComponent.setBackground(listBg);
       add(rightCellRendererComponent, BorderLayout.EAST);
       final JPanel spacer = new NonOpaquePanel();
