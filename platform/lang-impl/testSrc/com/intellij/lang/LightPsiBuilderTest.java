@@ -97,17 +97,22 @@ public class LightPsiBuilderTest {
     doTest("ab",
            new Parser() {
              public void parse(PsiBuilder builder) {
+               final PsiBuilder.Marker marker1 = builder.mark();
                builder.advanceLexer();
-               final PsiBuilder.Marker marker = builder.mark();
+               final PsiBuilder.Marker marker2 = builder.mark();
                builder.advanceLexer();
-               marker.done(OTHER);
-               marker.precede().doneBefore(COLLAPSED, marker);
+               marker2.done(OTHER);
+               marker2.precede().doneBefore(COLLAPSED, marker2);
+               marker1.doneBefore(COLLAPSED, marker2, "with error");
              }
            },
            "Element(ROOT)\n" +
-           "  PsiElement(LETTER)('a')\n" +
            "  Element(COLLAPSED)\n" +
-           "    <empty list>\n" +
+           "    PsiElement(LETTER)('a')\n" +
+           "    Element(COLLAPSED)\n" +
+           "      <empty list>\n" +
+           "    PsiErrorElement:with error\n" +
+           "      <empty list>\n" +
            "  Element(OTHER)\n" +
            "    PsiElement(LETTER)('b')\n");
   }
