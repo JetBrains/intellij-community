@@ -1,0 +1,1153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templateSet group="Zen HTML">
+  <template description="" name="html:xs" toReformat="true" toShortenFQNames="true" value="&lt;!DOCTYPE html PUBLIC &quot;-//W3C//DTD XHTML 1.0 Strict//EN&quot; &quot;http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd&quot;&gt;&#10;&lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot; xml:lang=&quot;$ENV_LANG$&quot;&gt;&#10;&lt;head&gt;&#10;  &lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html;charset=UTF-8&quot; /&gt;&#10;  &lt;title&gt;&lt;/title&gt;&#10;&lt;/head&gt;&#10;&lt;body&gt;&#10;  $END$&#10;&lt;/body&gt;&#10;&lt;/html&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;en&quot;" expression="" name="ENV_LANG"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="" name="html:4t" toReformat="true" toShortenFQNames="true" value="&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.01 Transitional//EN&quot; &quot;http://www.w3.org/TR/html4/loose.dtd&quot;&gt;&#10;&lt;html lang=&quot;$ENV_LANG$&quot;&gt;&#10;&lt;head&gt;&#10;  &lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html;charset=UTF-8&quot;&gt;&#10;  &lt;title&gt;&lt;/title&gt;&#10;&lt;/head&gt;&#10;&lt;body&gt;&#10;  $END$&#10;&lt;/body&gt;&#10;&lt;/html&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;en&quot;" expression="" name="ENV_LANG"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="" name="cc:ie6" toReformat="true" toShortenFQNames="true" value="&lt;!--[if lte IE 6]&gt;&#10;  $END$&#10;&lt;![endif]--&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="" name="html:4s" toReformat="true" toShortenFQNames="true" value="&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.01//EN&quot; &quot;http://www.w3.org/TR/html4/strict.dtd&quot;&gt;&#10;&lt;html lang=&quot;$ENV_LANG$&quot;&gt;&#10;&lt;head&gt;&#10;  &lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html;charset=UTF-8&quot;&gt;&#10;  &lt;title&gt;&lt;/title&gt;&#10;&lt;/head&gt;&#10;&lt;body&gt;&#10;  $END$&#10;&lt;/body&gt;&#10;&lt;/html&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;en&quot;" expression="" name="ENV_LANG"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="" name="cc:noie" toReformat="true" toShortenFQNames="true" value="&lt;!--[if !IE]&gt;&lt;!--&gt;&#10;  $END$&#10;&lt;!--&lt;![endif]--&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="" name="html:5" toReformat="true" toShortenFQNames="true" value="&lt;!DOCTYPE HTML&gt;&#10;&lt;html lang=&quot;$ENV_LOCALE$&quot;&gt;&#10;&lt;head&gt;&#10;  &lt;meta charset=&quot;UTF-8&quot;&gt;&#10;  &lt;title&gt;&lt;/title&gt;&#10;&lt;/head&gt;&#10;&lt;body&gt;&#10;  $END$&#10;&lt;/body&gt;&#10;&lt;/html&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;en-US&quot;" expression="" name="ENV_LOCALE"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="" name="cc:ie" toReformat="true" toShortenFQNames="true" value="&lt;!--[if IE]&gt;&#10;  $END$&#10;&lt;![endif]--&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="" name="html:xt" toReformat="true" toShortenFQNames="true" value="&lt;!DOCTYPE html PUBLIC &quot;-//W3C//DTD XHTML 1.0 Transitional//EN&quot; &quot;http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd&quot;&gt;&#10;&lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot; xml:lang=&quot;$ENV_LANG$&quot;&gt;&#10;&lt;head&gt;&#10;  &lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html;charset=UTF-8&quot; /&gt;&#10;  &lt;title&gt;&lt;/title&gt;&#10;&lt;/head&gt;&#10;&lt;body&gt;&#10;  $END$&#10;&lt;/body&gt;&#10;&lt;/html&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;en&quot;" expression="" name="ENV_LANG"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="" name="html:xxs" toReformat="true" toShortenFQNames="true" value="&lt;!DOCTYPE html PUBLIC &quot;-//W3C//DTD XHTML 1.1//EN&quot; &quot;http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd&quot;&gt;&#10;&lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot; xml:lang=&quot;$ENV_LANG$&quot;&gt;&#10;&lt;head&gt;&#10;  &lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html;charset=UTF-8&quot; /&gt;&#10;  &lt;title&gt;&lt;/title&gt;&#10;&lt;/head&gt;&#10;&lt;body&gt;&#10;  $END$&#10;&lt;/body&gt;&#10;&lt;/html&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;en&quot;" expression="" name="ENV_LANG"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;a href=&quot;http://...&quot;&gt;...&lt;/a&gt;" name="a:link" toReformat="true" toShortenFQNames="true" value="&lt;a href=&quot;http://$VAR0$&quot;&gt;$END$&lt;/a&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;input type=&quot;datetime-local&quot; name=&quot;...&quot; id=&quot;...&quot;&gt;" name="input:datetime-local" toReformat="true" toShortenFQNames="true" value="&lt;input type=&quot;datetime-local&quot; name=&quot;$VAR0$&quot; id=&quot;$VAR1$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;input type=&quot;reset&quot; value=&quot;...&quot;&gt;" name="input:reset" toReformat="true" toShortenFQNames="true" value="&lt;input type=&quot;reset&quot; value=&quot;$VAR0$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;colgroup&gt;...&lt;/colgroup&gt;" name="colg" toReformat="true" toShortenFQNames="true" value="&lt;colgroup&gt;$END$&lt;/colgroup&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;style type=&quot;text/css&quot;&gt;...&lt;/style&gt;" name="style" toReformat="true" toShortenFQNames="true" value="&lt;style type=&quot;text/css&quot;&gt;$END$&lt;/style&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;address&gt;...&lt;/address&gt;" name="adr" toReformat="true" toShortenFQNames="true" value="&lt;address&gt;$END$&lt;/address&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;img src=&quot;...&quot; alt=&quot;...&quot;&gt;" name="img" toReformat="true" toShortenFQNames="true" value="&lt;img src=&quot;$VAR0$&quot; alt=&quot;$VAR1$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;bdo dir=&quot;ltr&quot;&gt;...&lt;/bdo&gt;" name="bdo:l" toReformat="true" toShortenFQNames="true" value="&lt;bdo dir=&quot;ltr&quot;&gt;$END$&lt;/bdo&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;param name=&quot;...&quot; value=&quot;...&quot;&gt;" name="param" toReformat="true" toShortenFQNames="true" value="&lt;param name=&quot;$VAR0$&quot; value=&quot;$VAR1$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="" name="colgroup+" toReformat="true" toShortenFQNames="true" value="&lt;colgroup&gt;&#10;  &lt;col&gt;&#10;&lt;/colgroup&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;form action=&quot;...&quot; method=&quot;post&quot;&gt;...&lt;/form&gt;" name="form:post" toReformat="true" toShortenFQNames="true" value="&lt;form action=&quot;$VAR0$&quot; method=&quot;post&quot;&gt;$END$&lt;/form&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;bdo dir=&quot;rtl&quot;&gt;...&lt;/bdo&gt;" name="bdo:r" toReformat="true" toShortenFQNames="true" value="&lt;bdo dir=&quot;rtl&quot;&gt;$END$&lt;/bdo&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;figure&gt;...&lt;/figure&gt;" name="fig" toReformat="true" toShortenFQNames="true" value="&lt;figure&gt;$END$&lt;/figure&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;input type=&quot;radio&quot; name=&quot;...&quot; id=&quot;...&quot;&gt;" name="input:radio" toReformat="true" toShortenFQNames="true" value="&lt;input type=&quot;radio&quot; name=&quot;$VAR0$&quot; id=&quot;$VAR1$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;...print.css&quot; media=&quot;print&quot;&gt;" name="link:print" toReformat="true" toShortenFQNames="true" value="&lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;$END$print.css&quot; media=&quot;print&quot;&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;option&gt;...&lt;/option&gt;" name="opt" toReformat="true" toShortenFQNames="true" value="&lt;option&gt;$END$&lt;/option&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;input type=&quot;image&quot; src=&quot;...&quot; alt=&quot;...&quot;&gt;" name="input:i" toReformat="true" toShortenFQNames="true" value="&lt;input type=&quot;image&quot; src=&quot;$VAR0$&quot; alt=&quot;$VAR1$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;input type=&quot;hidden&quot; name=&quot;...&quot;&gt;" name="input:h" toReformat="true" toShortenFQNames="true" value="&lt;input type=&quot;hidden&quot; name=&quot;$VAR0$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;input type=&quot;file&quot; name=&quot;...&quot; id=&quot;...&quot;&gt;" name="input:f" toReformat="true" toShortenFQNames="true" value="&lt;input type=&quot;file&quot; name=&quot;$VAR0$&quot; id=&quot;$VAR1$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;input type=&quot;checkbox&quot; name=&quot;...&quot; id=&quot;...&quot;&gt;" name="input:c" toReformat="true" toShortenFQNames="true" value="&lt;input type=&quot;checkbox&quot; name=&quot;$VAR0$&quot; id=&quot;$VAR1$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;input type=&quot;button&quot; value=&quot;...&quot;&gt;" name="input:b" toReformat="true" toShortenFQNames="true" value="&lt;input type=&quot;button&quot; value=&quot;$VAR0$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;abbr title=&quot;...&quot;&gt;...&lt;/abbr&gt;" name="abbr" toReformat="true" toShortenFQNames="true" value="&lt;abbr title=&quot;$VAR0$&quot;&gt;$END$&lt;/abbr&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;input type=&quot;text&quot; name=&quot;...&quot; id=&quot;...&quot;&gt;" name="input:t" toReformat="true" toShortenFQNames="true" value="&lt;input type=&quot;text&quot; name=&quot;$VAR0$&quot; id=&quot;$VAR1$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;input type=&quot;password&quot; name=&quot;...&quot; id=&quot;...&quot;&gt;" name="input:p" toReformat="true" toShortenFQNames="true" value="&lt;input type=&quot;password&quot; name=&quot;$VAR0$&quot; id=&quot;$VAR1$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;input type=&quot;submit&quot; value=&quot;...&quot;&gt;" name="input:s" toReformat="true" toShortenFQNames="true" value="&lt;input type=&quot;submit&quot; value=&quot;$VAR0$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;input type=&quot;radio&quot; name=&quot;...&quot; id=&quot;...&quot;&gt;" name="input:r" toReformat="true" toShortenFQNames="true" value="&lt;input type=&quot;radio&quot; name=&quot;$VAR0$&quot; id=&quot;$VAR1$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;iframe&gt;...&lt;/iframe&gt;" name="ifr" toReformat="true" toShortenFQNames="true" value="&lt;iframe&gt;$END$&lt;/iframe&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;embed&gt;" name="emb" toReformat="true" toShortenFQNames="true" value="&lt;embed&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="" name="optg+" toReformat="true" toShortenFQNames="true" value="&lt;optgroup&gt;&#10;  &lt;option value=&quot;$VAR0$&quot;&gt;$END$&lt;/option&gt;&#10;&lt;/optgroup&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;command&gt;" name="cmd" toReformat="true" toShortenFQNames="true" value="&lt;command&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;link rel=&quot;alternate&quot; type=&quot;application/atom+xml&quot; title=&quot;Atom&quot; href=&quot;atom.xml&quot;&gt;" name="link:atom" toReformat="true" toShortenFQNames="true" value="&lt;link rel=&quot;alternate&quot; type=&quot;application/atom+xml&quot; title=&quot;Atom&quot; href=&quot;atom.xml&quot;&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="" name="table+" toReformat="true" toShortenFQNames="true" value="&lt;table&gt;&#10;  &lt;tr&gt;&#10;    &lt;td&gt;$END$&lt;/td&gt;&#10;  &lt;/tr&gt;&#10;&lt;/table&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;article&gt;...&lt;/article&gt;" name="art" toReformat="true" toShortenFQNames="true" value="&lt;article&gt;$END$&lt;/article&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;input type=&quot;search&quot; name=&quot;...&quot; id=&quot;...&quot;&gt;" name="input:search" toReformat="true" toShortenFQNames="true" value="&lt;input type=&quot;search&quot; name=&quot;$VAR0$&quot; id=&quot;$VAR1$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;area shape=&quot;rect&quot; coords=&quot;...&quot; href=&quot;...&quot; alt=&quot;...&quot;&gt;" name="area:r" toReformat="true" toShortenFQNames="true" value="&lt;area shape=&quot;rect&quot; coords=&quot;$VAR0$&quot; href=&quot;$VAR1$&quot; alt=&quot;$VAR2$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR2"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;area shape=&quot;poly&quot; coords=&quot;...&quot; href=&quot;...&quot; alt=&quot;...&quot;&gt;" name="area:p" toReformat="true" toShortenFQNames="true" value="&lt;area shape=&quot;poly&quot; coords=&quot;$VAR0$&quot; href=&quot;$VAR1$&quot; alt=&quot;$VAR2$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR2"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;input type=&quot;date&quot; name=&quot;...&quot; id=&quot;...&quot;&gt;" name="input:date" toReformat="true" toShortenFQNames="true" value="&lt;input type=&quot;date&quot; name=&quot;$VAR0$&quot; id=&quot;$VAR1$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;video src=&quot;...&quot;&gt;...&lt;/video&gt;" name="video" toReformat="true" toShortenFQNames="true" value="&lt;video src=&quot;$VAR0$&quot;&gt;$END$&lt;/video&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;input type=&quot;button&quot; value=&quot;...&quot;&gt;" name="input:button" toReformat="true" toShortenFQNames="true" value="&lt;input type=&quot;button&quot; value=&quot;$VAR0$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;area shape=&quot;default&quot; href=&quot;...&quot; alt=&quot;...&quot;&gt;" name="area:d" toReformat="true" toShortenFQNames="true" value="&lt;area shape=&quot;default&quot; href=&quot;$VAR0$&quot; alt=&quot;$VAR1$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;area shape=&quot;circle&quot; coords=&quot;...&quot; href=&quot;...&quot; alt=&quot;...&quot;&gt;" name="area:c" toReformat="true" toShortenFQNames="true" value="&lt;area shape=&quot;circle&quot; coords=&quot;$VAR0$&quot; href=&quot;$VAR1$&quot; alt=&quot;$VAR2$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR2"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;output&gt;...&lt;/output&gt;" name="out" toReformat="true" toShortenFQNames="true" value="&lt;output&gt;$END$&lt;/output&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;footer&gt;...&lt;/footer&gt;" name="ftr" toReformat="true" toShortenFQNames="true" value="&lt;footer&gt;$END$&lt;/footer&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;dialog&gt;...&lt;/dialog&gt;" name="dlg" toReformat="true" toShortenFQNames="true" value="&lt;dialog&gt;$END$&lt;/dialog&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;script type=&quot;text/javascript&quot; src=&quot;...&quot;&gt;...&lt;/script&gt;" name="script:src" toReformat="true" toShortenFQNames="true" value="&lt;script type=&quot;text/javascript&quot; src=&quot;$VAR0$&quot;&gt;$END$&lt;/script&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;form action=&quot;...&quot; method=&quot;get&quot;&gt;...&lt;/form&gt;" name="form:get" toReformat="true" toShortenFQNames="true" value="&lt;form action=&quot;$VAR0$&quot; method=&quot;get&quot;&gt;$END$&lt;/form&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html;charset=UTF-8&quot;&gt;" name="meta:utf" toReformat="true" toShortenFQNames="true" value="&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html;charset=UTF-8&quot;&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;label for=&quot;...&quot;&gt;...&lt;/label&gt;" name="label" toReformat="true" toShortenFQNames="true" value="&lt;label for=&quot;$VAR0$&quot;&gt;$END$&lt;/label&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;input type=&quot;time&quot; name=&quot;...&quot; id=&quot;...&quot;&gt;" name="input:time" toReformat="true" toShortenFQNames="true" value="&lt;input type=&quot;time&quot; name=&quot;$VAR0$&quot; id=&quot;$VAR1$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;link rel=&quot;shortcut icon&quot; type=&quot;image/x-icon&quot; href=&quot;...favicon.ico&quot;&gt;" name="link:favicon" toReformat="true" toShortenFQNames="true" value="&lt;link rel=&quot;shortcut icon&quot; type=&quot;image/x-icon&quot; href=&quot;$END$favicon.ico&quot;&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;menu type=&quot;toolbar&quot;&gt;...&lt;/menu&gt;" name="menu:toolbar" toReformat="true" toShortenFQNames="true" value="&lt;menu type=&quot;toolbar&quot;&gt;$END$&lt;/menu&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;progress&gt;...&lt;/progress&gt;" name="prog" toReformat="true" toShortenFQNames="true" value="&lt;progress&gt;$END$&lt;/progress&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;input type=&quot;email&quot; name=&quot;...&quot; id=&quot;...&quot;&gt;" name="input:email" toReformat="true" toShortenFQNames="true" value="&lt;input type=&quot;email&quot; name=&quot;$VAR0$&quot; id=&quot;$VAR1$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;optgroup&gt;...&lt;/optgroup&gt;" name="optg" toReformat="true" toShortenFQNames="true" value="&lt;optgroup&gt;$END$&lt;/optgroup&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;strong&gt;...&lt;/strong&gt;" name="str" toReformat="true" toShortenFQNames="true" value="&lt;strong&gt;$END$&lt;/strong&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;legend&gt;...&lt;/legend&gt;" name="leg" toReformat="true" toShortenFQNames="true" value="&lt;legend&gt;$END$&lt;/legend&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;acronym title=&quot;...&quot;&gt;...&lt;/acronym&gt;" name="acronym" toReformat="true" toShortenFQNames="true" value="&lt;acronym title=&quot;$VAR0$&quot;&gt;$END$&lt;/acronym&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="" name="ol+" toReformat="true" toShortenFQNames="true" value="&lt;ol&gt;&#10;  &lt;li&gt;$END$&lt;/li&gt;&#10;&lt;/ol&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="" name="tr+" toReformat="true" toShortenFQNames="true" value="&lt;tr&gt;&#10;  &lt;td&gt;$END$&lt;/td&gt;&#10;&lt;/tr&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="" name="optgroup+" toReformat="true" toShortenFQNames="true" value="&lt;optgroup&gt;&#10;  &lt;option value=&quot;$VAR0$&quot;&gt;$END$&lt;/option&gt;&#10;&lt;/optgroup&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;base href=&quot;...&quot;&gt;" name="base" toReformat="true" toShortenFQNames="true" value="&lt;base href=&quot;$VAR0$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;blockquote&gt;...&lt;/blockquote&gt;" name="bq" toReformat="true" toShortenFQNames="true" value="&lt;blockquote&gt;$END$&lt;/blockquote&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;source&gt;...&lt;/source&gt;" name="src" toReformat="true" toShortenFQNames="true" value="&lt;source&gt;$END$&lt;/source&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;object&gt;...&lt;/object&gt;" name="obj" toReformat="true" toShortenFQNames="true" value="&lt;object&gt;$END$&lt;/object&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="" name="dl+" toReformat="true" toShortenFQNames="true" value="&lt;dl&gt;&#10;  &lt;dt&gt;$VAR0$&lt;/dt&gt;&#10;  &lt;dd&gt;$END$&lt;/dd&gt;&#10;&lt;/dl&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;script type=&quot;text/javascript&quot;&gt;...&lt;/script&gt;" name="script" toReformat="true" toShortenFQNames="true" value="&lt;script type=&quot;text/javascript&quot;&gt;$END$&lt;/script&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;acronym&gt;...&lt;/acronym&gt;" name="acr" toReformat="true" toShortenFQNames="true" value="&lt;acronym&gt;$END$&lt;/acronym&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;input type=&quot;password&quot; name=&quot;...&quot; id=&quot;...&quot;&gt;" name="input:password" toReformat="true" toShortenFQNames="true" value="&lt;input type=&quot;password&quot; name=&quot;$VAR0$&quot; id=&quot;$VAR1$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;input type=&quot;file&quot; name=&quot;...&quot; id=&quot;...&quot;&gt;" name="input:file" toReformat="true" toShortenFQNames="true" value="&lt;input type=&quot;file&quot; name=&quot;$VAR0$&quot; id=&quot;$VAR1$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;textarea&gt;...&lt;/textarea&gt;" name="tarea" toReformat="true" toShortenFQNames="true" value="&lt;textarea&gt;$END$&lt;/textarea&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;select name=&quot;...&quot; id=&quot;...&quot;&gt;...&lt;/select&gt;" name="select" toReformat="true" toShortenFQNames="true" value="&lt;select name=&quot;$VAR0$&quot; id=&quot;$VAR1$&quot;&gt;$END$&lt;/select&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;input type=&quot;number&quot; name=&quot;...&quot; id=&quot;...&quot;&gt;" name="input:number" toReformat="true" toShortenFQNames="true" value="&lt;input type=&quot;number&quot; name=&quot;$VAR0$&quot; id=&quot;$VAR1$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;input type=&quot;range&quot; name=&quot;...&quot; id=&quot;...&quot;&gt;" name="input:range" toReformat="true" toShortenFQNames="true" value="&lt;input type=&quot;range&quot; name=&quot;$VAR0$&quot; id=&quot;$VAR1$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;area shape=&quot;...&quot; coords=&quot;...&quot; href=&quot;...&quot; alt=&quot;...&quot;&gt;" name="area" toReformat="true" toShortenFQNames="true" value="&lt;area shape=&quot;$VAR0$&quot; coords=&quot;$VAR1$&quot; href=&quot;$VAR2$&quot; alt=&quot;$VAR3$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR2"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR3"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;input type=&quot;image&quot; src=&quot;...&quot; alt=&quot;...&quot;&gt;" name="input:image" toReformat="true" toShortenFQNames="true" value="&lt;input type=&quot;image&quot; src=&quot;$VAR0$&quot; alt=&quot;$VAR1$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="" name="ul+" toReformat="true" toShortenFQNames="true" value="&lt;ul&gt;&#10;  &lt;li&gt;$END$&lt;/li&gt;&#10;&lt;/ul&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;input type=&quot;month&quot; name=&quot;...&quot; id=&quot;...&quot;&gt;" name="input:month" toReformat="true" toShortenFQNames="true" value="&lt;input type=&quot;month&quot; name=&quot;$VAR0$&quot; id=&quot;$VAR1$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;fieldset&gt;...&lt;/fieldset&gt;" name="fset" toReformat="true" toShortenFQNames="true" value="&lt;fieldset&gt;$END$&lt;/fieldset&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html;charset=Win-1251&quot;&gt;" name="meta:win" toReformat="true" toShortenFQNames="true" value="&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html;charset=Win-1251&quot;&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;menu type=&quot;toolbar&quot;&gt;...&lt;/menu&gt;" name="menu:t" toReformat="true" toShortenFQNames="true" value="&lt;menu type=&quot;toolbar&quot;&gt;$END$&lt;/menu&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;form action=&quot;...&quot;&gt;...&lt;/form&gt;" name="form" toReformat="true" toShortenFQNames="true" value="&lt;form action=&quot;$VAR0$&quot;&gt;$END$&lt;/form&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;menu type=&quot;context&quot;&gt;...&lt;/menu&gt;" name="menu:c" toReformat="true" toShortenFQNames="true" value="&lt;menu type=&quot;context&quot;&gt;$END$&lt;/menu&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;link rel=&quot;stylesheet&quot; href=&quot;...&quot;&gt;" name="link" toReformat="true" toShortenFQNames="true" value="&lt;link rel=&quot;stylesheet&quot; href=&quot;$VAR0$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;input type=&quot;...&quot;&gt;" name="input" toReformat="true" toShortenFQNames="true" value="&lt;input type=&quot;$VAR0$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;link rel=&quot;alternate&quot; type=&quot;application/rss+xml&quot; title=&quot;RSS&quot; href=&quot;...rss.xml&quot;&gt;" name="link:rss" toReformat="true" toShortenFQNames="true" value="&lt;link rel=&quot;alternate&quot; type=&quot;application/rss+xml&quot; title=&quot;RSS&quot; href=&quot;$END$rss.xml&quot;&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="" name="select+" toReformat="true" toShortenFQNames="true" value="&lt;select name=&quot;$VAR0$&quot; id=&quot;$VAR1$&quot;&gt;&#10;  &lt;option value=&quot;$VAR2$&quot;&gt;$END$&lt;/option&gt;&lt;/select&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR2"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;header&gt;...&lt;/header&gt;" name="hdr" toReformat="true" toShortenFQNames="true" value="&lt;header&gt;$END$&lt;/header&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;caption&gt;...&lt;/caption&gt;" name="cap" toReformat="true" toShortenFQNames="true" value="&lt;caption&gt;$END$&lt;/caption&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;details&gt;...&lt;/details&gt;" name="det" toReformat="true" toShortenFQNames="true" value="&lt;details&gt;$END$&lt;/details&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;link rel=&quot;apple-touch-icon&quot; href=&quot;...favicon.png&quot;&gt;" name="link:touch" toReformat="true" toShortenFQNames="true" value="&lt;link rel=&quot;apple-touch-icon&quot; href=&quot;$END$favicon.png&quot;&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;iframe src=&quot;...&quot; frameborder=&quot;0&quot;&gt;...&lt;/iframe&gt;" name="iframe" toReformat="true" toShortenFQNames="true" value="&lt;iframe src=&quot;$VAR0$&quot; frameborder=&quot;0&quot;&gt;$END$&lt;/iframe&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;...style.css&quot; media=&quot;all&quot;&gt;" name="link:css" toReformat="true" toShortenFQNames="true" value="&lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;$END$style.css&quot; media=&quot;all&quot;&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;input type=&quot;week&quot; name=&quot;...&quot; id=&quot;...&quot;&gt;" name="input:week" toReformat="true" toShortenFQNames="true" value="&lt;input type=&quot;week&quot; name=&quot;$VAR0$&quot; id=&quot;$VAR1$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;embed src=&quot;...&quot; type=&quot;...&quot;&gt;" name="embed" toReformat="true" toShortenFQNames="true" value="&lt;embed src=&quot;$VAR0$&quot; type=&quot;$VAR1$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;datagrid&gt;...&lt;/datagrid&gt;" name="datag" toReformat="true" toShortenFQNames="true" value="&lt;datagrid&gt;$END$&lt;/datagrid&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;input type=&quot;datetime&quot; name=&quot;...&quot; id=&quot;...&quot;&gt;" name="input:datetime" toReformat="true" toShortenFQNames="true" value="&lt;input type=&quot;datetime&quot; name=&quot;$VAR0$&quot; id=&quot;$VAR1$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;option value=&quot;...&quot;&gt;...&lt;/option&gt;" name="option" toReformat="true" toShortenFQNames="true" value="&lt;option value=&quot;$VAR0$&quot;&gt;$END$&lt;/option&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot;&gt;...&lt;/html&gt;" name="html:xml" toReformat="true" toShortenFQNames="true" value="&lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot;&gt;$END$&lt;/html&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;button&gt;...&lt;/button&gt;" name="btn" toReformat="true" toShortenFQNames="true" value="&lt;button&gt;$END$&lt;/button&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;input type=&quot;url&quot; name=&quot;...&quot; id=&quot;...&quot;&gt;" name="input:url" toReformat="true" toShortenFQNames="true" value="&lt;input type=&quot;url&quot; name=&quot;$VAR0$&quot; id=&quot;$VAR1$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;menu type=&quot;context&quot;&gt;...&lt;/menu&gt;" name="menu:context" toReformat="true" toShortenFQNames="true" value="&lt;menu type=&quot;context&quot;&gt;$END$&lt;/menu&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="" name="colg+" toReformat="true" toShortenFQNames="true" value="&lt;colgroup&gt;&#10;  &lt;col&gt;&#10;&lt;/colgroup&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;map name=&quot;...&quot;&gt;...&lt;/map&gt;" name="map" toReformat="true" toShortenFQNames="true" value="&lt;map name=&quot;$VAR0$&quot;&gt;$END$&lt;/map&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;input type=&quot;color&quot; name=&quot;...&quot; id=&quot;...&quot;&gt;" name="input:color" toReformat="true" toShortenFQNames="true" value="&lt;input type=&quot;color&quot; name=&quot;$VAR0$&quot; id=&quot;$VAR1$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;meta http-equiv=&quot;X-UA-Compatible&quot; content=&quot;IE=7&quot;&gt;" name="meta:compat" toReformat="true" toShortenFQNames="true" value="&lt;meta http-equiv=&quot;X-UA-Compatible&quot; content=&quot;IE=7&quot;&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;input type=&quot;hidden&quot; name=&quot;...&quot;&gt;" name="input:hidden" toReformat="true" toShortenFQNames="true" value="&lt;input type=&quot;hidden&quot; name=&quot;$VAR0$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;object data=&quot;...&quot; type=&quot;...&quot;&gt;...&lt;/object&gt;" name="object" toReformat="true" toShortenFQNames="true" value="&lt;object data=&quot;$VAR0$&quot; type=&quot;$VAR1$&quot;&gt;$END$&lt;/object&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;a href=&quot;mailto:...&quot;&gt;...&lt;/a&gt;" name="a:mail" toReformat="true" toShortenFQNames="true" value="&lt;a href=&quot;mailto:$VAR0$&quot;&gt;$END$&lt;/a&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;a href=&quot;...&quot;&gt;...&lt;/a&gt;" name="a" toReformat="true" toShortenFQNames="true" value="&lt;a href=&quot;$VAR0$&quot;&gt;$END$&lt;/a&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;datalist&gt;...&lt;/datalist&gt;" name="datal" toReformat="true" toShortenFQNames="true" value="&lt;datalist&gt;$END$&lt;/datalist&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;keygen&gt;" name="kg" toReformat="true" toShortenFQNames="true" value="&lt;keygen&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;textarea name=&quot;...&quot; id=&quot;...&quot; cols=&quot;30&quot; rows=&quot;10&quot;&gt;...&lt;/textarea&gt;" name="textarea" toReformat="true" toShortenFQNames="true" value="&lt;textarea name=&quot;$VAR0$&quot; id=&quot;$VAR1$&quot; cols=&quot;30&quot; rows=&quot;10&quot;&gt;$END$&lt;/textarea&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="" name="map+" toReformat="true" toShortenFQNames="true" value="&lt;map name=&quot;$VAR0$&quot;&gt;&#10;  &lt;area shape=&quot;$VAR1$&quot; coords=&quot;$VAR2$&quot; href=&quot;$VAR3$&quot; alt=&quot;$VAR4$&quot;&gt;&lt;/map&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR2"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR3"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR4"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;input type=&quot;submit&quot; value=&quot;...&quot;&gt;" name="input:submit" toReformat="true" toShortenFQNames="true" value="&lt;input type=&quot;submit&quot; value=&quot;$VAR0$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;input type=&quot;text&quot; name=&quot;...&quot; id=&quot;...&quot;&gt;" name="input:text" toReformat="true" toShortenFQNames="true" value="&lt;input type=&quot;text&quot; name=&quot;$VAR0$&quot; id=&quot;$VAR1$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;input type=&quot;checkbox&quot; name=&quot;...&quot; id=&quot;...&quot;&gt;" name="input:checkbox" toReformat="true" toShortenFQNames="true" value="&lt;input type=&quot;checkbox&quot; name=&quot;$VAR0$&quot; id=&quot;$VAR1$&quot;&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;fieldset&gt;...&lt;/fieldset&gt;" name="fst" toReformat="true" toShortenFQNames="true" value="&lt;fieldset&gt;$END$&lt;/fieldset&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;section&gt;...&lt;/section&gt;" name="sect" toReformat="true" toShortenFQNames="true" value="&lt;section&gt;$END$&lt;/section&gt;">
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;audio src=&quot;...&quot;&gt;...&lt;/audio&gt;" name="audio" toReformat="true" toShortenFQNames="true" value="&lt;audio src=&quot;$VAR0$&quot;&gt;$END$&lt;/audio&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;bdo dir=&quot;...&quot;&gt;...&lt;/bdo&gt;" name="bdo" toReformat="true" toShortenFQNames="true" value="&lt;bdo dir=&quot;$VAR0$&quot;&gt;$END$&lt;/bdo&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="HTML" value="true"/>
+      <option name="XML" value="true"/>
+      <option name="JSP" value="true"/>
+      <option name="OTHER" value="true"/>
+    </context>
+  </template>
+</templateSet>

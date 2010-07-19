@@ -262,7 +262,7 @@ public class XmlZenCodingTemplate extends ZenCodingTemplate {
   private static TemplateImpl generateTagTemplate(String tagName, CustomTemplateCallback callback) {
     StringBuilder builder = new StringBuilder("<");
     builder.append(tagName).append('>');
-    if (isTrueXml(callback) || !HtmlUtil.isSingleHtmlTag(tagName)) {
+    if (!HtmlUtil.isSingleHtmlTag(tagName)) {
       builder.append("$END$</").append(tagName).append('>');
     }
     return new TemplateImpl("", builder.toString(), "");

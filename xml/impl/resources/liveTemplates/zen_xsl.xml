@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templateSet group="Zen XSL">
+  <template description="&lt;xsl:template match=&quot;...&quot; mode=&quot;...&quot;&gt;...&lt;/xsl:template&gt;" name="tmatch" toReformat="true" toShortenFQNames="true" value="&lt;xsl:template match=&quot;$VAR0$&quot; mode=&quot;$VAR1$&quot;&gt;$END$&lt;/xsl:template&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="XML" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;xsl:param name=&quot;...&quot; select=&quot;...&quot; /&gt;" name="par" toReformat="true" toShortenFQNames="true" value="&lt;xsl:param name=&quot;$VAR0$&quot; select=&quot;$VAR1$&quot; /&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="XML" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;xsl:copy-of select=&quot;...&quot; /&gt;" name="co" toReformat="true" toShortenFQNames="true" value="&lt;xsl:copy-of select=&quot;$VAR0$&quot; /&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="XML" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;xsl:attribute name=&quot;...&quot;&gt;...&lt;/xsl:attribute&gt;" name="attr" toReformat="true" toShortenFQNames="true" value="&lt;xsl:attribute name=&quot;$VAR0$&quot;&gt;$END$&lt;/xsl:attribute&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="XML" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;xsl:value-of select=&quot;...&quot; /&gt;" name="val" toReformat="true" toShortenFQNames="true" value="&lt;xsl:value-of select=&quot;$VAR0$&quot; /&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="XML" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;xsl:when test=&quot;...&quot;&gt;...&lt;/xsl:when&gt;" name="xsl:when" toReformat="true" toShortenFQNames="true" value="&lt;xsl:when test=&quot;$VAR0$&quot;&gt;$END$&lt;/xsl:when&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="XML" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;xsl:for-each select=&quot;...&quot;&gt;...&lt;/xsl:for-each&gt;" name="each" toReformat="true" toShortenFQNames="true" value="&lt;xsl:for-each select=&quot;$VAR0$&quot;&gt;$END$&lt;/xsl:for-each&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="XML" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;xsl:variable name=&quot;...&quot;&gt;...&lt;/xsl:variable&gt;" name="var" toReformat="true" toShortenFQNames="true" value="&lt;xsl:variable name=&quot;$VAR0$&quot;&gt;$END$&lt;/xsl:variable&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="XML" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;xsl:when test=&quot;...&quot;&gt;...&lt;/xsl:when&gt;" name="wh" toReformat="true" toShortenFQNames="true" value="&lt;xsl:when test=&quot;$VAR0$&quot;&gt;$END$&lt;/xsl:when&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="XML" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;xsl:template name=&quot;...&quot;&gt;...&lt;/xsl:template&gt;" name="tn" toReformat="true" toShortenFQNames="true" value="&lt;xsl:template name=&quot;$VAR0$&quot;&gt;$END$&lt;/xsl:template&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="XML" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;xsl:apply-templates select=&quot;...&quot; mode=&quot;...&quot; /&gt;" name="ap" toReformat="true" toShortenFQNames="true" value="&lt;xsl:apply-templates select=&quot;$VAR0$&quot; mode=&quot;$VAR1$&quot; /&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="XML" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;xsl:template match=&quot;...&quot; mode=&quot;...&quot;&gt;...&lt;/xsl:template&gt;" name="tm" toReformat="true" toShortenFQNames="true" value="&lt;xsl:template match=&quot;$VAR0$&quot; mode=&quot;$VAR1$&quot;&gt;$END$&lt;/xsl:template&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="XML" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;xsl:call-template name=&quot;...&quot; /&gt;" name="call" toReformat="true" toShortenFQNames="true" value="&lt;xsl:call-template name=&quot;$VAR0$&quot; /&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="XML" value="true"/>
+    </context>
+  </template>
+  <template description="" name="choose+" toReformat="true" toShortenFQNames="true" value="&lt;xsl:choose&gt;&#10;  &lt;xsl:when test=&quot;$VAR0$&quot;&gt;$VAR1$&lt;/xsl:when&gt;&#10;  &lt;xsl:otherwise&gt;$END$&lt;/xsl:otherwise&gt;&#10;&lt;/xsl:choose&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="XML" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;xsl:variable name=&quot;...&quot; select=&quot;...&quot; /&gt;" name="vare" toReformat="true" toShortenFQNames="true" value="&lt;xsl:variable name=&quot;$VAR0$&quot; select=&quot;$VAR1$&quot; /&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="XML" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;xsl:with-param name=&quot;...&quot; select=&quot;...&quot; /&gt;" name="wp" toReformat="true" toShortenFQNames="true" value="&lt;xsl:with-param name=&quot;$VAR0$&quot; select=&quot;$VAR1$&quot; /&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
+    <context>
+      <option name="XML" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;xsl:template name=&quot;...&quot;&gt;...&lt;/xsl:template&gt;" name="tname" toReformat="true" toShortenFQNames="true" value="&lt;xsl:template name=&quot;$VAR0$&quot;&gt;$END$&lt;/xsl:template&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="XML" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;xsl:if test=&quot;...&quot;&gt;...&lt;/xsl:if&gt;" name="if" toReformat="true" toShortenFQNames="true" value="&lt;xsl:if test=&quot;$VAR0$&quot;&gt;$END$&lt;/xsl:if&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="XML" value="true"/>
+    </context>
+  </template>
+</templateSet>
