@@ -70,6 +70,47 @@ public class LightPsiBuilderTest {
     );
   }
 
+  @Test
+  public void testDoneAndError() {
+    doTest("a2b",
+           new Parser() {
+             public void parse(PsiBuilder builder) {
+               IElementType tokenType;
+               while ((tokenType = builder.getTokenType()) != null) {
+                 final PsiBuilder.Marker marker = builder.mark();
+                 builder.advanceLexer();
+                 if (tokenType == DIGIT) marker.error("no digits allowed"); else marker.done(tokenType);
+               }
+             }
+           },
+           "Element(ROOT)\n" +
+           "  Element(LETTER)\n" +
+           "    PsiElement(LETTER)('a')\n" +
+           "  PsiErrorElement:no digits allowed\n" +
+           "    PsiElement(DIGIT)('2')\n" +
+           "  Element(LETTER)\n" +
+           "    PsiElement(LETTER)('b')\n");
+  }
+
+  @Test
+  public void testPrecedeAndDoneBefore() throws Exception {
+    doTest("ab",
+           new Parser() {
+             public void parse(PsiBuilder builder) {
+               builder.advanceLexer();
+               final PsiBuilder.Marker marker = builder.mark();
+               builder.advanceLexer();
+               marker.done(OTHER);
+               marker.precede().doneBefore(COLLAPSED, marker);
+             }
+           },
+           "Element(ROOT)\n" +
+           "  PsiElement(LETTER)('a')\n" +
+           "  Element(COLLAPSED)\n" +
+           "    <empty list>\n" +
+           "  Element(OTHER)\n" +
+           "    PsiElement(LETTER)('b')\n");
+  }
 
   private interface Parser {
     void parse(PsiBuilder builder);
