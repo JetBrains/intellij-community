@@ -89,7 +89,7 @@ public class QuickEditAction implements IntentionAction {
 
   @NotNull
   public String getFamilyName() {
-    return "Quick Edit";
+    return "Edit Injected Fragment";
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {

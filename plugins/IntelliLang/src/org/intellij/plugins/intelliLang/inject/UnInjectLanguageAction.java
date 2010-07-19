@@ -50,7 +50,7 @@ public class UnInjectLanguageAction implements IntentionAction {
 
   @NotNull
   public String getFamilyName() {
-    return InjectLanguageAction.INJECT_LANGUAGE_FAMILY;
+    return getText();
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
