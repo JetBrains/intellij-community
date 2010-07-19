@@ -103,7 +103,7 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
   /**
    * Signals that the next command added should be sent as an input to the server.
    */
-  private volatile boolean waitingForInput;
+  public volatile boolean waitingForInput;
 
   /**
    * Input that should be sent to the server (waiting for raw_input)
