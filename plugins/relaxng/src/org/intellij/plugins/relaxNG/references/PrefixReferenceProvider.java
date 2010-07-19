@@ -22,6 +22,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.CreateNSDeclarationIntentionFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -44,6 +45,8 @@ import org.jetbrains.annotations.Nullable;
 * Date: 24.07.2007
 */
 public class PrefixReferenceProvider extends PsiReferenceProviderBase {
+  private static final Logger LOG = Logger.getInstance("#org.intellij.plugins.relaxNG.references.PrefixReferenceProvider");
+
   @NotNull
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
     final XmlAttributeValue value = (XmlAttributeValue)element;
@@ -102,7 +105,7 @@ public class PrefixReferenceProvider extends PsiReferenceProviderBase {
         QuickFixAction.registerQuickFixAction(info,
               new CreateNSDeclarationIntentionFix(tag, reference.getCanonicalText()));
       } catch (Throwable e) {
-        e.printStackTrace();
+        LOG.error(e);
       }
     }
 
