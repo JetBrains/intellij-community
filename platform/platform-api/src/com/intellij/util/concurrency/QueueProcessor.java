@@ -85,7 +85,7 @@ public class QueueProcessor<T> {
         myProcessor.consume(next);
       }
       catch (Exception e) {
-        LOG.error(e);
+        LOG.warn(e);
       }
 
       synchronized (myQueue) {
