@@ -5,6 +5,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
 
+import static com.intellij.psi.StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN;
+import static com.intellij.psi.StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN;
+
 /**
  * Specialized lexer for string literals. To be used as a layer in a LayeredLexer.
  * Mostly handles escapes, differently in byte / unicode / raw strings.
@@ -117,24 +120,33 @@ public class PyStringLiteralLexer extends LexerBase {
     char nextChar = myBuffer.charAt(myStart + 1);
     mySeenEscapedSpacesOnly &= nextChar == ' ';
     if ((nextChar == '\n' || nextChar == ' ' && (mySeenEscapedSpacesOnly || isTrailingSpace(myStart+2)))) {
-      return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN; // escaped EOL
+      return VALID_STRING_ESCAPE_TOKEN; // escaped EOL
     }
     if (nextChar == 'u' || nextChar == 'U') {
-      if (myUnicodeMark == MARK_UNICODE || (myUnicodeIsDefault && (myUnicodeMark == MARK_NONE))) { // unicode allowed
+      if (isUnicodeMode()) {
         final int width = nextChar == 'u'? 4 : 8; // is it uNNNN or Unnnnnnnn
         for(int i = myStart + 2; i < myStart + width + 2; i++) {
-          if (i >= myEnd || !isHexDigit(myBuffer.charAt(i))) return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN;
+          if (i >= myEnd || !isHexDigit(myBuffer.charAt(i))) return INVALID_UNICODE_ESCAPE_TOKEN;
         }
-        return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN;
+        return VALID_STRING_ESCAPE_TOKEN;
       }
       else return myOriginalLiteralToken; // b"\u1234" is just b"\\u1234", nothing gets escaped
     }
 
     if (nextChar == 'x') { // \xNN is allowed both in bytes and unicode.
       for(int i = myStart + 2; i < myStart + 4; i++) {
-        if (i >= myEnd || !isHexDigit(myBuffer.charAt(i))) return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN;
+        if (i >= myEnd || !isHexDigit(myBuffer.charAt(i))) return INVALID_UNICODE_ESCAPE_TOKEN;
       }
-      return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN;
+      return VALID_STRING_ESCAPE_TOKEN;
+    }
+
+    if (nextChar == 'N' && isUnicodeMode()) {
+      int i = myStart+2;
+      if (i >= myEnd || myBuffer.charAt(i) != '{') return INVALID_UNICODE_ESCAPE_TOKEN;
+      i++;
+      while(i < myEnd && myBuffer.charAt(i) != '}') i++;
+      if (i >= myEnd) return INVALID_UNICODE_ESCAPE_TOKEN;
+      return VALID_STRING_ESCAPE_TOKEN;      
     }
 
     switch (nextChar) {
@@ -155,11 +167,15 @@ public class PyStringLiteralLexer extends LexerBase {
       case '4':
       case '5':
       case '6':
-      case '7': return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN;
+      case '7': return VALID_STRING_ESCAPE_TOKEN;
     }
 
     // other unrecognized escapes are just part of string, not an error
     return myOriginalLiteralToken;
+  }
+
+  private boolean isUnicodeMode() {
+    return myUnicodeMark == MARK_UNICODE || (myUnicodeIsDefault && (myUnicodeMark == MARK_NONE));
   }
 
   // all subsequent chars are escaped spaces
@@ -232,6 +248,18 @@ public class PyStringLiteralLexer extends LexerBase {
         }
         return i;
       }
+
+      if (myBuffer.charAt(i) == 'N' && isUnicodeMode()) {
+        i++;
+        while(i < myBufferEnd && myBuffer.charAt(i) != '}') {
+          i++;
+        }
+        if (i < myBufferEnd) {
+          i++;
+        }
+        return i;
+      }
+
       else {
         return i + 1;
       }

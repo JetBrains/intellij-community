@@ -1,13 +1,12 @@
 package com.jetbrains.python;
 
-import com.intellij.lexer.Lexer;
+import com.jetbrains.python.fixtures.PyLexerTestCase;
 import com.jetbrains.python.lexer.PythonIndentingLexer;
-import junit.framework.TestCase;
 
 /**
  * @author yole
  */
-public class PythonLexerTest extends TestCase {
+public class PythonLexerTest extends PyLexerTestCase {
   public void testSimpleExpression() {
     doTest("a=1", "Py:IDENTIFIER", "Py:EQ", "Py:INTEGER_LITERAL");
   }
@@ -156,28 +155,6 @@ public class PythonLexerTest extends TestCase {
   }
 
   private static void doTest(String text, String... expectedTokens) {
-    Lexer lexer = new PythonIndentingLexer();
-    lexer.start(text);
-    int idx = 0;
-    int tokenPos = 0;
-    while (lexer.getTokenType() != null) {
-      if (idx >= expectedTokens.length) {
-        StringBuilder remainingTokens = new StringBuilder(lexer.getTokenType().toString());
-        lexer.advance();
-        while (lexer.getTokenType() != null) {
-          remainingTokens.append(" ").append(lexer.getTokenType().toString());
-          lexer.advance();
-        }
-        fail("Too many tokens. Following tokens: " + remainingTokens.toString());
-      }
-      assertEquals("Token offset mismatch at position " + idx, tokenPos, lexer.getTokenStart());
-      String tokenName = lexer.getTokenType().toString();
-      assertEquals("Token mismatch at position " + idx, expectedTokens[idx], tokenName);
-      idx++;
-      tokenPos = lexer.getTokenEnd();
-      lexer.advance();
-    }
-
-    if (idx < expectedTokens.length) fail("Not enough tokens");
+    doLexerTest(text, new PythonIndentingLexer(), expectedTokens);
   }
 }
