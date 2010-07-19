@@ -142,6 +142,25 @@ public class PyUtil {
     return _unfoldParenExprs(targets, new ArrayList<T>(targets.length), true);
   }
 
+  /**
+   * ('+', {'a', 'b', 'c'}) -> 'a+b+c'
+   * @param separator what to put between items
+   * @param items
+   * @return a string of items joined by separator
+   */
+  public static String joinWith(String separator, List<String> items) {
+    StringBuilder sb = new StringBuilder();
+    boolean is_not_first = false;
+    for (String item : items) {
+      if (is_not_first) {
+        sb.append(separator);
+      }
+      else is_not_first = true;
+      sb.append(item);
+    }
+    return sb.toString();
+  }
+
   // Poor man's filter
   // TODO: move to a saner place
 

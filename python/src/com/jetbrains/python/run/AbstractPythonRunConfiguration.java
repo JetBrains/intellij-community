@@ -7,6 +7,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -14,8 +15,11 @@ import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.sdk.BuildoutPythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkFlavor;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.toolbox.FP;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,7 +82,7 @@ public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfigur
   public String getSdkHome() {
     String sdkHome = mySdkHome;
     if (StringUtil.isEmptyOrSpaces(mySdkHome)) {
-      final Sdk projectJdk = ProjectRootManager.getInstance(getProject()).getProjectJdk();
+      final Sdk projectJdk = PythonSdkType.findPythonSdk(getModule());
       if (projectJdk != null) {
         sdkHome = projectJdk.getHomePath();
       }
@@ -195,30 +199,48 @@ public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfigur
    * @param commandLine what to patch
    */
   public void patchCommandLine(GeneralCommandLine commandLine) {
-    // prepend virtualenv bin if it's not already on PATH
     final String sdk_home = getSdkHome();
-    if (sdk_home != null) {
-      File virtualenv_root = PythonSdkType.getVirtualEnvRoot(sdk_home);
-      if (virtualenv_root != null) {
-        String virtualenv_bin = new File(virtualenv_root, "bin").getPath();
-        String path_value;
-        if (isPassParentEnvs()) {
-          // append to PATH
-          path_value = System.getenv("PATH");
-          if (path_value != null) path_value = virtualenv_bin + File.pathSeparator + path_value;
-          else path_value = virtualenv_bin;
+    Sdk sdk = PythonSdkType.findPythonSdk(getModule());
+    if (sdk != null && sdk_home != null) {
+      SdkType sdk_type = sdk.getSdkType();
+      if (sdk_type instanceof PythonSdkType) {
+        PythonSdkType python_sdk_type = (PythonSdkType)sdk_type;
+        if (python_sdk_type instanceof BuildoutPythonSdkType) {
+          // rewrite pythonpath
+          List<String> paths = python_sdk_type.getCachedSysPath(sdk_home);
+          if (paths != null) {
+            Map<String, String> new_env = cloneEnv(commandLine.getEnvParams());
+            new_env.put("PYTHONPATH", PyUtil.joinWith(File.pathSeparator, paths));
+            commandLine.setEnvParams(new_env);
+          }
         }
-        else path_value = virtualenv_bin;
-        Map<String, String> new_env; // we need a copy lest we change config's map.
-        Map<String, String> cmd_env = commandLine.getEnvParams();
-        if (cmd_env != null) new_env = new com.intellij.util.containers.HashMap<String, String>(cmd_env);
-        else new_env = new com.intellij.util.containers.HashMap<String, String>();
-        String existing_path = new_env.get("PATH");
-        if (existing_path == null || existing_path.indexOf(virtualenv_bin) < 0) {
-          new_env.put("PATH", path_value);
-          commandLine.setEnvParams(new_env);
+        File virtualenv_root = PythonSdkType.getVirtualEnvRoot(sdk_home);
+        if (virtualenv_root != null) {
+          // prepend virtualenv bin if it's not already on PATH
+          String virtualenv_bin = new File(virtualenv_root, "bin").getPath();
+          String path_value;
+          if (isPassParentEnvs()) {
+            // append to PATH
+            path_value = System.getenv("PATH");
+            if (path_value != null) path_value = virtualenv_bin + File.pathSeparator + path_value;
+            else path_value = virtualenv_bin;
+          }
+          else path_value = virtualenv_bin;
+          Map<String, String> new_env = cloneEnv(commandLine.getEnvParams()); // we need a copy lest we change config's map.
+          String existing_path = new_env.get("PATH");
+          if (existing_path == null || existing_path.indexOf(virtualenv_bin) < 0) {
+            new_env.put("PATH", path_value);
+            commandLine.setEnvParams(new_env);
+          }
         }
       }
     }
+  }
+
+  private static Map<String, String> cloneEnv(Map<String, String> cmd_env) {
+    Map<String, String> new_env;
+    if (cmd_env != null) new_env = new com.intellij.util.containers.HashMap<String, String>(cmd_env);
+    else new_env = new com.intellij.util.containers.HashMap<String, String>();
+    return new_env;
   }
 }

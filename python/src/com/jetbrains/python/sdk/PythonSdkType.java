@@ -57,6 +57,7 @@ public class PythonSdkType extends SdkType {
   private static final String[] WINDOWS_EXECUTABLE_SUFFIXES = new String[]{"cmd", "exe", "bat", "com"};
 
   static final int RUN_TIMEOUT = 60 * 1000; // 60 seconds per script invocation is plenty; anything more seems wrong (10 wasn't enough tho).
+  private List<String> myCachedSysPath;
 
   public static PythonSdkType getInstance() {
     return SdkType.findInstance(PythonSdkType.class);
@@ -462,7 +463,9 @@ public class PythonSdkType extends SdkType {
     Application application = ApplicationManager.getApplication();
     if (application != null && !application.isUnitTestMode()) {
       final List<String> paths = getSysPathsFromScript(bin_path);
+      myCachedSysPath = paths;
       if (paths == null) throw new InvalidSdkException("Failed to determine Python's sys.path value");
+      myCachedSysPath = Collections.unmodifiableList(paths);
       return paths;
     }
     else { // mock sdk
@@ -470,6 +473,12 @@ public class PythonSdkType extends SdkType {
       ret.add(working_dir);
       return ret;
     }
+  }
+
+  @Nullable
+  public List<String> getCachedSysPath(String bin_path) {
+    if (myCachedSysPath != null) return myCachedSysPath;
+    else return getSysPath(bin_path);
   }
 
   protected static boolean checkSuccess(ProcessOutput run_result) {

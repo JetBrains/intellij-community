@@ -3,7 +3,9 @@ package com.jetbrains.python.sdk;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PythonHelpersLocator;
 import org.jetbrains.annotations.NotNull;
@@ -76,6 +78,14 @@ public class BuildoutPythonSdkType extends PythonSdkType {
 
   @Override
   protected void addHardcodedPaths(SdkModificator sdkModificator) {
-    // nothing
+    // django if present
+    // NOTE: a silly hack. should find a better way
+    File parts_dir = new File(myBaseDir, "parts");
+    if (parts_dir.isDirectory()) {
+      File django_dir = new File(parts_dir, "django");
+      if (django_dir.isDirectory()) {
+        sdkModificator.addRoot(LocalFileSystem.getInstance().findFileByPath(django_dir.getPath()), OrderRootType.CLASSES);
+      }
+    }
   }
 }
