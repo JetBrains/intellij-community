@@ -79,7 +79,6 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
     }
     final ArrayList<String> args = new ArrayList<String>(
       Arrays.asList(sdk.getHomePath(), "-u", PythonHelpersLocator.getHelperPath("pydev/console/pydevconsole.py")));
-    args.add(NetUtils.getLocalHostString());
     for (int port : ports) {
       args.add(String.valueOf(port));
     }

@@ -7,10 +7,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.jetbrains.python.console.PydevWebServer;
-import org.apache.xmlrpc.WebServer;
-import org.apache.xmlrpc.XmlRpcException;
-import org.apache.xmlrpc.XmlRpcHandler;
+import org.apache.xmlrpc.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.MalformedURLException;
@@ -66,7 +63,8 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
     stdErrReader.start();
 
     //start the server that'll handle input requests
-    this.webServer = new PydevWebServer(clientPort, this);
+    webServer = new WebServer(clientPort);
+    webServer.addHandler("$default", this);
     this.webServer.start();
 
     IPydevXmlRpcClient client = new PydevXmlRpcClient(process, stdErrReader, stdOutReader, port);
@@ -78,7 +76,7 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
    */
   public void close() throws Exception {
     if (this.client != null) {
-      new Task.Backgroundable(myProject, "Close console communication", false) {
+      new Task.Backgroundable(myProject, "Close console communication", true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
@@ -146,7 +144,8 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
 
     //let the busy loop from execInterpreter free and enter a busy loop
     //in this function until execInterpreter gives us an input
-    nextResponse = new InterpreterResponse(stdOutReader.getAndClearContents(), stdErrReader.getAndClearContents(), false, needInput);
+    nextResponse = new InterpreterResponse(stdOutReader.getAndClearContents(),
+                                           stdErrReader.getAndClearContents(), false, needInput);
 
     //busy loop until we have an input
     while (inputReceived == null) {
@@ -220,7 +219,7 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
     }
     else {
       //create a thread that'll keep locked until an answer is received from the server.
-      new Task.Backgroundable(myProject, "REPL Communication", false) {
+      new Task.Backgroundable(myProject, "REPL Communication", true) {
 
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
@@ -233,17 +232,21 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
             //is accepted) -- that's mostly because the server may take a while to get started.
             int commAttempts = 0;
             while (true) {
+              if (indicator.isCanceled()){
+                return;
+              }
+
               executed = exec(command);
 
               //executed.o1 is not null only if we had an error
 
-              String refusedConnPattern = "Failed to read servers response"; // Was "refused", but it didn't
-              // work on non English system
-              // (in Spanish localized systems
-              // it is "rechazada")
-              // This string always works,
-              // because it is hard-coded in
-              // the XML-RPC library)
+              String refusedConnPattern = "Failed to read servers response";  // Was "refused", but it didn't
+                                                                              // work on non English system
+                                                                              // (in Spanish localized systems
+                                                                              // it is "rechazada")
+                                                                              // This string always works,
+                                                                              // because it is hard-coded in
+                                                                              // the XML-RPC library)
               if (executed.first != null && executed.first.indexOf(refusedConnPattern) != -1) {
                 if (firstCommWorked) {
                   break;
@@ -325,7 +328,7 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
           }
           onResponseReceived.call(nextResponse);
         }
-      }, "Waiting for REPL response", false, myProject);
+      }, "Waiting for REPL response", true, myProject);
     }
   }
 
