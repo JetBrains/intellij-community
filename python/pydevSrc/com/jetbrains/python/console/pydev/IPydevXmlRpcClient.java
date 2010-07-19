@@ -2,8 +2,6 @@ package com.jetbrains.python.console.pydev;
 
 import org.apache.xmlrpc.XmlRpcException;
 
-import java.net.MalformedURLException;
-
 
 /**
  * Interface that determines what's needed from the xml-rpc server.
@@ -20,5 +18,5 @@ public interface IPydevXmlRpcClient {
      * 
      * @throws XmlRpcException
      */
-    Object execute(String command, Object[] args, long timeout) throws XmlRpcException;
+    Object execute(String command, Object[] args) throws XmlRpcException;
 }

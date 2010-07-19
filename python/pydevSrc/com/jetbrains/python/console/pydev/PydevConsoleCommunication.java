@@ -1,13 +1,14 @@
 package com.jetbrains.python.console.pydev;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.jetbrains.python.console.PydevWebServer;
-import org.apache.xmlrpc.WebServer;
-import org.apache.xmlrpc.XmlRpcException;
-import org.apache.xmlrpc.XmlRpcHandler;
+import org.apache.xmlrpc.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.net.MalformedURLException;
 import java.util.ArrayList;
@@ -62,7 +63,8 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
     stdErrReader.start();
 
     //start the server that'll handle input requests
-    this.webServer = new PydevWebServer(clientPort, this);
+    webServer = new WebServer(clientPort);
+    webServer.addHandler("$default", this);
     this.webServer.start();
 
     IPydevXmlRpcClient client = new PydevXmlRpcClient(process, stdErrReader, stdOutReader, port);
@@ -74,17 +76,18 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
    */
   public void close() throws Exception {
     if (this.client != null) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        public void run() {
+      new Task.Backgroundable(myProject, "Close console communication", true) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
           try {
-            PydevConsoleCommunication.this.client.execute("close", new Object[0], TIMEOUT);
+            PydevConsoleCommunication.this.client.execute("close", new Object[0]);
           }
           catch (Exception e) {
             //Ok, we can ignore this one on close.
           }
           PydevConsoleCommunication.this.client = null;
         }
-      }, "Close console communication", false, myProject);
+      }.queue();
     }
 
     if (this.webServer != null) {
@@ -101,7 +104,7 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
   /**
    * Signals that the next command added should be sent as an input to the server.
    */
-  private volatile boolean waitingForInput;
+  public volatile boolean waitingForInput;
 
   /**
    * Input that should be sent to the server (waiting for raw_input)
@@ -141,7 +144,8 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
 
     //let the busy loop from execInterpreter free and enter a busy loop
     //in this function until execInterpreter gives us an input
-    nextResponse = new InterpreterResponse(stdOutReader.getAndClearContents(), stdErrReader.getAndClearContents(), false, needInput);
+    nextResponse = new InterpreterResponse(stdOutReader.getAndClearContents(),
+                                           stdErrReader.getAndClearContents(), false, needInput);
 
     //busy loop until we have an input
     while (inputReceived == null) {
@@ -158,6 +162,50 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
   }
 
   /**
+   * Executes the needed command
+   *
+   * @return a Pair with (null, more) or (error, false)
+   * @throws XmlRpcException
+   */
+  private Pair<String, Boolean> exec(final String command) throws XmlRpcException {
+    Object execute = client.execute("addExec", new Object[]{command});
+
+    Object object;
+    if (execute instanceof Vector) {
+      object = ((Vector)execute).get(0);
+    }
+    else if (execute.getClass().isArray()) {
+      object = ((Object[])execute)[0];
+    }
+    else {
+      object = execute;
+    }
+    boolean more;
+
+    String errorContents = null;
+    if (object instanceof Boolean) {
+      more = (Boolean)object;
+
+    }
+    else {
+      String str = object.toString();
+
+      String lower = str.toLowerCase();
+      if (lower.equals("true") || lower.equals("1")) {
+        more = true;
+      }
+      else if (lower.equals("false") || lower.equals("0")) {
+        more = false;
+      }
+      else {
+        more = false;
+        errorContents = str;
+      }
+    }
+    return new Pair<String, Boolean>(errorContents, more);
+  }
+
+  /**
    * Executes a given line in the interpreter.
    *
    * @param command the command to be executed in the client
@@ -171,76 +219,34 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
     }
     else {
       //create a thread that'll keep locked until an answer is received from the server.
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      new Task.Backgroundable(myProject, "REPL Communication", true) {
 
-        /**
-         * Executes the needed command
-         *
-         * @return a Pair with (null, more) or (error, false)
-         *
-         * @throws XmlRpcException
-         */
-        private Pair<String, Boolean> exec() throws XmlRpcException {
-
-          Object execute = client.execute("addExec", new Object[]{command}, TIMEOUT);
-
-          Object object;
-          if (execute instanceof Vector){
-            object = ((Vector)execute).get(0);
-          }
-          else if (execute.getClass().isArray()){
-            object = ((Object[])execute)[0];
-          }
-          else {
-            object = execute;
-          }
-          boolean more;
-
-          String errorContents = null;
-          if (object instanceof Boolean) {
-            more = (Boolean)object;
-
-          }
-          else {
-            String str = object.toString();
-
-            String lower = str.toLowerCase();
-            if (lower.equals("true") || lower.equals("1")) {
-              more = true;
-            }
-            else if (lower.equals("false") || lower.equals("0")) {
-              more = false;
-            }
-            else {
-              more = false;
-              errorContents = str;
-            }
-          }
-          return new Pair<String, Boolean>(errorContents, more);
-        }
-
-        public void run() {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
           boolean needInput = false;
           try {
 
             Pair<String, Boolean> executed = null;
 
-
             //the 1st time we'll do a connection attempt, we can try to connect n times (until the 1st time the connection
             //is accepted) -- that's mostly because the server may take a while to get started.
             int commAttempts = 0;
             while (true) {
-              executed = exec();
+              if (indicator.isCanceled()){
+                return;
+              }
+
+              executed = exec(command);
 
               //executed.o1 is not null only if we had an error
 
-              String refusedConnPattern = "Failed to read servers response"; // Was "refused", but it didn't
-              // work on non English system
-              // (in Spanish localized systems
-              // it is "rechazada")
-              // This string always works,
-              // because it is hard-coded in
-              // the XML-RPC library)
+              String refusedConnPattern = "Failed to read servers response";  // Was "refused", but it didn't
+                                                                              // work on non English system
+                                                                              // (in Spanish localized systems
+                                                                              // it is "rechazada")
+                                                                              // This string always works,
+                                                                              // because it is hard-coded in
+                                                                              // the XML-RPC library)
               if (executed.first != null && executed.first.indexOf(refusedConnPattern) != -1) {
                 if (firstCommWorked) {
                   break;
@@ -268,7 +274,7 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
 
             firstCommWorked = true;
 
-            String errorContents = executed.first;
+          String errorContents = executed.first;
             boolean more = executed.second;
 
             if (errorContents == null) {
@@ -281,50 +287,78 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
             nextResponse = new InterpreterResponse("", "Exception while pushing line to console:" + e.getMessage(), false, needInput);
           }
         }
-      }, "Pydev Console Communication", true, myProject);
-    }
 
-    //busy loop until we have a response
-    while (nextResponse == null) {
-      synchronized (lock2) {
-        try {
-          lock2.wait(20);
+      }.queue();
+
+
+      //busy loop waiting for the answer (or having the console die).
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+        @Override
+        public void run() {
+          final ProgressManager progressManager = ProgressManager.getInstance();
+          if (progressManager.hasProgressIndicator()){
+            progressManager.getProgressIndicator().setText("Waiting for REPL response with " + (int)(TIMEOUT/10e8) + "s timeout");
+          }
+          final long startTime = System.nanoTime();
+          while (nextResponse == null) {
+            try {
+              ProgressManager.checkCanceled();
+            }
+            catch (ProcessCanceledException e) {
+              LOG.debug("Canceled");
+              nextResponse = new InterpreterResponse("", "Canceled", false, false);
+            }
+
+            final long time = System.nanoTime() - startTime;
+            if (progressManager.hasProgressIndicator()){
+              progressManager.getProgressIndicator().setFraction(((double)time) / TIMEOUT);
+            }
+            if (time > TIMEOUT){
+              LOG.debug("Timeout exceeded");
+              nextResponse = new InterpreterResponse("", "Timeout exceeded", false, false);
+            }
+            synchronized (lock2) {
+              try {
+                lock2.wait(20);
+              }
+              catch (InterruptedException e) {
+                LOG.error(e);
+              }
+            }
+          }
+          onResponseReceived.call(nextResponse);
         }
-        catch (InterruptedException e) {
-          LOG.error(e);
-        }
-      }
+      }, "Waiting for REPL response", true, myProject);
     }
-    onResponseReceived.call(nextResponse);
   }
 
   /**
    * @return completions from the client
    */
-    public List<PydevCompletionVariant> getCompletions(final String prefix) throws Exception {
-        if(waitingForInput){
-            return Collections.emptyList();
-        }
-        final Object fromServer = client.execute("getCompletions", new Object[]{prefix}, TIMEOUT);
-        final List<PydevCompletionVariant> ret = new ArrayList<PydevCompletionVariant>();
-        
-        
-        if (fromServer instanceof Vector){
-          for(Object o: (Vector) fromServer){
-            if(o instanceof Vector){
-              //name, doc, args, type
-              final Vector comp = (Vector) o;
-              final int type = extractInt(comp.get(3));
-              final String args = AbstractPyCodeCompletion.getArgs((String) comp.get(2), type,
-                                                                   AbstractPyCodeCompletion.LOOKING_FOR_INSTANCED_VARIABLE) ;
-
-              ret.add(new PydevCompletionVariant((String) comp.get(0), (String) comp.get(1), args, type));
-            }
-        }
-        }
-
-      return ret;
+  public List<PydevCompletionVariant> getCompletions(final String prefix) throws Exception {
+    if (waitingForInput) {
+      return Collections.emptyList();
     }
+    final Object fromServer = client.execute("getCompletions", new Object[]{prefix});
+    final List<PydevCompletionVariant> ret = new ArrayList<PydevCompletionVariant>();
+
+
+    if (fromServer instanceof Vector) {
+      for (Object o : (Vector)fromServer) {
+        if (o instanceof Vector) {
+          //name, doc, args, type
+          final Vector comp = (Vector)o;
+          final int type = extractInt(comp.get(3));
+          final String args = AbstractPyCodeCompletion.getArgs((String)comp.get(2), type,
+                                                               AbstractPyCodeCompletion.LOOKING_FOR_INSTANCED_VARIABLE);
+
+          ret.add(new PydevCompletionVariant((String)comp.get(0), (String)comp.get(1), args, type));
+        }
+      }
+    }
+
+    return ret;
+  }
 
   /**
    * Extracts an int from an object
@@ -347,7 +381,7 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
     if (waitingForInput) {
       return "Unable to get description: waiting for input.";
     }
-    return client.execute("getDescription", new Object[]{text}, TIMEOUT).toString();
+    return client.execute("getDescription", new Object[]{text}).toString();
   }
 
 
