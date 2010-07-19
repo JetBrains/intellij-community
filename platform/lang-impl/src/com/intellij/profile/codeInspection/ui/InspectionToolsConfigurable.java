@@ -244,7 +244,10 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
   public Runnable enableSearch(final String option) {
     return new Runnable(){
       public void run() {
-        getSelectedPanel().filterTree(option);
+        SingleInspectionProfilePanel panel = getSelectedPanel();
+        if (panel != null) {
+          panel.filterTree(option);
+        }
       }
     };
   }

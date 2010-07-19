@@ -24,10 +24,10 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
-import com.intellij.testFramework.PsiTestUtil;
 
 /**
  * @author peter
@@ -51,7 +51,7 @@ public class GroovyGotoImplementationTest extends JavaCodeInsightFixtureTestCase
       PsiFile inProject = myFixture.addFileToProject("Foo.groovy", "class <caret>Foo {}\n class Bar extends Foo {}");
       myFixture.configureFromExistingVirtualFile(inProject.getVirtualFile());
 
-      final PsiElement[] impls = new GotoImplementationHandler().getSourceAndTargetElements(myFixture.getEditor(), inProject).second;
+      final PsiElement[] impls = new GotoImplementationHandler().getSourceAndTargetElements(myFixture.getEditor(), inProject).targets;
       assertEquals(1, impls.length);
     }
     finally {

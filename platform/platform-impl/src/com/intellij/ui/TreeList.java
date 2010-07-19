@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -32,7 +33,7 @@ import java.util.Enumeration;
 /**
  * @author Eugene Belyaev
  */
-public class TreeList extends JList implements TreeModelListener {
+public class TreeList extends JBList implements TreeModelListener {
   private final TreeModel myTreeModel;
   private boolean myRootVisible = false;
   private final DefaultListModel myListModel = new DefaultListModel();

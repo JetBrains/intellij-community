@@ -25,7 +25,7 @@ import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.JdkListConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.IconLoader;
@@ -80,7 +80,7 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
         final Project project = getProject(context, type);
         final ProjectStructureConfigurable projectConfig = ProjectStructureConfigurable.getInstance(project);
         final JdkListConfigurable jdkConfig = JdkListConfigurable.getInstance(project);
-        final ProjectJdksModel projectJdksModel = projectConfig.getProjectJdksModel();
+        final ProjectSdksModel projectJdksModel = projectConfig.getProjectJdksModel();
         final boolean[] successfullyAdded = new boolean[1];
         projectJdksModel.doAdd(type, myPanel, new Consumer<Sdk>() {
           public void consume(final Sdk jdk) {

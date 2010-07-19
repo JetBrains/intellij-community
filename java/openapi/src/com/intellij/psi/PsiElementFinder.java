@@ -15,10 +15,16 @@
  */
 package com.intellij.psi;
 
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Allows to extend the mechanism of locating classes and packages by full-qualified name.
@@ -89,5 +95,25 @@ public abstract class PsiElementFinder {
   @NotNull
   public PsiClass[] getClasses(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
     return PsiClass.EMPTY_ARRAY;
+  }
+
+  public Set<String> getClassNames(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
+    return getClassNames(getClasses(psiPackage, scope));
+  }
+
+  protected static Set<String> getClassNames(PsiClass[] classes) {
+    if (classes.length == 0) {
+      return Collections.emptySet();
+    }
+
+    final HashSet<String> names = new HashSet<String>();
+    for (PsiClass aClass : classes) {
+      ContainerUtil.addIfNotNull(aClass.getName(), names);
+    }
+    return names;
+  }
+
+  public boolean processPackageDirectories(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope, Processor<PsiDirectory> consumer) {
+    return true;
   }
 }

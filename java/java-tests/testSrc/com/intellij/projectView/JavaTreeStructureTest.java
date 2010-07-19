@@ -212,7 +212,7 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
 
   @Override
   protected Sdk getTestProjectJdk() {
-    return JavaSdkImpl.getMockJdkCE();
+    return JavaSdkImpl.getMockJdk17();
   }
 
 }

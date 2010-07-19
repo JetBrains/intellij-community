@@ -16,6 +16,7 @@
 package com.intellij.psi.impl;
 
 import com.intellij.ide.IconProvider;
+import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.*;
 import com.intellij.psi.PsiElement;
@@ -162,6 +163,14 @@ public class PomTargetPsiElementImpl extends RenameableFakePsiElement implements
       return ((PsiTarget)myTarget).getNavigationElement().getContainingFile();
     }
     return null;
+  }
+
+  @NotNull
+  public Language getLanguage() {
+    if (myTarget instanceof PsiTarget) {
+      return ((PsiTarget)myTarget).getNavigationElement().getLanguage();
+    }
+    return Language.ANY;
   }
 
   @NotNull

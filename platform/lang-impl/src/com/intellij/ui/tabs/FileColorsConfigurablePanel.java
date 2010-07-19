@@ -37,6 +37,7 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
   private FileColorManagerImpl myManager;
   private final JCheckBox myEnabledCheckBox;
   private final JCheckBox myTabsEnabledCheckBox;
+  private final JCheckBox myHighlightNonProjectFilesCheckBox;
   private final FileColorSettingsTable myLocalTable;
   private final FileColorSettingsTable mySharedTable;
 
@@ -56,6 +57,10 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
     myTabsEnabledCheckBox = new JCheckBox("Use colors in Editor Tabs");
     myTabsEnabledCheckBox.setMnemonic('T');
     topPanel.add(myTabsEnabledCheckBox);
+
+    myHighlightNonProjectFilesCheckBox = new JCheckBox("Highlight Non-Project Files");
+    myHighlightNonProjectFilesCheckBox.setMnemonic('N');
+    topPanel.add(myHighlightNonProjectFilesCheckBox);
     topPanel.add(Box.createHorizontalGlue());
 
     add(topPanel, BorderLayout.NORTH);
@@ -229,6 +234,7 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
 
     modified = myEnabledCheckBox.isSelected() != myManager.isEnabled();
     modified |= myTabsEnabledCheckBox.isSelected() != myManager.isEnabledForTabs();
+    modified |= myHighlightNonProjectFilesCheckBox.isSelected() != myManager.isHighlightNonProjectFiles();
     modified |= myLocalTable.isModified() || mySharedTable.isModified();
 
     return modified;
@@ -237,6 +243,7 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
   public void apply() {
     myManager.setEnabled(myEnabledCheckBox.isSelected());
     myManager.setEnabledForTabs(myTabsEnabledCheckBox.isSelected());
+    myManager.setHighlightNonProjectFiles(myHighlightNonProjectFilesCheckBox.isSelected());
 
     myLocalTable.apply();
     mySharedTable.apply();
@@ -247,6 +254,7 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
   public void reset() {
     myEnabledCheckBox.setSelected(myManager.isEnabled());
     myTabsEnabledCheckBox.setSelected(myManager.isEnabledForTabs());
+    myHighlightNonProjectFilesCheckBox.setSelected(myManager.isHighlightNonProjectFiles());
 
     if(myLocalTable.isModified()) myLocalTable.reset();
     if(mySharedTable.isModified()) mySharedTable.reset();

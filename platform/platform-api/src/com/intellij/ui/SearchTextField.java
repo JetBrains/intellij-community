@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -306,7 +307,7 @@ public class SearchTextField extends JPanel {
 
   private void showPopup() {
     if (myPopup == null) {
-      final JList list = new JList(myModel);
+      final JList list = new JBList(myModel);
       if (myListener != null) {
         removeKeyListener(myListener);
       }

@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -89,7 +90,7 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
   private void chooseTargetClass(PsiClass[] classes, final Editor editor, final String superClassName) {
     final Project project = classes[0].getProject();
 
-    final JList list = new JList(classes);
+    final JList list = new JBList(classes);
     PsiElementListCellRenderer renderer = new PsiClassListCellRenderer();
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setCellRenderer(renderer);

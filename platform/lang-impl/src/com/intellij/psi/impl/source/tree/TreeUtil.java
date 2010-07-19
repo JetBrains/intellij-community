@@ -73,7 +73,8 @@ public class TreeUtil {
   }
 
   @Nullable
-  public static ASTNode skipElementsBack(ASTNode element, TokenSet types) {
+  public static ASTNode skipElementsBack(@Nullable ASTNode element, TokenSet types) {
+    if (element == null) return null;
     if (!types.contains(element.getElementType())) return element;
 
     ASTNode parent = element.getTreeParent();

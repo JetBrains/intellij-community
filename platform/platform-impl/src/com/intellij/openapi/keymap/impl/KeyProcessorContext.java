@@ -88,4 +88,12 @@ public class KeyProcessorContext {
   public KeyEvent getInputEvent() {
     return myInputEvent;
   }
+
+  public void clear() {
+    myInputEvent = null;
+    myActions.clear();
+    myFocusOwner = null;
+    myDataContext = null;
+    myFoundComponent = null;
+  }
 }

@@ -19,8 +19,9 @@ package com.intellij.codeInsight.folding.impl.actions;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.project.DumbAware;
 
-public class FoldingActionGroup extends DefaultActionGroup {
+public class FoldingActionGroup extends DefaultActionGroup  implements DumbAware {
   public FoldingActionGroup() {
     super();
   }

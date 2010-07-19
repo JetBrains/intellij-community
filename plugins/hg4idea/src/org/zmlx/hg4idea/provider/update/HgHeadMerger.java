@@ -12,6 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider.update;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -27,12 +28,14 @@ import org.zmlx.hg4idea.command.HgCommandResult;
 import org.zmlx.hg4idea.command.HgMergeCommand;
 import org.zmlx.hg4idea.command.HgStatusCommand;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Set;
 
 import static org.zmlx.hg4idea.HgErrorHandler.ensureSuccess;
 
 final class HgHeadMerger {
 
+  private static final Logger LOG = Logger.getInstance(HgHeadMerger.class.getName());
   private final Project project;
   private final HgMergeCommand hgMergeCommand;
 
@@ -46,7 +49,15 @@ final class HgHeadMerger {
 
     HgCommandResult commandResult = ensureSuccess(hgMergeCommand.execute());
 
-    HgUtil.markDirectoryDirty(project, repo);
+    try {
+      HgUtil.markDirectoryDirty(project, repo);
+    }
+    catch (InvocationTargetException e) {
+      throwException(e);
+    }
+    catch (InterruptedException e) {
+      throwException(e);
+    }
 
     HgStatusCommand hgStatusCommand = new HgStatusCommand(project);
     hgStatusCommand.setIncludeIgnored(false);
@@ -74,6 +85,12 @@ final class HgHeadMerger {
       }
     }
     return commandResult;
+  }
+
+  private static void throwException(Exception e) throws VcsException {
+    String msg = "Exception during marking directory dirty: " + e;
+    LOG.error(msg, e);
+    throw new VcsException(msg);
   }
 
 }

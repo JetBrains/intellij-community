@@ -15,11 +15,11 @@
  */
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.impl.VcsRootIterator;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -178,6 +178,7 @@ public class ForNestedRootChecker {
     queue.add(constructor.createReplaceable(root));
     while (! queue.isEmpty()) {
       final Node node = queue.removeFirst();
+      if (Boolean.TRUE.equals(cancelledGetter.get())) throw new ProcessCanceledException();
 
       // check self
       final Real real = constructor.createReal(node.getFile(), root);

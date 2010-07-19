@@ -46,7 +46,7 @@ X ints = [239, 4.2d]
   public void testCastListToAnything() throws Exception {
     testAssignability """
 File f1 = ['path']
-File f2 = <warning descr="Cannot assign 'List' to 'File'">['path', 2, true, 42]</warning>
+File f2 = <warning descr="Cannot assign 'List<Serializable>' to 'File'">['path', 2, true, 42]</warning>
 """
   }
 
@@ -61,7 +61,7 @@ public class Y extends java.util.HashMap<String, String> {
 
     testAssignability """
 HashMap<String, File> m1 = ['a':['b']]
-Y y = <warning descr="Cannot assign 'Map' to 'Y'">[a:'b']</warning>
+Y y = <warning descr="Cannot assign 'Map<String, String>' to 'Y'">[a:'b']</warning>
 """
   }
 
@@ -304,7 +304,7 @@ class BarImpl extends Bar {}
 
     assertEmpty(GroovyOverrideImplementUtil.getMethodsToOverrideImplement(facade.findClass("BarImpl"), true))
 
-    def implementations = new GotoImplementationHandler().getSourceAndTargetElements(myFixture.editor, myFixture.file).second
+    def implementations = new GotoImplementationHandler().getSourceAndTargetElements(myFixture.editor, myFixture.file).targets
     assertEquals Arrays.toString(implementations), 3, implementations.size()
   }
 

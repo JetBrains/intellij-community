@@ -492,4 +492,9 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     }
     return false;
   }
+
+  @Override
+  public String toString() {
+    return getName() + " (" + getNamespace() + ")";
+  }
 }

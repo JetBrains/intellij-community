@@ -5,5 +5,13 @@ This inspection reports any methods which override methods in a superclass but
 do not have the <b><font color="#000080">@java.lang.Override</font></b> annotation.
 <p>
 For safety, this inspection is disabled unless the project uses JDK 5.0.
+<p>
+Use the checkbox below to have this inspection ignore the
+<b><font color="#000080">java.lang.Object</font></b> methods
+<b><font color="#000080">equals()</font></b>,
+<b><font color="#000080">hashCode()</font></b> and
+<b><font color="#000080">toString()</font></b>. The risk of these methods
+going missing and thus your code not compiling anymore due to the
+<b><font color="#000080">@Override</font></b> annotation is vanishingly small.
 </font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">Powered by InspectionGadgets </font> </td> </tr> </table> </body>
 </html>

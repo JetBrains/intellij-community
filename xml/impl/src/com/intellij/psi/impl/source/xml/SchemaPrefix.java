@@ -16,57 +16,97 @@
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.RenameableFakePsiElement;
-import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.Icons;
+import com.intellij.xml.XmlExtension;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 /**
  * @author Konstantin Bulenkov
  */
- public class SchemaPrefix extends RenameableFakePsiElement {
-    private final XmlElement myParent;
-    private final TextRange myRange;
-    private final String myName;
+public class SchemaPrefix extends RenameableFakePsiElement {
+  private final TextRange myRange;
+  private final String myName;
 
-    public SchemaPrefix(final XmlElement parent, TextRange range, String name) {
-      super(parent);
-      myParent = parent;
-      myRange = range;
-      myName = name;
-    }
-
-    public String getTypeName() {
-      return "XML Namespace Prefix";
-    }
-
-    public Icon getIcon() {
-      return Icons.VARIABLE_ICON;
-    }
-
-    @Override
-    public int getTextOffset() {
-      return myParent.getTextRange().getStartOffset() + myRange.getStartOffset();
-    }
-
-    @Override
-    public int getTextLength() {
-      return myName.length();
-    }
-
-    @Override
-    public String getName() {
-      return myName;
-    }
-
-    public PsiElement getParent() {
-      return myParent;
-    }
-
-    @Override
-    public TextRange getTextRange() {
-      return TextRange.from(getTextOffset(), getTextLength());
-    }
+  public SchemaPrefix(final XmlAttribute parent, TextRange range, String name) {
+    super(parent);
+    myRange = range;
+    myName = name;
   }
+
+  public static SchemaPrefix createJspPrefix(XmlAttributeValue element, String prefix) {
+    TextRange range = ElementManipulators.getValueTextRange(element).shiftRight(element.getStartOffsetInParent());
+    return new SchemaPrefix((XmlAttribute)element.getParent(), range, prefix) {
+      @Override
+      protected String getNamespace() {
+        return ((XmlAttribute)getParent()).getParent().getAttributeValue("uri");
+      }
+    };
+  }
+
+  public String getTypeName() {
+    return "XML Namespace Prefix";
+  }
+
+  public Icon getIcon() {
+    return Icons.VARIABLE_ICON;
+  }
+
+  @Override
+  public int getTextOffset() {
+    return getParent().getTextRange().getStartOffset() + myRange.getStartOffset();
+  }
+
+  @Override
+  public int getTextLength() {
+    return myName.length();
+  }
+
+  @Override
+  public String getName() {
+    return myName;
+  }
+
+  public XmlAttribute getDeclaration() {
+    return (XmlAttribute)getParent();
+  }
+
+  @Override
+  public TextRange getTextRange() {
+    return TextRange.from(getTextOffset(), getTextLength());
+  }
+
+  @NotNull
+  @Override
+  public SearchScope getUseScope() {
+    return XmlExtension.getExtension(getContainingFile()).getNsPrefixScope(getDeclaration());
+  }
+
+  @Override
+  public boolean isEquivalentTo(PsiElement another) {
+    return another instanceof SchemaPrefix && ((SchemaPrefix)another).getDeclaration() == getDeclaration();
+  }
+
+  public String getQuickNavigateInfo() {
+    String ns = getNamespace();
+    StringBuilder builder = new StringBuilder().append(getTypeName()).append(" \"").append(getName()).append("\"");
+    if (ns != null) {
+      builder.append(" (").append(ns).append(")");
+    }
+    return builder.toString();
+  }
+
+  @Nullable
+  protected String getNamespace() {
+    XmlAttribute parent = (XmlAttribute)getParent();
+    return parent.getValue();
+  }
+}

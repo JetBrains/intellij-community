@@ -459,7 +459,6 @@ public class SingleInspectionProfilePanel extends JPanel {
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     UIUtil.setLineStyleAngled(myTree);
-    TreeToolTipHandler.install(myTree);
     TreeUtil.installActions(myTree);
 
 

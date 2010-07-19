@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.ipp.psiutils.ErrorUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,8 +49,12 @@ public class ExpandBooleanIntention extends Intention {
             if (rhs == null) {
                 return;
             }
-            final String rhsText = rhs.getText();
             final PsiExpression lhs = assignmentExpression.getLExpression();
+            if (ErrorUtil.containsDeepError(lhs) ||
+                    ErrorUtil.containsDeepError(rhs)) {
+                return;
+            }
+            final String rhsText = rhs.getText();
             final String lhsText = lhs.getText();
             final PsiJavaToken sign = assignmentExpression.getOperationSign();
             final String signText = sign.getText();
@@ -59,6 +64,7 @@ public class ExpandBooleanIntention extends Intention {
             } else {
                 conditionText = rhsText;
             }
+
             @NonNls final String statement =
                     "if(" + conditionText + ") " + lhsText + " = true; else " +
                             lhsText + " = false;";
@@ -69,6 +75,9 @@ public class ExpandBooleanIntention extends Intention {
                     (PsiReturnStatement)containingStatement;
             final PsiExpression returnValue = returnStatement.getReturnValue();
             if (returnValue == null) {
+                return;
+            }
+            if (ErrorUtil.containsDeepError(returnValue)) {
                 return;
             }
             final String valueText = returnValue.getText();

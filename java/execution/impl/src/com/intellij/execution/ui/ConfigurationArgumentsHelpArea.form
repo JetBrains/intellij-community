@@ -17,7 +17,7 @@
           <text resource-bundle="messages/ExecutionBundle" key="environment.variables.helper.use.arguments.label"/>
         </properties>
       </component>
-      <scrollpane id="f35c0">
+      <scrollpane class="com.intellij.ui.components.JBScrollPane" id="f35c0">
         <constraints>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
           <gridbag weightx="1.0" weighty="1.0"/>

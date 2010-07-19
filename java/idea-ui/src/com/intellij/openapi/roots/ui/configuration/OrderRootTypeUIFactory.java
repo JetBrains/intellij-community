@@ -20,15 +20,12 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ui.PathEditor;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryElement;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableTreeContentElement;
 import com.intellij.openapi.util.KeyedExtensionFactory;
-import com.intellij.pom.java.LanguageLevel;
 
 public interface OrderRootTypeUIFactory {
   KeyedExtensionFactory<OrderRootTypeUIFactory, OrderRootType> FACTORY = new KeyedExtensionFactory<OrderRootTypeUIFactory, OrderRootType>(OrderRootTypeUIFactory.class, "com.intellij.OrderRootTypeUI") {
@@ -39,56 +36,4 @@ public interface OrderRootTypeUIFactory {
 
   LibraryTableTreeContentElement createElement(final LibraryElement parentElement);
   PathEditor createPathEditor(Sdk sdk);
-
-  class MyPathsEditor extends PathEditor {
-    private final boolean myShowUrl;
-    private final OrderRootType myOrderRootType;
-    private final FileChooserDescriptor myDescriptor;
-    private final String myDisplayName;
-    private final Sdk mySdk;
-
-    public MyPathsEditor(final String displayName,
-                         final OrderRootType orderRootType,
-                         final FileChooserDescriptor descriptor,
-                         final boolean showUrl,
-                         Sdk sdk) {
-      myShowUrl = showUrl;
-      myOrderRootType = orderRootType;
-      myDescriptor = descriptor;
-      myDisplayName = displayName;
-      mySdk = sdk;
-    }
-
-    protected boolean isShowUrlButton() {
-      return myShowUrl;
-    }
-
-    protected OrderRootType getRootType() {
-      return myOrderRootType;
-    }
-
-    protected FileChooserDescriptor createFileChooserDescriptor() {
-      return myDescriptor;
-    }
-
-    public String getDisplayName() {
-      return myDisplayName;
-    }
-
-    @Override
-    protected String getInitialValue() {
-      if (mySdk != null) {
-        final String versionString = mySdk.getVersionString();
-        if (versionString != null) {
-          final LanguageLevel level = LanguageLevelUtil.getDefaultLanguageLevel(versionString);
-          if (level == LanguageLevel.JDK_1_5) {
-            return "http://java.sun.com/j2se/1.5.0/docs/api/";
-          } else if (level == LanguageLevel.JDK_1_6) {
-            return "http://java.sun.com/j2se/6/docs/api/";
-          }
-        }
-      }
-      return "";
-    }
-  }
 }

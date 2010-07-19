@@ -22,7 +22,6 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunnerLayoutUi;
@@ -200,7 +199,12 @@ public abstract class DebuggerSessionTabBase implements DebuggerLogConsoleManage
   public void toFront() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       ExecutionManager.getInstance(getProject()).getContentManager().toFrontRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), myRunContentDescriptor);
-      ProjectUtil.focusProjectWindow(getProject(), Registry.is("debugger.mayBringFrameToFrontOnBreakpoint"));
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          ProjectUtil.focusProjectWindow(getProject(), Registry.is("debugger.mayBringFrameToFrontOnBreakpoint"));
+        }
+      });
     }
   }
 

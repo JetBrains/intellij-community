@@ -18,9 +18,9 @@ package org.jetbrains.plugins.groovy.debugger.filters;
 import com.intellij.execution.filters.StackFrameFilter;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.ui.classFilter.DebuggerClassFilterProvider;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -35,7 +35,7 @@ public class GroovyDebuggerClassFilterProvider extends StackFrameFilter implemen
     final Boolean flag = settings.DEBUG_DISABLE_SPECIFIC_GROOVY_METHODS;
     final ArrayList<ClassFilter> list = new ArrayList<ClassFilter>();
     if (flag == null || flag.booleanValue()) {
-      list.addAll(Arrays.asList(FILTERS));
+      ContainerUtil.addAll(list, FILTERS);
       return list;
     }
     return list;

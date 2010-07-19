@@ -17,10 +17,10 @@ package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.*;
 
@@ -49,26 +49,29 @@ public class RootsCalculator {
         if (myVcs.equals(myPlManager.getVcsFor(myProject.getBaseDir()))) {
           roots.add(myProject.getBaseDir());
         }
-      } else {
+      }
+      else {
         VirtualFile newFile = LocalFileSystem.getInstance().findFileByPath(mapping.getDirectory());
         if (newFile == null) {
           newFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(mapping.getDirectory());
         }
         if (newFile != null) {
           roots.add(newFile);
-        } else {
+        }
+        else {
           LOG.info("Can not file virtual file for root: " + mapping.getDirectory());
         }
       }
     }
-    roots.addAll(Arrays.asList(myContentRoots));
+    ContainerUtil.addAll(roots, myContentRoots);
     final Map<VirtualFile, RepositoryLocation> result = new HashMap<VirtualFile, RepositoryLocation>();
     for (Iterator<VirtualFile> iterator = roots.iterator(); iterator.hasNext();) {
       final VirtualFile vf = iterator.next();
       final RepositoryLocation location = myLocationCache.getLocation(myVcs, new FilePathImpl(vf), false);
       if (location != null) {
         result.put(vf, location);
-      } else {
+      }
+      else {
         iterator.remove();
       }
     }

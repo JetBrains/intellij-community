@@ -71,7 +71,7 @@
           <verticalAlignment value="0"/>
         </properties>
       </component>
-      <scrollpane id="14b5c">
+      <scrollpane class="com.intellij.ui.components.JBScrollPane" id="14b5c">
         <constraints>
           <grid row="5" column="1" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>

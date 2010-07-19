@@ -80,7 +80,7 @@ public abstract class CompletionService {
 
     for (int i = contributors.indexOf(from) + 1; i < contributors.size(); i++) {
       final CompletionContributor contributor = contributors.get(i);
-      if (dumb && !(contributor instanceof DumbAware)) continue;
+      if (dumb && !DumbService.isDumbAware(contributor)) continue;
 
       final CompletionResultSet result = createResultSet(parameters, consumer, contributor);
       contributor.fillCompletionVariants(parameters, result);

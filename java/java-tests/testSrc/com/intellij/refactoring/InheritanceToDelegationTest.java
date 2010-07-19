@@ -9,9 +9,9 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.inheritanceToDelegation.InheritanceToDelegationProcessor;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -24,7 +24,7 @@ public class InheritanceToDelegationTest extends MultiFileTestCase {
   }
 
   protected Sdk getTestProjectJdk() {
-    return JavaSdkImpl.getMockJdk15("java 1.5");
+    return JavaSdkImpl.getMockJdk17("java 1.5");
   }
 
   protected String getTestRoot() {
@@ -167,7 +167,7 @@ public class InheritanceToDelegationTest extends MultiFileTestCase {
         final List<PsiMethod> methodsList = new ArrayList<PsiMethod>();
         for (String name : methodNames) {
           final PsiMethod[] methodsByName = baseClass.findMethodsByName(name, false);
-          methodsList.addAll(Arrays.asList(methodsByName));
+          ContainerUtil.addAll(methodsList, methodsByName);
         }
         delegatedMethods = methodsList.toArray(new PsiMethod[methodsList.size()]);
 

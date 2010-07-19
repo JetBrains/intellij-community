@@ -15,11 +15,9 @@
  */
 package com.intellij.ide.util;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiClassListCellRenderer extends PsiElementListCellRenderer<PsiClass> {
   public String getElementText(PsiClass element) {
@@ -30,11 +28,11 @@ public class PsiClassListCellRenderer extends PsiElementListCellRenderer<PsiClas
     return getContainerTextStatic(element);
   }
 
+  @Nullable
   protected static String getContainerTextStatic(final PsiElement element) {
     PsiFile file = element.getContainingFile();
-    if (file instanceof PsiJavaFile) {
-      PsiJavaFile javaFile = (PsiJavaFile)file;
-      String packageName = javaFile.getPackageName();
+    if (file instanceof PsiClassOwner) {
+      String packageName = ((PsiClassOwner)file).getPackageName();
       if (packageName.length() == 0) return null;
       return "(" + packageName + ")";
     }

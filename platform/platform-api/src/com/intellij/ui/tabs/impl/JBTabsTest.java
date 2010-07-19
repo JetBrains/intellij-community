@@ -15,15 +15,16 @@
  */
 package com.intellij.ui.tabs.impl;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.UiDecorator;
+import com.intellij.ui.treeStructure.Tree;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -136,7 +137,7 @@ public class JBTabsTest {
       }
     });
 
-    final JTree someTree = new JTree() {
+    final JTree someTree = new Tree() {
       public void addNotify() {
         super.addNotify();    //To change body of overridden methods use File | Settings | File Templates.
         System.out.println("JBTabs.addNotify");
@@ -151,7 +152,7 @@ public class JBTabsTest {
     tabs.addTab(new TabInfo(someTree)).setText("Tree1").setActions(new DefaultActionGroup(), null)
         .setIcon(IconLoader.getIcon("/debugger/frame.png"));
 
-    final JTree component = new JTree();
+    final JTree component = new Tree();
     final TabInfo toAnimate1 = new TabInfo(component);
     //toAnimate1.setIcon(IconLoader.getIcon("/debugger/console.png"));
     final JCheckBox attract1 = new JCheckBox("Attract 1");
@@ -217,7 +218,7 @@ public class JBTabsTest {
 
     final JLabel tb = new JLabel("Side comp");
     tb.setBorder(new LineBorder(Color.red));
-    tabs.addTab(new TabInfo(new JScrollPane(text)).setSideComponent(tb)).setText("Text text text");
+    tabs.addTab(new TabInfo(ScrollPaneFactory.createScrollPane(text)).setSideComponent(tb)).setText("Text text text");
     tabs.addTab(toAnimate1).append("Tree2", new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED, Color.black, Color.red));
     tabs.addTab(new TabInfo(new JTable())).setText("Table 1").setActions(new DefaultActionGroup(), null);
     tabs.addTab(new TabInfo(new JTable())).setText("Table 2").setActions(new DefaultActionGroup(), null);

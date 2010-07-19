@@ -17,16 +17,12 @@
 package org.jetbrains.plugins.groovy;
 
 import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
-
-import java.util.List;
 
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyCompletionTest extends LightCodeInsightFixtureTestCase {
+public class GroovyCompletionTest extends GroovyCompletionTestBase {
   @Override
   protected String getBasePath() {
     return TestUtils.getTestDataPath() + "groovy/completion/";
@@ -46,12 +42,6 @@ public class GroovyCompletionTest extends LightCodeInsightFixtureTestCase {
 
   public void testSmartCompletionAfterNewInDeclarationWithInterface() throws Throwable {
     doSmartTest();
-  }
-
-  private void doSmartTest() throws Throwable {
-    myFixture.configureByFile(getTestName(false) + ".groovy");
-    myFixture.complete(CompletionType.SMART);
-    myFixture.checkResultByFile(getTestName(false) + "_after.groovy", true);
   }
 
   public void testCaretAfterSmartCompletionAfterNewInDeclaration() throws Throwable {
@@ -76,10 +66,6 @@ public class GroovyCompletionTest extends LightCodeInsightFixtureTestCase {
 
   public void testEachMethodForList() throws Throwable {
     doBasicTest();
-  }
-
-  private void doBasicTest() throws Exception {
-    myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy");
   }
 
   public void testEachMethodForMapWithKeyValue() throws Throwable {
@@ -124,12 +110,6 @@ public class GroovyCompletionTest extends LightCodeInsightFixtureTestCase {
 
   public void testEachMethodForEnumRanges() throws Throwable {
     doBasicTest();
-  }
-
-  public void doVariantableTest(String... variants) throws Throwable {
-    myFixture.configureByFile(getTestName(false) + ".groovy");
-    myFixture.complete(CompletionType.BASIC);
-    assertOrderedEquals(myFixture.getLookupElementStrings(), variants);
   }
 
   public void testNamedParametersForApplication() throws Throwable {
@@ -274,14 +254,6 @@ public class GroovyCompletionTest extends LightCodeInsightFixtureTestCase {
     doSmartTest();
   }
 
-  public void doSmartCompletion(String... variants) throws Exception {
-    myFixture.configureByFile(getTestName(false) + ".groovy");
-    myFixture.complete(CompletionType.SMART);
-    final List<String> list = myFixture.getLookupElementStrings();
-    assertNotNull(list);
-    UsefulTestCase.assertSameElements(list, variants);
-  }
-
   public void testSimpleMethodParameter() throws Throwable {
     doSmartCompletion("d1", "d2");
   }
@@ -292,5 +264,18 @@ public class GroovyCompletionTest extends LightCodeInsightFixtureTestCase {
 
   public void testIncSmartCompletion() throws Exception {
     doSmartCompletion("a", "b");
+  }
+
+  public void testInheritConstructorsAnnotation() throws Throwable {
+    myFixture.addFileToProject("groovy/transform/InheritConstructors.java", "package groovy.transform;\n" +
+                                                                            "\n" +
+                                                                            "import java.lang.annotation.ElementType;\n" +
+                                                                            "import java.lang.annotation.Retention;\n" +
+                                                                            "import java.lang.annotation.RetentionPolicy;\n" +
+                                                                            "import java.lang.annotation.Target;@Retention(RetentionPolicy.SOURCE)\n" +
+                                                                            "@Target({ElementType.TYPE})\n" +
+                                                                            "public @interface InheritConstructors {\n" +
+                                                                            "}");
+    doSmartTest();
   }
 }

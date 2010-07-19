@@ -266,6 +266,7 @@ public class ListUtil {
     if (model instanceof DefaultListModel) return DEFAULT_MODEL;
     if (model instanceof SortedListModel) return SORTED_MODEL;
     if (model instanceof FilteringListModel) return FILTERED_MODEL;
+    if (model instanceof CollectionListModel) return COLLECTION_MODEL;
 
     if (model == null) LOG.assertTrue(false);
     else LOG.error("Unknown model class: " + model.getClass().getName());
@@ -283,6 +284,16 @@ public class ListUtil {
     }
 
     public void remove(DefaultListModel model, int index) {
+      model.remove(index);
+    }
+  };
+
+  private static final ListModelExtension COLLECTION_MODEL = new ListModelExtension<CollectionListModel>() {
+    public Object get(CollectionListModel model, int index) {
+      return model.getElementAt(index);
+    }
+
+    public void remove(CollectionListModel model, int index) {
       model.remove(index);
     }
   };

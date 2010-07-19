@@ -25,8 +25,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectClasspathTraversing;
-import com.intellij.openapi.roots.ProjectRootsTraversing;
+import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -268,8 +267,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
     int formsProcessed = 0;
 
     for (final Module module : module2itemsList.keySet()) {
-      final String classPath =
-        ProjectRootsTraversing.collectRoots(module, ProjectClasspathTraversing.FULL_CLASSPATH_RECURSIVE).getPathsString();
+      final String classPath = OrderEnumerator.orderEntries(module).recursively().getPathsList().getPathsString();
       final ClassLoader loader = createClassLoader(classPath);
 
       if (GuiDesignerConfiguration.getInstance(project).COPY_FORMS_RUNTIME_TO_OUTPUT) {

@@ -374,7 +374,7 @@ public class CreateTestDialog extends DialogWrapper {
     constr.gridwidth = GridBagConstraints.REMAINDER;
     constr.fill = GridBagConstraints.BOTH;
     constr.weighty = 1;
-    panel.add(new JScrollPane(myMethodsTable), constr);
+    panel.add(ScrollPaneFactory.createScrollPane(myMethodsTable), constr);
 
     return panel;
   }

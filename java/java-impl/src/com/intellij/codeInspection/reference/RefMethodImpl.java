@@ -250,43 +250,42 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   public void buildReferences() {
     // Work on code block to find what we're referencing...
     PsiMethod method = (PsiMethod) getElement();
-    if (method != null) {
-      PsiCodeBlock body = method.getBody();
-      final RefJavaUtil refUtil = RefJavaUtil.getInstance();
-      refUtil.addReferences(method, this, body);
-      refUtil.addReferences(method, this, method.getModifierList());
-      checkForSuperCall(method);
-      setOnlyCallsSuper(refUtil.isMethodOnlyCallsSuper(method));
+    if (method == null) return;
+    PsiCodeBlock body = method.getBody();
+    final RefJavaUtil refUtil = RefJavaUtil.getInstance();
+    refUtil.addReferences(method, this, body);
+    refUtil.addReferences(method, this, method.getModifierList());
+    checkForSuperCall(method);
+    setOnlyCallsSuper(refUtil.isMethodOnlyCallsSuper(method));
 
-      setBodyEmpty(isOnlyCallsSuper() || !isExternalOverride() && (body == null || body.getStatements().length == 0));
+    setBodyEmpty(isOnlyCallsSuper() || !isExternalOverride() && (body == null || body.getStatements().length == 0));
 
-      PsiType retType = method.getReturnType();
-      if (retType != null) {
-        PsiType psiType = retType;
-        RefClass ownerClass = refUtil.getOwnerClass(getRefManager(), method);
+    PsiType retType = method.getReturnType();
+    if (retType != null) {
+      PsiType psiType = retType;
+      RefClass ownerClass = refUtil.getOwnerClass(getRefManager(), method);
 
-        if (ownerClass != null) {
-          psiType = psiType.getDeepComponentType();
+      if (ownerClass != null) {
+        psiType = psiType.getDeepComponentType();
 
-          if (psiType instanceof PsiClassType) {
-            PsiClass psiClass = PsiUtil.resolveClassInType(psiType);
-            if (psiClass != null && getRefManager().belongsToScope(psiClass)) {
-                RefClassImpl refClass = (RefClassImpl) getRefManager().getReference(psiClass);
-              if (refClass != null) {
-                refClass.addTypeReference(ownerClass);
-                refClass.addClassExporter(this);
-              }
+        if (psiType instanceof PsiClassType) {
+          PsiClass psiClass = PsiUtil.resolveClassInType(psiType);
+          if (psiClass != null && getRefManager().belongsToScope(psiClass)) {
+              RefClassImpl refClass = (RefClassImpl) getRefManager().getReference(psiClass);
+            if (refClass != null) {
+              refClass.addTypeReference(ownerClass);
+              refClass.addClassExporter(this);
             }
           }
         }
       }
-
-      for (RefParameter parameter : getParameters()) {
-        refUtil.setIsFinal(parameter, parameter.getElement().hasModifierProperty(PsiModifier.FINAL));
-      }
-
-      getRefManager().fireBuildReferences(this);
     }
+
+    for (RefParameter parameter : getParameters()) {
+      refUtil.setIsFinal(parameter, parameter.getElement().hasModifierProperty(PsiModifier.FINAL));
+    }
+
+    getRefManager().fireBuildReferences(this);
   }
 
   private void collectUncaughtExceptions(PsiMethod method) {

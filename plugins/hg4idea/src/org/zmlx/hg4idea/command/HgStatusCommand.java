@@ -17,10 +17,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgRevisionNumber;
 
 import java.io.File;
+import java.nio.charset.Charset;
 import java.util.*;
 
 public class HgStatusCommand {
@@ -86,6 +88,7 @@ public class HgStatusCommand {
     return doExecute(repo, null);
   }
 
+  @Nullable
   public HgChange execute(VirtualFile repo, @NotNull String file) {
     Set<HgChange> changes = doExecute(repo, file);
     return changes.isEmpty() ? null : changes.iterator().next();
@@ -133,9 +136,12 @@ public class HgStatusCommand {
       arguments.add(file);
     }
 
-    HgCommandResult result = service.execute(repo, "status", arguments);
+    HgCommandResult result = service.execute(repo, HgCommandService.DEFAULT_OPTIONS, "status", arguments, Charset.defaultCharset(), true);
     Set<HgChange> changes = new HashSet<HgChange>();
     HgChange previous = null;
+    if (result == null) {
+      return changes;
+    }
     for (String line : result.getOutputLines()) {
       if (StringUtils.isBlank(line) || line.length() < ITEM_COUNT) {
         LOG.warn("Unexpected line in status '" + line + '\'');

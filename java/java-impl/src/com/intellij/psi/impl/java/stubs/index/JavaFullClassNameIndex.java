@@ -41,6 +41,6 @@ public class JavaFullClassNameIndex extends IntStubIndexExtension<PsiClass> {
   }
 
   public Collection<PsiClass> get(final Integer integer, final Project project, final GlobalSearchScope scope) {
-    return super.get(integer, project, new JavaSourceFilterScope(scope, project));
+    return super.get(integer, project, new JavaSourceFilterScope(scope));
   }
 }

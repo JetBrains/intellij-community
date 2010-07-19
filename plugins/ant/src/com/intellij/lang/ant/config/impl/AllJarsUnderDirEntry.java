@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NonNls;
 import javax.swing.*;
 import java.io.File;
 import java.io.FileFilter;
-import java.util.Arrays;
 import java.util.List;
 
 public class AllJarsUnderDirEntry implements AntClasspathEntry {
@@ -70,7 +69,7 @@ public class AllJarsUnderDirEntry implements AntClasspathEntry {
         return pathname.getName().endsWith(JAR_SUFFIX) && pathname.isFile();
       }
     });
-    if (children != null) files.addAll(Arrays.asList(children));
+    if (children != null) ContainerUtil.addAll(files, children);
   }
 
   public CompositeAppearance getAppearance() {

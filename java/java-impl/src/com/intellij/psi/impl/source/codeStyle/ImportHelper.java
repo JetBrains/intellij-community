@@ -38,6 +38,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
@@ -645,9 +646,9 @@ public class ImportHelper{
       final PsiElement child = stack.removeFirst();
       if (child instanceof PsiImportList) continue;
       if (child instanceof PsiLiteralExpression) continue;
-      stack.addAll(Arrays.asList(child.getChildren()));
+      ContainerUtil.addAll(stack, child.getChildren());
 
-      for(final PsiReference reference : child.getReferences()){
+      for (final PsiReference reference : child.getReferences()) {
         if (!(reference instanceof PsiJavaReference)) continue;
         final PsiJavaReference javaReference = (PsiJavaReference)reference;
         if (javaReference instanceof JavaClassReference && ((JavaClassReference)javaReference).getContextReference() != null) continue;
@@ -674,8 +675,8 @@ public class ImportHelper{
         if (!(currentFileResolveScope instanceof PsiImportStatementBase)) continue;
         if (context != null &&
             (!currentFileResolveScope.isValid() ||
-            currentFileResolveScope instanceof JspxImportStatement &&
-            context != ((JspxImportStatement)currentFileResolveScope).getDeclarationFile())) {
+             currentFileResolveScope instanceof JspxImportStatement &&
+             context != ((JspxImportStatement)currentFileResolveScope).getDeclarationFile())) {
           continue;
         }
 

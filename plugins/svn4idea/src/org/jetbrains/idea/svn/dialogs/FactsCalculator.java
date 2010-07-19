@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.util.Consumer;
 import com.intellij.util.ValueHolder;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.continuation.TaskDescriptor;
 
 // cache. persistent. by request
 public class FactsCalculator<In, Out> {
@@ -37,7 +38,11 @@ public class FactsCalculator<In, Out> {
 
   @CalledInAwt
   public void get(final In in, final Consumer<Out> resultConsumer) {
-    new RunOrContinuation<Out>(myProject, myTaskTitle) {
+    createRunOrContinuation(in, resultConsumer).execute();
+  }
+
+  private RunOrContinuation<Out> createRunOrContinuation(final In in, final Consumer<Out> resultConsumer) {
+    return new RunOrContinuation<Out>(myProject, myTaskTitle) {
       @Override
       protected Out calculate() {
         return myCache.getValue(in);
@@ -54,6 +59,11 @@ public class FactsCalculator<In, Out> {
       protected void processResult(Out out) {
         resultConsumer.consume(out);
       }
-    }.execute();
+    };
+  }
+
+  @CalledInAwt
+  public TaskDescriptor getTask(final In in, final Consumer<Out> resultConsumer) {
+    return createRunOrContinuation(in, resultConsumer).getTask();
   }
 }

@@ -36,4 +36,5 @@ public interface XmlText extends XmlTagChild {
 
   @Nullable
   XmlText split(int displayIndex);
+  XmlText[] EMPTY_ARRAY = new XmlText[0];
 }

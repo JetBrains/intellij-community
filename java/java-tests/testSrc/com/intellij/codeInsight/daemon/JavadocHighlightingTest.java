@@ -8,7 +8,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.JavaPsiFacade;
 
 
 public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
@@ -99,15 +98,8 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testMissingReturnDescription() throws Exception {doTest();}
 
   private void doTestWithLangLevel(final LanguageLevel langLevel) throws Exception {
-    JavaPsiFacade manager = getJavaFacade();
-    final LanguageLevel effectiveLanguageLevel = LanguageLevelProjectExtension.getInstance(manager.getProject()).getLanguageLevel();
-    LanguageLevelProjectExtension.getInstance(manager.getProject()).setLanguageLevel(langLevel);
-    try {
-      doTest();
-    }
-    finally {
-      LanguageLevelProjectExtension.getInstance(manager.getProject()).setLanguageLevel(effectiveLanguageLevel);
-    }
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(langLevel);
+    doTest();
   }
 
   protected void doTest() throws Exception {
@@ -115,6 +107,6 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk15("java 1.5");
+    return JavaSdkImpl.getMockJdk17("java 1.5");
   }
 }

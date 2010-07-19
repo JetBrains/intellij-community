@@ -1,0 +1,3 @@
+start = \element
+\element = grammar {
+}

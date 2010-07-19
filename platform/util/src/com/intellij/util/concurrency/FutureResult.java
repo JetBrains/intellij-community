@@ -19,12 +19,12 @@ public class FutureResult<T> implements Future<T> {
   }
 
   public boolean isDone() {
-    return mySema.availablePermits() > 0;
+    return myValue != null;
   }
 
   public void set(T result) {
     assert myValue == null;
-    
+
     myValue = Ref.create(Pair.create((Object)result, true));
     mySema.release();
   }
@@ -37,8 +37,8 @@ public class FutureResult<T> implements Future<T> {
   }
 
   public T get() throws InterruptedException, ExecutionException {
+    mySema.acquire();
     try {
-      mySema.acquire();
       return doGet();
     }
     finally {
@@ -47,8 +47,8 @@ public class FutureResult<T> implements Future<T> {
   }
 
   public T get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+    if (!mySema.tryAcquire(timeout, unit)) throw new TimeoutException();
     try {
-      if (!mySema.tryAcquire(timeout, unit)) throw new TimeoutException();
       return doGet();
     }
     finally {

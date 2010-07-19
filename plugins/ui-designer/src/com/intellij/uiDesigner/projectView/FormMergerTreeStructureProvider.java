@@ -32,6 +32,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.actions.MoveAction;
 import com.intellij.uiDesigner.binding.FormClassIndex;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.*;
 
@@ -163,9 +164,9 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
       Set<PsiElement> result = new HashSet<PsiElement>();
       for(AbstractTreeNode node: selected) {
         if (node.getValue() instanceof Form) {
-          Form form = (Form) node.getValue();
+          Form form = (Form)node.getValue();
           result.add(form.getClassToBind());
-          result.addAll(Arrays.asList(form.getFormFiles()));
+          ContainerUtil.addAll(result, form.getFormFiles());
         }
         else if (node.getValue() instanceof PsiElement) {
           result.add((PsiElement) node.getValue());

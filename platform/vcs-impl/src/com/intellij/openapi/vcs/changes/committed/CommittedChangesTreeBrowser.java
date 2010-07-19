@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
@@ -26,10 +27,7 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.pom.Navigatable;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.TreeCopyProvider;
+import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
@@ -113,7 +111,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
     final Splitter filterSplitter = new Splitter(false, 0.5f);
 
-    filterSplitter.setSecondComponent(new JScrollPane(myChangesTree));
+    filterSplitter.setSecondComponent(ScrollPaneFactory.createScrollPane(myChangesTree));
     myLeftPanel.add(filterSplitter, BorderLayout.CENTER);
     final Splitter mainSplitter = new Splitter(false, 0.7f);
     mainSplitter.setFirstComponent(myLeftPanel);
@@ -127,6 +125,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
         updateModel();
       }
     }, filterSplitter);
+    Disposer.register(this, myInnerSplitter);
 
     mySplitterProportionsData.externalizeFromDimensionService("CommittedChanges.SplitterProportions");
     mySplitterProportionsData.restoreSplitterProportions(this);
@@ -173,10 +172,10 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   private TreeModel buildTreeModel(final List<CommittedChangeList> filteredChangeLists) {
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     DefaultTreeModel model = new DefaultTreeModel(root);
-    DefaultMutableTreeNode lastGroupNode = null;
-    String lastGroupName = null;
     Collections.sort(filteredChangeLists, myGroupingStrategy.getComparator());
     myGroupingStrategy.beforeStart();
+    DefaultMutableTreeNode lastGroupNode = null;
+    String lastGroupName = null;
     for(CommittedChangeList list: filteredChangeLists) {
       String groupName = myGroupingStrategy.getGroupName(list);
       if (!Comparing.equal(groupName, lastGroupName)) {
@@ -375,7 +374,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     }
     else if (key.equals(VcsDataKeys.CHANGE_LISTS)) {
       final List<CommittedChangeList> lists = getSelectedChangeLists();
-      if (lists.size() > 0) {
+      if (!lists.isEmpty()) {
         sink.put(VcsDataKeys.CHANGE_LISTS, lists.toArray(new CommittedChangeList[lists.size()]));
       }
     }
@@ -433,7 +432,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   }
 
   public void append(final List<CommittedChangeList> list) {
-    final TreeState state = (myChangeLists.isEmpty() && myState != null) ? myState :
+    final TreeState state = myChangeLists.isEmpty() && myState != null ? myState :
       TreeState.createOn(myChangesTree, (DefaultMutableTreeNode)myChangesTree.getModel().getRoot());
     state.setScrollToSelection(false);
     myChangeLists.addAll(list);

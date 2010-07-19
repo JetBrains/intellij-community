@@ -97,6 +97,11 @@ public abstract class StubProjectRootManagerEx extends ProjectRootManagerEx {
     throw new UnsupportedOperationException();
   }
 
+  @Override
+  public OrderEnumerator orderEntries() {
+    throw new UnsupportedOperationException("'orderEntries' not implemented in " + getClass().getName());
+  }
+
   public VirtualFile[] getContentRootsFromAllModules() {
     throw new UnsupportedOperationException();
   }

@@ -290,7 +290,7 @@
     <action id="TestGestureAction">
       <keyboard-gesture-shortcut keystroke="meta 1" modifier="dblClick"/>
     </action>
-    <action id="ToolWindowSwitcher">
+    <action id="Switcher">
       <keyboard-shortcut first-keystroke="ctrl TAB"/>
       <keyboard-shortcut first-keystroke="ctrl shift TAB"/>
     </action>

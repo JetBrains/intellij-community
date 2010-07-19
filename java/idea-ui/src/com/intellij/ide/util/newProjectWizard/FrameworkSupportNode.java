@@ -15,18 +15,19 @@
  */
 package com.intellij.ide.util.newProjectWizard;
 
-import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings;
 import com.intellij.facet.impl.ui.libraries.LibraryCompositionOptionsPanel;
+import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings;
 import com.intellij.facet.impl.ui.libraries.LibraryDownloadingMirrorsMap;
+import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
 import com.intellij.ide.util.frameworkSupport.FrameworkVersion;
-import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelImpl;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ui.UIUtil;
@@ -51,8 +52,8 @@ public class FrameworkSupportNode extends CheckedTreeNode {
   private final Computable<String> myBaseDirForLibrariesGetter;
   private LibraryCompositionOptionsPanel myLibraryCompositionOptionsPanel;
 
-  FrameworkSupportNode(final FrameworkSupportProvider provider, final FrameworkSupportNode parentNode, final FrameworkSupportModelImpl model,
-                             Computable<String> baseDirForLibrariesGetter) {
+  public FrameworkSupportNode(final FrameworkSupportProvider provider, final FrameworkSupportNode parentNode, final FrameworkSupportModelImpl model,
+                             Computable<String> baseDirForLibrariesGetter, Disposable parentDisposable) {
     super(provider);
     myBaseDirForLibrariesGetter = baseDirForLibrariesGetter;
     setChecked(false);
@@ -60,6 +61,7 @@ public class FrameworkSupportNode extends CheckedTreeNode {
     myParentNode = parentNode;
     model.registerComponent(provider, this);
     myConfigurable = provider.createConfigurable(model);
+    Disposer.register(parentDisposable, myConfigurable);
     if (parentNode != null) {
       parentNode.add(this);
       parentNode.myChildren.add(this);

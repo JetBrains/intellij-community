@@ -20,6 +20,7 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.ide.fileTemplates.FileTemplateGroupDescriptor;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -46,7 +47,7 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
     super(title);
     myRoot = initModel();
     myTreeModel = new MyTreeModel(myRoot);
-    myTree = new JTree(myTreeModel);
+    myTree = new Tree(myTreeModel);
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     UIUtil.setLineStyleAngled(myTree);

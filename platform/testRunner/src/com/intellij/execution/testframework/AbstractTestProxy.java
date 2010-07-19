@@ -43,6 +43,8 @@ public interface AbstractTestProxy {
 
   boolean isLeaf();
 
+  boolean isInterrupted();
+
   boolean isPassed();
 
   String getName();

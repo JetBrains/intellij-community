@@ -169,26 +169,33 @@ import java.util.Collection;
     new WriteCommandAction(module.getProject()) {
       protected void run(Result result) throws Throwable {
         final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-        final LibraryTable libraryTable = ProjectLibraryTable.getInstance(module.getProject());
-        final Library library = libraryTable.createLibrary(libName);
-        final Library.ModifiableModel libraryModel = library.getModifiableModel();
-        for (String jar : jarArr) {
-          final String path = libPath + jar;
-          final VirtualFile root = JarFileSystem.getInstance().refreshAndFindFileByPath(path + "!/");
-          assert root != null : "Library root folder not found: " + path + "!/";
-          libraryModel.addRoot(root, OrderRootType.CLASSES);
-        }
-        libraryModel.commit();
-        model.addLibraryEntry(library);
-        final OrderEntry[] orderEntries = model.getOrderEntries();
-        OrderEntry last = orderEntries[orderEntries.length - 1];
-        for (int i = orderEntries.length - 2; i > -1; i--) {
-          orderEntries[i + 1] = orderEntries[i];
-        }
-        orderEntries[0] = last;
-        model.rearrangeOrderEntries(orderEntries);
+        addLibrary(module, model, libName, libPath, jarArr);
         model.commit();
       }
     }.execute();
+  }
+
+  public static void addLibrary(Module module, ModifiableRootModel model, String libName, String libPath, String... jarArr) {
+    final LibraryTable libraryTable = ProjectLibraryTable.getInstance(module.getProject());
+    final Library library = libraryTable.createLibrary(libName);
+    final Library.ModifiableModel libraryModel = library.getModifiableModel();
+    for (String jar : jarArr) {
+      if (!libPath.endsWith("/") && !jar.startsWith("/")) {
+        jar = "/" + jar;
+      }
+      final String path = libPath + jar;
+      final VirtualFile root = JarFileSystem.getInstance().refreshAndFindFileByPath(path + "!/");
+      assert root != null : "Library root folder not found: " + path + "!/";
+      libraryModel.addRoot(root, OrderRootType.CLASSES);
+    }
+    libraryModel.commit();
+    model.addLibraryEntry(library);
+    final OrderEntry[] orderEntries = model.getOrderEntries();
+    OrderEntry last = orderEntries[orderEntries.length - 1];
+    for (int i = orderEntries.length - 2; i > -1; i--) {
+      orderEntries[i + 1] = orderEntries[i];
+    }
+    orderEntries[0] = last;
+    model.rearrangeOrderEntries(orderEntries);
   }
 }

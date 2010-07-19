@@ -112,4 +112,9 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
     final GrReferenceExpression ref = (GrReferenceExpression)configureByFile("javaLangClassType/A.groovy").getElement();
     assertEquals("java.lang.String", ref.getType().getCanonicalText());
   }
+
+  public void testGenericWildcard() {
+    final GrReferenceExpression ref = (GrReferenceExpression)configureByFile("genericWildcard/A.groovy").getElement();
+    assertEquals("A<Base>", ref.getType().getCanonicalText());
+  }
 }

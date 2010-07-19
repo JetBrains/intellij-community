@@ -36,6 +36,7 @@ import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl;
 import com.intellij.ui.BrowserHyperlinkListener;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SeparatorFactory;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.ui.UIUtil;
@@ -100,7 +101,7 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
     @NonNls final String text = IssueLinkHtmlRenderer.formatTextIntoHtml(project, changeList.getComment().trim());
     myCommitMessageArea.setBackground(UIUtil.getComboBoxDisabledBackground());
     myCommitMessageArea.addHyperlinkListener(new BrowserHyperlinkListener());
-    commitMessageScroll = new JScrollPane(myCommitMessageArea);
+    commitMessageScroll = ScrollPaneFactory.createScrollPane(myCommitMessageArea);
     myCommitMessageArea.setText(text);
     myCommitMessageArea.setCaretPosition(0);
   }

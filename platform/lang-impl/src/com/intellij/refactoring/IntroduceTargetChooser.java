@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.Function;
 
 import javax.swing.*;
@@ -37,12 +38,20 @@ public class IntroduceTargetChooser {
 
   public static <T extends PsiElement> void showChooser(final Editor editor, final List<T> expressions, final Pass<T> callback,
                                                         final Function<T, String> renderer) {
+    showChooser(editor, expressions, callback, renderer, "Expressions");
+  }
+
+  public static <T extends PsiElement> void showChooser(final Editor editor,
+                                                        final List<T> expressions,
+                                                        final Pass<T> callback,
+                                                        final Function<T, String> renderer,
+                                                        String title) {
     final ScopeHighlighter highlighter = new ScopeHighlighter(editor);
     final DefaultListModel model = new DefaultListModel();
     for (T expr : expressions) {
       model.addElement(expr);
     }
-    final JList list = new JList(model);
+    final JList list = new JBList(model);
     list.setCellRenderer(new DefaultListCellRenderer() {
 
       @Override
@@ -74,7 +83,7 @@ public class IntroduceTargetChooser {
     });
 
     JBPopupFactory.getInstance().createListPopupBuilder(list)
-          .setTitle("Expressions")
+          .setTitle(title)
           .setMovable(false)
           .setResizable(false)
           .setRequestFocus(true)

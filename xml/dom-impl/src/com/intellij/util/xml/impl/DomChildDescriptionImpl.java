@@ -21,6 +21,10 @@ public abstract class DomChildDescriptionImpl extends AbstractDomChildDescriptio
     myTagName = tagName;
   }
 
+  public String getName() {
+    return myTagName.getLocalName();
+  }
+
   @NotNull
   public String getXmlElementName() {
     return myTagName.getLocalName();

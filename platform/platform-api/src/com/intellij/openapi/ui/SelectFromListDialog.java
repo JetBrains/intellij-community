@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -31,7 +32,7 @@ import java.awt.*;
 public class SelectFromListDialog extends DialogWrapper {
   private final ToStringAspect myToStringAspect;
   private final DefaultListModel myModel = new DefaultListModel();
-  private final JList myList = new JList(myModel);
+  private final JList myList = new JBList(myModel);
   private final JPanel myMainPanel = new JPanel(new BorderLayout());
   
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.SelectFromListDialog");

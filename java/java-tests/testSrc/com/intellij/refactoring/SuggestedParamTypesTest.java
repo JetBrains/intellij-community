@@ -48,7 +48,7 @@ public class SuggestedParamTypesTest extends LightCodeInsightTestCase {
 
   @Override
   protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk15("java 1.5");
+    return JavaSdkImpl.getMockJdk17("java 1.5");
   }
 
   public void testPostfixExprUsedAsOutput() throws Exception {
@@ -73,6 +73,18 @@ public class SuggestedParamTypesTest extends LightCodeInsightTestCase {
 
   public void testAssignmentWithoutConcatenation() throws Exception {
     doTest("String", "Object", "Serializable", "Comparable<String>", "CharSequence");
+  }
+
+  public void testCastInside() throws Exception {
+    doTest("A", "Object");
+  }
+
+  public void testMultipleCasts() throws Exception {
+    doTest("A", "Object");
+  }
+
+  public void testCastNoCast() throws Exception {
+    doTest("Object");
   }
 
   private void doTest(String... types) throws Exception {

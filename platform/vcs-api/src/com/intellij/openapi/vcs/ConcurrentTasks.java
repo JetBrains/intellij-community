@@ -17,7 +17,6 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.Consumer;
@@ -51,7 +50,10 @@ public class ConcurrentTasks<T> {
 
     final List<Future<?>> futures = new LinkedList<Future<?>>();
     for (final Consumer<Consumer<T>> task : myTasks) {
-      if (myResultKnown) break;
+      if (myResultKnown) {
+        -- myCntAlive;
+        continue;
+      }
       final Runnable computableProxy = new Runnable() {
         public void run() {
           try {
@@ -60,17 +62,14 @@ public class ConcurrentTasks<T> {
                 if (myResultKnown) return;
                 myResult = t;
                 myResultKnown = true;
-                -- myCntAlive;
-                mySemaphore.up();
               }
             });
           }
-          catch (ProcessCanceledException e) {
+          finally {
             -- myCntAlive;
-            if (myCntAlive == 0) {
+            if (myCntAlive == 0 || myResultKnown) {
               mySemaphore.up();
             }
-            throw e;
           }
         }
       };
@@ -83,9 +82,10 @@ public class ConcurrentTasks<T> {
     }
 
     while (true) {
-      mySemaphore.waitFor(1000);
       if (myResultKnown) break;
+      if (myCntAlive <= 0) break;
       pi.checkCanceled();
+      mySemaphore.waitFor(1000);
     }
     // in it possible to even interrupt() threads involved, but at the moment it's better for tasks themselves to check cancel status
     for (Future<?> future : futures) {

@@ -26,10 +26,12 @@ import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.ui.ProjectJdksEditor;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +56,7 @@ public class JdkChooserPanel extends JPanel {
     super(new BorderLayout());
     myProject = project;
     myListModel = new DefaultListModel();
-    myList = new JList(myListModel);
+    myList = new JBList(myListModel);
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myList.setCellRenderer(new ProjectJdkListRenderer());
     //noinspection HardCodedStringLiteral
@@ -74,7 +76,7 @@ public class JdkChooserPanel extends JPanel {
     });
 
     JPanel panel = new JPanel(new BorderLayout());
-    panel.add(new JScrollPane(myList), BorderLayout.CENTER);
+    panel.add(ScrollPaneFactory.createScrollPane(myList), BorderLayout.CENTER);
     add(panel, BorderLayout.CENTER);
     if (myListModel.getSize() > 0) {
       myList.setSelectedIndex(0);
@@ -150,11 +152,11 @@ public class JdkChooserPanel extends JPanel {
       jdks = getCompatibleJdks(type, Arrays.asList(allJdks));
     }
     else {
-      final ProjectJdksModel projectJdksModel = ProjectStructureConfigurable.getInstance(myProject).getProjectJdksModel();
+      final ProjectSdksModel projectJdksModel = ProjectStructureConfigurable.getInstance(myProject).getProjectJdksModel();
       if (!projectJdksModel.isInitialized()){ //should be initialized
         projectJdksModel.reset(myProject);
       }
-      final Collection<Sdk> collection = projectJdksModel.getProjectJdks().values();
+      final Collection<Sdk> collection = projectJdksModel.getProjectSdks().values();
       jdks = getCompatibleJdks(type, collection);
     }
     Arrays.sort(jdks, new Comparator<Sdk>() {

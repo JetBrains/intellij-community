@@ -18,7 +18,10 @@ package org.intellij.plugins.xpathView.search;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -30,15 +33,13 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.util.Processor;
+import gnu.trove.THashSet;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import org.jdom.Element;
-
 import java.util.Collection;
-import java.util.Arrays;
-
-import gnu.trove.THashSet;
+import java.util.Collections;
 
 public class SearchScope implements JDOMExternalizable {
 
@@ -212,24 +213,10 @@ public class SearchScope implements JDOMExternalizable {
                         }
                     });
                     if (searchScope.isSearchInLibraries()) {
+                        final OrderEnumerator enumerator = OrderEnumerator.orderEntries(project).withoutModuleSourceEntries().withoutDepModules();
                         final Collection<VirtualFile> libraryFiles = new THashSet<VirtualFile>();
-                        for (Module mod : ModuleManager.getInstance(project).getModules()) {
-                            ModuleRootManager.getInstance(mod).processOrder(new RootPolicy<Void>(){
-                                @Nullable
-                                public Void visitLibraryOrderEntry(final LibraryOrderEntry libraryOrderEntry, final Void value) {
-                                    libraryFiles.addAll(Arrays.asList(libraryOrderEntry.getFiles(OrderRootType.CLASSES)));
-                                    libraryFiles.addAll(Arrays.asList(libraryOrderEntry.getFiles(OrderRootType.SOURCES)));
-                                    return null;
-                                }
-
-                                @Nullable
-                                public Void visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final Void value) {
-                                    libraryFiles.addAll(Arrays.asList(jdkOrderEntry.getFiles(OrderRootType.CLASSES)));
-                                    libraryFiles.addAll(Arrays.asList(jdkOrderEntry.getFiles(OrderRootType.SOURCES)));
-                                    return null;
-                                }
-                            }, null);
-                        }
+                        Collections.addAll(libraryFiles, enumerator.getClassesRoots());
+                        Collections.addAll(libraryFiles, enumerator.getSourceRoots());
                         final Processor<VirtualFile> adapter = new Processor<VirtualFile>() {
                             public boolean process(VirtualFile virtualFile) {
                                 return iterator.processFile(virtualFile);

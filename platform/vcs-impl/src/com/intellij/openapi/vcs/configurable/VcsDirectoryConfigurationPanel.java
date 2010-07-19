@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
+import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.table.TableView;
@@ -40,8 +41,8 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemListener;
 import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.io.File;
 import java.util.*;
 import java.util.List;
@@ -95,7 +96,7 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
             text = VcsBundle.message("none.vcs.presentation");
           }
           else {
-            final AbstractVcs vcs = myVcsManager.findVcsByName(vcsName);
+            final VcsDescriptor vcs = myAllVcss.get(vcsName);
             if (vcs != null) {
               text = vcs.getDisplayName();
             }
@@ -112,13 +113,13 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
     public TableCellEditor getEditor(final VcsDirectoryMapping o) {
       return new AbstractTableCellEditor() {
         public Object getCellEditorValue() {
-          final VcsWrapper selectedVcs = (VcsWrapper) myVcsComboBox.getComboBox().getSelectedItem();
-          return ((selectedVcs == null) || (selectedVcs.getOriginal() == null)) ? "" : selectedVcs.getOriginal().getName();
+          final VcsDescriptor selectedVcs = (VcsDescriptor) myVcsComboBox.getComboBox().getSelectedItem();
+          return ((selectedVcs == null) || selectedVcs.isNone()) ? "" : selectedVcs.getName();
         }
 
         public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
           String vcsName = (String) value;
-          myVcsComboBox.getComboBox().setSelectedItem(VcsWrapper.fromName(myProject, vcsName));
+          myVcsComboBox.getComboBox().setSelectedItem(myAllVcss.get(vcsName));
           return myVcsComboBox;
         }
       };
@@ -128,17 +129,24 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
   private JButton myAddButton;
   private JButton myEditButton;
   private JButton myRemoveButton;
+  private final Map<String, VcsDescriptor> myAllVcss;
 
   public VcsDirectoryConfigurationPanel(final Project project) {
     myProject = project;
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
+    final VcsDescriptor[] vcsDescriptors = myVcsManager.getAllVcss();
+    myAllVcss = new HashMap<String, VcsDescriptor>();
+    for (VcsDescriptor vcsDescriptor : vcsDescriptors) {
+      myAllVcss.put(vcsDescriptor.getName(), vcsDescriptor);
+    }
 
     myDirectoryMappingTable = new TableView<VcsDirectoryMapping>();
     initializeModel();
 
-    myVcsComboBox.getComboBox().setModel(buildVcsWrappersModel(myProject));
-    myVcsComboBox.getComboBox().setRenderer(new EditorComboBoxRenderer(myVcsComboBox.getComboBox().getEditor()));
-    myVcsComboBox.getComboBox().addItemListener(new ItemListener() {
+    final JComboBox comboBox = myVcsComboBox.getComboBox();
+    comboBox.setModel(buildVcsWrappersModel(myProject));
+    comboBox.setRenderer(new EditorComboBoxRenderer(comboBox.getEditor()));
+    comboBox.addItemListener(new ItemListener() {
       public void itemStateChanged(final ItemEvent e) {
         if (myDirectoryMappingTable != null && myDirectoryMappingTable.isEditing()) {
           myDirectoryMappingTable.stopEditing();
@@ -147,12 +155,8 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
     });
     myVcsComboBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final VcsWrapper vcsWrapper = ((VcsWrapper)myVcsComboBox.getComboBox().getSelectedItem());
-        AbstractVcs abstractVcs = null;
-        if (vcsWrapper != null){
-          abstractVcs = vcsWrapper.getOriginal();
-        }
-        new VcsConfigurationsDialog(project, myVcsComboBox.getComboBox(), abstractVcs).show();
+        final VcsDescriptor vcsWrapper = ((VcsDescriptor)comboBox.getSelectedItem());
+        new VcsConfigurationsDialog(project, comboBox, vcsWrapper).show();
       }
     });
 
@@ -182,13 +186,11 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
   }
 
   public static DefaultComboBoxModel buildVcsWrappersModel(final Project project) {
-    final AbstractVcs[] vcss = ProjectLevelVcsManager.getInstance(project).getAllVcss();
-    VcsWrapper[] vcsWrappers = new VcsWrapper[vcss.length+1];
-    vcsWrappers [0] = new VcsWrapper(null);
-    for(int i=0; i<vcss.length; i++) {
-      vcsWrappers [i+1] = new VcsWrapper(vcss [i]);
-    }
-    return new DefaultComboBoxModel(vcsWrappers);
+    final VcsDescriptor[] vcsDescriptors = ProjectLevelVcsManager.getInstance(project).getAllVcss();
+    final VcsDescriptor[] result = new VcsDescriptor[vcsDescriptors.length + 1];
+    result[0] = VcsDescriptor.createFictive();
+    System.arraycopy(vcsDescriptors, 0, result, 1, vcsDescriptors.length);
+    return new DefaultComboBoxModel(result);
   }
 
   protected String getLabelText() {
@@ -261,7 +263,7 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
   }
 
   protected JComponent createMainComponent() {
-    return new JScrollPane(myDirectoryMappingTable);
+    return ScrollPaneFactory.createScrollPane(myDirectoryMappingTable);
   }
 
   public void reset() {

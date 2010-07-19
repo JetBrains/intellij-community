@@ -125,8 +125,9 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
     return this;
   }
 
-  public void addModifier(String modifier) {
+  public LightMethodBuilder addModifier(String modifier) {
     myModifierList.addModifier(modifier);
+    return this;
   }
 
   public LightMethodBuilder setModifiers(String... modifiers) {

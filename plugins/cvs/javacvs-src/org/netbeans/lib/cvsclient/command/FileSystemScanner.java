@@ -83,7 +83,7 @@ final class FileSystemScanner {
 
   private List<DirectoryObject> scanDirectory(DirectoryObject directoryObject, CvsFiles cvsFiles) throws IOException {
     if (!clientEnvironment.getLocalFileReader().exists(directoryObject, clientEnvironment.getCvsFileSystem())) {
-      return Collections.EMPTY_LIST;
+      return Collections.emptyList();
     }
 
     cvsFiles.add(CvsFile.createCvsDirectory(directoryObject));

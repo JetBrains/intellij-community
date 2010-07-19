@@ -27,6 +27,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.ui.VisibilityPanel;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBList;
 import com.intellij.usageView.UsageViewUtil;
 
 import javax.swing.*;
@@ -81,7 +82,7 @@ public abstract class MoveInstanceMethodDialogBase extends RefactoringDialog {
   }
 
   protected JList createTargetVariableChooser() {
-    final JList list = new JList(new MyListModel());
+    final JList list = new JBList(new MyListModel());
     list.setCellRenderer(new MyListCellRenderer());
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setSelectedIndex(0);

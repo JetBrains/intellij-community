@@ -28,6 +28,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
@@ -130,17 +131,20 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     if (startTagName == null) return PsiReference.EMPTY_ARRAY;
     final ASTNode endTagName = XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(this);
     List<PsiReference> refs = new ArrayList<PsiReference>();
-    final String prefix = getNamespacePrefix();
+    String prefix = getNamespacePrefix();
 
+    TagNameReference startTagRef = TagNameReference.createTagNameReference(this, startTagName, true);
+    refs.add(startTagRef);
     if (prefix.length() > 0) {
-      refs.add(createPrefixReference(startTagName, prefix));
-      if (endTagName != null) {
-        refs.add(createPrefixReference(endTagName, prefix));
-      }
+      refs.add(createPrefixReference(startTagName, prefix, startTagRef));
     }
-    refs.add(TagNameReference.createTagNameReference(this, startTagName, true));
     if (endTagName != null) {
-      refs.add(TagNameReference.createTagNameReference(this, endTagName, false));
+      TagNameReference endTagRef = TagNameReference.createTagNameReference(this, endTagName, false);
+      refs.add(endTagRef);
+      prefix = XmlUtil.findPrefixByQualifiedName(endTagName.getText());
+      if (StringUtil.isNotEmpty(prefix)) {
+        refs.add(createPrefixReference(endTagName, prefix, endTagRef));
+      }
     }
 
 
@@ -153,8 +157,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     return ContainerUtil.toArray(refs, new PsiReference[refs.size()]);
   }
 
-  private SchemaPrefixReference createPrefixReference(ASTNode startTagName, String prefix) {
-    return new SchemaPrefixReference(this, TextRange.from(startTagName.getStartOffset() - this.getStartOffset(), prefix.length()), prefix);
+  private SchemaPrefixReference createPrefixReference(ASTNode startTagName, String prefix, TagNameReference tagRef) {
+    return new SchemaPrefixReference(this, TextRange.from(startTagName.getStartOffset() - this.getStartOffset(), prefix.length()), prefix, tagRef);
   }
 
   public XmlNSDescriptor getNSDescriptor(final String namespace, boolean strict) {
@@ -433,7 +437,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     XmlElementDescriptor elementDescriptor = null;
     final XmlNSDescriptor nsDescriptor = getNSDescriptor(namespace, false);
     if (nsDescriptor != null) {
-      if (!DumbService.getInstance(getProject()).isDumb() || nsDescriptor instanceof DumbAware) {
+      if (!DumbService.getInstance(getProject()).isDumb() || DumbService.isDumbAware(nsDescriptor)) {
         elementDescriptor = nsDescriptor.getElementDescriptor(this);
       }
     }
@@ -751,14 +755,14 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     }
     if (parentElement instanceof XmlTag) {
       if (known.isEmpty()) return ((XmlTag)parentElement).knownNamespaces();
-      known.addAll(Arrays.asList(((XmlTag)parentElement).knownNamespaces()));
+      ContainerUtil.addAll(known, ((XmlTag)parentElement).knownNamespaces());
     }
     else {
       final XmlFile xmlFile = XmlExtension.getExtensionByElement(this).getContainingFile(this);
       final XmlTag rootTag = xmlFile.getDocument().getRootTag();
       if (rootTag != null && rootTag != this) {
         if (known.isEmpty()) return rootTag.knownNamespaces();
-        known.addAll(Arrays.asList(rootTag.knownNamespaces()));
+        ContainerUtil.addAll(known, rootTag.knownNamespaces());
       }
     }
     return ArrayUtil.toStringArray(known);

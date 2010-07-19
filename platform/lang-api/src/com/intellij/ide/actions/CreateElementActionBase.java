@@ -88,7 +88,7 @@ public abstract class CreateElementActionBase extends AnAction {
     presentation.setEnabled(enabled);
   }
 
-  protected boolean isDumbAware() {
+  public boolean isDumbAware() {
     return false;
   }
 

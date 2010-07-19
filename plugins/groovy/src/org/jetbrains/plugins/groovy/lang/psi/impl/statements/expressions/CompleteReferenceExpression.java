@@ -38,12 +38,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.CompletionProcessor;
@@ -53,6 +53,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.*;
 
 /**
  * @author ven
@@ -76,6 +78,12 @@ public class CompleteReferenceExpression {
         for (Object variant : propertyVariants) {
           if (variant instanceof PsiField && accessedPropertyNames.contains(((PsiField)variant).getName())) {
             continue;
+          }
+          else if (variant instanceof LookupElement) {
+            final Object o = ((LookupElement)variant).getObject();
+            if (o instanceof PsiField && accessedPropertyNames.contains(((PsiField)o).getName())) {
+              continue;
+            }
           }
           consumer.consume(variant);
         }
@@ -116,8 +124,8 @@ public class CompleteReferenceExpression {
       JavaPsiFacade.getInstance(refExpr.getProject()).findClass("java.util.EventListener", refExpr.getResolveScope());
     for (PsiMethod method : clazz.getAllMethods()) {
       if (PsiUtil.isStaticsOK(method, refExpr)) {
-        if (GroovyPropertyUtils.isSimplePropertyAccessor(method)) {
-          String prop = GroovyPropertyUtils.getPropertyName(method);
+        if (isSimplePropertyAccessor(method)) {
+          String prop = getPropertyName(method);
           accessedPropertyNames.add(prop);
           assert prop != null;
           consumer.consume(LookupElementBuilder.create(prop).setIcon(GroovyIcons.PROPERTY));
@@ -179,7 +187,6 @@ public class CompleteReferenceExpression {
     GroovyResolveResult[] candidates = processor.getCandidates();
     if (candidates.length == 0 && sameQualifier.length == 0) return PsiNamedElement.EMPTY_ARRAY;
     candidates = filterStaticsOK(candidates);
-    PsiElement[] elements = ResolveUtil.mapToElements(candidates);
     if (qualifier == null) {
       List<GroovyResolveResult> nonPackages = ContainerUtil.findAll(candidates, new Condition<GroovyResolveResult>() {
         public boolean value(final GroovyResolveResult result) {
@@ -188,7 +195,7 @@ public class CompleteReferenceExpression {
       });
       candidates = nonPackages.toArray(new GroovyResolveResult[nonPackages.size()]);
     }
-    LookupElement[] propertyLookupElements = addPretendedProperties(elements);
+    LookupElement[] propertyLookupElements = addPretendedProperties(candidates);
     Object[] variants = GroovyCompletionUtil.getCompletionVariants(candidates);
     variants = ArrayUtil.mergeArrays(variants, propertyLookupElements, Object.class);
     return ArrayUtil.mergeArrays(variants, sameQualifier, Object.class);
@@ -197,7 +204,9 @@ public class CompleteReferenceExpression {
   private static GroovyResolveResult[] filterStaticsOK(GroovyResolveResult[] candidates) {
     List<GroovyResolveResult> result = new ArrayList<GroovyResolveResult>(candidates.length);
     for (GroovyResolveResult resolveResult : candidates) {
-      if (resolveResult.isStaticsOK()) result.add(resolveResult);
+      if (resolveResult.isStaticsOK() || resolveResult.getCurrentFileResolveContext() instanceof GrMethodCallExpression) {
+        result.add(resolveResult);
+      }
     }
     return result.toArray(new GroovyResolveResult[result.size()]);
   }
@@ -227,18 +236,24 @@ public class CompleteReferenceExpression {
     }
   }
 
-  private static LookupElement[] addPretendedProperties(PsiElement[] elements) {
+  private static LookupElement[] addPretendedProperties(GroovyResolveResult[] elements) {
     List<LookupElement> result = new ArrayList<LookupElement>();
 
-    for (PsiElement element : elements) {
+    for (GroovyResolveResult resolveResult : elements) {
+      PsiElement element = resolveResult.getElement();
       if (element instanceof PsiMethod && !(element instanceof GrAccessorMethod)) {
         PsiMethod method = (PsiMethod)element;
-        if (GroovyPropertyUtils.isSimplePropertyAccessor(method)) {
-          String propName = GroovyPropertyUtils.getPropertyName(method);
+        String propName = null;
+        if (isSimplePropertyGetter(method, null, resolveResult.getCurrentFileResolveContext() instanceof GrMethodCallExpression)) {
+          propName = getPropertyNameByGetter(method);
+        }
+        else if (isSimplePropertySetter(method, null, resolveResult.getCurrentFileResolveContext() instanceof GrMethodCallExpression)) {
+          propName = getPropertyName(method);
+        }
+        if (propName != null) {
           if (!PsiUtil.isValidReferenceName(propName)) {
             propName = "'" + propName + "'";
           }
-          assert propName != null;
           result.add(LookupElementBuilder.create(propName).setIcon(GroovyIcons.PROPERTY));
         }
       }
@@ -284,7 +299,7 @@ public class CompleteReferenceExpression {
               javaLangClass.processDeclarations(processor, ResolveState.initial(), null, refExpr);
               PsiType javaLangClassType =
                 JavaPsiFacade.getInstance(refExpr.getProject()).getElementFactory().createType(javaLangClass, substitutor);
-              ResolveUtil.processNonCodeMethods(javaLangClassType, processor, refExpr.getProject(), refExpr, true);
+              ResolveUtil.processNonCodeMethods(javaLangClassType, processor, refExpr, true);
             }
           }
         }
@@ -352,6 +367,6 @@ public class CompleteReferenceExpression {
       return;
     }
 
-    ResolveUtil.processNonCodeMethods(qualifierType, processor, project, refExpr, true);
+    ResolveUtil.processNonCodeMethods(qualifierType, processor, refExpr, true);
   }
 }

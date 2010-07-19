@@ -18,9 +18,9 @@ package org.intellij.plugins.intelliLang.inject.config.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.LanguageTextField;
 import org.intellij.lang.regexp.RegExpLanguage;
 import org.intellij.plugins.intelliLang.inject.config.XmlAttributeInjection;
-import org.intellij.plugins.intelliLang.util.LanguageTextField;
 
 import javax.swing.*;
 

@@ -17,16 +17,20 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.ex.WeakKeymapManagerListener;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -35,7 +39,6 @@ import java.util.List;
 final class Stripe extends JPanel{
   private final int myAnchor;
   private final ArrayList<StripeButton> myButtons = new ArrayList<StripeButton>();
-  private final MyKeymapManagerListener myKeymapManagerListener;
   private final WeakKeymapManagerListener myWeakKeymapManagerListener;
   private final MyUISettingsListener myUISettingsListener;
 
@@ -47,14 +50,14 @@ final class Stripe extends JPanel{
   private LayoutData myLastLayoutData;
   private boolean myFinishingDrop;
   static final int DROP_DISTANCE_SENSIVITY = 20;
+  private final Disposable myDisposable = Disposer.newDisposable();
 
   Stripe(final int anchor, ToolWindowManagerImpl manager){
     super(new GridBagLayout());
     //setBackground(new Color(247, 243, 239));
     myManager = manager;
     myAnchor = anchor;
-    myKeymapManagerListener=new MyKeymapManagerListener();
-    myWeakKeymapManagerListener=new WeakKeymapManagerListener(KeymapManagerEx.getInstanceEx(),myKeymapManagerListener);
+    myWeakKeymapManagerListener=new WeakKeymapManagerListener(KeymapManagerEx.getInstanceEx(), new MyKeymapManagerListener());
     myUISettingsListener=new MyUISettingsListener();
   }
 
@@ -66,7 +69,7 @@ final class Stripe extends JPanel{
     updateText();
     updateState();
     KeymapManagerEx.getInstanceEx().addKeymapManagerListener(myWeakKeymapManagerListener);
-    UISettings.getInstance().addUISettingsListener(myUISettingsListener);
+    UISettings.getInstance().addUISettingsListener(myUISettingsListener,myDisposable);
   }
 
   /**
@@ -74,11 +77,11 @@ final class Stripe extends JPanel{
    */
   public void removeNotify(){
     KeymapManagerEx.getInstanceEx().removeKeymapManagerListener(myWeakKeymapManagerListener);
-    UISettings.getInstance().removeUISettingsListener(myUISettingsListener);
+    Disposer.dispose(myDisposable);
     super.removeNotify();
   }
 
-  void addButton(final StripeButton button,final Comparator comparator){
+  void addButton(final StripeButton button,final Comparator<StripeButton> comparator){
     myPrefSize = null;
     myButtons.add(button);
     Collections.sort(myButtons,comparator);

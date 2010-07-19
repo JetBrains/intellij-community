@@ -22,6 +22,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatemen
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 
 import java.util.ArrayList;
@@ -105,7 +106,7 @@ scopes:
                 }
               }
               if (!containModifierFlag) {
-                ret.addAll(Arrays.asList(keywords));
+                ContainerUtil.addAll(ret, keywords);
               }
             }
             break scopes;

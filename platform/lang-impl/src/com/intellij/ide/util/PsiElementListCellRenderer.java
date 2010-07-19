@@ -37,6 +37,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -117,8 +118,8 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
         }
       }
       else {
-        setIcon(getNullIcon());
-        append(value == null ? getNullPresentation() : value.toString(), new SimpleTextAttributes(Font.PLAIN, list.getForeground()));
+        setIcon(IconUtil.getEmptyIcon(false));
+        append(value == null ? "" : value.toString(), new SimpleTextAttributes(Font.PLAIN, list.getForeground()));
       }
       setPaintFocusBorder(false);
       setBackground(selected ? UIUtil.getListSelectionBackground() : bgColor);
@@ -161,14 +162,6 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
   public abstract String getElementText(T element);
 
-  protected String getNullPresentation() {
-    return "";
-  }
-
-  protected Icon getNullIcon() {
-    return IconUtil.getEmptyIcon(false);
-  }
-
   @Nullable
   protected abstract String getContainerText(T element, final String name);
 
@@ -181,15 +174,16 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   public Comparator<T> getComparator() {
     return new Comparator<T>() {
       public int compare(T o1, T o2) {
-        return getText(o1).compareTo(getText(o2));
-      }
-
-      private String getText(T element) {
-        String elementText = getElementText(element);
-        String containerText = getContainerText(element, elementText);
-        return containerText != null ? elementText + " " + containerText : elementText;
+        return getComparingObject(o1).compareTo(getComparingObject(o2));
       }
     };
+  }
+
+  @NotNull
+  public Comparable getComparingObject(T element) {
+    String elementText = getElementText(element);
+    String containerText = getContainerText(element, elementText);
+    return containerText != null ? elementText + " " + containerText : elementText;
   }
 
   public void installSpeedSearch(PopupChooserBuilder builder) {

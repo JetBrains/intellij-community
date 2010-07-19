@@ -20,6 +20,14 @@ import com.intellij.ide.ExporterToTextFile;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.editor.impl.EditorFactoryImpl;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -28,6 +36,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -104,8 +113,7 @@ public class ExportToFileUtil {
   public static class ExportDialogBase extends DialogWrapper {
     private final Project myProject;
     private final ExporterToTextFile myExporter;
-    protected JTextArea myTextArea;
-    protected JScrollPane myTextScrollPane;
+    protected Editor myTextArea;
     protected JTextField myTfFile;
     protected JButton myFileButton;
     private ChangeListener myListener;
@@ -139,20 +147,29 @@ public class ExportToFileUtil {
 
     public void dispose() {
       myExporter.removeSettingsChangedListener(myListener);
+      EditorFactory.getInstance().releaseEditor(myTextArea);
       super.dispose();
     }
 
     private void initText() {
-      myTextArea.setText(myExporter.getReportText());
-      myTextArea.getCaret().setDot(0);
+      myTextArea.getDocument().setText(myExporter.getReportText());
     }
 
     protected JComponent createCenterPanel() {
-      myTextArea = new JTextArea();
-      myTextArea.setEditable(false);
-      myTextScrollPane = new JScrollPane(myTextArea);
-      myTextScrollPane.setPreferredSize(new Dimension(400, 300));
-      return myTextScrollPane;
+      final Document document = ((EditorFactoryImpl)EditorFactory.getInstance()).createDocument(true);
+      ((DocumentImpl)document).setAcceptSlashR(true);
+
+      myTextArea = EditorFactory.getInstance().createEditor(document, myProject, StdFileTypes.PLAIN_TEXT, true);
+      final EditorSettings settings = myTextArea.getSettings();
+      settings.setLineNumbersShown(false);
+      settings.setLineMarkerAreaShown(false);
+      settings.setFoldingOutlineShown(false);
+      settings.setRightMarginShown(false);
+      settings.setAdditionalLinesCount(0);
+      settings.setAdditionalColumnsCount(0);
+      settings.setAdditionalPageAtBottom(false);
+      ((EditorEx)myTextArea).setBackgroundColor(UIUtil.getInactiveTextFieldBackgroundColor());
+      return myTextArea.getComponent();
     }
 
     protected JComponent createNorthPanel() {
@@ -209,7 +226,7 @@ public class ExportToFileUtil {
     }
 
     public String getText() {
-      return myTextArea.getText();
+      return myTextArea.getDocument().getText();
     }
 
     public void setFileName(String s) {
@@ -235,7 +252,7 @@ public class ExportToFileUtil {
       }
 
       public void actionPerformed(ActionEvent e) {
-        String s = StringUtil.convertLineSeparators(myTextArea.getText());
+        String s = StringUtil.convertLineSeparators(getText());
         CopyPasteManager.getInstance().setContents(new StringSelection(s));
       }
     }

@@ -15,10 +15,14 @@
  */
 package com.intellij.ui.components.panels;
 
+import com.intellij.util.ui.UIUtil;
+
 import javax.swing.*;
 import java.awt.*;
 
 public class NonOpaquePanel extends Wrapper {
+
+  private static final Color TRANSPARENT = new Color(0, 0, 0, 0);
 
   public NonOpaquePanel() {
     setOpaque(false);
@@ -49,4 +53,21 @@ public class NonOpaquePanel extends Wrapper {
     setOpaque(false);
   }
 
+  @Override
+  public void setOpaque(boolean isOpaque) {
+    super.setOpaque(isOpaque);
+
+    if (!isOpaque && UIUtil.isUnderNimbusLookAndFeel()) {
+      if (UIUtil.isUnderNimbusLookAndFeel()) {
+        setBackground(TRANSPARENT);
+      }
+    }
+  }
+
+  public static void setTransparent(JComponent c) {
+    c.setOpaque(false);
+    if (UIUtil.isUnderNimbusLookAndFeel()) {
+      c.setBackground(TRANSPARENT);
+    }
+  }
 }

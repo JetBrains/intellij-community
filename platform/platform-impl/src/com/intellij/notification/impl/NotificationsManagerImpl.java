@@ -22,6 +22,7 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.BalloonLayout;
@@ -163,7 +164,13 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
     final JLabel label = new JLabel(text.getText());
     final Dimension size = label.getPreferredSize();
     text.setEditable(false);
+
     text.setOpaque(false);
+
+    if (UIUtil.isUnderNimbusLookAndFeel()) {
+      text.setBackground(new Color(0, 0, 0, 0));
+    }
+
     text.setBorder(null);
     text.setPreferredSize(size);
 

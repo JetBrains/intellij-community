@@ -35,6 +35,7 @@ import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
@@ -135,8 +136,8 @@ public abstract class ChangesTreeList<T> extends JPanel {
     myList = new JBList(new DefaultListModel());
     myList.setVisibleRowCount(10);
 
-    add(myListScrollPane = new JScrollPane(myList), LIST_CARD);
-    add(myTreeScrollPane = new JScrollPane(myTree), TREE_CARD);
+    add(myListScrollPane = ScrollPaneFactory.createScrollPane(myList), LIST_CARD);
+    add(myTreeScrollPane = ScrollPaneFactory.createScrollPane(myTree), TREE_CARD);
 
     new ListSpeedSearch(myList) {
       protected String getElementText(Object element) {
@@ -556,8 +557,8 @@ public abstract class ChangesTreeList<T> extends JPanel {
       myCheckBox = new JCheckBox();
       myTextRenderer = new ChangesBrowserNodeRenderer(myProject, false, myHighlightProblems);
 
-      myCheckBox.setBackground(null);
-      setBackground(null);
+      NonOpaquePanel.setTransparent(this);
+      NonOpaquePanel.setTransparent(myCheckBox);
 
       if (myShowCheckboxes) {
         add(myCheckBox, BorderLayout.WEST);

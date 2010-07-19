@@ -1,0 +1,3 @@
+// &copy; 2010
+char c = '\u00a9';
+String s = "\u00c1\u00ee";

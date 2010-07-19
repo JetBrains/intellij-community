@@ -26,6 +26,7 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -79,7 +80,7 @@ public class GrGenerateEqualsHelper {
     myCheckParameterWithInstanceof = useInstanceofToCheckParameterType;
 
     myNonNullSet = new HashSet<PsiField>();
-    myNonNullSet.addAll(Arrays.asList(nonNullFields));
+    ContainerUtil.addAll(myNonNullSet, nonNullFields);
 
     myFactory = GroovyPsiElementFactory.getInstance(project);
 
@@ -253,7 +254,7 @@ public class GrGenerateEqualsHelper {
       addClassInstance(buffer);
 
       ArrayList<PsiField> equalsFields = new ArrayList<PsiField>();
-      equalsFields.addAll(Arrays.asList(myEqualsFields));
+      ContainerUtil.addAll(equalsFields, myEqualsFields);
       Collections.sort(equalsFields, EqualsFieldsComparator.INSTANCE);
 
       for (PsiField field : equalsFields) {
@@ -261,15 +262,18 @@ public class GrGenerateEqualsHelper {
           final PsiType type = field.getType();
           if (type instanceof PsiArrayType) {
             addArrayEquals(buffer, field);
-          } else if (type instanceof PsiPrimitiveType) {
+          }
+          else if (type instanceof PsiPrimitiveType) {
             if (PsiType.DOUBLE.equals(type) || PsiType.FLOAT.equals(type)) {
               addDoubleFieldComparison(buffer, field);
-            } else {
+            }
+            else {
               addFieldComparison(buffer, field);
             }
-          } else {
+          }
+          else {
             if (type instanceof PsiClassType) {
-              final PsiClass aClass = ((PsiClassType) type).resolve();
+              final PsiClass aClass = ((PsiClassType)type).resolve();
               if (aClass != null && aClass.isEnum()) {
                 addFieldComparison(buffer, field);
                 continue;

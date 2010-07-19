@@ -15,21 +15,18 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NotNullFunction;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomReflectionUtil;
-import com.intellij.util.xml.JavaMethod;
-import com.intellij.util.xml.EvaluatedXmlName;
+import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.CustomDomChildrenDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Collections;
 import java.lang.reflect.Type;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author peter
@@ -42,14 +39,16 @@ public class CustomDomChildrenDescriptionImpl extends AbstractDomChildDescriptio
       return DomImplUtil.getCustomSubTags(handler, handler.getXmlTag().getSubTags(), handler.getFile());
     }
   };
+  private final TagNameDescriptor myTagNameDescriptor;
 
   public CustomDomChildrenDescriptionImpl(@NotNull final JavaMethod getter) {
-    this(getter, DomReflectionUtil.extractCollectionElementType(getter.getGenericReturnType()));
+    this(getter, DomReflectionUtil.extractCollectionElementType(getter.getGenericReturnType()), TagNameDescriptor.EMPTY);
   }
 
-  public CustomDomChildrenDescriptionImpl(@Nullable final JavaMethod getter, @NotNull Type type) {
+  public CustomDomChildrenDescriptionImpl(@Nullable final JavaMethod getter, @NotNull Type type, @NotNull TagNameDescriptor descriptor) {
     super(type);
     myGetter = getter;
+    myTagNameDescriptor = descriptor;
   }
 
   @Nullable public JavaMethod getGetterMethod() {
@@ -83,5 +82,11 @@ public class CustomDomChildrenDescriptionImpl extends AbstractDomChildDescriptio
 
   public EvaluatedXmlName createEvaluatedXmlName(final DomInvocationHandler parent, final XmlTag childTag) {
     return new DummyEvaluatedXmlName(childTag.getLocalName(), childTag.getNamespace());
+  }
+
+  @NotNull
+  @Override
+  public TagNameDescriptor getTagNameDescriptor() {
+    return myTagNameDescriptor;
   }
 }

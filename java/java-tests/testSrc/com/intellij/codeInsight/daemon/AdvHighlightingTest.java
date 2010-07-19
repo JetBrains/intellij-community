@@ -10,19 +10,21 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
@@ -64,7 +66,7 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
   protected Sdk getTestProjectJdk() {
     @NonNls boolean is50 = "StaticImportConflict".equals(getTestName(false));
     LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(is50 ? LanguageLevel.JDK_1_5 : LanguageLevel.JDK_1_4);
-    return is50 ? JavaSdkImpl.getMockJdk15("java 1.5") : JavaSdkImpl.getMockJdk("java 1.4");
+    return is50 ? JavaSdkImpl.getMockJdk17("java 1.5") : JavaSdkImpl.getMockJdk14();
   }
 
   public void testStaticImportConflict() throws Exception { doTest(BASE_PATH+"/staticImportConflict/Usage.java", BASE_PATH+"/staticImportConflict", false, false); }
@@ -147,10 +149,10 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         final ModifiableRootModel rootModel4 = rootManager4.getModifiableModel();
-        rootModel4.setSdk(JavaSdkImpl.getMockJdk("java 1.4"));
+        rootModel4.setSdk(JavaSdkImpl.getMockJdk17("java 1.4"));
         rootModel4.commit();
         final ModifiableRootModel rootModel5 = rootManager5.getModifiableModel();
-        rootModel5.setSdk(JavaSdkImpl.getMockJdk15("java 1.5"));
+        rootModel5.setSdk(JavaSdkImpl.getMockJdk17("java 1.5"));
         rootModel5.addModuleOrderEntry(java4);
         rootModel5.commit();
       }

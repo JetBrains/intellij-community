@@ -28,6 +28,7 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.xpath.psi.XPathElement;
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.psi.XPathVariableReference;
@@ -170,75 +171,76 @@ public class XsltCodeInsightUtil {
     }
 
     public static XmlTag findVariableInsertionPoint(final XmlTag currentUsageTag, PsiElement usageBlock, final String referenceName, XmlTag... moreUsages) {
-        // sort tags by document order
-        final Set<XmlTag> usages = new TreeSet<XmlTag>(POSITION_COMPARATOR);
-        usages.add(currentUsageTag);
-        usages.addAll(Arrays.asList(moreUsages));
+      // sort tags by document order
+      final Set<XmlTag> usages = new TreeSet<XmlTag>(POSITION_COMPARATOR);
+      usages.add(currentUsageTag);
+      ContainerUtil.addAll(usages, moreUsages);
 
-        // collect all other possible unresolved references with the same name in the current template
-        final Project project = currentUsageTag.getProject();
-        usageBlock.accept(new PsiRecursiveElementVisitor() {
-            public void visitElement(PsiElement element) {
-                if (element instanceof XPathVariableReference) {
-                    visitXPathVariableReference(((XPathVariableReference)element));
-                } else {
-                    super.visitElement(element);
-                }
-            }
-
-            private void visitXPathVariableReference(XPathVariableReference reference) {
-                if (referenceName.equals(reference.getReferencedName())) {
-                    if (reference.resolve() == null) {
-                        usages.add(PsiTreeUtil.getContextOfType(reference, XmlTag.class, true));
-                    }
-                }
-            }
-
-            public void visitXmlAttribute(XmlAttribute attribute) {
-                if (XsltSupport.isXPathAttribute(attribute)) {
-                    final PsiFile[] xpathFiles = XsltSupport.getFiles(attribute);
-                    for (PsiFile xpathFile : xpathFiles) {
-                        xpathFile.accept(this);
-                    }
-                }
-            }
-        });
-
-        final Iterator<XmlTag> it = usages.iterator();
-        final XmlTag firstUsage = it.next();
-
-        // find broadest scope to create the variable in
-        XmlTag tag = firstUsage;
-        while (it.hasNext()) {
-            XmlTag xmlTag = it.next();
-            final PsiElement t = PsiTreeUtil.findCommonParent(tag, xmlTag);
-            if (t instanceof XmlTag) {
-                tag = (XmlTag)t;
-            } else {
-                break;
-            }
+      // collect all other possible unresolved references with the same name in the current template
+      final Project project = currentUsageTag.getProject();
+      usageBlock.accept(new PsiRecursiveElementVisitor() {
+        public void visitElement(PsiElement element) {
+          if (element instanceof XPathVariableReference) {
+            visitXPathVariableReference(((XPathVariableReference)element));
+          }
+          else {
+            super.visitElement(element);
+          }
         }
 
-        // find the actual tag to create the variable before
-        final XmlTag[] subTags = tag.getSubTags();
-        for (XmlTag xmlTag : subTags) {
-            if (xmlTag.getTextOffset() > firstUsage.getTextOffset()) break;
-            tag = xmlTag;
+        private void visitXPathVariableReference(XPathVariableReference reference) {
+          if (referenceName.equals(reference.getReferencedName())) {
+            if (reference.resolve() == null) {
+              usages.add(PsiTreeUtil.getContextOfType(reference, XmlTag.class, true));
+            }
+          }
         }
 
-        final XmlTag parentTag = tag.getParentTag();
-        if (parentTag == null) return tag;
-
-        final String parentName = parentTag.getLocalName();
-        if ("apply-templates".equals(parentName) || "call-template".equals(parentName)
-                || "when".equals(parentName) || "choose".equals(parentName))
-        {
-            if ("when".equals(parentName)) tag = tag.getParentTag();
-            assert tag != null;
-            tag = tag.getParentTag();
+        public void visitXmlAttribute(XmlAttribute attribute) {
+          if (XsltSupport.isXPathAttribute(attribute)) {
+            final PsiFile[] xpathFiles = XsltSupport.getFiles(attribute);
+            for (PsiFile xpathFile : xpathFiles) {
+              xpathFile.accept(this);
+            }
+          }
         }
+      });
+
+      final Iterator<XmlTag> it = usages.iterator();
+      final XmlTag firstUsage = it.next();
+
+      // find broadest scope to create the variable in
+      XmlTag tag = firstUsage;
+      while (it.hasNext()) {
+        XmlTag xmlTag = it.next();
+        final PsiElement t = PsiTreeUtil.findCommonParent(tag, xmlTag);
+        if (t instanceof XmlTag) {
+          tag = (XmlTag)t;
+        }
+        else {
+          break;
+        }
+      }
+
+      // find the actual tag to create the variable before
+      final XmlTag[] subTags = tag.getSubTags();
+      for (XmlTag xmlTag : subTags) {
+        if (xmlTag.getTextOffset() > firstUsage.getTextOffset()) break;
+        tag = xmlTag;
+      }
+
+      final XmlTag parentTag = tag.getParentTag();
+      if (parentTag == null) return tag;
+
+      final String parentName = parentTag.getLocalName();
+      if ("apply-templates".equals(parentName) || "call-template".equals(parentName)
+          || "when".equals(parentName) || "choose".equals(parentName)) {
+        if ("when".equals(parentName)) tag = tag.getParentTag();
         assert tag != null;
-        return tag;
+        tag = tag.getParentTag();
+      }
+      assert tag != null;
+      return tag;
     }
 
     @Nullable

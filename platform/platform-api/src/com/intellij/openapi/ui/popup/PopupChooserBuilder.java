@@ -22,10 +22,11 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.ListScrollingUtil;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.util.Function;
-import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nls;
@@ -219,8 +220,6 @@ public class PopupChooserBuilder {
     scrollPane.getViewport().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     ((JComponent)scrollPane.getViewport().getView()).setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-    scrollPane.getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createMini());
-
     if (myChooserComponent instanceof ListWithFilter) {
       contentPane.add(myChooserComponent, BorderLayout.CENTER);
     }
@@ -299,7 +298,7 @@ public class PopupChooserBuilder {
       TreeUtil.expandAll(((TreeTable)table).getTree());
     }
 
-    JScrollPane scrollPane = new JScrollPane(table);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(table);
 
     scrollPane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
 
@@ -336,7 +335,7 @@ public class PopupChooserBuilder {
   private JScrollPane createScrollPane(final JTree tree) {
     TreeUtil.expandAll(tree);
 
-    JScrollPane scrollPane = new JScrollPane(tree);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(tree);
 
     scrollPane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
 
@@ -394,7 +393,7 @@ public class PopupChooserBuilder {
     return this;
   }
 
-  private class MyListWrapper extends JScrollPane implements DataProvider {
+  private class MyListWrapper extends JBScrollPane implements DataProvider {
     @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
     private final JList myList;
 

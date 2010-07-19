@@ -26,7 +26,6 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapManagerListener;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.Disposer;
@@ -37,6 +36,7 @@ import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.components.panels.VerticalBox;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AwtVisitor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -46,7 +46,9 @@ import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.KeyEvent;
 import java.text.NumberFormat;
 import java.util.*;
 
@@ -142,7 +144,7 @@ public class QuickAccessSettings implements ApplicationComponent, SearchableConf
     String[] vks = text.split(" ");
 
     HashSet<String> vksSet = new HashSet<String>();
-    vksSet.addAll(Arrays.asList(vks));
+    ContainerUtil.addAll(vksSet, vks);
     myModifierVks.clear();
     int mask = getModiferMask(vksSet);
     myModifierVks.addAll(getModifiersVKs(mask));

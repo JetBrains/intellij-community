@@ -22,8 +22,8 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Key;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.StringSetSpinAllocator;
 import com.intellij.util.ui.UIUtil;
@@ -71,7 +71,6 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
     tree.setRootVisible(false);
     tree.setShowsRootHandles(true);
     tree.setLineStyleAngled();
-    TreeToolTipHandler.install(tree);
     TreeUtil.installActions(tree);
     new TreeSpeedSearch(tree);
 
@@ -106,7 +105,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
 
     expacndChecked(tree);
 
-    JScrollPane scrollPane = new JScrollPane(tree);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(tree);
     scrollPane.setPreferredSize(new Dimension(400, 400));
     panel.add(scrollPane, BorderLayout.CENTER);
     return panel;

@@ -151,6 +151,7 @@ public interface JBPopup extends Disposable, LightweightWindow {
   void setLocation(@NotNull Point screenPoint);
 
   void setSize(@NotNull Dimension size);
+  Dimension getSize();
 
   boolean isPersistent();
 
@@ -177,4 +178,6 @@ public interface JBPopup extends Disposable, LightweightWindow {
   void setMinimumSize(Dimension size);
 
   void setFinalRunnable(@Nullable Runnable runnable);
+
+  void moveToFitScreen();
 }

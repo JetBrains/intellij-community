@@ -32,8 +32,8 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.semantic.SemKey;
 import com.intellij.semantic.SemService;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.ReflectionAssignabilityCache;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.events.ElementChangedEvent;
@@ -51,7 +51,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -435,12 +434,6 @@ public final class DomManagerImpl extends DomManager {
     return null;
   }
 
-  @Nullable
-  public final DomFileDescription<?> getDomFileDescription(final XmlFile xmlFile) {
-    final DomFileElementImpl<DomElement> element = getFileElement(xmlFile);
-    return element != null ? element.getFileDescription() : null;
-  }
-
   public final <T extends DomElement> T createMockElement(final Class<T> aClass, final Module module, final boolean physical) {
     final XmlFile file = (XmlFile)myFileFactory.createFileFromText("a.xml", StdFileTypes.XML, "", (long)0, physical);
     file.putUserData(MOCK_ELEMENT_MODULE, module);
@@ -466,7 +459,7 @@ public final class DomManagerImpl extends DomManager {
     final StableInvocationHandler handler = new StableInvocationHandler<T>(initial, provider, validator);
 
     final Set<Class> intf = new HashSet<Class>();
-    intf.addAll(Arrays.asList(initial.getClass().getInterfaces()));
+    ContainerUtil.addAll(intf, initial.getClass().getInterfaces());
     intf.add(StableElement.class);
     //noinspection unchecked
 

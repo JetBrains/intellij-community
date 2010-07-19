@@ -26,7 +26,6 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.impl.ProjectRootUtil;
 import com.intellij.openapi.roots.ModulePackageIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ui.configuration.CommonContentEntriesEditor;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.Messages;
@@ -101,7 +100,7 @@ public class PackageUtil {
     }
 
     if (psiDirectory == null) {
-      PsiDirectory[] sourceDirectories = ProjectRootUtil.getRootDirectories(project, OrderRootType.SOURCES);
+      PsiDirectory[] sourceDirectories = ProjectRootUtil.getSourceRootDirectories(project);
       psiDirectory = DirectoryChooserUtil.selectDirectory(project, sourceDirectories, baseDir,
                                      File.separatorChar + packageName.replace('.', File.separatorChar));
       if (psiDirectory == null) return null;

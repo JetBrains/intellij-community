@@ -16,19 +16,20 @@
 
 package com.intellij.util.xml.reflect;
 
+import com.intellij.openapi.util.Key;
+import com.intellij.pom.PomTarget;
 import com.intellij.util.xml.AnnotatedElement;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomNameStrategy;
-import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.lang.reflect.Type;
+import java.util.List;
 
 /**
  * @author peter
  */
-public interface AbstractDomChildrenDescription extends AnnotatedElement {
+public interface AbstractDomChildrenDescription extends AnnotatedElement, PomTarget {
   @NotNull
   List<? extends DomElement> getValues(@NotNull DomElement parent);
 

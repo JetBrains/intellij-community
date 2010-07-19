@@ -4,13 +4,11 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiMember;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.plugins.groovy.CompositeCompletionData;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
@@ -19,6 +17,7 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
+ * @deprecated use {@link com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase}
  * author ven
  */
 public abstract class CompletionTestBase extends JavaCodeInsightFixtureTestCase {
@@ -79,10 +78,6 @@ public abstract class CompletionTestBase extends JavaCodeInsightFixtureTestCase 
 
   protected String getExtension() {
     return "groovy";
-  }
-
-  protected FileType getFileType() {
-    return GroovyFileType.GROOVY_FILE_TYPE;
   }
 
   protected boolean addKeywords() {

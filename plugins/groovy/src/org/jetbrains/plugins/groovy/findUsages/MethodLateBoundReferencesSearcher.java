@@ -62,7 +62,7 @@ public class MethodLateBoundReferencesSearcher extends QueryExecutorBase<PsiRefe
       final VirtualFile vfile = file.getOriginalFile().getVirtualFile();
       final Project project = method.getProject();
       if (vfile != null && ProjectRootManager.getInstance(project).getFileIndex().isInSource(vfile)) {
-        return new GrSourceFilterScope((GlobalSearchScope)scope, project);
+        return new GrSourceFilterScope((GlobalSearchScope)scope);
       }
     }
     return scope;

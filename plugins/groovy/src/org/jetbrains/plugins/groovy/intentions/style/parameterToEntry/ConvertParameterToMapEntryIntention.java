@@ -194,10 +194,10 @@ public class ConvertParameterToMapEntryIntention extends Intention {
               final GrClosableBlock[] closureArguments =
                 call instanceof GrCallExpression ? ((GrCallExpression)call).getClosureArguments() : GrClosableBlock.EMPTY_ARRAY;
 
-              final GrClosureSignatureUtil.ArgInfo[] argInfos =
-                GrClosureSignatureUtil.mapParametersToArguments(signature, argumentList, closureArguments, occurrence.getManager(), owner.getResolveScope());
+              final GrClosureSignatureUtil.ArgInfo<PsiElement>[] argInfos =
+                GrClosureSignatureUtil.mapParametersToArguments(signature, argumentList, closureArguments, owner.getResolveScope());
               if (argInfos == null) continue;
-              final GrClosureSignatureUtil.ArgInfo argInfo = argInfos[index];
+              final GrClosureSignatureUtil.ArgInfo<PsiElement> argInfo = argInfos[index];
 
               final GrNamedArgument namedArg;
               if (argInfo.isMultiArg) {
@@ -319,7 +319,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
   private static boolean firstOwnerParameterMustBeMap(final GrParametersOwner owner) {
     final GrParameter first = getFirstParameter(owner);
     final PsiType type = first.getTypeGroovy();
-    final PsiClassType mapType = PsiUtil.createMapType(owner.getManager(), GlobalSearchScope.allScope(owner.getProject()));
+    final PsiClassType mapType = PsiUtil.createMapType(GlobalSearchScope.allScope(owner.getProject()));
     // First parameter may be used as map
     return type == null || type.isConvertibleFrom(mapType);
   }

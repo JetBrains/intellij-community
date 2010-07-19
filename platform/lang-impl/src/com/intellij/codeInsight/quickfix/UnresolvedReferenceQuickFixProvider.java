@@ -32,7 +32,7 @@ public abstract class UnresolvedReferenceQuickFixProvider<T extends PsiReference
     UnresolvedReferenceQuickFixProvider[] fixProviders = Extensions.getExtensions(EXTENSION_NAME);
     Class<? extends PsiReference> referenceClass = ref.getClass();
     for (UnresolvedReferenceQuickFixProvider each : fixProviders) {
-      if (dumb && !(each instanceof DumbAware)) {
+      if (dumb && !DumbService.isDumbAware(each)) {
         continue;
       }
       if (ReflectionCache.isAssignable(each.getReferenceClass(), referenceClass)) {

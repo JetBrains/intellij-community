@@ -16,8 +16,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/jaxb-impl-2.1.10.jar!/" />
         </CLASSES>
-        <JAVADOC />
-        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library">
@@ -25,8 +23,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/wadl-core.jar!/" />
         </CLASSES>
-        <JAVADOC />
-        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library">
@@ -34,17 +30,13 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/jaxb-api-2.1.jar!/" />
         </CLASSES>
-        <JAVADOC />
-        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/maven-embedder-1.0-SNAPSHOT.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/maven-embedder-1.1-SNAPSHOT.jar!/" />
         </CLASSES>
-        <JAVADOC />
-        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library">
@@ -52,8 +44,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/classworlds-1.1.jar!/" />
         </CLASSES>
-        <JAVADOC />
-        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library">
@@ -61,8 +51,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/plexus-utils-1.5.5.jar!/" />
         </CLASSES>
-        <JAVADOC />
-        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library">
@@ -70,8 +58,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/maven-2.2.1-uber.jar!/" />
         </CLASSES>
-        <JAVADOC />
-        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library">
@@ -79,8 +65,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/mercury-artifact-1.0-alpha-6.jar!/" />
         </CLASSES>
-        <JAVADOC />
-        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library">
@@ -88,8 +72,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/maven-dependency-tree-1.2.jar!/" />
         </CLASSES>
-        <JAVADOC />
-        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library">
@@ -97,8 +79,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/nexus-indexer-1.2.3.jar!/" />
         </CLASSES>
-        <JAVADOC />
-        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library">
@@ -106,8 +86,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/archetype-common-2.0-alpha-4-SNAPSHOT.jar!/" />
         </CLASSES>
-        <JAVADOC />
-        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library">
@@ -115,8 +93,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/activation-1.1.jar!/" />
         </CLASSES>
-        <JAVADOC />
-        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library">
@@ -124,8 +100,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/commons-logging-1.1.1.jar!/" />
         </CLASSES>
-        <JAVADOC />
-        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library">
@@ -133,8 +107,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/commons-beanutils.jar!/" />
         </CLASSES>
-        <JAVADOC />
-        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="maven" scope="TEST" />

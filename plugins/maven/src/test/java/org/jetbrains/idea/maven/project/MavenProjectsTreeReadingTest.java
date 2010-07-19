@@ -70,7 +70,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
     updateAll(myProjectPom);
     List<MavenProject> roots = myTree.getRootProjects();
-                       
+
     assertEquals(1, roots.size());
     assertEquals(myProjectPom, roots.get(0).getFile());
 
@@ -1939,6 +1939,118 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     }
 
     assertUnorderedElementsAreEqual(myTree.getAvailableProfiles(), "one", "two", "three");
+  }
+
+  public void testCollectingProfilesFromParentsAfterResolve() throws Exception {
+    createModulePom("parent1",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>parent1</artifactId>" +
+                    "<version>1</version>" +
+                    "<packaging>pom</packaging>" +
+
+                    "<profiles>" +
+                    "  <profile>" +
+                    "    <id>parent1Profile</id>" +
+                    "  </profile>" +
+                    "</profiles>");
+
+    createProfilesXml("parent1",
+                      "<profile>" +
+                      "  <id>parent1ProfileXml</id>" +
+                      "</profile>");
+
+    createModulePom("parent2",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>parent2</artifactId>" +
+                    "<version>1</version>" +
+                    "<packaging>pom</packaging>" +
+
+                    "<parent>" +
+                    " <groupId>test</groupId>" +
+                    " <artifactId>parent1</artifactId>" +
+                    " <version>1</version>" +
+                    " <relativePath>../parent1/pom.xml</relativePath>" +
+                    "</parent>" +
+
+                    "<profiles>" +
+                    "  <profile>" +
+                    "    <id>parent2Profile</id>" +
+                    "  </profile>" +
+                    "</profiles>");
+
+    createProfilesXml("parent2",
+                      "<profile>" +
+                      "  <id>parent2ProfileXml</id>" +
+                      "</profile>");
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<parent>" +
+                     " <groupId>test</groupId>" +
+                     " <artifactId>parent2</artifactId>" +
+                     " <version>1</version>" +
+                     " <relativePath>parent2/pom.xml</relativePath>" +
+                     "</parent>" +
+
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>projectProfile</id>" +
+                     "  </profile>" +
+                     "</profiles>");
+
+    createProfilesXml("<profile>" +
+                      "  <id>projectProfileXml</id>" +
+                      "</profile>");
+
+    updateSettingsXml("<profiles>" +
+                      "  <profile>" +
+                      "    <id>settings</id>" +
+                      "  </profile>" +
+                      "</profiles>");
+
+    updateAll(Arrays.asList("projectProfileXml",
+                            "projectProfile",
+                            "parent1Profile",
+                            "parent1ProfileXml",
+                            "parent2Profile",
+                            "parent2ProfileXml",
+                            "settings",
+                            "xxx"),
+              myProjectPom);
+
+    MavenProject project = myTree.findProject(myProjectPom);
+    assertUnorderedElementsAreEqual(project.getActivatedProfilesIds(),
+                                    "projectProfileXml",
+                                    "projectProfile",
+                                    "parent1Profile",
+                                    "parent1ProfileXml",
+                                    "parent2Profile",
+                                    "parent2ProfileXml",
+                                    "settings");
+
+    MavenEmbeddersManager embeddersManager = new MavenEmbeddersManager(myProject);
+    try {
+      myTree.resolve(project,
+                     getMavenGeneralSettings(),
+                     embeddersManager,
+                     NULL_MAVEN_CONSOLE,
+                     EMPTY_MAVEN_PROCESS,
+                     null);
+    }
+    finally {
+      embeddersManager.release();
+    }
+
+    assertUnorderedElementsAreEqual(project.getActivatedProfilesIds(),
+                                    "projectProfileXml",
+                                    "projectProfile",
+                                    "parent1Profile",
+                                    "parent1ProfileXml",
+                                    "parent2Profile",
+                                    "parent2ProfileXml",
+                                    "settings");
   }
 
   public void testDeletingAndRestoringActiveProfilesWhenAvailableProfilesChange() throws Exception {

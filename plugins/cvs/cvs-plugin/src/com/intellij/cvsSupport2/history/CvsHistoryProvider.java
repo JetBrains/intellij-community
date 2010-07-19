@@ -158,33 +158,47 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
   public VcsHistorySession createSessionFor(final FilePath filePath) {
     final List<VcsFileRevision> fileRevisionList = createRevisions(filePath);
     if (fileRevisionList == null) return null;
-    return new VcsAbstractHistorySession(fileRevisionList) {
-      @Nullable
-      public VcsRevisionNumber calcCurrentRevisionNumber() {
-        return getCurrentRevision(filePath);
-      }
+    return new MyHistorySession(fileRevisionList, filePath);
+  }
 
-      @Override
-      public synchronized boolean shouldBeRefreshed() {
-        //noinspection SimplifiableIfStatement
-        if (!CvsEntriesManager.getInstance().isActive()) {
-          return false;
-        }
-        return super.shouldBeRefreshed();
-      }
+  private static class MyHistorySession extends VcsAbstractHistorySession {
+    private final FilePath myFilePath;
 
-      public boolean isContentAvailable(final VcsFileRevision revision) {
-        if (revision instanceof CvsFileRevision) {
-          final CvsFileRevision cvsFileRevision = (CvsFileRevision)revision;
-          return !cvsFileRevision.getState().equals(CvsChangeList.DEAD_STATE);
-        }
-        return super.isContentAvailable(revision);
-      }
+    private MyHistorySession(List<? extends VcsFileRevision> revisions, FilePath filePath) {
+      super(revisions);
+      myFilePath = filePath;
+    }
 
-      public HistoryAsTreeProvider getHistoryAsTreeProvider() {
-        return MyHistoryAsTreeProvider.getInstance();
+    @Nullable
+    public VcsRevisionNumber calcCurrentRevisionNumber() {
+      return getCurrentRevision(myFilePath);
+    }
+
+    @Override
+    public synchronized boolean shouldBeRefreshed() {
+      //noinspection SimplifiableIfStatement
+      if (!CvsEntriesManager.getInstance().isActive()) {
+        return false;
       }
-    };
+      return super.shouldBeRefreshed();
+    }
+
+    public boolean isContentAvailable(final VcsFileRevision revision) {
+      if (revision instanceof CvsFileRevision) {
+        final CvsFileRevision cvsFileRevision = (CvsFileRevision)revision;
+        return !cvsFileRevision.getState().equals(CvsChangeList.DEAD_STATE);
+      }
+      return super.isContentAvailable(revision);
+    }
+
+    public HistoryAsTreeProvider getHistoryAsTreeProvider() {
+      return MyHistoryAsTreeProvider.getInstance();
+    }
+
+    @Override
+    public VcsHistorySession copy() {
+      return new MyHistorySession(getRevisionList(), myFilePath);
+    }
   }
 
   public void reportAppendableHistory(FilePath path, VcsAppendableHistorySessionPartner partner) throws VcsException {

@@ -24,6 +24,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Author: msk
@@ -107,11 +109,19 @@ public abstract class RefactoringDialog extends DialogWrapper {
     return true;
   }
 
+  protected boolean hasPreviewButton() {
+    return true;
+  }
+
   protected Action[] createActions() {
+    List<Action> actions = new ArrayList<Action>();
+    actions.add(getRefactorAction());
+    if(hasPreviewButton()) actions.add(getPreviewAction());
+    actions.add(getCancelAction());
+
     if (hasHelpAction ())
-      return new Action[]{getRefactorAction(), getPreviewAction(), getCancelAction(), getHelpAction()};
-    else
-      return new Action[]{getRefactorAction(), getPreviewAction(), getCancelAction()};
+      actions.add(getHelpAction());
+    return actions.toArray(new Action[actions.size()]);
   }
 
   protected Project getProject() {

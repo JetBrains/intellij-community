@@ -194,7 +194,12 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
   public void fireBeforeRefreshStart(boolean asynchronous) {
     if (myRefreshCount++ == 0) {
       for (final VirtualFileManagerListener listener : myVirtualFileManagerListeners) {
-        listener.beforeRefreshStart(asynchronous);
+        try {
+          listener.beforeRefreshStart(asynchronous);
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
       }
     }
   }
@@ -202,7 +207,12 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
   public void fireAfterRefreshFinish(boolean asynchronous) {
     if (--myRefreshCount == 0) {
       for (final VirtualFileManagerListener listener : myVirtualFileManagerListeners) {
-        listener.afterRefreshFinish(asynchronous);
+        try {
+          listener.afterRefreshFinish(asynchronous);
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
       }
     }
   }

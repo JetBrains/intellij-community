@@ -18,6 +18,8 @@ package com.intellij.openapi.editor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * Defines contract for the services that bring <code>'soft wrapping'</code> to the editor.
  * <p/>
@@ -86,12 +88,61 @@ public interface SoftWrapModel {
   TextChange getSoftWrap(int offset);
 
   /**
-   * Notifies current model that target document is about to be changed at location identified by the given visual position.
+   * Allows to ask current model about all soft wraps registered for the given document offsets range.
+   *
+   * @param start   start document offset range to use (inclusive)
+   * @param end     end document offset range to use (exclusive)
+   * @return        all soft wraps registered for the target document offsets range
+   */
+  @NotNull
+  List<? extends TextChange> getSoftWrapsForRange(int start, int end);
+
+  /**
+   * Allows to ask current model about all soft wraps registered for the given document line.
+   *
+   * @param documentLine    target document line
+   * @return                all soft wraps registered for the given document line
+   */
+  @NotNull
+  List<? extends TextChange> getSoftWrapsForLine(int documentLine);
+
+  /**
+   * Notifies current model that target document is about to be changed at current caret location.
    * <p/>
    * Primary purpose of this method is to perform {@code 'soft wrap' -> 'hard wrap'} conversion if the user types in virtual
    * soft wraps-introduced space.
-   *
-   * @param position    position where the document is to be modified
    */
-  void beforeDocumentChange(@NotNull VisualPosition position);
+  void beforeDocumentChangeAtCaret();
+
+  /**
+   * Allows to answer if given visual position points to soft wrap-introduced virtual space.
+   *
+   * @param position    target visual position to check
+   * @return            <code>true</code> if given visual position points to soft wrap-introduced virtual space;
+   *                    <code>false</code> otherwise
+   */
+  boolean isInsideSoftWrap(@NotNull VisualPosition position);
+
+  /**
+   * Asks current model to calculate indent width of the given soft wrap in pixels.
+   * <p/>
+   * <code>'Soft wrap indent width'</code> here means visual width of soft wrap-introduced editor space on a line
+   * that contains document text just after soft wrap. Basically, resulting value is a resulting width sum of soft
+   * wrap symbols that follow last soft wrap line feed plus <code>'after soft wrap'</code> drawing width.
+   *
+   * @param softWrap    soft wrap which indent width should be calculated
+   * @return            indent width in pixels for the given soft wrap
+   */
+  int getSoftWrapIndentWidthInPixels(@NotNull TextChange softWrap);
+
+  /**
+   * Asks current model to calculate indent width of the given soft wrap in {@link VisualPosition#column columns}.
+   * <p/>
+   * <code>'Soft wrap indent width'</code> here means number of soft wrap symbols that follow last soft wrap line
+   * feed plus one symbol for <code>'after soft wrap'</code> drawing.
+   *
+   * @param softWrap    soft wrap which indent width should be calculated
+   * @return            indent width in columns for the given soft wrap
+   */
+  int getSoftWrapIndentWidthInColumns(@NotNull TextChange softWrap);
 }

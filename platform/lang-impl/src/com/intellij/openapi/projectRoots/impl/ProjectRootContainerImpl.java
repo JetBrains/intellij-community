@@ -62,11 +62,12 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
   }
 
   @NotNull
-  public VirtualFile[] getRootFiles(OrderRootType type) {
+  public VirtualFile[] getRootFiles(@NotNull OrderRootType type) {
     return myFiles.get(type);
   }
 
-  public ProjectRoot[] getRoots(OrderRootType type) {
+  @NotNull
+  public ProjectRoot[] getRoots(@NotNull OrderRootType type) {
     return myRoots.get(type).getProjectRoots();
   }
 
@@ -116,27 +117,28 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
   }
 
 
-  public void removeRoot(ProjectRoot root, OrderRootType type) {
+  public void removeRoot(@NotNull ProjectRoot root, @NotNull OrderRootType type) {
     LOG.assertTrue(myInsideChange);
     myRoots.get(type).remove(root);
   }
 
-  public ProjectRoot addRoot(VirtualFile virtualFile, OrderRootType type) {
+  @NotNull
+  public ProjectRoot addRoot(@NotNull VirtualFile virtualFile, @NotNull OrderRootType type) {
     LOG.assertTrue(myInsideChange);
     return myRoots.get(type).add(virtualFile);
   }
 
-  public void addRoot(ProjectRoot root, OrderRootType type) {
+  public void addRoot(@NotNull ProjectRoot root, @NotNull OrderRootType type) {
     LOG.assertTrue(myInsideChange);
     myRoots.get(type).add(root);
   }
 
-  public void removeAllRoots(OrderRootType type ) {
+  public void removeAllRoots(@NotNull OrderRootType type ) {
     LOG.assertTrue(myInsideChange);
     myRoots.get(type).clear();
   }
 
-  public void removeRoot(VirtualFile root, OrderRootType type) {
+  public void removeRoot(@NotNull VirtualFile root, @NotNull OrderRootType type) {
     LOG.assertTrue(myInsideChange);
     myRoots.get(type).remove(root);
   }

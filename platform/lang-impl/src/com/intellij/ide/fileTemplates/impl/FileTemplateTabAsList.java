@@ -18,6 +18,7 @@ package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -31,7 +32,7 @@ import java.util.List;
  * @author Alexey Kudravtsev
  */
 abstract class FileTemplateTabAsList extends FileTemplateTab {
-  private final JList myList = new JList();
+  private final JList myList = new JBList();
   private MyListModel myModel;
 
   FileTemplateTabAsList(String title) {

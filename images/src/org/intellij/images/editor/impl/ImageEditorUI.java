@@ -24,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import com.intellij.ui.ScrollPaneFactory;
 import org.intellij.images.ImagesBundle;
 import org.intellij.images.editor.ImageDocument;
 import org.intellij.images.editor.ImageEditor;
@@ -97,7 +98,7 @@ final class ImageEditorUI extends JPanel implements DataProvider {
         view.addMouseListener(new EditorMouseAdapter());
         view.addMouseListener(new FocusRequester());
 
-        JScrollPane scrollPane = new JScrollPane(view);
+      JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(view);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 

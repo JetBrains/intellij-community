@@ -21,11 +21,12 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class RecentProjectsGroup extends ActionGroup {
+public class RecentProjectsGroup extends ActionGroup implements DumbAware {
   public RecentProjectsGroup() {
     super();
 

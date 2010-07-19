@@ -117,7 +117,7 @@ public class IconUtil {
 
         final boolean dumb = project != null && DumbService.getInstance(project).isDumb();
         for (FileIconPatcher patcher : getPatchers()) {
-          if (dumb && !(patcher instanceof DumbAware)) {
+          if (dumb && !DumbService.isDumbAware(patcher)) {
             continue;
           }
 

@@ -64,6 +64,7 @@ import java.util.*;
 import java.util.List;
 
 class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
+    static final boolean ALLOW_CHOOSING_SDK = !(StdFileTypes.JAVA instanceof PlainTextFileType);
     private final Project myProject;
 
     private Editor myEditor;
@@ -124,6 +125,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
         private ComboBox myModule;
         private ComboBox myJDK;
         private ComboBox myFileType;
+        private JPanel myClasspathAndJDKPanel;
 
         private final AnyXMLDescriptor myXmlDescriptor;
         private final FileChooserDescriptor myXsltDescriptor;
@@ -228,6 +230,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
             myShowInConsole.addItemListener(outputStateListener);
             myShowInStdout.addItemListener(outputStateListener);
             mySaveToFile.addItemListener(outputStateListener);
+            myClasspathAndJDKPanel.setVisible(ALLOW_CHOOSING_SDK);
             updateOutputState();
 
             myFileType.setRenderer(new FileTypeRenderer() {

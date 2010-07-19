@@ -66,7 +66,7 @@ public class GrForStatementImpl extends GroovyPsiElementImpl implements GrForSta
       GrVariable[] vars = forClause.getDeclaredVariables();
       for (final GrVariable var : vars) {
         if (var.equals(varScope)) break;
-        if (!ResolveUtil.processElement(processor, var)) return false;
+        if (!ResolveUtil.processElement(processor, var, state)) return false;
       }
     }
 

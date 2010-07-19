@@ -21,8 +21,6 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ui.AbstractTableCellEditor;
-import com.intellij.util.ui.CellEditorComponentWithBrowseButton;
 
 import javax.swing.*;
 import java.awt.*;
@@ -45,12 +43,7 @@ public class LocalPathCellEditor extends AbstractTableCellEditor {
   public Component getTableCellEditorComponent(final JTable table, Object value, boolean isSelected, final int row, int column) {
     ActionListener listener = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        FileChooserDescriptor d = new FileChooserDescriptor(false, true, false, true, false, false);
-        if (myTitle != null) {
-          d.setTitle(myTitle);
-        }
-        d.setShowFileSystemRoots(true);
-
+        final FileChooserDescriptor d = getFileChooserDescriptor();
         VirtualFile initialFile = LocalFileSystem.getInstance().findFileByPath((String)getCellEditorValue());
         VirtualFile[] files = FileChooser.chooseFiles(table, d, initialFile);
         if (files.length == 1 && files[0] != null) {
@@ -65,5 +58,14 @@ public class LocalPathCellEditor extends AbstractTableCellEditor {
     myComponent = new CellEditorComponentWithBrowseButton<JTextField>(new TextFieldWithBrowseButton(listener), this);
     myComponent.getChildComponent().setText((String)value);
     return myComponent;
+  }
+
+  public FileChooserDescriptor getFileChooserDescriptor() {
+    FileChooserDescriptor d = new FileChooserDescriptor(false, true, false, true, false, false);
+    if (myTitle != null) {
+      d.setTitle(myTitle);
+    }
+    d.setShowFileSystemRoots(true);
+    return d;
   }
 }

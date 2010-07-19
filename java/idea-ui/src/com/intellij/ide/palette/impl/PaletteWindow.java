@@ -24,6 +24,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
@@ -48,7 +49,7 @@ public class PaletteWindow extends JPanel implements DataProvider {
   private final MyPropertyChangeListener myPropertyChangeListener = new MyPropertyChangeListener();
   private final Set<PaletteGroup> myGroups = new HashSet<PaletteGroup>();
   private final JTabbedPane myTabbedPane = new JTabbedPane();
-  private final JScrollPane myScrollPane = new JScrollPane();
+  private final JScrollPane myScrollPane = ScrollPaneFactory.createScrollPane();
   private final MyListSelectionListener myListSelectionListener = new MyListSelectionListener();
   private PaletteGroupHeader myLastFocusedGroup;
 
@@ -111,7 +112,7 @@ public class PaletteWindow extends JPanel implements DataProvider {
       }
       for(String tabName: tabNames) {
         PaletteContentWindow contentWindow = new PaletteContentWindow();
-        JScrollPane scrollPane = new JScrollPane(contentWindow);
+        JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(contentWindow);
         scrollPane.addMouseListener(new MyScrollPanePopupHandler());
         myTabbedPane.add(tabName, scrollPane);
         for(PaletteGroup group: currentGroups) {

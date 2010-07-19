@@ -22,5 +22,12 @@ import com.intellij.psi.scope.PsiScopeProcessor;
  * @author ilyas
  */
 public interface CustomMembersHolder {
+  CustomMembersHolder EMPTY = new CustomMembersHolder() {
+    @Override
+    public boolean processMembers(PsiScopeProcessor processor) {
+      return true;
+    }
+  };
+
   boolean processMembers(PsiScopeProcessor processor);
 }

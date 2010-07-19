@@ -70,12 +70,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -133,10 +134,28 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       synchronized (myInitLock) {
         if (myPanels == null) {
           myPanels = new JPanel(new BorderLayout());
+          myPanels.setBorder(new MyBorder());
           mySplitters = new EditorsSplitters(this);
           myPanels.add(mySplitters, BorderLayout.CENTER);
         }
       }
+    }
+  }
+
+  private class MyBorder implements Border {
+    @Override
+    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+    }
+
+    @Override
+    public Insets getBorderInsets(Component c) {
+      boolean filesOpen = mySplitters != null && mySplitters.getOpenFiles().length > 0;
+      return new Insets(filesOpen ? 1 : 0, 0, 0, 0);
+    }
+
+    @Override
+    public boolean isBorderOpaque() {
+      return false;
     }
   }
 
@@ -496,7 +515,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       if (DumbService.getInstance(myProject).isDumb()) {
         final List<FileEditorProvider> dumbAware = ContainerUtil.findAll(providers, new Condition<FileEditorProvider>() {
           public boolean value(FileEditorProvider fileEditorProvider) {
-            return fileEditorProvider instanceof DumbAware;
+            return DumbService.isDumbAware(fileEditorProvider);
           }
         });
         providers = dumbAware.toArray(new FileEditorProvider[dumbAware.size()]);
@@ -521,7 +540,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
           editors[i] = editor;
           // Register PropertyChangeListener into editor
           editor.addPropertyChangeListener(myEditorPropertyChangeListener);
-          editor.putUserData(DUMB_AWARE, provider instanceof DumbAware);
+          editor.putUserData(DUMB_AWARE, DumbService.isDumbAware(provider));
 
           if (current && editor instanceof TextEditorImpl) {
             ((TextEditorImpl)editor).initFolding();
@@ -695,12 +714,13 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       public void run() {
         VirtualFile file = descriptor.getFile();
         final FileEditor[] editors = openFile(file, focusEditor);
-        result.addAll(Arrays.asList(editors));
+        ContainerUtil.addAll(result, editors);
 
         boolean navigated = false;
         for (final FileEditor editor : editors) {
-          if (editor instanceof NavigatableFileEditor && getSelectedEditor(descriptor.getFile()) == editor) { // try to navigate opened editor
-            navigated = navigateAndSelectEditor((NavigatableFileEditor) editor,  descriptor);
+          if (editor instanceof NavigatableFileEditor &&
+              getSelectedEditor(descriptor.getFile()) == editor) { // try to navigate opened editor
+            navigated = navigateAndSelectEditor((NavigatableFileEditor)editor, descriptor);
             if (navigated) break;
           }
         }
@@ -708,7 +728,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         if (!navigated) {
           for (final FileEditor editor : editors) {
             if (editor instanceof NavigatableFileEditor && getSelectedEditor(descriptor.getFile()) != editor) { // try other editors
-              if (navigateAndSelectEditor((NavigatableFileEditor) editor, descriptor)) {
+              if (navigateAndSelectEditor((NavigatableFileEditor)editor, descriptor)) {
                 break;
               }
             }
@@ -882,7 +902,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     List<EditorWithProviderComposite> editorComposites = getEditorComposites(file);
     List<FileEditor> editors = new ArrayList<FileEditor>();
     for (EditorWithProviderComposite composite : editorComposites) {
-      editors.addAll(Arrays.asList(composite.getEditors()));
+      ContainerUtil.addAll(editors, composite.getEditors());
     }
     return editors.toArray(new FileEditor[editors.size()]);
   }
@@ -908,23 +928,17 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     final EditorWithProviderComposite[] editorsComposites = getSplitters().getEditorsComposites();
     for (EditorWithProviderComposite editorsComposite : editorsComposites) {
       final FileEditor[] editors = editorsComposite.getEditors();
-      result.addAll(Arrays.asList(editors));
+      ContainerUtil.addAll(result, editors);
     }
     return result.toArray(new FileEditor[result.size()]);
   }
 
   public void showEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent) {
-    final EditorComposite composite = getEditorComposite(editor);
-    if (composite != null) {
-      composite.getPane(editor).addInfo(annotationComponent);
-    }
+    addTopComponent(editor, annotationComponent);
   }
 
   public void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent) {
-    final EditorComposite composite = getEditorComposite(editor);
-    if (composite != null) {
-      composite.getPane(editor).removeInfo(annotationComponent);
-    }
+    removeTopComponent(editor, annotationComponent);
   }
 
   public void addTopComponent(@NotNull final FileEditor editor, @NotNull final JComponent component) {
@@ -997,12 +1011,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
      * Extends/cuts number of opened tabs. Also updates location of tabs.
      */
     final MyUISettingsListener myUISettingsListener = new MyUISettingsListener();
-    UISettings.getInstance().addUISettingsListener(myUISettingsListener);
-    Disposer.register(myProject, new Disposable() {
-      public void dispose() {
-        UISettings.getInstance().removeUISettingsListener(myUISettingsListener);
-      }
-    });
+    UISettings.getInstance().addUISettingsListener(myUISettingsListener, myProject);
 
     StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
       public void run() {

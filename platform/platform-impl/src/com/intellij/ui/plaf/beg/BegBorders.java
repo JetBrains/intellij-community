@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.plaf.beg;
 
+
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;

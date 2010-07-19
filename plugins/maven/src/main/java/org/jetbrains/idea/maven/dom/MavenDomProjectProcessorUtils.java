@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +31,6 @@ import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
@@ -141,7 +141,7 @@ public class MavenDomProjectProcessorUtils {
       public boolean process(MavenDomProperties mavenDomProperties) {
         XmlTag propertiesTag = mavenDomProperties.getXmlTag();
         if (propertiesTag != null) {
-          properties.addAll(Arrays.asList(propertiesTag.getSubTags()));
+          ContainerUtil.addAll(properties, propertiesTag.getSubTags());
         }
         return false;
       }
@@ -425,7 +425,7 @@ public class MavenDomProjectProcessorUtils {
                                              MavenProject mavenProjectOrNull,
                                              Processor<T> processor,
                                              Function<MavenDomProfile, T> f) {
-    Collection<String> activePropfiles = mavenProjectOrNull == null ? null : mavenProjectOrNull.getActiveProfilesIds();
+    Collection<String> activePropfiles = mavenProjectOrNull == null ? null : mavenProjectOrNull.getActivatedProfilesIds();
     for (MavenDomProfile each : profilesDom.getProfiles()) {
       XmlTag idTag = each.getId().getXmlTag();
       if (idTag == null) continue;

@@ -7,6 +7,7 @@ import com.intellij.ide.todo.nodes.TodoItemNode;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
@@ -22,7 +23,7 @@ public class ToDoTreeStructureTest extends BaseProjectViewTestCase {
   }
 
   public void testToDo1() throws Exception {
-    AllTodosTreeBuilder all = new AllTodosTreeBuilder(new JTree(), new DefaultTreeModel(new DefaultMutableTreeNode()), myProject);
+    AllTodosTreeBuilder all = new AllTodosTreeBuilder(new Tree(), new DefaultTreeModel(new DefaultMutableTreeNode()), myProject);
     all.init();
 
     myStructure = all.getTreeStructure();
@@ -40,7 +41,7 @@ public class ToDoTreeStructureTest extends BaseProjectViewTestCase {
 
   //todo kirillk
   public void testToDo() throws Exception {
-    AllTodosTreeBuilder all = new AllTodosTreeBuilder(new JTree(), new DefaultTreeModel(new DefaultMutableTreeNode()), myProject);
+    AllTodosTreeBuilder all = new AllTodosTreeBuilder(new Tree(), new DefaultTreeModel(new DefaultMutableTreeNode()), myProject);
     all.init();
 
     myStructure = all.getTreeStructure();
@@ -67,7 +68,7 @@ public class ToDoTreeStructureTest extends BaseProjectViewTestCase {
 
 
     final DefaultTreeModel treeModel = new DefaultTreeModel(new DefaultMutableTreeNode());
-    final JTree currentFileTree = new JTree(treeModel);
+    final JTree currentFileTree = new Tree(treeModel);
     CurrentFileTodosTreeBuilder builder = new CurrentFileTodosTreeBuilder(currentFileTree,
                                                                           treeModel,
                                                                           myProject);

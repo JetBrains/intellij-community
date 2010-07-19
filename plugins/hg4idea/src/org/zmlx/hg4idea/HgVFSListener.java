@@ -22,10 +22,7 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.VcsBackgroundTask;
 import com.intellij.vcsUtil.VcsUtil;
-import org.zmlx.hg4idea.command.HgAddCommand;
-import org.zmlx.hg4idea.command.HgCopyCommand;
-import org.zmlx.hg4idea.command.HgMoveCommand;
-import org.zmlx.hg4idea.command.HgRemoveCommand;
+import org.zmlx.hg4idea.command.*;
 
 import java.util.*;
 
@@ -35,7 +32,7 @@ import java.util.*;
  */
 public class HgVFSListener extends VcsVFSListener {
 
-  private final VcsDirtyScopeManager dirtyScopeManager; 
+  private final VcsDirtyScopeManager dirtyScopeManager;
 
   protected HgVFSListener(final Project project, final HgVcs vcs) {
     super(project, vcs);
@@ -55,6 +52,33 @@ public class HgVFSListener extends VcsVFSListener {
   @Override
   protected String getSingleFileAddPromptTemplate() {
     return HgVcsMessages.message("hg4idea.add.body");
+  }
+
+  @Override
+  protected void executeAdd(List<VirtualFile> addedFiles, Map<VirtualFile, VirtualFile> copyFromMap) {
+    // if a file is copied from another repository, then 'hg add' should be used instead of 'hg copy'.
+    // Thus here we remove such files from the copyFromMap.
+    for (Iterator<Map.Entry<VirtualFile, VirtualFile>> it = copyFromMap.entrySet().iterator(); it.hasNext(); ) {
+      final Map.Entry<VirtualFile, VirtualFile> entry = it.next();
+      final VirtualFile rootFrom = HgUtil.getHgRootOrNull(myProject, entry.getKey());
+      final VirtualFile rootTo = HgUtil.getHgRootOrNull(myProject, entry.getValue());
+
+      if (rootTo == null || !rootTo.equals(rootFrom)) {
+        it.remove();
+      }
+    }
+
+    // exclude files which are added to a directory which is not version controlled
+    for (Iterator<VirtualFile> it = addedFiles.iterator(); it.hasNext(); ) {
+      if (HgUtil.getHgRootOrNull(myProject, it.next()) == null) {
+        it.remove();
+      }
+    }
+
+    // select files to add if there is something to select
+    if (!addedFiles.isEmpty() || !copyFromMap.isEmpty()) {
+      super.executeAdd(addedFiles, copyFromMap);
+    }
   }
 
   @Override
@@ -100,19 +124,32 @@ public class HgVFSListener extends VcsVFSListener {
     myDeletedWithoutConfirmFiles.clear();
     myDeletedFiles.clear();
 
-    // skip unversioned files
+    // skip unversioned files and files which are not under Mercurial
     final List<FilePath> unversionedFilePaths = new ArrayList<FilePath>();
     for (VirtualFile vf : ChangeListManagerImpl.getInstanceImpl(myProject).getUnversionedFiles()) {
       unversionedFilePaths.add(VcsUtil.getFilePath(vf.getPath()));
     }
-    for (Iterator<FilePath> iter = filesToDelete.iterator(); iter.hasNext(); ) {
-      if (unversionedFilePaths.contains(iter.next())) {
-        iter.remove();
+    skipUnversionedAndNotUnderHg(unversionedFilePaths, filesToDelete);
+    skipUnversionedAndNotUnderHg(unversionedFilePaths, deletedFiles);
+
+    // newly added files (which were added to the repo but never committed should be removed from the VCS,
+    // but without user confirmation.
+    for (Iterator<FilePath> it = deletedFiles.iterator(); it.hasNext(); ) {
+      final FilePath filePath = it.next();
+      final HgLogCommand logCommand = new HgLogCommand(myProject);
+      logCommand.setLogFile(true);
+      logCommand.setFollowCopies(false);
+      logCommand.setIncludeRemoved(true);
+      final VirtualFile repo = HgUtil.getHgRootOrNull(myProject, filePath);
+      if (repo == null) {
+        continue;
       }
-    }
-    for (Iterator<FilePath> iter = deletedFiles.iterator(); iter.hasNext(); ) {
-      if (unversionedFilePaths.contains(iter.next())) {
-        iter.remove();
+      final HgFile hgFile = new HgFile(repo, filePath);
+      final List<HgFileRevision> localRevisions = logCommand.execute(hgFile, -1, true);
+      // file is newly added, if it doesn't have a history or if the last history action was deleting this file.
+      if (localRevisions == null || localRevisions.isEmpty() || localRevisions.get(0).getDeletedFiles().contains(hgFile.getRelativePath())) {
+        it.remove();
+        filesToDelete.add(filePath);
       }
     }
 
@@ -128,8 +165,27 @@ public class HgVFSListener extends VcsVFSListener {
         }
       }
     }
-    
-    performDeletion(filesToDelete);
+
+    if (!filesToDelete.isEmpty()) {
+      performDeletion(filesToDelete);
+    }
+  }
+
+    /**
+     * Changes the given collection of files by filtering out unversioned files,
+     * files which are not under Mercurial repository, and
+     * newly added files (which were added to the repo, but never committed).
+     * @param unversionedFiles  unversioned files retrieved from the ChangeListManager.
+     *                          Passing as a parameter not to transform List<VirtualFile> to List<FilePath> twice.
+     * @param filesToFilter     files to be filtered.
+     */
+    private void skipUnversionedAndNotUnderHg(Collection<FilePath> unversionedFiles, Collection<FilePath> filesToFilter) {
+    for (Iterator<FilePath> iter = filesToFilter.iterator(); iter.hasNext(); ) {
+      final FilePath filePath = iter.next();
+      if (HgUtil.getHgRootOrNull(myProject, filePath) == null || unversionedFiles.contains(filePath)) {
+        iter.remove();
+      }
+    }
   }
 
   @Override

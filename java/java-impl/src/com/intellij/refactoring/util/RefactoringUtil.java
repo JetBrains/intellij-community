@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
@@ -401,7 +402,14 @@ public class RefactoringUtil {
   }
 
   public static void renameVariableReferences(PsiVariable variable, String newName, SearchScope scope) throws IncorrectOperationException {
-    for (PsiReference reference : ReferencesSearch.search(variable, scope)) {
+    renameVariableReferences(variable, newName, scope, false);
+  }
+
+  public static void renameVariableReferences(PsiVariable variable,
+                                              String newName,
+                                              SearchScope scope,
+                                              final boolean ignoreAccessScope) throws IncorrectOperationException {
+    for (PsiReference reference : ReferencesSearch.search(variable, scope, ignoreAccessScope)) {
       reference.handleElementRename(newName);
     }
   }
@@ -882,6 +890,52 @@ public class RefactoringUtil {
     }
   }
 
+  public static void bindToElementViaStaticImport(final PsiClass qualifierClass, final String staticName, final PsiImportList importList)
+    throws IncorrectOperationException {
+    final String qualifiedName  = qualifierClass.getQualifiedName();
+    final List<PsiJavaCodeReferenceElement> refs = getImportsFromClass(importList, qualifiedName);
+    if (refs.size() < CodeStyleSettingsManager.getSettings(qualifierClass.getProject()).NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND) {
+      importList.add(JavaPsiFacade.getInstance(qualifierClass.getProject()).getElementFactory().createImportStaticStatement(qualifierClass, staticName));
+    } else {
+      for (PsiJavaCodeReferenceElement ref : refs) {
+        final PsiImportStaticStatement importStatement = PsiTreeUtil.getParentOfType(ref, PsiImportStaticStatement.class);
+        if (importStatement != null) {
+          importStatement.delete();
+        }
+      }
+      importList.add(JavaPsiFacade.getInstance(qualifierClass.getProject()).getElementFactory().createImportStaticStatement(qualifierClass, "*"));
+    }
+  }
+
+  public static List<PsiJavaCodeReferenceElement> getImportsFromClass(@NotNull PsiImportList importList, String className){
+    final List<PsiJavaCodeReferenceElement> array = new ArrayList<PsiJavaCodeReferenceElement>();
+    for (PsiImportStaticStatement staticStatement : importList.getImportStaticStatements()) {
+      final PsiClass psiClass = staticStatement.resolveTargetClass();
+      if (psiClass != null && Comparing.strEqual(psiClass.getQualifiedName(), className)) {
+        array.add(staticStatement.getImportReference());
+      }
+    }
+    return array;
+  }
+
+  @Nullable
+  public static PsiMethod getChainedConstructor(PsiMethod constructor) {
+    final PsiCodeBlock constructorBody = constructor.getBody();
+    LOG.assertTrue(constructorBody != null);
+    final PsiStatement[] statements = constructorBody.getStatements();
+    if (statements.length == 1 && statements[0] instanceof PsiExpressionStatement) {
+      final PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
+      if (expression instanceof PsiMethodCallExpression) {
+        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+        final PsiReferenceExpression methodExpr = methodCallExpression.getMethodExpression();
+        if ("this".equals(methodExpr.getReferenceName())) {
+          return (PsiMethod)methodExpr.resolve();
+        }
+      }
+    }
+    return null;
+  }
+
   public static interface ImplicitConstructorUsageVisitor {
     void visitConstructor(PsiMethod constructor, PsiMethod baseConstructor);
 
@@ -1142,31 +1196,8 @@ public class RefactoringUtil {
     final Set<PsiTypeParameter> used = new HashSet<PsiTypeParameter>();
     for (final PsiElement element : elements) {
       if (element == null) continue;
-      element.accept(new JavaRecursiveElementVisitor() {  //pull up extends cls class with type params
+      collectTypeParameters(used, element);  //pull up extends cls class with type params
 
-        @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-          super.visitReferenceElement(reference);
-          if (!reference.isQualified()) {
-            final PsiElement resolved = reference.resolve();
-            if (resolved instanceof PsiTypeParameter) {
-              final PsiTypeParameter typeParameter = (PsiTypeParameter)resolved;
-              if (PsiTreeUtil.isAncestor(typeParameter.getOwner(), element, true)) {
-                used.add(typeParameter);
-              }
-            }
-          }
-        }
-
-        @Override
-        public void visitExpression(final PsiExpression expression) {
-          super.visitExpression(expression);
-          final PsiType type = expression.getType();
-          final PsiClass resolved = PsiUtil.resolveClassInType(type);
-          if (resolved instanceof PsiTypeParameter && PsiTreeUtil.isAncestor(((PsiTypeParameter)resolved).getOwner(), element, true)){
-            used.add((PsiTypeParameter)resolved);
-          }
-        }
-      });
     }
 
     if (fromList != null) {
@@ -1196,5 +1227,32 @@ public class RefactoringUtil {
       assert false;
       return null;
     }
+  }
+
+  public static void collectTypeParameters(final Set<PsiTypeParameter> used, final PsiElement element) {
+    element.accept(new JavaRecursiveElementVisitor() {
+      @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+        super.visitReferenceElement(reference);
+        if (!reference.isQualified()) {
+          final PsiElement resolved = reference.resolve();
+          if (resolved instanceof PsiTypeParameter) {
+            final PsiTypeParameter typeParameter = (PsiTypeParameter)resolved;
+            if (PsiTreeUtil.isAncestor(typeParameter.getOwner(), element, false)) {
+              used.add(typeParameter);
+            }
+          }
+        }
+      }
+
+      @Override
+      public void visitExpression(final PsiExpression expression) {
+        super.visitExpression(expression);
+        final PsiType type = expression.getType();
+        final PsiClass resolved = PsiUtil.resolveClassInType(type);
+        if (resolved instanceof PsiTypeParameter && PsiTreeUtil.isAncestor(((PsiTypeParameter)resolved).getOwner(), element, false)){
+          used.add((PsiTypeParameter)resolved);
+        }
+      }
+    });
   }
 }

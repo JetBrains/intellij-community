@@ -26,13 +26,19 @@ import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Chunk;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.compiler.GroovyCompilerBase;
 import org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfiguration;
@@ -40,12 +46,15 @@ import org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfiguration;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
  * @author peter
  */
 public class GroovycStubGenerator extends GroovyCompilerBase {
+
+  public static final String GROOVY_STUBS = "groovyStubs";
 
   public GroovycStubGenerator(Project project) {
     super(project);
@@ -93,8 +102,7 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
   @Override
   protected void compileFiles(CompileContext compileContext, Module module,
                               final List<VirtualFile> toCompile, OutputSink sink, boolean tests) {
-    final String rootPath = CompilerPaths.getGeneratedDataDirectory(myProject) + "/groovyStubs/";
-    final File outDir = new File(rootPath + myProject.getLocationHash() + "/" + module.getName() + "/" + (tests ? "tests" : "production") + "/");
+    final File outDir = getStubOutput(module, tests);
     outDir.mkdirs();
 
     final VirtualFile tempOutput = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(outDir);
@@ -117,6 +125,26 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
         addStubsToCompileScope(fullPaths, compileContext, module);
       }
     }
+  }
+
+  private static File getStubOutput(Module module, boolean tests) {
+    final Project project = module.getProject();
+    final String rootPath = CompilerPaths.getGeneratedDataDirectory(project).getPath() + "/" + GROOVY_STUBS + "/";
+    return new File(rootPath + project.getLocationHash() + "/" + module.getName() + "/" + (tests ? "tests" : "production") + "/");
+  }
+
+  @Nullable
+  public static PsiClass findClassByStub(Project project, VirtualFile stubFile) {
+    final String[] components = StringUtil.trimEnd(stubFile.getPath(), ".java").split("[\\\\/]");
+    final int stubs = Arrays.asList(components).indexOf(GROOVY_STUBS);
+    if (stubs < 0 || stubs >= components.length - 4) return null;
+
+    final String moduleName = components[stubs + 2];
+    final Module module = ModuleManager.getInstance(project).findModuleByName(moduleName);
+    if (module == null) return null;
+
+    final String fqn = StringUtil.join(Arrays.asList(components).subList(stubs + 4, components.length), ".");
+    return JavaPsiFacade.getInstance(project).findClass(fqn, GlobalSearchScope.moduleScope(module));
   }
 
   private void cleanDirectory(final VirtualFile dir) {

@@ -14,8 +14,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/lucene-core-2.3.0.jar!/" />
         </CLASSES>
-        <JAVADOC />
-        <SOURCES />
       </library>
     </orderEntry>
   </component>

@@ -16,17 +16,14 @@
 
 package org.jetbrains.plugins.groovy.lang.completion.filters.types;
 
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.PsiElement;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.filters.ElementFilter;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 /**
  * @author ilyas
@@ -35,10 +32,15 @@ public class BuiltInTypeAsArgumentFilter implements ElementFilter {
 
 
   public boolean isAcceptable(Object element, PsiElement context) {
-    PsiElement previous = PsiImplUtil.realPrevious(context.getParent().getPrevSibling());
-    if (context.getParent() instanceof GrReferenceElement && context.getParent().getParent() instanceof GrArgumentList) {
+    final PsiElement parent = context.getParent();
+    if (parent == null) {
+      throw new AssertionError("No parent for " + context);
+    }
+
+    PsiElement previous = PsiImplUtil.realPrevious(parent.getPrevSibling());
+    if (parent instanceof GrReferenceElement && parent.getParent() instanceof GrArgumentList) {
       PsiElement prevSibling = context.getPrevSibling();
-      if (context.getParent() instanceof GrReferenceElement && prevSibling != null && prevSibling.getNode() != null) {
+      if (parent instanceof GrReferenceElement && prevSibling != null && prevSibling.getNode() != null) {
         ASTNode node = prevSibling.getNode();
         return !GroovyTokenTypes.DOTS.contains(node.getElementType());
       } else {

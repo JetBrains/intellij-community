@@ -27,7 +27,6 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -119,6 +118,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   public void reinitSettings() {
     myBackgroundColor = null;
+    revalidateMarkup();
     repaint();
   }
   
@@ -191,9 +191,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
 
   private void paintAnnotations(Graphics g, Rectangle clip) {
-    paintBackground(g, clip, getAnnotationsAreaOffset(), getAnnotationsAreaWidth());
-
     int x = getAnnotationsAreaOffset();
+    int w = getAnnotationsAreaWidth();
+
+    if (w == 0) return;
+
+    paintBackground(g, clip, getAnnotationsAreaOffset(), w);
 
     Color color = myEditor.getColorsScheme().getColor(EditorColors.ANNOTATIONS_COLOR);
     g.setColor(color != null ? color : Color.blue);
@@ -201,6 +204,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     for (int i = 0; i < myTextAnnotationGutters.size(); i++) {
       TextAnnotationGutterProvider gutterProvider = myTextAnnotationGutters.get(i);
+
       int lineHeight = myEditor.getLineHeight();
       int startLineNumber = clip.y / lineHeight;
       int endLineNumber = (clip.y + clip.height) / lineHeight + 1;
@@ -209,7 +213,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         .line;
       endLineNumber = Math.min(endLineNumber, lastLine + 1);
       if (startLineNumber >= endLineNumber) {
-        return;
+        break;
       }
 
       for (int j = startLineNumber; j < endLineNumber; j++) {
@@ -219,7 +223,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         final Color bg = gutterProvider.getBgColor(logLine, myEditor);
         if (bg != null) {
           g.setColor(bg);
-          g.fillRect(x, j * lineHeight, getAnnotationsAreaWidth(), lineHeight);
+          g.fillRect(x, j * lineHeight, w, lineHeight);
         }
         g.setColor(myEditor.getColorsScheme().getColor(gutterProvider.getColor(logLine, myEditor)));
         g.setFont(myEditor.getColorsScheme().getFont(style));
@@ -230,6 +234,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
       x += myTextAnnotationGutterSizes.get(i);
     }
+
+    UIUtil.drawVDottedLine((Graphics2D)g, getAnnotationsAreaOffset() + w - 1, clip.y, clip.y + clip.height, null, getOutlineColor(false));
   }
 
   private void paintFoldingTree(Graphics g, Rectangle clip) {
@@ -237,9 +243,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       paintFoldingTree((Graphics2D)g);
     }
     else {
-      g.setColor(Color.white);
-      int x = getWhitespaceSeparatorOffset() - 1;
-      UIUtil.drawVDottedLine((Graphics2D)g, x, clip.y, clip.y + clip.height, myEditor.getBackroundColor(), getFoldingColor(false));
+      UIUtil.drawVDottedLine((Graphics2D)g, clip.x + clip.width -1, clip.y, clip.y + clip.height, null, getOutlineColor(false));
     }
   }
 
@@ -258,39 +262,28 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private void paintCaretRowBackground(final Graphics g, final int x, final int width) {
-    CaretModelImpl.VerticalInfo caretInfo = myEditor.getCaretModel().getVisualCaretInfo();
+    final VisualPosition visCaret = myEditor.getCaretModel().getVisualPosition();
     Color caretRowColor = myEditor.getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR);
     if (caretRowColor != null) {
       g.setColor(caretRowColor);
-      g.fillRect(x, caretInfo.y, width, caretInfo.height);
+      final Point caretPoint = myEditor.visualPositionToXY(visCaret);
+      g.fillRect(x, caretPoint.y, width, myEditor.getLineHeight());
     }
   }
 
   private void paintLineNumbers(Graphics g, Rectangle clip) {
     if (isLineNumbersShown()) {
       paintBackground(g, clip, getLineNumberAreaOffset(), getLineNumberAreaWidth());
-      g.setColor(Color.white);
       int x = getLineNumberAreaOffset() + getLineNumberAreaWidth() - 2;
-      UIUtil.drawLine(g, x, clip.y, x, clip.y + clip.height);
+      UIUtil.drawVDottedLine((Graphics2D)g, x, clip.y, clip.y + clip.height, null, getOutlineColor(false));
       paintLineNumbers(g);
     }
   }
 
   public Color getBackground() {
     if (myBackgroundColor == null) {
-      final Color userDefinedColor = myEditor.getColorsScheme().getColor(EditorColors.LEFT_GUTTER_BACKGROUND);
-      if (userDefinedColor != null) {
-        myBackgroundColor = userDefinedColor;
-      }
-      else {
-        LafManager lafManager = LafManager.getInstance();
-        if (lafManager != null && lafManager.isUnderAquaLookAndFeel()) {
-          myBackgroundColor = new Color(0xF0F0F0);
-        }
-        else {
-          myBackgroundColor = super.getBackground();
-        }
-      }
+      Color color = myEditor.getColorsScheme().getColor(EditorColors.GUTTER_BACKGROUND);
+      myBackgroundColor = color == null ? new Color(0xF0F0F0) : color;
     }
     return myBackgroundColor;
   }
@@ -327,7 +320,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     for (int i = startLineNumber; i < endLineNumber; i++) {
       LogicalPosition logicalPosition = myEditor.visualToLogicalPosition(new VisualPosition(i, 0));
-      if (logicalPosition.isOnSoftWrappedLine()) {
+      if (logicalPosition.softWrapLinesOnCurrentLogicalLine > 0) {
         continue;
       }
       int logLine = logicalPosition.line;
@@ -638,8 +631,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return (myEditor.getLineHeight() - icon.getIconHeight()) /2;
   }
 
-  public Color getFoldingColor(boolean isActive) {
-    ColorKey key = isActive ? EditorColors.SELECTED_FOLDING_TREE_COLOR : EditorColors.FOLDING_TREE_COLOR;
+  public Color getOutlineColor(boolean isActive) {
+    ColorKey key = isActive ? EditorColors.SELECTED_TEARLINE_COLOR : EditorColors.TEARLINE_COLOR;
     Color color = myEditor.getColorsScheme().getColor(key);
     return color != null ? color : Color.black;
   }
@@ -693,7 +686,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     int lineX = getWhitespaceSeparatorOffset();
     paintBackground(g, clip, getFoldingAreaOffset(), getFoldingAreaWidth());
 
-    g.setColor(myEditor.getBackroundColor());
+    g.setColor(myEditor.getBackgroundColor());
     g.fillRect(lineX, clip.y, getFoldingAreaWidth(), clip.height);
 
     paintCaretRowBackground(g, lineX, getFoldingAnchorWidth());
@@ -705,7 +698,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     if (!isFoldingOutlineShown()) return;
     Rectangle clip = g.getClipBounds();
 
-    UIUtil.drawVDottedLine(g, getWhitespaceSeparatorOffset(), clip.y, clip.y + clip.height, myEditor.getBackroundColor(), getFoldingColor(false));
+    UIUtil.drawVDottedLine(g, getWhitespaceSeparatorOffset(), clip.y, clip.y + clip.height, null, getOutlineColor(false));
 
     int anchorX = getFoldingAreaOffset();
     int width = getFoldingAnchorWidth();
@@ -767,7 +760,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     final FoldingGroup group = foldRange.getGroup();
 
-    final boolean drawTop = group == null || ((FoldingModelImpl)myEditor.getFoldingModel()).getFirstRegion(group) == foldRange;
+    final boolean drawTop = group == null || ((FoldingModelImpl)myEditor.getFoldingModel()).getFirstRegion(group, foldRange) == foldRange;
     if (!foldRange.isExpanded()) {
       if (y <= clip.y + clip.height && y + height >= clip.y) {
         if (drawTop) {
@@ -814,12 +807,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       int[] yPoints = {y, y, y + baseHeight, y + height, y + baseHeight};
 
       if (paintBackground) {
-        g.setColor(myEditor.getBackroundColor());
+        g.setColor(myEditor.getBackgroundColor());
 
         g.fillPolygon(xPoints, yPoints, 5);
       }
       else {
-        g.setColor(getFoldingColor(active));
+        g.setColor(getOutlineColor(active));
         g.drawPolygon(xPoints, yPoints, 5);
 
         //Minus
@@ -850,15 +843,15 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
                                    boolean active,
                                    boolean paintBackground) {
     if (paintBackground) {
-      g.setColor(myEditor.getBackroundColor());
+      g.setColor(myEditor.getBackgroundColor());
       g.fillRect(anchorX, y, width, width);
     }
     else {
-      g.setColor(getFoldingColor(active));
+      g.setColor(getOutlineColor(active));
       g.drawRect(anchorX, y, width, width);
 
       // Draw plus
-      if (!active) g.setColor(getFoldingColor(true));
+      if (!active) g.setColor(getOutlineColor(true));
       UIUtil.drawLine(g, anchorX + 2, y + width / 2, anchorX + width - 2, y + width / 2);
     }
   }
@@ -875,7 +868,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
       int lineX = anchorX + width / 2;
 
-      g.setColor(getFoldingColor(true));
+      g.setColor(getOutlineColor(true));
       UIUtil.drawLine(g, lineX, startY, lineX, endY);
     }
   }
@@ -957,7 +950,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     for (FoldRegion foldRange : visibleRanges) {
       if (!foldRange.isValid()) continue;
       final FoldingGroup group = foldRange.getGroup();
-      if (group != null && ((FoldingModelImpl)myEditor.getFoldingModel()).getFirstRegion(group) != foldRange) {
+      if (group != null && ((FoldingModelImpl)myEditor.getFoldingModel()).getFirstRegion(group, foldRange) != foldRange) {
         continue;
       }
 

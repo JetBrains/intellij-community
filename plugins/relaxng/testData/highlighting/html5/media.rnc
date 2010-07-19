@@ -1,0 +1,151 @@
+datatypes w = "http://whattf.org/datatype-draft"
+
+# #####################################################################
+##  RELAX NG Schema for HTML 5: Advanced Embedded Content             #
+# #####################################################################
+
+## Attributes Common to Media Elements
+
+	# src not included
+	media.attrs = 
+		(	media.attrs.autoplay?
+		&	media.attrs.preload?
+		&	media.attrs.controls?
+		&	media.attrs.loop?
+		)
+		media.attrs.autoplay   =
+			attribute autoplay   {
+				w:string "autoplay" | w:string ""
+			}
+		media.attrs.preload   =
+			attribute preload   {
+				w:string "none" | w:string "metadata" | w:string "auto" | w:string ""
+			}
+		media.attrs.controls  =
+			attribute controls  {
+				w:string "controls" | w:string ""
+			}
+		media.attrs.loop =
+			attribute loop {
+				w:string "loop" | w:string ""
+			}
+		
+## Source: <source>
+
+	source.elem =
+		element source { source.inner & source.attrs }
+	source.attrs =
+		(	common.attrs
+		&	source.attrs.src
+		&	source.attrs.type?
+		&	source.attrs.media?
+		)
+		source.attrs.src =
+			attribute src {
+				common.data.uri
+			}
+		source.attrs.type =
+			attribute type {
+				common.data.mimetype
+			}
+		source.attrs.media =
+			attribute media {
+				common.data.mediaquery
+			}
+	source.inner =
+		( empty )
+
+## Media Source
+
+	media.source = 
+		(	media.attrs.src
+		|	source.elem*
+		)
+
+	media.attrs.src =
+		attribute src {
+			common.data.uri
+		}
+
+## Video: <video>
+
+	video.elem.flow =
+		element video { video.inner.flow & video.attrs }
+	video.elem.phrasing =
+		element video { video.inner.phrasing & video.attrs }
+	video.attrs =
+		(	common.attrs
+		&	media.attrs
+		&	video.attrs.poster?
+		&	video.attrs.height?
+		&	video.attrs.width?
+		)
+		video.attrs.poster =
+			attribute poster {
+				common.data.uri
+			}
+		video.attrs.height =
+			attribute height {
+				common.data.integer.non-negative
+			}
+		video.attrs.width =
+			attribute width {
+				common.data.integer.non-negative
+			}
+	video.inner.flow =
+		(	media.source
+		,	common.inner.flow
+		)
+	video.inner.phrasing =
+		(	media.source
+		,	common.inner.phrasing
+		)
+
+	common.elem.flow |= video.elem.flow
+	common.elem.phrasing |= video.elem.phrasing
+
+## Audio: <audio>
+
+	audio.elem.flow =
+		element audio { audio.inner.flow & audio.attrs }
+	audio.elem.phrasing =
+		element audio { audio.inner.phrasing & audio.attrs }
+	audio.attrs =
+		(	common.attrs
+		&	media.attrs
+		)
+	audio.inner.flow =
+		(	media.source
+		,	common.inner.flow
+		)
+	audio.inner.phrasing =
+		(	media.source
+		,	common.inner.phrasing
+		)
+
+	common.elem.flow |= audio.elem.flow
+	common.elem.phrasing |= audio.elem.phrasing
+
+## Captioned Content: <figure>
+
+	figure.elem =
+		element figure { figure.inner & figure.attrs }
+	figure.attrs =
+		(	common.attrs
+		&	common.attrs.aria.implicit.img?
+		)
+	figure.inner =
+		(	( figcaption.elem, common.inner.flow )
+		|	( common.inner.flow, figcaption.elem? )
+		)
+
+	common.elem.flow |= figure.elem
+
+## Figure caption: <figcaption>
+
+	figcaption.elem =
+		element figcaption { figcaption.inner & figcaption.attrs }
+	figcaption.attrs =
+		( common.attrs )
+	figcaption.inner =
+		( common.inner.flow )

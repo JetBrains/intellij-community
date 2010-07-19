@@ -31,7 +31,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -39,8 +42,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.PathUtil;
-import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.PathsList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -180,7 +183,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
           }
           if (!dirItems.isEmpty()) {
             final RmicProcessingItem[] successfullyProcessed = invokeRmic(context, parserPool, pair.getFirst(), dirItems, pair.getSecond());
-            processed.addAll(Arrays.asList(successfullyProcessed));
+            ContainerUtil.addAll(processed, successfullyProcessed);
           }
           progressIndicator.setFraction(((double)processed.size()) / ((double)items.length));
         }
@@ -292,7 +295,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
 
     commandLine.add("-verbose");
 
-    commandLine.addAll(Arrays.asList(RmicConfiguration.getSettings(module.getProject()).getOptions()));
+    ContainerUtil.addAll(commandLine, RmicConfiguration.getSettings(module.getProject()).getOptions());
 
     commandLine.add("-classpath");
 
@@ -385,35 +388,9 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
   }
 
   private static String getCompilationClasspath(Module module) {
-    final StringBuilder classpathBuffer = StringBuilderSpinAllocator.alloc();
-    try {
-      final OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
-      final Set<VirtualFile> processedFiles = new HashSet<VirtualFile>();
-      for (final OrderEntry orderEntry : orderEntries) {
-        if (orderEntry instanceof JdkOrderEntry) {
-          continue;
-        }
-        final VirtualFile[] files = orderEntry.getFiles(OrderRootType.COMPILATION_CLASSES);
-        for (VirtualFile file : files) {
-          if (processedFiles.contains(file)) {
-            continue;
-          }
-          processedFiles.add(file);
-          final String path = PathUtil.getLocalPath(file);
-          if (path == null) {
-            continue;
-          }
-          if (classpathBuffer.length() > 0) {
-            classpathBuffer.append(File.pathSeparatorChar);
-          }
-          classpathBuffer.append(path);
-        }
-      }
-      return classpathBuffer.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(classpathBuffer);
-    }
+    final OrderEnumerator enumerator = ModuleRootManager.getInstance(module).orderEntries().withoutSdk().compileOnly().recursively().exportedOnly();
+    final PathsList pathsList = enumerator.getPathsList();
+    return pathsList.getPathsString();
   }
 
   private static final class RemoteClassValidityState implements ValidityState {

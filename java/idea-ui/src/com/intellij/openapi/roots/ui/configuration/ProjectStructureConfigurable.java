@@ -84,7 +84,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
 
   private Configurable mySelectedConfigurable;
 
-  private final ProjectJdksModel myProjectJdksModel = new ProjectJdksModel();
+  private final ProjectSdksModel myProjectJdksModel = new ProjectSdksModel();
 
   private ProjectConfigurable myProjectConfig;
   private final ProjectLibrariesConfigurable myProjectLibrariesConfig;
@@ -473,7 +473,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     return ShowSettingsUtil.getInstance().findProjectConfigurable(project, ProjectStructureConfigurable.class);
   }
 
-  public ProjectJdksModel getProjectJdksModel() {
+  public ProjectSdksModel getProjectJdksModel() {
     return myProjectJdksModel;
   }
 

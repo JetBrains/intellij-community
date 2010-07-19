@@ -19,6 +19,7 @@ import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBList;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -35,7 +36,7 @@ import java.util.Observable;
  */
 public class SelectCvsConfgurationPanel extends JPanel {
   private final DefaultListModel myModel = new DefaultListModel();
-  private final JList myList = new JList(myModel);
+  private final JList myList = new JBList(myModel);
   private CvsRootConfiguration mySelection;
   private final Project myProject;
   private final MyObservable myObservable;

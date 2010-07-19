@@ -32,7 +32,8 @@ public class CommonShortcuts {
                                                                                             SystemInfo.isMac
                                                                                             ? KeyEvent.META_DOWN_MASK
                                                                                             : KeyEvent.CTRL_DOWN_MASK));
-  public static final ShortcutSet INSERT = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, 0));
+  public static final ShortcutSet INSERT = new CustomShortcutSet(SystemInfo.isMac ? KeyStroke.getKeyStroke(KeyEvent.VK_N, KeyEvent.CTRL_DOWN_MASK) 
+                                                                                  : KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, 0));
   public static final ShortcutSet DELETE = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
   public static final ShortcutSet ESCAPE = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0));
 

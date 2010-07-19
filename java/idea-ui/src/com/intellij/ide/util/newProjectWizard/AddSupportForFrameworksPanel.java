@@ -26,8 +26,10 @@ import com.intellij.facet.ui.libraries.RemoteRepositoryInfo;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurableListener;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
+import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportCommunicator;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelImpl;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -60,7 +62,7 @@ import java.util.List;
 /**
  * @author nik
  */
-public class AddSupportForFrameworksPanel {
+public class AddSupportForFrameworksPanel implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.newProjectWizard.AddSupportForFrameworksStep");
   @NonNls private static final String UNCHECKED_CARD = "unchecked";
   @NonNls private static final String EMPTY_CARD = "empty";
@@ -133,6 +135,10 @@ public class AddSupportForFrameworksPanel {
         }
       }
     }
+  }
+
+  @Override
+  public void dispose() {
   }
 
   private void applyLibraryOptionsForSelected() {
@@ -279,14 +285,14 @@ public class AddSupportForFrameworksPanel {
       String underlyingFrameworkId = provider.getUnderlyingFrameworkId();
       FrameworkSupportNode parentNode = null;
       if (underlyingFrameworkId != null) {
-        FrameworkSupportProvider parentProvider = findProvider(underlyingFrameworkId);
+        FrameworkSupportProvider parentProvider = findProvider(underlyingFrameworkId, myProviders);
         if (parentProvider == null) {
           LOG.info("Cannot find id = " + underlyingFrameworkId);
           return null;
         }
         parentNode = createNode(parentProvider, nodes, groups);
       }
-      node = new FrameworkSupportNode(provider, parentNode, myModel, myBaseDirForLibrariesGetter);
+      node = new FrameworkSupportNode(provider, parentNode, myModel, myBaseDirForLibrariesGetter, this);
       nodes.put(provider.getId(), node);
       groups.put(provider.getGroupId(), node);
     }
@@ -294,8 +300,8 @@ public class AddSupportForFrameworksPanel {
   }
 
   @Nullable
-  private FrameworkSupportProvider findProvider(@NotNull String id) {
-    for (FrameworkSupportProvider provider : myProviders) {
+  private static FrameworkSupportProvider findProvider(@NotNull String id, final List<FrameworkSupportProvider> providers) {
+    for (FrameworkSupportProvider provider : providers) {
       if (id.equals(provider.getId())) {
         return provider;
       }
@@ -336,9 +342,10 @@ public class AddSupportForFrameworksPanel {
     List<Library> addedLibraries = new ArrayList<Library>();
     List<FrameworkSupportNode> selectedFrameworks = getFrameworkNodes(true);
     sortFrameworks(selectedFrameworks);
-
+    List<FrameworkSupportConfigurable> selectedConfigurables = new ArrayList<FrameworkSupportConfigurable>();
     for (FrameworkSupportNode node : selectedFrameworks) {
       FrameworkSupportConfigurable configurable = node.getConfigurable();
+      selectedConfigurables.add(configurable);
       final LibraryCompositionSettings settings = node.getLibraryCompositionSettings();
       Library library = settings != null ? settings.addLibraries(rootModel, addedLibraries) : null;
       configurable.addSupport(module, rootModel, library);
@@ -349,16 +356,13 @@ public class AddSupportForFrameworksPanel {
         ((FacetBasedFrameworkSupportProvider)provider).processAddedLibraries(module, addedLibraries);
       }
     }
+    for (FrameworkSupportCommunicator communicator : FrameworkSupportCommunicator.EP_NAME.getExtensions()) {
+      communicator.onFrameworkSupportAdded(module, rootModel, selectedConfigurables, myModel);
+    }
   }
 
   private void sortFrameworks(final List<FrameworkSupportNode> nodes) {
-    DFSTBuilder<FrameworkSupportProvider> builder = new DFSTBuilder<FrameworkSupportProvider>(GraphGenerator.create(CachingSemiGraph.create(new ProvidersGraph(myProviders))));
-    if (!builder.isAcyclic()) {
-      Pair<FrameworkSupportProvider,FrameworkSupportProvider> pair = builder.getCircularDependency();
-      LOG.error("Circular dependency between providers '" + pair.getFirst().getId() + "' and '" + pair.getSecond().getId() + "' was found.");
-    }
-
-    final Comparator<FrameworkSupportProvider> comparator = builder.comparator();
+    final Comparator<FrameworkSupportProvider> comparator = getFrameworkSupportProvidersComparator(myProviders);
     Collections.sort(nodes, new Comparator<FrameworkSupportNode>() {
       public int compare(final FrameworkSupportNode o1, final FrameworkSupportNode o2) {
         return comparator.compare(o1.getProvider(), o2.getProvider());
@@ -366,7 +370,19 @@ public class AddSupportForFrameworksPanel {
     });
   }
 
-  private class ProvidersGraph implements GraphGenerator.SemiGraph<FrameworkSupportProvider> {
+  public static Comparator<FrameworkSupportProvider> getFrameworkSupportProvidersComparator(final List<FrameworkSupportProvider> providers) {
+    DFSTBuilder<FrameworkSupportProvider>
+      builder = new DFSTBuilder<FrameworkSupportProvider>(GraphGenerator.create(CachingSemiGraph.create(
+      new ProvidersGraph(providers))));
+    if (!builder.isAcyclic()) {
+      Pair<FrameworkSupportProvider,FrameworkSupportProvider> pair = builder.getCircularDependency();
+      LOG.error("Circular dependency between providers '" + pair.getFirst().getId() + "' and '" + pair.getSecond().getId() + "' was found.");
+    }
+
+    return builder.comparator();
+  }
+
+  private static class ProvidersGraph implements GraphGenerator.SemiGraph<FrameworkSupportProvider> {
     private final List<FrameworkSupportProvider> myFrameworkSupportProviders;
 
     public ProvidersGraph(final List<FrameworkSupportProvider> frameworkSupportProviders) {
@@ -382,13 +398,13 @@ public class AddSupportForFrameworksPanel {
       List<FrameworkSupportProvider> dependencies = new ArrayList<FrameworkSupportProvider>();
       String underlyingId = provider.getUnderlyingFrameworkId();
       if (underlyingId != null) {
-        FrameworkSupportProvider underlyingProvider = findProvider(underlyingId);
+        FrameworkSupportProvider underlyingProvider = findProvider(underlyingId, myFrameworkSupportProviders);
         if (underlyingProvider != null) {
           dependencies.add(underlyingProvider);
         }
       }
       for (String id : ids) {
-        FrameworkSupportProvider dependency = findProvider(id);
+        FrameworkSupportProvider dependency = findProvider(id, myFrameworkSupportProviders);
         if (dependency != null) {
           dependencies.add(dependency);
         }

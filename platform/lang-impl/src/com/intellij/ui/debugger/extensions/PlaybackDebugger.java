@@ -41,7 +41,9 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.debugger.UiDebuggerExtension;
 import com.intellij.util.WaitFor;
 import com.intellij.util.ui.UIUtil;
@@ -141,11 +143,11 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     //}
 
     final Splitter script2Log = new Splitter(true);
-    script2Log.setFirstComponent(new JScrollPane(myEditor.getComponent()));
+    script2Log.setFirstComponent(ScrollPaneFactory.createScrollPane(myEditor.getComponent()));
 
-    myList = new JList(myMessage);
+    myList = new JBList(myMessage);
     myList.setCellRenderer(new MyListRenderer());
-    script2Log.setSecondComponent(new JScrollPane(myList));
+    script2Log.setSecondComponent(ScrollPaneFactory.createScrollPane(myList));
 
     myComponent.add(script2Log, BorderLayout.CENTER);
 

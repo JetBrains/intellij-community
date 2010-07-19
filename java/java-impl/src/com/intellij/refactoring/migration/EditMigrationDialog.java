@@ -116,7 +116,7 @@ public class EditMigrationDialog extends DialogWrapper{
     myDescriptionTextArea = new JTextArea(myMigrationMap.getDescription(), 3, 40);
     myDescriptionTextArea.setLineWrap(true);
     myDescriptionTextArea.setWrapStyleWord(true);
-    JScrollPane scrollPane = new JScrollPane(myDescriptionTextArea);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myDescriptionTextArea);
     scrollPane.setBorder(null);
     scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
     scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);

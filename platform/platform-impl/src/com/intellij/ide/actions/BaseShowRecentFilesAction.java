@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
@@ -82,7 +83,7 @@ public abstract class BaseShowRecentFilesAction extends AnAction implements Dumb
       pathLabel.setFont(font.deriveFont((float)10));
     }
 
-    final JList list = new JList(model);
+    final JList list = new JBList(model);
     list.addKeyListener(
       new KeyAdapter() {
         public void keyPressed(KeyEvent e) {

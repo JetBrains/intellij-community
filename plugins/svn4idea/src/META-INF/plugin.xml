@@ -83,8 +83,6 @@
       <separator/>
       <reference id="ChangesView.Browse"/>
       <separator/>
-      <action id="Subversion.Map" class="org.jetbrains.idea.svn.actions.ShowSvnMapAction" icon="/icons/ShowWorkingCopies.png"/>
-      <separator/> 
       <add-to-group group-id="SubversionFilePopupGroup" anchor="last"/>
     </group>
     <group id="SubversionUpdateActionGroup" class="org.jetbrains.idea.svn.actions.SubversionGroup">
@@ -100,8 +98,11 @@
       <add-to-group group-id="SubversionGroup" relative-to-action="Subversion.Add" anchor="after"/>
     </group>
 
+    <action class="org.jetbrains.idea.svn.dialogs.MergeFromAction" id="Subversion.MergeFrom">
+      <add-to-group relative-to-action="Vcs.IntegrateProject" anchor="after" group-id="VcsGlobalGroup"/>
+    </action>
     <action class="org.jetbrains.idea.svn.actions.CleanupProjectAction" id="Subversion.CleanupProject">
-      <add-to-group group-id="VcsGlobalGroup" anchor="after" relative-to-action="Vcs.IntegrateProject"/>
+      <add-to-group group-id="VcsGlobalGroup" anchor="after" relative-to-action="Subversion.MergeFrom"/>
     </action>
   </actions>
 
@@ -123,7 +124,7 @@
     <applicationService serviceInterface="org.jetbrains.idea.svn.dialogs.browserCache.Loader"
                     serviceImplementation="org.jetbrains.idea.svn.dialogs.browserCache.CacheLoader"/>
 
-    <vcs name="svn" vcsClass="org.jetbrains.idea.svn.SvnVcs"/>
+    <vcs name="svn" vcsClass="org.jetbrains.idea.svn.SvnVcs" displayName="Subversion" administrativeAreaName=".svn, _svn"/>
 
     <ComponentRoamingType component="SvnConfiguration" type="DISABLED"/>
     <vcsPopupProvider implementation="org.jetbrains.idea.svn.actions.SvnQuickListContentProvider"/>

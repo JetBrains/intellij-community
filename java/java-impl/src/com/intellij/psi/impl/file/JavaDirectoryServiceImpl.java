@@ -38,10 +38,10 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
@@ -65,7 +65,7 @@ public class JavaDirectoryServiceImpl extends JavaDirectoryService {
         PsiClass[] psiClasses = ((PsiClassOwner)file).getClasses();
         if (psiClasses.length == 0) continue;
         if (classes == null) classes = new ArrayList<PsiClass>();
-        classes.addAll(Arrays.asList(psiClasses));
+        ContainerUtil.addAll(classes, psiClasses);
       }
     }
     return classes == null ? PsiClass.EMPTY_ARRAY : classes.toArray(new PsiClass[classes.size()]);

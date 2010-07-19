@@ -16,6 +16,8 @@
 package com.intellij.patterns.compiler;
 
 import com.intellij.openapi.components.ServiceManager;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Gregory.Shrago
@@ -25,5 +27,19 @@ public abstract class PatternCompilerFactory {
     return ServiceManager.getService(PatternCompilerFactory.class);
   }
 
-  public abstract <T> PatternCompiler<T> getPatternCompiler(Class[] patternClasses);
+  /**
+   * Retrieves pattern classes registered via com.intellij.patterns.patternClass extension.
+   * @param alias or null
+   * @return pattern classes
+   */
+  @NotNull
+  public abstract Class[] getPatternClasses(@Nullable final String alias);
+
+  @NotNull
+  public abstract <T> PatternCompiler<T> getPatternCompiler(@NotNull Class[] patternClasses);
+
+  @NotNull
+  public <T> PatternCompiler<T> getPatternCompiler(@Nullable final String alias) {
+    return getPatternCompiler(getPatternClasses(alias));
+  }
 }

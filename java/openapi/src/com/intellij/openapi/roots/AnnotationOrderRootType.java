@@ -44,7 +44,7 @@ public class AnnotationOrderRootType extends PersistentOrderRootType {
 
   public static VirtualFile[] getFiles(OrderEntry entry) {
     List<VirtualFile> result = new ArrayList<VirtualFile>();
-    RecursiveRootPolicy<List<VirtualFile>> policy = new RecursiveRootPolicy<List<VirtualFile>>() {
+    RootPolicy<List<VirtualFile>> policy = new RootPolicy<List<VirtualFile>>() {
       public List<VirtualFile> visitLibraryOrderEntry(final LibraryOrderEntry orderEntry, final List<VirtualFile> value) {
         Collections.addAll(value, orderEntry.getRootFiles(getInstance()));
         return value;
@@ -67,7 +67,7 @@ public class AnnotationOrderRootType extends PersistentOrderRootType {
 
   public static String[] getUrls(OrderEntry entry) {
     List<String> result = new ArrayList<String>();
-    RecursiveRootPolicy<List<String>> policy = new RecursiveRootPolicy<List<String>>() {
+    RootPolicy<List<String>> policy = new RootPolicy<List<String>>() {
       public List<String> visitLibraryOrderEntry(final LibraryOrderEntry orderEntry, final List<String> value) {
         Collections.addAll(value, orderEntry.getRootUrls(getInstance()));
         return value;

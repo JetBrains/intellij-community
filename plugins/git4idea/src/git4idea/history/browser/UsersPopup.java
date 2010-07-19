@@ -18,6 +18,7 @@ package git4idea.history.browser;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.ListSpeedSearch;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 
@@ -30,7 +31,7 @@ public class UsersPopup {
 
   public static void showUsersPopup(final List<String> knownUsers, final Consumer<String> continuation, DataContext dc) {
     // todo pattern to come
-    final JList list = new JList();
+    final JList list = new JBList();
     list.setListData(ArrayUtil.toObjectArray(knownUsers));
     new ListSpeedSearch(list);
 

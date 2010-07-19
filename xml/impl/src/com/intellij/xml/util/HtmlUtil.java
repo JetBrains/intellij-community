@@ -42,6 +42,7 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.schema.XmlAttributeDescriptorImpl;
@@ -55,7 +56,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -102,12 +102,12 @@ public class HtmlUtil {
   private static final Set<String> POSSIBLY_INLINE_TAGS_MAP = new THashSet<String>();
 
   static {
-    EMPTY_TAGS_MAP.addAll(Arrays.asList(EMPTY_TAGS));
-    EMPTY_ATTRS_MAP.addAll(Arrays.asList(EMPTY_ATTRS));
-    OPTIONAL_END_TAGS_MAP.addAll(Arrays.asList(OPTIONAL_END_TAGS));
-    BLOCK_TAGS_MAP.addAll(Arrays.asList(BLOCK_TAGS));
-    INLINE_ELEMENTS_CONTAINER_MAP.addAll(Arrays.asList(INLINE_ELEMENTS_CONTAINER));
-    POSSIBLY_INLINE_TAGS_MAP.addAll(Arrays.asList(POSSIBLY_INLINE_TAGS));
+    ContainerUtil.addAll(EMPTY_TAGS_MAP, EMPTY_TAGS);
+    ContainerUtil.addAll(EMPTY_ATTRS_MAP, EMPTY_ATTRS);
+    ContainerUtil.addAll(OPTIONAL_END_TAGS_MAP, OPTIONAL_END_TAGS);
+    ContainerUtil.addAll(BLOCK_TAGS_MAP, BLOCK_TAGS);
+    ContainerUtil.addAll(INLINE_ELEMENTS_CONTAINER_MAP, INLINE_ELEMENTS_CONTAINER);
+    ContainerUtil.addAll(POSSIBLY_INLINE_TAGS_MAP, POSSIBLY_INLINE_TAGS);
   }
 
   public static boolean isSingleHtmlTag(String tagName) {

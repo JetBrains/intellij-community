@@ -28,6 +28,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ColorChooser;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -41,11 +43,8 @@ import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.image.BufferedImage;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Kirill Kalishev
@@ -66,7 +65,7 @@ public class RegistryUi implements Disposable {
     myContent.setLayout(new BorderLayout());
 
     myModel = new MyTableModel();
-    myTable = new JTable(myModel);
+    myTable = new JBTable(myModel);
     final MyRenderer r = new MyRenderer();
 
     final TableColumn c0 = myTable.getColumnModel().getColumn(0);
@@ -86,10 +85,10 @@ public class RegistryUi implements Disposable {
 
     myDescriptionLabel = new JTextArea(3, 50);
     myDescriptionLabel.setEditable(false);
-    final JScrollPane label = new JScrollPane(myDescriptionLabel);
+    final JScrollPane label = ScrollPaneFactory.createScrollPane(myDescriptionLabel);
     label.setBorder(new TitledBorder("Description"));
 
-    myContent.add(new JScrollPane(myTable), BorderLayout.CENTER);
+    myContent.add(ScrollPaneFactory.createScrollPane(myTable), BorderLayout.CENTER);
     myContent.add(label, BorderLayout.SOUTH);
 
     myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {

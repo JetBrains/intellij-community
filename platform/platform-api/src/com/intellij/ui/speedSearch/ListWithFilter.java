@@ -21,6 +21,7 @@ package com.intellij.ui.speedSearch;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.ui.LightColors;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.Function;
 
 import javax.swing.*;
@@ -36,7 +37,7 @@ public class ListWithFilter<T> extends JPanel {
   private final MySpeedSearch mySpeedSearch;
 
   public static JComponent wrap(JList list) {
-    return wrap(list, new JScrollPane(list), new Function<Object, String>() {
+    return wrap(list, ScrollPaneFactory.createScrollPane(list), new Function<Object, String>() {
       public String fun(Object o) {
         return o.toString();
       }

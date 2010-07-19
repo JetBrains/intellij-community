@@ -13,6 +13,7 @@
 package org.zmlx.hg4idea.action;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
@@ -23,6 +24,7 @@ import org.zmlx.hg4idea.HgUtil;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.command.HgCommandException;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -30,6 +32,7 @@ import java.util.List;
 abstract class HgAbstractGlobalAction extends AnAction {
 
   protected abstract HgGlobalCommandBuilder getHgGlobalCommandBuilder(Project project);
+  private static final Logger LOG = Logger.getInstance(HgAbstractGlobalAction.class.getName());
 
   public void actionPerformed(AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
@@ -44,11 +47,14 @@ abstract class HgAbstractGlobalAction extends AnAction {
     }
     try {
       command.execute();
+      HgUtil.markDirectoryDirty(project,command.getRepo());
     } catch (HgCommandException e) {
-      VcsUtil.showErrorMessage(project, e.getMessage(), "Error");
+      handleException(project, e);
+    } catch (InvocationTargetException e) {
+      handleException(project, e);
+    } catch (InterruptedException e) {
+      handleException(project, e);
     }
-
-    HgUtil.markDirectoryDirty(project,command.getRepo());
   }
 
   @Override
@@ -90,6 +96,11 @@ abstract class HgAbstractGlobalAction extends AnAction {
   protected interface HgGlobalCommandBuilder {
     @Nullable
     HgGlobalCommand build(Collection<VirtualFile> repos);
+  }
+
+  private static void handleException(Project project, Exception e) {
+    LOG.error(e);
+    VcsUtil.showErrorMessage(project, e.getMessage(), "Error");
   }
 
 }

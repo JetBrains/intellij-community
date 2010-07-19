@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.ListUtil;
+import com.intellij.ui.components.JBList;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -304,7 +305,7 @@ public class CodeStyleGenerationConfigurable implements Configurable {
     return !textField.getText().trim().equals(value);
   }
 
-  private static class MembersOrderList extends JList {
+  private static class MembersOrderList extends JBList {
 
     private static abstract class PropertyManager {
 

@@ -17,12 +17,21 @@ package com.intellij.spellchecker.quickfixes;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.ide.DataManager;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.refactoring.actions.RenameElementAction;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,14 +76,34 @@ public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
   }
 
   @SuppressWarnings({"SSBasedInspection"})
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    SwingUtilities.invokeLater(new Runnable() {
+  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+    Runnable fix = new Runnable() {
       public void run() {
         DictionarySuggestionProvider provider = findProvider();
         if (provider != null) {
           provider.setActive(true);
         }
-        DataContext dataContext = DataManager.getInstance().getDataContext();
+   
+        HashMap<String, Object> map = new HashMap<String, Object>();
+        PsiElement psiElement = descriptor.getPsiElement();
+        PsiFile containingFile = psiElement.getContainingFile();
+        Editor editor = InjectedLanguageUtil.openEditorFor(containingFile, project);
+        
+        if (editor instanceof EditorWindow) {
+          map.put(LangDataKeys.EDITOR.getName(), editor);
+          map.put(LangDataKeys.PSI_ELEMENT.getName(), psiElement);
+        } else if (ApplicationManager.getApplication().isUnitTestMode()) { // TextEditorComponent / FiledEditorManagerImpl give away the data in real life
+          map.put(
+            LangDataKeys.PSI_ELEMENT.getName(), 
+            new TextEditorPsiDataProvider().getData(
+              LangDataKeys.PSI_ELEMENT.getName(),
+              editor, 
+              containingFile.getVirtualFile()
+            )
+          );
+        }
+        
+        DataContext dataContext = SimpleDataContext.getSimpleContext(map, DataManager.getInstance().getDataContext());
         AnAction action = new RenameElementAction();
         AnActionEvent event = new AnActionEvent(null, dataContext, "", action.getTemplatePresentation(), ActionManager.getInstance(), 0);
         action.actionPerformed(event);
@@ -82,7 +111,10 @@ public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
           provider.setActive(false);
         }
       }
-    });
+    };
+    
+    if (ApplicationManager.getApplication().isUnitTestMode()) fix.run();
+    else SwingUtilities.invokeLater(fix); // TODO [shkate] this is hard to test!
   }
 
 }

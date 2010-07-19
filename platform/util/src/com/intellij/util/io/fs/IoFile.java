@@ -24,7 +24,7 @@ import java.io.*;
 
 class IoFile implements IFile {
   private final File myFile;
-  private final IFile[] EMPTY_ARRAY = new IFile[0];
+  private static final IFile[] EMPTY_ARRAY = new IFile[0];
 
   public IoFile(@NotNull final File file) {
     myFile = file;

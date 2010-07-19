@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.siyeh.ig.telemetry.TelemetryDisplayImpl">
-  <scrollpane id="2507" binding="scrollPane">
+  <scrollpane class="com.intellij.ui.components.JBScrollPane" id="2507" binding="scrollPane">
     <constraints>
       <xy x="104" y="60" width="174" height="154"/>
       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3"/>
@@ -8,7 +8,7 @@
     <properties/>
     <border type="none"/>
     <children>
-      <component id="d0712" class="javax.swing.JTable" binding="table">
+      <component id="d0712" class="com.intellij.ui.table.JBTable" binding="table">
         <constraints/>
         <properties>
           <rowSelectionAllowed value="true"/>

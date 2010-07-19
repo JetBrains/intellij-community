@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.svn.integrate;
 
-import com.intellij.util.NotNullFunction;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 
@@ -24,7 +24,8 @@ import java.io.File;
 public interface IMerger {
   boolean hasNext();
   void mergeNext() throws SVNException;
-  void getInfo(NotNullFunction<String, Boolean> holder, boolean getLatest);
+  void getInfo(Consumer<String> holder, boolean getLatest);
+  void getSkipped(final Consumer<String> holder);
   String getComment();
   @Nullable
   File getMergeInfoHolder();

@@ -31,7 +31,14 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
 
   public abstract int getWhitespaceSeparatorOffset();
 
-  public abstract Color getFoldingColor(boolean isActive);
+  public abstract Color getOutlineColor(boolean isActive);
+
+  /**
+   * @deprecated use getOutlineColor
+   */
+  public Color getFoldingColor(boolean isActive) {
+    return getOutlineColor(isActive);
+  }
 
   public abstract void revalidateMarkup();
 

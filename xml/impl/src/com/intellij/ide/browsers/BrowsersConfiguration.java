@@ -35,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
@@ -203,37 +202,8 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public static void launchBrowser(@NonNls @NotNull String path, @NonNls String... parameters) throws IOException {
-    String[] command;
-    if (SystemInfo.isMac) {
-      if (parameters.length > 1) {
-        //open -a command doesn't support additional parameters 
-        command = new String[] {path};
-      }
-      else {
-        command = new String[]{"open", "-a", path};
-      }
-    }
-    else if (SystemInfo.isWindows9x) {
-      if (path.indexOf(File.separatorChar) != -1) {
-        command = new String[]{path};
-      }
-      else {
-        command = new String[]{"command.com", "/c", "start", path};
-      }
-    }
-    else if (SystemInfo.isWindows) {
-      if (path.indexOf(File.separatorChar) != -1) {
-        command = new String[]{path};
-      }
-      else {
-        command = new String[]{"cmd.exe", "/c", "start", path};
-      }
-    }
-    else {
-      command = new String[]{path};
-    }
-
+  public static void launchBrowser(@NonNls @NotNull String browserPath, @NonNls String... parameters) throws IOException {
+    final String[] command = BrowserUtil.getOpenBrowserCommand(browserPath, parameters);
     Runtime.getRuntime().exec(ArrayUtil.mergeArrays(command, parameters, String.class));
   }
 }

@@ -1,7 +1,7 @@
 // "Replace Implements with Static Import" "true"
 
-import static I.BAZZ;
 import static I.FOO;
+import static I1.BAZZ;
 
 public class X {
   void bar() {

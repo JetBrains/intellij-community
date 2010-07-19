@@ -21,16 +21,15 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -76,10 +75,10 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
   private IdeRootPane myRootPane;
   private final BalloonLayout myBalloonLayout;
 
-  public IdeFrameImpl(ApplicationInfoEx applicationInfoEx, ActionManager actionManager, UISettings uiSettings, DataManager dataManager,
-                      KeymapManager keymapManager, final Application application, final String[] commandLineArgs) {
+  public IdeFrameImpl(ApplicationInfoEx applicationInfoEx, ActionManagerEx actionManager, UISettings uiSettings, DataManager dataManager,
+                      final Application application, final String[] commandLineArgs) {
     super(applicationInfoEx.getFullApplicationName());
-    myRootPane = new IdeRootPane(actionManager, uiSettings, dataManager, keymapManager, application, commandLineArgs);
+    myRootPane = new IdeRootPane(actionManager, uiSettings, dataManager, application, commandLineArgs);
     setRootPane(myRootPane);
 
     AppUIUtil.updateFrameIcon(this);
@@ -100,7 +99,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
 
   }
 
-  private boolean isThereActiveFrame() {
+  private static boolean isThereActiveFrame() {
     Frame[] all = Frame.getFrames();
     for (Frame each : all) {
       if (each.isActive()) {
@@ -135,7 +134,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
    * !!!!! CAUTION !!!!!
    */
   public final void setDefaultFocusableComponent(final JComponent component) {
-    myLayoutFocusTraversalPolicy.setOverridenDefaultComponent(component);
+    LayoutFocusTraversalPolicyExt.setOverridenDefaultComponent(component);
   }
 
   /**

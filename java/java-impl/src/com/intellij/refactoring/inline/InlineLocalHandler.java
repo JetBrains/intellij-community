@@ -166,7 +166,12 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
       }
     }
 
-    if (checkRefsInAugmentedAssignmentOrUnaryModified(refsToInline, project, editor, localName)) {
+    final PsiElement writeAccess = checkRefsInAugmentedAssignmentOrUnaryModified(refsToInline);
+    if (writeAccess != null) {
+      HighlightManager.getInstance(project).addOccurrenceHighlights(editor, new PsiElement[]{writeAccess}, writeAttributes, true, null);
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.is.accessed.for.writing", localName));
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_VARIABLE);
+      WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
       return;
     }
 
@@ -238,8 +243,8 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     }, RefactoringBundle.message("inline.command", localName), null);
   }
 
-  private static boolean checkRefsInAugmentedAssignmentOrUnaryModified(final PsiElement[] refsToInline, final Project project, final Editor editor,
-                                                        final String localName) {
+  @Nullable
+  public static PsiElement checkRefsInAugmentedAssignmentOrUnaryModified(final PsiElement[] refsToInline) {
     for (PsiElement element : refsToInline) {
 
       PsiElement parent = element.getParent();
@@ -251,16 +256,10 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
       if (parent instanceof PsiAssignmentExpression && element == ((PsiAssignmentExpression)parent).getLExpression()
           || isUnaryWriteExpression(parent)) {
 
-        EditorColorsManager manager = EditorColorsManager.getInstance();
-        final TextAttributes writeAttributes = manager.getGlobalScheme().getAttributes(EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES);
-        HighlightManager.getInstance(project).addOccurrenceHighlights(editor, new PsiElement[]{element}, writeAttributes, true, null);
-        String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.is.accessed.for.writing", localName));
-        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_VARIABLE);
-        WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
-        return true;
+        return element;
       }
     }
-    return false;
+    return null;
   }
 
   private static boolean isUnaryWriteExpression(PsiElement parent) {

@@ -120,7 +120,7 @@ public abstract class PsiTestCase extends ModuleTestCase {
 
     myTestDataBefore = loadData(dataName);
 
-    PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk("java 1.4"));
+    PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk17());
     VirtualFile vDir = PsiTestUtil.createTestProjectStructure(myProject, myModule, myDataRoot, myFilesToDelete);
 
     final VirtualFile vFile = vDir.findChild(myTestDataBefore.getTextFile());

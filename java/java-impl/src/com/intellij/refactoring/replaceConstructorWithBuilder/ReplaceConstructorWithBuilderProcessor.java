@@ -40,6 +40,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.replaceConstructorWithBuilder.usageInfo.ReplaceConstructorWithSettersChainInfo;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.refactoring.util.FixableUsagesRefactoringProcessor;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
@@ -234,7 +235,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
     if (myConstructors.length == 1) return myConstructors[0];
     PsiMethod commonConstructor = null;
     for (PsiMethod constructor : myConstructors) {
-      final PsiMethod chainedConstructor = ParameterData.getChainedConstructor(constructor);
+      final PsiMethod chainedConstructor = RefactoringUtil.getChainedConstructor(constructor);
       if (chainedConstructor == null) {
         if (commonConstructor != null) {
           if (!isChained(commonConstructor, constructor)) {
@@ -258,7 +259,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
   private static boolean isChained(PsiMethod first, PsiMethod last) {
     if (first == null) return false;
     if (first == last) return true;
-    return isChained(ParameterData.getChainedConstructor(first), last);
+    return isChained(RefactoringUtil.getChainedConstructor(first), last);
   }
 
   private String createMethodName() {

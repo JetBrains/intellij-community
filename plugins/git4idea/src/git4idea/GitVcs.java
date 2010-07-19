@@ -59,6 +59,7 @@ import git4idea.diff.GitDiffProvider;
 import git4idea.diff.GitTreeDiffProvider;
 import git4idea.history.GitHistoryProvider;
 import git4idea.history.GitUsersComponent;
+import git4idea.history.browser.GitProjectLogManager;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitMergeProvider;
 import git4idea.rollback.GitRollbackEnvironment;
@@ -141,6 +142,10 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
    */
   private final GitMergeProvider myMergeProvider;
   /**
+   * reverse merge provider
+   */
+  private final GitMergeProvider myReverseMergeProvider;
+  /**
    * a VFS listener that tracks file addition, deletion, and renaming.
    */
   private GitVFSListener myVFSListener;
@@ -219,6 +224,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     myConfigurable = new GitVcsConfigurable(mySettings, myProject);
     myUpdateEnvironment = new GitUpdateEnvironment(myProject, this, mySettings);
     myMergeProvider = new GitMergeProvider(myProject);
+    myReverseMergeProvider = new GitMergeProvider(myProject, true);
     myCommittedChangeListProvider = new GitCommittedChangeListProvider(myProject);
     myOutgoingChangesProvider = new GitOutgoingChangesProvider(myProject);
     myTreeDiffProvider = new GitTreeDiffProvider(myProject);
@@ -284,6 +290,14 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
    */
   public void removeGitRootsListener(GitRootsListener listener) {
     myRootListeners.removeListener(listener);
+  }
+
+  /**
+   * @return a reverse merge provider for git (with reversed meaning of "theirs" and "yours", needed for the rebase and unstash)
+   */
+  @NotNull
+  public MergeProvider getReverseMergeProvider() {
+    return myReverseMergeProvider;
   }
 
   /**
@@ -467,6 +481,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
       myGitIgnoreTracker = new GitIgnoreTracker(myProject, this);
     }
     GitUsersComponent.getInstance(myProject).activate();
+    GitProjectLogManager.getInstance(myProject).activate();
   }
 
   /**
@@ -491,6 +506,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
       myConfigTracker = null;
     }
     GitUsersComponent.getInstance(myProject).deactivate();
+    GitProjectLogManager.getInstance(myProject).deactivate();
   }
 
   /**

@@ -251,7 +251,7 @@ public class ParameterInfoController {
     JLayeredPane layeredPane = myEditor.getComponent().getRootPane().getLayeredPane();
     p.x = Math.min(p.x, layeredPane.getWidth() - hintSize.width);
     p.x = Math.max(p.x, 0);
-    myHint.setBounds(p.x, p.y,hintSize.width,hintSize.height);
+    myHint.updateBounds(p.x, p.y);
   }
 
   private void addAlarmRequest(){
@@ -333,7 +333,7 @@ public class ParameterInfoController {
   @Nullable
   public static <E extends PsiElement> E findArgumentList(PsiFile file, int offset, int lbraceOffset){
     if (file == null) return null;
-    ParameterInfoHandler[] handlers = ShowParameterInfoHandler.getHandlers(PsiUtilBase.getLanguageAtOffset(file, offset), file.getViewProvider().getBaseLanguage());
+    ParameterInfoHandler[] handlers = ShowParameterInfoHandler.getHandlers(file.getProject(), PsiUtilBase.getLanguageAtOffset(file, offset), file.getViewProvider().getBaseLanguage());
 
     if (handlers != null) {
       for(ParameterInfoHandler handler:handlers) {

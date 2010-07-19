@@ -159,8 +159,8 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     }
     else {
       Set<String> allNamesSet = new LinkedHashSet<String>((currentNames.length + delegateNames.length) * 2);
-      allNamesSet.addAll(Arrays.asList(currentNames));
-      allNamesSet.addAll(Arrays.asList(delegateNames));
+      ContainerUtil.addAll(allNamesSet, currentNames);
+      ContainerUtil.addAll(allNamesSet, delegateNames);
       names = ArrayUtil.toStringArray(allNamesSet);
     }
 
@@ -432,7 +432,12 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       return content;
     }
     else {
-      return FileUtil.loadBytes(contentStream, (int)file.getLength());
+      try {
+        return FileUtil.loadBytes(contentStream, (int)file.getLength());
+      }
+      catch (IOException e) {
+        throw FSRecords.handleError(e);
+      }
     }
   }
 

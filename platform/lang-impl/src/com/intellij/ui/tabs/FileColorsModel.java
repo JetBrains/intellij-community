@@ -17,10 +17,14 @@
 package com.intellij.ui.tabs;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.ui.FileColorManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -136,11 +140,21 @@ public class FileColorsModel implements Cloneable {
     }
 
     final FileColorConfiguration configuration = findConfiguration(psiFile);
-    if (configuration != null && configuration.isValid()) {
+    if (configuration != null && configuration.isValid(psiFile.getProject())) {
       return configuration.getColorName();
     }
 
+    if (FileColorManager.getInstance(myProject).isHighlightNonProjectFiles()
+        && !isFileUnderProject(psiFile.getVirtualFile())) {
+      return FileColorManager.OUT_OF_PROJECT_SCOPE_COLOR; 
+    }
     return null;
+  }
+
+  private boolean isFileUnderProject(@Nullable VirtualFile file) {
+    if (file == null) return false;
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+    return myProject.isInitialized() && !fileIndex.isIgnored(file) && fileIndex.getContentRootForFile(file) != null;
   }
 
   @Nullable

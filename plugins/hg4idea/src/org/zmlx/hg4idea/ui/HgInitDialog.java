@@ -48,15 +48,28 @@ public class HgInitDialog extends DialogWrapper {
   private JRadioButton myCreateRepositoryForTheRadioButton;
   private JRadioButton mySelectWhereToCreateRadioButton;
   private TextFieldWithBrowseButton myTextFieldBrowser;
-  private final Project myProject;
-  private VirtualFile mySelectedDir;
-  private FileChooserDescriptor myFileDescriptor;
-  private boolean myIsProjectBaseDirHgRoot; // basing on this field, show options or invoke file chooser at once
 
-  public HgInitDialog(Project project) {
+  @Nullable private final Project myProject;
+  private final boolean myShowDialog; // basing on this field, show options or invoke file chooser at once
+  private final FileChooserDescriptor myFileDescriptor;
+  private VirtualFile mySelectedDir;
+
+  public HgInitDialog(@Nullable Project project) {
     super(project);
     myProject = project;
-    myIsProjectBaseDirHgRoot = HgUtil.isHgRoot(myProject.getBaseDir());
+    // a file chooser instead of dialog will be shown immediately if there is no current project or if current project is already an hg root
+    myShowDialog = (myProject != null && !HgUtil.isHgRoot(myProject.getBaseDir()));
+
+    myFileDescriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
+      public void validateSelectedFiles(VirtualFile[] files) throws Exception {
+        if (HgUtil.isHgRoot(files[0])) {
+          throw new ConfigurationException(HgVcsMessages.message("hg4idea.init.this.is.hg.root", files[0].getPresentableUrl()));
+        }
+        updateEverything();
+      }
+    };
+    myFileDescriptor.setHideIgnored(false);
+    
     init();
   }
 
@@ -64,7 +77,9 @@ public class HgInitDialog extends DialogWrapper {
   protected void init() {
     super.init();
     setTitle(HgVcsMessages.message("hg4idea.init.dialog.title"));
-    mySelectedDir = myProject.getBaseDir();
+    if (myProject != null) {
+      mySelectedDir = myProject.getBaseDir();
+    }
 
     mySelectWhereToCreateRadioButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -84,15 +99,6 @@ public class HgInitDialog extends DialogWrapper {
       }
     });
 
-    myFileDescriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
-      public void validateSelectedFiles(VirtualFile[] files) throws Exception {
-        if (HgUtil.isHgRoot(files[0])) {
-          throw new ConfigurationException(HgVcsMessages.message("hg4idea.init.this.is.hg.root", files[0].getPresentableUrl()));
-        }
-        updateEverything();
-      }
-    };
-    myFileDescriptor.setHideIgnored(false);
     myTextFieldBrowser.addBrowseFolderListener(HgVcsMessages.message("hg4idea.init.destination.directory.title"),
                                                HgVcsMessages.message("hg4idea.init.destination.directory.description"),
                                                myProject, myFileDescriptor);
@@ -103,20 +109,17 @@ public class HgInitDialog extends DialogWrapper {
    */
   @Override
   public void show() {
-    if (myIsProjectBaseDirHgRoot) {
-      final VirtualFile[] files = FileChooser.chooseFiles(myProject, myFileDescriptor, myProject.getBaseDir());
-      mySelectedDir = (files.length == 0 ? null : files[0]);
-    } else {
+    if (myShowDialog) {
       super.show();
+    } else {
+      final VirtualFile[] files = FileChooser.chooseFiles(myProject, myFileDescriptor);
+      mySelectedDir = (files.length == 0 ? null : files[0]);
     }
   }
 
   @Override
   public boolean isOK() {
-    if (myIsProjectBaseDirHgRoot) {
-      return mySelectedDir != null;
-    }
-    return super.isOK();
+    return myShowDialog ? super.isOK() : mySelectedDir != null;
   }
 
   @Nullable
@@ -134,7 +137,7 @@ public class HgInitDialog extends DialogWrapper {
    * enable/disable the 'OK' button, show error text and update mySelectedDir. 
    */
   private void updateEverything() {
-    if (myCreateRepositoryForTheRadioButton.isSelected()) {
+    if (myShowDialog && myCreateRepositoryForTheRadioButton.isSelected()) {
       enableOKAction();
       mySelectedDir = myProject.getBaseDir();
     } else {

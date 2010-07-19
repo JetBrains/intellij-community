@@ -28,11 +28,12 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 /**
  * @author Maxim.Medvedev
@@ -47,13 +48,16 @@ public class AfterNewClassInsertHandler implements InsertHandler<LookupItem<PsiC
   }
 
   public void handleInsert(InsertionContext context, LookupItem<PsiClassType> item) {
-    final PsiClass psiClass = PsiUtil.resolveClassInType(myClassType);
+    final PsiClassType.ClassResolveResult resolveResult = myClassType.resolveGenerics();
+    final PsiClass psiClass = resolveResult.getElement();
     if (psiClass == null || !psiClass.isValid()) {
       return;
     }
-
-
-    PsiMethod[] constructors = psiClass.getConstructors();
+    PsiElement place = myPlace;
+    if (!(place instanceof GroovyPsiElement)) {
+      place = myPlace.getContainingFile();
+    }
+    PsiMethod[] constructors = ResolveUtil.getAllClassConstructors(psiClass, (GroovyPsiElement)place, resolveResult.getSubstitutor());
     final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(psiClass.getProject()).getResolveHelper();
     boolean hasParams = ContainerUtil.or(constructors, new Condition<PsiMethod>() {
       public boolean value(PsiMethod psiMethod) {
@@ -151,8 +155,8 @@ public class AfterNewClassInsertHandler implements InsertHandler<LookupItem<PsiC
     manager.commitDocument(document);
     final PsiReference ref = file.findReferenceAt(offset);
     if (ref instanceof GrCodeReferenceElement) {
-      org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.shortenReference((GrCodeReferenceElement)ref);
-      org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.shortenReferences((GroovyPsiElement)ref);
+      PsiUtil.shortenReference((GrCodeReferenceElement)ref);
+      PsiUtil.shortenReferences((GroovyPsiElement)ref);
     }
   }
 }

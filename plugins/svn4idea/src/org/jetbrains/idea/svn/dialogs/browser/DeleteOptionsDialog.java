@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.dialogs.browser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -78,7 +79,7 @@ public class DeleteOptionsDialog extends DialogWrapper {
     myCommitMessage = new JTextArea(10, 0);
     myCommitMessage.setWrapStyleWord(true);
     myCommitMessage.setLineWrap(true);
-    panel.add(new JScrollPane(myCommitMessage), gc);
+    panel.add(ScrollPaneFactory.createScrollPane(myCommitMessage), gc);
 
     gc.gridy += 1;
     gc.gridwidth = 3;

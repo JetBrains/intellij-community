@@ -1,0 +1,3 @@
+datatypes xxx = "yyy"
+
+element <error>xxx</error>:foo { text }

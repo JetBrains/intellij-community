@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.HyperlinkEvent;
@@ -39,20 +40,21 @@ public class ExecutionUtil {
   private ExecutionUtil() {
   }
 
-  public static void handleExecutionError(Project project, @NotNull String taskName, ExecutionException e) {
-    handleExecutionError(project, ToolWindowId.MESSAGES_WINDOW, taskName, e);
-  }
-
-  public static void handleExecutionError(final Project project, @NotNull final RunProfile runProfile, final ExecutionException e) {
-    handleExecutionError(project, runProfile.getName(), e);
+  public static void handleExecutionError(@NotNull Project project,
+                                          @NotNull String toolWindowId,
+                                          @NotNull RunProfile runProfile,
+                                          @NotNull ExecutionException e) {
+    handleExecutionError(project, toolWindowId, runProfile.getName(), e);
   }
 
   public static void handleExecutionError(@NotNull final Project project,
-                                          @NotNull String toolWindowId,
+                                          @NotNull final String toolWindowId,
                                           @NotNull String taskName,
-                                          @NotNull final ExecutionException e) {
+                                          @NotNull ExecutionException e) {
     if (e instanceof RunCanceledByUserException) return;
 
+    LOG.debug(e);
+    
     String error = e.getMessage();
     HyperlinkListener listener = null;
 
@@ -65,18 +67,24 @@ public class ExecutionUtil {
 
         listener = new HyperlinkListener() {
           @Override
-          public void hyperlinkUpdate(HyperlinkEvent e) {
+          public void hyperlinkUpdate(HyperlinkEvent event) {
             PropertiesComponent.getInstance(project).setValue("dynamic.classpath", "true");
           }
         };
       }
     }
-    String message = ExecutionBundle.message("error.running.configuration.with.error.error.message", taskName, error);
+    final String message = ExecutionBundle.message("error.running.configuration.with.error.error.message", taskName, error);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       LOG.error(message);
     }
 
-    ToolWindowManager.getInstance(project).notifyByBalloon(toolWindowId, MessageType.ERROR, message, null, listener);
+    final HyperlinkListener finalListener = listener;
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        ToolWindowManager.getInstance(project).notifyByBalloon(toolWindowId, MessageType.ERROR, message, null, finalListener);
+      }
+    });
   }
 }

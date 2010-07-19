@@ -633,14 +633,14 @@ public class MavenProjectsManager extends SimpleProjectComponent
   }
 
   private void doScheduleUpdateProjects(final Collection<MavenProject> projects, final boolean force, final boolean forceImport) {
-    // read when postStartupActivitias start
+    // read when postStartupActivities start
     MavenUtil.runWhenInitialized(myProject, new DumbAwareRunnable() {
       public void run() {
         if (projects == null) {
           myWatcher.scheduleUpdateAll(force, forceImport);
         }
         else {
-          myWatcher.scheduleUpdate(MavenUtil.collectFiles(projects), Collections.EMPTY_LIST, force, forceImport);
+          myWatcher.scheduleUpdate(MavenUtil.collectFiles(projects), Collections.<VirtualFile>emptyList(), force, forceImport);
         }
       }
     });
@@ -975,13 +975,13 @@ public class MavenProjectsManager extends SimpleProjectComponent
     return addDependency(mavenProject, id, false);
   }
 
-  public MavenDomDependency addDependency(final MavenProject mavenProject, final MavenId id, final boolean overriden) {
+  public MavenDomDependency addDependency(final MavenProject mavenProject, final MavenId id, final boolean overridden) {
     final MavenArtifact[] artifact = new MavenArtifact[1];
 
     try {
       MavenUtil.run(myProject, "Downloading dependency...", new MavenTask() {
         public void run(MavenProgressIndicator indicator) throws MavenProcessCanceledException {
-          artifact[0] = myProjectsTree.downloadArtifact(mavenProject, id, myEmbeddersManager, new SoutMavenConsole(), indicator);
+          artifact[0] = MavenProjectsTree.downloadArtifact(mavenProject, id, myEmbeddersManager, new SoutMavenConsole(), indicator);
         }
       });
     }
@@ -996,7 +996,7 @@ public class MavenProjectsManager extends SimpleProjectComponent
       protected void run(Result<MavenDomDependency> result) throws Throwable {
         MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(myProject, mavenProject.getFile());
 
-        MavenDomDependency domDependency = MavenDomUtil.createDomDependency(model, artifact[0], getEditor(), overriden);
+        MavenDomDependency domDependency = MavenDomUtil.createDomDependency(model, artifact[0], getEditor(), overridden);
 
         mavenProject.addDependency(artifact[0]);
         result.setResult(domDependency);

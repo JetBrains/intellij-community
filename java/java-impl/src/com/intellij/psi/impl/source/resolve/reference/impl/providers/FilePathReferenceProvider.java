@@ -18,15 +18,18 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author cdr
@@ -110,12 +113,12 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
     List<Module> modules = new ArrayList<Module>();
     modules.add(thisModule);
     ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(thisModule);
-    modules.addAll(Arrays.asList(moduleRootManager.getDependencies()));
+    ContainerUtil.addAll(modules, moduleRootManager.getDependencies());
 
     List<PsiFileSystemItem> result = new ArrayList<PsiFileSystemItem>();
     final PsiManager psiManager = PsiManager.getInstance(thisModule.getProject());
     if (includingClasses) {
-      VirtualFile[] libraryUrls = moduleRootManager.getFiles(OrderRootType.CLASSES);
+      VirtualFile[] libraryUrls = moduleRootManager.orderEntries().getAllLibrariesAndSdkClassesRoots();
       for (VirtualFile file : libraryUrls) {
         PsiDirectory directory = psiManager.findDirectory(file);
         if (directory != null) {

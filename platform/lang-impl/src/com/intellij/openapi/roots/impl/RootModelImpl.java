@@ -62,12 +62,9 @@ public class RootModelImpl implements ModifiableRootModel {
   private boolean myWritable;
   final VirtualFilePointerListener myVirtualFilePointerListener;
   private final VirtualFilePointerManager myFilePointerManager;
+
   VirtualFilePointer myExplodedDirectoryPointer;
-
   private String myExplodedDirectory;
-
-  final List<RootModelComponentBase> myComponents = new ArrayList<RootModelComponentBase>();
-
   private boolean myExcludeExploded;
 
   @NonNls private static final String EXPLODED_TAG = "exploded";
@@ -259,7 +256,7 @@ public class RootModelImpl implements ModifiableRootModel {
     final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
 
     for (OrderEntry orderEntry : getOrderEntries()) {
-      result.addAll(Arrays.asList(orderEntry.getFiles(type)));
+      ContainerUtil.addAll(result, orderEntry.getFiles(type));
     }
     return ContainerUtil.toArray(result, new VirtualFile[result.size()]);
   }
@@ -269,7 +266,7 @@ public class RootModelImpl implements ModifiableRootModel {
     final ArrayList<String> result = new ArrayList<String>();
 
     for (OrderEntry orderEntry : getOrderEntries()) {
-      result.addAll(Arrays.asList(orderEntry.getUrls(type)));
+      ContainerUtil.addAll(result, orderEntry.getUrls(type));
     }
     return ContainerUtil.toArray(result, new String[result.size()]);
   }
@@ -437,7 +434,7 @@ public class RootModelImpl implements ModifiableRootModel {
     assertWritable();
     assertValidRearrangement(newEntries);
     myOrderEntries.clear();
-    myOrderEntries.addAll(Arrays.asList(newEntries));
+    ContainerUtil.addAll(myOrderEntries, newEntries);
   }
 
   private void assertValidRearrangement(OrderEntry[] newEntries) {
@@ -519,6 +516,12 @@ public class RootModelImpl implements ModifiableRootModel {
       result = orderEntry.accept(policy, result);
     }
     return result;
+  }
+
+  @NotNull
+  @Override
+  public OrderEnumerator orderEntries() {
+    return new ModuleOrderEnumerator(this, null);
   }
 
   public Project getProject() {
@@ -950,7 +953,7 @@ public class RootModelImpl implements ModifiableRootModel {
 
   @NotNull
   public String[] getDependencyModuleNames() {
-    List<String> result = processOrder(new CollectDependentModules(), new ArrayList<String>());
+    List<String> result = orderEntries().withoutSdk().withoutLibraries().withoutModuleSourceEntries().process(new CollectDependentModules(), new ArrayList<String>());
     return ContainerUtil.toArray(result, new String[result.size()]);
   }
 

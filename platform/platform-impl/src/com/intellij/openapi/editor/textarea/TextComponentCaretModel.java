@@ -48,7 +48,7 @@ public class TextComponentCaretModel implements CaretModel {
   }
 
   public void moveToVisualPosition(final VisualPosition pos) {
-    throw new UnsupportedOperationException("Not implemented");
+    moveToLogicalPosition(myEditor.visualToLogicalPosition(pos));
   }
 
   public void moveToOffset(final int offset) {

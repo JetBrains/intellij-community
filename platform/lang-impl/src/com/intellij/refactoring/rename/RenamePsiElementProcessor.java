@@ -67,6 +67,13 @@ public abstract class RenamePsiElementProcessor {
     return null;
   }
 
+  /**
+   * Builds the complete set of elements to be renamed during the refactoring.
+   *
+   * @param element the base element for the refactoring.
+   * @param newName the name into which the element is being renamed.
+   * @param allRenames the map (from element to its new name) into which all additional elements to be renamed should be stored.
+   */
   public void prepareRenaming(final PsiElement element, final String newName, final Map<PsiElement, String> allRenames) {
   }
 
@@ -127,8 +134,16 @@ public abstract class RenamePsiElementProcessor {
     }
   }
 
+  /**
+   * Returns the element to be renamed instead of the element on which the rename refactoring was invoked (for example, a super method
+   * of an inherited method).
+   *
+   * @param element the element on which the refactoring was invoked.
+   * @param editor the editor in which the refactoring was invoked.
+   * @return the element to rename, or null if the rename refactoring should be canceled.
+   */
   @Nullable
-  public PsiElement substituteElementToRename(final PsiElement element, Editor editor) {
+  public PsiElement substituteElementToRename(final PsiElement element, @Nullable Editor editor) {
     return element;
   }
 

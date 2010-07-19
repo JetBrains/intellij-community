@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -211,5 +212,37 @@ public class GitFileUtils {
       handler.setNoSSH(true);
       handler.run();
     }
+  }
+
+  /**
+   * Get file content for the specific revision
+   *
+   * @param project      the project
+   * @param root         the vcs root
+   * @param revision     the revision to find path in
+   * @param relativePath
+   * @return the content of file if file is found, null if the file is missing in the revision
+   * @throws VcsException if there is a problem with running git
+   */
+  @Nullable
+  public static byte[] getFileContent(Project project, VirtualFile root, String revision, String relativePath) throws VcsException {
+    GitBinaryHandler h = new GitBinaryHandler(project, root, GitCommand.SHOW);
+    h.setNoSSH(true);
+    h.setSilent(true);
+    h.addParameters(revision + ":" + relativePath);
+    byte[] result;
+    try {
+      result = h.run();
+    }
+    catch (VcsException e) {
+      String m = e.getMessage().trim();
+      if (m.startsWith("fatal: ambiguous argument ") || (m.startsWith("fatal: Path '") && m.contains("' exists on disk, but not in '"))) {
+        result = null;
+      }
+      else {
+        throw e;
+      }
+    }
+    return result;
   }
 }

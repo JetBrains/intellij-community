@@ -63,7 +63,7 @@ public class LanguageFolding extends LanguageExtension<FoldingBuilder> {
   }
 
   public static FoldingDescriptor[] buildFoldingDescriptors(FoldingBuilder builder, PsiElement root, Document document, boolean quick) {
-    if (!(builder instanceof DumbAware) && DumbService.getInstance(root.getProject()).isDumb()) {
+    if (!DumbService.isDumbAware(builder) && DumbService.getInstance(root.getProject()).isDumb()) {
       return FoldingDescriptor.EMPTY;
     }
 

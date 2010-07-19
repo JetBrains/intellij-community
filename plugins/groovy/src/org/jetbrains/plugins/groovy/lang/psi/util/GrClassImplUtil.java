@@ -50,7 +50,10 @@ import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Maxim.Medvedev
@@ -140,7 +143,7 @@ public class GrClassImplUtil {
     if (visited.contains(clazz)) return;
     visited.add(clazz);
 
-    allMethods.addAll(Arrays.asList(clazz.getMethods()));
+    ContainerUtil.addAll(allMethods, clazz.getMethods());
 
     final PsiField[] fields = clazz.getFields();
     for (PsiField field : fields) {
@@ -148,7 +151,7 @@ public class GrClassImplUtil {
         final GrField groovyField = (GrField)field;
         if (groovyField.isProperty()) {
           PsiMethod[] getters = groovyField.getGetters();
-          if (getters.length > 0) allMethods.addAll(Arrays.asList(getters));
+          if (getters.length > 0) ContainerUtil.addAll(allMethods, getters);
           PsiMethod setter = groovyField.getSetter();
           if (setter != null) allMethods.add(setter);
         }
@@ -233,7 +236,7 @@ public class GrClassImplUtil {
                                             PsiElement lastParent,
                                             @NotNull PsiElement place) {
     for (final PsiTypeParameter typeParameter : grType.getTypeParameters()) {
-      if (!ResolveUtil.processElement(processor, typeParameter)) return false;
+      if (!ResolveUtil.processElement(processor, typeParameter, state)) return false;
     }
 
     NameHint nameHint = processor.getHint(NameHint.KEY);
@@ -252,7 +255,7 @@ public class GrClassImplUtil {
           if (!isSameDeclaration(place, field)) { //the same variable declaration
             final PsiSubstitutor finalSubstitutor = PsiClassImplUtil
               .obtainFinalSubstitutor(field.getContainingClass(), fieldInfo.getSubstitutor(), grType, substitutor, place, factory);
-            if (!processor.execute(field, ResolveState.initial().put(PsiSubstitutor.KEY, finalSubstitutor))) return false;
+            if (!processor.execute(field, state.put(PsiSubstitutor.KEY, finalSubstitutor))) return false;
           }
         }
       }
@@ -262,7 +265,7 @@ public class GrClassImplUtil {
           if (!isSameDeclaration(place, field)) {  //the same variable declaration
             final PsiSubstitutor finalSubstitutor = PsiClassImplUtil
               .obtainFinalSubstitutor(field.getContainingClass(), info.getSubstitutor(), grType, substitutor, place, factory);
-            if (!processor.execute(field, ResolveState.initial().put(PsiSubstitutor.KEY, finalSubstitutor))) return false;
+            if (!processor.execute(field, state.put(PsiSubstitutor.KEY, finalSubstitutor))) return false;
           }
         }
       }
@@ -278,7 +281,7 @@ public class GrClassImplUtil {
             if (!isSameDeclaration(place, method) && isMethodVisible(isPlaceGroovy, method)) {
               final PsiSubstitutor finalSubstitutor = PsiClassImplUtil
                 .obtainFinalSubstitutor(method.getContainingClass(), info.getSubstitutor(), grType, substitutor, place, factory);
-              if (!processor.execute(method, ResolveState.initial().put(PsiSubstitutor.KEY, finalSubstitutor))) {
+              if (!processor.execute(method, state.put(PsiSubstitutor.KEY, finalSubstitutor))) {
                 return false;
               }
             }
@@ -293,7 +296,7 @@ public class GrClassImplUtil {
             if (!isSameDeclaration(place, method) && isMethodVisible(isPlaceGroovy, method)) {
               final PsiSubstitutor finalSubstitutor = PsiClassImplUtil
                 .obtainFinalSubstitutor(method.getContainingClass(), info.getSubstitutor(), grType, substitutor, place, factory);
-              if (!processor.execute(method, ResolveState.initial().put(PsiSubstitutor.KEY, finalSubstitutor))) {
+              if (!processor.execute(method, state.put(PsiSubstitutor.KEY, finalSubstitutor))) {
                 return false;
               }
             }

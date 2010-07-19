@@ -235,7 +235,7 @@ public class JBTabsImpl extends JComponent
     add(mySingleRowLayout.myRightGhost);
 
 
-    new LazyUiDisposable<JBTabsImpl>(parent, this, this, project) {
+    new LazyUiDisposable<JBTabsImpl>(parent, this, this) {
       protected void initialize(@NotNull Disposable parent, @NotNull JBTabsImpl child, @Nullable Project project) {
         myProject = project;
 
@@ -1346,6 +1346,10 @@ public class JBTabsImpl extends JComponent
     return 4;
   }
 
+  private int getEdgeArcSize() {
+    return 3;
+  }
+
   public int getGhostTabLength() {
     return 15;
   }
@@ -1512,7 +1516,8 @@ public class JBTabsImpl extends JComponent
     boolean rightEdge = !isSingleRow() && last && Boolean.TRUE.equals(myInfo2Label.get(selected).getClientProperty(STRETCHED_BY_WIDTH)) && border.right == 0;
 
     if (leftEdge) {
-      shape.path.moveTo(shape.insets.left, shape.labelTopY);
+      shape.path.moveTo(shape.insets.left, shape.labelTopY + shape.labelPath.deltaY(getEdgeArcSize()));
+      shape.path.quadTo(shape.labelLeftX, shape.labelTopY, shape.labelLeftX + shape.labelPath.deltaX(getEdgeArcSize()), shape.labelTopY);
       shape.path.lineTo(shape.labelRightX - shape.labelPath.deltaX(getArcSize()), shape.labelTopY);
     } else {
       shape.path.moveTo(shape.insets.left, shape.labelBottomY);
@@ -1530,7 +1535,8 @@ public class JBTabsImpl extends JComponent
     }
     else {
       if (rightEdge) {
-        shape.path.lineTo(shape.labelRightX + 1, shape.labelTopY);
+        shape.path.lineTo(shape.labelRightX + 1 - shape.path.deltaX(getArcSize()), shape.labelTopY);
+        shape.path.quadTo(shape.labelRightX + 1, shape.labelTopY, shape.labelRightX + 1, shape.labelTopY + shape.path.deltaY(getArcSize()));
       } else {
         shape.path.lineTo(shape.labelRightX - shape.path.deltaX(getArcSize()), shape.labelTopY);
         shape.path.quadTo(shape.labelRightX, shape.labelTopY, shape.labelRightX, shape.labelTopY + shape.path.deltaY(getArcSize()));
@@ -1780,7 +1786,8 @@ public class JBTabsImpl extends JComponent
       shape.quadTo(leftX, topY, leftX + shape.deltaX(arc), topY);
     } else {
       if (firstShowing) {
-        shape.moveTo(leftX, topY);
+        shape.moveTo(leftX, topY + shape.deltaY(getEdgeArcSize()));
+        shape.quadTo(leftX, topY, leftX + shape.deltaX(getEdgeArcSize()), topY);
       }
     }
 
@@ -1791,7 +1798,9 @@ public class JBTabsImpl extends JComponent
       shape.lineTo(rigthX, bottomY);
     } else {
       if (lastShowing) {
-        shape.lineTo(rigthX + 1, topY);
+        shape.lineTo(rigthX - shape.deltaX(arc), topY);
+        shape.quadTo(rigthX + 1, topY, rigthX + 1, topY + shape.deltaY(arc));
+
         shape.lineTo(rigthX + 1, bottomY);
         rightEdge = true;
       }

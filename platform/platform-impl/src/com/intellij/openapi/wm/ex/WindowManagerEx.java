@@ -16,8 +16,8 @@
 package com.intellij.openapi.wm.ex;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.CommandProcessor;
 import com.intellij.openapi.wm.impl.DesktopLayout;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -33,6 +33,8 @@ import java.awt.event.ComponentEvent;
  * @author Vladimir Kondratyev
  */
 public abstract class WindowManagerEx extends WindowManager {
+  public static enum WindowShadowMode { NORMAL, SMALL, DISABLED }
+
   public static WindowManagerEx getInstanceEx(){
     return (WindowManagerEx)WindowManager.getInstance();
   }
@@ -115,6 +117,8 @@ public abstract class WindowManagerEx extends WindowManager {
 
   public abstract void setWindowMask(Window window, Shape mask);
 
+  public abstract void setWindowShadow(Window window, WindowShadowMode mode);
+
   public abstract void resetWindow(final Window window);
 
   /**
@@ -136,5 +140,8 @@ public abstract class WindowManagerEx extends WindowManager {
    * @param project the dialog has been shown for
    */
   public abstract void hideDialog(JDialog dialog, Project project);
+
+  public abstract void adjustContainerWindow(Component c, Dimension oldSize, Dimension newSize);
+
 
 }

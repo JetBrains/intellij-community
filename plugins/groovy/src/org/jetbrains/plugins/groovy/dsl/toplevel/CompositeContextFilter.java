@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.groovy.dsl.toplevel;
 
-import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
+import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
 
 import java.util.List;
 
@@ -17,9 +17,9 @@ public class CompositeContextFilter implements ContextFilter {
     myAnd = and;
   }
 
-  public boolean isApplicable(PsiElement place, String fqName, ProcessingContext ctx) {
+  public boolean isApplicable(GroovyClassDescriptor descriptor, ProcessingContext ctx) {
     for (ContextFilter filter : myFilters) {
-      if (myAnd != filter.isApplicable(place, fqName, ctx)) {
+      if (myAnd != filter.isApplicable(descriptor, ctx)) {
         return !myAnd;
       }
     }

@@ -177,4 +177,24 @@ public class MoveFilesOrDirectoriesUtil {
       return null;
     }
   }
+
+  public static void checkIfMoveIntoSelf(PsiElement element, PsiElement newContainer) throws IncorrectOperationException {
+    PsiElement container = newContainer;
+    while (container != null) {
+      if (container == element) {
+        if (element instanceof PsiDirectory) {
+          if (element == newContainer) {
+            throw new IncorrectOperationException("Cannot place directory into itself.");
+          }
+          else {
+            throw new IncorrectOperationException("Cannot place directory into its subdirectory.");
+          }
+        }
+        else {
+          throw new IncorrectOperationException();
+        }
+      }
+      container = container.getParent();
+    }
+  }
 }

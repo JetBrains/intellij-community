@@ -471,9 +471,12 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
 
     for (OrderEntry orderEntry : getOrderEntries(module)) {
       if (orderEntry instanceof ModuleOrderEntry) {
-        VirtualFile[] importedClassRoots = orderEntry.getFiles(OrderRootType.COMPILATION_CLASSES);
-        for (VirtualFile importedClassRoot : importedClassRoots) {
-          addEntryToMap(importedClassRoot, orderEntry, depEntries);
+        final Module depModule = ((ModuleOrderEntry)orderEntry).getModule();
+        if (depModule != null) {
+          VirtualFile[] importedClassRoots = OrderEnumerator.orderEntries(depModule).exportedOnly().recursively().classes().usingCache().getRoots();
+          for (VirtualFile importedClassRoot : importedClassRoots) {
+            addEntryToMap(importedClassRoot, orderEntry, depEntries);
+          }
         }
         VirtualFile[] sourceRoots = orderEntry.getFiles(OrderRootType.SOURCES);
         for (VirtualFile sourceRoot : sourceRoots) {

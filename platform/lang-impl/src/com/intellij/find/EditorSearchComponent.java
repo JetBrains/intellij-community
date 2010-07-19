@@ -51,8 +51,10 @@ import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.NonFocusableCheckBox;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,7 +62,10 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 public class EditorSearchComponent extends JPanel implements DataProvider {
@@ -575,8 +580,10 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
       copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_OCCURENCE));
 
       ArrayList<Shortcut> shortcuts = new ArrayList<Shortcut>();
-      shortcuts.addAll(Arrays.asList(ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_PREVIOUS).getShortcutSet().getShortcuts()));
-      shortcuts.addAll(Arrays.asList(ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP).getShortcutSet().getShortcuts()));
+      ContainerUtil
+        .addAll(shortcuts, ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_PREVIOUS).getShortcutSet().getShortcuts());
+      ContainerUtil
+        .addAll(shortcuts, ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP).getShortcutSet().getShortcuts());
       shortcuts.add(new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.SHIFT_DOWN_MASK), null));
 
       registerCustomShortcutSet(
@@ -601,8 +608,9 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     public NextOccurenceAction() {
       copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_OCCURENCE));
       ArrayList<Shortcut> shortcuts = new ArrayList<Shortcut>();
-      shortcuts.addAll(Arrays.asList(ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_NEXT).getShortcutSet().getShortcuts()));
-      shortcuts.addAll(Arrays.asList(ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN).getShortcutSet().getShortcuts()));
+      ContainerUtil.addAll(shortcuts, ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_NEXT).getShortcutSet().getShortcuts());
+      ContainerUtil
+        .addAll(shortcuts, ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN).getShortcutSet().getShortcuts());
       shortcuts.add(new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), null));
 
       registerCustomShortcutSet(
@@ -626,9 +634,9 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
       getTemplatePresentation().setText("Search History");
 
       ArrayList<Shortcut> shortcuts = new ArrayList<Shortcut>();
-      shortcuts.addAll(Arrays.asList(ActionManager.getInstance().getAction(IdeActions.ACTION_FIND).getShortcutSet().getShortcuts()));
+      ContainerUtil.addAll(shortcuts, ActionManager.getInstance().getAction(IdeActions.ACTION_FIND).getShortcutSet().getShortcuts());
       shortcuts.add(new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_H, KeyEvent.CTRL_DOWN_MASK), null));
-      shortcuts.addAll(Arrays.asList(ActionManager.getInstance().getAction("IncrementalSearch").getShortcutSet().getShortcuts()));
+      ContainerUtil.addAll(shortcuts, ActionManager.getInstance().getAction("IncrementalSearch").getShortcutSet().getShortcuts());
 
       registerCustomShortcutSet(
         new CustomShortcutSet(shortcuts.toArray(new Shortcut[shortcuts.size()])),
@@ -663,7 +671,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
 
   private void showHistory(final boolean byClickingToolbarButton) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("find.recent.search");
-    showCompletionPopup(new JList(ArrayUtil.reverseArray(FindSettings.getInstance().getRecentFindStrings())), "Recent Searches",
+    showCompletionPopup(new JBList(ArrayUtil.reverseArray(FindSettings.getInstance().getRecentFindStrings())), "Recent Searches",
                         byClickingToolbarButton);
   }
 
@@ -685,7 +693,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
       }
 
       FeatureUsageTracker.getInstance().triggerFeatureUsed("find.completion");
-      final JList list = new JList(array) {
+      final JList list = new JBList(array) {
         protected void paintComponent(final Graphics g) {
           UISettings.setupAntialiasing(g);
           super.paintComponent(g);

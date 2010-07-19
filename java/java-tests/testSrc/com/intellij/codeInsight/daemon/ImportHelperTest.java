@@ -135,7 +135,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
   }
 
   protected Sdk getTestProjectJdk() {
-    return JavaSdkImpl.getMockJdk15("mock 1.5");
+    return JavaSdkImpl.getMockJdk17("mock 1.5");
   }
 
   private void checkAddImport(PsiJavaFile file, String fqn, String... expectedOrder) {

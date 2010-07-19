@@ -37,6 +37,7 @@ import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -187,8 +188,8 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
 
   private static ModuleConfigurationEditorProvider[] collectProviders(final Module module) {
     List<ModuleConfigurationEditorProvider> result = new ArrayList<ModuleConfigurationEditorProvider>();
-    result.addAll(Arrays.asList(module.getComponents(ModuleConfigurationEditorProvider.class)));
-    result.addAll(Arrays.asList(Extensions.getExtensions(ModuleConfigurationEditorProvider.EP_NAME, module)));
+    ContainerUtil.addAll(result, module.getComponents(ModuleConfigurationEditorProvider.class));
+    ContainerUtil.addAll(result, Extensions.getExtensions(ModuleConfigurationEditorProvider.EP_NAME, module));
     return result.toArray(new ModuleConfigurationEditorProvider[result.size()]);
   }
 
@@ -208,7 +209,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
 
   private void processEditorsProvider(final ModuleConfigurationEditorProvider provider, final ModuleConfigurationState state) {
     final ModuleConfigurationEditor[] editors = provider.createEditors(state);
-    myEditors.addAll(Arrays.asList(editors));
+    ContainerUtil.addAll(myEditors, editors);
   }
 
   private JPanel createPanel() {

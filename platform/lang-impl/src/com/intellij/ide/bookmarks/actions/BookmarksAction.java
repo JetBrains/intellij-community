@@ -51,6 +51,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.speedSearch.FilteringListModel;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
@@ -98,7 +99,7 @@ public class BookmarksAction extends AnAction implements DumbAware {
     final Font font = pathLabel.getFont();
     pathLabel.setFont(font.deriveFont((float)10));
 
-    final JList list = new JList(model);
+    final JList list = new JBList(model);
 
     final PreviewPanel previewPanel = new PreviewPanel(project);
 

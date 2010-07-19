@@ -20,23 +20,20 @@ import com.intellij.openapi.util.Condition;
 
 import java.util.*;
 
-import static org.junit.Assert.assertEquals;
-
 public class ContainerUtilTest extends junit.framework.TestCase {
   public void testFindInstanceOf() {
-    Iterator<Object> iterator = Arrays.asList(new Object[]{new Integer(1), new ArrayList(), "1"}).iterator();
-    String string = (String)com.intellij.util.containers.ContainerUtil
-      .find(iterator, com.intellij.util.containers.FilteringIterator.instanceOf(String.class));
+    Iterator<Object> iterator = Arrays.<Object>asList(new Integer(1), new ArrayList(), "1").iterator();
+    String string = (String)ContainerUtil.find(iterator, FilteringIterator.instanceOf(String.class));
     junit.framework.Assert.assertEquals("1", string);
   }
 
   public void testConcatMulti() {
-    List l = ContainerUtil.concat(Arrays.asList(1, 2), Collections.EMPTY_LIST, Arrays.asList(3, 4));
+    List<Integer> l = ContainerUtil.concat(Arrays.asList(1, 2), Collections.EMPTY_LIST, Arrays.asList(3, 4));
     assertEquals(4, l.size());
-    assertEquals(1, l.get(0));
-    assertEquals(2, l.get(1));
-    assertEquals(3, l.get(2));
-    assertEquals(4, l.get(3));
+    assertEquals(1, (int)l.get(0));
+    assertEquals(2, (int)l.get(1));
+    assertEquals(3, (int)l.get(2));
+    assertEquals(4, (int)l.get(3));
 
     try {
       l.get(-1);
@@ -66,7 +63,7 @@ public class ContainerUtilTest extends junit.framework.TestCase {
     asserIterating(Arrays.asList(4), cond, 4);
   }
 
-  private void asserIterating(List<Integer> collection, Condition<Integer> condition, Integer... expected) {
+  private static void asserIterating(List<Integer> collection, Condition<Integer> condition, Integer... expected) {
     Iterable<Integer> it = ContainerUtil.iterate(collection, condition);
     List<Integer> actual = new ArrayList<Integer>();
     for (Integer each : it) {

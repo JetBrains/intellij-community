@@ -32,6 +32,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 
 import javax.swing.*;
@@ -84,7 +85,7 @@ public class CommonProgramParametersPanel extends JPanel {
         final List<String> macros = new ArrayList<String>(PathMacros.getInstance().getUserMacroNames());
         if (myModuleContext != null) macros.add("MODULE_DIR");
 
-        final JList list = new JList(ArrayUtil.toStringArray(macros));
+        final JList list = new JBList(ArrayUtil.toStringArray(macros));
         final JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(list).setItemChoosenCallback(new Runnable() {
           public void run() {
             final Object value = list.getSelectedValue();

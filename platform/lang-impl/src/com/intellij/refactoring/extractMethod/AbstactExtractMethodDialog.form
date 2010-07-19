@@ -56,7 +56,7 @@
           </component>
         </children>
       </grid>
-      <scrollpane id="b0a7b">
+      <scrollpane class="com.intellij.ui.components.JBScrollPane" id="b0a7b">
         <constraints>
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="1" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
@@ -86,7 +86,7 @@
           <text resource-bundle="messages/RefactoringBundle" key="refactoring.extract.method.dialog.signature.preview"/>
         </properties>
       </component>
-      <scrollpane id="ca3f5">
+      <scrollpane class="com.intellij.ui.components.JBScrollPane" id="ca3f5">
         <constraints>
           <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="1" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>

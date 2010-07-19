@@ -16,16 +16,15 @@
 package org.jetbrains.idea.maven.facade;
 
 import org.jetbrains.idea.maven.model.MavenModel;
-import org.jetbrains.idea.maven.model.MavenProfile;
 
 import java.io.Serializable;
-import java.util.List;
+import java.util.Collection;
 
 public class ProfileApplicationResult implements Serializable {
   private final MavenModel myModel;
-  private final List<MavenProfile> myActivatedProfiles;
+  private final Collection<String> myActivatedProfiles;
 
-  public ProfileApplicationResult(MavenModel model, List<MavenProfile> activatedProfiles) {
+  public ProfileApplicationResult(MavenModel model, Collection<String> activatedProfiles) {
     myModel = model;
     myActivatedProfiles = activatedProfiles;
   }
@@ -34,7 +33,7 @@ public class ProfileApplicationResult implements Serializable {
     return myModel;
   }
 
-  public List<MavenProfile> getActivatedProfiles() {
+  public Collection<String> getActivatedProfiles() {
     return myActivatedProfiles;
   }
 }

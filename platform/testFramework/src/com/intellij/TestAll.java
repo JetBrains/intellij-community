@@ -48,8 +48,6 @@ public class TestAll implements Test {
     Logger.setFactory(TestLoggerFactory.getInstance());
   }
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.TestAll");
-
   private TestCaseLoader myTestCaseLoader;
   private long myStartTime = 0;
   private final boolean myInterruptedByOutOfMemory = false;
@@ -70,7 +68,7 @@ public class TestAll implements Test {
   public static final int MAX_FAILURE_TEST_COUNT = 150;
 
   public int countTestCases() {
-    List classes = myTestCaseLoader.getClasses();
+    List<Class> classes = myTestCaseLoader.getClasses();
 
     int count = 0;
 
@@ -135,12 +133,7 @@ public class TestAll implements Test {
     if (PlatformTestCase.ourTestThread != null) {
       return PlatformTestCase.ourTestThread;
     }
-    else if (LightPlatformTestCase.ourTestThread != null) {
-      return LightPlatformTestCase.ourTestThread;
-    }
-    else {
-      return null;
-    }
+    else return LightPlatformTestCase.ourTestThread;
   }
 
   private void addErrorMessage(TestResult testResult, String message) {
@@ -156,10 +149,10 @@ public class TestAll implements Test {
   }
 
   public void run(final TestResult testResult) {
-    List classes = myTestCaseLoader.getClasses();
+    List<Class> classes = myTestCaseLoader.getClasses();
     int totalTests = classes.size();
-    for (final Object aClass : classes) {
-      runNextTest(testResult, totalTests, (Class)aClass);
+    for (final Class aClass : classes) {
+      runNextTest(testResult, totalTests, aClass);
       if (testResult.shouldStop()) break;
     }
     tryGc(10);
@@ -369,6 +362,7 @@ public class TestAll implements Test {
     }
 
     log("Number of test classes found: " + myTestCaseLoader.getClasses().size());
+    myTestCaseLoader.checkClassesExist();
   }
 
   private static void log(String message) {

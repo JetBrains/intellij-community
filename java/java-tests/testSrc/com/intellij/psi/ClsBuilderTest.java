@@ -24,7 +24,7 @@ import java.io.IOException;
 
 public class ClsBuilderTest extends LightIdeaTestCase {
   protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk15("1.5");
+    return JavaSdkImpl.getMockJdk17();
   }
 
   public void testUtilList() throws Exception {

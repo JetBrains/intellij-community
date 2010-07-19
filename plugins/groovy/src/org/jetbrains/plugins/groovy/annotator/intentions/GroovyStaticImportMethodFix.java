@@ -32,15 +32,14 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import javax.swing.*;
@@ -53,10 +52,10 @@ import java.util.List;
  */
 public class GroovyStaticImportMethodFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.annotator.intentions.GroovyStaticImportMethodFix");
-  private final SmartPsiElementPointer<GrCall> myMethodCall;
+  private final SmartPsiElementPointer<GrMethodCall> myMethodCall;
   private List<PsiMethod> myCandidates = null;
 
-  public GroovyStaticImportMethodFix(@NotNull GrCall methodCallExpression) {
+  public GroovyStaticImportMethodFix(@NotNull GrMethodCall methodCallExpression) {
     myMethodCall = SmartPointerManager.getInstance(methodCallExpression.getProject()).createSmartPsiElementPointer(methodCallExpression);
   }
 
@@ -79,25 +78,18 @@ public class GroovyStaticImportMethodFix implements IntentionAction {
   }
 
   @Nullable
-  private static GrReferenceExpression getMethodExpression(GrCall call) {
-    GrExpression result = null;
-    if (call instanceof GrMethodCallExpression) {
-      result = ((GrMethodCallExpression)call).getInvokedExpression();
-    }
-    else if (call instanceof GrApplicationStatement) {
-      result = ((GrApplicationStatement)call).getFunExpression();
-    }
-
+  private static GrReferenceExpression getMethodExpression(GrMethodCall call) {
+    GrExpression result = call.getInvokedExpression();
     return result instanceof GrReferenceExpression ? (GrReferenceExpression)result : null;
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    myCandidates = null;
     return myMethodCall != null &&
            myMethodCall.getElement() != null &&
            myMethodCall.getElement().isValid() &&
            getMethodExpression(myMethodCall.getElement()) != null &&
            getMethodExpression(myMethodCall.getElement()).getQualifierExpression() == null &&
-           file.getManager().isInProject(file) &&
            file.getManager().isInProject(file) &&
            !getCandidates().isEmpty();
   }
@@ -107,7 +99,7 @@ public class GroovyStaticImportMethodFix implements IntentionAction {
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(myMethodCall.getProject());
     PsiShortNamesCache cache = facade.getShortNamesCache();
 
-    GrCall element = myMethodCall.getElement();
+    GrMethodCall element = myMethodCall.getElement();
     LOG.assertTrue(element != null);
     GrReferenceExpression reference = getMethodExpression(element);
     LOG.assertTrue(reference != null);
@@ -156,7 +148,7 @@ public class GroovyStaticImportMethodFix implements IntentionAction {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
             try {
-              GrCall element = myMethodCall.getElement();
+              GrMethodCall element = myMethodCall.getElement();
               if (element != null) {
                 getMethodExpression(element).bindToElementViaStaticImport(toImport.getContainingClass());
               }
@@ -164,7 +156,6 @@ public class GroovyStaticImportMethodFix implements IntentionAction {
             catch (IncorrectOperationException e) {
               LOG.error(e);
             }
-
           }
         });
 
@@ -174,7 +165,7 @@ public class GroovyStaticImportMethodFix implements IntentionAction {
   }
 
   private void chooseAndImport(Editor editor) {
-    final JList list = new JList(getCandidates().toArray(new PsiMethod[getCandidates().size()]));
+    final JList list = new JBList(getCandidates().toArray(new PsiMethod[getCandidates().size()]));
     list.setCellRenderer(new MethodCellRenderer(true));
     new PopupChooserBuilder(list).
       setTitle(QuickFixBundle.message("static.import.method.choose.method.to.import")).

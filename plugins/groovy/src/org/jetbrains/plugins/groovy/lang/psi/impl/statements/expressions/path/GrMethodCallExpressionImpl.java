@@ -21,6 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -40,9 +41,9 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrRefer
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 /**
  * @author ilyas
@@ -154,7 +155,7 @@ public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements 
     if (!(newExpr instanceof GrClosableBlock)) {
       ArrayList<GrExpression> allArgs = new ArrayList<GrExpression>();
       // Collecting all arguments
-      allArgs.addAll(Arrays.asList(getExpressionArguments()));
+      ContainerUtil.addAll(allArgs, getExpressionArguments());
       ArrayList<GrExpression> closureArgs = new ArrayList<GrExpression>();
       for (GrExpression closArg : getClosureArguments()) {
         if (closArg.equals(closure)) break;
@@ -168,7 +169,7 @@ public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements 
       GrArgumentList newArgList =
         GroovyPsiElementFactory.getInstance(getProject()).createExpressionArgumentList(allArgs.toArray(new GrExpression[allArgs.size()]));
       while (closure.getNode().getTreePrev() != null &&
-          !(closure.getNode().getTreePrev().getPsi() instanceof GrArgumentList)) {
+             !(closure.getNode().getTreePrev().getPsi() instanceof GrArgumentList)) {
         parentNode.removeChild(closure.getNode().getTreePrev());
       }
       parentNode.removeChild(closure.getNode());
@@ -186,21 +187,17 @@ public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements 
   }
 
   @NotNull
-  public GroovyResolveResult[] getMethodVariants() {
+  public GroovyResolveResult[] getMethodVariants(@Nullable GrExpression upToArgument) {
     final GrExpression invoked = getInvokedExpression();
-    if (!(invoked instanceof GrReferenceExpression)) return GroovyResolveResult.EMPTY_ARRAY;
-    final ArrayList<GroovyResolveResult> res = new ArrayList<GroovyResolveResult>();
+    if (!(invoked instanceof GrReferenceExpressionImpl)) return GroovyResolveResult.EMPTY_ARRAY;
 
-    for (PsiReference ref : invoked.getReferences()) {
-      if (ref instanceof PsiPolyVariantReference) {
-        for (ResolveResult result : ((PsiPolyVariantReference)ref).multiResolve(false)) {
-          if (result instanceof GroovyResolveResult) {
-            res.add((GroovyResolveResult)result);
-          }
-        }
-      }
+    final PsiType[] partialArgs = PsiUtil.getArgumentTypes(invoked, false, upToArgument);
+    final MethodResolverProcessor processor = ((GrReferenceExpressionImpl)invoked).runMethodResolverProcessor(partialArgs, true);
+    if (processor != null) {
+      return processor.getCandidates();
     }
-    return res.toArray(new GroovyResolveResult[res.size()]);
+
+    return GroovyResolveResult.EMPTY_ARRAY;
   }
 
 }

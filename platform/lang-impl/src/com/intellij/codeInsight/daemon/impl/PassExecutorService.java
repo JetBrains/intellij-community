@@ -111,7 +111,7 @@ public abstract class PassExecutorService implements Disposable {
 
       for (int i = 0; i < passes.length; i++) {
         final HighlightingPass pass = passes[i];
-        if (dumb && !(pass instanceof DumbAware)) {
+        if (dumb && !DumbService.isDumbAware(pass)) {
           continue;
         }
 
@@ -319,7 +319,7 @@ public abstract class PassExecutorService implements Disposable {
           boolean success = ApplicationManagerEx.getApplicationEx().tryRunReadAction(new Runnable() {
             public void run() {
               try {
-                if (DumbService.getInstance(myProject).isDumb() && !(myPass instanceof DumbAware)) {
+                if (DumbService.getInstance(myProject).isDumb() && !DumbService.isDumbAware(myPass)) {
                   return;
                 }
 

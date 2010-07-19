@@ -1550,6 +1550,15 @@ public class FileBasedIndex implements ApplicationComponent {
             }
           }
         }
+        if (!markForReindex) {
+          w.lock();
+          try {
+            myFilesToUpdate.remove(file); // no need to update it anymore
+          }
+          finally {
+            w.unlock();
+          }
+        }
         IndexingStamp.flushCache();
       }
     }
@@ -1891,15 +1900,13 @@ public class FileBasedIndex implements ApplicationComponent {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
 
     Set<VirtualFile> visitedRoots = new com.intellij.util.containers.HashSet<VirtualFile>();
-    for (IndexedRootsProvider provider : Extensions.getExtensions(IndexedRootsProvider.EP_NAME)) {
+    for (IndexedRootsProvider provider : Extensions.getExtensions(IndexableSetContributor.EP_NAME)) {
       //important not to depend on project here, to support per-project background reindex
       // each client gives a project to FileBasedIndex
       if (project.isDisposed()) {
         return;
       }
-      final Set<String> rootsToIndex = provider.getRootsToIndex();
-      for (String url : rootsToIndex) {
-        final VirtualFile root = VirtualFileManager.getInstance().findFileByUrl(url);
+      for (VirtualFile root : IndexableSetContributor.getRootsToIndex(provider)) {
         if (visitedRoots.add(root)) {
           iterateRecursively(root, processor, indicator);
         }

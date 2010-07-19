@@ -84,7 +84,7 @@
                 <properties/>
                 <border type="none"/>
                 <children>
-                  <scrollpane id="c575b">
+                  <scrollpane class="com.intellij.ui.components.JBScrollPane" id="c575b">
                     <constraints>
                       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false">
                         <preferred-size width="250" height="120"/>
@@ -93,7 +93,7 @@
                     <properties/>
                     <border type="none"/>
                     <children>
-                      <component id="d3735" class="javax.swing.JList" binding="myModulesList">
+                      <component id="d3735" class="com.intellij.ui.components.JBList" binding="myModulesList">
                         <constraints/>
                         <properties/>
                       </component>
@@ -142,7 +142,7 @@
                 <properties/>
                 <border type="none"/>
                 <children>
-                  <scrollpane id="4fa3">
+                  <scrollpane class="com.intellij.ui.components.JBScrollPane" id="4fa3">
                     <constraints>
                       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false">
                         <preferred-size width="350" height="120"/>
@@ -151,7 +151,7 @@
                     <properties/>
                     <border type="none"/>
                     <children>
-                      <component id="96c82" class="javax.swing.JList" binding="myFilesList">
+                      <component id="96c82" class="com.intellij.ui.components.JBList" binding="myFilesList">
                         <constraints/>
                         <properties/>
                       </component>

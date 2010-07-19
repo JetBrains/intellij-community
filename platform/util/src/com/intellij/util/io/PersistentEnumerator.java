@@ -417,7 +417,7 @@ public class PersistentEnumerator<Data> implements Forceable {
     Bits.putInt(buf, KEY_REF_OFFSET, dataOffset);
   }
 
-  public boolean iterateData(final Processor<Data> processor) throws IOException {
+  protected boolean iterateData(final Processor<Data> processor) throws IOException {
     if (myKeyStorage == null) {
       throw new UnsupportedOperationException("Iteration over InlineIntegerKeyDescriptors is not supported");
     }

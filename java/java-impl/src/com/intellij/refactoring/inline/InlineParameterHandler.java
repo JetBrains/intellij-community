@@ -26,12 +26,15 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringMessageDialog;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nullable;
@@ -107,7 +110,36 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
       }
     });
     if (occurrences.isEmpty()) {
-      CommonRefactoringUtil.showErrorHint(project, editor, "Method has no usages", RefactoringBundle.message("inline.parameter.refactoring"), null);
+      final int offset = editor.getCaretModel().getOffset();
+      final PsiElement refExpr = psiElement.getContainingFile().findElementAt(offset);
+      final PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(refExpr, PsiCodeBlock.class);
+      if (codeBlock != null) {
+        final PsiElement[] defs = DefUseUtil.getDefs(codeBlock, psiParameter, refExpr);
+        if (defs.length == 1) {
+          final PsiElement def = defs[0];
+          if (def instanceof PsiReferenceExpression && PsiUtil.isOnAssignmentLeftHand((PsiExpression)def)) {
+            final PsiExpression rExpr = ((PsiAssignmentExpression)def.getParent()).getRExpression();
+            if (rExpr != null) {
+              final PsiElement[] refs = DefUseUtil.getRefs(codeBlock, psiParameter, refExpr);
+
+              if (InlineLocalHandler.checkRefsInAugmentedAssignmentOrUnaryModified(refs) == null) {
+                new WriteCommandAction(project) {
+                  @Override
+                  protected void run(Result result) throws Throwable {
+                    for (final PsiElement ref : refs) {
+                      InlineUtil.inlineVariable(psiParameter, rExpr, (PsiJavaCodeReferenceElement)ref);
+                    }
+                    def.getParent().delete();
+                  }
+                }.execute();
+                return;
+              }
+            }
+          }
+        }
+      }
+      CommonRefactoringUtil
+        .showErrorHint(project, editor, "Method has no usages", RefactoringBundle.message("inline.parameter.refactoring"), null);
       return;
     }
     if (!result) {

@@ -20,6 +20,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.PopupHandler;
+import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +36,6 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -63,47 +64,49 @@ public class CustomizationUtil {
 
 
   private static AnAction [] getReordableChildren(ActionGroup group, CustomActionsSchema schema, String defaultGroupName, AnActionEvent e) {
-     String text = group.getTemplatePresentation().getText();
-     ActionManager actionManager = ActionManager.getInstance();
-     final ArrayList<AnAction> reordableChildren = new ArrayList<AnAction>();
-     reordableChildren.addAll(Arrays.asList(group.getChildren(e)));
-     final List<ActionUrl> actions = schema.getActions();
-     for (Iterator<ActionUrl> iterator = actions.iterator(); iterator.hasNext();) {
-       ActionUrl actionUrl = iterator.next();
-       if ((actionUrl.getParentGroup().equals(text) ||
-            actionUrl.getParentGroup().equals(defaultGroupName) ||
-            actionUrl.getParentGroup().equals(actionManager.getId(group))) ) {
-         AnAction componentAction = actionUrl.getComponentAction();
-         if (componentAction != null) {
-           if (actionUrl.getActionType() == ActionUrl.ADDED) {
-             if (reordableChildren.size() > actionUrl.getAbsolutePosition()){
-               reordableChildren.add(actionUrl.getAbsolutePosition(), componentAction);
-             } else {
-               reordableChildren.add(componentAction);
-             }
-           }
-           else if (actionUrl.getActionType() == ActionUrl.DELETED && reordableChildren.size() > actionUrl.getAbsolutePosition()) {
-             final AnAction anAction = reordableChildren.get(actionUrl.getAbsolutePosition());
-             if (anAction.getTemplatePresentation().getText() == null
-                 ? (componentAction.getTemplatePresentation().getText() != null && componentAction.getTemplatePresentation().getText().length() > 0)
-                 : !anAction.getTemplatePresentation().getText().equals(componentAction.getTemplatePresentation().getText())) {
-               continue;
-             }
-             reordableChildren.remove(actionUrl.getAbsolutePosition());
-           }
-         }
-       }
-     }
-     for (int i = 0; i < reordableChildren.size(); i++) {
-       if (reordableChildren.get(i) instanceof ActionGroup) {
-         final ActionGroup groupToCorrect = (ActionGroup)reordableChildren.get(i);
-         final AnAction correctedAction = correctActionGroup(groupToCorrect, schema, "");
-         reordableChildren.set(i, correctedAction);
-       }
-     }
+    String text = group.getTemplatePresentation().getText();
+    ActionManager actionManager = ActionManager.getInstance();
+    final ArrayList<AnAction> reordableChildren = new ArrayList<AnAction>();
+    ContainerUtil.addAll(reordableChildren, group.getChildren(e));
+    final List<ActionUrl> actions = schema.getActions();
+    for (Iterator<ActionUrl> iterator = actions.iterator(); iterator.hasNext();) {
+      ActionUrl actionUrl = iterator.next();
+      if ((actionUrl.getParentGroup().equals(text) ||
+           actionUrl.getParentGroup().equals(defaultGroupName) ||
+           actionUrl.getParentGroup().equals(actionManager.getId(group)))) {
+        AnAction componentAction = actionUrl.getComponentAction();
+        if (componentAction != null) {
+          if (actionUrl.getActionType() == ActionUrl.ADDED) {
+            if (reordableChildren.size() > actionUrl.getAbsolutePosition()) {
+              reordableChildren.add(actionUrl.getAbsolutePosition(), componentAction);
+            }
+            else {
+              reordableChildren.add(componentAction);
+            }
+          }
+          else if (actionUrl.getActionType() == ActionUrl.DELETED && reordableChildren.size() > actionUrl.getAbsolutePosition()) {
+            final AnAction anAction = reordableChildren.get(actionUrl.getAbsolutePosition());
+            if (anAction.getTemplatePresentation().getText() == null
+                ? (componentAction.getTemplatePresentation().getText() != null &&
+                   componentAction.getTemplatePresentation().getText().length() > 0)
+                : !anAction.getTemplatePresentation().getText().equals(componentAction.getTemplatePresentation().getText())) {
+              continue;
+            }
+            reordableChildren.remove(actionUrl.getAbsolutePosition());
+          }
+        }
+      }
+    }
+    for (int i = 0; i < reordableChildren.size(); i++) {
+      if (reordableChildren.get(i) instanceof ActionGroup) {
+        final ActionGroup groupToCorrect = (ActionGroup)reordableChildren.get(i);
+        final AnAction correctedAction = correctActionGroup(groupToCorrect, schema, "");
+        reordableChildren.set(i, correctedAction);
+      }
+    }
 
-     return reordableChildren.toArray(new AnAction[reordableChildren.size()]);
-   }
+    return reordableChildren.toArray(new AnAction[reordableChildren.size()]);
+  }
 
   private static class CachedAction extends ActionGroup {
     private boolean myForceUpdate;
@@ -135,6 +138,11 @@ public class CustomizationUtil {
     public void update(AnActionEvent e) {
       myGroup.update(e);
     }
+
+    @Override
+    public boolean isDumbAware() {
+      return myGroup.isDumbAware();
+    }
   }
 
   public static void optimizeSchema(final JTree tree, final CustomActionsSchema schema) {
@@ -143,7 +151,7 @@ public class CustomizationUtil {
     DefaultMutableTreeNode root = new DefaultMutableTreeNode(rootGroup);
     root.removeAllChildren();
     schema.fillActionGroups(root);
-    final JTree defaultTree = new JTree(new DefaultTreeModel(root));
+    final JTree defaultTree = new Tree(new DefaultTreeModel(root));
 
     final ArrayList<ActionUrl> actions = new ArrayList<ActionUrl>();
 

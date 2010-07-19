@@ -22,6 +22,7 @@ package com.intellij.openapi.project;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFilePathWrapper;
 import org.jetbrains.annotations.Nullable;
 
 public class ProjectUtil {
@@ -29,6 +30,9 @@ public class ProjectUtil {
   }
 
   public static String calcRelativeToProjectPath(final VirtualFile file, final Project project) {
+    if (file instanceof VirtualFilePathWrapper) {
+      return ((VirtualFilePathWrapper)file).getPresentablePath();
+    }    
     String url = file.getPresentableUrl();
     if (project == null) {
       return url;

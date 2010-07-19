@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.IdeBorderFactory;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -62,10 +63,13 @@ public class CyclicDependenciesAction extends AnAction{
       }
       AnalysisScope scope = getInspectionScope(dataContext);
       if (scope == null || scope.getScopeType() != AnalysisScope.MODULES){
-        ProjectModuleOrPackageDialog dlg = new ProjectModuleOrPackageDialog(module != null ? ModuleUtil.getModuleNameInReadAction(module) : null);
-        dlg.show();
-        if (!dlg.isOK()) return;
-        if (dlg.isProjectScopeSelected()) {
+        ProjectModuleOrPackageDialog dlg = null;
+        if (module != null) {
+          dlg = new ProjectModuleOrPackageDialog(ModuleUtil.getModuleNameInReadAction(module));
+          dlg.show();
+          if (!dlg.isOK()) return;
+        }
+        if (dlg == null || dlg.isProjectScopeSelected()) {
           scope = getProjectScope(dataContext);
         }
         else {
@@ -82,6 +86,7 @@ public class CyclicDependenciesAction extends AnAction{
   }
 
 
+  @Nullable
   private static AnalysisScope getInspectionScope(final DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
@@ -91,6 +96,7 @@ public class CyclicDependenciesAction extends AnAction{
     return scope != null && scope.getScopeType() != AnalysisScope.INVALID ? scope : null;
   }
 
+  @Nullable
   private static AnalysisScope getInspectionScopeImpl(DataContext dataContext) {
     //Possible scopes: package, project, module.
     Project projectContext = PlatformDataKeys.PROJECT_CONTEXT.getData(dataContext);
@@ -127,6 +133,7 @@ public class CyclicDependenciesAction extends AnAction{
     return getProjectScope(dataContext);
   }
 
+  @Nullable
   private static AnalysisScope getProjectScope(DataContext dataContext) {
     final Project data = PlatformDataKeys.PROJECT.getData(dataContext);
     if (data == null) {
@@ -135,6 +142,7 @@ public class CyclicDependenciesAction extends AnAction{
     return new AnalysisScope(data);
   }
 
+  @Nullable
   private static AnalysisScope getModuleScope(DataContext dataContext) {
     final Module data = LangDataKeys.MODULE.getData(dataContext);
     if (data == null) {
@@ -158,12 +166,7 @@ public class CyclicDependenciesAction extends AnAction{
       init();
       setTitle(AnalysisScopeBundle.message("cyclic.dependencies.scope.dialog.title", myTitle));
       setHorizontalStretch(1.75f);
-      if (moduleName == null){
-        myModuleButton.setVisible(false);
-        myProjectButton.setSelected(true);
-      } else {
-        myModuleButton.setSelected(true);
-      }
+      myModuleButton.setSelected(true);
     }
 
     protected JComponent createCenterPanel() {

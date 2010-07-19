@@ -16,6 +16,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContaine
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,6 +41,7 @@ public class AddFrameworkSupportDialog extends DialogWrapper {
         return contentRootPath;
       }
     });
+    Disposer.register(myDisposable, myAddSupportPanel);
     init();
   }
 

@@ -127,7 +127,7 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
 
     JobUtil.invokeConcurrentlyUnderMyProgress(annotators, new Processor<Annotator>() {
       public boolean process(Annotator annotator) {
-        if (dumb && !(annotator instanceof DumbAware)) {
+        if (dumb && !DumbService.isDumbAware(annotator)) {
           return true;
         }
 

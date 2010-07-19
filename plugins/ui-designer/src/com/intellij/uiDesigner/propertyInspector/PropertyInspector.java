@@ -19,20 +19,23 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.uiDesigner.radComponents.*;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
 import com.intellij.uiDesigner.componentTree.ComponentTree;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.designSurface.GridCaptionPanel;
-import com.intellij.uiDesigner.quickFixes.QuickFixManager;import com.intellij.util.IJSwingUtilities;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.quickFixes.QuickFixManager;
+import com.intellij.uiDesigner.radComponents.*;
+import com.intellij.util.IJSwingUtilities;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;import javax.swing.event.ChangeListener;import javax.swing.event.ChangeEvent;
+import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.*;
 import java.util.List;
 
 /**
@@ -48,7 +51,7 @@ public final class PropertyInspector extends JPanel{
   @NonNls private static final String INSPECTOR_CARD = "inspector";
   @NonNls private static final String EMPTY_CARD = "empty";
   @NonNls private static final String CUSTOM_CARD = "column";
-  private final JScrollPane myCustomPropertiesScrollPane = new JScrollPane();
+  private final JScrollPane myCustomPropertiesScrollPane = ScrollPaneFactory.createScrollPane();
   private CustomPropertiesPanel myCustomPropertiesPanel;
   private final ChangeListener myCustomPropertiesChangeListener;
   private RadContainer myPropertiesPanelContainer;

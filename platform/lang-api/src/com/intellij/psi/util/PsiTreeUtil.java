@@ -25,11 +25,11 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class PsiTreeUtil {
@@ -263,6 +263,26 @@ public class PsiTreeUtil {
 
     }
     return getParentOfType(element, parentClass);
+  }
+
+  @Nullable public static <T extends PsiElement> T getContextOfType(@Nullable PsiElement element, @NotNull Class<T> aClass, boolean strict, Class<? extends PsiElement>... stopAt) {
+    if (element == null) return null;
+    if (strict) {
+      element = element.getContext();
+    }
+
+    while (element != null && !instanceOf(aClass, element)) {
+      for (Class stopClass : stopAt) {
+        if (instanceOf(stopClass, element)) {
+          return null;
+        }
+      }
+
+      element = element.getContext();
+    }
+
+    return (T)element;
+
   }
 
   @Nullable public static <T extends PsiElement> T getContextOfType(@Nullable PsiElement element, @NotNull Class<T> aClass, boolean strict) {
@@ -588,7 +608,7 @@ public class PsiTreeUtil {
     }
 
     ArrayList<PsiElement> filteredElements = new ArrayList<PsiElement>();
-    filteredElements.addAll(Arrays.asList(elements));
+    ContainerUtil.addAll(filteredElements, elements);
 
     int previousSize;
     do {
@@ -606,7 +626,8 @@ public class PsiTreeUtil {
           }
         }
       }
-    } while (filteredElements.size() != previousSize);
+    }
+    while (filteredElements.size() != previousSize);
 
     if (LOG.isDebugEnabled()) {
       for (PsiElement element : filteredElements) {

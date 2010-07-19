@@ -59,7 +59,7 @@ public class MavenProjectsTreeIgnoresTest extends MavenProjectsTreeTestCase {
     assertEquals("ignored: m1 ", myLog);
     myLog = "";
 
-    myTree.setIgnoredFilesPatterns(Collections.EMPTY_LIST);
+    myTree.setIgnoredFilesPatterns(Collections.<String>emptyList());
 
     assertEquals("unignored: m1 ", myLog);
     myLog = "";

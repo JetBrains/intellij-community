@@ -33,6 +33,7 @@ import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -592,7 +593,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       if (!name.equals(parmName)) {
         name = myJavaCodeStyle.suggestUniqueVariableName(name, block.getFirstChild(), true);
       }
-      RefactoringUtil.renameVariableReferences(parm, name, GlobalSearchScope.projectScope(myProject));
+      RefactoringUtil.renameVariableReferences(parm, name, new LocalSearchScope(myMethodCopy.getBody()), true);
       PsiType paramType = parm.getType();
       @NonNls String defaultValue;
       if (paramType instanceof PsiEllipsisType) {
@@ -687,7 +688,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         name = newName;
       }
       if (!name.equals(oldName)) {
-        RefactoringUtil.renameVariableReferences(var, name, GlobalSearchScope.projectScope(myProject));
+        RefactoringUtil.renameVariableReferences(var, name, new LocalSearchScope(myMethodCopy.getBody()), true);
         var.getNameIdentifier().replace(myFactory.createIdentifier(name));
       }
     }

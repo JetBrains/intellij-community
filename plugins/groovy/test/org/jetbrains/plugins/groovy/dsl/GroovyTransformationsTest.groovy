@@ -1,14 +1,23 @@
 package org.jetbrains.plugins.groovy.dsl
 
-import com.intellij.psi.PsiFile
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
-import org.jetbrains.plugins.groovy.lang.completion.CompletionTestBase
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.ContentEntry
+import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
  * @author ilyas
  */
-class GroovyTransformationsTest extends CompletionTestBase {
+class GroovyTransformationsTest extends LightCodeInsightFixtureTestCase {
+  static def descriptor = new DefaultLightProjectDescriptor() {
+    @Override def void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
+      PsiTestUtil.addLibrary(module, model, "GROOVY", TestUtils.getMockGroovy1_7LibraryHome(), TestUtils.GROOVY_JAR_17);
+    }
+  }
 
   @Override
   protected String getBasePath() {
@@ -23,9 +32,8 @@ class GroovyTransformationsTest extends CompletionTestBase {
     myFixture.testCompletionVariants(getTestName(false) + ".groovy", variants)
   }
 
-  @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
-    moduleBuilder.addLibraryJars("GROOVY", TestUtils.getMockGroovy1_7LibraryHome(), TestUtils.GROOVY_JAR_17);
+  @Override protected LightProjectDescriptor getProjectDescriptor() {
+    return descriptor;
   }
 
   public void testDelegateAnnotation() throws Throwable { doPlainTest() }

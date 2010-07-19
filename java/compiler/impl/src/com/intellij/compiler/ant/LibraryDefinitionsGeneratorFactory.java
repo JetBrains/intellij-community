@@ -22,15 +22,14 @@ import com.intellij.compiler.ant.taskdefs.PatternSetRef;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.ex.ProjectEx;
-import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -51,18 +50,16 @@ public class LibraryDefinitionsGeneratorFactory {
     final ModuleManager moduleManager = ModuleManager.getInstance(project);
     final Module[] modules = moduleManager.getModules();
     for (Module module : modules) {
-      final OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
-      for (OrderEntry orderEntry : orderEntries) {
-        if (orderEntry instanceof LibraryOrderEntry && orderEntry.isValid()) {
-          Library library = ((LibraryOrderEntry)orderEntry).getLibrary();
-          if (library != null) {
-            final String name = library.getName();
-            if (name != null) {
-              myUsedLibraries.add(name);
-            }
+      ModuleRootManager.getInstance(module).orderEntries().forEachLibrary(new Processor<Library>() {
+        @Override
+        public boolean process(Library library) {
+          final String name = library.getName();
+          if (name != null) {
+            myUsedLibraries.add(name);
           }
+          return true;
         }
-      }
+      });
     }
   }
 

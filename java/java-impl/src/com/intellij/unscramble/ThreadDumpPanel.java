@@ -25,6 +25,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -57,7 +58,7 @@ public class ThreadDumpPanel extends JPanel {
   private static final Icon EDT_BUSY_ICON_DAEMON = new LayeredIcon(EDT_BUSY_ICON, DAEMON);
   private static final Icon IO_ICON = IconLoader.getIcon("/debugger/threadStates/io.png");
   private static final Icon IO_ICON_DAEMON = new LayeredIcon(IO_ICON, DAEMON);
-  private final JList myThreadList;
+  private final JBList myThreadList;
 
   public ThreadDumpPanel(Project project, final ConsoleView consoleView, final DefaultActionGroup toolbarActions, final List<ThreadState> threadDump) {
     super(new BorderLayout());
@@ -66,7 +67,7 @@ public class ThreadDumpPanel extends JPanel {
     for (ThreadState threadState : data) {
       model.addElement(threadState);
     }
-    myThreadList = new JList(model);
+    myThreadList = new JBList(model);
     myThreadList.setCellRenderer(new ThreadListCellRenderer());
     myThreadList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myThreadList.addListSelectionListener(new ListSelectionListener() {
@@ -82,13 +83,12 @@ public class ThreadDumpPanel extends JPanel {
         myThreadList.repaint();
       }
     });
-    ListToolTipHandler.install(myThreadList);
     toolbarActions.add(new CopyToClipboardAction(threadDump, project));
     toolbarActions.add(new SortThreadsAction());
     add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions,false).getComponent(), BorderLayout.WEST);
 
     final Splitter splitter = new Splitter(false, 0.3f);
-    splitter.setFirstComponent(new JScrollPane(myThreadList));
+    splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myThreadList));
     splitter.setSecondComponent(consoleView.getComponent());
 
     add(splitter, BorderLayout.CENTER);

@@ -97,4 +97,8 @@ public abstract class CompilerModuleExtension extends ModuleExtension {
   public abstract void setExcludeOutput(boolean exclude);
 
   public abstract boolean isExcludeOutput();
+
+  public abstract VirtualFile[] getOutputRoots(boolean includeTests);
+
+  public abstract String[] getOutputRootUrls(boolean includeTests);
 }

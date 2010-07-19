@@ -126,6 +126,19 @@ public class ResolveClassTest extends GroovyResolveTestCase {
     assertInstanceOf(resolved, PsiClass.class);
   }
 
+  public void testTwoStaticImports() throws Exception {
+    final PsiReference ref = configureByFile("twoStaticImports/Test.groovy");
+    final PsiElement resolved = ref.resolve();
+    assertNotNull(resolved);
+  }
+
+  public void testAliasedImportedClassFromDefaultPackage() throws Exception {
+    myFixture.addClass("class Foo{}");
+    final PsiReference ref = configureByFile("aliasedImportedClassFromDefaultPackage/Test.groovy");
+    final PsiElement resolved = ref.resolve();
+    assertNotNull(resolved);
+  }
+
   private void doTest() throws Exception {
     doTest(getTestName(true) + "/" + getTestName(false) + ".groovy");
   }

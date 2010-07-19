@@ -49,8 +49,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.indexing.*;
 import com.intellij.util.text.CharArrayUtil;
-import gnu.trove.THashMap;
-import org.apache.commons.collections.CollectionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -329,15 +327,17 @@ public class IdTableBuilding {
         while (!iterator.atEnd()) {
           final IElementType token = iterator.getTokenType();
 
-          if (CacheUtil.isInComments(token) || myCommentTokens.contains(token)) {
+          if (myCommentTokens.contains(token) || CacheUtil.isInComments(token)) {
             int start = iterator.getStart();
+            if (start >= documentLength) break;            
             int end = iterator.getEnd();
 
-            if (start >= documentLength || end > documentLength) {
-              Logger.getInstance(getClass().getName())
-                .error("Lexer editor highlighter produces tokens out of range:" + documentLength + ",(" + start + "," + end + ")");
-            }
-            todoScanningDatas = BaseFilterLexer.advanceTodoItemsCount(chars.subSequence(start, end), occurrenceConsumer, todoScanningDatas);
+            todoScanningDatas = BaseFilterLexer.advanceTodoItemsCount(
+              chars.subSequence(start, Math.min(end, documentLength)), 
+              occurrenceConsumer, 
+              todoScanningDatas
+            );
+            if (end > documentLength) break;
           }
           iterator.advance();
         }

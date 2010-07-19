@@ -30,6 +30,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -55,14 +56,14 @@ public class TodoTreeHelper {
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     final List<VirtualFile> roots = new ArrayList<VirtualFile>();
     final List<VirtualFile> sourceRoots = new ArrayList<VirtualFile>();
-    if (module == null){
+    if (module == null) {
       final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
-      roots.addAll(Arrays.asList(projectRootManager.getContentRoots()));
-      sourceRoots.addAll(Arrays.asList(projectRootManager.getContentSourceRoots()));
+      ContainerUtil.addAll(roots, projectRootManager.getContentRoots());
+      ContainerUtil.addAll(sourceRoots, projectRootManager.getContentSourceRoots());
     } else {
       ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-      roots.addAll(Arrays.asList(moduleRootManager.getContentRoots()));
-      sourceRoots.addAll(Arrays.asList(moduleRootManager.getSourceRoots()));
+      ContainerUtil.addAll(roots, moduleRootManager.getContentRoots());
+      ContainerUtil.addAll(sourceRoots, moduleRootManager.getSourceRoots());
     }
     roots.removeAll(sourceRoots);
     for (VirtualFile dir : roots) {

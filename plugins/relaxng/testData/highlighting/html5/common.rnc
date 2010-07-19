@@ -1,0 +1,393 @@
+datatypes w = "http://whattf.org/datatype-draft"
+
+# #####################################################################
+##  RELAX NG Schema for HTML 5: Common Definitions                    #
+# #####################################################################
+
+
+# #####################################################################
+##  Language Parameters - redefine in inclusion block as necessary    #
+# #####################################################################
+
+## HTML vs. XHTML restrictions
+
+	XMLonly = empty
+	HTMLonly = notAllowed
+
+## HTML 4 Compatibility - set to notAllowed to disallow markup introduced in HTML 5
+#                         (This only affects mixed-version modules; wholly HTML5
+#                          modules should simply be left out of the inclusion list.)
+
+	v5only = empty
+
+## HTML Compatibility Switches - set to notAllowed to disallow
+
+	## XML features that can't be roundtripped HTML <-> XHTML
+	#  (xml:base on elements other than <html>)
+	nonRoundtrippable = empty
+
+	## XML features that can't be serialized as HTML
+	nonHTMLizable = empty
+
+# #####################################################################
+##  Wildcards                                                         #
+# #####################################################################
+
+## Any attribute from any namespace
+
+	common.attr.anything =
+		attribute * { text }*
+
+## Any element from any namespace
+
+	common.elem.anything =
+		element * { common.inner.anything & common.attr.anything }
+
+## Any content from any namespace
+
+	common.inner.anything =
+		(	text
+		&	common.elem.anything*
+		)
+
+# #####################################################################
+##  Common Element Classes                                            #
+# #####################################################################
+
+## Metadata Elements
+
+	common.elem.metadata =
+		( notAllowed )
+
+## Phrase Elements
+
+	common.elem.phrasing =
+		( notAllowed )
+
+## Prose Elements
+
+	common.elem.flow =
+		( common.elem.phrasing )
+
+
+# #####################################################################
+##  Common Content Models                                             #
+# #####################################################################
+
+## Metadata Content
+
+	common.inner.metadata =
+		( common.elem.metadata* )
+
+## Phrase Content
+
+	common.inner.phrasing =
+		( text & common.elem.phrasing* )
+
+## Prose Content
+
+	common.inner.flow =
+		( text & common.elem.flow* ) # REVISIT <style scoped>
+
+# #####################################################################
+##  Common Attributes                                                 #
+# #####################################################################
+
+# When updating, check <bdo> definition too
+
+common.attrs =
+	(	common.attrs.basic
+	&	common.attrs.i18n
+	&	common.attrs.present
+	&	common.attrs.other
+	)
+
+common.attrs.basic =
+	(	(	common.attrs.id
+		|	common.attrs.xml-id
+		)? # REVISIT assuming only either one is allowed
+	&	common.attrs.class?
+	&	common.attrs.title?
+	&	common.attrs.base?
+	&	common.attrs.space?
+	)
+	common.attrs.id =
+		attribute id {
+			common.data.id
+		}
+	common.attrs.xml-id =
+		attribute xml:id {
+			xsd:NCName
+		} & XMLonly
+	common.attrs.class =
+		attribute class {
+			common.data.tokens
+		}
+	common.attrs.title =
+		attribute title {
+			text
+		}
+	common.attrs.base =
+		common.attrs.xmlbase
+		& nonRoundtrippable
+	common.attrs.xmlbase =
+		attribute xml:base {
+			common.data.uri
+		} & XMLonly
+	common.attrs.space =
+		common.attrs.xmlspace
+	common.attrs.xmlspace =
+		attribute xml:space {
+			string "preserve" # REVISIT this is not allowed per spec
+		} & XMLonly
+
+common.attrs.i18n =
+	(	common.attrs.dir?
+	&	common.attrs.language?
+	)
+	common.attrs.dir =
+		attribute dir {
+			w:string "ltr" | w:string "rtl"
+		}
+	# This lang definition is a hack for enviroments where
+	# the HTML5 parser maps lang to xml:lang.
+	# Sameness check left to Schematron
+	common.attrs.language =
+		(	common.attrs.xmllang?
+		&	common.attrs.lang?
+		)
+	common.attrs.lang =
+		attribute lang {
+			common.data.langcode
+		} & XMLonly
+	common.attrs.xmllang =
+		attribute xml:lang {
+			common.data.langcode
+		}
+#	common.attrs.language =
+#		(	common.attrs.lang
+#		|	common.attrs.xmllang
+#		)
+#	common.attrs.lang =
+#		attribute lang {
+#			common.data.langcode
+#		} & HTMLonly
+#	common.attrs.xmllang =
+#		attribute xml:lang {
+#			common.data.langcode
+#		} & XMLonly
+
+common.attrs.present =
+	(	common.attrs.style?
+	&	common.attrs.tabindex?
+	&	common.attrs.accesskey?
+	)
+	common.attrs.style =
+		attribute style {
+			string
+		}
+	common.attrs.tabindex =
+		attribute tabindex {
+			common.data.integer
+		}
+		# REVISIT move style to a module and bundle tabindex with ARIA
+	common.attrs.accesskey =
+		attribute accesskey {
+			common.data.keylabellist
+		}
+
+common.attrs.other =
+	empty
+
+# #####################################################################
+##  Common Datatypes                                                  #
+# #####################################################################
+
+## Names and Tokens
+
+	common.data.tokens =
+		list { token* }
+
+	common.data.browsing-context =
+		w:browsing-context
+
+	common.data.browsing-context-or-keyword =
+		w:browsing-context-or-keyword
+#		xsd:string {
+#			pattern = "()|([^_].*)|(_[bB][lL][aA][nN][kK])|(_[sS][eE][lL][fF])|(_[pP][aA][rR][eE][nN][tT])|(_[tT][oO][pP])"
+#		}
+
+
+## IDs and IDREFs
+
+	common.data.id =
+		w:ID
+#		xsd:string {
+#			pattern = "\S+"
+#		}
+
+	common.data.idref =
+		w:IDREF
+		
+	common.data.idrefs =
+		w:IDREFS
+
+	common.data.name =
+		w:ID #FIXME
+
+	common.data.hash-name =
+		w:hash-name	
+#		xsd:string {
+#			pattern = "#.+"
+#		}
+
+## Numerical
+
+	common.data.integer =
+		w:integer
+#		xsd:string {
+#			pattern = "-?[0-9]+"
+#		}
+
+	common.data.integer.positive =
+		w:integer-positive
+#		xsd:string {
+#			pattern = "0*[1-9][0-9]*"
+#		}
+
+	common.data.integer.non-negative =
+		w:integer-non-negative
+#		xsd:string {
+#			pattern = "[0-9]+"
+#		}
+		
+#	common.data.percent =
+#		xsd:string {
+#			pattern = "(100)|([1-9]?[0-9](\.[0-9]+)?)%"
+#		}
+		
+	common.data.float =
+		w:float
+#		xsd:string {
+#			pattern = "-?[0-9]+(\.[0-9]+)?([eE]-?[0-9]+)?"
+#		}
+
+	common.data.float.positive =
+		w:float-positive
+#		xsd:string {
+#			pattern = "(0*[1-9][0-9]*(\.[0-9]+)?)|([0-9]+(\.0*[1-9][0-9]*)?)([eE]-?[0-9]+)?"
+#		}
+		
+	common.data.float.non-negative =
+		w:float-non-negative
+#		xsd:string {
+#			pattern = "[0-9]+(\.[0-9]+)?([eE]-?[0-9]+)?"
+#		}
+		
+## Temporal
+
+	common.data.datetime =
+		w:datetime-tz
+
+	common.data.date-or-time =
+		w:date-or-time
+
+## IRIs
+
+	common.data.uri =
+		w:string "" | w:iri-ref
+
+	common.data.uris =
+		list { w:iri-ref* }
+
+	common.data.uri.absolute =
+		w:iri
+
+## <link type='icon'> sizes
+
+	common.data.sizes =
+#		list { w:sizes }
+		list {
+			xsd:string {
+				pattern = "[1-9][0-9]*x[1-9][0-9]*"
+			}+
+		}
+
+## MIME types
+
+	common.data.mimetype =
+		w:mime-type
+
+## Encodings
+
+	common.data.charset =
+		w:charset
+
+	common.data.meta-charset =
+		w:meta-charset
+
+## Refresh
+
+	common.data.refresh =
+		w:refresh
+
+## Default style
+
+	common.data.default-style =
+        string
+#		w:default-style
+
+## Media Queries
+
+	common.data.mediaquery =
+		w:media-query
+
+## Language Codes
+
+	common.data.langcode =
+		w:string "" | w:language
+
+## List of Key Labels
+	common.data.keylabellist =
+		w:keylabellist
+
+## Microdata Identifier
+  common.data.microdata-identifier =
+    w:microdata-identifier
+
+## Zero
+  common.data.zero =
+    w:zero
+
+# #####################################################################
+##  WF2 Module Hook                                                   #
+# #####################################################################
+		
+common-form.attrs.form = ( notAllowed )
+
+# #####################################################################
+##  ARIA Module Hooks                                                 #
+# #####################################################################
+
+common.attrs.aria = ( notAllowed )
+common.attrs.aria.implicit.button = ( notAllowed )
+common.attrs.aria.implicit.input = ( notAllowed )
+common.attrs.aria.implicit.region = ( notAllowed )
+common.attrs.aria.implicit.group = ( notAllowed )
+common.attrs.aria.implicit.th = ( notAllowed )
+common.attrs.aria.implicit.structure = ( notAllowed )
+common.attrs.aria.implicit.link = ( notAllowed )
+common.attrs.aria.implicit.listitem = ( notAllowed )
+common.attrs.aria.implicit.img = ( notAllowed )
+common.attrs.aria.implicit.select = ( notAllowed )
+common.attrs.aria.landmark.application = ( notAllowed )
+common.attrs.aria.landmark.banner = ( notAllowed )
+common.attrs.aria.landmark.complementary = ( notAllowed )
+common.attrs.aria.landmark.contentinfo = ( notAllowed )
+common.attrs.aria.landmark.main = ( notAllowed )
+common.attrs.aria.landmark.navigation = ( notAllowed )
+common.attrs.aria.landmark.search = ( notAllowed )
+# per ARIA spec: article, document, and note are not actually landmarks
+common.attrs.aria.landmark.article = ( notAllowed )
+common.attrs.aria.landmark.document = ( notAllowed )
+common.attrs.aria.landmark.note = ( notAllowed )

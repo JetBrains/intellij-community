@@ -141,7 +141,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   private Boolean myActive;
 
-  private static ThreadLocal<Integer> ourEdtSafe = new ThreadLocal<Integer>();
+  private static final ThreadLocal<Integer> ourEdtSafe = new ThreadLocal<Integer>();
 
   protected void boostrapPicoContainer() {
     super.boostrapPicoContainer();
@@ -229,6 +229,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   private boolean disposeSelf() {
+    myDisposeInProgress = true;
     Project[] openProjects = ProjectManagerEx.getInstanceEx().getOpenProjects();
     final boolean[] canClose = {true};
     for (final Project project : openProjects) {
@@ -240,7 +241,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       }, ApplicationBundle.message("command.exit"), null);
       if (!canClose[0]) return false;
     }
-    myDisposeInProgress = true;
     Disposer.dispose(this);
 
     Disposer.assertIsEmpty();
@@ -494,6 +494,10 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
               catch (ProcessCanceledException e) {
                 progress.cancel();
                 // ok to ignore.
+              }
+              catch (RuntimeException e) {
+                progress.cancel();
+                throw e;
               }
               finally {
                 setExceptionalThreadWithReadAccessFlag(old);

@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -39,12 +40,12 @@ public class SimpleProjectRoot implements ProjectRoot, JDOMExternalizable {
   private boolean myInitialized = false;
   @NonNls private static final String ATTRIBUTE_URL = "url";
 
-  SimpleProjectRoot(VirtualFile file) {
+  SimpleProjectRoot(@NotNull VirtualFile file) {
     myFile = file;
     myUrl = myFile.getUrl();
   }
 
-  public SimpleProjectRoot(String url) {
+  public SimpleProjectRoot(@NotNull String url) {
     myUrl = url;
   }
 

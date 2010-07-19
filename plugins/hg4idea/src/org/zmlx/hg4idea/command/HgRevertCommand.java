@@ -13,11 +13,11 @@
 package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.ContainerUtil;
 import org.apache.commons.lang.StringUtils;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgRevisionNumber;
 
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -36,7 +36,8 @@ public class HgRevertCommand {
       arguments.add("--rev");
       if (StringUtils.isNotBlank(vcsRevisionNumber.getChangeset())) {
         arguments.add(vcsRevisionNumber.getChangeset());
-      } else {
+      }
+      else {
         arguments.add(vcsRevisionNumber.getRevision());
       }
     }
@@ -45,7 +46,7 @@ public class HgRevertCommand {
       arguments.add("--no-backup");
     }
 
-    arguments.addAll(Arrays.asList(hgFile.getRelativePath()));
+    ContainerUtil.addAll(arguments, hgFile.getRelativePath());
 
     HgCommandService.getInstance(project).execute(hgFile.getRepo(), "revert", arguments);
   }

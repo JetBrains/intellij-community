@@ -20,6 +20,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.Painter;
 import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.MenuDragMouseEvent;
@@ -28,7 +30,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
-import java.lang.ref.WeakReference;
 import java.util.*;
 
 public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEventQueue.EventDispatcher, Painter.Listener {
@@ -36,14 +37,15 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   private final Set<EventListener> myMouseListeners = new LinkedHashSet<EventListener>();
   private final JRootPane myRootPane;
 
-  private final WeakReference<Component> myCurrentOverComponent = new WeakReference<Component>(null);
-  private final WeakReference<Component> myMousePressedComponent = new WeakReference<Component>(null);
-
   private final Set<Painter> myPainters = new LinkedHashSet<Painter>();
   private final Map<Painter, Component> myPainter2Component = new LinkedHashMap<Painter, Component>();
 
   private boolean myPaintingActive;
   private boolean myPreprocessorActive;
+  private final Map<Object, Cursor> myListener2Cursor = new LinkedHashMap<Object, Cursor>();
+
+  private Component myLastCursorComponent;
+  private Cursor myLastOriginalCursor;
 
   public IdeGlassPaneImpl(JRootPane rootPane) {
     myRootPane = rootPane;
@@ -53,15 +55,15 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   }
 
   public boolean dispatch(final AWTEvent e) {
-    boolean dispatched = false;
 
     if (e instanceof MouseEvent) {
       final MouseEvent me = (MouseEvent)e;
-      Window eventWindow = me.getComponent() instanceof Window ? ((Window)me.getComponent()) : SwingUtilities.getWindowAncestor(me.getComponent());
+      Window eventWindow = me.getComponent() instanceof Window ? (Window)me.getComponent() : SwingUtilities.getWindowAncestor(me.getComponent());
       final Window thisGlassWindow = SwingUtilities.getWindowAncestor(myRootPane);
       if (eventWindow != thisGlassWindow) return false;
     }
 
+    boolean dispatched;
     if (e.getID() == MouseEvent.MOUSE_PRESSED || e.getID() == MouseEvent.MOUSE_RELEASED || e.getID() == MouseEvent.MOUSE_CLICKED) {
       dispatched = preprocess((MouseEvent)e, false);
     } else if (e.getID() == MouseEvent.MOUSE_MOVED || e.getID() == MouseEvent.MOUSE_DRAGGED) {
@@ -99,23 +101,78 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   }
 
   private boolean preprocess(final MouseEvent e, final boolean motion) {
-    final MouseEvent event = convertEvent(e, myRootPane);
-    for (EventListener each : myMouseListeners) {
-      if (motion && each instanceof MouseMotionListener) {
-        fireMouseMotion((MouseMotionListener)each, event);
-      } else if (!motion && each instanceof MouseListener) {
-        fireMouseEvent((MouseListener)each, event);
+    try {
+      final MouseEvent event = convertEvent(e, myRootPane);
+      for (EventListener each : myMouseListeners) {
+        if (motion && each instanceof MouseMotionListener) {
+          fireMouseMotion((MouseMotionListener)each, event);
+        } else if (!motion && each instanceof MouseListener) {
+          fireMouseEvent((MouseListener)each, event);
+        }
+
+        if (event.isConsumed()) {
+          e.consume();
+          return true;
+        }
       }
 
-      if (event.isConsumed()) {
-        return true;
-      }
+      return false;
     }
+    finally {
+      Cursor cursor;
+      if (!myListener2Cursor.isEmpty()) {
+        cursor = myListener2Cursor.values().iterator().next();
 
-    return false;
+        final Point point = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), myRootPane.getContentPane());
+        final Component target =
+            SwingUtilities.getDeepestComponentAt(myRootPane.getContentPane().getParent(), point.x, point.y);
+
+        restoreLastComponent(target);
+
+        if (target != null) {
+          if (myLastCursorComponent != target) {
+            myLastCursorComponent = target;
+            if (target.isCursorSet()) {
+              myLastOriginalCursor = target.getCursor();
+            } 
+          }
+
+          if (cursor != null && !cursor.equals(target.getCursor())) {
+            target.setCursor(cursor);
+          }
+        }
+
+        getRootPane().setCursor(cursor);
+
+      } else {
+        cursor = Cursor.getDefaultCursor();
+        getRootPane().setCursor(cursor);
+
+
+        restoreLastComponent(null);
+        myLastOriginalCursor = null;
+        myLastCursorComponent = null;
+      }
+      myListener2Cursor.clear();
+    }
   }
 
-private MouseEvent convertEvent(final MouseEvent e, final Component target) {
+  private void restoreLastComponent(Component newC) {
+    if (myLastCursorComponent != null && myLastCursorComponent != newC) {
+      myLastCursorComponent.setCursor(myLastOriginalCursor);
+    }
+  }
+
+
+  public void setCursor(Cursor cursor, @NotNull Object requestor) {
+    if (cursor == null) {
+      myListener2Cursor.remove(requestor);
+    } else {
+      myListener2Cursor.put(requestor, cursor);
+    }
+  }
+
+  private static MouseEvent convertEvent(final MouseEvent e, final Component target) {
     final Point point = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), target);
     if (e instanceof MouseWheelEvent) {
       final MouseWheelEvent mwe = (MouseWheelEvent)e;
@@ -177,7 +234,7 @@ private MouseEvent convertEvent(final MouseEvent e, final Component target) {
     activateIfNeeded();
     Disposer.register(parent, new Disposable() {
       public void dispose() {
-        SwingUtilities.invokeLater(new Runnable() {
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
           public void run() {
             removeListener(listener);
           }
@@ -201,12 +258,12 @@ private MouseEvent convertEvent(final MouseEvent e, final Component target) {
 
   private void deactivateIfNeeded() {
     if (myPaintingActive) {
-      if (myPainters.size() == 0 && getComponentCount() == 0) {
+      if (myPainters.isEmpty() && getComponentCount() == 0) {
         myPaintingActive = false;
       }
     }
 
-    if (myPreprocessorActive && myMouseListeners.size() == 0) {
+    if (myPreprocessorActive && myMouseListeners.isEmpty()) {
       myPreprocessorActive = false;
     }
 
@@ -215,12 +272,12 @@ private MouseEvent convertEvent(final MouseEvent e, final Component target) {
 
   private void activateIfNeeded() {
     if (!myPaintingActive) {
-      if (myPainters.size() > 0 || getComponentCount() > 0) {
+      if (!myPainters.isEmpty() || getComponentCount() > 0) {
         myPaintingActive = true;
       }
     }
 
-    if (!myPreprocessorActive && myMouseListeners.size() > 0) {
+    if (!myPreprocessorActive && !myMouseListeners.isEmpty()) {
       myPreprocessorActive = true;
     }
 
@@ -289,7 +346,7 @@ private MouseEvent convertEvent(final MouseEvent e, final Component target) {
   }
 
   protected void paintComponent(final Graphics g) {
-    if (myPainters.size() == 0) return;
+    if (myPainters.isEmpty()) return;
 
     Graphics2D g2d = (Graphics2D)g;
     for (Painter painter : myPainters) {
@@ -319,7 +376,7 @@ private MouseEvent convertEvent(final MouseEvent e, final Component target) {
   }
 
   public boolean hasPainters() {
-    return myPainters.size() > 0;
+    return !myPainters.isEmpty();
   }
 
   public void onNeedsRepaint(final Painter painter, final JComponent dirtyComponent) {
@@ -342,14 +399,13 @@ private MouseEvent convertEvent(final MouseEvent e, final Component target) {
     return e.getComponent();
   }
 
-  private Component findComponent(final MouseEvent e, final Container container) {
+  private static Component findComponent(final MouseEvent e, final Container container) {
     final Point lpPoint = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), container);
-    final Component lpComponent = SwingUtilities.getDeepestComponentAt(container, lpPoint.x, lpPoint.y);
-    return lpComponent;
+    return SwingUtilities.getDeepestComponentAt(container, lpPoint.x, lpPoint.y);
   }
 
   @Override
   public boolean isOptimizedDrawingEnabled() {
-    return hasPainters() ? false : super.isOptimizedDrawingEnabled();
+    return !hasPainters() && super.isOptimizedDrawingEnabled();
   }
 }

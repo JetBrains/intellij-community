@@ -155,7 +155,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     for (VirtualFile f : getParameters().myFiles) {
       MavenProject project = new MavenProject(f);
       process.setText2(ProjectBundle.message("maven.reading.pom", f.getPath()));
-      project.read(generalSettings, Collections.EMPTY_LIST, reader, locator);
+      project.read(generalSettings, Collections.<String>emptyList(), reader, locator);
       uniqueProfiles.addAll(project.getProfilesIds());
     }
     getParameters().myProfiles = new ArrayList<String>(uniqueProfiles);

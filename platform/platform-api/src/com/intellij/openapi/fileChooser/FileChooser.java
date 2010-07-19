@@ -17,6 +17,7 @@ package com.intellij.openapi.fileChooser;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,5 +46,32 @@ public class FileChooser {
   public static VirtualFile[] chooseFiles(Component parent, FileChooserDescriptor descriptor, @Nullable VirtualFile toSelect) {
     FileChooserDialog chooser = FileChooserFactory.getInstance().createFileChooser(descriptor, parent);
     return chooser.choose(toSelect, null);
+  }
+
+
+  /**
+   * Shows file/folder open dialog, allows user to choose files/folders and then passes result to callback in EDT.
+   * On MacOS Open Dialog will be shown with slide effect if Macish UI is turned on.
+   * @param descriptor File chooser descriptor
+   * @param project project
+   * @param toSelect file to preselect
+   * @param onChosenCallback Callback will be invoked after user have closed dialog
+   */
+  public static void chooseFilesWithSlideEffect(@NotNull final FileChooserDescriptor descriptor,
+                                                @Nullable final Project project,
+                                                @Nullable final VirtualFile toSelect,
+                                                @NotNull final Consumer<VirtualFile[]> onChosenCallback
+  ) {
+    final FileChooserDialog dialog = FileChooserFactory.getInstance().createFileChooser(descriptor, project);
+    if (dialog instanceof MacFileChooserDialog) {
+      ((MacFileChooserDialog)dialog).chooseWithSheet(null, project, new MacFileChooserDialog.MacFileChooserCallback() {
+        public void onChosen(@NotNull final VirtualFile[] files) {
+          onChosenCallback.consume(files);
+        }
+      });
+    } else {
+      final VirtualFile[] files = dialog.choose(toSelect, project);
+      onChosenCallback.consume(files);
+    }
   }
 }

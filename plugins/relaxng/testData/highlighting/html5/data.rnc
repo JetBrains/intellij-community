@@ -1,0 +1,69 @@
+datatypes w = "http://whattf.org/datatype-draft"
+
+# #####################################################################
+##  RELAX NG Schema for HTML 5: Static Data Markup                    #
+# #####################################################################
+
+## Time: <time>
+
+	time.elem =
+		element time { time.inner & time.attrs }
+	time.attrs =
+		(	common.attrs
+		&	time.attrs.datetime?
+		&	time.attrs.pubdate?
+		)
+		time.attrs.datetime =
+			attribute datetime {
+				common.data.date-or-time #REVISIT check format
+			}
+		time.attrs.pubdate =
+			attribute pubdate {
+				w:string "pubdate" | w:string ""
+			}
+	time.inner =
+		( common.inner.phrasing ) #Cannot enforce textContent format here
+
+	common.elem.phrasing |= time.elem
+
+## Scalar Gauge: <meter>
+
+	meter.elem =
+		element meter { meter.inner & meter.attrs }
+	meter.attrs =
+		(	common.attrs
+		&	meter.attrs.value
+		&	meter.attrs.min?
+		&	meter.attrs.low?
+		&	meter.attrs.high?
+		&	meter.attrs.max?
+		&	meter.attrs.optimum?
+		)
+		meter.attrs.value =
+			attribute value {
+				common.data.float
+			}
+		meter.attrs.min =
+			attribute min {
+				common.data.float
+			}
+		meter.attrs.low =
+			attribute low {
+				common.data.float
+			}
+		meter.attrs.high =
+			attribute high {
+				common.data.float
+			}
+		meter.attrs.max =
+			attribute max {
+				common.data.float
+			}
+		meter.attrs.optimum =
+			attribute optimum {
+				common.data.float
+			}
+	meter.inner =
+		( common.inner.phrasing ) #Cannot enforce textContent format here
+
+	common.elem.phrasing |= meter.elem

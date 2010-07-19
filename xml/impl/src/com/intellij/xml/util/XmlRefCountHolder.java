@@ -17,6 +17,7 @@ package com.intellij.xml.util;
 
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.lang.Language;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataCache;
@@ -30,6 +31,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -97,14 +99,17 @@ public class XmlRefCountHolder {
     if (list == null) {
       list = new ArrayList<Pair<XmlAttributeValue, Boolean>>();
       myId2AttributeListMap.put(id, list);
-    } else if (!soft) {
+    }
+    else if (!soft) {
       // mark as duplicate
-      if (list.size() == 1) {
-        if (!list.get(0).second.booleanValue()) {
-          myPossiblyDuplicateIds.add(list.get(0).first);
-          myPossiblyDuplicateIds.add(attributeValue);
+      Pair<XmlAttributeValue, Boolean> notSoft = ContainerUtil.find(list, new Condition<Pair<XmlAttributeValue, Boolean>>() {
+        @Override
+        public boolean value(Pair<XmlAttributeValue, Boolean> xmlAttributeValueBooleanPair) {
+          return !xmlAttributeValueBooleanPair.second;
         }
-      } else {
+      });
+      if (notSoft != null) {
+        myPossiblyDuplicateIds.add(notSoft.first);
         myPossiblyDuplicateIds.add(attributeValue);
       }
     }

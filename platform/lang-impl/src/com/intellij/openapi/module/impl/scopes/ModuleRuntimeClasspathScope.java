@@ -18,15 +18,12 @@ package com.intellij.openapi.module.impl.scopes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiBundle;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
-import java.util.Set;
 
 /**
  * @author max
@@ -58,38 +55,25 @@ public class ModuleRuntimeClasspathScope extends GlobalSearchScope {
   }
 
   private void buildEntries(final Module module) {
-    final Set<Module> processedModules = new HashSet<Module>();
-    processedModules.add(module);
-
-    ModuleRootManager.getInstance(module).processOrder(new RootPolicy<LinkedHashSet<VirtualFile>>() {
+    ModuleRootManager.getInstance(module).orderEntries().recursively().process(new RootPolicy<LinkedHashSet<VirtualFile>>() {
       private boolean myJDKProcessed = false;
 
       public LinkedHashSet<VirtualFile> visitModuleSourceOrderEntry(final ModuleSourceOrderEntry moduleSourceOrderEntry,
                                                                     final LinkedHashSet<VirtualFile> value) {
-        value.addAll(Arrays.asList(moduleSourceOrderEntry.getFiles(OrderRootType.SOURCES)));
+        ContainerUtil.addAll(value, moduleSourceOrderEntry.getFiles(OrderRootType.SOURCES));
         return value;
       }
 
       public LinkedHashSet<VirtualFile> visitLibraryOrderEntry(final LibraryOrderEntry libraryOrderEntry,
                                                                final LinkedHashSet<VirtualFile> value) {
-        value.addAll(Arrays.asList(libraryOrderEntry.getFiles(OrderRootType.CLASSES)));
-        return value;
-      }
-
-      public LinkedHashSet<VirtualFile> visitModuleOrderEntry(final ModuleOrderEntry moduleOrderEntry,
-                                                              final LinkedHashSet<VirtualFile> value) {
-        final Module depModule = moduleOrderEntry.getModule();
-        if (depModule != null && !processedModules.contains(depModule)) {
-          processedModules.add(depModule);
-          ModuleRootManager.getInstance(depModule).processOrder(this, value);
-        }
+        ContainerUtil.addAll(value, libraryOrderEntry.getRootFiles(OrderRootType.CLASSES));
         return value;
       }
 
       public LinkedHashSet<VirtualFile> visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final LinkedHashSet<VirtualFile> value) {
         if (myJDKProcessed) return value;
         myJDKProcessed = true;
-        value.addAll(Arrays.asList(jdkOrderEntry.getFiles(OrderRootType.CLASSES)));
+        ContainerUtil.addAll(value, jdkOrderEntry.getRootFiles(OrderRootType.CLASSES));
         return value;
       }
     }, myEntries);

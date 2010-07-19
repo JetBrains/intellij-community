@@ -121,6 +121,16 @@ public class JavaSdkImpl extends JavaSdk {
     return null;
   }
 
+  @NonNls public static final String MAC_HOME_PATH = "/Home";
+
+  @Override
+  public String adjustSelectedSdkHome(String homePath) {
+    if (SystemInfo.isMac) {
+      return homePath + MAC_HOME_PATH;
+    }
+    return homePath;
+  }
+
   public boolean isValidSdkHome(String path) {
     return checkForJdk(new File(path));
   }
@@ -163,7 +173,7 @@ public class JavaSdkImpl extends JavaSdk {
           int minorDot = versionString.indexOf('.', dotIdx + 1);
           if (minorDot > 0) {
             int minor = Integer.parseInt(versionString.substring(dotIdx + 1, minorDot));
-            versionString = String.valueOf(major) + "." + String.valueOf(minor);
+            versionString = major + "." + minor;
           }
         }
         catch (NumberFormatException e) {
@@ -220,13 +230,10 @@ public class JavaSdkImpl extends JavaSdk {
   private final Map<String, String> myCachedVersionStrings = new HashMap<String, String>();
 
   public final String getVersionString(final String sdkHome) {
-    String versionString;
-
-    if(myCachedVersionStrings.containsKey(sdkHome)) {
+    if (myCachedVersionStrings.containsKey(sdkHome)) {
       return myCachedVersionStrings.get(sdkHome);
-    } else {
-      versionString = getJdkVersion(sdkHome);
     }
+    String versionString = getJdkVersion(sdkHome);
     if (versionString != null && versionString.length() == 0) {
       versionString = null;
     }
@@ -268,47 +275,44 @@ public class JavaSdkImpl extends JavaSdk {
     return jdk;
   }
 
-  public static Sdk getMockJdkCE() {
-    File mockJdkCEPath = new File(PathManager.getHomePath(), "java/mockJDK");
+  private static File getPathForJdkNamed(String name) {
+    File mockJdkCEPath = new File(PathManager.getHomePath(), "java/" + name);
     if (mockJdkCEPath.exists()) {
-      return createMockJdk(mockJdkCEPath.getPath(), "java 1.5", getInstance());
+      return mockJdkCEPath;
     }
-
-    mockJdkCEPath = new File(PathManager.getHomePath(), "community/java/mockJDK");
-    if (mockJdkCEPath.exists()) {
-      return createMockJdk(mockJdkCEPath.getPath(), "java 1.5", getInstance());
-    }
-
-    return getMockJdk("java 1.5");
-
+    return new File(PathManager.getHomePath(), "community/java/" + name);
   }
-
-  public static Sdk getMockJdk(@NonNls String versionName) {
-    File mockJdkCEPath = new File(PathManager.getHomePath(), "java/mockJDK");
-    if (mockJdkCEPath.exists()) {
-      return createMockJdk(mockJdkCEPath.getPath(), versionName, getInstance());
-    }
-    final String forcedPath = System.getProperty("idea.testingFramework.mockJDK");
-    String jdkHome = forcedPath != null ? forcedPath : PathManager.getHomePath() + File.separator + "mockJDK";
-    return createMockJdk(jdkHome, versionName, getInstance());
-  }
-
-  public static Sdk getMockJdk15(@NonNls String versionName) {
-    File mockJdkCEPath = new File(PathManager.getHomePath(), "java/mockJDK");
-    if (mockJdkCEPath.exists()) {
-      return createMockJdk(mockJdkCEPath.getPath(), versionName, getInstance());
-    }
-    String jdkHome = PathManager.getHomePath() + File.separator + "mockJDK-1.5";
-    return createMockJdk(jdkHome, versionName, getInstance());
-  }
-  
   public static Sdk getMockJdk17() {
-    File mockJdkCEPath = new File(PathManager.getHomePath(), "java/mockJDK-1.7");
-    if (mockJdkCEPath.exists()) {
-      return createMockJdk(mockJdkCEPath.getPath(), "java 1.7", getInstance());
-    }
-    mockJdkCEPath = new File(PathManager.getHomePath(), "community/java/mockJDK-1.7");
-    return createMockJdk(mockJdkCEPath.getPath(), "java 1.7", getInstance());
+    return getMockJdk17("java 1.7");
+  }
+  public static Sdk getMockJdk17(String name) {
+    File mockJdkCEPath = getPathForJdkNamed("mockJDK-1.7");
+    return createMockJdk(mockJdkCEPath.getPath(), name, getInstance());
+  }
+  public static Sdk getMockJdk14() {
+    File mockJdkCEPath = getMockJdk14Path();
+    return createMockJdk(mockJdkCEPath.getPath(), "java 1.4", getInstance());
+  }
+
+  public static File getMockJdk14Path() {
+    return getPathForJdkNamed("mockJDK-1.4");
+  }
+
+  public static Sdk getWebMockJdk17() {
+    Sdk jdk = getMockJdk17();
+    addWebJarsTo(jdk);
+    return jdk;
+  }
+
+  public static void addWebJarsTo(Sdk jdk) {
+    SdkModificator sdkModificator = jdk.getSdkModificator();
+    File jar = new File(PathManager.getHomePath(), "lib/jsp-api.jar");
+    VirtualFile root = JarFileSystem.getInstance().getJarRootForLocalFile(LocalFileSystem.getInstance().findFileByIoFile(jar));
+    sdkModificator.addRoot(root, OrderRootType.CLASSES);
+    File jar2 = new File(PathManager.getHomePath(), "lib/servlet-api.jar");
+    VirtualFile root2 = JarFileSystem.getInstance().getJarRootForLocalFile(LocalFileSystem.getInstance().findFileByIoFile(jar2));
+    sdkModificator.addRoot(root2, OrderRootType.CLASSES);
+    sdkModificator.commitChanges();
   }
 
   private static Sdk createMockJdk(String jdkHome, final String versionName, JavaSdk javaSdk) {
@@ -341,9 +345,7 @@ public class JavaSdkImpl extends JavaSdk {
     FileFilter jarFileFilter = new FileFilter(){
       @SuppressWarnings({"HardCodedStringLiteral"})
       public boolean accept(File f){
-        if (f.isDirectory()) return false;
-        if (f.getName().endsWith(".jar")) return true;
-        return false;
+        return !f.isDirectory() && f.getName().endsWith(".jar");
       }
     };
 

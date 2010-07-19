@@ -44,6 +44,7 @@ import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.xml.*;
@@ -94,7 +95,8 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   }
 
   @Override public void visitXmlToken(XmlToken token) {
-    if (token.getTokenType() == XmlTokenType.XML_NAME || token.getTokenType() == XmlTokenType.XML_TAG_NAME) {
+    IElementType tokenType = token.getTokenType();
+    if (tokenType == XmlTokenType.XML_NAME || tokenType == XmlTokenType.XML_TAG_NAME) {
       PsiElement element = token.getPrevSibling();
       while(element instanceof PsiWhiteSpace) element = element.getPrevSibling();
 
@@ -111,6 +113,23 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
         if (parent instanceof XmlAttribute && !(token.getNextSibling() instanceof OuterLanguageElement)) {
           checkAttribute((XmlAttribute) parent);
+        }
+      }
+    } else if (tokenType == XmlTokenType.XML_DATA_CHARACTERS && token.getParent() instanceof XmlText) {
+      if (token.textContains(']') && token.textContains('>')) {
+        String s = token.getText();
+        String marker = "]]>";
+        int i = s.indexOf(marker);
+        
+        if (i != -1) {                              // TODO: fix
+          TextRange textRange = token.getTextRange();
+          int start = textRange.getStartOffset() + i;
+          addToResults(HighlightInfo.createHighlightInfo(
+            PsiTreeUtil.getParentOfType(token, XmlTag.class) instanceof HtmlTag ? 
+              HighlightInfoType.WARNING:HighlightInfoType.ERROR, 
+            start, start + marker.length(), 
+            XmlErrorMessages.message("cdata.end.should.not.appear.in.content.unless.to.mark.end.of.cdata.section")
+          ));
         }
       }
     }
@@ -355,6 +374,19 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   private void checkAttribute(XmlAttribute attribute) {
     XmlTag tag = attribute.getParent();
 
+    final String name = attribute.getName();
+    PsiElement prevLeaf = PsiTreeUtil.prevLeaf(attribute);
+
+    if (!(prevLeaf instanceof PsiWhiteSpace)) {
+      TextRange textRange = attribute.getTextRange();
+      addToResults(HighlightInfo.createHighlightInfo(
+        tag instanceof HtmlTag ? HighlightInfoType.WARNING:HighlightInfoType.ERROR, 
+        textRange.getStartOffset(), 
+        textRange.getStartOffset(),
+        XmlErrorMessages.message("attribute.should.be.preceded.with.space")
+      ));
+    }
+
     if (attribute.isNamespaceDeclaration()) {
       checkReferences(attribute.getValueElement());
       return;
@@ -374,8 +406,6 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     }
 
     XmlAttributeDescriptor attributeDescriptor = elementDescriptor.getAttributeDescriptor(attribute);
-
-    final String name = attribute.getName();
 
     if (attributeDescriptor == null) {
       if (!XmlUtil.attributeFromTemplateFramework(name, tag)) {

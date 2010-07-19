@@ -896,6 +896,70 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
   }
 
 
+  public void testDeferredSelection() throws Exception {
+    buildStructure(myRoot, false);
+
+    final Ref<Boolean> queued = new Ref<Boolean>(false);
+    final Ref<Boolean> intellijSelected = new Ref<Boolean>(false);
+    final Ref<Boolean> jetbrainsSelected = new Ref<Boolean>(false);
+    invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          getBuilder().select(new NodeElement("intellij"), new Runnable() {
+            @Override
+            public void run() {
+              intellijSelected.set(true);
+            }
+          }, true);
+          queued.set(true);
+        }
+        catch (Exception e) {
+          e.printStackTrace();
+          fail();
+        }
+      }
+    });
+
+    new WaitFor() {
+      @Override
+      protected boolean condition() {
+        return queued.get();
+      }
+    };
+
+    assertTrue(getBuilder().getUi().isReady());
+    assertTree("+null\n");
+    assertNull(((DefaultMutableTreeNode)getBuilder().getTreeModel().getRoot()).getUserObject());
+
+    invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        getBuilder().getUi().activate(true);
+        getBuilder().select(new NodeElement("jetbrains"), new Runnable() {
+          @Override
+          public void run() {
+            jetbrainsSelected.set(true);
+          }
+        }, true);
+      }
+    });
+
+    waitBuilderToCome(new Condition<Object>() {
+      @Override
+      public boolean value(Object object) {
+        return intellijSelected.get() && jetbrainsSelected.get();
+      }
+    });
+
+    assertTree("-/\n" +
+               " -com\n" +
+               "  +[intellij]\n" +
+               " +[jetbrains]\n" +
+               " +org\n" +
+               " +xunit\n");
+  }
+
   private void expandNext(final NodeElement[] elements, final int index, final ProgressIndicator indicator, final ActionCallback callback) {
     if (indicator.isCanceled()) {
       callback.setRejected();
@@ -1907,11 +1971,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     }
 
     @Override
-    public void testReleaseBuilderDuringUpdate() throws Exception {
-      super.testReleaseBuilderDuringUpdate();
-    }
-
-    @Override
     protected int getChildrenLoadingDelay() {
       return 300;
     }
@@ -1937,6 +1996,11 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       super(false, true);
     }
 
+
+    @Override
+    public void testDeferredSelection() throws Exception {
+      super.testDeferredSelection();
+    }
 
     @Override
     protected int getNodeDescriptorUpdateDelay() {

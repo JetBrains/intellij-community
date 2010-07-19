@@ -95,7 +95,7 @@ public abstract class ConventionInspection extends BaseInspection {
     private static final int REGEX_COLUMN_COUNT = 25;
 
     public Collection<? extends JComponent> createExtraOptions() {
-        return Collections.EMPTY_LIST;
+        return Collections.emptyList();
     }
 
     @Override

@@ -34,8 +34,9 @@ public abstract class DiffPreviewProvider {
 
   public static DiffContent[] getContents() {
     // Assuming that standalone IDE should provide one provider
-    for (DiffPreviewProvider diffPreviewProvider : Extensions.getExtensions(EP_NAME)) {
-      return diffPreviewProvider.createContents();
+    final DiffPreviewProvider[] providers = Extensions.getExtensions(EP_NAME);
+    if (providers.length != 0){
+      return providers[0].createContents();
     }
     return new DiffContent[]{createContent(LEFT_TEXT), createContent(CENTER_TEXT), createContent(RIGHT_TEXT)};
   }

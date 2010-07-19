@@ -38,10 +38,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
-import org.jetbrains.idea.maven.execution.MavenExecutor;
-import org.jetbrains.idea.maven.execution.MavenExternalExecutor;
-import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
-import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
+import org.jetbrains.idea.maven.execution.*;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.project.MavenArtifactDownloader;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -188,7 +185,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   private void assertModuleLibDepPath(LibraryOrderEntry lib, OrderRootType type, List<String> paths) {
     if (paths == null) return;
-    assertUnorderedElementsAreEqual(lib.getUrls(type), ArrayUtil.toStringArray(paths));
+    assertUnorderedElementsAreEqual(lib.getRootUrls(type), ArrayUtil.toStringArray(paths));
     // also check the library because it may contain slight different set of urls (e.g. with duplicates)
     assertUnorderedElementsAreEqual(lib.getLibrary().getUrls(type), ArrayUtil.toStringArray(paths));
   }
@@ -209,16 +206,16 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected void assertExportedDeps(String moduleName, String... expectedDeps) {
     final List<String> actual = new ArrayList<String>();
 
-    getRootManager(moduleName).processOrder(new RootPolicy<Object>() {
+    getRootManager(moduleName).orderEntries().withoutSdk().withoutModuleSourceEntries().exportedOnly().process(new RootPolicy<Object>() {
       @Override
       public Object visitModuleOrderEntry(ModuleOrderEntry e, Object value) {
-        if (e.isExported()) actual.add(e.getModuleName());
+        actual.add(e.getModuleName());
         return null;
       }
 
       @Override
       public Object visitLibraryOrderEntry(LibraryOrderEntry e, Object value) {
-        if (e.isExported()) actual.add(e.getLibraryName());
+        actual.add(e.getLibraryName());
         return null;
       }
     }, null);
@@ -441,7 +438,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
     MavenRunnerParameters rp = new MavenRunnerParameters(true, dir.getPath(), Arrays.asList(goal), null);
     MavenRunnerSettings rs = new MavenRunnerSettings();
-    MavenExecutor e = new MavenExternalExecutor(rp, getMavenGeneralSettings(), rs, NULL_MAVEN_CONSOLE);
+    MavenExecutor e = new MavenExternalExecutor(rp, getMavenGeneralSettings(), rs, new SoutMavenConsole());
 
     e.execute(new EmptyProgressIndicator());
   }
@@ -465,7 +462,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected Sdk createJdk(String versionName) {
-    return JavaSdkImpl.getMockJdk15(versionName);
+    return JavaSdkImpl.getMockJdk17(versionName);
   }
 
   protected void compileModules(String... moduleNames) {

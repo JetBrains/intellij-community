@@ -24,9 +24,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDialog;
-import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.fileChooser.*;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
@@ -39,6 +37,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.PlatformProjectOpenProcessor;
+import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -55,7 +55,7 @@ public class OpenFileAction extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    @Nullable Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    @Nullable final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null &&
         PlatformProjectOpenProcessor.getInstanceIfItExists() == null) {
       return;
@@ -78,11 +78,19 @@ public class OpenFileAction extends AnAction implements DumbAware {
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, true);
     descriptor.setTitle(IdeBundle.message("title.open.file"));
 
-    final FileChooserDialog chooser = FileChooserFactory.getInstance().createFileChooser(descriptor, project);
-
     final String lastFilePath = project != null ? getLastFilePath(project) : null;
     final VirtualFile toSelect = lastFilePath == null ? null : LocalFileSystem.getInstance().findFileByPath(lastFilePath);
-    final VirtualFile[] result = chooser.choose(toSelect, project);
+
+    FileChooser.chooseFilesWithSlideEffect(descriptor, project, toSelect,new Consumer<VirtualFile[]>() {
+      @Override
+      public void consume(final VirtualFile[] files) {
+        doOpenFile(project, files);
+      }
+    });
+  }
+
+  private void doOpenFile(@Nullable final Project project,
+                          @NotNull final VirtualFile[] result) {
     if (result.length == 0) return;
 
     for (final VirtualFile file : result) {

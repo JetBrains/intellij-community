@@ -42,7 +42,7 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
   }
 
   @Override
-  protected boolean isDumbAware() {
+  public boolean isDumbAware() {
     return CreateFileAction.class.equals(getClass());
   }
 

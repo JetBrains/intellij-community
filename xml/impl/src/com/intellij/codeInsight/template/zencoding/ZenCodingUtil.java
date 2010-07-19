@@ -21,9 +21,39 @@ import com.intellij.openapi.util.Pair;
  * @author Eugene.Kudelevsky
  */
 public class ZenCodingUtil {
-  static final String NUMBER_IN_ITERATION_PLACE_HOLDER = "$";
+  private static final char NUMBER_IN_ITERATION_PLACE_HOLDER = '$';
+
+  private ZenCodingUtil() {
+  }
+
+  private static String replaceNumberMarkersBy(String s, String by) {
+    StringBuilder builder = new StringBuilder(s.length());
+    int j = -1;
+    for (int i = 0, n = s.length(); i <= n; i++) {
+      char c = i < n ? s.charAt(i) : 0;
+      if (c == NUMBER_IN_ITERATION_PLACE_HOLDER) {
+        if (j == -1) {
+          j = i;
+        }
+      }
+      else {
+        if (j != -1) {
+          for (int k = 0, m = i - j - by.length(); k < m; k++) {
+            builder.append('0');
+          }
+          builder.append(by);
+          j = -1;
+        }
+        if (i < n) {
+          builder.append(c);
+        }
+      }
+    }
+    return builder.toString();
+  }
 
   public static String getValue(Pair<String, String> pair, int numberInIteration) {
-    return pair.second.replace(NUMBER_IN_ITERATION_PLACE_HOLDER, Integer.toString(numberInIteration + 1));
+    String s = replaceNumberMarkersBy(pair.second, Integer.toString(numberInIteration + 1));
+    return s.replace("\"", "&quot;");
   }
 }

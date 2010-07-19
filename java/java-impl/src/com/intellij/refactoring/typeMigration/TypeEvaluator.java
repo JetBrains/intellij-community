@@ -402,7 +402,7 @@ public class TypeEvaluator {
   public static PsiType substituteType(final PsiType migrationTtype, final PsiType originalType, final boolean isContraVariantPosition) {
     if ( originalType instanceof PsiClassType && migrationTtype instanceof PsiClassType) {
       final PsiClass originalClass = ((PsiClassType)originalType).resolve();
-      if (isContraVariantPosition && ((PsiClassType)originalType).rawType().isAssignableFrom(((PsiClassType)migrationTtype).rawType())) {
+      if (isContraVariantPosition && TypeConversionUtil.erasure(originalType).isAssignableFrom(TypeConversionUtil.erasure(migrationTtype))) {
         final PsiClass psiClass = ((PsiClassType)migrationTtype).resolve();
         final PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(originalClass, psiClass, PsiSubstitutor.EMPTY);
         if (substitutor != null) {
@@ -413,7 +413,8 @@ public class TypeEvaluator {
           }
         }
       }
-      else if (!isContraVariantPosition && ((PsiClassType)migrationTtype).rawType().isAssignableFrom(((PsiClassType)originalType).rawType())) {
+      else if (!isContraVariantPosition && TypeConversionUtil.erasure(migrationTtype).isAssignableFrom(TypeConversionUtil.erasure(
+        originalType))) {
         final PsiType psiType = substituteType(migrationTtype, originalType, false, originalClass, JavaPsiFacade.getElementFactory(originalClass.getProject()).createType(originalClass, PsiSubstitutor.EMPTY));
         if (psiType != null) {
           return psiType;

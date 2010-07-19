@@ -13,6 +13,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
+import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.util.IncorrectOperationException;
@@ -31,7 +32,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
 
   @Override
   protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk15("java 1.5");
+    return JavaSdkImpl.getMockJdk17("java 1.5");
   }
 
   public void testExitPoints1() throws Exception {
@@ -166,6 +167,12 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   public void testAnonInner() throws Exception {
     doTest();
   }
+
+
+  public void testConflictingAnonymous() throws Exception {
+    doTest();
+  }
+
 
   public void testFinalParamUsedInsideAnon() throws Exception {
     CodeStyleSettingsManager.getSettings(getProject()).GENERATE_FINAL_PARAMETERS = false;
@@ -448,6 +455,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doDuplicatesTest();
   }
 
+  public void testParametersFromAnonymous() throws Exception {
+    doTest();
+  }
+
   private void doPrepareErrorTest(final String expectedMessage) throws Exception {
     String expectedError = null;
     try {
@@ -502,6 +513,12 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     }
     else {
       elements = CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset);
+    }
+    if (elements.length == 0) {
+      final PsiExpression expression = IntroduceVariableBase.getSelectedExpression(project, file, startOffset, endOffset);
+      if (expression != null) {
+        elements = new PsiElement[]{expression};
+      }
     }
     assertTrue(elements.length > 0);
 

@@ -87,7 +87,7 @@ public class UpdateHighlightersUtil {
       List<HighlightInfo> infosToRemove = new ArrayList<HighlightInfo>();
       for (HighlightInfo info : infos) {
         if (info.group == group) {
-          manager.removeEditorAnnotation(fileEditor, info.fileLevelComponent);
+          manager.removeTopComponent(fileEditor, info.fileLevelComponent);
           infosToRemove.add(info);
         }
       }
@@ -340,7 +340,7 @@ public class UpdateHighlightersUtil {
       if (fileEditor instanceof TextEditor) {
         FileLevelIntentionComponent component = new FileLevelIntentionComponent(info.description, info.severity, info.quickFixActionRanges,
                                                                                 project, psiFile, ((TextEditor)fileEditor).getEditor());
-        manager.showEditorAnnotation(fileEditor, component);
+        manager.addTopComponent(fileEditor, component);
         List<HighlightInfo> fileLevelInfos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
         if (fileLevelInfos == null) {
           fileLevelInfos = new ArrayList<HighlightInfo>();

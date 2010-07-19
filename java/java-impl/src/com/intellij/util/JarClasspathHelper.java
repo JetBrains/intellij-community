@@ -17,29 +17,41 @@ package com.intellij.util;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerProjectExtension;
+import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.OrderedSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
 
 /**
  * @author Dmitry Avdeev
  */
 public class JarClasspathHelper {
 
-  public static void patchFiles(VirtualFile[] files, Project project) {
+  public static OrderedSet<VirtualFile> patchFiles(OrderedSet<VirtualFile> files, Project project) {
     if (!Registry.is("jar.build")) {
-      return;
+      return files;
     }
     String path = getJarsPath(project);
-    for (int i = 0, filesLength = files.length; i < filesLength; i++) {
-      VirtualFile file = files[i];
-
+    final OrderedSet<VirtualFile> result = new OrderedSet<VirtualFile>(TObjectHashingStrategy.CANONICAL);
+    final Collection<VirtualFile> modulesOutputs =
+      new HashSet<VirtualFile>(Arrays.asList(OrderEnumerator.orderEntries(project).withoutLibraries().withoutSdk().getClassesRoots()));
+    for (VirtualFile file : files) {
       VirtualFile jar = getJarFile(path, file.getName());
-      if (jar != null) {
-        files[i] = jar;
+      if (modulesOutputs.contains(file) && jar != null) {
+        result.add(jar);
+      }
+      else {
+        result.add(file);
       }
     }
+    return result;
   }
 
   @Nullable

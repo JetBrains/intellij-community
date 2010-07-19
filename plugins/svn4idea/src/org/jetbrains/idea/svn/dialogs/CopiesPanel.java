@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DottedBorder;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.containers.Convertor;
@@ -113,12 +114,12 @@ public class CopiesPanel {
     myRefreshLabel = new LinkLabel("Refresh", null, new LinkListener() {
       public void linkSelected(LinkLabel aSource, Object aLinkData) {
         if (myRefreshLabel.isEnabled()) {
-          myVcs.invokeRefreshSvnRoots(false);
+          myVcs.invokeRefreshSvnRoots(true);
           myRefreshLabel.setEnabled(false);
         }
       }
     });
-    myHolder = new JScrollPane(holderPanel);
+    myHolder = ScrollPaneFactory.createScrollPane(holderPanel);
     setFocusableForLinks(myRefreshLabel);
     refreshView.run();
     initView();
@@ -181,6 +182,16 @@ public class CopiesPanel {
       final JTextField format = createField("Format: " + wcInfo.getFormat().getName());
       copyPanel.add(format, gb1);
 
+      gb1.gridx = 2;
+      final LinkLabel changeFormatLabel = new LinkLabel("Change", null, new LinkListener() {
+        public void linkSelected(LinkLabel aSource, Object aLinkData) {
+          changeFormat(wcInfo);
+        }
+      });
+      copyPanel.add(changeFormatLabel, gb1);
+      setFocusableForLinks(changeFormatLabel);
+      gb1.gridx = 0;
+
       ++ gb1.gridy;
       final JTextField depth = createField("Depth: " + wcInfo.getStickyDepth().getName());
       copyPanel.add(depth, gb1);
@@ -223,17 +234,9 @@ public class CopiesPanel {
       gb1.gridwidth = 1;
       gb1.insets.top = 5;
       ++ gb1.gridy;
-      final LinkLabel formatLabel = new LinkLabel("Change Format", null, new LinkListener() {
-        public void linkSelected(LinkLabel aSource, Object aLinkData) {
-          changeFormat(wcInfo);
-        }
-      });
-      copyPanel.add(formatLabel, gb1);
-      setFocusableForLinks(formatLabel);
 
       final VirtualFile vf = lfs.refreshAndFindFileByIoFile(new File(wcInfo.getPath()));
       final VirtualFile root = (vf == null) ? wcInfo.getVcsRoot() : vf;
-      ++ gb1.gridx;
       final LinkLabel configureBranchesLabel = new LinkLabel("Configure Branches", null, new LinkListener() {
         public void linkSelected(LinkLabel aSource, Object aLinkData) {
           BranchConfigurationDialog.configureBranches(myProject, root, true);
@@ -245,7 +248,7 @@ public class CopiesPanel {
       copyPanel.add(configureBranchesLabel, gb1);
       setFocusableForLinks(configureBranchesLabel);
 
-      ++ gb1.gridx;
+      ++ gb1.gridy;
       final LinkLabel mergeLabel = new LinkLabel("Merge from...", null);
       mergeLabel.setListener(new LinkListener() {
         public void linkSelected(LinkLabel aSource, Object aLinkData) {
@@ -255,6 +258,9 @@ public class CopiesPanel {
       if (root == null) {
         mergeLabel.setEnabled(false); //+-
       }
+      final Font font = mergeLabel.getFont();
+      mergeLabel.setFont(font.deriveFont(Font.BOLD));
+      mergeLabel.setForeground(mergeLabel.getForeground().darker());
       copyPanel.add(mergeLabel, gb1);
       setFocusableForLinks(mergeLabel);
     }

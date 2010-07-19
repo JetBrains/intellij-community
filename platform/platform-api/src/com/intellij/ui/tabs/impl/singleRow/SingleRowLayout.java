@@ -17,6 +17,7 @@ package com.intellij.ui.tabs.impl.singleRow;
 
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.*;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;

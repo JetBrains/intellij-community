@@ -45,6 +45,7 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -80,7 +81,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     myOptions = dialog;
     PsiMember[] members = dialog.getSelectedMembers();
     myMembersToMove.clear();
-    myMembersToMove.addAll(Arrays.asList(members));
+    ContainerUtil.addAll(myMembersToMove, members);
 
     setCommandName(members);
 

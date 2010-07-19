@@ -20,11 +20,13 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
@@ -293,13 +295,18 @@ public class MavenRootModelAdapter {
   }
 
   public Library findLibrary(final MavenArtifact artifact) {
-    return myRootModel.processOrder(new RootPolicy<Library>() {
+    final String name = makeLibraryName(artifact);
+    final Ref<Library> result = Ref.create(null);
+    myRootModel.orderEntries().forEachLibrary(new Processor<Library>() {
       @Override
-      public Library visitLibraryOrderEntry(LibraryOrderEntry e, Library result) {
-        String name = makeLibraryName(artifact);
-        return name.equals(e.getLibraryName()) ? e.getLibrary() : result;
+      public boolean process(Library library) {
+        if (name.equals(library.getName())) {
+          result.set(library);
+        }
+        return true;
       }
-    }, null);
+    });
+    return result.get();
   }
 
   private static String makeLibraryName(MavenArtifact artifact) {

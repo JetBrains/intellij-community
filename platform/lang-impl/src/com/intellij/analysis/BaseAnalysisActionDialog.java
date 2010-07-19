@@ -152,8 +152,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     if (searchInLib && GlobalSearchScope.projectScope(myProject).getDisplayName().equals(preselect)) {
       preselect = GlobalSearchScope.allScope(myProject).getDisplayName();
     }
-    if (GlobalSearchScope.allScope(myProject).getDisplayName().equals(preselect)) {
-      myAnalysisOptions.SCOPE_TYPE = AnalysisScope.CUSTOM;
+    if (GlobalSearchScope.allScope(myProject).getDisplayName().equals(preselect) && myAnalysisOptions.SCOPE_TYPE == AnalysisScope.CUSTOM) {
       myAnalysisOptions.CUSTOM_SCOPE_NAME = preselect;
       searchInLib = true;
     }

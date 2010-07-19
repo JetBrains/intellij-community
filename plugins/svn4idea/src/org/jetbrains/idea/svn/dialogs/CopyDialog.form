@@ -17,7 +17,7 @@
           <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="label.copy.comment"/>
         </properties>
       </component>
-      <scrollpane id="57f3f">
+      <scrollpane class="com.intellij.ui.components.JBScrollPane" id="57f3f">
         <constraints>
           <grid row="3" column="0" row-span="1" col-span="3" vsize-policy="6" hsize-policy="6" anchor="8" fill="3" indent="0" use-parent-layout="false"/>
           <gridbag top="2" left="2" bottom="2" right="2" weightx="1.0" weighty="1.0"/>

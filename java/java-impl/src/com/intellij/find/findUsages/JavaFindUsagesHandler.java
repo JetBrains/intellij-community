@@ -49,7 +49,10 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 
 /**
  * @author peter
@@ -186,10 +189,10 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
           if (doSearch) {
             final List<PsiElement> elements = new ArrayList<PsiElement>();
             if (getter != null) {
-              elements.addAll(Arrays.asList(SuperMethodWarningUtil.checkSuperMethods(getter, ACTION_STRING)));
+              ContainerUtil.addAll(elements, SuperMethodWarningUtil.checkSuperMethods(getter, ACTION_STRING));
             }
             if (setter != null) {
-              elements.addAll(Arrays.asList(SuperMethodWarningUtil.checkSuperMethods(setter, ACTION_STRING)));
+              ContainerUtil.addAll(elements, SuperMethodWarningUtil.checkSuperMethods(setter, ACTION_STRING));
             }
             return elements.toArray(new PsiElement[elements.size()]);
           }
@@ -415,7 +418,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         PsiClass[] classes = JavaDirectoryService.getInstance().getClasses(dir);
-        array.addAll(Arrays.asList(classes));
+        ContainerUtil.addAll(array, classes);
         if (includeSubdirs) {
           PsiDirectory[] dirs = dir.getSubdirectories();
           for (PsiDirectory directory : dirs) {
@@ -584,13 +587,14 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
     final SearchScope searchScope = options.searchScope;
     if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()){
       PsiMethod method = (PsiMethod)element;
-      if (options.isIncludeOverloadUsages) {
-        for (PsiMethod constructor : method.getContainingClass().getConstructors()) {
-          addConstructorUsages(constructor, searchScope, result, options);
-        }
-      }
-      else {
-        addConstructorUsages(method, searchScope, result, options);
+      final PsiClass parentClass = method.getContainingClass();
+
+      if (parentClass != null) {
+        MethodReferencesSearch.search(new MethodReferencesSearch.SearchParameters(method, searchScope, !options.isIncludeOverloadUsages, options.fastTrack)).forEach(new ReadActionProcessor<PsiReference>() {
+          public boolean processInReadAction(final PsiReference ref) {
+            return addResult(result, ref, options, parentClass);
+          }
+        });
       }
       return;
     }
@@ -607,17 +611,6 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
     } else {
       ReferencesSearch.search(new ReferencesSearch.SearchParameters(element, searchScope, false, options.fastTrack)).forEach(consumer);
     }
-  }
-
-  private static void addConstructorUsages(PsiMethod method, SearchScope searchScope, final Processor<UsageInfo> result, final FindUsagesOptions options) {
-    final PsiClass parentClass = method.getContainingClass();
-    if (parentClass == null) return;
-
-    ReferencesSearch.search(new ReferencesSearch.SearchParameters(method, searchScope, false, options.fastTrack)).forEach(new ReadActionProcessor<PsiReference>() {
-      public boolean processInReadAction(final PsiReference ref) {
-        return addResult(result, ref, options, parentClass);
-      }
-    });
   }
 
   public static void addResult(Processor<UsageInfo> total, PsiElement element, FindUsagesOptions options, PsiElement refElement) {

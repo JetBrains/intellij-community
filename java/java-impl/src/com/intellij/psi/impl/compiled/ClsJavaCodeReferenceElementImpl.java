@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -35,8 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 
 public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements PsiJavaCodeReferenceElement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsJavaCodeReferenceElementImpl");
-
   private final PsiElement myParent;
   private final String myCanonicalText;
   private final String myQualifiedName;
@@ -44,6 +41,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   private volatile PsiType[] myTypeParametersCachedTypes = null; // in left-to-right-order
   @NonNls private static final String EXTENDS_PREFIX = "?extends";
   @NonNls private static final String SUPER_PREFIX = "?super";
+  public static final ClsJavaCodeReferenceElementImpl[] EMPTY_ARRAY = new ClsJavaCodeReferenceElementImpl[0];
 
   public ClsJavaCodeReferenceElementImpl(PsiElement parent, String canonicalText) {
     myParent = parent;

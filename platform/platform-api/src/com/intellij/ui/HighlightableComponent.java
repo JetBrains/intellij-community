@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntObjectHashMap;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -347,6 +348,29 @@ public class HighlightableComponent extends JComponent {
     return myIcon.getIconWidth() + myIconTextGap;
   }
 
+  @Nullable
+  public HighlightedRegion findRegionByX(int x) {
+    FontMetrics defFontMetrics = getFontMetrics(getFont());
+
+    int width = getTextOffset();
+    if (width > x) return null;
+
+    if (myText.length() != 0 && myHighlightedRegions.size() != 0) {
+      int endIndex = 0;
+      for (HighlightedRegion hRegion : myHighlightedRegions) {
+        width += defFontMetrics.stringWidth(myText.substring(endIndex, hRegion.startOffset));
+        endIndex = hRegion.endOffset;
+        if (width > x) return null;
+
+        String text = getRegionText(hRegion);
+        FontMetrics fontMetrics = myFontMetrics.get(hRegion.textAttributes.getFontType());
+        width += fontMetrics.stringWidth(text);
+        if (width > x) return hRegion;
+      }
+    }
+    return null;
+  }
+
   public Dimension getPreferredSize() {
     FontMetrics defFontMetrics = getFontMetrics(getFont());
 
@@ -359,24 +383,10 @@ public class HighlightableComponent extends JComponent {
       else{
         int endIndex = 0;
         for (HighlightedRegion hRegion : myHighlightedRegions) {
-
-          String text = myText.substring(endIndex, hRegion.startOffset);
+          width += defFontMetrics.stringWidth(myText.substring(endIndex, hRegion.startOffset));
           endIndex = hRegion.endOffset;
 
-          width += defFontMetrics.stringWidth(text);
-
-          if (hRegion.endOffset > myText.length()) {
-            if (hRegion.startOffset < myText.length()) {
-              text = myText.substring(hRegion.startOffset);
-            }
-            else {
-              text = "";
-            }
-          }
-          else {
-            text = myText.substring(hRegion.startOffset, hRegion.endOffset);
-          }
-
+          String text = getRegionText(hRegion);
           FontMetrics fontMetrics = myFontMetrics.get(hRegion.textAttributes.getFontType());
           width += fontMetrics.stringWidth(text);
         }
@@ -391,5 +401,21 @@ public class HighlightableComponent extends JComponent {
     }
 
     return new Dimension(width + 2, height);
+  }
+
+  private String getRegionText(HighlightedRegion hRegion) {
+    String text;
+    if (hRegion.endOffset > myText.length()) {
+      if (hRegion.startOffset < myText.length()) {
+        text = myText.substring(hRegion.startOffset);
+      }
+      else {
+        text = "";
+      }
+    }
+    else {
+      text = myText.substring(hRegion.startOffset, hRegion.endOffset);
+    }
+    return text;
   }
 }

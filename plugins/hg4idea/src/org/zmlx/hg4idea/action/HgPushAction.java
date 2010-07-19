@@ -15,7 +15,6 @@ package org.zmlx.hg4idea.action;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.zmlx.hg4idea.command.HgPushCommand;
-import org.zmlx.hg4idea.command.HgCommandResult;
 import org.zmlx.hg4idea.ui.HgPushDialog;
 
 import java.util.Collection;
@@ -43,14 +42,11 @@ public class HgPushAction extends HgAbstractGlobalAction {
       }
 
       public void execute() {
-        HgPushCommand command = new HgPushCommand(
-          project, dialog.getRepository(), dialog.getTarget()
-        );
-        if (dialog.isRevisionSelected()) {
-          command.setRevision(dialog.getRevision());
-        }
-        HgCommandResult result = command.execute();
-        new HgCommandResultNotifier(project).process(result);
+        HgPushCommand command = new HgPushCommand(project, dialog.getRepository(), dialog.getTarget());
+        command.setRevision(dialog.getRevision());
+        command.setForce(dialog.isForce());
+        command.setBranch(dialog.getBranch());
+        new HgCommandResultNotifier(project).process(command.execute());
       }
     };
   }

@@ -41,6 +41,11 @@ public abstract class RenameableFakePsiElement extends FakePsiElement implements
     myParent = parent;
   }
 
+  @Override
+  public PsiElement getParent() {
+    return myParent;
+  }
+
   public PsiFile getContainingFile() {
     return myParent.getContainingFile();
   }

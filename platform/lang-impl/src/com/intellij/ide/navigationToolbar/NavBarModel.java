@@ -46,6 +46,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -371,13 +372,13 @@ public class NavBarModel {
     if (!(object instanceof Project) && rootElement instanceof Module && ((Module)rootElement).isDisposed()) return result;
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     if (object instanceof Project) {
-      result.addAll(Arrays.asList(ApplicationManager.getApplication().runReadAction(
-          new Computable<Module[]>() {
-            public Module[] compute() {
-              return ModuleManager.getInstance((Project)object).getModules();
-            }
+      ContainerUtil.addAll(result, ApplicationManager.getApplication().runReadAction(
+        new Computable<Module[]>() {
+          public Module[] compute() {
+            return ModuleManager.getInstance((Project)object).getModules();
           }
-      )));
+        }
+      ));
     }
     else if (object instanceof Module) {
       Module module = (Module)object;

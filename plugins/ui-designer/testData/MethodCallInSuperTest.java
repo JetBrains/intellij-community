@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import javax.swing.*;
-import java.awt.*;
 
 public class MethodCallInSuperTest extends JDialog {
   private JComponent myRootComponent;
 
   public MethodCallInSuperTest() {
-    super(getNullFrame(), "", true);
+    super(getNullDialog(), "", true);
     getContentPane().add(myRootComponent);
   }
   
-  private static JFrame getNullFrame() {
+  private static JDialog getNullDialog() {
     return null;
   }
 }

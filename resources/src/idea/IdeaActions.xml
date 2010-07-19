@@ -269,6 +269,7 @@
 
       <action id="ScanSourceCommentsAction" internal="true" class="com.intellij.tools.ScanSourceCommentsAction" text="Dump all comments in the project"/>
       <action internal="true" id="CompilerTest" class="com.intellij.compiler.impl.javaCompiler.api.CompilerPerfTestAction" text="Test Rebuild Performance"/>
+      <action internal="true" id="GenerateDomModel" class="com.intellij.util.dom.generator.GenerateDomModelAction" text="Generate Dom Model"/>
 
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
@@ -677,7 +678,4 @@
 
     
   </actions>
-
-  <xi:include href="XmlActions.xml" xpointer="xpointer(/component/*)"/>
-
 </component>

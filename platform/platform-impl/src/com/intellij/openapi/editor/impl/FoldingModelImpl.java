@@ -84,8 +84,14 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
   }
 
   @NotNull
-  public FoldRegion getFirstRegion(@NotNull FoldingGroup group) {
+  public FoldRegion getFirstRegion(@NotNull FoldingGroup group, FoldRegion child) {
     final List<FoldRegion> regions = getGroupedRegions(group);
+    if (regions.isEmpty()) {
+      final boolean inAll = Arrays.asList(getAllFoldRegions()).contains(child);
+      final boolean inAllPlusInvalid = Arrays.asList(getAllFoldRegionsIncludingInvalid()).contains(child);
+      throw new AssertionError("Folding group without children; the known child is in all: " + inAll + "; in all+invalid: " + inAllPlusInvalid);
+    }
+
     FoldRegion main = regions.get(0);
     for (int i = 1; i < regions.size(); i++) {
       FoldRegion region = regions.get(i);
@@ -450,7 +456,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
         }
       }
 
-      myCachedVisible = visible.toArray(new FoldRegion[visible.size()]);
+      myCachedVisible = visible.isEmpty() ? FoldRegion.EMPTY_ARRAY : visible.toArray(new FoldRegion[visible.size()]);
 
       Arrays.sort(myCachedVisible, BY_END_OFFSET_REVERSE);
 

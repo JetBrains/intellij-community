@@ -25,13 +25,17 @@ import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
-import net.sf.cglib.core.CollectionUtils;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author max
@@ -138,6 +142,13 @@ class UndoableGroup {
         }
       }
     });
+    commitAllDocuments();
+  }
+
+  private static void commitAllDocuments() {
+    for (Project p : ProjectManager.getInstance().getOpenProjects()) {
+      PsiDocumentManager.getInstance(p).commitAllDocuments();
+    }
   }
 
   private void reportUndoProblem(UnexpectedUndoException e, boolean isUndo) {

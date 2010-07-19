@@ -25,6 +25,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.SizedIcon;
 import com.intellij.ui.plaf.beg.BegMenuItemUI;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
@@ -41,7 +42,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ActionMenuItem extends JMenuItem {
-  private static final Icon ourCheckedIcon = IconLoader.getIcon("/actions/check.png");
+  private static final Icon ourCheckedIcon = new SizedIcon(IconLoader.getIcon("/actions/check.png"), 18, 18);
   private static final Icon ourUncheckedIcon = new EmptyIcon(18, 18);
 
   private final AnAction myAction;

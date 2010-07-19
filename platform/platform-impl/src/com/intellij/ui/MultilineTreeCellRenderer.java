@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -381,7 +382,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Tr
   public static JScrollPane installRenderer(final JTree tree, final MultilineTreeCellRenderer renderer) {
     final TreeCellRenderer defaultRenderer = tree.getCellRenderer();
 
-    JScrollPane scrollpane = new JScrollPane(tree){
+    JScrollPane scrollpane = new JBScrollPane(tree){
       private int myAddRemoveCounter = 0;
       private boolean myShouldResetCaches = false;
       public void setSize(Dimension d) {

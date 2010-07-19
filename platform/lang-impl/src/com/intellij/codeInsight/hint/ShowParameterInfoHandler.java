@@ -25,6 +25,7 @@ import com.intellij.lang.parameterInfo.LanguageParameterInfo;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -66,7 +67,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     context.setHighlightedElement(highlightedElement);
 
     final Language language = psiElement.getLanguage();
-    ParameterInfoHandler[] handlers = getHandlers(language, file.getViewProvider().getBaseLanguage());
+    ParameterInfoHandler[] handlers = getHandlers(project, language, file.getViewProvider().getBaseLanguage());
     if (handlers == null) handlers = new ParameterInfoHandler[0];
 
     Lookup lookup = LookupManager.getInstance(project).getActiveLookup();
@@ -113,10 +114,10 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
   }
 
   @Nullable
-  public static ParameterInfoHandler[] getHandlers(final Language... languages) {
+  public static ParameterInfoHandler[] getHandlers(Project project, final Language... languages) {
     Set<ParameterInfoHandler> handlers = new THashSet<ParameterInfoHandler>();
     for (final Language language : languages) {
-      handlers.addAll(LanguageParameterInfo.INSTANCE.allForLanguage(language));
+      handlers.addAll(DumbService.getInstance(project).filterByDumbAwareness(LanguageParameterInfo.INSTANCE.allForLanguage(language)));
     }
     if (handlers.isEmpty()) return null;
     return handlers.toArray(new ParameterInfoHandler[handlers.size()]);

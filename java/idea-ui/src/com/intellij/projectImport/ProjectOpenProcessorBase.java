@@ -34,9 +34,7 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.CompilerProjectExtension;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
@@ -73,11 +71,22 @@ public abstract class ProjectOpenProcessorBase extends ProjectOpenProcessor {
   public boolean canOpenProject(final VirtualFile file) {
     final String[] supported = getSupportedExtensions();
     if (supported != null) {
-      final String fileName = file.getName();
-      for (String name : supported) {
-        if (fileName.equals(name)) {
-          return true;
+      if (file.isDirectory()) {
+        for (VirtualFile child : file.getChildren()) {
+          if (canOpenFile(child, supported)) return true;
         }
+        return false;
+      }
+      if (canOpenFile(file, supported)) return true;
+    }
+    return false;
+  }
+
+  protected static boolean canOpenFile(VirtualFile file, String[] supported) {
+    final String fileName = file.getName();
+    for (String name : supported) {
+      if (fileName.equals(name)) {
+        return true;
       }
     }
     return false;
@@ -98,6 +107,15 @@ public abstract class ProjectOpenProcessorBase extends ProjectOpenProcessor {
   public Project doOpenProject(@NotNull VirtualFile virtualFile, Project projectToClose, boolean forceOpenInNewFrame) {
     try {
       final WizardContext wizardContext = new WizardContext(null);
+      if (virtualFile.isDirectory()) {
+        final String[] supported = getSupportedExtensions();
+        for (VirtualFile file : virtualFile.getChildren()) {
+          if (canOpenFile(file, supported)) {
+            virtualFile = file;
+            break;
+          }
+        }
+      }
       if (!doQuickImport(virtualFile, wizardContext)) return null;
 
       if (wizardContext.getProjectName() == null) {

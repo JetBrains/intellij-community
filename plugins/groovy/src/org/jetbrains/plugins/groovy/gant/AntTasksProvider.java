@@ -19,19 +19,22 @@ import com.intellij.lang.ant.psi.impl.ReflectedProject;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -73,15 +76,18 @@ public class AntTasksProvider {
       public Result<Set<LightMethodBuilder>> compute() {
         Map<String, Class> antObjects = getAntObjects((GroovyFile)file);
 
-        final Set<LightMethodBuilder> result = new HashSet<LightMethodBuilder>();
+        final Set<LightMethodBuilder> methods = new HashSet<LightMethodBuilder>();
 
         final Project project = file.getProject();
         final PsiType closureType = JavaPsiFacade.getElementFactory(project).createTypeFromText(GrClosableBlock.GROOVY_LANG_CLOSURE, file);
 
         for (String name : antObjects.keySet()) {
-          result.add(new AntBuilderMethod(file, name, closureType, antObjects.get(name)));
+          methods.add(new AntBuilderMethod(file, name, closureType, antObjects.get(name)));
         }
-        return Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, ProjectRootManager.getInstance(project));
+        final Result<Set<LightMethodBuilder>> result =
+          Result.create(methods, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, ProjectRootManager.getInstance(project));
+        result.setLockValue(true);
+        return result;
       }
     }, false);
   }
@@ -94,7 +100,7 @@ public class AntTasksProvider {
           final Module module = ModuleUtil.findModuleForPsiElement(groovyFile);
           Set<VirtualFile> jars = new HashSet<VirtualFile>();
           if (module != null) {
-            jars.addAll(Arrays.asList(ModuleRootManager.getInstance(module).getFiles(OrderRootType.CLASSES)));
+            ContainerUtil.addAll(jars, OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots());
           }
 
           if (groovyFile.isScript() && GroovyScriptType.getScriptType(groovyFile) instanceof GantScriptType) {
@@ -109,8 +115,14 @@ public class AntTasksProvider {
           final ReflectedProject antProject = ReflectedProject.getProject(loader);
 
           final Map<String, Class> result = new HashMap<String, Class>();
-          result.putAll(antProject.getTaskDefinitions());
-          result.putAll(antProject.getDataTypeDefinitions());
+          final Map<String, Class> taskDefinitions = antProject.getTaskDefinitions();
+          if (taskDefinitions != null) {
+            result.putAll(taskDefinitions);
+          }
+          final Map<String, Class> dataTypeDefinitions = antProject.getDataTypeDefinitions();
+          if (dataTypeDefinitions != null) {
+            result.putAll(dataTypeDefinitions);
+          }
           return Result.create(result, ProjectRootManager.getInstance(groovyFile.getProject()));
         }
 

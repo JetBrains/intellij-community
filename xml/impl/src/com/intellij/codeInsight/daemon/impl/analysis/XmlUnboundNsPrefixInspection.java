@@ -116,7 +116,7 @@ public class XmlUnboundNsPrefixInspection extends XmlSuppressableInspectionTool 
     if (!HighlightLevelUtil.shouldInspect(containingFile)) return;
 
     final XmlExtension extension = XmlExtension.getExtension(containingFile);
-    if (extension.isPrefixDeclared(context, namespacePrefix)) {
+    if (extension.getPrefixDeclaration(context, namespacePrefix) != null) {
       return;
     }
 

@@ -22,15 +22,15 @@ import java.lang.ref.WeakReference;
 
 public final class WeakKeymapManagerListener implements KeymapManagerListener{
   private final KeymapManagerEx myKeymapManager;
-  private final WeakReference myRef;
+  private final WeakReference<KeymapManagerListener> myRef;
 
   public WeakKeymapManagerListener(KeymapManagerEx keymapManager,KeymapManagerListener delegate){
     myKeymapManager=keymapManager;
-    myRef=new WeakReference(delegate);
+    myRef=new WeakReference<KeymapManagerListener>(delegate);
   }
 
   public void activeKeymapChanged(Keymap keymap){
-    KeymapManagerListener delegate=(KeymapManagerListener)myRef.get();
+    KeymapManagerListener delegate= myRef.get();
     if(delegate!=null){
       delegate.activeKeymapChanged(keymap);
     }else{

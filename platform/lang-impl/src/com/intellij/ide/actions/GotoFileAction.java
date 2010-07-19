@@ -28,22 +28,25 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -195,7 +198,7 @@ public class GotoFileAction extends GotoActionBase implements DumbAware {
      */
     private ElementsChooser<FileType> createFileTypeChooser(final GotoFileModel gotoFileModel) {
       List<FileType> elements = new ArrayList<FileType>();
-      elements.addAll(Arrays.asList(FileTypeManager.getInstance().getRegisteredFileTypes()));
+      ContainerUtil.addAll(elements, FileTypeManager.getInstance().getRegisteredFileTypes());
       Collections.sort(elements, FileTypeComparator.INSTANCE);
       final ElementsChooser<FileType> chooser = new ElementsChooser<FileType>(elements, true) {
         @Override

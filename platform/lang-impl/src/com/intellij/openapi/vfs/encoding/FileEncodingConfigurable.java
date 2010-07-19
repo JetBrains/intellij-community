@@ -29,6 +29,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -177,7 +178,7 @@ public class FileEncodingConfigurable implements SearchableConfigurable, NonDefa
   }
 
   private void createUIComponents() {
-    myTreePanel = ScrollPaneFactory.createScrollPane(new JTable());
+    myTreePanel = ScrollPaneFactory.createScrollPane(new JBTable());
   }
 
   public boolean needDisplay() {

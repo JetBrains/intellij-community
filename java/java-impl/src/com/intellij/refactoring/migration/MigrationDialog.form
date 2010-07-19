@@ -38,7 +38,7 @@
           <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
         </constraints>
       </vspacer>
-      <scrollpane id="3fbd" binding="myDescriptionScroll">
+      <scrollpane class="com.intellij.ui.components.JBScrollPane" id="3fbd" binding="myDescriptionScroll">
         <constraints>
           <xy x="5" y="44" width="426" height="22"/>
           <grid row="1" column="0" row-span="1" col-span="3" vsize-policy="7" hsize-policy="7" anchor="0" fill="3"/>

@@ -30,7 +30,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.scope.BaseScopeProcessor;
-import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubElement;
@@ -38,12 +37,14 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
@@ -60,7 +61,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -88,7 +88,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     if (stub instanceof GrFileStub) {
       return ((GrFileStub)stub).getPackageName().toString();
     }
-    GrPackageDefinition packageDef = findChildByClass(GrPackageDefinition.class);
+    GrPackageDefinition packageDef = getPackageDefinition();
     if (packageDef != null) {
       return packageDef.getPackageName();
     }
@@ -96,7 +96,8 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   }
 
   public GrPackageDefinition getPackageDefinition() {
-    return findChildByClass(GrPackageDefinition.class);
+    ASTNode node = calcTreeElement().findChildByType(GroovyElementTypes.PACKAGE_DEFINITION);
+    return node != null ? (GrPackageDefinition)node.getPsi() : null;
   }
 
   private GrParameter getSyntheticArgsParameter() {
@@ -119,15 +120,15 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     PsiClass scriptClass = getScriptClass();
     if (scriptClass != null) {
       if (!scriptClass.processDeclarations(processor, state, lastParent, place)) return false;
-      if (!ResolveUtil.processElement(processor, scriptClass)) return false;
+      if (!ResolveUtil.processElement(processor, scriptClass, state)) return false;
     }
 
     for (GrTypeDefinition definition : getTypeDefinitions()) {
-      if (!ResolveUtil.processElement(processor, definition)) return false;
+      if (!ResolveUtil.processElement(processor, definition, state)) return false;
     }
 
     if (lastParent != null && !(lastParent instanceof GrTypeDefinition) && scriptClass != null) {
-      if (!ResolveUtil.processElement(processor, getSyntheticArgsParameter())) return false;
+      if (!ResolveUtil.processElement(processor, getSyntheticArgsParameter(), state)) return false;
     }
 
     if (!processChildrenScopes(this, processor, state, lastParent, place)) return false;
@@ -135,8 +136,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     final ClassHint classHint = processor.getHint(ClassHint.KEY);
     final boolean processClasses = classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.CLASS);
 
-    final NameHint nameHint = processor.getHint(NameHint.KEY);
-    final String expectedName = nameHint == null ? null : nameHint.getName(state);
+    final String expectedName = ResolveUtil.getNameHint(processor);
 
     PsiScopeProcessor importProcessor = !processClasses || expectedName == null ? processor : new BaseScopeProcessor() {
       public boolean execute(PsiElement element, ResolveState state) {
@@ -159,12 +159,21 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     }
 
     if (classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.PACKAGE)) {
-      PsiPackage defaultPackage = JavaPsiFacade.getInstance(getProject()).findPackage("");
-      if (defaultPackage != null) {
-        for (PsiPackage subPackage : defaultPackage.getSubPackages(getResolveScope())) {
-          if (!ResolveUtil.processElement(processor, subPackage)) return false;
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+      if (expectedName != null) {
+        final PsiPackage pkg = facade.findPackage(expectedName);
+        if (pkg != null && !processor.execute(pkg, state)) {
+          return false;
+        }
+      } else {
+        PsiPackage defaultPackage = facade.findPackage("");
+        if (defaultPackage != null) {
+          for (PsiPackage subPackage : defaultPackage.getSubPackages(getResolveScope())) {
+            if (!ResolveUtil.processElement(processor, subPackage, state)) return false;
+          }
         }
       }
+
     }
 
     return true;
@@ -196,7 +205,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   private List<String> getImplicitlyImportedPackages() {
     final ArrayList<String> result = new ArrayList<String>();
     result.add(getPackageName());
-    result.addAll(Arrays.asList(IMPLICITLY_IMPORTED_PACKAGES));
+    ContainerUtil.addAll(result, IMPLICITLY_IMPORTED_PACKAGES);
     if (isScript()) {
       result.addAll(GroovyScriptType.getScriptType(this).appendImplicitImports(this));
     }
@@ -214,7 +223,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
     for (String implicitlyImportedClass : IMPLICITLY_IMPORTED_CLASSES) {
       PsiClass clazz = facade.findClass(implicitlyImportedClass, getResolveScope());
-      if (clazz != null && !ResolveUtil.processElement(processor, clazz)) return false;
+      if (clazz != null && !ResolveUtil.processElement(processor, clazz, state)) return false;
     }
     return true;
   }

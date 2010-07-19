@@ -18,7 +18,7 @@
     <action id="PreviousEditorTab" class="com.intellij.openapi.fileEditor.impl.SelectPreviousEditorTabAction"/>
     
     <action id="TextComponent.ClearAction" class="com.intellij.ui.ClearTextAction"/>
-    <action id="ToolWindowSwitcher" class="com.intellij.ide.actions.ToolWindowSwitcher" text="Switcher"/>
+    <action id="Switcher" class="com.intellij.ide.actions.Switcher" text="Switcher"/>
 
     <group id="EditorActions">
       <action id="EditorPageUp" class="com.intellij.openapi.editor.actions.PageUpAction"/>
@@ -428,7 +428,7 @@
       <separator/>
       <action id="NotificationTestAction" internal="true" class="com.intellij.notification.impl.actions.NotificationTestAction"
               text="Add Test Notification"/>
-
+      <action id="TestMessageBoxAction" internal="true" class="com.intellij.diagnostic.TestMessageBoxAction" text="Show Test Dialog"/>
       <separator/>
       <reference ref="MaintenanceGroup"/>
       

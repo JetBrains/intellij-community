@@ -250,6 +250,7 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder {
         boolean hasComponentInTab = false;
         int count = 0;
         for(ComponentPtr ptr: selectedElements) {
+          ptr.validate();
           if(ptr.isValid()) {
             final RadComponent component=ptr.getComponent();
             LOG.assertTrue(component!=null);

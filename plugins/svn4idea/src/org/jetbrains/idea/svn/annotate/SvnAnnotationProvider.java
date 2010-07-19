@@ -136,7 +136,8 @@ public class SvnAnnotationProvider implements AnnotationProvider {
             }
           };
 
-          final boolean supportsMergeinfo = SvnUtil.checkRepositoryVersion15(myVcs, url);
+          final boolean calculateMergeinfo = SvnConfiguration.getInstance(myVcs.getProject()).SHOW_MERGE_SOURCES_IN_ANNOTATE &&
+                                             SvnUtil.checkRepositoryVersion15(myVcs, url);
           final SVNRevision svnRevision = ((SvnRevisionNumber)revision.getRevisionNumber()).getRevision();
 
           final MySteppedLogGetter logGetter = new MySteppedLogGetter(myVcs, ioFile, progress, client, endRevision, result, url);
@@ -145,7 +146,7 @@ public class SvnAnnotationProvider implements AnnotationProvider {
 
           for (int i = 0; i < rp.size() - 1; i++) {
             //final SVNRevision rEnd = (i + 1) == rp.size() ? SVNRevision.create(0) : rp.get(i + 1);
-            client.doAnnotate(ioFile, svnRevision, rp.get(i + 1), rp.get(i), true, supportsMergeinfo, annotateHandler, null);
+            client.doAnnotate(ioFile, svnRevision, rp.get(i + 1), rp.get(i), true, calculateMergeinfo, annotateHandler, null);
           }
 
           annotation[0] = result;

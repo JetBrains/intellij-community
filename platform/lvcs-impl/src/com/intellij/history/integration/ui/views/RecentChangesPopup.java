@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -49,7 +50,7 @@ public class RecentChangesPopup {
       return;
     }
 
-    final JList list = new JList(createModel(cc));
+    final JList list = new JBList(createModel(cc));
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setCellRenderer(new RecentChangesListCellRenderer());
 
@@ -107,7 +108,7 @@ public class RecentChangesPopup {
     public Component getListCellRendererComponent(JList l, Object val, int i, boolean isSelected, boolean cellHasFocus) {
       RecentChange c = (RecentChange)val;
       myActionLabel.setText(c.getChangeName());
-      myDateLabel.setText(FormatUtil.formatTimestamp(c.getTimestamp()));
+      myDateLabel.setText(FormatUtil.formatRelativeTimestamp(c.getTimestamp()));
 
       updateColors(isSelected);
       return myPanel;

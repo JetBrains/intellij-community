@@ -890,7 +890,7 @@ public class StringUtil {
     if (separator.length() == 0) {
       return Collections.singletonList(s);
     }
-    ArrayList<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<String>();
     int pos = 0;
     while (true) {
       int index = s.indexOf(separator, pos);

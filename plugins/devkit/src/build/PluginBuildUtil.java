@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Computable;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
@@ -83,16 +84,13 @@ public class PluginBuildUtil {
     });
   }
 
-  public static void getLibraries(Module module, Set<Library> libs) {
-    OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
-    for (OrderEntry orderEntry : orderEntries) {
-      if (orderEntry instanceof LibraryOrderEntry) {
-        LibraryOrderEntry libEntry = (LibraryOrderEntry)orderEntry;
-        Library lib = libEntry.getLibrary();
-        final DependencyScope scope = libEntry.getScope();
-        if (lib == null || !scope.isForProductionRuntime()) continue;
-        libs.add(lib);
+  public static void getLibraries(Module module, final Set<Library> libs) {
+    ModuleRootManager.getInstance(module).orderEntries().productionOnly().runtimeOnly().forEachLibrary(new Processor<Library>() {
+      @Override
+      public boolean process(Library library) {
+        libs.add(library);
+        return true;
       }
-    }
+    });
   }
 }

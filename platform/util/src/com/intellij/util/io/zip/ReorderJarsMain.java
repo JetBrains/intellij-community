@@ -22,6 +22,7 @@ package com.intellij.util.io.zip;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 
 import java.io.File;
@@ -90,7 +91,7 @@ public class ReorderJarsMain {
   private static Set<String> loadIgnoredJars(String libPath) throws IOException {
     final File ignoredJarsFile = new File(libPath, "required_for_dist.txt");
     final Set<String> ignoredJars = new HashSet<String>();
-    ignoredJars.addAll(Arrays.asList(new String(FileUtil.loadFileText(ignoredJarsFile)).split("\r\n")));
+    ContainerUtil.addAll(ignoredJars, new String(FileUtil.loadFileText(ignoredJarsFile)).split("\r\n"));
     return ignoredJars;
   }
 

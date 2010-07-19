@@ -18,9 +18,10 @@ package org.jetbrains.idea.maven.project.actions;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 
-public class DownloadActionGroup extends DefaultActionGroup {
+public class DownloadActionGroup extends DefaultActionGroup implements DumbAware {
   @Override
   public void update(AnActionEvent e) {
     super.update(e);

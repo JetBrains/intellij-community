@@ -28,7 +28,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.xml.SchemaPrefix;
 import com.intellij.psi.impl.source.xml.TagNameReference;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
@@ -153,7 +156,12 @@ public abstract class XmlExtension {
     return HighlightInfoType.ERROR;
   }
 
-  public abstract boolean isPrefixDeclared(final XmlTag context, String namespacePrefix);
+  @Nullable
+  public abstract SchemaPrefix getPrefixDeclaration(final XmlTag context, String namespacePrefix);
+
+  public SearchScope getNsPrefixScope(XmlAttribute declaration) {
+    return new LocalSearchScope(declaration.getParent());
+  }
 
   public boolean shouldBeHighlightedAsTag(XmlTag tag) {
     return true;

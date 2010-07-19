@@ -16,6 +16,8 @@
 
 package com.intellij.history.integration;
 
+import com.intellij.openapi.util.text.StringUtil;
+
 import java.text.DateFormat;
 import java.util.Date;
 
@@ -23,7 +25,10 @@ public class FormatUtil {
   public static final DateFormat FORMAT = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
 
   public static String formatTimestamp(long t) {
-    DateFormat f = FORMAT;
-    return f.format(new Date(t));
+    return FORMAT.format(new Date(t));
+  }
+
+  public static String formatRelativeTimestamp(long t) {
+    return StringUtil.formatDate(t, FORMAT);
   }
 }

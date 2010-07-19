@@ -28,6 +28,7 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 
@@ -73,7 +74,7 @@ public class GenerateEqualsHelper implements Runnable {
     myCheckParameterWithInstanceof = useInstanceofToCheckParameterType;
 
     myNonNullSet = new HashSet<PsiField>();
-    myNonNullSet.addAll(Arrays.asList(nonNullFields));
+    ContainerUtil.addAll(myNonNullSet, nonNullFields);
     final PsiManager manager = PsiManager.getInstance(project);
 
     myFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
@@ -179,7 +180,7 @@ public class GenerateEqualsHelper implements Runnable {
       addClassInstance(buffer);
 
       ArrayList<PsiField> equalsFields = new ArrayList<PsiField>();
-      equalsFields.addAll(Arrays.asList(myEqualsFields));
+      ContainerUtil.addAll(equalsFields, myEqualsFields);
       Collections.sort(equalsFields, EqualsFieldsComparator.INSTANCE);
 
       for (PsiField field : equalsFields) {

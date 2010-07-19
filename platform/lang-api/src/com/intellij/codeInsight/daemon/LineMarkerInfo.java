@@ -18,10 +18,10 @@ package com.intellij.codeInsight.daemon;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -153,7 +153,12 @@ public class LineMarkerInfo<T extends PsiElement> {
     }
 
     public String getTooltipText() {
-      return myInfo.getLineMarkerTooltip();
+      try {
+        return myInfo.getLineMarkerTooltip();
+      }
+      catch (IndexNotReadyException ignored) {
+        return null;
+      }
     }
 
     public Alignment getAlignment() {

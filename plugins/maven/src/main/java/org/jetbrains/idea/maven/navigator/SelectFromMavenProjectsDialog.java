@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleNodeVisitor;
 import com.intellij.ui.treeStructure.SimpleTree;
@@ -90,7 +91,7 @@ public class SelectFromMavenProjectsDialog extends DialogWrapper {
 
   @Nullable
   protected JComponent createCenterPanel() {
-    final JScrollPane pane = new JScrollPane(myTree);
+    final JScrollPane pane = ScrollPaneFactory.createScrollPane(myTree);
     pane.setPreferredSize(new Dimension(320, 400));
     return pane;
   }

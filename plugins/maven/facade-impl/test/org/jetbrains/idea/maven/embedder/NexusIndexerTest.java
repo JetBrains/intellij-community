@@ -48,6 +48,11 @@ public class NexusIndexerTest extends MavenIndicesTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
+    updateSettingsXmlFully("<settings>" +
+                           "  <mirrors>" +
+                           "  </mirrors>" +
+                           "</settings>");
+
     myRepositoryHelper = new MavenCustomRepositoryHelper(myDir, "local1_index", "local1", "remote");
 
     myEmbedder = MavenFacadeEmbedderImpl.create(MavenFacadeManager.convertSettings(getMavenGeneralSettings()));

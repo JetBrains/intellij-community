@@ -17,6 +17,7 @@
 package com.intellij.execution.impl;
 
 import com.intellij.execution.*;
+import com.intellij.execution.configuration.ConfigurationFactoryEx;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -63,6 +64,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.net.URL;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 class RunConfigurable extends BaseConfigurable {
   private static final Icon ICON = IconLoader.getIcon("/general/configurableRunDebug.png");
@@ -105,7 +108,6 @@ class RunConfigurable extends BaseConfigurable {
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     UIUtil.setLineStyleAngled(myTree);
-    TreeToolTipHandler.install(myTree);
     TreeUtil.installActions(myTree);
     PopupHandler.installFollowingSelectionTreePopup(myTree, createActionsGroup(), ActionPlaces.UNKNOWN, ActionManager.getInstance());
     myTree.setCellRenderer(new ColoredTreeCellRenderer() {
@@ -646,8 +648,8 @@ class RunConfigurable extends BaseConfigurable {
     }
   }
 
-  private static String createUniqueName(DefaultMutableTreeNode typeNode) {
-    String str = ExecutionBundle.message("run.configuration.unnamed.name.prefix");
+  private static String createUniqueName(DefaultMutableTreeNode typeNode, @Nullable String baseName) {
+    String str = (baseName == null) ? ExecutionBundle.message("run.configuration.unnamed.name.prefix") : baseName;
     final ArrayList<String> currentNames = new ArrayList<String>();
     for (int i = 0; i < typeNode.getChildCount(); i++) {
       final Object userObject = ((DefaultMutableTreeNode)typeNode.getChildAt(i)).getUserObject();
@@ -659,9 +661,13 @@ class RunConfigurable extends BaseConfigurable {
       }
     }
     if (!currentNames.contains(str)) return str;
+
+    final Matcher matcher = Pattern.compile("(.*?)\\s*\\(\\d+\\)").matcher(str);
+    final String originalName = (matcher.matches()) ? matcher.group(1) : str;
     int i = 1;
     while (true) {
-      if (!currentNames.contains(str + i)) return str + i;
+      final String newName = String.format("%s (%d)", originalName, i);
+      if (!currentNames.contains(newName)) return newName;
       i++;
     }
   }
@@ -692,7 +698,10 @@ class RunConfigurable extends BaseConfigurable {
       sortTree(myRoot);
       ((DefaultTreeModel)myTree.getModel()).reload();
     }
-    final RunnerAndConfigurationSettings settings = getRunManager().createConfiguration(createUniqueName(node), factory);
+    final RunnerAndConfigurationSettings settings = getRunManager().createConfiguration(createUniqueName(node, null), factory);
+    if (factory instanceof ConfigurationFactoryEx) {
+      ((ConfigurationFactoryEx)factory).onNewConfigurationCreated(settings.getConfiguration());
+    }
     createNewConfiguration(settings, node);
   }
 
@@ -898,8 +907,12 @@ class RunConfigurable extends BaseConfigurable {
       try {
         final DefaultMutableTreeNode typeNode = getSelectedConfigurationTypeNode();
         final RunnerAndConfigurationSettings settings = configuration.getSnapshot();
-        final String copyName = createUniqueName(typeNode);
+        final String copyName = createUniqueName(typeNode, configuration.getNameText());
         settings.setName(copyName);
+        final ConfigurationFactory factory = settings.getFactory();
+        if (factory instanceof ConfigurationFactoryEx) {
+          ((ConfigurationFactoryEx)factory).onConfigurationCopied(settings.getConfiguration());
+        }
         final SingleConfigurationConfigurable<RunConfiguration> configurable = createNewConfiguration(settings, typeNode);
         IdeFocusManager.getInstance(myProject).requestFocus(configurable.getNameTextField(), true);
         configurable.getNameTextField().setSelectionStart(0);

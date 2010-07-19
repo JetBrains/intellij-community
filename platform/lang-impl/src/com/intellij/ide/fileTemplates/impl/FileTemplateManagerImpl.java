@@ -63,6 +63,7 @@ import java.util.*;
  * _inside_, not outside of the read action
  */
 public class FileTemplateManagerImpl extends FileTemplateManager implements ExportableComponent, JDOMExternalizable {
+  private static final FileTemplateManagerImpl[] EMPTY_ARRAY = new FileTemplateManagerImpl[0];
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl");
   @NonNls private static final String DEFAULT_TEMPLATE_EXTENSION = "ft";
   @NonNls private static final String TEMPLATES_DIR = "fileTemplates";
@@ -137,7 +138,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     myPatternsManager = patternsManager;
     myCodeTemplatesManager = codeTemplatesManager;
     myJ2eeTemplatesManager = j2eeTemplatesManager;
-    myChildren = internalTemplatesManager == null ? new FileTemplateManagerImpl[0] : new FileTemplateManagerImpl[]{internalTemplatesManager,patternsManager,codeTemplatesManager,j2eeTemplatesManager};
+    myChildren = internalTemplatesManager == null ? EMPTY_ARRAY : new FileTemplateManagerImpl[]{internalTemplatesManager,patternsManager,codeTemplatesManager,j2eeTemplatesManager};
 
     if (ApplicationManager.getApplication().isUnitTestMode() && defaultTemplatesDirName.equals(INTERNAL_DIR)) {
       for (String tname : Arrays.asList("Class", "AnnotationType", "Enum", "Interface")) {

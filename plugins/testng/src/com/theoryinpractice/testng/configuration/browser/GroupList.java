@@ -20,6 +20,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SortedListModel;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import com.theoryinpractice.testng.util.TestNGUtil;
 
@@ -42,7 +43,7 @@ public class GroupList extends JPanel
                 return s1.compareTo(s2);
             }
         });
-        list = new JList(model);
+        list = new JBList(model);
         Set<String> groups = TestNGUtil.getAnnotationValues("groups", classes);
       String[] array = ArrayUtil.toStringArray(groups);
         Arrays.sort(array);

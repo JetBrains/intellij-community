@@ -26,6 +26,9 @@ import org.jetbrains.annotations.NonNls;
  * single logical <code>(line; column)</code> pair matches soft wrap-introduced virtual space, i.e. different visual positions
  * correspond to the same logical position. It's convenient to store exact visual location details within the logical
  * position in order to relief further {@code 'logical position' -> 'visual position'} mapping.
+ * <p/>
+ * <b>Note:</b> two objects of this class are considered equal if their logical line and column are equal. I.e. all logical positions
+ * for soft wrap-introduced virtual space and the first document symbol after soft wrap are considered to be equal.
  *
  * @see Editor#offsetToLogicalPosition(int)
  * @see Editor#logicalPositionToOffset(LogicalPosition)
@@ -41,27 +44,25 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
 
   /**
    * Identifies if current logical position may be correctly mapped to visual position. E.g. we can define properties like
-   * {@link #softWrapLines}, {@link #softWrapColumnDiff} etc during {@code 'visual position' -> 'logical position'} conversion
+   * {@link #softWrapLinesBeforeCurrentLogicalLine}, {@link #softWrapColumnDiff} etc during {@code 'visual position' -> 'logical position'} conversion
    * in order to be able to easy match it back to visual position.
    */
   public final boolean visualPositionAware;
 
   /**
-   * Number of virtual soft wrap-introduced lines before the visual position that corresponds to the current logical position.
+   * Number of virtual soft wrap-introduced lines before the current logical line.
    *
    * @see #visualPositionAware
    */
-  public final int softWrapLines;
+  public final int softWrapLinesBeforeCurrentLogicalLine;
 
   /**
-   * Number of virtual soft lines introduced by the current soft wrap before the visual position that corresponds
+   * Number of virtual soft wrap introduced lines on a current logical line before the visual position that corresponds
    * to the current logical position.
-   * <p/>
-   * This value is assumed to be not greater than {@link #softWrapLines} all the time.
    *
    * @see #visualPositionAware
    */
-  public final int linesFromActiveSoftWrap;
+  public final int softWrapLinesOnCurrentLogicalLine;
 
   /**
    * Number to add to the {@link #column logical column} in order to get soft wrap-introduced visual column offset.
@@ -88,34 +89,26 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
     this(line, column, 0, 0, 0, 0, 0, false);
   }
 
-  public LogicalPosition(int line, int column, int softWrapLines, int linesFromActiveSoftWrap, int softWrapColumnDiff,
-                         int foldedLines, int foldingColumnDiff)
+  public LogicalPosition(int line, int column, int softWrapLinesBeforeCurrentLogicalLine, int softWrapLinesOnCurrentLogicalLine,
+                         int softWrapColumnDiff, int foldedLines, int foldingColumnDiff)
   {
-    this(line, column, softWrapLines, linesFromActiveSoftWrap, softWrapColumnDiff, foldedLines, foldingColumnDiff, true);
+    this(
+      line, column, softWrapLinesBeforeCurrentLogicalLine, softWrapLinesOnCurrentLogicalLine, softWrapColumnDiff, foldedLines,
+      foldingColumnDiff, true
+    );
   }
 
-  private LogicalPosition(int line, int column, int softWrapLines, int linesFromActiveSoftWrap, int softWrapColumnDiff, int foldedLines,
-                          int foldingColumnDiff, boolean visualPositionAware)
+  private LogicalPosition(int line, int column, int softWrapLinesBeforeCurrentLogicalLine, int softWrapLinesOnCurrentLogicalLine,
+                          int softWrapColumnDiff, int foldedLines, int foldingColumnDiff, boolean visualPositionAware)
   {
-    assert linesFromActiveSoftWrap <= softWrapLines;
-
     this.line = line;
     this.column = column;
-    this.softWrapLines = softWrapLines;
-    this.linesFromActiveSoftWrap = linesFromActiveSoftWrap;
+    this.softWrapLinesBeforeCurrentLogicalLine = softWrapLinesBeforeCurrentLogicalLine;
+    this.softWrapLinesOnCurrentLogicalLine = softWrapLinesOnCurrentLogicalLine;
     this.softWrapColumnDiff = softWrapColumnDiff;
     this.foldedLines = foldedLines;
     this.foldingColumnDiff = foldingColumnDiff;
     this.visualPositionAware = visualPositionAware;
-  }
-
-  /**
-   * Allows to answer if current position points to soft wrap-introduced visual line.
-   *
-   * @return    <code>true</code> if current position points to soft wrap-introduced visual line; <code>false</code> otherwise
-   */
-  public boolean isOnSoftWrappedLine() {
-    return softWrapColumnDiff != 0;
   }
 
   /**
@@ -127,38 +120,35 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
    * @return    visual position based on a state of the current logical position
    */
   public VisualPosition toVisualPosition() {
-    return new VisualPosition(line + softWrapLines - foldedLines, column + softWrapColumnDiff + foldingColumnDiff);
+    return new VisualPosition(
+      line + softWrapLinesBeforeCurrentLogicalLine + softWrapLinesOnCurrentLogicalLine - foldedLines,
+      column + softWrapColumnDiff + foldingColumnDiff
+    );
   }
 
   public boolean equals(Object o) {
     if (!(o instanceof LogicalPosition)) return false;
     final LogicalPosition logicalPosition = (LogicalPosition) o;
 
-    return column == logicalPosition.column && line == logicalPosition.line && softWrapLines == logicalPosition.softWrapLines
-           && linesFromActiveSoftWrap == logicalPosition.linesFromActiveSoftWrap
-           && softWrapColumnDiff == logicalPosition.softWrapColumnDiff && foldedLines == logicalPosition.foldedLines
-           && foldingColumnDiff == logicalPosition.foldingColumnDiff;
+    return column == logicalPosition.column && line == logicalPosition.line;
   }
 
   public int hashCode() {
-    int result = 29 * line + column;
-    result = result * 29 + softWrapLines;
-    result = 29 * result + softWrapColumnDiff;
-    result = 29 * result + foldedLines;
-    return 29 * result + foldingColumnDiff;
+    return 29 * line + column;
   }
 
   @NonNls
   public String toString() {
     return "LogicalPosition: line=" + line + " column=" + column + "; visual position aware=" + visualPositionAware
-           + " soft wrap: lines=" + softWrapLines + " (active=" + linesFromActiveSoftWrap + ") columns diff=" + softWrapColumnDiff
-           + "; folding: lines = " + foldedLines + " columns diff=" + foldingColumnDiff;
+           + "; soft wrap: lines=" + (softWrapLinesBeforeCurrentLogicalLine + softWrapLinesOnCurrentLogicalLine) + " (before=" +
+           softWrapLinesBeforeCurrentLogicalLine + "; current=" + softWrapLinesOnCurrentLogicalLine
+           + ") columns diff=" + softWrapColumnDiff + "; folding: lines = " + foldedLines + " columns diff=" + foldingColumnDiff;
   }
 
   public int compareTo(LogicalPosition position) {
     if (line != position.line) return line - position.line;
     if (column != position.column) return column - position.column;
-    if (softWrapLines != position.softWrapLines) return softWrapLines - position.softWrapLines;
+    if (softWrapLinesBeforeCurrentLogicalLine != position.softWrapLinesBeforeCurrentLogicalLine) return softWrapLinesBeforeCurrentLogicalLine - position.softWrapLinesBeforeCurrentLogicalLine;
     return softWrapColumnDiff - position.softWrapColumnDiff;
   }
 }

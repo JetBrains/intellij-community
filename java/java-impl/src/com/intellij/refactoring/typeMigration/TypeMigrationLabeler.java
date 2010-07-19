@@ -362,15 +362,7 @@ public class TypeMigrationLabeler {
     type = userDefinedType ? type : TypeEvaluator.substituteType(type, originalType, isContraVariantPosition);
 
     if (!userDefinedType) {
-      if (originalType instanceof PsiClassType) {
-        final PsiClassType psiClassType = (PsiClassType)originalType;
-        if (psiClassType.resolve() instanceof PsiTypeParameter) {
-          return false;
-        }
-        for (PsiType paramType : psiClassType.getParameters()) {
-          if (paramType instanceof PsiClassType && ((PsiClassType)paramType).resolve() instanceof PsiTypeParameter) return false;
-        }
-      }
+      if (typeContainsTypeParameters(originalType)) return false;
     }
 
     if (type instanceof PsiCapturedWildcardType) {
@@ -399,11 +391,7 @@ public class TypeMigrationLabeler {
       return !alreadyProcessed;
     }
     else if (resolved instanceof PsiParameter && ((PsiParameter)resolved).getDeclarationScope() instanceof PsiMethod) {
-      final PsiMethod method = PsiTreeUtil.getParentOfType(resolved, PsiMethod.class);
-
-      if (method == null) {
-        return false;
-      }
+      final PsiMethod method = (PsiMethod)((PsiParameter)resolved).getDeclarationScope();
 
       final int index = method.getParameterList().getParameterIndex(((PsiParameter)resolved));
       final PsiMethod[] methods = OverridingMethodsSearch.search(method, method.getUseScope(), false).toArray(PsiMethod.EMPTY_ARRAY);
@@ -433,6 +421,18 @@ public class TypeMigrationLabeler {
     }
   }
 
+  static boolean typeContainsTypeParameters(PsiType originalType) {
+    if (originalType instanceof PsiClassType) {
+      final PsiClassType psiClassType = (PsiClassType)originalType;
+      if (psiClassType.resolve() instanceof PsiTypeParameter) {
+        return true;
+      }
+      for (PsiType paramType : psiClassType.getParameters()) {
+        if (paramType instanceof PsiClassType && ((PsiClassType)paramType).resolve() instanceof PsiTypeParameter) return true;
+      }
+    }
+    return false;
+  }
 
 
   @Nullable

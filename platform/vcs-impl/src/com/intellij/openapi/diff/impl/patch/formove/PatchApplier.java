@@ -33,6 +33,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchAction;
@@ -77,6 +78,11 @@ public class PatchApplier<BinaryType extends FilePatch> {
       public VirtualFile getFile(FilePatch patch, String path) {
         return PathMerger.getFile(myBaseDirectory, path);
       }
+
+      @Override
+      public FilePath getPath(FilePatch patch, String path) {
+        return PathMerger.getFile(new FilePathImpl(myBaseDirectory), path);
+      }
     });
   }
 
@@ -87,7 +93,10 @@ public class PatchApplier<BinaryType extends FilePatch> {
   public ApplyPatchStatus execute(boolean showSuccessNotification) {
     myRemainingPatches.addAll(myPatches);
 
-    final ApplyPatchStatus status = ApplicationManager.getApplication().runWriteAction(new Computable<ApplyPatchStatus>() {
+    final ApplyPatchStatus patchStatus = nonWriteActionPreCheck();
+    if (ApplyPatchStatus.FAILURE.equals(patchStatus)) return patchStatus;
+
+    final ApplyPatchStatus applyStatus = ApplicationManager.getApplication().runWriteAction(new Computable<ApplyPatchStatus>() {
       public ApplyPatchStatus compute() {
         final Ref<ApplyPatchStatus> refStatus = new Ref<ApplyPatchStatus>(ApplyPatchStatus.FAILURE);
         CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
@@ -98,10 +107,16 @@ public class PatchApplier<BinaryType extends FilePatch> {
         return refStatus.get();
       }
     });
+    final ApplyPatchStatus status = ApplyPatchStatus.SUCCESS.equals(patchStatus) ? applyStatus :
+                                    ApplyPatchStatus.and(patchStatus, applyStatus);
+    // listeners finished, all 'legal' file additions/deletions with VCS are done
+    final TriggerAdditionOrDeletion trigger = new TriggerAdditionOrDeletion(myProject);
+    addSkippedItems(trigger);
+    trigger.process();
     if(showSuccessNotification || !ApplyPatchStatus.SUCCESS.equals(status)) {
       showApplyStatus(myProject, status);
     }
-    refreshFiles();
+    refreshFiles(trigger.getAffected());
     return status;
   }
 
@@ -109,7 +124,12 @@ public class PatchApplier<BinaryType extends FilePatch> {
     if (group.isEmpty()) return ApplyPatchStatus.SUCCESS; //?
     final Project project = group.iterator().next().myProject;
 
-    ApplyPatchStatus result = ApplicationManager.getApplication().runWriteAction(new Computable<ApplyPatchStatus>() {
+    ApplyPatchStatus result = ApplyPatchStatus.SUCCESS;
+    for (PatchApplier patchApplier : group) {
+      result = ApplyPatchStatus.and(result, patchApplier.nonWriteActionPreCheck());
+      if (ApplyPatchStatus.FAILURE.equals(result)) return result;
+    }
+    result = ApplyPatchStatus.and(result, ApplicationManager.getApplication().runWriteAction(new Computable<ApplyPatchStatus>() {
       public ApplyPatchStatus compute() {
         final Ref<ApplyPatchStatus> refStatus = new Ref<ApplyPatchStatus>(null);
         CommandProcessor.getInstance().executeCommand(project, new Runnable() {
@@ -121,14 +141,34 @@ public class PatchApplier<BinaryType extends FilePatch> {
         }, VcsBundle.message("patch.apply.command"), null);
         return refStatus.get();
       }
-    });
+    }));
     result = result == null ? ApplyPatchStatus.FAILURE : result;
+    final TriggerAdditionOrDeletion trigger = new TriggerAdditionOrDeletion(project);
+    for (PatchApplier applier : group) {
+      applier.addSkippedItems(trigger);
+    }
+    trigger.process();
 
     for (PatchApplier applier : group) {
-      applier.refreshFiles();
+      applier.refreshFiles(trigger.getAffected());
     }
     showApplyStatus(project, result);
     return result;
+  }
+
+  protected void addSkippedItems(final TriggerAdditionOrDeletion trigger) {
+    trigger.addExisting(myVerifier.getToBeAdded());
+    trigger.addDeleted(myVerifier.getToBeDeleted());
+  }
+
+  public ApplyPatchStatus nonWriteActionPreCheck() {
+    final boolean value = myVerifier.nonWriteActionPreCheck();
+    if (! value) return ApplyPatchStatus.FAILURE;
+
+    final List<FilePatch> skipped = myVerifier.getSkipped();
+    final boolean applyAll = skipped.isEmpty();
+    myPatches.removeAll(skipped);
+    return applyAll ? ApplyPatchStatus.SUCCESS : ((skipped.size() == myPatches.size()) ? ApplyPatchStatus.ALREADY_APPLIED : ApplyPatchStatus.PARTIAL) ;
   }
 
   protected ApplyPatchStatus executeWritable() {
@@ -175,9 +215,10 @@ public class PatchApplier<BinaryType extends FilePatch> {
     }
   }
 
-  protected void refreshFiles() {
+  protected void refreshFiles(final Collection<FilePath> additionalDirectly) {
     final List<FilePath> directlyAffected = myVerifier.getDirectlyAffected();
     final List<VirtualFile> indirectlyAffected = myVerifier.getAllAffected();
+    directlyAffected.addAll(additionalDirectly);
 
     final RefreshSession session = RefreshQueue.getInstance().createSession(false, true, new Runnable() {
       public void run() {
@@ -272,6 +313,10 @@ public class PatchApplier<BinaryType extends FilePatch> {
 
   public List<FilePatch> getRemainingPatches() {
     return myRemainingPatches;
+  }
+
+  public boolean hasRemainingPatches() {
+    return ! myRemainingPatches.isEmpty();
   }
 
   private boolean makeWritable(final List<VirtualFile> filesToMakeWritable) {

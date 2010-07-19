@@ -355,21 +355,26 @@ public class FindUsagesManager implements JDOMExternalizable {
 
         options.fastTrack = new SearchRequestCollector();
 
-        for (final PsiElement element : elements) {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            public void run() {
-              LOG.assertTrue(element.isValid());
+        try {
+          for (final PsiElement element : elements) {
+            ApplicationManager.getApplication().runReadAction(new Runnable() {
+              public void run() {
+                LOG.assertTrue(element.isValid());
+              }
+            });
+            handler.processElementUsages(element, usageInfoProcessor, options);
+          }
+
+          PsiManager.getInstance(handler.getProject()).getSearchHelper().processRequests(options.fastTrack, new ReadActionProcessor<PsiReference>() {
+            public boolean processInReadAction(final PsiReference ref) {
+              TextRange rangeInElement = ref.getRangeInElement();
+              return usageInfoProcessor.process(new UsageInfo(ref.getElement(), rangeInElement.getStartOffset(), rangeInElement.getEndOffset(), false));
             }
           });
-          handler.processElementUsages(element, usageInfoProcessor, options);
         }
-
-        PsiManager.getInstance(handler.getProject()).getSearchHelper().processRequests(options.fastTrack, new ReadActionProcessor<PsiReference>() {
-          public boolean processInReadAction(final PsiReference ref) {
-            TextRange rangeInElement = ref.getRangeInElement();
-            return usageInfoProcessor.process(new UsageInfo(ref.getElement(), rangeInElement.getStartOffset(), rangeInElement.getEndOffset(), false));
-          }
-        });
+        finally {
+          options.fastTrack = null;
+        }
       }
     };
   }

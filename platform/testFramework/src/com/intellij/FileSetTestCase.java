@@ -18,10 +18,12 @@ import junit.framework.TestSuite;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public abstract class FileSetTestCase extends TestSuite {
   private final File[] myFiles;
   protected Project myProject;
+  private Pattern myPattern;
 
   public FileSetTestCase(String path) {
     File f = new File(path);
@@ -35,7 +37,8 @@ public abstract class FileSetTestCase extends TestSuite {
       throw new IllegalArgumentException("invalid path: "     + path);
     }
 
-
+    final String pattern = System.getProperty("fileset.pattern");
+    myPattern = pattern != null ? Pattern.compile(pattern) : null;
     addAllTests();
   }
 
@@ -68,6 +71,9 @@ public abstract class FileSetTestCase extends TestSuite {
 
   private void addFileTest(File file) {
     if (!StringUtil.startsWithChar(file.getName(), '_') && !"CVS".equals(file.getName())) {
+      if (myPattern != null && !myPattern.matcher(file.getPath()).matches()){
+        return;
+      }
       final ActualTest t = new ActualTest(file);
       addTest(t);
     }

@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.ScrollPaneFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -42,7 +43,9 @@ public class PagedListWithActions<T> {
     myComponentManager.setData(myEngine.getCurrent());
     //myList.setListData(ArrayUtil.toObjectArray(myEngine.getCurrent()));
     myPanel.add(ActionManager.getInstance().createActionToolbar("merge all", createListActions(), true).getComponent(), BorderLayout.NORTH);
-    final JScrollPane scroll = new JScrollPane(myComponentManager.getComponent(), JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+    final JScrollPane scroll = ScrollPaneFactory
+      .createScrollPane(myComponentManager.getComponent(), JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                        JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
     myPanel.add(scroll, BorderLayout.CENTER);
   }
 
@@ -68,15 +71,13 @@ public class PagedListWithActions<T> {
       final List<T> data = myEngine.next();
       myComponentManager.setData(data);
       myComponentManager.refresh();
-      /*myList.setListData(ArrayUtil.toObjectArray(data));
-      myList.revalidate();
-      myList.repaint();*/
     }
 
     @Override
     public void update(AnActionEvent e) {
       super.update(e);
       e.getPresentation().setEnabled(myEngine.hasNext());
+      e.getPresentation().setVisible(myEngine.hasNext());
     }
   }
 
@@ -96,6 +97,7 @@ public class PagedListWithActions<T> {
     public void update(AnActionEvent e) {
       super.update(e);
       e.getPresentation().setEnabled(myEngine.hasPrevious());
+      e.getPresentation().setVisible(myEngine.hasPrevious());
     }
   }
 

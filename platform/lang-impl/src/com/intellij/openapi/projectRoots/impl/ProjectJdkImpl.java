@@ -31,11 +31,15 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternalizable, Sdk, SdkModificator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.ProjectJdkImpl");
@@ -83,7 +87,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
   }
 
   public final void setVersionString(String versionString) {
-    myVersionString = (versionString == null || "".equals(versionString)) ? null : versionString;
+    myVersionString = versionString == null || "".equals(versionString) ? null : versionString;
     myVersionDefined = true;
   }
 
@@ -241,7 +245,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
       final ProjectRoot[] rootFiles = myRootContainer.getRoots(rootType);
       final ArrayList<String> result = new ArrayList<String>();
       for (ProjectRoot rootFile : rootFiles) {
-        result.addAll(Arrays.asList(rootFile.getUrls()));
+        ContainerUtil.addAll(result, rootFile.getUrls());
       }
       return ArrayUtil.toStringArray(result);
     }
@@ -318,7 +322,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
     final ProjectRoot[] roots = myRootContainer.getRoots(rootType); // use getRoots() cause the data is most up-to-date there
     final List<VirtualFile> files = new ArrayList<VirtualFile>(roots.length);
     for (ProjectRoot root : roots) {
-      files.addAll(Arrays.asList(root.getVirtualFiles()));
+      ContainerUtil.addAll(files, root.getVirtualFiles());
     }
     return VfsUtil.toVirtualFileArray(files);
   }

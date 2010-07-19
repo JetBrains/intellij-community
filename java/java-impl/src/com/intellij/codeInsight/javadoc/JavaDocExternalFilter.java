@@ -24,8 +24,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -121,6 +123,12 @@ public class JavaDocExternalFilter {
         return DOC_ELEMENT_PROTOCOL + root + href;
       }
 
+      if (Comparing.strEqual(VirtualFileManager.extractProtocol(root), LocalFileSystem.PROTOCOL)) {
+        final String path = VirtualFileManager.extractPath(root);
+        if (!path.startsWith("/")) {//skip host for local file system files (format - file://host_name/path)
+          root = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, "/" + path);
+        }
+      }
       return ourHTMLFilesuffix.matcher(root).replaceAll("/") + href;
     }
   };

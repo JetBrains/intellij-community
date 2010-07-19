@@ -62,7 +62,7 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
   }
 
   public ModuleFixtureBuilder<T> addSourceRoot(final String sourceRootPath) {
-    assert myContentRoots.size() > 0 : "content root should be added first";
+    assert !myContentRoots.isEmpty() : "content root should be added first";
     mySourceRoots.add(sourceRootPath);
     return this;
   }
@@ -101,7 +101,7 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
   protected abstract T instantiateFixture();
 
   Module buildModule() {
-    final Module[] module = new Module[]{null};
+    final Module[] module = {null};
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {

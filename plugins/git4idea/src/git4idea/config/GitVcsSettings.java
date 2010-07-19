@@ -15,18 +15,15 @@
  */
 package git4idea.config;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -261,7 +258,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     myLineSeparatorsConversion = s.LINE_SEPARATORS_CONVERSION;
     myAskBeforeLineSeparatorConversion = s.LINE_SEPARATORS_CONVERSION_ASK;
     myCommitAuthors.clear();
-    myCommitAuthors.addAll(Arrays.asList(s.PREVIOUS_COMMIT_AUTHORS));
+    ContainerUtil.addAll(myCommitAuthors, s.PREVIOUS_COMMIT_AUTHORS);
     myPushActiveBranchesRebaseSavePolicy = s.PUSH_ACTIVE_BRANCHES_REBASE_SAVE_POLICY;
     mySshExecutable = s.SSH_EXECUTABLE;
     myUpdateChangesPolicy = s.UPDATE_CHANGES_POLICY;
@@ -279,21 +276,6 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
    */
   public static GitVcsSettings getInstance(Project project) {
     return ServiceManager.getService(project, GitVcsSettings.class);
-  }
-
-  /**
-   * Get instance with checked read action
-   *
-   * @param project the project to get setting for
-   * @return the settings object
-   */
-  public static GitVcsSettings getInstanceChecked(final Project project) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<GitVcsSettings>() {
-      public GitVcsSettings compute() {
-        if (project.isDisposed()) throw new ProcessCanceledException();
-        return ServiceManager.getService(project, GitVcsSettings.class);
-      }
-    });
   }
 
   /**

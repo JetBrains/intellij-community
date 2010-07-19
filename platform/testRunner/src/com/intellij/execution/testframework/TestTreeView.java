@@ -27,7 +27,6 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.containers.Convertor;
@@ -90,7 +89,6 @@ public abstract class TestTreeView extends Tree implements DataProvider {
         return testProxy.getName();
       }
     });
-    TreeToolTipHandler.install(this);
     TreeUtil.installActions(this);
     PopupHandler.installPopupHandler(this, IdeActions.GROUP_TESTTREE_POPUP, ActionPlaces.TESTTREE_VIEW_POPUP);
   }

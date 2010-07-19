@@ -127,7 +127,10 @@ public class GrLiteralImpl extends GrExpressionImpl implements GrLiteral, PsiLan
   @Override
   public PsiReference getReference() {
     final PsiReference[] references = getReferences();
-    if (references.length > 0) {
+    if (references.length == 1) {
+      return references[0];
+    }
+    if (references.length > 1) {
       return new PsiMultiReference(references, this);
     }
     return null;

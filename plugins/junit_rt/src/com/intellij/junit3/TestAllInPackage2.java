@@ -46,10 +46,12 @@ public class TestAllInPackage2 extends TestSuite {
   private static boolean skipSuite(Set allNames, Test suite) {
     if (suite instanceof TestRunnerUtil.SuiteMethodWrapper) {
       final Test test = ((TestRunnerUtil.SuiteMethodWrapper)suite).getSuite();
+      final String currentSuiteName =  ((TestRunnerUtil.SuiteMethodWrapper)suite).getClassName();
       if (test instanceof TestSuite) {
         boolean hasAllComponents = true;
         for (int idx = 0; idx < ((TestSuite)test).testCount(); idx++) {
-          if (!allNames.contains(((TestSuite)test).testAt(idx).toString())) {
+          final String testName = ((TestSuite)test).testAt(idx).toString();
+          if (!allNames.contains(testName) || currentSuiteName.equals(testName)) {
             hasAllComponents = false;
             break;
           }

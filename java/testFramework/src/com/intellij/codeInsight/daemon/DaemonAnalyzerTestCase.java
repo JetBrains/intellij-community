@@ -370,7 +370,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     IntentionAction intentionAction = findIntentionAction(infos, intentionActionName, editor, file);
 
     assertNotNull(intentionActionName, intentionAction);
-    ShowIntentionActionsHandler.chooseActionAndInvoke(file, editor, intentionAction, intentionActionName);
+    assertTrue(ShowIntentionActionsHandler.chooseActionAndInvoke(file, editor, intentionAction, intentionActionName));
   }
 
   protected static IntentionAction findIntentionAction(final Collection<HighlightInfo> infos, final String intentionActionName, final Editor editor,

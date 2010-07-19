@@ -28,12 +28,14 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.ClassCellRenderer;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -96,7 +98,7 @@ public class TurnRefsToSuperDialog extends RefactoringDialog {
     final JLabel classListLabel = new JLabel();
     panel.add(classListLabel, gbConstraints);
 
-    mySuperClassesList = new JList(mySuperClasses.toArray());
+    mySuperClassesList = new JBList(mySuperClasses.toArray());
     mySuperClassesList.setCellRenderer(new ClassCellRenderer());
     mySuperClassesList.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     classListLabel.setText(RefactoringBundle.message("turnRefsToSuper.change.usages.to", mySubClass.getQualifiedName()));
@@ -108,7 +110,7 @@ public class TurnRefsToSuperDialog extends RefactoringDialog {
     }
     mySuperClassesList.setSelectedIndex(indexToSelect);
     gbConstraints.gridy++;
-    panel.add(new JScrollPane(mySuperClassesList), gbConstraints);
+    panel.add(ScrollPaneFactory.createScrollPane(mySuperClassesList), gbConstraints);
 
     gbConstraints.gridy++;
     myCbReplaceInstanceOf.setText(RefactoringBundle.message("turnRefsToSuper.use.superclass.in.instanceof"));

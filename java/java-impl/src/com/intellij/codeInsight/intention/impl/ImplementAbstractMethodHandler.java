@@ -28,6 +28,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.ide.util.PsiClassListCellRenderer;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -43,6 +44,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
 
 import javax.swing.*;
@@ -93,7 +95,7 @@ public class ImplementAbstractMethodHandler {
     PsiClassListCellRenderer renderer = new PsiClassListCellRenderer();
     Arrays.sort(result[0], renderer.getComparator());
 
-    myList = new JList(result[0]);
+    myList = new JBList(result[0]);
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myList.setCellRenderer(renderer);
 
@@ -143,7 +145,7 @@ public class ImplementAbstractMethodHandler {
   private PsiClass[] getClassImplementations(final PsiClass psiClass) {
     ArrayList<PsiClass> list = new ArrayList<PsiClass>();
     for (PsiClass inheritor : ClassInheritorsSearch.search(psiClass, psiClass.getUseScope(), true)) {
-      if (!inheritor.isInterface()) {
+      if (!inheritor.isInterface() && StdLanguages.JAVA.equals(inheritor.getLanguage())) {
         PsiMethod method = inheritor.findMethodBySignature(myMethod, true);
         if (method == null || !method.getContainingClass().equals(psiClass)) continue;
         list.add(inheritor);

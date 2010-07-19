@@ -20,7 +20,8 @@ public enum VcsInitObject {
   MAPPINGS(10, false),
   COMMITTED_CHANGES_CACHE(200, true),
   BRANCHES(250, true),
-  REMOTE_REVISIONS_CACHE(300, true);
+  REMOTE_REVISIONS_CACHE(300, true),
+  AFTER_COMMON(400, true);
 
   private final int myOrder;
   // others do not depend on it

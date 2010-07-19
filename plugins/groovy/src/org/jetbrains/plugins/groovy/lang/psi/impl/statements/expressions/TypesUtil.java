@@ -134,7 +134,7 @@ public class TypesUtil {
         }
       }
 
-      ResolveUtil.processNonCodeMethods(thisType, processor, place.getProject(), place, false);
+      ResolveUtil.processNonCodeMethods(thisType, processor, place, false);
       return processor.getCandidates();
     }
     return GroovyResolveResult.EMPTY_ARRAY;
@@ -225,25 +225,56 @@ public class TypesUtil {
       return true;
     }
 
-    return _isAssignable(lType, rType, manager, scope);
+    return _isAssignable(lType, rType, manager, scope, allowConversion);
   }
 
   public static boolean isAssignable(PsiType lType, PsiType rType, GroovyPsiElement context) {
-    return isAssignableByMethodCallConversion(lType, rType, context) ||
-           _isAssignable(lType, rType, context.getManager(), context.getResolveScope());
+    return isAssignable(lType, rType, context, true);
   }
 
-  private static boolean _isAssignable(PsiType lType, PsiType rType, PsiManager manager, GlobalSearchScope scope) {
+  public static boolean isAssignable(PsiType lType, PsiType rType, GroovyPsiElement context, boolean allowConversion) {
+    if (rType instanceof PsiIntersectionType) {
+      for (PsiType child : ((PsiIntersectionType)rType).getConjuncts()) {
+        if (isAssignable(lType, child, context, allowConversion)) {
+          return true;
+        }
+      }
+      return false;
+    }
+    if (lType instanceof PsiIntersectionType) {
+      for (PsiType child : ((PsiIntersectionType)lType).getConjuncts()) {
+        if (!isAssignable(child, rType, context, allowConversion)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    if (allowConversion && lType != null && rType != null) {
+      for (GrTypeConverter converter : GrTypeConverter.EP_NAME.getExtensions()) {
+        final Boolean result = converter.isConvertible(lType, rType, context);
+        if (result != null) {
+          return result;
+        }
+      }
+    }
+    return (allowConversion && isAssignableByMethodCallConversion(lType, rType, context)) ||
+           _isAssignable(lType, rType, context.getManager(), context.getResolveScope(), true);
+  }
+
+  private static boolean _isAssignable(PsiType lType, PsiType rType, PsiManager manager, GlobalSearchScope scope, boolean allowConversion) {
     if (lType == null || rType == null) {
       return false;
     }
 
-    //all numeric types are assignable
-    if (isNumericType(lType)) {
-      return isNumericType(rType) || rType.equals(PsiType.NULL);
-    }
-    else if (lType.equalsToText(JAVA_LANG_STRING)) {
-      return true;
+    if (allowConversion) {
+      //all numeric types are assignable
+      if (isNumericType(lType)) {
+        return isNumericType(rType) || rType.equals(PsiType.NULL);
+      }
+      else if (lType.equalsToText(JAVA_LANG_STRING)) {
+        return true;
+      }
     }
 
     rType = boxPrimitiveType(rType, manager, scope);

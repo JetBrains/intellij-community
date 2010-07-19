@@ -29,6 +29,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
@@ -43,6 +44,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -123,8 +125,8 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
 
   }
 
-  public boolean checkConflicts(ExtractSuperclassDialog dialog) {
-    final MemberInfo[] infos = dialog.getSelectedMemberInfos();
+  public boolean checkConflicts(final ExtractSuperclassDialog dialog) {
+    final MemberInfo[] infos = ArrayUtil.toObjectArray(dialog.getSelectedMemberInfos(), MemberInfo.class);
     final PsiDirectory targetDirectory = dialog.getTargetDirectory();
     final PsiPackage targetPackage;
     if (targetDirectory != null) {
@@ -133,8 +135,14 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
     else {
       targetPackage = null;
     }
-    final MultiMap<PsiElement,String> conflicts =
-      PullUpConflictsUtil.checkConflicts(infos, mySubclass, mySubclass.getSuperClass(), targetPackage, targetDirectory, dialog.getContainmentVerifier());
+    final MultiMap<PsiElement,String> conflicts = new MultiMap<PsiElement, String>();
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      public void run() {
+        final PsiClass superClass = mySubclass.getExtendsListTypes().length > 0 ? mySubclass.getSuperClass() : null;
+        conflicts.putAllValues(PullUpConflictsUtil.checkConflicts(infos, mySubclass, superClass, targetPackage, targetDirectory, dialog.getContainmentVerifier(), false));
+      }
+    }, "Detecting possible conflicts...", true, myProject)) return false;
+
     if (!conflicts.isEmpty()) {
       ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);
       conflictsDialog.show();
@@ -149,8 +157,8 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
   private void doRefactoring(final Project project, final PsiClass subclass, final ExtractSuperclassDialog dialog) {
     final String superclassName = dialog.getExtractedSuperName();
     final PsiDirectory targetDirectory = dialog.getTargetDirectory();
-    final MemberInfo[] selectedMemberInfos = dialog.getSelectedMemberInfos();
-    final DocCommentPolicy javaDocPolicy = new DocCommentPolicy(dialog.getJavaDocPolicy());
+    final MemberInfo[] selectedMemberInfos = ArrayUtil.toObjectArray(dialog.getSelectedMemberInfos(), MemberInfo.class);
+    final DocCommentPolicy javaDocPolicy = new DocCommentPolicy(dialog.getDocCommentPolicy());
     LocalHistoryAction a = LocalHistory.getInstance().startAction(getCommandName(subclass, superclassName));
     try {
       PsiClass superclass = null;

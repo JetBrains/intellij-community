@@ -40,6 +40,6 @@ public class GrFullClassNameIndex extends IntStubIndexExtension<PsiClass> {
   }
 
   public Collection<PsiClass> get(final Integer integer, final Project project, final GlobalSearchScope scope) {
-    return super.get(integer, project, new GrSourceFilterScope(scope, project));
+    return super.get(integer, project, new GrSourceFilterScope(scope));
   }
 }

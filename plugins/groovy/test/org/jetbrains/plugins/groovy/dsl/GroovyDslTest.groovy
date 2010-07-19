@@ -16,15 +16,25 @@
 package org.jetbrains.plugins.groovy.dsl;
 
 
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.ContentEntry
+import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.psi.PsiFile
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
-import org.jetbrains.plugins.groovy.lang.completion.CompletionTestBase
+import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
  * @author peter
  */
-public class GroovyDslTest extends CompletionTestBase {
+public class GroovyDslTest extends LightCodeInsightFixtureTestCase {
+  static def descriptor = new DefaultLightProjectDescriptor() {
+    @Override def void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
+      PsiTestUtil.addLibrary(module, model, "GROOVY", TestUtils.getMockGroovyLibraryHome(), TestUtils.GROOVY_JAR);
+    }
+  }
 
   @Override
   protected String getBasePath() {
@@ -84,7 +94,7 @@ public class GroovyDslTest extends CompletionTestBase {
       })
 """)
   }
-  
+
   public void testDelegateToArgument2() throws Throwable {
     doCustomTest("""
       def ctx = context(scope: closureScope(isArgument: true))
@@ -109,9 +119,8 @@ public class GroovyDslTest extends CompletionTestBase {
     )
   }
 
-  @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
-    moduleBuilder.addLibraryJars("GROOVY", TestUtils.getMockGroovyLibraryHome(), TestUtils.GROOVY_JAR);
+  @Override protected LightProjectDescriptor getProjectDescriptor() {
+    return descriptor;
   }
 
 }

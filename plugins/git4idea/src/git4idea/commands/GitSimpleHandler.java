@@ -33,7 +33,7 @@ import java.util.concurrent.Semaphore;
  * The class also includes a number of static utility methods that represent some
  * simple commands.
  */
-public class GitSimpleHandler extends GitHandler {
+public class GitSimpleHandler extends GitTextHandler {
   /**
    * Stderr output
    */

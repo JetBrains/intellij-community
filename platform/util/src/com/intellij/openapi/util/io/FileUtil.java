@@ -23,6 +23,7 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import org.intellij.lang.annotations.RegExp;
 import org.jetbrains.annotations.NonNls;
@@ -33,7 +34,10 @@ import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.channels.FileChannel;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.regex.Pattern;
 
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
@@ -1023,7 +1027,7 @@ public class FileUtil {
       if (file.isDirectory()) {
         final File[] children = file.listFiles();
         if (children != null) {
-          queue.addAll(Arrays.asList(children));
+          ContainerUtil.addAll(queue, children);
         }
       }
     }

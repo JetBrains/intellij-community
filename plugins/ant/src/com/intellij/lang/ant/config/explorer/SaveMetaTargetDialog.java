@@ -22,6 +22,8 @@ import com.intellij.lang.ant.config.impl.ExecuteCompositeTargetEvent;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.ListUtil;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 
 import javax.swing.*;
@@ -86,7 +88,7 @@ public class SaveMetaTargetDialog extends DialogWrapper {
                                                GridBagConstraints.HORIZONTAL, new Insets(4, 0, 0, 0), 0, 0));
 
     final DefaultListModel dataModel = new DefaultListModel();
-    myTargetList = new JList(dataModel);
+    myTargetList = new JBList(dataModel);
     final String[] targetNames = myInitialEvent.getTargetNames();
     for (String name : targetNames) {
       dataModel.addElement(name);
@@ -95,7 +97,7 @@ public class SaveMetaTargetDialog extends DialogWrapper {
                                                                                                     0.0, 0.0, GridBagConstraints.NORTHWEST,
                                                                                                     GridBagConstraints.NONE,
                                                                                                     new Insets(6, 0, 0, 0), 0, 0));
-    panel.add(new JScrollPane(myTargetList), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 2, 1.0, 1.0,
+    panel.add(ScrollPaneFactory.createScrollPane(myTargetList), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 2, 1.0, 1.0,
                                                                     GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
                                                                     new Insets(4, 0, 0, 0), 0, 0));
 

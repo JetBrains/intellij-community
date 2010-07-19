@@ -5,9 +5,10 @@
 package com.intellij.util.ui.classpath;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -31,8 +32,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ReorderableListController;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.Icons;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,7 +57,7 @@ import java.util.List;
  */
 public class SimpleClasspathPanel extends JPanel {
 
-  private final JList myList = new JList();
+  private final JList myList = new JBList();
   private final DefaultListModel myListModel = new DefaultListModel();
   private URLClassLoader myClassLoader;
   private final Disposable myDisposable;
@@ -133,7 +136,7 @@ public class SimpleClasspathPanel extends JPanel {
     final THashSet<VirtualFile> result = new THashSet<VirtualFile>();
     for (final Enumeration<?> enumeration = myListModel.elements(); enumeration.hasMoreElements(); ) {
       final Library library = (Library)enumeration.nextElement();
-      result.addAll(Arrays.asList(library.getFiles(OrderRootType.CLASSES)));
+      ContainerUtil.addAll(result, library.getFiles(OrderRootType.CLASSES));
     }
     return result;
   }

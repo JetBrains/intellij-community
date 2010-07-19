@@ -41,6 +41,13 @@ public interface SdkModel {
   Sdk findSdk(String sdkName);
 
   /**
+   * Adds the specified SDK (already created and initialized) to the model.
+   *
+   * @param sdk the SDK to add
+   */
+  void addSdk(Sdk sdk);
+
+  /**
    * Allows to receive notifications when the JDK list has been changed by the
    * user configuring the JDKs.
    */
@@ -91,4 +98,6 @@ public interface SdkModel {
    * @param listener the listener instance.
    */
   void removeListener(Listener listener);
+
+  Listener getMulticaster();
 }

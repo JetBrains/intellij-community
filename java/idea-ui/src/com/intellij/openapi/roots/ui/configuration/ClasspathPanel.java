@@ -55,6 +55,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Icons;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.Table;
 import org.jetbrains.annotations.NotNull;
@@ -1091,7 +1092,7 @@ public class ClasspathPanel extends JPanel {
       final Set<VirtualFile> alreadyAdded = new HashSet<VirtualFile>();
       final Library[] libraries = myLibraryTable.getLibraries();
       for (Library library : libraries) {
-        alreadyAdded.addAll(Arrays.asList(library.getFiles(OrderRootType.CLASSES)));
+        ContainerUtil.addAll(alreadyAdded, library.getFiles(OrderRootType.CLASSES));
       }
       chosenFilesSet.removeAll(alreadyAdded);
       return VfsUtil.toVirtualFileArray(chosenFilesSet);

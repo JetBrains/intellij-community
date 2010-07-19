@@ -27,8 +27,11 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.*;
+import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -89,7 +92,7 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
         }
       }
     } else {
-      fullElementsSet.addAll(Arrays.asList(temptoDelete));
+      ContainerUtil.addAll(fullElementsSet, temptoDelete);
     }
 
     if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, fullElementsSet)) return;

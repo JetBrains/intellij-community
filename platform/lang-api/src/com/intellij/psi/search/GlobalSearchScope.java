@@ -31,12 +31,11 @@ import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public abstract class GlobalSearchScope extends SearchScope implements ProjectAwareFileFilter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.search.GlobalSearchScope");
@@ -79,6 +78,10 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
   public abstract boolean isSearchInLibraries();
 
+  public boolean isSearchOutsideRootModel() {
+    return false;
+  }
+
   @NotNull
   public GlobalSearchScope intersectWith(@NotNull GlobalSearchScope scope) {
     if (scope == this) return this;
@@ -107,13 +110,13 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   }
 
   @NotNull
-  public SearchScope union(@NotNull SearchScope scope) {
+  public GlobalSearchScope union(@NotNull SearchScope scope) {
     if (scope instanceof GlobalSearchScope) return uniteWith((GlobalSearchScope)scope);
     return union((LocalSearchScope)scope);
   }
 
   @NotNull
-  public SearchScope union(final LocalSearchScope scope) {
+  public GlobalSearchScope union(final LocalSearchScope scope) {
     return new GlobalSearchScope(scope.getScope()[0].getProject()) {
       @Override
       public boolean contains(VirtualFile file) {
@@ -128,6 +131,11 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       @Override
       public boolean isSearchInModuleContent(@NotNull Module aModule) {
         return GlobalSearchScope.this.isSearchInModuleContent(aModule);
+      }
+
+      @Override
+      public boolean isSearchOutsideRootModel() {
+        return GlobalSearchScope.this.isSearchOutsideRootModel();
       }
 
       @Override
@@ -248,13 +256,18 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     return new FileScope(project, virtualFile);
   }
 
+  public static GlobalSearchScope filesScope(final Project project, final Collection<VirtualFile> files) {
+    if (files.isEmpty()) return EMPTY_SCOPE;
+    return files.size() == 1? fileScope(project, files.iterator().next()) : new FilesScope(project, files);
+  }
+
   private static class IntersectionScope extends GlobalSearchScope {
     private final GlobalSearchScope myScope1;
     private final GlobalSearchScope myScope2;
     private final String myDisplayName;
 
     private IntersectionScope(@NotNull GlobalSearchScope scope1, @NotNull GlobalSearchScope scope2, String displayName) {
-      super(scope1 == null ? scope2.getProject() : scope1.getProject());
+      super(scope1.getProject() == null ? scope2.getProject() : scope1.getProject());
       myScope1 = scope1;
       myScope2 = scope2;
       myDisplayName = displayName;
@@ -296,6 +309,10 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     public boolean isSearchInLibraries() {
       return myScope1.isSearchInLibraries() && myScope2.isSearchInLibraries();
     }
+    
+    public boolean isSearchOutsideRootModel() {
+      return myScope1.isSearchOutsideRootModel() && myScope2.isSearchOutsideRootModel();
+    }
   }
   private static class UnionScope extends GlobalSearchScope {
     private final GlobalSearchScope myScope1;
@@ -303,7 +320,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     private final String myDisplayName;
 
     private UnionScope(@NotNull GlobalSearchScope scope1, @NotNull GlobalSearchScope scope2, String displayName) {
-      super(scope1.getProject() == scope2.getProject() ? scope1.getProject() : null);
+      super(scope1.getProject() == null ? scope2.getProject() : scope1.getProject());
       myScope1 = scope1;
       myScope2 = scope2;
       myDisplayName = displayName;
@@ -318,6 +335,11 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
     public boolean contains(VirtualFile file) {
       return myScope1.contains(file) || myScope2.contains(file);
+    }
+
+    @Override
+    public boolean isSearchOutsideRootModel() {
+      return myScope1.isSearchOutsideRootModel() || myScope2.isSearchOutsideRootModel();
     }
 
     public int compare(VirtualFile file1, VirtualFile file2) {
@@ -470,6 +492,34 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     }
   }
 
+  private static class FilesScope extends GlobalSearchScope {
+    private final Collection<VirtualFile> myFiles;
+
+    public FilesScope(final Project project, final Collection<VirtualFile> files) {
+      myFiles = files;
+    }
+
+    @Override
+    public boolean contains(final VirtualFile file) {
+      return myFiles.contains(file);
+    }
+
+    @Override
+    public int compare(final VirtualFile file1, final VirtualFile file2) {
+      return 0;
+    }
+
+    @Override
+    public boolean isSearchInModuleContent(@NotNull Module aModule) {
+      return true;
+    }
+
+    @Override
+    public boolean isSearchInLibraries() {
+      return false;
+    }
+  }
+
   private static class FilterScopeAdapter extends GlobalSearchScope {
     private final NamedScope mySet;
     private final PsiManager myManager;
@@ -512,22 +562,16 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     return new FileTypeRestrictionScope(scope, fileTypes);
   }
 
-  private static class FileTypeRestrictionScope extends GlobalSearchScope {
-    private final GlobalSearchScope myScope;
+  private static class FileTypeRestrictionScope extends DelegatingGlobalSearchScope {
     private final FileType[] myFileTypes;
 
     private FileTypeRestrictionScope(@NotNull GlobalSearchScope scope, @NotNull FileType[] fileTypes) {
-      super(scope.getProject());
+      super(scope);
       myFileTypes = fileTypes;
-      myScope = scope;
-    }
-
-    public int compare(VirtualFile file1, VirtualFile file2) {
-      return myScope.compare(file1, file2);
     }
 
     public boolean contains(VirtualFile file) {
-      if (!myScope.contains(file)) return false;
+      if (!super.contains(file)) return false;
 
       final FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
       for (FileType otherFileType : myFileTypes) {
@@ -537,23 +581,15 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       return false;
     }
 
-    public boolean isSearchInLibraries() {
-      return myScope.isSearchInLibraries();
-    }
-
-    public boolean isSearchInModuleContent(@NotNull Module aModule) {
-      return myScope.isSearchInModuleContent(aModule);
-    }
-
     @NotNull
     @Override
     public GlobalSearchScope intersectWith(@NotNull GlobalSearchScope scope) {
       if (scope instanceof FileTypeRestrictionScope) {
         FileTypeRestrictionScope restrict = (FileTypeRestrictionScope)scope;
-        if (restrict.myScope == myScope) {
+        if (restrict.myBaseScope == myBaseScope) {
           List<FileType> intersection = new ArrayList<FileType>(Arrays.asList(restrict.myFileTypes));
           intersection.retainAll(Arrays.asList(myFileTypes));
-          return new FileTypeRestrictionScope(myScope, intersection.toArray(new FileType[intersection.size()]));
+          return new FileTypeRestrictionScope(myBaseScope, intersection.toArray(new FileType[intersection.size()]));
         }
       }
       return super.intersectWith(scope);
@@ -563,8 +599,8 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     public GlobalSearchScope uniteWith(@NotNull GlobalSearchScope scope) {
       if (scope instanceof FileTypeRestrictionScope) {
         FileTypeRestrictionScope restrict = (FileTypeRestrictionScope)scope;
-        if (restrict.myScope == myScope) {
-          return new FileTypeRestrictionScope(myScope, ArrayUtil.mergeArrays(myFileTypes, restrict.myFileTypes, FileType.class));
+        if (restrict.myBaseScope == myBaseScope) {
+          return new FileTypeRestrictionScope(myBaseScope, ArrayUtil.mergeArrays(myFileTypes, restrict.myFileTypes, FileType.class));
         }
       }
       return super.uniteWith(scope);

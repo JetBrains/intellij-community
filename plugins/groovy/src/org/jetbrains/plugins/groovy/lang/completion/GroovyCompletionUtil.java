@@ -24,14 +24,17 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -40,6 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -48,6 +52,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.*;
 
@@ -209,6 +214,15 @@ public class GroovyCompletionUtil {
           }
         }
       }
+      else if (context instanceof GrMethodCallExpression && element instanceof PsiMethod) {
+        final PsiMethod method = generateMethodInCategory(candidates[i]);
+        result[i] = setupLookupBuilder(method, candidates[i].getSubstitutor(), LookupElementBuilder.create((PsiNamedElement)element));
+        continue;
+      }
+      if (element instanceof PsiNamedElement) {
+        result[i] = setupLookupBuilder(element, candidates[i].getSubstitutor(), LookupElementBuilder.create((PsiNamedElement)element));
+        continue;
+      }
       result[i] = element;
     }
 
@@ -221,6 +235,18 @@ public class GroovyCompletionUtil {
     final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
     LookupElementBuilder builder = LookupElementBuilder.create(element, importedName).setPresentableText(importedName);
     return setupLookupBuilder(element, substitutor, builder);
+  }
+
+  private static PsiMethod generateMethodInCategory(GroovyResolveResult result) {
+    final PsiElement element = result.getElement();
+    assert element instanceof PsiMethod;
+    final LightMethodBuilder builder = new LightMethodBuilder(element.getManager(), ((PsiMethod)element).getName());
+    final PsiParameter[] params = ((PsiMethod)element).getParameterList().getParameters();
+    for (int i = 1; i < params.length; i++) {
+      builder.addParameter(params[i]);
+    }
+    builder.setBaseIcon(GroovyIcons.METHOD);
+    return builder;
   }
 
   public static LookupElement getLookupElement(Object o) {
@@ -287,7 +313,14 @@ public class GroovyCompletionUtil {
   }
 
   public static boolean hasConstructorParameters(PsiClass clazz) {
-    final PsiMethod[] constructors = clazz.getConstructors();
+    final PsiMethod[] constructors;
+    if (clazz instanceof GroovyPsiElement) {
+      constructors = ResolveUtil.getAllClassConstructors(clazz, (GroovyPsiElement)clazz, PsiSubstitutor.EMPTY);
+    }
+    else {
+      constructors = clazz.getConstructors();
+    }
+
     for (PsiMethod constructor : constructors) {
       if (constructor.getParameterList().getParametersCount() > 0) return true;
     }

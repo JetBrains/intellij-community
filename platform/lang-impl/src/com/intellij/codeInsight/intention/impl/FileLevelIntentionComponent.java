@@ -49,7 +49,6 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
                                      final HighlightSeverity severity,
                                      final List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> intentions,
                                      final Project project, final PsiFile psiFile, final Editor editor) {
-    super();
     myProject = project;
 
     final ShowIntentionsPass.IntentionsInfo info = new ShowIntentionsPass.IntentionsInfo();

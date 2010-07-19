@@ -16,6 +16,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefGraphAnnotator;
 import com.intellij.codeInspection.reference.RefManager;
@@ -173,5 +174,15 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
    * @param composer provides sample api to compose html
    */
   public void compose(StringBuffer buf, RefEntity refEntity, HTMLComposer composer) {
+  }
+
+  /**
+   * @return JobDescriptors array to show inspection progress correctly. TotalAmount should be set (e.g. in
+   * {@link #runInspection(com.intellij.analysis.AnalysisScope, InspectionManager, GlobalInspectionContext, ProblemDescriptionsProcessor)})
+   * ProgressIndicator should progress with {@link com.intellij.codeInspection.GlobalInspectionContext#incrementJobDoneAmount(com.intellij.codeInspection.ex.JobDescriptor, String)}  
+   */
+  @Nullable
+  public JobDescriptor[] getAdditionalJobs() {
+    return null;
   }
 }

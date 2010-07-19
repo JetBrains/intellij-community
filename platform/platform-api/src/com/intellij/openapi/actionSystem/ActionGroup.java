@@ -23,13 +23,14 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.lang.reflect.Method;
 import java.util.Set;
 import java.util.HashSet;
 
 /**
  * Represents a group of actions.
  */
-public abstract class ActionGroup extends AnAction implements DumbAware {
+public abstract class ActionGroup extends AnAction {
   private boolean myPopup;
   private final PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
   public static final ActionGroup EMPTY_GROUP = new ActionGroup() {
@@ -46,6 +47,8 @@ public abstract class ActionGroup extends AnAction implements DumbAware {
    * The actual value is a Boolean.
    */
   @NonNls public static final String PROP_POPUP = "popup";
+
+  private Boolean myDumbAware;
 
   /**
    * Creates a new <code>ActionGroup</code> with shortName set to <code>null</code> and
@@ -77,6 +80,11 @@ public abstract class ActionGroup extends AnAction implements DumbAware {
    * This method can be called in popup menus if {@link #canBePerformed(DataContext)} is true
    */
   public void actionPerformed(AnActionEvent e){
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    super.update(e);
   }
 
   /**
@@ -151,5 +159,30 @@ public abstract class ActionGroup extends AnAction implements DumbAware {
         mySecondaryActions.add(newAction);
       }
     }
+  }
+
+  @Override
+  public boolean isDumbAware() {
+    if (myDumbAware != null) {
+      return myDumbAware;
+    }
+
+    boolean dumbAware = super.isDumbAware();
+    if (dumbAware) {
+      myDumbAware = Boolean.valueOf(dumbAware);
+    } else {
+      if (myDumbAware == null) {
+        try {
+          Method updateMethod = getClass().getMethod("update", AnActionEvent.class);
+          Class<?> declaringClass = updateMethod.getDeclaringClass();
+          myDumbAware = AnAction.class.equals(declaringClass) || ActionGroup.class.equals(declaringClass);
+        }
+        catch (NoSuchMethodException e) {
+          myDumbAware = Boolean.FALSE;
+        }
+      }
+    }
+
+    return myDumbAware;
   }
 }

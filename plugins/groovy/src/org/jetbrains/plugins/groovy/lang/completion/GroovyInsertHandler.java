@@ -30,6 +30,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
@@ -37,6 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.Arrays;
 
@@ -114,7 +116,7 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
           parent.getParent() instanceof GrNewExpression &&
           (offset == text.length() || !text.substring(offset).trim().startsWith("("))) {
         document.insertString(offset, "()");
-        final PsiMethod[] methods = clazz.getConstructors();
+        final PsiMethod[] methods = ResolveUtil.getAllClassConstructors(clazz, (GroovyPsiElement)parent, PsiSubstitutor.EMPTY);
         for (PsiMethod method : methods) {
           if (method.getParameterList().getParameters().length > 0) {
             caretModel.moveToOffset(offset + 1);

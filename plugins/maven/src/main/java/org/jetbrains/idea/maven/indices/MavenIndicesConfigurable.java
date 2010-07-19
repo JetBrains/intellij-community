@@ -19,12 +19,23 @@ import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.InputValidator;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.CollectionListModel;
+import com.intellij.ui.ListUtil;
+import com.intellij.ui.components.JBList;
+import com.intellij.util.Processor;
 import com.intellij.util.ui.AnimatedIcon;
 import com.intellij.util.ui.AsyncProcessIcon;
+import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
+import org.jetbrains.idea.maven.services.MavenServicesManager;
+import org.jetbrains.idea.maven.utils.RepositoryAttachHandler;
 
 import javax.swing.*;
+import javax.swing.Timer;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
@@ -34,9 +45,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
+import java.util.*;
 import java.util.List;
 
 public class MavenIndicesConfigurable extends BaseConfigurable implements SearchableConfigurable{
@@ -45,18 +57,52 @@ public class MavenIndicesConfigurable extends BaseConfigurable implements Search
   private JPanel myMainPanel;
   private JTable myTable;
   private JButton myUpdateButton;
+  private JButton myRemoveNexusButton;
+  private JButton myAddNexusButton;
+  private JBList myNexusList;
+  private JButton myTestButton;
 
   private AnimatedIcon myUpdatingIcon;
   private final Icon myWaitingIcon = IconLoader.getIcon("/process/step_passive.png");
   private Timer myRepaintTimer;
   private ActionListener myTimerListener;
+  private ArrayList<String> myServiceUrls = new ArrayList<String>();
+  private final Project myProject;
 
   public MavenIndicesConfigurable(Project project) {
+    myProject = project;
     myManager = MavenProjectIndicesManager.getInstance(project);
     configControls();
   }
 
+  @Override
+  public boolean isModified() {
+    return !myServiceUrls.equals(MavenServicesManager.getInstance().getUrls());
+  }
+
   private void configControls() {
+    myNexusList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    myAddNexusButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        final String value = (String)myNexusList.getSelectedValue();
+        final String text = Messages.showInputDialog("Nexus Service URL", "Add Nexus URL", Messages.getQuestionIcon(), value == null? "http://": value, new URLInputVaslidator());
+        ((CollectionListModel)myNexusList.getModel()).add(text);
+        myNexusList.setSelectedValue(text, true);
+      }
+    });
+    ListUtil.addRemoveListener(myRemoveNexusButton, myNexusList);
+    ListUtil.disableWhenNoSelection(myTestButton, myNexusList);
+    myTestButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        final String value = (String)myNexusList.getSelectedValue();
+        if (value != null) {
+          testNexusConnection(value);
+        }
+      }
+    });
+
     myUpdateButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         doUpdateIndex();
@@ -85,6 +131,27 @@ public class MavenIndicesConfigurable extends BaseConfigurable implements Search
                                new MyIconCellRenderer());
 
     updateButtonsState();
+  }
+
+  private void testNexusConnection(String url) {
+    RepositoryAttachHandler.searchRepositories(myProject, Collections.singletonList(url), new Processor<Collection<MavenRepositoryInfo>>() {
+      @Override
+      public boolean process(Collection<MavenRepositoryInfo> infos) {
+        if (infos.isEmpty()) {
+          Messages.showMessageDialog("No repositories found", "Nexus Connection Failed", Messages.getWarningIcon());
+        }
+        else {
+          final StringBuilder sb = new StringBuilder();
+          sb.append(infos.size()).append(infos.size() == 1? "repository" :" repositories").append(" found");
+          for (MavenRepositoryInfo info : infos) {
+            sb.append("\n  ");
+            sb.append(info.getId()).append(" (").append(info.getName()).append(")").append(": ").append(info.getUrl());
+          }
+          Messages.showMessageDialog(sb.toString(), "Nexus Connection Successfull", Messages.getInformationIcon());
+        }
+        return true;
+      }
+    });
   }
 
   private void updateButtonsState() {
@@ -145,9 +212,14 @@ public class MavenIndicesConfigurable extends BaseConfigurable implements Search
   }
 
   public void apply() throws ConfigurationException {
+    MavenServicesManager.getInstance().setUrls(myServiceUrls);
   }
 
   public void reset() {
+    myServiceUrls.clear();
+    myServiceUrls.addAll(MavenServicesManager.getInstance().getUrls());
+    myNexusList.setModel(new CollectionListModel(myServiceUrls));
+
     myTable.setModel(new MyTableModel(myManager.getIndices()));
     myTable.getColumnModel().getColumn(0).setPreferredWidth(400);
     myTable.getColumnModel().getColumn(1).setPreferredWidth(50);
@@ -279,6 +351,24 @@ public class MavenIndicesConfigurable extends BaseConfigurable implements Search
           myWaitingIcon.paintIcon(this, g, x, y);
           break;
       }
+    }
+  }
+
+  private static class URLInputVaslidator implements InputValidator {
+    @Override
+    public boolean checkInput(String inputString) {
+      try {
+        final URL url = new URL(inputString);
+        return StringUtil.isNotEmpty(url.getHost());
+      }
+      catch (MalformedURLException e) {
+        return false;
+      }
+    }
+
+    @Override
+    public boolean canClose(String inputString) {
+      return checkInput(inputString);
     }
   }
 }

@@ -12,6 +12,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaAnonymousClassBaseRefOccurenceIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaSuperClassNameOccurenceIndex;
+import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.AllClassesSearch;
@@ -60,7 +61,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       });
     }
 
-    final GlobalSearchScope scope = useScope instanceof GlobalSearchScope ? (GlobalSearchScope)useScope : null;
+    final GlobalSearchScope scope = useScope instanceof GlobalSearchScope ? (GlobalSearchScope)useScope : new EverythingGlobalScope(psiManager.getProject());
     final String searchKey = aClass.getName();
     if (StringUtil.isEmpty(searchKey)) {
       return true;

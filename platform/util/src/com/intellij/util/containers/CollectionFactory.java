@@ -28,6 +28,10 @@ public class CollectionFactory {
   private CollectionFactory() {
   }
 
+  public static <T> Set<T> newSet(T... elements) {
+    return new HashSet<T>(Arrays.asList(elements));
+  }
+
   public static <T> Set<T> newTroveSet(T... elements) {
     return newTroveSet(Arrays.asList(elements));
   }

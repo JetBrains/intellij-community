@@ -15,6 +15,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
@@ -54,7 +55,7 @@ public class GrVariableDeclarationImpl extends GroovyPsiElementImpl implements G
     for (final GrVariable variable : getVariables()) {
       if (lastParent == variable) break;
       if (lastParent instanceof GrMethod && !(variable instanceof GrField)) break;
-      if (!ResolveUtil.processElement(processor, variable)) return false;
+      if (!ResolveUtil.processElement(processor, variable, state)) return false;
     }
 
     return true;
@@ -62,9 +63,7 @@ public class GrVariableDeclarationImpl extends GroovyPsiElementImpl implements G
 
   @NotNull
   public GrModifierList getModifierList() {
-    GrModifierList list = findChildByClass(GrModifierList.class);
-    assert list != null;
-    return list;
+    return (GrModifierList)findNotNullChildByType(GroovyElementTypes.MODIFIERS);
   }
 
   @Override

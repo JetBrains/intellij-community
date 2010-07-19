@@ -137,7 +137,7 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
     return myClassLoader;
   }
 
-  private AntInstallation getAntInstallation() {
+  public AntInstallation getAntInstallation() {
     final AntConfigurationBase configuration = AntConfigurationBase.getInstance(getXmlTag().getProject());
     AntInstallation antInstallation = null;
     if (configuration != null) {

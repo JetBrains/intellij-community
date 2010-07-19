@@ -15,10 +15,16 @@
  */
 package com.intellij.spellchecker.tokenizer;
 
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.spellchecker.inspections.SplitterFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class XmlTextTokenizer extends Tokenizer<XmlText> {
 
@@ -26,8 +32,9 @@ public class XmlTextTokenizer extends Tokenizer<XmlText> {
   @Nullable
   @Override
   public Token[] tokenize(@NotNull XmlText element) {
+    if(element.getContainingFile().getContext() != null) return null; // outer element should care of spell checking
+    List<Pair<PsiElement,TextRange>> list = ((PsiLanguageInjectionHost)element).getInjectedPsi();
+    if (list != null && list.size() > 0) return null;
     return new Token[]{new Token<XmlText>(element, element.getText(),false, SplitterFactory.getInstance().getPlainTextSplitter())};
   }
-
-
 }

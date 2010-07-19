@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
-  private final Icon myProjectIcon = IconLoader.getIcon(ApplicationInfoImpl.getInstanceEx().getSmallIconUrl());
+  private static final Icon ourProjectIcon = IconLoader.getIcon(ApplicationInfoImpl.getInstanceEx().getSmallIconUrl());
 
   public OpenProjectFileChooserDescriptor(final boolean chooseFiles) {
     super(chooseFiles, true, false, false, false, false);
@@ -39,7 +39,7 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
   }
 
   public Icon getOpenIcon(final VirtualFile virtualFile) {
-    if (isProjectDirectory(virtualFile)) return myProjectIcon;
+    if (isProjectDirectory(virtualFile)) return ourProjectIcon;
     final Icon icon = getImporterIcon(virtualFile, true);
     if(icon!=null){
       return icon;
@@ -48,7 +48,7 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
   }
 
   public Icon getClosedIcon(final VirtualFile virtualFile) {
-    if (isProjectDirectory(virtualFile)) return myProjectIcon;
+    if (isProjectDirectory(virtualFile)) return ourProjectIcon;
     final Icon icon = getImporterIcon(virtualFile, false);
     if(icon!=null){
       return icon;
@@ -60,7 +60,7 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
   public static Icon getImporterIcon(final VirtualFile virtualFile, final boolean open) {
     final ProjectOpenProcessor provider = ProjectOpenProcessor.getImportProvider(virtualFile);
     if(provider!=null) {
-      return provider.getIcon();
+      return virtualFile.isDirectory() && provider.lookForProjectsInDirectory() ? ourProjectIcon : provider.getIcon();
     }
     return null;
   }
@@ -71,14 +71,31 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
   }
 
   private static boolean isProjectFile(final VirtualFile file) {
-    return (!file.isDirectory() && file.getName().toLowerCase().endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) ||
-           (ProjectOpenProcessor.getImportProvider(file) != null);
+    if (isIprFile(file)) return true;
+    final ProjectOpenProcessor importProvider = ProjectOpenProcessor.getImportProvider(file);
+    return importProvider != null;
+  }
+
+  private static boolean isIprFile(VirtualFile file) {
+    if ((!file.isDirectory() && file.getName().toLowerCase().endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION))) {
+      return true;
+    }
+    return false;
   }
 
   private static boolean isProjectDirectory(final VirtualFile virtualFile) {
     // the root directory of any drive is never an IDEA project
     if (virtualFile.getParent() == null) return false;
-    if (virtualFile.isDirectory() && virtualFile.isValid() && virtualFile.findChild(Project.DIRECTORY_STORE_FOLDER) != null) return true;
+    if (virtualFile.isDirectory() && virtualFile.isValid()) {
+      final VirtualFile[] children = virtualFile.getChildren();
+      if (children == null) return false;
+      for (VirtualFile file : children) {
+        if (file.getName().equals(Project.DIRECTORY_STORE_FOLDER)) return true;
+        if (isIprFile(file)) {
+          return true;
+        }
+      }
+    }
     return false;
   }
 }

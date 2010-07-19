@@ -21,7 +21,6 @@ public class UnusedDeclarationTest extends InspectionTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myTool = new UnusedDeclarationInspection();
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_3);
   }
 
   private void doTest() throws Exception {

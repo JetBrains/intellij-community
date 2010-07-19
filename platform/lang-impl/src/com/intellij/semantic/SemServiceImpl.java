@@ -215,7 +215,7 @@ public class SemServiceImpl extends SemService{
         return null;
       }
 
-      if (cached != null && cached != Collections.EMPTY_LIST) {
+      if (cached != null && cached != Collections.<T>emptyList()) {
         if (singleList == null) {
           singleList = cached;
           continue;

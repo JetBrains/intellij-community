@@ -8,11 +8,9 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.ToolWindowHeadlessManagerImpl;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.slicer.*;
 import com.intellij.util.ArrayUtil;
@@ -26,21 +24,8 @@ import java.util.*;
  * @author cdr
  */
 public class SliceTreeTest extends LightDaemonAnalyzerTestCase {
-  private LanguageLevel myOldLanguageLevel;
-
-  protected void setUp() throws Exception {
-    super.setUp();
-    myOldLanguageLevel = LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).getLanguageLevel();
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
-  }
-
   @Override protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk15("java 1.5");
-  }
-
-  protected void tearDown() throws Exception {
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(myOldLanguageLevel);
-    super.tearDown();
+    return JavaSdkImpl.getMockJdk17("java 1.5");
   }
 
   private SliceTreeStructure configureTree(@NonNls final String name) throws Exception {

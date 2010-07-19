@@ -530,18 +530,21 @@ public class XmlUtil {
   }
 
   @Nullable
-  public static PsiElement findNamespaceDeclaration(PsiFile xmlFile, String nsName) {
-    if (xmlFile instanceof XmlFile) {
-      final XmlDocument document = ((XmlFile)xmlFile).getDocument();
-      if (document != null) {
-        final XmlTag rootTag = document.getRootTag();
-        if (rootTag != null) {
-          for (XmlAttribute attribute : rootTag.getAttributes()) {
-            if (attribute.isNamespaceDeclaration() && attribute.getLocalName().equals(nsName)) {
-              return attribute;
-            }
+  public static PsiElement findNamespaceDeclaration(XmlElement xmlElement, String nsName) {
+    while (! (xmlElement instanceof XmlTag) && xmlElement != null) {
+      final PsiElement parent = xmlElement.getParent();
+      if (!(parent instanceof XmlElement)) return null;
+      xmlElement = (XmlElement)parent;
+    }
+    if (xmlElement != null) {
+      XmlTag tag = (XmlTag)xmlElement;
+      while (tag != null) {
+        for (XmlAttribute attribute : tag.getAttributes()) {
+          if (attribute.isNamespaceDeclaration() && attribute.getLocalName().equals(nsName)) {
+            return attribute;
           }
         }
+        tag = tag.getParentTag();
       }
     }
     return null;
@@ -950,9 +953,8 @@ public class XmlUtil {
   private static final String HTML5_SCHEMA_LOCATION;
   
   static {
-    URL schemaLocation = XmlUtil.class.getResource(ExternalResourceManagerImpl.STANDARD_SCHEMAS + "html5/xhtml5.xsd");
-    VirtualFile relativeFile = schemaLocation != null ?
-                               VfsUtil.findRelativeFile(VfsUtil.fixURLforIDEA(schemaLocation.toExternalForm()), null):null;
+    URL schemaLocationURL = XmlUtil.class.getResource(ExternalResourceManagerImpl.STANDARD_SCHEMAS + "html5/xhtml5.xsd");
+    VirtualFile relativeFile = schemaLocationURL != null ? VfsUtil.findFileByURL(schemaLocationURL):null;
     HTML5_SCHEMA_LOCATION = relativeFile != null ? relativeFile.getPath():"";
   }
   

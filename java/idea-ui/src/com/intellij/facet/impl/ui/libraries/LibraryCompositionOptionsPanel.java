@@ -34,16 +34,19 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author nik
@@ -176,7 +179,7 @@ public class LibraryCompositionOptionsPanel {
     descriptor.setTitle(IdeBundle.message("file.chooser.select.paths.title"));
     descriptor.setDescription(IdeBundle.message("file.chooser.multiselect.description"));
     final VirtualFile[] files = FileChooser.chooseFiles(myAddJarsButton, descriptor, getBaseDirectory());
-    myAddedJars.addAll(Arrays.asList(files));
+    ContainerUtil.addAll(myAddedJars, files);
     updateAll();
   }
 
@@ -196,7 +199,7 @@ public class LibraryCompositionOptionsPanel {
     List<VirtualFile> roots = new ArrayList<VirtualFile>();
     roots.addAll(myAddedJars);
     for (Library library : myUsedLibraries) {
-      roots.addAll(Arrays.asList(myLibrariesContainer.getLibraryFiles(library, OrderRootType.CLASSES)));
+      ContainerUtil.addAll(roots, myLibrariesContainer.getLibraryFiles(library, OrderRootType.CLASSES));
     }
     RequiredLibrariesInfo.RequiredClassesNotFoundInfo info = new RequiredLibrariesInfo(myLibraryCompositionSettings.getLibraryInfos()).checkLibraries(
       VfsUtil.toVirtualFileArray(roots), false);

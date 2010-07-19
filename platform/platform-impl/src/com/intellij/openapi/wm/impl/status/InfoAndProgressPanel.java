@@ -457,46 +457,46 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     setLayout(new BorderLayout());
     add(myRefreshAndInfoPanel, BorderLayout.CENTER);
 
-    long wastedTime = ProgressManagerImpl.getWastedTime();
-    if (ApplicationManagerEx.getApplicationEx().isInternal() && wastedTime > 10 * 60 * 1000) {
-      JPanel wrapper = new JPanel(new BorderLayout());
-      wrapper.setOpaque(false);
-      JLabel label = new JLabel(" Wasted time: " + formatTime(wastedTime) + " ");
-      label.setForeground(UIUtil.getPanelBackground().darker());
-      label.setOpaque(false);
-      wrapper.add(label, BorderLayout.CENTER);
-      wrapper.add(myProgressIcon, BorderLayout.EAST);
-
-      long time = System.currentTimeMillis() - ApplicationManagerEx.getApplicationEx().getStartTime();
-      long percentage = wastedTime * 100 / time;
-      String period = new SimpleDateFormat("m 'min' H 'hours'").format(new Date(2000, 0, 1, 0, 0, 0).getTime() + time);
-
-      List<Pair<String, Long>> list = ProgressManagerImpl.getTimeWasters();
-      StringBuilder s = new StringBuilder("<html>Successfully wasted " + percentage +"% of your time in " + period  + ":<br><border>");
-      for (Pair<String, Long> each : list) {
-        s.append("<tr><td>");
-        s.append(each.first);
-        s.append(":</td><td>");
-        s.append(formatTime(each.second));
-        s.append("</td></tr>");
-      }
-      s.append("</border></html>");
-      wrapper.setToolTipText(s.toString());
-      add(wrapper, BorderLayout.EAST);
-    } else {
+    //long wastedTime = ProgressManagerImpl.getWastedTime();
+    //if (ApplicationManagerEx.getApplicationEx().isInternal() && wastedTime > 10 * 60 * 1000) {
+    //  JPanel wrapper = new JPanel(new BorderLayout());
+    //  wrapper.setOpaque(false);
+    //  JLabel label = new JLabel(" Wasted time: " + formatTime(wastedTime) + " ");
+    //  label.setForeground(UIUtil.getPanelBackground().darker());
+    //  label.setOpaque(false);
+    //  wrapper.add(label, BorderLayout.CENTER);
+    //  wrapper.add(myProgressIcon, BorderLayout.EAST);
+    //
+    //  long time = System.currentTimeMillis() - ApplicationManagerEx.getApplicationEx().getStartTime();
+    //  long percentage = wastedTime * 100 / time;
+    //  String period = new SimpleDateFormat("m 'min' H 'hours'").format(new Date(2000, 0, 1, 0, 0, 0).getTime() + time);
+    //
+    //  List<Pair<String, Long>> list = ProgressManagerImpl.getTimeWasters();
+    //  StringBuilder s = new StringBuilder("<html>Successfully wasted " + percentage +"% of your time in " + period  + ":<br><border>");
+    //  for (Pair<String, Long> each : list) {
+    //    s.append("<tr><td>");
+    //    s.append(each.first);
+    //    s.append(":</td><td>");
+    //    s.append(formatTime(each.second));
+    //    s.append("</td></tr>");
+    //  }
+    //  s.append("</border></html>");
+    //  wrapper.setToolTipText(s.toString());
+    //  add(wrapper, BorderLayout.EAST);
+    //} else {
       add(myProgressIcon, BorderLayout.EAST);
-    }
+    //}
 
     myProgressIcon.suspend();
     myRefreshAndInfoPanel.revalidate();
     myRefreshAndInfoPanel.repaint();
   }
 
-  private String formatTime(long t) {
-    if (t < 1000) return "< 1 sec";
-    if (t < 60 * 1000) return (t / 1000) + " sec";
-    return "~" + (int)Math.ceil(t / (60 * 1000f)) + " min";
-  }
+  //private String formatTime(long t) {
+  //  if (t < 1000) return "< 1 sec";
+  //  if (t < 60 * 1000) return (t / 1000) + " sec";
+  //  return "~" + (int)Math.ceil(t / (60 * 1000f)) + " min";
+  //}
 
   public boolean isProcessWindowOpen() {
     return myPopup.isShowing();

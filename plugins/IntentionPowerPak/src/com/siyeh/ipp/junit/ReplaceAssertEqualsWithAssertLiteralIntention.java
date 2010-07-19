@@ -19,12 +19,12 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.psiutils.ImportUtils;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class ReplaceAssertEqualsWithAssertLiteralIntention
         extends MutablyNamedIntention {
@@ -84,7 +84,7 @@ public class ReplaceAssertEqualsWithAssertLiteralIntention
             } else {
                 otherArg = args[1];
             }
-            actualArgumentText = otherArg.getText();
+            actualArgumentText = args[0].getText() + ", " + otherArg.getText();
             assertString = getAssertString(argText);
         }
         final PsiElement qualifier = expression.getQualifier();

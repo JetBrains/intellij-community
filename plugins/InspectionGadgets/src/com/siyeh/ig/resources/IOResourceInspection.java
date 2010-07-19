@@ -19,6 +19,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.ui.ScrollPaneFactory;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TypeUtils;
@@ -30,12 +31,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
+import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -95,7 +92,7 @@ public class IOResourceInspection extends ResourceInspection {
                 new IGTable(new ListWrappingTableModel(ignoredTypes,
                         InspectionGadgetsBundle.message(
                                 "ignored.io.resource.types")));
-        final JScrollPane scrollPane = new JScrollPane(table);
+      final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(table);
         panel.add(scrollPane, constraints);
         constraints.gridx = 1;
         constraints.weightx = 0.0;

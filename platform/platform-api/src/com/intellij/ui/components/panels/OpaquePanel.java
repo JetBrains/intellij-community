@@ -25,6 +25,7 @@ public class OpaquePanel extends JPanel {
 
 
   private boolean myOpaqueActive = true;
+  private String myKey;
 
   public OpaquePanel() {
     this(null, null);
@@ -43,9 +44,15 @@ public class OpaquePanel extends JPanel {
     setBackground(color);
   }
 
+  public OpaquePanel setKey(String key) {
+    myKey = key;
+    return this;
+  }
+
   protected void paintComponent(Graphics g) {
     if (myOpaqueActive) {
-      g.setColor(getBackground());
+      Color bg = myKey != null ? UIManager.getColor(myKey) : getBackground();
+      g.setColor(bg);
       Dimension size = getSize();
       g.fillRect(0, 0, size.width, size.height);
     }
@@ -57,5 +64,26 @@ public class OpaquePanel extends JPanel {
 
   public void setOpaqueActive(final boolean opaqueActive) {
     myOpaqueActive = opaqueActive;
+  }
+
+  public static class List extends OpaquePanel {
+    public List() {
+      setKey("List.background");
+    }
+
+    public List(LayoutManager layout) {
+      super(layout);
+      setKey("List.background");
+    }
+
+    public List(Color color) {
+      super(color);
+      setKey("List.background");
+    }
+
+    public List(LayoutManager layoutManager, Color color) {
+      super(layoutManager, color);
+      setKey("List.background");
+    }
   }
 }

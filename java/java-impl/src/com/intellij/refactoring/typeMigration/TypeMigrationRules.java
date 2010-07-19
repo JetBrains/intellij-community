@@ -5,11 +5,12 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.typeMigration.rules.*;
+import com.intellij.refactoring.typeMigration.rules.RootTypeConversionRule;
+import com.intellij.refactoring.typeMigration.rules.TypeConversionRule;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.LinkedList;
 
 /**
@@ -29,7 +30,7 @@ public class TypeMigrationRules {
   public TypeMigrationRules(final PsiType root) {
     myRootType = root;
     myConversionRules.add(new RootTypeConversionRule());
-    myConversionRules.addAll(Arrays.asList(Extensions.getExtensions(TypeConversionRule.EP_NAME)));
+    ContainerUtil.addAll(myConversionRules, Extensions.getExtensions(TypeConversionRule.EP_NAME));
   }
 
   public void setMigrationRootType(PsiType migrationRootType) {

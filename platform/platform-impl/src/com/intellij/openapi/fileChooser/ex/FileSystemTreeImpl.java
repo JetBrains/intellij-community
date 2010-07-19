@@ -114,7 +114,6 @@ public class FileSystemTreeImpl implements FileSystemTree {
 
     new TreeSpeedSearch(myTree);
     myTree.setLineStyleAngled();
-    TreeToolTipHandler.install(myTree);
     TreeUtil.installActions(myTree);
 
     myTree.getSelectionModel().setSelectionMode(

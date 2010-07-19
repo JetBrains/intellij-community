@@ -22,11 +22,13 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
+import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
+import com.intellij.ide.CopyPasteManagerEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -60,27 +62,23 @@ public class AnalyzeStacktraceUtil {
   public static void printStacktrace(final ConsoleView consoleView, final String unscrambledTrace) {
     consoleView.clear();
     consoleView.print(unscrambledTrace+"\n", ConsoleViewContentType.ERROR_OUTPUT);
-    consoleView.performWhenNoDeferredOutput(
-      new Runnable() {
-        public void run() {
-          consoleView.scrollTo(0);
-        }
-      }
-    );
+    if (consoleView instanceof ConsoleViewImpl) {
+      ((ConsoleViewImpl)consoleView).foldImmediately();
+    }
+    consoleView.scrollTo(0);
   }
 
   @Nullable
   public static String getTextInClipboard() {
-    String text = null;
-    try {
-      Transferable contents = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(AnalyzeStacktraceUtil.class);
-      if (contents != null) {
-        text = (String)contents.getTransferData(DataFlavor.stringFlavor);
+    final Transferable contents = CopyPasteManagerEx.getInstanceEx().getSystemClipboardContents(false);
+    if (contents != null) {
+      try {
+        return (String)contents.getTransferData(DataFlavor.stringFlavor);
+      } catch (Exception e) {
+        //no luck
       }
     }
-    catch (Exception ignore) {
-    }
-    return text;
+    return null;
   }
 
   public interface ConsoleFactory {

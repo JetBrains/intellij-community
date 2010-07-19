@@ -34,13 +34,16 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import javax.swing.border.LineBorder;
 import java.awt.*;
 
-public class NavigationItemListCellRenderer extends JPanel implements ListCellRenderer {
+public class NavigationItemListCellRenderer extends OpaquePanel implements ListCellRenderer {
   public NavigationItemListCellRenderer() {
     super(new BorderLayout());
   }
@@ -64,20 +67,23 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
     final Color listBg = leftCellRendererComponent.getBackground();
     add(leftCellRendererComponent, BorderLayout.WEST);
 
+    setBackground(isSelected ? UIUtil.getListSelectionBackground() : listBg);
+
     if  (hasRightRenderer){
       final DefaultListCellRenderer moduleRenderer = factory.getModuleRenderer();
 
       final Component rightCellRendererComponent =
         moduleRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      ((JComponent)rightCellRendererComponent).setOpaque(false);
       rightCellRendererComponent.setBackground(listBg);
       add(rightCellRendererComponent, BorderLayout.EAST);
-      final JPanel spacer = new JPanel();
+      final JPanel spacer = new NonOpaquePanel();
+
       final Dimension size = rightCellRendererComponent.getSize();
       spacer.setSize(new Dimension((int)(size.width * 0.015 + leftCellRendererComponent.getSize().width * 0.015), size.height));
       spacer.setBackground(isSelected ? UIUtil.getListSelectionBackground() : listBg);
       add(spacer, BorderLayout.CENTER);
     }
-    setBackground(isSelected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());
     return this;
   }
 

@@ -142,7 +142,7 @@ public class JavaFileManagerImpl implements JavaFileManager {
       if (qualifiedName == null || !qualifiedName.equals(qName)) continue;
 
       VirtualFile vFile = aClass.getContainingFile().getVirtualFile();
-      if (!fileIsInScope(scope, vFile)) continue;
+      if (!hasAcceptablePackage(vFile)) continue;
 
       result.add(aClass);
       count++;
@@ -213,8 +213,8 @@ public class JavaFileManagerImpl implements JavaFileManager {
 
   @Nullable
   private PsiClass _findClassWithoutRepository(String qName) {
-    VirtualFile[] sourcePath = myProjectRootManager.getFilesFromAllModules(OrderRootType.SOURCES);
-    VirtualFile[] classPath = myProjectRootManager.getFilesFromAllModules(OrderRootType.CLASSES);
+    VirtualFile[] sourcePath = myProjectRootManager.orderEntries().sources().usingCache().getRoots();
+    VirtualFile[] classPath = myProjectRootManager.orderEntries().withoutModuleSourceEntries().classes().usingCache().getRoots();
 
     int index = 0;
     while (index < qName.length()) {
@@ -331,7 +331,7 @@ public class JavaFileManagerImpl implements JavaFileManager {
       }
 
       VirtualFile vFile = file.getVirtualFile();
-      if (!fileIsInScope(scope, vFile)) continue;
+      if (!hasAcceptablePackage(vFile)) continue;
       if (bestFile == null || scope.compare(vFile, bestFile) > 0) {
         bestFile = vFile;
         bestClass = aClass;
@@ -342,9 +342,7 @@ public class JavaFileManagerImpl implements JavaFileManager {
   }
 
 
-  private boolean fileIsInScope(final GlobalSearchScope scope, final VirtualFile vFile) {
-    if (!scope.contains(vFile)) return false;
-
+  private boolean hasAcceptablePackage(final VirtualFile vFile) {
     if (vFile.getFileType() == StdFileTypes.CLASS) {
       // See IDEADEV-5626
       final VirtualFile root = ProjectRootManager.getInstance(myManager.getProject()).getFileIndex().getClassRootForFile(vFile);

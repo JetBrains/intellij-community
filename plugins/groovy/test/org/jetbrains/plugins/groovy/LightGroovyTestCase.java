@@ -43,7 +43,7 @@ public abstract class LightGroovyTestCase extends LightCodeInsightFixtureTestCas
     }
 
     public Sdk getSdk() {
-      return JavaSdkImpl.getMockJdk15("java 1.5");
+      return JavaSdkImpl.getMockJdk17("java 1.5");
     }
 
     public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {

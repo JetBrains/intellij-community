@@ -139,7 +139,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   }
 
   public boolean isReferenced() {
-    return getInReferences().size() > 0;
+    return !getInReferences().isEmpty();
   }
 
   public boolean hasSuspiciousCallers() {
@@ -257,6 +257,6 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
       }
     }
     final RefEntity entity = getOwner();
-    return entity instanceof RefElement && ((RefElementImpl)entity).isSuppressed(toolId);
+    return entity instanceof RefElementImpl && ((RefElementImpl)entity).isSuppressed(toolId);
   }
 }

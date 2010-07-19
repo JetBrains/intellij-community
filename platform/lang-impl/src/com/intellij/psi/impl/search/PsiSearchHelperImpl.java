@@ -30,7 +30,9 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -641,7 +643,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         });
       } else {
         final List<String> words = StringUtil.getWordsIn(primitive.word);
-        final Set<IdIndexEntry> key = new HashSet<IdIndexEntry>(words.size());
+        final Set<IdIndexEntry> key = new HashSet<IdIndexEntry>(words.size() * 2);
         for (String word : words) {
           key.add(new IdIndexEntry(word, primitive.caseSensitive));
         }

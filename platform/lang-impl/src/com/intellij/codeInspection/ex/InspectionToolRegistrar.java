@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.profile.codeInspection.ui.InspectionToolsConfigurable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +36,6 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
@@ -62,8 +62,8 @@ public class InspectionToolRegistrar {
   public void ensureInitialized() {
     if (!myInspectionComponentsLoaded.getAndSet(true)) {
       Set<InspectionToolProvider> providers = new THashSet<InspectionToolProvider>();
-      providers.addAll(Arrays.asList(ApplicationManager.getApplication().getComponents(InspectionToolProvider.class)));
-      providers.addAll(Arrays.asList(Extensions.getExtensions(InspectionToolProvider.EXTENSION_POINT_NAME)));
+      ContainerUtil.addAll(providers, ApplicationManager.getApplication().getComponents(InspectionToolProvider.class));
+      ContainerUtil.addAll(providers, Extensions.getExtensions(InspectionToolProvider.EXTENSION_POINT_NAME));
       registerTools(providers.toArray(new InspectionToolProvider[providers.size()]));
       for (InspectionToolsFactory factory : Extensions.getExtensions(InspectionToolsFactory.EXTENSION_POINT_NAME)) {
         for (final InspectionProfileEntry profileEntry : factory.createTools()) {
@@ -71,7 +71,8 @@ public class InspectionToolRegistrar {
             public InspectionTool create() {
               if (profileEntry instanceof LocalInspectionTool) {
                 return new LocalInspectionToolWrapper((LocalInspectionTool)profileEntry);
-              } else if (profileEntry instanceof GlobalInspectionTool) {
+              }
+              else if (profileEntry instanceof GlobalInspectionTool) {
                 return new GlobalInspectionToolWrapper((GlobalInspectionTool)profileEntry);
               }
               return (InspectionTool)profileEntry;

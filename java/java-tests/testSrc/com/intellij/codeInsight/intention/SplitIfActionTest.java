@@ -1,8 +1,8 @@
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.intention.impl.SplitIfAction;
-import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.testFramework.LightCodeInsightTestCase;
 
 /**
  * @author mike
@@ -38,6 +38,20 @@ public class SplitIfActionTest extends LightCodeInsightTestCase {
     perform();
     checkResultByFile("/codeInsight/splitIfAction/after5.java");
   }
+
+  public void test6() throws Exception {
+    configureByFile("/codeInsight/splitIfAction/beforeParenthesis.java");
+    perform();
+    checkResultByFile("/codeInsight/splitIfAction/afterParenthesis.java");
+  }
+
+  public void test7() throws Exception {
+    configureByFile("/codeInsight/splitIfAction/beforeOrParenthesis.java");
+    perform();
+    checkResultByFile("/codeInsight/splitIfAction/afterOrParenthesis.java");
+  }
+
+
 
   private void perform() throws Exception {
     SplitIfAction action = new SplitIfAction();

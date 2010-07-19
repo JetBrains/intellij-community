@@ -20,11 +20,15 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeConsumer;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeEP;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author ilyas
@@ -39,8 +43,10 @@ public class GroovyFileTypeLoader extends FileTypeFactory{
   public static Set<String> getCustomGroovyScriptExtensions() {
     final LinkedHashSet<String> strings = new LinkedHashSet<String>();
     strings.add("gdsl");
+    strings.add("gpp");
+    strings.add("grunit");
     for (GroovyScriptTypeEP ep : GroovyScriptType.EP_NAME.getExtensions()) {
-      strings.addAll(Arrays.asList(ep.extensions.split(";")));
+      ContainerUtil.addAll(strings, ep.extensions.split(";"));
     }
     return strings;
   }

@@ -125,6 +125,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     myListeners.addListener(new ChangeListAdapter() {
       @Override
       public void defaultListChanged(final ChangeList oldDefaultList, ChangeList newDefaultList) {
+        if (((LocalChangeList)oldDefaultList).hasDefaultName()) return;
         if (!ApplicationManager.getApplication().isUnitTestMode() &&
           oldDefaultList instanceof LocalChangeList &&
           oldDefaultList.getChanges().isEmpty() &&
@@ -145,6 +146,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
                     public void setValue(Value value) {
                       config.REMOVE_EMPTY_INACTIVE_CHANGELISTS = value;
+                    }
+
+                    @Override
+                    public boolean isPersistent() {
+                      return true;
                     }
                   }, "<html>The empty changelist '" + StringUtil.first(oldDefaultList.getName(), 30, true) + "' is no longer active.<br>" +
                      "Do you want to remove it?</html>", "&Remember my choice");
@@ -295,7 +301,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     final boolean wasEverythingDirty = invalidated.isEverythingDirty();
     final List<VcsDirtyScope> scopes = invalidated.getScopes();
 
-    boolean somethingChangedInView = false;
     try {
       checkIfDisposed();
 
@@ -316,6 +321,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       if (wasEverythingDirty) {
         changeListWorker.notifyStartProcessingChanges(null);
       }
+      myChangesViewManager.scheduleRefresh();
 
       final ChangeListManagerGate gate = changeListWorker.createSelfGate();
 
@@ -381,12 +387,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         myModifier.clearQueue();
         // update member from copy
         if (takeChanges) {
-          somethingChangedInView |= myWorker.takeData(changeListWorker);
+          myWorker.takeData(changeListWorker);
         }
 
         if (takeChanges && updateUnversionedFiles) {
           boolean statusChanged = !myComposite.equals(composite);
-          somethingChangedInView |= statusChanged;
           myComposite = composite;
           if (statusChanged) {
             myDelayedNotificator.getProxyDispatcher().unchangedFileStatusChanged();
@@ -398,6 +403,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         }
         myShowLocalChangesInvalidated = false;
       }
+      myChangesViewManager.scheduleRefresh();
     }
     catch (DisposedException e) {
       // OK, we're finishing all the stuff now.
@@ -416,8 +422,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       
       synchronized (myDataLock) {
         myDelayedNotificator.getProxyDispatcher().changeListUpdateDone();
-      }
-      if (somethingChangedInView) {
         myChangesViewManager.scheduleRefresh();
       }
     }
@@ -1022,9 +1026,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   private static class MyChangesDeltaForwarder implements PlusMinus<Pair<String, AbstractVcs>> {
     //private SlowlyClosingAlarm myAlarm;
-    private final RemoteRevisionsCache myRevisionsCache;
+    private RemoteRevisionsCache myRevisionsCache;
     private final ProjectLevelVcsManager myVcsManager;
-    private final ExecutorWrapper myExecutorWrapper;
+    private ExecutorWrapper myExecutorWrapper;
     private final ExecutorService myService;
 
 

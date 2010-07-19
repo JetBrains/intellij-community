@@ -12,18 +12,21 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.intellij.openapi.application.*;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vfs.*;
-import com.intellij.vcsUtil.*;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.GuiUtils;
+import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.command.HgRemoveCommand;
 
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 /**
@@ -61,66 +64,52 @@ public abstract class HgUtil {
     return tempFile;
   }
 
-  public static void markDirectoryDirty( final Project project, final FilePath file ) {
-    Application application = ApplicationManager.getApplication();
-    application.runReadAction(new Runnable() {
+  public static void markDirectoryDirty(final Project project, final VirtualFile file) throws InvocationTargetException, InterruptedException {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(file);
       }
-    } );
-    application.runWriteAction(new Runnable() {
-      public void run() {
-        VirtualFile virtualFile = VcsUtil.getVirtualFile(file.getPath());
-        if (virtualFile != null) {
-          virtualFile.refresh(true, true);
-        }
-      }
-    } );
-  }
-
-  public static void markDirectoryDirty( final Project project, final VirtualFile file ) {
-    Application application = ApplicationManager.getApplication();
-    application.runReadAction(new Runnable() {
-      public void run() {
-        VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(file);
-      }
-    } );
-    application.runWriteAction(new Runnable() {
+    });
+    runWriteActionAndWait(new Runnable() {
       public void run() {
         file.refresh(true, true);
       }
-    } );
+    });
   }
 
-  public static void markFileDirty( final Project project, final FilePath file ) {
-    Application application = ApplicationManager.getApplication();
-    application.runReadAction(new Runnable() {
+  public static void markFileDirty( final Project project, final VirtualFile file ) throws InvocationTargetException, InterruptedException {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         VcsDirtyScopeManager.getInstance(project).fileDirty(file);
       }
     } );
-    application.runWriteAction(new Runnable() {
-      public void run() {
-        VirtualFile virtualFile = VcsUtil.getVirtualFile(file.getPath());
-        if (virtualFile != null) {
-          virtualFile.refresh(true, false);
-        }
-      }
-    } );
-  }
-
-  public static void markFileDirty( final Project project, final VirtualFile file ) {
-    Application application = ApplicationManager.getApplication();
-    application.runReadAction(new Runnable() {
-      public void run() {
-        VcsDirtyScopeManager.getInstance(project).fileDirty(file);
-      }
-    } );
-    application.runWriteAction(new Runnable() {
+    runWriteActionAndWait(new Runnable() {
       public void run() {
         file.refresh(true, false);
       }
-    } );
+    });
+  }
+
+  /**
+   * Runs the given task as a write action in the event dispatching thread and waits for its completion.
+   */
+  public static void runWriteActionAndWait(@NotNull final Runnable runnable) throws InvocationTargetException, InterruptedException {
+    GuiUtils.runOrInvokeAndWait(new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(runnable);
+      }
+    });
+  }
+
+  /**
+   * Schedules the given task to be run as a write action in the event dispatching thread.
+   */
+  public static void runWriteActionLater(@NotNull final Runnable runnable) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(runnable);
+      }
+    });
   }
 
   /**
@@ -199,4 +188,40 @@ public abstract class HgUtil {
   public static boolean isHgRoot(VirtualFile dir) {
     return dir.findChild(".hg") != null;
   }
+
+  /**
+   * Gets the Mercurial root for the given file path or null if non exists:
+   * the root should not only be in directory mappings, but also the .hg repository folder should exist.
+   * @see #getHgRootOrThrow(com.intellij.openapi.project.Project, com.intellij.openapi.vcs.FilePath)
+   */
+  @Nullable
+  public static VirtualFile getHgRootOrNull(Project project, FilePath filePath) {
+    return getNearestHgRoot(VcsUtil.getVcsRootFor(project, filePath));
+  }
+
+  /**
+   * Gets the Mercurial root for the given file path or null if non exists:
+   * the root should not only be in directory mappings, but also the .hg repository folder should exist.
+   * @see #getHgRootOrThrow(com.intellij.openapi.project.Project, com.intellij.openapi.vcs.FilePath)
+   * @see #getHgRootOrNull(com.intellij.openapi.project.Project, com.intellij.openapi.vcs.FilePath) 
+   */
+  @Nullable
+  public static VirtualFile getHgRootOrNull(Project project, VirtualFile file) {
+    return getHgRootOrNull(project, VcsUtil.getFilePath(file.getPath()));
+  }
+
+  /**
+   * Gets the Mercurial root for the given file path or throws a VcsException if non exists:
+   * the root should not only be in directory mappings, but also the .hg repository folder should exist.
+   * @see #getHgRootOrNull(com.intellij.openapi.project.Project, com.intellij.openapi.vcs.FilePath)
+   */
+  @NotNull
+  public static VirtualFile getHgRootOrThrow(Project project, FilePath filePath) throws VcsException {
+    final VirtualFile vf = getHgRootOrNull(project, filePath);
+    if (vf == null) {
+      throw new VcsException(HgVcsMessages.message("hg4idea.exception.file.not.under.hg", filePath.getPresentableUrl()));
+    }
+    return vf;
+  }
+
 }

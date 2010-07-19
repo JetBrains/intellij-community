@@ -28,11 +28,11 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 
 import javax.swing.*;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 /**
  * author: lesya
@@ -50,7 +50,7 @@ public abstract class ActionOnSelectedElement extends AbstractAction {
       }
     }
     ;
-    if (selectedIOFiles != null) result.addAll(Arrays.asList(selectedIOFiles));
+    if (selectedIOFiles != null) ContainerUtil.addAll(result, selectedIOFiles);
     return (File[])result.toArray(new File[result.size()]);
   }
 

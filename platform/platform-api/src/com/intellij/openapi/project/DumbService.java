@@ -16,6 +16,7 @@
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
@@ -91,7 +92,7 @@ public abstract class DumbService {
     if (isDumb()) {
       final ArrayList<T> result = new ArrayList<T>(collection);
       for (Iterator<T> iterator = result.iterator(); iterator.hasNext();) {
-        if (!(iterator.next() instanceof DumbAware)) {
+        if (!isDumbAware(iterator.next())) {
           iterator.remove();
         }
       }
@@ -138,6 +139,14 @@ public abstract class DumbService {
   public abstract BalloonHandler showDumbModeNotification(String message);
 
   public abstract Project getProject();
+
+  public static boolean isDumbAware(Object o) {
+    if (o instanceof AnAction) {
+      return ((AnAction)o).isDumbAware();
+    } else {
+      return o instanceof DumbAware;
+    }
+  }
 
   /**
    * @see #DUMB_MODE

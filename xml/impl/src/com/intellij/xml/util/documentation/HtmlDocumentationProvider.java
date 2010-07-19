@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.XmlElementFactory;
+import com.intellij.psi.impl.source.xml.SchemaPrefix;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
@@ -54,7 +55,10 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
 
   @Nullable
   public String getQuickNavigateInfo(PsiElement element) {
-    return null; 
+    if (element instanceof SchemaPrefix) {
+      return ((SchemaPrefix)element).getQuickNavigateInfo();
+    }
+    return null;
   }
 
   public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {

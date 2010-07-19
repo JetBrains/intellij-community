@@ -1,8 +1,10 @@
 package com.intellij.psi.impl.compiled;
 
+import com.intellij.util.containers.ContainerUtil;
 import junit.framework.TestCase;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Pavel.Fatin, 18.02.2010
@@ -123,7 +125,7 @@ public class ClassFileStubBuilderTest extends TestCase {
 
   private static boolean isInner(String name, String... files) {
     Set<String> all = new HashSet<String>();
-    all.addAll(Arrays.asList(files));
+    ContainerUtil.addAll(all, files);
     all.add(name);
     return ClassFileStubBuilder.isInner(name, new DirectoryMock(all));
   }

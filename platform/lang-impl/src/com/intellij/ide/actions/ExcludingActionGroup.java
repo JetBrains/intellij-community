@@ -43,6 +43,11 @@ public class ExcludingActionGroup extends ActionGroup {
     myDelegate.update(e);
   }
 
+  @Override
+  public boolean isDumbAware() {
+    return myDelegate.isDumbAware();
+  }
+
   @NotNull
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     List<AnAction> result = new ArrayList<AnAction>();

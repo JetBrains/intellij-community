@@ -182,7 +182,7 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
 
   public String getConfigurationDirectory() {
     if (myConfigurationDirectory == null || isUseDefaultConfiguation()) {
-      myConfigurationDirectory = SVNWCUtil.getDefaultConfigurationDirectory().getAbsolutePath();
+      myConfigurationDirectory = IdeaSubversionConfigurationDirectory.getPath();
     }
     return myConfigurationDirectory;
   }
@@ -193,11 +193,13 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
 
   public void setConfigurationDirectory(String path) {
     myConfigurationDirectory = path;
-    File dir = path == null ? SVNWCUtil.getDefaultConfigurationDirectory() : new File(path);
+    File dir = path == null ? new File(IdeaSubversionConfigurationDirectory.getPath()) : new File(path);
     SVNConfigFile.createDefaultConfiguration(dir);
 
     myOptions = null;
     myAuthManager = null;
+    myPassiveAuthManager = null;
+    myInteractiveManager = null;
     RUNTIME_AUTH_CACHE.clear();
   }
 
@@ -205,6 +207,8 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
     myIsUseDefaultConfiguration = useDefault;
     myOptions = null;
     myAuthManager = null;
+    myPassiveAuthManager = null;
+    myInteractiveManager = null;
     RUNTIME_AUTH_CACHE.clear();
   }
 
@@ -216,11 +220,11 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
     return myOptions;
   }
 
-  public ISVNAuthenticationManager getAuthenticationManager(final SvnVcs svnVcs) {
+  public SvnAuthenticationManager getAuthenticationManager(final SvnVcs svnVcs) {
     if (myAuthManager == null) {
       // reloaded when configuration directory changes
         myAuthManager = new SvnAuthenticationManager(myProject, new File(getConfigurationDirectory()));
-        myAuthManager.setAuthenticationProvider(new SvnAuthenticationProvider(svnVcs));
+        myAuthManager.setAuthenticationProvider(new SvnAuthenticationProvider(svnVcs, getInteractiveManager(svnVcs)));
         myAuthManager.setRuntimeStorage(RUNTIME_AUTH_CACHE);
     }
     return myAuthManager;
@@ -234,11 +238,11 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
     return myPassiveAuthManager;
   }
 
-  public ISVNAuthenticationManager getInteractiveManager(final SvnVcs svnVcs) {
+  public SvnAuthenticationManager getInteractiveManager(final SvnVcs svnVcs) {
     if (myInteractiveManager == null) {
       myInteractiveManager = new SvnAuthenticationManager(myProject, new File(getConfigurationDirectory()));
       myInteractiveManager.setRuntimeStorage(RUNTIME_AUTH_CACHE);
-      myInteractiveManager.setAuthenticationProvider(new SvnInteractiveAuthenticationProvider(svnVcs));
+      myInteractiveManager.setAuthenticationProvider(new SvnInteractiveAuthenticationProvider(svnVcs, myInteractiveManager));
     }
     return myInteractiveManager;
   }
@@ -303,7 +307,11 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
     }
     final Element supportedVersion = element.getChild("supportedVersion");
     if (supportedVersion != null) {
-      mySupportOptions = new SvnSupportOptions(Long.parseLong(supportedVersion.getText()));
+      try {
+        mySupportOptions = new SvnSupportOptions(Long.parseLong(supportedVersion.getText().trim()));
+      } catch (NumberFormatException e) {
+        mySupportOptions = new SvnSupportOptions(null);
+      }
     }
     final Attribute maxAnnotateRevisions = element.getAttribute("maxAnnotateRevisions");
     if (maxAnnotateRevisions != null) {

@@ -58,7 +58,7 @@
         <properties/>
         <border type="none"/>
         <children>
-          <scrollpane id="ed807">
+          <scrollpane class="com.intellij.ui.components.JBScrollPane" id="ed807">
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false">
                 <preferred-size width="400" height="-1"/>
@@ -67,7 +67,7 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="747bc" class="javax.swing.JTree" binding="myActionsTree">
+              <component id="747bc" class="com.intellij.ui.treeStructure.Tree" binding="myActionsTree">
                 <constraints/>
                 <properties/>
               </component>
@@ -117,14 +117,14 @@
               </component>
             </children>
           </grid>
-          <scrollpane id="79c0e">
+          <scrollpane class="com.intellij.ui.components.JBScrollPane" id="79c0e">
             <constraints>
               <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
             <border type="none"/>
             <children>
-              <component id="4fd59" class="javax.swing.JList" binding="myActionsList">
+              <component id="4fd59" class="com.intellij.ui.components.JBList" binding="myActionsList">
                 <constraints/>
                 <properties/>
               </component>

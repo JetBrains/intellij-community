@@ -21,10 +21,8 @@ import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.ui.DialogButtonGroup;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.ListUtil;
-import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.ui.*;
+import com.intellij.ui.components.JBList;
 
 import javax.swing.*;
 import java.awt.*;
@@ -52,7 +50,7 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
   private final JTextField myHexPrefix = new JTextField(20);
   private final JTextField myNumPostfixes = new JTextField(20);
 
-  private final JList[] myKeywordsLists = new JList[]{new JList(), new JList(), new JList(), new JList()};
+  private final JList[] myKeywordsLists = new JList[]{new JBList(), new JBList(), new JBList(), new JBList()};
   private final DefaultListModel[] myKeywordModels = new DefaultListModel[]{new DefaultListModel(), new DefaultListModel(), new DefaultListModel(), new DefaultListModel()};
   private final JButton[] myAddKeywordButtons = new JButton[4];
   private final JButton[] myRemoveKeywordButtons = new JButton[4];
@@ -237,7 +235,7 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
     JPanel keywordsPanel = panel;
     keywordsPanel.setLayout(new BorderLayout());
 
-    keywordsPanel.add(new JScrollPane(myKeywordsLists[index]), BorderLayout.CENTER);
+    keywordsPanel.add(ScrollPaneFactory.createScrollPane(myKeywordsLists[index]), BorderLayout.CENTER);
 
     DialogButtonGroup buttonGroup = new DialogButtonGroup();
     buttonGroup.setBorder(BorderFactory.createEmptyBorder(0, 10, 5, 0));

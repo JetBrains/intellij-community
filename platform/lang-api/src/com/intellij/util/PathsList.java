@@ -123,15 +123,20 @@ public class PathsList  {
   }
 
   public String getPathsString() {
-    final StringBuffer buffer = new StringBuffer();
-    String separator = "";
-    final List<String> classPath = getPathList();
-    for (final String path : classPath) {
-      buffer.append(separator);
-      buffer.append(path);
-      separator = File.pathSeparator;
+    final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
+    try {
+      String separator = "";
+      final List<String> classPath = getPathList();
+      for (final String path : classPath) {
+        buffer.append(separator);
+        buffer.append(path);
+        separator = File.pathSeparator;
+      }
+      return buffer.toString();
     }
-    return buffer.toString();
+    finally {
+      StringBuilderSpinAllocator.dispose(buffer);
+    }
   }
 
   public List<String> getPathList() {
@@ -175,7 +180,7 @@ public class PathsList  {
     add(PathUtil.getCanonicalPath(file.getAbsolutePath()).replace('/', File.separatorChar));
   }
 
-  public void addVirtualFiles(List<VirtualFile> files) {
+  public void addVirtualFiles(Collection<VirtualFile> files) {
     for (final VirtualFile file : files) {
       add(file);
     }

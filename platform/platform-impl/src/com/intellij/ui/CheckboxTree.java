@@ -40,13 +40,11 @@ public class CheckboxTree extends CheckboxTreeBase {
   public CheckboxTree(final CheckboxTreeCellRenderer cellRenderer, CheckedTreeNode root) {
     super(cellRenderer, root);
 
-    TreeToolTipHandler.install(this);
-    installSpeedSearch();    
+    installSpeedSearch();
   }
   public CheckboxTree(final CheckboxTreeCellRenderer cellRenderer, CheckedTreeNode root, final CheckPolicy checkPolicy) {
     super(cellRenderer, root, checkPolicy);
 
-    TreeToolTipHandler.install(this);
     installSpeedSearch();
   }
 

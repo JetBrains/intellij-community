@@ -24,9 +24,12 @@ import com.intellij.util.Processor;
 import com.intellij.util.ValueHolder;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.continuation.TaskDescriptor;
+import com.intellij.util.continuation.Where;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.PersistentHashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.history.CopyData;
@@ -40,21 +43,25 @@ import java.util.*;
 
 public class SvnBranchPointsCalculator {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.dialogs.SvnBranchPointsCalculator");
-  private final FactsCalculator<KeyData, WrapperInvertor<BranchCopyData>> myCalculator;
-
+  private FactsCalculator<KeyData, WrapperInvertor<BranchCopyData>> myCalculator;
   private PersistentHolder myPersistentHolder;
+  private File myFile;
+  private final Project myProject;
 
   public SvnBranchPointsCalculator(final Project project) {
+    myProject = project;
     final File vcs = new File(PathManager.getSystemPath(), "vcs");
     File file = new File(vcs, "svn_copy_sources");
     file.mkdirs();
-    file = new File(file, project.getLocationHash());
+    myFile = file;
+    myFile = new File(file, project.getLocationHash());
+  }
 
-    // todo when will it die?
+  public void activate() {
     ValueHolder<WrapperInvertor<BranchCopyData>, KeyData> cache = null;
 
     try {
-      myPersistentHolder = new PersistentHolder(file);
+      myPersistentHolder = new PersistentHolder(myFile);
       cache = new ValueHolder<WrapperInvertor<BranchCopyData>, KeyData>() {
         public WrapperInvertor<BranchCopyData> getValue(KeyData dataHolder) {
           try {
@@ -90,7 +97,13 @@ public class SvnBranchPointsCalculator {
       };
     }
 
-    myCalculator = new FactsCalculator<KeyData, WrapperInvertor<BranchCopyData>>(project, "Looking for branch origin", cache, new Loader(project));
+    myCalculator = new FactsCalculator<KeyData, WrapperInvertor<BranchCopyData>>(myProject, "Looking for branch origin", cache, new Loader(myProject));
+  }
+
+  public void deactivate() {
+    myPersistentHolder.close();
+    myCalculator = null;
+    myPersistentHolder = null;
   }
 
   private static class BranchDataExternalizer implements DataExternalizer<TreeMap<String,BranchCopyData>> {
@@ -166,11 +179,13 @@ public class SvnBranchPointsCalculator {
       final Ref<IOException> excRef = new Ref<IOException>();
       // list for values by default
       myForSearchMap = new MultiMap<String, String>();
-      myPersistentMap.iterateData(new Processor<String>() {
+      myPersistentMap.processKeys(new Processor<String>() {
         public boolean process(final String s) {
           try {
             final TreeMap<String, BranchCopyData> map = myPersistentMap.get(s);
-            myForSearchMap.put(s, new ArrayList<String>(map.keySet()));
+            if (map != null) {
+              myForSearchMap.put(s, new ArrayList<String>(map.keySet()));
+            }
           }
           catch (IOException e) {
             excRef.set(e);
@@ -185,6 +200,15 @@ public class SvnBranchPointsCalculator {
 
       for (String key : myForSearchMap.keySet()) {
         Collections.sort((List<String>) myForSearchMap.get(key));
+      }
+    }
+
+    public void close() {
+      try {
+        myPersistentMap.close();
+      }
+      catch (IOException e) {
+        LOG.info(e);
       }
     }
 
@@ -361,5 +385,16 @@ public class SvnBranchPointsCalculator {
 
   public void getFirstCopyPoint(final String repoUID, final String sourceUrl, final String targetUrl, Consumer<WrapperInvertor<BranchCopyData>> consumer) {
     myCalculator.get(new KeyData(repoUID, sourceUrl, targetUrl), consumer);
+  }
+
+  public TaskDescriptor getFirstCopyPointTask(final String repoUID, final String sourceUrl, final String targetUrl,
+                                          final Consumer<WrapperInvertor<BranchCopyData>> consumer) {
+    return myCalculator.getTask(new KeyData(repoUID, sourceUrl, targetUrl), consumer);
+  }
+
+  public static abstract class CopyPointAcceptorTask extends TaskDescriptor implements Consumer<WrapperInvertor<BranchCopyData>> {
+    protected CopyPointAcceptorTask(String name, @NotNull Where where) {
+      super(name, where);
+    }
   }
 }

@@ -26,10 +26,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -86,7 +86,7 @@ public class GuessTypeParameters {
 
       List<PsiType> types = matchingTypeParameters(vals, params, info);
       if (!types.isEmpty()) {
-        types.addAll(Arrays.asList(ExpectedTypesProvider.processExpectedTypes(infos, new MyTypeVisitor(manager, scope), project)));
+        ContainerUtil.addAll(types, ExpectedTypesProvider.processExpectedTypes(infos, new MyTypeVisitor(manager, scope), project));
         builder.replaceElement(typeElement, new TypeExpression(project, types.toArray(new PsiType[types.size()])));
         return;
       }

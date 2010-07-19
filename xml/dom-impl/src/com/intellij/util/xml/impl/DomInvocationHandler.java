@@ -536,10 +536,18 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     final XmlTag tag = getXmlTag();
     final int index = info.second;
     if (tag != null) {
-      if (!LOG.assertTrue(tag.isValid())) {
+      if (!tag.isValid()) {
         throw new PsiInvalidElementAccessException(tag);
       }
-      final List<XmlTag> tags = DomImplUtil.findSubTags(tag.getSubTags(), evaluatedXmlName, getFile());
+      final XmlTag[] subTags = tag.getSubTags();
+      for (int i = 0, subTagsLength = subTags.length; i < subTagsLength; i++) {
+        XmlTag xmlTag = subTags[i];
+        if (!xmlTag.isValid()) {
+          throw new PsiInvalidElementAccessException(xmlTag,
+                                                     "invalid children of valid tag: " + tag.getText() + "; subtag=" + xmlTag + "; index=" + i);
+        }
+      }
+      final List<XmlTag> tags = DomImplUtil.findSubTags(subTags, evaluatedXmlName, getFile());
       if (tags.size() > index) {
         return myManager.getSemService().getSemElement(DomManagerImpl.DOM_INDEXED_HANDLER_KEY, tags.get(index));
       }

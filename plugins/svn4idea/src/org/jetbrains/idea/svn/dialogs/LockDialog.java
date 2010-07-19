@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.OptionsDialog;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -32,7 +33,7 @@ public class LockDialog extends OptionsDialog {
   private JTextArea myLockTextArea;
   private JCheckBox myForceCheckBox;
 
-  @NonNls private static final String HELP_ID = "vcs.subversion.lock";
+  @NonNls private static final String HELP_ID = "reference.VCS.subversion.lockFile";
 
   public LockDialog(Project project, boolean canBeParent, boolean multiple) {
     super(project, canBeParent);
@@ -87,8 +88,8 @@ public class LockDialog extends OptionsDialog {
     gc.fill = GridBagConstraints.BOTH;
 
     myLockTextArea = new JTextArea(7, 25);
-    JScrollPane scrollPane = new JScrollPane(myLockTextArea, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
-                                             JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    JScrollPane scrollPane =
+      ScrollPaneFactory.createScrollPane(myLockTextArea, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     scrollPane.setMinimumSize(scrollPane.getPreferredSize());
     panel.add(scrollPane, gc);
     commentLabel.setLabelFor(myLockTextArea);

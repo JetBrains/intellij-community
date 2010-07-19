@@ -88,7 +88,7 @@ public class ActionUtil {
     }
     final boolean enabledBeforeUpdate = presentation.isEnabled();
 
-    final boolean notAllowed = dumbMode && !(action instanceof DumbAware) && !(action instanceof ActionGroup);
+    final boolean notAllowed = dumbMode && !action.isDumbAware();
 
     try {
       if (beforeActionPerformed) {
@@ -122,7 +122,7 @@ public class ActionUtil {
     performDumbAwareUpdate(action, e, true);
 
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-    if (project != null && DumbService.getInstance(project).isDumb() && !(action instanceof DumbAware)) {
+    if (project != null && DumbService.getInstance(project).isDumb() && !action.isDumbAware()) {
       if (Boolean.FALSE.equals(e.getPresentation().getClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE))) {
         return false;
       }

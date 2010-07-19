@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.gradle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
@@ -97,7 +98,7 @@ public class GradleLibraryManager extends AbstractGroovyLibraryManager {
 
   @Nullable
   public static VirtualFile getSdkHomeFromClasspath(Module module) {
-    final VirtualFile gradleJar = findGradleJar(ModuleRootManager.getInstance(module).getFiles(OrderRootType.CLASSES));
+    final VirtualFile gradleJar = findGradleJar(OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots());
     if (gradleJar != null) {
       final VirtualFile parent = gradleJar.getParent();
       if (parent != null && "lib".equals(parent.getName())) {

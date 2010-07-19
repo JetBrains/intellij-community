@@ -16,7 +16,6 @@
 
 package com.intellij.codeInspection.suspiciousNameCombination;
 
-import com.intellij.CommonBundle;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInspection.InspectionsBundle;
@@ -29,7 +28,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.ui.AddDeleteListPanel;
+import com.intellij.ui.AddEditDeleteListPanel;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -38,10 +37,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -209,23 +204,10 @@ public class SuspiciousNameCombinationInspection extends BaseLocalInspectionTool
     }
   }
 
-  private class MyOptionsPanel extends AddDeleteListPanel {
-    private JButton myEditButton;
+  private class MyOptionsPanel extends AddEditDeleteListPanel<String> {
 
     public MyOptionsPanel() {
       super(InspectionsBundle.message("suspicious.name.combination.options.title"), myNameGroups);
-      myEditButton.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          editSelectedItem();
-        }
-      });
-      myList.addMouseListener(new MouseAdapter() {
-        public void mouseClicked(MouseEvent e) {
-          if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
-            editSelectedItem();
-          }
-        }
-      });
       myListModel.addListDataListener(new ListDataListener() {
         public void intervalAdded(ListDataEvent e) {
           saveChanges();
@@ -241,31 +223,20 @@ public class SuspiciousNameCombinationInspection extends BaseLocalInspectionTool
       });
     }
 
-    @Override protected JButton[] createButtons() {
-      myEditButton = new JButton(CommonBundle.message("button.edit"));
-      return new JButton[] { myAddButton, myEditButton, myDeleteButton };
-    }
-
-    protected Object findItemToAdd() {
+    protected String findItemToAdd() {
       return Messages.showInputDialog(this,
                                       InspectionsBundle.message("suspicious.name.combination.options.prompt"),
                                       InspectionsBundle.message("suspicious.name.combination.add.titile"),
                                       Messages.getQuestionIcon(), "", null);
     }
 
-    private void editSelectedItem() {
-      int index = myList.getSelectedIndex();
-      if (index >= 0) {
-        String inputValue = (String) myListModel.get(index);
-        String newValue = Messages.showInputDialog(this,
-                                                   InspectionsBundle.message("suspicious.name.combination.options.prompt"),
-                                                   InspectionsBundle.message("suspicious.name.combination.edit.title"),
-                                                   Messages.getQuestionIcon(),
-                                                   inputValue, null);
-        if (newValue != null) {
-          myListModel.set(index, newValue);
-        }
-      }
+    @Override
+    protected String editSelectedItem(String inputValue) {
+      return Messages.showInputDialog(this,
+                                      InspectionsBundle.message("suspicious.name.combination.options.prompt"),
+                                      InspectionsBundle.message("suspicious.name.combination.edit.title"),
+                                      Messages.getQuestionIcon(),
+                                      inputValue, null);
     }
 
     private void saveChanges() {

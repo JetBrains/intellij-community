@@ -25,16 +25,10 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.HashSet;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
 
 /**
  * @author dsl
@@ -87,49 +81,23 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
 
   @NotNull
   public VirtualFile[] getFiles(OrderRootType type) {
-    return getFiles(type, new HashSet<Module>());
+    final OrderRootsEnumerator enumerator = getEnumerator(type);
+    return enumerator != null ? enumerator.getRoots() : VirtualFile.EMPTY_ARRAY;
   }
 
-  @NotNull
-  VirtualFile[] getFiles(OrderRootType type, Set<Module> processed) {
-    Module myModule = myModulePointer.getModule();
-    if (myModule != null && !processed.contains(myModule) && !myModule.isDisposed()) {
-      processed.add(myModule);
-      if (!myScope.isForProductionCompile() && type == OrderRootType.PRODUCTION_COMPILATION_CLASSES) {
-        return VirtualFile.EMPTY_ARRAY;
-      }
-      if (myScope == DependencyScope.PROVIDED && type == OrderRootType.CLASSES_AND_OUTPUT) {
-        return VirtualFile.EMPTY_ARRAY;
-      }
-      return ((ModuleRootManagerImpl)ModuleRootManager.getInstance(myModule)).getFilesForOtherModules(type, processed);
-    }
-    else {
-      return VirtualFile.EMPTY_ARRAY;
-    }
+  @Nullable
+  private OrderRootsEnumerator getEnumerator(OrderRootType type) {
+    final Module module = myModulePointer.getModule();
+    if (module == null) return null;
+
+    return ModuleRootManagerImpl.getCachingEnumeratorForType(type, module, true);
   }
 
   @NotNull
   public String[] getUrls(OrderRootType rootType) {
-    List<String> urls = getUrls(rootType, null);
-    return ArrayUtil.toStringArray(urls);
+    final OrderRootsEnumerator enumerator = getEnumerator(rootType);
+    return enumerator != null ? enumerator.getUrls() : ArrayUtil.EMPTY_STRING_ARRAY;
   }
-
-  public List<String> getUrls(OrderRootType rootType, @Nullable Set<Module> processed) {
-    Module myModule = myModulePointer.getModule();
-    if (myModule != null && !myModule.isDisposed() && (processed == null || !processed.contains(myModule))) {
-      if (processed == null) processed = new THashSet<Module>();
-      processed.add(myModule);
-      if (!myScope.isForProductionCompile() && rootType == OrderRootType.PRODUCTION_COMPILATION_CLASSES) {
-        return Collections.emptyList();
-      }
-      if (myScope == DependencyScope.PROVIDED && rootType == OrderRootType.CLASSES_AND_OUTPUT) {
-        return Collections.emptyList();
-      }
-      return ((ModuleRootManagerImpl)ModuleRootManager.getInstance(myModule)).getUrlsForOtherModules(rootType, processed);
-    }
-    return Collections.emptyList();
-  }
-
 
   public boolean isValid() {
     return !isDisposed() && getModule() != null;

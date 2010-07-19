@@ -45,7 +45,7 @@ public class TabsBorder {
 
     myEffectiveBorder = null;
 
-    myTabs.revalidateAndRepaint(false);
+    myTabs.relayout(true, false);
 
     return myTabs;
   }
@@ -77,7 +77,6 @@ public class TabsBorder {
       myPosition == JBTabsPosition.bottom ? myTabBorderSize : myBorderSize.bottom,
       myPosition == JBTabsPosition.right ? myTabBorderSize : myBorderSize.right
     );
-
     return (Insets)myEffectiveBorder.clone();
   }
 }

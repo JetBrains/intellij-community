@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
@@ -104,7 +105,7 @@ public class ConflictsDialog extends DialogWrapper{
     @NonNls final String contentType = "text/html";
     final JEditorPane messagePane = new JEditorPane(contentType, "");
     messagePane.setEditable(false);
-    JScrollPane scrollPane = new JScrollPane(messagePane);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(messagePane);
     scrollPane.setPreferredSize(new Dimension(500, 400));
     panel.add(new JLabel(RefactoringBundle.message("the.following.problems.were.found")), BorderLayout.NORTH);
     panel.add(scrollPane, BorderLayout.CENTER);

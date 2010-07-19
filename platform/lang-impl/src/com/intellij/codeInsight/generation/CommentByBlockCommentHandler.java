@@ -220,17 +220,28 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
     }
     if (prefix == null || suffix == null) return null;
 
-    if (!testSelectionForNonComments()) {
-      return null;
-    }
-
-    TextRange commentedRange = getSelectedComments(text, prefix, suffix);
-    if (commentedRange == null) {
-      PsiElement comment = findCommentAtCaret();
-      if (comment != null) {
-        String commentText = comment.getText();
-        if (commentText.startsWith(prefix) && commentText.endsWith(suffix)) {
-          commentedRange = comment.getTextRange();
+    TextRange commentedRange;
+    
+    if (commenter instanceof SelfManagingCommenter) {
+      commentedRange = ((SelfManagingCommenter)commenter).getBlockCommentRange(
+        selectionModel.getSelectionStart(), 
+        selectionModel.getSelectionEnd(),
+        myDocument, 
+        mySelfManagedCommenterData
+      );
+    } else {
+      if (!testSelectionForNonComments()) {
+        return null;
+      }
+  
+      commentedRange = getSelectedComments(text, prefix, suffix);
+      if (commentedRange == null) {
+        PsiElement comment = findCommentAtCaret();
+        if (comment != null) {
+          String commentText = comment.getText();
+          if (commentText.startsWith(prefix) && commentText.endsWith(suffix)) {
+            commentedRange = comment.getTextRange();
+          }
         }
       }
     }

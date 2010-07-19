@@ -24,10 +24,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.actions.EnterAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -38,11 +38,11 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -185,7 +185,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
     for (ClassMember member : members) {
       GenerationInfo[] prototypes = generateMemberPrototypes(aClass, member);
       if (prototypes != null) {
-        array.addAll(Arrays.asList(prototypes));
+        ContainerUtil.addAll(array, prototypes);
       }
     }
     return array;

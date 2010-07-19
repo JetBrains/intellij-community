@@ -39,18 +39,10 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
 
   private static final Logger LOG = Logger.getInstance(PatternCompilerImpl.class.getName());
 
-  private final Class[] myPatternClasses;
   private Set<Method> myStaticMethods;
 
   public PatternCompilerImpl(final Class[] patternClasses) {
-    myPatternClasses = patternClasses;
-  }
-
-  private Set<Method> getStaticMethods() {
-    if (myStaticMethods == null) {
-      myStaticMethods = getStaticMethods(myPatternClasses);
-    }
-    return myStaticMethods;
+    myStaticMethods = getStaticMethods(patternClasses);
   }
 
   protected void preInvoke(Object target, String methodName, Object[] arguments) {
@@ -71,13 +63,12 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
 
   @Override
   public ElementPattern<T> compileElementPattern(final String text) {
-    final Set<Method> staticMethods = getStaticMethods();
     return processElementPatternText(text, new Function<Frame, Object>() {
       public Object fun(final Frame frame) {
         try {
           final Object[] args = frame.params.toArray();
           preInvoke(frame.target, frame.methodName, args);
-          return invokeMethod(frame.target, frame.methodName, args, staticMethods);
+          return invokeMethod(frame.target, frame.methodName, args, myStaticMethods);
         }
         catch (Throwable throwable) {
           throw new IllegalArgumentException(text, throwable);
@@ -145,7 +136,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
             curFrame.state = ch == '('? State.param_start : State.name_end;
           }
           else {
-            throw new IllegalStateException("'"+curString+ch+"' method name start is invalid");
+            throw new IllegalStateException("'"+curString+ch+"' method name start is invalid, '(' expected");
           }
           break;
         case name_end:
@@ -232,7 +223,10 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
           }
           break;
         case invoke_end:
-          if (ch == ')') {
+          if (ch == 0 && stack.isEmpty()) {
+            return (T)curResult;
+          }
+          else if (ch == ')') {
             curFrame.state = State.invoke;
           }
           else if (ch == ',') {
@@ -335,12 +329,11 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
 
   @Override
   public String dumpContextDeclarations() {
-    final Set<Method> methods = getStaticMethods();
     final StringBuilder sb = new StringBuilder();
     final THashMap<Class, Collection<Class>> classes = new THashMap<Class, Collection<Class>>();
     final THashSet<Class> missingClasses = new THashSet<Class>();
     classes.put(Object.class, missingClasses);
-    for (Method method : methods) {
+    for (Method method : myStaticMethods) {
       for (Class<?> type = method.getReturnType(); type != null && ElementPattern.class.isAssignableFrom(type); type = type.getSuperclass()) {
         final Class<?> enclosingClass = type.getEnclosingClass();
         if (enclosingClass != null) {
@@ -360,7 +353,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
       if (aClass == Object.class) continue;
       printClass(aClass, classes, sb);
     }
-    for (Method method : methods) {
+    for (Method method : myStaticMethods) {
       printMethodDeclaration(method, sb, classes);
     }
     for (Class aClass : missingClasses) {

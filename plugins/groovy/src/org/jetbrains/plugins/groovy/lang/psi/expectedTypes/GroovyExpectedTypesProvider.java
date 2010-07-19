@@ -127,7 +127,7 @@ public class GroovyExpectedTypesProvider {
       final int closureIndex = closureArgs.indexOf(myExpression);
       if (closureIndex >= 0) {
         List<TypeConstraint> constraints = new ArrayList<TypeConstraint>();
-        for (GroovyResolveResult variant : methodCall.getMethodVariants()) {
+        for (GroovyResolveResult variant : ResolveUtil.getMethodVariants(myExpression)) {
           PsiParameter[] parameters = getCallParameters(variant);
           if (parameters == null || parameters.length == 0) continue;
 

@@ -43,6 +43,7 @@ import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.InsertPathAction;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
@@ -619,7 +620,7 @@ public class CustomizableActionsPanel {
       Group rootGroup = ActionsTreeUtil.createMainGroup(null, null, QuickListsManager.getInstance().getAllQuickLists());
       DefaultMutableTreeNode root = ActionsTreeUtil.createNode(rootGroup);
       DefaultTreeModel model = new DefaultTreeModel(root);
-      myTree = new JTree();
+      myTree = new Tree();
       myTree.setModel(model);
       myTree.setCellRenderer(new MyTreeCellRenderer());
       final ActionManager actionManager = ActionManager.getInstance();

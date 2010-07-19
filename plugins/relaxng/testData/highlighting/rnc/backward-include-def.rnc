@@ -1,0 +1,6 @@
+default namespace = "backward-include-def.rng"
+
+include "backward-include-ref.rnc"
+start = element t { foo }
+foo = element foo { backward }
+backward = element x { empty }

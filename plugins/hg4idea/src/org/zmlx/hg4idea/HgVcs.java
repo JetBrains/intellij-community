@@ -14,9 +14,12 @@ package org.zmlx.hg4idea;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -33,12 +36,15 @@ import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.util.messages.MessageBus;
+import com.intellij.util.containers.ComparatorDelegate;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import org.zmlx.hg4idea.provider.*;
@@ -51,10 +57,12 @@ import org.zmlx.hg4idea.ui.HgCurrentBranchStatus;
 
 import javax.swing.*;
 import java.io.File;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-public class HgVcs extends AbstractVcs {
+public class HgVcs extends AbstractVcs<CommittedChangeList> {
 
   public static final Topic<HgUpdater> BRANCH_TOPIC =
     new Topic<HgUpdater>("hg4idea.branch", HgUpdater.class);
@@ -75,6 +83,8 @@ public class HgVcs extends AbstractVcs {
   public static final String NOTIFICATION_GROUP_ID = "Mercurial";
   public static final String HG_EXECUTABLE_FILE_NAME = (SystemInfo.isWindows ? "hg.exe" : "hg");
 
+  private static final String ORIG_FILE_PATTERN = "*.orig";
+
   private final HgChangeProvider changeProvider;
   private final HgProjectConfigurable configurable;
   private final HgRollbackEnvironment rollbackEnvironment;
@@ -92,16 +102,19 @@ public class HgVcs extends AbstractVcs {
   private ScheduledFuture<?> changesUpdaterScheduledFuture;
   private final HgGlobalSettings globalSettings;
   private final HgProjectSettings projectSettings;
+  private final ProjectLevelVcsManager myVcsManager;
 
   private boolean started = false;
   private HgVFSListener myVFSListener;
   private VirtualFileListener myDirStateChangeListener;
 
   public HgVcs(Project project,
-    HgGlobalSettings globalSettings, HgProjectSettings projectSettings) {
+    HgGlobalSettings globalSettings, HgProjectSettings projectSettings,
+    ProjectLevelVcsManager vcsManager) {
     super(project, VCS_NAME);
     this.globalSettings = globalSettings;
     this.projectSettings = projectSettings;
+    myVcsManager = vcsManager;
     configurable = new HgProjectConfigurable(projectSettings);
     changeProvider = new HgChangeProvider(project, getKeyInstanceMethod());
     rollbackEnvironment = new HgRollbackEnvironment(project);
@@ -210,6 +223,43 @@ public class HgVcs extends AbstractVcs {
   }
 
   @Override
+  public boolean allowsNestedRoots() {
+    return true;
+  }
+
+  @Override
+  public <S> List<S> filterUniqueRoots(final List<S> in, final Convertor<S, VirtualFile> convertor) {
+    Collections.sort(in, new ComparatorDelegate<S, VirtualFile>(convertor, FilePathComparator.getInstance()));
+
+    for (int i = 1; i < in.size(); i++) {
+      final S sChild = in.get(i);
+      final VirtualFile child = convertor.convert(sChild);
+      final VirtualFile childRoot = HgUtil.getHgRootOrNull(myProject, child);
+      if (childRoot == null) {
+        continue;
+      }
+      for (int j = i - 1; j >= 0; --j) {
+        final S sParent = in.get(j);
+        final VirtualFile parent = convertor.convert(sParent);
+        // if the parent is an ancestor of the child and that they share common root, the child is removed
+        if (VfsUtil.isAncestor(parent, child, false) && VfsUtil.isAncestor(childRoot, parent, false)) {
+          in.remove(i);
+          //noinspection AssignmentToForLoopParameter
+          --i;
+          break;
+        }
+      }
+    }
+    return in;
+  }
+
+
+  @Override
+  public RootsConvertor getCustomConvertor() {
+    return HgRootsHandler.getInstance(myProject);
+  }
+
+    @Override
   public boolean isVersionedDirectory(VirtualFile dir) {
     return HgUtil.getNearestHgRoot(dir) != null;
   }
@@ -225,17 +275,18 @@ public class HgVcs extends AbstractVcs {
 
   @Override
   public void activate() {
+    // validate hg executable
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       started = true;
     } else {
       HgExecutableValidator validator = new HgExecutableValidator(myProject);
       started = validator.check(globalSettings);
     }
-
     if (!started) {
       return;
     }
 
+    // status bar
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
     if (statusBar != null) {
       statusBar.addWidget(hgCurrentBranchStatus, myProject);
@@ -243,30 +294,21 @@ public class HgVcs extends AbstractVcs {
       statusBar.addWidget(outgoingChangesStatus, myProject);
     }
 
-    final HgIncomingStatusUpdater incomingUpdater =
-      new HgIncomingStatusUpdater(incomingChangesStatus, projectSettings);
-
-    final HgOutgoingStatusUpdater outgoingUpdater =
-      new HgOutgoingStatusUpdater(outgoingChangesStatus, projectSettings);
-
+    // updaters and listeners
+    final HgIncomingStatusUpdater incomingUpdater = new HgIncomingStatusUpdater(incomingChangesStatus, projectSettings);
+    final HgOutgoingStatusUpdater outgoingUpdater = new HgOutgoingStatusUpdater(outgoingChangesStatus, projectSettings);
     changesUpdaterScheduledFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(
       new Runnable() {
         public void run() {
           incomingUpdater.update(myProject);
           outgoingUpdater.update(myProject);
         }
-      }, 0, globalSettings.getIncomingCheckIntervalSeconds(), TimeUnit.SECONDS);
+      }, 0, HgGlobalSettings.getIncomingCheckIntervalSeconds(), TimeUnit.SECONDS);
 
-    MessageBus messageBus = myProject.getMessageBus();
-    messageBusConnection = messageBus.connect();
-
+    messageBusConnection = myProject.getMessageBus().connect();
     messageBusConnection.subscribe(INCOMING_TOPIC, incomingUpdater);
     messageBusConnection.subscribe(OUTGOING_TOPIC, outgoingUpdater);
-
-    messageBusConnection.subscribe(
-      BRANCH_TOPIC, new HgCurrentBranchStatusUpdater(hgCurrentBranchStatus)
-    );
-
+    messageBusConnection.subscribe(BRANCH_TOPIC, new HgCurrentBranchStatusUpdater(hgCurrentBranchStatus));
     messageBusConnection.subscribe(
       FileEditorManagerListener.FILE_EDITOR_MANAGER,
       new FileEditorManagerAdapter() {
@@ -281,8 +323,18 @@ public class HgVcs extends AbstractVcs {
     );
 
     myVFSListener = new HgVFSListener(myProject, this);
-
     VirtualFileManager.getInstance().addVirtualFileListener(myDirStateChangeListener);
+
+    // ignore temporary files
+    final String ignoredPattern = FileTypeManager.getInstance().getIgnoredFilesList();
+    if (!ignoredPattern.contains(ORIG_FILE_PATTERN)) {
+      final String newPattern = ignoredPattern + (ignoredPattern.endsWith(";") ? "" : ";") + ORIG_FILE_PATTERN;
+      HgUtil.runWriteActionLater(new Runnable() {
+        public void run() {
+          FileTypeManager.getInstance().setIgnoredFilesList(newPattern);
+        }
+      });
+    }
   }
 
   @Override
@@ -336,5 +388,14 @@ public class HgVcs extends AbstractVcs {
     }
     return globalSettings.getHgExecutable();
   }
+
+  public HgGlobalSettings getGlobalSettings() {
+    return globalSettings;
+  }
+
+  public void showMessageInConsole(String message, final TextAttributes style) {
+    myVcsManager.addMessageToConsoleWindow(message, style);
+  }
+
 
 }

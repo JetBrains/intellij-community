@@ -1,0 +1,52 @@
+datatypes w = "http://whattf.org/datatype-draft"
+
+# #####################################################################
+##  RELAX NG Schema for HTML 5: Datatypes related to forms            #
+# #####################################################################
+
+## MIME types
+		
+	form.data.mimetypelist = 
+		w:mime-type-list
+		
+	form.data.charsetlist =
+		string # FIXME should be a "a space- and/or comma-delimited 
+		       # list of charset values"
+
+## ECMAScript Regular Expression
+		
+	form.data.pattern = 
+		w:pattern
+		
+## Temporal
+		
+	form.data.datetime-local =
+		w:datetime-local
+	
+	form.data.date =
+		w:date
+	
+	form.data.month =
+		w:month
+	
+	form.data.week =
+		w:week
+	
+	form.data.time =
+		w:time
+
+## Email
+
+	form.data.emailaddress =
+		w:email-address
+
+	form.data.emailaddresslist =
+		w:email-address-list
+
+## Color
+
+	form.data.color =
+		w:color
+#		xsd:string {
+#			pattern = "#[a-fA-F0-9]{6}"
+#		}

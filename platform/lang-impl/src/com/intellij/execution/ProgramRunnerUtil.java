@@ -77,7 +77,7 @@ public class ProgramRunnerUtil {
       runner.execute(executor, new ExecutionEnvironment(runner, configuration, project));
     }
     catch (ExecutionException e) {
-      ExecutionUtil.handleExecutionError(project, configuration.getConfiguration(), e);
+      ExecutionUtil.handleExecutionError(project, executor.getToolWindowId(), configuration.getConfiguration(), e);
     }
   }
 

@@ -38,7 +38,10 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnnotatedMemberIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFieldNameIndex;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.ENUM_CONSTANT;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.FIELD;
@@ -142,7 +145,7 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
         namedParameterSetArray[j] = dataStream.readUTF();
       }
       Set<String> curSet = new HashSet<String>();
-      curSet.addAll(Arrays.asList(namedParameterSetArray));
+      ContainerUtil.addAll(curSet, namedParameterSetArray);
       namedParametersSets.add(curSet);
     }
 

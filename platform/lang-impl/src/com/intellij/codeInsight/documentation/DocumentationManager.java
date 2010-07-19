@@ -64,7 +64,6 @@ import com.intellij.ui.popup.NotLookupOrSearchCondition;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.util.Alarm;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NonNls;
@@ -753,7 +752,7 @@ public class DocumentationManager {
   }
 
   @NotNull
-  private static DocumentationProvider getProviderFromElement(@Nullable PsiElement element, @Nullable PsiElement originalElement) {
+  public static DocumentationProvider getProviderFromElement(@Nullable PsiElement element, @Nullable PsiElement originalElement) {
     if (element != null && !element.isValid()) {
       element = null;
     }
@@ -777,22 +776,16 @@ public class DocumentationManager {
     DocumentationProvider elementProvider =
       element == null || elementLanguage.is(containingFileLanguage) ? null : LanguageDocumentation.INSTANCE.forLanguage(elementLanguage);
 
-    addProviderToResult(result, elementProvider);
-    addProviderToResult(result, originalProvider);
+    result.add(elementProvider);
+    result.add(originalProvider);
 
     if (containingFile != null) {
       final Language baseLanguage = containingFile.getViewProvider().getBaseLanguage();
       if (!baseLanguage.is(containingFileLanguage)) {
-        addProviderToResult(result, LanguageDocumentation.INSTANCE.forLanguage(baseLanguage));
+        result.add(LanguageDocumentation.INSTANCE.forLanguage(baseLanguage));
       }
     }
-    // return extensible documentation provider even if the list is empty
-    return new CompositeDocumentationProvider(result);
-  }
-
-  private static void addProviderToResult(final Set<DocumentationProvider> result, final DocumentationProvider t) {
-    if (t instanceof CompositeDocumentationProvider) result.addAll(((CompositeDocumentationProvider)t).getProviders());
-    else ContainerUtil.addIfNotNull(t, result);
+    return CompositeDocumentationProvider.wrapProviders(result);
   }
 
   @Nullable

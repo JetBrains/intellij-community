@@ -39,7 +39,7 @@
                 <border type="none"/>
                 <children/>
               </grid>
-              <scrollpane id="cc69">
+              <scrollpane class="com.intellij.ui.components.JBScrollPane" id="cc69">
                 <constraints>
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false">
                     <preferred-size width="200" height="300"/>
@@ -48,7 +48,7 @@
                 <properties/>
                 <border type="none"/>
                 <children>
-                  <component id="755cb" class="javax.swing.JList" binding="myList">
+                  <component id="755cb" class="com.intellij.ui.components.JBList" binding="myList">
                     <constraints/>
                     <properties/>
                   </component>
@@ -64,7 +64,7 @@
             <properties/>
             <border type="none" title="Project XSLT Files"/>
             <children>
-              <scrollpane id="39878">
+              <scrollpane class="com.intellij.ui.components.JBScrollPane" id="39878">
                 <constraints>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                 </constraints>

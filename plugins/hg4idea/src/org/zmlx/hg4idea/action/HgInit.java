@@ -6,11 +6,11 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.zmlx.hg4idea.HgUtil;
 import org.zmlx.hg4idea.HgVcs;
@@ -23,24 +23,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Action for initializing Mercurial repository. Command "hg init".
+ * Action for initializing a Mercurial repository.
+ * Command "hg init".
  * @author Kirill Likhodedov
  */
 public class HgInit extends DumbAwareAction {
 
-  private static final Logger LOG = Logger.getInstance(HgInit.class.getName());
   private Project myProject;
-
-  public HgInit() {
-  }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
     myProject = e.getData(PlatformDataKeys.PROJECT);
-    if (myProject == null) {
-      LOG.warn("[actionPerformed] project is null");
-      return;
-    }
 
     // provide window to select the root directory
     final HgInitDialog hgInitDialog = new HgInitDialog(myProject);
@@ -53,7 +46,7 @@ public class HgInit extends DumbAwareAction {
       return;
     }
 
-    // check if it the project is not yet under mercurial and provide some options in that case
+    // check if the selected folder is not yet under mercurial and provide some options in that case
     final VirtualFile vcsRoot = HgUtil.getNearestHgRoot(selectedRoot);
     VirtualFile mapRoot = selectedRoot;
     if (vcsRoot != null) {
@@ -67,37 +60,43 @@ public class HgInit extends DumbAwareAction {
       if (dialog.getAnswer() == HgInitAlreadyUnderHgDialog.Answer.USE_PARENT_REPO) {
         mapRoot = vcsRoot;
       } else if (dialog.getAnswer() == HgInitAlreadyUnderHgDialog.Answer.CREATE_REPO_HERE) {
-        createRepository(selectedRoot);
+        if (!createRepository(selectedRoot)) {
+          return;
+        }
       }
     } else { // no parent repository => creating the repository here.
-       createRepository(selectedRoot);
+       if (!createRepository(selectedRoot)){
+         return;
+       }
     }
 
-    // update vcs directory mappings
-    mapRoot.refresh(false, false);
-    final String path = mapRoot.equals(myProject.getBaseDir()) ? "" : mapRoot.getPath();
-    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
-    final List<VcsDirectoryMapping> vcsDirectoryMappings = new ArrayList<VcsDirectoryMapping>(vcsManager.getDirectoryMappings());
-    VcsDirectoryMapping mapping = new VcsDirectoryMapping(path, HgVcs.VCS_NAME);
-    for (int i = 0; i < vcsDirectoryMappings.size(); i++) {
-      final VcsDirectoryMapping m = vcsDirectoryMappings.get(i);
-      if (m.getDirectory().equals(path)) {
-        if (m.getVcs().length() == 0) {
-          vcsDirectoryMappings.set(i, mapping);
-          mapping = null;
-          break;
-        }
-        else if (m.getVcs().equals(mapping.getVcs())) {
-          mapping = null;
-          break;
+    // update vcs directory mappings if new repository was created inside the current project directory
+    if (myProject != null && myProject.getBaseDir() != null && VfsUtil.isAncestor(myProject.getBaseDir(), mapRoot, false)) {
+      mapRoot.refresh(false, false);
+      final String path = mapRoot.equals(myProject.getBaseDir()) ? "" : mapRoot.getPath();
+      final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+      final List<VcsDirectoryMapping> vcsDirectoryMappings = new ArrayList<VcsDirectoryMapping>(vcsManager.getDirectoryMappings());
+      VcsDirectoryMapping mapping = new VcsDirectoryMapping(path, HgVcs.VCS_NAME);
+      for (int i = 0; i < vcsDirectoryMappings.size(); i++) {
+        final VcsDirectoryMapping m = vcsDirectoryMappings.get(i);
+        if (m.getDirectory().equals(path)) {
+          if (m.getVcs().length() == 0) {
+            vcsDirectoryMappings.set(i, mapping);
+            mapping = null;
+            break;
+          }
+          else if (m.getVcs().equals(mapping.getVcs())) {
+            mapping = null;
+            break;
+          }
         }
       }
+      if (mapping != null) {
+        vcsDirectoryMappings.add(mapping);
+      }
+      vcsManager.setDirectoryMappings(vcsDirectoryMappings);
+      vcsManager.updateActiveVcss();
     }
-    if (mapping != null) {
-      vcsDirectoryMappings.add(mapping);
-    }
-    vcsManager.setDirectoryMappings(vcsDirectoryMappings);
-    vcsManager.updateActiveVcss();
   }
 
   @Override
@@ -108,13 +107,14 @@ public class HgInit extends DumbAwareAction {
     presentation.setVisible(project != null);
   }
 
-  private void createRepository(VirtualFile selectedRoot) {
-    if ((new HgInitCommand(myProject)).execute(selectedRoot)) {
-      Notifications.Bus.notify(new Notification(HgVcs.NOTIFICATION_GROUP_ID,
-                                              HgVcsMessages.message("hg4idea.init.created.notification.title"),
-                                              HgVcsMessages.message("hg4idea.init.created.notification.description", selectedRoot.getPresentableUrl()),
-                                              NotificationType.INFORMATION), myProject);
-    }
+  private boolean createRepository(VirtualFile selectedRoot) {
+    final boolean succeeded = (new HgInitCommand(myProject)).execute(selectedRoot);
+    Notifications.Bus.notify(new Notification(HgVcs.NOTIFICATION_GROUP_ID,
+                                              HgVcsMessages.message(succeeded ? "hg4idea.init.created.notification.title" : "hg4idea.init.error.title"),
+                                              HgVcsMessages.message(succeeded ? "hg4idea.init.created.notification.description" : "hg4idea.init.error.description", 
+                                                                    selectedRoot.getPresentableUrl()),
+                                              succeeded ? NotificationType.INFORMATION : NotificationType.ERROR), myProject);
+    return succeeded;
   }
   
 }

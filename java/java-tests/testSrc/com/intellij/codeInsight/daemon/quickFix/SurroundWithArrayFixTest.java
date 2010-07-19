@@ -7,7 +7,7 @@ package com.intellij.codeInsight.daemon.quickFix;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 
-public class SurroundWithArrayFixTest extends LightQuickFixTestCase {
+public class SurroundWithArrayFixTest extends LightQuickFix15TestCase {
    public void test() throws Exception {
      doAllTests();
    }
@@ -18,6 +18,6 @@ public class SurroundWithArrayFixTest extends LightQuickFixTestCase {
 
   @Override
   protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk15("java 1.5");
+    return JavaSdkImpl.getMockJdk17("java 1.5");
   }
 }

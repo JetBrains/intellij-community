@@ -66,8 +66,17 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
 
   public PsiReference getReference() {
     PsiReference[] otherReferences = ReferenceProvidersRegistry.getReferencesFromProviders(this, GrArgumentLabel.class);
-    PsiReference[] thisReference = {this};
-    return new PsiMultiReference(otherReferences.length == 0 ? thisReference : ArrayUtil.mergeArrays(thisReference, otherReferences, PsiReference.class), this);
+    if (otherReferences.length == 0) {
+      return this;
+    }
+
+    PsiReference[] refs = new PsiReference[otherReferences.length + 1];
+    refs[0] = this;
+    for (int i = 0; i < otherReferences.length; i++) {
+      refs[i + 1] = otherReferences[i];
+    }
+    
+    return new PsiMultiReference(refs, this);
   }
 
   @Nullable
@@ -76,13 +85,20 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
     if (element instanceof GrLiteral) {
       final Object value = ((GrLiteral)element).getValue();
       if (value instanceof String) {
-        return (String) value;
+        return (String)value;
+      }
+
+      if (value instanceof Number) {
+        return value.toString();
       }
     }
     if (element instanceof GrExpression) {
       final Object value = JavaPsiFacade.getInstance(getProject()).getConstantEvaluationHelper().computeConstantExpression(element);
       if (value instanceof String) {
         return (String)value;
+      }
+      if (value instanceof Number) {
+        return value.toString();
       }
     }
 
@@ -138,7 +154,7 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
             if (field != null) return field;
             final PropertyResolverProcessor processor = new PropertyResolverProcessor(propName, this);
             ResolveUtil
-              .processNonCodeMethods(JavaPsiFacade.getElementFactory(getProject()).createType(clazz), processor, getProject(), this, false);
+              .processNonCodeMethods(JavaPsiFacade.getElementFactory(getProject()).createType(clazz), processor, this, false);
             final GroovyResolveResult[] candidates = processor.getCandidates();
             if (candidates.length == 0) return null;
             return candidates[0].getElement();

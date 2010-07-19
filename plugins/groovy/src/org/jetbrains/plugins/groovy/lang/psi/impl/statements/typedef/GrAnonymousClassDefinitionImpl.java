@@ -52,7 +52,7 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
   @NotNull
   public GrCodeReferenceElement getBaseClassReferenceGroovy() {
     //noinspection ConstantConditions
-    return findChildByClass(GrCodeReferenceElement.class); //not null because of definition =)
+    return findNotNullChildByClass(GrCodeReferenceElement.class); //not null because of definition =)
   }
 
   @Override

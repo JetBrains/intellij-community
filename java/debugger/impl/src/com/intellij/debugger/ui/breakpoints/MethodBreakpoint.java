@@ -34,6 +34,7 @@ import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
@@ -331,8 +332,13 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
           new MethodDescriptor();
         //noinspection HardCodedStringLiteral
         descriptor.methodName = method.isConstructor() ? "<init>" : method.getName();
-        descriptor.methodSignature = JVMNameUtil.getJVMSignature(method);
-        descriptor.isStatic = method.hasModifierProperty(PsiModifier.STATIC);
+        try {
+          descriptor.methodSignature = JVMNameUtil.getJVMSignature(method);
+          descriptor.isStatic = method.hasModifierProperty(PsiModifier.STATIC);
+        }
+        catch (IndexNotReadyException ignored) {
+          return null;
+        }
         descriptor.methodLine = document.getLineNumber(methodNameOffset);
         return descriptor;
       }

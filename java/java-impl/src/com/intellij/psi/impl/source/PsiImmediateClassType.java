@@ -96,7 +96,10 @@ public class PsiImmediateClassType extends PsiClassType {
     List<PsiType> lst = new ArrayList<PsiType>();
     final PsiTypeParameter[] parameters = myClass.getTypeParameters();
     for (PsiTypeParameter parameter : parameters) {
-      lst.add(mySubstitutor.substitute(parameter));
+      PsiType substituted = mySubstitutor.substitute(parameter);
+      if (substituted != null) {
+        lst.add(substituted);
+      }
     }
     return lst.toArray(new PsiType[lst.size()]);
   }

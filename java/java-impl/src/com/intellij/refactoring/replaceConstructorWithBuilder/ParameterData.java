@@ -25,7 +25,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PropertyUtil;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.refactoring.util.RefactoringUtil;
 
 import java.util.Map;
 
@@ -51,7 +51,7 @@ public class ParameterData {
       initParameterData(parameter, result);
     }
 
-    final PsiMethod chainedConstructor = getChainedConstructor(constructor);
+    final PsiMethod chainedConstructor = RefactoringUtil.getChainedConstructor(constructor);
     if (chainedConstructor != null) {
       final PsiCodeBlock constructorBody = constructor.getBody();
       LOG.assertTrue(constructorBody != null);
@@ -66,24 +66,6 @@ public class ParameterData {
         }
       }
     }
-  }
-
-  @Nullable
-  public static PsiMethod getChainedConstructor(PsiMethod constructor) {
-    final PsiCodeBlock constructorBody = constructor.getBody();
-    LOG.assertTrue(constructorBody != null);
-    final PsiStatement[] statements = constructorBody.getStatements();
-    if (statements.length == 1 && statements[0] instanceof PsiExpressionStatement) {
-      final PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
-      if (expression instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
-        final PsiReferenceExpression methodExpr = methodCallExpression.getMethodExpression();
-        if ("this".equals(methodExpr.getReferenceName())) {
-          return (PsiMethod)methodExpr.resolve();
-        }
-      }
-    }
-    return null;
   }
 
   private static ParameterData initParameterData(PsiParameter parameter, Map<String, ParameterData> result) {

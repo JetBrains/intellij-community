@@ -198,7 +198,7 @@ public class FilteringTreeBuilderTest extends BaseTreeTestCase  {
     }
 
     protected SimpleNode[] buildChildren() {
-      return myKids.values().toArray(new Node[myKids.size()]);
+      return myKids.isEmpty() ? NO_CHILDREN : myKids.values().toArray(new Node[myKids.size()]);
     }
 
     @Override

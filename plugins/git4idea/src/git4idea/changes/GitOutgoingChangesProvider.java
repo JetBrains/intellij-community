@@ -92,7 +92,7 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
     final GitBranchesSearcher searcher = new GitBranchesSearcher(myProject, vcsRoot, true);
     final GitBranch target = searcher.getRemote();
     if (searcher.getLocal() == null || target == null) {
-      return revisions; // no information, better strict approach
+      return new ArrayList<U>(revisions); // no information, better strict approach
     }
     // get branches with commit
     final Collection<U> result = new ArrayList<U>(revisions);

@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.runner;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.openapi.module.Module;
@@ -24,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -42,7 +44,7 @@ public abstract class GroovyScriptRunner {
 
   public abstract boolean isValidModule(@NotNull Module module);
 
-  public abstract boolean ensureRunnerConfigured(@Nullable Module module, RunProfile profile, final Project project) throws ExecutionException;
+  public abstract boolean ensureRunnerConfigured(@Nullable Module module, RunProfile profile, Executor executor, final Project project) throws ExecutionException;
 
   public abstract void configureCommandLine(JavaParameters params, @Nullable Module module, boolean tests, VirtualFile script,
                                             GroovyScriptRunConfiguration configuration) throws CantRunException;
@@ -89,7 +91,7 @@ public abstract class GroovyScriptRunner {
 
   @Nullable
   protected static VirtualFile findGroovyJar(@NotNull Module module) {
-    final VirtualFile[] files = ModuleRootManager.getInstance(module).getFiles(OrderRootType.CLASSES);
+    final VirtualFile[] files = OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots();
     for (VirtualFile root : files) {
       if (root.getName().matches(GroovyConfigUtils.GROOVY_JAR_PATTERN) || root.getName().matches(GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN)) {
         return root;

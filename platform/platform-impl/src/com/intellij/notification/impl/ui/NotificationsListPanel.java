@@ -26,6 +26,8 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.MinimizeButton;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.Processor;
@@ -182,6 +184,10 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
 
       myText.setBorder(BorderFactory.createEmptyBorder(3, 0, 3, 0));
       myText.setOpaque(false);
+      if (UIUtil.isUnderNimbusLookAndFeel()) {
+        myText.setBackground(new Color(0, 0, 0, 0));
+      }
+
       myText.setEditable(false);
       myText.setEditorKit(UIUtil.getHTMLEditorKit());
 
@@ -323,7 +329,7 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
     }
   }
 
-  private static class ItemsList extends JList {
+  private static class ItemsList extends JBList {
     private ItemsList(final NotificationsListModel model) {
       super(model);
       setOpaque(false);
@@ -593,7 +599,7 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
       // TODO: switch filter if removed all of the notifications from current one!
 
       final ItemsList list = new ItemsList(model);
-      final JScrollPane scrollPane = new JScrollPane(list);
+      final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(list);
       scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
       scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 

@@ -44,7 +44,7 @@ public abstract class FacetBasedFrameworkSupportProvider<F extends Facet> extend
     myFacetType = facetType;
   }
 
-  protected static String getProviderId(final FacetType facetType) {
+  public static String getProviderId(final FacetType facetType) {
     return FACET_SUPPORT_PREFIX + facetType.getStringId();
   }
 

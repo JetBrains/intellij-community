@@ -49,6 +49,8 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnAc
 
   private Set<AnAction> mySwitchActions = new HashSet<AnAction>();
 
+  private Set<SwitchingSession> myFadingWay = new HashSet<SwitchingSession>();
+
   public SwitchManager(Project project, QuickAccessSettings quickAccess, ActionManager actionManager) {
     myProject = project;
     myQa = quickAccess;
@@ -64,7 +66,7 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnAc
 
   public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
     if (!mySwitchActions.contains(action)) {
-      disposeSession(mySession);
+      disposeCurrentSession(false);
     }
   }
 
@@ -96,7 +98,7 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnAc
       if (areAllModifiersPressed(e.getModifiers(), myQa.getModiferCodes())) {
         myWaitingForAutoInitSession = true;
         myAutoInitSessionEvent = e;
-        myInitSessionAlarm.addRequest(new Runnable() {
+        Runnable initRunnable = new Runnable() {
           public void run() {
             IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(new Runnable() {
               public void run() {
@@ -106,7 +108,12 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnAc
               }
             });
           }
-        }, Registry.intValue("actionSystem.keyGestureHoldTime"));
+        };
+        if (myFadingWay.size() == 0) {
+          myInitSessionAlarm.addRequest(initRunnable, Registry.intValue("actionSystem.keyGestureHoldTime"));
+        } else {
+          initRunnable.run();
+        }
       }
     } else {
       if (myWaitingForAutoInitSession) {
@@ -181,14 +188,15 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnAc
   public ActionCallback initSession(SwitchingSession session) {
     cancelWaitingForAutoInit();
 
-    disposeSession(mySession);
+    disposeCurrentSession(false);
     mySession = session;
     return new ActionCallback.Done();
   }
 
-  private void disposeSession(SwitchingSession session) {
+  public void disposeCurrentSession(boolean fadeAway) {
     if (mySession != null) {
-      Disposer.dispose(session);
+      mySession.setFadeaway(fadeAway);
+      Disposer.dispose(mySession);
       mySession = null;
     }
   }
@@ -212,7 +220,7 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnAc
     final ActionCallback result = new ActionCallback();
     if (isSessionActive()) {
       final boolean showSpots = mySession.isShowspots();
-      mySession.finish().doWhenDone(new AsyncResult.Handler<SwitchTarget>() {
+      mySession.finish(false).doWhenDone(new AsyncResult.Handler<SwitchTarget>() {
         public void run(final SwitchTarget switchTarget) {
           mySession = null;
           IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(new Runnable() {
@@ -237,12 +245,16 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnAc
     return isSessionActive() && mySession.isSelectionWasMoved();
   }
 
-  public void resetSession() {
-    disposeSession(mySession);
-  }
-
   public boolean isSelectionWasMoved() {
     if (!isSessionActive()) return false;
     return mySession.isSelectionWasMoved();
+  }
+
+  public void addFadingAway(SwitchingSession session) {
+    myFadingWay.add(session);
+  }
+
+  public void removeFadingAway(SwitchingSession session) {
+    myFadingWay.remove(session);
   }
 }

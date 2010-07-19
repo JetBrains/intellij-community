@@ -35,7 +35,7 @@ public class ParamMatcher extends BaseMatcher {
     public ParamMatcher(XmlTag parent, String name) {
         myRoot = parent;
         myName = name;
-        myExcludedNames = Collections.EMPTY_SET;
+        myExcludedNames = Collections.emptySet();
     }
 
     public ParamMatcher(XmlTag root, String[] excludedNames, String name) {

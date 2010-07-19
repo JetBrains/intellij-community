@@ -44,7 +44,10 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import gnu.trove.THashMap;
-import org.intellij.plugins.intelliLang.inject.*;
+import org.intellij.plugins.intelliLang.inject.AbstractLanguageInjectionSupport;
+import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
+import org.intellij.plugins.intelliLang.inject.InjectorUtils;
+import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.config.InjectionPlace;
 import org.jetbrains.annotations.Nls;
@@ -130,9 +133,10 @@ public class InjectionsSettingsUI implements Configurable {
       }
     };
     for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
-      myAddActions.addAll(Arrays.asList(support.createAddActions(myProject, consumer)));
+      ContainerUtil.addAll(myAddActions, support.createAddActions(myProject, consumer));
       final AnAction action = support.createEditAction(myProject, producer);
-      myEditActions.put(support.getId(), action == null? AbstractLanguageInjectionSupport.createDefaultEditAction(myProject, producer) : action);
+      myEditActions
+        .put(support.getId(), action == null ? AbstractLanguageInjectionSupport.createDefaultEditAction(myProject, producer) : action);
       mySupports.put(support.getId(), support);
     }
     Collections.sort(myAddActions, new Comparator<AnAction>() {

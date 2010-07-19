@@ -30,7 +30,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.patterns.PlatformPatterns;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -38,8 +38,8 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
-import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
+import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -51,10 +51,23 @@ public class XmlTagRenameHandler implements RenameHandler {
 
   public boolean isAvailableOnDataContext(final DataContext dataContext) {
     final PsiElement element = getElement(dataContext);
-    if (PsiElementRenameHandler.isVetoed(element)) return false;
+    if (element == null || PsiElementRenameHandler.isVetoed(element)) return false;
+    PsiElement parent = element.getParent();
+    if (!(parent instanceof XmlTag)) {
+      return false;
+    }
+    XmlTag tag = (XmlTag)parent;
+    String prefix = tag.getNamespacePrefix();
+    if (StringUtil.isNotEmpty(prefix)) {
+      Editor editor = getEditor(dataContext);
+      assert editor != null;
+      int offset = editor.getCaretModel().getOffset();
+      if (offset <= element.getTextRange().getStartOffset() + prefix.length()) {
+        return false;
+      }
+    }
     //noinspection ConstantConditions
-    return PlatformPatterns.psiElement().withParent(XmlTag.class).accepts(element) &&
-           isDeclarationOutOfProjectOrAbsent(element.getProject(), dataContext);
+    return isDeclarationOutOfProjectOrAbsent(element.getProject(), dataContext);
   }
 
   public boolean isRenaming(final DataContext dataContext) {

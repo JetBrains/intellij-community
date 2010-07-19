@@ -416,7 +416,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     mySignatureArea.setEditable(false);
     mySignatureArea.setBackground(getContentPane().getBackground());
     //mySignatureArea.setFont(myTableFont);
-    JScrollPane scrollPane = new JScrollPane(mySignatureArea);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(mySignatureArea);
     scrollPane.setBorder(IdeBorderFactory.createEmptyBorder(new Insets(0,0,0,0)));
     panel.add(scrollPane, BorderLayout.CENTER);
 

@@ -12,7 +12,7 @@
     <orderEntry type="module" module-name="boot" />
     <orderEntry type="module" module-name="vcs-api" />
     <orderEntry type="library" name="OroMatcher" level="project" />
-    <orderEntry type="library" scope="TEST" name="JUnit3" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" name="Velocity" level="project" />
     <orderEntry type="library" name="commons-collections" level="project" />
     <orderEntry type="module" module-name="vcs-impl" />

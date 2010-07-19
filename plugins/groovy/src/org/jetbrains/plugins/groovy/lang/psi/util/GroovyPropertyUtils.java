@@ -115,8 +115,18 @@ public class GroovyPropertyUtils {
   }//do not check return type
 
   public static boolean isSimplePropertyGetter(PsiMethod method, String propertyName) {
+    return isSimplePropertyGetter(method, propertyName, false);
+  }
+
+  public static boolean isSimplePropertyGetter(PsiMethod method,
+                                               String propertyName,
+                                               boolean isUsedInCategory) {
     if (method == null || method.isConstructor()) return false;
-    if (method.getParameterList().getParametersCount() != 0) return false;
+    if (isUsedInCategory) {
+      if (method.getParameterList().getParametersCount() != 1) return false;
+    } else {
+      if (method.getParameterList().getParametersCount() != 0) return false;
+    }
     if (!isGetterName(method.getName())) return false;
     if (method.getName().startsWith(IS_PREFIX) && !PsiType.BOOLEAN.equals(method.getReturnType())) {
       return false;
@@ -129,8 +139,19 @@ public class GroovyPropertyUtils {
   }
 
   public static boolean isSimplePropertySetter(PsiMethod method, String propertyName) {
+    return isSimplePropertySetter(method, propertyName, false);
+  }
+
+  public static boolean isSimplePropertySetter(PsiMethod method,
+                                               String propertyName,
+                                               boolean isUsedInCategory) {
     if (method == null || method.isConstructor()) return false;
-    if (method.getParameterList().getParametersCount() != 1) return false;
+    if (isUsedInCategory) {
+      if (method.getParameterList().getParametersCount() != 2) return false;
+    } else {
+      if (method.getParameterList().getParametersCount() != 1) return false;
+    }
+
     if (!isSetterName(method.getName())) return false;
     return propertyName == null || propertyName.equals(getPropertyNameBySetter(method));
   }

@@ -59,6 +59,11 @@ public class GrTupleType extends GrLiteralClassType {
     StringBuilder builder = new StringBuilder();
     builder.append("[");
     for (int i = 0; i < myComponentTypes.length; i++) {
+      if (i >= 2) {
+        builder.append(",...");
+        break;
+      }
+
       if (i > 0) builder.append(", ");
       builder.append(getInternalCanonicalText(myComponentTypes[i]));
     }

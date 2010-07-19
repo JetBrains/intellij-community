@@ -21,6 +21,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.ui.components.JBList;
 
 import javax.swing.*;
 import java.awt.*;
@@ -45,7 +46,7 @@ public class SimpleFieldChooser extends DialogWrapper {
     for (PsiField member : myFields) {
       model.addElement(member);
     }
-    myList = new JList(model);
+    myList = new JBList(model);
     myList.setCellRenderer(new MyListCellRenderer());
     myList.addMouseListener(
       new MouseAdapter() {

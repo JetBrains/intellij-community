@@ -58,20 +58,20 @@ public class ModuleRootsExternalizationTest extends ModuleTestCase {
     File classes = new File(content, "classes");
     File testClasses = new File(content, "testClasses");
     final VirtualFile contentFile = LocalFileSystem.getInstance().findFileByIoFile(content);
-    assertTrue(contentFile != null);
+    assertNotNull(contentFile);
     final VirtualFile sourceFile = LocalFileSystem.getInstance().findFileByIoFile(source);
-    assertTrue(sourceFile != null);
+    assertNotNull(sourceFile);
     final VirtualFile testSourceFile = LocalFileSystem.getInstance().findFileByIoFile(testSource);
-    assertTrue(testSourceFile != null);
+    assertNotNull(testSourceFile);
     final VirtualFile excludeFile = LocalFileSystem.getInstance().findFileByIoFile(exclude);
 
-    assertTrue(excludeFile != null);
+    assertNotNull(excludeFile);
     final VirtualFile classesFile = LocalFileSystem.getInstance().findFileByIoFile(classes);
 
-    assertTrue(classesFile != null);
+    assertNotNull(classesFile);
     final VirtualFile testClassesFile = LocalFileSystem.getInstance().findFileByIoFile(testClasses);
 
-    assertTrue(testClassesFile != null);
+    assertNotNull(testClassesFile);
 
     final File moduleFile = new File(content, "test.iml");
     final Module module = createModule(moduleFile);
@@ -85,7 +85,7 @@ public class ModuleRootsExternalizationTest extends ModuleTestCase {
         compilerModuleExtension.setCompilerOutputPath(classesFile);
         compilerModuleExtension.setCompilerOutputPathForTests(testClassesFile);
         compilerModuleExtension.inheritCompilerOutputPath(false);
-        rootModel.setSdk(JavaSdkImpl.getMockJdk("java 1.4"));
+        rootModel.setSdk(JavaSdkImpl.getMockJdk17());
         contentEntry.addSourceFolder(sourceFile, false);
         contentEntry.addSourceFolder(testSourceFile, true);
         contentEntry.addExcludeFolder(excludeFile);
@@ -108,7 +108,7 @@ public class ModuleRootsExternalizationTest extends ModuleTestCase {
                         "<sourceFolder url=\"file://$MODULE_DIR$/testSource\" isTestSource=\"true\" />" +
                         "<excludeFolder url=\"file://$MODULE_DIR$/exclude\" />" +
                         "</content>" +
-                        "<orderEntry type=\"jdk\" jdkName=\"java 1.4\" jdkType=\"JavaSDK\" />" +
+                        "<orderEntry type=\"jdk\" jdkName=\"java 1.7\" jdkType=\"JavaSDK\" />" +
                         "<orderEntry type=\"sourceFolder\" forTests=\"false\" />" +
                         "</root>",
                         module);
@@ -142,8 +142,8 @@ public class ModuleRootsExternalizationTest extends ModuleTestCase {
     });
 
     final Iterator libraryIterator = moduleLibraryTable.getLibraryIterator();
-    assertTrue(libraryIterator.next().equals(unnamedLibrary));
-    assertTrue(libraryIterator.next().equals(namedLibrary));
+    assertEquals(libraryIterator.next(), unnamedLibrary);
+    assertEquals(libraryIterator.next(), namedLibrary);
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
@@ -159,13 +159,11 @@ public class ModuleRootsExternalizationTest extends ModuleTestCase {
                         "<orderEntry type=\"module-library\">" +
                         "<library>" +
                         "<CLASSES><root url=\"file://$MODULE_DIR$/unnamedLibClasses\" /></CLASSES>" +
-                        "<JAVADOC /><SOURCES />" +
                         "</library>" +
                         "</orderEntry>" +
                         "<orderEntry type=\"module-library\">" +
                         "<library name=\"namedLibrary\">" +
                         "<CLASSES><root url=\"file://$MODULE_DIR$/namedLibClasses\" /></CLASSES>" +
-                        "<JAVADOC /><SOURCES />" +
                         "</library>" +
                         "</orderEntry>" +
                         "</root>", module);

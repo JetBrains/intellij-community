@@ -307,6 +307,18 @@ public class VfsUtil {
     return components;
   }
 
+  @Nullable
+  public static VirtualFile findRelativeFile(@NotNull VirtualFile base, String ... path) {
+    VirtualFile file = base;
+
+    for (String pathElement : path) {
+      file = file.findChild(pathElement);
+      if (file == null) return null;
+    }
+
+    return file;
+  }
+
   @SuppressWarnings({"HardCodedStringLiteral"})
   @Nullable
   public static VirtualFile findRelativeFile(@NotNull String uri, VirtualFile base) {
@@ -632,6 +644,17 @@ public class VfsUtil {
     });
     if (!err.isNull()) throw err.get();
     return result;
+  }
+
+  public static VirtualFile createDirectoryIfMissing(VirtualFile parent, String relativePath) throws IOException {
+    for (String each : StringUtil.split(relativePath, "/")) {
+      VirtualFile child = parent.findChild(each);
+      if (child == null) {
+        child = parent.createChildDirectory(LocalFileSystem.getInstance(), each);
+      }
+      parent = child;
+    }
+    return parent;
   }
 
   @Nullable

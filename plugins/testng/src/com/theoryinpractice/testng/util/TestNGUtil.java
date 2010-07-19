@@ -44,6 +44,7 @@ import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.NanoXmlUtil;
 import com.theoryinpractice.testng.model.TestClassFilter;
 import org.jetbrains.annotations.NonNls;
@@ -220,14 +221,15 @@ public class TestNGUtil
     Map<PsiClass, Collection<PsiMethod>> results = new HashMap<PsiClass, Collection<PsiMethod>>();
     Set<String> test = new HashSet<String>(1);
     test.add(TEST_ANNOTATION_FQN);
-    test.addAll(Arrays.asList(CONFIG_ANNOTATIONS_FQN));
+    ContainerUtil.addAll(test, CONFIG_ANNOTATIONS_FQN);
     for (PsiClass psiClass : classes) {
       if (isBrokenPsiClass(psiClass)) continue;
 
       PsiAnnotation annotation;
       try {
         annotation = AnnotationUtil.findAnnotation(psiClass, test);
-      } catch (Exception e) {
+      }
+      catch (Exception e) {
         LOGGER.error("Exception trying to findAnnotation on " + psiClass.getClass().getName() + ".\n\n" + e.getMessage());
         annotation = null;
       }
@@ -235,7 +237,8 @@ public class TestNGUtil
         if (isAnnotatedWithParameter(annotation, parameter, values)) {
           results.put(psiClass, new LinkedHashSet<PsiMethod>());
         }
-      } else {
+      }
+      else {
         Collection<String> matches = extractAnnotationValuesFromJavaDoc(getTextJavaDoc(psiClass), parameter);
         for (String s : matches) {
           if (values.contains(s)) {
@@ -255,7 +258,8 @@ public class TestNGUtil
               if (results.get(psiClass) == null) results.put(psiClass, new LinkedHashSet<PsiMethod>());
               results.get(psiClass).add(method);
             }
-          } else {
+          }
+          else {
             Collection<String> matches = extractAnnotationValuesFromJavaDoc(getTextJavaDoc(psiClass), parameter);
             for (String s : matches) {
               if (values.contains(s)) {
@@ -296,18 +300,19 @@ public class TestNGUtil
   public static void collectAnnotationValues(final Set<String> results, final String parameter, PsiMethod[] psiMethods, PsiClass... classes) {
     final Set<String> test = new HashSet<String>(1);
     test.add(TEST_ANNOTATION_FQN);
-    test.addAll(Arrays.asList(CONFIG_ANNOTATIONS_FQN));
+    ContainerUtil.addAll(test, CONFIG_ANNOTATIONS_FQN);
     if (psiMethods != null) {
       for (final PsiMethod psiMethod : psiMethods) {
         ApplicationManager.getApplication().runReadAction(
-            new Runnable() {
-              public void run() {
-                appendAnnotationAttributeValues(parameter, results, AnnotationUtil.findAnnotation(psiMethod, test), psiMethod);
-              }
+          new Runnable() {
+            public void run() {
+              appendAnnotationAttributeValues(parameter, results, AnnotationUtil.findAnnotation(psiMethod, test), psiMethod);
             }
+          }
         );
       }
-    } else {
+    }
+    else {
       for (final PsiClass psiClass : classes) {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {

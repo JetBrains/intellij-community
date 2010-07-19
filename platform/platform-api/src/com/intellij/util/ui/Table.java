@@ -21,7 +21,7 @@ import javax.swing.table.TableModel;
 
 
 /**
- * @deprecated use com.intellij.ui.table.JBTable
+ * @deprecated use {@link com.intellij.ui.table.JBTable}
  */
 public class Table extends JBTable {
   public Table() {

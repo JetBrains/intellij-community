@@ -30,9 +30,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ui.Util;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.JavadocOrderRootType;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
@@ -62,6 +60,7 @@ import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Icons;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -471,10 +470,11 @@ public class LibraryTableEditor implements Disposable, LibraryEditorListener {
 
     private void appendLibraryToModules(final ModuleStructureConfigurable rootConfigurable, final Library libraryToSelect) {
       final List<Module> modules = new ArrayList<Module>();
-      modules.addAll(Arrays.asList(rootConfigurable.getModules()));
+      ContainerUtil.addAll(modules, rootConfigurable.getModules());
       final ChooseModulesDialog dlg = new ChooseModulesDialog(myProject,
                                                               modules, ProjectBundle.message("choose.modules.dialog.title"),
-                                                              ProjectBundle.message("choose.modules.dialog.description", libraryToSelect.getName())); 
+                                                              ProjectBundle
+                                                                .message("choose.modules.dialog.description", libraryToSelect.getName()));
       dlg.show();
       if (dlg.isOK()) {
         final List<Module> choosenModules = dlg.getChosenElements();
@@ -596,12 +596,12 @@ public class LibraryTableEditor implements Disposable, LibraryEditorListener {
       final Library[] libraries = myTableModifiableModel.getLibraries();
       for (Library library : libraries) {
         final VirtualFile[] libraryFiles = getLibraryEditor(library).getFiles(rootType);
-        alreadyAdded.addAll(Arrays.asList(libraryFiles));
+        ContainerUtil.addAll(alreadyAdded, libraryFiles);
       }
     }
     else {
       final VirtualFile[] libraryFiles = getLibraryEditor(lib).getFiles(rootType);
-      alreadyAdded.addAll(Arrays.asList(libraryFiles));
+      ContainerUtil.addAll(alreadyAdded, libraryFiles);
     }
     chosenFilesSet.removeAll(alreadyAdded);
     return VfsUtil.toVirtualFileArray(chosenFilesSet);

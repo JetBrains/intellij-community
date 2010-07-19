@@ -33,7 +33,7 @@ public class CompositeFilter implements Filter {
   public Result applyFilter(final String line, final int entireLength) {
     final boolean dumb = DumbService.getInstance(myProject).isDumb();
     for (final Filter filter : myFilters) {
-      if (!dumb || filter instanceof DumbAware) {
+      if (!dumb || DumbService.isDumbAware(filter)) {
         final Result info = filter.applyFilter(line, entireLength);
         if (info != null) {
           return info;

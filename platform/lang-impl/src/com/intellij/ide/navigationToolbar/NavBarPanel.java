@@ -23,6 +23,7 @@ import com.intellij.ide.IdeView;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.DirectoryChooserUtil;
@@ -41,7 +42,6 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
@@ -58,6 +58,7 @@ import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupOwner;
 import com.intellij.ui.popup.list.ListPopupImpl;
@@ -82,7 +83,7 @@ import java.util.Set;
  * User: anna
  * Date: 03-Nov-2005
  */
-public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
+public class NavBarPanel extends OpaquePanel.List implements DataProvider, PopupOwner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.navigationToolbar.NavigationToolbarPanel");
   /*private static final Icon LEFT_ICON = IconLoader.getIcon("/general/splitLeft.png");
   private static final Icon RIGHT_ICON = IconLoader.getIcon("/general/splitRight.png");
@@ -108,8 +109,6 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
 
     myProject = project;
     myModel = new NavBarModel(myProject);
-    setBackground(UIUtil.getListBackground());
-    setOpaque(true);
 
     PopupHandler.installPopupHandler(this, IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionPlaces.NAVIGATION_BAR);
 
@@ -192,7 +191,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       }
     });
 
-    installBorder(-1);
+    installBorder(-1, false);
 
     myCopyPasteDelegator = new CopyPasteDelegator(myProject, NavBarPanel.this) {
       @NotNull
@@ -483,7 +482,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     }
 
     final Object object = myModel.getElement(index);
-    final List<Object> objects = myModel.calcElementChildren(object);
+    final java.util.List<Object> objects = myModel.calcElementChildren(object);
 
     if (!objects.isEmpty()) {
       final Object[] siblings = new Object[objects.size()];
@@ -571,9 +570,8 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     myModel.setSelectedIndex(myList.size() - 1);
 
     if (myHint != null) {
-      final Dimension dimension = getPreferredSize();
-      final Rectangle bounds = myHint.getBounds();
-      myHint.setBounds(bounds.x, bounds.y, dimension.width, dimension.height);
+      Rectangle bounds = myHint.getBounds();
+      myHint.updateBounds(bounds.x, bounds.y);
     }
 
     if (myModel.hasChildren(object)) {
@@ -761,14 +759,26 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     myModelUpdateAlarm.cancelAllRequests();
   }
 
-  public void installBorder(final int rightOffset) {
+  public void installBorder(final int rightOffset, final boolean isDocked) {
     setBorder(new Border() {
       public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
         g.setColor(c.getBackground() != null ? c.getBackground().darker() : Color.darkGray);
+
+       boolean drawTopBorder = true;
+       if (isDocked) {
+         if (!UISettings.getInstance().SHOW_MAIN_TOOLBAR) {
+           drawTopBorder = false;
+         }
+       }
+
         if (rightOffset == -1) {
-          g.drawLine(0, 0, width - 1, 0);
+          if (drawTopBorder) {
+            g.drawLine(0, 0, width - 1, 0);
+          }
         } else {
-          g.drawLine(0, 0, width - rightOffset + 3, 0);
+          if (drawTopBorder) {
+            g.drawLine(0, 0, width - rightOffset + 3, 0);
+          }
         }
         g.drawLine(0, height - 1 , width, height - 1);
 
@@ -897,7 +907,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       boolean selected = myModel.getSelectedIndex() == myIndex;
 
       setPaintFocusBorder(selected);
-      setFocusBorderAroundIcon(selected);
+      setFocusBorderAroundIcon(true);
 
       setBackground(selected && focused ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());
 

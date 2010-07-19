@@ -308,7 +308,17 @@ public abstract class BaseRefactoringProcessor {
 
     final PsiElement[] initialElements = viewDescriptor.getElements();
     final UsageTarget[] targets = PsiElement2UsageTargetAdapter.convert(initialElements);
-    final Usage[] usages = UsageInfo2UsageAdapter.convert(usageInfos);
+    final Ref<Usage[]> convertUsagesRef = new Ref<Usage[]>();
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      @Override
+      public void run() {
+        convertUsagesRef.set(UsageInfo2UsageAdapter.convert(usageInfos));
+      }
+    }, "Preprocess usages", true, myProject)) return;
+
+    if (convertUsagesRef.isNull()) return;
+
+    final Usage[] usages = convertUsagesRef.get();
 
     final UsageViewPresentation presentation = createPresentation(viewDescriptor, usages);
 

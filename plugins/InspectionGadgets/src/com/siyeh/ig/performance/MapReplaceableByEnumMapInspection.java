@@ -15,10 +15,8 @@
  */
 package com.siyeh.ig.performance;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiNewExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -80,6 +78,16 @@ public class MapReplaceableByEnumMapInspection extends BaseInspection {
             final PsiClass argumentClass = argumentClassType.resolve();
             if (argumentClass == null || !argumentClass.isEnum()) {
                 return;
+            }
+            final PsiClass aClass =
+                    PsiTreeUtil.getParentOfType(expression, PsiClass.class);
+            if (argumentClass.equals(aClass)) {
+                final PsiMember member =
+                        PsiTreeUtil.getParentOfType(expression, PsiMember.class);
+                if (member != null &&
+                        !member.hasModifierProperty(PsiModifier.STATIC)) {
+                    return;
+                }
             }
             registerNewExpressionError(expression);
         }

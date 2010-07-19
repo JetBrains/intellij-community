@@ -36,7 +36,7 @@ import org.jetbrains.annotations.NonNls;
 
   @Override
   protected Sdk getTestProjectJdk() {
-    return JavaSdkImpl.getMockJdk("java 1.4");
+    return JavaSdkImpl.getMockJdk17();
   }
 
   @Override

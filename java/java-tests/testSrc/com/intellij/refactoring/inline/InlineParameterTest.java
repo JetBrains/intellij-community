@@ -21,7 +21,7 @@ public class InlineParameterTest extends LightCodeInsightTestCase {
   }
 
   protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk15("java 1.5");
+    return JavaSdkImpl.getMockJdk17("java 1.5");
   }
 
   public void testSameValue() throws Exception {
@@ -243,6 +243,19 @@ public class InlineParameterTest extends LightCodeInsightTestCase {
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       assertEquals("Parameter initializer depends on callers parameter", e.getMessage());
+    }
+  }
+
+  public void testInlineLocalParamDef() throws Exception {
+    doTest(false);
+  }
+
+  public void testParameterDefWithWriteAccess()  throws Exception {
+    try {
+      doTest(false);
+    }
+    catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
+      assertEquals("Method has no usages", e.getMessage());
     }
   }
 

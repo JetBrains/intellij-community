@@ -73,7 +73,7 @@
               <preferredSize width="280" height="20"/>
             </properties>
           </component>
-          <scrollpane id="d8de8">
+          <scrollpane class="com.intellij.ui.components.JBScrollPane" id="d8de8">
             <constraints>
               <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
               <gridbag top="0" left="4" bottom="0" right="0" weightx="0.1" weighty="1.0"/>
@@ -84,7 +84,7 @@
             </properties>
             <border type="none"/>
             <children>
-              <component id="c263e" class="javax.swing.JList" binding="myTypesList">
+              <component id="c263e" class="com.intellij.ui.components.JBList" binding="myTypesList">
                 <constraints/>
                 <properties/>
               </component>
@@ -108,7 +108,7 @@
               <text resource-bundle="messages/ProjectBundle" key="project.new.wizard.description.title"/>
             </properties>
           </component>
-          <scrollpane id="6260">
+          <scrollpane class="com.intellij.ui.components.JBScrollPane" id="6260">
             <constraints>
               <grid row="4" column="1" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
               <gridbag top="0" left="3" bottom="0" right="0" weightx="0.8" weighty="0.0"/>

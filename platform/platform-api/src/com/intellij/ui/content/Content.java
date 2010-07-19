@@ -63,7 +63,7 @@ public interface Content extends UserDataHolder, ComponentContainer {
   Disposable getDisposer();
 
   /**
-   * @param disposer a Disposable object whoes dispose() method will be invoken upon this content release.
+   * @param disposer a Disposable object whoes dispose() method will be invoked upon this content release.
    */
   void setDisposer(Disposable disposer);
 

@@ -48,7 +48,7 @@
           </component>
         </children>
       </grid>
-      <scrollpane id="386b1">
+      <scrollpane class="com.intellij.ui.components.JBScrollPane" id="386b1">
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false">
             <minimum-size width="300" height="150"/>
@@ -57,7 +57,7 @@
         <properties/>
         <border type="none"/>
         <children>
-          <component id="9266f" class="javax.swing.JList" binding="myLibraryList">
+          <component id="9266f" class="com.intellij.ui.components.JBList" binding="myLibraryList">
             <constraints/>
             <properties/>
           </component>

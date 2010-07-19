@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -85,7 +86,7 @@ public class YourkitFilter implements Filter{
     public void navigate(final Project project) {
       DefaultPsiElementListCellRenderer renderer = new DefaultPsiElementListCellRenderer();
 
-      final JList list = new JList(myPsiFiles);
+      final JList list = new JBList(myPsiFiles);
       list.setCellRenderer(renderer);
 
       final PopupChooserBuilder builder = new PopupChooserBuilder(list);

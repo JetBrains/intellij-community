@@ -73,7 +73,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
-    <vcs name="Git" vcsClass="git4idea.GitVcs"/>
+    <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>
     <checkoutProvider implementation="git4idea.checkout.GitCheckoutProvider"/>
     <vcsPopupProvider implementation="git4idea.actions.GitQuickListContentProvider"/>
 
@@ -101,6 +101,9 @@
     <projectService
         serviceInterface="git4idea.history.GitUsersComponent"
         serviceImplementation="git4idea.history.GitUsersComponent"/>
+    <projectService
+        serviceInterface="git4idea.history.browser.GitProjectLogManager"
+        serviceImplementation="git4idea.history.browser.GitProjectLogManager"/>
     <applicationService
         serviceInterface="git4idea.config.GitVcsApplicationSettings"
         serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>
@@ -116,10 +119,4 @@
     <ComponentRoamingType component="Git.Settings" type="DISABLED"/>
     <fileTypeFactory implementation="git4idea.vfs.GitFileTypeFactory"/>
   </extensions>
-
-  <project-components>
-    <component>
-      <implementation-class>git4idea.history.browser.GitProjectLogManager</implementation-class>
-    </component>
-  </project-components>
 </idea-plugin>

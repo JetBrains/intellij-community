@@ -19,6 +19,7 @@ package com.intellij.psi.impl.source.resolve.reference.impl;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -133,7 +134,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
     Set<Object> variants = new HashSet<Object>();
     for(PsiReference ref: myReferences) {
       Object[] refVariants = ref.getVariants();
-      variants.addAll(Arrays.asList(refVariants));
+      ContainerUtil.addAll(variants, refVariants);
     }
     return variants.toArray();
   }
@@ -149,7 +150,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
     PsiElementResolveResult selfReference = null;
     for (PsiReference reference : refs) {
       if (reference instanceof PsiPolyVariantReference) {
-        result.addAll(Arrays.asList(((PsiPolyVariantReference)reference).multiResolve(incompleteCode)));
+        ContainerUtil.addAll(result, ((PsiPolyVariantReference)reference).multiResolve(incompleteCode));
       }
       else {
         final PsiElement resolved = reference.resolve();

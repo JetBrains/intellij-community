@@ -122,10 +122,10 @@ public class Patches {
   public static final boolean MAC_HIDE_QUIT_HACK = false;
 
   /**
-   * Causes calling thread to lock up aquiring content of the system clipboard on linux. Being called from the swing thread an
+   * Causes calling thread to lock up acquiring content of the system clipboard on linux. Being called from the swing thread an
    * application stops responding.
    */
-  public static final boolean SUN_BUG_ID_4818143 = SystemInfo.isLinux || SystemInfo.isFreeBSD;
+  public static final boolean SUN_BUG_ID_4818143 = SystemInfo.isLinux || SystemInfo.isFreeBSD || SystemInfo.isMac;
 
   /**
    * Java does not recognize the optional BOM which can begin a UTF-8 stream.

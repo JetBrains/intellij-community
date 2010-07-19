@@ -59,7 +59,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
   }
 
   private boolean isValid() {
-    if (isDumbMode() && !(this instanceof DumbAware)) {
+    if (isDumbMode() && !DumbService.isDumbAware(this)) {
       return false;
     }
 

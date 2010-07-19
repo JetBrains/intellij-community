@@ -126,22 +126,25 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
   }
 
   @TestOnly
-  public void cleanupForNextTest() throws IOException {
+  public void cleanupForNextTest(Set<VirtualFile> survivors) throws IOException {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         FileDocumentManager.getInstance().saveAllDocuments();
-        refresh(false);
       }
     });
     ((PersistentFS)ManagingFS.getInstance()).clearIdCache();
-    
-    final VirtualFile[] roots = ManagingFS.getInstance().getRoots(this);
-    for (VirtualFile root : roots) {
+
+    for (VirtualFile root : ManagingFS.getInstance().getRoots(this)) {
       if (root instanceof VirtualDirectoryImpl) {
-        final VirtualDirectoryImpl directory = (VirtualDirectoryImpl)root;
-        directory.cleanupCachedChildren();
+        ((VirtualDirectoryImpl)root).cleanupCachedChildren(survivors);
       }
     }
+
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        refresh(false);
+      }
+    });
 
     myRootsToWatch.clear();
 

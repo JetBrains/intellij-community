@@ -108,7 +108,13 @@ public abstract class FileEditorManager {
    */
   @NotNull public abstract FileEditor[] getAllEditors();
 
+  /**
+   * @deprecated use addTopComponent
+   */
   public abstract void showEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComoponent);
+  /**
+   * @deprecated use removeTopComponent
+   */
   public abstract void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComoponent);
 
   public abstract void addTopComponent(@NotNull final FileEditor editor, @NotNull final JComponent component);

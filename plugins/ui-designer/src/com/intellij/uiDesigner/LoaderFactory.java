@@ -21,17 +21,13 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.roots.ProjectRootsTraversing;
-import com.intellij.openapi.roots.ProjectClasspathTraversing;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
-import com.intellij.openapi.vfs.impl.jar.JarHandler;
 import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.lang.UrlClassLoader;
@@ -93,9 +89,9 @@ public final class LoaderFactory {
       return cachedLoader;
     }
 
-    final String runClasspath = ProjectRootsTraversing.collectRoots(module, ProjectClasspathTraversing.FULL_CLASSPATH_RECURSIVE).getPathsString();
+    final String runClasspath = OrderEnumerator.orderEntries(module).recursively().getPathsList().getPathsString();
 
-    final ClassLoader classLoader = createClassLoader(runClasspath);
+    final ClassLoader classLoader = createClassLoader(runClasspath, module.getName());
 
     myModule2ClassLoader.put(module, classLoader);
 
@@ -104,13 +100,13 @@ public final class LoaderFactory {
 
   @NotNull public ClassLoader getProjectClassLoader() {
     if (myProjectClassLoader == null) {
-      final String runClasspath = ProjectRootsTraversing.collectRoots(myProject, ProjectClasspathTraversing.FULL_CLASSPATH_RECURSIVE).getPathsString();
-      myProjectClassLoader = createClassLoader(runClasspath);
+      final String runClasspath = OrderEnumerator.orderEntries(myProject).withoutSdk().getPathsList().getPathsString();
+      myProjectClassLoader = createClassLoader(runClasspath, "<project>");
     }
     return myProjectClassLoader;
   }
 
-  private static ClassLoader createClassLoader(final String runClasspath) {
+  private static ClassLoader createClassLoader(final String runClasspath, final String moduleName) {
     final ArrayList<URL> urls = new ArrayList<URL>();
     final VirtualFileManager manager = VirtualFileManager.getInstance();
     final JarFileSystemImpl fileSystem = (JarFileSystemImpl)JarFileSystem.getInstance();
@@ -135,7 +131,7 @@ public final class LoaderFactory {
     }
 
     final URL[] _urls = urls.toArray(new URL[urls.size()]);
-    return new DesignTimeClassLoader(Arrays.asList(_urls), null);
+    return new DesignTimeClassLoader(Arrays.asList(_urls), LoaderFactory.class.getClassLoader(), moduleName);
   }
 
   public void clearClassLoaderCache() {
@@ -156,8 +152,16 @@ public final class LoaderFactory {
   }
 
   private static class DesignTimeClassLoader extends UrlClassLoader {
-    public DesignTimeClassLoader(final List<URL> urls, final ClassLoader parent) {
+    private final String myModuleName;
+
+    public DesignTimeClassLoader(final List<URL> urls, final ClassLoader parent, final String moduleName) {
       super(urls, parent);
+      myModuleName = moduleName;
+    }
+
+    @Override
+    public String toString() {
+      return "DesignTimeClassLoader:" + myModuleName;
     }
   }
 }

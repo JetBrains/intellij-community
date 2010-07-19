@@ -215,7 +215,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
         editor.getComponent().getRootPane().getLayeredPane()
       );
 
-      hint.setLocation(location.x, location.y);
+      hint.updateBounds(location.x, location.y);
     }
     else {
       hint.hide();
@@ -348,7 +348,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
       p.x = Math.max(0, layeredPane.getWidth() - size.width);
     }
     if (hint.isVisible()) {
-      hint.setLocation(p.x, p.y);
+      hint.updateBounds(p.x, p.y);
     }
     else {
       hint.show(layeredPane, p.x, p.y, editor.getContentComponent());

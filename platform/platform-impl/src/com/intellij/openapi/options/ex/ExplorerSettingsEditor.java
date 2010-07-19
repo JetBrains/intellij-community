@@ -38,6 +38,7 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
@@ -280,7 +281,7 @@ public class ExplorerSettingsEditor extends DialogWrapper {
 
     myOptionsPanel.setBorder(BorderFactory.createEmptyBorder(15, 5, 2, 5));
 
-    JScrollPane optionsScrollForTinyScreens = new JScrollPane(myOptionsPanel);
+    JScrollPane optionsScrollForTinyScreens = ScrollPaneFactory.createScrollPane(myOptionsPanel);
     optionsScrollForTinyScreens.setBorder(null);
     
     myComponentPanel.add(optionsScrollForTinyScreens, BorderLayout.CENTER);
@@ -352,7 +353,7 @@ public class ExplorerSettingsEditor extends DialogWrapper {
   }
 
   private void initTree() {
-    myTree = new JTree(myRoot){
+    myTree = new Tree(myRoot){
       public Dimension getPreferredScrollableViewportSize() {
         Dimension size = super.getPreferredScrollableViewportSize();
         size = new Dimension(size.width + 10, size.height);

@@ -19,8 +19,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 
 import java.util.Set;
@@ -32,14 +30,12 @@ public class AdditionalIndexableFileSet implements IndexableFileSet {
   private final Set<VirtualFile> myRoots = new THashSet<VirtualFile>();
 
   public AdditionalIndexableFileSet() {
-    this(Extensions.getExtensions(IndexedRootsProvider.EP_NAME));
+    this(Extensions.getExtensions(IndexableSetContributor.EP_NAME));
   }
 
   public AdditionalIndexableFileSet(IndexedRootsProvider... extensions) {
     for (IndexedRootsProvider provider : extensions) {
-      for (String url : provider.getRootsToIndex()) {
-        ContainerUtil.addIfNotNull(VirtualFileManager.getInstance().findFileByUrl(url), myRoots);
-      }
+      myRoots.addAll(IndexableSetContributor.getRootsToIndex(provider));
     }
   }
 

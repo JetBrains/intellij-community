@@ -24,7 +24,6 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -72,14 +71,14 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     if (!super.processDeclarations(processor, state, lastParent, place)) return false;
 
     for (final PsiParameter parameter : getAllParameters()) {
-      if (!ResolveUtil.processElement(processor, parameter)) return false;
+      if (!ResolveUtil.processElement(processor, parameter, state)) return false;
     }
 
     if (processor instanceof PropertyResolverProcessor && OWNER_NAME.equals(((PropertyResolverProcessor)processor).getName())) {
       processor.handleEvent(ResolveUtil.DECLARATION_SCOPE_PASSED, this);
     }
 
-    if (!ResolveUtil.processElement(processor, getOwner())) return false;
+    if (!ResolveUtil.processElement(processor, getOwner(), state)) return false;
 
     final PsiClass closureClass = JavaPsiFacade.getInstance(getProject()).findClass(GROOVY_LANG_CLOSURE, getResolveScope());
     if (closureClass != null) {
@@ -87,7 +86,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
 
       // Process non-code in closures
       PsiType clType = JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(closureClass, PsiSubstitutor.EMPTY);
-      if (!ResolveUtil.processNonCodeMethods(clType, processor, getProject(), place, true)) return false;
+      if (!ResolveUtil.processNonCodeMethods(clType, processor, place, true)) return false;
     }
 
     return true;
@@ -114,13 +113,19 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     return new PsiParameter[]{getSyntheticItParameter()};
   }
 
+  @Override
+  @Nullable
+  public PsiElement getArrow() {
+    return findChildByType(GroovyTokenTypes.mCLOSABLE_BLOCK_OP);
+  }
+
   public GrParameterListImpl getParameterList() {
     return findChildByClass(GrParameterListImpl.class);
   }
 
   public void addParameter(GrParameter parameter) {
     GrParameterList parameterList = getParameterList();
-    if (findChildByType(GroovyTokenTypes.mCLOSABLE_BLOCK_OP) == null) {
+    if (getArrow() == null) {
       ASTNode next = parameterList.getNode().getTreeNext();
       getNode().addLeaf(GroovyTokenTypes.mCLOSABLE_BLOCK_OP, "->", next);
       getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", next);
@@ -130,7 +135,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   }
 
   public boolean hasParametersSection() {
-    return findChildByType(GroovyElementTypes.mCLOSABLE_BLOCK_OP) != null;
+    return getArrow() != null;
   }
 
   public PsiType getType() {

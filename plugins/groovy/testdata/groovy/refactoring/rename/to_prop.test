@@ -1,7 +1,7 @@
 class A {
   def String foo = "asd"
 
-  def setFoo(asd){}
+  def setFoo(String asd){}
 
   def getFoo(){"dsfsdf"}
 }
@@ -18,7 +18,7 @@ a.<caret>setFoo("asd")
 class A {
   def String foo = "asd"
 
-  def setNewName(asd){}
+  def setNewName(String asd){}
 
   def getFoo(){"dsfsdf"}
 }

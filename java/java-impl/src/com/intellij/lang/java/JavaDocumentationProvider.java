@@ -701,8 +701,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     }
     if (module != null) {
       String[] javadocPaths = ModuleRootManager.getInstance(module).getRootUrls(JavadocOrderRootType.getInstance());
-      List<String> httpRoot = getHttpRoots(javadocPaths, relPath);
-      if (httpRoot != null) return httpRoot;
+      return getHttpRoots(javadocPaths, relPath);
     }
 
     final List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(virtualFile);

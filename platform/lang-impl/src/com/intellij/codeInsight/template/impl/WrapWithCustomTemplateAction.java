@@ -17,7 +17,6 @@ package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.template.CustomLiveTemplate;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
-import com.intellij.codeInsight.template.TemplateInvokationListener;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Document;
@@ -63,12 +62,7 @@ public class WrapWithCustomTemplateAction extends AnAction {
 
     if (selection != null) {
       selection = selection.trim();
-      final CustomTemplateCallback callback = new CustomTemplateCallback(myEditor, myFile);
-      myTemplate.wrap(selection, callback, new TemplateInvokationListener() {
-        public void finished() {
-          callback.startAllExpandedTemplates();
-        }
-      });
+      myTemplate.wrap(selection, new CustomTemplateCallback(myEditor, myFile));
     }
   }
 }

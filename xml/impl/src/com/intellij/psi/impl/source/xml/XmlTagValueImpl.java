@@ -55,7 +55,7 @@ public class XmlTagValueImpl implements XmlTagValue{
     for (final XmlTagChild element : myElements) {
       if (element instanceof XmlText) textElementsList.add((XmlText)element);
     }
-    return myTextElements = ContainerUtil.toArray(textElementsList, new XmlText[textElementsList.size()]);
+    return myTextElements = textElementsList.isEmpty() ? XmlText.EMPTY_ARRAY : ContainerUtil.toArray(textElementsList, new XmlText[textElementsList.size()]);
   }
 
   @NotNull

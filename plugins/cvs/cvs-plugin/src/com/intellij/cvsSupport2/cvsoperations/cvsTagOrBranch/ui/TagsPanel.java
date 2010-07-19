@@ -17,6 +17,7 @@ package com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -44,7 +45,7 @@ public class TagsPanel extends JPanel implements TableCellRenderer{
   };
 
   private Collection<String> myTags;
-  private final JList myList = new JList();
+  private final JList myList = new JBList();
   @NonNls private static final String MORE_LABEL_TEXT = "<html><b>(...)</b></html>";
   private final String myPopupTitle;
 

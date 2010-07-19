@@ -149,13 +149,23 @@ public final class IntentionActionMetaData {
     return urls.isEmpty() ? null : urls.toArray(new TextDescriptor[urls.size()]);
   }
 
+  @Nullable
   private static URL getIntentionDescriptionDirURL(ClassLoader aClassLoader, String intentionFolderName) {
-    final URL pageURL = aClassLoader.getResource(INTENTION_DESCRIPTION_FOLDER + "/" + intentionFolderName);
+    final URL pageURL = aClassLoader.getResource(INTENTION_DESCRIPTION_FOLDER + "/" + intentionFolderName+"/"+ DESCRIPTION_FILE_NAME);
     if (LOG.isDebugEnabled()) {
       LOG.debug("Path:"+"intentionDescriptions/" + intentionFolderName);
       LOG.debug("URL:"+pageURL);
     }
-    return pageURL;
+    if (pageURL != null) {
+      try {
+        final String url = pageURL.toExternalForm();
+        return new URL(url.substring(0, url.lastIndexOf('/')));
+      }
+      catch (MalformedURLException e) {
+        LOG.error(e);
+      }
+    }
+    return null;
   }
 
   private URL getDirURL() {

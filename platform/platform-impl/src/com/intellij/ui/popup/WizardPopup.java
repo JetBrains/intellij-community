@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.PopupBorder;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.ui.popup.util.MnemonicsSearch;
@@ -75,7 +76,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
     final JComponent content = createContent();
 
-    JScrollPane scrollPane = new JScrollPane(content);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(content);
     scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     scrollPane.getHorizontalScrollBar().setBorder(null);
@@ -88,7 +89,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     init(project, scrollPane, getPreferredFocusableComponent(), true, true, true, true, null,
          false, aStep.getTitle(), null, true, null, false, null, null, null, false, null, true, false, true, null, 0f,
-         null, true, false, new Component[0], null, true, Collections.<Pair<ActionListener, KeyStroke>>emptyList(), null, null, false);
+         null, true, false, new Component[0], null, true, Collections.<Pair<ActionListener, KeyStroke>>emptyList(), null, null, false, true);
 
     registerAction("disposeAll", KeyEvent.VK_ESCAPE, InputEvent.SHIFT_MASK, new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
@@ -289,7 +290,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
       int resultHeight = ofContent.height > MAX_SIZE.height ? MAX_SIZE.height : ofContent.height;
 
       if (ofContent.height > MAX_SIZE.height) {
-        resultWidth += new JScrollPane().getVerticalScrollBar().getPreferredSize().getWidth();
+        resultWidth += ScrollPaneFactory.createScrollPane().getVerticalScrollBar().getPreferredSize().getWidth();
       }
 
       return new Dimension(resultWidth, resultHeight);

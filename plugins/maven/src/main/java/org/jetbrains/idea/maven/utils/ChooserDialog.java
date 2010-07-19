@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.utils;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +44,7 @@ public class ChooserDialog<T> extends DialogWrapper {
 
   @Nullable
   protected JComponent createCenterPanel() {
-    return new JScrollPane(myChooser);
+    return ScrollPaneFactory.createScrollPane(myChooser);
   }
 
   protected JComponent createNorthPanel() {

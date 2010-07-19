@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInsight.lookup;
 
+import com.intellij.codeInsight.completion.DefaultInsertHandler;
+import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -31,6 +33,12 @@ public class PsiTypeLookupItem extends LookupItem {
   @Override
   public boolean equals(final Object o) {
     return super.equals(o) && o instanceof PsiTypeLookupItem && getBracketsCount() == ((PsiTypeLookupItem) o).getBracketsCount();
+  }
+
+  @Override
+  public void handleInsert(InsertionContext context) {
+    DefaultInsertHandler.addImportForItem(context.getFile(), context.getStartOffset(), this);
+    super.handleInsert(context);
   }
 
   @Override

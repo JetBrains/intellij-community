@@ -17,12 +17,15 @@ package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.impl.VcsDescriptor;
+import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.Nullable;
@@ -41,10 +44,10 @@ public class VcsConfigurationsDialog extends DialogWrapper{
   private JPanel myVersionControlConfigurationsPanel;
   private static final String NONE = VcsBundle.message("none.vcs.presentation");
 
-  private final Map<String, Configurable> myVcsNameToConfigurableMap = new HashMap<String, Configurable>();
+  private final Map<String, UnnamedConfigurable> myVcsNameToConfigurableMap = new HashMap<String, UnnamedConfigurable>();
   private static final ColoredListCellRenderer VCS_LIST_RENDERER = new ColoredListCellRenderer() {
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-      String name = value == null ? NONE : ((AbstractVcs)value).getDisplayName();
+      String name = value == null ? NONE : ((VcsDescriptor) value).getDisplayName();
       append(name, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, list.getForeground()));
     }
   };
@@ -53,11 +56,11 @@ public class VcsConfigurationsDialog extends DialogWrapper{
   @Nullable
   private final JComboBox myVcsesToUpdate;
 
-  public VcsConfigurationsDialog(Project project, @Nullable JComboBox vcses, AbstractVcs selectedVcs) {
+  public VcsConfigurationsDialog(Project project, @Nullable JComboBox vcses, VcsDescriptor selectedVcs) {
     super(project, false);
     myProject = project;
 
-    AbstractVcs[] abstractVcses = collectAvailableNames();
+    VcsDescriptor[] abstractVcses = collectAvailableNames();
     initList(abstractVcses);
 
     initVcsConfigurable(abstractVcses);
@@ -65,7 +68,7 @@ public class VcsConfigurationsDialog extends DialogWrapper{
     updateConfiguration();
     myVcsesToUpdate = vcses;
     for (String vcsName : myVcsNameToConfigurableMap.keySet()) {
-       Configurable configurable = myVcsNameToConfigurableMap.get(vcsName);
+       UnnamedConfigurable configurable = myVcsNameToConfigurableMap.get(vcsName);
        if (configurable != null && configurable.isModified()) configurable.reset();
     }
     updateConfiguration();
@@ -78,32 +81,43 @@ public class VcsConfigurationsDialog extends DialogWrapper{
 
   private void updateConfiguration() {
     int selectedIndex = myVcses.getSelectionModel().getMinSelectionIndex();
-    final AbstractVcs currentVcs;
-    currentVcs = selectedIndex >= 0 ? (AbstractVcs)(myVcses.getModel()).getElementAt(selectedIndex) : null;
+    final VcsDescriptor currentVcs;
+    currentVcs = selectedIndex >= 0 ? (VcsDescriptor)(myVcses.getModel()).getElementAt(selectedIndex) : null;
     String currentName = currentVcs == null ? NONE : currentVcs.getName();
-    ((CardLayout)myVcsConfigurationPanel.getLayout()).show(myVcsConfigurationPanel, currentName);
+    if (currentVcs != null) {
+      myVcsNameToConfigurableMap.get(currentName).createComponent();
+    }
+    final CardLayout cardLayout = (CardLayout)myVcsConfigurationPanel.getLayout();
+    cardLayout.show(myVcsConfigurationPanel, currentName);
   }
 
-  private void initVcsConfigurable(AbstractVcs[] vcses) {
+  private void initVcsConfigurable(VcsDescriptor[] vcses) {
     myVcsConfigurationPanel.setLayout(new CardLayout());
     MyNullConfigurable nullConfigurable = new MyNullConfigurable();
     myVcsNameToConfigurableMap.put(NONE, nullConfigurable);
     myVcsConfigurationPanel.add(nullConfigurable.createComponent(), NONE);
-    for (AbstractVcs vcs : vcses) {
+    for (VcsDescriptor vcs : vcses) {
       addConfigurationPanelFor(vcs);
     }
   }
 
-  private void addConfigurationPanelFor(final AbstractVcs vcs) {
+  private void addConfigurationPanelFor(final VcsDescriptor vcs) {
     String name = vcs.getName();
-    myVcsNameToConfigurableMap.put(name, vcs.getConfigurable());
-    myVcsConfigurationPanel.add(createPanelForConfiguration(vcs), name);
+    final JPanel parentPanel = new JPanel();
+    final LazyConfigurable lazyConfigurable = new LazyConfigurable(new Getter<Configurable>() {
+      @Override
+      public Configurable get() {
+        return AllVcses.getInstance(myProject).getByName(vcs.getName()).getConfigurable();
+      }
+    }, parentPanel);
+    myVcsNameToConfigurableMap.put(name, lazyConfigurable);
+    myVcsConfigurationPanel.add(parentPanel, name);
   }
 
-  private void initList(AbstractVcs[] names) {
+  private void initList(VcsDescriptor[] names) {
     DefaultListModel model = new DefaultListModel();
 
-    for (AbstractVcs name : names) {
+    for (VcsDescriptor name : names) {
       model.addElement(name);
     }
 
@@ -120,21 +134,8 @@ public class VcsConfigurationsDialog extends DialogWrapper{
   }
 
 
-  private AbstractVcs[] collectAvailableNames() {
+  private VcsDescriptor[] collectAvailableNames() {
     return ProjectLevelVcsManager.getInstance(myProject).getAllVcss();
-  }
-
-  private Component createPanelForConfiguration(AbstractVcs vcs) {
-    if (vcs != null) {
-      Configurable configurable = myVcsNameToConfigurableMap.get(vcs.getName());
-      if (configurable != null) {
-        JComponent result = configurable.createComponent();
-        configurable.reset();
-        return result;
-      }
-    }
-    return new JPanel();
-
   }
 
   protected JComponent createCenterPanel() {
@@ -143,7 +144,7 @@ public class VcsConfigurationsDialog extends DialogWrapper{
 
   protected void doOKAction() {
     for (String vcsName : myVcsNameToConfigurableMap.keySet()) {
-      Configurable configurable = myVcsNameToConfigurableMap.get(vcsName);
+      UnnamedConfigurable configurable = myVcsNameToConfigurableMap.get(vcsName);
       if (configurable != null && configurable.isModified()) {
         try {
           configurable.apply();
@@ -157,13 +158,13 @@ public class VcsConfigurationsDialog extends DialogWrapper{
 
     final JComboBox vcsesToUpdate = myVcsesToUpdate;
     if (vcsesToUpdate != null) {
-      final VcsWrapper wrapper = new VcsWrapper((AbstractVcs)myVcses.getSelectedValue());
+      final VcsDescriptor wrapper = (VcsDescriptor) myVcses.getSelectedValue();
       vcsesToUpdate.setSelectedItem(wrapper);
       final ComboBoxModel model = vcsesToUpdate.getModel();
       for(int i = 0; i < model.getSize(); i++){
         final Object vcsWrapper = model.getElementAt(i);
-        if (vcsWrapper instanceof VcsWrapper){
-          final VcsWrapper defaultVcsWrapper = (VcsWrapper)vcsWrapper;
+        if (vcsWrapper instanceof VcsDescriptor){
+          final VcsDescriptor defaultVcsWrapper = (VcsDescriptor) vcsWrapper;
           if (defaultVcsWrapper.equals(wrapper)){
             vcsesToUpdate.setSelectedIndex(i);
             break;

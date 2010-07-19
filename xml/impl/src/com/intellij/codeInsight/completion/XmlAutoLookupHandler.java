@@ -53,16 +53,19 @@ public class XmlAutoLookupHandler extends CodeCompletionHandlerBase {
     int offset = context.getStartOffset();
 
     PsiElement lastElement = InjectedLanguageUtil.findElementAtNoCommit(file, offset - 1);
+    if (lastElement instanceof PsiFile) { //the very end of an injected file
+      lastElement = file.findElementAt(offset - 1);
+    }
     if (lastElement == null) return;
 
     if(!doCompleteIfNeeded(offset1, offset2, context, dummyIdentifier, editor, invocationCount, file, lastElement)) {
       // In template language based file we need to check element from template data language tree, not from base language 
       FileViewProvider fileViewProvider = file.getViewProvider();
       Language templateDataLanguage;
-      
+
+      final PsiElement parent = lastElement.getParent();
       if (fileViewProvider instanceof TemplateLanguageFileViewProvider &&
-          (templateDataLanguage = ((TemplateLanguageFileViewProvider)fileViewProvider).getTemplateDataLanguage()) != lastElement.getParent().getLanguage()
-         ) {
+          (templateDataLanguage = ((TemplateLanguageFileViewProvider)fileViewProvider).getTemplateDataLanguage()) != parent.getLanguage()) {
         lastElement = fileViewProvider.findElementAt(offset - 1, templateDataLanguage);
         if (lastElement == null) return;
         doCompleteIfNeeded(offset1, offset2, context, dummyIdentifier, editor, invocationCount, file, lastElement);

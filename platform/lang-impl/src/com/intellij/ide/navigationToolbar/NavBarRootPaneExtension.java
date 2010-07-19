@@ -24,6 +24,8 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.impl.IdeRootPaneNorthExtension;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -46,12 +48,11 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
 
   public JComponent getComponent() {
     if (myPanel == null) {
-      myPanel = new JPanel(new BorderLayout());
+      myPanel = new OpaquePanel.List(new BorderLayout());
 
-      myPanel.setBackground(UIUtil.getListBackground());
       myNavigationBar = new NavBarPanel(myProject);
 
-      JScrollPane scroller = new JScrollPane(myNavigationBar);
+      JScrollPane scroller = ScrollPaneFactory.createScrollPane(myNavigationBar);
       scroller.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
       scroller.setHorizontalScrollBar(null);
       scroller.setBorder(null);
@@ -69,7 +70,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
       myPanel.add(closeLabel, BorderLayout.EAST);
 
       myPanel.putClientProperty("NavBarPanel", myNavigationBar);
-      myNavigationBar.installBorder(0);
+      myNavigationBar.installBorder(0, true);
       myPanel.setBorder(myNavigationBar.getBorder());
       myNavigationBar.setBorder(null);
     }

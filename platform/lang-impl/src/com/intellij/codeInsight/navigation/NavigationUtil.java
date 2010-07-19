@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.TextRange;
@@ -32,6 +33,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.ui.components.JBList;
 
 import javax.swing.*;
 
@@ -61,7 +63,7 @@ public final class NavigationUtil {
 
   public static <T extends PsiElement> JBPopup getPsiElementPopup(final T[] elements, final PsiElementListCellRenderer<T> renderer,
                                                                   final String title, final PsiElementProcessor<T> processor) {
-    final JList list = new JList(elements);
+    final JList list = new JBList(elements);
     list.setCellRenderer(renderer);
 
     final Runnable runnable = new Runnable() {
@@ -100,8 +102,13 @@ public final class NavigationUtil {
     VirtualFile vFile = file.getVirtualFile();
     if (vFile == null) return false;
 
+    if (!EditorHistoryManager.getInstance(elt.getProject()).hasBeenOpen(vFile)) return false;
+
     final FileEditorManager fem = FileEditorManager.getInstance(elt.getProject());
-    if (!fem.isFileOpen(vFile)) return false;
+    if (!fem.isFileOpen(vFile)) {
+      fem.openFile(vFile, true);
+      return true;
+    }
 
     final TextRange range = elt.getTextRange();
     if (range == null) return false;

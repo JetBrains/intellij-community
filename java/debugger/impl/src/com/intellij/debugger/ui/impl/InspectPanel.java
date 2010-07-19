@@ -28,9 +28,9 @@ import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.ScrollPaneFactory;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.awt.*;
 
 public class InspectPanel extends DebuggerTreePanel {
@@ -39,7 +39,7 @@ public class InspectPanel extends DebuggerTreePanel {
 
     getInspectTree().setInspectDescriptor(inspectDescriptor);
 
-    add(new JScrollPane(getInspectTree()), BorderLayout.CENTER);
+    add(ScrollPaneFactory.createScrollPane(getInspectTree()), BorderLayout.CENTER);
     final Disposable disposable = DebuggerAction.installEditAction(getInspectTree(), DebuggerActions.EDIT_NODE_SOURCE);
     registerDisposable(disposable);
     setUpdateEnabled(true);

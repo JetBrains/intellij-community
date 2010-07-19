@@ -29,6 +29,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
@@ -238,9 +239,9 @@ public class XsltContextProvider extends ContextProvider {
                 if (associations.length == 0) {
                     fillFromSchema(file, names);
                 } else {
-                    names.validateNames = true;
-                    //noinspection unchecked
-                    names.dependencies.addAll(Arrays.asList(associations));
+                  names.validateNames = true;
+                  //noinspection unchecked
+                  ContainerUtil.addAll(names.dependencies, associations);
                 }
                 //noinspection unchecked
                 names.dependencies.add(myFileAssociationsManager);

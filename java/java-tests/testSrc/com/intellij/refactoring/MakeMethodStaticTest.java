@@ -164,6 +164,12 @@ public class MakeMethodStaticTest extends LightCodeInsightTestCase {
     checkResultByFile("/refactoring/makeMethodStatic/after22.java");
   }
 
+  public void testPreserveTypeParams() throws Exception {
+    configureByFile("/refactoring/makeMethodStatic/beforePreserveTypeParams.java");
+    performWithFields();
+    checkResultByFile("/refactoring/makeMethodStatic/afterPreserveTypeParams.java");
+  }
+
   private void perform(boolean addClassParameter) {
     PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
     assertTrue(element instanceof PsiMethod);

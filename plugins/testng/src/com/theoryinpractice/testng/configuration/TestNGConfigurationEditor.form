@@ -248,7 +248,7 @@
                       <forms defaultalign-vert="false"/>
                     </constraints>
                   </vspacer>
-                  <scrollpane id="7e87f">
+                  <scrollpane class="com.intellij.ui.components.JBScrollPane" id="7e87f">
                     <constraints>
                       <grid row="0" column="0" row-span="5" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                       <forms defaultalign-vert="false"/>
@@ -322,7 +322,7 @@
                       <text value="&amp;Remove"/>
                     </properties>
                   </component>
-                  <scrollpane id="20819">
+                  <scrollpane class="com.intellij.ui.components.JBScrollPane" id="20819">
                     <constraints>
                       <grid row="0" column="0" row-span="5" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                       <forms defaultalign-vert="false"/>
@@ -330,7 +330,7 @@
                     <properties/>
                     <border type="none"/>
                     <children>
-                      <component id="53e0a" class="javax.swing.JList" binding="listenersTable">
+                      <component id="53e0a" class="com.intellij.ui.components.JBList" binding="listenersTable">
                         <constraints/>
                         <properties/>
                       </component>

@@ -129,6 +129,10 @@ public class AutomaticRenamingDialog extends DialogWrapper {
   }
 
   protected void handleChanges() {
+    final int selectedRow = myTable.getSelectedRow();
+    final boolean validName = RenameUtil.isValidName(myProject, myRenames[selectedRow], myNewNames[selectedRow]);
+    getOKAction().setEnabled(validName);
+    setErrorText(validName ? null : "Identifier \'" + myNewNames[selectedRow] + "\' is invalid");
   }
 
   protected JComponent createCenterPanel() {

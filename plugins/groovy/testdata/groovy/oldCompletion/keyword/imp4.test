@@ -1,6 +1,6 @@
 import static <caret> a.b
 -----
 META-INF
-com
 java
 javax
+org

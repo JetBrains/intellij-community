@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.doc.actions.GroovyDocAddPackageAction;
@@ -64,7 +65,7 @@ public final class GroovyDocGenerationPanel extends JPanel {
 
     myDataModel = new DefaultListModel();
 
-    myPackagesList = new JList(myDataModel);
+    myPackagesList = new JBList(myDataModel);
     myPackagesList.setMinimumSize(new Dimension(100, 150));
 
     JScrollPane packagesScrollPane = ScrollPaneFactory.createScrollPane(myPackagesList);

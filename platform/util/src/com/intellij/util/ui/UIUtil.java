@@ -41,6 +41,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.FontRenderContext;
+import java.awt.image.BufferedImage;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -70,6 +71,9 @@ public class UIUtil {
   @NonNls public static final String FOCUS_PROXY_KEY = "isFocusProxy";
 
   public static Key<Integer> KEEP_BORDER_SIDES = Key.create("keepBorderSides");
+
+  // accessed only from EDT
+  private static HashMap<Color, BufferedImage> ourAppleDotSamples = new HashMap<Color, BufferedImage>();
 
   private UIUtil() {
   }
@@ -673,6 +677,16 @@ public class UIUtil {
     }
   }
 
+  /**
+   * Should be invoked only in EDT.
+   * @param g Graphics surface
+   * @param startX Line start X coordinate
+   * @param endX Line end X coordinate
+   * @param lineY Line Y coordinate
+   * @param bgColor Background color (optional)
+   * @param fgColor Foreground color (optional)
+   * @param opaque If opaque the image will be dr
+   */
   public static void drawBoldDottedLine(final Graphics2D g,
                                         final int startX,
                                         final int endX,
@@ -750,44 +764,75 @@ public class UIUtil {
     // CCC CCC CCC ...
     //
     // (where "C" - colored pixel, " " - white pixel)
-    //
-    // Each dot:
-    // | 20%  | 50%  | 20% |
-    // | 100% | 100% | 100%|
-    // | 50%  | 100% | 50% |
-
-    g.setColor(fgColor != null ? fgColor : oldColor);
 
     final int step = 4;
     final int startPosCorrection = startX % step < 3 ? 0 : 1;
 
-    final int dotX0  = (startX / step + startPosCorrection) * step;
+    // Optimization - lets draw dotted line using dot sample image.
 
     // draw one dot by pixel:
+
+    // save old settings
     final Composite oldComposite = g.getComposite();
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, .2f));
-    g.drawLine(dotX0, lineY, dotX0,  lineY);
-    g.drawLine(dotX0+2, lineY, dotX0+2,  lineY);
+    // draw image "over" on top of background
+    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER));
 
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
-    g.drawLine(dotX0, lineY+1, dotX0+2,  lineY+1);
-    g.drawLine(dotX0+1, lineY+2, dotX0+1,  lineY+2);
-
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, .5f));
-    g.drawLine(dotX0+1, lineY, dotX0+1,  lineY);
-    g.drawLine(dotX0, lineY+2, dotX0,  lineY+2);
-    g.drawLine(dotX0+2, lineY+2, dotX0+2,  lineY+2);
-
-    // restore previous settings
-    g.setComposite(oldComposite);
+    // sample
+    final BufferedImage image = getAppleDotStamp(fgColor, oldColor);
 
     // Now copy our dot several times
-    for (int dotXi = dotX0 + step; dotXi < endX; dotXi += step) {
-      g.copyArea(dotX0, lineY, 3, 3, dotXi - dotX0, 0);
+    final int dotX0  = (startX / step + startPosCorrection) * step;
+    for (int dotXi = dotX0; dotXi < endX; dotXi += step) {
+      g.drawImage(image, dotXi, lineY, null);
     }
 
-    // restore color
-    g.setColor(oldColor);
+    //restore previous settings
+    g.setComposite(oldComposite);
+  }
+
+  private static BufferedImage getAppleDotStamp(final Color fgColor,
+                                                final Color oldColor) {
+    final Color color = fgColor != null ? fgColor : oldColor;
+
+    // let's avoid of generating tons of GC and store samples for different colors
+    BufferedImage sample = ourAppleDotSamples.get(color);
+    if (sample == null) {
+      sample = createAppleDotStamp(color);
+      ourAppleDotSamples.put(color, sample);
+    }
+    return sample;
+  }
+
+  private static BufferedImage createAppleDotStamp(final Color color) {
+    final BufferedImage image = new BufferedImage(3, 3, BufferedImage.TYPE_INT_ARGB);
+    final Graphics2D g = image.createGraphics();
+
+    g.setColor(color);
+
+    // Each dot:
+    // | 20%  | 50%  | 20% |
+    // | 80%  | 80%  | 80% |
+    // | 50%  | 100% | 50% |
+
+    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC, .2f));
+    g.drawLine(0, 0, 0, 0);
+    g.drawLine(2, 0, 2, 0);
+
+    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC, 0.7f));
+    g.drawLine(0, 1, 2, 1);
+
+    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC, 1.0f));
+    g.drawLine(1, 2, 1, 2);
+
+    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC, .5f));
+    g.drawLine(1, 0, 1, 0);
+    g.drawLine(0, 2, 0, 2);
+    g.drawLine(2, 2, 2, 2);
+
+    // dispose graphics
+    g.dispose();
+    
+    return image;
   }
 
   public static void applyRenderingHints(final Graphics g) {
@@ -844,20 +889,23 @@ public class UIUtil {
     });
   }
 
-  public static void drawVDottedLine(Graphics2D g, int lineX, int startY, int endY, final Color bgColor, final Color fgColor) {
-    g.setColor(bgColor);
-    drawLine(g, lineX, startY, lineX, endY);
+  public static void drawVDottedLine(Graphics2D g, int lineX, int startY, int endY, @Nullable final Color bgColor, final Color fgColor) {
+    if (bgColor != null) {
+      g.setColor(bgColor);
+      drawLine(g, lineX, startY, lineX, endY);
+    }
 
     g.setColor(fgColor);
-
     for (int i = (startY / 2) * 2; i < endY; i += 2) {
       g.drawRect(lineX, i, 0, 0);
     }
   }
 
-  public static void drawHDottedLine(Graphics2D g, int startX, int endX, int lineY, final Color bgColor, final Color fgColor) {
-    g.setColor(bgColor);
-    drawLine(g, startX, lineY, endX, lineY);
+  public static void drawHDottedLine(Graphics2D g, int startX, int endX, int lineY, @Nullable final Color bgColor, final Color fgColor) {
+    if (bgColor != null) {
+      g.setColor(bgColor);
+      drawLine(g, startX, lineY, endX, lineY);
+    }
 
     g.setColor(fgColor);
 
@@ -866,7 +914,7 @@ public class UIUtil {
     }
   }
 
-  public static void drawDottedLine(Graphics2D g, int x1, int y1, int x2, int y2, final Color bgColor, final Color fgColor) {
+  public static void drawDottedLine(Graphics2D g, int x1, int y1, int x2, int y2, @Nullable final Color bgColor, final Color fgColor) {
     if (x1 == x2) {
       drawVDottedLine(g, x1, y1, y2, bgColor, fgColor);
     }
@@ -933,7 +981,7 @@ public class UIUtil {
   }
 
   public static boolean isStandardMenuLAF() {
-    return isWinLafOnVista() || "Nimbus".equals(UIManager.getLookAndFeel().getName());
+    return isWinLafOnVista() || "Nimbus".equals(UIManager.getLookAndFeel().getName()) || "GTK look and feel".equals(UIManager.getLookAndFeel().getName());
   }
 
   public static Color getFocusedFillColor() {

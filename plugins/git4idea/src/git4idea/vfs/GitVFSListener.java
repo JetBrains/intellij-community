@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsVFSListener;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.util.ui.UIUtil;
@@ -35,6 +36,7 @@ import git4idea.commands.StringScanner;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -105,20 +107,20 @@ public class GitVFSListener extends VcsVFSListener {
    * {@inheritDoc}
    */
   @Override
-  protected void executeAdd() {
+  protected void executeAdd(final List<VirtualFile> addedFiles, final Map<VirtualFile, VirtualFile> copiedFiles) {
     // Filter added files before further processing
     final Map<VirtualFile, List<VirtualFile>> sortedFiles;
     try {
-      sortedFiles = GitUtil.sortFilesByGitRoot(myAddedFiles, true);
+      sortedFiles = GitUtil.sortFilesByGitRoot(addedFiles, true);
     }
     catch (VcsException e) {
       throw new RuntimeException("The exception is not expected here", e);
     }
     final HashSet<VirtualFile> retainedFiles = new HashSet<VirtualFile>();
     final ProgressManager progressManager = ProgressManager.getInstance();
-    progressManager.runProcessWithProgressSynchronously(new Runnable() {
-      public void run() {
-        ProgressIndicator pi = progressManager.getProgressIndicator();
+    progressManager.run(new Task.Backgroundable(myProject, GitBundle.getString("vfs.listener.checking.ignored"), false) {
+      @Override
+      public void run(@NotNull ProgressIndicator pi) {
         for (Map.Entry<VirtualFile, List<VirtualFile>> e : sortedFiles.entrySet()) {
           VirtualFile root = e.getKey();
           pi.setText(root.getPresentableUrl());
@@ -146,11 +148,26 @@ public class GitVFSListener extends VcsVFSListener {
               });
             }
           }
+          addedFiles.retainAll(retainedFiles);
+          UIUtil.invokeLaterIfNeeded(new Runnable() {
+            @Override
+            public void run() {
+              originalExecuteAdd(addedFiles, copiedFiles);
+            }
+          });
         }
       }
-    }, GitBundle.getString("vfs.listener.checking.ignored"), false, myProject);
-    myAddedFiles.retainAll(retainedFiles);
-    super.executeAdd();
+    });
+  }
+
+  /**
+   * The version of execute add before overriding
+   *
+   * @param addedFiles  the added files
+   * @param copiedFiles the copied files
+   */
+  private void originalExecuteAdd(List<VirtualFile> addedFiles, final Map<VirtualFile, VirtualFile> copiedFiles) {
+    super.executeAdd(addedFiles, copiedFiles);
   }
 
   /**
@@ -265,14 +282,20 @@ public class GitVFSListener extends VcsVFSListener {
       return;
     }
     gitVcs().runInBackground(new Task.Backgroundable(myProject, GitBundle.getString("remove.removing")) {
-
       public void run(@NotNull ProgressIndicator indicator) {
+        HashSet<File> filesToRefresh = new HashSet<File>();
         for (Map.Entry<VirtualFile, List<FilePath>> e : sortedFiles.entrySet()) {
           try {
             final VirtualFile root = e.getKey();
+            final File rootFile = new File(root.getPath());
             indicator.setText(root.getPresentableUrl());
             GitFileUtils.delete(myProject, root, e.getValue(), "--ignore-unmatch");
             GitUtil.markFilesDirty(myProject, e.getValue());
+            for (FilePath p : e.getValue()) {
+              for (File f = p.getIOFile(); f != null && !f.equals(rootFile); f = f.getParentFile()) {
+                filesToRefresh.add(f);
+              }
+            }
           }
           catch (final VcsException ex) {
             UIUtil.invokeLaterIfNeeded(new Runnable() {
@@ -282,6 +305,7 @@ public class GitVFSListener extends VcsVFSListener {
             });
           }
         }
+        LocalFileSystem.getInstance().refreshIoFiles(filesToRefresh);
       }
     });
   }

@@ -15,6 +15,12 @@ package org.zmlx.hg4idea;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 @State(
   name = "hg4idea.settings",
@@ -26,6 +32,32 @@ public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettin
   private static final int FIVE_MINUTES = 300;
 
   private String hgExecutable = HG;
+
+  // visited URL -> list of logins for this URL. Passwords are remembered in the PasswordSafe.
+  private Map<String, List<String>> myRememberedUrls = new HashMap<String, List<String>>();
+
+  /**
+   * Returns the rememebered urls which were accessed while working in the plugin.
+   * @return key is a String representation of a URL, value is the list (probably empty) of logins remembered for this URL.
+   */
+  @NotNull
+  public Map<String, List<String>> getRememberedUrls() {
+    return myRememberedUrls;
+  }
+
+  /**
+   * Adds the information about visited URL.
+   * @param stringUrl String representation of the URL.
+   * @param username  Login used to access the URL.
+   */
+  public void addRememberedUrl(@NotNull String stringUrl, @NotNull String username) {
+    List<String> list = myRememberedUrls.get(stringUrl);
+    if (list == null) {
+      list = new LinkedList<String>();
+      myRememberedUrls.put(stringUrl, list);
+    }
+    list.add(username);
+  }
 
   public static String getDefaultExecutable() {
     return HG;

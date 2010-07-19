@@ -108,9 +108,7 @@ public class MavenProject {
     newState.myReadingProblems = readerResult.readingProblems;
     newState.myLocalRepository = settings.getEffectiveLocalRepository();
 
-    Collection<MavenProfile> activeProfiles = readerResult.activatedProfiles;
-
-    newState.myActiveProfilesIds = collectProfilesIds(activeProfiles);
+    newState.myActivatedProfilesIds = readerResult.activatedProfiles;
 
     MavenModel model = readerResult.mavenModel;
 
@@ -136,7 +134,7 @@ public class MavenProject {
 
     doSetResolvedAttributes(newState, readerResult, resetArtifacts);
 
-    newState.myModulesPathsAndNames = collectModulePathsAndNames(model, getDirectory(), activeProfiles);
+    newState.myModulesPathsAndNames = collectModulePathsAndNames(model, getDirectory());
     Collection<String> newProfiles = collectProfilesIds(model.getProfiles());
     if (resetProfiles || newState.myProfilesIds == null) {
       newState.myProfilesIds = newProfiles;
@@ -209,28 +207,18 @@ public class MavenProject {
     newState.myTestResources = model.getBuild().getTestResources();
   }
 
-  private static Map<String, String> collectModulePathsAndNames(MavenModel mavenModel,
-                                                                String baseDir,
-                                                                Collection<MavenProfile> activeProfiles) {
+  private static Map<String, String> collectModulePathsAndNames(MavenModel mavenModel, String baseDir) {
     String basePath = baseDir + "/";
     Map<String, String> result = new LinkedHashMap<String, String>();
-    for (Map.Entry<String, String> each : collectModulesRelativePathsAndNames(mavenModel, activeProfiles).entrySet()) {
+    for (Map.Entry<String, String> each : collectModulesRelativePathsAndNames(mavenModel).entrySet()) {
       result.put(new Path(basePath + each.getKey()).getPath(), each.getValue());
     }
     return result;
   }
 
-  private static Map<String, String> collectModulesRelativePathsAndNames(MavenModel mavenModel, Collection<MavenProfile> activeProfiles) {
+  private static Map<String, String> collectModulesRelativePathsAndNames(MavenModel mavenModel) {
     LinkedHashMap<String, String> result = new LinkedHashMap<String, String>();
-    addModulesToList(mavenModel.getModules(), result);
-    for (MavenProfile profile : activeProfiles) {
-      addModulesToList(profile.getModules(), result);
-    }
-    return result;
-  }
-
-  private static void addModulesToList(List<String> moduleNames, LinkedHashMap<String, String> result) {
-    for (String name : moduleNames) {
+    for (String name : mavenModel.getModules()) {
       name = name.trim();
       
       if (name.length() == 0) continue;
@@ -244,6 +232,7 @@ public class MavenProject {
 
       result.put(name, originalName);
     }
+    return result;
   }
 
   private static Collection<String> collectProfilesIds(Collection<MavenProfile> profiles) {
@@ -287,10 +276,6 @@ public class MavenProject {
 
   public boolean hasReadingProblems() {
     return !myState.myReadingProblems.isEmpty();
-  }
-
-  public Collection<String> getActiveProfilesIds() {
-    return myState.myActiveProfilesIds;
   }
 
   public String getName() {
@@ -378,7 +363,7 @@ public class MavenProject {
     MavenProjectReaderResult result = reader.resolveProject(generalSettings,
                                                             embedder,
                                                             getFile(),
-                                                            getActiveProfilesIds(),
+                                                            getActivatedProfilesIds(),
                                                             locator);
     MavenProjectChanges changes = set(result, generalSettings, false, result.readingProblems.isEmpty(), false);
 
@@ -397,7 +382,7 @@ public class MavenProject {
     MavenProjectReaderResult result = reader.generateSources(embedder,
                                                              importingSettings,
                                                              getFile(),
-                                                             getActiveProfilesIds(),
+                                                             getActivatedProfilesIds(),
                                                              console);
     if (result == null || !result.readingProblems.isEmpty()) return Pair.create(false, MavenProjectChanges.NONE);
     MavenProjectChanges changes = setFolders(result);
@@ -559,6 +544,10 @@ public class MavenProject {
 
   public Collection<String> getProfilesIds() {
     return myState.myProfilesIds;
+  }
+
+  public Collection<String> getActivatedProfilesIds() {
+    return myState.myActivatedProfilesIds;
   }
 
   public List<MavenArtifact> getDependencies() {
@@ -767,16 +756,15 @@ public class MavenProject {
 
     List<MavenArtifact> myDependencies;
     List<MavenArtifactNode> myDependencyTree;
-
     List<MavenRemoteRepository> myRemoteRepositories;
 
     Map<String, String> myModulesPathsAndNames;
 
-    Collection<String> myProfilesIds;
-
     Map<String, String> myModelMap;
 
-    Collection<String> myActiveProfilesIds;
+    Collection<String> myProfilesIds;
+    Collection<String> myActivatedProfilesIds;
+
     Collection<MavenProjectProblem> myReadingProblems;
     Set<MavenId> myUnresolvedArtifactIds;
     File myLocalRepository;

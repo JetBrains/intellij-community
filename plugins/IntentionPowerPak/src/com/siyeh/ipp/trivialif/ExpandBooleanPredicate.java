@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.siyeh.ipp.trivialif;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class ExpandBooleanPredicate implements PsiElementPredicate{
 
@@ -31,7 +32,7 @@ class ExpandBooleanPredicate implements PsiElementPredicate{
         if(containingStatement == null){
             return false;
         }
-        return isBooleanReturn(containingStatement) || 
+        return isBooleanReturn(containingStatement) ||
                 isBooleanAssignment(containingStatement);
     }
 
@@ -46,7 +47,10 @@ class ExpandBooleanPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiType returnType = returnValue.getType();
-        return PsiType.BOOLEAN.equals(returnType);
+        if (!PsiType.BOOLEAN.equals(returnType)) {
+            return false;
+        }
+        return !ErrorUtil.containsError(returnValue);
     }
 
     public static boolean isBooleanAssignment(PsiStatement containingStatement){
@@ -66,6 +70,9 @@ class ExpandBooleanPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiType assignmentType = rhs.getType();
-        return PsiType.BOOLEAN.equals(assignmentType);
+        if (!PsiType.BOOLEAN.equals(assignmentType)) {
+            return false;
+        }
+        return !ErrorUtil.containsError(rhs);
     }
 }

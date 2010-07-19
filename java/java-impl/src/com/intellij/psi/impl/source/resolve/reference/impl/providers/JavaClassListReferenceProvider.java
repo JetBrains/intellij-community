@@ -27,7 +27,10 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -95,11 +98,11 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider {
           }
         }
         String s = str.substring(start, end + 1);
-        results.addAll(Arrays.asList(new JavaClassReferenceSet(s, position, offsetInPosition + start, false, this){
-          public boolean isSoft(){
+        ContainerUtil.addAll(results, new JavaClassReferenceSet(s, position, offsetInPosition + start, false, this) {
+          public boolean isSoft() {
             return true;
           }
-        }.getAllReferences()));
+        }.getAllReferences());
         ProgressManager.checkCanceled();
       }
     }

@@ -40,7 +40,7 @@ public class GitHandlerUtil {
   /**
    * The logger instance
    */
-  private final static Logger LOG = Logger.getInstance(GitHandlerUtil.class.getName());
+  private static final Logger LOG = Logger.getInstance(GitHandlerUtil.class.getName());
 
   /**
    * a private constructor for utility class
@@ -194,6 +194,7 @@ public class GitHandlerUtil {
         break;
       case WRITE_SUSPENDABLE:
         suspendable = true;
+        //noinspection fallthrough
       case WRITE:
         handler.myVcs.getCommandLock().writeLock().lock();
         break;
@@ -204,7 +205,6 @@ public class GitHandlerUtil {
         final Object SUSPEND = new Object();
         final Object RESUME = new Object();
         final LinkedBlockingQueue<Object> queue = new LinkedBlockingQueue<Object>();
-        boolean suspended = false;
         Runnable suspend = new Runnable() {
           public void run() {
             queue.add(SUSPEND);
@@ -227,6 +227,7 @@ public class GitHandlerUtil {
               queue.add(EXIT);
             }
           });
+          boolean suspended = false;
           while (true) {
             Object action;
             while (true) {
@@ -328,7 +329,7 @@ public class GitHandlerUtil {
   /**
    * A base class for handler listener that implements error handling logic
    */
-  private static abstract class GitHandlerListenerBase implements GitHandlerListener {
+  private abstract static class GitHandlerListenerBase implements GitHandlerListener {
     /**
      * a handler
      */
@@ -387,9 +388,9 @@ public class GitHandlerUtil {
      * @param exitCode the exit code of the process
      */
     protected void ensureError(final int exitCode) {
-      if (myHandler.errors().size() == 0) {
+      if (myHandler.errors().isEmpty()) {
         String text = getErrorText();
-        if ((text == null || text.length() == 0) && myHandler.errors().size() == 0) {
+        if ((text == null || text.length() == 0) && myHandler.errors().isEmpty()) {
           //noinspection ThrowableInstanceNeverThrown
           myHandler.addError(new VcsException(GitBundle.message("git.error.exit", exitCode)));
         }

@@ -23,10 +23,12 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.Icons;
 import com.intellij.util.StringBuilderSpinAllocator;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -74,12 +76,12 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     myDependenciesList = createList();
 
     final Splitter splitter = new Splitter(false);
-    
-    final JScrollPane entriesPane = new JScrollPane(myEntriesChooser);
+
+    final JScrollPane entriesPane = ScrollPaneFactory.createScrollPane(myEntriesChooser);
     entriesPane.setBorder(BorderFactory.createTitledBorder(getEntriesChooserTitle()));
     splitter.setFirstComponent(entriesPane);
-    
-    final JScrollPane depsPane = new JScrollPane(myDependenciesList);
+
+    final JScrollPane depsPane = ScrollPaneFactory.createScrollPane(myDependenciesList);
     depsPane.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder(getDependenciesTitle()), depsPane.getBorder()));
     splitter.setSecondComponent(depsPane);
     
@@ -133,7 +135,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
   }
 
   private JList createList() {
-    final JList list = new JList(new DefaultListModel());
+    final JList list = new JBList(new DefaultListModel());
     list.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     list.setCellRenderer(new MyListCellRenderer());
     return list;
@@ -497,7 +499,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
       final JPanel labelChooser = new JPanel(new BorderLayout());
       labelChooser.add(new JLabel(getSplitDialogChooseFilesPrompt()), BorderLayout.NORTH);
-      labelChooser.add(new JScrollPane(myChooser), BorderLayout.CENTER);
+      labelChooser.add(ScrollPaneFactory.createScrollPane(myChooser), BorderLayout.CENTER);
       labelChooser.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
       panel.add(labelNameField, BorderLayout.NORTH);

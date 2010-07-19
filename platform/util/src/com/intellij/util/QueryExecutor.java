@@ -16,6 +16,8 @@
 package com.intellij.util;
 
 /**
+ * Consider extending {@link com.intellij.openapi.application.QueryExecutorBase} instead unless you know what you're doing.
+ *
  * @author max
  */
 public interface QueryExecutor<Result, Param> {

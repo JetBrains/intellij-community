@@ -317,6 +317,14 @@ public class JavacCompiler extends ExternalCompiler {
         }
       }
     }
+    else {
+      if (versionIndex > 5) {
+        // Unless explicitly specified by user, disable annotation processing by default for 'java compilation' mode
+        // This is needed to suppress unwanted side-effects from auto-discovered processors from compilation classpath
+        additionalOptions.add("-proc:none");
+      }
+    }
+
     while (tokenizer.hasMoreTokens()) {
       @NonNls String token = tokenizer.nextToken();
       if (versionIndex == 0) {
@@ -329,10 +337,10 @@ public class JavacCompiler extends ExternalCompiler {
           continue; // not supported in these versions
         }
       }
+      if (token.startsWith("-proc:")) {
+        continue;
+      }
       if (isAnnotationProcessing) {
-        if (token.startsWith("-proc:")) {
-          continue;
-        }
         if (token.startsWith("-implicit:")) {
           continue;
         }
@@ -344,6 +352,7 @@ public class JavacCompiler extends ExternalCompiler {
         additionalOptions.add(token);
       }
     }
+
     return additionalOptions;
   }
 

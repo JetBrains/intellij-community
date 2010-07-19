@@ -16,6 +16,7 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -516,9 +517,9 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
     VirtualFile[] actualDirs = myIndex.getDirectoriesByPackageName(packageName, true).toArray(VirtualFile.EMPTY_ARRAY);
     assertNotNull(actualDirs);
     HashSet<VirtualFile> set1 = new HashSet<VirtualFile>();
-    set1.addAll(Arrays.asList(expectedDirs));
+    ContainerUtil.addAll(set1, expectedDirs);
     HashSet<VirtualFile> set2 = new HashSet<VirtualFile>();
-    set2.addAll(Arrays.asList(actualDirs));
+    ContainerUtil.addAll(set2, actualDirs);
     assertEquals(set1, set2);
   }
 }

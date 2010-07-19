@@ -5,6 +5,7 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/resources" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -16,7 +17,6 @@
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="properties" />
     <orderEntry type="module" module-name="execution-impl" />
-    <orderEntry type="library" name="Ant" level="project" />
     <orderEntry type="module" module-name="compiler-openapi" />
     <orderEntry type="module" module-name="execution-openapi" />
     <orderEntry type="module" module-name="idea-ui" />
@@ -26,14 +26,13 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/gradle-open-api-0.8.jar!/" />
         </CLASSES>
-        <JAVADOC />
-        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="copyright" />
     <orderEntry type="module" module-name="IntelliLangJava" />
     <orderEntry type="module" module-name="ant" />
+    <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
   </component>
 </module>
 

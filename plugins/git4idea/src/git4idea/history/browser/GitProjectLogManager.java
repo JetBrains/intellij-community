@@ -16,11 +16,9 @@
 package git4idea.history.browser;
 
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -36,6 +34,7 @@ import com.intellij.util.CalculateContinuation;
 import com.intellij.util.CatchingConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import git4idea.GitBranch;
 import git4idea.GitBranchesSearcher;
@@ -50,7 +49,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class GitProjectLogManager implements ProjectComponent {
+public class GitProjectLogManager {
   private final static Logger LOG = Logger.getInstance("#git4idea.history.browser.GitProjectLogManager");
   private final Project myProject;
   private final ProjectLevelVcsManager myVcsManager;
@@ -61,6 +60,8 @@ public class GitProjectLogManager implements ProjectComponent {
 
   public static final Topic<CurrentBranchListener> CHECK_CURRENT_BRANCH =
             new Topic<CurrentBranchListener>("CHECK_CURRENT_BRANCH", CurrentBranchListener.class);
+  private CurrentBranchListener myCurrentBranchListener;
+  private MessageBusConnection myConnection;
 
   public GitProjectLogManager(final Project project, final ProjectLevelVcsManager vcsManager, final GitUsersComponent gitUsersComponent) {
     myProject = project;
@@ -76,7 +77,7 @@ public class GitProjectLogManager implements ProjectComponent {
         }.callMe();
       }
     };
-    myProject.getMessageBus().connect(myProject).subscribe(CHECK_CURRENT_BRANCH, new CurrentBranchListener() {
+    myCurrentBranchListener = new CurrentBranchListener() {
       public void consume(VirtualFile file) {
         final VirtualFile baseDir = myProject.getBaseDir();
         if (baseDir == null) return;
@@ -96,25 +97,40 @@ public class GitProjectLogManager implements ProjectComponent {
           }
         }
       }
-    });
+    };
   }
 
   public static GitProjectLogManager getInstance(final Project project) {
-    return project.getComponent(GitProjectLogManager.class);
+    return ServiceManager.getService(project, GitProjectLogManager.class);
   }
 
-  public void projectClosed() {
+  /*public void projectClosed() {
     myVcsManager.removeVcsListener(myListener);
+  }*/
+
+  public void deactivate() {
+    myVcsManager.removeVcsListener(myListener);
+    if (myConnection != null) {
+      myConnection.disconnect();
+      myConnection = null;
+    }
   }
 
-  public void projectOpened() {
+  public void activate() {
+    myVcsManager.addVcsListener(myListener);
+    recalculateWindows();
+    myConnection = myProject.getMessageBus().connect(myProject);
+    myConnection.subscribe(CHECK_CURRENT_BRANCH, myCurrentBranchListener);
+  }
+
+  /*public void projectOpened() {
     StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
       public void run() {
         myVcsManager.addVcsListener(myListener);
         recalculateWindows();
       }
     });
-  }
+  }*/
 
   private void recalculateWindows() {
     final GitVcs vcs = GitVcs.getInstance(myProject);
@@ -147,13 +163,10 @@ public class GitProjectLogManager implements ProjectComponent {
         }, new CatchingConsumer<String, Exception>() {
           public void consume(Exception e) {
             //should not
+            LOG.info(e);
           }
           public void consume(final String caption) {
-            new AbstractCalledLater(myProject, ModalityState.NON_MODAL) {
-              public void run() {
-                content.setDisplayName(caption);
-              }
-            }.callMe();
+            content.setDisplayName(caption);
           }
         });
       }
@@ -204,11 +217,11 @@ public class GitProjectLogManager implements ProjectComponent {
     return "git4idea.history.browser.GitProjectLogManager";
   }
 
-  public void initComponent() {
+  /*public void initComponent() {
   }
 
   public void disposeComponent() {
-  }
+  }*/
 
   public interface CurrentBranchListener extends Consumer<VirtualFile> {
   }

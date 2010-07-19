@@ -32,7 +32,7 @@ public class AdditionalIndexedRootsScope extends GlobalSearchScope {
   }
 
   public AdditionalIndexedRootsScope(GlobalSearchScope baseScope, Class<? extends IndexedRootsProvider> providerClass) {
-    this(baseScope, new AdditionalIndexableFileSet(IndexedRootsProvider.EP_NAME.findExtension(providerClass)));
+    this(baseScope, new AdditionalIndexableFileSet(IndexableSetContributor.EP_NAME.findExtension(providerClass)));
   }
 
   public AdditionalIndexedRootsScope(GlobalSearchScope baseScope, IndexableFileSet myFileSet) {
@@ -43,6 +43,11 @@ public class AdditionalIndexedRootsScope extends GlobalSearchScope {
 
   public boolean contains(VirtualFile file) {
     return myBaseScope.contains(file) || myFileSet.isInSet(file);
+  }
+
+  @Override
+  public boolean isSearchOutsideRootModel() {
+    return true;
   }
 
   public int compare(VirtualFile file1, VirtualFile file2) {

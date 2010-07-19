@@ -21,6 +21,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
+import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
@@ -39,7 +40,16 @@ public class AntDomFileReferenceSet extends FileReferenceSet {
   private final GenericAttributeValue myValue;
 
   public AntDomFileReferenceSet(final GenericAttributeValue attribValue) {
-    super(cutTrailingSlash(FileUtil.toSystemIndependentName(attribValue.getRawText())), attribValue.getXmlAttributeValue(), Math.abs(attribValue.getXmlAttributeValue().getValueTextRange().getStartOffset() - attribValue.getXmlAttributeValue().getTextRange().getStartOffset()), null, SystemInfo.isFileSystemCaseSensitive);
+    this(attribValue, attribValue.getRawText(), 0);
+  }
+
+  public AntDomFileReferenceSet(final GenericAttributeValue attribValue, final String pathSubstring, int beginOffset) {
+    super(cutTrailingSlash(FileUtil.toSystemIndependentName(pathSubstring)),
+          attribValue.getXmlAttributeValue(),
+          ElementManipulators.getOffsetInElement(attribValue.getXmlAttributeValue()) + beginOffset,
+          null,
+          SystemInfo.isFileSystemCaseSensitive
+    );
     myValue = attribValue;
   }
 

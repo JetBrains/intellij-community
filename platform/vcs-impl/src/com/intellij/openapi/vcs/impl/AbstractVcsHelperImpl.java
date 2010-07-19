@@ -143,9 +143,10 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       myBuffer = new BufferedListConsumer<VcsFileRevision>(5, new Consumer<List<VcsFileRevision>>() {
         public void consume(List<VcsFileRevision> vcsFileRevisions) {
           mySession.getRevisionList().addAll(vcsFileRevisions);
+          final VcsHistorySession copy = mySession.copy();
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
-              ensureHistoryPanelCreated().getHistoryPanelRefresh().consume(mySession);
+              ensureHistoryPanelCreated().getHistoryPanelRefresh().consume(copy);
             }
           });
         }
@@ -245,6 +246,9 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
 
     SelectFilesDialog dlg = new SelectFilesDialog(myProject, files, prompt, confirmationOption);
     dlg.setTitle(title);
+    if (! confirmationOption.isPersistent()) {
+      dlg.setDoNotAskOption(null);
+    }
     dlg.show();
     if (dlg.isOK()) {
       final Collection<VirtualFile> selection = dlg.getSelectedFiles();
@@ -278,6 +282,9 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
 
     SelectFilePathsDialog dlg = new SelectFilePathsDialog(myProject, files, prompt, confirmationOption);
     dlg.setTitle(title);
+    if (! confirmationOption.isPersistent()) {
+      dlg.setDoNotAskOption(null);
+    }
     dlg.show();
     return dlg.isOK() ? dlg.getSelectedFiles() : null;
   }

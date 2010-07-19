@@ -50,6 +50,7 @@
     <colorSettingsPage implementation="org.intellij.lang.xpath.XPathColorSettingsPage" />
 
     <configurationType implementation="org.intellij.lang.xpath.xslt.run.XsltRunConfigType" />
+    <programRunner implementation="org.intellij.lang.xpath.xslt.run.XsltRunner"/>
     <configurationProducer implementation="org.intellij.lang.xpath.xslt.run.XsltConfigurationProducer" />
 
     <applicationService

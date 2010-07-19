@@ -15,15 +15,14 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.openapi.vcs.CalledInBackground;
-import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.continuation.Continuation;
+import com.intellij.util.continuation.ContinuationContext;
+import com.intellij.util.continuation.TaskDescriptor;
+import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class RunOrContinuation<T> {
@@ -50,6 +49,43 @@ public abstract class RunOrContinuation<T> {
   }
 
   @CalledInAwt
+  public TaskDescriptor getTask() {
+    final Ref<T> refT = new Ref<T>();
+
+    final TaskDescriptor pooled = new TaskDescriptor(myTaskTitle, Where.POOLED) {
+      @Override
+      public void run(ContinuationContext context) {
+        refT.set(calculateLong());
+        if (! myWasCanceled) {
+          context.next(new TaskDescriptor("final part", Where.AWT) {
+            @Override
+            public void run(ContinuationContext context) {
+              processResult(refT.get());
+            }
+          });
+        }
+      }
+    };
+
+    return new TaskDescriptor("short part", Where.AWT) {
+      @Override
+      public void run(ContinuationContext context) {
+        refT.set(calculate());
+        if ((! myWasCanceled) && (! refT.isNull())) {
+          processResult(refT.get());
+          return;
+        }
+        context.next(pooled);
+      }
+    };
+  }
+
+  @CalledInAwt
+  public void execute() {
+    new Continuation(myProject, true).run(getTask());
+  }
+
+  /*@CalledInAwt
   public void execute() {
     final Ref<T> refT = new Ref<T>();
     refT.set(calculate());
@@ -63,8 +99,10 @@ public abstract class RunOrContinuation<T> {
       }
       @Override
       public void onSuccess() {
-        if ((! myWasCanceled) && (! refT.isNull())) processResult(refT.get());
+        if (! myWasCanceled) {
+          processResult(refT.get());
+        }
       }
     });
-  }
+  } */
 }

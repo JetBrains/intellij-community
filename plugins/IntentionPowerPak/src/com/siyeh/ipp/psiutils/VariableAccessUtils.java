@@ -158,7 +158,7 @@ public class VariableAccessUtils {
     public static Set<PsiVariable> collectUsedVariables(
             PsiElement context) {
         if (context == null) {
-            return Collections.EMPTY_SET;
+            return Collections.emptySet();
         }
         final VariableCollectingVisitor visitor =
                 new VariableCollectingVisitor();

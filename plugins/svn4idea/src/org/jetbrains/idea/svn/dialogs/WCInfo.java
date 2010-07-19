@@ -29,9 +29,10 @@ public class WCInfo implements WCPaths {
   private final boolean myIsWcRoot;
   private final NestedCopyType myType;
   private final SVNDepth myStickyDepth;
+  private final boolean myRepoSupportsMergeInfo;
 
   public WCInfo(final String path, final SVNURL url, final WorkingCopyFormat format, final String repositoryRoot, final boolean isWcRoot,
-                final NestedCopyType type, SVNDepth stickyDepth) {
+                final NestedCopyType type, SVNDepth stickyDepth, boolean repoSupportsMergeInfo) {
     myPath = path;
     myUrl = url;
     myFormat = format;
@@ -39,6 +40,7 @@ public class WCInfo implements WCPaths {
     myIsWcRoot = isWcRoot;
     myType = type;
     myStickyDepth = stickyDepth;
+    myRepoSupportsMergeInfo = repoSupportsMergeInfo;
   }
 
   public SVNDepth getStickyDepth() {
@@ -96,5 +98,9 @@ public class WCInfo implements WCPaths {
 
   public NestedCopyType getType() {
     return myType;
+  }
+
+  public boolean isRepoSupportsMergeInfo() {
+    return myRepoSupportsMergeInfo;
   }
 }

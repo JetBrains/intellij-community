@@ -129,6 +129,7 @@
   <extensionPoint name="definitionsSearch" interface="com.intellij.util.QueryExecutor"/>
 
   <extensionPoint name="useScopeEnlarger" interface="com.intellij.psi.search.UseScopeEnlarger"/>
+  <extensionPoint name="resolveScopeEnlarger" interface="com.intellij.psi.ResolveScopeEnlarger"/>
 
   <extensionPoint name="gotoClassContributor"
                   interface="com.intellij.navigation.ChooseByNameContributor"/>
@@ -141,6 +142,7 @@
   <extensionPoint name="roots.watchedRootsProvider" interface="com.intellij.openapi.roots.WatchedRootsProvider" area="IDEA_PROJECT"/>
   <extensionPoint name="moduleExtension" interface="com.intellij.openapi.roots.ModuleExtension" area="IDEA_MODULE"/>
   <extensionPoint name="orderRootType" interface="com.intellij.openapi.roots.OrderRootType"/>
+  <extensionPoint name="orderEnumerationHandler" interface="com.intellij.openapi.roots.OrderEnumerationHandler"/>
   <extensionPoint name="directoryIndexExcludePolicy" interface="com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy"
                   area="IDEA_PROJECT"/>
 
@@ -256,6 +258,8 @@
   <extensionPoint name="psi.fileReferenceHelper" interface="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceHelper"/>
 
   <extensionPoint name="psi.referenceContributor" interface="com.intellij.psi.PsiReferenceContributor"/>
+  <extensionPoint name="psi.referenceProvider" beanClass="com.intellij.psi.PsiReferenceProviderBean"/>
+  <extensionPoint name="patterns.patternClass" beanClass="com.intellij.patterns.compiler.PatternClassBean"/>  
 
   <extensionPoint name="pom.declarationSearcher" interface="com.intellij.pom.PomDeclarationSearcher"/>
 
@@ -438,4 +442,7 @@
   <extensionPoint name="typeIcon" beanClass="com.intellij.ide.TypeIconEP"/>
 
   <extensionPoint name="analyzeStacktraceFilter" interface="com.intellij.execution.filters.Filter" area="IDEA_PROJECT"/>
+
+  <extensionPoint name="stacktrace.fold" beanClass="com.intellij.execution.console.CustomizableConsoleFoldingBean"/>
+
 </extensionPoints>

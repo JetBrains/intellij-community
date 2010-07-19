@@ -16,6 +16,7 @@
 package com.intellij.ide.dnd;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -31,7 +32,7 @@ public class DnDDemo implements DnDEvent.DropTargetHighlightingType {
     frame.getContentPane().setLayout(new BorderLayout());
 
     JPanel panel = new JPanel(new BorderLayout());
-    final JTree source = new JTree();
+    final JTree source = new Tree();
     panel.add(source, BorderLayout.WEST);
     final DnDManager dndManager = new DnDManagerImpl(null);
     dndManager.registerSource(new DnDSource() {

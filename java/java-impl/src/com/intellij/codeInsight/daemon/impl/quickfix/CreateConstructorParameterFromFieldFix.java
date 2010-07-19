@@ -28,8 +28,12 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
+import java.util.Comparator;
 
 public class CreateConstructorParameterFromFieldFix implements IntentionAction {
   private final SmartPsiElementPointer<PsiField> myField;
@@ -76,8 +80,22 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
       aClass = getField().getContainingClass();
       constructors = aClass.getConstructors();
     }
-    for (int i = 0; i < constructors.length; i++){
-      if (!addParameterToConstructor(project, file, editor, getField().getContainingClass().getConstructors()[i])) break;
+    Arrays.sort(constructors, new Comparator<PsiMethod>() {
+      @Override
+      public int compare(PsiMethod c1, PsiMethod c2) {
+        final PsiMethod cc1 = RefactoringUtil.getChainedConstructor(c1);
+        final PsiMethod cc2 = RefactoringUtil.getChainedConstructor(c2);
+        if (cc1 == c2) return 1;
+        if (cc2 == c1) return -1;
+        if (cc1 == null) {
+          return cc2 == null ? 0 : compare(c1, cc2);
+        } else {
+          return cc2 == null ? compare(cc1, c2) : compare(cc1, cc2);
+        }
+      }
+    });
+    for (PsiMethod constructor : constructors) {
+      if (!addParameterToConstructor(project, file, editor, constructor)) break;
     }
   }
 

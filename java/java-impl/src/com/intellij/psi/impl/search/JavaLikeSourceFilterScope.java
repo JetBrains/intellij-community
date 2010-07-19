@@ -34,7 +34,7 @@ public class JavaLikeSourceFilterScope extends JavaSourceFilterScope {
   private final ProjectFileIndex myIndex;
 
   public JavaLikeSourceFilterScope(final GlobalSearchScope delegate, final Project project) {
-    super(delegate, project);
+    super(delegate);
     myDelegate = delegate;
     myIndex = ProjectRootManager.getInstance(project).getFileIndex();
   }

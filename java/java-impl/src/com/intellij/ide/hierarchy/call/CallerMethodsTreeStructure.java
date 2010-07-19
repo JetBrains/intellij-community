@@ -25,9 +25,9 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -57,9 +57,9 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
     final PsiClassType originalType = JavaPsiFacade.getElementFactory(myProject).createType(originalClass);
     final Set<PsiMethod> methodsToFind = new HashSet<PsiMethod>();
     methodsToFind.add(method);
-    methodsToFind.addAll(Arrays.asList(method.findDeepestSuperMethods()));
+    ContainerUtil.addAll(methodsToFind, method.findDeepestSuperMethods());
 
-    final Map<PsiMember,CallHierarchyNodeDescriptor> methodToDescriptorMap = new HashMap<PsiMember, CallHierarchyNodeDescriptor>();
+    final Map<PsiMember, CallHierarchyNodeDescriptor> methodToDescriptorMap = new HashMap<PsiMember, CallHierarchyNodeDescriptor>();
     for (final PsiMethod methodToFind : methodsToFind) {
       MethodReferencesSearch.search(methodToFind, searchScope, true).forEach(new Processor<PsiReference>() {
         public boolean process(final PsiReference reference) {
@@ -73,7 +73,9 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
             }
             if (qualifier != null && !methodToFind.hasModifierProperty(PsiModifier.STATIC)) {
               final PsiType qualifierType = qualifier.getType();
-              if (qualifierType instanceof PsiClassType && !TypeConversionUtil.isAssignable(qualifierType, originalType) && methodToFind != method) {
+              if (qualifierType instanceof PsiClassType &&
+                  !TypeConversionUtil.isAssignable(qualifierType, originalType) &&
+                  methodToFind != method) {
                 final PsiClass psiClass = ((PsiClassType)qualifierType).resolve();
                 if (psiClass != null) {
                   final PsiMethod callee = psiClass.findMethodBySignature(methodToFind, true);

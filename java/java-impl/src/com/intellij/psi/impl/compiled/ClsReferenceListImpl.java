@@ -36,10 +36,12 @@ public class ClsReferenceListImpl extends ClsRepositoryPsiElement<PsiClassRefere
     synchronized (LAZY_BUILT_LOCK) {
       if (myRefs == null) {
         final String[] strings = getStub().getReferencedNames();
-        ClsJavaCodeReferenceElementImpl[] res = new ClsJavaCodeReferenceElementImpl[strings.length];
+        ClsJavaCodeReferenceElementImpl[] res = strings.length == 0 ?
+                                                ClsJavaCodeReferenceElementImpl.EMPTY_ARRAY :
+                                                new ClsJavaCodeReferenceElementImpl[strings.length];
         for (int i = 0; i < res.length; i++) {
-            res[i] = new ClsJavaCodeReferenceElementImpl(this, strings[i]);
-          }
+          res[i] = new ClsJavaCodeReferenceElementImpl(this, strings[i]);
+        }
         myRefs = res;
       }
       return myRefs;

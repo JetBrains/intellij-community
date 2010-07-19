@@ -75,6 +75,7 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.AutoScrollFromSourceHandler;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.GuiUtils;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.switcher.QuickAccessProvider;
@@ -932,7 +933,7 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
     views.remove(getCurrentProjectViewPane());
     Collections.sort(views, PANE_WEIGHT_COMPARATOR);
 
-    final JList list = new JList(ArrayUtil.toObjectArray(views));
+    final JList list = new JBList(ArrayUtil.toObjectArray(views));
     list.setCellRenderer(new DefaultListCellRenderer() {
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);

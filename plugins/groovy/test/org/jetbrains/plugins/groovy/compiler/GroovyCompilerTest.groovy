@@ -27,6 +27,10 @@ import junit.framework.AssertionFailedError
  * @author peter
  */
 public class GroovyCompilerTest extends GroovyCompilerTestCase {
+  @Override protected void setUp() {
+    super.setUp();
+    addGroovyLibrary(myModule);
+  }
 
   public void testPlainGroovy() throws Throwable {
     myFixture.addFileToProject("A.groovy", "println '239'");
@@ -262,7 +266,7 @@ public class GroovyCompilerTest extends GroovyCompilerTestCase {
 
     Module dep = addDependentModule();
 
-    addGroovyLibrary(dep, false);
+    addGroovyLibrary(dep);
 
     assertEmpty(make());
     assertOutput("Bar", "239", dep);

@@ -8,14 +8,14 @@
     <properties/>
     <border type="none"/>
     <children>
-      <scrollpane id="685df">
+      <scrollpane class="com.intellij.ui.components.JBScrollPane" id="685df">
         <constraints>
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
         <border type="none"/>
         <children>
-          <component id="3f9c4" class="javax.swing.JTree" binding="myComponentTree">
+          <component id="3f9c4" class="com.intellij.ui.treeStructure.Tree" binding="myComponentTree">
             <constraints/>
             <properties>
               <rootVisible value="false"/>

@@ -48,13 +48,13 @@ public class OptimizeImportsRefactoringHelper implements RefactoringHelper<Set<P
   }
 
   public void performOperation(final Project project, final Set<PsiJavaFile> javaFiles) {
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
     final Set<SmartPsiElementPointer<PsiImportStatementBase>> redundants = new HashSet<SmartPsiElementPointer<PsiImportStatementBase>>();
     final Runnable findRedundantImports = new Runnable() {
       public void run() {
         final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
         final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
         final SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
-        PsiDocumentManager.getInstance(project).commitAllDocuments();
         for (PsiJavaFile file : javaFiles) {
           if (file.isValid()) {
             final VirtualFile virtualFile = file.getVirtualFile();

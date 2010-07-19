@@ -33,7 +33,6 @@ public class ClassesOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
   }
 
   public PathEditor createPathEditor(Sdk sdk) {
-    return new MyPathsEditor(ProjectBundle.message("sdk.configure.classpath.tab"), OrderRootType.CLASSES, new FileChooserDescriptor(true, true, true, false, true, true), false,
-                             sdk);
+    return new PathEditor(ProjectBundle.message("sdk.configure.classpath.tab"), OrderRootType.CLASSES, new FileChooserDescriptor(true, true, true, false, true, true));
   }
 }

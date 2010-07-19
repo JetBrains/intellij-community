@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EnvironmentUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -131,7 +132,7 @@ public class ParametersList implements Cloneable{
   }
 
   public void addAll(final String[] parameters) {
-    myParameters.addAll(Arrays.asList(parameters));
+    ContainerUtil.addAll(myParameters, parameters);
   }
 
   public void addAll(final List<String> parameters) {

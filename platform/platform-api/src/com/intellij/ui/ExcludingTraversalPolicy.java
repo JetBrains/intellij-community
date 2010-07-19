@@ -85,6 +85,6 @@ public class ExcludingTraversalPolicy extends FocusTraversalPolicy {
 
   @Override
   public Component getDefaultComponent(Container aContainer) {
-    return myWrappee.getDefaultComponent(aContainer);
+    return getFirstComponent(aContainer);
   }
 }

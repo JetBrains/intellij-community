@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.projectImport.ProjectOpenProcessorBase;
+import com.intellij.util.Consumer;
 
 import java.io.File;
 import java.util.Collections;
@@ -65,10 +66,14 @@ public class OpenProjectAction extends AnAction implements DumbAware {
     }
 
     descriptor.putUserData(FileChooserDialogImpl.PREFER_LAST_OVER_TO_SELECT, Boolean.TRUE);
-    final VirtualFile[] files = FileChooser.chooseFiles(project, descriptor, userHomeDir);
 
-    if (files.length == 0 || files[0] == null) return;
+    FileChooser.chooseFilesWithSlideEffect(descriptor, project, userHomeDir,new Consumer<VirtualFile[]>() {
+      @Override
+      public void consume(final VirtualFile[] files) {
+        if (files.length == 0 || files[0] == null) return;
 
-    ProjectUtil.openOrImport(files[0].getPath(), project, false);
+        ProjectUtil.openOrImport(files[0].getPath(), project, false);
+      }
+    });
   }
 }

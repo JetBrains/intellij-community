@@ -41,7 +41,7 @@ import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
 import com.intellij.openapi.ui.Messages;
@@ -91,7 +91,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   private StructureConfigurableContext myContext;
   private final List<ModuleEditor.ChangeListener> myAllModulesChangeListeners = new ArrayList<ModuleEditor.ChangeListener>();
 
-  public ModulesConfigurator(Project project, ProjectJdksModel projectJdksModel) {
+  public ModulesConfigurator(Project project, ProjectSdksModel projectJdksModel) {
     myProject = project;
     myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
     myProjectConfigurable = new ProjectConfigurable(project, this, projectJdksModel);

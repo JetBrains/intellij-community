@@ -47,6 +47,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.ui.PopupHandler;
+import com.intellij.ui.ScrollPaneFactory;
 import com.sun.jdi.ObjectCollectedException;
 
 import javax.swing.*;
@@ -96,7 +97,7 @@ public class FramesPanel extends UpdatableDebuggerView {
 
     setBorder(null);
     add(myThreadsCombo, BorderLayout.NORTH);
-    add(new JScrollPane(myFramesList), BorderLayout.CENTER);
+    add(ScrollPaneFactory.createScrollPane(myFramesList), BorderLayout.CENTER);
   }
 
   public DebuggerStateManager getContextManager() {

@@ -42,6 +42,10 @@ public class GrMapType extends GrLiteralClassType {
   private final String myJavaClassName;
 
 
+  public GrMapType(GlobalSearchScope scope) {
+    this(JavaPsiFacade.getInstance(scope.getProject()), scope, Collections.<String, PsiType>emptyMap(), Collections.<Pair<PsiType, PsiType>>emptyList(), LanguageLevel.JDK_1_5);
+  }
+
   public GrMapType(JavaPsiFacade facade,
                    GlobalSearchScope scope,
                    Map<String, PsiType> stringEntries,
@@ -111,7 +115,9 @@ public class GrMapType extends GrLiteralClassType {
     for (Pair<PsiType, PsiType> entry : myOtherEntries) {
       components.add(getInternalCanonicalText(entry.first) + ":" + getInternalCanonicalText(entry.second));
     }
-    return "[" + StringUtil.join(components, ", ") + "]";
+    boolean tooMany = components.size() > 2;
+    final List<String> theFirst = components.subList(0, Math.min(2, components.size()));
+    return "[" + StringUtil.join(theFirst, ", ") + (tooMany ? ",..." : "") + "]";
   }
 
   public boolean isValid() {
@@ -144,7 +150,7 @@ public class GrMapType extends GrLiteralClassType {
   }
 
   public boolean isAssignableFrom(@NotNull PsiType type) {
-    return false;
+    return type instanceof GrMapType || myFacade.getElementFactory().createTypeFromText(getJavaClassName(), null).isAssignableFrom(type);
   }
 
 }

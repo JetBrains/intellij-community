@@ -35,9 +35,9 @@ public class DiffDividerPaint {
     int width = component.getWidth();
     int height = component.getHeight();
     int editorHeight = mySides.getEditor(myLeftSide).getComponent().getHeight();
-    DividerPoligon.paintPoligons(DividerPoligon.createVisiblePoligons(mySides, myLeftSide),
-                                 (Graphics2D)g.create(0, height - editorHeight, width, editorHeight),
-                                 width);
+    Graphics2D gg = (Graphics2D)g.create(0, height - editorHeight, width, editorHeight);
+    DividerPoligon.paintPoligons(DividerPoligon.createVisiblePoligons(mySides, myLeftSide), gg, width);
+    gg.dispose();
   }
 
   public EditingSides getSides() {

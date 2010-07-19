@@ -22,13 +22,12 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vcs.impl.VcsEP;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class AllVcses implements AllVcsesI, Disposable {
   private final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.projectlevelman.AllVcses");
@@ -36,7 +35,7 @@ public class AllVcses implements AllVcsesI, Disposable {
 
   private final Object myLock;
   private final Project myProject;
-  private final Map<String, VcsEP> myExtensions;
+  private final Map<String, VcsEP> myExtensions;    // +-
 
   private AllVcses(final Project project) {
     myProject = project;
@@ -44,14 +43,11 @@ public class AllVcses implements AllVcsesI, Disposable {
     myLock = new Object();
 
     final VcsEP[] vcsEPs = Extensions.getExtensions(VcsEP.EP_NAME, myProject);
-    myExtensions = new HashMap<String, VcsEP>();
+    final HashMap<String, VcsEP> map = new HashMap<String, VcsEP>();
     for (VcsEP vcsEP : vcsEPs) {
-      myExtensions.put(vcsEP.name, vcsEP);
+      map.put(vcsEP.name, vcsEP);
     }
-
-    for (VcsEP ep : myExtensions.values()) {
-      addVcs(ep.getVcs(myProject));
-    }
+    myExtensions = Collections.unmodifiableMap(map);
   }
 
   public static AllVcsesI getInstance(final Project project) {
@@ -62,21 +58,6 @@ public class AllVcses implements AllVcsesI, Disposable {
     registerVcs(vcs);
     myVcses.put(vcs.getName(), vcs);
   }
-
-  /*@Nullable
-  private AbstractVcs lazyGet(final String name) {
-    final AbstractVcs vcs = myVcses.get(name);
-    if (vcs != null) {
-      return vcs;
-    }
-    final VcsEP ep = myExtensions.get(name);
-    if (ep != null) {
-      final AbstractVcs vcs1 = ep.getVcs(myProject);
-      addVcs(vcs1);
-      return vcs1;
-    }
-    return null;
-  }*/
 
   private void registerVcs(final AbstractVcs vcs) {
     try {
@@ -106,14 +87,26 @@ public class AllVcses implements AllVcsesI, Disposable {
 
   public AbstractVcs getByName(final String name) {
     synchronized (myLock) {
-      //return lazyGet(name);
-      return myVcses.get(name);
+      final AbstractVcs vcs = myVcses.get(name);
+      if (vcs != null) {
+        return vcs;
+      }
+      final VcsEP ep = myExtensions.get(name);
+      if (ep != null) {
+        final AbstractVcs vcs1 = ep.getVcs(myProject);
+        addVcs(vcs1);
+        return vcs1;
+      }
+      return null;
     }
   }
 
-  /*public AbstractVcs[] getList() {
-    return myList;
-  }*/
+  @Nullable
+  @Override
+  public VcsDescriptor getDescriptor(String name) {
+    final VcsEP ep = myExtensions.get(name);
+    return ep == null ? null : ep.createDescriptor();
+  }
 
   public void dispose() {
     synchronized (myLock) {
@@ -133,20 +126,15 @@ public class AllVcses implements AllVcsesI, Disposable {
   }
 
   public boolean isEmpty() {
-    synchronized (myLock) {
-      return myVcses.isEmpty();
-    }
+    return myExtensions.isEmpty();
   }
 
-  public AbstractVcs[] getAll() {
-    synchronized (myLock) {
-      final AbstractVcs[] vcses = myVcses.values().toArray(new AbstractVcs[myVcses.size()]);
-      Arrays.sort(vcses, new Comparator<AbstractVcs>() {
-          public int compare(final AbstractVcs o1, final AbstractVcs o2) {
-            return o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
-          }
-        });
-      return vcses;
+  public VcsDescriptor[] getAll() {
+    final List<VcsDescriptor> result = new ArrayList<VcsDescriptor>(myExtensions.size());
+    for (VcsEP vcsEP : myExtensions.values()) {
+      result.add(vcsEP.createDescriptor());
     }
+    Collections.sort(result);
+    return result.toArray(new VcsDescriptor[result.size()]);
   }
 }

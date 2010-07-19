@@ -85,4 +85,6 @@ public abstract class VcsAbstractHistorySession implements VcsHistorySession {
   public boolean isContentAvailable(VcsFileRevision revision) {
     return true;
   }
+
+  public abstract VcsHistorySession copy();
 }

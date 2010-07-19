@@ -21,6 +21,8 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * @author peter
  */
@@ -29,6 +31,24 @@ public class NonClasspathDirectoryScope extends GlobalSearchScope {
 
   public NonClasspathDirectoryScope(@NotNull VirtualFile root) {
     myRoot = root;
+  }
+
+  @Override
+  public boolean isSearchOutsideRootModel() {
+    return true;
+  }
+
+  @NotNull
+  public static GlobalSearchScope compose(List<VirtualFile> roots) {
+    if (roots.isEmpty()) {
+      return EMPTY_SCOPE;
+    }
+
+    GlobalSearchScope scope = new NonClasspathDirectoryScope(roots.get(0));
+    for (int i = 1; i < roots.size(); i++) {
+      scope = scope.uniteWith(new NonClasspathDirectoryScope(roots.get(i)));
+    }
+    return scope;
   }
 
   @Override

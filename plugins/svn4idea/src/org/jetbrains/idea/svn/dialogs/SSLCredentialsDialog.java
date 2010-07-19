@@ -19,6 +19,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.idea.svn.SvnBundle;
 
 import javax.swing.*;
@@ -87,7 +88,20 @@ public class SSLCredentialsDialog extends DialogWrapper {
     ++ gb.gridy;
     gb.weightx = 0;
     mySaveAuth = new JCheckBox(SvnBundle.message("checkbox.ssl.keep.for.current.session"), authSaveAllowed);
+    mySaveAuth.setEnabled(authSaveAllowed);
     myPanel.add(mySaveAuth, gb);
+    if (! authSaveAllowed) {
+      ++ gb.gridy;
+      gb.gridwidth = 2;
+      final JLabel cannotSaveLabel = new JLabel(SvnBundle.message("svn.cannot.save.credentials.store-auth-creds"));
+      cannotSaveLabel.setForeground(UIUtil.getInactiveTextColor());
+      myPanel.add(cannotSaveLabel, gb);
+    }
+  }
+
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myCertificatePath;
   }
 
   public String getCertificatePath() {

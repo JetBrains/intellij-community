@@ -38,6 +38,7 @@ import com.intellij.refactoring.util.usageInfo.NoConstructorClassUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nullable;
@@ -662,7 +663,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     LOG.assertTrue(toInsertParams || toInsertThrows);
     if (toInsertParams) {
       List<PsiParameter> newParameters = new ArrayList<PsiParameter>();
-      newParameters.addAll(Arrays.asList(caller.getParameterList().getParameters()));
+      ContainerUtil.addAll(newParameters, caller.getParameterList().getParameters());
       final JavaParameterInfo[] primaryNewParms = changeInfo.getNewParameters();
       PsiSubstitutor substitutor =
         baseMethod == null ? PsiSubstitutor.EMPTY : ChangeSignatureProcessor.calculateSubstitutor(caller, baseMethod);
@@ -678,7 +679,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     if (toInsertThrows) {
       List<PsiJavaCodeReferenceElement> newThrowns = new ArrayList<PsiJavaCodeReferenceElement>();
       final PsiReferenceList throwsList = caller.getThrowsList();
-      newThrowns.addAll(Arrays.asList(throwsList.getReferenceElements()));
+      ContainerUtil.addAll(newThrowns, throwsList.getReferenceElements());
       final ThrownExceptionInfo[] primaryNewExns = changeInfo.getNewExceptions();
       for (ThrownExceptionInfo thrownExceptionInfo : primaryNewExns) {
         if (thrownExceptionInfo.getOldIndex() < 0) {

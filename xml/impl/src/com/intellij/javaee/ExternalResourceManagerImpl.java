@@ -30,12 +30,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.HashMap;
-import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.XmlSchemaProvider;
 import com.intellij.xml.util.XmlUtil;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -60,9 +57,6 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
 
   private final Map<String, Map<String, String>> myResources = new HashMap<String, Map<String, String>>();
   private final Set<String> myResourceLocations = new HashSet<String>();
-
-  private final Set<NullableFunction<String, XmlNSDescriptor>> myImplicitNamespaces =
-    new THashSet<NullableFunction<String, XmlNSDescriptor>>();
 
   private final Set<String> myIgnoredResources = new HashSet<String>();
 
@@ -385,6 +379,14 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     }
   }
 
+  public List<String> getStandardResources() {
+    ArrayList<String> strings = new ArrayList<String>();
+    Collection<Map<String, String>> maps = myStdResources.getValue().values();
+    for (Map<String, String> map : maps) {
+      strings.addAll(map.values());
+    }
+    return strings;
+  }
 
   private final static NotNullLazyKey<ProjectResources, Project> INSTANCE_CACHE = ServiceManager.createLazyKey(ProjectResources.class);
 

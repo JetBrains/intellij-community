@@ -37,6 +37,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.ReorderableListController;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nls;
 
@@ -57,7 +58,7 @@ import java.util.List;
  */
 public class QuickListsPanel extends JPanel implements SearchableConfigurable, MasterDetails {
   private final DefaultListModel myQuickListsModel = new DefaultListModel();
-  private JList myQuickListsList = new JList(myQuickListsModel);
+  private JList myQuickListsList = new JBList(myQuickListsModel);
   private final JPanel myRightPanel = new JPanel(new BorderLayout());
   private int myCurrentIndex = -1;
   private QuickListPanel myQuickListPanel = null;
@@ -122,7 +123,7 @@ public class QuickListsPanel extends JPanel implements SearchableConfigurable, M
   private JPanel createQuickListsPanel() {
     JPanel panel = new JPanel();
     panel.setLayout(new BorderLayout());
-    myQuickListsList = new JList(myQuickListsModel);
+    myQuickListsList = new JBList(myQuickListsModel);
     myQuickListsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myQuickListsList.setCellRenderer(new MyQuickListCellRenderer());
     myQuickListsList.addListSelectionListener(new ListSelectionListener() {

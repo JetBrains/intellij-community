@@ -30,8 +30,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
@@ -40,10 +38,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.io.*;
-import java.net.URL;
 import java.util.*;
 
 public class FileWatcher {
@@ -78,12 +74,15 @@ public class FileWatcher {
   private int attemptCount = 0;
   private static final int MAX_PROCESS_LAUNCH_ATTEMPT_COUNT = 10;
   private boolean isShuttingDown = false;
+  private final ManagingFS myManagingFS;
 
   public static FileWatcher getInstance() {
     return ourInstance;
   }
 
   private FileWatcher() {
+    // to avoid deadlock (PY-1215), initialize ManagingFS reference in main thread, not in filewatcher thread
+    myManagingFS = ManagingFS.getInstance();
     try {
       if (!"true".equals(System.getProperty(PROPERTY_WATCHER_DISABLED))) {
         startupProcess();
@@ -434,13 +433,12 @@ public class FileWatcher {
   }
 
   private void reset() {
-    final ManagingFS fs = ManagingFS.getInstance();
     synchronized (LOCK) {
       myDirtyPaths.clear();
       myDirtyDirs.clear();
       myDirtyRecursivePaths.clear();
 
-      for (VirtualFile root : fs.getLocalRoots()) {
+      for (VirtualFile root : myManagingFS.getLocalRoots()) {
         ((NewVirtualFile)root).markDirtyRecursively();
       }
     }

@@ -47,6 +47,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -75,7 +76,7 @@ public class CommanderPanel extends JPanel {
   private AbstractListBuilder myBuilder;
   private JPanel myTitlePanel;
   private JLabel myParentTitle;
-  protected final JList myList;
+  protected final JBList myList;
   private final MyModel myModel;
 
   private CopyPasteDelegator myCopyPasteDelegator;
@@ -95,7 +96,7 @@ public class CommanderPanel extends JPanel {
     super(new BorderLayout());
     myProject = project;
     myModel = new MyModel();
-    myList = new JList(myModel);
+    myList = new JBList(myModel);
     myList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
     if (enablePopupMenu) {
@@ -166,7 +167,6 @@ public class CommanderPanel extends JPanel {
       }
     });
 
-    ListToolTipHandler.install(myList);
   }
 
   public void addHistoryListener(CommanderHistoryListener listener) {
@@ -270,7 +270,7 @@ public class CommanderPanel extends JPanel {
     myTitlePanel.add(panel1, BorderLayout.CENTER);
 
     add(myTitlePanel, BorderLayout.NORTH);
-    final JScrollPane scrollPane = new JScrollPane(myList);
+    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myList);
     scrollPane.setBorder(null);
     scrollPane.getVerticalScrollBar().setFocusable(false); // otherwise the scrollbar steals focus and panel switching with tab is broken 
     scrollPane.getHorizontalScrollBar().setFocusable(false);

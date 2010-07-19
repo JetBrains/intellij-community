@@ -20,12 +20,14 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.source.xml.SchemaPrefix;
 import com.intellij.psi.impl.source.xml.TagNameReference;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
@@ -242,15 +244,20 @@ public class DefaultXmlExtension extends XmlExtension {
     }
   }
 
-  public boolean isPrefixDeclared(final XmlTag context, String namespacePrefix) {
+  public SchemaPrefix getPrefixDeclaration(final XmlTag context, String namespacePrefix) {
     @NonNls String nsDeclarationAttrName = null;
     for(XmlTag t = context; t != null; t = t.getParentTag()) {
       if (t.hasNamespaceDeclarations()) {
         if (nsDeclarationAttrName == null) nsDeclarationAttrName = namespacePrefix.length() > 0 ? "xmlns:"+namespacePrefix:"xmlns";
-        if (t.getAttributeValue(nsDeclarationAttrName) != null) return true;
+        XmlAttribute attribute = t.getAttribute(nsDeclarationAttrName);
+        if (attribute != null) {
+          final String attrPrefix = attribute.getNamespacePrefix();
+          final TextRange textRange = TextRange.from(attrPrefix.length() + 1, namespacePrefix.length());
+          return new SchemaPrefix(attribute, textRange, namespacePrefix);
+        }
       }
     }
-    return false;
+    return null;
   }
 
   private static Set<String> guessNamespace(final PsiFile file, String tagName) {

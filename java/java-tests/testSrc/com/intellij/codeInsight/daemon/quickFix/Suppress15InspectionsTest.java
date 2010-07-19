@@ -11,16 +11,9 @@ import com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclaration;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.pom.java.LanguageLevel;
 
 
 public class Suppress15InspectionsTest extends LightQuickFixTestCase {
-
-  protected void setUp() throws Exception {
-    super.setUp();
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
-  }
 
   @Override
   protected Sdk getProjectJDK() {

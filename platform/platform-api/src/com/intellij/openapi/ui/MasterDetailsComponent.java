@@ -162,7 +162,7 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
     };
 
     left.add(myNorthPanel, BorderLayout.NORTH);
-    myMaster = new JScrollPane(myTree);
+    myMaster = ScrollPaneFactory.createScrollPane(myTree);
     left.add(myMaster, BorderLayout.CENTER);
     mySplitter.setFirstComponent(left);
 

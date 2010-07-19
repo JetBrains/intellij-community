@@ -27,13 +27,14 @@ import com.intellij.ide.fileTemplates.ui.SelectTemplateDialog;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class CreateFromTemplateGroup extends ActionGroup{
+public class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.actions.CreateFromTemplateGroup");
 
   public void update(AnActionEvent event){

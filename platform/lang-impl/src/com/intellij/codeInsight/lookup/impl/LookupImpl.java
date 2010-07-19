@@ -40,6 +40,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ListScrollingUtil;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.plaf.beg.BegPopupMenuBorder;
 import com.intellij.ui.popup.PopupIcons;
 import com.intellij.util.CollectConsumer;
@@ -53,6 +55,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
@@ -116,7 +119,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
     myProcessIcon = new AsyncProcessIcon("Completion progress");
     myProcessIcon.setVisible(false);
-    myList = new JList(new DefaultListModel());
+    myList = new JBList(new DefaultListModel());
     myCellRenderer = new LookupCellRenderer(this);
     myList.setCellRenderer(myCellRenderer);
 
@@ -125,7 +128,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myList.setBackground(LookupCellRenderer.BACKGROUND_COLOR);
 
-    JScrollPane scrollPane = new JScrollPane(myList);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myList);
+    scrollPane.setViewportBorder(new EmptyBorder(0, 0, 0, 0));
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     getComponent().add(scrollPane, BorderLayout.NORTH);
     scrollPane.setBorder(null);
@@ -934,8 +938,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       }
 
       Point point = calculatePosition();
-      Dimension preferredSize = getComponent().getPreferredSize();
-      setBounds(point.x,point.y,preferredSize.width,preferredSize.height);
+      updateBounds(point.x,point.y);
 
       HintManagerImpl.adjustEditorHintPosition(this, myEditor, point);
     }

@@ -240,18 +240,18 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       catch (NoClassDefFoundError e) {
         // wrong JDK
       }
+    }
 
-      final BackendCompiler[] compilers = Extensions.getExtensions(BackendCompiler.EP_NAME, myProject);
-      final Set<FileType> types = new HashSet<FileType>();
-      for (BackendCompiler compiler : compilers) {
-        myRegisteredCompilers.add(compiler);
-        types.addAll(compiler.getCompilableFileTypes());
-      }
+    final BackendCompiler[] compilers = Extensions.getExtensions(BackendCompiler.EP_NAME, myProject);
+    final Set<FileType> types = new HashSet<FileType>();
+    for (BackendCompiler compiler : compilers) {
+      myRegisteredCompilers.add(compiler);
+      types.addAll(compiler.getCompilableFileTypes());
+    }
 
-      final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
-      for (FileType type : types) {
-        compilerManager.addCompilableFileType(type);
-      }
+    final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
+    for (FileType type : types) {
+      compilerManager.addCompilableFileType(type);
     }
 
     myDefaultJavaCompiler = JAVAC_EXTERNAL_BACKEND;

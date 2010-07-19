@@ -48,6 +48,8 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.ReorderableListController;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBList;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -68,7 +70,7 @@ import java.util.List;
 public class SeverityEditorDialog extends DialogWrapper {
   private final JPanel myPanel;
 
-  private final JList myOptionsList = new JList();
+  private final JList myOptionsList = new JBList();
   private final ColorAndFontDescriptionPanel myOptionsPanel = new ColorAndFontDescriptionPanel();
 
   private SeverityRegistrar.SeverityBasedTextAttributes myCurrentSelection;
@@ -104,7 +106,7 @@ public class SeverityEditorDialog extends DialogWrapper {
       }
     });
     myOptionsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    JScrollPane scrollPane = new JScrollPane(myOptionsList);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myOptionsList);
     scrollPane.setPreferredSize(new Dimension(230, 60));
     JPanel leftPanel = new JPanel(new BorderLayout());
     leftPanel.add(scrollPane, BorderLayout.CENTER);

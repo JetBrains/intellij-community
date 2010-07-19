@@ -19,7 +19,7 @@
         <border type="etched" title-resource-bundle="org/jetbrains/idea/svn/SvnBundle" title-key="nulty.roots.update.configuration.selected.root.setting.group.title"/>
         <children/>
       </xy>
-      <scrollpane id="90f51">
+      <scrollpane class="com.intellij.ui.components.JBScrollPane" id="90f51">
         <constraints>
           <xy x="4" y="29" width="153" height="127"/>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3"/>
@@ -27,7 +27,7 @@
         <properties/>
         <border type="none"/>
         <children>
-          <component id="1e1ab" class="javax.swing.JList" binding="myList">
+          <component id="1e1ab" class="com.intellij.ui.components.JBList" binding="myList">
             <constraints/>
             <properties/>
           </component>

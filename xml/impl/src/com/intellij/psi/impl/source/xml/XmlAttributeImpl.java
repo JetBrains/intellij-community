@@ -336,13 +336,13 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
       final String prefix = XmlUtil.findPrefixByQualifiedName(getName());
       final TextRange range =
         prefix.length() == 0 ? TextRange.from(getName().length(), 0) : TextRange.from(prefix.length() + 1, localName.length());
-      refs[0] = new SchemaPrefixReference(this, range, localName);
+      refs[0] = new SchemaPrefixReference(this, range, localName, null);
     }
     else {
       final String prefix = getNamespacePrefix();
       if (prefix.length() > 0 && getLocalName().length() > 0) {
         refs = new PsiReference[referencesFromProviders.length + 2];
-        refs[0] = new SchemaPrefixReference(this, TextRange.from(0, prefix.length()), prefix);
+        refs[0] = new SchemaPrefixReference(this, TextRange.from(0, prefix.length()), prefix, null);
         refs[1] = new MyPsiReference();
       }
       else {

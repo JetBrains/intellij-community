@@ -25,6 +25,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBList;
 
 import javax.swing.*;
 import java.awt.*;
@@ -42,7 +43,7 @@ public class MethodListDlg extends DialogWrapper {
       }
     };
   private final SortedListModel<PsiMethod> myListModel = new SortedListModel<PsiMethod>(METHOD_NAME_COMPARATOR);
-  private final JList myList = new JList(myListModel);
+  private final JList myList = new JBList(myListModel);
   private final JPanel myWholePanel = new JPanel(new BorderLayout());
 
   public MethodListDlg(final PsiClass psiClass, final Condition<PsiMethod> filter, final JComponent parent) {

@@ -28,6 +28,7 @@ public class HgSetExecutableDialog extends DialogWrapper {
   public HgSetExecutableDialog(Project project) {
     super(project, false);
     init();
+    setTitle(HgVcsMessages.message("hg4idea.configuration.executable.title"));
   }
 
   @Override
@@ -48,7 +49,7 @@ public class HgSetExecutableDialog extends DialogWrapper {
     myHgExecutablePath = new HgSetExecutablePathPanel();
     myHgExecutablePath.addOKListener(new ActionListener() {
       public void actionPerformed(ActionEvent event) {
-        setErrorText("");
+        setErrorText(null);
       }
     });
   }

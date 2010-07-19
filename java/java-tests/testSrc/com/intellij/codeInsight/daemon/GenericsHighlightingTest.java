@@ -15,8 +15,6 @@ import org.jetbrains.annotations.NonNls;
 
 public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/genericsHighlighting";
-  private LanguageLevel myOldLanguageLevel;
-
 
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new UncheckedWarningLocalInspection(), new UnusedSymbolLocalInspection(), new UnusedImportLocalInspection()};
@@ -32,19 +30,14 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
 
   protected void setUp() throws Exception {
     super.setUp();
-    myOldLanguageLevel = LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).getLanguageLevel();
     LanguageLevel level = getTestName(false).contains("Level6") ? LanguageLevel.JDK_1_6 : LanguageLevel.JDK_1_5;
     LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(level);
   }
 
   @Override protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk15("java 1.5");
+    return JavaSdkImpl.getMockJdk17("java 1.5");
   }
 
-  protected void tearDown() throws Exception {
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(myOldLanguageLevel);
-    super.tearDown();
-  }
 
   public void testReferenceTypeParams() throws Exception { doTest(false); }
   public void testOverridingMethods() throws Exception { doTest(false); }
@@ -56,6 +49,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testExplicitMethodParameters() throws Exception { doTest(false); }
   public void testExplicitMethodParameters1() throws Exception { doTest(false); }
   public void testInferenceWithBounds() throws Exception {doTest(false);}
+  public void testInferenceWithSuperBounds() throws Exception {doTest(false);}
   public void testVariance() throws Exception {doTest(false);}
   public void testForeachTypes() throws Exception {doTest(false);}
   public void testRawOverridingMethods() throws Exception {doTest(false);}

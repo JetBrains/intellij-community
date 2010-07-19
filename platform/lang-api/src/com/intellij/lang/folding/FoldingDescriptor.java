@@ -33,7 +33,7 @@ import java.util.Set;
  *
  * @author max
  * @see FoldingBuilder
- */                                                    
+ */
 public class FoldingDescriptor {
   public static final FoldingDescriptor[] EMPTY = new FoldingDescriptor[0];
 
@@ -86,7 +86,7 @@ public class FoldingDescriptor {
   /**
    * @return the node to which the folding region is related.
    */
-  @NotNull 
+  @NotNull
   public ASTNode getElement() {
     return myElement;
   }
@@ -117,7 +117,7 @@ public class FoldingDescriptor {
     }
     return null;
   }
-  
+
   @NotNull
   public Set<Object> getDependencies() {
     return myDependencies;

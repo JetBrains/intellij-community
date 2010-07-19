@@ -90,4 +90,8 @@ public final class MockJdkWrapper implements Sdk {
   public SdkModificator getSdkModificator() {
     return null;
   }
+
+  public Sdk getDelegate() {
+    return myDelegate;
+  }
 }

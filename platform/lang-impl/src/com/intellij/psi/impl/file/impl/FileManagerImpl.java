@@ -50,6 +50,10 @@ import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.containers.ConcurrentHashMap;
@@ -378,7 +382,27 @@ public class FileManagerImpl implements FileManager {
     return getDefaultResolveScope(vFile);
   }
 
-  public GlobalSearchScope getDefaultResolveScope(VirtualFile vFile) {
+  
+  public GlobalSearchScope getDefaultResolveScope(final VirtualFile vFile) {
+    final Project project = myManager.getProject();
+    final PsiFile psiFile = PsiManager.getInstance(project).findFile(vFile);
+    assert psiFile != null;
+    return CachedValuesManager.getManager(project).getCachedValue(psiFile, new CachedValueProvider<GlobalSearchScope>() {
+      @Override
+      public Result<GlobalSearchScope> compute() {
+        GlobalSearchScope scope = getInherentResolveScope(vFile);
+        for (ResolveScopeEnlarger enlarger : ResolveScopeEnlarger.EP_NAME.getExtensions()) {
+          final SearchScope extra = enlarger.getAdditionalResolveScope(vFile, project);
+          if (extra != null) {
+            scope = scope.union(extra);
+          }
+        }
+        return Result.create(scope, PsiModificationTracker.MODIFICATION_COUNT, ProjectRootManager.getInstance(project));
+      }
+    });
+  }
+
+  private GlobalSearchScope getInherentResolveScope(VirtualFile vFile) {
     ProjectFileIndex projectFileIndex = myProjectRootManager.getFileIndex();
     Module module = projectFileIndex.getModuleForFile(vFile);
     if (module != null) {

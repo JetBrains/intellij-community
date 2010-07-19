@@ -1,17 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component name="LanguageInjectionConfiguration">
+  <injection language="Groovy" injector-id="xml">
+    <display-name>IntelliJ IDEA pattern</display-name>
+    <place><![CDATA[xmlTag().withLocalName("place").withParent(xmlTag().withLocalName("injection").withParent(xmlTag().withLocalName("component")))]]></place>
+    <place><![CDATA[xmlTag().withLocalName("pattern").inside(xmlTag().withLocalName("idea-plugin"))]]></place>
+  </injection>
   <injection language="XPath" injector-id="xml">
     <display-name>JAXB attribute node</display-name>
-    <place><![CDATA[xmlAttribute().withLocalName(string().equalTo("node")).inside(xmlTag().withLocalName(string().equalTo("bindings")).withNamespace(string().equalTo("http://java.sun.com/xml/ns/jaxb")))]]></place>
+    <place><![CDATA[xmlAttribute().withLocalName(string().equalTo("node")).withParent(xmlTag().withLocalName(string().equalTo("bindings")).withNamespace(string().equalTo("http://java.sun.com/xml/ns/jaxb")))]]></place>
   </injection>
   <injection language="JavaScript" injector-id="xml">
     <display-name>*/@href</display-name>
     <value-pattern>^javascript:(.+)</value-pattern>
-    <place><![CDATA[xmlAttribute().withLocalName(string().equalTo("href")).inside(xmlTag().withNamespace(string().equalTo("http://www.w3.org/1999/xhtml")))]]></place>
+    <place><![CDATA[xmlAttribute().withLocalName(string().equalTo("href")).withParent(xmlTag().withNamespace(string().equalTo("http://www.w3.org/1999/xhtml")))]]></place>
   </injection>
   <injection language="JavaScript" injector-id="xml">
     <display-name>*/@on.*</display-name>
-    <place><![CDATA[xmlAttribute().withLocalName(string().matches("on.*")).inside(xmlTag().withNamespace(string().equalTo("http://www.w3.org/1999/xhtml")))]]></place>
+    <place><![CDATA[xmlAttribute().withLocalName(string().matches("on.*")).withParent(xmlTag().withNamespace(string().equalTo("http://www.w3.org/1999/xhtml")))]]></place>
   </injection>
   <injection language="CSS" injector-id="xml">
     <display-name>*/@style</display-name>
@@ -68,7 +73,7 @@
   </injection>
   <injection language="SQL" injector-id="xml">
     <display-name>iBatis3: sql|select|insert|update|delete</display-name>
-    <place><![CDATA[xmlTag().withLocalName(string().oneOf("sql", "select", "insert", "update", "delete")).withNamespace(string().equalTo("http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd"))]]></place>
+    <place><![CDATA[xmlTag().withLocalName(string().oneOf("sql", "select", "insert", "update", "delete")).withNamespace(string().oneOf("http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd", "http://mybatis.org/dtd/mybatis-3-mapper.dtd"))]]></place>
     <apply-to-subtags />
   </injection>
   <injection language="CSS" injector-id="xml">

@@ -48,6 +48,6 @@ public abstract class FrameworkSupportProviderBase extends FrameworkSupportProvi
 
   @NotNull
   public FrameworkSupportConfigurableBase createConfigurable(final @NotNull FrameworkSupportModel model) {
-    return new FrameworkSupportConfigurableBase(this, getVersions(), getVersionLabelText());
+    return new FrameworkSupportConfigurableBase(this, model, getVersions(), getVersionLabelText());
   }
 }

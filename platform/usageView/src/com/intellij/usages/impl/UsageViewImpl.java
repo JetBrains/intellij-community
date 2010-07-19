@@ -51,6 +51,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentHashSet;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.UIUtil;
@@ -253,7 +254,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     final UsageFilteringRuleProvider[] providers = Extensions.getExtensions(UsageFilteringRuleProvider.EP_NAME);
     List<UsageFilteringRule> list = new ArrayList<UsageFilteringRule>(providers.length);
     for (UsageFilteringRuleProvider provider : providers) {
-      list.addAll(Arrays.asList(provider.getActiveRules(project)));
+      ContainerUtil.addAll(list, provider.getActiveRules(project));
     }
     return list.toArray(new UsageFilteringRule[list.size()]);
   }
@@ -262,7 +263,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     final UsageGroupingRuleProvider[] providers = Extensions.getExtensions(UsageGroupingRuleProvider.EP_NAME);
     List<UsageGroupingRule> list = new ArrayList<UsageGroupingRule>(providers.length);
     for (UsageGroupingRuleProvider provider : providers) {
-      list.addAll(Arrays.asList(provider.getActiveRules(project)));
+      ContainerUtil.addAll(list, provider.getActiveRules(project));
     }
 
     Collections.sort(list, new Comparator<UsageGroupingRule>() {
@@ -327,6 +328,11 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       public void update(AnActionEvent e) {
         super.update(e);
         myButtonPanel.update();
+      }
+
+      @Override
+      public boolean isDumbAware() {
+        return true;
       }
     };
 
@@ -448,7 +454,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     final UsageGroupingRuleProvider[] providers = Extensions.getExtensions(UsageGroupingRuleProvider.EP_NAME);
     List<AnAction> list = new ArrayList<AnAction>(providers.length);
     for (UsageGroupingRuleProvider provider : providers) {
-      list.addAll(Arrays.asList(provider.createGroupingActions(this)));
+      ContainerUtil.addAll(list, provider.createGroupingActions(this));
     }
     return list.toArray(new AnAction[list.size()]);
   }
@@ -900,13 +906,13 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
       if (usage instanceof UsageInFiles) {
         UsageInFiles usageInFiles = (UsageInFiles)usage;
-        result.addAll(Arrays.asList(usageInFiles.getFiles()));
+        ContainerUtil.addAll(result, usageInFiles.getFiles());
       }
     }
     for (UsageTarget target : myTargets) {
       VirtualFile[] files = target.getFiles();
       if (files == null) continue;
-      result.addAll(Arrays.asList(files));
+      ContainerUtil.addAll(result, files);
     }
     return result;
   }
@@ -1168,7 +1174,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
             }
 
             if (usage instanceof UsageInFiles) {
-              result.addAll(Arrays.asList(((UsageInFiles)usage).getFiles()));
+              ContainerUtil.addAll(result, ((UsageInFiles)usage).getFiles());
             }
           }
         }
@@ -1179,7 +1185,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
           if (usageTarget.isValid()) {
             final VirtualFile[] files = usageTarget.getFiles();
             if (files != null) {
-              result.addAll(Arrays.asList(files));
+              ContainerUtil.addAll(result, files);
             }
           }
         }

@@ -202,7 +202,7 @@ public class LineStatusTracker {
 
   private static TextAttributes getAttributesFor(Range range) {
     EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-    Color color = ColorUtil.shift(globalScheme.getAttributes(getEditorColorNameFor(range)).getBackgroundColor(), 0.8);
+    Color color = globalScheme.getAttributes(getEditorColorNameFor(range)).getErrorStripeColor();
     TextAttributes textAttributes = new TextAttributes(null, color, null, EffectType.BOXED, Font.PLAIN);
     textAttributes.setErrorStripeColor(color);
     return textAttributes;
@@ -210,13 +210,13 @@ public class LineStatusTracker {
 
   private static void paintGutterFragment(Editor editor, Graphics g, Rectangle r, TextAttributesKey diffAttributeKey) {
     EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
-    g.setColor(editor.getColorsScheme().getAttributes(diffAttributeKey).getBackgroundColor());
+    g.setColor(editor.getColorsScheme().getAttributes(diffAttributeKey).getErrorStripeColor());
     int endX = gutter.getWhitespaceSeparatorOffset();
     int x = r.x + r.width - 2;
     int width = endX - x;
     if (r.height > 0) {
       g.fillRect(x, r.y + 2, width, r.height - 4);
-      g.setColor(gutter.getFoldingColor(false));
+      g.setColor(gutter.getOutlineColor(false));
       UIUtil.drawLine(g, x, r.y + 2, x + width, r.y + 2);
       UIUtil.drawLine(g, x, r.y + 2, x, r.y + r.height - 3);
       UIUtil.drawLine(g, x, r.y + r.height - 3, x + width, r.y + r.height - 3);
@@ -230,7 +230,7 @@ public class LineStatusTracker {
         r.y};
       g.fillPolygon(xPoints, yPoints, 3);
 
-      g.setColor(gutter.getFoldingColor(false));
+      g.setColor(gutter.getOutlineColor(false));
       g.drawPolygon(xPoints, yPoints, 3);
     }
   }
@@ -784,7 +784,7 @@ public class LineStatusTracker {
 
     JComponent toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.FILEHISTORY_VIEW_TOOLBAR, group, true).getComponent();
 
-    final Color background = ((EditorEx)editor).getBackroundColor();
+    final Color background = ((EditorEx)editor).getBackgroundColor();
     final Color foreground = editor.getColorsScheme().getColor(EditorColors.CARET_COLOR);
     toolbar.setBackground(background);
 

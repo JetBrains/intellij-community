@@ -37,6 +37,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -97,7 +98,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
       m.addElement(((MyUnwrapAction)a).getName());
     }
 
-    final JList list = new JList(m);
+    final JList list = new JBList(m);
     list.setVisibleRowCount(options.size());
 
     list.addListSelectionListener(new ListSelectionListener() {

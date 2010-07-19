@@ -1,0 +1,895 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!-- This was mostly generated from the syntax summary in the XSLT
+     Recommendation (using XSLT of course). -->
+<!-- Issues: this validates extension elements as literal result
+     elements, which is overly restrictive. -->
+<grammar xmlns="http://relaxng.org/ns/structure/1.0"
+         ns="http://www.w3.org/1999/XSL/Transform"
+         datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
+   <start>
+      <choice>
+         <ref name="stylesheet.element"/>
+         <ref name="transform.element"/>
+         <ref name="literal-result-element-as-stylesheet"/>
+      </choice>
+   </start>
+   <define name="version">
+      <value>1.0</value>
+   </define>
+   <define name="top-level-elements.model">
+      <zeroOrMore>
+         <choice>
+            <ref name="top-level-element.category"/>
+            <ref name="top-level-extension"/>
+         </choice>
+      </zeroOrMore>
+   </define>
+   <define name="top-level-extension">
+      <element>
+         <anyName>
+            <except>
+               <nsName/>
+               <nsName ns=""/>
+            </except>
+         </anyName>
+         <grammar>
+            <start>
+              <ref name="any"/>
+            </start>
+            <define name="any">
+	       <zeroOrMore>
+		  <choice>
+		     <attribute>
+			<anyName/>
+		     </attribute>
+		     <text/>
+		     <element>
+			<anyName/>
+			<ref name="any"/>
+		     </element>
+		  </choice>
+	       </zeroOrMore>
+            </define>
+         </grammar>
+      </element>
+   </define>
+   <define name="template.model">
+      <zeroOrMore>
+         <choice>
+            <ref name="instruction.category"/>
+            <ref name="literal-result-element"/>
+            <text/>
+         </choice>
+      </zeroOrMore>
+   </define>
+   <define name="literal-result-element-as-stylesheet">
+      <element>
+         <anyName>
+            <except>
+               <nsName/>
+            </except>
+         </anyName>
+         <attribute>
+            <name>version</name>
+            <ref name="version"/>
+         </attribute>
+         <ref name="literal-result-element-no-version.atts"/>
+         <ref name="template.model"/>
+      </element>
+   </define>
+   <define name="literal-result-element">
+      <element>
+         <anyName>
+            <except>
+               <nsName/>
+            </except>
+         </anyName>
+         <ref name="literal-result-element.atts"/>
+         <ref name="template.model"/>
+      </element>
+   </define>
+   <define name="literal-result-element.atts">
+      <ref name="literal-result-element-no-version.atts"/>
+      <optional>
+	 <attribute>
+	    <name>version</name>
+	    <ref name="version"/>
+	 </attribute>
+      </optional>
+   </define>
+   <define name="literal-result-element-no-version.atts">
+      <zeroOrMore>
+         <choice>
+            <attribute>
+	       <anyName>
+		  <except>
+		     <nsName/>
+		  </except>
+	       </anyName>
+               <ref name="avt.datatype"/>
+            </attribute>
+            <attribute>
+               <name>extension-element-prefixes</name>
+               <ref name="prefixes.datatype"/>
+	    </attribute>
+            <attribute>
+               <name>exclude-result-prefixes</name>
+               <ref name="prefixes.datatype"/>
+	    </attribute>
+            <attribute>
+               <name>use-attribute-sets</name>
+               <ref name="qnames.datatype"/>
+            </attribute>
+         </choice>
+      </zeroOrMore>
+   </define>
+   <define name="top-level-element.category">
+      <choice>
+         <ref name="include.element"/>
+         <ref name="strip-space.element"/>
+         <ref name="preserve-space.element"/>
+         <ref name="template.element"/>
+         <ref name="namespace-alias.element"/>
+         <ref name="attribute-set.element"/>
+         <ref name="variable.element"/>
+         <ref name="param.element"/>
+         <ref name="key.element"/>
+         <ref name="decimal-format.element"/>
+         <ref name="output.element"/>
+      </choice>
+   </define>
+   <define name="instruction.category">
+      <choice>
+         <ref name="apply-templates.element"/>
+         <ref name="apply-imports.element"/>
+         <ref name="call-template.element"/>
+         <ref name="element.element"/>
+         <ref name="attribute.element"/>
+         <ref name="text.element"/>
+         <ref name="processing-instruction.element"/>
+         <ref name="comment.element"/>
+         <ref name="copy.element"/>
+         <ref name="value-of.element"/>
+         <ref name="number.element"/>
+         <ref name="for-each.element"/>
+         <ref name="if.element"/>
+         <ref name="choose.element"/>
+         <ref name="variable.element"/>
+         <ref name="copy-of.element"/>
+         <ref name="message.element"/>
+         <ref name="fallback.element"/>
+      </choice>
+   </define>
+   <define name="extension.atts">
+      <zeroOrMore>
+         <attribute>
+            <anyName>
+               <except>
+                  <nsName/>
+                  <nsName ns=""/>
+               </except>
+            </anyName>
+         </attribute>
+      </zeroOrMore>
+   </define>
+   <define name="stylesheet.element">
+      <element name="stylesheet">
+         <ref name="stylesheet.model"/>
+      </element>
+   </define>
+   <define name="transform.element">
+      <element name="transform">
+         <ref name="stylesheet.model"/>
+      </element>
+   </define>
+   <define name="stylesheet.model">
+      <ref name="extension.atts"/>
+      <optional>
+	 <attribute name="id">
+	    <data type="NCName"/>
+	 </attribute>
+      </optional>
+      <optional>
+	 <attribute name="extension-element-prefixes">
+            <ref name="prefixes.datatype"/>
+	 </attribute>
+      </optional>
+      <optional>
+	 <attribute name="exclude-result-prefixes">
+            <ref name="prefixes.datatype"/>
+	 </attribute>
+      </optional>
+      <attribute name="version">
+	 <ref name="version"/>
+      </attribute>
+      <group>
+	 <zeroOrMore>
+	    <ref name="import.element"/>
+	 </zeroOrMore>
+	 <ref name="top-level-elements.model"/>
+      </group>
+   </define>
+   <define name="include.element">
+      <element name="include">
+         <ref name="extension.atts"/>
+         <attribute name="href">
+            <data type="anyURI"/>
+         </attribute>
+      </element>
+   </define>
+   <define name="import.element">
+      <element name="import">
+         <ref name="extension.atts"/>
+         <attribute name="href">
+            <data type="anyURI"/>
+         </attribute>
+      </element>
+   </define>
+   <define name="strip-space.element">
+      <element name="strip-space">
+         <ref name="extension.atts"/>
+         <attribute name="elements">
+            <ref name="wildcards.datatype"/>
+         </attribute>
+      </element>
+   </define>
+   <define name="preserve-space.element">
+      <element name="preserve-space">
+         <ref name="extension.atts"/>
+         <attribute name="elements">
+            <ref name="wildcards.datatype"/>
+         </attribute>
+      </element>
+   </define>
+   <define name="template.element">
+      <element name="template">
+         <ref name="extension.atts"/>
+         <optional>
+            <attribute name="match">
+               <ref name="pattern.datatype"/>
+            </attribute>
+         </optional>
+         <optional>
+            <attribute name="name">
+               <ref name="qname.datatype"/>
+            </attribute>
+         </optional>
+         <optional>
+            <attribute name="priority">
+               <ref name="number.datatype"/>
+            </attribute>
+         </optional>
+         <optional>
+            <attribute name="mode">
+               <ref name="qname.datatype"/>
+            </attribute>
+         </optional>
+         <group>
+            <zeroOrMore>
+               <ref name="param.element"/>
+            </zeroOrMore>
+            <ref name="template.model"/>
+         </group>
+      </element>
+   </define>
+   <define name="apply-templates.element">
+      <element name="apply-templates">
+         <ref name="extension.atts"/>
+         <optional>
+            <attribute name="select">
+               <ref name="expression.datatype"/>
+            </attribute>
+         </optional>
+         <optional>
+            <attribute name="mode">
+               <ref name="qname.datatype"/>
+            </attribute>
+         </optional>
+         <zeroOrMore>
+            <choice>
+               <ref name="sort.element"/>
+               <ref name="with-param.element"/>
+            </choice>
+         </zeroOrMore>
+      </element>
+   </define>
+   <define name="apply-imports.element">
+      <element name="apply-imports">
+         <ref name="extension.atts"/>
+      </element>
+   </define>
+   <define name="call-template.element">
+      <element name="call-template">
+         <ref name="extension.atts"/>
+         <attribute name="name">
+            <ref name="qname.datatype"/>
+         </attribute>
+         <zeroOrMore>
+            <ref name="with-param.element"/>
+         </zeroOrMore>
+      </element>
+   </define>
+   <define name="namespace-alias.element">
+      <element name="namespace-alias">
+         <ref name="extension.atts"/>
+         <attribute name="stylesheet-prefix">
+            <ref name="prefix.datatype"/>
+         </attribute>
+         <attribute name="result-prefix">
+            <ref name="prefix.datatype"/>
+         </attribute>
+      </element>
+   </define>
+   <define name="element.element">
+      <element name="element">
+         <ref name="extension.atts"/>
+         <attribute name="name">
+            <choice>
+               <ref name="qname.datatype"/>
+               <ref name="expr-avt.datatype"/>
+            </choice>
+         </attribute>
+         <optional>
+            <attribute name="namespace">
+               <choice>
+                  <data type="anyURI"/>
+                  <ref name="brace-avt.datatype"/>
+               </choice>
+            </attribute>
+         </optional>
+         <optional>
+            <attribute name="use-attribute-sets">
+               <ref name="qnames.datatype"/>
+            </attribute>
+         </optional>
+         <ref name="template.model"/>
+      </element>
+   </define>
+   <define name="attribute.element">
+      <element name="attribute">
+         <ref name="extension.atts"/>
+         <attribute name="name">
+            <choice>
+               <ref name="qname.datatype"/>
+               <ref name="expr-avt.datatype"/>
+            </choice>
+         </attribute>
+         <optional>
+            <attribute name="namespace">
+               <choice>
+                  <data type="anyURI"/>
+                  <ref name="brace-avt.datatype"/>
+               </choice>
+            </attribute>
+         </optional>
+         <ref name="template.model"/>
+      </element>
+   </define>
+   <define name="attribute-set.element">
+      <element name="attribute-set">
+         <ref name="extension.atts"/>
+         <attribute name="name">
+            <ref name="qname.datatype"/>
+         </attribute>
+         <optional>
+            <attribute name="use-attribute-sets">
+               <ref name="qnames.datatype"/>
+            </attribute>
+         </optional>
+         <zeroOrMore>
+            <ref name="attribute.element"/>
+         </zeroOrMore>
+      </element>
+   </define>
+   <define name="text.element">
+      <element name="text">
+         <ref name="extension.atts"/>
+         <optional>
+            <attribute name="disable-output-escaping">
+               <choice>
+                  <value type="string">yes</value>
+                  <value type="string">no</value>
+               </choice>
+            </attribute>
+         </optional>
+         <text/>
+      </element>
+   </define>
+   <define name="processing-instruction.element">
+      <element name="processing-instruction">
+         <ref name="extension.atts"/>
+         <attribute name="name">
+            <choice>
+               <data type="NCName"/>
+               <ref name="expr-avt.datatype"/>
+            </choice>
+         </attribute>
+         <ref name="template.model"/>
+      </element>
+   </define>
+   <define name="comment.element">
+      <element name="comment">
+         <ref name="extension.atts"/>
+         <ref name="template.model"/>
+      </element>
+   </define>
+   <define name="copy.element">
+      <element name="copy">
+         <ref name="extension.atts"/>
+         <optional>
+            <attribute name="use-attribute-sets">
+               <ref name="qnames.datatype"/>
+            </attribute>
+         </optional>
+         <ref name="template.model"/>
+      </element>
+   </define>
+   <define name="value-of.element">
+      <element name="value-of">
+         <ref name="extension.atts"/>
+         <attribute name="select">
+            <ref name="expression.datatype"/>
+         </attribute>
+         <optional>
+            <attribute name="disable-output-escaping">
+               <choice>
+                  <value type="string">yes</value>
+                  <value type="string">no</value>
+               </choice>
+            </attribute>
+         </optional>
+      </element>
+   </define>
+   <define name="number.element">
+      <element name="number">
+         <ref name="extension.atts"/>
+         <optional>
+            <attribute name="level">
+               <choice>
+                  <value type="string">single</value>
+                  <value type="string">multiple</value>
+                  <value type="string">any</value>
+               </choice>
+            </attribute>
+         </optional>
+         <optional>
+            <attribute name="count">
+               <ref name="pattern.datatype"/>
+            </attribute>
+         </optional>
+         <optional>
+            <attribute name="from">
+               <ref name="pattern.datatype"/>
+            </attribute>
+         </optional>
+         <optional>
+            <attribute name="value">
+               <ref name="expression.datatype"/>
+            </attribute>
+         </optional>
+         <optional>
+            <attribute name="format">
+               <ref name="avt.datatype"/>
+            </attribute>
+         </optional>
+         <optional>
+            <attribute name="lang">
+               <choice>
+                  <data type="NMTOKEN"/>
+                  <ref name="expr-avt.datatype"/>
+               </choice>
+            </attribute>
+         </optional>
+         <optional>
+            <attribute name="letter-value">
+	       <choice>
+		  <value type="string">alphabetic</value>
+		  <value type="string">traditional</value>
+		  <ref name="expr-avt.datatype"/>
+	       </choice>
+            </attribute>
+         </optional>
+         <optional>
+            <attribute name="grouping-separator">
+               <choice>
+                  <ref name="char.datatype"/>
+                  <ref name="expr-avt.datatype"/>
+               </choice>
+            </attribute>
+         </optional>
+         <optional>
+            <attribute name="grouping-size">
+               <choice>
+                  <ref name="number.datatype"/>
+                  <ref name="expr-avt.datatype"/>
+               </choice>
+            </attribute>
+         </optional>
+      </element>
+   </define>
+   <define name="for-each.element">
+      <element name="for-each">
+         <ref name="extension.atts"/>
+         <attribute name="select">
+            <ref name="expression.datatype"/>
+         </attribute>
+         <group>
+            <zeroOrMore>
+               <ref name="sort.element"/>
+            </zeroOrMore>
+            <ref name="template.model"/>
+         </group>
+      </element>
+   </define>
+   <define name="if.element">
+      <element name="if">
+         <ref name="extension.atts"/>
+         <attribute name="test">
+            <ref name="expression.datatype"/>
+         </attribute>
+         <ref name="template.model"/>
+      </element>
+   </define>
+   <define name="choose.element">
+      <element name="choose">
+         <ref name="extension.atts"/>
+         <group>
+            <oneOrMore>
+               <ref name="when.element"/>
+            </oneOrMore>
+            <optional>
+               <ref name="otherwise.element"/>
+            </optional>
+         </group>
+      </element>
+   </define>
+   <define name="when.element">
+      <element name="when">
+         <ref name="extension.atts"/>
+         <attribute name="test">
+            <ref name="expression.datatype"/>
+         </attribute>
+         <ref name="template.model"/>
+      </element>
+   </define>
+   <define name="otherwise.element">
+      <element name="otherwise">
+         <ref name="extension.atts"/>
+         <ref name="template.model"/>
+      </element>
+   </define>
+   <define name="sort.element">
+      <element name="sort">
+         <ref name="extension.atts"/>
+         <optional>
+            <attribute name="select">
+               <ref name="expression.datatype"/>
+            </attribute>
+         </optional>
+         <optional>
+            <attribute name="lang">
+               <choice>
+                  <data type="NMTOKEN"/>
+                  <ref name="expr-avt.datatype"/>
+               </choice>
+            </attribute>
+         </optional>
+         <optional>
+            <attribute name="data-type">
+	       <choice>
+		  <value type="string">text</value>
+		  <value type="string">number</value>
+		  <ref name="qname-but-not-ncname.datatype"/>
+		  <ref name="expr-avt.datatype"/>
+	       </choice>
+            </attribute>
+         </optional>
+         <optional>
+            <attribute name="order">
+	       <choice>
+		  <value type="string">ascending</value>
+		  <value type="string">descending</value>
+		  <ref name="expr-avt.datatype"/>
+	       </choice>
+            </attribute>
+         </optional>
+         <optional>
+            <attribute name="case-order">
+	       <choice>
+		  <value type="string">upper-first</value>
+		  <value type="string">lower-first</value>
+		  <ref name="expr-avt.datatype"/>
+	       </choice>
+            </attribute>
+         </optional>
+      </element>
+   </define>
+   <define name="variable.element">
+      <element name="variable">
+         <ref name="extension.atts"/>
+         <attribute name="name">
+            <ref name="qname.datatype"/>
+         </attribute>
+         <choice>
+            <attribute name="select">
+               <ref name="expression.datatype"/>
+            </attribute>
+            <ref name="template.model"/>
+         </choice>
+      </element>
+   </define>
+   <define name="param.element">
+      <element name="param">
+         <ref name="extension.atts"/>
+         <attribute name="name">
+            <ref name="qname.datatype"/>
+         </attribute>
+         <choice>
+            <attribute name="select">
+               <ref name="expression.datatype"/>
+            </attribute>
+            <ref name="template.model"/>
+         </choice>
+      </element>
+   </define>
+   <define name="copy-of.element">
+      <element name="copy-of">
+         <ref name="extension.atts"/>
+         <attribute name="select">
+            <ref name="expression.datatype"/>
+         </attribute>
+      </element>
+   </define>
+   <define name="with-param.element">
+      <element name="with-param">
+         <ref name="extension.atts"/>
+         <attribute name="name">
+            <ref name="qname.datatype"/>
+         </attribute>
+         <choice>
+            <attribute name="select">
+               <ref name="expression.datatype"/>
+            </attribute>
+            <ref name="template.model"/>
+         </choice>
+      </element>
+   </define>
+   <define name="key.element">
+      <element name="key">
+         <ref name="extension.atts"/>
+         <attribute name="name">
+            <ref name="qname.datatype"/>
+         </attribute>
+         <attribute name="match">
+            <ref name="pattern.datatype"/>
+         </attribute>
+         <attribute name="use">
+            <ref name="expression.datatype"/>
+         </attribute>
+      </element>
+   </define>
+   <define name="decimal-format.element">
+      <element name="decimal-format">
+         <ref name="extension.atts"/>
+         <optional>
+            <attribute name="name">
+               <ref name="qname.datatype"/>
+            </attribute>
+         </optional>
+         <optional>
+            <attribute name="decimal-separator">
+               <ref name="char.datatype"/>
+            </attribute>
+         </optional>
+         <optional>
+            <attribute name="grouping-separator">
+               <ref name="char.datatype"/>
+            </attribute>
+         </optional>
+         <optional>
+            <attribute name="infinity">
+               <text/>
+            </attribute>
+         </optional>
+         <optional>
+            <attribute name="minus-sign">
+               <ref name="char.datatype"/>
+            </attribute>
+         </optional>
+         <optional>
+            <attribute name="NaN">
+               <text/>
+            </attribute>
+         </optional>
+         <optional>
+            <attribute name="percent">
+               <ref name="char.datatype"/>
+            </attribute>
+         </optional>
+         <optional>
+            <attribute name="per-mille">
+               <ref name="char.datatype"/>
+            </attribute>
+         </optional>
+         <optional>
+            <attribute name="zero-digit">
+               <ref name="char.datatype"/>
+            </attribute>
+         </optional>
+         <optional>
+            <attribute name="digit">
+               <ref name="char.datatype"/>
+            </attribute>
+         </optional>
+         <optional>
+            <attribute name="pattern-separator">
+               <ref name="char.datatype"/>
+            </attribute>
+         </optional>
+      </element>
+   </define>
+   <define name="message.element">
+      <element name="message">
+         <ref name="extension.atts"/>
+         <optional>
+            <attribute name="terminate">
+               <choice>
+                  <value type="string">yes</value>
+                  <value type="string">no</value>
+               </choice>
+            </attribute>
+         </optional>
+         <ref name="template.model"/>
+      </element>
+   </define>
+   <define name="fallback.element">
+      <element name="fallback">
+         <ref name="extension.atts"/>
+         <ref name="template.model"/>
+      </element>
+   </define>
+   <define name="output.element">
+      <element name="output">
+         <ref name="extension.atts"/>
+         <optional>
+            <attribute name="method">
+               <choice>
+                  <value type="string">xml</value>
+                  <value type="string">html</value>
+                  <value type="string">text</value>
+                  <ref name="qname-but-not-ncname.datatype"/>
+               </choice>
+            </attribute>
+         </optional>
+         <optional>
+            <attribute name="version">
+               <data type="NMTOKEN"/>
+            </attribute>
+         </optional>
+         <optional>
+            <attribute name="encoding">
+               <text/>
+            </attribute>
+         </optional>
+         <optional>
+            <attribute name="omit-xml-declaration">
+               <choice>
+                  <value type="string">yes</value>
+                  <value type="string">no</value>
+               </choice>
+            </attribute>
+         </optional>
+         <optional>
+            <attribute name="standalone">
+               <choice>
+                  <value type="string">yes</value>
+                  <value type="string">no</value>
+               </choice>
+            </attribute>
+         </optional>
+         <optional>
+            <attribute name="doctype-public">
+               <text/>
+            </attribute>
+         </optional>
+         <optional>
+            <attribute name="doctype-system">
+               <text/>
+            </attribute>
+         </optional>
+         <optional>
+            <attribute name="cdata-section-elements">
+               <ref name="qnames.datatype"/>
+            </attribute>
+         </optional>
+         <optional>
+            <attribute name="indent">
+               <choice>
+                  <value type="string">yes</value>
+                  <value type="string">no</value>
+               </choice>
+            </attribute>
+         </optional>
+         <optional>
+            <attribute name="media-type">
+               <text/>
+            </attribute>
+         </optional>
+      </element>
+   </define>
+   <define name="prefixes.datatype">
+      <list>
+         <zeroOrMore>
+            <choice>
+               <data type="NCName"/>
+               <value>#default</value>
+            </choice>
+         </zeroOrMore>
+      </list>
+   </define>
+   <define name="prefix.datatype">
+      <choice>
+	 <data type="NCName"/>
+	 <value>#default</value>
+      </choice>
+   </define>
+   <define name="wildcards.datatype">
+      <list>
+         <zeroOrMore>
+	    <choice>
+	       <data type="QName"/>
+	       <data type="token">
+		  <param name="pattern">\*|\i\c*:\*</param>
+	       </data>
+	    </choice>
+         </zeroOrMore>
+      </list> 
+   </define>
+   <define name="qname.datatype">
+      <data type="QName"/>
+   </define>
+   <define name="qnames.datatype">
+      <list>
+         <zeroOrMore>
+            <data type="QName"/>
+         </zeroOrMore>
+      </list>
+   </define>
+   <define name="char.datatype">
+      <data type="string">
+         <param name="length">1</param>
+      </data>
+   </define>
+   <define name="number.datatype">
+      <data type="decimal"/>
+   </define>
+   <define name="expression.datatype">
+      <text/>
+   </define>
+   <define name="pattern.datatype">
+      <text/>
+   </define>
+   <define name="qname-but-not-ncname.datatype">
+      <data type="QName">
+        <param name="pattern">.*:.*</param>
+      </data>
+   </define>
+   <!-- An AVT containing at least one expression. -->
+   <define name="expr-avt.datatype">
+      <data type="string">
+         <param name="pattern">([^\{\}]|\{\{|\}\})*\{([^&#34;'\{\}]|&#34;[^&#34;]*&#34;|'[^']*')+\}([^\{\}]|\{\{|\}\}|\{([^&#34;'\{\}]|&#34;[^&#34;]*&#34;|'[^']*')+\})*</param>
+      </data>
+   </define>
+   <!-- An AVT containing at least one brace; ie where instantiated AVT
+        is not the same as the literal AVT. -->
+   <define name="brace-avt.datatype">
+      <data type="string">
+         <param name="pattern">[^\{\}]*(\{\{|\}\}|\{([^&#34;'\{\}]|&#34;[^&#34;]*&#34;|'[^']*')+\})([^\{\}]|\{\{|\}\}|\{([^&#34;'\{\}]|&#34;[^&#34;]*&#34;|'[^']*')+\})*</param>
+      </data>
+   </define>
+   <define name="avt.datatype">
+      <data type="string">
+         <param name="pattern">([^\{\}]|\{\{|\}\}|\{([^&#34;'\{\}]|&#34;[^&#34;]*&#34;|'[^']*')+\})*</param>
+      </data>
+   </define>
+</grammar>

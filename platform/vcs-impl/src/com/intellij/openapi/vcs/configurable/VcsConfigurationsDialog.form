@@ -27,7 +27,7 @@
         <properties/>
         <border type="none"/>
         <children>
-          <scrollpane id="506c9" binding="myVcsesScrollPane">
+          <scrollpane class="com.intellij.ui.components.JBScrollPane" id="506c9" binding="myVcsesScrollPane">
             <constraints>
               <xy x="0" y="0" width="149" height="423"/>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
@@ -35,7 +35,7 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="859d6" class="javax.swing.JList" binding="myVcses">
+              <component id="859d6" class="com.intellij.ui.components.JBList" binding="myVcses">
                 <constraints/>
                 <properties/>
               </component>

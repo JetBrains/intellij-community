@@ -90,6 +90,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
       }
 
       public void stateChanged() {
+        if (project.isDisposed()) return;
         if (toolWindow.getAnchor() != myAnchor) {
           myAnchor = myToolWindow.getAnchor();
           layoutPanel();
@@ -164,7 +165,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
 
   private JTree createTree() {
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
-    final JTree tree = new Tree(new DefaultTreeModel(root)){
+    final Tree tree = new Tree(new DefaultTreeModel(root)){
       protected void paintComponent(Graphics g) {
         DuplicateNodeRenderer.paintDuplicateNodesBackground(g, this);
         super.paintComponent(g);
@@ -188,7 +189,6 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
 
     new TreeSpeedSearch(tree);
     TreeUtil.installActions(tree);
-    TreeToolTipHandler.install(tree);
     ToolTipManager.sharedInstance().registerComponent(tree);
 
     myAutoScrollToSourceHandler.install(tree);

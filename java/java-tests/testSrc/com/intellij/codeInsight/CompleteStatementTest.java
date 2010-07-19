@@ -145,9 +145,7 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testSCR36110() throws Exception {
     JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
     LanguageLevel old = LanguageLevelProjectExtension.getInstance(facade.getProject()).getLanguageLevel();
-    LanguageLevelProjectExtension.getInstance(facade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
     doTest();
-    LanguageLevelProjectExtension.getInstance(facade.getProject()).setLanguageLevel(old);
   }
 
   public void testSCR37331() throws Exception { doTest(); }

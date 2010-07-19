@@ -17,12 +17,13 @@
 package com.intellij.tools;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 
 /**
  * @author Eugene Belyaev
  */
-public class ExternalToolsGroup extends SimpleActionGroup {
+public class ExternalToolsGroup extends SimpleActionGroup implements DumbAware {
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     removeAll();

@@ -38,7 +38,7 @@ public class CopyClassTest extends CodeInsightTestCase {
   private void doTest(final String oldName, final String copyName) throws Exception {
     String root = JavaTestUtil.getJavaTestDataPath() + "/refactoring/copyClass/" + getTestName(true);
 
-    PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk15("java 1.5"));
+    PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk17("java 1.5"));
     myRootDir = PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
 
     performAction(oldName, copyName);
@@ -70,7 +70,7 @@ public class CopyClassTest extends CodeInsightTestCase {
   private void doMultifileTest() throws Exception {
     String root = JavaTestUtil.getJavaTestDataPath() + "/refactoring/copyClass/multifile/" + getTestName(true);
     String rootBefore = root + "/before";
-    PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk("java 1.4"));
+    PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk17());
     VirtualFile rootDir = PsiTestUtil.createTestProjectStructure(myProject, myModule, rootBefore, myFilesToDelete);
 
     final HashMap<PsiFile, PsiClass[]> map = new HashMap<PsiFile, PsiClass[]>();

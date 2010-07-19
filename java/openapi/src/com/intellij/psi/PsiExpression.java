@@ -19,7 +19,7 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a Java epxression.
+ * Represents a Java expression.
  */
 public interface PsiExpression extends PsiAnnotationMemberValue {
   /**

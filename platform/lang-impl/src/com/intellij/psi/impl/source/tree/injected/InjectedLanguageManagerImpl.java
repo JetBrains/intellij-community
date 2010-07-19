@@ -307,7 +307,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
     MultiHostInjector[] infos = cachedInjectors.get(element.getClass());
     if (infos != null) {
       for (MultiHostInjector injector : infos) {
-        if (dumb && !(injector instanceof DumbAware)) {
+        if (dumb && !DumbService.isDumbAware(injector)) {
           continue;
         }
 

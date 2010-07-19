@@ -9,6 +9,8 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.rename.RenameProcessor
 import com.intellij.refactoring.rename.RenameUtil
+import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler
+import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
@@ -239,6 +241,97 @@ def foo(p) {
     def usages = RenameUtil.findUsages(method, "project", false, false, [method:"project"])
     assert !usages[0].isNonCodeUsage
     assert usages[1].isNonCodeUsage
+  }
+
+  public void testRenameAliasImportedProperty() {
+    myFixture.addFileToProject("Foo.groovy", """class Foo {
+static def bar
+}""")
+    myFixture.configureByText("a.groovy", """
+import static Foo.ba<caret>r as foo
+
+print foo
+print getFoo()
+setFoo(2)
+foo = 4""")
+
+    myFixture.renameElement myFixture.findClass("Foo").getFields()[0], "newName"
+    myFixture.checkResult """
+import static Foo.newName as foo
+
+print foo
+print getFoo()
+setFoo(2)
+foo = 4"""
+  }
+
+  public void testRenameAliasImportedClass() {
+    myFixture.addFileToProject("Foo.groovy", """class Foo {
+static def bar
+}""")
+    myFixture.configureByText("a.groovy", """
+import Foo as Bar
+Bar bar = new Bar()
+""")
+
+    myFixture.renameElement myFixture.findClass("Foo"), "F"
+    myFixture.checkResult """
+import F as Bar
+Bar bar = new Bar()
+"""
+  }
+
+  public void testRenameAliasImportedMethod() {
+    myFixture.addFileToProject("Foo.groovy", """class Foo {
+static def bar(){}
+}""")
+    myFixture.configureByText("a.groovy", """
+import static Foo.bar as foo
+foo()
+""")
+
+    myFixture.renameElement myFixture.findClass("Foo").findMethodsByName("bar", false)[0], "b"
+    myFixture.checkResult """
+import static Foo.b as foo
+foo()
+"""
+  }
+
+  public void testRenameAliasImportedField() {
+    myFixture.addFileToProject("Foo.groovy", """class Foo {
+public static bar
+}""")
+    myFixture.configureByText("a.groovy", """
+import static Foo.ba<caret>r as foo
+
+print foo
+foo = 4""")
+
+    myFixture.renameElement myFixture.findClass("Foo").getFields()[0], "newName"
+    myFixture.checkResult """
+import static Foo.newName as foo
+
+print foo
+foo = 4"""
+  }
+
+  public void testInplaceRename() {
+   doInplaceRenameTest();
+  }
+
+  public void testInplaceRenameWithGetter() {
+   doInplaceRenameTest();
+  }
+
+  public void testInplaceRenameWithStaticField() {
+   doInplaceRenameTest();
+  }
+
+  private def doInplaceRenameTest() {
+    String prefix = TestUtils.getTestDataPath() + "groovy/refactoring/rename/" + getTestName(false)
+    myFixture.configureByFile prefix + ".groovy";
+    CodeInsightTestUtil.doInlineRename(new VariableInplaceRenameHandler(), "foo", myFixture);
+    myFixture.checkResultByFile prefix + "_after.groovy"
   }
 
 }

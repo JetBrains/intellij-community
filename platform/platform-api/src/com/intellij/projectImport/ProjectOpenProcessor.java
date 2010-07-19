@@ -41,6 +41,15 @@ public abstract class ProjectOpenProcessor {
   @Nullable
   public abstract Project doOpenProject(@NotNull VirtualFile virtualFile, Project projectToClose, boolean forceOpenInNewFrame);
 
+  /**
+   * Allow opening a directory directly if the project files are located in that directory.
+   *
+   * @return true if project files are searched inside the selected directory, false if the project files must be selected directly.
+   */
+  public boolean lookForProjectsInDirectory() {
+    return true;
+  }
+
   @Nullable
   public static ProjectOpenProcessor getImportProvider(VirtualFile file) {
     for (ProjectOpenProcessor provider : Extensions.getExtensions(EXTENSION_POINT_NAME)) {

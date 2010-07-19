@@ -54,6 +54,7 @@ public class PerformanceWatcher implements ApplicationComponent {
   private List<StackTraceElement> myStacktraceCommonPart;
 
   private int UNRESPONSIVE_THRESHOLD = 5;
+  private int UNRESPONSIVE_INTERVAL = 5;
 
   @NotNull
   public String getComponentName() {
@@ -72,7 +73,16 @@ public class PerformanceWatcher implements ApplicationComponent {
         // ignore
       }
     }
-    if (UNRESPONSIVE_THRESHOLD == 0) {
+    final String interval = System.getProperty("performance.watcher.interval");
+    if (interval != null) {
+      try {
+        UNRESPONSIVE_INTERVAL = Integer.parseInt(interval);
+      }
+      catch (NumberFormatException e) {
+        // ignore
+      }
+    }
+    if (UNRESPONSIVE_THRESHOLD == 0 || UNRESPONSIVE_INTERVAL == 0) {
       return;
     }
 
@@ -111,7 +121,7 @@ public class PerformanceWatcher implements ApplicationComponent {
   }
 
   private static void deleteOldThreadDumps() {
-    File allLogsDir = new File(PathManager.getSystemPath(), "log");
+    File allLogsDir = new File(PathManager.getLogPath());
     if (allLogsDir.isDirectory()) {
       final String[] dirs = allLogsDir.list(new FilenameFilter() {
         public boolean accept(final File dir, final String name) {
@@ -145,7 +155,7 @@ public class PerformanceWatcher implements ApplicationComponent {
   private void checkEDTResponsiveness() {
     while(true) {
       try {
-        if (myShutdownSemaphore.tryAcquire(1, TimeUnit.SECONDS)) {
+        if (myShutdownSemaphore.tryAcquire(UNRESPONSIVE_INTERVAL, TimeUnit.SECONDS)) {
           break;
         }
       }

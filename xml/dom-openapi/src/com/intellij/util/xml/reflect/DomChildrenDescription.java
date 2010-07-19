@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xml.reflect;
 
+import com.intellij.pom.PomNamedTarget;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomNameStrategy;
 import com.intellij.util.xml.XmlName;
@@ -23,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
  */
-public interface DomChildrenDescription extends AbstractDomChildrenDescription {
+public interface DomChildrenDescription extends AbstractDomChildrenDescription, PomNamedTarget {
 
   @NotNull
   XmlName getXmlName();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 Bas Leijdekkers
+ * Copyright 2006-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,8 +71,17 @@ public class ConvertInterfaceToClassIntention extends Intention {
                 modifierList.setModifierProperty(PsiModifier.FINAL, true);
             }
         }
+        final PsiClass[] innerClasses = anInterface.getInnerClasses();
+        for (PsiClass innerClass : innerClasses) {
+            final PsiModifierList modifierList = innerClass.getModifierList();
+            if (modifierList != null) {
+                modifierList.setModifierProperty(PsiModifier.PUBLIC, true);
+                modifierList.setModifierProperty(PsiModifier.STATIC, true);
+            }
+        }
     }
 
+    @Override
     protected void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
         final PsiClass anInterface = (PsiClass)element.getParent();
@@ -84,6 +93,7 @@ public class ConvertInterfaceToClassIntention extends Intention {
         moveExtendsToImplements(anInterface);
     }
 
+    @Override
     @NotNull
     protected PsiElementPredicate getElementPredicate() {
         return new ConvertInterfaceToClassPredicate();

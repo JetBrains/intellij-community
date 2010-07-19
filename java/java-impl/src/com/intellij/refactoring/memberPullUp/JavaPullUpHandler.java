@@ -29,6 +29,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
@@ -142,11 +143,17 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
 
 
 
-  public boolean checkConflicts(PullUpDialog dialog) {
+  public boolean checkConflicts(final PullUpDialog dialog) {
     final MemberInfo[] infos = dialog.getSelectedMemberInfos();
-    PsiClass superClass = dialog.getSuperClass();
+    final PsiClass superClass = dialog.getSuperClass();
     if (!checkWritable(superClass, infos)) return false;
-    MultiMap<PsiElement,String> conflicts = PullUpConflictsUtil.checkConflicts(infos, mySubclass, superClass, null, null, dialog.getContainmentVerifier());
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      public void run() {
+        conflicts
+          .putAllValues(PullUpConflictsUtil.checkConflicts(infos, mySubclass, superClass, null, null, dialog.getContainmentVerifier()));
+      }
+    }, "Detecting possible conflicts...", true, myProject)) return false;
     if (!conflicts.isEmpty()) {
       ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);
       conflictsDialog.show();

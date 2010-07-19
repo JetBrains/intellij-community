@@ -22,6 +22,9 @@ import com.intellij.util.containers.HashSet;
 import java.util.Set;
 
 /**
+ * @deprecated use {@link OrderEnumerator#orderEntries(com.intellij.openapi.module.Module)} with {@link OrderEnumerator#recursively()}
+ * option instead instead
+ *
  * @author yole
  */
 public class RecursiveRootPolicy<R> extends RootPolicy<R> {

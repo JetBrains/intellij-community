@@ -107,6 +107,8 @@ public interface ComponentPopupBuilder {
   @NotNull
   ComponentPopupBuilder setAdText(@Nullable String text);
 
+  @NotNull ComponentPopupBuilder setShowShadow(boolean show);
+
   @NotNull
   ComponentPopupBuilder setCommandButton(@NotNull InplaceButton commandButton);
 

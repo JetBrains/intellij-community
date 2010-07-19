@@ -17,55 +17,125 @@ package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.impl.IterationState;
+import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.util.List;
 
 public class EditorUtil {
   private EditorUtil() { }
 
   public static int getLastVisualLineColumnNumber(Editor editor, int line) {
+    Document document = editor.getDocument();
+    int lastLine = document.getLineCount() - 1;
+    if (lastLine < 0) {
+      return 0;
+    }
+
+    // Filter all lines that are not shown because of collapsed folding region.
     VisualPosition visStart = new VisualPosition(line, 0);
     LogicalPosition logStart = editor.visualToLogicalPosition(visStart);
     int lastLogLine = logStart.line;
-    while (lastLogLine < editor.getDocument().getLineCount() - 1) {
+    while (lastLogLine < document.getLineCount() - 1) {
       logStart = new LogicalPosition(logStart.line + 1, logStart.column);
       VisualPosition tryVisible = editor.logicalToVisualPosition(logStart);
       if (tryVisible.line != visStart.line) break;
       lastLogLine = logStart.line;
     }
 
-    int lastLine = editor.getDocument().getLineCount() - 1;
-    if (lastLine < 0) {
-      return 0;
+    int resultLogLine = Math.min(lastLogLine, lastLine);
+    VisualPosition resVisStart = editor.offsetToVisualPosition(document.getLineStartOffset(resultLogLine));
+    VisualPosition resVisEnd = editor.offsetToVisualPosition(document.getLineEndOffset(resultLogLine));
+
+    // Target logical line is not soft wrap affected.
+    if (resVisStart.line == resVisEnd.line) {
+      return resVisEnd.column;
     }
-    return editor.offsetToVisualPosition(editor.getDocument().getLineEndOffset(Math.min(lastLogLine, lastLine))).column;
+
+    int visualLinesToSkip = line - resVisStart.line;
+    List<? extends TextChange> softWraps = editor.getSoftWrapModel().getSoftWrapsForLine(resultLogLine);
+    for (int i = 0; i < softWraps.size(); i++) {
+      TextChange softWrap = softWraps.get(i);
+      CharSequence text = document.getCharsSequence();
+      if (visualLinesToSkip <= 0) {
+        int result = editor.offsetToVisualPosition(softWrap.getStart() - 1).column;
+        // We need to add width of the next symbol because current result column points to the last symbol before the soft wrap.
+        return  result + textWidthInColumns(editor, text, softWrap.getStart() - 1, softWrap.getStart(), result);
+      }
+
+      int softWrapLineFeeds = StringUtil.countNewLines(softWrap.getText());
+      if (softWrapLineFeeds < visualLinesToSkip) {
+        visualLinesToSkip -= softWrapLineFeeds;
+        continue;
+      }
+
+      // Target visual column is located on the last visual line of the current soft wrap.
+      if (softWrapLineFeeds == visualLinesToSkip) {
+        if (i >= softWraps.size() - 1) {
+          return resVisEnd.column;
+        }
+        // We need to find visual column for line feed of the next soft wrap.
+        TextChange nextSoftWrap = softWraps.get(i + 1);
+        int result = editor.offsetToVisualPosition(nextSoftWrap.getStart() - 1).column;
+
+        // We need to add symbol width because current column points to the last symbol before the next soft wrap;
+        result += textWidthInColumns(editor, text, nextSoftWrap.getStart() - 1, nextSoftWrap.getStart(), result);
+
+        int lineFeedIndex = StringUtil.indexOf(nextSoftWrap.getText(), '\n');
+        result += textWidthInColumns(editor, nextSoftWrap.getText(), 0, lineFeedIndex, result);
+        return result;
+      }
+
+      // Target visual column is the one before line feed introduced by the current soft wrap.
+      int softWrapStartOffset = 0;
+      int softWrapEndOffset = 0;
+      int softWrapTextLength = softWrap.getText().length();
+      while (visualLinesToSkip-- > 0) {
+        softWrapStartOffset = softWrapEndOffset + 1;
+        if (softWrapStartOffset >= softWrapTextLength) {
+          assert false;
+          return resVisEnd.column;
+        }
+        softWrapEndOffset = StringUtil.indexOf(softWrap.getText(), '\n', softWrapStartOffset, softWrapTextLength);
+        if (softWrapEndOffset < 0) {
+          assert false;
+          return resVisEnd.column;
+        }
+      }
+      int result = editor.offsetToVisualPosition(softWrap.getStart() - 1).column; // Column of the symbol just before the soft wrap
+      // Target visual column is located on the last visual line of the current soft wrap.
+      result += textWidthInColumns(editor, text, softWrap.getStart() - 1, softWrap.getStart(), result);
+      result += calcColumnNumber(editor, softWrap.getText(), softWrapStartOffset, softWrapEndOffset);
+      return result;
+    }
+
+    assert false;
+    return resVisEnd.column;
   }
 
   public static float calcVerticalScrollProportion(Editor editor) {
-    Rectangle viewRect = editor.getScrollingModel().getVisibleAreaOnScrollingFinished();
-    if (viewRect.height == 0) {
+    Rectangle viewArea = editor.getScrollingModel().getVisibleAreaOnScrollingFinished();
+    if (viewArea.height == 0) {
       return 0;
     }
     LogicalPosition pos = editor.getCaretModel().getLogicalPosition();
     Point location = editor.logicalPositionToXY(pos);
-    return (location.y - viewRect.y) / (float) viewRect.height;
+    return (location.y - viewArea.y) / (float) viewArea.height;
   }
 
   public static void setVerticalScrollProportion(Editor editor, float proportion) {
-    Rectangle viewRect = editor.getScrollingModel().getVisibleArea();
+    Rectangle viewArea = editor.getScrollingModel().getVisibleArea();
     LogicalPosition caretPosition = editor.getCaretModel().getLogicalPosition();
     Point caretLocation = editor.logicalPositionToXY(caretPosition);
     int yPos = caretLocation.y;
-    yPos -= viewRect.height * proportion;
+    yPos -= viewArea.height * proportion;
     editor.getScrollingModel().scrollVertically(yPos);
   }
 
@@ -163,6 +233,10 @@ public class EditorUtil {
     return tabSize - colNumber % tabSize;
   }
 
+  public static int calcColumnNumber(Editor editor, CharSequence text, int start, int offset) {
+    return calcColumnNumber(editor, text, start, offset, getTabSize(editor));
+  }
+
   public static int calcColumnNumber(Editor editor, CharSequence text, int start, int offset, int tabSize) {
     boolean useOptimization = true;
     boolean hasNonTabs = false;
@@ -230,6 +304,75 @@ public class EditorUtil {
 
     int nTabs = x / tabSize;
     return (nTabs + 1) * tabSize;
+  }
+
+  /**
+   * Allows to answer how many columns are used to represent tabulation symbols that is started at the given visual column
+   * at the given editor.
+   *
+   * @param visualColumn    visual column where target tabulation symbol starts
+   * @param editor          target editor where tabulation symbol is to be represented
+   * @return                number of visual columns required to represent tabulation symbols that starts at the given column
+   */
+  public static int tabWidthInColumns(@NotNull Editor editor, int visualColumn) {
+    if (!editor.getSettings().isWhitespacesShown()) {
+      return 1;
+    }
+    int tabSize = getTabSize(editor);
+    int tabsNumber = visualColumn / tabSize;
+    return (tabsNumber + 1) * tabSize - visualColumn;
+  }
+
+  public static int textWidthInColumns(@NotNull Editor editor, CharSequence text, int start, int end, int columnOffset) {
+    int result = 0;
+    for (int i = start; i < end; i++) {
+      if (text.charAt(i) == '\t') {
+        result += tabWidthInColumns(editor, columnOffset + result);
+      }
+      else {
+        result++;
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Allows to answer what width in pixels is required to draw fragment of the given char array from <code>[start; end)</code> interval
+   * at the given editor.
+   * <p/>
+   * Tabulation symbols is processed specially, i.e. it's ta
+   * <p/>
+   * <b>Note:</b> it's assumed that target text fragment remains to the single line, i.e. line feed symbols within it are not
+   * treated specially.
+   *
+   * @param editor    editor that will be used for target text representation
+   * @param text      target text holder
+   * @param start     offset within the given char array that points to target text start (inclusive)
+   * @param end       offset within the given char array that points to target text end (exclusive)
+   * @param fontType  font type to use for target text representation
+   * @param x         <code>'x'</code> coordinate that should be used as a starting point for target text representation.
+   *                  It's necessity is implied by the fact that IDEA editor may represent tabulation symbols in any range
+   *                  from <code>[1; tab size]</code> (check {@link #nextTabStop(int, Editor)} for more details)
+   * @return          width in pixels required for target text representation
+   */
+  public static int textWidth(@NotNull Editor editor, char[] text, int start, int end, int fontType, int x) {
+    int result = 0;
+    for (int i = start; i < end; i++) {
+      char c = text[i];
+      if (c != '\t') {
+        FontInfo font = fontForChar(c, fontType, editor);
+        result += font.charWidth(c, editor.getContentComponent());
+        continue;
+      }
+
+      if (editor.getSettings().isWhitespacesShown()) {
+        result += nextTabStop(x + result, editor) - result - x;
+      }
+      else {
+        result += getSpaceWidth(fontType, editor);
+      }
+    }
+    return result;
   }
 }
 

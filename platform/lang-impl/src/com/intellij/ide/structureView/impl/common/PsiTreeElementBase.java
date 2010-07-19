@@ -25,12 +25,12 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -102,7 +102,7 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
     for (StructureViewExtension extension : structureViewFactory.getAllExtensions(aClass)) {
       StructureViewTreeElement[] children = extension.getChildren(element);
       if (children != null) {
-        result.addAll(Arrays.asList(children));
+        ContainerUtil.addAll(result, children);
       }
     }
     return result.toArray(new StructureViewTreeElement[result.size()]);

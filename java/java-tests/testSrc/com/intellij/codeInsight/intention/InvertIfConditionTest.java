@@ -9,13 +9,10 @@
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 
 public class InvertIfConditionTest extends LightIntentionActionTestCase {
-  private LanguageLevel myPrevLanguageLevel;
 
   protected String getBasePath() {
     return BASE_PATH;
@@ -23,18 +20,6 @@ public class InvertIfConditionTest extends LightIntentionActionTestCase {
 
   private static final String BASE_PATH = "/codeInsight/invertIfCondition/";
   private boolean myElseOnNewLine;
-
-  protected void setUp() throws Exception {
-    super.setUp();
-
-    myPrevLanguageLevel = LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).getLanguageLevel();
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
-  }
-
-  protected void tearDown() throws Exception {
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(myPrevLanguageLevel);
-    super.tearDown();
-  }
 
   protected boolean shouldBeAvailableAfterExecution() {
     return true;

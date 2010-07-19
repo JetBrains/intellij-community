@@ -45,6 +45,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +53,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
@@ -435,7 +435,7 @@ public class HighlightInfo {
         if (localInspectionTool instanceof CustomSuppressableInspectionTool) {
           final IntentionAction[] suppressActions = ((CustomSuppressableInspectionTool)localInspectionTool).getSuppressActions(element);
           if (suppressActions != null) {
-            newOptions.addAll(Arrays.asList(suppressActions));
+            ContainerUtil.addAll(newOptions, suppressActions);
           }
         }
       }

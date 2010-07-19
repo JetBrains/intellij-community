@@ -53,7 +53,7 @@ public class GitStashUtils {
   }
 
   /**
-   * Create stash for later use
+   * Create stash for later use (it ignores exit code 1 [merge conflict])
    *
    * @param project the project to use
    * @param root    the root
@@ -62,6 +62,7 @@ public class GitStashUtils {
     GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.STASH);
     handler.setNoSSH(true);
     handler.addParameters("pop");
+    handler.ignoreErrorCode(1);
     if (QUIET_STASH_SUPPORTED.isLessOrEqual(GitVcs.getInstance(project).version())) {
       handler.addParameters("--quiet");
     }

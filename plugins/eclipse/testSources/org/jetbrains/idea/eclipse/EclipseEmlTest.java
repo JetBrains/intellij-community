@@ -31,6 +31,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.IdeaTestCase;
@@ -76,11 +77,18 @@ public class EclipseEmlTest extends IdeaTestCase {
 
     final EclipseClasspathStorageProvider.EclipseClasspathConverter converter =
       new EclipseClasspathStorageProvider.EclipseClasspathConverter(module);
-    final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
+    ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
 
     final Element classpathElement = JDOMUtil.loadDocument(new String(FileUtil.loadFileText(new File(path, EclipseXml.DOT_CLASSPATH_EXT)))).getRootElement();
     converter.getClasspath(rootModel, classpathElement);
+    rootModel.commit();
 
+    checkModule(path, module);
+  }
+
+  protected static void checkModule(String path, Module module) throws WriteExternalException, IOException, JDOMException {
+    ModifiableRootModel rootModel;
+    rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
     final Element root = new Element("component");
     IdeaSpecificSettings.writeIDEASpecificClasspath(root, rootModel);
     rootModel.dispose();

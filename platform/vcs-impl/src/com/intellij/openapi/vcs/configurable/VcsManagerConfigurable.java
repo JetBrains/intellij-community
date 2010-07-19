@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictConfigurable;
 import com.intellij.openapi.vcs.changes.ui.IgnoredSettingsPanel;
+import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
@@ -124,7 +125,7 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
     }*/
     result.add(new IssueNavigationConfigurationPanel(myProject));
     result.add(new ChangelistConflictConfigurable(ChangeListManagerImpl.getInstanceImpl(myProject)));
-    AbstractVcs[] vcses = ProjectLevelVcsManager.getInstance(myProject).getAllVcss();
+    VcsDescriptor[] vcses = ProjectLevelVcsManager.getInstance(myProject).getAllVcss();
 
     if (vcses.length > 0) {
       result.add(createVcsComposeConfigurable(vcses));
@@ -142,11 +143,11 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
     });
   }
 
-  private static Configurable createVcsComposeConfigurable(final AbstractVcs[] vcses) {
+  private Configurable createVcsComposeConfigurable(final VcsDescriptor[] vcses) {
     return new SearchableConfigurable.Parent.Abstract(){
       protected Configurable[] buildConfigurables() {
         List<Configurable> result = new ArrayList<Configurable>();
-        for (AbstractVcs vcs : vcses) {
+        for (VcsDescriptor vcs : vcses) {
           result.add(createVcsConfigurableWrapper(vcs));
         }
         return result.toArray(new Configurable[result.size()]);
@@ -171,8 +172,9 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
     };
   }
 
-  private static Configurable createVcsConfigurableWrapper(final AbstractVcs vcs) {
-    final Configurable delegate = vcs.getConfigurable();
+  private Configurable createVcsConfigurableWrapper(final VcsDescriptor vcs) {
+    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+    final Configurable delegate = vcsManager.findVcsByName(vcs.getName()).getConfigurable();
     return new SearchableConfigurable(){
       @Nls
       public String getDisplayName() {

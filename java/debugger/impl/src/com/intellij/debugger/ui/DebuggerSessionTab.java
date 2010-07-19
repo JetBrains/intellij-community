@@ -338,6 +338,11 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
         e.getPresentation().setText(ActionsBundle.message("group.XDebugger.settings.text"));
         e.getPresentation().setIcon(layoutGroup.getTemplatePresentation().getIcon());
       }
+
+      @Override
+      public boolean isDumbAware() {
+        return true;
+      }
     };
     for (AnAction each : layout) {
       settings.add(each);

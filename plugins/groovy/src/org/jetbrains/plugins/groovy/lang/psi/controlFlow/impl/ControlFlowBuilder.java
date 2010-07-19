@@ -389,16 +389,17 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     }
 
     myHead = head;
+    if (condition != null) {
+      myNegate = !myNegate;
+      final boolean old = myAssertionsOnly;
+      myAssertionsOnly = true;
+      condition.accept(this);
+      myNegate = !myNegate;
+      myAssertionsOnly = old;
+    }
+
     final GrStatement elseBranch = ifStatement.getElseBranch();
     if (elseBranch != null) {
-      if (condition != null) {
-        myNegate = !myNegate;
-        final boolean old = myAssertionsOnly;
-        myAssertionsOnly = true;
-        condition.accept(this);
-        myNegate = !myNegate;
-        myAssertionsOnly = old;
-      }
       elseBranch.accept(this);
       addPendingEdge(ifStatement, myHead);
     }
@@ -430,9 +431,13 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       final GrExpression condition = ((GrTraditionalForClause)clause).getCondition();
       if (condition != null) {
         condition.accept(this);
+        if (!alwaysTrue(condition)) {
+          addPendingEdge(forStatement, myHead); //break cycle
+        }
       }
+    } else {
+      addPendingEdge(forStatement, myHead); //break cycle
     }
-    addPendingEdge(forStatement, myHead); //break cycle
 
     final GrStatement body = forStatement.getBody();
     if (body != null) {
@@ -501,8 +506,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     if (condition != null) {
       condition.accept(this);
     }
-    final boolean endless = Boolean.TRUE.equals(myConstantEvaluator.computeConstantExpression(condition));
-    if (!endless) {
+    if (!alwaysTrue(condition)) {
       addPendingEdge(whileStatement, myHead); //break
     }
     final GrCondition body = whileStatement.getBody();
@@ -513,6 +517,10 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     if (myHead != null) addEdge(myHead, instruction); //loop
     flowAbrupted();
     finishNode(instruction);
+  }
+
+  private boolean alwaysTrue(GroovyPsiElement condition) {
+    return Boolean.TRUE.equals(myConstantEvaluator.computeConstantExpression(condition));
   }
 
   public void visitSwitchStatement(GrSwitchStatement switchStatement) {

@@ -17,6 +17,7 @@ package com.intellij.lang.ant;
 
 import com.intellij.lang.CompositeLanguage;
 import com.intellij.lang.StdLanguages;
+import com.intellij.lang.ant.dom.AntDomAntlib;
 import com.intellij.lang.ant.dom.AntDomElement;
 import com.intellij.lang.ant.dom.AntDomProject;
 import com.intellij.lang.ant.psi.AntFile;
@@ -135,6 +136,16 @@ public class AntSupport implements ApplicationComponent {
     if (psiFile instanceof XmlFile) {
       final DomManager domManager = DomManager.getDomManager(psiFile.getProject());
       final DomFileElement<AntDomProject> fileElement = domManager.getFileElement((XmlFile)psiFile, AntDomProject.class);
+      return fileElement != null? fileElement.getRootElement() : null;
+    }
+    return null;
+  }
+
+  @Nullable
+  public static AntDomAntlib getAntLib(PsiFile psiFile) {
+    if (psiFile instanceof XmlFile) {
+      final DomManager domManager = DomManager.getDomManager(psiFile.getProject());
+      final DomFileElement<AntDomAntlib> fileElement = domManager.getFileElement((XmlFile)psiFile, AntDomAntlib.class);
       return fileElement != null? fileElement.getRootElement() : null;
     }
     return null;

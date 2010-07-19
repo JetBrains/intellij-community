@@ -32,11 +32,11 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class AntTargetReference extends AntGenericReference {
@@ -183,7 +183,7 @@ public class AntTargetReference extends AntGenericReference {
       }
     }
 
-    result.addAll(Arrays.asList(project.getImportedTargets()));
+    ContainerUtil.addAll(result, project.getImportedTargets());
 
     return result.toArray();
   }

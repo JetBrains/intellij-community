@@ -24,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.ui.ListScrollingUtil;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.ClosableByLeftArrow;
 import com.intellij.ui.popup.PopupIcons;
 import com.intellij.ui.popup.WizardPopup;
@@ -406,7 +407,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     myIndexForShowingChild = aIndexForShowingChild;
   }
 
-  private class MyList extends JList implements DataProvider{
+  private class MyList extends JBList implements DataProvider{
     public MyList() {
       super(myListModel);
     }

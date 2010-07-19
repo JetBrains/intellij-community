@@ -20,6 +20,8 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.DumbService;
@@ -29,6 +31,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.ui.PrevNextActionsDescriptor;
+import com.intellij.ui.SideBorder;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.tabs.UiDecorator;
 import org.jetbrains.annotations.NotNull;
@@ -77,7 +80,6 @@ public abstract class EditorComposite implements Disposable {
   private FileEditor mySelectedEditor;
   private final FileEditorManagerEx myFileEditorManager;
   private final long myInitialFileModificationStamp;
-  private final Map<FileEditor, FileEditorInfoPane> myInfoPanes = new HashMap<FileEditor, FileEditorInfoPane>();
   private final Map<FileEditor, JComponent> myTopComponents = new HashMap<FileEditor, JComponent>();
   private final Map<FileEditor, JComponent> myBottomComponents = new HashMap<FileEditor, JComponent>();
 
@@ -198,19 +200,13 @@ public abstract class EditorComposite implements Disposable {
 
     component.add(comp, BorderLayout.CENTER);
 
-    final JPanel topPanel = new JPanel();
-    topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
+    JPanel topPanel = new TopBottomPanel();
     myTopComponents.put(editor, topPanel);
     component.add(topPanel, BorderLayout.NORTH);
 
-    final JPanel bottomPanel = new JPanel();
-    bottomPanel.setLayout(new BoxLayout(bottomPanel, BoxLayout.Y_AXIS));
+    final JPanel bottomPanel = new TopBottomPanel();
     myBottomComponents.put(editor, bottomPanel);
     component.add(bottomPanel, BorderLayout.SOUTH);
-
-    FileEditorInfoPane infoPane = new FileEditorInfoPane();
-    myInfoPanes.put(editor, infoPane);
-    addTopComponent(editor, infoPane);
 
     return component;
   }
@@ -307,15 +303,11 @@ public abstract class EditorComposite implements Disposable {
     assert container != null;
 
     if (remove) {
-      container.remove(component);
+      container.remove(component.getParent());
     } else {
-      container.add(component);
+      container.add(new TopBottomComponentWrapper(component, top));
     }
     container.revalidate();
-  }
-
-  public FileEditorInfoPane getPane(FileEditor editor) {
-    return myInfoPanes.get(editor);
   }
 
   /**
@@ -408,5 +400,34 @@ public abstract class EditorComposite implements Disposable {
   }
 
   public void dispose() {
+  }
+
+  private class TopBottomPanel extends JPanel {
+    private TopBottomPanel() {
+      setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+    }
+
+    @Override
+    public Color getBackground() {
+      Color color = EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.GUTTER_BACKGROUND);
+      return color == null ? Color.gray : color;
+    }
+  }
+
+  private class TopBottomComponentWrapper extends JPanel {
+    public TopBottomComponentWrapper(JComponent component, boolean top) {
+      super(new BorderLayout());
+      setOpaque(false);
+
+      setBorder(new SideBorder(null, top ? SideBorder.BOTTOM : SideBorder.TOP, true) {
+        @Override
+        public Color getLineColor() {
+          Color result = EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.TEARLINE_COLOR);
+          return result == null ? Color.black : result;
+        }
+      });
+      
+      add(component);
+    }
   }
 }

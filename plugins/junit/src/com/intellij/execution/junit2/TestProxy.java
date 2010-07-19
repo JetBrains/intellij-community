@@ -162,6 +162,11 @@ public class TestProxy extends CompositePrintable implements PrintableTestProxy,
     return getChildCount() == 0;
   }
 
+  @Override
+  public boolean isInterrupted() {
+    return getMagnitude() == PoolOfTestStates.TERMINATED_INDEX;
+  }
+
   public boolean isPassed() {
     return getMagnitude() <= PoolOfTestStates.PASSED_INDEX;
   }

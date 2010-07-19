@@ -15,9 +15,7 @@
  */
 package com.intellij.formatting;
 
-import com.intellij.formatting.templateLanguages.DataLanguageBlockWrapper;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.formatter.common.AbstractBlock;
 
 import java.io.PrintStream;
 import java.util.List;

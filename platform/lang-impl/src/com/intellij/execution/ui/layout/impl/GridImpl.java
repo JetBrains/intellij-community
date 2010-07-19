@@ -26,33 +26,25 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.switcher.SwitchProvider;
 import com.intellij.ui.switcher.SwitchTarget;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.*;
 import java.util.List;
-import java.awt.*;
 
 public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform.Facade, DataProvider {
-
   private final ThreeComponentsSplitter myTopSplit = new ThreeComponentsSplitter();
   private final Splitter mySplitter = new Splitter(true);
 
-  private final HashMap<PlaceInGrid, GridCellImpl> myPlaceInGrid2Cell = new HashMap<PlaceInGrid, GridCellImpl>();
-
-  private final Placeholder myLeft = new Placeholder();
-  private final Placeholder myCenter = new Placeholder();
-  private final Placeholder myRight = new Placeholder();
-  private final Placeholder myBottom = new Placeholder();
+  private final Map<PlaceInGrid, GridCellImpl> myPlaceInGrid2Cell = new EnumMap<PlaceInGrid, GridCellImpl>(PlaceInGrid.class);
 
   private final String mySessionName;
 
   private final List<Content> myContents = new ArrayList<Content>();
-  private final Map<Content, GridCellImpl> myContent2Cell = new java.util.HashMap<Content, GridCellImpl>();
+  private final Map<Content, GridCellImpl> myContent2Cell = new HashMap<Content, GridCellImpl>();
 
   private final Comparator<Content> myContentComparator = new Comparator<Content>() {
     public int compare(final Content o1, final Content o2) {
@@ -60,7 +52,6 @@ public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform
     }
   };
 
-  private boolean myLastUiStateWasRestored;
   private final ViewContextEx myViewContext;
 
   public GridImpl(ViewContextEx viewContext, String sessionName) {
@@ -68,22 +59,27 @@ public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform
     mySessionName = sessionName;
 
     Disposer.register(myViewContext, this);
+    Disposer.register(this, myTopSplit);
 
-    myPlaceInGrid2Cell.put(PlaceInGrid.left, new GridCellImpl(myViewContext, this, myLeft, PlaceInGrid.left));
-    myPlaceInGrid2Cell.put(PlaceInGrid.center, new GridCellImpl(myViewContext, this, myCenter, PlaceInGrid.center));
-    myPlaceInGrid2Cell.put(PlaceInGrid.right, new GridCellImpl(myViewContext, this, myRight, PlaceInGrid.right));
-    myPlaceInGrid2Cell.put(PlaceInGrid.bottom, new GridCellImpl(myViewContext, this, myBottom, PlaceInGrid.bottom));
+    Placeholder left = new Placeholder();
+    myPlaceInGrid2Cell.put(PlaceInGrid.left, new GridCellImpl(myViewContext, this, left, PlaceInGrid.left));
+    Placeholder center = new Placeholder();
+    myPlaceInGrid2Cell.put(PlaceInGrid.center, new GridCellImpl(myViewContext, this, center, PlaceInGrid.center));
+    Placeholder right = new Placeholder();
+    myPlaceInGrid2Cell.put(PlaceInGrid.right, new GridCellImpl(myViewContext, this, right, PlaceInGrid.right));
+    Placeholder bottom = new Placeholder();
+    myPlaceInGrid2Cell.put(PlaceInGrid.bottom, new GridCellImpl(myViewContext, this, bottom, PlaceInGrid.bottom));
 
     setContent(mySplitter);
     setOpaque(false);
     setFocusCycleRoot(true);
 
 
-    myTopSplit.setFirstComponent(myLeft);
-    myTopSplit.setInnerComponent(myCenter);
-    myTopSplit.setLastComponent(myRight);
+    myTopSplit.setFirstComponent(left);
+    myTopSplit.setInnerComponent(center);
+    myTopSplit.setLastComponent(right);
     mySplitter.setFirstComponent(myTopSplit);
-    mySplitter.setSecondComponent(myBottom);
+    mySplitter.setSecondComponent(bottom);
 
   }
 
@@ -125,7 +121,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform
   }
 
 
-  public void add(final Content content, final boolean select) {
+  void add(final Content content) {
     GridCellImpl cell = getCellFor(content);
     cell.add(content);
     myContents.add(content);
@@ -133,7 +129,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform
     Collections.sort(myContents, myContentComparator);
   }
 
-  public void remove(final Content content) {
+  void remove(final Content content) {
     getCellFor(content).remove(content);
     myContents.remove(content);
     myContent2Cell.remove(content);
@@ -156,23 +152,14 @@ public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform
   }
 
   public boolean updateGridUI() {
-    boolean hasToolbarContent = true;
-    boolean wasHidden = false;
     for (final GridCellImpl cell : myPlaceInGrid2Cell.values()) {
       final boolean eachToHide = myContents.size() == 1 && !cell.isDetached();
       cell.setHideTabs(eachToHide);
-      wasHidden |= eachToHide;
     }
 
-    if (wasHidden) {
-      hasToolbarContent = false;
-    } {
-      final Content onlyContent = myContents.get(0);
-      hasToolbarContent = onlyContent.getSearchComponent() != null;
-    }
+    final Content onlyContent = myContents.get(0);
 
-
-    return hasToolbarContent;
+    return onlyContent.getSearchComponent() != null;
   }
 
   public boolean isEmpty() {
@@ -180,7 +167,6 @@ public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform
   }
 
   public ActionCallback restoreLastUiState() {
-    myLastUiStateWasRestored = true;
     final ActionCallback result = new ActionCallback(myPlaceInGrid2Cell.values().size());
     for (final GridCellImpl cell : myPlaceInGrid2Cell.values()) {
       cell.restoreLastUiState().notifyWhenDone(result);

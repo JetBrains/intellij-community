@@ -20,15 +20,15 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.SystemInfo;
@@ -118,9 +118,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
   private final WindowAdapter myActivationListener;
   private final ApplicationInfoEx myApplicationInfoEx;
   private final DataManager myDataManager;
-  private final ActionManager myActionManager;
+  private final ActionManagerEx myActionManager;
   private final UISettings myUiSettings;
-  private final KeymapManager myKeymapManager;
 
   /**
    * invoked by reflection
@@ -128,18 +127,15 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
    * @param applicationInfoEx
    * @param actionManager
    * @param uiSettings
-   * @param keymapManager
    */
   public WindowManagerImpl(DataManager dataManager,
-                              ApplicationInfoEx applicationInfoEx,
-                              ActionManager actionManager,
-                              UISettings uiSettings,
-                              KeymapManager keymapManager) {
+                           ApplicationInfoEx applicationInfoEx,
+                           ActionManagerEx actionManager,
+                           UISettings uiSettings) {
     myApplicationInfoEx = applicationInfoEx;
     myDataManager = dataManager;
     myActionManager = actionManager;
     myUiSettings = uiSettings;
-    myKeymapManager = keymapManager;
     if (myDataManager instanceof DataManagerImpl) {
         ((DataManagerImpl)myDataManager).setWindowManager(this);
     }
@@ -180,7 +176,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
 
   public void showFrame(final String[] args) {
     IdeEventQueue.getInstance().setWindowManager(this);
-    final IdeFrameImpl frame = new IdeFrameImpl(myApplicationInfoEx, myActionManager, myUiSettings, myDataManager, myKeymapManager,
+    final IdeFrameImpl frame = new IdeFrameImpl(myApplicationInfoEx, myActionManager, myUiSettings, myDataManager,
                                                 ApplicationManager.getApplication(), args);
     myProject2Frame.put(null, frame);
     if (myFrameBounds != null) {
@@ -270,7 +266,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     setAlphaMode(window, ratio);
   }
 
-  private void setAlphaMode(Window window, float ratio) {
+  private static void setAlphaMode(Window window, float ratio) {
     try {
       if (SystemInfo.isMacOSLeopard) {
         if (window instanceof JWindow) {
@@ -305,12 +301,23 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     }
   }
 
+  @Override
+  public void setWindowShadow(Window window, WindowShadowMode mode) {
+    if (window instanceof JWindow) {
+      JRootPane root = ((JWindow)window).getRootPane();
+
+      root.putClientProperty("Window.shadow", mode == WindowShadowMode.DISABLED ? Boolean.FALSE : Boolean.TRUE);
+      root.putClientProperty("Window.style", mode == WindowShadowMode.SMALL ? "small" : null);
+    }
+  }
+
   public void resetWindow(final Window window) {
     try {
       if (!isAlphaModeSupported()) return;
 
       WindowUtils.setWindowMask(window, (Shape)null);
       setAlphaMode(window, 0f);
+      setWindowShadow(window, WindowShadowMode.NORMAL);
     }
     catch (Throwable e) {
       LOG.debug(e);
@@ -342,6 +349,25 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
       else {
         queueForDisposal(dialog, project);
         dialog.setVisible(false);
+      }
+    }
+  }
+
+  @Override
+  public void adjustContainerWindow(Component c, Dimension oldSize, Dimension newSize) {
+    if (c == null) return;
+
+    Window wnd = SwingUtilities.getWindowAncestor(c);
+
+    if (wnd instanceof JWindow) {
+      JBPopup popup = (JBPopup)((JWindow)wnd).getRootPane().getClientProperty(JBPopup.KEY);
+      if (popup != null) {
+        if (oldSize.height < newSize.height) {
+          Dimension size = popup.getSize();
+          size.height += (newSize.height - oldSize.height);
+          popup.setSize(size);
+          popup.moveToFitScreen();
+        }
       }
     }
   }
@@ -396,7 +422,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     return frame;
   }
 
-  private IdeFrameImpl tryToFindTheOnlyFrame() {
+  private static IdeFrameImpl tryToFindTheOnlyFrame() {
     IdeFrameImpl candidate = null;
     final Frame[] all = Frame.getFrames();
     for (Frame each : all) {
@@ -421,16 +447,15 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
   public IdeFrame getIdeFrame(final Project project) {
     if (project != null) {
       return getFrame(project);
-    } else {
-      final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-      final Component parent = UIUtil.findUltimateParent(window);
-      if (parent instanceof IdeFrame) return (IdeFrame)parent;
+    }
+    final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+    final Component parent = UIUtil.findUltimateParent(window);
+    if (parent instanceof IdeFrame) return (IdeFrame)parent;
 
-      final Frame[] frames = Frame.getFrames();
-      for (Frame each : frames) {
-        if (each instanceof IdeFrame) {
-          return (IdeFrame)each;
-        }
+    final Frame[] frames = Frame.getFrames();
+    for (Frame each : frames) {
+      if (each instanceof IdeFrame) {
+        return (IdeFrame)each;
       }
     }
 
@@ -448,8 +473,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
       frame.setProject(project);
     }
     else {
-      frame = new IdeFrameImpl((ApplicationInfoEx)ApplicationInfo.getInstance(), ActionManager.getInstance(), UISettings.getInstance(),
-                               DataManager.getInstance(), KeymapManager.getInstance(), ApplicationManager.getApplication(), ArrayUtil.EMPTY_STRING_ARRAY);
+      frame = new IdeFrameImpl((ApplicationInfoEx)ApplicationInfo.getInstance(), ActionManagerEx.getInstanceEx(), UISettings.getInstance(),
+                               DataManager.getInstance(), ApplicationManager.getApplication(), ArrayUtil.EMPTY_STRING_ARRAY);
       if (myFrameBounds != null) {
         frame.setBounds(myFrameBounds);
       }

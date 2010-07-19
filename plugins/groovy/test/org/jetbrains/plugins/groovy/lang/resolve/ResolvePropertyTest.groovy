@@ -569,4 +569,10 @@ set<caret>Foo(2)
     def resolved = ref.resolve()
     assertInstanceOf resolved, GrMethod
   }
+
+  public void testPropertyUseInCategory() {
+    PsiReference ref = configureByFile("propertyUseInCategory/a.groovy")
+    PsiElement resolved = ref.resolve()
+    assertInstanceOf resolved, PsiMethod
+  }
 }

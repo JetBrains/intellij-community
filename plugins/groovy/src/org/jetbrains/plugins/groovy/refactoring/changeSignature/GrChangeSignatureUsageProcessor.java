@@ -67,7 +67,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.DefaultGroovyVariableNameValidator;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -196,7 +195,8 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       else {
         PsiType type = newReturnType.getType(context, method.getManager());
         final PsiType oldReturnType = method.getReturnType();
-        if (!TypesUtil.isAssignable(type, oldReturnType, context.getManager(), context.getResolveScope())) { //todo ask for replace covariant type 
+        if (!TypesUtil
+          .isAssignable(type, oldReturnType, context.getManager(), context.getResolveScope())) { //todo ask for replace covariant type
           method.setReturnType(substitutor.substitute(type));
         }
       }
@@ -207,7 +207,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     GrParameter[] oldParameters = parameterList.getParameters();
 
     Set<GrParameter> toRemove = new HashSet<GrParameter>(oldParameters.length);
-    toRemove.addAll(Arrays.asList(oldParameters));
+    ContainerUtil.addAll(toRemove, oldParameters);
 
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(method.getProject());
     GrParameter anchor = null;
@@ -360,7 +360,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     invocation = (GrConstructorInvocation)block.addStatementBefore(invocation, getFirstStatement(block));
     processMethodUsage(invocation.getThisOrSuperKeyword(), changeInfo,
                        changeInfo.isParameterSetOrOrderChanged() || changeInfo.isParameterNamesChanged(),
-                       changeInfo.isExceptionSetChanged(), GrClosureSignatureUtil.ArgInfo.EMPTY_ARRAY, substitutor);
+                       changeInfo.isExceptionSetChanged(), GrClosureSignatureUtil.ArgInfo.<PsiElement>empty_array(), substitutor);
   }
 
   @Nullable
@@ -374,7 +374,8 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
                                          JavaChangeInfo changeInfo,
                                          boolean toChangeArguments,
                                          boolean toCatchExceptions,
-                                         GrClosureSignatureUtil.ArgInfo[] map, PsiSubstitutor substitutor) {
+                                         GrClosureSignatureUtil.ArgInfo<PsiElement>[] map,
+                                         PsiSubstitutor substitutor) {
     if (map == null) return;
     if (changeInfo.isNameChanged()) {
       if (element instanceof GrReferenceElement) {
@@ -395,7 +396,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
         }
       }
       Set<PsiElement> argsToDelete = new HashSet<PsiElement>(map.length * 2);
-      for (GrClosureSignatureUtil.ArgInfo argInfo : map) {
+      for (GrClosureSignatureUtil.ArgInfo<PsiElement> argInfo : map) {
         argsToDelete.addAll(argInfo.args);
       }
 
@@ -417,7 +418,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
         JavaParameterInfo parameter = parameters[i];
         int index = parameter.getOldIndex();
         if (index >= 0) {
-          GrClosureSignatureUtil.ArgInfo argInfo = map[index];
+          GrClosureSignatureUtil.ArgInfo<PsiElement> argInfo = map[index];
           List<PsiElement> arguments = argInfo.args;
           if (argInfo.isMultiArg) { //arguments for Map and varArg
             if ((i != 0 || !(arguments.size() > 0 && arguments.iterator().next() instanceof GrNamedArgument)) &&

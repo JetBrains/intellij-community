@@ -25,7 +25,10 @@ import com.intellij.ide.structureView.impl.StructureViewFactoryImpl;
 import com.intellij.ide.structureView.impl.StructureViewState;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.ide.ui.customization.CustomizationUtil;
-import com.intellij.ide.util.treeView.*;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.AbstractTreeStructure;
+import com.intellij.ide.util.treeView.NodeDescriptorProvidingKey;
+import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.ide.util.treeView.smartTree.TreeModel;
 import com.intellij.openapi.Disposable;
@@ -44,8 +47,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.ui.AutoScrollFromSourceHandler;
 import com.intellij.ui.AutoScrollToSourceHandler;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
@@ -87,7 +90,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   private final Project myProject;
   private final StructureViewModel myTreeModel;
   private static int ourSettingsModificationCount;
-  private JTree myTree;
+  private Tree myTree;
 
   public StructureViewComponent(FileEditor editor, StructureViewModel structureViewModel, Project project) {
     this(editor, structureViewModel, project, true);
@@ -139,7 +142,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       }
     });
 
-    setContent(new JScrollPane(myAbstractTreeBuilder.getTree()));
+    setContent(ScrollPaneFactory.createScrollPane(myAbstractTreeBuilder.getTree()));
 
     myAbstractTreeBuilder.getTree().setCellRenderer(new NodeRenderer());
 
@@ -165,7 +168,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     myAutoScrollToSourceHandler.install(getTree());
     myAutoScrollFromSourceHandler.install();
 
-    TreeToolTipHandler.install(getTree());
     TreeUtil.installActions(getTree());
     new TreeSpeedSearch(getTree());
 
@@ -562,10 +564,9 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   }
 
   public JTree getTree() {
-    return myAbstractTreeBuilder == null ? null : myAbstractTreeBuilder.getTree();
+    return myTree;
   }
 
- 
   private final class MyAutoScrollToSourceHandler extends AutoScrollToSourceHandler {
     private boolean myShouldAutoScroll = true;
 

@@ -149,6 +149,10 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     return Collections.unmodifiableList(myShelvedChangeLists);
   }
 
+  /*public ShelvedChangeList shelveChanges(final Collection<Change> changes, final String commitMessage, final Runnable callAfterReverted) throws IOException, VcsException {
+
+  }*/
+
   public ShelvedChangeList shelveChanges(final Collection<Change> changes, final String commitMessage) throws IOException, VcsException {
     final List<Change> textChanges = new ArrayList<Change>();
     final List<ShelvedBinaryFile> binaryFiles = new ArrayList<ShelvedBinaryFile>();

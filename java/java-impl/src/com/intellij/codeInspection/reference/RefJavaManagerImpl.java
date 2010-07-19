@@ -209,19 +209,19 @@ public class RefJavaManagerImpl extends RefJavaManager {
   @Nullable
   public String getType(final RefEntity ref) {
     if (ref instanceof RefMethod) {
-      return RefJavaManager.METHOD;
+      return METHOD;
     }
     else if (ref instanceof RefClass) {
-      return RefJavaManager.CLASS;
+      return CLASS;
     }
     else if (ref instanceof RefField) {
-      return RefJavaManager.FIELD;
+      return FIELD;
     }
     else if (ref instanceof RefParameter) {
-      return RefJavaManager.PARAMETER;
+      return PARAMETER;
     }
     else if (ref instanceof RefPackage) {
-      return RefJavaManager.PACKAGE;
+      return PACKAGE;
     }
     return null;
   }
@@ -247,8 +247,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
   }
 
   public boolean belongsToScope(final PsiElement psiElement) {
-    if (psiElement instanceof PsiTypeParameter) return false;
-    return true;
+    return !(psiElement instanceof PsiTypeParameter);
   }
 
   public void export(final RefEntity refEntity, final Element element) {
@@ -265,8 +264,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
 
   private static void appendPackageElement(final Element element, final String packageName) {
     final Element packageElement = new Element("package");
-    packageElement
-              .addContent(packageName.length() > 0 ? packageName : InspectionsBundle.message("inspection.export.results.default"));
+    packageElement.addContent(packageName.length() > 0 ? packageName : InspectionsBundle.message("inspection.export.results.default"));
     element.addContent(packageElement);
   }
 
@@ -320,7 +318,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
     public void visitMethod(final PsiMethod method) {
       super.visitMethod(method);
       final RefElement refElement = myRefManager.getReference(method);
-      if (refElement instanceof RefMethod) {
+      if (refElement instanceof RefMethodImpl) {
         ((RefMethodImpl)refElement).buildReferences();
       }
     }
@@ -328,7 +326,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
     public void visitField(final PsiField field) {
       super.visitField(field);
       final RefElement refElement = myRefManager.getReference(field);
-      if (refElement instanceof RefField) {
+      if (refElement instanceof RefFieldImpl) {
         ((RefFieldImpl)refElement).buildReferences();
       }
     }

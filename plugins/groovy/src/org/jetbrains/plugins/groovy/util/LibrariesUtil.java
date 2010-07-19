@@ -120,7 +120,7 @@ public class LibrariesUtil {
       }
     }
 
-    final String home = getGroovyLibraryHome(ModuleRootManager.getInstance(module).getFiles(OrderRootType.CLASSES));
+    final String home = getGroovyLibraryHome(OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots());
     return StringUtil.isEmpty(home) ? null : home;
   }
 

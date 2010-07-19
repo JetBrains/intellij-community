@@ -24,10 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.ui.ErrorLabel;
-import com.intellij.ui.GroupedElementsRenderer;
-import com.intellij.ui.LoadingNode;
-import com.intellij.ui.TreeUIHelper;
+import com.intellij.ui.*;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
@@ -114,7 +111,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       }
     });
 
-    final JScrollPane scrolls = new JScrollPane(myTree);
+    final JScrollPane scrolls = ScrollPaneFactory.createScrollPane(myTree);
     scrolls.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 
     add(scrolls, BorderLayout.CENTER);
@@ -434,13 +431,12 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     }
 
     protected SimpleNode[] buildChildren() {
-      ArrayList<SimpleNode> result = new ArrayList<SimpleNode>();
-      for (int i = 0; i < myGroups.size(); i++) {
-        ConfigurableGroup eachGroup = myGroups.get(i);
+      List<SimpleNode> result = new ArrayList<SimpleNode>();
+      for (ConfigurableGroup eachGroup : myGroups) {
         result.addAll(buildGroup(eachGroup));
       }
 
-      return result.toArray(new SimpleNode[result.size()]);
+      return result.isEmpty() ? NO_CHILDREN : result.toArray(new SimpleNode[result.size()]);
     }
 
     private List<EditorNode> buildGroup(final ConfigurableGroup eachGroup) {
@@ -461,7 +457,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
     }
   }
 
-  private boolean isInvisibleNode(final Configurable child) {
+  private static boolean isInvisibleNode(final Configurable child) {
     return child instanceof SearchableConfigurable.Parent && !((SearchableConfigurable.Parent)child).isVisible();
   }
 
@@ -494,12 +490,12 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
       return result; // TODO: DECIDE IF INNERS SHOULD BE SORTED: sort(result);
     }
     else {
-      return Collections.EMPTY_LIST;
+      return Collections.emptyList();
     }
   }
 
+  private static final EditorNode[] EMPTY_EN_ARRAY = new EditorNode[0];
   class EditorNode extends Base {
-
     Configurable myConfigurable;
     ConfigurableGroup myGroup;
 
@@ -513,7 +509,7 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
 
     protected EditorNode[] buildChildren() {
       List<EditorNode> list = OptionsTree.this.buildChildren(myConfigurable, this, null);
-      return list.toArray(new EditorNode[list.size()]);
+      return list.isEmpty() ? EMPTY_EN_ARRAY : list.toArray(new EditorNode[list.size()]);
     }
 
     @Override
@@ -608,7 +604,6 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
 
     @Override
     protected void configureUiHelper(final TreeUIHelper helper) {
-      helper.installToolTipHandler(this);
     }
 
     @Override

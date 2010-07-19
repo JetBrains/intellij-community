@@ -19,13 +19,14 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Comparator;
 
-public class CheckoutActionGroup extends ActionGroup {
+public class CheckoutActionGroup extends ActionGroup implements DumbAware {
 
   private AnAction[] myChildren;
 

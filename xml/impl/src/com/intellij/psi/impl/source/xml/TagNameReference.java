@@ -20,6 +20,7 @@ import com.intellij.codeInsight.completion.XmlTagInsertHandler;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -41,6 +42,7 @@ import com.intellij.xml.XmlElementDescriptorAwareAboutChildren;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
+import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
@@ -76,12 +78,14 @@ public class TagNameReference implements PsiReference {
       return new TextRange(0, 0);
     }
 
+    int colon = nameElement.getText().indexOf(':') + 1;
     if (myStartTagFlag) {
       final int parentOffset = ((TreeElement)nameElement).getStartOffsetInParent();
-      return new TextRange(parentOffset, parentOffset + nameElement.getTextLength());
-    } else {
+      return new TextRange(parentOffset + colon, parentOffset + nameElement.getTextLength());
+    }
+    else {
       final PsiElement element = getElement();
-      if (element == myNameElement) return new TextRange(0, myNameElement.getTextLength());
+      if (element == myNameElement) return new TextRange(colon, myNameElement.getTextLength());
 
       final int elementLength = element.getTextLength();
       int diffFromEnd = 0;
@@ -91,7 +95,7 @@ public class TagNameReference implements PsiReference {
       }
 
       final int nameEnd = elementLength - diffFromEnd;
-      return new TextRange(nameEnd - nameElement.getTextLength(), nameEnd);
+      return new TextRange(nameEnd - nameElement.getTextLength() + colon, nameEnd);
     }
   }
 
@@ -175,24 +179,35 @@ public class TagNameReference implements PsiReference {
     final PsiElement element = getElement();
     if(!myStartTagFlag){
       if (element instanceof XmlTag) {
-        return new LookupElement[]{createClosingTagLookupElement((XmlTag)element)};
+        return new LookupElement[]{createClosingTagLookupElement((XmlTag)element, false)};
       }
       return ArrayUtil.EMPTY_STRING_ARRAY;
     }
-    return getTagNameVariants((XmlTag)element);
+    return getTagNameVariants((XmlTag)element, ((XmlTag)element).getNamespacePrefix());
   }
 
-  protected static LookupElement createClosingTagLookupElement(XmlTag tag) {
-    return TailTypeDecorator.withTail(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE.applyPolicy(LookupElementBuilder.create(tag.getName())), TailType.createSimpleTailType('>'));
+  public LookupElement createClosingTagLookupElement(XmlTag tag, boolean includePrefix) {
+    LookupElementBuilder builder = LookupElementBuilder.create(includePrefix || !myNameElement.getText().contains(":") ? tag.getName() : tag.getLocalName());
+    return TailTypeDecorator.withTail(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE.applyPolicy(builder),
+                                      TailType.createSimpleTailType('>'));
   }
 
+  public static LookupElement[] getTagNameVariants(final @NotNull XmlTag tag, final String prefix) {
+    final List<String> namespaces;
+    if (prefix.isEmpty()) {
+      namespaces = new ArrayList<String>(Arrays.asList(tag.knownNamespaces()));
+      namespaces.add(XmlUtil.EMPTY_URI); // empty namespace
+    }
+    else {
+      namespaces = new ArrayList<String>(Collections.singletonList(tag.getNamespace()));
+    }
+    final String[] variants = getTagNameVariants(tag, namespaces, null);
+    return ContainerUtil.map2Array(variants, LookupElement.class, new Function<String, LookupElement>() {
+      public LookupElement fun(String qname) {
 
-  public static LookupElement[] getTagNameVariants(final XmlTag element) {
-    final ArrayList<String> namespaces = new ArrayList<String>(Arrays.asList(element.knownNamespaces()));
-    namespaces.add(XmlUtil.EMPTY_URI); // empty namespace
-    final String[] variants = getTagNameVariants(element, namespaces, null);
-    return ContainerUtil.map2Array(variants, MutableLookupElement.class, new Function<String, MutableLookupElement>() {
-      public MutableLookupElement fun(String qname) {
+        if (!prefix.isEmpty() && qname.startsWith(prefix)) {
+          qname = qname.substring(prefix.length() + 1);    
+        }
         final MutableLookupElement<String> lookupElement = LookupElementFactory.getInstance().createLookupElement(qname);
         final int separator = qname.indexOf(':');
         if (separator > 0) {
@@ -249,12 +264,21 @@ public class TagNameReference implements PsiReference {
       }
     }
 
-    List<String> l = ContainerUtil.mapNotNull(variants, new NullableFunction<XmlElementDescriptor, String>() {
+    final boolean hasPrefix = StringUtil.isNotEmpty(element.getNamespacePrefix());
+    final List<String> list = ContainerUtil.mapNotNull(variants, new NullableFunction<XmlElementDescriptor, String>() {
       public String fun(XmlElementDescriptor descriptor) {
-        return descriptor instanceof AnyXmlElementDescriptor ? null : descriptor.getName(element);
+        if (descriptor instanceof AnyXmlElementDescriptor) {
+          return null;
+        }
+        else if (hasPrefix && descriptor instanceof XmlElementDescriptorImpl && 
+                 !namespaces.contains(((XmlElementDescriptorImpl)descriptor).getNamespace())) {
+          return null;
+        }
+
+        return descriptor.getName(element);
       }
     });
-    return ArrayUtil.toStringArray(l);
+    return ArrayUtil.toStringArray(list);
   }
 
   private static void processVariantsInNamespace(final String namespace,
@@ -262,14 +286,15 @@ public class TagNameReference implements PsiReference {
                                                  final List<XmlElementDescriptor> variants,
                                                  final XmlElementDescriptor elementDescriptor,
                                                  final String elementNamespace,
-                                                 final Map<String, XmlElementDescriptor> descriptorsMap, final Set<XmlNSDescriptor> visited,
+                                                 final Map<String, XmlElementDescriptor> descriptorsMap,
+                                                 final Set<XmlNSDescriptor> visited,
                                                  XmlTag parent,
                                                  final XmlExtension extension) {
     if(descriptorsMap.containsKey(namespace)){
         final XmlElementDescriptor descriptor = descriptorsMap.get(namespace);
 
       if(isAcceptableNs(element, elementDescriptor, elementNamespace, namespace)){
-        for(XmlElementDescriptor containedDescriptor:descriptor.getElementsDescriptors(parent)) {
+        for(XmlElementDescriptor containedDescriptor: descriptor.getElementsDescriptors(parent)) {
           if (containedDescriptor != null) variants.add(containedDescriptor);
         }
       }
@@ -350,7 +375,7 @@ public class TagNameReference implements PsiReference {
   }
 
   @Nullable
-  public static PsiReference createTagNameReference(XmlElement element, @NotNull ASTNode nameElement, boolean startTagFlag) {
+  static TagNameReference createTagNameReference(XmlElement element, @NotNull ASTNode nameElement, boolean startTagFlag) {
     final XmlExtension extension = XmlExtension.getExtensionByElement(element);
     return extension == null ? null : extension.createTagNameReference(nameElement, startTagFlag);
   }

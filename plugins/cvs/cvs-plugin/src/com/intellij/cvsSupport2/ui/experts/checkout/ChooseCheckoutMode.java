@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.checkout.CheckoutStrategy;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.Icons;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
@@ -45,7 +46,7 @@ public class ChooseCheckoutMode extends WizardStep {
   private File mySelectedLocation;
   private final Collection<File> myCvsPaths = new ArrayList<File>();
   private final DefaultListModel myCheckoutModeModel = new DefaultListModel();
-  private final JList myCheckoutModeList = new JList(myCheckoutModeModel);
+  private final JList myCheckoutModeList = new JBList(myCheckoutModeModel);
   private final JCheckBox myMakeNewFielsReadOnly = new JCheckBox(com.intellij.CvsBundle.message("checkbox.make.new.files.read.only"));
   private final JCheckBox myPruneEmptyDirectories = new JCheckBox(com.intellij.CvsBundle.message("checkbox.prune.empty.directories"));
   private final ChangeKeywordSubstitutionPanel myChangeKeywordSubstitutionPanel;

@@ -87,6 +87,4 @@ binding.setVariable("loadProject", {
 
 requireProperty("home", guessHome())
 
-project.stagePrinter = { String message ->
-  println "##teamcity[progressMessage '$message']"
-}
+project.builder.buildInfoPrinter = new org.jetbrains.jps.teamcity.TeamcityBuildInfoPrinter()

@@ -53,11 +53,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub> implements PsiJavaFile, PsiFileWithStubSupport, PsiFileEx,
-                                                                                            Queryable {
+                                                                                            Queryable, PsiClassOwnerEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsFileImpl");
 
   static final Object MIRROR_LOCK = new String("Mirror Lock");
@@ -172,6 +174,11 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   @NotNull
   public String[] getImplicitlyImportedPackages() {
     return ArrayUtil.EMPTY_STRING_ARRAY;
+  }
+
+  @Override
+  public Set<String> getClassNames() {
+    return Collections.singleton(getVirtualFile().getNameWithoutExtension());
   }
 
   @NotNull

@@ -32,9 +32,6 @@
     <extensionPoint name="junitPatcher"
                     interface="com.intellij.execution.JUnitPatcher"/>
 
-    <extensionPoint name="javaClasspathPolicyExtender"
-                    interface="com.intellij.execution.configurations.JavaClasspathPolicyExtender"/>
-
     <extensionPoint name="i18nInspectionTool"
                     interface="com.intellij.codeInspection.FileCheckingInspection"/>
     <extensionPoint name="invalidPropertyKeyInspectionTool"
@@ -120,6 +117,7 @@
                     interface="com.intellij.codeInsight.generation.surroundWith.JavaExpressionSurrounder"/>
 
     <extensionPoint name="frameworkSupport" interface="com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider"/>
+    <extensionPoint name="frameworkSupportCommunicator" interface="com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportCommunicator"/>
 
     <!--new project wizard-->
     <extensionPoint name="wizardMode" interface="com.intellij.ide.util.newProjectWizard.modes.WizardMode"/>
@@ -216,6 +214,7 @@
     <definitionsSearch implementation="com.intellij.codeInsight.navigation.ClassImplementationsSearch"/>
 
     <inspectionToolProvider implementation="com.intellij.codeInspection.ex.StandardInspectionToolsProvider"/>
+    <inspectionToolProvider implementation="com.intellij.codeInspection.internal.InternalInspectionToolsProvider"/>
 
     <renameHandler implementation="com.intellij.ide.projectView.impl.RenameModuleHandler"/>
 
@@ -537,6 +536,10 @@
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ConcatenationToMessageFormatAction</className>
+      <category>I18N</category>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.ConvertToBasicLatinAction</className>
       <category>I18N</category>
     </intentionAction>
 
@@ -913,6 +916,8 @@
     <patternDialectProvider implementation="com.intellij.packageDependencies.ui.PackagePatternProvider" id="package" order="before file" />
     <scopeDescriptorProvider implementation="com.intellij.ide.util.scopeChooser.HierarchyScopeDescriptorProvider"/>
 
+    <patterns.patternClass className="com.intellij.patterns.PsiJavaPatterns" alias="java"/>
+
     <customScopesProvider implementation="com.intellij.analysis.PackagesScopesProvider"/>
 
     <highlightErrorFilter implementation="com.intellij.codeInsight.daemon.impl.analysis.JavadocErrorFilter"/>
@@ -1135,7 +1140,9 @@
                         serviceImplementation="com.intellij.profile.codeInspection.JavaAwareInspectionProfileManager"/>
     <exportable serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"/>
     <schemeOwner serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"/>
-  </extensions>
+
+    <resolveScopeEnlarger implementation="com.intellij.psi.NonClasspathResolveScopeEnlarger"/>
+    </extensions>
 
   <xi:include href="/META-INF/xdebugger.xml" xpointer="xpointer(/root/*)"/>
   <extensions defaultExtensionNs="com.intellij">

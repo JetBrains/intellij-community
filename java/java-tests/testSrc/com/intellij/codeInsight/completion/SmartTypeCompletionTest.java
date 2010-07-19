@@ -15,7 +15,6 @@ import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Condition;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -25,7 +24,6 @@ import org.jetbrains.annotations.NonNls;
 
 public class SmartTypeCompletionTest extends LightCompletionTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/smartType";
-  private LanguageLevel myPrevLanguageLevel;
 
   @Override
   protected String getTestDataPath() {
@@ -764,13 +762,13 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
   }
 
   public void testAfterNew15() throws Exception {
+    setLanguageLevel(LanguageLevel.JDK_1_5);
     doActionItemTest();
   }
 
   public void testInsertOverride() throws Exception {
     CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(getProject());
     styleSettings.INSERT_OVERRIDE_ANNOTATION = true;
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_6);
     doActionItemTest();
   }
 
@@ -1064,20 +1062,12 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
 
   protected void setUp() throws Exception {
     super.setUp();
-    myPrevLanguageLevel = LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).getLanguageLevel();
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
     setType(CompletionType.SMART);
-  }
-
-  protected void tearDown() throws Exception {
-    LookupManager.getInstance(getProject()).hideActiveLookup();
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(myPrevLanguageLevel);
-    super.tearDown();
   }
 
   @Override
   protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk15("java 1.5");
+    return JavaSdkImpl.getMockJdk17("java 1.5");
   }
 
   private void select() {

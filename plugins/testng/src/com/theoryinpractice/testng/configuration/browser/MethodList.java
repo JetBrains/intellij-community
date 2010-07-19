@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBList;
 import com.theoryinpractice.testng.util.TestNGUtil;
 
 import java.awt.BorderLayout;
@@ -53,7 +54,7 @@ public class MethodList extends JPanel
     {
         super(new BorderLayout());
         model = new SortedListModel<PsiMethod>(comparator);
-        list = new JList(model);
+        list = new JBList(model);
         this.psiClass = psiClass;
         evaluate(psiClass.getAllMethods(), new TestMethodFilter());
         add(ScrollPaneFactory.createScrollPane(list));

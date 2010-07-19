@@ -846,7 +846,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     frame.getContentPane().add(content, BorderLayout.CENTER);
 
 
-    final JTree tree = new JTree();
+    final JTree tree = new Tree();
     content.add(tree);
 
 

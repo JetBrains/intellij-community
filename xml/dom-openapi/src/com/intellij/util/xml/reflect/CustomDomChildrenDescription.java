@@ -16,8 +16,48 @@
 
 package com.intellij.util.xml.reflect;
 
+import com.intellij.pom.PomTarget;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.EvaluatedXmlName;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.Set;
+
 /**
  * @author peter
  */
 public interface CustomDomChildrenDescription extends AbstractDomChildrenDescription {
+  @NotNull
+  TagNameDescriptor getTagNameDescriptor();
+
+  abstract class TagNameDescriptor {
+    public static final TagNameDescriptor EMPTY = new TagNameDescriptor() {
+      @Override
+      public Set<EvaluatedXmlName> getCompletionVariants(@NotNull DomElement parent) {
+        return Collections.emptySet();
+      }
+
+      @Override
+      public PomTarget findDeclaration(DomElement parent, @NotNull EvaluatedXmlName name) {
+        return null;
+      }
+
+      @Override
+      public PomTarget findDeclaration(@NotNull DomElement child) {
+        return child.getChildDescription();
+      }
+    };
+
+    public abstract Set<EvaluatedXmlName> getCompletionVariants(@NotNull DomElement parent);
+
+    @Nullable
+    public abstract PomTarget findDeclaration(DomElement parent, @NotNull EvaluatedXmlName name);
+
+    @Nullable
+    public abstract PomTarget findDeclaration(@NotNull DomElement child);
+    
+  }
+  
 }

@@ -25,6 +25,7 @@ public class RootUrlInfo implements RootUrlPair {
   private final String myRepositoryUrl;
   private final SVNURL myAbsoluteUrlAsUrl;
   private final WorkingCopyFormat myFormat;
+  private boolean myRepoSupportsMergeInfo;
 
   private final File myIoFile;
   private final VirtualFile myVfile;
@@ -33,11 +34,12 @@ public class RootUrlInfo implements RootUrlPair {
   private NestedCopyType myType;
 
   public RootUrlInfo(final SVNURL repositoryUrl, final SVNURL absoluteUrlAsUrl, final WorkingCopyFormat format, final VirtualFile vfile,
-                     final VirtualFile root) {
+                     final VirtualFile root, boolean repoSupportsMergeInfo) {
     myRepositoryUrlUrl = repositoryUrl;
     myFormat = format;
     myVfile = vfile;
     myRoot = root;
+    myRepoSupportsMergeInfo = repoSupportsMergeInfo;
     myIoFile = new File(myVfile.getPath());
     final String asString = repositoryUrl.toString();
     myRepositoryUrl = asString.endsWith("/") ? asString.substring(0, asString.length() - 1) : asString;
@@ -88,5 +90,13 @@ public class RootUrlInfo implements RootUrlPair {
 
   public void setType(NestedCopyType type) {
     myType = type;
+  }
+
+  public boolean isRepoSupportsMergeInfo() {
+    return myRepoSupportsMergeInfo;
+  }
+
+  public void setRepoSupportsMergeInfo(boolean repoSupportsMergeInfo) {
+    myRepoSupportsMergeInfo = repoSupportsMergeInfo;
   }
 }

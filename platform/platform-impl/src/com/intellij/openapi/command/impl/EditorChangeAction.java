@@ -24,7 +24,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.impl.FileStatusManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NonNls;
 
@@ -53,19 +52,11 @@ class EditorChangeAction implements UndoableAction {
   public void undo() {
     exchangeStrings(myNewString, myOldString);
     getDocument().setModificationStamp(myTimeStamp);
-    commitAllDocuments();
     refreshFileStatus();
-  }
-
-  private static void commitAllDocuments() {
-    for (Project p : ProjectManager.getInstance().getOpenProjects()) {
-      PsiDocumentManager.getInstance(p).commitAllDocuments();
-    }
   }
 
   public void redo() {
     exchangeStrings(myOldString, myNewString);
-    commitAllDocuments();
     refreshFileStatus();
   }
 

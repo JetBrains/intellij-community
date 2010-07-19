@@ -45,7 +45,7 @@ public interface AnnotationHolder {
    * @param message the error message.
    * @return the annotation (which can be modified to set additional annotation parameters)
    */
-  Annotation createErrorAnnotation(ASTNode node, @Nullable String message);
+  Annotation createErrorAnnotation(@NotNull ASTNode node, @Nullable String message);
 
   /**
    * Creates an error annotation with the specified message over the specified text range.
@@ -54,7 +54,7 @@ public interface AnnotationHolder {
    * @param message the error message.
    * @return the annotation (which can be modified to set additional annotation parameters)
    */
-  Annotation createErrorAnnotation(TextRange range, @Nullable String message);
+  Annotation createErrorAnnotation(@NotNull TextRange range, @Nullable String message);
 
   /**
    * Creates a warning annotation with the specified message over the specified PSI element.
@@ -63,7 +63,7 @@ public interface AnnotationHolder {
    * @param message the warning message.
    * @return the annotation (which can be modified to set additional annotation parameters)
    */
-  Annotation createWarningAnnotation(PsiElement elt, @Nullable String message);
+  Annotation createWarningAnnotation(@NotNull PsiElement elt, @Nullable String message);
 
   /**
    * Creates a warning annotation with the specified message over the specified AST node.
@@ -72,7 +72,7 @@ public interface AnnotationHolder {
    * @param message the warning message.
    * @return the annotation (which can be modified to set additional annotation parameters)
    */
-  Annotation createWarningAnnotation(ASTNode node, @Nullable String message);
+  Annotation createWarningAnnotation(@NotNull ASTNode node, @Nullable String message);
 
   /**
    * Creates a warning annotation with the specified message over the specified text range.
@@ -81,7 +81,7 @@ public interface AnnotationHolder {
    * @param message the warning message.
    * @return the annotation (which can be modified to set additional annotation parameters)
    */
-  Annotation createWarningAnnotation(TextRange range, @Nullable String message);
+  Annotation createWarningAnnotation(@NotNull TextRange range, @Nullable String message);
 
   /**
     * Creates an annotation with severity {@link HighlightSeverity#INFO} ('weak warning') with the specified
@@ -91,7 +91,7 @@ public interface AnnotationHolder {
     * @param message the info message.
     * @return the annotation (which can be modified to set additional annotation parameters)
     */
-   Annotation createInformationAnnotation(PsiElement elt, @Nullable String message);
+   Annotation createInformationAnnotation(@NotNull PsiElement elt, @Nullable String message);
 
    /**
     * Creates an annotation with severity {@link HighlightSeverity#INFO} ('weak warning') with the specified
@@ -101,7 +101,7 @@ public interface AnnotationHolder {
     * @param message the info message.
     * @return the annotation (which can be modified to set additional annotation parameters)
     */
-   Annotation createInformationAnnotation(ASTNode node, @Nullable String message);
+   Annotation createInformationAnnotation(@NotNull ASTNode node, @Nullable String message);
 
    /**
     * Creates an annotation with severity {@link HighlightSeverity#INFO} ('weak warning') with the specified
@@ -111,7 +111,7 @@ public interface AnnotationHolder {
     * @param message the info message.
     * @return the annotation (which can be modified to set additional annotation parameters)
     */
-   Annotation createInformationAnnotation(TextRange range, String message);
+   Annotation createInformationAnnotation(@NotNull TextRange range, String message);
 
 
   /**
@@ -122,7 +122,7 @@ public interface AnnotationHolder {
    * @param message the information message.
    * @return the annotation (which can be modified to set additional annotation parameters)
    */
-  Annotation createInfoAnnotation(PsiElement elt, @Nullable String message);
+  Annotation createInfoAnnotation(@NotNull PsiElement elt, @Nullable String message);
 
   /**
    * Creates an information annotation (colored highlighting only, with no gutter mark and not participating in
@@ -132,7 +132,7 @@ public interface AnnotationHolder {
    * @param message the information message.
    * @return the annotation (which can be modified to set additional annotation parameters)
    */
-  Annotation createInfoAnnotation(ASTNode node, @Nullable String message);
+  Annotation createInfoAnnotation(@NotNull ASTNode node, @Nullable String message);
 
   /**
    * Creates an information annotation (colored highlighting only, with no gutter mark and not participating in
@@ -142,6 +142,6 @@ public interface AnnotationHolder {
    * @param message the information message.
    * @return the annotation (which can be modified to set additional annotation parameters)
    */
-  Annotation createInfoAnnotation(TextRange range, String message);
+  Annotation createInfoAnnotation(@NotNull TextRange range, String message);
 
 }

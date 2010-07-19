@@ -122,6 +122,11 @@ public class SMTestProxy extends CompositePrintable implements PrintableTestProx
     return myChildren == null || myChildren.isEmpty();
   }
 
+  @Override
+  public boolean isInterrupted() {
+    return myState.wasTerminated();
+  }
+
   public boolean isPassed() {
     return myState.getMagnitude() == TestStateInfo.Magnitude.SKIPPED_INDEX ||
            myState.getMagnitude() == TestStateInfo.Magnitude.COMPLETE_INDEX ||

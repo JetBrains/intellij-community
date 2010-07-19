@@ -1,0 +1,7 @@
+include "included.rnc" {
+  i<caret> = element foo { empty }
+}
+start = istart.element
+div {
+  istart.element = element foo { empty }
+}

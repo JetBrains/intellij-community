@@ -45,6 +45,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.Place;
@@ -292,7 +293,12 @@ public class QuickEditAction implements IntentionAction {
         new WriteCommandAction.Simple(myProject, origFile) {
           @Override
           protected void run() throws Throwable {
-            commitToOriginalInner();
+            PostprocessReformattingAspect.getInstance(myProject).disablePostprocessFormattingInside(new Runnable() {
+              @Override
+              public void run() {
+                commitToOriginalInner();
+              }
+            });
           }
         }.execute();
       }
@@ -307,11 +313,14 @@ public class QuickEditAction implements IntentionAction {
         .classify(myMarkers.entrySet().iterator(),
                   new Convertor<Map.Entry<SmartPsiElementPointer, Pair<RangeMarker, RangeMarker>>, PsiLanguageInjectionHost>() {
                     public PsiLanguageInjectionHost convert(final Map.Entry<SmartPsiElementPointer, Pair<RangeMarker, RangeMarker>> o) {
-                      return (PsiLanguageInjectionHost)o.getKey().getElement();
+                      final PsiElement element = o.getKey().getElement();
+                      return (PsiLanguageInjectionHost)element;
                     }
                   });
       PsiDocumentManager.getInstance(myProject).commitDocument(myOrigDocument);
+      int localInsideFileCursor = 0;
       for (PsiLanguageInjectionHost host : map.keySet()) {
+        if (host == null) continue;
         final String hostText = host.getText();
         TextRange insideHost = null;
         final StringBuilder sb = new StringBuilder();
@@ -321,12 +330,13 @@ public class QuickEditAction implements IntentionAction {
           final TextRange localInsideHost =
             new TextRange(origMarker.getStartOffset() - hostOffset, origMarker.getEndOffset() - hostOffset);
           final RangeMarker rangeMarker = entry.getValue().second;
-          final TextRange localInsideFile = new TextRange(rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
+          final TextRange localInsideFile = new TextRange(Math.max(localInsideFileCursor, rangeMarker.getStartOffset()), rangeMarker.getEndOffset());
           if (insideHost != null) {
+            //append unchanged inter-markers fragment
             sb.append(hostText.substring(insideHost.getEndOffset(), localInsideHost.getStartOffset()));
           }
-          sb.append(localInsideFile.getEndOffset() <= text.length()? localInsideFile.substring(text) : "");
-
+          sb.append(localInsideFile.getEndOffset() <= text.length() && !localInsideFile.isEmpty()? localInsideFile.substring(text) : "");
+          localInsideFileCursor = localInsideFile.getEndOffset();
           insideHost = insideHost == null ? localInsideHost : insideHost.union(localInsideHost);
         }
         assert insideHost != null;

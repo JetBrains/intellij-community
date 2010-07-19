@@ -29,23 +29,18 @@ import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 
 public class ButtonlessScrollBarUI extends BasicScrollBarUI {
-
   public static final Color GRADIENT_LIGHT = new SameColor(0xfb);
   public static final Color GRADIENT_DARK = new SameColor(0xd7);
   public static final Color GRADIENT_THUMB_BORDER = new SameColor(0xc9);
-  public static final Color PLAIN_THUMB_FILL = new SameColor(0xe5);
-  public static final Color PLAIN_THUMB_BORDER = new SameColor(0xd0);
   public static final Color TRACK_BACKGROUND = LightColors.SLIGHTLY_GRAY;
   public static final Color TRACK_BORDER = new SameColor(230);
 
-  private final boolean myIsMini;
   private final AdjustmentListener myAdjustmentListener;
   private final Animator myAnimator;
 
   private int myAnimationColorShift = 0;
 
-  protected ButtonlessScrollBarUI(boolean isMini) {
-    myIsMini = isMini;
+  protected ButtonlessScrollBarUI() {
     myAdjustmentListener = new AdjustmentListener() {
       @Override
       public void adjustmentValueChanged(AdjustmentEvent e) {
@@ -54,10 +49,16 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       }
     };
 
-    myAnimator = new Animator("Adjustment fadeout", myIsMini ? 5 : 10, myIsMini ? 300 : 500, false, 1, 0) {
+    final int delayFrames = 4;
+    final int framesCount = 10 + delayFrames;
+    myAnimator = new Animator("Adjustment fadeout", framesCount, framesCount * 50, false, 1, 0) {
       @Override
       public void paintNow(float frame, float totalFrames, float cycle) {
-        myAnimationColorShift = (int)((totalFrames - frame) * 3);
+        myAnimationColorShift = 40;
+        if (frame > delayFrames) {
+          myAnimationColorShift *= 1 - ((frame - delayFrames) / (totalFrames - delayFrames));
+        }
+
         if (scrollbar != null) {
           scrollbar.repaint();
         }
@@ -66,20 +67,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   }
 
   public static BasicScrollBarUI createNormal() {
-    return new ButtonlessScrollBarUI(false);
-  }
-
-  public static BasicScrollBarUI createMini() {
-    return new ButtonlessScrollBarUI(true);
-  }
-
-  @Override
-  public void installUI(JComponent c) {
-    if (myIsMini) {
-      c.putClientProperty("JComponent.sizeVariant", "mini");
-    }
-
-    super.installUI(c);
+    return new ButtonlessScrollBarUI();
   }
 
   @Override
@@ -111,10 +99,29 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
   @Override
   protected Dimension getMinimumThumbSize() {
-    final int thickness = myIsMini ? 10 : 18;
+    final int thickness = getThickness();
     return isVertical() ? new Dimension(thickness, thickness * 2) : new Dimension(thickness * 2, thickness);
   }
 
+  protected int getThickness() {
+    return 13;
+  }
+
+  @Override
+  public Dimension getMaximumSize(JComponent c) {
+    int thickness = getThickness();
+    return new Dimension(thickness, thickness);
+  }
+
+  @Override
+  public Dimension getMinimumSize(JComponent c) {
+    return getMaximumSize(c);
+  }
+
+  @Override
+  public Dimension getPreferredSize(JComponent c) {
+    return getMaximumSize(c);
+  }
 
   @Override
   protected void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
@@ -122,30 +129,33 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       return;
     }
 
-
     g.translate(thumbBounds.x, thumbBounds.y);
-
-    if (myIsMini) {
-      paintMiniThumb(g, thumbBounds);
-    }
-    else {
-      paintMaxiThumb(g, thumbBounds);
-    }
-
+    paintMaxiThumb(g, thumbBounds);
     g.translate(-thumbBounds.x, -thumbBounds.y);
   }
 
   private void paintMaxiThumb(Graphics g, Rectangle thumbBounds) {
-    final int gap = 3;
+    final boolean vertical = isVertical();
+    int hgap = vertical ? 2 : 1;
+    int vgap = vertical ? 1 : 2;
 
-    int w = adjustThumbWidth(thumbBounds.width - gap * 2);
-    int h = thumbBounds.height - gap * 2;
 
+
+    int w = adjustThumbWidth(thumbBounds.width - hgap * 2);
+    int h = thumbBounds.height - vgap * 2;
+
+    // leave one pixel between thumb and right or bottom edge
+    if (vertical) {
+      h -= 1;
+    }
+    else {
+      w -= 1;
+    }
     final GradientPaint paint;
     final Color start = adjustColor(GRADIENT_LIGHT);
     final Color end = adjustColor(GRADIENT_DARK);
 
-    if (isVertical()) {
+    if (vertical) {
       paint = new GradientPaint(1, 0, start, w + 1, 0, end);
     }
     else {
@@ -153,10 +163,10 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     }
 
     ((Graphics2D)g).setPaint(paint);
-    g.fillRoundRect(gap, gap, w + 1, h + 1, 4, 4);
+    g.fillRect(hgap + 1, vgap + 1, w - 1, h - 1);
 
     g.setColor(GRADIENT_THUMB_BORDER);
-    g.drawRoundRect(gap, gap, w, h, 4, 4);
+    g.drawRoundRect(hgap, vgap, w, h, 3, 3);
   }
 
   protected int adjustThumbWidth(int width) {
@@ -167,20 +177,6 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     if (myAnimationColorShift == 0) return c;
     return new SameColor(c.getRed() - myAnimationColorShift);
   }
-
-  private void paintMiniThumb(Graphics g, Rectangle thumbBounds) {
-    final int gap = 2;
-
-    int w = thumbBounds.width - gap * 2;
-    int h = thumbBounds.height - gap * 2;
-
-    g.setColor(adjustColor(PLAIN_THUMB_FILL));
-    g.fillRect(gap, gap, w, h);
-
-    g.setColor(PLAIN_THUMB_BORDER);
-    g.drawRect(gap, gap, w, h);
-  }
-
 
   private boolean isVertical() {
     return scrollbar.getOrientation() == JScrollBar.VERTICAL;
@@ -197,6 +193,10 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   }
 
   private static class EmptyButton extends JButton {
+    private EmptyButton() {
+      setFocusable(false);
+    }
+
     @Override
     public Dimension getMaximumSize() {
       return new Dimension(0, 0);

@@ -87,8 +87,8 @@ public class AbstractRerunFailedTestsAction extends AnAction {
 
   @NotNull
   protected List<AbstractTestProxy> getFailedTests(Project project) {
-    List<? extends AbstractTestProxy> myAllTests = getModel().getRoot().getAllTests();
-    return Filter.DEFECTIVE_LEAF.and(JavaAwareFilter.METHOD(project)).select(myAllTests);
+    final List<? extends AbstractTestProxy> myAllTests = getModel().getRoot().getAllTests();
+    return Filter.FAILED_OR_INTERRUPTED.and(JavaAwareFilter.METHOD(project)).select(myAllTests);
   }
 
   public void actionPerformed(AnActionEvent e) {

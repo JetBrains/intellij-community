@@ -25,13 +25,13 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer;
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.TreeSelectionEvent;
@@ -39,7 +39,6 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.util.*;
-import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -139,7 +138,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
           }
         }
       });
-      myScrollPane = new JScrollPane(myStructureTree);
+      myScrollPane = ScrollPaneFactory.createScrollPane(myStructureTree);
       myBuilder = new TreeModelBuilder(myProject, false);
     }
 

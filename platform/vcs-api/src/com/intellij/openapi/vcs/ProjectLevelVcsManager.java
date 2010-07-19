@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
+import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
@@ -68,7 +69,7 @@ public abstract class ProjectLevelVcsManager {
    *
    * @return the list of registered version control systems.
    */
-  public abstract AbstractVcs[] getAllVcss();
+  public abstract VcsDescriptor[] getAllVcss();
 
   /**
    * Returns the version control system with the specified name.
@@ -78,6 +79,8 @@ public abstract class ProjectLevelVcsManager {
    */
   public abstract AbstractVcs findVcsByName(@NonNls String name);
 
+  @Nullable
+  public abstract VcsDescriptor getDescriptor(final String name);
   /**
    * Checks if all files in the specified array are managed by the specified VCS.
    *

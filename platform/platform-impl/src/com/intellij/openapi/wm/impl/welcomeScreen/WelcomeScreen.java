@@ -265,7 +265,7 @@ public class WelcomeScreen {
     myMainPanel.add(quickStartPanel);
     myMainPanel.add(docsPanel);
 
-    JScrollPane myMainScrollPane = new JScrollPane(myMainPanel);
+    JScrollPane myMainScrollPane = ScrollPaneFactory.createScrollPane(myMainPanel);
     myMainScrollPane.setBorder(null);
     myMainScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     myMainScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);

@@ -91,7 +91,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       String message = e.getMessage();
       assertTrue(message, message.startsWith("local variable <b><code>varName</code></b> has 1 usage that is not safe to delete.\n" +
-                                             "Of those 0 usages are in strings, comments, or non-Java files."));
+                                             "Of those 0 usages are in strings, comments, or non-code files."));
     }
   }
 

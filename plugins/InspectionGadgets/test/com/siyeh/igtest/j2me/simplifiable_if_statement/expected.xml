@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>SimplifiableIfStatement.java</file>
+    <line>50</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">If statement may be replaced with &amp;&amp; or || expression</problem_class>
+    <description>&lt;code&gt;if&lt;/code&gt; statement can be replaced with 'return a || b;' #loc</description>
+  </problem>
+
+
+
+  <problem>
+    <file>SimplifiableIfStatement.java</file>
+    <line>70</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">If statement may be replaced with &amp;&amp; or || expression</problem_class>
+    <description>&lt;code&gt;if&lt;/code&gt; statement can be replaced with 'return a &amp;&amp; b;' #loc</description>
+  </problem>
+
+
+
+  <problem>
+    <file>SimplifiableIfStatement.java</file>
+    <line>8</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">If statement may be replaced with &amp;&amp; or || expression</problem_class>
+    <description>&lt;code&gt;if&lt;/code&gt; statement can be replaced with 'i = !a || b;' #loc</description>
+  </problem>
+
+
+
+  <problem>
+    <file>SimplifiableIfStatement.java</file>
+    <line>14</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">If statement may be replaced with &amp;&amp; or || expression</problem_class>
+    <description>&lt;code&gt;if&lt;/code&gt; statement can be replaced with 'j = a || b;' #loc</description>
+  </problem>
+
+
+
+  <problem>
+    <file>SimplifiableIfStatement.java</file>
+    <line>20</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">If statement may be replaced with &amp;&amp; or || expression</problem_class>
+    <description>&lt;code&gt;if&lt;/code&gt; statement can be replaced with 'k = a &amp;&amp; b;' #loc</description>
+  </problem>
+
+
+
+  <problem>
+    <file>SimplifiableIfStatement.java</file>
+    <line>26</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">If statement may be replaced with &amp;&amp; or || expression</problem_class>
+    <description>&lt;code&gt;if&lt;/code&gt; statement can be replaced with 'l = !a &amp;&amp; b;' #loc</description>
+  </problem>
+
+
+
+  <problem>
+    <file>SimplifiableIfStatement.java</file>
+    <line>40</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">If statement may be replaced with &amp;&amp; or || expression</problem_class>
+    <description>&lt;code&gt;if&lt;/code&gt; statement can be replaced with 'return !a || b;' #loc</description>
+  </problem>
+
+
+
+  <problem>
+    <file>SimplifiableIfStatement.java</file>
+    <line>60</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">If statement may be replaced with &amp;&amp; or || expression</problem_class>
+    <description>&lt;code&gt;if&lt;/code&gt; statement can be replaced with 'return !a &amp;&amp; b;' #loc</description>
+  </problem>
+
+  <problem>
+    <file>SimplifiableIfStatement.java</file>
+    <line>79</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">If statement may be replaced with &amp;&amp; or || expression</problem_class>
+    <description>&lt;code&gt;if&lt;/code&gt; statement can be replaced with 'return (a || b) &amp;&amp; (c || d);' #loc</description>
+  </problem>
+</problems>

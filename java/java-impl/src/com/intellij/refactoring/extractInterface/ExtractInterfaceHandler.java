@@ -35,6 +35,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -88,9 +89,9 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler, Elemen
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
             myInterfaceName = dialog.getExtractedSuperName();
-            mySelectedMembers = dialog.getSelectedMembers();
+            mySelectedMembers = ArrayUtil.toObjectArray(dialog.getSelectedMemberInfos(), MemberInfo.class);
             myTargetDir = dialog.getTargetDirectory();
-            myJavaDocPolicy = new DocCommentPolicy(dialog.getJavaDocPolicy());
+            myJavaDocPolicy = new DocCommentPolicy(dialog.getDocCommentPolicy());
             try {
               doRefactoring();
             }

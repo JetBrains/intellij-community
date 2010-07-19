@@ -17,7 +17,9 @@ package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiElement;
@@ -51,14 +53,18 @@ public class CompletionServiceImpl extends CompletionService{
     }
   }
 
-  public CompletionResultSet createResultSet(CompletionParameters parameters, Consumer<LookupElement> consumer,
-                                                      @NotNull CompletionContributor contributor) {
-    final PsiElement position = parameters.getPosition();
-    final String prefix = CompletionData.findPrefixStatic(position, parameters.getOffset());
+  public CompletionResultSet createResultSet(final CompletionParameters parameters, final Consumer<LookupElement> consumer,
+                                                      @NotNull final CompletionContributor contributor) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<CompletionResultSet>() {
+      public CompletionResultSet compute() {
+        final PsiElement position = parameters.getPosition();
+        final String prefix = CompletionData.findPrefixStatic(position, parameters.getOffset());
 
-    final String textBeforePosition = parameters.getPosition().getContainingFile().getText().substring(0, parameters.getOffset());
+        final String textBeforePosition = parameters.getPosition().getContainingFile().getText().substring(0, parameters.getOffset());
 
-    return new CompletionResultSetImpl(consumer, textBeforePosition, new CamelHumpMatcher(prefix), contributor);
+        return new CompletionResultSetImpl(consumer, textBeforePosition, new CamelHumpMatcher(prefix), contributor);
+      }
+    });
   }
 
   @Override

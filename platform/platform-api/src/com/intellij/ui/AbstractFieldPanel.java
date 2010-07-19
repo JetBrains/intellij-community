@@ -209,7 +209,7 @@ public abstract class AbstractFieldPanel extends JPanel {
         }
       }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)), myTextArea);
 
-      return new JScrollPane(myTextArea);
+      return ScrollPaneFactory.createScrollPane(myTextArea);
     }
   }
 }

@@ -39,6 +39,7 @@ import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SeparatorFactory;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
@@ -847,6 +848,17 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     return myProject;
   }
 
+  @Override
+  public boolean vcsIsAffected(String name) {
+    // tod +- performance?
+    if (! ProjectLevelVcsManager.getInstance(myProject).checkVcsIsActive(name)) return false;
+    final List<AbstractVcs> affected = myBrowserExtender.getAffectedVcses();
+    for (AbstractVcs vcs : affected) {
+      if (Comparing.equal(vcs.getName(), name)) return true;
+    }
+    return false;
+  }
+
   public void setCommitMessage(final String currentDescription) {
     setCommitMessageText(currentDescription);
     myCommitMessageArea.requestFocusInMessage();
@@ -976,8 +988,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       super(new BorderLayout());
       myArea.setText(dialog.getCommitMessage());
       myArea.setLineWrap(true);      
-      myArea.setWrapStyleWord(true);      
-      JScrollPane scrollPane = new JScrollPane(myArea);
+      myArea.setWrapStyleWord(true);
+      JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myArea);
       setBorder(IdeBorderFactory.createTitledBorder(VcsBundle.message("diff.commit.message.title")));
       add(scrollPane, BorderLayout.CENTER);
       myCommitDialog = dialog;

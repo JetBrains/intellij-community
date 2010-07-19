@@ -462,8 +462,8 @@ public class HighlightUtil {
     if (rType != null && expression != null && isCastIntentionApplicable(expression, lType)) {
       QuickFixAction.registerQuickFixAction(highlightInfo, new AddTypeCastFix(lType, expression));
     }
-    if (lType instanceof PsiClassType && expression != null) {
-      QuickFixAction.registerQuickFixAction(highlightInfo, new WrapExpressionFix((PsiClassType)lType, expression));
+    if (expression != null && lType != null) {
+      QuickFixAction.registerQuickFixAction(highlightInfo, new WrapExpressionFix(lType, expression));
     }
     ChangeNewOperatorTypeFix.register(highlightInfo, expression, lType);
     return highlightInfo;

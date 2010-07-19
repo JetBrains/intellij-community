@@ -19,7 +19,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.util.NotNullFunction;
+import com.intellij.util.Consumer;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -137,16 +137,16 @@ public class Merger implements IMerger {
            Collections.<CommittedChangeList>emptyList();
   }
 
-  public void getInfo(final NotNullFunction<String, Boolean> holder, final boolean getLatest) {
+  public void getInfo(final Consumer<String> holder, final boolean getLatest) {
     if (getLatest && (myLatestProcessed != null)) {
-      holder.fun(SvnBundle.message("action.Subversion.integrate.changes.warning.failed.list.text", myLatestProcessed.getNumber(),
+      holder.consume(SvnBundle.message("action.Subversion.integrate.changes.warning.failed.list.text", myLatestProcessed.getNumber(),
                                    myLatestProcessed.getComment().replace('\n', '|')));
     }
 
     getSkipped(holder);
   }
 
-  private void getSkipped(final NotNullFunction<String, Boolean> holder) {
+  public void getSkipped(final Consumer<String> holder) {
     final List<CommittedChangeList> tail = getTail();
     if (! tail.isEmpty()) {
       final StringBuilder sb = new StringBuilder();
@@ -158,7 +158,7 @@ public class Merger implements IMerger {
         sb.append(list.getNumber()).append(" (").append(list.getComment().replace('\n', '|')).append(')');
       }
 
-      holder.fun(SvnBundle.message("action.Subversion.integrate.changes.warning.skipped.lists.text", sb.toString()));
+      holder.consume(SvnBundle.message("action.Subversion.integrate.changes.warning.skipped.lists.text", sb.toString()));
     }
   }
 

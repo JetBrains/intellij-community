@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +49,7 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
   private final String myTreeTableTitle;
   private final String myOverrideQuestion;
   private final String myOverrideTitle;
-  private final AbstractFileTreeTable<T> myTreeView;
+  private AbstractFileTreeTable<T> myTreeView;
   private JScrollPane myTreePanel;
   private JPanel myPanel;
   private JLabel myLabel;
@@ -61,10 +62,10 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
     myOverrideQuestion = overrideQuestion;
     myOverrideTitle = overrideTitle;
     myLabel.setText(caption);
-    myTreeView = new MyTreeTable();
   }
 
   public JComponent createComponent() {
+    myTreeView = new MyTreeTable();
     myTreePanel.setViewportView(myTreeView);
     return myPanel;
   }
@@ -91,7 +92,7 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
   }
 
   private void createUIComponents() {
-    myTreePanel = ScrollPaneFactory.createScrollPane(new JTable());
+    myTreePanel = ScrollPaneFactory.createScrollPane(new JBTable());
   }
 
   protected abstract String visualize(@NotNull T t);

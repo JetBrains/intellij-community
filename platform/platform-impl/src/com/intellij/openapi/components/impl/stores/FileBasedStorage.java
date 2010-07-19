@@ -17,6 +17,9 @@ package com.intellij.openapi.components.impl.stores;
 
 
 import com.intellij.Patches;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -39,7 +42,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -255,15 +257,11 @@ public class FileBasedStorage extends XmlElementStorage {
   private Document processReadException(final Exception e) {
     myBlockSavingTheContent = isProjectOrModuleFile();
     if (!ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      SwingUtilities.invokeLater(new Runnable(){
-        public void run() {
-          JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
-                                        "Cannot load settings from file '" + myFile.getPath() + "': " + e.getLocalizedMessage() + "\n" +
-                                        getInvalidContentMessage(),
-                                        "Load Settings",
-                                        JOptionPane.ERROR_MESSAGE);
-        }
-      });
+      LOG.info(e);
+      final String message = "Cannot load settings from file '" + myFile.getPath() + "': " + e.getLocalizedMessage() + "\n" +
+                             getInvalidContentMessage();
+      Notifications.Bus.notify(
+        new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Load Settings", message, NotificationType.WARNING));
     }
 
     return null;

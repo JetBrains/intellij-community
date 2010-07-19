@@ -75,7 +75,7 @@ public class MoveClassTest extends CodeInsightTestCase {
     String root = JavaTestUtil.getJavaTestDataPath() + "/refactoring/moveClass/" + testName;
 
     String rootBefore = root + "/before";
-    PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk("java 1.4"));
+    PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk17());
     VirtualFile rootDir = PsiTestUtil.createTestProjectStructure(myProject, myModule, rootBefore, myFilesToDelete);
 
     performAction(classNames, newPackageName);

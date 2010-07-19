@@ -64,6 +64,7 @@ public class IdeaSpecificSettings {
 
   @NonNls private static final String SRCROOT_ATTR = "srcroot";
   private static final Logger LOG = Logger.getInstance("#" + IdeaSpecificSettings.class.getName());
+  @NonNls private static final String JAVADOCROOT_ATTR = "javadocroot_attr";
 
   private IdeaSpecificSettings() {
   }
@@ -106,24 +107,29 @@ public class IdeaSpecificSettings {
         appendLibraryScope(model, libElement, libraryByName);
         final Library.ModifiableModel modifiableModel = libraryByName.getModifiableModel();
         replaceCollapsedByEclipseSourceRoots(libElement, modifiableModel);
+        for (Object r : libElement.getChildren(JAVADOCROOT_ATTR)) {
+          final String url = ((Element)r).getAttributeValue("url");
+          modifiableModel.addRoot(url, JavadocOrderRootType.getInstance());
+        }
         replaceModuleRelatedRoots(model.getProject(), modifiableModel, libElement, OrderRootType.SOURCES, RELATIVE_MODULE_SRC);
         replaceModuleRelatedRoots(model.getProject(), modifiableModel, libElement, OrderRootType.CLASSES, RELATIVE_MODULE_CLS);
         replaceModuleRelatedRoots(model.getProject(), modifiableModel, libElement, JavadocOrderRootType.getInstance(), RELATIVE_MODULE_JAVADOC);
         modifiableModel.commit();
       }
-      else {
-        libraryByName = EclipseClasspathReader.findLibraryByName(model.getProject(), libName);
-        if (libraryByName != null) {
-          appendLibraryScope(model, libElement, libraryByName);
-        }
-        final Library[] libraries = model.getModuleLibraryTable().getLibraries();
-        for (Library library : libraries) {
-          final Library.ModifiableModel modifiableModel = library.getModifiableModel();
-          replaceCollapsedByEclipseSourceRoots(libElement, modifiableModel);
-          replaceModuleRelatedRoots(model.getProject(), modifiableModel, libElement, OrderRootType.SOURCES, RELATIVE_MODULE_SRC);
-          replaceModuleRelatedRoots(model.getProject(), modifiableModel, libElement, OrderRootType.CLASSES, RELATIVE_MODULE_CLS);
-          replaceModuleRelatedRoots(model.getProject(), modifiableModel, libElement, JavadocOrderRootType.getInstance(), RELATIVE_MODULE_JAVADOC);
-          modifiableModel.commit();
+    }
+    overrideModulesScopes(root, model);
+  }
+
+  private static void overrideModulesScopes(Element root, ModifiableRootModel model) {
+    for (Object o : root.getChildren("module")) {
+      final String moduleName = ((Element)o).getAttributeValue("name");
+      final String scope = ((Element)o).getAttributeValue("scope");
+      if (scope != null) {
+        for (OrderEntry entry : model.getOrderEntries()) {
+          if (entry instanceof ModuleOrderEntry && Comparing.strEqual(((ModuleOrderEntry)entry).getModuleName(), moduleName)) {
+            ((ModuleOrderEntry)entry).setScope(DependencyScope.valueOf(scope));
+            break;
+          }
         }
       }
     }
@@ -191,7 +197,7 @@ public class IdeaSpecificSettings {
 
     final CompilerModuleExtension compilerModuleExtension = model.getModuleExtension(CompilerModuleExtension.class);
 
-    if (compilerModuleExtension.getCompilerOutputPathForTests() != null) {
+    if (compilerModuleExtension.getCompilerOutputUrlForTests() != null) {
       final Element pathElement = new Element(IdeaXml.OUTPUT_TEST_TAG);
       pathElement.setAttribute(IdeaXml.URL_ATTR, compilerModuleExtension.getCompilerOutputUrlForTests());
       root.addContent(pathElement);
@@ -248,51 +254,59 @@ public class IdeaSpecificSettings {
     }
 
     for (OrderEntry entry : model.getOrderEntries()) {
-      if (entry instanceof LibraryOrderEntry) {
-        final Element element = new Element("lib");
-        element.setAttribute("name", entry.getPresentableName());
-        final DependencyScope scope = ((LibraryOrderEntry)entry).getScope();
-        element.setAttribute("scope", scope.name());
-        if (((LibraryOrderEntry)entry).isModuleLevel()) {
-          final String[] urls = entry.getUrls(OrderRootType.SOURCES);
-          if (urls.length > 1) {
-            for (String url : urls) {
-              Element srcElement = new Element(SRCROOT_ATTR);
-              srcElement.setAttribute("url", url);
-              element.addContent(srcElement);
-            }
-          }
-          else if (urls.length == 1 && urls[0].contains(JarFileSystem.JAR_SEPARATOR)) {
-            final VirtualFile virtualFile = JarFileSystem.getInstance().findFileByPath(VfsUtil.urlToPath(urls[0]));
-            if (virtualFile != null) {
-              Element srcElement = new Element(SRCROOT_ATTR);
-              srcElement.setAttribute("url", urls[0]);
-              element.addContent(srcElement);
-            }
-          }
-
-          for (String srcUrl : entry.getUrls(OrderRootType.SOURCES)) {
-            appendModuleRelatedRoot(element, srcUrl, RELATIVE_MODULE_SRC, model);
-          }
-
-          for (String classesUrl : entry.getUrls(OrderRootType.CLASSES)) {
-            appendModuleRelatedRoot(element, classesUrl, RELATIVE_MODULE_CLS, model);
-          }
-
-          for (String javadocUrl : entry.getUrls(JavadocOrderRootType.getInstance())) {
-            appendModuleRelatedRoot(element, javadocUrl, RELATIVE_MODULE_JAVADOC, model);
-          }
-
-          if (!element.getChildren().isEmpty()) {
-            root.addContent(element);
-            isModified = true;
-            continue;
-          }
-        }
+      if (entry instanceof ModuleOrderEntry) {
+        final DependencyScope scope = ((ModuleOrderEntry)entry).getScope();
         if (!scope.equals(DependencyScope.COMPILE)) {
+          Element element = new Element("module");
+          element.setAttribute("name", ((ModuleOrderEntry)entry).getModuleName());
+          element.setAttribute("scope", scope.name());
           root.addContent(element);
           isModified = true;
         }
+      }
+      if (!(entry instanceof LibraryOrderEntry)) continue;
+
+      final Element element = new Element("lib");
+      element.setAttribute("name", entry.getPresentableName());
+      final LibraryOrderEntry libraryEntry = (LibraryOrderEntry)entry;
+      final DependencyScope scope = libraryEntry.getScope();
+      element.setAttribute("scope", scope.name());
+      if (libraryEntry.isModuleLevel()) {
+        final String[] urls = libraryEntry.getRootUrls(OrderRootType.SOURCES);
+        for (String url : urls) {
+          Element srcElement = new Element(SRCROOT_ATTR);
+          srcElement.setAttribute("url", url);
+          element.addContent(srcElement);
+        }
+
+        final String[] javadocUrls = libraryEntry.getRootUrls(JavadocOrderRootType.getInstance());
+        for (int i = 1; i < javadocUrls.length;  i++) {
+          Element javadocElement = new Element(JAVADOCROOT_ATTR);
+          javadocElement.setAttribute("url", javadocUrls[i]);
+          element.addContent(javadocElement);
+        }
+
+        for (String srcUrl : libraryEntry.getRootUrls(OrderRootType.SOURCES)) {
+          appendModuleRelatedRoot(element, srcUrl, RELATIVE_MODULE_SRC, model);
+        }
+
+        for (String classesUrl : libraryEntry.getRootUrls(OrderRootType.CLASSES)) {
+          appendModuleRelatedRoot(element, classesUrl, RELATIVE_MODULE_CLS, model);
+        }
+
+        for (String javadocUrl : libraryEntry.getRootUrls(JavadocOrderRootType.getInstance())) {
+          appendModuleRelatedRoot(element, javadocUrl, RELATIVE_MODULE_JAVADOC, model);
+        }
+
+        if (!element.getChildren().isEmpty()) {
+          root.addContent(element);
+          isModified = true;
+          continue;
+        }
+      }
+      if (!scope.equals(DependencyScope.COMPILE)) {
+        root.addContent(element);
+        isModified = true;
       }
     }
 

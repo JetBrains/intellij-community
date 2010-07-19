@@ -335,7 +335,6 @@ public class ScopeEditorPanel {
     tree.setShowsRootHandles(true);
     tree.setLineStyleAngled();
 
-    TreeToolTipHandler.install(tree);
     TreeUtil.installActions(tree);
     SmartExpander.installOn(tree);
     new TreeSpeedSearch(tree);

@@ -166,7 +166,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
             }
           }
         }
-        else if (attributeDecl.isFixed() && attributeDecl.getDefaultValue() != null && !htmlCode) {
+        else if (attributeDecl.isRequired() && attributeDecl.isFixed() && attributeDecl.getDefaultValue() != null && !htmlCode) {
           template.addTextSegment(" " + attributeName + "=\"" + attributeDecl.getDefaultValue() + "\"");
         }
       }

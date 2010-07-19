@@ -349,6 +349,52 @@ public class CharArrayUtil {
     return -1;
   }
 
+  /**
+   * Tries to find index that points to the first location of the given symbol at the given char array at range <code>[from; to)</code>.
+   *
+   * @param buffer      target symbols holder to check
+   * @param symbol      target symbol which offset should be found
+   * @param fromIndex   start index to search (inclusive)
+   * @param toIndex     end index to search (exclusive)
+   * @return            index that points to the first location of the given symbol at the given char array at range
+   *                    <code>[from; to)</code> if target symbol is found;
+   *                    <code>-1</code> otherwise
+   */
+  public static int indexOf(final char[] buffer, final char symbol, int fromIndex, final int toIndex) {
+    if (fromIndex < 0) {
+      fromIndex = 0;
+    }
+    for (int i = fromIndex; i < toIndex; i++) {
+      if (buffer[i] == symbol) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  /**
+   * Tries to find index that points to the last location of the given symbol at the given char array at range <code>[from; to)</code>.
+   *
+   * @param buffer      target symbols holder to check
+   * @param symbol      target symbol which offset should be found
+   * @param fromIndex   start index to search (inclusive)
+   * @param toIndex     end index to search (exclusive)
+   * @return            index that points to the last location of the given symbol at the given char array at range
+   *                    <code>[from; to)</code> if target symbol is found;
+   *                    <code>-1</code> otherwise
+   */
+  public static int lastIndexOf(final char[] buffer, final char symbol, int fromIndex, final int toIndex) {
+    if (fromIndex < 0) {
+      fromIndex = 0;
+    }
+    for (int i = toIndex - 1; i >= fromIndex; i--) {
+      if (buffer[i] == symbol) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
   public static int lastIndexOf(CharSequence buffer, String pattern, int fromIndex) {
     char[] chars = pattern.toCharArray();
     int end = buffer.length() - chars.length;

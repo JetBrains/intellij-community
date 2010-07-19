@@ -34,7 +34,7 @@ import java.util.*;
 
 public class JavaNameSuggestionProvider implements NameSuggestionProvider {
   @Nullable
-  public SuggestedNameInfo getSuggestedNames(final PsiElement element, final PsiElement nameSuggestionContext, List<String> result) {
+  public SuggestedNameInfo getSuggestedNames(final PsiElement element, final PsiElement nameSuggestionContext, Set<String> result) {
     String initialName = UsageViewUtil.getShortName(element);
     SuggestedNameInfo info = suggestNamesForElement(element);
     if (info != null) {
@@ -130,7 +130,7 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
       JavaCompletionUtil.completeVariableNameForRefactoring(element.getProject(), set, prefix, var.getType(), kind);
 
       if (prefix.length() == 0) {
-        List<String> suggestedNames = new ArrayList<String>();
+        Set<String> suggestedNames = new HashSet<String>();
         getSuggestedNames(element, nameSuggestionContext, suggestedNames);
         for (String suggestedName : suggestedNames) {
           LookupItemUtil.addLookupItem(set, suggestedName);

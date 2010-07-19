@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module relativePaths="true" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="lang-api" />
+    <orderEntry type="module" module-name="xml" />
+    <orderEntry type="module" module-name="dom-openapi" />
+    <orderEntry type="module" module-name="lang-impl" />
+    <orderEntry type="module" module-name="testFramework" scope="TEST" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/rngom-20051226-patched.jar!/" />
+        </CLASSES>
+        <SOURCES>
+          <root url="jar://$MODULE_DIR$/lib/rngom-src.zip!/src" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/isorelax.jar!/" />
+        </CLASSES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/trang-core.jar!/" />
+        </CLASSES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/jing.jar!/" />
+        </CLASSES>
+      </library>
+    </orderEntry>
+  </component>
+</module>
+

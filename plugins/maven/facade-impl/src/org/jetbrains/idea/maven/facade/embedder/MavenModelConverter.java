@@ -121,7 +121,7 @@ public class MavenModelConverter {
   }
 
   private static List<String> ensurePatterns(List<String> patterns) {
-    return patterns == null ? Collections.EMPTY_LIST : patterns;
+    return patterns == null ? Collections.<String>emptyList() : patterns;
   }
 
   private static List<MavenRemoteRepository> convertRepositories(List<Repository> repositories) {
@@ -282,7 +282,7 @@ public class MavenModelConverter {
   }
 
   private static Element xppToElement(Xpp3Dom xpp) {
-    Element result = null;
+    Element result;
     try {
       result = new Element(xpp.getName());
     }

@@ -182,7 +182,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
     }
   }
 
-  static class TypeOrElementOrAttributeReference implements PsiReference, QuickFixProvider<TypeOrElementOrAttributeReference> {
+  public static class TypeOrElementOrAttributeReference implements PsiReference, QuickFixProvider<TypeOrElementOrAttributeReference> {
     private final PsiElement myElement;
     private TextRange myRange;
     private String nsPrefix;
@@ -674,12 +674,12 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
   }
 
   @Nullable
-  public static PsiReference createSchemaPrefixReference(final PsiElement element) {
+  private static PsiReference createSchemaPrefixReference(final PsiElement element) {
     if (element instanceof XmlAttributeValue) {
       final XmlAttributeValue attributeValue = (XmlAttributeValue)element;
       final String prefix = XmlUtil.findPrefixByQualifiedName(attributeValue.getValue());
       if (prefix.length() > 0) {
-        return new SchemaPrefixReference(attributeValue, TextRange.from(1, prefix.length()), prefix);
+        return new SchemaPrefixReference(attributeValue, TextRange.from(1, prefix.length()), prefix, null);
       }
     }
     return null;

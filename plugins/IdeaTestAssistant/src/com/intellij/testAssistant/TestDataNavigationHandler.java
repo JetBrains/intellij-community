@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -99,7 +100,7 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
     if (myFileNames.size() == 2) {
       shortNames.add(CREATE_MISSING_OPTION);
     }
-    final JList list = new JList(ArrayUtil.toStringArray(shortNames));
+    final JList list = new JBList(ArrayUtil.toStringArray(shortNames));
     list.setCellRenderer(new ColoredListCellRenderer() {
       @Override
       protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {

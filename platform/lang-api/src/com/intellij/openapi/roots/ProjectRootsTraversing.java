@@ -29,14 +29,29 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.List;
 
+/**
+ * @deprecated use {@link com.intellij.openapi.roots.OrderEnumerator} instead
+ */
+@Deprecated
 public class ProjectRootsTraversing {
-
+  /**
+   * @deprecated use <code>OrderEnumerator.orderEntries(module).withoutDepModules().withoutThisModuleContent().getPathsList()</code>
+   * or <code>OrderEnumerator.orderEntries(project).withoutThisModuleContent().getPathsList()</code> instead
+   */
   public static final RootTraversePolicy LIBRARIES_AND_JDK =
     new RootTraversePolicy(null, RootTraversePolicy.ADD_CLASSES, RootTraversePolicy.ADD_CLASSES, null);
 
+  /**
+   * @deprecated use <code>OrderEnumerator.orderEntries(module).withoutSdk().withoutLibraries().withoutDepModules().getSourcePathsList()</code>
+   * or <code>OrderEnumerator.orderEntries(project).withoutSdk().withoutLibraries().getSourcePathsList()</code> instead
+   */
   public static final RootTraversePolicy PROJECT_SOURCES =
     new RootTraversePolicy(RootTraversePolicy.SOURCES, null, null, null);
 
+  /**
+   * @deprecated use <code>OrderEnumerator.orderEntries().withoutSdk().withoutThisModuleContent().recursively().getPathsList()</code>
+   * or <code>OrderEnumerator.orderEntries().withoutSdk().withoutThisModuleContent().getPathsList()</code> instead
+   */
   public static final RootTraversePolicy PROJECT_LIBRARIES =
     new RootTraversePolicy(null, null, RootTraversePolicy.ADD_CLASSES, RootTraversePolicy.RECURSIVE);
 

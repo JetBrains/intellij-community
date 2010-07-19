@@ -28,19 +28,23 @@ public class EachToForIntentionTest extends GrIntentionTestCase {
     return TestUtils.getTestDataPath() + "intentions/EachToFor/";
   }
 
-  public void testEachToFor() throws Throwable {
+  public void testEachToFor() {
     doTest("Replace with For-In", true);
   }
 
-  public void testEachToForWithFinal() throws Throwable {
+  public void testEachToForWithFinal() {
     doTest("Replace with For-In", true);
   }
 
-  public void testEachToForWithDefaultVariable() throws Throwable {
+  public void testEachToForWithDefaultVariable() {
     doTest("Replace with For-In", true);
   }
 
-  public void testEachForInWithNoQualifier () throws Throwable {
+  public void testEachForInWithNoQualifier() {
+    doTest("Replace with For-In", true);
+  }
+
+  public void testWithClosureInBody() {
     doTest("Replace with For-In", true);
   }
 }

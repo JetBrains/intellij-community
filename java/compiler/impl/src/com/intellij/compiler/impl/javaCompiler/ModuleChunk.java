@@ -23,15 +23,20 @@ import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.JdkOrderEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.Chunk;
 import com.intellij.util.JarClasspathHelper;
-import com.intellij.util.PathUtil;
+import com.intellij.util.PathsList;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OrderedSet;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
@@ -180,7 +185,7 @@ public class ModuleChunk extends Chunk<Module> {
     final Set<Module> modules = getNodes();
     Set<VirtualFile> roots = new HashSet<VirtualFile>();
     for (final Module module : modules) {
-      roots.addAll(Arrays.asList(myContext.getSourceRoots(module)));
+      ContainerUtil.addAll(roots, myContext.getSourceRoots(module));
     }
     return VfsUtil.toVirtualFileArray(roots);
   }
@@ -194,28 +199,16 @@ public class ModuleChunk extends Chunk<Module> {
   public OrderedSet<VirtualFile> getCompilationClasspathFiles() {
     final Set<Module> modules = getNodes();
 
-    final OrderedSet<VirtualFile> cpFiles = new OrderedSet<VirtualFile>(TObjectHashingStrategy.CANONICAL);
+    OrderedSet<VirtualFile> cpFiles = new OrderedSet<VirtualFile>(TObjectHashingStrategy.CANONICAL);
     for (final Module module : modules) {
-
-      final OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
-      boolean skip = true;
-      for (OrderEntry orderEntry : orderEntries) {
-        if (orderEntry instanceof JdkOrderEntry) {
-          skip = false;
-          continue;
-        }
-        if (skip) {
-          continue;
-        }
-
-        VirtualFile[] files = orderEntry.getFiles((mySourcesFilter & TEST_SOURCES) == 0 ? OrderRootType.PRODUCTION_COMPILATION_CLASSES : OrderRootType.COMPILATION_CLASSES);
-        if (orderEntry instanceof ModuleOrderEntry) {
-          Project project = module.getProject();
-          JarClasspathHelper.patchFiles(files, project);
-        }
-        cpFiles.addAll(Arrays.asList(files));
+      OrderEnumerator enumerator = OrderEnumerator.orderEntries(module).compileOnly().satisfying(new AfterJdkOrderEntryCondition());
+      if ((mySourcesFilter & TEST_SOURCES) == 0) {
+        enumerator = enumerator.productionOnly();
       }
+      Collections.addAll(cpFiles, enumerator.recursively().exportedOnly().getClassesRoots());
     }
+    cpFiles = JarClasspathHelper.patchFiles(cpFiles, myContext.getProject());
+
     return cpFiles;
   }
 
@@ -228,52 +221,21 @@ public class ModuleChunk extends Chunk<Module> {
     final OrderedSet<VirtualFile> cpFiles = new OrderedSet<VirtualFile>(TObjectHashingStrategy.CANONICAL);
     final OrderedSet<VirtualFile> jdkFiles = new OrderedSet<VirtualFile>(TObjectHashingStrategy.CANONICAL);
     for (final Module module : modules) {
-      final OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
-      for (OrderEntry orderEntry : orderEntries) {
-        if (orderEntry instanceof JdkOrderEntry) {
-          jdkFiles.addAll(Arrays.asList(orderEntry.getFiles(OrderRootType.CLASSES)));
-          break;
-        }
-        else {
-          if ((mySourcesFilter & TEST_SOURCES) == 0) {
-            cpFiles.addAll(Arrays.asList(orderEntry.getFiles(OrderRootType.PRODUCTION_COMPILATION_CLASSES)));
-          }
-          else {
-            cpFiles.addAll(Arrays.asList(orderEntry.getFiles(OrderRootType.COMPILATION_CLASSES)));
-          }
-        }
+      OrderEnumerator enumerator = OrderEnumerator.orderEntries(module).compileOnly().satisfying(new BeforeJdkOrderEntryCondition());
+      if ((mySourcesFilter & TEST_SOURCES) == 0) {
+        enumerator = enumerator.productionOnly();
       }
+      Collections.addAll(cpFiles, enumerator.recursively().exportedOnly().getClassesRoots());
+      Collections.addAll(jdkFiles, OrderEnumerator.orderEntries(module).sdkOnly().getClassesRoots());
     }
     cpFiles.addAll(jdkFiles);
     return cpFiles;
   }
 
   private static String convertToStringPath(final OrderedSet<VirtualFile> cpFiles) {
-    final StringBuilder classpathBuffer = StringBuilderSpinAllocator.alloc();
-    try {
-      for (final VirtualFile file : cpFiles) {
-        final String path = PathUtil.getLocalPath(file);
-        //if (file.getFileSystem() instanceof LocalFileSystem && file.isDirectory()) {
-        //  path = tryZipFor(file.getPath());
-        //}
-        //else {
-        //  path = PathUtil.getLocalPath(file);
-        //}
-
-        if (path == null) {
-          continue;
-        }
-        if (classpathBuffer.length() > 0) {
-          classpathBuffer.append(File.pathSeparatorChar);
-        }
-        classpathBuffer.append(path);
-      }
-
-      return classpathBuffer.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(classpathBuffer);
-    }
+    PathsList classpath = new PathsList();
+    classpath.addVirtualFiles(cpFiles);
+    return classpath.getPathsString();
   }
 
   //private String tryZipFor(String outputDir) {
@@ -326,5 +288,30 @@ public class ModuleChunk extends Chunk<Module> {
   //the check for equal language levels is done elsewhere
   public LanguageLevel getLanguageLevel() {
     return LanguageLevelUtil.getEffectiveLanguageLevel(getModules()[0]);
+  }
+
+  private static class BeforeJdkOrderEntryCondition implements Condition<OrderEntry> {
+    private boolean myJdkFound;
+
+    @Override
+    public boolean value(OrderEntry orderEntry) {
+      if (orderEntry instanceof JdkOrderEntry) {
+        myJdkFound = true;
+      }
+      return !myJdkFound;
+    }
+  }
+
+  private static class AfterJdkOrderEntryCondition implements Condition<OrderEntry> {
+    private boolean myJdkFound;
+
+    @Override
+    public boolean value(OrderEntry orderEntry) {
+      if (orderEntry instanceof JdkOrderEntry) {
+        myJdkFound = true;
+        return false;
+      }
+      return myJdkFound;
+    }
   }
 }

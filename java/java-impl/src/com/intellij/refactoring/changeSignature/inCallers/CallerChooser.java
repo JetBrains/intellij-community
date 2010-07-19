@@ -33,10 +33,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.ui.CheckboxTree;
-import com.intellij.ui.CheckboxTreeBase;
-import com.intellij.ui.CheckedTreeNode;
-import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.HashSet;
@@ -103,7 +100,7 @@ public abstract class CallerChooser extends DialogWrapper {
     };
     myTree.getSelectionModel().addTreeSelectionListener(myTreeSelectionListener);
 
-    JScrollPane scrollPane = new JScrollPane(myTree);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
     splitter.setFirstComponent(scrollPane);
     final JComponent callSitesViewer = createCallSitesViewer();
     TreePath selectionPath = myTree.getSelectionPath();

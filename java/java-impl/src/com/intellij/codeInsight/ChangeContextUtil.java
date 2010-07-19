@@ -280,7 +280,7 @@ public class ChangeContextUtil {
     return refMemberClass;
   }
 
-  private static boolean canRemoveQualifier(PsiReferenceExpression refExpr) {
+  public static boolean canRemoveQualifier(PsiReferenceExpression refExpr) {
     try{
       PsiExpression qualifier = refExpr.getQualifierExpression();
       if (!(qualifier instanceof PsiReferenceExpression)) return false;

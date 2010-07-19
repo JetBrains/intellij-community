@@ -49,7 +49,7 @@ public class FormEnumUsageTest extends PsiTestCase {
         public void run() {
           try{
             String root = PluginPathManager.getPluginHomePath("ui-designer") + "/testData/binding/" + getTestName(true);
-            PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk("java 1.5"));
+            PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk17());
             myTestProjectRoot = PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
           }
           catch(Exception e){

@@ -18,7 +18,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.compiler.*;
@@ -26,6 +26,7 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -43,7 +44,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
-import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,6 +56,7 @@ import java.util.List;
 public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase {
   private TempDirTestFixture myMainOutput;
 
+
   @Override
   protected void setUp() throws Exception {
     myMainOutput = new TempDirTestFixtureImpl();
@@ -64,21 +65,22 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
     getProject().getComponent(GroovyCompilerLoader.class).projectOpened();
     CompilerManagerImpl.testSetup();
 
-    CompilerProjectExtension.getInstance(getProject()).setCompilerOutputUrl(myMainOutput.findOrCreateDir("out").getUrl());
-
-    addGroovyLibrary(myModule, getName().contains("1_7"));
-
-    GroovycOSProcessHandler.ourDebug = true;
+    new WriteCommandAction(getProject()) {
+      protected void run(Result result) throws Throwable {
+        CompilerProjectExtension.getInstance(getProject()).setCompilerOutputUrl(myMainOutput.findOrCreateDir("out").getUrl());
+      }
+    }.execute();
   }
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
     moduleBuilder.setMockJdkLevel(JavaModuleFixtureBuilder.MockJdkLevel.jdk15);
+    moduleBuilder.addJdk(JavaSdkImpl.getMockJdk14Path().getPath());
     super.tuneFixture(moduleBuilder);
   }
 
-  protected static void addGroovyLibrary(final Module to, boolean version17) {
-    final String root = version17 ? TestUtils.getRealGroovy1_7LibraryHome() : PathManager.getHomePath() + "/community/lib/";
+  protected static void addGroovyLibrary(final Module to) {
+    final String root = PluginPathManager.getPluginHomePath("groovy") + "/../../lib/";
     final File[] groovyJars = GroovyUtils.getFilesInDirectoryByPattern(root, GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN);
     assert groovyJars.length == 1;
     PsiTestUtil.addLibrary(to, "groovy", root, groovyJars[0].getName());
@@ -86,7 +88,6 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
 
   @Override
   protected void tearDown() throws Exception {
-    GroovycOSProcessHandler.ourDebug = false;
     myMainOutput.tearDown();
     myMainOutput = null;
     super.tearDown();

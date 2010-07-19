@@ -1,8 +1,10 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,15 +70,37 @@ public abstract class GrLiteralClassType extends PsiClassType {
     };
   }
 
+  @Nullable
   public String getPresentableText() {
-    return getClassName();
+    String name = getClassName();
+    if (name == null) return null;
+    final PsiType[] params = getParameters();
+    if (params.length == 0 || params[0] == null) return name;
+
+    return name + "<" + StringUtil.join(params, new Function<PsiType, String>() {
+      @Override
+      public String fun(PsiType psiType) {
+        return psiType.getPresentableText();
+      }
+    }, ", ") + ">";
   }
 
   @Nullable
   public String getCanonicalText() {
     PsiClass resolved = resolve();
     if (resolved == null) return null;
-    return resolved.getQualifiedName();
+    final String name = resolved.getQualifiedName();
+    if (name==null) return null;
+
+    final PsiType[] params = getParameters();
+    if (params.length==0 || params[0]==null) return name;
+
+    return name + "<" + StringUtil.join(params, new Function<PsiType, String>() {
+      @Override
+      public String fun(PsiType psiType) {
+        return psiType.getCanonicalText();
+      }
+    }, ", ") + ">";
   }
 
   @NotNull

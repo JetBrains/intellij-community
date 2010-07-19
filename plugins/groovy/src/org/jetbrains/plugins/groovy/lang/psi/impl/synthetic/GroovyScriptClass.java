@@ -21,12 +21,15 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.ElementBase;
+import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.InheritanceImplUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.ui.RowIcon;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -338,7 +341,7 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
                                      @NotNull PsiElement place) {
     for (GrTopLevelDefintion defintion : myFile.getTopLevelDefinitions()) {
       if (!(defintion instanceof PsiClass)) {
-        if (!ResolveUtil.processElement(processor, defintion)) return false;
+        if (!ResolveUtil.processElement(processor, defintion, state)) return false;
       }
     }
 
@@ -346,7 +349,7 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
     //noinspection RedundantIfStatement
     if (scriptClass != null && !scriptClass.processDeclarations(new BaseScopeProcessor() {
       public boolean execute(PsiElement element, ResolveState state) {
-        return !(element instanceof PsiNamedElement) || ResolveUtil.processElement(processor, (PsiNamedElement)element);
+        return !(element instanceof PsiNamedElement) || ResolveUtil.processElement(processor, (PsiNamedElement)element, state);
       }
 
       @Override
@@ -373,7 +376,8 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
       }
 
       public String getLocationString() {
-        return "(groovy script)";
+        final String packageName = myFile.getPackageName();
+        return "(groovy script" + (packageName.isEmpty() ? "" : ", " + packageName) + ")";
       }
 
       public TextAttributesKey getTextAttributesKey() {
@@ -381,7 +385,7 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
       }
 
       public Icon getIcon(boolean open) {
-        return myFile.getIcon(0);
+        return GroovyScriptClass.this.getIcon(ICON_FLAG_VISIBILITY | ICON_FLAG_READ_STATUS);
       }
     };
   }
@@ -392,7 +396,9 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
 
   @Nullable
   public Icon getIcon(int flags) {
-    return myFile.getIcon(flags);
+    final Icon icon = myFile.getIcon(flags);
+    RowIcon baseIcon = ElementBase.createLayeredIcon(icon, 0);
+    return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 
   public void checkDelete() throws IncorrectOperationException {

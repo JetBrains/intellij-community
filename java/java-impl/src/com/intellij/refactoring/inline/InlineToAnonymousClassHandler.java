@@ -18,6 +18,7 @@ package com.intellij.refactoring.inline;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.patterns.ElementPattern;
@@ -34,6 +35,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 /**
@@ -50,17 +52,29 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
     return element instanceof PsiMethod || element instanceof PsiClass;
   }
 
-  public boolean canInlineElement(PsiElement element) {
+  public boolean canInlineElement(final PsiElement element) {
     if (element.getLanguage() != StdLanguages.JAVA) return false;
     if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)element;
       if (method.isConstructor() && !InlineMethodHandler.isChainingConstructor(method)) {
         final PsiClass containingClass = method.getContainingClass();
-        return containingClass != null && ClassInheritorsSearch.search(containingClass).findAll().size() == 0;
+        if (containingClass == null) return false;
+        return findClassInheritors(containingClass);
       }
     }
     if (!(element instanceof PsiClass)) return false;
-    Collection<PsiClass> inheritors = ClassInheritorsSearch.search((PsiClass)element).findAll();
+    if (element instanceof PsiAnonymousClass) return false;
+    return findClassInheritors((PsiClass)element);
+  }
+
+  private static boolean findClassInheritors(final PsiClass element) {
+    final Collection<PsiClass> inheritors = new ArrayList<PsiClass>();
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable(){
+      @Override
+      public void run() {
+        inheritors.addAll(ClassInheritorsSearch.search(element).findAll());
+      }
+    }, "Searching for class \"" + element.getQualifiedName() + "\" inheritors ...", true, element.getProject())) return false;
     return inheritors.size() == 0;
   }
 
@@ -78,9 +92,15 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
       return;
     }
 
-    String errorMessage = getCannotInlineMessage(psiClass);
-    if (errorMessage != null) {
-      CommonRefactoringUtil.showErrorHint(project, editor, errorMessage, RefactoringBundle.message("inline.to.anonymous.refactoring"), null);
+    final Ref<String> errorMessage = new Ref<String>();
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable(){
+      @Override
+      public void run() {
+        errorMessage.set(getCannotInlineMessage(psiClass));
+      }
+    }, "Check if inline is possible...", true, project)) return;
+    if (errorMessage.get() != null) {
+      CommonRefactoringUtil.showErrorHint(project, editor, errorMessage.get(), RefactoringBundle.message("inline.to.anonymous.refactoring"), null);
       return;
     }
 

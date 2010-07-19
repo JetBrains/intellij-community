@@ -32,6 +32,7 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.inline.InlineOptionsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -464,8 +465,8 @@ public class GroovyInlineMethodUtil {
       return;
     }
     ArrayList<GrExpression> exprs = new ArrayList<GrExpression>();
-    exprs.addAll(Arrays.asList(argumentList.getExpressionArguments()));
-    exprs.addAll(Arrays.asList(call.getClosureArguments()));
+    ContainerUtil.addAll(exprs, argumentList.getExpressionArguments());
+    ContainerUtil.addAll(exprs, call.getClosureArguments());
 
     // first parameter may have map type
     boolean firstParamIsMap = argumentList.getNamedArguments().length > 0;
@@ -493,7 +494,8 @@ public class GroovyInlineMethodUtil {
         if (initializer != null) {
           if (nonDefault > 0) {
             nonDefault--;
-          } else {
+          }
+          else {
             nameFilter.add(parameter.getName());
           }
         }

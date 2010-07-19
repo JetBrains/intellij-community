@@ -18,6 +18,7 @@ package com.intellij.lang.ant.config.actions;
 import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.impl.MetaTarget;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.StringSetSpinAllocator;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public final class AntBuildGroup extends ActionGroup {
+public final class AntBuildGroup extends ActionGroup implements DumbAware {
 
   public void update(AnActionEvent event) {
     Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());

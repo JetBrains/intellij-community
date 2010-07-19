@@ -16,6 +16,7 @@
 
 package com.intellij.util.xmlb;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.beans.PropertyDescriptor;
@@ -23,7 +24,6 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 class PropertyAccessor implements Accessor {
@@ -63,11 +63,11 @@ class PropertyAccessor implements Accessor {
     List<Annotation> result = new ArrayList<Annotation>();
 
     if (myPropertyDescriptor.getReadMethod() != null) {
-      result.addAll(Arrays.asList(myPropertyDescriptor.getReadMethod().getAnnotations()));
+      ContainerUtil.addAll(result, myPropertyDescriptor.getReadMethod().getAnnotations());
     }
 
     if (myPropertyDescriptor.getWriteMethod() != null) {
-      result.addAll(Arrays.asList(myPropertyDescriptor.getWriteMethod().getAnnotations()));
+      ContainerUtil.addAll(result, myPropertyDescriptor.getWriteMethod().getAnnotations());
     }
 
     return result.toArray(new Annotation[result.size()]);

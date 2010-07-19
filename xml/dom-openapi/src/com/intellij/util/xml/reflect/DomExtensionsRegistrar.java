@@ -46,4 +46,6 @@ public interface DomExtensionsRegistrar {
    */
   @NotNull DomExtension registerCustomChildrenExtension(@NotNull final Type type);
 
+  @NotNull DomExtension registerCustomChildrenExtension(@NotNull final Type type, @NotNull CustomDomChildrenDescription.TagNameDescriptor descriptor);
+
 }

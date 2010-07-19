@@ -17,15 +17,18 @@
 package org.jetbrains.plugins.groovy.findUsages;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMemberReference;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Processor;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -45,9 +48,14 @@ public class GroovyConstructorUsagesSearchHelper {
   private GroovyConstructorUsagesSearchHelper() {
   }
 
-  public static boolean execute(final PsiMethod constructor, final SearchScope searchScope, final Processor<PsiReference> consumer) {
+  public static boolean execute(final PsiMethod constructor, SearchScope searchScope, final Processor<PsiReference> consumer) {
     if (!constructor.isConstructor()) return true;
-    final PsiClass clazz = ApplicationManager.getApplication().runReadAction(new NullableComputable<PsiClass>(){
+
+    if (searchScope instanceof GlobalSearchScope) {
+      searchScope = GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope)searchScope, GroovyFileType.GROOVY_FILE_TYPE);
+    }
+
+    final PsiClass clazz = ApplicationManager.getApplication().runReadAction(new NullableComputable<PsiClass>() {
       public PsiClass compute() {
         return constructor.getContainingClass();
       }
@@ -76,20 +84,17 @@ public class GroovyConstructorUsagesSearchHelper {
     }
 
 
-    ReferencesSearch.search(clazz, searchScope, true).forEach(new Processor<PsiReference>() {
-      public boolean process(final PsiReference ref) {
-        return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-          public Boolean compute() {
-            final PsiElement element = ref.getElement();
-            if (element instanceof GrCodeReferenceElement && element.getParent() instanceof GrNewExpression) {
-              final GrNewExpression newExpression = (GrNewExpression)element.getParent();
-              final PsiMethod resolvedConstructor = newExpression.resolveConstructor();
-              final PsiManager manager = constructor.getManager();
-              if (manager.areElementsEquivalent(resolvedConstructor, constructor) && !consumer.process(ref)) return false;
-            }
-            return true;
-          }
-        });
+    ReferencesSearch.search(clazz, searchScope, true).forEach(new ReadActionProcessor<PsiReference>() {
+      @Override
+      public boolean processInReadAction(PsiReference ref) {
+        final PsiElement element = ref.getElement();
+        if (element instanceof GrCodeReferenceElement && element.getParent() instanceof GrNewExpression) {
+          final GrNewExpression newExpression = (GrNewExpression)element.getParent();
+          final PsiMethod resolvedConstructor = newExpression.resolveConstructor();
+          final PsiManager manager = constructor.getManager();
+          if (manager.areElementsEquivalent(resolvedConstructor, constructor) && !consumer.process(ref)) return false;
+        }
+        return true;
       }
     });
 

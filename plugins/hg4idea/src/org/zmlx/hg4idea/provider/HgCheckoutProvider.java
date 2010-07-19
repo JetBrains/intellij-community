@@ -38,9 +38,6 @@ public class HgCheckoutProvider implements CheckoutProvider {
 
   private HgCommandResult myCloneResult;
 
-  /**
-   * {@inheritDoc}
-   */
   public void doCheckout(@NotNull final Project project, @Nullable final Listener listener) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
@@ -69,15 +66,10 @@ public class HgCheckoutProvider implements CheckoutProvider {
       }
     }, HgVcsMessages.message("hg4idea.clone.progress", dialog.getSourceRepositoryURL()), false, project);
 
-    if (myCloneResult.getExitValue() == 0) {
-      if (listener != null) {
-        listener.directoryCheckedOut(new File(dialog.getParentDirectory(), dialog.getDirectoryName()));
-      }
-    }
-    if (listener != null) {
+    if (myCloneResult != null && myCloneResult.getExitValue() == 0 && listener != null) {
+      listener.directoryCheckedOut(new File(dialog.getParentDirectory(), dialog.getDirectoryName()));
       listener.checkoutCompleted();
     }
-
   }
 
   /**

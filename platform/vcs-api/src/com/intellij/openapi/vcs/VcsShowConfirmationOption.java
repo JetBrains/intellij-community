@@ -43,6 +43,21 @@ public interface VcsShowConfirmationOption {
     }
   }
 
+  public static final VcsShowConfirmationOption STATIC_SHOW_CONFIRMATION = new VcsShowConfirmationOption() {
+    @Override
+    public Value getValue() {
+      return Value.SHOW_CONFIRMATION;
+    }
+    @Override
+    public void setValue(Value value) {
+    }
+    @Override
+    public boolean isPersistent() {
+      return false;
+    }
+  };
+
   Value getValue();
   void setValue(Value value);
+  boolean isPersistent();
 }

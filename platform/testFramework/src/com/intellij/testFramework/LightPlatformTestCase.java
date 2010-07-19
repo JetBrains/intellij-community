@@ -55,7 +55,10 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -73,8 +76,10 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
+import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.IndexableFileSet;
 import com.intellij.util.messages.MessageBusConnection;
@@ -434,7 +439,18 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project)).clearUncommitedDocuments();
 
 
-    ((UndoManagerImpl)UndoManager.getGlobalInstance()).dropHistoryInTests();
+    Runnable runnable = new Runnable() {
+      public void run() {
+        ((UndoManagerImpl)UndoManager.getGlobalInstance()).dropHistoryInTests();
+      }
+    };
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      runnable.run();
+    } else {
+      SwingUtilities.invokeAndWait(runnable);
+    }
+
+    TemplateDataLanguageMappings.getInstance(project).cleanupForNextTest();
 
     ProjectManagerEx.getInstanceEx().setCurrentTestProject(null);
     application.setDataProvider(null);
@@ -653,19 +669,20 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       SimpleLightProjectDescriptor that = (SimpleLightProjectDescriptor)o;
 
       if (myModuleType != null ? !myModuleType.equals(that.myModuleType) : that.myModuleType != null) return false;
-      return !isJDKChanged(that.getSdk());
+      return areJdksEqual(that.getSdk());
     }
 
     @Override
     public int hashCode() {
-      int result = myModuleType != null ? myModuleType.hashCode() : 0;
-      result = 31 * result + (mySdk != null ? mySdk.hashCode() : 0);
-      return result;
+      return myModuleType != null ? myModuleType.hashCode() : 0;
     }
 
-    private boolean isJDKChanged(final Sdk newJDK) {
-      if (mySdk == null && newJDK == null) return false;
-      return mySdk == null || newJDK == null || !Comparing.equal(mySdk.getVersionString(), newJDK.getVersionString());
+    private boolean areJdksEqual(final Sdk newSdk) {
+      if (mySdk == null || newSdk == null) return mySdk == newSdk;
+
+      final String[] myUrls = mySdk.getRootProvider().getUrls(OrderRootType.CLASSES);
+      final String[] newUrls = newSdk.getRootProvider().getUrls(OrderRootType.CLASSES);
+      return CollectionFactory.newSet(myUrls).equals(CollectionFactory.newSet(newUrls));
     }
 
   }

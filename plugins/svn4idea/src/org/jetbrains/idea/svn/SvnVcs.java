@@ -20,10 +20,7 @@ package org.jetbrains.idea.svn;
 import com.intellij.ide.FrameStateListener;
 import com.intellij.ide.FrameStateManager;
 import com.intellij.idea.RareLogger;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
+import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -132,6 +129,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   private ChangeProvider myChangeProvider;
   private MergeProvider myMergeProvider;
+  private final WorkingCopiesContent myWorkingCopiesContent;
 
   @NonNls public static final String LOG_PARAMETER_NAME = "javasvn.log";
   public static final String pathToEntries = SvnUtil.SVN_ADMIN_DIR_NAME + File.separatorChar + SvnUtil.ENTRIES_FILE_NAME;
@@ -221,6 +219,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     }
 
     myFrameStateListener = new MyFrameStateListener(changeListManager, vcsDirtyScopeManager);
+    myWorkingCopiesContent = new WorkingCopiesContent(this);
   }
 
   public void postStartup() {
@@ -228,6 +227,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     myCopiesRefreshManager = new SvnCopiesRefreshManager(myProject, (SvnFileUrlMappingImpl) getSvnFileUrlMapping());
 
     invokeRefreshSvnRoots(true);
+    myWorkingCopiesContent.activate();
   }
 
   public void invokeRefreshSvnRoots(final boolean asynchronous) {
@@ -369,6 +369,17 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
     myAuthNotifier.init();
     mySvnBranchPointsCalculator = new SvnBranchPointsCalculator(myProject);
+    mySvnBranchPointsCalculator.activate();
+
+    if (SystemInfo.isWindows) {
+      if (! SVNJNAUtil.isJNAPresent()) {
+        Notifications.Bus.notify(new Notification("SVN_NO_JNA", "Subversion plugin: no JNA",
+          "A problem with JNA initialization for svnkit library. Encryption is not available.", NotificationType.WARNING), NotificationDisplayType.BALLOON, myProject);
+      } else if (! SVNJNAUtil.isWinCryptEnabled()) {
+        Notifications.Bus.notify(new Notification("SVN_NO_CRYPT32", "Subversion plugin: no encryption",
+          "A problem with encryption module (Crypt32.dll) initialization for svnkit library. Encryption is not available.", NotificationType.WARNING), NotificationDisplayType.BALLOON, myProject);
+      }
+    }
 
     // do one time after project loaded
     StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
@@ -471,7 +482,9 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     myAuthNotifier.stop();
     myAuthNotifier.clear();
 
+    mySvnBranchPointsCalculator.deactivate();
     mySvnBranchPointsCalculator = null;
+    myWorkingCopiesContent.deactivate();
   }
 
   public VcsShowConfirmationOption getAddConfirmation() {
@@ -892,7 +905,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       final File file = info.getIoFile();
       infos.add(new WCInfo(file.getAbsolutePath(), info.getAbsoluteUrlAsUrl(),
         SvnFormatSelector.getWorkingCopyFormat(file), info.getRepositoryUrl(), SvnUtil.isWorkingCopyRoot(file), info.getType(),
-        SvnUtil.getDepth(this, file)));
+        SvnUtil.getDepth(this, file), info.isRepoSupportsMergeInfo()));
     }
     return infos;
   }
@@ -1047,5 +1060,10 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   public SvnBranchPointsCalculator getSvnBranchPointsCalculator() {
     return mySvnBranchPointsCalculator;
+  }
+
+  @Override
+  public boolean areDirectoriesVersionedItems() {
+    return true;
   }
 }

@@ -28,5 +28,5 @@ public interface GotoTargetRendererProvider {
   ExtensionPointName<GotoTargetRendererProvider> EP_NAME = ExtensionPointName.create("com.intellij.gotoTargetRendererProvider");
 
   @Nullable
-  PsiElementListCellRenderer getRenderer(PsiElement[] elements);
+  PsiElementListCellRenderer getRenderer(PsiElement element);
 }

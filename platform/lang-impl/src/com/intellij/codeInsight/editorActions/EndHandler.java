@@ -80,8 +80,8 @@ public class EndHandler extends EditorActionHandler {
               final String lineIndent = styleManager.getLineIndent(file, caretOffset);
               if (lineIndent != null) {
                 int col = calcColumnNumber(lineIndent, editor.getSettings().getTabSize(project));
-                int line = caretModel.getLogicalPosition().line;
-                caretModel.moveToLogicalPosition(new LogicalPosition(line, col));
+                int line = caretModel.getVisualPosition().line;
+                caretModel.moveToVisualPosition(new VisualPosition(line, col));
 
                 if (caretModel.getLogicalPosition().column != col){
                   if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {

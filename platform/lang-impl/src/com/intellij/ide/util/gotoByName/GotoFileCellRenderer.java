@@ -16,6 +16,7 @@
 
 package com.intellij.ide.util.gotoByName;
 
+import com.intellij.ide.util.PlatformModuleRendererFactory;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -26,6 +27,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ui.FilePathSplittingPolicy;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 
@@ -70,6 +72,16 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFile>{
       }
     }
     return url;
+  }
+
+  @Override
+  protected DefaultListCellRenderer getRightCellRenderer() {
+    final DefaultListCellRenderer rightRenderer = super.getRightCellRenderer();
+    if (rightRenderer instanceof PlatformModuleRendererFactory.PlatformModuleRenderer) {
+      // that renderer will display file path, but we're showing it ourselves - no need to show twice
+      return null;
+    }
+    return rightRenderer;
   }
 
   protected int getIconFlags() {

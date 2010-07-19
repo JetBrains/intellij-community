@@ -297,11 +297,11 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
 
     @NonNls String storageKey = "FileHistory." + provider.getClass().getName();
     if (treeHistoryProvider != null) {
-      myDualView = new DualView(new TreeNodeOnVcsRevision(null, treeHistoryProvider.createTreeOn(new ArrayList<VcsFileRevision>(myHistorySession.getRevisionList()))),
+      myDualView = new DualView(new TreeNodeOnVcsRevision(null, treeHistoryProvider.createTreeOn(myHistorySession.getRevisionList())),
                                 COLUMNS, storageKey, project);
     }
     else {
-      myDualView = new DualView(new TreeNodeOnVcsRevision(null, wrapWithTreeElements(new ArrayList<VcsFileRevision>(myHistorySession.getRevisionList()))), COLUMNS,
+      myDualView = new DualView(new TreeNodeOnVcsRevision(null, wrapWithTreeElements(myHistorySession.getRevisionList())), COLUMNS,
                                 storageKey, project);
       myDualView.switchToTheFlatMode();
     }
@@ -445,11 +445,11 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
 
     if (treeHistoryProvider != null) {
       myDualView.setRoot(new TreeNodeOnVcsRevision(null,
-        treeHistoryProvider.createTreeOn(new ArrayList<VcsFileRevision>(myHistorySession.getRevisionList()))), myTargetSelection);
+        treeHistoryProvider.createTreeOn(myHistorySession.getRevisionList())), myTargetSelection);
     }
     else {
       myDualView.setRoot(new TreeNodeOnVcsRevision(null,
-        wrapWithTreeElements(new ArrayList<VcsFileRevision>(myHistorySession.getRevisionList()))), myTargetSelection);
+        wrapWithTreeElements(myHistorySession.getRevisionList())), myTargetSelection);
     }
 
     myDualView.expandAll();

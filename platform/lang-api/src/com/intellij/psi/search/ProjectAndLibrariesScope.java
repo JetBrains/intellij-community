@@ -81,10 +81,19 @@ public class ProjectAndLibrariesScope extends GlobalSearchScope {
 
   @NotNull
   public GlobalSearchScope intersectWith(@NotNull final GlobalSearchScope scope) {
+    if (scope.isSearchOutsideRootModel()) {
+      return super.intersectWith(scope);
+    }
+
+
     return scope;
   }
 
   public GlobalSearchScope uniteWith(@NotNull final GlobalSearchScope scope) {
+    if (scope.isSearchOutsideRootModel()) {
+      return super.uniteWith(scope);
+    }
+
     return this;
   }
 

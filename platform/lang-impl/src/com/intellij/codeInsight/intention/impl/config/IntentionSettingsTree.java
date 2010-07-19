@@ -91,7 +91,7 @@ public abstract class IntentionSettingsTree {
 
     myFilter = new MyFilterComponent();
     myComponent = new JPanel(new BorderLayout());
-    JScrollPane scrollPane = new JScrollPane(myTree);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
     myToolbarPanel = new JPanel(new BorderLayout());
     myToolbarPanel.add(createTreeToolbarPanel().getComponent(), BorderLayout.WEST);
     myToolbarPanel.add(myFilter, BorderLayout.CENTER);

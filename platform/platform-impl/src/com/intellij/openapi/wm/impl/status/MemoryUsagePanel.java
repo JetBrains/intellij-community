@@ -107,11 +107,11 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
     final long maxMemory = runtime.maxMemory();
     final long freeMemory = maxMemory - runtime.totalMemory() + runtime.freeMemory();
 
-    final Insets insets = getInsets();
+    final Insets insets = SystemInfo.isMac ? getInsets() : new Insets(0, 0, 0, 0);
 
     final int totalBarLength = size.width - insets.left - insets.right - (SystemInfo.isMac ? 0 : 0);
     final int usedBarLength = totalBarLength - (int)(totalBarLength * freeMemory / maxMemory);
-    final int barHeight = HEIGHT; // size.height - insets.top - insets.bottom;
+    final int barHeight = SystemInfo.isMac ? HEIGHT : size.height - insets.top - insets.bottom;
     final Graphics2D g2 = (Graphics2D)g;
 
     final int yOffset = (size.height - barHeight) / 2;
@@ -129,12 +129,16 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
       g2.setPaint(new GradientPaint(1, 1, new Color(175, 185, 202), 0, size.height - 2, new Color(126, 138, 168)));
       g2.fillRect(xOffset + 1, yOffset, usedBarLength, barHeight);
 
-      g2.setColor(new Color(194, 197, 203));
-      g2.drawLine(xOffset + 1, yOffset+1, xOffset + usedBarLength, yOffset+1);
+      if (SystemInfo.isMac) {
+        g2.setColor(new Color(194, 197, 203));
+        g2.drawLine(xOffset + 1, yOffset+1, xOffset + usedBarLength, yOffset+1);
+      }
     }
 
-    g2.setColor(new Color(110, 110, 110));
-    g2.drawRect(xOffset, yOffset, totalBarLength, barHeight - 1);
+    if (SystemInfo.isMac) {
+      g2.setColor(new Color(110, 110, 110));
+      g2.drawRect(xOffset, yOffset, totalBarLength, barHeight - 1);
+    }
 
     g.setFont(getFont());
     final long used = (maxMemory - freeMemory) / MEGABYTE;
@@ -151,7 +155,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
 
   public final int getPreferredWidth() {
     final Insets insets = getInsets();
-    return getFontMetrics(UIUtil.getLabelFont().deriveFont(11.0f)).stringWidth(SAMPLE_STRING) + insets.left + insets.right + (SystemInfo.isMac ? 2 : 0);
+    return getFontMetrics(SystemInfo.isMac ? UIUtil.getLabelFont().deriveFont(11.0f) : UIUtil.getLabelFont()).stringWidth(SAMPLE_STRING) + insets.left + insets.right + (SystemInfo.isMac ? 2 : 0);
   }
 
   @Override

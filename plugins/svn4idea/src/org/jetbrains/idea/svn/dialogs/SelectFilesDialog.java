@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.OrderPanel;
 import com.intellij.ui.OrderPanelListener;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -115,7 +116,7 @@ public class SelectFilesDialog extends DialogWrapper implements ActionListener {
     FontMetrics fm = myFilesList.getFontMetrics(font);
     int height = fm.getHeight();
     myFilesList.setPreferredSize(new Dimension(myFilesList.getPreferredSize().width, height*7));
-    panel.add(new JScrollPane(myFilesList), BorderLayout.CENTER);
+    panel.add(ScrollPaneFactory.createScrollPane(myFilesList), BorderLayout.CENTER);
 
     JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
     mySelectAllButton = new JButton(SvnBundle.message("button.text.select.all"));

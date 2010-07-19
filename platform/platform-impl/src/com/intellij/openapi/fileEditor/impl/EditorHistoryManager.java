@@ -17,7 +17,6 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,7 +26,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.Pair;
@@ -67,12 +65,7 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
     fileEditorManager.addFileEditorManagerListener(editorManagerListener, project);
     project.getMessageBus().connect().subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, new MyEditorManagerBeforeListener());
 
-    uiSettings.addUISettingsListener(myUISettingsListener);
-    Disposer.register(project, new Disposable() {
-      public void dispose() {
-        uiSettings.removeUISettingsListener(myUISettingsListener);
-      }
-    });
+    uiSettings.addUISettingsListener(myUISettingsListener, project);
   }
 
   public void projectOpened(){
@@ -227,6 +220,13 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
       result[i] = myEntriesList.get(i).myFile;
     }
     return result;
+  }
+
+  public boolean hasBeenOpen(@NotNull VirtualFile f) {
+    for (HistoryEntry each : myEntriesList) {
+      if (each.myFile == f) return true;
+    }
+    return false;
   }
 
   /**

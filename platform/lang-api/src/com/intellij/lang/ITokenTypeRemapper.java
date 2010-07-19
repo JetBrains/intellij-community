@@ -29,8 +29,8 @@ public interface ITokenTypeRemapper {
    * An external hook to see and alter token types reported by lexer.
    * A lexer might take a delegate implementing this interface.
    * @param source type of an element as lexer understood it.
-   * @param start start index of lexem in text (as lexer.getTokenStart() would return).
-   * @param end end index of lexem in text (as lexer.getTokenEnd() would return).
+   * @param start start index of lexeme in text (as lexer.getTokenStart() would return).
+   * @param end end index of lexeme in text (as lexer.getTokenEnd() would return).
    * @param text text being parsed.
    * @return altered (or not) element type.
   **/

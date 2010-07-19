@@ -162,8 +162,11 @@ public class BackspaceHandler extends EditorWriteActionHandler {
 
     final CharSequence charSeq = editor.getDocument().getCharsSequence();
     // smart backspace is activated only if all characters in the check range are whitespace characters
-    for(int pos=startCheckRange; pos<endCheckRange; pos++) {
-      final char c = charSeq.charAt(pos);
+    for(int pos=0; pos<caretPos.column; pos++) {
+      // use logicalPositionToOffset to make sure tabs are handled correctly
+      final LogicalPosition checkPos = new LogicalPosition(caretPos.line, pos);
+      final int offset = editor.logicalPositionToOffset(checkPos);
+      final char c = charSeq.charAt(offset);
       if (c != '\t' && c != ' ' && c != '\n') {
         return null;
       }
@@ -177,5 +180,4 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     }
     return new LogicalPosition(caretPos.line, column);
   }
-
 }

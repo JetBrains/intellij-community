@@ -112,7 +112,7 @@ public class HighlighterUtil {
     public static List<RangeHighlighter> getHighlighters(Editor editor) {
         if (!hasHighlighters(editor)) {
             //noinspection unchecked
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         } else {
             return editor.getUserData(HIGHLIGHTERS_KEY);
         }

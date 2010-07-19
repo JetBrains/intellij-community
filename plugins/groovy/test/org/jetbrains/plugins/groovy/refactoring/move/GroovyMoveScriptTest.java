@@ -19,13 +19,14 @@ package org.jetbrains.plugins.groovy.refactoring.move;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.io.File;
@@ -33,7 +34,8 @@ import java.io.File;
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyMoveScriptTest extends JavaCodeInsightFixtureTestCase {
+public class GroovyMoveScriptTest extends LightCodeInsightFixtureTestCase {
+
   protected String getBasePath() {
     return TestUtils.getTestDataPath() + "refactoring/move/moveScript/";
   }
@@ -52,16 +54,15 @@ public class GroovyMoveScriptTest extends JavaCodeInsightFixtureTestCase {
 
   private void performAction(String[] fileNames, String newDirName, String dir) throws Exception {
     final PsiFile[] files = new PsiFile[fileNames.length];
-    final VirtualFileManager fileManager = VirtualFileManager.getInstance();
     for (int i = 0; i < files.length; i++) {
       String fileName = fileNames[i];
-      final VirtualFile file = fileManager.findFileByUrl("file://" + dir + "/" + fileName);
+      final VirtualFile file = myFixture.getTempDirFixture().getFile(dir + "/" + fileName);
       assertNotNull("File " + fileName + " not found", file);
 
       files[i] = PsiManager.getInstance(getProject()).findFile(file);
       assertNotNull("File " + fileName + " not found", files[i]);
     }
-    final VirtualFile virDir = fileManager.findFileByUrl("file://" + dir + "/" + newDirName);
+    final VirtualFile virDir = myFixture.getTempDirFixture().getFile(dir + "/" + newDirName);
     assertNotNull("Directory " + newDirName + " not found", virDir);
 
     final PsiDirectory psiDirectory = PsiManager.getInstance(getProject()).findDirectory(virDir);
@@ -83,7 +84,7 @@ public class GroovyMoveScriptTest extends JavaCodeInsightFixtureTestCase {
   private void doTest(String testName, String[] fileNames, String newDirName) throws Exception {
     final VirtualFile actualRoot = myFixture.copyDirectoryToProject(testName + "/before", "");
 
-    performAction(fileNames, newDirName, actualRoot.getPath());
+    performAction(fileNames, newDirName, VfsUtil.getRelativePath(actualRoot, myFixture.getTempDirFixture().getFile(""), '/'));
 
     File expectedRoot = new File(getTestDataPath() + testName + "/after");
     getProject().getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();

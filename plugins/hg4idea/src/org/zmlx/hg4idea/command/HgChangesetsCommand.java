@@ -55,10 +55,12 @@ public abstract class HgChangesetsCommand {
 
     addArguments(args);
 
-    HgCommandResult result = commandService.execute(
-      repo, Arrays.asList("--quiet"), command, args
-    );
-    
+    HgCommandResult result = commandService.execute(repo, Arrays.asList("--quiet"), command, args);
+
+    if (result == null) {
+      return Collections.emptyList();
+    }
+
     String output = result.getRawOutput();
     if (StringUtils.isEmpty(output)) {
       return Collections.emptyList();

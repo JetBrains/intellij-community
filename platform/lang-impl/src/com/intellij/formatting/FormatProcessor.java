@@ -44,7 +44,7 @@ class FormatProcessor {
   private final CodeStyleSettings mySettings;
 
   /**
-   * Remembers mappings between backward-shifted aligned block and blocks that cause that shift in order to detected
+   * Remembers mappings between backward-shifted aligned block and blocks that cause that shift in order to detect
    * infinite cycles that may occur when, for example following alignment is specified:
    * <p/>
    * <pre>
@@ -527,6 +527,13 @@ class FormatProcessor {
       return true;
     }
 
+    // Note that we can't just put this check at the method start because at least adjustSpacingByIndentOffset() may perform
+    // block states modification (e.g. define new value for 'allow to use first child indent as block indent' flag).
+    if (offsetResponsibleBlock.getWhiteSpace().isIsReadOnly()) {
+      // We're unable to perform backward shift because white space for the target element is read-only.
+      return true;
+    }
+
     // There is a possible case that alignment options are defined incorrectly. Consider the following example:
     //     int i1;
     //     int i2, i3;
@@ -538,9 +545,10 @@ class FormatProcessor {
     Set<LeafBlockWrapper> blocksCausedRealignment = myBackwardShiftedAlignedBlocks.get(offsetResponsibleBlock);
     if (blocksCausedRealignment != null && blocksCausedRealignment.contains(myCurrentBlock)) {
       LOG.error(String.format("Formatting error - code block %s is set to be shifted right because of its alignment with "
-                              + "block %s more than once. I.e. moving the former block because of alignment algo causes "
+                              + "block %s more than once. I.e. moving the former block because of alignment algorithm causes "
                               + "subsequent block to be shifted right as well - cyclic dependency",
                               offsetResponsibleBlock.getTextRange(), myCurrentBlock.getTextRange()));
+      blocksCausedRealignment.add(myCurrentBlock);
       return true;
     }
     myBackwardShiftedAlignedBlocks.clear();

@@ -16,17 +16,27 @@
 
 package org.jetbrains.plugins.groovy.intentions.closure;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
@@ -41,6 +51,25 @@ public class EachToForIntention extends Intention {
   @Override
   protected PsiElementPredicate getElementPredicate() {
     return new EachToForPredicate();
+  }
+
+  private GrVariable var = null;
+
+  @Override
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    super.invoke(project, editor, file);
+    if (var == null) return;
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+
+    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+    final Document doc = documentManager.getDocument(file);
+    if (doc == null) return;
+
+
+    documentManager.doPostponedOperationsAndUnblockDocument(doc);
+    editor.getCaretModel().moveToOffset(var.getTextOffset());
+    new VariableInplaceRenamer(var, editor).performInplaceRename();
   }
 
   @Override
@@ -69,12 +98,13 @@ public class EachToForIntention extends Intention {
     StringBuilder builder = new StringBuilder();
     builder.append("for (").append(var).append(" in ").append(qualifier.getText()).append(") {\n");
     String text = block.getText();
-    int index = text.indexOf("->");
-    if (index == -1) {
-      index = 1;
+    final PsiElement blockArrow = block.getArrow();
+    int index;
+    if (blockArrow != null) {
+      index = blockArrow.getStartOffsetInParent() + blockArrow.getTextLength();
     }
     else {
-      index += 2;
+      index = 1;
     }
     while (index < text.length() && Character.isWhitespace(text.charAt(index))) index++;
     text = text.substring(index, text.length() - 1);
@@ -82,7 +112,9 @@ public class EachToForIntention extends Intention {
     builder.append("}");
 
     final GrStatement statement = elementFactory.createStatementFromText(builder.toString());
-    expression.replaceWithStatement(statement);
+    final GrForStatement forStatement = (GrForStatement)expression.replaceWithStatement(statement);
+    final GrForClause clause = forStatement.getClause();
+    this.var = clause.getDeclaredVariables()[0];
   }
 
   private static class EachToForPredicate implements PsiElementPredicate {

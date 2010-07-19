@@ -43,9 +43,9 @@ public class SchemesManagerFactoryImpl extends SchemesManagerFactory implements 
 
     if (baseDirPath != null) {
 
-      SchemesManagerImpl<T, E> manager = new SchemesManagerImpl<T,E>(fileSpec, processor, roamingType,
-                                                          ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager().getStreamProviders(roamingType),
-                                                          new File(baseDirPath));
+      StreamProvider[] providers =
+        ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager().getStreamProviders(roamingType);
+      SchemesManagerImpl<T, E> manager = new SchemesManagerImpl<T,E>(fileSpec, processor, roamingType, providers, new File(baseDirPath));
       myRegisteredManagers.add(manager);
       return manager;
     }

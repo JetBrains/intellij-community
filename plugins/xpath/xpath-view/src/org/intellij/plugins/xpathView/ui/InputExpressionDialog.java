@@ -86,7 +86,7 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
     private final ComboBox myComboBox = new ComboBox();
     private JComponent myEditorComponent;
 
-    private @Nullable Set<Namespace> myNamespaceCache;
+    @Nullable private Set<Namespace> myNamespaceCache;
     private InteractiveContextProvider myContextProvider;
     private final PsiFile myXPathFile;
 
@@ -163,8 +163,8 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
                     n = selectedItem.namespaces;
                     v = selectedItem.variables;
                 } else {
-                    n = Collections.EMPTY_SET;
-                    v = Collections.EMPTY_SET;
+                    n = Collections.emptySet();
+                    v = Collections.emptySet();
                 }
 
                 // FIXME
@@ -231,7 +231,7 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
                     final PsiReference[] references = element.getReferences();
                     for (PsiReference reference : references) {
                         if (reference instanceof PrefixReference) {
-                            final PrefixReference prefixReference = ((PrefixReference)reference);
+                            final PrefixReference prefixReference = (PrefixReference)reference;
                             if (prefixReference.isUnresolved()) {
                                 prefixes.add(prefixReference.getPrefix());
                             }
@@ -378,7 +378,7 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
             if (myNamespaceCache != null) {
                 return Namespace.makeMap(myNamespaceCache);
             } else {
-                return Collections.EMPTY_MAP;
+                return Collections.emptyMap();
             }
         }
 
@@ -397,8 +397,8 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
     public Context getContext() {
         final HistoryElement context = myModel.getSelectedItem();
         if (context == null || context.expression == null) {
-            final Set<Namespace> cache = myNamespaceCache != null ? myNamespaceCache : Collections.EMPTY_SET;
-            return new Context(new HistoryElement(myDocument.getText(), Collections.EMPTY_SET, cache), getMode());
+            final Set<Namespace> cache = myNamespaceCache != null ? myNamespaceCache : Collections.<Namespace>emptySet();
+            return new Context(new HistoryElement(myDocument.getText(), Collections.<Variable>emptySet(), cache), getMode());
         }
 
         final Collection<Namespace> namespaces = myNamespaceCache != null ?
@@ -536,8 +536,8 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
 
         @Nullable
         public String getPrefixForURI(String uri, XmlElement context) {
-            final java.util.List<String> list = myMap.getKeysByValue(uri);
-            return list != null && list.size() > 0 ? list.get(0) : null;
+            final List<String> list = myMap.getKeysByValue(uri);
+            return list != null && !list.isEmpty() ? list.get(0) : null;
         }
 
         @NotNull
@@ -617,7 +617,7 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
                 } else {
                     n = Collections.singleton(namespace);
                     //noinspection unchecked
-                    v = Collections.EMPTY_SET;
+                    v = Collections.emptySet();
                 }
 
                 updateContext(n, v);

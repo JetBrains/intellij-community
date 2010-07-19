@@ -41,6 +41,6 @@ public class JavaFieldNameIndex extends StringStubIndexExtension<PsiField> {
   }
 
   public Collection<PsiField> get(final String s, final Project project, final GlobalSearchScope scope) {
-    return super.get(s, project, new JavaSourceFilterScope(scope, project));
+    return super.get(s, project, new JavaSourceFilterScope(scope));
   }
 }

@@ -1,0 +1,5 @@
+<grammar xmlns="http://relaxng.org/ns/structure/1.0">
+  <div>
+    <define name="included.start.element" />
+  </div>
+</grammar>

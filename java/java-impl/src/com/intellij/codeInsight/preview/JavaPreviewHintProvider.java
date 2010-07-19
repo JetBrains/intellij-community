@@ -15,10 +15,10 @@
  */
 package com.intellij.codeInsight.preview;
 
+import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.patterns.PlatformPatterns;
 import com.intellij.xml.util.ColorSampleLookupValue;
 import org.jetbrains.annotations.NotNull;
 
@@ -60,7 +60,10 @@ public class JavaPreviewHintProvider implements PreviewHintProvider {
                 final Object o = helper.computeConstantExpression(each);
                 if (o instanceof Integer) {
                   values[i] = ((Integer)o).intValue();
-                  values[i] = values[i] > 255 ? 255 : values[i] < 0 ? 0 : values[i];
+                  if (expressions.length != 1) {
+                    values[i] = values[i] > 255 ? 255 : values[i] < 0 ? 0 : values[i];
+                  }
+
                   i++;
                 }
                 else if (o instanceof Float) {
@@ -73,18 +76,22 @@ public class JavaPreviewHintProvider implements PreviewHintProvider {
 
               Color c = null;
               if (i == expressions.length) {
-                switch (values.length) {
-                  case 1:
-                    c = new Color(values[0]);
-                    break;
-                  case 3:
-                    c = new Color(values[0], values[1], values[2]);
-                    break;
-                  case 4:
-                    c = new Color(values[0], values[1], values[2], values[3]);
-                    break;
-                  default:
-                    break;
+                if (i == 1 && values[0] > 255) {
+                  c = new Color(values[0]);
+                } else {
+                  switch (values.length) {
+                    case 1:
+                      c = new Color(values[0]);
+                      break;
+                    case 3:
+                      c = new Color(values[0], values[1], values[2]);
+                      break;
+                    case 4:
+                      c = new Color(values[0], values[1], values[2], values[3]);
+                      break;
+                    default:
+                      break;
+                  }
                 }
               }
               else if (j == expressions.length) {

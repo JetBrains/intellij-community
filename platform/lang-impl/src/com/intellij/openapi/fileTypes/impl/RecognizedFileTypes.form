@@ -8,7 +8,7 @@
     <properties/>
     <border type="etched" title-resource-bundle="messages/FileTypesBundle" title-key="filetypes.recognized.group"/>
     <children>
-      <scrollpane id="de9d1">
+      <scrollpane class="com.intellij.ui.components.JBScrollPane" id="de9d1">
         <constraints>
           <grid row="0" column="0" row-span="6" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false">
             <minimum-size width="80" height="80"/>
@@ -18,7 +18,7 @@
         <properties/>
         <border type="none"/>
         <children>
-          <component id="f12a0" class="javax.swing.JList" binding="myFileTypesList">
+          <component id="f12a0" class="com.intellij.ui.components.JBList" binding="myFileTypesList">
             <constraints/>
             <properties>
               <selectionMode value="0"/>

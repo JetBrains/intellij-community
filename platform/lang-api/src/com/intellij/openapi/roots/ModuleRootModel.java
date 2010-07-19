@@ -149,6 +149,16 @@ public interface ModuleRootModel {
   <R> R processOrder(RootPolicy<R> policy, R initialValue);
 
   /**
+   * Returns {@link OrderEnumerator} instance which can be used to process order entries of the module (with or without dependencies) and
+   * collect classes or source roots
+   *
+   * @return {@link OrderEnumerator} instance
+   * @since 10.0
+   */
+  @NotNull
+  OrderEnumerator orderEntries();
+
+  /**
    * Returns list of module names <i>this module</i> depends on.
    *
    * @return the list of module names this module depends on.

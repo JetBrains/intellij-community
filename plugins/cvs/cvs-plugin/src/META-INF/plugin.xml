@@ -39,7 +39,7 @@
 
     <checkinHandlerFactory implementation="com.intellij.cvsSupport2.CvsCheckinHandlerFactory"/>
 
-    <vcs name="CVS" vcsClass="com.intellij.cvsSupport2.CvsVcs2"/>
+    <vcs name="CVS" vcsClass="com.intellij.cvsSupport2.CvsVcs2" displayName="CVS" administrativeAreaName="CVS"/>
     <vcsPopupProvider implementation="com.intellij.cvsSupport2.actions.CvsQuickListContentProvider"/>
   </extensions>
 

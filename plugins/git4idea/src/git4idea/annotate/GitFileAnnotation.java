@@ -16,7 +16,6 @@
 package git4idea.annotate;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.EditorGutterAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusListener;
@@ -36,10 +35,8 @@ import git4idea.actions.GitShowAllSubmittedFilesAction;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.List;
 
 /**
  * Git file annotation implementation
@@ -89,14 +86,14 @@ public class GitFileAnnotation implements FileAnnotation {
    */
   private final boolean myMonitorFlag;
 
-  private final LineAnnotationAspect DATE_ASPECT = new MyAnnotationAspect() {
+  private final LineAnnotationAspect DATE_ASPECT = new GitAnnotationAspect() {
     public String doGetValue(LineInfo info) {
       final Date date = info.getDate();
       return date == null ? "" : DATE_FORMAT.format(date);
     }
   };
 
-  private final LineAnnotationAspect REVISION_ASPECT = new MyAnnotationAspect() {
+  private final LineAnnotationAspect REVISION_ASPECT = new GitAnnotationAspect() {
     @Override
     protected String doGetValue(LineInfo lineInfo) {
       final GitRevisionNumber revision = lineInfo.getRevision();
@@ -104,7 +101,7 @@ public class GitFileAnnotation implements FileAnnotation {
     }
   };
 
-  private final LineAnnotationAspect AUTHOR_ASPECT = new MyAnnotationAspect() {
+  private final LineAnnotationAspect AUTHOR_ASPECT = new GitAnnotationAspect() {
     @Override
     protected String doGetValue(LineInfo lineInfo) {
       final String author = lineInfo.getAuthor();
@@ -285,7 +282,7 @@ public class GitFileAnnotation implements FileAnnotation {
   /**
    * Revision annotation aspect implementation
    */
-  private abstract class MyAnnotationAspect  extends LineAnnotationAspectAdapter implements EditorGutterAction {
+  private abstract class GitAnnotationAspect extends LineAnnotationAspectAdapter {
     public String getValue(int lineNumber) {
       if (myLines.size() <= lineNumber || lineNumber < 0 || myLines.get(lineNumber) == null) {
         return "";
@@ -297,17 +294,8 @@ public class GitFileAnnotation implements FileAnnotation {
 
     protected abstract String doGetValue(LineInfo lineInfo);
 
-    /**
-     * {@inheritDoc}
-     */
-    public Cursor getCursor(final int lineNum) {
-      return Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void doAction(int lineNum) {
+    @Override
+    protected void showAffectedPaths(int lineNum) {
       if (lineNum >= 0 && lineNum < myLines.size()) {
         final LineInfo info = myLines.get(lineNum);
         VcsFileRevision revision = myRevisionMap.get(info.getRevision());

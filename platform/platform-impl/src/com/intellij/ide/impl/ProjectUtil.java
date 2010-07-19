@@ -112,6 +112,14 @@ public class ProjectUtil {
         virtualFile.isDirectory() && virtualFile.findChild(DIRECTORY_BASED_PROJECT_DIR) != null) {
       return openProject(path, projectToClose, forceOpenInNewFrame);
     }
+    if (virtualFile.isDirectory()) {
+      for (VirtualFile child : virtualFile.getChildren()) {
+        final String childPath = child.getPath();
+        if (childPath.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
+          return openProject(childPath, projectToClose, forceOpenInNewFrame);
+        }
+      }
+    }
     ProjectOpenProcessor provider = ProjectOpenProcessor.getImportProvider(virtualFile);
     if (provider != null) {
       return provider.doOpenProject(virtualFile, projectToClose, forceOpenInNewFrame);

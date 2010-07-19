@@ -34,6 +34,7 @@ import com.intellij.codeInspection.ui.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
@@ -78,7 +79,7 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
             if (descriptor != null) {
               final QuickFix[] fixes = descriptor.getFixes();
               if (fixes != null) {
-                quickFixes.addAll(Arrays.asList(fixes));
+                ContainerUtil.addAll(quickFixes, fixes);
               }
             }
           }

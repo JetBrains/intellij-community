@@ -114,13 +114,10 @@ public class GitHistoryUtils {
       return null;
     }
     String[] lines = result.split("\n");
-    if (lines.length < 3) {
-      LOG.error("Unsupported result format: " + result);
-      return null;
-    }
     String hash = lines[0];
+    boolean exists = lines.length < 3 || lines[2].charAt(0) != 'D';
     Date commitDate = GitUtil.parseTimestamp(lines[1]);
-    return new ItemLatestState(new GitRevisionNumber(hash, commitDate), lines[2].charAt(0) != 'D', false);
+    return new ItemLatestState(new GitRevisionNumber(hash, commitDate), exists, false);
   }
 
   public static void history(final Project project, FilePath path, final Consumer<GitFileRevision> consumer,
@@ -132,12 +129,13 @@ public class GitHistoryUtils {
     h.setNoSSH(true);
     h.setStdoutSuppressed(true);
     h.addParameters("-M", "--follow", "--name-only",
-                    "--pretty=tformat:%x00%x01%x00%H%x00%ct%x00%an%x20%x3C%ae%x3E%x00%cn%x20%x3C%ce%x3E%x00%x02%x00%s%x00%b", "--encoding=UTF-8");
+                    "--pretty=tformat:%x00%x01%x00%H%x00%ct%x00%an%x20%x3C%ae%x3E%x00%cn%x20%x3C%ce%x3E%x00%x02%x00%s%x00%b",
+                    "--encoding=UTF-8");
     h.endOptions();
     h.addRelativePaths(path);
 
     final String prefix = root.getPath() + "/";
-    final MyTokenAccomulator accomulator = new MyTokenAccomulator(6);
+    final MyTokenAccumulator accumulator = new MyTokenAccumulator(6);
 
     final Consumer<List<String>> resultAdapter = new Consumer<List<String>>() {
       public void consume(List<String> result) {
@@ -161,20 +159,22 @@ public class GitHistoryUtils {
     h.addLineListener(new GitLineHandlerAdapter() {
       @Override
       public void onLineAvailable(String line, Key outputType) {
-        final List<String> result = accomulator.acceptLine(line);
+        final List<String> result = accumulator.acceptLine(line);
         if (result != null) {
           resultAdapter.consume(result);
         }
       }
+
       @Override
       public void startFailed(Throwable exception) {
+        //noinspection ThrowableInstanceNeverThrown
         exceptionConsumer.consume(new VcsException(exception));
       }
 
       @Override
       public void processTerminated(int exitCode) {
         super.processTerminated(exitCode);
-        final List<String> result = accomulator.processLast();
+        final List<String> result = accumulator.processLast();
         if (result != null) {
           resultAdapter.consume(result);
         }
@@ -186,7 +186,7 @@ public class GitHistoryUtils {
     semaphore.waitFor();
   }
 
-  private static class MyTokenAccomulator {
+  private static class MyTokenAccumulator {
     // %x00%x02%x00%s%x00%x02%x01%b%x00%x01%x00
     private final static String ourCommentStartMark = "\u0000\u0002\u0000";
     private final static String ourCommentEndMark = "\u0000\u0002\u0001";
@@ -197,7 +197,7 @@ public class GitHistoryUtils {
 
     private boolean myNotStarted;
 
-    private MyTokenAccomulator(final int max) {
+    private MyTokenAccumulator(final int max) {
       myMax = max;
       myBuffer = new StringBuilder();
       myNotStarted = true;
@@ -206,18 +206,19 @@ public class GitHistoryUtils {
     @Nullable
     public List<String> acceptLine(String s) {
       final boolean lineEnd = s.startsWith(ourLineEndMark);
-      if (lineEnd && (! myNotStarted)) {
+      if (lineEnd && (!myNotStarted)) {
         final String line = myBuffer.toString();
         myBuffer.setLength(0);
         myBuffer.append(s.substring(3));
 
         return processResult(line);
-      } else {
+      }
+      else {
         myBuffer.append(lineEnd ? s.substring(3) : s);
         myBuffer.append('\u0002');
       }
       myNotStarted = false;
-        
+
       return null;
     }
 
@@ -225,8 +226,19 @@ public class GitHistoryUtils {
       return processResult(myBuffer.toString());
     }
 
-    private List<String> processResult(final String line) {
+    private static List<String> processResult(final String line) {
       final int commentStartIdx = line.indexOf(ourCommentStartMark);
+      if (commentStartIdx == -1) {
+        LOG.info("Git history: no comment mark in line: '" + line + "'");
+        // todo remove this when clarifyed
+        java.util.StringTokenizer tk = new java.util.StringTokenizer(line, "\u0000", false);
+        final List<String> result = new ArrayList<String>();
+        while (tk.hasMoreElements()) {
+          final String token = tk.nextToken();
+          result.add(token);
+        }
+        return result;
+      }
 
       final String start = line.substring(0, commentStartIdx);
       java.util.StringTokenizer tk = new java.util.StringTokenizer(start, "\u0000", false);
@@ -280,7 +292,8 @@ public class GitHistoryUtils {
     return rc;
   }
 
-  public static List<Pair<SHAHash, Date>> onlyHashesHistory(Project project, FilePath path, final String... parameters) throws VcsException {
+  public static List<Pair<SHAHash, Date>> onlyHashesHistory(Project project, FilePath path, final String... parameters)
+    throws VcsException {
     // adjust path using change manager
     path = getLastCommitName(project, path);
     final VirtualFile root = GitUtil.getGitRoot(path);
@@ -298,15 +311,18 @@ public class GitHistoryUtils {
     while (tk.hasMoreTokens()) {
       final String line = tk.nextToken();
       final StringTokenizer tk2 = new StringTokenizer(line, "\u0000\n", false);
-        final String hash = tk2.nextToken("\u0000\n");
-        final String dateString = tk2.nextToken("\u0000");
-        final Date date = GitUtil.parseTimestamp(dateString);
-        rc.add(new Pair<SHAHash, Date>(new SHAHash(hash), date));
+      final String hash = tk2.nextToken("\u0000\n");
+      final String dateString = tk2.nextToken("\u0000");
+      final Date date = GitUtil.parseTimestamp(dateString);
+      rc.add(new Pair<SHAHash, Date>(new SHAHash(hash), date));
     }
     return rc;
   }
 
-  public static List<GitCommit> historyWithLinks(Project project, FilePath path, final Set<String> allBranchesSet, final String... parameters) throws VcsException {
+  public static List<GitCommit> historyWithLinks(Project project,
+                                                 FilePath path,
+                                                 final Set<String> allBranchesSet,
+                                                 final String... parameters) throws VcsException {
     // adjust path using change manager
     path = getLastCommitName(project, path);
     final VirtualFile root = GitUtil.getGitRoot(path);
@@ -331,41 +347,43 @@ public class GitHistoryUtils {
       final String line = tk.nextToken();
       final StringTokenizer tk2 = new StringTokenizer(line, "\u0000\n", false);
       //while (tk2.hasMoreTokens()) {
-        final String hash = tk2.nextToken("\u0000\n");
-        final String dateString = tk2.nextToken("\u0000");
-        final Date date = GitUtil.parseTimestamp(dateString);
-        final String authorName = tk2.nextToken("\u0000");
+      final String hash = tk2.nextToken("\u0000\n");
+      final String dateString = tk2.nextToken("\u0000");
+      final Date date = GitUtil.parseTimestamp(dateString);
+      final String authorName = tk2.nextToken("\u0000");
       final String authorEmail = tk2.nextToken("\u0000");
-        final String committerName = tk2.nextToken("\u0000");
+      final String committerName = tk2.nextToken("\u0000");
       final String committerEmail = tk2.nextToken("\u0000");
-        // parent hashes
-        final String parents =  removeSquareBraces(tk2.nextToken("\u0000"));
+      // parent hashes
+      final String parents = removeSquareBraces(tk2.nextToken("\u0000"));
       final Set<SHAHash> parentsHashes;
-      if (! StringUtil.isEmptyOrSpaces(parents)) {
+      if (!StringUtil.isEmptyOrSpaces(parents)) {
         final String[] parentsSplit = parents.split(" "); // todo if parent = 000000
         parentsHashes = new HashSet<SHAHash>();
         for (String s : parentsSplit) {
           parentsHashes.add(new SHAHash(s));
         }
-      } else {
+      }
+      else {
         parentsHashes = Collections.emptySet();
       }
-        // decorate
-        final String decorate = tk2.nextToken("\u0000");
-        final String[] refNames = parseRefNames(decorate);
+      // decorate
+      final String decorate = tk2.nextToken("\u0000");
+      final String[] refNames = parseRefNames(decorate);
       final List<String> tags = refNames.length > 0 ? new LinkedList<String>() : Collections.<String>emptyList();
       final List<String> branches = refNames.length > 0 ? new LinkedList<String>() : Collections.<String>emptyList();
       for (String refName : refNames) {
         if (allBranchesSet.contains(refName)) {
           branches.add(refName);
-        } else {
+        }
+        else {
           tags.add(refName);
         }
       }
 
-        final String message = tk2.nextToken("\u0000").trim();
+      final String message = tk2.nextToken("\u0000").trim();
 
-        final List<FilePath> pathsList = new LinkedList<FilePath>();
+      final List<FilePath> pathsList = new LinkedList<FilePath>();
       if (tk2.hasMoreTokens()) {
         final String paths = tk2.nextToken();
         StringTokenizer tkPaths = new StringTokenizer(paths, "\n", false);
@@ -376,8 +394,8 @@ public class GitHistoryUtils {
         }
       }
       // todo parse revisions... patches?
-        rc.add(new GitCommit(new SHAHash(hash), authorName, committerName, date, message, parentsHashes, pathsList, authorEmail,
-                             committerEmail, tags, branches));
+      rc.add(new GitCommit(new SHAHash(hash), authorName, committerName, date, message, parentsHashes, pathsList, authorEmail,
+                           committerEmail, tags, branches));
       //}
     }
     return rc;

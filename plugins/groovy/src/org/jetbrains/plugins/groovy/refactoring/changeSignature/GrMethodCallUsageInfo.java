@@ -29,10 +29,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
@@ -46,7 +45,7 @@ import java.util.Map;
 public class GrMethodCallUsageInfo extends UsageInfo implements PossiblyIncorrectUsage {
   private final boolean myToChangeArguments;
   private final boolean myToCatchExceptions;
-  private GrClosureSignatureUtil.ArgInfo[] myMapToArguments;
+  private GrClosureSignatureUtil.ArgInfo<PsiElement>[] myMapToArguments;
   private PsiSubstitutor mySubstitutor;
 
   public boolean isToCatchExceptions() {
@@ -84,11 +83,11 @@ public class GrMethodCallUsageInfo extends UsageInfo implements PossiblyIncorrec
     myToCatchExceptions = isToCatchExceptions;
     final GrArgumentList list = PsiUtil.getArgumentsList(element);
     if (list == null) {
-      myMapToArguments = GrClosureSignatureUtil.ArgInfo.EMPTY_ARRAY;
+      myMapToArguments = GrClosureSignatureUtil.ArgInfo.empty_array();
     }
     else {
       myMapToArguments =
-        GrClosureSignatureUtil.mapParametersToArguments(signature, list, element.getManager(), GlobalSearchScope.allScope(getProject()));
+        GrClosureSignatureUtil.mapParametersToArguments(signature, list, GlobalSearchScope.allScope(getProject()));
     }
   }
 
@@ -105,12 +104,8 @@ public class GrMethodCallUsageInfo extends UsageInfo implements PossiblyIncorrec
   public static GroovyResolveResult resolveMethod(final PsiElement ref) {
     if (ref instanceof GrEnumConstant) return ((GrEnumConstant)ref).resolveConstructorGenerics();
     PsiElement parent = ref.getParent();
-    if (parent instanceof GrCallExpression) {
-      final GroovyResolveResult[] variants = ((GrCallExpression)parent).getMethodVariants();
-      return variants.length == 1 ? variants[0] : null;
-    }
-    else if (parent instanceof GrApplicationStatement) {
-      final GrExpression expression = ((GrApplicationStatement)parent).getFunExpression();
+    if (parent instanceof GrMethodCall) {
+      final GrExpression expression = ((GrMethodCall)parent).getInvokedExpression();
       if (expression instanceof GrReferenceExpression) {
         return ((GrReferenceExpression)expression).advancedResolve();
       }
@@ -123,7 +118,7 @@ public class GrMethodCallUsageInfo extends UsageInfo implements PossiblyIncorrec
   }
 
 
-  public GrClosureSignatureUtil.ArgInfo[] getMapToArguments() {
+  public GrClosureSignatureUtil.ArgInfo<PsiElement>[] getMapToArguments() {
     return myMapToArguments;
   }
 

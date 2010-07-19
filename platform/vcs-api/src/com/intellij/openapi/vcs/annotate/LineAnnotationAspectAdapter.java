@@ -15,8 +15,23 @@
  */
 package com.intellij.openapi.vcs.annotate;
 
-public abstract class LineAnnotationAspectAdapter implements LineAnnotationAspect {
+import com.intellij.openapi.editor.EditorGutterAction;
+
+import java.awt.*;
+
+public abstract class LineAnnotationAspectAdapter implements LineAnnotationAspect, EditorGutterAction {
   public String getTooltipText(int lineNumber) {
     return null;
   }
+
+  public Cursor getCursor(final int lineNum) {
+    return Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
+  }
+
+  @Override
+  public void doAction(int lineNum) {
+    showAffectedPaths(lineNum);
+  }
+
+  protected abstract void showAffectedPaths(int lineNum);
 }

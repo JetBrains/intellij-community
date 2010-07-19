@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
-import com.intellij.util.NotNullFunction;
+import com.intellij.util.Consumer;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.integrate.IMerger;
@@ -87,7 +87,7 @@ public class BranchMerger implements IMerger {
     }
   }
 
-  public void getInfo(NotNullFunction<String, Boolean> holder, boolean getLatest) {
+  public void getInfo(Consumer<String> holder, boolean getLatest) {
   }
 
   public File getMergeInfoHolder() {
@@ -95,5 +95,8 @@ public class BranchMerger implements IMerger {
   }
 
   public void afterProcessing() {
+  }
+
+  public void getSkipped(Consumer<String> holder) {
   }
 }

@@ -117,14 +117,6 @@ public class ResolveCache {
       return result;
     }
 
-    if (incompleteCode) {
-      result = resolve(ref, resolver, maps, needToPreventRecursion, false);
-      if (result != null && !(result instanceof Object[] && ((Object[])result).length == 0)) {
-        cache(ref, result, maps, physical, incompleteCode, clearCountOnStart);
-        return result;
-      }
-    }
-
     if (needToPreventRecursion && !lockElement(ref)) return null;
     try {
       result = resolver.resolve(ref, incompleteCode);

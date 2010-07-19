@@ -366,6 +366,16 @@
   <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.LegacyCompletionContributor" id="legacy" order="last"/>
   <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.FilePathCompletionContributor" id="filePath" order="before javaClassName"/>
 
+  <applicationService serviceInterface="com.intellij.execution.console.ConsoleFoldingSettings" serviceImplementation="com.intellij.execution.console.ConsoleFoldingSettings"/>
+  <console.folding implementation="com.intellij.execution.console.SubstringConsoleFolding"/>
+  <applicationConfigurable implementation="com.intellij.execution.console.ConsoleFoldingConfigurable"/>
+
+  <stacktrace.fold substring="at java.lang.reflect.Method.invoke("/>
+  <stacktrace.fold substring="at java.lang.reflect.Constructor.newInstance("/>
+  <stacktrace.fold substring="at sun.reflect."/>
+
+  <psi.referenceContributor implementation="com.intellij.psi.PsiReferenceContributorImpl"/>
+
   <lookup.charFilter implementation="com.intellij.codeInsight.completion.CompletionCharFilter" order="last" id="completion"/>
   <lookup.charFilter implementation="com.intellij.refactoring.IdentifierCharFilter" id="identifier"/>
   <lookup.charFilter implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceCharFilter" id="fileRef" order="before completion"/>
@@ -482,6 +492,8 @@
                       serviceImplementation="com.intellij.openapi.graph.impl.builder.util.CustomGraphActionsFactoryImpl"/>
   <applicationService serviceInterface="com.intellij.openapi.graph.GraphPeerFactory"
                       serviceImplementation="com.intellij.openapi.graph.impl.GraphPeerFactoryImpl"/>
+  <applicationService serviceInterface="com.intellij.openapi.graph.GraphSvgExporter"
+                      serviceImplementation="com.intellij.openapi.graph.impl.GraphSvgExporterImpl"/>
 
   <projectService serviceInterface="com.intellij.openapi.graph.builder.GraphBuilderFactory"
                   serviceImplementation="com.intellij.openapi.graph.impl.builder.GraphBuilderFactoryImpl"/>
@@ -551,7 +563,6 @@
   <filePasteProvider implementation="com.intellij.ide.FileListPasteProvider"/>
 
   <definitionsSearch implementation="com.intellij.pom.PomDefinitionSearch"/>
-  <gotoTargetRendererProvider implementation="com.intellij.testIntegration.GotoTestRendererProvider"/>
 
   <applicationService serviceInterface="com.intellij.ide.todo.TodoConfiguration"
                       serviceImplementation="com.intellij.ide.todo.TodoConfiguration"/>
