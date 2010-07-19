@@ -32,7 +32,7 @@ import java.util.Collection;
  */
 public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.PersistentHashMap");
-
+  private static final int APPEND_CACHE_DATA_THRESHOLD = 20 * 1024 * 1024; // 20 MB
   private PersistentHashMapValueStorage myValueStorage;
   private final DataExternalizer<Value> myValueExternalizer;
   private static final long NULL_ADDR = 0;
@@ -50,6 +50,10 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
       super(new ByteArrayOutputStream());
     }
 
+    public int getBufferSize() {
+      return ((ByteArrayOutputStream)out).size();
+    }
+    
     public void writeTo(OutputStream stream) throws IOException {
       ((ByteArrayOutputStream)out).writeTo(stream);
     }
@@ -62,6 +66,8 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
       return ((ByteArrayOutputStream)out).toByteArray();
     }
   }
+
+  private int myBytesInMemoryCount = 0;
 
   private final LimitedPool<AppendStream> myStreamPool = new LimitedPool<AppendStream>(10, new LimitedPool.ObjectFactory<AppendStream>() {
     public AppendStream create() {
@@ -92,6 +98,8 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
         updateValueId(id, headerRecord);
 
         myStreamPool.recycle(value);
+
+        myBytesInMemoryCount -= bytes.length;
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -187,7 +195,18 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   public synchronized void appendData(Key key, ValueDataAppender appender) throws IOException {
     synchronized (ourLock) {
       markDirty(true);
-      appender.append(myAppendCache.get(key));
+      
+      final AppendStream stream = myAppendCache.get(key);
+      final int sizeBefore = stream.getBufferSize();
+      appender.append(stream);
+      myBytesInMemoryCount += (stream.getBufferSize() - sizeBefore);
+      
+      if (myBytesInMemoryCount > APPEND_CACHE_DATA_THRESHOLD) {
+        LOG.warn(
+          "PersistentHashMap: OVER " + APPEND_CACHE_DATA_THRESHOLD + " BYTES IN APPEND STREAM CACHE, FORCING CACHE FLUSH (not optimal serialization format?) File: " + getDataFile(myFile).getPath()
+        );
+        myAppendCache.clear();
+      }
     }
   }
 
