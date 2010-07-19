@@ -83,6 +83,7 @@ public class ThrowableInstanceNeverThrownInspection extends BaseInspection {
             } else if (parent instanceof PsiReturnStatement) {
                 return;
             }
+            if (PsiTreeUtil.getParentOfType(parent, PsiCallExpression.class) != null) return;
             final PsiElement typedParent =
                     PsiTreeUtil.getParentOfType(expression,
                             PsiAssignmentExpression.class,
@@ -129,6 +130,7 @@ public class ThrowableInstanceNeverThrownInspection extends BaseInspection {
                     } else if (usageParent instanceof PsiReturnStatement) {
                         return;
                     }
+                    if (PsiTreeUtil.getParentOfType(usageParent, PsiCallExpression.class) != null) return;
                 }
             }
             registerError(expression, expression);
