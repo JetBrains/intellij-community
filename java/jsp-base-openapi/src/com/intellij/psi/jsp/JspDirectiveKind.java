@@ -19,6 +19,7 @@ package com.intellij.psi.jsp;
  * @author ven
  */
 public enum JspDirectiveKind {
+  /** Mapped to both page and tag directives */
   PAGE,
   INCLUDE,
   TAGLIB,
