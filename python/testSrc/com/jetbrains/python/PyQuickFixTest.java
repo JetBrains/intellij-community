@@ -16,19 +16,19 @@ import org.jetbrains.annotations.NonNls;
 @TestDataPath("$CONTENT_ROOT/../testData/inspections/")
 public class PyQuickFixTest extends PyLightFixtureTestCase {
 
-  public void testAddImport() throws Exception {
+  public void testAddImport() {
     doInspectionTest(new String[] { "AddImport.py", "ImportTarget.py" }, PyUnresolvedReferencesInspection.class, PyBundle.message("ACT.NAME.add.import"), true, true);
   }
 
-  public void testAddImportDoc() throws Exception {
+  public void testAddImportDoc() {
     doInspectionTest(new String[] { "AddImportDoc.py", "ImportTarget.py" }, PyUnresolvedReferencesInspection.class, PyBundle.message("ACT.NAME.add.import"), true, true);
   }
 
-  public void testAddImportDocComment() throws Exception {  // PY-728
+  public void testAddImportDocComment() {  // PY-728
     doInspectionTest(new String[] { "AddImportDocComment.py", "ImportTarget.py" }, PyUnresolvedReferencesInspection.class, PyBundle.message("ACT.NAME.add.import"), true, true);
   }
 
-  public void testQualifyByImport() throws Exception {
+  public void testQualifyByImport() {
     final PyCodeInsightSettings settings = PyCodeInsightSettings.getInstance();
     boolean oldPreferFrom = settings.PREFER_FROM_IMPORT;
     boolean oldHighlightUnused = settings.HIGHLIGHT_UNUSED_IMPORTS;
@@ -43,7 +43,7 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
     }
   }
 
-  public void testAddToImportFromList() throws Exception {
+  public void testAddToImportFromList() {
     final PyCodeInsightSettings settings = PyCodeInsightSettings.getInstance();
     boolean oldHighlightUnused = settings.HIGHLIGHT_UNUSED_IMPORTS;
     settings.HIGHLIGHT_UNUSED_IMPORTS = false;
@@ -58,89 +58,89 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
 
   // TODO: add tests for stub indexes-based autoimport of unimported somehow.
 
-  public void testAddSelf() throws Exception {
+  public void testAddSelf() {
     doInspectionTest("AddSelf.py", PyMethodParametersInspection.class, PyBundle.message("QFIX.add.parameter.self", "self"), true, true);
   }
 
-  public void testAddCls() throws Exception {
+  public void testAddCls() {
     doInspectionTest("AddCls.py", PyMethodParametersInspection.class, PyBundle.message("QFIX.add.parameter.self", "cls"), true, true);
   }
 
-  public void testRenameToSelf() throws Exception {
+  public void testRenameToSelf() {
     doInspectionTest("RenameToSelf.py", PyMethodParametersInspection.class, PyBundle.message("QFIX.rename.parameter.to.$0", "self"), true,
                      true);
   }
 
-  public void testAddFieldFromMethod() throws Exception {
+  public void testAddFieldFromMethod() {
     doInspectionTest("AddFieldFromMethod.py", PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.NAME.add.field.$0.to.class.$1", "y", "A"),
                      true, true);
   }
 
-  public void testAddFieldFromInstance() throws Exception {
+  public void testAddFieldFromInstance() {
     doInspectionTest("AddFieldFromInstance.py", PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.NAME.add.field.$0.to.class.$1", "y", "A"),
                      true, true);
   }
 
-  public void testAddFieldAddConstructor() throws Exception {
+  public void testAddFieldAddConstructor() {
     doInspectionTest("AddFieldAddConstructor.py", PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.NAME.add.field.$0.to.class.$1", "x", "B"),
                      true, true);
   }
 
-  public void testAddFieldNewConstructor() throws Exception {
+  public void testAddFieldNewConstructor() {
     doInspectionTest("AddFieldNewConstructor.py", PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.NAME.add.field.$0.to.class.$1", "x", "B"),
                      true, true);
   }
 
-  public void testAddMethodFromInstance() throws Exception {
+  public void testAddMethodFromInstance() {
     doInspectionTest("AddMethodFromInstance.py", PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.NAME.add.method.$0.to.class.$1", "y", "A"),
                      true, true);
   }
 
-  public void testAddMethodFromMethod() throws Exception {
+  public void testAddMethodFromMethod() {
     doInspectionTest("AddMethodFromMethod.py", PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.NAME.add.method.$0.to.class.$1", "y", "A"),
                      true, true);
   }
 
-  public void testRemoveTrailingSemicolon() throws Exception {
+  public void testRemoveTrailingSemicolon() {
     doInspectionTest("RemoveTrailingSemicolon.py", PyTrailingSemicolonInspection.class, PyBundle.message("QFIX.remove.trailing.semicolon"),
                      true, true);
   }
 
-  public void testDictCreation() throws Exception {
+  public void testDictCreation() {
     doInspectionTest("DictCreation.py", PyDictCreationInspection.class, PyBundle.message("QFIX.dict.creation"), true, true);
   }
 
-  public void testTransformClassicClass() throws Exception {
+  public void testTransformClassicClass() {
     doInspectionTest("TransformClassicClass.py", PyClassicStyleClassInspection.class,
                      PyBundle.message("QFIX.classic.class.transform"), true, true);
   }
 
-  public void testAddGlobalQuickFix() throws Exception {
+  public void testAddGlobalQuickFix() {
     doInspectionTest("AddGlobalStatement.py", PyUnboundLocalVariableInspection.class,
                      PyBundle.message("QFIX.add.global"), true, true);
   }
 
-  public void testAddGlobalExistingQuickFix() throws Exception {
+  public void testAddGlobalExistingQuickFix() {
     doInspectionTest("AddGlobalExistingStatement.py", PyUnboundLocalVariableInspection.class,
                      PyBundle.message("QFIX.add.global"), true, true);
   }
 
-  public void testSimplifyBooleanCheckQuickFix() throws Exception {
+  public void testSimplifyBooleanCheckQuickFix() {
     doInspectionTest("SimplifyBooleanCheck.py", PySimplifyBooleanCheckInspection.class,
                      PyBundle.message("QFIX.simplify"), true, true);
   }
 
-  public void testFromFutureImportQuickFix() throws Exception {
+  public void testFromFutureImportQuickFix() {
     doInspectionTest("MoveFromFutureImport.py", PyFromFutureImportInspection.class,
                      PyBundle.message("QFIX.move.from.future.import"), true, true);
   }
 
-  public void testComparisonWithNoneQuickFix() throws Exception {
+  public void testComparisonWithNoneQuickFix() {
     doInspectionTest("ComparisonWithNone.py", PyComparisonWithNoneInspection.class,
                      PyBundle.message("QFIX.replace.equality"), true, true);
   }
 
-  public void testAddClassFix() throws Exception {
+  public void testAddClassFix() {
     doInspectionTest("AddClass.py", PyUnresolvedReferencesInspection.class, "Create class 'Xyzzy'", true, true);
   }
 
@@ -153,7 +153,7 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
                                   final Class inspectionClass,
                                   @NonNls String quickFixName,
                                   boolean applyFix,
-                                  boolean available) throws Exception {
+                                  boolean available) {
     doInspectionTest(new String[]{testFileName}, inspectionClass, quickFixName, applyFix, available);
   }
 
@@ -171,7 +171,7 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
                                   final Class inspectionClass,
                                   @NonNls String quickFixName,
                                   boolean applyFix,
-                                  boolean available) throws Exception {
+                                  boolean available) {
     myFixture.enableInspections(inspectionClass);
     myFixture.configureByFiles(testFiles);
     myFixture.checkHighlighting(true, false, false);
