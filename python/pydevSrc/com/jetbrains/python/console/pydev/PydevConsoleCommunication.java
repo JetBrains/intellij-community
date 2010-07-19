@@ -232,13 +232,9 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
             //is accepted) -- that's mostly because the server may take a while to get started.
             int commAttempts = 0;
             while (true) {
-            try {
-              ProgressManager.checkCanceled();
-            }
-            catch (ProcessCanceledException e) {
-              LOG.debug("Canceled");
-              return;
-            }
+              if (indicator.isCanceled()){
+                return;
+              }
 
               executed = exec(command);
 
@@ -299,24 +295,17 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
       ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         @Override
         public void run() {
-          final ProgressManager progressManager = ProgressManager.getInstance();
-          if (progressManager.hasProgressIndicator()){
-            progressManager.getProgressIndicator().setText("Waiting for REPL response with " + (int)(TIMEOUT/10e8) + "s timeout");
-          }
+          final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+          progressIndicator.setText("Waiting for REPL response with " + (int)(TIMEOUT/10e8) + "s timeout");
           final long startTime = System.nanoTime();
           while (nextResponse == null) {
-            try {
-              ProgressManager.checkCanceled();
-            }
-            catch (ProcessCanceledException e) {
+            if (progressIndicator.isCanceled()){
               LOG.debug("Canceled");
               nextResponse = new InterpreterResponse("", "Canceled", false, false);
             }
 
             final long time = System.nanoTime() - startTime;
-            if (progressManager.hasProgressIndicator()){
-              progressManager.getProgressIndicator().setFraction(((double)time) / TIMEOUT);
-            }
+            progressIndicator.setFraction(((double)time) / TIMEOUT);
             if (time > TIMEOUT){
               LOG.debug("Timeout exceeded");
               nextResponse = new InterpreterResponse("", "Timeout exceeded", false, false);
