@@ -227,6 +227,11 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
               console.setPrompt(PyConsoleHighlightingUtil.ORDINARY_PROMPT);
             }
           }
+          if (interpreterResponse.need_input){
+            if (!PyConsoleHighlightingUtil.INPUT_PROMPT.equals(console.getPrompt())){
+              console.setPrompt(PyConsoleHighlightingUtil.INPUT_PROMPT);
+            }
+          }
           // Handle output
           if (!StringUtil.isEmpty(interpreterResponse.err)){
             PyConsoleHighlightingUtil.processOutput(console, interpreterResponse.err, ProcessOutputTypes.STDERR);
