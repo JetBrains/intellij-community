@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Bas Leijdekkers
+ * Copyright 2007-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,7 @@ public class AddAction extends AbstractAction {
 
     public AddAction(IGTable table) {
         this.table = table;
-        putValue(NAME,
-                InspectionGadgetsBundle.message("button.add"));
+        putValue(NAME, InspectionGadgetsBundle.message("button.add"));
     }
 
     public void actionPerformed(ActionEvent e) {
@@ -41,9 +40,9 @@ public class AddAction extends AbstractAction {
         EventQueue.invokeLater(new Runnable() {
             public void run() {
                 final int lastRowIndex = tableModel.getRowCount() - 1;
-                final Rectangle rect =
+                final Rectangle rectangle =
                         table.getCellRect(lastRowIndex, 0, true);
-                table.scrollRectToVisible(rect);
+                table.scrollRectToVisible(rectangle);
                 table.editCellAt(lastRowIndex, 0);
                 final ListSelectionModel selectionModel =
                         table.getSelectionModel();
