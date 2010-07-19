@@ -285,7 +285,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
       String underlyingFrameworkId = provider.getUnderlyingFrameworkId();
       FrameworkSupportNode parentNode = null;
       if (underlyingFrameworkId != null) {
-        FrameworkSupportProvider parentProvider = findProvider(underlyingFrameworkId);
+        FrameworkSupportProvider parentProvider = findProvider(underlyingFrameworkId, myProviders);
         if (parentProvider == null) {
           LOG.info("Cannot find id = " + underlyingFrameworkId);
           return null;
@@ -300,8 +300,8 @@ public class AddSupportForFrameworksPanel implements Disposable {
   }
 
   @Nullable
-  private FrameworkSupportProvider findProvider(@NotNull String id) {
-    for (FrameworkSupportProvider provider : myProviders) {
+  private static FrameworkSupportProvider findProvider(@NotNull String id, final List<FrameworkSupportProvider> providers) {
+    for (FrameworkSupportProvider provider : providers) {
       if (id.equals(provider.getId())) {
         return provider;
       }
@@ -362,13 +362,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
   }
 
   private void sortFrameworks(final List<FrameworkSupportNode> nodes) {
-    DFSTBuilder<FrameworkSupportProvider> builder = new DFSTBuilder<FrameworkSupportProvider>(GraphGenerator.create(CachingSemiGraph.create(new ProvidersGraph(myProviders))));
-    if (!builder.isAcyclic()) {
-      Pair<FrameworkSupportProvider,FrameworkSupportProvider> pair = builder.getCircularDependency();
-      LOG.error("Circular dependency between providers '" + pair.getFirst().getId() + "' and '" + pair.getSecond().getId() + "' was found.");
-    }
-
-    final Comparator<FrameworkSupportProvider> comparator = builder.comparator();
+    final Comparator<FrameworkSupportProvider> comparator = getFrameworkSupportProvidersComparator(myProviders);
     Collections.sort(nodes, new Comparator<FrameworkSupportNode>() {
       public int compare(final FrameworkSupportNode o1, final FrameworkSupportNode o2) {
         return comparator.compare(o1.getProvider(), o2.getProvider());
@@ -376,7 +370,19 @@ public class AddSupportForFrameworksPanel implements Disposable {
     });
   }
 
-  private class ProvidersGraph implements GraphGenerator.SemiGraph<FrameworkSupportProvider> {
+  public static Comparator<FrameworkSupportProvider> getFrameworkSupportProvidersComparator(final List<FrameworkSupportProvider> providers) {
+    DFSTBuilder<FrameworkSupportProvider>
+      builder = new DFSTBuilder<FrameworkSupportProvider>(GraphGenerator.create(CachingSemiGraph.create(
+      new ProvidersGraph(providers))));
+    if (!builder.isAcyclic()) {
+      Pair<FrameworkSupportProvider,FrameworkSupportProvider> pair = builder.getCircularDependency();
+      LOG.error("Circular dependency between providers '" + pair.getFirst().getId() + "' and '" + pair.getSecond().getId() + "' was found.");
+    }
+
+    return builder.comparator();
+  }
+
+  private static class ProvidersGraph implements GraphGenerator.SemiGraph<FrameworkSupportProvider> {
     private final List<FrameworkSupportProvider> myFrameworkSupportProviders;
 
     public ProvidersGraph(final List<FrameworkSupportProvider> frameworkSupportProviders) {
@@ -392,13 +398,13 @@ public class AddSupportForFrameworksPanel implements Disposable {
       List<FrameworkSupportProvider> dependencies = new ArrayList<FrameworkSupportProvider>();
       String underlyingId = provider.getUnderlyingFrameworkId();
       if (underlyingId != null) {
-        FrameworkSupportProvider underlyingProvider = findProvider(underlyingId);
+        FrameworkSupportProvider underlyingProvider = findProvider(underlyingId, myFrameworkSupportProviders);
         if (underlyingProvider != null) {
           dependencies.add(underlyingProvider);
         }
       }
       for (String id : ids) {
-        FrameworkSupportProvider dependency = findProvider(id);
+        FrameworkSupportProvider dependency = findProvider(id, myFrameworkSupportProviders);
         if (dependency != null) {
           dependencies.add(dependency);
         }
