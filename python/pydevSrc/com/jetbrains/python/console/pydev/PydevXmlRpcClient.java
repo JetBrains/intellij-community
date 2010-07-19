@@ -1,8 +1,6 @@
 package com.jetbrains.python.console.pydev;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.net.NetUtils;
 import org.apache.xmlrpc.AsyncCallback;
 import org.apache.xmlrpc.XmlRpcClient;
@@ -66,7 +64,7 @@ public class PydevXmlRpcClient implements IPydevXmlRpcClient {
    *
    * @return the result from executing the given command in the server.
    */
-  public Object execute(String command, Object[] args, long timeout) throws XmlRpcException {
+  public Object execute(String command, Object[] args) throws XmlRpcException {
     final Object[] result = new Object[]{null};
 
     //make an async call so that we can keep track of not actually having an answer.
@@ -81,30 +79,8 @@ public class PydevXmlRpcClient implements IPydevXmlRpcClient {
       }
     });
 
-    final ProgressManager progressManager = ProgressManager.getInstance();
-    if (progressManager.hasProgressIndicator()){
-      progressManager.getProgressIndicator().setText("Communicating with Pydev console with " + (int)(timeout/10e8) + "s timeout");
-    }
-    final long startTime = System.nanoTime();
     //busy loop waiting for the answer (or having the console die).
     while (result[0] == null) {
-      try {
-        ProgressManager.checkCanceled();
-      }
-      catch (ProcessCanceledException e) {
-        result[0] = new Object[]{"Canceled"};
-        break;
-      }
-
-      final long time = System.nanoTime() - startTime;
-      if (progressManager.hasProgressIndicator()){
-        progressManager.getProgressIndicator().setFraction(((double)time) / timeout);
-      }
-      if (time > timeout){
-        LOG.debug("Timeout exceeded");
-        result[0] = new Object[]{"Timeout exceeded"};
-        break;
-      }
       try {
         if (process != null) {
           final String errStream = stdErrReader.getContents();

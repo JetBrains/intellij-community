@@ -1,13 +1,15 @@
 package com.jetbrains.python.console.pydev;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.jetbrains.python.console.PydevWebServer;
 import org.apache.xmlrpc.WebServer;
 import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.XmlRpcHandler;
+import org.jetbrains.annotations.NotNull;
 
 import java.net.MalformedURLException;
 import java.util.ArrayList;
@@ -45,7 +47,6 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
   private static final Logger LOG = Logger.getInstance(PydevConsoleCommunication.class.getName());
   private final Project myProject;
   public static final int MAX_ATTEMPTS = 1;
-  public static final long TIMEOUT = (long)(10e9);
 
   /**
    * Initializes the xml-rpc communication.
@@ -74,17 +75,18 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
    */
   public void close() throws Exception {
     if (this.client != null) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        public void run() {
+      new Task.Backgroundable(myProject, "Close console communication", false) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
           try {
-            PydevConsoleCommunication.this.client.execute("close", new Object[0], TIMEOUT);
+            PydevConsoleCommunication.this.client.execute("close", new Object[0]);
           }
           catch (Exception e) {
             //Ok, we can ignore this one on close.
           }
           PydevConsoleCommunication.this.client = null;
         }
-      }, "Close console communication", false, myProject);
+      }.queue();
     }
 
     if (this.webServer != null) {
@@ -171,7 +173,7 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
     }
     else {
       //create a thread that'll keep locked until an answer is received from the server.
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      new Task.Backgroundable(myProject, "Pydev Console Communication", false) {
 
         /**
          * Executes the needed command
@@ -181,14 +183,13 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
          * @throws XmlRpcException
          */
         private Pair<String, Boolean> exec() throws XmlRpcException {
-
-          Object execute = client.execute("addExec", new Object[]{command}, TIMEOUT);
+          Object execute = client.execute("addExec", new Object[]{command});
 
           Object object;
-          if (execute instanceof Vector){
+          if (execute instanceof Vector) {
             object = ((Vector)execute).get(0);
           }
-          else if (execute.getClass().isArray()){
+          else if (execute.getClass().isArray()) {
             object = ((Object[])execute)[0];
           }
           else {
@@ -219,7 +220,8 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
           return new Pair<String, Boolean>(errorContents, more);
         }
 
-        public void run() {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
           boolean needInput = false;
           try {
 
@@ -281,50 +283,51 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
             nextResponse = new InterpreterResponse("", "Exception while pushing line to console:" + e.getMessage(), false, needInput);
           }
         }
-      }, "Pydev Console Communication", true, myProject);
-    }
 
-    //busy loop until we have a response
-    while (nextResponse == null) {
-      synchronized (lock2) {
-        try {
-          lock2.wait(20);
-        }
-        catch (InterruptedException e) {
-          LOG.error(e);
+      }.queue();
+
+      //busy loop until we have a response
+      while (nextResponse == null) {
+        synchronized (lock2) {
+          try {
+            lock2.wait(20);
+          }
+          catch (InterruptedException e) {
+            LOG.error(e);
+          }
         }
       }
+      onResponseReceived.call(nextResponse);
     }
-    onResponseReceived.call(nextResponse);
   }
 
   /**
    * @return completions from the client
    */
-    public List<PydevCompletionVariant> getCompletions(final String prefix) throws Exception {
-        if(waitingForInput){
-            return Collections.emptyList();
-        }
-        final Object fromServer = client.execute("getCompletions", new Object[]{prefix}, TIMEOUT);
-        final List<PydevCompletionVariant> ret = new ArrayList<PydevCompletionVariant>();
-        
-        
-        if (fromServer instanceof Vector){
-          for(Object o: (Vector) fromServer){
-            if(o instanceof Vector){
-              //name, doc, args, type
-              final Vector comp = (Vector) o;
-              final int type = extractInt(comp.get(3));
-              final String args = AbstractPyCodeCompletion.getArgs((String) comp.get(2), type,
-                                                                   AbstractPyCodeCompletion.LOOKING_FOR_INSTANCED_VARIABLE) ;
-
-              ret.add(new PydevCompletionVariant((String) comp.get(0), (String) comp.get(1), args, type));
-            }
-        }
-        }
-
-      return ret;
+  public List<PydevCompletionVariant> getCompletions(final String prefix) throws Exception {
+    if (waitingForInput) {
+      return Collections.emptyList();
     }
+    final Object fromServer = client.execute("getCompletions", new Object[]{prefix});
+    final List<PydevCompletionVariant> ret = new ArrayList<PydevCompletionVariant>();
+
+
+    if (fromServer instanceof Vector) {
+      for (Object o : (Vector)fromServer) {
+        if (o instanceof Vector) {
+          //name, doc, args, type
+          final Vector comp = (Vector)o;
+          final int type = extractInt(comp.get(3));
+          final String args = AbstractPyCodeCompletion.getArgs((String)comp.get(2), type,
+                                                               AbstractPyCodeCompletion.LOOKING_FOR_INSTANCED_VARIABLE);
+
+          ret.add(new PydevCompletionVariant((String)comp.get(0), (String)comp.get(1), args, type));
+        }
+      }
+    }
+
+    return ret;
+  }
 
   /**
    * Extracts an int from an object
@@ -347,7 +350,7 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
     if (waitingForInput) {
       return "Unable to get description: waiting for input.";
     }
-    return client.execute("getDescription", new Object[]{text}, TIMEOUT).toString();
+    return client.execute("getDescription", new Object[]{text}).toString();
   }
 
 
