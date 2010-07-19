@@ -31,10 +31,6 @@ import org.jetbrains.annotations.NotNull;
 
 public class ExtractClassHandler implements RefactoringActionHandler {
 
-  protected static String getRefactoringName() {
-    return RefactorJBundle.message("extract.class");
-  }
-
   protected static String getHelpID() {
     return HelpID.ExtractClass;
   }
