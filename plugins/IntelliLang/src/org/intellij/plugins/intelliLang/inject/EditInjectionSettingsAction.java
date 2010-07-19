@@ -53,7 +53,7 @@ public class EditInjectionSettingsAction implements IntentionAction {
 
   @NotNull
   public String getFamilyName() {
-    return InjectLanguageAction.INJECT_LANGUAGE_FAMILY;
+    return "Edit Injection Settings";
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
