@@ -12,7 +12,6 @@
       <CLASSES>
         <root url="jar://$MODULE_DIR$/test.jar!/" />
       </CLASSES>
-      <JAVADOC />
       <SOURCES>
         <root url="file://$MODULE_DIR$" />
       </SOURCES>
