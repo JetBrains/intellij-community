@@ -22,7 +22,6 @@
           <root url="jar://$MODULE_DIR$/lib/coverage-report-idea.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/instrumenter.jar!/" />
         </CLASSES>
-        <JAVADOC />
         <SOURCES>
           <root url="jar://$MODULE_DIR$/lib/coverage-src.zip!/" />
         </SOURCES>
