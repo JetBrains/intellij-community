@@ -9,6 +9,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.fixtures.PyResolveTestCase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
 
 public class PyResolveTest extends PyResolveTestCase {
@@ -248,6 +249,17 @@ public class PyResolveTest extends PyResolveTestCase {
     PsiElement targetElement = resolve();
     assertTrue(targetElement instanceof PyFunction);
     assertEquals("A", ((PyFunction) targetElement).getContainingClass().getName());
+  }
+
+  public void testSuperPy3k() {  // PY-1330
+    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON30);
+    try {
+      final PyFunction pyFunction = assertResolvesTo(PyFunction.class, "foo");
+      assertEquals("A", pyFunction.getContainingClass().getName());
+    }
+    finally {
+      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
+    }
   }
 
   public void testStackOverflow() {
