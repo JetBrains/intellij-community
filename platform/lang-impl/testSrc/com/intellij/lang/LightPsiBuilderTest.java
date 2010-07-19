@@ -34,41 +34,39 @@ public class LightPsiBuilderTest {
 
   @Test
   public void testPlain() {
-    doTest(
-      "a<<b",
-      new Parser() {
-        public void parse(PsiBuilder builder) {
-          while (builder.getTokenType() != null) {
-            builder.advanceLexer();
-          }
-        }
-      },
-      "Element(ROOT)\n" +
-      "  PsiElement(LETTER)('a')\n" +
-      "  PsiElement(OTHER)('<')\n" +
-      "  PsiElement(OTHER)('<')\n" +
-      "  PsiElement(LETTER)('b')\n"
+    doTest("a<<b",
+           new Parser() {
+             public void parse(PsiBuilder builder) {
+               while (builder.getTokenType() != null) {
+                 builder.advanceLexer();
+               }
+             }
+           },
+           "Element(ROOT)\n" +
+           "  PsiElement(LETTER)('a')\n" +
+           "  PsiElement(OTHER)('<')\n" +
+           "  PsiElement(OTHER)('<')\n" +
+           "  PsiElement(LETTER)('b')\n"
     );
   }
 
   @Test
   public void testCollapse() {
-    doTest(
-      "a<<b",
-      new Parser() {
-        public void parse(PsiBuilder builder) {
-          PsiBuilder.Marker inner = null;
-          while (builder.getTokenType() != null) {
-            if (builder.getTokenType() == OTHER && inner == null) inner = builder.mark();
-            builder.advanceLexer();
-            if (builder.getTokenType() != OTHER && inner != null) { inner.collapse(COLLAPSED); inner = null; }
-          }
-        }
-      },
-      "Element(ROOT)\n" +
-      "  PsiElement(LETTER)('a')\n" +
-      "  PsiElement(COLLAPSED)('<<')\n" +
-      "  PsiElement(LETTER)('b')\n"
+    doTest("a<<b",
+           new Parser() {
+             public void parse(PsiBuilder builder) {
+               PsiBuilder.Marker inner = null;
+               while (builder.getTokenType() != null) {
+                 if (builder.getTokenType() == OTHER && inner == null) inner = builder.mark();
+                 builder.advanceLexer();
+                 if (builder.getTokenType() != OTHER && inner != null) { inner.collapse(COLLAPSED); inner = null; }
+               }
+             }
+           },
+           "Element(ROOT)\n" +
+           "  PsiElement(LETTER)('a')\n" +
+           "  PsiElement(COLLAPSED)('<<')\n" +
+           "  PsiElement(LETTER)('b')\n"
     );
   }
 
