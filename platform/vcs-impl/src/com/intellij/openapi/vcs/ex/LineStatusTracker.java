@@ -210,7 +210,8 @@ public class LineStatusTracker {
 
   private static void paintGutterFragment(Editor editor, Graphics g, Rectangle r, TextAttributesKey diffAttributeKey) {
     EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
-    g.setColor(editor.getColorsScheme().getAttributes(diffAttributeKey).getErrorStripeColor());
+    final Color stripeColor = editor.getColorsScheme().getAttributes(diffAttributeKey).getErrorStripeColor();
+    g.setColor(stripeColor);
     int endX = gutter.getWhitespaceSeparatorOffset();
     int x = r.x + r.width - 2;
     int width = endX - x;

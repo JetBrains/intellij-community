@@ -284,7 +284,7 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND" value="baeeba"/>
           <option name="EFFECT_COLOR"/>
-          <option name="ERROR_STRIPE_COLOR" value="29d92a"/>
+          <option name="ERROR_STRIPE_COLOR" value="4ced4d"/>
         </value>
       </option>
 
@@ -293,7 +293,7 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND" value="bccff9"/>
           <option name="EFFECT_COLOR"/>
-          <option name="ERROR_STRIPE_COLOR" value="316df5"/>
+          <option name="ERROR_STRIPE_COLOR" value="5186fe"/>
         </value>
       </option>
 
