@@ -1,6 +1,6 @@
 class A(object):
-  def __init__(self):
-    self._x = 1
+  def __init__(self, bar):
+    self._x = 1 ; self._bar = bar
 
   def __getX(self):
     return self._x
@@ -58,6 +58,9 @@ class A(object):
 
   @qoo.setter # unknown qoo is reported in ref inspection
   def qoo(self, v):
-    self._x = v 
+    self._x = v
 
+  @property
+  def bar(self):
+    return None
 

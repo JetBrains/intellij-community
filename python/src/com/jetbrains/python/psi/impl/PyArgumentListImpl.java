@@ -221,6 +221,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
     super.deleteChildInternal(node);
   }
 
+  @NotNull
   public AnalysisResult analyzeCall() {
     final PyCallExpressionHelper.AnalysisResultImpl ret = new PyCallExpressionHelper.AnalysisResultImpl(this);
     PyExpression[] arguments = getArguments();

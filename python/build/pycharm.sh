@@ -11,10 +11,47 @@
 # ---------------------------------------------------------------------
 if [ -z "$PYCHARM_JDK" ]; then
   PYCHARM_JDK=$JDK_HOME
+  if [ -z "$PYCHARM_JDK" -a -e "$JAVA_HOME/lib/tools.jar" ]; then
+    PYCHARM_JDK=$JAVA_HOME
+  fi
+  if [ -z "$PYCHARM_JDK" ]; then
+    # Try to get the jdk path from java binary path
+    JAVA_BIN_PATH=`which java`
+    if [ -n "$JAVA_BIN_PATH" ]; then
+      JAVA_LOCATION=`readlink -f $JAVA_BIN_PATH | xargs dirname | xargs dirname | xargs dirname`
+      if [ -x "$JAVA_LOCATION/bin/java" -a -e "$JAVA_LOCATION/lib/tools.jar" ]; then
+        PYCHARM_JDK=$JAVA_LOCATION
+      fi
+    fi
+  fi
   if [ -z "$PYCHARM_JDK" ]; then
     echo ERROR: cannot start PyCharm.
     echo No JDK found to run PyCharm. Please validate either PYCHARM_JDK or JDK_HOME points to valid JDK installation
   fi
+fi
+
+VERSION_LOG='/tmp/java.version.log'
+$PYCHARM_JDK/bin/java -version 2> $VERSION_LOG
+grep 'OpenJDK' $VERSION_LOG
+OPEN_JDK=$?
+grep '64-Bit' $VERSION_LOG
+BITS=$?
+rm /tmp/java.version.log
+if [ $OPEN_JDK -eq 0 ]; then
+  echo WARNING: You are launching IDE using OpenJDK Java runtime
+  echo
+  echo          THIS IS STRICTLY UNSUPPORTED DUE TO KNOWN PERFORMANCE AND GRAPHICS PROBLEMS
+  echo
+  echo NOTE:    If you have both Sun JDK and OpenJDK installed
+  echo          please validate either PYCHARM_JDK or JDK_HOME points to valid Sun JDK installation
+  echo
+  echo Press Enter to continue.
+  read IGNORE
+fi
+if [ $BITS -eq 0 ]; then
+  BITS="64"
+else
+  BITS=""
 fi
 
 #--------------------------------------------------------------------------
@@ -64,3 +101,4 @@ export LD_LIBRARY_PATH
 
 cd "$PYCHARM_BIN_HOME"
 exec $PYCHARM_JDK/bin/java $JVM_ARGS $PYCHARM_MAIN_CLASS_NAME $*
+

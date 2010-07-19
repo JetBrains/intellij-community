@@ -87,13 +87,18 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   }
 
   public void testPyUnusedLocalVariableInspection() {
-    PyUnusedLocalVariableInspection inspection = new PyUnusedLocalVariableInspection();
+    PyUnusedLocalInspection inspection = new PyUnusedLocalInspection();
     inspection.ignoreTupleUnpacking = false;
     doTest(getTestName(false), inspection);
   }
 
   public void testPyUnusedVariableTupleUnpacking() {
-    doHighlightingTest(PyUnusedLocalVariableInspection.class);
+    doHighlightingTest(PyUnusedLocalInspection.class);
+  }
+
+  public void testPyUnusedLocalFunctionInspection() {
+    PyUnusedLocalInspection inspection = new PyUnusedLocalInspection();
+    doTest(getTestName(false), inspection);
   }
 
   public void testPyDictCreationInspection() throws Throwable {

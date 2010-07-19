@@ -2,6 +2,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -44,7 +45,13 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   public static final PyClass[] EMPTY_ARRAY = new PyClassImpl[0];
 
   private List<PyTargetExpression> myInstanceAttributes;
-  private final CachedValue<Boolean> myNewStyle;
+  private final NotNullLazyValue<CachedValue<Boolean>> myNewStyle = new NotNullLazyValue<CachedValue<Boolean>>() {
+    @NotNull
+    @Override
+    protected CachedValue<Boolean> compute() {
+      return CachedValuesManager.getManager(getProject()).createCachedValue(new NewStyleCachedValueProvider(), false);
+    }
+  };
 
   private class NewStyleCachedValueProvider implements CachedValueProvider<Boolean> {
     @Override
@@ -55,12 +62,10 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   public PyClassImpl(ASTNode astNode) {
     super(astNode);
-    myNewStyle = CachedValuesManager.getManager(getProject()).createCachedValue(new NewStyleCachedValueProvider(), false);
   }
 
   public PyClassImpl(final PyClassStub stub) {
     super(stub, PyElementTypes.CLASS_DECLARATION);
-    myNewStyle = CachedValuesManager.getManager(getProject()).createCachedValue(new NewStyleCachedValueProvider(), false);
   }
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
@@ -704,7 +709,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   public boolean isNewStyleClass() {
-    return myNewStyle.getValue();
+    return myNewStyle.getValue().getValue();
   }
 
   private boolean calculateNewStyleClass() {

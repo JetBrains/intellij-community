@@ -25,7 +25,7 @@ public class VariableIntroduceHandler extends IntroduceHandler {
                                       @NotNull final PsiElement declaration,
                                       @NotNull final List<PsiElement> occurrences,
                                       final boolean replaceAll,
-                                      boolean initInConstructor) {
+                                      InitPlace initInConstructor) {
     return doIntroduceVariable(expression, declaration, occurrences, replaceAll);
   }
 

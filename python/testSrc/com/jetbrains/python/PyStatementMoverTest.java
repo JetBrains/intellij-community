@@ -8,13 +8,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 
 /**
- * Created by IntelliJ IDEA.
- * Author: Alexey.Ivanov
- * Date:   05.05.2010
- * Time:   18:20:20
+ * @author Alexey.Ivanov
  */
 public class PyStatementMoverTest extends PyLightFixtureTestCase {
-  private void doTest() throws Exception {
+  private void doTest() {
     final String testName = getTestName(true);
     myFixture.configureByFile("mover/" + testName + ".py");
     performAction(new MoveStatementUpAction().getHandler());
@@ -33,43 +30,47 @@ public class PyStatementMoverTest extends PyLightFixtureTestCase {
     }
   }
 
-  public void testSimple() throws Exception {
+  public void testSimple() {
     doTest();
   }
 
-  public void testOutsideStatement() throws Exception {
+  public void testOutsideStatement() {
     doTest();
   }
 
-  public void testInsideStatement() throws Exception {
+  public void testInsideStatement() {
     doTest();
   }
 
-  public void testFunctions() throws Exception {
+  public void testFunctions() {
     doTest();
   }
 
-  public void testBetweenStatementParts() throws Exception {
+  public void testBetweenStatementParts() {
     doTest();
   }
 
-  public void testMoveStatement() throws Exception {
+  public void testMoveStatement() {
     doTest();
   }
 
-  public void testSelection() throws Exception {
+  public void testSelection() {
     doTest();
   }
 
-  public void testSimpleBlankLines() throws Exception {
+  public void testSimpleBlankLines() {
     doTest();
   }
 
-  public void testPy950() throws Exception {
+  public void testPy950() {
     doTest();
   }
 
-  public void testIndent() throws Exception {
+  public void testIndent() {
+    doTest();
+  }
+
+  public void testDecorator() {
     doTest();
   }
 }

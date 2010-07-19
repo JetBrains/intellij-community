@@ -143,7 +143,7 @@ public class ImportFromExistingFix implements HintAction, LocalQuickFix {
     Collections.sort(myImports);
   }
 
-  public boolean hasCandidates() {
-    return !myImports.isEmpty();
+  public int getCandidatesCount() {
+    return myImports.size();
   }
 }

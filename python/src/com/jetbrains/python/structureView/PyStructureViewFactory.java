@@ -21,9 +21,7 @@ public class PyStructureViewFactory implements PsiStructureViewFactory {
 
       @NotNull
       public StructureViewModel createStructureViewModel() {
-        return new StructureViewModelBase(psiFile, new PyStructureViewElement((PyElement) psiFile))
-          .withSorters(Sorter.ALPHA_SORTER)
-          .withSuitableClasses(PyFunction.class, PyClass.class);
+        return new PyStructureViewModel(psiFile);
       }
     };
   }

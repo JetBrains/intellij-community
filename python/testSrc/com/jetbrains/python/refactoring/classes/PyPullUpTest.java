@@ -10,19 +10,27 @@ import java.util.Collections;
  * @author Dennis.Ushakov
  */
 public class PyPullUpTest extends PyClassRefactoringTest {
-  public void testSimple() throws Exception {
+  public void testSimple() {
     doHelperTest("Boo", ".boo", "Foo");
   }
 
-  public void testSuperclass() throws Exception {
+  public void testSuperclass() {
     doHelperTest("Boo", "Foo", "Zope");
   }
 
-  public void testExistingsuperclass() throws Exception {
+  public void testExistingsuperclass() {
     doHelperTest("Boo", "Foo", "Zope");
   }
 
-  private void doHelperTest(final String className, final String memberName, final String superClassName) throws Exception {
+  public void testWithComments() {
+    doHelperTest("Boo", ".boo", "Foo");
+  }
+
+  public void testWithMultilineComments() {
+    doHelperTest("Boo", ".boo", "Foo");
+  }
+
+  private void doHelperTest(final String className, final String memberName, final String superClassName) {
     String baseName = "/refactoring/pullup/" + getTestName(true);
     myFixture.configureByFile(baseName + ".py");
     final PyClass clazz = findClass(className);

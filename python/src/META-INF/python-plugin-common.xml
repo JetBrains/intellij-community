@@ -169,6 +169,9 @@
 
     <analyzeStacktraceFilter implementation="com.jetbrains.python.run.PythonTracebackFilter"/>
 
+    <internalFileTemplate name="Python Script"/>
+    <internalFileTemplate name="Python Unit Test"/>
+
     <!-- Django -->
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.django.annotator.ViewMethodLineMarkerProvider"/>
     <configurationType implementation="com.jetbrains.django.run.DjangoServerRunConfigurationType"/>
@@ -390,5 +393,9 @@
 
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
+
+    <action id="NewPythonFile" class="com.jetbrains.python.actions.CreatePythonFileAction">
+      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewXml"/>
+    </action>
   </actions>
 </idea-plugin>

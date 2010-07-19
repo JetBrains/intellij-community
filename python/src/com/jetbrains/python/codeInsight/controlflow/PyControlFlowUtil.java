@@ -9,10 +9,9 @@ import org.jetbrains.annotations.NotNull;
  * @author oleg
  */
 public class PyControlFlowUtil {
-  public static void iterateWriteAccessFor(@NotNull final String variableName,
-                                           final int statInstruction,
-                                           @NotNull final Instruction[] instructions,
-                                           @NotNull final Function<ReadWriteInstruction, Operation> closure) {
+  public static void iteratePrev(final int statInstruction,
+                                 @NotNull final Instruction[] instructions,
+                                 @NotNull final Function<Instruction, Operation> closure) {
     final ControlFlowUtil.Stack stack = new ControlFlowUtil.Stack(instructions.length);
     final boolean[] visited = new boolean[instructions.length];
 
@@ -24,16 +23,11 @@ public class PyControlFlowUtil {
       }
       visited[num] = true;
       final Instruction instr = instructions[num];
-      if (instr instanceof ReadWriteInstruction) {
-        final ReadWriteInstruction rwInstr = (ReadWriteInstruction)instr;
-        if (variableName.equals(rwInstr.getName()) && rwInstr.getAccess().isWriteAccess()){
-          final Operation nextOperation = closure.fun(rwInstr);
-          if (nextOperation == Operation.CONTINUE) {
-            continue;
-          } else if (nextOperation == Operation.BREAK) {
-            break;
-          }
-        }
+      final Operation nextOperation = closure.fun(instr);
+      if (nextOperation == Operation.CONTINUE) {
+        continue;
+      } else if (nextOperation == Operation.BREAK) {
+        break;
       }
       for (Instruction pred : instr.allPred()) {
         stack.push(pred.num());

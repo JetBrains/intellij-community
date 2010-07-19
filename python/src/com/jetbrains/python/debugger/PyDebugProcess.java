@@ -7,6 +7,7 @@ import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
@@ -32,7 +33,7 @@ import static javax.swing.SwingUtilities.invokeLater;
 // todo: bundle messages
 // todo: pydevd supports module reloading - look for a way to use the feature
 // todo: smart step into
-public class PyDebugProcess extends XDebugProcess {
+public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
 
   private final PyPositionConverter myPositionConverter = new PyLocalPositionConverter();
   private final RemoteDebugger myDebugger;
@@ -168,6 +169,12 @@ public class PyDebugProcess extends XDebugProcess {
   public void changeVariable(final PyDebugValue var, final String value) throws PyDebuggerException {
     final PyStackFrame frame = currentFrame();
     myDebugger.changeVariable(frame.getThreadId(), frame.getFrameId(), var, value);
+  }
+
+  @Override
+  public boolean isVariable(String name) {
+    final Project project = getSession().getProject();
+    return PyDebugSupportUtils.isVariable(project, name);
   }
 
   private PyStackFrame currentFrame() throws PyDebuggerException {

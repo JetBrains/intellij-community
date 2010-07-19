@@ -91,6 +91,16 @@ public class PyClassRefactoringUtil {
     if (methods.size() == 0) return;
     final PyElement[] elements = methods.toArray(new PyElement[methods.size()]);
     addMethods(superClass, elements, true);
+    removeMethodsWithComments(elements);
+  }
+
+  private static void removeMethodsWithComments(PyElement[] elements) {
+    for (PyElement element : elements) {
+      final Set<PsiElement> comments = PyUtil.getComments(element);
+      if (comments.size() > 0) {
+        PyPsiUtils.removeElements(comments.toArray(new PsiElement[comments.size()]));
+      }
+    }
     PyPsiUtils.removeElements(elements);
   }
 
@@ -110,13 +120,18 @@ public class PyClassRefactoringUtil {
 
     final PyClass newClass = PyElementGenerator.getInstance(project).createFromText(PyClass.class, text);
     final PyStatementList statements = superClass.getStatementList();
+    final PyStatementList newStatements = newClass.getStatementList();
     if (statements.getStatements().length != 0) {
-      for (PyElement newStatement : newClass.getStatementList().getStatements()) {
-        //statements.add(PythonLanguage.getInstance().getElementGenerator().createNewLine(project));
-        statements.add(newStatement);
+      for (PyElement newStatement : newStatements.getStatements()) {
+        if (newStatement instanceof PyExpressionStatement && newStatement.getFirstChild() instanceof PyStringLiteralExpression) continue;
+        final PsiElement anchor = statements.add(newStatement);
+        final Set<PsiElement> comments = PyUtil.getComments(newStatement);
+        for (PsiElement comment : comments) {
+          statements.addBefore(comment, anchor);
+        }
       }
     } else {
-      statements.replace(newClass.getStatementList());
+      statements.replace(newStatements);
     }
   }
 
@@ -134,6 +149,10 @@ public class PyClassRefactoringUtil {
     for (PyElement element : elements) {
       final String name = element.getName();
       if (name != null && (up || superClass.findMethodByName(name, false) == null)) {
+        final Set<PsiElement> comments = PyUtil.getComments(element);
+        for (PsiElement comment : comments) {
+          builder.append(white).append(comment.getText());
+        }
         builder.append(white).append(element.getText()).append("\n");
         hasChanges = true;
       }

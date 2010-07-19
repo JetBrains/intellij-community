@@ -21,10 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
- * Created by IntelliJ IDEA.
- * Author: Alexey.Ivanov
- * Date:   23.04.2010
- * Time:   16:44:57
+ * @author Alexey.Ivanov
  */
 public class StatementMover extends LineMover {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.codeInsight.editorActions.moveUpDown.StatementMover");
@@ -147,7 +144,7 @@ public class StatementMover extends LineMover {
       return null;
     }
 
-    int startOffset = first.getTextOffset();
+    int startOffset = first.getTextRange().getStartOffset();
     int endOffset = second.getTextRange().getEndOffset();
     final Document document = editor.getDocument();
     if (endOffset > document.getTextLength()) {

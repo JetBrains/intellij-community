@@ -1,6 +1,5 @@
 package com.jetbrains.python.psi.impl;
 
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -11,10 +10,6 @@ import com.jetbrains.python.psi.resolve.ResolveProcessor;
 import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Something that describes a property, with all related accessors.
@@ -112,60 +107,45 @@ public abstract class PropertyBunch<MType> {
     if (call != null) {
       PyArgumentList arglist = call.getArgumentList();
       if (arglist != null) {
-        PyArgumentList.AnalysisResult analysis = PyCallExpressionHelper.analyzeBuiltinCall(call);
-        if (analysis != null) {
-          PyCallExpression.PyMarkedCallee marked_callee = analysis.getMarkedCallee();
-          if (marked_callee != null) {
-            PyParameter[] params = marked_callee.getCallable().getParameterList().getParameters();
-            List<Maybe<MType>> accessors = new ArrayList<Maybe<MType>>(3);
-            final Maybe<MType> unknown = new Maybe<MType>();
-            accessors.add(null);
-            accessors.add(null);
-            accessors.add(null); // 3 times
-            final int offset = marked_callee.getImplicitOffset();
-            // NOTE: we could find mapped parameters by name, but this won't be any shorter :(
-            for (Map.Entry<PyExpression, PyNamedParameter> entry : analysis.getPlainMappedParams().entrySet()) {
-              PyNamedParameter param = entry.getValue();
-              int n = ArrayUtil.indexOf(params, param) - offset;
-              if (n >= 0) {
-                if (n < 3) {
-                  // accessors
-                  accessors.set(n, unknown); // definitely filled
-                  PyExpression expr = PyUtil.peelArgument(entry.getKey());
-                  if (expr instanceof PyReferenceExpression) {
-                    PyReferenceExpression arg_ref = (PyReferenceExpression)expr;
-                    if (arg_ref.getQualifier() == null) accessors.set(n, new Maybe<MType>(target.translate(arg_ref)));
-                  }
-                }
-                else if (n == 3) {
-                  // doc
-                  PyExpression expr = PyUtil.peelArgument(entry.getKey());
-                  if (expr instanceof PyStringLiteralExpression) {
-                    target.myDoc = ((PyStringLiteralExpression)expr).getStringValue();
-                  }
-                }
-              }
-            }
-            for (PyNamedParameter param : analysis.getKwdMappedParams()) {
-              // can't extract values, but values are present
-              int n = ArrayUtil.indexOf(params, param) - offset;
-              if (n >= 0 && n < 3) accessors.set(n, unknown);
-            }
-            for (PyParameter param : analysis.getTupleMappedParams()) {
-              // can't extract values, but values are present
-              int n = ArrayUtil.indexOf(params, param) - offset;
-              if (n >= 0 && n < 3) accessors.set(n, unknown);
-            }
-            // something could have been not set; this means None was implicitly passed
-            for (int i = 0; i < 3; i += 1) if (accessors.get(i) == null) accessors.set(i, new Maybe<MType>(null));
-            target.myGetter = accessors.get(0);
-            target.mySetter = accessors.get(1);
-            target.myDeleter = accessors.get(2);
-            return true;
+        PyExpression[] accessors = new PyExpression[3];
+        String doc = null;
+        int position = 0;
+        String[] keywords = new String[] { "fget", "fset", "fdel", "doc" };
+        for (PyExpression arg: arglist.getArguments()) {
+          int index = -1;
+          if (arg instanceof PyKeywordArgument) {
+            String keyword = ((PyKeywordArgument)arg).getKeyword();
+            index = ArrayUtil.indexOf(keywords, keyword);
+            position = -1;
+          }
+          else if (position >= 0) {
+            index = position;
+            position++;
+          }
+
+          arg = PyUtil.peelArgument(arg);
+          if (index < 3) {
+            accessors [index] = arg;
+          }
+          else if (index == 3 && arg instanceof PyStringLiteralExpression) {
+            doc = ((PyStringLiteralExpression)arg).getStringValue();
           }
         }
-      }    }
+        target.myGetter = translateIfSet(target, accessors [0]);
+        target.mySetter = translateIfSet(target, accessors [1]);
+        target.myDeleter = translateIfSet(target, accessors [2]);
+        target.myDoc = doc;
+        return true;
+      }
+    }
     return false;
   }
 
+  private static <MType> Maybe<MType> translateIfSet(PropertyBunch<MType> target, PyExpression accessor) {
+    // TODO[yole] I don't quite understand this subtle distinction (why an accessor defined with lambda must be treated as defined=false)
+    if (accessor != null && !(accessor instanceof PyReferenceExpression)) {
+      return new Maybe<MType>();
+    }
+    return new Maybe<MType>(accessor == null ? null : target.translate((PyReferenceExpression) accessor));
+  }
 }

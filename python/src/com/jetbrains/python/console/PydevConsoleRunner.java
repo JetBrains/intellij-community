@@ -79,7 +79,6 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
     }
     final ArrayList<String> args = new ArrayList<String>(
       Arrays.asList(sdk.getHomePath(), "-u", PythonHelpersLocator.getHelperPath("pydev/console/pydevconsole.py")));
-    args.add(NetUtils.getLocalHostString());
     for (int port : ports) {
       args.add(String.valueOf(port));
     }
@@ -204,13 +203,18 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
 
   @Override
   public void sendInput(final String input) {
-
     if (myPydevConsoleCommunication != null){
+      final boolean waitedForInputBefore = myPydevConsoleCommunication.waitingForInput;
       myPydevConsoleCommunication.execInterpreter(input, new ICallback<Object, InterpreterResponse>() {
         public Object call(final InterpreterResponse interpreterResponse) {
           final LanguageConsoleImpl console = myConsoleView.getConsole();
           // Handle prompt
-          if (interpreterResponse.more){
+          if (interpreterResponse.need_input){
+            if (!PyConsoleHighlightingUtil.INPUT_PROMPT.equals(console.getPrompt())){
+              console.setPrompt(PyConsoleHighlightingUtil.INPUT_PROMPT);
+            }
+          }
+          else if (interpreterResponse.more){
             if (!PyConsoleHighlightingUtil.INDENT_PROMPT.equals(console.getPrompt())){
               console.setPrompt(PyConsoleHighlightingUtil.INDENT_PROMPT);
               // In this case we can insert indent automatically
@@ -227,6 +231,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
               console.setPrompt(PyConsoleHighlightingUtil.ORDINARY_PROMPT);
             }
           }
+
           // Handle output
           if (!StringUtil.isEmpty(interpreterResponse.err)){
             PyConsoleHighlightingUtil.processOutput(console, interpreterResponse.err, ProcessOutputTypes.STDERR);
@@ -236,6 +241,11 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
           return null;
         }
       });
+      // After requesting input we got no call back to change prompt, change it manually
+      if (waitedForInputBefore && !myPydevConsoleCommunication.waitingForInput){
+        final LanguageConsoleImpl console = myConsoleView.getConsole();
+        console.setPrompt(PyConsoleHighlightingUtil.ORDINARY_PROMPT);
+      }
     }
   }
 

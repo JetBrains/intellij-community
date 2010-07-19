@@ -1,7 +1,6 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
@@ -57,16 +56,16 @@ public class PyMethodParametersInspection extends PyInspection {
         PyParameterList plist = node.getParameterList();
         PyParameter[] params = plist.getParameters();
         Set<PyFunction.Flag> flags = PyUtil.detectDecorationsAndWrappersOf(node);
-        boolean is_special_metaclass_method = false;
+        boolean isMetaclassMethod = false;
         PyClass type_cls = PyBuiltinCache.getInstance(node).getClass("type");
         for (PyClass ancestor_cls : ((PyClass)cap).iterateAncestors()) {
           if (ancestor_cls == type_cls) {
-            is_special_metaclass_method = true;
+            isMetaclassMethod = true;
             break;
           }
         }
         final String method_name = node.getName();
-        is_special_metaclass_method &= PyNames.INIT.equals(method_name) || "__call__".equals(method_name);
+        boolean isSpecialMetaclassMethod = isMetaclassMethod && (PyNames.INIT.equals(method_name) || "__call__".equals(method_name));
         final boolean is_staticmethod = flags.contains(STATICMETHOD);
         if (params.length == 0) {
           // check for "staticmetod"
@@ -80,7 +79,7 @@ public class PyMethodParametersInspection extends PyInspection {
               open_paren != null && close_paren != null &&
               "(".equals(open_paren.getText()) && ")".equals(close_paren.getText())
             ) {
-              String paramName = flags.contains(CLASSMETHOD) || is_special_metaclass_method ? "cls" : "self";
+              String paramName = flags.contains(CLASSMETHOD) || isMetaclassMethod ? "cls" : "self";
               registerProblem(
                 plist, PyBundle.message("INSP.must.have.first.parameter", paramName),
                 ProblemHighlightType.GENERIC_ERROR, null, new AddSelfQuickFix(paramName)
@@ -105,8 +104,8 @@ public class PyMethodParametersInspection extends PyInspection {
               }
             }
             // TODO: check for style settings
-            if (flags.contains(CLASSMETHOD) || is_special_metaclass_method) {
-              String CLS = "cls";
+            String CLS = "cls";
+            if (flags.contains(CLASSMETHOD) || isSpecialMetaclassMethod) {
               if (!CLS.equals(pname)) {
                 registerProblem(
                   PyUtil.sure(params[0].getNode()).getPsi(),
@@ -116,6 +115,9 @@ public class PyMethodParametersInspection extends PyInspection {
               }
             }
             else if (!is_staticmethod && !first_param.isPositionalContainer() && !PyNames.CANONICAL_SELF.equals(pname)) {
+              if (isMetaclassMethod && CLS.equals(pname)) {
+                return;   // accept either 'self' or 'cls' for all methods in metaclass
+              }
               registerProblem(
                 PyUtil.sure(params[0].getNode()).getPsi(),
                 PyBundle.message("INSP.usually.named.self"),

@@ -18,9 +18,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
-import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -31,15 +29,18 @@ import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Alexey.Ivanov
  */
 abstract public class IntroduceHandler implements RefactoringActionHandler {
+  public enum InitPlace {
+    SAME_METHOD,
+    CONSTRUCTOR,
+    SET_UP
+  }
+
   private static void replaceExpression(PyExpression newExpression, Project project, PsiElement expression) {
     PyExpressionStatement statement = PsiTreeUtil.getParentOfType(expression, PyExpressionStatement.class);
     if (statement != null) {
@@ -60,37 +61,51 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    performAction(project, editor, file, null, false, false);
+    performAction(project, editor, file, null, false, false, false);
   }
 
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
   }
 
-  protected String[] getSuggestedNames(@NotNull final PyExpression expression) {
-    Collection<String> res = new HashSet<String>();
+  public Collection<String> getSuggestedNames(@NotNull final PyExpression expression) {
+    Collection<String> candidates = new HashSet<String>();
     String text = expression.getText();
     if (text != null) {
-      for (String name : NameSuggestorUtil.generateNames(text)) {
-        if (myValidator.checkPossibleName(name, expression)) {
-          res.add(name);
-        }
-      }
+      candidates.addAll(NameSuggestorUtil.generateNames(text));
     }
     PyType type = expression.getType(TypeEvalContext.fast());
     if (type != null) {
       final String typeName = type.getName();
       if (typeName != null) {
-        for (String name : NameSuggestorUtil.generateNamesByType(typeName)) {
-          if (myValidator.checkPossibleName(name, expression)) {
-            res.add(name);
-          }
+        candidates.addAll(NameSuggestorUtil.generateNamesByType(typeName));
+      }
+    }
+    final PyKeywordArgument kwArg = PsiTreeUtil.getParentOfType(expression, PyKeywordArgument.class);
+    if (kwArg != null && kwArg.getValueExpression() == expression) {
+      candidates.add(kwArg.getKeyword());
+    }
+
+    final PyArgumentList argList = PsiTreeUtil.getParentOfType(expression, PyArgumentList.class);
+    if (argList != null) {
+      final PyArgumentList.AnalysisResult result = argList.analyzeCall();
+      if (result.getMarkedCallee() != null && !result.isImplicitlyResolved()) {
+        final PyNamedParameter namedParameter = result.getPlainMappedParams().get(expression);
+        if (namedParameter != null) {
+          candidates.add(namedParameter.getName());
         }
       }
     }
-    return ArrayUtil.toStringArray(res);
+    
+    Collection<String> res = new HashSet<String>();
+    for (String name : candidates) {
+      if (myValidator.checkPossibleName(name, expression)) {
+        res.add(name);
+      }
+    }
+    return res;
   }
 
-  public void performAction(@NotNull final Project project, Editor editor, PsiFile file, String name, boolean replaceAll, boolean hasConstructor) {
+  public void performAction(@NotNull final Project project, Editor editor, PsiFile file, String name, boolean replaceAll, boolean hasConstructor, boolean isTestClass) {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(file)) {
       return;
     }
@@ -111,7 +126,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
         element2 = file.findElementAt(document.getLineEndOffset(lineNumber) - 1);
       }
       if (element1 == null || element2 == null || PyRefactoringUtil.getSelectedExpression(project, file, element1, element2) == null) {
-        if (smartIntroduce(file, editor, name, replaceAll, hasConstructor)) {
+        if (smartIntroduce(file, editor, name, replaceAll, hasConstructor, isTestClass)) {
           return;
         }
       }
@@ -129,10 +144,10 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       return;
     }
 
-    performActionOnElement(editor, element1, name, replaceAll, hasConstructor);
+    performActionOnElement(editor, element1, name, replaceAll, hasConstructor, isTestClass);
   }
 
-  private boolean smartIntroduce(final PsiFile file, final Editor editor, final String name, final boolean replaceAll, final boolean hasConstructor) {
+  private boolean smartIntroduce(final PsiFile file, final Editor editor, final String name, final boolean replaceAll, final boolean hasConstructor, final boolean isTestClass) {
     int offset = editor.getCaretModel().getOffset();
     PsiElement elementAtCaret = file.findElementAt(offset);
     final List<PyExpression> expressions = new ArrayList<PyExpression>();
@@ -146,14 +161,14 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       elementAtCaret = elementAtCaret.getParent();
     }
     if (expressions.size() == 1) {
-      performActionOnElement(editor, expressions.get(0), name, replaceAll, hasConstructor);
+      performActionOnElement(editor, expressions.get(0), name, replaceAll, hasConstructor, isTestClass);
       return true;
     }
     else if (expressions.size() > 1) {
       IntroduceTargetChooser.showChooser(editor, expressions, new Pass<PyExpression>() {
         @Override
         public void pass(PyExpression pyExpression) {
-          performActionOnElement(editor, pyExpression, name, replaceAll, hasConstructor);
+          performActionOnElement(editor, pyExpression, name, replaceAll, hasConstructor, isTestClass);
         }
       }, new Function<PyExpression, String>() {
         public String fun(PyExpression pyExpression) {
@@ -177,7 +192,8 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
                                       PsiElement element,
                                       String name,
                                       boolean replaceAll,
-                                      boolean hasConstructor) {
+                                      boolean hasConstructor,
+                                      boolean isTestClass) {
     final Project project = element.getProject();
     if (!checkEnabled(project, editor, element, myDialogTitle)) {
       return;
@@ -195,18 +211,18 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     else {
       occurrences = Collections.emptyList();
     }
-    String[] possibleNames = getSuggestedNames(expression);
+    Collection<String> possibleNames = getSuggestedNames(expression);
     replaceAll &= occurrences.size() > 0;
-    boolean initInConstructor = false;
+    InitPlace initInConstructor = InitPlace.SAME_METHOD;
     if (name == null) {
-      PyIntroduceDialog dialog = new PyIntroduceDialog(project, expression, myDialogTitle, myValidator, occurrences.size(), possibleNames, getHelpId(), hasConstructor);
+      PyIntroduceDialog dialog = new PyIntroduceDialog(project, expression, myDialogTitle, myValidator, occurrences.size(), possibleNames, getHelpId(), hasConstructor, isTestClass);
       dialog.show();
       if (!dialog.isOK()) {
         return;
       }
       name = dialog.getName();
       replaceAll = dialog.doReplaceAllOccurrences();
-      initInConstructor = dialog.initInConstructor();
+      initInConstructor = dialog.getInitPlace();
     }
     String assignmentText = name + " = " + expression.getText();
     PyAssignmentStatement declaration = createDeclaration(project, assignmentText);
@@ -245,7 +261,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
                                                @NotNull final List<PsiElement> occurrences,
                                                @NotNull final String name,
                                                final boolean replaceAll,
-                                               final boolean initInConstructor) {
+                                               final InitPlace initInConstructor) {
     return new WriteCommandAction<PyAssignmentStatement>(project, expression.getContainingFile()) {
       protected void run(final Result<PyAssignmentStatement> result) throws Throwable {
         final Pair<PsiElement, TextRange> data = expression.getUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE);
@@ -279,5 +295,5 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
                                                @NotNull final PsiElement declaration,
                                                @NotNull final List<PsiElement> occurrences,
                                                final boolean replaceAll,
-                                               boolean initInConstructor);
+                                               final InitPlace initInConstructor);
 }

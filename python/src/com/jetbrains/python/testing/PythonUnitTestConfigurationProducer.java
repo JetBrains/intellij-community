@@ -52,6 +52,10 @@ public class PythonUnitTestConfigurationProducer extends RuntimeConfigurationPro
       }
     }
 
+    if (PythonUnitTestRunnableScriptFilter.isIfNameMain(location)) {
+      return null;
+    }
+
     settings = createConfigurationFromFolder(location);
     if (settings != null) return settings;
 

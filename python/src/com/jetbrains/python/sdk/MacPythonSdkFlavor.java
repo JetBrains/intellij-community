@@ -26,13 +26,14 @@ public class MacPythonSdkFlavor extends PythonSdkFlavor {
   private static void collectPythonInstallations(String pythonPath, List<String> candidates) {
     VirtualFile rootVDir = LocalFileSystem.getInstance().findFileByPath(pythonPath);
     if (rootVDir != null) {
+      rootVDir.refresh(false, false);
       for (VirtualFile dir : rootVDir.getChildren()) {
         final String dir_name = dir.getName().toLowerCase();
         if (dir.isDirectory()) {
           if ("Current".equals(dir_name) || dir_name.startsWith("2") || dir_name.startsWith("3")) {
             VirtualFile bin_dir = dir.findChild("bin");
             if (bin_dir != null && bin_dir.isDirectory()) {
-              VirtualFile python_exe = dir.findChild("python");
+              VirtualFile python_exe = bin_dir.findChild("python");
               if (python_exe != null) candidates.add(python_exe.getPath());
             }
           }

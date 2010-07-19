@@ -9,10 +9,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: Aug 24, 2009
- * Time: 6:49:13 PM
+ * @author Alexey.Ivanov
  */
 public class NameSuggestorUtil {
   private NameSuggestorUtil() {

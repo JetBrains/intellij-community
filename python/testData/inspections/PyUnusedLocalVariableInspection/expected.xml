@@ -3,41 +3,46 @@
   <problem>
     <file>test.py</file>
     <line>2</line>
-  <description>"Local variable 'aaa' value is not used"</description>
+  <description>Local variable 'aaa' value is not used</description>
   </problem>
   <problem>
     <file>test.py</file>
     <line>3</line>
-  <description>"Local variable 'aaa' value is not used"</description>
+  <description>Local variable 'aaa' value is not used</description>
   </problem>
   <problem>
     <file>test.py</file>
     <line>6</line>
-  <description>"Local variable 'bbb' value is not used"</description>
+  <description>Local variable 'bbb' value is not used</description>
   </problem>
   <problem>
     <file>test.py</file>
     <line>8</line>
-  <description>"Parameter 'self' value is not used"</description>
+  <description>Parameter 'self' value is not used</description>
   </problem>
   <problem>
     <file>test.py</file>
     <line>11</line>
-  <description>"Parameter 'a' value is not used"</description>
+  <description>Parameter 'a' value is not used</description>
   </problem>
   <problem>
     <file>test.py</file>
     <line>16</line>
-  <description>"Local variable 'k' value is not used"</description>
+  <description>Local variable 'k' value is not used</description>
   </problem>
   <problem>
     <file>test.py</file>
     <line>19</line>
-  <description>"Local variable 'i' value is not used"</description>
+  <description>Local variable 'i' value is not used</description>
   </problem>
   <problem>
     <file>test.py</file>
-    <line>83</line>
-  <description>"Parameter 'x' value is not used"</description>
+    <line>49</line>
+  <description>Local function 'test' is not used</description>
+  </problem>
+  <problem>
+    <file>test.py</file>
+    <line>81</line>
+  <description>Parameter 'x' value is not used</description>
   </problem>
 </problems>

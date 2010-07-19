@@ -1,6 +1,5 @@
 package com.jetbrains.python.console;
 
-import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -12,23 +11,22 @@ import com.jetbrains.python.PythonLanguage;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.util.Vector;
-
 /**
  * @author oleg
  * Light element in completion to provide Quick documentation functionality
  */
 public class PydevConsoleElement extends LightElement implements PsiNamedElement {
-  private final Vector myDescription;
+  private final String myName;
+  private final String myDescription;
 
-  public PydevConsoleElement(final PsiManager manager, final Vector description) {
+  public PydevConsoleElement(final PsiManager manager, final String name, final String description) {
     super(manager, PythonLanguage.getInstance());
+    myName = name;
     myDescription = description;
   }
 
   public String getText() {
-    return (String) myDescription.get(0);
+    return myName;
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
@@ -45,7 +43,7 @@ public class PydevConsoleElement extends LightElement implements PsiNamedElement
   }
 
   public String getName() {
-    return (String) myDescription.get(0);
+    return myName;
   }
 
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
@@ -53,7 +51,7 @@ public class PydevConsoleElement extends LightElement implements PsiNamedElement
   }
 
   public static String generateDoc(final PydevConsoleElement pydevConsoleElement) {
-    final String description = (String)pydevConsoleElement.myDescription.get(1);
+    final String description = pydevConsoleElement.myDescription;
     // Description contract:
     // (Signatures\n\n) ? Description
     final int index = description.indexOf("\n\n");

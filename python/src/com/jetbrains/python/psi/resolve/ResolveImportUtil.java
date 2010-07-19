@@ -387,18 +387,21 @@ public class ResolveImportUtil {
         final VirtualFile elt_vfile = elt_psifile.getVirtualFile();
         if (elt_vfile != null) { // reality
           for (OrderEntry entry : ProjectRootManager.getInstance(elt.getProject()).getFileIndex().getOrderEntriesForFile(elt_vfile)) {
-            if (!visitGivenRoots(entry.getFiles(OrderRootType.SOURCES), visitor)) break;
-            if (!visitGivenRoots(entry.getFiles(OrderRootType.CLASSES), visitor)) break;
+            if (!visitOrderEntryRoots(visitor, entry)) break;
           }
         }
       }
     }
   }
 
-
-  private static boolean visitGivenRoots(final VirtualFile[] roots, RootVisitor visitor) {
-    for (VirtualFile root : roots) {
-      if (!visitor.visitRoot(root)) return false;
+  private static boolean visitOrderEntryRoots(RootVisitor visitor, OrderEntry entry) {
+    Set<VirtualFile> allRoots = new java.util.HashSet<VirtualFile>();
+    Collections.addAll(allRoots, entry.getFiles(OrderRootType.SOURCES));
+    Collections.addAll(allRoots, entry.getFiles(OrderRootType.CLASSES));
+    for (VirtualFile root : allRoots) {
+      if (!visitor.visitRoot(root)) {
+        return false;
+      }
     }
     return true;
   }
@@ -463,6 +466,9 @@ public class ResolveImportUtil {
     }
 
     public boolean visitRoot(final VirtualFile root) {
+      if (!root.isValid()) {
+        return true;
+      }
       PsiElement module = root.isDirectory() ? psiManager.findDirectory(root) : psiManager.findFile(root);
       for (String component : qualifiedName.getComponents()) {
         if (component == null) {
@@ -619,8 +625,7 @@ public class ResolveImportUtil {
     @Nullable
     public PsiElement visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final PsiElement value) {
       if (value != null) return value;  // for chaining in processOrder()
-      visitGivenRoots(jdkOrderEntry.getRootFiles(OrderRootType.SOURCES), myVisitor);
-      visitGivenRoots(jdkOrderEntry.getRootFiles(OrderRootType.CLASSES), myVisitor);
+      visitOrderEntryRoots(myVisitor, jdkOrderEntry);
       return null;
     }
 
@@ -628,8 +633,7 @@ public class ResolveImportUtil {
     @Override
     public PsiElement visitLibraryOrderEntry(LibraryOrderEntry libraryOrderEntry, PsiElement value) {
       if (value != null) return value;  // for chaining in processOrder()
-      visitGivenRoots(libraryOrderEntry.getRootFiles(OrderRootType.SOURCES), myVisitor);
-      visitGivenRoots(libraryOrderEntry.getRootFiles(OrderRootType.CLASSES), myVisitor);
+      visitOrderEntryRoots(myVisitor, libraryOrderEntry);
       return null;
     }
   }

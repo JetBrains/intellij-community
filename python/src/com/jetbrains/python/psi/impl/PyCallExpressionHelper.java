@@ -255,41 +255,6 @@ public class PyCallExpressionHelper {
     return false;
   }
 
-  /**
-   * Maps arguments of a call assuming it's a call to a builtin. No resolution or assignment chasing is done inside;
-   * caller should have done that.
-   * Class to constructor mapping is made inside, though.
-   * @param call an unqualified call expression; name is directly searched in builtins.
-   * @return analysis with argument mapping.
-   */
-  @Nullable
-  public static PyArgumentList.AnalysisResult analyzeBuiltinCall(@NotNull PyCallExpression call) {
-    final AnalysisResultImpl ret = new AnalysisResultImpl(call.getArgumentList());
-    PyExpression[] arguments = call.getArguments();
-    final String name = call.getCallee().getName();
-    if (name != null) {
-      PyFile builtins = PyBuiltinCache.getInstance(call).getBuiltinsFile();
-      if (builtins != null) {
-        int arg_offset = 0;
-        EnumSet<PyFunction.Flag> flags = EnumSet.noneOf(PyFunction.Flag.class);
-        PyFunction func = builtins.findTopLevelFunction(name);
-        if (func == null) {
-          PyClass cls = builtins.findTopLevelClass(name);
-          if (cls != null) {
-            func = cls.findInitOrNew(true);
-            arg_offset = 1;
-          }
-        }
-        if (func != null) {
-          if (PyNames.NEW.equals(func.getName())) flags.add(PyFunction.Flag.CLASSMETHOD);
-          ret.mapArguments(arguments, new PyCallExpression.PyMarkedCallee(func, flags, arg_offset, false));
-          return ret;
-        }
-      }
-    }
-    return null;
-  }
-
   static boolean isCalleeText(PyCallExpression pyCallExpression, String[] nameCandidates) {
     final PyExpression callee = pyCallExpression.getCallee();
     if (!(callee instanceof PyReferenceExpression)) {

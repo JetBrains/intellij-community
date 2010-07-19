@@ -23,7 +23,11 @@ class BarClass(object):
   def __get(self):
     return self.__value
 
+  def __set(self, val):
+    self.__value = val
+
   value = property(__get)
+  setvalue = property(fset=__set)
 
 class BazClass(object):
   __x = 1

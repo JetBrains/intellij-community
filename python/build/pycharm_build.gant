@@ -108,7 +108,7 @@ def zipSources() {
 target('default': "Build artifacts") {
 
   def modules = [
-          "python", "python-ide", platformApiModules(), platformImplementationModules(), pluginFilter
+          "python", "python-ide", "python-pydev", platformApiModules(), platformImplementationModules(), pluginFilter
   ].flatten()
   
   loadProject()
@@ -328,6 +328,7 @@ def buildTarGz() {
     }
     tarfileset(dir: "$home/bin", prefix: "$tarRoot/bin") {
       include(name: "libyjpagent*.so")
+      include(name: "runneru")
     }
     tarfileset(dir: "$home/community/bin/linux", prefix: "$tarRoot/bin") {
       exclude(name: "libbreakgen*")
@@ -370,9 +371,13 @@ def layoutFull(String target, Set usedJars) {
       jar("extensions.jar") { module("extensions")}
 
       jar("pycharm.jar") {
-        implementationModules.each { module it}
+        implementationModules.each { module it }
         zipfileset(src: "${home}/lib/client-api.jar")
         zipfileset(src: "${home}/lib/ideaLicenseDecoder.jar")
+      }
+
+      jar("pycharm-pydev.jar") {
+        module("python-pydev")
       }
 
       jar("bootstrap.jar") { module("bootstrap")}
@@ -386,6 +391,7 @@ def layoutFull(String target, Set usedJars) {
 
       jar("resources_en.jar") {
         module("platform-resources-en")
+        zipfileset(dir: "$home/python/resources/tips", prefix: "tips")
       }
 
       jar("icons.jar") { module("icons") }
@@ -395,9 +401,15 @@ def layoutFull(String target, Set usedJars) {
         fileset(file: it)
       }
 
-      fileset(dir: "$home/community/lib/src") {
-        include(name: "trove4j_changes.txt")
-        include(name: "trove4j_src.jar")
+      dir("src") {
+        fileset(dir: "$home/community/lib/src") {
+          include(name: "trove4j_changes.txt")
+          include(name: "trove4j_src.jar")
+        }
+
+        jar("pycharm-pydev-src.zip") {
+          fileset(dir: "$home/python/pydevSrc")
+        }
       }
     }
 
@@ -436,7 +448,10 @@ def layoutMac(Map args, String target) {
     dir("bin") {
       fileset(dir: "$home/community/bin/mac")
       fileset(dir: "$home/community/bin/nix")
-      fileset(dir: "$home/bin", includes: "*.jnilib")
+      fileset(dir: "$home/bin") {
+        include(name: "*.jnilib")
+        include(name: "runnerm")
+      }
     }
     dir("lib") {
       fileset(dir: "$home/community/build/conf/mac/lib")
@@ -471,6 +486,7 @@ def layoutWin(String target) {
     dir("bin") {
       fileset(dir: "$home/bin") {
         include(name: "yjpagent.dll")
+        include(name: "runnerw.exe")
       }
       fileset(dir: "$home/community/bin/win") {
         exclude(name: "breakgen*")
