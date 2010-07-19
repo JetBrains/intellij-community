@@ -277,7 +277,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
       if (roots.size() == 0 && rootType.skipWriteIfEmpty()) continue; //compatibility iml/ipr
       final Element rootTypeElement = new Element(rootType.name());
       roots.writeExternal(rootTypeElement, ROOT_PATH_ELEMENT);
-      element.addContent(rootTypeElement);
+      if (rootTypeElement.getAttributes().size() > 0 || rootTypeElement.getContent().size() > 0) element.addContent(rootTypeElement);
     }
     List<String> urls = new ArrayList<String>(myJarDirectories.keySet());
     Collections.sort(urls, new Comparator<String>() {
