@@ -20,34 +20,34 @@ import com.intellij.lexer.LexerBase;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
 
 public class LightPsiBuilderTest {
+  private static final IElementType ROOT = new IElementType("ROOT", Language.ANY);
+  private static final IElementType LETTER = new IElementType("LETTER", Language.ANY);
+  private static final IElementType DIGIT = new IElementType("DIGIT", Language.ANY);
+  private static final IElementType OTHER = new IElementType("OTHER", Language.ANY);
+  private static final IElementType COLLAPSED = new IElementType("COLLAPSED", Language.ANY);
 
   @Test
   public void testPlain() {
     doTest(
       "a<<b",
-      new PsiParser() {
-        @NotNull
-        public ASTNode parse(IElementType root, PsiBuilder builder) {
-          final PsiBuilder.Marker rootMarker = builder.mark();
+      new Parser() {
+        public void parse(PsiBuilder builder) {
           while (builder.getTokenType() != null) {
             builder.advanceLexer();
           }
-          rootMarker.done(root);
-          return builder.getTreeBuilt();
         }
       },
       "Element(ROOT)\n" +
-      "  PsiElement(TOKEN)('a')\n" +
-      "  PsiElement(TOKEN)('<')\n" +
-      "  PsiElement(TOKEN)('<')\n" +
-      "  PsiElement(TOKEN)('b')\n"
+      "  PsiElement(LETTER)('a')\n" +
+      "  PsiElement(OTHER)('<')\n" +
+      "  PsiElement(OTHER)('<')\n" +
+      "  PsiElement(LETTER)('b')\n"
     );
   }
 
@@ -55,37 +55,38 @@ public class LightPsiBuilderTest {
   public void testCollapse() {
     doTest(
       "a<<b",
-      new PsiParser() {
-        @NotNull
-        public ASTNode parse(IElementType root, PsiBuilder builder) {
-          final PsiBuilder.Marker rootMarker = builder.mark();
+      new Parser() {
+        public void parse(PsiBuilder builder) {
           PsiBuilder.Marker inner = null;
           while (builder.getTokenType() != null) {
-            if ("<".equals(builder.getTokenText()) && inner == null) inner = builder.mark();
+            if (builder.getTokenType() == OTHER && inner == null) inner = builder.mark();
             builder.advanceLexer();
-            if (!"<".equals(builder.getTokenText()) && inner != null) { inner.collapse(new IElementType("COLLAPSE", Language.ANY)); inner = null; }
+            if (builder.getTokenType() != OTHER && inner != null) { inner.collapse(COLLAPSED); inner = null; }
           }
-          rootMarker.done(root);
-          return builder.getTreeBuilt();
         }
       },
       "Element(ROOT)\n" +
-      "  PsiElement(TOKEN)('a')\n" +
-      "  PsiElement(COLLAPSE)('<<')\n" +
-      "  PsiElement(TOKEN)('b')\n"
+      "  PsiElement(LETTER)('a')\n" +
+      "  PsiElement(COLLAPSED)('<<')\n" +
+      "  PsiElement(LETTER)('b')\n"
     );
   }
 
 
-  private static void doTest(final String text, final PsiParser parser, final String expected) {
+  private interface Parser {
+    void parse(PsiBuilder builder);
+  }
+
+  private static void doTest(final String text, final Parser parser, final String expected) {
     final PsiBuilder builder = new PsiBuilderImpl(new MyTestLexer(), TokenSet.EMPTY, TokenSet.EMPTY, text);
-    final ASTNode root = parser.parse(new IElementType("ROOT", Language.ANY), builder);
+    final PsiBuilder.Marker rootMarker = builder.mark();
+    parser.parse(builder);
+    rootMarker.done(ROOT);
+    final ASTNode root = builder.getTreeBuilt();
     assertEquals(expected, DebugUtil.nodeTreeToString(root, true));
   }
 
   private static class MyTestLexer extends LexerBase {
-    public static IElementType TOKEN = new IElementType("TOKEN", Language.ANY);
-
     private CharSequence myBuffer = "";
     private int myIndex = 0;
     private int myBufferEnd = 1;
@@ -101,7 +102,18 @@ public class LightPsiBuilderTest {
     }
 
     public IElementType getTokenType() {
-      return myIndex < myBufferEnd ? TOKEN : null;
+      if (myIndex >= myBufferEnd) {
+        return null;
+      }
+      else if (Character.isDigit(myBuffer.charAt(myIndex))) {
+        return DIGIT;
+      }
+      else if (Character.isLetter(myBuffer.charAt(myIndex))) {
+        return LETTER;
+      }
+      else {
+        return OTHER;
+      }
     }
 
     public int getTokenStart() {
