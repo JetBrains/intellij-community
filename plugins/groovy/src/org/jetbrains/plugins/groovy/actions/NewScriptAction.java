@@ -17,7 +17,7 @@
 package org.jetbrains.plugins.groovy.actions;
 
 import com.intellij.ide.actions.CreateFileFromTemplateDialog;
-import com.intellij.ide.actions.CreateTemplateInPackageAction;
+import com.intellij.ide.actions.JavaCreateTemplateInPackageAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.project.DumbAware;
@@ -33,7 +33,7 @@ import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
-public class NewScriptAction extends CreateTemplateInPackageAction<GroovyFile> implements DumbAware {
+public class NewScriptAction extends JavaCreateTemplateInPackageAction<GroovyFile> implements DumbAware {
   private static final String GROOVY_DSL_SCRIPT_TMPL = "GroovyDslScript.gdsl";
 
   public NewScriptAction() {
