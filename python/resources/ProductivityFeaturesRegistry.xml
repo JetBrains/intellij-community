@@ -151,36 +151,36 @@
       successive-show="7">
       <dependency id="codeassists.quickjavadoc"/>
     </feature>
-    <!-- TODO uncomment when Python specific tips are provided (PY-1292)
     <feature
       id="codeassists.surroundwith.statement"
-      tip-file="RSurroundWith.html"
+      tip-file="Surround.html"
       first-show="5"
       successive-show="5"
       min-usage-count="4"
       />
+    <!--
     <feature
       id="codeassists.surroundwith.expression"
-      tip-file="RSurroundWith.html"
+      tip-file="Surround.html"
       first-show="6"
       successive-show="5"
       min-usage-count="3"
       />
     <feature
       id="codeassists.comment.block"
-      tip-file="RCommentCode.html"
+      tip-file="CommentCode.html"
       first-show="6"
       successive-show="5"
       min-usage-count="3"
       />
+    -->
     <feature
       id="codeassists.comment.line"
-      tip-file="RCommentCode.html"
+      tip-file="Comment.html"
       first-show="6"
       successive-show="5"
       min-usage-count="3"
       />
-      -->
   </group>
 
   <group id="refactoring">
