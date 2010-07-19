@@ -44,9 +44,7 @@
           <root url="jar://$MODULE_DIR$/lib/maven-embedder-1.1-SNAPSHOT.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES>
-          <root url="file://$MODULE_DIR$/../../../../../maven/idea-embedder/src/main/java" />
-        </SOURCES>
+        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library">

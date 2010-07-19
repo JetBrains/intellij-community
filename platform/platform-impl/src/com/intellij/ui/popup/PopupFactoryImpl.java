@@ -711,7 +711,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     final JLabel label = new JLabel(text.getText());
     final Dimension size = label.getPreferredSize();
     text.setEditable(false);
-    text.setOpaque(false);
+    NonOpaquePanel.setTransparent(text);
     text.setBorder(null);
     text.setPreferredSize(size);
 

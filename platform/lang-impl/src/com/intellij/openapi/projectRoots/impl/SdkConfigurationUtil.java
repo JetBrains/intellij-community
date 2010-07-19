@@ -106,7 +106,7 @@ public class SdkConfigurationUtil {
     return descriptor;
   }
 
-  public static void addSdk(final Sdk sdk) {
+  public static void addSdk(@NotNull final Sdk sdk) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
@@ -213,7 +213,9 @@ public class SdkConfigurationUtil {
         });
         if (sdkHome != null) {
           final Sdk newSdk = setupSdk(ProjectJdkTable.getInstance().getAllJdks(), sdkHome, sdkType, true, null, null);
-          addSdk(newSdk);
+          if (newSdk != null) {
+            addSdk(newSdk);
+          }
           return newSdk;
         }
       }

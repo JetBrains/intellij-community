@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,7 +33,7 @@ import org.jetbrains.idea.svn.ignore.SvnPropertyService;
 import java.util.Map;
 import java.util.Set;
 
-public class IgnoreActionGroup extends DefaultActionGroup {
+public class IgnoreActionGroup extends DefaultActionGroup implements DumbAware {
   private final IgnoreGroupHelperAction myHelperAction;
   private final IgnoreInfoGetterStub myGetterStub;
   

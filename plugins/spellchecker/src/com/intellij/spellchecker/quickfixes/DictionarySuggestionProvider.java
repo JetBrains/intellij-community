@@ -23,7 +23,6 @@ import com.intellij.refactoring.rename.NameSuggestionProvider;
 import com.intellij.spellchecker.SpellCheckerManager;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -36,7 +35,7 @@ public class DictionarySuggestionProvider implements NameSuggestionProvider {
     this.active = active;
   }
 
-  public SuggestedNameInfo getSuggestedNames(PsiElement element, PsiElement nameSuggestionContext, List<String> result) {
+  public SuggestedNameInfo getSuggestedNames(PsiElement element, PsiElement nameSuggestionContext, Set<String> result) {
     assert result != null;
     if (!active || nameSuggestionContext==null) {
       return null;

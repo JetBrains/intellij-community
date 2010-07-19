@@ -16,6 +16,7 @@
 package com.intellij.lang.ant.dom;
 
 import com.intellij.util.xml.SubTagList;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -24,6 +25,9 @@ import java.util.List;
  *         Date: Jul 8, 2010
  */
 public abstract class AntDomAntlib extends AntDomElement{
+
+  public static final String ANTLIB_DEFAULT_FILENAME = "antlib.xml";
+  public static final String ANTLIB_URI_PREFIX = "antlib:";
 
   @SubTagList("typedef")
   public abstract List<AntDomTypeDef> getTypedefs();
@@ -39,4 +43,12 @@ public abstract class AntDomAntlib extends AntDomElement{
 
   @SubTagList("scriptdef")
   public abstract List<AntDomTypeDef> getScriptdefs();
+
+  @Nullable
+  public static String toAntlibResource(String antlibUri) {
+    if (!antlibUri.startsWith(ANTLIB_URI_PREFIX)) {
+      return null;
+    }
+    return antlibUri.substring(ANTLIB_URI_PREFIX.length()).replace('.', '/') + "/" + ANTLIB_DEFAULT_FILENAME;
+  }
 }

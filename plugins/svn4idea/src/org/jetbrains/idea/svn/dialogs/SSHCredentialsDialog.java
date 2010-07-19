@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.svn.SvnBundle;
 
@@ -60,16 +61,13 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
   @NonNls private static final String HELP_ID = "vcs.subversion.authentication";
   @NonNls private static final String USER_HOME_PROPERTY = "user.home";
 
-  protected SSHCredentialsDialog(Project project) {
+  protected SSHCredentialsDialog(Project project, String realm, String userName, boolean allowSave, final int port) {
     super(project, true);
     myProject = project;
-    setResizable(true);
-  }
-
-  public void setup(String realm, String userName, boolean allowSave, final int port) {
     myRealm = realm;
     myUserName = userName;
     myAllowSave = allowSave;
+    setResizable(true);
     getHelpAction().setEnabled(true);
     init();
     myPortField.setText("" + port);
@@ -248,6 +246,12 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
     gb.fill = GridBagConstraints.HORIZONTAL;
     myAllowSaveCheckBox = new JCheckBox(SvnBundle.message("checkbox.ssh.keep.for.current.session"));
     panel.add(myAllowSaveCheckBox, gb);
+    if (! myAllowSave) {
+      gb.gridy += 1;
+      final JLabel cannotSaveLabel = new JLabel(SvnBundle.message("svn.cannot.save.credentials.store-auth-creds"));
+      cannotSaveLabel.setForeground(UIUtil.getInactiveTextColor());
+      panel.add(cannotSaveLabel, gb);
+    }
     gb.gridy += 1;
     panel.add(new JSeparator(), gb);
 

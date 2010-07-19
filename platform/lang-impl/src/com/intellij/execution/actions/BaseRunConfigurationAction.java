@@ -178,12 +178,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
     final RunnerAndConfigurationSettings existing = context.findExisting();
     RunnerAndConfigurationSettings configuration = existing;
     if (configuration == null) {
-      try {
-        configuration = context.getConfiguration();
-      }
-      catch (IndexNotReadyException e) {
-        configuration = null;
-      }
+      configuration = context.getConfiguration();
     }
     if (configuration == null){
       presentation.setEnabled(false);

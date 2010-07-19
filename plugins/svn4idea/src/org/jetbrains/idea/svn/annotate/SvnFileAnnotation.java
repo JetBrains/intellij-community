@@ -114,6 +114,7 @@ public class SvnFileAnnotation implements FileAnnotation {
     }
   };
   private final SvnConfiguration myConfiguration;
+  private boolean myShowMergeSources;
 
   public void setRevision(final long revision, final SvnFileRevision svnRevision) {
     myRevisionMap.put(revision, svnRevision);
@@ -171,6 +172,7 @@ public class SvnFileAnnotation implements FileAnnotation {
     myContents = contents;
     myVcs.getSvnEntriesFileListener().addListener(myListener);
     myConfiguration = SvnConfiguration.getInstance(vcs.getProject());
+    myShowMergeSources = myConfiguration.SHOW_MERGE_SOURCES_IN_ANNOTATE;
 
     myInfos = new MyPartiallyCreatedInfos();
   }
@@ -262,6 +264,7 @@ public class SvnFileAnnotation implements FileAnnotation {
 
   @Nullable
   public AnnotationSourceSwitcher getAnnotationSourceSwitcher() {
+    if (! myShowMergeSources) return null;
     return new AnnotationSourceSwitcher() {
       @NotNull
       public AnnotationSource getAnnotationSource(int lineNumber) {
@@ -279,7 +282,7 @@ public class SvnFileAnnotation implements FileAnnotation {
 
       @NotNull
       public AnnotationSource getDefaultSource() {
-        return AnnotationSource.getInstance(myConfiguration.SHOW_MERGE_SOURCES_IN_ANNOTATE);
+        return AnnotationSource.getInstance(myShowMergeSources);
       }
 
       public void switchTo(AnnotationSource source) {

@@ -1,0 +1,105 @@
+# #####################################################################
+##  RELAX NG Schema for HTML 5: Block Markup Added in HTML5           #
+# #####################################################################
+
+## Section: <section>
+
+	section.elem =
+		element section { section.inner & section.attrs }
+	section.attrs =
+		(	common.attrs
+		&	(	common.attrs.aria
+			|	common.attrs.aria.implicit.region
+			)?
+		)
+	section.inner =
+		(	style.elem.scoped*
+		,	common.inner.flow 
+		)
+
+	common.elem.flow |= section.elem
+
+## Navigational Links: <nav>
+
+	nav.elem =
+		element nav { nav.inner & nav.attrs }
+	nav.attrs =
+		(	common.attrs
+		&	( common.attrs.aria.implicit.region
+		  | common.attrs.aria.landmark.navigation
+		  )?
+		)
+	nav.inner =
+		( common.inner.flow )
+
+	common.elem.flow |= nav.elem
+
+## Article: <article>
+
+	article.elem =
+		element article { article.inner & article.attrs }
+	article.attrs =
+		(	common.attrs
+		&	( common.attrs.aria.implicit.region
+		  | common.attrs.aria.landmark.article
+		  | common.attrs.aria.landmark.main
+		  | common.attrs.aria.landmark.document
+		  | common.attrs.aria.landmark.application
+		  )?
+		)
+	article.inner =
+		(	style.elem*
+		,	common.inner.flow 
+		)
+		
+	common.elem.flow |= article.elem
+
+## Tangential Aside: <aside>
+
+	aside.elem =
+		element aside { aside.inner & aside.attrs }
+	aside.attrs =
+		(	common.attrs
+		&	( common.attrs.aria.implicit.region
+		  | common.attrs.aria.landmark.complementary
+		  | common.attrs.aria.landmark.search
+		  | common.attrs.aria.landmark.note
+		  )?
+		)
+	aside.inner =
+		(	style.elem*
+		,	common.inner.flow 
+		)
+
+	common.elem.flow |= aside.elem
+
+## Header: <header>
+
+	header.elem =
+		element header { header.inner & header.attrs }
+	header.attrs =
+		(	common.attrs
+		&	( common.attrs.aria.implicit.region
+		  | common.attrs.aria.landmark.banner
+		  )?
+		)
+	header.inner =
+		( common.inner.flow )
+
+	common.elem.flow |= header.elem
+
+## Footer: <footer>
+
+	footer.elem =
+		element footer { footer.inner & footer.attrs }
+	footer.attrs =
+		(	common.attrs
+		&	( common.attrs.aria.implicit.region
+		  | common.attrs.aria.landmark.contentinfo
+		  )?
+		)
+	footer.inner =
+		( common.inner.flow )
+
+	common.elem.flow |= footer.elem
+

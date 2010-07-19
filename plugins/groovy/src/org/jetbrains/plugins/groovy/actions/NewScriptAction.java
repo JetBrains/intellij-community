@@ -16,7 +16,6 @@
 
 package org.jetbrains.plugins.groovy.actions;
 
-import com.intellij.CommonBundle;
 import com.intellij.ide.actions.CreateFileFromTemplateDialog;
 import com.intellij.ide.actions.CreateTemplateInPackageAction;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -41,14 +40,12 @@ public class NewScriptAction extends CreateTemplateInPackageAction<GroovyFile> i
     super(GroovyBundle.message("newscript.menu.action.text"), GroovyBundle.message("newscript.menu.action.description"), GroovyIcons.GROOVY_ICON_16x16, false);
   }
 
-  @NotNull
   @Override
-  protected CreateFileFromTemplateDialog.Builder buildDialog(Project project, final PsiDirectory directory) {
-    final CreateFileFromTemplateDialog.Builder builder = CreateFileFromTemplateDialog.
-      createDialog(project, GroovyBundle.message("newscript.dlg.prompt"));
-    builder.addKind("Groovy script", GroovyIcons.GROOVY_ICON_16x16, "GroovyScript.groovy");
-    builder.addKind("GroovyDSL script", GroovyIcons.GROOVY_ICON_16x16, GROOVY_DSL_SCRIPT_TMPL);
-    return builder;
+  protected void buildDialog(Project project, PsiDirectory directory, CreateFileFromTemplateDialog.Builder builder) {
+    builder
+      .setTitle(GroovyBundle.message("newscript.dlg.prompt"))
+      .addKind("Groovy script", GroovyIcons.GROOVY_ICON_16x16, "GroovyScript.groovy")
+      .addKind("GroovyDSL script", GroovyIcons.GROOVY_ICON_16x16, GROOVY_DSL_SCRIPT_TMPL);
   }
 
   @Override
@@ -59,10 +56,6 @@ public class NewScriptAction extends CreateTemplateInPackageAction<GroovyFile> i
   @Override
   protected String getActionName(PsiDirectory directory, String newName, String templateName) {
     return GroovyBundle.message("newscript.menu.action.text");
-  }
-
-  protected String getErrorTitle() {
-    return CommonBundle.getErrorTitle();
   }
 
   @Override

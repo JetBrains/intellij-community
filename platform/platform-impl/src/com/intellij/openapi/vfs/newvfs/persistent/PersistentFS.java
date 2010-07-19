@@ -432,7 +432,12 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       return content;
     }
     else {
-      return FileUtil.loadBytes(contentStream, (int)file.getLength());
+      try {
+        return FileUtil.loadBytes(contentStream, (int)file.getLength());
+      }
+      catch (IOException e) {
+        throw FSRecords.handleError(e);
+      }
     }
   }
 

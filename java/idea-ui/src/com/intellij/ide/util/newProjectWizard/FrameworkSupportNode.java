@@ -52,7 +52,7 @@ public class FrameworkSupportNode extends CheckedTreeNode {
   private final Computable<String> myBaseDirForLibrariesGetter;
   private LibraryCompositionOptionsPanel myLibraryCompositionOptionsPanel;
 
-  FrameworkSupportNode(final FrameworkSupportProvider provider, final FrameworkSupportNode parentNode, final FrameworkSupportModelImpl model,
+  public FrameworkSupportNode(final FrameworkSupportProvider provider, final FrameworkSupportNode parentNode, final FrameworkSupportModelImpl model,
                              Computable<String> baseDirForLibrariesGetter, Disposable parentDisposable) {
     super(provider);
     myBaseDirForLibrariesGetter = baseDirForLibrariesGetter;

@@ -20,8 +20,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.project.DumbAware;
 
-public class LocalHistoryGroup extends DefaultActionGroup {
+public class LocalHistoryGroup extends DefaultActionGroup implements DumbAware {
   public void update(AnActionEvent event) {
     Presentation p = event.getPresentation();
     boolean hasProject = event.getData(PlatformDataKeys.PROJECT) != null;

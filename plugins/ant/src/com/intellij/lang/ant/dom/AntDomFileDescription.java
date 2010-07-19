@@ -21,7 +21,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.xml.DomFileDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,15 +28,11 @@ import org.jetbrains.annotations.Nullable;
  * @author Eugene Zhuravlev
  *         Date: Apr 6, 2010
  */
-public class AntDomFileDescription extends DomFileDescription<AntDomProject> {
-  private static final String PROJECT_TAG_NAME = "project";
+public class AntDomFileDescription extends AntFileDescription<AntDomProject> {
+  private static final String ROOT_TAG_NAME = "project";
 
   public AntDomFileDescription() {
-    super(AntDomProject.class, PROJECT_TAG_NAME);
-  }
-
-  protected void initializeFileDescription() {
-    registerReferenceInjector(new AntReferenceInjector());
+    super(AntDomProject.class, ROOT_TAG_NAME);
   }
 
   public boolean isMyFile(@NotNull XmlFile file, @Nullable Module module) {
@@ -48,7 +43,7 @@ public class AntDomFileDescription extends DomFileDescription<AntDomProject> {
     final XmlDocument document = xmlFile.getDocument();
     if (document != null) {
       final XmlTag tag = document.getRootTag();
-      if (tag != null && PROJECT_TAG_NAME.equals(tag.getName()) && tag.getContext() instanceof XmlDocument) {
+      if (tag != null && ROOT_TAG_NAME.equals(tag.getName()) && tag.getContext() instanceof XmlDocument) {
         return true;
       }
       final VirtualFile vFile = xmlFile.getOriginalFile().getVirtualFile();

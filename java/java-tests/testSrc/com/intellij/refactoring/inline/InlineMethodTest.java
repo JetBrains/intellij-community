@@ -157,6 +157,10 @@ public class InlineMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testParamNameConflictsWithLocalVar() throws Exception {
+    doTest();
+  }
+
   @Override
   protected Sdk getProjectJDK() {
     return JavaSdkImpl.getMockJdk17("java 1.5");

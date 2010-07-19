@@ -57,6 +57,7 @@ import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupOwner;
 import com.intellij.ui.popup.list.ListPopupImpl;
@@ -81,7 +82,7 @@ import java.util.Set;
  * User: anna
  * Date: 03-Nov-2005
  */
-public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
+public class NavBarPanel extends OpaquePanel.List implements DataProvider, PopupOwner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.navigationToolbar.NavigationToolbarPanel");
   /*private static final Icon LEFT_ICON = IconLoader.getIcon("/general/splitLeft.png");
   private static final Icon RIGHT_ICON = IconLoader.getIcon("/general/splitRight.png");
@@ -107,8 +108,6 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
 
     myProject = project;
     myModel = new NavBarModel(myProject);
-    setBackground(UIUtil.getListBackground());
-    setOpaque(true);
 
     PopupHandler.installPopupHandler(this, IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionPlaces.NAVIGATION_BAR);
 
@@ -482,7 +481,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     }
 
     final Object object = myModel.getElement(index);
-    final List<Object> objects = myModel.calcElementChildren(object);
+    final java.util.List<Object> objects = myModel.calcElementChildren(object);
 
     if (!objects.isEmpty()) {
       final Object[] siblings = new Object[objects.size()];
@@ -895,7 +894,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       boolean selected = myModel.getSelectedIndex() == myIndex;
 
       setPaintFocusBorder(selected);
-      setFocusBorderAroundIcon(selected);
+      setFocusBorderAroundIcon(true);
 
       setBackground(selected && focused ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());
 

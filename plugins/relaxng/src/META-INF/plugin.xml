@@ -17,7 +17,7 @@
          <a href="http://www.thaiopensource.com/relaxng/trang.html">Trang</a></li>
     </ul>
   ]]></description>
-  <version>1.5.5</version>
+  <version>1.6</version>
 
   <change-notes><![CDATA[
      <ul>
@@ -32,7 +32,6 @@
 ]]></change-notes>
 
   <vendor email="sascha.weinreuter@cit.de">Sascha Weinreuter</vendor>
-  <idea-version since-build="95.4"  /><!-- 9.x -->
 
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="org.intellij.plugins.relaxNG.SimpleErrorReportSubmitter" />

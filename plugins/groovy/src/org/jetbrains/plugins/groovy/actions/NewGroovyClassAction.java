@@ -16,7 +16,6 @@
 
 package org.jetbrains.plugins.groovy.actions;
 
-import com.intellij.CommonBundle;
 import com.intellij.ide.actions.CreateFileFromTemplateDialog;
 import com.intellij.ide.actions.CreateTemplateInPackageAction;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -38,16 +37,14 @@ public class NewGroovyClassAction extends CreateTemplateInPackageAction<GrTypeDe
     super(GroovyBundle.message("newclass.menu.action.text"), GroovyBundle.message("newclass.menu.action.description"), GroovyIcons.CLASS, true);
   }
 
-  @NotNull
   @Override
-  protected CreateFileFromTemplateDialog.Builder buildDialog(Project project, final PsiDirectory directory) {
-    final CreateFileFromTemplateDialog.Builder builder = CreateFileFromTemplateDialog.
-      createDialog(project, GroovyBundle.message("newclass.dlg.title"));
-    builder.addKind("Class", GroovyIcons.CLASS, "GroovyClass.groovy");
-    builder.addKind("Interface", GroovyIcons.INTERFACE, "GroovyInterface.groovy");
-    builder.addKind("Enum", GroovyIcons.ENUM, "GroovyEnum.groovy");
-    builder.addKind("Annotation", GroovyIcons.ANNOTATION_TYPE, "GroovyAnnotation.groovy");
-    return builder;
+  protected void buildDialog(Project project, PsiDirectory directory, CreateFileFromTemplateDialog.Builder builder) {
+    builder
+      .setTitle(GroovyBundle.message("newclass.dlg.title"))
+      .addKind("Class", GroovyIcons.CLASS, "GroovyClass.groovy")
+      .addKind("Interface", GroovyIcons.INTERFACE, "GroovyInterface.groovy")
+      .addKind("Enum", GroovyIcons.ENUM, "GroovyEnum.groovy")
+      .addKind("Annotation", GroovyIcons.ANNOTATION_TYPE, "GroovyAnnotation.groovy");
   }
 
   @Override
@@ -58,10 +55,6 @@ public class NewGroovyClassAction extends CreateTemplateInPackageAction<GrTypeDe
   @Override
   protected String getActionName(PsiDirectory directory, String newName, String templateName) {
     return GroovyBundle.message("newclass.menu.action.text");
-  }
-
-  protected String getErrorTitle() {
-    return CommonBundle.getErrorTitle();
   }
 
   @Override

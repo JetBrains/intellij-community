@@ -19,6 +19,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.ScrollPaneUI;
 import java.awt.*;
@@ -53,7 +54,32 @@ public class JBScrollPane extends JScrollPane {
 
   public void setUI(ScrollPaneUI ui) {
     super.setUI(ui);
-    setViewportBorder(new EmptyBorder(1, 1, 1, 1));
+    setViewportBorder(new Border() {
+      @Override
+      public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+        JViewport vp = getViewport();
+        if (vp != null) {
+          Color bg = vp.getView().getBackground();
+          if (bg != null) {
+            g.setColor(bg);
+            g.drawLine(0, 0, width - 1, 0);
+            g.drawLine(0, height - 1, width - 1, height - 1);
+            g.drawLine(0, 0, 0, height - 1);
+            g.drawLine(width - 1, 0, width - 1, height - 1);
+          }
+        }
+      }
+
+      @Override
+      public Insets getBorderInsets(Component c) {
+        return new Insets(1, 1, 1, 1);
+      }
+
+      @Override
+      public boolean isBorderOpaque() {
+        return true;
+      }
+    });
   }
 
   @Override

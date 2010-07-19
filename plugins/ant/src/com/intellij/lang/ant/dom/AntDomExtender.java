@@ -59,6 +59,9 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
       final String tagName = xmlTag.getName(); // todo: support namespaces
 
       final AntDomProject antProject = antDomElement.getAntProject();
+      if (antProject == null) {
+        return;
+      }
       final ReflectedProject reflected = ReflectedProject.getProject(antProject.getClassLoader());
 
       final DomGenericInfo genericInfo = antDomElement.getGenericInfo();
@@ -218,7 +221,11 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
         return Collections.emptySet();
       }
       final AntDomElement element = (AntDomElement)parent;
-      final CustomAntElementsRegistry registry = CustomAntElementsRegistry.getInstance(element.getAntProject());
+      final AntDomProject antDomProject = element.getAntProject();
+      if (antDomProject == null) {
+        return Collections.emptySet();
+      }
+      final CustomAntElementsRegistry registry = CustomAntElementsRegistry.getInstance(antDomProject);
       final Set<EvaluatedXmlName> result = new HashSet<EvaluatedXmlName>();
       for (XmlName variant : registry.getCompletionVariants(element)) {
         final String ns = variant.getNamespaceKey();
@@ -245,7 +252,11 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
         return null;
       }
       final AntDomElement parentElement = (AntDomElement)parent;
-      final CustomAntElementsRegistry registry = CustomAntElementsRegistry.getInstance(parentElement.getAntProject());
+      final AntDomProject antDomProject = parentElement.getAntProject();
+      if (antDomProject == null) {
+        return null;
+      }
+      final CustomAntElementsRegistry registry = CustomAntElementsRegistry.getInstance(antDomProject);
       final AntDomElement declaringElement = registry.findDeclaringElement(parentElement, xmlName);
       if (declaringElement == null) {
         return null;

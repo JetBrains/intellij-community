@@ -31,7 +31,6 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.MultiLineTooltipUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.svn.config.ConfigureProxiesListener;
-import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -73,7 +72,7 @@ public class SvnConfigurable implements Configurable {
         SvnConfiguration configuration = SvnConfiguration.getInstance(myProject);
         String path = configuration.getConfigurationDirectory();
         if (!enabled || path == null) {
-          myConfigurationDirectoryText.setText(SVNWCUtil.getDefaultConfigurationDirectory().getAbsolutePath());
+          myConfigurationDirectoryText.setText(IdeaSubversionConfigurationDirectory.getPath());
         }
         else {
           myConfigurationDirectoryText.setText(path);
@@ -220,7 +219,7 @@ public class SvnConfigurable implements Configurable {
     SvnConfiguration configuration = SvnConfiguration.getInstance(myProject);
     String path = configuration.getConfigurationDirectory();
     if (configuration.isUseDefaultConfiguation() || path == null) {
-      path = SVNWCUtil.getDefaultConfigurationDirectory().getAbsolutePath();
+      path = IdeaSubversionConfigurationDirectory.getPath();
     }
     myConfigurationDirectoryText.setText(path);
     myUseDefaultCheckBox.setSelected(configuration.isUseDefaultConfiguation());

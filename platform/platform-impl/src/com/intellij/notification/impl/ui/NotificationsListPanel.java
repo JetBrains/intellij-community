@@ -184,6 +184,10 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
 
       myText.setBorder(BorderFactory.createEmptyBorder(3, 0, 3, 0));
       myText.setOpaque(false);
+      if (UIUtil.isUnderNimbusLookAndFeel()) {
+        myText.setBackground(new Color(0, 0, 0, 0));
+      }
+
       myText.setEditable(false);
       myText.setEditorKit(UIUtil.getHTMLEditorKit());
 

@@ -60,6 +60,8 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
   public static final String PROJECT_DIR_MACRO_NAME = "PROJECT_DIR";
   @NonNls
   public static final String MODULE_DIR_MACRO_NAME = "MODULE_DIR";
+  @NonNls
+  public static final String USER_HOME_MACRO_NAME = "USER_HOME";
 
   private static final Set<String> ourSystemMacroNames = new HashSet<String>();
   @NonNls public static final String EXT_FILE_NAME = "path.macros";
@@ -68,48 +70,56 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
     ourSystemMacroNames.add(APPLICATION_HOME_MACRO_NAME);
     ourSystemMacroNames.add(PROJECT_DIR_MACRO_NAME);
     ourSystemMacroNames.add(MODULE_DIR_MACRO_NAME);
+    //ourSystemMacroNames.add(USER_HOME_MACRO_NAME);
   }
 
   private static final Set<String> ourToolsMacros = new HashSet<String>();
   static {
-    ourToolsMacros.add("ClasspathEntry");
-    ourToolsMacros.add("Classpath");
-    ourToolsMacros.add("ColumnNumber");
-    ourToolsMacros.add("FileClass");
-    ourToolsMacros.add("FileDir");
-    ourToolsMacros.add("FileDirRelativeToProjectRoot");
-    ourToolsMacros.add("/FileDirRelativeToProjectRoot");
-    ourToolsMacros.add("FileDirRelativeToSourcepath");
-    ourToolsMacros.add("/FileDirRelativeToSourcepath");
-    ourToolsMacros.add("FileExt");
-    ourToolsMacros.add("FileFQPackage");
-    ourToolsMacros.add("FileName");
-    ourToolsMacros.add("FileNameWithoutExtension");
-    ourToolsMacros.add("FilePackage");
-    ourToolsMacros.add("FilePath");
-    ourToolsMacros.add("FilePathRelativeToProjectRoot");
-    ourToolsMacros.add("/FilePathRelativeToProjectRoot");
-    ourToolsMacros.add("FilePathRelativeToSourcepath");
-    ourToolsMacros.add("/FilePathRelativeToSourcepath");
-    ourToolsMacros.add("FileRelativeDir");
-    ourToolsMacros.add("/FileRelativeDir");
-    ourToolsMacros.add("FileRelativePath");
-    ourToolsMacros.add("/FileRelativePath");
-    ourToolsMacros.add("JavaDocPath");
-    ourToolsMacros.add("JDKPath");
-    ourToolsMacros.add("LineNumber");
-    ourToolsMacros.add("ModuleFileDir");
-    ourToolsMacros.add("ModuleFilePath");
-    ourToolsMacros.add("ModuleName");
-    ourToolsMacros.add("ModuleSourcePath");
-    ourToolsMacros.add("OutputPath");
-    ourToolsMacros.add("ProjectFileDir");
-    ourToolsMacros.add("ProjectFilePath");
-    ourToolsMacros.add("ProjectName");
-    ourToolsMacros.add("Projectpath");
-    ourToolsMacros.add("Prompt");
-    ourToolsMacros.add("SourcepathEntry");
-    ourToolsMacros.add("Sourcepath");
+    ourToolsMacros.addAll(Arrays.asList(
+      "ClasspathEntry",
+      "Classpath",
+      "ColumnNumber",
+      "FileClass",
+      "FileDir",
+      "FileDirRelativeToProjectRoot",
+      "/FileDirRelativeToProjectRoot",
+      "FileDirRelativeToSourcepath",
+      "/FileDirRelativeToSourcepath",
+      "FileExt",
+      "FileFQPackage",
+      "FileName",
+      "FileNameWithoutExtension",
+      "FilePackage",
+      "FilePath",
+      "FilePathRelativeToProjectRoot",
+      "/FilePathRelativeToProjectRoot",
+      "FilePathRelativeToSourcepath",
+      "/FilePathRelativeToSourcepath",
+      "FileRelativeDir",
+      "/FileRelativeDir",
+      "FileRelativePath",
+      "/FileRelativePath",
+      "JavaDocPath",
+      "JDKPath",
+      "LineNumber",
+      "ModuleFileDir",
+      "ModuleFilePath",
+      "ModuleName",
+      "ModuleSourcePath",
+      "OutputPath",
+      "ProjectFileDir",
+      "ProjectFilePath",
+      "ProjectName",
+      "Projectpath",
+      "Prompt",
+      "SourcepathEntry",
+      "Sourcepath",
+      "SHOW_CHANGES"
+    ));
+  }
+
+  public PathMacrosImpl() {
+    //setMacro(USER_HOME_MACRO_NAME, FileUtil.toSystemIndependentName(SystemProperties.getUserHome()));
   }
 
   public static PathMacrosImpl getInstanceEx() {

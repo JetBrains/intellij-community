@@ -28,6 +28,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.ide.util.PsiClassListCellRenderer;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -144,7 +145,7 @@ public class ImplementAbstractMethodHandler {
   private PsiClass[] getClassImplementations(final PsiClass psiClass) {
     ArrayList<PsiClass> list = new ArrayList<PsiClass>();
     for (PsiClass inheritor : ClassInheritorsSearch.search(psiClass, psiClass.getUseScope(), true)) {
-      if (!inheritor.isInterface()) {
+      if (!inheritor.isInterface() && StdLanguages.JAVA.equals(inheritor.getLanguage())) {
         PsiMethod method = inheritor.findMethodBySignature(myMethod, true);
         if (method == null || !method.getContainingClass().equals(psiClass)) continue;
         list.add(inheritor);

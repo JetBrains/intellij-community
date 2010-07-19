@@ -182,7 +182,7 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
 
   public String getConfigurationDirectory() {
     if (myConfigurationDirectory == null || isUseDefaultConfiguation()) {
-      myConfigurationDirectory = SVNWCUtil.getDefaultConfigurationDirectory().getAbsolutePath();
+      myConfigurationDirectory = IdeaSubversionConfigurationDirectory.getPath();
     }
     return myConfigurationDirectory;
   }
@@ -193,11 +193,13 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
 
   public void setConfigurationDirectory(String path) {
     myConfigurationDirectory = path;
-    File dir = path == null ? SVNWCUtil.getDefaultConfigurationDirectory() : new File(path);
+    File dir = path == null ? new File(IdeaSubversionConfigurationDirectory.getPath()) : new File(path);
     SVNConfigFile.createDefaultConfiguration(dir);
 
     myOptions = null;
     myAuthManager = null;
+    myPassiveAuthManager = null;
+    myInteractiveManager = null;
     RUNTIME_AUTH_CACHE.clear();
   }
 
@@ -205,6 +207,8 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
     myIsUseDefaultConfiguration = useDefault;
     myOptions = null;
     myAuthManager = null;
+    myPassiveAuthManager = null;
+    myInteractiveManager = null;
     RUNTIME_AUTH_CACHE.clear();
   }
 
@@ -303,7 +307,11 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
     }
     final Element supportedVersion = element.getChild("supportedVersion");
     if (supportedVersion != null) {
-      mySupportOptions = new SvnSupportOptions(Long.parseLong(supportedVersion.getText()));
+      try {
+        mySupportOptions = new SvnSupportOptions(Long.parseLong(supportedVersion.getText().trim()));
+      } catch (NumberFormatException e) {
+        mySupportOptions = new SvnSupportOptions(null);
+      }
     }
     final Attribute maxAnnotateRevisions = element.getAttribute("maxAnnotateRevisions");
     if (maxAnnotateRevisions != null) {

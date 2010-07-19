@@ -24,6 +24,7 @@ import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -34,7 +35,7 @@ import java.util.List;
  * Date: Sep 26, 2003
  * Time: 11:05:57 PM
  */
-public class ViewAsGroup extends ActionGroup{
+public class ViewAsGroup extends ActionGroup implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.actions.ViewAsGroup");
 
   private AnAction[] myChildren = AnAction.EMPTY_ARRAY;

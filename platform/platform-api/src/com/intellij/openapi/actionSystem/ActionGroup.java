@@ -82,6 +82,11 @@ public abstract class ActionGroup extends AnAction {
   public void actionPerformed(AnActionEvent e){
   }
 
+  @Override
+  public void update(AnActionEvent e) {
+    super.update(e);
+  }
+
   /**
    * @return true if {@link #actionPerformed(AnActionEvent)} should be called
    */
@@ -169,7 +174,8 @@ public abstract class ActionGroup extends AnAction {
       if (myDumbAware == null) {
         try {
           Method updateMethod = getClass().getMethod("update", AnActionEvent.class);
-          myDumbAware = updateMethod.getDeclaringClass().equals(AnAction.class);
+          Class<?> declaringClass = updateMethod.getDeclaringClass();
+          myDumbAware = AnAction.class.equals(declaringClass) || ActionGroup.class.equals(declaringClass);
         }
         catch (NoSuchMethodException e) {
           myDumbAware = Boolean.FALSE;

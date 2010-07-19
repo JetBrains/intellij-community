@@ -25,13 +25,13 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.List;
+import java.util.Set;
 
 /**
  * @author Gregory.Shrago
  */
 public class DomNameSuggestionProvider implements NameSuggestionProvider {
-  public SuggestedNameInfo getSuggestedNames(final PsiElement element, final PsiElement nameSuggestionContext, final List<String> result) {
+  public SuggestedNameInfo getSuggestedNames(final PsiElement element, final PsiElement nameSuggestionContext, final Set<String> result) {
     if (element instanceof PsiMetaOwner) {
       final PsiMetaData psiMetaData = ((PsiMetaOwner)element).getMetaData();
       if (psiMetaData instanceof DomMetaData) {

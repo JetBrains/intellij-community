@@ -56,7 +56,11 @@ public class MethodUtils{
         if (method == null) {
             return false;
         }
-        return methodMatches(method, null, PsiType.getJavaLangString(method.getManager(), method.getResolveScope()),
+        final PsiManager manager = method.getManager();
+        final GlobalSearchScope scope = method.getResolveScope();
+        final PsiClassType stringType =
+                PsiType.getJavaLangString(manager, scope);
+        return methodMatches(method, null, stringType,
                 HardcodedMethodConstants.TO_STRING);
     }
 
@@ -193,8 +197,9 @@ public class MethodUtils{
             @NonNls @Nullable String returnTypeString,
             @NonNls @Nullable String methodName,
             @NonNls @Nullable String... parameterTypeStrings) {
-        final PsiManager manager = method.getManager();
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+        final Project project = method.getProject();
+        final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+        final PsiElementFactory factory = psiFacade.getElementFactory();
         try {
             if (parameterTypeStrings != null) {
                 final PsiType[] parameterTypes =
