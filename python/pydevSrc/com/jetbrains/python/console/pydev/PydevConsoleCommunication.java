@@ -160,6 +160,50 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
   }
 
   /**
+   * Executes the needed command
+   *
+   * @return a Pair with (null, more) or (error, false)
+   * @throws XmlRpcException
+   */
+  private Pair<String, Boolean> exec(final String command) throws XmlRpcException {
+    Object execute = client.execute("addExec", new Object[]{command});
+
+    Object object;
+    if (execute instanceof Vector) {
+      object = ((Vector)execute).get(0);
+    }
+    else if (execute.getClass().isArray()) {
+      object = ((Object[])execute)[0];
+    }
+    else {
+      object = execute;
+    }
+    boolean more;
+
+    String errorContents = null;
+    if (object instanceof Boolean) {
+      more = (Boolean)object;
+
+    }
+    else {
+      String str = object.toString();
+
+      String lower = str.toLowerCase();
+      if (lower.equals("true") || lower.equals("1")) {
+        more = true;
+      }
+      else if (lower.equals("false") || lower.equals("0")) {
+        more = false;
+      }
+      else {
+        more = false;
+        errorContents = str;
+      }
+    }
+    return new Pair<String, Boolean>(errorContents, more);
+  }
+
+  /**
    * Executes a given line in the interpreter.
    *
    * @param command the command to be executed in the client
@@ -175,51 +219,6 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
       //create a thread that'll keep locked until an answer is received from the server.
       new Task.Backgroundable(myProject, "Pydev Console Communication", false) {
 
-        /**
-         * Executes the needed command
-         *
-         * @return a Pair with (null, more) or (error, false)
-         *
-         * @throws XmlRpcException
-         */
-        private Pair<String, Boolean> exec() throws XmlRpcException {
-          Object execute = client.execute("addExec", new Object[]{command});
-
-          Object object;
-          if (execute instanceof Vector) {
-            object = ((Vector)execute).get(0);
-          }
-          else if (execute.getClass().isArray()) {
-            object = ((Object[])execute)[0];
-          }
-          else {
-            object = execute;
-          }
-          boolean more;
-
-          String errorContents = null;
-          if (object instanceof Boolean) {
-            more = (Boolean)object;
-
-          }
-          else {
-            String str = object.toString();
-
-            String lower = str.toLowerCase();
-            if (lower.equals("true") || lower.equals("1")) {
-              more = true;
-            }
-            else if (lower.equals("false") || lower.equals("0")) {
-              more = false;
-            }
-            else {
-              more = false;
-              errorContents = str;
-            }
-          }
-          return new Pair<String, Boolean>(errorContents, more);
-        }
-
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           boolean needInput = false;
@@ -227,12 +226,11 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
 
             Pair<String, Boolean> executed = null;
 
-
             //the 1st time we'll do a connection attempt, we can try to connect n times (until the 1st time the connection
             //is accepted) -- that's mostly because the server may take a while to get started.
             int commAttempts = 0;
             while (true) {
-              executed = exec();
+              executed = exec(command);
 
               //executed.o1 is not null only if we had an error
 
