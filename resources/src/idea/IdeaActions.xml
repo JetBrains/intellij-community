@@ -519,7 +519,6 @@
       <reference ref="CompareFileWithEditor"/>
       <separator/>
       <reference ref="ExternalToolsGroup"/>
-      <reference ref="ValidateXml"/>
     </group>
 
     <group id="TestStatisticsTablePopupMenu">
