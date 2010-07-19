@@ -232,9 +232,13 @@ public class PydevConsoleCommunication implements IScriptConsoleCommunication, X
             //is accepted) -- that's mostly because the server may take a while to get started.
             int commAttempts = 0;
             while (true) {
-              if (indicator.isCanceled()){
-                return;
-              }
+            try {
+              ProgressManager.checkCanceled();
+            }
+            catch (ProcessCanceledException e) {
+              LOG.debug("Canceled");
+              return;
+            }
 
               executed = exec(command);
 
