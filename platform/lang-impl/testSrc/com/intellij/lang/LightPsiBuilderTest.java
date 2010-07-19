@@ -112,6 +112,30 @@ public class LightPsiBuilderTest {
            "    PsiElement(LETTER)('b')\n");
   }
 
+  @Test
+  public void testErrorBefore() throws Exception {
+    doTest("a1",
+           new Parser() {
+             public void parse(PsiBuilder builder) {
+               final PsiBuilder.Marker letter = builder.mark();
+               builder.advanceLexer();
+               letter.done(LETTER);
+               final PsiBuilder.Marker digit = builder.mark();
+               builder.advanceLexer();
+               digit.done(DIGIT);
+               digit.precede().errorBefore("something lost", digit);
+             }
+           },
+           "Element(ROOT)\n" +
+           "  Element(LETTER)\n" +
+           "    PsiElement(LETTER)('a')\n" +
+           "  PsiErrorElement:something lost\n" +
+           "    <empty list>\n" +
+           "  Element(DIGIT)\n" +
+           "    PsiElement(DIGIT)('1')\n");
+  }
+
+
   private interface Parser {
     void parse(PsiBuilder builder);
   }

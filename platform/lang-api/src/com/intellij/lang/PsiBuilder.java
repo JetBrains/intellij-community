@@ -139,6 +139,14 @@ public interface PsiBuilder extends UserDataHolder {
      * @param message for error element.
      */
     void error(String message);
+
+    /**
+     * Like {@linkplain #error(String)}, but the marker is completed before specified one.
+     *
+     * @param message for error element.
+     * @param before marker to complete this one before.
+     */
+    void errorBefore(String message, Marker before);
   }
 
   /**

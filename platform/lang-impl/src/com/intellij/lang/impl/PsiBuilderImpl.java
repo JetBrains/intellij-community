@@ -298,6 +298,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       myBuilder.error(this, message);
     }
 
+    public void errorBefore(final String message, final Marker before) {
+      myType = TokenType.ERROR_ELEMENT;
+      myBuilder.errorBefore(this, message, before);
+    }
+
     public IElementType getTokenType() {
       return myType;
     }
@@ -599,6 +604,27 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     DoneWithErrorMarker doneMarker = new DoneWithErrorMarker((StartMarker)marker, myCurrentLexeme, message);
     ((StartMarker)marker).myDoneMarker = doneMarker;
     myProduction.add(doneMarker);
+  }
+
+  @SuppressWarnings({"SuspiciousMethodCalls"})
+  public void errorBefore(Marker marker, String message, Marker before) {
+// TODO: there could be not done markers after 'marker' and that's normal
+    if (((StartMarker)marker).myDoneMarker != null) {
+      LOG.error("Marker already done.");
+    }
+
+    int idx = myProduction.lastIndexOf(marker);
+    if (idx < 0) {
+      LOG.error("Marker has never been added.");
+    }
+
+    int beforeIndex = myProduction.lastIndexOf(before);
+
+    DoneWithErrorMarker doneMarker = new DoneWithErrorMarker((StartMarker)marker, myCurrentLexeme, message);
+    doneMarker.myLexemeIndex = ((StartMarker)before).myLexemeIndex;
+
+    ((StartMarker)marker).myDoneMarker = doneMarker;
+    myProduction.add(beforeIndex, doneMarker);
   }
 
   public void done(final Marker marker) {
