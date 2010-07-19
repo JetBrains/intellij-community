@@ -25,7 +25,7 @@ public class UnixPythonSdkFlavor extends PythonSdkFlavor {
         if (!child.isDirectory()) {
           final String child_name = child.getName();
           if (child_name.startsWith("python") || child_name.startsWith("jython")) {
-            candidates.add(child.getPath());
+            if (! child_name.endsWith("-config")) candidates.add(child.getPath());
           }
         }
       }
