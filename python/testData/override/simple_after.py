@@ -1,8 +1,8 @@
 class A:
-    def doStuff(self, foo): pass
+    def doStuff(self, foo=True): pass
 
 class B(A):
-    def doStuff(self, foo):
+    def doStuff(self, foo=True):
         <selection>A.doStuff(self, foo)</selection>
 
     def otherMethod(self, foo, bar):
