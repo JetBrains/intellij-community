@@ -208,7 +208,10 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
         if (node != myElement) {
           final PyExpression qualifier = node.getQualifier();
           if (qualifier != null && qualifier.getText().equals(text)) {
-            members.add(node.getReferencedName());
+            final String refName = node.getReferencedName();
+            if (refName != null) {
+              members.add(refName);
+            }
           }
         }
       }
