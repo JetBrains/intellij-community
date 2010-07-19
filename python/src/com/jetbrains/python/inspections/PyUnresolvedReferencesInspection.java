@@ -10,6 +10,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.actions.*;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
+import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.patterns.Matcher;
@@ -287,6 +288,14 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     }
 
     private List<PsiElement> collectUnusedImportElements() {
+      if (myAllImports.isEmpty()){
+        return Collections.emptyList();
+      }
+      // PY-1315 Unused imports inspection shouldn't work in python repl console
+      final NameDefiner first = myAllImports.iterator().next();
+      if (first.getContainingFile() instanceof PyExpressionCodeFragment || PydevConsoleRunner.isInPydevConsole(first)){
+        return Collections.emptyList();
+      }
       List<PsiElement> result = new ArrayList<PsiElement>();
 
       Set<NameDefiner> unusedImports = new HashSet<NameDefiner>(myAllImports);
