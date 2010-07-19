@@ -29,8 +29,10 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkType;
@@ -38,6 +40,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.PathUtil;
@@ -49,8 +52,12 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.regex.Pattern;
 
 /**
  * @author Eugene Zhuravlev
@@ -75,6 +82,7 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
 
   private final Project myProject;
   private AnalysisScope myGenerationScope;
+  private static final Logger LOGGER = Logger.getInstance("#" + JavadocConfiguration.class.getName());
 
   public void setGenerationScope(AnalysisScope generationScope) {
     myGenerationScope = generationScope;
@@ -236,22 +244,42 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
         parameters.add(classPathString);
       }
 
-      parameters.add("-sourcepath");
-      parameters.add(OrderEnumerator.orderEntries(myProject).withoutSdk().withoutLibraries().getSourcePathsList().getPathsString());
-
       if (OUTPUT_DIRECTORY != null) {
         parameters.add("-d");
         parameters.add(OUTPUT_DIRECTORY.replace('/', File.separatorChar));
       }
 
-      final Collection<String> packages = new HashSet<String>();
-      final Collection<String> sources = new HashSet<String>();
-      myGenerationOptions.accept(new MyContentIterator(myProject, packages, sources));
-      if (packages.size() + sources.size() == 0) {
-        throw new CantRunException(JavadocBundle.message("javadoc.generate.no.classes.in.selected.packages.error"));
+      try {
+        File sourcepathTempFile = File.createTempFile("javadoc", "args.txt");
+        sourcepathTempFile.deleteOnExit();
+        parameters.add("@" + sourcepathTempFile.getCanonicalPath());
+        final PrintWriter writer = new PrintWriter(new FileWriter(sourcepathTempFile));
+        try {
+          writer.println("-sourcepath");
+          writer.println(OrderEnumerator.orderEntries(myProject).withoutSdk().withoutLibraries().getSourcePathsList().getPathsString());
+          final Collection<String> packages = new HashSet<String>();
+          final Collection<String> sources = new HashSet<String>();
+          final Runnable findRunnable = new Runnable() {
+            public void run() {
+              myGenerationOptions.accept(new MyContentIterator(myProject, packages, sources));
+            }
+          };
+          if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(findRunnable, "Search for sources to generate javadoc in...", false, myProject)) {
+            return;
+          }
+          if (packages.size() + sources.size() == 0) {
+            throw new CantRunException(JavadocBundle.message("javadoc.generate.no.classes.in.selected.packages.error"));
+          }
+          writer.println(StringUtil.join(packages, " "));
+          writer.println(StringUtil.join(sources, " "));
+        }
+        finally {
+          writer.close();
+        }
       }
-      parameters.addAll(new ArrayList<String>(packages));
-      parameters.addAll(new ArrayList<String>(sources));
+      catch (IOException e) {
+        LOGGER.error(e);
+      }
     }
 
     protected OSProcessHandler startProcess() throws ExecutionException {
