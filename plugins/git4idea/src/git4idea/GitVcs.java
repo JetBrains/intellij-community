@@ -43,6 +43,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ComparatorDelegate;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.ui.UIUtil;
 import git4idea.annotate.GitAnnotationProvider;
 import git4idea.changes.GitChangeProvider;
 import git4idea.changes.GitChangeUtils;
@@ -541,8 +542,13 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
         buffer.append("\n");
         buffer.append(exception.getMessage());
       }
-      String msg = buffer.toString();
-      Messages.showErrorDialog(myProject, msg, GitBundle.getString("error.dialog.title"));
+      final String msg = buffer.toString();
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          Messages.showErrorDialog(myProject, msg, GitBundle.getString("error.dialog.title"));
+        }
+      });
     }
   }
 
