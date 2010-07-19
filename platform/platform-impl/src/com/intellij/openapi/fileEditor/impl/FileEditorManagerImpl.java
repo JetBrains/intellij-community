@@ -70,6 +70,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -132,6 +133,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       synchronized (myInitLock) {
         if (myPanels == null) {
           myPanels = new JPanel(new BorderLayout());
+          myPanels.setBorder(new EmptyBorder(1, 0, 0, 0));
           mySplitters = new EditorsSplitters(this);
           myPanels.add(mySplitters, BorderLayout.CENTER);
         }
