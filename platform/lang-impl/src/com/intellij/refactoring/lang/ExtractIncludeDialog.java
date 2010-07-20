@@ -50,7 +50,7 @@ public class ExtractIncludeDialog extends DialogWrapper {
   private JTextField myNameField;
   private final PsiDirectory myCurrentDirectory;
   private static final String REFACTORING_NAME = RefactoringBundle.message("extractIncludeFile.name");
-  private final String myExtension;
+  protected final String myExtension;
   protected JLabel myTargetDirLabel;
 
   public PsiDirectory getTargetDirectory() {
@@ -60,7 +60,8 @@ public class ExtractIncludeDialog extends DialogWrapper {
   private PsiDirectory myTargetDirectory;
 
   public String getTargetFileName () {
-    return myNameField.getText().trim() + "." + myExtension;
+    String name = myNameField.getText().trim();
+    return name.contains(".") ? name: name + "." + myExtension;
   }
 
   public ExtractIncludeDialog(final PsiDirectory currentDirectory, final String extension) {
@@ -116,7 +117,7 @@ public class ExtractIncludeDialog extends DialogWrapper {
   }
 
   protected String getNameLabel() {
-    return RefactoringBundle.message("name.for.extracted.include.file");
+    return RefactoringBundle.message("name.for.extracted.include.file", myExtension);
   }
 
   private void validateOKButton() {
