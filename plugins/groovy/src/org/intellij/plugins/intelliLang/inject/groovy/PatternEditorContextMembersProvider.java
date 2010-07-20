@@ -124,7 +124,7 @@ public class PatternEditorContextMembersProvider extends NonCodeMembersContribut
   }
 
   private static List<PsiElement> getRootsByClassNames(PsiFile file, String type) {
-    final ArrayList<PsiElement> roots = new ArrayList<PsiElement>(1);
+    final List<PsiElement> roots = ContainerUtil.createEmptyCOWList();
 
     final Project project = file.getProject();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
