@@ -44,11 +44,11 @@ public class TemporaryPlacesInjector implements MultiHostInjector {
 
   public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull final PsiElement context) {
     final PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)context;
-    final ElementManipulator<PsiLanguageInjectionHost> manipulator = ElementManipulators.getManipulator(host);
-    if (manipulator == null) return; // TODO: [gregory] there is no need to stop the world !
-    //LOG.assertTrue(manipulator != null, "No manipulator for " + host);
     final PsiLanguageInjectionHost originalHost = PsiUtilBase.getOriginalElement(host, host.getClass());
     final List<TemporaryPlacesRegistry.TemporaryPlace> list = TemporaryPlacesRegistry.getInstance(context.getProject()).getTempInjectionsSafe(originalHost);
+    if (list.isEmpty()) return;
+    final ElementManipulator<PsiLanguageInjectionHost> manipulator = ElementManipulators.getManipulator(host);
+    if (manipulator == null) return;
     for (final TemporaryPlacesRegistry.TemporaryPlace place : list) {
       LOG.assertTrue(place.language != null, "Language should not be NULL");
       InjectorUtils.registerInjection(
