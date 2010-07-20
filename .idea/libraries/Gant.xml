@@ -3,7 +3,6 @@
     <CLASSES>
       <root url="file://$PROJECT_DIR$/build/lib/gant/lib" />
     </CLASSES>
-    <JAVADOC />
     <SOURCES>
       <root url="jar://$PROJECT_DIR$/build/lib/gant/src.zip!/groovy" />
       <root url="jar://$PROJECT_DIR$/build/lib/gant/jps-sources.zip!/" />

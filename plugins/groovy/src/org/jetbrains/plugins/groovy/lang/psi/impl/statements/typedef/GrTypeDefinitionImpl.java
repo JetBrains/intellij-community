@@ -138,6 +138,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
 
   public ItemPresentation getPresentation() {
     return new ItemPresentation() {
+      @Nullable
       public String getPresentableText() {
         return getName();
       }
@@ -524,7 +525,14 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
 
     if (renameFile) {
       final GroovyFileBase file = (GroovyFileBase)getContainingFile();
-      file.setName(name + "." + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension());
+      final VirtualFile virtualFile = file.getVirtualFile();
+      final String ext;
+      if (virtualFile != null) {
+        ext = virtualFile.getExtension();
+      } else {
+        ext = GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension();
+      }
+      file.setName(name + "." + ext);
     }
 
     return this;
@@ -596,12 +604,12 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
     if (!(file instanceof GroovyFile)) return false;
     final GroovyFile groovyFile = (GroovyFile)file;
     if (groovyFile.isScript()) return false;
-    final GrTypeDefinition[] typeDefinitions = groovyFile.getTypeDefinitions();
     final String name = getName();
     final VirtualFile vFile = groovyFile.getVirtualFile();
     return vFile != null && name != null && name.equals(vFile.getNameWithoutExtension());
   }
 
+  @Nullable
   public PsiElement getOriginalElement() {
     return PsiImplUtil.getOriginalElement(this, getContainingFile());
   }

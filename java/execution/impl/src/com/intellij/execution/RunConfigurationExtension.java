@@ -48,6 +48,7 @@ public abstract class RunConfigurationExtension {
   public static final ExtensionPointName<RunConfigurationExtension> EP_NAME = new ExtensionPointName<RunConfigurationExtension>("com.intellij.runConfigurationExtension");
   public static final Key<List> RUN_EXTENSIONS = Key.create("run.extension.elemnts");
   public abstract void handleStartProcess(final ModuleBasedConfiguration configuration, final OSProcessHandler handler);
+  @Nullable  
   public abstract <T extends ModuleBasedConfiguration & CommonJavaRunConfigurationParameters> SettingsEditor createEditor(T configuration);
   public abstract String getEditorTitle();
   public abstract String getName();

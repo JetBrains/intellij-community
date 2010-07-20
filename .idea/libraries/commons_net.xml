@@ -3,7 +3,6 @@
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/lib/commons-net-2.0-patched.jar!/" />
     </CLASSES>
-    <JAVADOC />
     <SOURCES>
       <root url="jar://$PROJECT_DIR$/lib/src/commons-net-2.0-patched-src.zip!/commons-net-2.0-src/src/main/java" />
     </SOURCES>

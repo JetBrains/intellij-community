@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.CommandButtonGroup;
 import com.intellij.ui.components.panels.OpaquePanel;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -221,7 +222,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     return mySteps.get(myCurrentStep);
   }
 
-  public void addStep(final T step) {
+  public void addStep(@NotNull final T step) {
     mySteps.add(step);
 
     if (step instanceof StepAdapter) {

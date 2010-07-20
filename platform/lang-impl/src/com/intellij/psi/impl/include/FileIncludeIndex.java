@@ -17,6 +17,7 @@
 package com.intellij.psi.impl.include;
 
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.FactoryMap;
@@ -68,14 +69,14 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
     return INDEX_ID;
   }
 
-  public DataIndexer<FileIncludeIndex.Key, List<FileIncludeInfoImpl>, FileContent> getIndexer() {
-    return new DataIndexer<FileIncludeIndex.Key, List<FileIncludeInfoImpl>, FileContent>() {
+  public DataIndexer<Key, List<FileIncludeInfoImpl>, FileContent> getIndexer() {
+    return new DataIndexer<Key, List<FileIncludeInfoImpl>, FileContent>() {
       @NotNull
-      public Map<FileIncludeIndex.Key, List<FileIncludeInfoImpl>> map(FileContent inputData) {
+      public Map<Key, List<FileIncludeInfoImpl>> map(FileContent inputData) {
 
-        Map<FileIncludeIndex.Key, List<FileIncludeInfoImpl>> map = new FactoryMap<FileIncludeIndex.Key, List<FileIncludeInfoImpl>>() {
+        Map<Key, List<FileIncludeInfoImpl>> map = new FactoryMap<Key, List<FileIncludeInfoImpl>>() {
           @Override
-          protected List<FileIncludeInfoImpl> create(FileIncludeIndex.Key key) {
+          protected List<FileIncludeInfoImpl> create(Key key) {
             return new ArrayList<FileIncludeInfoImpl>();
           }
         };
@@ -144,6 +145,9 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
   public FileBasedIndex.InputFilter getInputFilter() {
     return new FileBasedIndex.InputFilter() {
       public boolean acceptInput(VirtualFile file) {
+        if (file.getFileSystem() == JarFileSystem.getInstance()) {
+          return false;
+        }
         for (FileIncludeProvider provider : myProviders) {
           if (provider.acceptFile(file)) {
             return true;

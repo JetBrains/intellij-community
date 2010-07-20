@@ -25,6 +25,7 @@ public class InvertBooleanTest extends LightCodeInsightTestCase {
   public void testParameter() throws Exception { doTest(); } //inverting boolean parameter
 
   public void testParameter1() throws Exception { doTest(); } //inverting boolean parameter more advanced stuff
+  public void testUnusedReturnValue() throws Exception { doTest(); }
 
   private void doTest() throws Exception {
     configureByFile(TEST_ROOT + getTestName(true) + ".java");

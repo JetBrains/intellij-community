@@ -134,7 +134,7 @@ public class RenameDialog extends RefactoringDialog {
   }
 
   public String[] getSuggestedNames() {
-    Set<String> result = new HashSet<String>();
+    LinkedHashSet<String> result = new LinkedHashSet<String>();
     final NameSuggestionProvider[] providers = Extensions.getExtensions(NameSuggestionProvider.EP_NAME);
     for(NameSuggestionProvider provider: providers) {
       SuggestedNameInfo info = provider.getSuggestedNames(myPsiElement, myNameSuggestionContext, result);

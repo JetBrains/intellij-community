@@ -26,16 +26,16 @@ import java.util.List;
  * @author oleg
  * This component represents a list of checkboxes.
  */
- public abstract class OptionalChooserComponent implements CheckBoxListListener {
+public abstract class OptionalChooserComponent<T> implements CheckBoxListListener {
   private JPanel myContentPane;
   private CheckBoxList myList;
   private DefaultListModel myListModel;
-  private final List<Pair<String, Boolean>> myInitialList;
-  private ArrayList<Pair<String, Boolean>> myWorkingList;
+  private List<Pair<T, Boolean>> myInitialList;
+  private ArrayList<Pair<T, Boolean>> myWorkingList;
 
-  public OptionalChooserComponent(@NotNull final List<Pair<String, Boolean>> list) {
-    myInitialList = list;
-    myWorkingList = new ArrayList<Pair<String, Boolean>>(myInitialList);
+  public OptionalChooserComponent(@NotNull final List<Pair<T, Boolean>> list) {
+    setInitialList(list);
+    myWorkingList = new ArrayList<Pair<T, Boolean>>(myInitialList);
 
     // fill list
     reset();
@@ -46,7 +46,7 @@ import java.util.List;
   }
 
   public void checkBoxSelectionChanged(int index, boolean value) {
-    final Pair<String, Boolean> pair = myWorkingList.remove(index);
+    final Pair<T, Boolean> pair = myWorkingList.remove(index);
     myWorkingList.add(index, Pair.create(pair.first, value));
   }
 
@@ -56,17 +56,25 @@ import java.util.List;
   }
 
   public void reset() {
-    myWorkingList = new ArrayList<Pair<String, Boolean>>(myInitialList);
-    update();
+    myWorkingList = new ArrayList<Pair<T, Boolean>>(myInitialList);
+    refresh();
   }
 
-  public abstract JCheckBox createCheckBox(final String path, final boolean checked);
+  protected abstract JCheckBox createCheckBox(final T value, final boolean checked);
+
+  public int getSelectedIndex() {
+    return myList.getSelectedIndex();
+  }
 
   public boolean isModified() {
     return !myWorkingList.equals(myInitialList);
   }
 
-  public ArrayList<Pair<String, Boolean>> getValue() {
+  public void setInitialList(@NotNull final List<Pair<T, Boolean>> list) {
+    myInitialList = list;
+  }
+
+  public ArrayList<Pair<T, Boolean>> getCurrentModel() {
     return myWorkingList;
   }
 
@@ -75,9 +83,9 @@ import java.util.List;
     myInitialList.addAll(myWorkingList);
   }
 
-  public void update() {
+  public void refresh() {
     myListModel.clear();
-    for (Pair<String, Boolean> pair : myWorkingList) {
+    for (Pair<T, Boolean> pair : myWorkingList) {
       myListModel.addElement(createCheckBox(pair.first, pair.second));
     }
   }

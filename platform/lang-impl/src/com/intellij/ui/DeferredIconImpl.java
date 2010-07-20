@@ -23,6 +23,7 @@ import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import com.intellij.util.ui.EmptyIcon;
@@ -66,29 +67,37 @@ public class DeferredIconImpl<T> implements DeferredIcon {
     if (!myIsScheduled) {
       myIsScheduled = true;
 
-      final Component target;
+      final Ref<Component> target = new Ref<Component>(null);
+      final Ref<Component> paintingParent = new Ref<Component>(null);
+      final Ref<Rectangle> paintingParentRec = new Ref<Rectangle>(null);
 
       final Container list = SwingUtilities.getAncestorOfClass(JList.class, c);
       if (list != null) {
-        target = list;
+        target.set(list);
       }
       else {
         final Container tree = SwingUtilities.getAncestorOfClass(JTree.class, c);
         if (tree != null) {
-          target = tree;
+          target.set(tree);
         }
         else {
           final Container table = SwingUtilities.getAncestorOfClass(JTable.class, c);
           if (table != null) {
-            target = table;
+            target.set(table);
           }
           else {
-            target = c;
+            target.set(c);
           }
         }
       }
 
-      myLastTarget = new WeakReference<Component>(target);
+      Container pp = SwingUtilities.getAncestorOfClass(PaintingParent.class, c);
+      paintingParent.set(pp);
+      if (paintingParent.get() != null) {
+        paintingParentRec.set(((PaintingParent)pp).getChildRec(c));
+      }
+
+      myLastTarget = new WeakReference<Component>(target.get());
 
       JobUtil.submitToJobThread(new Runnable() {
         public void run() {
@@ -100,10 +109,23 @@ public class DeferredIconImpl<T> implements DeferredIcon {
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
+              Component actualTarget = target.get();
+              if (SwingUtilities.getWindowAncestor(actualTarget) == null) {
+                actualTarget = paintingParent.get();
+                if (actualTarget == null || SwingUtilities.getWindowAncestor(actualTarget) == null) {
+                  actualTarget = null;
+                  myLastTarget = null;
+                }
+              }
+
+              if (actualTarget == null) return;
+
+              myLastTarget = new WeakReference<Component>(actualTarget);
+
               if (shouldRevalidate) {
                 // revalidate will not work: jtree caches size of nodes
-                if (target instanceof JTree) {
-                  final TreeUI ui = ((JTree)target).getUI();
+                if (actualTarget instanceof JTree) {
+                  final TreeUI ui = ((JTree)actualTarget).getUI();
                   if (ui instanceof BasicTreeUI) {
                     // this call is "fake" and only need to reset tree layout cache
                     ((BasicTreeUI)ui).setLeftChildIndent(((Integer)UIManager.get("Tree.leftChildIndent")).intValue());
@@ -111,11 +133,16 @@ public class DeferredIconImpl<T> implements DeferredIcon {
                 }
               }
 
-              if (c == target) {
+              if (c == actualTarget) {
                 c.repaint(x, y, getIconWidth(), getIconHeight());
               }
               else {
-                ourRepaintScheduler.pushDirtyComponent(target);
+                Rectangle rec = null;
+                if (paintingParentRec.get() != null) {
+                  rec = paintingParentRec.get();
+                }
+
+                ourRepaintScheduler.pushDirtyComponent(actualTarget, rec);
               }
             }
           });
@@ -191,20 +218,44 @@ public class DeferredIconImpl<T> implements DeferredIcon {
 
   private static class RepaintScheduler {
     private final Alarm myAlarm = new Alarm();
-    private final Set<Component> myQueue = new LinkedHashSet<Component>();
+    private final Set<RepaintRequest> myQueue = new LinkedHashSet<RepaintRequest>();
 
-    public void pushDirtyComponent(Component c) {
+    public void pushDirtyComponent(final Component c, final Rectangle rec) {
       myAlarm.cancelAllRequests();
       myAlarm.addRequest(new Runnable() {
         public void run() {
-          for (Component component : myQueue) {
-            component.repaint();
+          for (RepaintRequest each : myQueue) {
+            Rectangle r = each.getRectangle();
+            if (r != null) {
+              each.getComponent().repaint(r.x, r.y, r.width, r.height);
+            } else {
+              each.getComponent().repaint();
+            }
           }
           myQueue.clear();
         }
       }, 50);
 
-      myQueue.add(c);
+      myQueue.add(new RepaintRequest(c, rec));
     }
   }
+
+  private static class RepaintRequest {
+    private Component myComponent;
+    private Rectangle myRectangle;
+
+    private RepaintRequest(Component component, Rectangle rectangle) {
+      myComponent = component;
+      myRectangle = rectangle;
+    }
+
+    public Component getComponent() {
+      return myComponent;
+    }
+
+    public Rectangle getRectangle() {
+      return myRectangle;
+    }
+  }
+
 }

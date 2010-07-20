@@ -23,6 +23,7 @@ package com.intellij.ide.util.newProjectWizard;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.module.ModuleType;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -41,7 +42,7 @@ public class StepSequence {
     myParentSequence = stepSequence;
   }
 
-  public void addCommonStep(ModuleWizardStep step){
+  public void addCommonStep(@NotNull ModuleWizardStep step){
     myCommonSteps.add(step);
   }
 

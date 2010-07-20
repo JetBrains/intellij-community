@@ -83,12 +83,8 @@ public abstract class BaseRefactoringAction extends AnAction {
     presentation.setEnabled(true);
     DataContext dataContext = e.getDataContext();
     Project project = e.getData(PlatformDataKeys.PROJECT);
-    if (project == null) {
-      disableAction(e);
-      return;
-    }
-    if (isHidden()) {
-      e.getPresentation().setVisible(false);
+    if (project == null || isHidden()) {
+      hideAction(e);
       return;
     }
 
@@ -103,7 +99,7 @@ public abstract class BaseRefactoringAction extends AnAction {
 
     if (editor == null) {
       if (isAvailableInEditorOnly()) {
-        disableAction(e);
+        hideAction(e);
         return;
       }
       final PsiElement[] elements = getPsiElementArray(dataContext);
@@ -116,19 +112,29 @@ public abstract class BaseRefactoringAction extends AnAction {
       PsiElement element = e.getData(LangDataKeys.PSI_ELEMENT);
       if (element == null || !isAvailableForLanguage(element.getLanguage())) {
         if (file == null) {
-          disableAction(e);
+          hideAction(e);
           return;
         }
         element = getElementAtCaret(editor, file);
       }
-      final boolean isEnabled = element != null &&
-                                !(element instanceof SyntheticElement) &&
-                                isAvailableForLanguage(PsiUtilBase.getLanguageInEditor(editor, project)) &&
-                                isAvailableOnElementInEditor(element, editor);
-      if (!isEnabled) {
-        disableAction(e);
+      boolean isVisible = element != null &&
+                          !(element instanceof SyntheticElement) &&
+                          isAvailableForLanguage(PsiUtilBase.getLanguageInEditor(editor, project));
+      if (isVisible) {
+        boolean isEnabled = isAvailableOnElementInEditor(element, editor);
+        if (!isEnabled) {
+          disableAction(e);
+        }
+      }
+      else {
+        hideAction(e);
       }
     }
+  }
+
+  private static void hideAction(AnActionEvent e) {
+    disableAction(e);
+    e.getPresentation().setVisible(false);
   }
 
   protected boolean isHidden() {
@@ -161,8 +167,8 @@ public abstract class BaseRefactoringAction extends AnAction {
 
   private static void disableAction(final AnActionEvent e) {
     e.getPresentation().setEnabled(false);
-    if (ActionPlaces.isPopupPlace(e.getPlace())) {
-      e.getPresentation().setVisible(false);
+    if (ActionPlaces.isPopupPlace(e.getPlace()) && e.getPresentation().isVisible()) {
+      hideAction(e);
     }
   }
 

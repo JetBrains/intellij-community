@@ -3,7 +3,5 @@
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/lib/jcip-annotations.jar!/" />
     </CLASSES>
-    <JAVADOC />
-    <SOURCES />
   </library>
 </component>

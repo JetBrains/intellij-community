@@ -233,7 +233,9 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
                  ((PsiPrefixExpression)expression.getParent()).getOperationSign().getTokenType() == JavaTokenType.EXCL) {
             expression = (PsiExpression)expression.getParent();
           }
-          expression.replace(CodeInsightServicesUtil.invertCondition(expression));
+          if (!(expression.getParent() instanceof PsiExpressionStatement)) {
+            expression.replace(CodeInsightServicesUtil.invertCondition(expression));
+          }
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);

@@ -50,8 +50,8 @@ public class SpellCheckerSettingsPane implements Disposable {
   private JPanel panelForDictionaryChooser;
   private JPanel panelForAcceptedWords;
   private JPanel panelForFolderChooser;
-  private final OptionalChooserComponent optionalChooserComponent;
-  private final PathsChooserComponent pathsChooserComponent;
+  private OptionalChooserComponent<String> optionalChooserComponent;
+  private PathsChooserComponent pathsChooserComponent;
   private final List<Pair<String, Boolean>> allDictionaries = new ArrayList<Pair<String, Boolean>>();
   private final List<String> dictionariesFolders = new ArrayList<String>();
   private final WordsPanel wordsPanel;
@@ -96,20 +96,20 @@ public class SpellCheckerSettingsPane implements Disposable {
         }
         paths.add(path);
 
-        final ArrayList<Pair<String, Boolean>> currentDictionaries = optionalChooserComponent.getValue();
+        final ArrayList<Pair<String, Boolean>> currentDictionaries = optionalChooserComponent.getCurrentModel();
         SPFileUtil.processFilesRecursively(path, new Consumer<String>() {
           public void consume(final String s) {
             currentDictionaries.add(Pair.create(s, true));
           }
         });
-        optionalChooserComponent.update();
+        optionalChooserComponent.refresh();
         return true;
       }
 
       public boolean removePath(List<String> paths, String path) {
         if (paths.remove(path)) {
           final ArrayList<Pair<String, Boolean>> result = new ArrayList<Pair<String, Boolean>>();
-          final ArrayList<Pair<String, Boolean>> currentDictionaries = optionalChooserComponent.getValue();
+          final ArrayList<Pair<String, Boolean>> currentDictionaries = optionalChooserComponent.getCurrentModel();
           for (Pair<String, Boolean> pair : currentDictionaries) {
             if (!pair.first.startsWith(FileUtil.toSystemDependentName(path))) {
               result.add(pair);
@@ -117,7 +117,7 @@ public class SpellCheckerSettingsPane implements Disposable {
           }
           currentDictionaries.clear();
           currentDictionaries.addAll(result);
-          optionalChooserComponent.update();
+          optionalChooserComponent.refresh();
           return true;
         }
         return false;
@@ -127,7 +127,7 @@ public class SpellCheckerSettingsPane implements Disposable {
     panelForFolderChooser.add(pathsChooserComponent.getContentPane(), BorderLayout.CENTER);
 
 
-    optionalChooserComponent = new OptionalChooserComponent(allDictionaries) {
+    optionalChooserComponent = new OptionalChooserComponent<String>(allDictionaries) {
       @Override
       public JCheckBox createCheckBox(String path, boolean checked) {
         if (isUserDictionary(path)) {

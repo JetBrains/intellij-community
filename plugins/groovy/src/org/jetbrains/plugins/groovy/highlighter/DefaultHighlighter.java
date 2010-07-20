@@ -70,6 +70,8 @@ public class DefaultHighlighter {
   static final String METHOD_CALL_ID = "Method call";
   @NonNls
   static final String STATIC_METHOD_ACCESS_ID = "Static method access";
+  @NonNls
+  static final String CLASS_REFERENCE_ID = "Class";
 
 
   @NonNls
@@ -102,6 +104,9 @@ public class DefaultHighlighter {
 
   public static TextAttributesKey DOC_COMMENT_TAG = TextAttributesKey.createTextAttributesKey(DOC_COMMENT_TAG_ID,
       SyntaxHighlighterColors.DOC_COMMENT_TAG.getDefaultAttributes());
+
+  public static TextAttributesKey CLASS_REFERENCE =
+    TextAttributesKey.createTextAttributesKey(CLASS_REFERENCE_ID, HighlighterColors.TEXT.getDefaultAttributes().clone());
 
   public static final TextAttributes KEYWORD_ATTRIBUTES = SyntaxHighlighterColors.KEYWORD.getDefaultAttributes().clone();
   static{

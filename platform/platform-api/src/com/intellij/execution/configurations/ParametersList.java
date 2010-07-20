@@ -33,6 +33,7 @@ public class ParametersList implements Cloneable{
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.ParametersList");
   private List<String> myParameters = new ArrayList<String>();
   private Map<String, String> myMacroMap = null;
+  private List<ParamsGroup> myGroups = new ArrayList<ParamsGroup>();
 
   public boolean hasParameter(@NonNls final String param) {
     return myParameters.contains(param);
@@ -63,11 +64,15 @@ public class ParametersList implements Cloneable{
       buffer.append(separator);
       buffer.append(GeneralCommandLine.quote(param));
     }
+    for (ParamsGroup paramsGroup : myGroups) {
+      // params group parameters string already contains a separator
+      buffer.append(paramsGroup.getParametersList().getParametersString());
+    }
     return buffer.toString();
   }
 
   public String[] getArray() {
-    return ArrayUtil.toStringArray(myParameters);
+    return ArrayUtil.toStringArray(getList());
   }
 
   public void addParametersString(final String parameters) {
@@ -81,6 +86,42 @@ public class ParametersList implements Cloneable{
 
   public void add(@NonNls final String parameter) {
     myParameters.add(expandMacros(parameter));
+  }
+
+  public ParamsGroup addParamsGroup(@NotNull final String groupId) {
+    return addParamsGroup(new ParamsGroup(groupId));
+  }
+
+  public ParamsGroup addParamsGroup(@NotNull final ParamsGroup group) {
+    myGroups.add(group);
+    return group;
+  }
+
+  public ParamsGroup addParamsGroupAt(final int index,
+                                      @NotNull final String groupId) {
+    final ParamsGroup group = new ParamsGroup(groupId);
+    myGroups.add(index, group);
+    return group;
+  }
+
+  public int getParamsGroupsCount() {
+    return myGroups.size();
+  }
+
+  public List<String> getParameters() {
+    return Collections.unmodifiableList(myParameters);
+  }
+
+  public List<ParamsGroup> getParamsGroups() {
+    return Collections.unmodifiableList(myGroups);
+  }
+
+  public ParamsGroup getParamsGroupAt(final int index) {
+    return myGroups.get(index);
+  }
+
+  public ParamsGroup removeParamsGroup(final int index) {
+    return myGroups.remove(index);
   }
 
   public void addAt(final int index, @NotNull final String parameter) {
@@ -119,7 +160,20 @@ public class ParametersList implements Cloneable{
   }
 
   public List<String> getList() {
-    return Collections.unmodifiableList(myParameters);
+    if (myGroups.isEmpty()) {
+      return Collections.unmodifiableList(myParameters);
+    }
+
+    final List<String> params = new ArrayList<String>();
+
+    // params
+    params.addAll(myParameters);
+
+    // recursively add groups
+    for (ParamsGroup group : myGroups) {
+      params.addAll(group.getParameters());
+    }
+    return Collections.unmodifiableList(params);
   }
 
   public void prepend(@NonNls final String parameter) {
@@ -143,6 +197,10 @@ public class ParametersList implements Cloneable{
     try {
       final ParametersList clone = (ParametersList)super.clone();
       clone.myParameters = new ArrayList<String>(myParameters);
+      clone.myGroups = new ArrayList<ParamsGroup>(myGroups.size() + 1);
+      for (ParamsGroup group : myGroups) {
+        clone.myGroups.add(group.clone());
+      }
       return clone;
     }
     catch (CloneNotSupportedException e) {

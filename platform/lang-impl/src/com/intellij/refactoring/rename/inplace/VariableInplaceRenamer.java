@@ -227,7 +227,9 @@ public class VariableInplaceRenamer {
             }
 
             //add highlights
-            addHighlights(rangesToHighlight, topLevelEditor, myHighlighters, highlightManager);
+            if (myHighlighters != null) { // can be null if finish is called during testing
+              addHighlights(rangesToHighlight, topLevelEditor, myHighlighters, highlightManager);
+            }
           }
         });
       }

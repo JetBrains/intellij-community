@@ -298,6 +298,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       myBuilder.error(this, message);
     }
 
+    public void errorBefore(final String message, final Marker before) {
+      myType = TokenType.ERROR_ELEMENT;
+      myBuilder.errorBefore(this, message, before);
+    }
+
     public IElementType getTokenType() {
       return myType;
     }
@@ -564,15 +569,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   @SuppressWarnings({"SuspiciousMethodCalls"})
   public void doneBefore(Marker marker, Marker before) {
-// TODO: there could be not done markers after 'marker' and that's normal
-    if (((StartMarker)marker).myDoneMarker != null) {
-      LOG.error("Marker already done.");
-    }
-
-    int idx = myProduction.lastIndexOf(marker);
-    if (idx < 0) {
-      LOG.error("Marker never been added.");
-    }
+    doValidityChecks(marker, before);
 
     int beforeIndex = myProduction.lastIndexOf(before);
 
@@ -594,15 +591,27 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   public void error(Marker marker, String message) {
-    doValidityChecks(marker);
+    doValidityChecks(marker, null);
 
     DoneWithErrorMarker doneMarker = new DoneWithErrorMarker((StartMarker)marker, myCurrentLexeme, message);
     ((StartMarker)marker).myDoneMarker = doneMarker;
     myProduction.add(doneMarker);
   }
 
+  @SuppressWarnings({"SuspiciousMethodCalls"})
+  public void errorBefore(Marker marker, String message, Marker before) {
+    doValidityChecks(marker, before);
+
+    int beforeIndex = myProduction.lastIndexOf(before);
+
+    DoneWithErrorMarker doneMarker = new DoneWithErrorMarker((StartMarker)marker, myCurrentLexeme, message);
+    doneMarker.myLexemeIndex = ((StartMarker)before).myLexemeIndex;
+    ((StartMarker)marker).myDoneMarker = doneMarker;
+    myProduction.add(beforeIndex, doneMarker);
+  }
+
   public void done(final Marker marker) {
-    doValidityChecks(marker);
+    doValidityChecks(marker, null);
 
     DoneMarker doneMarker = DONE_MARKERS.alloc();
     doneMarker.myStart = (StartMarker)marker;
@@ -618,30 +627,41 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   @SuppressWarnings({"UseOfSystemOutOrSystemErr", "SuspiciousMethodCalls"})
-  private void doValidityChecks(final Marker marker) {
-    if (myDebugMode) {
-      final DoneMarker doneMarker = ((StartMarker)marker).myDoneMarker;
-      if (doneMarker != null) {
-        LOG.error("Marker already done.");
-      }
-      int idx = myProduction.lastIndexOf(marker);
-      if (idx < 0) {
-        LOG.error("Marker never been added.");
-      }
+  private void doValidityChecks(final Marker marker, @Nullable final Marker before) {
+    if (!myDebugMode) return;
 
-      for (int i = myProduction.size() - 1; i > idx; i--) {
-        Object item = myProduction.get(i);
-        if (item instanceof StartMarker) {
-          StartMarker otherMarker = (StartMarker)item;
-          if (otherMarker.myDoneMarker == null) {
-            final Throwable debugAllocOther = otherMarker.myDebugAllocationPosition;
-            final Throwable debugAllocThis = ((StartMarker)marker).myDebugAllocationPosition;
-            if (debugAllocOther != null) {
-              debugAllocThis.printStackTrace(System.err);
-              debugAllocOther.printStackTrace(System.err);
-            }
-            LOG.error("Another not done marker added after this one. Must be done before this.");
+    final DoneMarker doneMarker = ((StartMarker)marker).myDoneMarker;
+    if (doneMarker != null) {
+      LOG.error("Marker already done.");
+    }
+    int idx = myProduction.lastIndexOf(marker);
+    if (idx < 0) {
+      LOG.error("Marker has never been added.");
+    }
+
+    int endIdx = myProduction.size();
+    if (before != null) {
+      endIdx = myProduction.lastIndexOf(before);
+      if (endIdx < 0) {
+        LOG.error("'Before' marker has never been added.");
+      }
+      if (idx > endIdx) {
+        LOG.error("'Before' marker precedes this one.");
+      }
+    }
+
+    for (int i = endIdx - 1; i > idx; i--) {
+      Object item = myProduction.get(i);
+      if (item instanceof StartMarker) {
+        StartMarker otherMarker = (StartMarker)item;
+        if (otherMarker.myDoneMarker == null) {
+          final Throwable debugAllocOther = otherMarker.myDebugAllocationPosition;
+          final Throwable debugAllocThis = ((StartMarker)marker).myDebugAllocationPosition;
+          if (debugAllocOther != null) {
+            debugAllocThis.printStackTrace(System.err);
+            debugAllocOther.printStackTrace(System.err);
           }
+          LOG.error("Another not done marker added after this one. Must be done before this.");
         }
       }
     }

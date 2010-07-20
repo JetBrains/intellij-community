@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @since 5.1
  */
-public class CreateClassAction extends CreateTemplateInPackageAction<PsiClass> {
+public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClass> {
   public CreateClassAction() {
     super(IdeBundle.message("action.create.new.class"), IdeBundle.message("action.create.new.class"), Icons.CLASS_ICON, true);
   }

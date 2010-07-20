@@ -3,14 +3,14 @@
 
   <problem>
     <file>ThrowableInstanceNeverThrown.java</file>
-    <line>14</line>
+    <line>17</line>
     <problem_class>Throwable instance not thrown</problem_class>
     <description>Runtime exception instance &lt;code&gt;new RuntimeException()&lt;/code&gt; is not thrown</description>
   </problem>
 
   <problem>
     <file>ThrowableInstanceNeverThrown.java</file>
-    <line>31</line>
+    <line>34</line>
     <problem_class>Throwable instance not thrown</problem_class>
     <description>Runtime exception instance &lt;code&gt;new RuntimeException(&quot;throw me&quot;)&lt;/code&gt; is not thrown</description>
   </problem>

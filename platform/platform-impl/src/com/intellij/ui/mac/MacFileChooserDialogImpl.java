@@ -18,6 +18,7 @@ package com.intellij.ui.mac;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.MacFileChooserDialog;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.mac.foundation.Foundation;
@@ -98,6 +99,11 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
       invoke(chooser, "setAllowsMultipleSelection:", myChooserDescriptor.isChooseMultiple());
       if (Foundation.isClassRespondsToSelector(Foundation.getClass("NSOpenPanel"), Foundation.createSelector("_setIncludeNewFolderButton:"))) {
         invoke(chooser, "_setIncludeNewFolderButton:", true);
+      }
+      if (Registry.is("ide.mac.filechooser.showhidden.files")) {
+        if (Foundation.isClassRespondsToSelector(Foundation.getClass("NSOpenPanel"), Foundation.createSelector("setShowsHiddenFiles:"))) {
+          invoke(chooser, "setShowsHiddenFiles:", true);
+        }
       }
 
       invoke(chooser, "setDelegate:", self);

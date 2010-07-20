@@ -17,7 +17,6 @@ package com.intellij.xml.util;
 
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.lang.Language;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataCache;
@@ -31,6 +30,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
@@ -102,14 +102,14 @@ public class XmlRefCountHolder {
     }
     else if (!soft) {
       // mark as duplicate
-      Pair<XmlAttributeValue, Boolean> notSoft = ContainerUtil.find(list, new Condition<Pair<XmlAttributeValue, Boolean>>() {
+      List<XmlAttributeValue> notSoft = ContainerUtil.mapNotNull(list, new NullableFunction<Pair<XmlAttributeValue, Boolean>, XmlAttributeValue>() {
         @Override
-        public boolean value(Pair<XmlAttributeValue, Boolean> xmlAttributeValueBooleanPair) {
-          return !xmlAttributeValueBooleanPair.second;
+        public XmlAttributeValue fun(Pair<XmlAttributeValue, Boolean> pair) {
+          return pair.second ? null : pair.first;
         }
       });
-      if (notSoft != null) {
-        myPossiblyDuplicateIds.add(notSoft.first);
+      if (!notSoft.isEmpty()) {
+        myPossiblyDuplicateIds.addAll(notSoft);
         myPossiblyDuplicateIds.add(attributeValue);
       }
     }

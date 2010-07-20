@@ -17,6 +17,8 @@ package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
+import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
@@ -61,6 +63,20 @@ public class FrameworksTree extends CheckboxTree {
     }
 
     super.processMouseEvent(e);
+  }
+
+  @Override
+  protected void installSpeedSearch() {
+    new TreeSpeedSearch(this, new Convertor<TreePath, String>() {
+      @Override
+      public String convert(TreePath path) {
+        final Object node = path.getLastPathComponent();
+        if (node instanceof FrameworkSupportNode) {
+          return ((FrameworkSupportNode)node).getTitle();
+        }
+        return "";
+      }
+    });
   }
 
   public boolean isProcessingMouseEventOnCheckbox() {
