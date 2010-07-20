@@ -143,7 +143,7 @@ public class JdkUtil {
       Charset charset = javaParameters.getCharset();
       if (charset == null) charset = EncodingManager.getInstance().getDefaultCharset();
       if (charset == null) charset = CharsetToolkit.getDefaultSystemCharset();
-      commandLine.setCharset(charset);
+      commandLine.setCharsetAndAddJavaParameter(charset);
     }
 
     final Map<String, String> env = javaParameters.getEnv();

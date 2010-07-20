@@ -59,6 +59,10 @@ public class GeneralCommandLine {
 
   public void setCharset(@NotNull Charset charset) {
     myCharset = charset;
+  }
+
+  public void setCharsetAndAddJavaParameter(@NotNull Charset charset) {
+    myCharset = charset;
     addParameter("-Dfile.encoding=" + charset.name());
   }
 
