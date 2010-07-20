@@ -440,7 +440,7 @@ public class WelcomeScreen {
           final boolean e2 = ((IdeaPluginDescriptorImpl)o2).isEnabled();
           if (e1 && !e2) return -1;
           if (!e1 && e2) return 1;
-          return o1.getName().compareTo(o2.getName());
+          return o1.getName().toLowerCase().compareTo(o2.getName().toLowerCase());
         }
       };
       Collections.sort(installedPlugins, pluginsComparator);
