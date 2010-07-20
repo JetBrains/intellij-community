@@ -3,7 +3,5 @@
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/plugins/testng/lib/testng-jdk15.jar!/" />
     </CLASSES>
-    <JAVADOC />
-    <SOURCES />
   </library>
 </component>

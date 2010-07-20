@@ -1,0 +1,1 @@
+def objects = <spot>[foo, bar]</spot>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.xml;
+package org.jetbrains.plugins.groovy.intentions;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
-public interface XmlTagChild extends XmlElement{
-  XmlTagChild[] EMPTY_ARRAY = new XmlTagChild[0];
-  XmlTag getParentTag();
+/**
+ * @author Maxim.Medvedev
+ */
+public class ConvertJavaStyleArrayCreationTest extends GrIntentionTestCase{
+  @Override
+  protected String getBasePath() {
+    return TestUtils.getTestDataPath() + "intentions/convertJavaStyleArrayCreation/";
+  }
 
-  @Nullable
-  XmlTagChild getNextSiblingInTag();
-  @Nullable
-  XmlTagChild getPrevSiblingInTag();
+  public void testConversion() {
+    doTest(GroovyIntentionsBundle.message("convert.java.style.array.creation.intention.name"), true);
+  }
 }

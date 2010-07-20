@@ -38,6 +38,10 @@ public abstract class InlineActionHandler {
     return canInlineElement(element);
   }
 
+  public boolean isEnabledOnElement(PsiElement element, Editor editor) {
+    return isEnabledOnElement(element);
+  }
+
   public abstract boolean isEnabledForLanguage(Language l);
 
   public abstract boolean canInlineElement(PsiElement element);

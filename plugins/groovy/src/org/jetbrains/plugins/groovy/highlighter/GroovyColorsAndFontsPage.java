@@ -67,7 +67,7 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
       new AttributesDescriptor(DefaultHighlighter.ANNOTATION_ID, DefaultHighlighter.ANNOTATION),
       new AttributesDescriptor(DefaultHighlighter.STATIC_FIELD_ID, DefaultHighlighter.STATIC_FIELD),
       new AttributesDescriptor(DefaultHighlighter.STATIC_FIELD_ID, DefaultHighlighter.INSTANCE_FIELD),
-      new AttributesDescriptor(DefaultHighlighter.STATIC_METHOD_ACCESS_ID, DefaultHighlighter.STATIC_METHOD_ACCESS),
+      new AttributesDescriptor(DefaultHighlighter.CLASS_REFERENCE_ID, DefaultHighlighter.CLASS_REFERENCE),
     };
 
   @NotNull
@@ -83,23 +83,23 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
   @NonNls
   @NotNull
   public String getDemoText() {
-    return "import javax.swing.JPanel\n" +
+    return "import <classref>javax.swing.JPanel</classref>\n" +
            "  ### \n" +
            "<gdoc>/**\n" +
            " * This is Groovydoc comment\n" +
-           " * <doctag>@see</doctag> java.lang.String#equals\n" +
+           " * <doctag>@see</doctag> <classref>java.lang.String</classref>#equals\n" +
            " */</gdoc>\n" +
            "<annotation>@SpecialBean</annotation> \n" +
-           "class Demo {\n" +
+           "class <classref>Demo</classref> {\n" +
            "  def <instfield>property</instfield>\n" +
            "//This is a line comment\n" +
            "/* This is a block comment */\n" +
            "  static def foo(int i) { return [i, i, <instfield>property</instfield>] }\n" +
-           "  static def <statfield>panel</statfield> = new JPanel()\n" +
+           "  static def <statfield>panel</statfield> = new <classref>JPanel</classref>()\n" +
            "}\n" +
            "\n" +
-           "Demo.<statfield>panel</statfield>.size = " +
-           "Demo.<statmet>foo</statmet>(\"123${456}789\".toInteger()) \n" +
+           "<classref>Demo</classref>.<statfield>panel</statfield>.size = " +
+           "<classref>Demo</classref>.<statmet>foo</statmet>(\"123${456}789\".toInteger()) \n" +
            "'JetBrains'.matches(/Jw+Bw+/) \n" +
            "def x=1 + <unresolved>unresolved</unresolved>"      
       ;
@@ -115,6 +115,7 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
     map.put("gdoc", DefaultHighlighter.DOC_COMMENT_CONTENT);
     map.put("doctag", DefaultHighlighter.DOC_COMMENT_TAG);
     map.put("unresolved", DefaultHighlighter.UNRESOLVED_ACCESS);
+    map.put("classref", DefaultHighlighter.CLASS_REFERENCE);
 
     return map;
   }

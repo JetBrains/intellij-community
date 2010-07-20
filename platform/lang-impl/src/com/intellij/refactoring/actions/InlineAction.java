@@ -45,16 +45,16 @@ public class InlineAction extends BasePlatformRefactoringAction {
 
   @Override
   protected boolean isAvailableOnElementInEditor(PsiElement element, Editor editor) {
-    return hasInlineActionHandler(element, PsiUtilBase.getLanguageInEditor(editor, element.getProject()));
+    return hasInlineActionHandler(element, PsiUtilBase.getLanguageInEditor(editor, element.getProject()), editor);
   }
 
   public boolean isEnabledOnElements(PsiElement[] elements) {
-    return elements.length == 1 && hasInlineActionHandler(elements [0], null);
+    return elements.length == 1 && hasInlineActionHandler(elements [0], null, null);
   }
 
-  private static boolean hasInlineActionHandler(PsiElement element, @Nullable Language editorLanguage) {
+  private static boolean hasInlineActionHandler(PsiElement element, @Nullable Language editorLanguage, Editor editor) {
     for(InlineActionHandler handler: Extensions.getExtensions(InlineActionHandler.EP_NAME)) {
-      if (handler.isEnabledOnElement(element)) {
+      if (handler.isEnabledOnElement(element, editor)) {
         return true;
       }
     }

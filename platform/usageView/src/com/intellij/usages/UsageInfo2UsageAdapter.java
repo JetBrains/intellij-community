@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -91,7 +92,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
           initChunks();
         } else {  // element over light virtual file
           myTextChunks = new TextChunk[] {
-            new TextChunk(null, element.getText())
+            new TextChunk(new TextAttributes(), element.getText())
           };
           myOffset = element.getTextOffset();
         }
