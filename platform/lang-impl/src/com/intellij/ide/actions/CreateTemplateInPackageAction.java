@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
@@ -71,13 +70,15 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
 
     ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     for (PsiDirectory dir : view.getDirectories()) {
-      if (projectFileIndex.isInSourceContent(dir.getVirtualFile()) && JavaDirectoryService.getInstance().getPackage(dir) != null) {
+      if (projectFileIndex.isInSourceContent(dir.getVirtualFile()) && checkPackageExists(dir)) {
         return true;
       }
     }
 
     return false;
   }
+
+  protected abstract boolean checkPackageExists(PsiDirectory directory);
 
   @Nullable
    private T checkOrCreate(String newName, PsiDirectory directory, String templateName, boolean check) throws IncorrectOperationException {
@@ -113,10 +114,9 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
      return doCreate(dir, className, templateName);
    }
 
-  protected void doCheckCreate(PsiDirectory dir, String className, String templateName) throws IncorrectOperationException {
-    JavaDirectoryService.getInstance().checkCreateClass(dir, className);
-  }
+  protected abstract void doCheckCreate(PsiDirectory dir, String className, String templateName) throws IncorrectOperationException;
 
+  @Nullable
   protected abstract T doCreate(final PsiDirectory dir, final String className, String templateName) throws IncorrectOperationException;
 
 }

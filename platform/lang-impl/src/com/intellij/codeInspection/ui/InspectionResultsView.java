@@ -572,7 +572,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     if (myTree == null) return null;
     TreePath[] paths = myTree.getSelectionPaths();
 
-    if (paths == null) return null;
+    if (paths == null || paths.length == 0) return null;
 
     if (paths.length > 1) {
       if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {

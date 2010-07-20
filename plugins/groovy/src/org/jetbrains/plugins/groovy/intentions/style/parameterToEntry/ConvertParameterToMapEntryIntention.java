@@ -185,42 +185,53 @@ public class ConvertParameterToMapEntryIntention extends Intention {
         //final List<GrCall> calls = getCallOccurrences(occurrences);
         try {
           for (PsiElement occurrence : occurrences) {
-            if (occurrence instanceof GrReferenceExpression && occurrence.getParent() instanceof GrCall) {
-              final GrReferenceExpression refExpr = (GrReferenceExpression)occurrence;
-              final GrClosureSignature signature = generateSignature(owner, refExpr);
-              if (signature == null) continue;
-              final GrCall call = (GrCall)refExpr.getParent();
-              final GrArgumentList argumentList = call.getArgumentList();
-              final GrClosableBlock[] closureArguments =
-                call instanceof GrCallExpression ? ((GrCallExpression)call).getClosureArguments() : GrClosableBlock.EMPTY_ARRAY;
-
-              final GrClosureSignatureUtil.ArgInfo<PsiElement>[] argInfos =
-                GrClosureSignatureUtil.mapParametersToArguments(signature, argumentList, closureArguments, owner.getResolveScope());
-              if (argInfos == null) continue;
-              final GrClosureSignatureUtil.ArgInfo<PsiElement> argInfo = argInfos[index];
-
-              final GrNamedArgument namedArg;
-              if (argInfo.isMultiArg) {
-                if (argInfo.args.size() == 0) continue;
-                String arg = "[" + StringUtil.join(ContainerUtil.map(argInfo.args, new Function<PsiElement, String>() {
-                  public String fun(PsiElement element) {
-                    return element.getText();
-                  }
-                }), ", ") + "]";
-                for (PsiElement psiElement : argInfo.args) {
-                  psiElement.delete();
+            GrReferenceExpression refExpr = null;
+            if (occurrence instanceof GrReferenceExpression) {
+              final PsiElement parent = occurrence.getParent();
+              if (parent instanceof GrCall) {
+                refExpr = (GrReferenceExpression)occurrence;
+              }
+              else if (parent instanceof GrReferenceExpression) {
+                final PsiElement resolved = ((GrReferenceExpression)parent).resolve();
+                if (resolved instanceof PsiMethod && "call".equals(((PsiMethod)resolved).getName())) {
+                  refExpr = (GrReferenceExpression)parent;
                 }
-                namedArg = factory.createNamedArgument(paramName, factory.createExpressionFromText(arg));
               }
-              else {
-                if (argInfo.args.size() == 0) continue;
-                final PsiElement argument = argInfo.args.iterator().next();
-                assert argument instanceof GrExpression;
-                namedArg = factory.createNamedArgument(paramName, (GrExpression)argument);
-                argument.delete();
-              }
-              ((GrCall)refExpr.getParent()).addNamedArgument(namedArg);
             }
+            if (refExpr == null) continue;
+            final GrClosureSignature signature = generateSignature(owner, refExpr);
+            if (signature == null) continue;
+            final GrCall call = (GrCall)refExpr.getParent();
+            final GrArgumentList argumentList = call.getArgumentList();
+            final GrClosableBlock[] closureArguments =
+              call instanceof GrCallExpression ? ((GrCallExpression)call).getClosureArguments() : GrClosableBlock.EMPTY_ARRAY;
+
+            final GrClosureSignatureUtil.ArgInfo<PsiElement>[] argInfos =
+              GrClosureSignatureUtil.mapParametersToArguments(signature, argumentList, closureArguments, owner.getResolveScope());
+            if (argInfos == null) continue;
+            final GrClosureSignatureUtil.ArgInfo<PsiElement> argInfo = argInfos[index];
+
+            final GrNamedArgument namedArg;
+            if (argInfo.isMultiArg) {
+              if (argInfo.args.size() == 0) continue;
+              String arg = "[" + StringUtil.join(ContainerUtil.map(argInfo.args, new Function<PsiElement, String>() {
+                public String fun(PsiElement element) {
+                  return element.getText();
+                }
+              }), ", ") + "]";
+              for (PsiElement psiElement : argInfo.args) {
+                psiElement.delete();
+              }
+              namedArg = factory.createNamedArgument(paramName, factory.createExpressionFromText(arg));
+            }
+            else {
+              if (argInfo.args.size() == 0) continue;
+              final PsiElement argument = argInfo.args.iterator().next();
+              assert argument instanceof GrExpression;
+              namedArg = factory.createNamedArgument(paramName, (GrExpression)argument);
+              argument.delete();
+            }
+            ((GrCall)refExpr.getParent()).addNamedArgument(namedArg);
           }
         }
         catch (IncorrectOperationException e) {
@@ -369,10 +380,8 @@ public class ConvertParameterToMapEntryIntention extends Intention {
     final PsiElement namedElem = getReferencedElement(owner);
     if (namedElem == null) return true;
     final Ref<Boolean> result = new Ref<Boolean>(true);
-    final Task task = new Task.Modal(project, GroovyIntentionsBundle.message("find.method.ro.closure.usages.0",
-                                                                             owner instanceof GrClosableBlock
-                                                                             ? CLOSURE_CAPTION
-                                                                             : METHOD_CAPTION), true) {
+    final Task task = new Task.Modal(project, GroovyIntentionsBundle
+      .message("find.method.ro.closure.usages.0", owner instanceof GrClosableBlock ? CLOSURE_CAPTION : METHOD_CAPTION), true) {
       public void run(@NotNull final ProgressIndicator indicator) {
         final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(getProject());
         final Query<PsiReference> query = ReferencesSearch.search(namedElem, projectScope);
