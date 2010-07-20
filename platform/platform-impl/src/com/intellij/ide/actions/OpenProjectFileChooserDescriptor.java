@@ -60,7 +60,7 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
   public static Icon getImporterIcon(final VirtualFile virtualFile, final boolean open) {
     final ProjectOpenProcessor provider = ProjectOpenProcessor.getImportProvider(virtualFile);
     if(provider!=null) {
-      return virtualFile.isDirectory() ? ourProjectIcon : provider.getIcon();
+      return virtualFile.isDirectory() && provider.lookForProjectsInDirectory() ? ourProjectIcon : provider.getIcon();
     }
     return null;
   }

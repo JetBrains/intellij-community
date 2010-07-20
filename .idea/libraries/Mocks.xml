@@ -12,7 +12,5 @@
       <root url="jar://$PROJECT_DIR$/lib/dev/hamcrest-library-1.0.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/dev/hamcrest-api-1.0.jar!/" />
     </CLASSES>
-    <JAVADOC />
-    <SOURCES />
   </library>
 </component>

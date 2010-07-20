@@ -4,6 +4,7 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetTypeId;
 import com.intellij.facet.ui.FacetBasedFrameworkSupportProvider;
+import com.intellij.ide.util.newProjectWizard.AddSupportForFrameworksPanel;
 import com.intellij.ide.util.newProjectWizard.FrameworkSupportNode;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportCommunicator;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelImpl;
@@ -31,7 +32,9 @@ public abstract class FrameworkSupportProviderTestCase extends IdeaTestCase {
     super.setUp();
     myFrameworkSupportModel = new FrameworkSupportModelImpl(getProject(), null);
     myNodes = new HashMap<FrameworkSupportProvider, FrameworkSupportNode>();
-    for (FrameworkSupportProvider provider : FrameworkSupportProvider.EXTENSION_POINT.getExtensions()) {
+    final FrameworkSupportProvider[] providers = FrameworkSupportProvider.EXTENSION_POINT.getExtensions().clone();
+    Arrays.sort(providers, AddSupportForFrameworksPanel.getFrameworkSupportProvidersComparator(new ArrayList<FrameworkSupportProvider>(Arrays.asList(providers))));
+    for (FrameworkSupportProvider provider : providers) {
       final FrameworkSupportNode node = new FrameworkSupportNode(provider, null, myFrameworkSupportModel, null, getTestRootDisposable());
       myNodes.put(provider, node);
       myFrameworkSupportModel.registerComponent(provider, node);

@@ -678,7 +678,4 @@
 
     
   </actions>
-
-  <xi:include href="XmlActions.xml" xpointer="xpointer(/component/*)"/>
-
 </component>

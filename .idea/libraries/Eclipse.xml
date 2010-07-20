@@ -3,7 +3,6 @@
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/lib/org.eclipse.jdt.core_3.5.2.v_981_R35x.jar!/" />
     </CLASSES>
-    <JAVADOC />
     <SOURCES>
       <root url="jar://$PROJECT_DIR$/lib/src/org.eclipse.jdt.core.source_3.5.2.v_981_R35x.jar!/" />
     </SOURCES>

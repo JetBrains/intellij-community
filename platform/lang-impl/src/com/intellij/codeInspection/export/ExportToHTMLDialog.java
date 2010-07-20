@@ -25,12 +25,11 @@ import com.intellij.ui.OptionGroup;
 
 import javax.swing.*;
 
-// TODO copy-paste result of com.intellij.codeEditor.printing.ExportToHTMLDialog
 public class ExportToHTMLDialog extends DialogWrapper{
-  private JCheckBox myCbOpenInBrowser;
   private final Project myProject;
-  private TextFieldWithBrowseButton myTargetDirectoryField;
-  private final boolean myCanBeOpenInBrowser;
+  protected JCheckBox myCbOpenInBrowser;
+  protected TextFieldWithBrowseButton myTargetDirectoryField;
+  protected final boolean myCanBeOpenInBrowser;
 
   public ExportToHTMLDialog(Project project, final boolean canBeOpenInBrowser) {
     super(project, true);
@@ -54,11 +53,15 @@ public class ExportToHTMLDialog extends DialogWrapper{
     if (!myCanBeOpenInBrowser) return null;
     OptionGroup optionGroup = new OptionGroup(InspectionsBundle.message("inspection.export.options.panel.title"));
 
+    addOptions(optionGroup);
+
+    return optionGroup.createPanel();
+  }
+
+  protected void addOptions(OptionGroup optionGroup) {
     myCbOpenInBrowser = new JCheckBox();
     myCbOpenInBrowser.setText(InspectionsBundle.message("inspection.export.open.option"));
     optionGroup.add(myCbOpenInBrowser);
-
-    return optionGroup.createPanel();
   }
 
   public void reset() {

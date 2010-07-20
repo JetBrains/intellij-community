@@ -70,6 +70,7 @@ public class TemplateState implements Disposable {
   private Editor myEditor;
 
   private TemplateImpl myTemplate;
+  private TemplateImpl myPrevTemplate;
   private TemplateSegments mySegments = null;
   private Map<String, String> myPredefinedVariableValues;
 
@@ -219,6 +220,7 @@ public class TemplateState implements Disposable {
       mySegments = null;
     }
     myTemplateRange = null;
+    myPrevTemplate = myTemplate;
     myTemplate = null;
     releaseEditor();
     myTabStopHighlighters.clear();
@@ -271,6 +273,7 @@ public class TemplateState implements Disposable {
     myTemplateIndented = false;
     myCurrentVariableNumber = -1;
     mySegments = new TemplateSegments(myEditor);
+    myPrevTemplate = myTemplate;
     myTemplate = template;
     //myArgument = argument;
     myPredefinedVariableValues = predefinedVarValues;
@@ -378,7 +381,7 @@ public class TemplateState implements Disposable {
 
   private void afterChangedUpdate() {
     if (isFinished()) return;
-    LOG.assertTrue(myTemplate != null);
+    LOG.assertTrue(myTemplate != null, myPrevTemplate != null ? myPrevTemplate.getKey() : "prev template is null");
     if (myDocumentChanged) {
       if (myDocumentChangesTerminateTemplate || mySegments.isInvalid()) {
         final int oldIndex = myCurrentVariableNumber;

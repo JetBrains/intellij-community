@@ -17,7 +17,9 @@
 package org.intellij.plugins.relaxNG.validation;
 
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
@@ -33,7 +35,6 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import javax.swing.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Set;
@@ -44,6 +45,8 @@ import java.util.Set;
  * Date: 19.11.2007
  */
 public class MessageViewHelper {
+  private static final Logger LOG = Logger.getInstance("#org.intellij.plugins.relaxNG.validation.MessageViewHelper");
+
   private final Project myProject;
 
   private final Set<String> myErrors = new THashSet<String>();
@@ -91,23 +94,23 @@ public class MessageViewHelper {
       try {
         file = VfsUtil.findFileByURL(new URL(systemId));
       } catch (MalformedURLException e) {
-        System.err.println("systemId = " + systemId);
-        e.printStackTrace();
+        LOG.warn("systemId = " + systemId);
+        LOG.error(e);
       }
     }
 
     final VirtualFile file1 = file;
-    SwingUtilities.invokeLater(
-            new Runnable() {
-              public void run() {
-                myErrorsView.addMessage(
-                        warning ? MessageCategory.WARNING : MessageCategory.ERROR,
-                        new String[]{ ex.getLocalizedMessage() },
-                        file1,
-                        ex.getLineNumber() - 1,
-                        ex.getColumnNumber() - 1, null);
-              }
-            }
+    ApplicationManager.getApplication().invokeLater(
+      new Runnable() {
+        public void run() {
+          myErrorsView.addMessage(
+            warning ? MessageCategory.WARNING : MessageCategory.ERROR,
+            new String[]{ex.getLocalizedMessage()},
+            file1,
+            ex.getLineNumber() - 1,
+            ex.getColumnNumber() - 1, null);
+        }
+      }
     );
   }
 

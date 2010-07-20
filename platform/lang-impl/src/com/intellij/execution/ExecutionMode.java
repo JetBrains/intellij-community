@@ -15,10 +15,14 @@
  */
 package com.intellij.execution;
 
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
 * @author Roman.Chernyatchik
@@ -32,6 +36,7 @@ public abstract class ExecutionMode {
   private final JComponent myProgressParentComponent;
   private Function<Object, Boolean> myShouldCancelFun;
   private final Object CANCEL_FUN_LOCK = new Object();
+  private List<ProcessListener> myListeners = new ArrayList<ProcessListener>(1);
 
   public ExecutionMode(final boolean cancelable,
                        @Nullable final String title,
@@ -94,4 +99,12 @@ public abstract class ExecutionMode {
     }
   }
 
+  public void addProcessListener(@NotNull final ProcessListener listener) {
+    myListeners.add(listener);
+  }
+
+  @NotNull
+  public List<ProcessListener> getProcessListeners() {
+    return myListeners;
+  }
 }

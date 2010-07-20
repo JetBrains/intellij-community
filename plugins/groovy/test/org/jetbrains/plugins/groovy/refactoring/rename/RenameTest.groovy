@@ -327,6 +327,12 @@ foo = 4"""
    doInplaceRenameTest();
   }
 
+  public void testExtensionOnClassRename() {
+    myFixture.configureByText "Foo.gpp", "class Foo {}"
+    myFixture.renameElement myFixture.findClass("Foo"), "Bar"
+    assert "gpp", myFixture.file.virtualFile.extension
+  }
+
   private def doInplaceRenameTest() {
     String prefix = TestUtils.getTestDataPath() + "groovy/refactoring/rename/" + getTestName(false)
     myFixture.configureByFile prefix + ".groovy";

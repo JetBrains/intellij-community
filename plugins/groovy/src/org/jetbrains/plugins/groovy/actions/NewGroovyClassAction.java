@@ -17,7 +17,7 @@
 package org.jetbrains.plugins.groovy.actions;
 
 import com.intellij.ide.actions.CreateFileFromTemplateDialog;
-import com.intellij.ide.actions.CreateTemplateInPackageAction;
+import com.intellij.ide.actions.JavaCreateTemplateInPackageAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.project.DumbAware;
@@ -32,7 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
-public class NewGroovyClassAction extends CreateTemplateInPackageAction<GrTypeDefinition> implements DumbAware {
+public class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTypeDefinition> implements DumbAware {
   public NewGroovyClassAction() {
     super(GroovyBundle.message("newclass.menu.action.text"), GroovyBundle.message("newclass.menu.action.description"), GroovyIcons.CLASS, true);
   }

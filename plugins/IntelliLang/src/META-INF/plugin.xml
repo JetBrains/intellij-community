@@ -20,20 +20,20 @@
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter" />
     <intentionAction>
       <className>org.intellij.plugins.intelliLang.inject.InjectLanguageAction</className>
-      <category>Language Injections</category>
+      <category>Language Injection</category>
     </intentionAction>
     <intentionAction>
       <className>org.intellij.plugins.intelliLang.inject.UnInjectLanguageAction</className>
-      <!--<category>Language Injections</category>-->
+      <category>Language Injection</category>
     </intentionAction>
     <intentionAction>
       <className>org.intellij.plugins.intelliLang.inject.EditInjectionSettingsAction</className>
-      <!--<category>Language Injections</category>-->
+      <category>Language Injection</category>
     </intentionAction>
 
     <intentionAction>
       <className>org.intellij.plugins.intelliLang.inject.quickedit.QuickEditAction</className>
-      <!--<category>Language Injections</category>-->
+      <category>Language Injection</category>
     </intentionAction>
 
     <highlightErrorFilter implementation="org.intellij.plugins.intelliLang.inject.CustomErrorElementFilter"/>

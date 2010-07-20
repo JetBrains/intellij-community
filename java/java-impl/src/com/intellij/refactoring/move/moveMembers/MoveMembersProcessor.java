@@ -156,19 +156,21 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   protected void performRefactoring(final UsageInfo[] usages) {
     try {
       // correct references to moved members from the outside
-      LanguageExtension<MoveMemberHandler> extension=new LanguageExtension<MoveMemberHandler>("com.intellij.refactoring.moveMemberHandler");
       PsiClass targetClass = JavaPsiFacade.getInstance(myProject)
       .findClass(myOptions.getTargetClassName(), GlobalSearchScope.projectScope(myProject));
       if (targetClass == null) return;
       final Map<PsiMember, PsiElement> anchors = new HashMap<PsiMember, PsiElement>();
       for (PsiMember member : myMembersToMove) {
-        anchors.put(member, extension.forLanguage(member.getLanguage()).getAnchor(member, targetClass));
+        final MoveMemberHandler handler = MoveMemberHandler.EP_NAME.forLanguage(member.getLanguage());
+        if (handler != null) {
+          anchors.put(member, handler.getAnchor(member, targetClass));
+        }
       }
       ArrayList<MoveMembersUsageInfo> otherUsages = new ArrayList<MoveMembersUsageInfo>();
       for (UsageInfo usageInfo : usages) {
         MoveMembersUsageInfo usage = (MoveMembersUsageInfo)usageInfo;
         if (!usage.reference.isValid()) continue;
-        final MoveMemberHandler handler = extension.forLanguage(usageInfo.getElement().getLanguage());
+        final MoveMemberHandler handler = MoveMemberHandler.EP_NAME.forLanguage(usageInfo.getElement().getLanguage());
         if (handler!=null) {
           if (handler.changeExternalUsage(myOptions, usage)) continue;
         }
@@ -189,13 +191,15 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
           }
         }
         final RefactoringElementListener elementListener = getTransaction().getElementListener(member);
-        final MoveMemberHandler handler = extension.forLanguage(member.getLanguage());
-        PsiMember newMember=handler.doMove(myOptions, member, anchors.get(member), targetClass);
-        elementListener.elementMoved(newMember);
+        final MoveMemberHandler handler = MoveMemberHandler.EP_NAME.forLanguage(member.getLanguage());
+        if (handler != null) {
+          PsiMember newMember=handler.doMove(myOptions, member, anchors.get(member), targetClass);
+          elementListener.elementMoved(newMember);
 
-        fixModifierList(newMember, usages);
-        for (PsiReference reference : refsToBeRebind) {
-          reference.bindToElement(newMember);
+          fixModifierList(newMember, usages);
+          for (PsiReference reference : refsToBeRebind) {
+            reference.bindToElement(newMember);
+          }
         }
       }
 

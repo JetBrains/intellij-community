@@ -30,6 +30,8 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -97,14 +99,17 @@ public class XmlRefCountHolder {
     if (list == null) {
       list = new ArrayList<Pair<XmlAttributeValue, Boolean>>();
       myId2AttributeListMap.put(id, list);
-    } else if (!soft) {
+    }
+    else if (!soft) {
       // mark as duplicate
-      if (list.size() == 1) {
-        if (!list.get(0).second.booleanValue()) {
-          myPossiblyDuplicateIds.add(list.get(0).first);
-          myPossiblyDuplicateIds.add(attributeValue);
+      List<XmlAttributeValue> notSoft = ContainerUtil.mapNotNull(list, new NullableFunction<Pair<XmlAttributeValue, Boolean>, XmlAttributeValue>() {
+        @Override
+        public XmlAttributeValue fun(Pair<XmlAttributeValue, Boolean> pair) {
+          return pair.second ? null : pair.first;
         }
-      } else {
+      });
+      if (!notSoft.isEmpty()) {
+        myPossiblyDuplicateIds.addAll(notSoft);
         myPossiblyDuplicateIds.add(attributeValue);
       }
     }

@@ -111,21 +111,27 @@ public interface PsiBuilder extends UserDataHolder {
     void done(IElementType type);
 
     /**
-     * Like done(), but collapses all tokens between start and end markers into single leaf node of given type.
+     * Like {@linkplain #done(IElementType)}, but collapses all tokens between start and end markers
+     * into single leaf node of given type.
      *
      * @param type the type of the node in the AST tree.
      */
     void collapse(IElementType type);
 
     /**
-     * TODO doc
+     * Like {@linkplain #done(IElementType)}, but the marker is completed (end marker inserted)
+     * before specified one. All markers added between start of this marker and the marker specified as end one
+     * must be either dropped or completed.
+     *
      * @param type the type of the node in the AST tree.
      * @param before marker to complete this one before.
      */
     void doneBefore(IElementType type, Marker before);
 
     /**
-     * TODO doc
+     * Like {@linkplain #doneBefore(IElementType, Marker)}, but in addition an error element with given text
+     * is inserted right before this marker's end.
+     *
      * @param type the type of the node in the AST tree.
      * @param before marker to complete this one before.
      * @param errorMessage for error element.
@@ -139,6 +145,14 @@ public interface PsiBuilder extends UserDataHolder {
      * @param message for error element.
      */
     void error(String message);
+
+    /**
+     * Like {@linkplain #error(String)}, but the marker is completed before specified one.
+     *
+     * @param message for error element.
+     * @param before marker to complete this one before.
+     */
+    void errorBefore(String message, Marker before);
   }
 
   /**

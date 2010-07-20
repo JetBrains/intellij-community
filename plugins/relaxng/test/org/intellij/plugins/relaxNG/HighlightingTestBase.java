@@ -85,7 +85,7 @@ public abstract class HighlightingTestBase extends TestCase implements IdeaCodeI
         }
       });
     } catch (IOException e) {
-      e.printStackTrace();
+      throw new RuntimeException(e);
     }
   }
 

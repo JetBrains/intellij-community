@@ -28,7 +28,6 @@
       <root url="jar://$PROJECT_DIR$/lib/ant/lib/ant-swing.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/ant/lib/ant-javamail.jar!/" />
     </CLASSES>
-    <JAVADOC />
     <SOURCES>
       <root url="jar://$PROJECT_DIR$/lib/ant/src/bundled_ant_src.zip!/bundled_ant_src/main" />
     </SOURCES>

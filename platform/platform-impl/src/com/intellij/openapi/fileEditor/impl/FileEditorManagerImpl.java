@@ -70,6 +70,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -132,10 +134,28 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       synchronized (myInitLock) {
         if (myPanels == null) {
           myPanels = new JPanel(new BorderLayout());
+          myPanels.setBorder(new MyBorder());
           mySplitters = new EditorsSplitters(this);
           myPanels.add(mySplitters, BorderLayout.CENTER);
         }
       }
+    }
+  }
+
+  private class MyBorder implements Border {
+    @Override
+    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+    }
+
+    @Override
+    public Insets getBorderInsets(Component c) {
+      boolean filesOpen = mySplitters != null && mySplitters.getOpenFiles().length > 0;
+      return new Insets(filesOpen ? 1 : 0, 0, 0, 0);
+    }
+
+    @Override
+    public boolean isBorderOpaque() {
+      return false;
     }
   }
 

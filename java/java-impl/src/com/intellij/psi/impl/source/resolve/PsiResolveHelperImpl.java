@@ -185,6 +185,9 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     if (wildcardToCapture != null) {
       if (lowerBound != PsiType.NULL) {
         if (!wildcardToCapture.isAssignableFrom(lowerBound)) return getFailedInferenceConstraint(typeParameter);
+        if (wildcardToCapture.isSuper()) {
+          return new Pair<PsiType, ConstraintType>(wildcardToCapture, ConstraintType.SUPERTYPE);
+        }
         lowerBound = GenericsUtil.getLeastUpperBound(lowerBound, wildcardToCapture, typeParameter.getManager());
       }
       else {

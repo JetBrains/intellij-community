@@ -15,7 +15,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/../lib/trilead-ssh2-build213.jar!/" />
         </CLASSES>
-        <JAVADOC />
         <SOURCES>
           <root url="file://$MODULE_DIR$/../trilead-ssh2-build213/src" />
         </SOURCES>

@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.HyperlinkEvent;
@@ -47,15 +48,15 @@ public class ExecutionUtil {
   }
 
   public static void handleExecutionError(@NotNull final Project project,
-                                          @NotNull String toolWindowId,
+                                          @NotNull final String toolWindowId,
                                           @NotNull String taskName,
                                           @NotNull ExecutionException e) {
     if (e instanceof RunCanceledByUserException) return;
 
+    LOG.debug(e);
+    
     String error = e.getMessage();
     HyperlinkListener listener = null;
-
-    LOG.debug(error);
 
     if (error.contains("87") && e instanceof ProcessNotCreatedException) {
       final String commandLineString = ((ProcessNotCreatedException)e).getCommandLine().getCommandLineString();
@@ -72,12 +73,18 @@ public class ExecutionUtil {
         };
       }
     }
-    String message = ExecutionBundle.message("error.running.configuration.with.error.error.message", taskName, error);
+    final String message = ExecutionBundle.message("error.running.configuration.with.error.error.message", taskName, error);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       LOG.error(message);
     }
 
-    ToolWindowManager.getInstance(project).notifyByBalloon(toolWindowId, MessageType.ERROR, message, null, listener);
+    final HyperlinkListener finalListener = listener;
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        ToolWindowManager.getInstance(project).notifyByBalloon(toolWindowId, MessageType.ERROR, message, null, finalListener);
+      }
+    });
   }
 }

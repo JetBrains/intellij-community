@@ -229,6 +229,11 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
     if (canBeVarargs) {
       myCbMakeVarargs = new NonFocusableCheckBox(RefactoringBundle.message("declare.varargs.checkbox"));
       updateVarargsEnabled();
+      myCbMakeVarargs.addItemListener(new ItemListener() {
+        public void itemStateChanged(ItemEvent e) {
+          updateSignature();
+        }
+      });
       myCbMakeVarargs.setSelected(false);
       panel.add(myCbMakeVarargs);
     }

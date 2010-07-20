@@ -51,7 +51,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class InjectLanguageAction implements IntentionAction {
-  @NonNls protected static final String INJECT_LANGUAGE_FAMILY = "Inject Language";
+  @NonNls private static final String INJECT_LANGUAGE_FAMILY = "Inject Language";
 
   @NotNull
   public String getText() {

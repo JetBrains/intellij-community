@@ -3,7 +3,5 @@
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/lib/oromatcher.jar!/" />
     </CLASSES>
-    <JAVADOC />
-    <SOURCES />
   </library>
 </component>

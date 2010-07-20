@@ -23,6 +23,7 @@ import com.intellij.ide.IdeView;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.DirectoryChooserUtil;
@@ -190,7 +191,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
       }
     });
 
-    installBorder(-1);
+    installBorder(-1, false);
 
     myCopyPasteDelegator = new CopyPasteDelegator(myProject, NavBarPanel.this) {
       @NotNull
@@ -554,6 +555,10 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
         }
       });
 
+      if (!isValid()) {
+        validate();
+      }
+
       myNodePopup.showUnderneathOf(item);
     }
   }
@@ -758,14 +763,26 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
     myModelUpdateAlarm.cancelAllRequests();
   }
 
-  public void installBorder(final int rightOffset) {
+  public void installBorder(final int rightOffset, final boolean isDocked) {
     setBorder(new Border() {
       public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
         g.setColor(c.getBackground() != null ? c.getBackground().darker() : Color.darkGray);
+
+       boolean drawTopBorder = true;
+       if (isDocked) {
+         if (!UISettings.getInstance().SHOW_MAIN_TOOLBAR) {
+           drawTopBorder = false;
+         }
+       }
+
         if (rightOffset == -1) {
-          g.drawLine(0, 0, width - 1, 0);
+          if (drawTopBorder) {
+            g.drawLine(0, 0, width - 1, 0);
+          }
         } else {
-          g.drawLine(0, 0, width - rightOffset + 3, 0);
+          if (drawTopBorder) {
+            g.drawLine(0, 0, width - rightOffset + 3, 0);
+          }
         }
         g.drawLine(0, height - 1 , width, height - 1);
 

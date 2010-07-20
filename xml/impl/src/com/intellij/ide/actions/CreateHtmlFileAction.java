@@ -56,7 +56,7 @@ public class CreateHtmlFileAction extends CreateFromTemplateAction<PsiFile> {
       .setTitle(XmlBundle.message("new.html.file.action"))
       .addKind("HTML file", StdFileTypes.HTML.getIcon(), FileTemplateManager.INTERNAL_HTML_TEMPLATE_NAME)
       .addKind("HTML5 file", StdFileTypes.HTML.getIcon(), FileTemplateManager.INTERNAL_HTML5_TEMPLATE_NAME)
-      .addKind("XHTML file", StdFileTypes.HTML.getIcon(), FileTemplateManager.INTERNAL_XHTML_TEMPLATE_NAME);
+      .addKind("XHTML file", StdFileTypes.XHTML.getIcon(), FileTemplateManager.INTERNAL_XHTML_TEMPLATE_NAME);
   }
 
   @Override

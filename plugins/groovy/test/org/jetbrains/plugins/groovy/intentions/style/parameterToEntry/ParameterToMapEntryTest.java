@@ -56,39 +56,43 @@ public class ParameterToMapEntryTest extends GroovyFormatterTestCase {
   }
   */
 
-  public void testParam1() throws Throwable {
+  public void testParam1() {
     doTestImpl("A.groovy");
   }
 
-  public void testFormatter() throws Throwable {
+  public void testFormatter() {
     doTestImpl("A.groovy");
   }
 
-  public void testClosureAtEnd() throws Throwable {
+  public void testClosureAtEnd() {
     doTestImpl("A.groovy");
   }
 
-  public void testClosure1() throws Throwable {
+  public void testClosure1() {
     doTestImpl("A.groovy");
   }
 
-  public void testNewMap() throws Throwable {
+  public void testNewMap() {
     doTestImpl("A.groovy");
   }
 
-  public void testTestError() throws Throwable {
+  public void testTestError() {
     doTestImpl("A.groovy");
   }
 
-  public void testSecondClosure() throws Throwable {
+  public void testSecondClosure() {
     doTestImpl("A.groovy");
   }
 
-  public void testVarArgs() throws Throwable {
+  public void testVarArgs() {
     doTestImpl("A.groovy");
   }
 
-  private void doTestImpl(String filePath) throws Throwable {
+  public void testCallMethod() {
+    doTestImpl("A.groovy");
+  }
+
+  private void doTestImpl(String filePath) {
     myFixture.configureByFile(filePath);
     int offset = myFixture.getEditor().getCaretModel().getOffset();
     final PsiFile file = myFixture.getFile();

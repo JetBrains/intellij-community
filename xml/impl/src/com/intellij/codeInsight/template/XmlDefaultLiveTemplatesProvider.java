@@ -22,6 +22,6 @@ import com.intellij.codeInsight.template.impl.DefaultLiveTemplatesProvider;
  */
 public class XmlDefaultLiveTemplatesProvider implements DefaultLiveTemplatesProvider {
   public String[] getDefaultLiveTemplateFiles() {
-    return new String[] { "/liveTemplates/html_xml" };
+    return new String[] { "/liveTemplates/html_xml", "/liveTemplates/zen_html", "/liveTemplates/zen_xsl" };
   }
 }

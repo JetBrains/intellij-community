@@ -159,13 +159,11 @@ public class ModuleRootsExternalizationTest extends ModuleTestCase {
                         "<orderEntry type=\"module-library\">" +
                         "<library>" +
                         "<CLASSES><root url=\"file://$MODULE_DIR$/unnamedLibClasses\" /></CLASSES>" +
-                        "<JAVADOC /><SOURCES />" +
                         "</library>" +
                         "</orderEntry>" +
                         "<orderEntry type=\"module-library\">" +
                         "<library name=\"namedLibrary\">" +
                         "<CLASSES><root url=\"file://$MODULE_DIR$/namedLibClasses\" /></CLASSES>" +
-                        "<JAVADOC /><SOURCES />" +
                         "</library>" +
                         "</orderEntry>" +
                         "</root>", module);

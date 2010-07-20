@@ -16,6 +16,7 @@
 
 package org.intellij.plugins.relaxNG.validation;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
@@ -62,12 +63,15 @@ import java.io.StringReader;
 * Date: 19.07.2007
 */
 public class RngParser {
+  private static final Logger LOG = Logger.getInstance("#org.intellij.plugins.relaxNG.validation.RngParser");
+
   static final Key<CachedValue<Schema>> SCHEMA_KEY = Key.create("SCHEMA");
   static final Key<CachedValue<DPattern>> PATTERN_KEY = Key.create("PATTERN");
 
   public static final DefaultHandler DEFAULT_HANDLER = new DefaultHandler() {
     public void error(SAXParseException e) throws SAXException {
-      System.out.println("e.getMessage() = " + e.getMessage() + " [" + e.getSystemId() + "]");
+      LOG.info("e.getMessage() = " + e.getMessage() + " [" + e.getSystemId() + "]");
+      LOG.info(e);
     }
   };
 
@@ -90,9 +94,9 @@ public class RngParser {
 
       return (DPattern)p.parse(checking ? new CheckingSchemaBuilder(sb, eh) : sb);
     } catch (BuildException e) {
-      e.printStackTrace();
+      LOG.info(e);
     } catch (IllegalSchemaException e) {
-      System.out.println("invalid schema: " + file.getVirtualFile().getPresentableUrl());
+      LOG.info("invalid schema: " + file.getVirtualFile().getPresentableUrl());
     }
     return null;
   }
@@ -166,7 +170,7 @@ public class RngParser {
               return Result.createSingleDependency(schema, descriptorFile);
             }
           } catch (Exception e) {
-            e.printStackTrace();
+            LOG.info(e);
             return Result.createSingleDependency(null, descriptorFile);
           }
         }

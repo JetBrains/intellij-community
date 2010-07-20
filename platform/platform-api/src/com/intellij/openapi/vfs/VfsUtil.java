@@ -646,6 +646,17 @@ public class VfsUtil {
     return result;
   }
 
+  public static VirtualFile createDirectoryIfMissing(VirtualFile parent, String relativePath) throws IOException {
+    for (String each : StringUtil.split(relativePath, "/")) {
+      VirtualFile child = parent.findChild(each);
+      if (child == null) {
+        child = parent.createChildDirectory(LocalFileSystem.getInstance(), each);
+      }
+      parent = child;
+    }
+    return parent;
+  }
+
   @Nullable
   public static VirtualFile createDirectoryIfMissing(@NotNull String dir) throws IOException {
     return doCreateDirectoriesIfMissing(FileUtil.toSystemIndependentName(dir));

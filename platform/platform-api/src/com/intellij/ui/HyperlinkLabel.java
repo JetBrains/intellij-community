@@ -16,9 +16,11 @@
 
 package com.intellij.ui;
 
+import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
@@ -106,6 +108,15 @@ public class HyperlinkLabel extends HighlightableComponent {
     myHighlightedText.appendText(afterLinkText, null);
     myHighlightedText.applyToComponent(this);
     adjustSize();
+  }
+
+  public void setHyperlinkTarget(@NotNull final String url) {
+    addHyperlinkListener(new HyperlinkListener() {
+      @Override
+      public void hyperlinkUpdate(HyperlinkEvent e) {
+        BrowserUtil.launchBrowser(url);
+      }
+    });
   }
 
   public void addHyperlinkListener(HyperlinkListener listener) {

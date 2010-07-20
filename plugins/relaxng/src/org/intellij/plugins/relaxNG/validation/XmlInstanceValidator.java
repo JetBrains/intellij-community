@@ -17,6 +17,7 @@
 package org.intellij.plugins.relaxNG.validation;
 
 import com.intellij.codeInsight.daemon.Validator;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.psi.PsiDocumentManager;
@@ -40,6 +41,7 @@ import org.xml.sax.SAXParseException;
  * Date: 30.07.2007
  */
 public class XmlInstanceValidator {
+  private static final Logger LOG = Logger.getInstance("#org.intellij.plugins.relaxNG.validation.MessageViewHelper");
 
   public static void doValidation(@NotNull final XmlDocument doc, final Validator.ValidationHost host, final XmlFile descriptorFile) {
     try {
@@ -61,9 +63,11 @@ public class XmlInstanceValidator {
       doc.accept(new Psi2SaxAdapter(handler));
 
     } catch (ProcessCanceledException e) {
-      throw e;
+      LOG.error(e);
+    } catch (RuntimeException e) {
+      LOG.error(e);
     } catch (Exception e) {
-      e.printStackTrace();
+      LOG.info(e);
     }
   }
 

@@ -206,7 +206,7 @@ public class GenerationNode {
     return template;
   }
 
-  private static TemplateImpl invokeXmlTemplate(XmlTemplateToken token,
+  private static TemplateImpl invokeXmlTemplate(final XmlTemplateToken token,
                                                 CustomTemplateCallback callback,
                                                 final int numberInIteration,
                                                 @Nullable ZenCodingGenerator generator,
@@ -227,6 +227,7 @@ public class GenerationNode {
           public void run() {
             XmlTag tag1 = hasChildren ? expandEmptyTagIfNeccessary(tag) : tag;
             setAttributeValues(tag1, attr2value, numberInIteration);
+            token.setFile((XmlFile)tag1.getContainingFile());
           }
         });
       }
@@ -272,7 +273,6 @@ public class GenerationNode {
     if (flag) {
       builder.append("></").append(tag.getName()).append('>');
       final XmlTag tag1 = XmlElementFactory.getInstance(tag.getProject()).createTagFromText(builder.toString(), XMLLanguage.INSTANCE);
-      tag.replace(tag1);
       return tag1;
     }
     return tag;

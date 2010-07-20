@@ -124,7 +124,8 @@ public class CollectClassMembersUtil {
 
   private static boolean hasExplicitVisibilityModifiers(PsiField field) {
     if (field instanceof GrField) {
-      return ((GrModifierList)field.getModifierList()).hasExplicitVisibilityModifiers();
+      final GrModifierList list = (GrModifierList)field.getModifierList();
+      return list == null || list.hasExplicitVisibilityModifiers();
     }
     else {
       return true;
