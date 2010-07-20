@@ -173,15 +173,9 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
       }
       log("3 authentication result: " + result[0]);
     }
+
     final boolean wasCanceled = result[0] == null;
     callState.setWasCancelled(wasCanceled);
-    if ((! wasCanceled) && (ISVNAuthenticationManager.USERNAME != kind) && (result[0].isStorageAllowed())) {
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        public void run() {
-          myManager.checkContinueSaveCredentials(result[0], kind, realm);
-        }
-      });
-    }
     return result[0];
   }
 
