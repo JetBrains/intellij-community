@@ -227,38 +227,11 @@ public class PsiImplUtil {
   }
 
   public static void setName(String name, PsiElement nameElement) {
-    ASTNode node = nameElement.getNode();
-    ASTNode newNameNode = GroovyPsiElementFactory.getInstance(nameElement.getProject()).createReferenceNameFromText(name).getNode();
-    assert newNameNode != null && node != null;
-    node.getTreeParent().replaceChild(node, newNameNode);
+    final PsiElement newNameElement = GroovyPsiElementFactory.getInstance(nameElement.getProject()).createReferenceNameFromText(name);
+    nameElement.replace(newNameElement);
   }
 
   public static boolean isExtendsSignature(MethodSignature superSignatureCandidate, MethodSignature subSignature) {
-    /*final String name1 = superSignatureCandidate.getName();
-    final String name2 = subSignature.getName();
-    if (!name1.equals(name2)) return false;
-
-    final PsiType[] superTypes = superSignatureCandidate.getParameterTypes();
-    final PsiType[] subTypes = subSignature.getParameterTypes();
-    if (subTypes.length != superTypes.length) return false;
-    for (int i = 0; i < subTypes.length - 1; i++) {
-      PsiType superType = TypeConversionUtil.erasure(superTypes[i]);
-      PsiType subType = subTypes[i];
-      if (!superType.isAssignableFrom(subType)) return false;
-    }
-
-    if (superTypes.length > 0) {
-      final PsiType lastSuperType = TypeConversionUtil.erasure(superTypes[superTypes.length - 1]);
-      final PsiType lastSubType = subTypes[superTypes.length - 1];
-      if (lastSuperType instanceof PsiArrayType && !(lastSubType instanceof PsiArrayType)) {
-        final PsiType componentType = ((PsiArrayType) lastSuperType).getComponentType();
-        if (!lastSubType.isConvertibleFrom(componentType)) return false;
-      } else {
-        if (!lastSuperType.isAssignableFrom(lastSubType)) return false;
-      }
-    }
-
-    return true;*/
     return MethodSignatureUtil.isSubsignature(superSignatureCandidate, subSignature);
   }
 
