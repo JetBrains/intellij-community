@@ -96,9 +96,11 @@
 
     <projectConfigurable implementation="org.jetbrains.plugins.groovy.gant.GantConfigurable"/>
     <projectConfigurable implementation="org.jetbrains.plugins.groovy.gradle.GradleConfigurable"/>
+    <!--<projectConfigurable implementation="org.jetbrains.plugins.groovy.settings.GroovyProjectConfigurable"/>-->
 
     <projectService serviceInterface="org.jetbrains.plugins.groovy.gant.GantSettings" serviceImplementation="org.jetbrains.plugins.groovy.gant.GantSettings"/>
     <projectService serviceInterface="org.jetbrains.plugins.groovy.gradle.GradleSettings" serviceImplementation="org.jetbrains.plugins.groovy.gradle.GradleSettings"/>
+    <!--<projectService serviceInterface="org.jetbrains.plugins.groovy.settings.GroovyProjectSettings" serviceImplementation="org.jetbrains.plugins.groovy.settings.GroovyProjectSettings"/>-->
 
     <colorSettingsPage implementation="org.jetbrains.plugins.groovy.highlighter.GroovyColorsAndFontsPage"/>
     <frameworkSupport implementation="org.jetbrains.plugins.groovy.config.GroovyFacetSupportProvider"/>
@@ -378,7 +380,7 @@
     <intentionAction>
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
       <categoryKey>intention.category.groovy/intention.category.conversions</categoryKey>
-      <className>org.jetbrains.plugins.groovy.intentions.conversions.ConvertJavaStyleArrayCreationIntention</className>
+      <className>org.jetbrains.plugins.groovy.intentions.conversions.ConvertJavaStyleArrayIntention</className>
     </intentionAction>
     <intentionAction>
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>

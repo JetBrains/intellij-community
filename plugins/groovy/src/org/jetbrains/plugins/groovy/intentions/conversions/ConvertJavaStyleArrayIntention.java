@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 /**
  * @author Maxim.Medvedev
  */
-public class ConvertJavaStyleArrayCreationIntention extends Intention {
+public class ConvertJavaStyleArrayIntention extends Intention {
   @Override
   protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
     final GrClosableBlock block = ((GrMethodCallExpression)element).getClosureArguments()[0];
