@@ -248,7 +248,7 @@
       <src refid="jps.module.sourcepath"/>
       <classpath refid="jps.module.production.classpath"/>
       <patternset refid="excluded.from.compilation.jps"/>
-      <javac debug="${compiler.debug}">
+      <javac debug="${compiler.debug}" source="1.5" target="1.5">
         <compilerarg line="${compiler.args.jps}"/>
       </javac>
     </groovyc>
@@ -275,7 +275,7 @@
       <src refid="jps.module.test.sourcepath"/>
       <classpath refid="jps.module.classpath"/>
       <patternset refid="excluded.from.compilation.jps"/>
-      <javac debug="${compiler.debug}">
+      <javac debug="${compiler.debug}" source="1.5" target="1.5">
         <compilerarg line="${compiler.args.jps}"/>
       </javac>
     </groovyc>
