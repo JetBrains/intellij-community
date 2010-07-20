@@ -29,7 +29,11 @@ public class DeferingPrinter implements Printer {
   }
 
   public void print(final String text, final ConsoleViewContentType contentType) {
-    myCompositePrintable.addLast(new ExternalOutput(text, contentType));
+    myCompositePrintable.addLast(new Printable() {
+      public void printOn(final Printer printer) {
+        printer.print(text, contentType);
+      }
+    });
   }
 
   public void onNewAvailable(final Printable printable) {

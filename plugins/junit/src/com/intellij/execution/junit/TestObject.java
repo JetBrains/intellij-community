@@ -312,7 +312,11 @@ public abstract class TestObject implements JavaCommandLine {
           currentTest.onOutput(text, consoleViewType);
         }
         else {
-          consoleView.getPrinter().onNewAvailable(new ExternalOutput(text, consoleViewType));
+          consoleView.getPrinter().onNewAvailable(new Printable() {
+            public void printOn(final Printer printer) {
+              printer.print(text, consoleViewType);
+            }
+          });
         }
       }
     });

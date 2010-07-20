@@ -19,11 +19,11 @@ package com.intellij.execution.junit2;
 import com.intellij.execution.Location;
 import com.intellij.execution.junit2.events.*;
 import com.intellij.execution.junit2.info.TestInfo;
-import com.intellij.execution.junit2.segments.InputConsumer;
 import com.intellij.execution.junit2.states.Statistics;
 import com.intellij.execution.junit2.states.TestState;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.ui.PrintableTestProxy;
+import com.intellij.execution.testframework.ui.TestsOutputConsolePrinter;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -36,7 +36,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-public class TestProxy extends CompositePrintable implements PrintableTestProxy, InputConsumer, ChangingPrintable {
+public class TestProxy extends CompositePrintable implements PrintableTestProxy, ChangingPrintable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.TestProxy");
 
   private final TestInfo myInfo;
@@ -67,8 +67,11 @@ public class TestProxy extends CompositePrintable implements PrintableTestProxy,
       myPrinter.mark();
       myMarked = true;
     }
-    final ExternalOutput printable = new ExternalOutput(text, contentType);
-    addLast(printable);
+    addLast(new Printable() {
+      public void printOn(final Printer printer) {
+        printer.print(text, contentType);
+      }
+    });
   }
 
   public void addLast(final Printable printable) {
