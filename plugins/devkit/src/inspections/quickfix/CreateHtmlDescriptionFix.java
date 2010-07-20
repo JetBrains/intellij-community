@@ -28,7 +28,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -99,9 +98,12 @@ public class CreateHtmlDescriptionFix implements LocalQuickFix, Iconable {
         }
         options.add(path);
       }
-      final JList files = new JBList(ArrayUtil.toStringArray(options));
-      final PopupChooserBuilder builder = JBPopupFactory.getInstance().createListPopupBuilder(files);
-      final JBPopup popup = builder.setTitle(DevKitBundle.message("select.target.location.of.description", myFilename)).setItemChoosenCallback(new Runnable() {
+      final JBList files = new JBList(ArrayUtil.toStringArray(options));
+      files.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+      final JBPopup popup = JBPopupFactory.getInstance()
+        .createListPopupBuilder(files)
+        .setTitle(DevKitBundle.message("select.target.location.of.description", myFilename))
+        .setItemChoosenCallback(new Runnable() {
         public void run() {
           final int index = files.getSelectedIndex();
           if (0 <= index && index < roots.length) {
