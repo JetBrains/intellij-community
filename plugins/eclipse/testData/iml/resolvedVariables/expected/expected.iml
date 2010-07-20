@@ -12,7 +12,6 @@
       <CLASSES>
         <root url="file://$variable$/empty.txt" />
       </CLASSES>
-      <JAVADOC />
       <SOURCES>
         <root url="file://$srcvariable$/empty.txt" />
       </SOURCES>
@@ -23,7 +22,6 @@
       <CLASSES>
         <root url="file://$variable$" />
       </CLASSES>
-      <JAVADOC />
       <SOURCES>
         <root url="file://$srcvariable$" />
       </SOURCES>
