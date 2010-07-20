@@ -133,6 +133,7 @@ public abstract class BaseRefactoringAction extends AnAction {
   }
 
   private static void hideAction(AnActionEvent e) {
+    disableAction(e);
     e.getPresentation().setVisible(false);
   }
 
