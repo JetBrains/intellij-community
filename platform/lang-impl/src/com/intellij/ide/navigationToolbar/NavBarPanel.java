@@ -555,6 +555,10 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
         }
       });
 
+      if (!isValid()) {
+        validate();
+      }
+
       myNodePopup.showUnderneathOf(item);
     }
   }
