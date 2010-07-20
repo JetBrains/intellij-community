@@ -29,9 +29,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.UIBundle;
+import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ItemRemovable;
-import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,7 +66,7 @@ public class ClassFilterEditor extends JPanel {
     myAddClassButton = new JButton(getAddButtonText());
     myAddPatternButton = new JButton(getAddPatternButtonText());
     myRemoveButton = new JButton(UIBundle.message("button.remove"));
-    myTable = new Table();
+    myTable = new JBTable();
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
 
     add(scrollPane, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 3, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(4, 4, 4, 6), 0, 0));
@@ -346,5 +346,9 @@ public class ClassFilterEditor extends JPanel {
     public void actionPerformed(ActionEvent e) {
       TableUtil.removeSelectedItems(myTable);
     }
+  }
+
+  public void setAddPatternButtonVisible(boolean visible) {
+    myAddPatternButton.setVisible(visible);
   }
 }
