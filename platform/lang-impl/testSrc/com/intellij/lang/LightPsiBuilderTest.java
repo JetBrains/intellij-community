@@ -20,9 +20,13 @@ import com.intellij.lexer.LexerBase;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.sun.tools.internal.xjc.util.NullStream;
 import org.junit.Test;
 
+import java.io.PrintStream;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 
 public class LightPsiBuilderTest {
@@ -140,6 +144,45 @@ public class LightPsiBuilderTest {
            "    PsiElement(DIGIT)('1')\n");
   }
 
+  @Test
+  public void testValidityChecksOnDone() throws Exception {
+    doFailTest("a",
+               new Parser() {
+                 public void parse(PsiBuilder builder) {
+                   final PsiBuilder.Marker first = builder.mark();
+                   builder.advanceLexer();
+                   builder.mark();
+                   first.done(LETTER);
+                 }
+               });
+  }
+
+  @Test
+  public void testValidityChecksOnDoneBefore1() throws Exception {
+    doFailTest("a",
+               new Parser() {
+                 public void parse(PsiBuilder builder) {
+                   final PsiBuilder.Marker first = builder.mark();
+                   builder.advanceLexer();
+                   final PsiBuilder.Marker second = builder.mark();
+                   second.precede();
+                   first.doneBefore(LETTER, second);
+                 }
+               });
+  }
+
+  @Test
+  public void testValidityChecksOnDoneBefore2() throws Exception {
+    doFailTest("a",
+               new Parser() {
+                 public void parse(PsiBuilder builder) {
+                   final PsiBuilder.Marker first = builder.mark();
+                   builder.advanceLexer();
+                   final PsiBuilder.Marker second = builder.mark();
+                   second.doneBefore(LETTER, first);
+                 }
+               });
+  }
 
   private interface Parser {
     void parse(PsiBuilder builder);
@@ -152,6 +195,27 @@ public class LightPsiBuilderTest {
     rootMarker.done(ROOT);
     final ASTNode root = builder.getTreeBuilt();
     assertEquals(expected, DebugUtil.nodeTreeToString(root, true));
+  }
+
+  private static void doFailTest(final String text, final Parser parser) {
+    final PrintStream std = System.err;
+    //noinspection IOResourceOpenedButNotSafelyClosed
+    System.setErr(new PrintStream(new NullStream()));
+    try {
+      try {
+        final PsiBuilder builder = new PsiBuilderImpl(new MyTestLexer(), TokenSet.EMPTY, TokenSet.EMPTY, text);
+        builder.setDebugMode(true);
+        parser.parse(builder);
+        fail("should fail");
+      }
+      catch (AssertionError e) {
+        //System.out.println("caught: " + e);
+        if ("should fail".equals(e.getMessage())) throw e;
+      }
+    }
+    finally {
+      System.setErr(std);
+    }
   }
 
   private static class MyTestLexer extends LexerBase {
