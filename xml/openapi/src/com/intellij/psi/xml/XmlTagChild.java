@@ -20,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 public interface XmlTagChild extends XmlElement{
   XmlTagChild[] EMPTY_ARRAY = new XmlTagChild[0];
-  @Nullable
   XmlTag getParentTag();
 
   @Nullable

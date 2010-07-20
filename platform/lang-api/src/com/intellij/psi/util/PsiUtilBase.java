@@ -431,6 +431,14 @@ public class PsiUtilBase {
     return narrowLanguage(lang, file.getLanguage());
   }
 
+  @Nullable
+  public static PsiElement getElementAtCaret(Editor editor) {
+    Project project = editor.getProject();
+    if (project == null) return null;
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    return file == null ? null : file.findElementAt(editor.getCaretModel().getOffset());
+  }
+
   public static Language getDialect(@NotNull PsiElement element) {
     return narrowLanguage(element.getLanguage(), element.getContainingFile().getLanguage());
   }
