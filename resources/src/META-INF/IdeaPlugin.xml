@@ -1150,7 +1150,6 @@
   </extensions>
 
   <xi:include href="/META-INF/XmlPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/META-INF/DomPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/RegExpPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/ImagesPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
 </idea-plugin>
