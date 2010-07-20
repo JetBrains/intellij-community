@@ -41,6 +41,7 @@ import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.Icons;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -557,9 +558,6 @@ public abstract class ChangesTreeList<T> extends JPanel {
       myCheckBox = new JCheckBox();
       myTextRenderer = new ChangesBrowserNodeRenderer(myProject, false, myHighlightProblems);
 
-      NonOpaquePanel.setTransparent(this);
-      NonOpaquePanel.setTransparent(myCheckBox);
-
       if (myShowCheckboxes) {
         add(myCheckBox, BorderLayout.WEST);
       }
@@ -574,6 +572,16 @@ public abstract class ChangesTreeList<T> extends JPanel {
                                                   boolean leaf,
                                                   int row,
                                                   boolean hasFocus) {
+
+      if (UIUtil.isUnderNimbusLookAndFeel()) {
+        NonOpaquePanel.setTransparent(this);
+        NonOpaquePanel.setTransparent(myCheckBox);
+      } else {
+        setBackground(null);
+        myCheckBox.setBackground(null);
+      }
+
+
       myTextRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
       if (myShowCheckboxes) {
         ChangesBrowserNode node = (ChangesBrowserNode)value;
