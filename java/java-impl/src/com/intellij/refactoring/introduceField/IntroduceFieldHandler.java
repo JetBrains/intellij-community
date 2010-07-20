@@ -65,9 +65,13 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
   protected Settings showRefactoringDialog(Project project, Editor editor, PsiClass parentClass, PsiExpression expr,
                                            PsiType type,
                                            PsiExpression[] occurences, PsiElement anchorElement, PsiElement anchorElementIfAll) {
-    final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(expr, PsiMethod.class);
-    PsiElement element = expr.getUserData(ElementToWorkOn.PARENT);
-    if (element == null) element = expr;
+    final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(expr != null ? expr : anchorElement, PsiMethod.class);
+    PsiElement element = null;
+    if (expr != null) {
+      element = expr.getUserData(ElementToWorkOn.PARENT);
+      if (element == null) element = expr;
+    }
+    if (element == null) element = anchorElement;
     final PsiModifierListOwner staticParentElement = PsiUtil.getEnclosingStaticElement(element, parentClass);
     boolean declareStatic = staticParentElement != null;
 
