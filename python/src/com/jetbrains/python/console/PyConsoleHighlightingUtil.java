@@ -15,6 +15,7 @@ import java.util.regex.Pattern;
  */
 public class PyConsoleHighlightingUtil {
   public static final String ORDINARY_PROMPT =      ">>> ";
+  public static final String INPUT_PROMPT =      ">? ";
   public static final String INDENT_PROMPT =        "... ";
   static final String HELP_PROMPT =                 "help> ";
 

@@ -15,6 +15,7 @@ public class PythonAllTestsSuite {
 
   public static final Class[] tests = {
     PythonLexerTest.class,
+    PyStringLiteralLexerTest.class,
     PyEncodingTest.class,
     PythonParsingTest.class,
     PyStringLiteralTest.class,

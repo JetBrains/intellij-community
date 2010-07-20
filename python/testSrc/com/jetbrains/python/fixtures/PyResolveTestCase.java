@@ -47,11 +47,11 @@ public abstract class PyResolveTestCase extends PyLightFixtureTestCase {
 
   protected abstract PsiElement doResolve() throws Exception;
 
-  protected <T extends PsiElement> void assertResolvesTo(final Class<T> aClass, final String name) {
-    assertResolvesTo(aClass, name, null);
+  protected <T extends PsiElement> T assertResolvesTo(final Class<T> aClass, final String name) {
+    return assertResolvesTo(aClass, name, null);
   }
 
-  protected <T extends PsiElement> void assertResolvesTo(final Class<T> aClass,
+  protected <T extends PsiElement> T assertResolvesTo(final Class<T> aClass,
                                                          final String name,
                                                          String containingFilePath) {
     final PsiElement element;
@@ -66,6 +66,7 @@ public abstract class PyResolveTestCase extends PyLightFixtureTestCase {
     if (containingFilePath != null) {
       assertEquals(containingFilePath, element.getContainingFile().getVirtualFile().getPath());
     }
+    return (T)element;
   }
 
   protected int findMarkerOffset(final PsiFile psiFile) {

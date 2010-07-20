@@ -154,6 +154,10 @@ public class PyOverrideImplementUtil {
     String[] paramTexts = ContainerUtil.map(baseParams, new Function<PyParameter, String>() {
       @Override
       public String fun(PyParameter pyParameter) {
+        final PyNamedParameter pyNamedParameter = pyParameter.getAsNamed();
+        if (pyNamedParameter != null) {
+          return pyNamedParameter.getRepr(false);
+        }
         return pyParameter.getText();
       }
     }, ArrayUtil.EMPTY_STRING_ARRAY);

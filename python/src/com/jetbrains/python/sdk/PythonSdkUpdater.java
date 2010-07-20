@@ -45,6 +45,7 @@ public class PythonSdkUpdater implements ProjectComponent {
           else {
             LOG.info("Skeletons version incremented from " + version + " to " + SKELETONS_VERSION + ", rebuilding all skeletons");
           }
+          skeletonDir.mkdirs();
           writeVersion(versionFile, SKELETONS_VERSION);
           versionUpdated = true;
         }

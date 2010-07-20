@@ -34,6 +34,10 @@ public class CollectionElementNameMacro implements Macro {
       return null;
     }
     String param = paramResult.toString();
+    int lastDot = param.lastIndexOf('.');
+    if (lastDot >= 0) {
+      param = param.substring(lastDot+1);
+    }
     final String result = smartUnpluralize(param);
     return new TextResult(result);
   }
