@@ -78,12 +78,11 @@ public class FileReferenceContextUtil {
         if (!range.intersects(element.getTextRange())) return;
         String text = element.getText();
         PsiFileSystemItem item = map.get(text);
-        element = bindElement(element, item);
-        if (element != null) {
-          element.acceptChildren(this);
-        }
+        element.putCopyableUserData(REF_FILE_SYSTEM_ITEM_KEY, item);
+        element.acceptChildren(this);
       }
     });
+    decodeFileReferences(element);
   }
 
   private static PsiElement bindElement(PsiElement element, PsiFileSystemItem item) {
