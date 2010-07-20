@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -34,6 +35,7 @@ import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.StringScanner;
 import git4idea.config.GitConfigUtil;
+import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -407,6 +409,28 @@ public class GitUtil {
     return root;
   }
 
+  /**
+   * Get git roots for the project. The method shows dialogs in the case when roots cannot be retrieved, so it should be called
+   * from the event dispatch thread.
+   *
+   * @param project the project
+   * @param vcs     the git Vcs
+   * @return the list of the roots
+   */
+  @NotNull
+  public static List<VirtualFile> getGitRoots(Project project, GitVcs vcs) throws VcsException {
+    final VirtualFile[] contentRoots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs);
+    if (contentRoots == null || contentRoots.length == 0) {
+      throw new VcsException(GitBundle.getString("repository.action.missing.roots.unconfigured.message"));
+    }
+    final List<VirtualFile> roots = new ArrayList<VirtualFile>(gitRootsForPaths(Arrays.asList(contentRoots)));
+    if (roots.size() == 0) {
+      throw new VcsException(GitBundle.getString("repository.action.missing.roots.misconfigured"));
+    }
+    Collections.sort(roots, VIRTUAL_FILE_COMPARATOR);
+    return roots;
+  }
+
 
   /**
    * Check if the virtual file under git
@@ -486,6 +510,7 @@ public class GitUtil {
   /**
    * Covert list of files to relative paths
    *
+   * @param root      a vcs root
    * @param filePaths a parameters to convert
    * @return a list of relative paths
    * @throws IllegalArgumentException if some path is not under root.
@@ -493,7 +518,7 @@ public class GitUtil {
   public static List<String> toRelativePaths(@NotNull VirtualFile root, @NotNull final Collection<FilePath> filePaths) {
     ArrayList<String> rc = new ArrayList<String>(filePaths.size());
     for (FilePath path : filePaths) {
-      rc.add(GitUtil.relativePath(root, path));
+      rc.add(relativePath(root, path));
     }
     return rc;
   }
@@ -501,18 +526,19 @@ public class GitUtil {
   /**
    * Covert list of files to relative paths
    *
-   * @param filePaths a parameters to convert
+   * @param root  a vcs root
+   * @param files a parameters to convert
    * @return a list of relative paths
    * @throws IllegalArgumentException if some path is not under root.
    */
   public static List<String> toRelativeFiles(@NotNull VirtualFile root, @NotNull final Collection<VirtualFile> files) {
     ArrayList<String> rc = new ArrayList<String>(files.size());
     for (VirtualFile file : files) {
-      rc.add(GitUtil.relativePath(root, file));
+      rc.add(relativePath(root, file));
     }
     return rc;
   }
-  
+
   /**
    * Refresh files
    *
@@ -718,7 +744,7 @@ public class GitUtil {
     while (s.hasMoreData()) {
       final String line = s.line();
       final boolean lineIsAStart = line.startsWith("\u0000\u0001");
-      if ((! firstStep) && lineIsAStart) {
+      if ((!firstStep) && lineIsAStart) {
         final StringScanner innerScanner = new StringScanner(sb.toString());
         sb.setLength(0);
         consumer.consume(GitChangeUtils.parseChangeList(project, root, innerScanner, skipDiffsForMerge));
