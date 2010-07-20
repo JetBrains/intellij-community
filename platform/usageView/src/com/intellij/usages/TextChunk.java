@@ -23,7 +23,7 @@ public class TextChunk {
   private final AttributesFlyweight myAttributes;
   private final String myText;
 
-  public TextChunk(TextAttributes attributesKey, @NotNull String text) {
+  public TextChunk(@NotNull TextAttributes attributesKey, @NotNull String text) {
     myAttributes = attributesKey.getFlyweight();
     myText = text;
   }
