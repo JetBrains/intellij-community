@@ -44,10 +44,4 @@ public class AppEngineServerIntegration extends AppServerIntegration {
   public ApplicationServerHelper getApplicationServerHelper() {
     return myServerHelper;
   }
-
-  @NotNull
-  @Override
-  public Collection<FacetTypeId<? extends JavaeeFacet>> getSupportedFacetTypes() {
-    return JavaeeFacetUtil.getInstance().getSingletonCollection(WebFacet.ID);
-  }
 }
