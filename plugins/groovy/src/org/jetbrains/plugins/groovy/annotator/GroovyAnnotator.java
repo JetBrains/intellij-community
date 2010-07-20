@@ -283,6 +283,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     if (body != null) checkDuplicateMethod(body.getGroovyMethods(), myHolder);
     checkImplementedMethodsOfClass(myHolder, typeDefinition);
     checkConstructors(myHolder, typeDefinition);
+    highligtClassReference(myHolder, typeDefinition.getNameIdentifierGroovy());
   }
 
   private static void checkConstructors(AnnotationHolder holder, GrTypeDefinition typeDefinition) {
@@ -1296,6 +1297,9 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     if (member instanceof PsiMethod) {
       annotation.setTextAttributes(!isStatic ? DefaultHighlighter.METHOD_CALL : DefaultHighlighter.STATIC_METHOD_ACCESS);
     }
+    if (member instanceof PsiClass) {
+      highligtClassReference(holder, refExpr);
+    }
   }
 
 
@@ -1536,16 +1540,24 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   private static void highlightAnnotation(AnnotationHolder holder, PsiElement refElement, GroovyResolveResult result) {
     PsiElement element = result.getElement();
     PsiElement parent = refElement.getParent();
-    if (element instanceof PsiClass && ((PsiClass)element).isAnnotationType() && !(parent instanceof GrImportStatement)) {
-      Annotation annotation = holder.createInfoAnnotation(parent, null);
-      annotation.setTextAttributes(DefaultHighlighter.ANNOTATION);
-      GroovyPsiElement context = result.getCurrentFileResolveContext();
-      if (context instanceof GrImportStatement) {
-        annotation = holder.createInfoAnnotation(((GrImportStatement)context).getImportReference(), null);
+    if (element instanceof PsiClass) {
+      if (((PsiClass)element).isAnnotationType() && !(parent instanceof GrImportStatement)) {
+        Annotation annotation = holder.createInfoAnnotation(parent, null);
         annotation.setTextAttributes(DefaultHighlighter.ANNOTATION);
+        GroovyPsiElement context = result.getCurrentFileResolveContext();
+        if (context instanceof GrImportStatement) {
+          annotation = holder.createInfoAnnotation(((GrImportStatement)context).getImportReference(), null);
+          annotation.setTextAttributes(DefaultHighlighter.ANNOTATION);
+        }
+      } else {
+        highligtClassReference(holder, refElement);
       }
     }
+  }
 
+  private static void highligtClassReference(AnnotationHolder holder, PsiElement classReference) {
+    final Annotation annotation = holder.createInfoAnnotation(classReference, null);
+    annotation.setTextAttributes(DefaultHighlighter.CLASS_REFERENCE);
   }
 
 
