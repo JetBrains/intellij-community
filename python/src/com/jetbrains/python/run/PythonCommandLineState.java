@@ -82,12 +82,16 @@ public abstract class PythonCommandLineState extends CommandLineState {
       }
     }
 
-    final ColoredProcessHandler processHandler = createProcess(commandLine.createProcess(), commandLine);
+    final ColoredProcessHandler processHandler = doCreateProcess(commandLine);
     ProcessTerminatedListener.attach(processHandler);
     return processHandler;
   }
 
-  protected ColoredProcessHandler createProcess(Process process, GeneralCommandLine commandLine) throws ExecutionException {
+  protected ColoredProcessHandler doCreateProcess(GeneralCommandLine commandLine) throws ExecutionException {
+    return createProcessHandler(commandLine.createProcess(), commandLine);
+  }
+
+  protected ColoredProcessHandler createProcessHandler(Process process, GeneralCommandLine commandLine) throws ExecutionException {
     return new ColoredProcessHandler(process, commandLine.getCommandLineString());
   }
 
