@@ -41,8 +41,8 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
   // If output collection was enabled for this console printer - all output will be collected in
   // myOutputStorage component. Otherwise no output will be stored.
   // 'myCurrentOutputStorage' printer is used for displaying whole output for test's root
-  private final Intermediate myOutputStorage = new DeferingPrinter(true);
-  private Intermediate myCurrentOutputStorage = myOutputStorage;
+  private final DeferingPrinter myOutputStorage = new DeferingPrinter(true);
+  private Printer myCurrentOutputStorage = myOutputStorage;
 
   private int myMarkOffset = 0;
 
