@@ -279,12 +279,30 @@
         </value>
       </option>
 
+      <option name="DIFF_CONFLICT">
+        <value>
+          <option name="FOREGROUND"/>
+          <option name="BACKGROUND" value="ffc8bd"/>
+          <option name="EFFECT_COLOR"/>
+          <option name="ERROR_STRIPE_COLOR" value="ff6647"/>
+        </value>
+      </option>
+
+      <option name="DIFF_DELETED">
+        <value>
+          <option name="FOREGROUND"/>
+          <option name="BACKGROUND" value="cbcbcb"/>
+          <option name="EFFECT_COLOR"/>
+          <option name="ERROR_STRIPE_COLOR" value="747474"/>
+        </value>
+      </option>
+
       <option name="DIFF_INSERTED">
         <value>
           <option name="FOREGROUND"/>
           <option name="BACKGROUND" value="baeeba"/>
           <option name="EFFECT_COLOR"/>
-          <option name="ERROR_STRIPE_COLOR" value="4ced4d"/>
+          <option name="ERROR_STRIPE_COLOR" value="1e201"/>
         </value>
       </option>
 
@@ -293,16 +311,7 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND" value="bccff9"/>
           <option name="EFFECT_COLOR"/>
-          <option name="ERROR_STRIPE_COLOR" value="5186fe"/>
-        </value>
-      </option>
-
-      <option name="DIFF_CONFLICT">
-        <value>
-          <option name="FOREGROUND"/>
-          <option name="BACKGROUND" value="ffc8bd"/>
-          <option name="EFFECT_COLOR"/>
-          <option name="ERROR_STRIPE_COLOR" value="eb5e42"/>
+          <option name="ERROR_STRIPE_COLOR" value="3471ff"/>
         </value>
       </option>
 
@@ -543,16 +552,6 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND" value="f0f0f0"/>
           <option name="EFFECT_COLOR"/>
-        </value>
-      </option>
-
-      <option name="DIFF_DELETED">
-        <value>
-          <option name="FOREGROUND"/>
-          <option name="BACKGROUND" value="cbcbcb"/>
-          <option name="EFFECT_COLOR"/>
-          <option name="ERROR_STRIPE_COLOR" value="747474"/>
-
         </value>
       </option>
 

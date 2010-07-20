@@ -201,17 +201,18 @@ public class LineStatusTracker {
   }
 
   private static TextAttributes getAttributesFor(Range range) {
-    EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-    Color color = globalScheme.getAttributes(getEditorColorNameFor(range)).getErrorStripeColor();
-    TextAttributes textAttributes = new TextAttributes(null, color, null, EffectType.BOXED, Font.PLAIN);
-    textAttributes.setErrorStripeColor(color);
+    final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
+    final Color stripeColor = globalScheme.getAttributes(getEditorColorNameFor(range)).getErrorStripeColor();
+    final TextAttributes textAttributes = new TextAttributes(null, stripeColor, null, EffectType.BOXED, Font.PLAIN);
+    textAttributes.setErrorStripeColor(stripeColor);
     return textAttributes;
   }
 
   private static void paintGutterFragment(Editor editor, Graphics g, Rectangle r, TextAttributesKey diffAttributeKey) {
-    EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
+    final EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
     final Color stripeColor = editor.getColorsScheme().getAttributes(diffAttributeKey).getErrorStripeColor();
-    g.setColor(stripeColor);
+    g.setColor(brighter(stripeColor));
+
     int endX = gutter.getWhitespaceSeparatorOffset();
     int x = r.x + r.width - 2;
     int width = endX - x;
@@ -236,6 +237,21 @@ public class LineStatusTracker {
     }
   }
 
+  private static Color brighter(final Color color) {
+    final float[] hsbStripeColor = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
+
+    if (hsbStripeColor[1] < 0.02f) {
+      // color is grey
+      hsbStripeColor[2] = Math.min(1.0f, hsbStripeColor[2] * 1.3f);
+    } else {
+      // let's decrease color saturation
+      hsbStripeColor[1] *= 0.3;
+
+      // max brightness
+      hsbStripeColor[2] = 1.0f;
+    }
+    return Color.getHSBColor(hsbStripeColor[0], hsbStripeColor[1], hsbStripeColor[2]);
+  }
 
   private LineMarkerRenderer createRenderer(final Range range) {
     return new ActiveGutterRenderer() {
