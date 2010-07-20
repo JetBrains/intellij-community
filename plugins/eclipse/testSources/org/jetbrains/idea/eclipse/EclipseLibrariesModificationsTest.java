@@ -75,9 +75,75 @@ public class EclipseLibrariesModificationsTest extends EclipseVarsTest {
     doTestExisting(new String[]{"/variableidea/test.jar!/"}, new String[]{"/srcvariableidea1/test.jar!/"}, new String[0]);
   }
 
-   public void testReplacedExistingWithMultipleJavadocs() throws Exception {
+  public void testReplacedExistingWithMultipleJavadocs() throws Exception {
     doTestExisting(new String[]{"/variableidea/test.jar!/"}, new String[]{},
                    new String[]{"/srcvariableidea1/test.jar!/", "/srcvariableidea11/test.jar!/"});
+  }
+
+  public void testLibAddLibSource() throws Exception {
+    doTestExisting(new String[]{"/jars/test.jar!/"},
+                   new String[]{"/jars/test.jar!/", "/jars/test-2.jar!/"},
+                   new String[]{});
+  }
+
+  public void testLibAddVarSource() throws Exception {
+    doTestExisting(new String[]{"/jars/test.jar!/"},
+                   new String[]{"/jars/test.jar!/", "/srcvariableidea/test.jar!/"},
+                   new String[]{});
+  }
+
+  public void testLibReplaceVarSource() throws Exception {
+    doTestExisting(new String[]{"/jars/test.jar!/"},
+                   new String[]{"/srcvariableidea/test.jar!/"},
+                   new String[]{});
+  }
+
+  public void testLibvarAddLibSource() throws Exception {
+    doTestExisting(new String[]{"/variableidea/test.jar!/"},
+                   new String[]{"/jars/test.jar!/"},
+                   new String[]{});
+  }
+
+  public void testLibvarAddVarSource() throws Exception {
+    doTestExisting(new String[]{"/variableidea/test.jar!/"},
+                   new String[]{"/jars/test.jar!/", "/srcvariableidea/test.jar!/"},
+                   new String[]{});
+  }
+
+  public void testLibvarReplaceLibSource() throws Exception {
+    doTestExisting(new String[]{"/variableidea/test.jar!/"},
+                   new String[]{"/jars/test.jar!/"},
+                   new String[]{});
+  }
+
+  public void testLibvarReplaceVarSource() throws Exception {
+    doTestExisting(new String[]{"/variableidea/test.jar!/"},
+                   new String[]{"/srcvariableidea/test.jar!/"},
+                   new String[]{});
+  }
+
+  public void testVarAddLibSource() throws Exception {
+    doTestExisting(new String[]{"/variableidea/test.jar!/"},
+                   new String[]{"/jars/test.jar!/"},
+                   new String[]{});
+  }
+
+  public void testVarAddVarSource() throws Exception {
+    doTestExisting(new String[]{"/variableidea/test.jar!/"},
+                   new String[]{"/variableidea/test.jar!/", "/srcvariableidea/test.jar!/"},
+                   new String[]{});
+  }
+
+  public void testVarReplaceLibSource() throws Exception {
+    doTestExisting(new String[]{"/variableidea/test.jar!/"},
+                   new String[]{"/jars/test.jar!/"},
+                   new String[]{});
+  }
+
+  public void testVarReplaceVarSource() throws Exception {
+    doTestExisting(new String[]{"/variableidea/test.jar!/"},
+                   new String[]{"/srcvariableidea/test.jar!/"},
+                   new String[]{});
   }
 
   private void doTestExisting(String[] classRoots, String[] sourceRoots, String[] javadocs) throws Exception {

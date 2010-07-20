@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component>
+  <exclude-output />
+  <contentEntry url="file://$MODULE_DIR$" />
+  <lib name="test.jar" scope="COMPILE">
+    <srcroot url="jar://$variable$/test.jar!/" />
+    <srcroot url="jar://$srcvariable$/test.jar!/" />
+  </lib>
+</component>
