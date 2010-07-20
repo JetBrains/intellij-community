@@ -3,7 +3,5 @@
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/lib/commons-lang-2.4.jar!/" />
     </CLASSES>
-    <JAVADOC />
-    <SOURCES />
   </library>
 </component>

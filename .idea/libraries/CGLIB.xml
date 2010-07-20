@@ -3,7 +3,6 @@
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/lib/cglib-nodep-2.1_3.jar!/" />
     </CLASSES>
-    <JAVADOC />
     <SOURCES>
       <root url="jar://$PROJECT_DIR$/lib/src/cglib-src-2.1_3.jar!/src/proxy" />
     </SOURCES>
