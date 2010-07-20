@@ -1,19 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="CCaseConfig">
-    <option name="checkoutReserved" value="false" />
-    <option name="markExternalChangeAsUpToDate" value="true" />
-    <option name="checkInUseHijack" value="true" />
-    <option name="useUcmModel" value="true" />
-    <option name="isOffline" value="false" />
-    <option name="synchOutside" value="false" />
-    <option name="isHistoryResticted" value="true" />
-    <option name="useIdenticalSwitch" value="true" />
-    <option name="synchActivitiesOnRefresh" value="true" />
-    <option name="lastScr" value="" />
-    <option name="scrTextFileName" value="" />
-    <option name="historyRevisionsNumber" value="4" />
-  </component>
   <component name="DependencyValidationManager">
     <option name="SKIP_IMPORT_STATEMENTS" value="false" />
   </component>
@@ -55,19 +41,8 @@
   <component name="ProjectKey">
     <option name="state" value="project://default" />
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_5" assert-keyword="true" jdk-15="true" project-jdk-name="1.5" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_6" assert-keyword="true" jdk-15="true" project-jdk-name="1.6" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/out" />
-  </component>
-  <component name="StarteamConfiguration">
-    <option name="SERVER" value="" />
-    <option name="PORT" value="49201" />
-    <option name="USER" value="" />
-    <option name="PASSWORD" value="" />
-    <option name="PROJECT" value="" />
-    <option name="VIEW" value="" />
-    <option name="ALTERNATIVE_WORKING_PATH" value="" />
-    <option name="LOCK_ON_CHECKOUT" value="false" />
-    <option name="UNLOCK_ON_CHECKIN" value="false" />
   </component>
   <component name="SvnBranchConfigurationManager">
     <option name="mySupportsUserInfoFilter" value="true" />
