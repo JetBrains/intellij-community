@@ -10,14 +10,14 @@
 // the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
 // either express or implied. See the License for the specific language governing permissions and
 // limitations under the License.
-package org.zmlx.hg4idea;
+package org.zmlx.hg4idea.test;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import org.zmlx.hg4idea.command.HgResolveCommand;
 
-public class HgResolveConflictTestCase extends AbstractHgTestCase {
+public class HgResolveConflictTestCase extends HgAbstractTestCase {
 
   public static final String BASE = "one\n" +
     "conflicting\n" +

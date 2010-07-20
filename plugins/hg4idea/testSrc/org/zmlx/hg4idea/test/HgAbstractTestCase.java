@@ -10,7 +10,7 @@
 // the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
 // either express or implied. See the License for the specific language governing permissions and
 // limitations under the License.
-package org.zmlx.hg4idea;
+package org.zmlx.hg4idea.test;
 
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.PluginPathManager;
@@ -24,7 +24,8 @@ import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.vcsUtil.VcsUtil;
 import org.testng.annotations.BeforeMethod;
-import org.zmlx.hg4idea.org.zmlx.hg4idea.test.TestChangeListManager;
+import org.zmlx.hg4idea.HgFile;
+import org.zmlx.hg4idea.HgVcs;
 
 import java.io.*;
 
@@ -33,7 +34,7 @@ import static org.testng.Assert.assertTrue;
 /**
  * The ancestor of all hg4idea test cases.
  */
-public abstract class AbstractHgTestCase extends AbstractVcsTestCase {
+public abstract class HgAbstractTestCase extends AbstractVcsTestCase {
 
   public static final String HG_EXECUTABLE_PATH = "IDEA_TEST_HG_EXECUTABLE_PATH";
 
