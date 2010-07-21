@@ -27,6 +27,6 @@ public class ConvertJavaStyleArrayCreationTest extends GrIntentionTestCase{
   }
 
   public void testConversion() {
-    doTest(GroovyIntentionsBundle.message("convert.java.style.array.creation.intention.name"), true);
+    doTest(GroovyIntentionsBundle.message("convert.java.style.array.intention.name"), true);
   }
 }
