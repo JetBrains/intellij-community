@@ -27,7 +27,7 @@ class Project {
   final Map<String, Library> libraries = [:]
   final Map<String, Artifact> artifacts = [:]
 
-  String targetFolder = "."
+  String targetFolder = null
 
   boolean dryRun = false
 
@@ -143,11 +143,24 @@ class Project {
 
   def clean() {
     if (!dryRun) {
-      stage("Cleaning $targetFolder")
-      binding.ant.delete(dir: targetFolder)
+      if (targetFolder != null) {
+        stage("Cleaning $targetFolder")
+        binding.ant.delete(dir: targetFolder)
+      }
+      else {
+        stage("Cleaning output folders for ${modules.size()} modules")
+        modules.values().each {
+          binding.ant.delete(dir: it.outputPath)
+          binding.ant.delete(dir: it.testOutputPath)
+        }
+        stage("Cleaning output folders for ${artifacts.size()} artifacts")
+        artifacts.values().each {
+          binding.ant.delete(dir: it.outputPath)
+        }
+      }
     }
     else {
-      stage("Cleaning $targetFolder skipped as we're running dry")
+      stage("Cleaning skipped as we're running dry")
     }
     builder.clean()
   }

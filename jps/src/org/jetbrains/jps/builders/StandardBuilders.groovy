@@ -167,7 +167,8 @@ class GroovyStubGenerator implements ModuleBuilder {
     def project = module.project
     def ant = project.binding.ant
 
-    File dir = new File(project.targetFolder, "___temp___")
+    String targetFolder = project.targetFolder
+    File dir = new File(targetFolder != null ? targetFolder : ".", "___temp___")
     ant.delete(dir: dir)
     ant.mkdir(dir: dir)
 

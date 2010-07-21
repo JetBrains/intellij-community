@@ -16,7 +16,9 @@ class Module extends LazyInitializeableObject implements ClasspathItem {
   List sourceRoots = []
   List testRoots = []
   List excludes = []
-  
+
+  String outputPath
+  String testOutputPath
   Map<String, Facet> facets = [:]
   Map<String, Object> props = [:]
   Map<String, String> sourceRootPrefixes = [:]

@@ -138,14 +138,6 @@ class ProjectBuilder {
     return dst
   }
 
-  private String classesDir(Project project) {
-    return new File(project.targetFolder, "production").absolutePath
-  }
-
-  private String testClassesDir(Project project) {
-    return new File(project.targetFolder, "test").absolutePath
-  }
-
   String getModuleOutputFolder(Module module, boolean tests) {
     return folderForChunkOutput(chunkForModule(module), tests)
   }
@@ -155,11 +147,26 @@ class ProjectBuilder {
       def customOut = chunk.customOutput
       if (customOut != null) return customOut
     }
-    def basePath = tests ? testClassesDir(project) : classesDir(project)
-    return new File(basePath, chunk.name).absolutePath
+
+    String targetFolder = project.targetFolder
+    if (targetFolder != null) {
+      def basePath = tests ? new File(targetFolder, "test").absolutePath : new File(targetFolder, "production").absolutePath
+      return new File(basePath, chunk.name).absolutePath
+    }
+    else {
+      Set<Module> modules = chunk.modules
+      def module = modules.toList().first()
+      if (modules.size() > 1) {
+        project.warning("Modules $modules with cyclic dependencies will be compiled to output of $module")
+      }
+      return tests ? module.testOutputPath : module.outputPath
+    }
   }
 
   def compile(ModuleChunk chunk, String dst, boolean tests) {
+    if (dst == null) {
+      project.error("${tests ? 'Test output' : 'Output'} path for module $chunk is not specified")
+    }
     List sources = validatePaths(tests ? chunk.testRoots : chunk.sourceRoots)
 
     if (sources.isEmpty()) return

@@ -4,6 +4,7 @@ import org.jetbrains.jps.Library
 import org.jetbrains.jps.MacroExpansion
 import org.jetbrains.jps.Project
 import org.jetbrains.jps.artifacts.Artifact
+import org.jetbrains.jps.Module
 
 /**
  * @author max
@@ -12,6 +13,7 @@ public class IdeaProjectLoader implements MacroExpansion {
   private int libraryCount = 0
   Project project
   private String projectBasePath
+  private String projectOutputPath
   private Map<String, String> pathVariables
 
   public static String guessHome(Script script) {
@@ -76,7 +78,7 @@ public class IdeaProjectLoader implements MacroExpansion {
     projectBasePath = iprFile.getParentFile().getAbsolutePath()
 
     def root = new XmlParser(false, false).parse(iprFile)
-    loadProjectJdk(root)
+    loadProjectJdkAndOutput(root)
     loadCompilerConfiguration(root)
     loadModules(getComponent(root, "ProjectModuleManager"))
     loadProjectLibraries(getComponent(root, "libraryTable"))
@@ -90,7 +92,7 @@ public class IdeaProjectLoader implements MacroExpansion {
 
     def miscXml = new File(dir, "misc.xml")
     if (!miscXml.exists()) project.error("Cannot find misc.xml in $dir")
-    loadProjectJdk(new XmlParser(false, false).parse(miscXml))
+    loadProjectJdkAndOutput(new XmlParser(false, false).parse(miscXml))
 
     def compilerXml = new File(dir, "compiler.xml")
     if (compilerXml.exists()) {
@@ -146,13 +148,14 @@ public class IdeaProjectLoader implements MacroExpansion {
     return pattern
   }
 
-  private def loadProjectJdk(Node root) {
+  private def loadProjectJdkAndOutput(Node root) {
     def componentTag = getComponent(root, "ProjectRootManager")
     def sdkName = componentTag."@project-jdk-name"
     def sdk = project.sdks[sdkName]
     if (sdk == null) {
       project.info("Project SDK '$sdkName' is not defined. Embedded javac will be used")
     }
+    projectOutputPath = expandProjectMacro(pathFromUrl(componentTag.output?.first()?.@url))
     project.projectSdk = sdk
   }
 
@@ -167,8 +170,9 @@ public class IdeaProjectLoader implements MacroExpansion {
     ArtifactLoader artifactLoader = new ArtifactLoader(this)
     artifactsComponent.artifact.each {Node artifactTag ->
       def artifactName = artifactTag."@name"
+      def outputPath = expandProjectMacro(artifactTag."output-path"?.first()?.text())
       def root = artifactLoader.loadLayoutElement(artifactTag.root.first(), artifactName)
-      def artifact = new Artifact(name: artifactName, rootElement: root)
+      def artifact = new Artifact(name: artifactName, rootElement: root, outputPath: outputPath)
       project.artifacts[artifact.name] = artifact;
     }
   }
@@ -190,6 +194,7 @@ public class IdeaProjectLoader implements MacroExpansion {
   }
 
   public String expandProjectMacro(String path) {
+    if (path == null) return path
     path = path.replace("\$PROJECT_DIR\$", projectBasePath)
     pathVariables.each { name, value ->
       path = path.replace("\$${name}\$", value)
@@ -257,6 +262,7 @@ public class IdeaProjectLoader implements MacroExpansion {
     def moduleBasePath = moduleFile.getParentFile().getAbsolutePath()
     def currentModuleName = moduleName(imlPath)
     project.createModule(currentModuleName) {
+      Module currentModule = project.modules[currentModuleName]
       def root = new XmlParser(false, false).parse(moduleFile)
       def componentTag = getComponent(root, "NewModuleRootManager")
       if (componentTag != null) {
@@ -296,7 +302,7 @@ public class IdeaProjectLoader implements MacroExpansion {
               }
 
               if (libraryName != null) {
-                project.modules[currentModuleName].libraries[libraryName] = moduleLibrary
+                currentModule.libraries[libraryName] = moduleLibrary
               }
               break;
 
@@ -335,7 +341,7 @@ public class IdeaProjectLoader implements MacroExpansion {
                 project.warning("Cannot resolve SDK '$name' in module '$currentModuleName'. Embedded javac will be used")
               }
               else {
-                project.modules[currentModuleName].sdk = sdk
+                currentModule.sdk = sdk
                 providedClasspath sdk
               }
               break
@@ -343,7 +349,7 @@ public class IdeaProjectLoader implements MacroExpansion {
             case "inheritedJdk":
               def sdk = project.projectSdk
               if (sdk != null) {
-                project.modules[currentModuleName].sdk = sdk
+                currentModule.sdk = sdk
                 providedClasspath sdk
               }
               break
@@ -361,24 +367,36 @@ public class IdeaProjectLoader implements MacroExpansion {
           }
 
           if (prefix != null && prefix != "") {
-            project.modules[currentModuleName].sourceRootPrefixes[path] = (prefix.replace('.', '/'))
+            currentModule.sourceRootPrefixes[path] = (prefix.replace('.', '/'))
           }
         }
+
         componentTag.content.excludeFolder.each {Node exTag ->
           String path = expandMacro(pathFromUrl(exTag.@url), moduleBasePath)
           exclude path
         }
+
         def languageLevel = componentTag."@LANGUAGE_LEVEL"
         if (languageLevel != null) {
           def ll = convertLanguageLevel(languageLevel)
-          project.modules[currentModuleName]["sourceLevel"] = ll
-          project.modules[currentModuleName]["targetLevel"] = ll
+          currentModule["sourceLevel"] = ll
+          currentModule["targetLevel"] = ll
+        }
+
+        if (componentTag."@inherit-compiler-output" == "true") {
+          File compileOutput = new File(projectOutputPath, "classes")
+          currentModule.outputPath = new File(new File(compileOutput, "production"), currentModuleName).absolutePath
+          currentModule.testOutputPath = new File(new File(compileOutput, "test"), currentModuleName).absolutePath
+        }
+        else {
+          currentModule.outputPath = expandMacro(pathFromUrl(componentTag.output?.first()?.@url), moduleBasePath)
+          currentModule.testOutputPath = expandMacro(pathFromUrl(componentTag."output-test"?.first()?.@url), moduleBasePath)
         }
       }
 
       def facetManagerTag = getComponent(root, "FacetManager")
       if (facetManagerTag != null) {
-        def facetLoader = new FacetLoader(this, project.modules[currentModuleName], moduleBasePath)
+        def facetLoader = new FacetLoader(this, currentModule, moduleBasePath)
         facetLoader.loadFacets(facetManagerTag)
       }
     }
@@ -397,6 +415,7 @@ public class IdeaProjectLoader implements MacroExpansion {
   }
 
   static String pathFromUrl(String url) {
+    if (url == null) return null
     if (url.startsWith("file://")) {
       return url.substring("file://".length())
     }

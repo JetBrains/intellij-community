@@ -81,6 +81,9 @@ class ArtifactBuilder {
 
     project.stage("Building '${artifact.name}' artifact")
     output = getArtifactOutputFolder(artifact)
+    if (output == null) {
+      project.error("Output path for artifact '$artifact.name' is not specified")
+    }
     artifactOutputs[artifact] = output
     preBuildTasks*.perform(artifact, output)
     project.binding.layout.call([output, {
@@ -91,7 +94,11 @@ class ArtifactBuilder {
   }
 
   String getArtifactOutputFolder(Artifact artifact) {
-    return new File(getBaseArtifactsOutput(), suggestFileName(artifact.name)).absolutePath
+    String targetFolder = project.targetFolder
+    if (targetFolder == null) {
+      return artifact.outputPath
+    }
+    return new File(new File(targetFolder, "artifacts"), suggestFileName(artifact.name)).absolutePath
   }
 
   def preBuildTask(String artifactName, Closure task) {
@@ -112,10 +119,6 @@ class ArtifactBuilder {
 
   private static String suggestFileName(String text) {
     return text.replaceAll(/(;|:|\s)/, "_");
-  }
-
-  private String getBaseArtifactsOutput() {
-    return new File(project.targetFolder, "artifacts")
   }
 }
 
