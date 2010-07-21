@@ -5,6 +5,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.util.Processor;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
@@ -55,6 +56,9 @@ public class RenamePyFunctionProcessor extends RenamePsiElementProcessor {
     final PyClass containingClass = function.getContainingClass();
     if (containingClass == null) {
       return function;
+    }
+    if (PyNames.INIT.equals(function.getName())) {
+      return containingClass; 
     }
     final List<PsiElement> superMethods = new ArrayList<PsiElement>(PySuperMethodsSearch.search(function, true).findAll());
     if (superMethods.size() > 0) {

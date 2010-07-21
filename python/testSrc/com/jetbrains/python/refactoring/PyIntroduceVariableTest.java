@@ -2,6 +2,7 @@ package com.jetbrains.python.refactoring;
 
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.refactoring.introduce.variable.VariableIntroduceHandler;
 
@@ -25,19 +26,25 @@ public class PyIntroduceVariableTest extends PyLightFixtureTestCase {
   }
 
   public void testSuggestKeywordArgumentName() {   // PY-1260
-    myFixture.configureByFile(getTestName(true) + ".py");
-    VariableIntroduceHandler handler = new VariableIntroduceHandler();
-    PyExpression expr = PsiTreeUtil.getParentOfType(myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset()), PyExpression.class);
-    final Collection<String> names = handler.getSuggestedNames(expr);
-    assertTrue(names.contains("extra_context"));
+    doTestSuggestions(PyExpression.class, "extra_context");
   }
 
   public void testSuggestArgumentName() {   // PY-1260
+    doTestSuggestions(PyExpression.class, "extra_context");
+  }
+
+  public void testSuggestTypeName() {  // PY-1336
+    doTestSuggestions(PyCallExpression.class, "my_class");
+  }
+
+  private void doTestSuggestions(Class<? extends PyExpression> parentClass, String... expectedNames) {
     myFixture.configureByFile(getTestName(true) + ".py");
     VariableIntroduceHandler handler = new VariableIntroduceHandler();
-    PyExpression expr = PsiTreeUtil.getParentOfType(myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset()), PyExpression.class);
+    PyExpression expr = PsiTreeUtil.getParentOfType(myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset()), parentClass);
     final Collection<String> names = handler.getSuggestedNames(expr);
-    assertTrue(names.contains("extra_context"));
+    for (String expectedName : expectedNames) {
+      assertTrue(names.contains(expectedName));
+    }
   }
 
   private void doTest() {

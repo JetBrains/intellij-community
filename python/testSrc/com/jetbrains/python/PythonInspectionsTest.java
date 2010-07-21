@@ -102,8 +102,7 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   }
 
   public void testPyDictCreationInspection() throws Throwable {
-    LocalInspectionTool inspection = new PyDictCreationInspection();
-    doTest(getTestName(false), inspection);
+    doHighlightingTest(PyDictCreationInspection.class);
   }
 
   public void testPyDeprecatedModulesInspection() throws Throwable {

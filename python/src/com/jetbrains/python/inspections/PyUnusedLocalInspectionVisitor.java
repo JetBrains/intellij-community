@@ -10,6 +10,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveResult;
@@ -219,8 +220,17 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
   }
 
   void registerProblems() {
+    final UnusedLocalFilter[] filters = Extensions.getExtensions(UnusedLocalFilter.EP_NAME);
     // Register problems
     for (PsiElement element : myUnusedElements) {
+      boolean ignoreUnused = false;
+      for (UnusedLocalFilter filter : filters) {
+        if (filter.ignoreUnused(element)) {
+          ignoreUnused = true;
+        }
+      }
+      if (ignoreUnused) continue;
+      
       // Local function
       if (element instanceof PyFunction){
         registerWarning(((PyFunction)element).getNameIdentifier(),
