@@ -33,6 +33,7 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.*;
+import com.intellij.execution.testframework.ui.TestsOutputConsolePrinter;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.Disposable;
@@ -308,15 +309,21 @@ public abstract class TestObject implements JavaCommandLine {
         final String text = event.getText();
         final ConsoleViewContentType consoleViewType = ConsoleViewContentType.getConsoleViewType(outputType);
         final TestProxy currentTest = packetsReceiver.getCurrentTest();
+        final TestsOutputConsolePrinter consolePrinter = consoleView.getPrinter();
+        final Printable printable = new Printable() {
+          public void printOn(final Printer printer) {
+            printer.print(text, consoleViewType);
+          }
+        };
+
         if (currentTest != null) {
-          currentTest.onOutput(text, consoleViewType);
+          if (consoleViewType == ConsoleViewContentType.ERROR_OUTPUT && !consolePrinter.isMarked()) {
+            consolePrinter.mark();
+          }
+          currentTest.addLast(printable);
         }
         else {
-          consoleView.getPrinter().onNewAvailable(new Printable() {
-            public void printOn(final Printer printer) {
-              printer.print(text, consoleViewType);
-            }
-          });
+          consolePrinter.onNewAvailable(printable);
         }
       }
     });

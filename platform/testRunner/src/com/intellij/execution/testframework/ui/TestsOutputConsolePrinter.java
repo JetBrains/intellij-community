@@ -141,4 +141,8 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
       }
     });
   }
+
+  public boolean isMarked() {
+    return myMarkOffset > 0;
+  }
 }

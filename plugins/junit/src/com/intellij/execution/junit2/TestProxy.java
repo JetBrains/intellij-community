@@ -44,9 +44,8 @@ public class TestProxy extends AbstractTestProxy {
   private TestEventsConsumer myEventsConsumer;
   private int myPreviousMagnitude = -1;
   private int myStateTimestamp = 0;
-  private boolean myMarked = false;
 
-//  private ArrayList myChildren = new ArrayList();
+  //  private ArrayList myChildren = new ArrayList();
   private final FilterCache myChildren = new FilterCache();
   private TestProxy myParent = null;
   public static final Filter NOT_LEAF = Filter.LEAF.not();
@@ -57,18 +56,6 @@ public class TestProxy extends AbstractTestProxy {
 
   public String toString() {
     return getInfo().getComment() + "." + getInfo().getName();
-  }
-
-  public void onOutput(final String text, final ConsoleViewContentType contentType) {
-    if (!myMarked && contentType == ConsoleViewContentType.ERROR_OUTPUT) {
-      myPrinter.mark();
-      myMarked = true;
-    }
-    addLast(new Printable() {
-      public void printOn(final Printer printer) {
-        printer.print(text, contentType);
-      }
-    });
   }
 
   public void printOn(final Printer printer) {
