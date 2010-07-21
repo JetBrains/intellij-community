@@ -33,7 +33,12 @@ public class TreeRootNode extends TestProxy
         return inProgress;
     }
 
-    public void setInProgress(boolean inProgress) {
+  @Override
+  public boolean isRoot() {
+    return true;
+  }
+
+  public void setInProgress(boolean inProgress) {
         this.inProgress = inProgress;
     }
 

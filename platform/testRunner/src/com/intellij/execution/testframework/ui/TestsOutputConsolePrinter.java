@@ -25,7 +25,7 @@ import com.intellij.openapi.Disposable;
 public class TestsOutputConsolePrinter implements Printer, Disposable {
   private final ConsoleView myConsole;
   private final TestConsoleProperties myProperties;
-  private ChangingPrintable myCurrentPrintable = ChangingPrintable.DEAF;
+  private AbstractTestProxy myCurrentPrintable;
   private Printer myOutput;
 
   // After pause action has been invoked -  all output will be redirected to special
@@ -91,19 +91,18 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
    * This method must be invoked in Event Dispatch Thread
    * @param test Selected test
    */
-  public void updateOnTestSelected(final PrintableTestProxy test) {
+  public void updateOnTestSelected(final AbstractTestProxy test) {
     if (myCurrentPrintable == test) {
       return;
     }
-    myCurrentPrintable.setPrintLinstener(DEAF);
     myConsole.clear();
     myMarkOffset = 0;
     if (test == null) {
-      myCurrentPrintable = ChangingPrintable.DEAF;
+      myCurrentPrintable = null;
       return;
     }
     myCurrentPrintable = test;
-    myCurrentPrintable.setPrintLinstener(this);
+    myCurrentPrintable.setPrintListener(this);
     if (test.isRoot()) {
       myOutputStorage.printOn(this);
     }
@@ -132,11 +131,7 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
   }
 
   public boolean canPause() {
-    if (myCurrentPrintable instanceof AbstractTestProxy) {
-      final AbstractTestProxy test = (AbstractTestProxy)myCurrentPrintable;
-      return test.isInProgress();
-    }
-    return false;
+    return myCurrentPrintable != null ? myCurrentPrintable.isInProgress() : false;
   }
 
   protected void scrollToBeginning() {

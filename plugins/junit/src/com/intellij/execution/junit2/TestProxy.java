@@ -22,8 +22,6 @@ import com.intellij.execution.junit2.info.TestInfo;
 import com.intellij.execution.junit2.states.Statistics;
 import com.intellij.execution.junit2.states.TestState;
 import com.intellij.execution.testframework.*;
-import com.intellij.execution.testframework.ui.PrintableTestProxy;
-import com.intellij.execution.testframework.ui.TestsOutputConsolePrinter;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -36,12 +34,11 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-public class TestProxy extends CompositePrintable implements PrintableTestProxy, ChangingPrintable {
+public class TestProxy extends AbstractTestProxy {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.TestProxy");
 
   private final TestInfo myInfo;
   private TestState myState = TestState.DEFAULT;
-  private Printer myPrinter = Printer.DEAF;
   private final TestProxyListenersNotifier myNotifier = new TestProxyListenersNotifier();
   private Statistics myStatistics = new Statistics();
   private TestEventsConsumer myEventsConsumer;
@@ -72,15 +69,6 @@ public class TestProxy extends CompositePrintable implements PrintableTestProxy,
         printer.print(text, contentType);
       }
     });
-  }
-
-  public void addLast(final Printable printable) {
-    super.addLast(printable);
-    fireOnNewPrintable(printable);
-  }
-
-  private void fireOnNewPrintable(final Printable printable) {
-    myPrinter.onNewAvailable(printable);
   }
 
   public void printOn(final Printer printer) {
@@ -115,10 +103,6 @@ public class TestProxy extends CompositePrintable implements PrintableTestProxy,
 
   public int getStateTimestamp() {
     return myStateTimestamp;
-  }
-
-  public TestProxy getChildAt(final int childIndex) {
-    return myChildren.getList().get(childIndex);
   }
 
   public int getChildCount() {
@@ -181,22 +165,12 @@ public class TestProxy extends CompositePrintable implements PrintableTestProxy,
       return;//todo throw new RuntimeException("Test: "+child + " already has parent: " + child.getParent());
     myChildren.add(child);
     child.myParent = this;
-    if (myPrinter != Printer.DEAF) {
-      child.setPrintLinstener(myPrinter);
-      child.fireOnNewPrintable(child);
-    }
+    setChildPrinter(child);
     pullEvent(new NewChildEvent(this, child));
     getState().changeStateAfterAddingChildTo(this, child);
     myNotifier.onChildAdded(this, child);
   }
 
-  public void setPrintLinstener(final Printer printer) {
-    myPrinter = printer;
-    for (Iterator iterator = myChildren.iterator(); iterator.hasNext();) {
-      final TestProxy testProxy = (TestProxy) iterator.next();
-      testProxy.setPrintLinstener(printer);
-    }
-  }
 
   public TestInfo getInfo() {
     return myInfo;

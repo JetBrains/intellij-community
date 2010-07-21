@@ -23,7 +23,6 @@ import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.sm.SMRunnerUtil;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
-import com.intellij.execution.testframework.ui.PrintableTestProxy;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.openapi.application.ModalityState;
 import org.jetbrains.annotations.NotNull;
@@ -88,7 +87,7 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
         // Do nothing
       }
 
-      public void onSelected(@Nullable final PrintableTestProxy selectedTestProxy,
+      public void onSelected(@Nullable final SMTestProxy selectedTestProxy,
                              @NotNull final TestResultsViewer viewer,
                              @NotNull final TestFrameworkRunningModel model) {
         if (selectedTestProxy == null) {

@@ -19,8 +19,9 @@ package com.intellij.execution.junit2.states;
 import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.segments.ObjectReader;
 import com.intellij.execution.junit2.ui.Formatters;
+import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.CompositePrintable;
 import com.intellij.execution.testframework.Printer;
-import com.intellij.execution.testframework.ui.PrintableTestProxy;
 import com.intellij.execution.ui.ConsoleViewContentType;
 
 public class SkippedState extends ReadableState {
@@ -31,7 +32,7 @@ public class SkippedState extends ReadableState {
   }
 
   public void printOn(final Printer printer) {
-    printer.print(Formatters.printTest(myPeformedTest) + ":" + PrintableTestProxy.NEW_LINE,
+    printer.print(Formatters.printTest(myPeformedTest) + ":" + CompositePrintable.NEW_LINE,
                   ConsoleViewContentType.SYSTEM_OUTPUT);
     myPeformedTest.printOn(printer);
   }

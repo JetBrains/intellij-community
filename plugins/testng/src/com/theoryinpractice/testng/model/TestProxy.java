@@ -21,6 +21,7 @@ import com.intellij.execution.stacktrace.StackTraceLine;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.Printable;
+import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -42,7 +43,7 @@ import java.util.List;
 /**
  * @author Hani Suleiman Date: Jul 28, 2005 Time: 10:52:51 PM
  */
-public class TestProxy implements AbstractTestProxy {
+public class TestProxy extends AbstractTestProxy {
   private final List<TestProxy> results = new ArrayList<TestProxy>();
   private TestResultMessage resultMessage;
   private String name;
@@ -61,10 +62,6 @@ public class TestProxy implements AbstractTestProxy {
 
   public String getName() {
     return name;
-  }
-
-  public void setName(String name) {
-    this.name = name;
   }
 
   @Nullable
@@ -202,17 +199,6 @@ public class TestProxy implements AbstractTestProxy {
     return EditSourceUtil.getDescriptor(location.getPsiElement());
   }
 
-  public TestProxy[] getPathFromRoot() {
-    ArrayList<TestProxy> arraylist = new ArrayList<TestProxy>();
-    TestProxy testproxy = this;
-    do {
-      arraylist.add(testproxy);
-    }
-    while ((testproxy = testproxy.getParent()) != null);
-    Collections.reverse(arraylist);
-    return arraylist.toArray(new TestProxy[arraylist.size()]);
-  }
-
   @Override
   public String toString() {
     return name + ' ' + results;
@@ -258,6 +244,11 @@ public class TestProxy implements AbstractTestProxy {
     return total;
   }
 
+  @Override
+  public boolean isRoot() {
+    return false;
+  }
+
   public int getChildCount() {
     return results.size();
   }
@@ -273,15 +264,6 @@ public class TestProxy implements AbstractTestProxy {
       if (firstDefect != null) return firstDefect;
     }
     return null;
-  }
-
-  public boolean childExists(String child) {
-    for (int count = 0; count < getChildCount(); count++) {
-      if (child.equals(getChildAt(count).getName())) {
-        return true;
-      }
-    }
-    return false;
   }
 
   public int getExceptionMark() {
@@ -308,5 +290,17 @@ public class TestProxy implements AbstractTestProxy {
 
   public void setTearDownFailure(boolean tearDownFailure) {
     myTearDownFailure = tearDownFailure;
+  }
+
+  @Override
+  public void printOn(Printer printer) {//todo
+  }
+
+   @Override
+  public void setPrintListener(Printer printer) {// todo
+  }
+
+  @Override
+  public void fireOnNewPrintable(Printable printable) {// todo
   }
 }

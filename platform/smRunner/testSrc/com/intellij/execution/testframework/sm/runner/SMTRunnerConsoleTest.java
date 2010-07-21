@@ -86,7 +86,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
   }
 
   public void testPrintTestProxy() {
-    mySimpleTest.setPrintLinstener(myMockResetablePrinter);
+    mySimpleTest.setPrintListener(myMockResetablePrinter);
     mySimpleTest.addLast(new Printable() {
       public void printOn(final Printer printer) {
         printer.print("std out", ConsoleViewContentType.NORMAL_OUTPUT);
@@ -98,7 +98,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
   }
 
   public void testAddStdOut() {
-    mySimpleTest.setPrintLinstener(myMockResetablePrinter);
+    mySimpleTest.setPrintListener(myMockResetablePrinter);
 
     mySimpleTest.addStdOutput("one", ProcessOutputTypes.STDOUT);
     assertStdOutput(myMockResetablePrinter, "one");
@@ -114,14 +114,14 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
   }
 
   public void testAddStdSys() {
-    mySimpleTest.setPrintLinstener(myMockResetablePrinter);
+    mySimpleTest.setPrintListener(myMockResetablePrinter);
 
     mySimpleTest.addSystemOutput("sys");
     assertAllOutputs(myMockResetablePrinter, "", "", "sys");
   }
 
   public void testPrintTestProxy_Order() {
-    mySimpleTest.setPrintLinstener(myMockResetablePrinter);
+    mySimpleTest.setPrintListener(myMockResetablePrinter);
 
     sendToTestProxyStdOut(mySimpleTest, "first ");
     sendToTestProxyStdOut(mySimpleTest, "second");
@@ -132,7 +132,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
   public void testSetPrintListener_ForExistingChildren() {
     mySuite.addChild(mySimpleTest);
 
-    mySuite.setPrintLinstener(myMockResetablePrinter);
+    mySuite.setPrintListener(myMockResetablePrinter);
 
     sendToTestProxyStdOut(mySimpleTest, "child ");
     sendToTestProxyStdOut(mySuite, "root");
@@ -141,7 +141,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
   }
 
   public void testSetPrintListener_OnNewChild() {
-    mySuite.setPrintLinstener(myMockResetablePrinter);
+    mySuite.setPrintListener(myMockResetablePrinter);
 
     sendToTestProxyStdOut(mySuite, "root ");
 
@@ -299,7 +299,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
 
     myEventsProcessor.onSuiteStarted("suite", null);
     final SMTestProxy suite = myEventsProcessor.getCurrentSuite();
-    suite.setPrintLinstener(myMockResetablePrinter);
+    suite.setPrintListener(myMockResetablePrinter);
     myEventsProcessor.onError("error msg:suite", "method1:1\nmethod2:2");
 
     assertAllOutputs(myMockResetablePrinter, "", "\n" +
@@ -387,13 +387,13 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
   }
 
   public void testOnUncapturedOutput_BeforeProcessStarted() {
-    myRootSuite.setPrintLinstener(myMockResetablePrinter);
+    myRootSuite.setPrintListener(myMockResetablePrinter);
 
     assertOnUncapturedOutput();
   }
 
   public void testOnUncapturedOutput_BeforeFirstSuiteStarted() {
-    myRootSuite.setPrintLinstener(myMockResetablePrinter);
+    myRootSuite.setPrintListener(myMockResetablePrinter);
 
     myEventsProcessor.onStartTesting();
     assertOnUncapturedOutput();
@@ -405,7 +405,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     myEventsProcessor.onSuiteStarted("my suite", null);
     final SMTestProxy mySuite = myEventsProcessor.getCurrentSuite();
     assertTrue(mySuite != myRootSuite);
-    mySuite.setPrintLinstener(myMockResetablePrinter);
+    mySuite.setPrintListener(myMockResetablePrinter);
 
     assertOnUncapturedOutput();
   }
@@ -476,7 +476,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     myEventsProcessor.onTestStarted(testName, null);
     final SMTestProxy proxy =
         myEventsProcessor.getProxyByFullTestName(myEventsProcessor.getFullTestName(testName));
-    proxy.setPrintLinstener(myMockResetablePrinter);
+    proxy.setPrintListener(myMockResetablePrinter);
     return proxy;
   }
 
