@@ -1,9 +1,19 @@
 package com.jetbrains.python.refactoring.rename;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
+import com.intellij.util.Processor;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFunction;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author yole
@@ -32,5 +42,28 @@ public class RenamePyClassProcessor extends RenamePsiElementProcessor {
   @Override
   public void setToSearchForTextOccurrences(PsiElement element, boolean enabled) {
     PyCodeInsightSettings.getInstance().RENAME_SEARCH_NON_CODE_FOR_CLASS = enabled;
+  }
+
+  @NotNull
+  @Override
+  public Collection<PsiReference> findReferences(final PsiElement element) {
+    if (element instanceof PyClass) {
+      final PyFunction initMethod = ((PyClass)element).findMethodByName(PyNames.INIT, true);
+      if (initMethod != null) {
+        final List<PsiReference> allRefs = new ArrayList<PsiReference>();
+        allRefs.addAll(super.findReferences(element));
+        ReferencesSearch.search(initMethod).forEach(new Processor<PsiReference>() {
+          @Override
+          public boolean process(PsiReference psiReference) {
+            if (psiReference.getCanonicalText().equals(((PyClass)element).getName())) {
+              allRefs.add(psiReference);
+            }
+            return true;
+          }
+        });
+        return allRefs;
+      }
+    }
+    return super.findReferences(element);
   }
 }
