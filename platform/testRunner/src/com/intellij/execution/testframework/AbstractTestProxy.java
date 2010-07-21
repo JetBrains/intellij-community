@@ -21,17 +21,16 @@
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.Location;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
-import org.jetbrains.annotations.NonNls;
 
-import java.util.Iterator;
 import java.util.List;
 
 public abstract class AbstractTestProxy extends CompositePrintable {
   public static final DataKey<AbstractTestProxy> DATA_KEY = DataKey.create("testProxy");
-  protected Printer myPrinter = Printer.DEAF;
+  protected Printer myPrinter = null;
 
   public abstract boolean isInProgress();
 
@@ -60,22 +59,16 @@ public abstract class AbstractTestProxy extends CompositePrintable {
 
   public abstract List<? extends AbstractTestProxy> getAllTests();
 
-  public abstract boolean isRoot();
-
-  public void setChildPrinter(AbstractTestProxy child) {
-    if (myPrinter != Printer.DEAF) {
-      child.setPrintListener(myPrinter);
+  public void fireOnNewPrintable(final Printable printable) {
+    if (myPrinter != null) {
+      myPrinter.onNewAvailable(printable);
     }
   }
 
-  public void fireOnNewPrintable(final Printable printable) {
-    myPrinter.onNewAvailable(printable);
-  }
-
-  public void setPrintListener(final Printer printer) {
+  public void setPrinter(final Printer printer) {
     myPrinter = printer;
     for (AbstractTestProxy testProxy : getChildren()) {
-      testProxy.setPrintListener(printer);
+      testProxy.setPrinter(printer);
     }
   }
 

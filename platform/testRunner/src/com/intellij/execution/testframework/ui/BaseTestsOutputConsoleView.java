@@ -35,10 +35,10 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
   protected TestConsoleProperties myProperties;
   protected TestResultsPanel myTestResultsPanel;
 
-  public BaseTestsOutputConsoleView(final TestConsoleProperties properties) {
+  public BaseTestsOutputConsoleView(final TestConsoleProperties properties, final AbstractTestProxy unboundOutputRoot) {
     myProperties = properties;
     myConsole = TextConsoleBuilderFactory.getInstance().createBuilder(properties.getProject(), myProperties.getScope()).getConsole();
-    myPrinter = new TestsOutputConsolePrinter(myConsole, properties);
+    myPrinter = new TestsOutputConsolePrinter(myConsole, properties, unboundOutputRoot);
     myProperties.setConsole(this);
 
     Disposer.register(this, myProperties);

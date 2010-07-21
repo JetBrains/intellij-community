@@ -65,7 +65,7 @@ public class TestNGConsoleView extends BaseTestsOutputConsoleView {
   public TestNGConsoleView(TestNGConfiguration config,
                            final RunnerSettings runnerSettings,
                            final ConfigurationPerRunnerSettings configurationPerRunnerSettings) {
-    super(new TestNGConsoleProperties(config));
+    super(new TestNGConsoleProperties(config), null);
     myConfiguration = config;
     myRunnerSettings = runnerSettings;
     myConfigurationPerRunnerSettings = configurationPerRunnerSettings;

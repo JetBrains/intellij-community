@@ -149,7 +149,7 @@ public class SMTestProxy extends AbstractTestProxy {
     child.setParent(this);
     // if parent is being printed then all childs output
     // should be also send to the same printer
-    setChildPrinter(child);
+    child.setPrinter(myPrinter);
   }
 
   public String getName() {
@@ -322,10 +322,6 @@ public class SMTestProxy extends AbstractTestProxy {
 
   public boolean wasLaunched() {
     return myState.wasLaunched();
-  }
-
-  public boolean isRoot() {
-    return getParent() == null;
   }
 
 

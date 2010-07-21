@@ -27,13 +27,13 @@ import com.intellij.execution.junit2.ui.JUnitTreeConsoleView;
 import com.intellij.execution.junit2.ui.TestsPacketsReceiver;
 import com.intellij.execution.junit2.ui.actions.RerunFailedTestsAction;
 import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
+import com.intellij.execution.junit2.ui.model.RootTestInfo;
 import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.*;
-import com.intellij.execution.testframework.ui.TestsOutputConsolePrinter;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.Disposable;
@@ -259,8 +259,9 @@ public abstract class TestObject implements JavaCommandLine {
     for(final RunConfigurationExtension ext: Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
       ext.handleStartProcess(myConfiguration, handler);
     }
+    final TestProxy unboundOutputRoot = new TestProxy(new RootTestInfo());
     final JUnitConsoleProperties consoleProperties = new JUnitConsoleProperties(myConfiguration);
-    final JUnitTreeConsoleView consoleView = new JUnitTreeConsoleView(consoleProperties, getRunnerSettings(), getConfigurationSettings());
+    final JUnitTreeConsoleView consoleView = new JUnitTreeConsoleView(consoleProperties, getRunnerSettings(), getConfigurationSettings(), unboundOutputRoot);
     consoleView.initUI();
     consoleView.attachToProcess(handler);
 
@@ -268,6 +269,7 @@ public abstract class TestObject implements JavaCommandLine {
       @Override
       public void notifyStart(TestProxy root) {
         super.notifyStart(root);
+        unboundOutputRoot.addChild(root);
         final JUnitRunningModel model = getModel();
         if (model != null) {
           handler.getOut().setDispatchListener(model.getNotifier());
@@ -309,7 +311,6 @@ public abstract class TestObject implements JavaCommandLine {
         final String text = event.getText();
         final ConsoleViewContentType consoleViewType = ConsoleViewContentType.getConsoleViewType(outputType);
         final TestProxy currentTest = packetsReceiver.getCurrentTest();
-        final TestsOutputConsolePrinter consolePrinter = consoleView.getPrinter();
         final Printable printable = new Printable() {
           public void printOn(final Printer printer) {
             printer.print(text, consoleViewType);
@@ -317,13 +318,10 @@ public abstract class TestObject implements JavaCommandLine {
         };
 
         if (currentTest != null) {
-          if (consoleViewType == ConsoleViewContentType.ERROR_OUTPUT && !consolePrinter.isMarked()) {
-            consolePrinter.mark();
-          }
           currentTest.addLast(printable);
         }
         else {
-          consolePrinter.onNewAvailable(printable);
+          unboundOutputRoot.addLast(printable);
         }
       }
     });

@@ -36,7 +36,6 @@ import org.testng.remote.strprotocol.MessageHelper;
 import org.testng.remote.strprotocol.TestResultMessage;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -244,11 +243,6 @@ public class TestProxy extends AbstractTestProxy {
     return total;
   }
 
-  @Override
-  public boolean isRoot() {
-    return false;
-  }
-
   public int getChildCount() {
     return results.size();
   }
@@ -290,17 +284,5 @@ public class TestProxy extends AbstractTestProxy {
 
   public void setTearDownFailure(boolean tearDownFailure) {
     myTearDownFailure = tearDownFailure;
-  }
-
-  @Override
-  public void printOn(Printer printer) {//todo
-  }
-
-   @Override
-  public void setPrintListener(Printer printer) {// todo
-  }
-
-  @Override
-  public void fireOnNewPrintable(Printable printable) {// todo
   }
 }

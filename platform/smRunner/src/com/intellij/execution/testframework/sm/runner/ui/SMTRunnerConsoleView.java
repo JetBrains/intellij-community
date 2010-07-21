@@ -52,7 +52,7 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
   public SMTRunnerConsoleView(final TestConsoleProperties consoleProperties, final RunnerSettings runnerSettings,
                               final ConfigurationPerRunnerSettings configurationPerRunnerSettings,
                               @Nullable final String splitterProperty) {
-    super(consoleProperties);
+    super(consoleProperties, null);
     myRunnerSettings = runnerSettings;
     myConfigurationPerRunnerSettings = configurationPerRunnerSettings;
     mySplitterProperty = splitterProperty;
@@ -109,6 +109,5 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
   }
 
   public void attachToProcess(final ProcessHandler processHandler) {
-    getPrinter().setCollectOutput(false);
   }
 }

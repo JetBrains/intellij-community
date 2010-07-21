@@ -23,12 +23,4 @@ public interface Printer {
   void onNewAvailable(Printable printable);
   void printHyperlink(String text, HyperlinkInfo info);
   void mark();
-
-
-  Printer DEAF = new Printer() {
-    public void print(final String text, final ConsoleViewContentType contentType) {}
-    public void onNewAvailable(final Printable printable) {}
-    public void printHyperlink(final String text, final HyperlinkInfo info) {}
-    public void mark() {}
-  };
 }

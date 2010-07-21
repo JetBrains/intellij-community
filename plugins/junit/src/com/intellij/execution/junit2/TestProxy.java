@@ -22,7 +22,6 @@ import com.intellij.execution.junit2.info.TestInfo;
 import com.intellij.execution.junit2.states.Statistics;
 import com.intellij.execution.junit2.states.TestState;
 import com.intellij.execution.testframework.*;
-import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
@@ -60,7 +59,6 @@ public class TestProxy extends AbstractTestProxy {
 
   public void printOn(final Printer printer) {
     super.printOn(printer);
-    CompositePrintable.printAllOn(myChildren.getList(), printer);
     myState.printOn(printer);
   }
 
@@ -152,7 +150,8 @@ public class TestProxy extends AbstractTestProxy {
       return;//todo throw new RuntimeException("Test: "+child + " already has parent: " + child.getParent());
     myChildren.add(child);
     child.myParent = this;
-    setChildPrinter(child);
+    addLast(child);
+    child.setPrinter(myPrinter);
     pullEvent(new NewChildEvent(this, child));
     getState().changeStateAfterAddingChildTo(this, child);
     myNotifier.onChildAdded(this, child);
@@ -258,10 +257,6 @@ public class TestProxy extends AbstractTestProxy {
     } while ((test = test.getParent()) != null);
     Collections.reverse(parents);
     return parents.toArray(new TestProxy[parents.size()]);
-  }
-
-  public boolean isRoot() {
-    return getParent() == null;
   }
 
 }

@@ -20,11 +20,9 @@ import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.ui.ConsoleViewContentType;
 
 public class DeferingPrinter implements Printer {
-  private final boolean myCollectOutput;
   private CompositePrintable myCompositePrintable;
 
-  public DeferingPrinter(final boolean collectOutput) {
-    myCollectOutput = collectOutput;
+  public DeferingPrinter() {
     myCompositePrintable = new CompositePrintable();
   }
 
@@ -48,9 +46,8 @@ public class DeferingPrinter implements Printer {
     myCompositePrintable.addLast(new PrinterMark());
   }
 
-  public void printOn(final Printer printer) {
+  public void printAndForget(final Printer printer) {
     myCompositePrintable.printOn(printer);
-    if (!myCollectOutput)
-      myCompositePrintable.clear();
+    myCompositePrintable.clear();
   }
 }
