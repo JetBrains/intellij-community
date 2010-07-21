@@ -17,7 +17,6 @@
     <orderEntry type="library" name="XmlBeans" level="project" />
     <orderEntry type="module" module-name="platform-resources" />
     <orderEntry type="module" module-name="vcs-api" />
-    <orderEntry type="module" module-name="dom-impl" />
   </component>
   <component name="copyright">
     <Base>
