@@ -143,20 +143,27 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
 
   private static File checkDataFiles(final File file) {
     if (!file.exists()) {
-      final File dataFile = getDataFile(file);
-      final String baseName = dataFile.getName();
-      final File[] files = dataFile.getParentFile().listFiles(new FileFilter() {
-        public boolean accept(final File pathname) {
-          return pathname.getName().startsWith(baseName);
-        }
-      });
-      if (files != null) {
-        for (File f : files) {
-          FileUtil.delete(f);
-        }
-      }
+      deleteFiles(file);
     }
     return file;
+  }
+
+  public void deleteFiles() {
+    deleteFiles(myFile);
+  }
+
+  private static void deleteFiles(File baseFile) {
+    final String baseName = baseFile.getName();
+    final File[] files = baseFile.getParentFile().listFiles(new FileFilter() {
+      public boolean accept(final File pathname) {
+        return pathname.getName().startsWith(baseName);
+      }
+    });
+    if (files != null) {
+      for (File f : files) {
+        FileUtil.delete(f);
+      }
+    }
   }
 
   private static File getDataFile(final File file) {
