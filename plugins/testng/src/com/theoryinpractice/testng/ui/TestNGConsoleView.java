@@ -113,18 +113,17 @@ public class TestNGConsoleView extends BaseTestsOutputConsoleView {
 
       final String stackTrace = result.getStackTrace();
       if (stackTrace != null && stackTrace.length() > 10) {
+        exceptionMark = currentTest.getCurrentSize();
         //trim useless crud from stacktrace
         String trimmed = trimStackTrace(stackTrace);
         List<Printable> printables = getPrintables(result, trimmed);
         for (Printable printable : printables) {
           currentTest.addLast(printable);
         }
-        exceptionMark = printables.size();
       }
       final TestProxy failedToStart = testNGResults.getFailedToStart();
       if (failedToStart != null) {
         currentTest.addChild(failedToStart);
-        exceptionMark += failedToStart.getExceptionMark();
       }
       testNGResults.addTestResult(result, exceptionMark);
       myExceptionalMark = -1;

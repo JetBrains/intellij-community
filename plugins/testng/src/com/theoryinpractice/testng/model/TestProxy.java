@@ -254,6 +254,14 @@ public class TestProxy extends AbstractTestProxy {
     myExceptionMark = exceptionMark;
   }
 
+  @Override
+  public void printOn(Printer printer) {
+    for (int i = 0; i < myNestedPrintables.size(); i++) {
+      if (i == myExceptionMark && i > 0) printer.mark();
+      myNestedPrintables.get(i).printOn(printer);
+    }
+  }
+
   public boolean isInterrupted() {
     return !isInProgress() && inProgress;
   }

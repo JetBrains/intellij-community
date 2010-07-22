@@ -36,6 +36,10 @@ public class CompositePrintable implements Printable {
     myNestedPrintables.clear();
   }
 
+  public int getCurrentSize() {
+    return myNestedPrintables.size();
+  }
+
   public static <T extends Printable> void printAllOn(final List<T> printables, final Printer console) {
     for (final T printable : printables) {
       printable.printOn(console);
