@@ -29,6 +29,8 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.ClassLoaderUtil;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -232,6 +234,14 @@ public class FileTemplateUtil{
                                               @NonNls @Nullable final String fileName,
                                               @Nullable Properties props,
                                               @NotNull final PsiDirectory directory) throws Exception {
+    return createFromTemplate(template, fileName, props, directory, null);
+  }
+
+  public static PsiElement createFromTemplate(@NotNull final FileTemplate template,
+                                              @NonNls @Nullable final String fileName,
+                                              @Nullable Properties props,
+                                              @NotNull final PsiDirectory directory,
+                                              @Nullable ClassLoader classLoader) throws Exception {
     @NotNull final Project project = directory.getProject();
     if (props == null) {
       props = FileTemplateManager.getInstance().getDefaultProperties();
@@ -256,7 +266,15 @@ public class FileTemplateUtil{
         props.setProperty(FileTemplate.ATTRIBUTE_PACKAGE_NAME, FileTemplate.ATTRIBUTE_PACKAGE_NAME);
       }
     }
-    String mergedText = template.getText(props);
+
+    final Properties props_ = props;
+    String mergedText = ClassLoaderUtil.runWithClassLoader(classLoader != null ? classLoader : FileTemplateUtil.class.getClassLoader(),
+                                                           new ThrowableComputable<String, IOException>() {
+                                                             @Override
+                                                             public String compute() throws IOException {
+                                                               return template.getText(props_);
+                                                             }
+                                                           });
     final String templateText = StringUtil.convertLineSeparators(mergedText);
     final Exception[] commandException = new Exception[1];
     final PsiElement[] result = new PsiElement[1];
