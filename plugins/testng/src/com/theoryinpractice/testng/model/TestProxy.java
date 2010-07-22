@@ -154,33 +154,9 @@ public class TestProxy extends AbstractTestProxy {
     return new PsiLocation<PsiElement>(project, element);
   }
 
+  @Nullable
   public Navigatable getDescriptor(final Location location) {
     if (location == null) return null;
-    if (isNotPassed()) {
-      final PsiLocation<?> psiLocation = location.toPsiLocation();
-      final PsiClass containingClass = psiLocation.getParentElement(PsiClass.class);
-      if (containingClass != null) {
-        String containingMethod = null;
-        for (Iterator<Location<PsiMethod>> iterator = psiLocation.getAncestors(PsiMethod.class, false); iterator.hasNext();) {
-          final PsiMethod psiMethod = iterator.next().getPsiElement();
-          if (containingClass.equals(psiMethod.getContainingClass())) containingMethod = psiMethod.getName();
-        }
-        if (containingMethod != null) {
-          final String qualifiedName = containingClass.getQualifiedName();
-          for (Printable aStackTrace : myNestedPrintables) {
-            if (aStackTrace instanceof TestNGConsoleView.Chunk) {
-              final String[] stackTrace = new LineTokenizer(((TestNGConsoleView.Chunk)aStackTrace).text).execute();
-              for (String line : stackTrace) {
-                final StackTraceLine stackLine = new StackTraceLine(containingClass.getProject(), line);
-                if (containingMethod.equals(stackLine.getMethodName()) && Comparing.strEqual(qualifiedName, stackLine.getClassName())) {
-                  return stackLine.getOpenFileDescriptor(containingClass.getContainingFile().getVirtualFile());
-                }
-              }
-            }
-          }
-        }
-      }
-    }
     return EditSourceUtil.getDescriptor(location.getPsiElement());
   }
 
