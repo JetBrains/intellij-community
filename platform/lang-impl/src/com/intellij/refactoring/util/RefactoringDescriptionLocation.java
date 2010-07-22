@@ -25,7 +25,7 @@ import com.intellij.psi.ElementDescriptionProvider;
 public class RefactoringDescriptionLocation extends ElementDescriptionLocation {
   private final boolean myWithParent;
 
-  private RefactoringDescriptionLocation(boolean withParent) {
+  protected RefactoringDescriptionLocation(boolean withParent) {
     myWithParent = withParent;
   }
 
