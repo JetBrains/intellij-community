@@ -1,0 +1,20 @@
+PsiJavaFile:TypeParams7.java
+  PsiTypeParameterList
+    PsiJavaToken:LT('<')
+    PsiTypeParameter:T
+      PsiIdentifier:T('T')
+      PsiWhiteSpace(' ')
+      PsiKeyword:extends('extends')
+      PsiWhiteSpace(' ')
+      PsiElement(EXTENDS_BOUND_LIST)
+        PsiJavaCodeReferenceElement:X
+          PsiIdentifier:X('X')
+          PsiReferenceParameterList
+            <empty list>
+    PsiJavaToken:COMMA(',')
+    PsiWhiteSpace(' ')
+    PsiTypeParameter:Y
+      PsiIdentifier:Y('Y')
+      PsiElement(EXTENDS_BOUND_LIST)
+        <empty list>
+    PsiJavaToken:GT('>')

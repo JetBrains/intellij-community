@@ -1,0 +1,3 @@
+PsiJavaFile:Type0.java
+  PsiTypeElement:int
+    PsiKeyword:int('int')

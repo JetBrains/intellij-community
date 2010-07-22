@@ -29,8 +29,15 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class JavaStubElementType<StubT extends StubElement, PsiT extends PsiElement> extends IStubElementType<StubT, PsiT> {
+  private final boolean myLeftBound;
+
   protected JavaStubElementType(@NotNull @NonNls final String debugName) {
+    this(debugName, false);
+  }
+
+  protected JavaStubElementType(@NotNull @NonNls final String debugName, final boolean leftBound) {
     super(debugName, StdFileTypes.JAVA != null ? StdFileTypes.JAVA.getLanguage() : null);
+    myLeftBound = leftBound;
   }
 
   public String getExternalId() {
@@ -47,4 +54,9 @@ public abstract class JavaStubElementType<StubT extends StubElement, PsiT extend
   }
 
   public abstract PsiT createPsi(ASTNode node);
+
+  @Override
+  public boolean isLeftBound() {
+    return myLeftBound;
+  }
 }

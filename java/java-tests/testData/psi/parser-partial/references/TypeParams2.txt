@@ -1,0 +1,9 @@
+PsiJavaFile:TypeParams2.java
+  PsiTypeParameterList
+    PsiJavaToken:LT('<')
+    PsiTypeParameter:T
+      PsiIdentifier:T('T')
+      PsiElement(EXTENDS_BOUND_LIST)
+        <empty list>
+    PsiErrorElement:'>' expected.
+      <empty list>

@@ -1,0 +1,10 @@
+PsiJavaFile:Or1.java
+  PsiBinaryExpression:a |
+    PsiReferenceExpression:a
+      PsiReferenceParameterList
+        <empty list>
+      PsiIdentifier:a('a')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:OR('|')
+    PsiErrorElement:Expression expected
+      <empty list>

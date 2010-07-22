@@ -1,0 +1,26 @@
+PsiJavaFile:FirstNameMissed.java
+  PsiAnnotation
+    PsiJavaToken:AT('@')
+    PsiJavaCodeReferenceElement:Anno
+      PsiIdentifier:Anno('Anno')
+      PsiReferenceParameterList
+        <empty list>
+    PsiAnnotationParameterList
+      PsiJavaToken:LPARENTH('(')
+      PsiNameValuePair
+        PsiReferenceExpression:value1
+          PsiReferenceParameterList
+            <empty list>
+          PsiIdentifier:value1('value1')
+      PsiErrorElement:Annotation attribute must be of the form 'name=value'
+        <empty list>
+      PsiJavaToken:COMMA(',')
+      PsiWhiteSpace(' ')
+      PsiNameValuePair
+        PsiIdentifier:param2('param2')
+        PsiJavaToken:EQ('=')
+        PsiReferenceExpression:value2
+          PsiReferenceParameterList
+            <empty list>
+          PsiIdentifier:value2('value2')
+      PsiJavaToken:RPARENTH(')')
