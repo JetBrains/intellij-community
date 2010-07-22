@@ -192,6 +192,7 @@ public class TestProxy extends AbstractTestProxy {
   public void addChild(TestProxy proxy) {
     results.add(proxy);
     proxy.setParent(this);
+    proxy.setPrinter(myPrinter);
     addLast(proxy);
   }
 
