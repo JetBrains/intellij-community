@@ -33,6 +33,7 @@ import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.ui.table.TableView;
@@ -55,7 +56,6 @@ import java.awt.event.MouseEvent;
 import java.text.NumberFormat;
 import java.util.*;
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class TestNGResults extends TestResultsPanel implements TestFrameworkRunningModel {
@@ -77,7 +77,6 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
   private TestTreeBuilder treeBuilder;
   private Animator animator;
 
-  private final Pattern packagePattern = Pattern.compile("(.*)\\.(.*)");
   private final TreeRootNode rootNode;
   private static final String NO_PACKAGE = "No Package";
   private TestNGResults.OpenSourceSelectionListener openSourceListener;
@@ -179,15 +178,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
   }
 
   public TestProxy testStarted(TestResultMessage result) {
-    // TODO This should be an action button which rebuilds the tree when toggled.
-    boolean flattenPackages = true;
-    TestProxy classNode;
-    if (flattenPackages) {
-      classNode = getPackageClassNodeFor(result);
-    }
-    else {
-      classNode = getClassNodeFor(result);
-    }
+    TestProxy classNode = getPackageClassNodeFor(result);
     TestProxy proxy = new TestProxy();
     proxy.setParent(classNode);
     proxy.setResultMessage(result);
@@ -217,8 +208,6 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
   }
 
   public void addTestResult(final TestResultMessage result, int exceptionMark) {
-
-
     TestProxy testCase;
     synchronized (started) {
       final List<TestProxy> dups = started.get(result);
@@ -268,34 +257,15 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
     updateStatusLine();
   }
 
-  private String packageNameFor(String fqnClassName) {
-    Matcher matcher = packagePattern.matcher(fqnClassName);
-    if (matcher.matches()) {
-      return matcher.group(1);
-    }
-    else {
-      return NO_PACKAGE;
-    }
-  }
-
-  private String classNameFor(String fqnClassName) {
-    Matcher matcher = packagePattern.matcher(fqnClassName);
-    if (matcher.matches()) {
-      return matcher.group(2);
-    }
-    else {
-      return fqnClassName;
-    }
-  }
-
   private TestProxy getPackageClassNodeFor(final TestResultMessage result) {
     TestProxy owner = treeBuilder.getRoot();
-    String packageName = packageNameFor(result.getTestClass());
+    final String packageName1 = StringUtil.getPackageName(result.getTestClass());
+    String packageName = packageName1.length() == 0 ? NO_PACKAGE : packageName1;
     owner = getChildNodeNamed(owner, packageName);
     if (owner.getPsiElement() == null) {
       owner.setPsiElement(JavaPsiFacade.getInstance(project).findPackage(packageName));
     }
-    owner = getChildNodeNamed(owner, classNameFor(result.getTestClass()));
+    owner = getChildNodeNamed(owner, StringUtil.getShortName(result.getTestClass()));
     //look up the psiclass now
     if (owner.getPsiElement() == null) {
       final TestProxy finalOwner = owner;
@@ -304,16 +274,6 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
           finalOwner.setPsiElement(ClassUtil.findPsiClass(PsiManager.getInstance(project), result.getTestClass()));
         }
       });
-    }
-    return owner;
-  }
-
-  private TestProxy getClassNodeFor(TestResultMessage result) {
-
-    String[] nodes = result.getTestClass().split("\\.");
-    TestProxy owner = treeBuilder.getRoot();
-    for (String node : nodes) {
-      owner = getChildNodeNamed(owner, node);
     }
     return owner;
   }
