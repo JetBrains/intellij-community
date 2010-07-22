@@ -2,6 +2,7 @@ package com.intellij.tokenindex;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.util.containers.HashMap;
@@ -14,6 +15,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -120,6 +122,7 @@ public class TokenIndex extends FileBasedIndexExtension<TokenIndexKey, List<Toke
     return new DataIndexer<TokenIndexKey, List<Token>, FileContent>() {
       @NotNull
       public Map<TokenIndexKey, List<Token>> map(FileContent inputData) {
+        if (true) return Collections.EMPTY_MAP; // TODO: Eugene index is VERY unefficient and leads to OME
         Map<TokenIndexKey, List<Token>> result = new HashMap<TokenIndexKey, List<Token>>(1);
         RecursiveTokenizingVisitor visitor = new RecursiveTokenizingVisitor();
         inputData.getPsiFile().accept(visitor);
@@ -149,6 +152,7 @@ public class TokenIndex extends FileBasedIndexExtension<TokenIndexKey, List<Toke
   public FileBasedIndex.InputFilter getInputFilter() {
     return new FileBasedIndex.InputFilter() {
       public boolean acceptInput(VirtualFile file) {
+        if (file.getFileSystem() instanceof JarFileSystem) return false;
         return file.getFileType() instanceof LanguageFileType;
       }
     };
