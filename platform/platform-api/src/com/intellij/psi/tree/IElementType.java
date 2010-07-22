@@ -32,7 +32,6 @@ import java.util.List;
  * @see com.intellij.lexer.Lexer#getTokenType()
  * @see com.intellij.lang.ASTNode#getElementType()
  */
-
 public class IElementType {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.tree.IElementType");
 
@@ -46,9 +45,8 @@ public class IElementType {
   /**
    * Default enumeration predicate which matches all token types.
    *
-   * @see #enumerate(com.intellij.psi.tree.IElementType.Predicate)
+   * @see #enumerate(Predicate)
    */
-
   public static final Predicate TRUE = new Predicate() {
     public boolean matches(IElementType type) {
       return true;
@@ -89,7 +87,6 @@ public class IElementType {
    * @param debugName the name of the element type, used for debugging purposes.
    * @param language  the language with which the element type is associated.
    */
-
   public IElementType(@NotNull @NonNls String debugName, @Nullable Language language) {
     this(debugName, language, true);
   }
@@ -98,6 +95,7 @@ public class IElementType {
     myDebugName = debugName;
     myLanguage = language == null ? Language.ANY : language;
     if (register) {
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
       myIndex = ourCounter++;
       LOG.assertTrue(ourCounter < MAX_INDEXED_TYPES, "Too many element types registered. Out of (short) range.");
       synchronized (ourRegistry) {
@@ -114,7 +112,6 @@ public class IElementType {
    *
    * @return the associated language.
    */
-
   @NotNull
   public Language getLanguage() {
     return myLanguage;
@@ -126,7 +123,6 @@ public class IElementType {
    *
    * @return the element type index.
    */
-
   public final short getIndex() {
     return myIndex;
   }
@@ -138,10 +134,9 @@ public class IElementType {
   /**
    * Returns the element type registered at the specified index.
    *
-   * @param idx the indx for which the element type should be returned.
+   * @param idx the index for which the element type should be returned.
    * @return the element type at the specified index.
    */
-
   public static IElementType find(short idx) {
     synchronized (ourRegistry) {
       if (idx == 0) return ourRegistry.get(0); // We've changed FIRST_TOKEN_INDEX from 0 to 1. This is just for old plugins to avoid crashes.  
@@ -152,10 +147,34 @@ public class IElementType {
   /**
    * Predicate for matching element types.
    *
-   * @see IElementType#enumerate(com.intellij.psi.tree.IElementType.Predicate)
+   * @see IElementType#enumerate(Predicate)
    */
-
   public interface Predicate {
     boolean matches(IElementType type);
+  }
+
+  /**
+   * Controls whitespace balancing behavior of PsiBuilder.
+   * <p>By default, empty composite elements (containing no children) are bounded to the right neighbour, forming following tree:
+   * <pre>
+   *  [previous_element]
+   *  [whitespace]
+   *  [empty_element]
+   *    &lt;empty&gt;
+   *  [next_element]
+   * </pre>
+   * <p>Left-bound elements are bounded to the left neighbour instead:
+   * <pre>
+   *  [previous_element]
+   *  [empty_element]
+   *    &lt;empty&gt;
+   *  [whitespace]
+   *  [next_element]
+   * </pre>
+   * <p>See {@linkplain com.intellij.lang.impl.PsiBuilderImpl#prepareLightTree()} for details.
+   * @return true if empty elements of this type should be bound to the left.
+   */
+  public boolean isLeftBound() {
+    return false;
   }
 }

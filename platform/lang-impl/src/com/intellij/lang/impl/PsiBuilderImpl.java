@@ -384,6 +384,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private static class DoneMarker extends ProductionMarker {
     public StartMarker myStart;
     public boolean myCollapse = false;
+    public boolean myTieToTheLeft = false;
 
     public DoneMarker() {}
 
@@ -568,20 +569,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   @SuppressWarnings({"SuspiciousMethodCalls"})
-  public void doneBefore(Marker marker, Marker before) {
-    doValidityChecks(marker, before);
-
-    int beforeIndex = myProduction.lastIndexOf(before);
-
-    DoneMarker doneMarker = DONE_MARKERS.alloc();
-    doneMarker.myLexemeIndex = ((StartMarker)before).myLexemeIndex;
-    doneMarker.myStart = (StartMarker)marker;
-
-    ((StartMarker)marker).myDoneMarker = doneMarker;
-    myProduction.add(beforeIndex, doneMarker);
-  }
-
-  @SuppressWarnings({"SuspiciousMethodCalls"})
   public void drop(Marker marker) {
     final boolean removed = myProduction.remove(myProduction.lastIndexOf(marker)) == marker;
     if (!removed) {
@@ -594,6 +581,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     doValidityChecks(marker, null);
 
     DoneWithErrorMarker doneMarker = new DoneWithErrorMarker((StartMarker)marker, myCurrentLexeme, message);
+    doneMarker.myTieToTheLeft = isEmpty(((StartMarker)marker).myLexemeIndex, myCurrentLexeme);
+
     ((StartMarker)marker).myDoneMarker = doneMarker;
     myProduction.add(doneMarker);
   }
@@ -604,8 +593,9 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     int beforeIndex = myProduction.lastIndexOf(before);
 
-    DoneWithErrorMarker doneMarker = new DoneWithErrorMarker((StartMarker)marker, myCurrentLexeme, message);
-    doneMarker.myLexemeIndex = ((StartMarker)before).myLexemeIndex;
+    DoneWithErrorMarker doneMarker = new DoneWithErrorMarker((StartMarker)marker, ((StartMarker)before).myLexemeIndex, message);
+    doneMarker.myTieToTheLeft = isEmpty(((StartMarker)marker).myLexemeIndex, ((StartMarker)before).myLexemeIndex);
+
     ((StartMarker)marker).myDoneMarker = doneMarker;
     myProduction.add(beforeIndex, doneMarker);
   }
@@ -616,9 +606,35 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     DoneMarker doneMarker = DONE_MARKERS.alloc();
     doneMarker.myStart = (StartMarker)marker;
     doneMarker.myLexemeIndex = myCurrentLexeme;
+    doneMarker.myTieToTheLeft = doneMarker.myStart.myType.isLeftBound() &&
+                                isEmpty(((StartMarker)marker).myLexemeIndex, myCurrentLexeme);
 
     ((StartMarker)marker).myDoneMarker = doneMarker;
     myProduction.add(doneMarker);
+  }
+
+  @SuppressWarnings({"SuspiciousMethodCalls"})
+  public void doneBefore(Marker marker, Marker before) {
+    doValidityChecks(marker, before);
+
+    int beforeIndex = myProduction.lastIndexOf(before);
+
+    DoneMarker doneMarker = DONE_MARKERS.alloc();
+    doneMarker.myLexemeIndex = ((StartMarker)before).myLexemeIndex;
+    doneMarker.myStart = (StartMarker)marker;
+    doneMarker.myTieToTheLeft = doneMarker.myStart.myType.isLeftBound() &&
+                                isEmpty(((StartMarker)marker).myLexemeIndex, ((StartMarker)before).myLexemeIndex);
+
+    ((StartMarker)marker).myDoneMarker = doneMarker;
+    myProduction.add(beforeIndex, doneMarker);
+  }
+
+  private boolean isEmpty(final int startIdx, final int endIdx) {
+    for (int i = startIdx; i < endIdx; i++) {
+      final IElementType token = myLexTypes[i];
+      if (!myWhitespaces.contains(token) && !myComments.contains(token)) return false;
+    }
+    return true;
   }
 
   public void collapse(final Marker marker) {
@@ -779,25 +795,36 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     for (int i = 1; i < fProduction.size() - 1; i++) {
       ProductionMarker item = fProduction.get(i);
 
-      if (item instanceof StartMarker) {
+      if (item instanceof StartMarker && ((StartMarker)item).myDoneMarker == null) {
+        LOG.error(UNBALANCED_MESSAGE);
+      }
+
+      if (item instanceof StartMarker && ((StartMarker)item).myDoneMarker.myTieToTheLeft) {
+        int prevProductionLexIndex = fProduction.get(i - 1).myLexemeIndex;
+        IElementType prevTokenType;
+        while (item.myLexemeIndex > prevProductionLexIndex &&
+               item.myLexemeIndex - 1 < myLexemeCount &&
+               (myWhitespaces.contains(prevTokenType = myLexTypes[item.myLexemeIndex - 1]) ||
+                myComments.contains(prevTokenType))) {
+          item.myLexemeIndex--;
+        }
+        ((StartMarker)item).myDoneMarker.myLexemeIndex = item.myLexemeIndex;
+      }
+      else if (item instanceof StartMarker) {
         IElementType nextTokenType;
         while (item.myLexemeIndex < myLexemeCount &&
-               ( myWhitespaces.contains(nextTokenType = myLexTypes[item.myLexemeIndex]) ||
-                 myComments.contains(nextTokenType)
-               )
-              ) {
+               (myWhitespaces.contains(nextTokenType = myLexTypes[item.myLexemeIndex]) ||
+                myComments.contains(nextTokenType))) {
           item.myLexemeIndex++;
         }
       }
       else if (item instanceof DoneMarker || item instanceof ErrorItem) {
         int prevProductionLexIndex = fProduction.get(i - 1).myLexemeIndex;
         IElementType prevTokenType;
-
-        while (item.myLexemeIndex > prevProductionLexIndex && item.myLexemeIndex - 1 < myLexemeCount &&
-               ( myWhitespaces.contains(prevTokenType = myLexTypes[item.myLexemeIndex - 1]) ||
-                 myComments.contains(prevTokenType)
-               )
-              ) {
+        while (item.myLexemeIndex > prevProductionLexIndex &&
+               item.myLexemeIndex - 1 < myLexemeCount &&
+               (myWhitespaces.contains(prevTokenType = myLexTypes[item.myLexemeIndex - 1]) ||
+                myComments.contains(prevTokenType))) {
           item.myLexemeIndex--;
         }
       }
