@@ -32,7 +32,7 @@ public interface BaseJspFile extends XmlFile {
   boolean isTagPage();
 
   XmlTag[] getDirectiveTags(JspDirectiveKind directiveKind, final boolean searchInIncludes);
-  XmlTag createDirective(XmlTag context, JspDirectiveKind page);
+  XmlTag createDirective(XmlTag context, JspDirectiveKind directiveKind);
 
   PsiFile getBaseLanguageRoot();
   /**

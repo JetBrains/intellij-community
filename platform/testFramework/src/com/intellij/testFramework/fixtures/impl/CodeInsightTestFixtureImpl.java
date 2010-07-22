@@ -185,7 +185,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           FileUtil.copy(fromFile, destFile);
         }
         catch (IOException e) {
-          throw new RuntimeException(e);
+          throw new RuntimeException("Cannot copy " + fromFile + " to " + destFile, e);
         }
       }
     }

@@ -658,8 +658,8 @@ public class VfsUtil {
   }
 
   @Nullable
-  public static VirtualFile createDirectoryIfMissing(@NotNull String dir) throws IOException {
-    return doCreateDirectoriesIfMissing(FileUtil.toSystemIndependentName(dir));
+  public static VirtualFile createDirectoryIfMissing(@NotNull String directoryPath) throws IOException {
+    return doCreateDirectoriesIfMissing(FileUtil.toSystemIndependentName(directoryPath));
   }
 
   private static VirtualFile doCreateDirectoriesIfMissing(String dir) throws IOException {
