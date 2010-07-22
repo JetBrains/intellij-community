@@ -39,17 +39,13 @@ public class PathMacrosCollector extends PathMacroMap {
 
   private static final Set<String> ourSystemMacroNames = new HashSet<String>(
     Arrays.asList(PathMacrosImpl.APPLICATION_HOME_MACRO_NAME, PathMacrosImpl.MODULE_DIR_MACRO_NAME, PathMacrosImpl.PROJECT_DIR_MACRO_NAME
-      //, PathMacrosImpl.USER_HOME_MACRO_NAME
+      , PathMacrosImpl.USER_HOME_MACRO_NAME
     ));
   private static final String FILE_PROTOCOL = "file:";
   private static final String JAR_PROTOCOL = "jar:";
 
   private PathMacrosCollector() {
     myMatcher = MACRO_PATTERN.matcher("");
-  }
-
-  public static Set<String> getMacroNames(Element root, @Nullable final NotNullFunction<Object, Boolean> filter) {
-    return getMacroNames(root, filter, null);
   }
 
   public static Set<String> getMacroNames(Element root, @Nullable final NotNullFunction<Object, Boolean> filter, @Nullable final NotNullFunction<Object, Boolean> recursiveFilter, @NotNull final PathMacros pathMacros) {

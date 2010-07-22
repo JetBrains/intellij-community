@@ -70,7 +70,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
     ourSystemMacroNames.add(APPLICATION_HOME_MACRO_NAME);
     ourSystemMacroNames.add(PROJECT_DIR_MACRO_NAME);
     ourSystemMacroNames.add(MODULE_DIR_MACRO_NAME);
-    //ourSystemMacroNames.add(USER_HOME_MACRO_NAME);
+    ourSystemMacroNames.add(USER_HOME_MACRO_NAME);
   }
 
   private static final Set<String> ourToolsMacros = new HashSet<String>();

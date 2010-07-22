@@ -19,17 +19,16 @@ import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.PathMacroMap;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
 public class ProjectPathMacroManager extends BasePathMacroManager {
   private final ProjectEx myProject;
-
 
   public ProjectPathMacroManager(final ProjectEx project) {
     myProject = project;
@@ -42,47 +41,13 @@ public class ProjectPathMacroManager extends BasePathMacroManager {
   }
 
   public ReplacePathToMacroMap getReplacePathMap() {
-    ReplacePathToMacroMap result = new ReplacePathToMacroMap();
-    result.putAll(super.getReplacePathMap());
-    getProjectHomeReplacements(result, true);
+    ReplacePathToMacroMap result = super.getReplacePathMap();
+    addFileHierarchyReplacements(result, PathMacrosImpl.PROJECT_DIR_MACRO_NAME, getProjectDir(myProject), null);
     return result;
   }
 
-  private void getProjectHomeReplacements(@NonNls ReplacePathToMacroMap result, final boolean savePathsRelative) {
-    String projectDir = getProjectDir();
-    if (projectDir == null) return;
-
-    File f = new File(projectDir.replace('/', File.separatorChar));
-    //LOG.assertTrue(f.exists());
-
-    String macro = "$" + PathMacrosImpl.PROJECT_DIR_MACRO_NAME + "$";
-    boolean check = false;
-    while (f != null && f.getParentFile() != null) {
-      String path = PathMacroMap.quotePath(f.getAbsolutePath());
-      String s = macro;
-
-      if (StringUtil.endsWithChar(path, '/')) s += "/";
-
-      putIfAbsent(result, "file://" + path, "file://" + s, check);
-      putIfAbsent(result, "file:/" + path, "file:/" + s, check);
-      putIfAbsent(result, "file:" + path, "file:" + s, check);
-      putIfAbsent(result, "jar://" + path, "jar://" + s, check);
-      putIfAbsent(result, "jar:/" + path, "jar:/" + s, check);
-      putIfAbsent(result, "jar:" + path, "jar:" + s, check);
-      //noinspection HardCodedStringLiteral
-      if (!path.equalsIgnoreCase("e:/") && !path.equalsIgnoreCase("r:/") && !path.equalsIgnoreCase("p:/")) {
-        putIfAbsent(result, path, s, check);
-      }
-
-      if (!savePathsRelative) break;
-      check = true;
-      macro += "/..";
-      f = f.getParentFile();
-    }
-  }
-
   private void getExpandProjectHomeReplacements(ExpandMacroToPathMap result) {
-    String projectDir = getProjectDir();
+    String projectDir = getProjectDir(myProject);
     if (projectDir == null) return;
 
     File f = new File(projectDir.replace('/', File.separatorChar));
@@ -103,7 +68,7 @@ public class ProjectPathMacroManager extends BasePathMacroManager {
   }
 
   @Nullable
-  private String getProjectDir() {
+  public static String getProjectDir(Project myProject) {
     final VirtualFile baseDir = myProject.getBaseDir();
     return baseDir != null ? baseDir.getPath() : null;
   }

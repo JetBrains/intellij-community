@@ -20,33 +20,63 @@ import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.components.PathMacroMap;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.FactoryMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.*;
 
 public class BasePathMacroManager extends PathMacroManager {
   private PathMacrosImpl myPathMacros;
-  private boolean myUseUserMacroses;
 
+  protected static void addFileHierarchyReplacements(ReplacePathToMacroMap result,
+                                                     String variableName,
+                                                     @Nullable String _path, @Nullable String stopAt) {
+    if (_path == null) {
+      return;
+    }
 
-  public BasePathMacroManager(boolean useUserMacroses) {
-    myUseUserMacroses = useUserMacroses;
-  }
+    String macro = "$" + variableName + "$";
+    File dir = new File(_path.replace('/', File.separatorChar));
+    boolean check = false;
+    while (dir != null && dir.getParentFile() != null) {
+      @NonNls String path = PathMacroMap.quotePath(dir.getAbsolutePath());
+      String s = macro;
 
-  public BasePathMacroManager() {
-    this(true);
+      if (StringUtil.endsWithChar(path, '/')) s += "/";
+
+      putIfAbsent(result, "file:" + path, "file:" + s, check);
+      putIfAbsent(result, "file:/" + path, "file:/" + s, check);
+      putIfAbsent(result, "file://" + path, "file://" + s, check);
+      putIfAbsent(result, "jar:" + path, "jar:" + s, check);
+      putIfAbsent(result, "jar:/" + path, "jar:/" + s, check);
+      putIfAbsent(result, "jar://" + path, "jar://" + s, check);
+      if (!path.equalsIgnoreCase("e:/") && !path.equalsIgnoreCase("r:/") && !path.equalsIgnoreCase("p:/")) {
+        putIfAbsent(result, path, s, check);
+      }
+
+      if (dir.getPath().equals(stopAt)) {
+        break;
+      }
+
+      macro += "/..";
+      check = true;
+      dir = dir.getParentFile();
+    }
   }
 
   public ExpandMacroToPathMap getExpandMacroMap() {
     ExpandMacroToPathMap result = new ExpandMacroToPathMap();
     result.addMacroExpand(PathMacrosImpl.APPLICATION_HOME_MACRO_NAME, PathManager.getHomePath());
-    if (myUseUserMacroses) {
-      getPathMacros().addMacroExpands(result);
-    }
+    result.addMacroExpand(PathMacrosImpl.USER_HOME_MACRO_NAME, SystemProperties.getUserHome());
+    getPathMacros().addMacroExpands(result);
     return result;
   }
 
@@ -55,10 +85,8 @@ public class BasePathMacroManager extends PathMacroManager {
     ReplacePathToMacroMap result = new ReplacePathToMacroMap();
 
     result.addMacroReplacement(PathManager.getHomePath(), PathMacrosImpl.APPLICATION_HOME_MACRO_NAME);
-    if (myUseUserMacroses) {
-      getPathMacros().addMacroReplacements(result);
-    }
-
+    result.addMacroReplacement(SystemProperties.getUserHome(), PathMacrosImpl.USER_HOME_MACRO_NAME);
+    getPathMacros().addMacroReplacements(result);
     return result;
   }
 
