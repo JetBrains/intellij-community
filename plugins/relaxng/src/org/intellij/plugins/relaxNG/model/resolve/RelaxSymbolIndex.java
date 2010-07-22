@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -19,6 +20,8 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.text.CharSequenceReader;
 import com.intellij.util.xml.NanoXmlUtil;
 import org.intellij.plugins.relaxNG.ProjectLoader;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
@@ -30,11 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.ByteArrayInputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /*
 * Created by IntelliJ IDEA.
@@ -68,7 +67,9 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
       public Map<String, Void> map(FileContent inputData) {
         final HashMap<String, Void> map = new HashMap<String, Void>();
         if (inputData.getFileType() == XmlFileType.INSTANCE) {
-          NanoXmlUtil.parse(new ByteArrayInputStream(inputData.getContent()), new NanoXmlUtil.IXMLBuilderAdapter() {
+          CharSequence inputDataContentAsText = inputData.getContentAsText();
+          if (CharArrayUtil.indexOf(inputDataContentAsText, ProjectLoader.RNG_NAMESPACE, 0) == -1) return Collections.EMPTY_MAP;
+          NanoXmlUtil.parse(new CharSequenceReader(inputDataContentAsText), new NanoXmlUtil.IXMLBuilderAdapter() {
             NanoXmlUtil.IXMLBuilderAdapter attributeHandler;
             int depth;
 
@@ -131,6 +132,9 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
   public FileBasedIndex.InputFilter getInputFilter() {
     return new FileBasedIndex.InputFilter() {
       public boolean acceptInput(VirtualFile file) {
+        if (file.getFileSystem() instanceof JarFileSystem) {
+          return false; // there is lots and lots of custom XML inside zip files
+        }
         return file.getFileType() == StdFileTypes.XML || file.getFileType() == RncFileType.getInstance();
       }
     };
