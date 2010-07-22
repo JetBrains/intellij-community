@@ -119,7 +119,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
       myValueStorage = PersistentHashMapValueStorage.create(getDataFile(myFile).getPath());
       myGarbageSize = getMetaData();
 
-      if (makesSenceToCompact()) {
+      if (makesSenseToCompact()) {
         compact();
       }
     }
@@ -136,27 +136,23 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     return myFile;
   }
 
-  private boolean makesSenceToCompact() {
-    final long filesize = getDataFile(myFile).length();
-    return filesize > 5 * 1024 * 1024 && myGarbageSize * 2 > filesize; // file is longer than 5MB and more than 50% of data is garbage
+  private boolean makesSenseToCompact() {
+    final long fileSize = getDataFile(myFile).length();
+    return fileSize > 5 * 1024 * 1024 && myGarbageSize * 2 > fileSize; // file is longer than 5MB and more than 50% of data is garbage
   }
 
   private static File checkDataFiles(final File file) {
     if (!file.exists()) {
-      deleteFiles(file);
+      deleteFilesStartingWith(getDataFile(file));
     }
     return file;
   }
 
-  public void deleteFiles() {
-    deleteFiles(myFile);
-  }
-
-  private static void deleteFiles(File baseFile) {
-    final String baseName = baseFile.getName();
-    final File[] files = baseFile.getParentFile().listFiles(new FileFilter() {
-      public boolean accept(final File pathname) {
-        return pathname.getName().startsWith(baseName);
+  public static void deleteFilesStartingWith(File prefixFile) {
+    final String baseName = prefixFile.getName();
+    final File[] files = prefixFile.getParentFile().listFiles(new FileFilter() {
+      public boolean accept(final File pathName) {
+        return pathName.getName().startsWith(baseName);
       }
     });
     if (files != null) {

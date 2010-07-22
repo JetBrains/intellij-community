@@ -54,7 +54,7 @@ public abstract class StateCache<T> {
     }
     catch (IOException ignored) {
     }
-    myMap.deleteFiles();
+    PersistentHashMap.deleteFilesStartingWith(myBaseFile);
     try {
       myMap = createMap(myBaseFile);
     }
