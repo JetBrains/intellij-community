@@ -124,17 +124,18 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
         cursor = myListener2Cursor.values().iterator().next();
 
         final Point point = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), myRootPane.getContentPane());
-        final Component target =
+        Component target =
             SwingUtilities.getDeepestComponentAt(myRootPane.getContentPane().getParent(), point.x, point.y);
+
+
+        target = getCompWithCursor(target);
 
         restoreLastComponent(target);
 
         if (target != null) {
           if (myLastCursorComponent != target) {
             myLastCursorComponent = target;
-            if (target.isCursorSet()) {
-              myLastOriginalCursor = target.getCursor();
-            } 
+            myLastOriginalCursor = target.getCursor();
           }
 
           if (cursor != null && !cursor.equals(target.getCursor())) {
@@ -155,6 +156,16 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
       }
       myListener2Cursor.clear();
     }
+  }
+
+  private Component getCompWithCursor(Component c) {
+    Component eachParentWithCursor = c;
+    while (eachParentWithCursor != null) {
+      if (eachParentWithCursor.isCursorSet()) return eachParentWithCursor;
+      eachParentWithCursor = eachParentWithCursor.getParent();
+    }
+
+    return null;
   }
 
   private void restoreLastComponent(Component newC) {

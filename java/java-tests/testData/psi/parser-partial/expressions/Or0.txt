@@ -1,0 +1,21 @@
+PsiJavaFile:Or0.java
+  PsiBinaryExpression:a | b | c
+    PsiBinaryExpression:a | b
+      PsiReferenceExpression:a
+        PsiReferenceParameterList
+          <empty list>
+        PsiIdentifier:a('a')
+      PsiWhiteSpace(' ')
+      PsiJavaToken:OR('|')
+      PsiWhiteSpace(' ')
+      PsiReferenceExpression:b
+        PsiReferenceParameterList
+          <empty list>
+        PsiIdentifier:b('b')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:OR('|')
+    PsiWhiteSpace(' ')
+    PsiReferenceExpression:c
+      PsiReferenceParameterList
+        <empty list>
+      PsiIdentifier:c('c')

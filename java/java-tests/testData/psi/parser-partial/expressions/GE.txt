@@ -1,0 +1,17 @@
+PsiJavaFile:GE.java
+  PsiAssignmentExpression:x >>>= 8 >> 2
+    PsiReferenceExpression:x
+      PsiReferenceParameterList
+        <empty list>
+      PsiIdentifier:x('x')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:GTGTGTEQ('>>>=')
+    PsiWhiteSpace(' ')
+    PsiBinaryExpression:8 >> 2
+      PsiLiteralExpression:8
+        PsiJavaToken:INTEGER_LITERAL('8')
+      PsiWhiteSpace(' ')
+      PsiJavaToken:GTGT('>>')
+      PsiWhiteSpace(' ')
+      PsiLiteralExpression:2
+        PsiJavaToken:INTEGER_LITERAL('2')

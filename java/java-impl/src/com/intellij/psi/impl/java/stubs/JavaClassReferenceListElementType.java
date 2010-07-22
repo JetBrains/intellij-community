@@ -42,7 +42,7 @@ import java.io.IOException;
 
 public class JavaClassReferenceListElementType extends JavaStubElementType<PsiClassReferenceListStub, PsiReferenceList> {
   public JavaClassReferenceListElementType(@NotNull @NonNls String id) {
-    super(id);
+    super(id, true);
   }
 
   public PsiReferenceList createPsi(final PsiClassReferenceListStub stub) {

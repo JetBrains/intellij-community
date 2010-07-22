@@ -21,7 +21,6 @@
 package com.intellij.refactoring.move.moveMembers;
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
-import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -282,7 +281,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
             if (!JavaResolveUtil.isAccessible(member, myTargetClass, modifierListCopies.get(member), element, accessObjectClass, null)) {
               newVisibility = newVisibility == null ? VisibilityUtil.getVisibilityStringToDisplay(member) : newVisibility;
               String message =
-                CommonRefactoringUtil.capitalize(RefactoringBundle.message("0.with.1.visibility.is.not.accesible.from.2", RefactoringUIUtil.getDescription(member, false),
+                CommonRefactoringUtil.capitalize(RefactoringBundle.message("0.with.1.visibility.is.not.accessible.from.2", RefactoringUIUtil.getDescription(member, false),
                                           newVisibility, RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(element), true)));
               conflicts.putValue(member, message);
             }

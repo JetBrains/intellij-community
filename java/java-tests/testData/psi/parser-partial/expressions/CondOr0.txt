@@ -1,0 +1,21 @@
+PsiJavaFile:CondOr0.java
+  PsiBinaryExpression:a || b || c
+    PsiBinaryExpression:a || b
+      PsiReferenceExpression:a
+        PsiReferenceParameterList
+          <empty list>
+        PsiIdentifier:a('a')
+      PsiWhiteSpace(' ')
+      PsiJavaToken:OROR('||')
+      PsiWhiteSpace(' ')
+      PsiReferenceExpression:b
+        PsiReferenceParameterList
+          <empty list>
+        PsiIdentifier:b('b')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:OROR('||')
+    PsiWhiteSpace(' ')
+    PsiReferenceExpression:c
+      PsiReferenceParameterList
+        <empty list>
+      PsiIdentifier:c('c')

@@ -200,7 +200,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
         }
         if (!JavaResolveUtil.isAccessible(myMethod, myTargetClass, copy, call, accessObjectClass, null)) {
           final String newVisibility = myNewVisibility == null ? VisibilityUtil.getVisibilityStringToDisplay(myMethod) : myNewVisibility;
-          String message = RefactoringBundle.message("0.with.1.visibility.is.not.accesible.from.2",
+          String message = RefactoringBundle.message("0.with.1.visibility.is.not.accessible.from.2",
                                                      RefactoringUIUtil.getDescription(myMethod, true), newVisibility,
                                                      RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(call), true));
           conflicts.putValue(myMethod, message);

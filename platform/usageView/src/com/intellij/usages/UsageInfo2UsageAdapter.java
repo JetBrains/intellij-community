@@ -34,6 +34,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.ui.ComputableIcon;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.rules.*;
 import com.intellij.util.IncorrectOperationException;
@@ -62,7 +63,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
   private final UsageInfo myUsageInfo;
   private int myLineNumber;
   private int myOffset = -1;
-  protected Icon myIcon;
+  protected ComputableIcon myIcon;
   private String myTooltipText;
   private List<RangeMarker> myRangeMarkers = new ArrayList<RangeMarker>();
   private TextChunk[] myTextChunks;
@@ -101,7 +102,13 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
           myIcon = null;
         }
         else {
-          myIcon = element.getIcon(0);
+          myIcon = new ComputableIcon(new Computable<Icon>() {
+            @Override
+            public Icon compute() {
+              PsiElement psiElement = getElement();
+              return psiElement != null && psiElement.isValid() ? psiElement.getIcon(0) : null;
+            }
+          });
         }
 
         myTooltipText = myUsageInfo.getTooltipText();
@@ -374,7 +381,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
     }
 
     public Icon getIcon() {
-      return myIcon;
+      return myIcon != null ? myIcon.getIcon() : null;
     }
 
     public String getTooltipText() {

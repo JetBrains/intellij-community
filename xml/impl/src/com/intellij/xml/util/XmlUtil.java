@@ -190,12 +190,17 @@ public class XmlUtil {
     return null;
   }
 
-  @Nullable
-  public static String findNamespacePrefixByURI(XmlFile file, @NonNls String uri) {
+  @SuppressWarnings({"ConstantConditions"})
+  public static XmlTag getRootTag(XmlFile file) {
     if (file == null) return null;
     final XmlDocument document = file.getDocument();
     if (document == null) return null;
-    final XmlTag tag = document.getRootTag();
+    return document.getRootTag();
+  }
+
+  @Nullable
+  public static String findNamespacePrefixByURI(XmlFile file, @NonNls String uri) {
+    final XmlTag tag = getRootTag(file);
     if (tag == null) return null;
 
     for (XmlAttribute attribute : tag.getAttributes()) {

@@ -100,7 +100,7 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
   @Override
   public PsiType getDeclaredType() {
     final PsiType type = super.getDeclaredType();
-    if (isVarArgs()) {
+    if (type != null && isVarArgs()) {
       return new PsiEllipsisType(type);
     }
     return type;

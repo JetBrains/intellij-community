@@ -78,7 +78,7 @@ public class IntroduceParameterTest extends LightCodeInsightTestCase {
   }
 
   public void testThisSubstitutionInQualifier() throws Exception {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false, false, "field <b><code>Test.i</code></b> is not accesible from method <b><code>XTest.n()</code></b>. Value for introduced parameter in that method call will be incorrect.");
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false, false, "field <b><code>Test.i</code></b> is not accessible from method <b><code>XTest.n()</code></b>. Value for introduced parameter in that method call will be incorrect.");
   }
 
   public void testFieldAccess() throws Exception {

@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -85,6 +86,7 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
     final CreateFileFromTemplateDialog.Builder builder = CreateFileFromTemplateDialog.createDialog(project);
     buildDialog(project, dir, builder);
 
+    final Ref<String> selectedTemplateName = Ref.create(null);
     final T createdElement =
       builder.show(getErrorTitle(), getDefaultTemplateName(dir), new CreateFileFromTemplateDialog.FileCreator<T>() {
         public void checkBeforeCreate(@NotNull String name, @NotNull String templateName) {
@@ -92,6 +94,7 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
         }
 
         public T createFile(@NotNull String name, @NotNull String templateName) {
+          selectedTemplateName.set(templateName);
           return CreateFromTemplateAction.this.createFile(name, templateName, dir);
         }
 
@@ -102,7 +105,11 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
       });
     if (createdElement != null) {
       view.selectElement(createdElement);
+      postProcesss(createdElement, selectedTemplateName.get());
     }
+  }
+
+  protected void postProcesss(T createdElement, String templateName) {
   }
 
   @Nullable

@@ -15,7 +15,6 @@
  */
 package com.intellij.compiler.impl;
 
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.PersistentHashMap;
@@ -55,12 +54,7 @@ public abstract class StateCache<T> {
     }
     catch (IOException ignored) {
     }
-    final String baseName = myBaseFile.getName();
-    for (File file : myBaseFile.getParentFile().listFiles()) {
-      if (file.getName().startsWith(baseName)) {
-        FileUtil.delete(file);
-      }
-    }
+    PersistentHashMap.deleteFilesStartingWith(myBaseFile);
     try {
       myMap = createMap(myBaseFile);
     }

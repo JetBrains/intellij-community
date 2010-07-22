@@ -69,7 +69,7 @@ public interface JavaElementType {
 
   IElementType IMPORT_STATIC_REFERENCE = new IJavaElementType("IMPORT_STATIC_REFERENCE");
   IElementType TYPE = new IJavaElementType("TYPE");
-  IElementType REFERENCE_PARAMETER_LIST = new IJavaElementType("REFERENCE_PARAMETER_LIST");
+  IElementType REFERENCE_PARAMETER_LIST = new IJavaElementType("REFERENCE_PARAMETER_LIST", true);
   IElementType JAVA_CODE_REFERENCE = new IJavaElementType("JAVA_CODE_REFERENCE");
   IElementType PACKAGE_STATEMENT = new IJavaElementType("PACKAGE_STATEMENT");
 
@@ -120,7 +120,7 @@ public interface JavaElementType {
 
   IElementType ANNOTATION_ARRAY_INITIALIZER = new IJavaElementType("ANNOTATION_ARRAY_INITIALIZER");
   IElementType NAME_VALUE_PAIR = new IJavaElementType("NAME_VALUE_PAIR");
-  IElementType ANNOTATION_PARAMETER_LIST = new IJavaElementType("ANNOTATION_PARAMETER_LIST");
+  IElementType ANNOTATION_PARAMETER_LIST = new IJavaElementType("ANNOTATION_PARAMETER_LIST", true);
   IElementType METHOD_RECEIVER = new IJavaElementType("METHOD_RECEIVER");
 
   ILazyParseableElementType CODE_BLOCK = new IErrorCounterReparseableElementType("CODE_BLOCK", StdLanguages.JAVA) {

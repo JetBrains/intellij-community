@@ -39,12 +39,15 @@ import java.util.Set;
 public class DeferredIconImpl<T> implements DeferredIcon {
   private static final RepaintScheduler ourRepaintScheduler = new RepaintScheduler();
   private volatile Icon myDelegateIcon;
-  private final Function<T, Icon> myEvaluator;
+  private Function<T, Icon> myEvaluator;
   private volatile boolean myIsScheduled = false;
-  private final T myParam;
+  private T myParam;
   private WeakReference<Component> myLastTarget = null;
   private static final EmptyIcon EMPTY_ICON = new EmptyIcon(16, 16);
   private boolean myNeedReadAction;
+  private boolean myDone;
+
+  private Disposer<T> myDisposer;
 
   public DeferredIconImpl(Icon baseIcon, T param, Function<T, Icon> evaluator) {
     this(baseIcon, param, true, evaluator);
@@ -64,7 +67,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
   public void paintIcon(final Component c, final Graphics g, final int x, final int y) {
     myDelegateIcon.paintIcon(c, g, x, y);
 
-    if (!myIsScheduled) {
+    if (!myIsScheduled && !isDone()) {
       myIsScheduled = true;
 
       final Ref<Component> target = new Ref<Component>(null);
@@ -109,6 +112,8 @@ public class DeferredIconImpl<T> implements DeferredIcon {
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
+              setDone();
+
               Component actualTarget = target.get();
               if (SwingUtilities.getWindowAncestor(actualTarget) == null) {
                 actualTarget = paintingParent.get();
@@ -149,6 +154,16 @@ public class DeferredIconImpl<T> implements DeferredIcon {
         }
       }, Job.DEFAULT_PRIORITY);
     }
+  }
+
+  private void setDone() {
+    if (myDisposer != null) {
+      myDisposer.dispose(myParam);
+    }
+
+    myDone = true;
+    myEvaluator = null;
+    myParam = null;
   }
 
   public Icon evaluate() {
@@ -208,12 +223,8 @@ public class DeferredIconImpl<T> implements DeferredIcon {
     return myDelegateIcon.getIconHeight();
   }
 
-  public void invalidate() {
-    myIsScheduled = false;
-    Component lastTarget = myLastTarget != null ? myLastTarget.get() : null;
-    if (lastTarget != null) {
-      lastTarget.repaint();
-    }
+  public boolean isDone() {
+    return myDone;
   }
 
   private static class RepaintScheduler {
@@ -256,6 +267,18 @@ public class DeferredIconImpl<T> implements DeferredIcon {
     public Rectangle getRectangle() {
       return myRectangle;
     }
+  }
+
+
+  public DeferredIconImpl setDisposer(Disposer<T> disposer) {
+    myDisposer = disposer;
+    return this;
+  }
+
+  public interface Disposer<T> {
+
+    void dispose(T key);
+
   }
 
 }

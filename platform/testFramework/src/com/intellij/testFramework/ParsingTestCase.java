@@ -53,17 +53,22 @@ public abstract class ParsingTestCase extends LightPlatformTestCase {
     return false;
   }
 
-  protected void doTest(boolean checkResult) throws Exception {
+  protected void doTest(boolean checkResult) {
     String name = getTestName(false);
-    String text = loadFile(name + "." + myFileExt);
-    myFile = createPsiFile(name, text);
-    myFile.accept(new PsiRecursiveElementVisitor(){});
-    assertEquals(text, myFile.getText());
-    if (checkResult){
-      checkResult(name + ".txt", myFile);
+    try {
+      String text = loadFile(name + "." + myFileExt);
+      myFile = createPsiFile(name, text);
+      myFile.accept(new PsiRecursiveElementVisitor(){});
+      assertEquals(text, myFile.getText());
+      if (checkResult){
+        checkResult(name + ".txt", myFile);
+      }
+      else{
+        toParseTreeText(myFile, includeRanges());
+      }
     }
-    else{
-      toParseTreeText(myFile, includeRanges());
+    catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 

@@ -23,6 +23,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -68,7 +69,7 @@ public class GroovyRefactoringSupportProvider extends DefaultRefactoringSupportP
     if (!(scope instanceof LocalSearchScope)) return false;
 
     final PsiElement[] scopeElements = ((LocalSearchScope)scope).getScope();
-    if (scopeElements.length != 1) return false;
-    return true;
+    return scopeElements.length == 1 ||
+           scopeElements.length == 2 && (scopeElements[0] instanceof GrDocComment ^ scopeElements[1] instanceof GrDocComment);
   }
 }

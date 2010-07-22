@@ -81,7 +81,7 @@ public class Main {
       if (ideaHomeDir == null) return false;
 
       String platform = System.getProperty("idea.platform.prefix", "idea");
-      String patchFileName = "jetbrains.patch.jar." + platform;
+      String patchFileName = ("jetbrains.patch.jar." + platform).toLowerCase();
       File patchFile = new File(System.getProperty("java.io.tmpdir"), patchFileName);
 
       if (!patchFile.exists()) return false;

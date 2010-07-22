@@ -18,7 +18,6 @@ package org.intellij.plugins.intelliLang.inject.groovy;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.patterns.compiler.PatternClassBean;
 import com.intellij.patterns.compiler.PatternCompilerFactory;
 import com.intellij.psi.*;
@@ -41,7 +40,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -60,22 +58,23 @@ public class PatternEditorContextMembersProvider extends NonCodeMembersContribut
                                      PsiElement place,
                                      ResolveState state) {
     final PsiFile file = place.getContainingFile().getOriginalFile();
-    final BaseInjection injection = file.getUserData(BaseInjection.INJECTION_KEY);
-    final CachedValueProvider<List<PsiElement>> provider;
-    if (injection == null) {
-      provider = createDevProvider(file);
-    }
-    else {
-      provider = createPatternProvider(injection, file);
-    }
-    if (provider == null) return;
-    final List<PsiElement> roots =
-      ((UserDataHolderEx)file).putUserDataIfAbsent(INJECTION_PARSED_CONTEXT,
-                                                   CachedValuesManager.getManager(file.getProject()).createCachedValue(provider, false)).getValue();
-    for (PsiElement root : roots) {
-      for (PsiElement cur = root.getFirstChild(); cur != null; cur = cur.getNextSibling()) {
-        if (cur instanceof PsiNamedElement && !ResolveUtil.processElement(processor, (PsiNamedElement)cur)) return;
+    CachedValue<List<PsiElement>> value = file.getUserData(INJECTION_PARSED_CONTEXT);
+    if (value == null) {
+      final BaseInjection injection = file.getUserData(BaseInjection.INJECTION_KEY);
+      final CachedValueProvider<List<PsiElement>> provider;
+      if (injection == null) {
+        provider = createDevProvider(file);
       }
+      else {
+        provider = createPatternProvider(injection, file);
+      }
+      if (provider == null) return;
+      file.putUserData(INJECTION_PARSED_CONTEXT,
+                       value = CachedValuesManager.getManager(file.getProject()).createCachedValue(provider, false));
+    }
+    final List<PsiElement> roots = value.getValue();
+    for (PsiElement root : roots) {
+      if (!root.processDeclarations(processor, state, null, place)) return;
     }
   }
 
@@ -125,7 +124,7 @@ public class PatternEditorContextMembersProvider extends NonCodeMembersContribut
   }
 
   private static List<PsiElement> getRootsByClassNames(PsiFile file, String type) {
-    final ArrayList<PsiElement> roots = new ArrayList<PsiElement>(1);
+    final List<PsiElement> roots = ContainerUtil.createEmptyCOWList();
 
     final Project project = file.getProject();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);

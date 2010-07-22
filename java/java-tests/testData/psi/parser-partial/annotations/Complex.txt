@@ -1,0 +1,22 @@
+PsiJavaFile:Complex.java
+  PsiAnnotation
+    PsiJavaToken:AT('@')
+    PsiJavaCodeReferenceElement:Author
+      PsiIdentifier:Author('Author')
+      PsiReferenceParameterList
+        <empty list>
+    PsiAnnotationParameterList
+      PsiJavaToken:LPARENTH('(')
+      PsiNameValuePair
+        PsiIdentifier:first('first')
+        PsiJavaToken:EQ('=')
+        PsiLiteralExpression:"Eugene"
+          PsiJavaToken:STRING_LITERAL('"Eugene"')
+      PsiJavaToken:COMMA(',')
+      PsiWhiteSpace(' ')
+      PsiNameValuePair
+        PsiIdentifier:second('second')
+        PsiJavaToken:EQ('=')
+        PsiLiteralExpression:"Wampirchik"
+          PsiJavaToken:STRING_LITERAL('"Wampirchik"')
+      PsiJavaToken:RPARENTH(')')

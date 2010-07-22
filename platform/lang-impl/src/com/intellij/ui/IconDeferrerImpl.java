@@ -45,18 +45,6 @@ public class IconDeferrerImpl extends IconDeferrer {
 
   public IconDeferrerImpl(MessageBus bus) {
     final MessageBusConnection connection = bus.connect();
-    connection.setDefaultHandler(new MessageHandler() {
-      public void handle(final Method event, final Object... params) {
-        invalidateAllIcons();
-      }
-    });
-
-    connection.subscribe(ProjectTopics.MODIFICATION_TRACKER, new PsiModificationTracker.Listener() {
-      public void modificationCountChanged() {
-        invalidateAllIcons();
-      }
-    });
-
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       public void before(final List<? extends VFileEvent> events) {
       }
@@ -79,16 +67,6 @@ public class IconDeferrerImpl extends IconDeferrer {
     }
   }
 
-  private void invalidateAllIcons() {
-    synchronized (LOCK) {
-      for (Icon icon : myIconsCache.values()) {
-        if (icon instanceof DeferredIconImpl) {
-          ((DeferredIconImpl)icon).invalidate();
-        }
-      }
-    }
-  }
-
   public <T> Icon defer(final Icon base, final T param, final Function<T, Icon> f) {
     if (myEvaluationIsInProgress.get().booleanValue()) {
       return f.fun(param);
@@ -97,7 +75,14 @@ public class IconDeferrerImpl extends IconDeferrer {
     synchronized (LOCK) {
       Icon result = myIconsCache.get(param);
       if (result == null) {
-        result = new DeferredIconImpl<T>(base, param, f);
+        result = new DeferredIconImpl<T>(base, param, f).setDisposer(new DeferredIconImpl.Disposer<T>() {
+          @Override
+          public void dispose(T key) {
+            synchronized (LOCK) {
+              myIconsCache.remove(key);
+            }
+          }
+        });
         myIconsCache.put(param, result);
       }
 

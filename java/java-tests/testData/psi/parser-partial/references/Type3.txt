@@ -1,0 +1,9 @@
+PsiJavaFile:Type3.java
+  PsiTypeElement:int[]
+    PsiTypeElement:int
+      PsiKeyword:int('int')
+    PsiJavaToken:LBRACKET('[')
+    PsiJavaToken:RBRACKET(']')
+  PsiJavaToken:LBRACKET('[')
+  PsiErrorElement:']' expected
+    <empty list>

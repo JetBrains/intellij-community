@@ -1171,11 +1171,6 @@ final class ToolWindowsPane extends JLayeredPane implements Disposable {
     }
   }
 
-//todo
-  static int getHorizontalInsetX() {
-    return 19;
-  }
-
   public void setStripesOverlayed(boolean stripesOverlayed) {
     myStripesOverlayed = stripesOverlayed;
     updateToolStripesVisibility();

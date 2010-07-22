@@ -1,0 +1,5 @@
+PsiJavaFile:Not1.java
+  PsiPrefixExpression:!
+    PsiJavaToken:EXCL('!')
+    PsiErrorElement:Expression expected
+      <empty list>

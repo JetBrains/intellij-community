@@ -73,6 +73,18 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
   }
 
   @NotNull
+  public StringPattern containsChars(@NonNls @NotNull final String s) {
+    return with(new PatternCondition<String>("containsChars") {
+      public boolean accepts(@NotNull final String str, final ProcessingContext context) {
+        for (int i=0, len=s.length(); i<len; i++) {
+          if (str.indexOf(s.charAt(i))>-1) return true;
+        }
+        return false;
+      }
+    });
+  }
+
+  @NotNull
   public StringPattern matches(@NonNls @NotNull final String s) {
     final String escaped = StringUtil.escapeToRegexp(s);
     if (escaped.equals(s)) {

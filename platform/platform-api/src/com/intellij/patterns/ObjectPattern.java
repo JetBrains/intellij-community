@@ -18,6 +18,7 @@ package com.intellij.patterns;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.InstanceofCheckerGenerator;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -68,9 +69,10 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
   }
 
   public Self and(final ElementPattern pattern) {
-    return with(new PatternCondition<T>("and") {
-      public boolean accepts(@NotNull final T t, final ProcessingContext context) {
-        return pattern.getCondition().accepts(t, context);
+    return with(new PatternConditionPlus<T, T>("and", pattern) {
+      @Override
+      public boolean processValues(T t, ProcessingContext context, PairProcessor<T, ProcessingContext> processor) {
+        return processor.process(t, context);
       }
     });
   }

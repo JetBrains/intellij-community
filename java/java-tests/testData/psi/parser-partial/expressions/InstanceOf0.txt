@@ -1,0 +1,14 @@
+PsiJavaFile:InstanceOf0.java
+  PsiInstanceofExpression:a instanceof String
+    PsiReferenceExpression:a
+      PsiReferenceParameterList
+        <empty list>
+      PsiIdentifier:a('a')
+    PsiWhiteSpace(' ')
+    PsiKeyword:instanceof('instanceof')
+    PsiWhiteSpace(' ')
+    PsiTypeElement:String
+      PsiJavaCodeReferenceElement:String
+        PsiIdentifier:String('String')
+        PsiReferenceParameterList
+          <empty list>
