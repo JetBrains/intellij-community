@@ -55,7 +55,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
 
-class SearchingForTestsTask extends Task.Backgroundable {
+public class SearchingForTestsTask extends Task.Backgroundable {
   private static final Logger LOG = Logger.getInstance("#" + SearchingForTestsTask.class.getName());
   private final Map<PsiClass, Collection<PsiMethod>> myClasses;
   private Socket mySocket;
@@ -88,7 +88,7 @@ class SearchingForTestsTask extends Task.Backgroundable {
       LOG.info(e);
     }
     try {
-      fillTestObjects();
+      fillTestObjects(myClasses);
     }
     catch (CantRunException e) {
       logCantRunException(e);
@@ -271,7 +271,7 @@ class SearchingForTestsTask extends Task.Backgroundable {
     }
   }
 
-  protected void fillTestObjects()
+  protected void fillTestObjects(final Map<PsiClass, Collection<PsiMethod>> classes)
     throws CantRunException {
     final TestData data = myConfig.getPersistantData();
     final PsiManager psiManager = PsiManager.getInstance(myProject);
@@ -294,8 +294,8 @@ class SearchingForTestsTask extends Task.Backgroundable {
         TestClassFilter projectFilter =
           new TestClassFilter(scope.getSourceScope(myConfig).getGlobalSearchScope(), myProject, true);
         TestClassFilter filter = projectFilter.intersectionWith(PackageScope.packageScope(psiPackage, true));
-        myClasses.putAll(calculateDependencies(null, TestNGUtil.getAllTestClasses(filter, false)));
-        if (myClasses.size() == 0) {
+        classes.putAll(calculateDependencies(null, TestNGUtil.getAllTestClasses(filter, false)));
+        if (classes.size() == 0) {
           throw new CantRunException("No tests found in the package \"" + packageName + '\"');
         }
       }
@@ -321,7 +321,7 @@ class SearchingForTestsTask extends Task.Backgroundable {
       })) {
         throw new CantRunException("Cannot test anonymous or local class \"" + data.getMainClassName() + '\"');
       }
-      myClasses.putAll(calculateDependencies(null, psiClass));
+      classes.putAll(calculateDependencies(null, psiClass));
     }
     else if (data.TEST_OBJECT.equals(TestType.METHOD.getType())) {
       //it's a method
@@ -353,11 +353,11 @@ class SearchingForTestsTask extends Task.Backgroundable {
           }
         }
       );
-      myClasses.putAll(calculateDependencies(methods, psiClass));
-      Collection<PsiMethod> psiMethods = myClasses.get(psiClass);
+      classes.putAll(calculateDependencies(methods, psiClass));
+      Collection<PsiMethod> psiMethods = classes.get(psiClass);
       if (psiMethods == null) {
         psiMethods = new LinkedHashSet<PsiMethod>();
-        myClasses.put(psiClass, psiMethods);
+        classes.put(psiClass, psiMethods);
       }
       psiMethods.addAll(Arrays.asList(methods));
     }
@@ -366,7 +366,7 @@ class SearchingForTestsTask extends Task.Backgroundable {
       PsiClass[] testClasses = TestNGUtil
         .getAllTestClasses(new TestClassFilter(data.getScope().getSourceScope(myConfig).getGlobalSearchScope(), myProject, true), false);
       for (PsiClass c : testClasses) {
-        myClasses.put(c, new HashSet<PsiMethod>());
+        classes.put(c, new HashSet<PsiMethod>());
       }
     }
   }
