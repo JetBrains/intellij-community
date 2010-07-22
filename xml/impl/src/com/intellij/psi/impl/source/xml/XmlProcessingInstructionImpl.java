@@ -40,7 +40,7 @@ public class XmlProcessingInstructionImpl extends XmlElementImpl implements XmlP
 
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof XmlElementVisitor) {
-      ((XmlElementVisitor)visitor).visitXmlElement(this);
+      ((XmlElementVisitor)visitor).visitXmlProcessingInstruction(this);
     }
     else {
       visitor.visitElement(this);

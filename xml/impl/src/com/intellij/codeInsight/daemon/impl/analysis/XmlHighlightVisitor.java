@@ -167,6 +167,30 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     bindMessageToAstNode(childByRole, warning, 0, messageLength, localizedMessage, quickFixActions);
   }
 
+
+  @Override
+  public void visitXmlProcessingInstruction(XmlProcessingInstruction processingInstruction) {
+    super .visitXmlProcessingInstruction(processingInstruction);
+    PsiElement parent = processingInstruction.getParent();
+
+    if (parent instanceof XmlProlog && processingInstruction.getText().startsWith("<?xml")) {
+      for(PsiElement e = PsiTreeUtil.prevLeaf(processingInstruction); e != null; e = PsiTreeUtil.prevLeaf(e)) {
+        if (e instanceof PsiWhiteSpace && PsiTreeUtil.prevLeaf(e) != null ||
+            e instanceof OuterLanguageElement) {
+          continue;
+        }
+        PsiElement eParent = e.getParent();
+        if (eParent instanceof PsiComment) e = eParent;
+  
+        addToResults(HighlightInfo.createHighlightInfo(
+          HighlightInfoType.ERROR,
+          e,
+          XmlErrorMessages.message("xml.declaration.should.precede.all.document.content")
+        ));
+      }
+    }
+  }
+
   private void bindMessageToAstNode(final PsiElement childByRole,
                                     final HighlightInfoType warning,
                                     final int offset,
