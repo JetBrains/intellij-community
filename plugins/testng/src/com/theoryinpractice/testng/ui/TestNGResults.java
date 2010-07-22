@@ -241,7 +241,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
     }
     else {
       //do not remember testresultmessage: test hierarchy is not set
-      testCase = new TestProxy();
+      testCase = new TestProxy(result.toDisplayString());
       failedToStart = testCase;
     }
 
