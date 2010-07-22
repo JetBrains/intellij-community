@@ -181,6 +181,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
         }
         PsiElement eParent = e.getParent();
         if (eParent instanceof PsiComment) e = eParent;
+        if (eParent instanceof XmlProcessingInstruction) break;
   
         addToResults(HighlightInfo.createHighlightInfo(
           HighlightInfoType.ERROR,
