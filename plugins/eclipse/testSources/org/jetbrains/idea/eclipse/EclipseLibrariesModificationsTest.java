@@ -30,9 +30,6 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class EclipseLibrariesModificationsTest extends EclipseVarsTest {
 
   private void doTestCreate(String[] classRoots, String[] sourceRoots) throws Exception {

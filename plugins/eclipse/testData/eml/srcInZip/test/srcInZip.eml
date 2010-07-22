@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component>
-	<exclude-output/>
-	<contentEntry url="file://$MODULE_DIR$">
-		<excludeFolder url="file://$MODULE_DIR$/bin"/>
-	</contentEntry>
-	<lib name="jar-all-5.zip" scope="COMPILE">
-		<srcroot url="jar://$MODULE_DIR$/lib/jar-all-5.zip!/doc/api"/>
-	</lib>
+  <exclude-output />
+  <contentEntry url="file://$MODULE_DIR$" />
+  <lib name="jar-all-5.zip" scope="COMPILE">
+    <srcroot url="jar://$MODULE_DIR$/lib/jar-all-5.zip!/doc/api" />
+    <relative-module-src project-related="jar://$PROJECT_DIR$/test/lib/jar-all-5.zip!/doc/api" />
+    <relative-module-cls project-related="jar://$PROJECT_DIR$/test/lib/jar-all-5.zip!/" />
+  </lib>
 </component>
