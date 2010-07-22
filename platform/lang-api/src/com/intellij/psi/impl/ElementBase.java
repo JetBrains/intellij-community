@@ -83,17 +83,28 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       baseIcon = myBaseIcon.get(flags);
     }
 
-    return IconDeferrer.getInstance().defer(baseIcon, new ElementIconRequest(psiElement,flags), new Function<ElementIconRequest, Icon>() {
-      public Icon fun(ElementIconRequest request) {
-        if (!request.getElement().isValid()) return null;
-
-        final Icon providersIcon = PsiIconUtil.getProvidersIcon(request.getElement(), request.getFlags());
-        if (providersIcon != null) {
-          return providersIcon instanceof RowIcon ? (RowIcon)providersIcon : createLayeredIcon(providersIcon, request.getFlags());
+    if (isToDeferIconLoading()) {
+      return IconDeferrer.getInstance().defer(baseIcon, new ElementIconRequest(psiElement, flags), new Function<ElementIconRequest, Icon>() {
+        public Icon fun(ElementIconRequest request) {
+          return computeIconNow(request.getElement(), request.getFlags());
         }
-        return getElementIcon(request.getFlags());
-      }
-    });
+      });
+    } else {
+      return computeIconNow(psiElement, flags);
+    }
+  }
+
+  protected boolean isToDeferIconLoading() {
+    return true;
+  }
+
+  private Icon computeIconNow(PsiElement element, int flags) {
+    if (!element.isValid()) return null;
+    final Icon providersIcon = PsiIconUtil.getProvidersIcon(element, flags);
+    if (providersIcon != null) {
+      return providersIcon instanceof RowIcon ? (RowIcon)providersIcon : createLayeredIcon(providersIcon, flags);
+    }
+    return getElementIcon(flags);
   }
 
   protected Icon computeBaseIcon(int flags) {
