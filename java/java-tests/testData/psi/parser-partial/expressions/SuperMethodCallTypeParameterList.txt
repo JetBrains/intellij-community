@@ -1,0 +1,9 @@
+PsiJavaFile:SuperMethodCallTypeParameterList.java
+  PsiMethodCallExpression:super()
+    PsiReferenceExpression:super
+      PsiReferenceParameterList
+        <empty list>
+      PsiKeyword:super('super')
+    PsiExpressionList
+      PsiJavaToken:LPARENTH('(')
+      PsiJavaToken:RPARENTH(')')

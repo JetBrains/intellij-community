@@ -1,0 +1,17 @@
+PsiJavaFile:ExprList3.java
+  PsiMethodCallExpression:f(1,
+    PsiReferenceExpression:f
+      PsiReferenceParameterList
+        <empty list>
+      PsiIdentifier:f('f')
+    PsiExpressionList
+      PsiJavaToken:LPARENTH('(')
+      PsiLiteralExpression:1
+        PsiJavaToken:INTEGER_LITERAL('1')
+      PsiJavaToken:COMMA(',')
+      PsiErrorElement:Expression expected
+        <empty list>
+      PsiExpression(empty)
+        <empty list>
+      PsiErrorElement:')' expected
+        <empty list>

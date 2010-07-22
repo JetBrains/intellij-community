@@ -1,0 +1,14 @@
+PsiJavaFile:New2.java
+  PsiNewExpression:new A[]
+    PsiKeyword:new('new')
+    PsiReferenceParameterList
+      <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaCodeReferenceElement:A
+      PsiIdentifier:A('A')
+      PsiReferenceParameterList
+        <empty list>
+    PsiJavaToken:LBRACKET('[')
+    PsiJavaToken:RBRACKET(']')
+    PsiErrorElement:Array initializer expected
+      <empty list>

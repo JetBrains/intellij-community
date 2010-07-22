@@ -20,7 +20,19 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
 
 public class IJavaElementType extends IElementType {
+  private final boolean myLeftBound;
+
   public IJavaElementType(@NonNls String debugName) {
+    this(debugName, false);
+  }
+
+  public IJavaElementType(@NonNls final String debugName, final boolean leftBound) {
     super(debugName, StdFileTypes.JAVA != null ? StdFileTypes.JAVA.getLanguage() : null);
+    myLeftBound = leftBound;
+  }
+
+  @Override
+  public boolean isLeftBound() {
+    return myLeftBound;
   }
 }

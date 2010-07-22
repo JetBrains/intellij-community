@@ -1,0 +1,6 @@
+PsiJavaFile:PrimitiveClassObjectAccess.java
+  PsiClassObjectAccessExpression:int.class
+    PsiTypeElement:int
+      PsiKeyword:int('int')
+    PsiJavaToken:DOT('.')
+    PsiKeyword:class('class')

@@ -1,0 +1,8 @@
+PsiJavaFile:TypeParams0.java
+  PsiTypeParameterList
+    PsiJavaToken:LT('<')
+    PsiTypeParameter:T
+      PsiIdentifier:T('T')
+      PsiElement(EXTENDS_BOUND_LIST)
+        <empty list>
+    PsiJavaToken:GT('>')
