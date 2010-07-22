@@ -47,7 +47,6 @@ public class TestProxy extends AbstractTestProxy {
   private TestResultMessage resultMessage;
   private String name;
   private TestProxy parent;
-  private List<Printable> output;
   private SmartPsiElementPointer psiElement;
   private boolean inProgress;
   private int myExceptionMark;
@@ -84,19 +83,6 @@ public class TestProxy extends AbstractTestProxy {
 
   public List<AbstractTestProxy> getResults(Filter filter) {
     return filter.select(results);
-  }
-
-  public List<Printable> getOutput() {
-    if (output != null) return output;
-    List<Printable> total = new ArrayList<Printable>();
-    for (TestProxy child : results) {
-      final List<Printable> out = child.getOutput();
-      if (total.size() > 0 && out.size() > 0) {
-        total.add(new TestNGConsoleView.Chunk("\n===============================================\n\n", ConsoleViewContentType.NORMAL_OUTPUT));
-      }
-      total.addAll(out);
-    }
-    return total;
   }
 
   public List<TestProxy> getChildren() {
@@ -170,7 +156,7 @@ public class TestProxy extends AbstractTestProxy {
 
   public Navigatable getDescriptor(final Location location) {
     if (location == null) return null;
-    if (isNotPassed() && output != null) {
+    if (isNotPassed()) {
       final PsiLocation<?> psiLocation = location.toPsiLocation();
       final PsiClass containingClass = psiLocation.getParentElement(PsiClass.class);
       if (containingClass != null) {
@@ -181,7 +167,7 @@ public class TestProxy extends AbstractTestProxy {
         }
         if (containingMethod != null) {
           final String qualifiedName = containingClass.getQualifiedName();
-          for (Printable aStackTrace : output) {
+          for (Printable aStackTrace : myNestedPrintables) {
             if (aStackTrace instanceof TestNGConsoleView.Chunk) {
               final String[] stackTrace = new LineTokenizer(((TestNGConsoleView.Chunk)aStackTrace).text).execute();
               for (String line : stackTrace) {
@@ -203,9 +189,10 @@ public class TestProxy extends AbstractTestProxy {
     return name + ' ' + results;
   }
 
-  public void addResult(TestProxy proxy) {
+  public void addChild(TestProxy proxy) {
     results.add(proxy);
     proxy.setParent(this);
+    addLast(proxy);
   }
 
   public void setParent(TestProxy parent) {
@@ -214,10 +201,6 @@ public class TestProxy extends AbstractTestProxy {
 
   public TestProxy getParent() {
     return parent;
-  }
-
-  public void setOutput(List<Printable> output) {
-    this.output = output;
   }
 
   public boolean isNotPassed() {
@@ -260,9 +243,9 @@ public class TestProxy extends AbstractTestProxy {
     return null;
   }
 
-  public int getExceptionMark() {
+  public int getExceptionMark() {//todo
     if (myExceptionMark == 0 && getChildCount() > 0) {
-      return (output != null ? output.size() : 0) + getChildAt(0).getExceptionMark();
+      return getChildAt(0).getExceptionMark();
     }
     return myExceptionMark;
   }

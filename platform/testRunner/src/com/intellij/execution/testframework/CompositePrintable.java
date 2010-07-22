@@ -22,7 +22,7 @@ import java.util.List;
 public class CompositePrintable implements Printable {
   public static final String NEW_LINE = "\n";
 
-  private final ArrayList<Printable> myNestedPrintables = new ArrayList<Printable>();
+  protected final ArrayList<Printable> myNestedPrintables = new ArrayList<Printable>();
 
   public void printOn(final Printer printer) {
     printAllOn(myNestedPrintables, printer);

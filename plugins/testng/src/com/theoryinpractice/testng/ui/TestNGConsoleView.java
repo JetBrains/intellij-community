@@ -28,6 +28,7 @@ import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.Printable;
 import com.intellij.execution.testframework.Printer;
+import com.intellij.execution.testframework.TestTreeView;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
@@ -37,10 +38,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.model.TestNGConsoleProperties;
 import com.theoryinpractice.testng.model.TestProxy;
+import com.theoryinpractice.testng.model.TreeRootNode;
 import org.jetbrains.annotations.NonNls;
 import org.testng.remote.strprotocol.TestResultMessage;
 
 import javax.swing.*;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -54,8 +58,7 @@ public class TestNGConsoleView extends BaseTestsOutputConsoleView {
   @NonNls private static final Pattern EXPECTED_NOT_SAME_BUT_WAS_PATTERN =
     Pattern.compile("(.*)expected not same with:\\<(.*)\\> but was:\\<(.*)\\>.*", Pattern.DOTALL);
   private TestNGResults testNGResults;
-  private final List<Printable> currentTestOutput = new ArrayList<Printable>();
-  private final List<Printable> nonTestOutput = new ArrayList<Printable>();
+  private TestProxy currentTest;
 
   private int myExceptionalMark = -1;
   private final TestNGConfiguration myConfiguration;
@@ -64,8 +67,9 @@ public class TestNGConsoleView extends BaseTestsOutputConsoleView {
 
   public TestNGConsoleView(TestNGConfiguration config,
                            final RunnerSettings runnerSettings,
-                           final ConfigurationPerRunnerSettings configurationPerRunnerSettings) {
-    super(new TestNGConsoleProperties(config), null);
+                           final ConfigurationPerRunnerSettings configurationPerRunnerSettings,
+                           final TreeRootNode unboundOutputRoot) {
+    super(new TestNGConsoleProperties(config), unboundOutputRoot);
     myConfiguration = config;
     myRunnerSettings = runnerSettings;
     myConfigurationPerRunnerSettings = configurationPerRunnerSettings;
@@ -76,6 +80,16 @@ public class TestNGConsoleView extends BaseTestsOutputConsoleView {
     return testNGResults;
   }
 
+  @Override
+  public void initUI() {
+    super.initUI();
+    final TestTreeView testTreeView = testNGResults.getTreeView();
+    testTreeView.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+      public void valueChanged(TreeSelectionEvent e) {
+        getPrinter().updateOnTestSelected(testTreeView.getSelectedTest());
+      }
+    });
+  }
 
   @Override
   public void dispose() {
@@ -96,50 +110,30 @@ public class TestNGConsoleView extends BaseTestsOutputConsoleView {
   public void addTestResult(TestResultMessage result) {
     if (testNGResults != null) {
       int exceptionMark = myExceptionalMark == -1 ? 0 : myExceptionalMark;
+
       final String stackTrace = result.getStackTrace();
       if (stackTrace != null && stackTrace.length() > 10) {
         //trim useless crud from stacktrace
         String trimmed = trimStackTrace(stackTrace);
         List<Printable> printables = getPrintables(result, trimmed);
         for (Printable printable : printables) {
-          printable.printOn(wrapConsoleView(getConsole())); //enable for root element
+          currentTest.addLast(printable);
         }
-        synchronized (currentTestOutput) {
-          exceptionMark = currentTestOutput.size();
-          currentTestOutput.addAll(printables);
-        }
+        exceptionMark = printables.size();
       }
-      testNGResults.addTestResult(result, new ArrayList<Printable>(currentTestOutput), exceptionMark);
-
+      final TestProxy failedToStart = testNGResults.getFailedToStart();
+      if (failedToStart != null) {
+        currentTest.addChild(failedToStart);
+        exceptionMark += failedToStart.getExceptionMark();
+      }
+      testNGResults.addTestResult(result, exceptionMark);
       myExceptionalMark = -1;
-      synchronized (currentTestOutput) {
-        currentTestOutput.clear();
-      }
     }
   }
 
   public void testStarted(TestResultMessage result) {
     if (testNGResults != null) {
-      testNGResults.testStarted(result);
-    }
-  }
-
-  public void flushOutput() {
-    synchronized (currentTestOutput) {
-      if (!currentTestOutput.isEmpty()) { //non empty for first test only
-        nonTestOutput.addAll(currentTestOutput);
-        currentTestOutput.clear();
-      }
-    }
-  }
-
-  public void flush() {
-    final TestProxy failedToStart = testNGResults.getFailedToStart();
-    if (failedToStart != null) {
-      final List<Printable> output = failedToStart.getOutput();
-      if (output != null) {
-        nonTestOutput.addAll(output);
-      }
+      currentTest = testNGResults.testStarted(result);
     }
   }
 
@@ -204,66 +198,15 @@ public class TestNGConsoleView extends BaseTestsOutputConsoleView {
     return printables;
   }
 
-  public void print(String s, ConsoleViewContentType contentType) {
-    if (myExceptionalMark == -1 && contentType == ConsoleViewContentType.ERROR_OUTPUT) {
-      myExceptionalMark = currentTestOutput.size();
-    }
-    Chunk chunk = new Chunk(s, contentType);
-    synchronized (currentTestOutput) {
-      currentTestOutput.add(chunk);
-    }
-  }
-
-  public void reset() {
-    final List<Printable> printables = new ArrayList<Printable>();
-    printables.addAll(nonTestOutput);
-    printables.addAll(testNGResults.getRoot().getOutput());
-    printables.addAll(currentTestOutput);
-    setView(printables, 0);
-  }
-
   public void attachToProcess(ProcessHandler processHandler) {
-    getConsole().attachToProcess(processHandler);
-  }
-  
-  public void setView(final List<Printable> output, final int i) {
-    if (!ApplicationManager.getApplication().isDispatchThread()) {
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          setView(output, i);
-        }
-      });
-    }
-    else {
-      final ConsoleView consoleView = getConsole();
-      consoleView.clear();
-      int idx = 0;
-      int offset = 0;
-      for (Printable chunk : new ArrayList<Printable>(output)) {
-        chunk.printOn(wrapConsoleView(consoleView));
-        if (idx++ < i) {
-          offset = consoleView.getContentSize();
-        }
-      }
-      consoleView.scrollTo(offset);
-    }
   }
 
-  private static Printer wrapConsoleView(final ConsoleView consoleView) {
-    return new Printer() {
-      public void print(String text, ConsoleViewContentType contentType) {
-        consoleView.print(text, contentType);
-      }
+  public TestProxy getCurrentTest() {
+    return currentTest;
+  }
 
-      public void onNewAvailable(Printable printable) {}
-
-      public void printHyperlink(String text, HyperlinkInfo info) {
-        consoleView.printHyperlink(text, info);
-      }
-
-      public void mark() {
-      }
-    };
+  public void finish() {
+    currentTest = null;
   }
 
   public static class Chunk implements Printable {

@@ -81,7 +81,6 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
   private final TreeRootNode rootNode;
   private static final String NO_PACKAGE = "No Package";
   private TestNGResults.OpenSourceSelectionListener openSourceListener;
-  private final TestNGConsoleView myConsole;
   private int myStatus = MessageHelper.PASSED_TEST;
   private Set<String> startedMethods = new HashSet<String>();
 
@@ -92,7 +91,6 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
                        final ConfigurationPerRunnerSettings configurationSettings) {
     super(component, console.createConsoleActions(), console.getProperties(),
           runnerSettings, configurationSettings, TESTNG_SPLITTER_PROPERTY, 0.5f);
-    myConsole = console;
     this.project = configuration.getProject();
 
     model = new TestNGResultsTableModel();
@@ -132,7 +130,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
 
     animator = new Animator(this, treeBuilder);
 
-    openSourceListener = new OpenSourceSelectionListener(structure, myConsole);
+    openSourceListener = new OpenSourceSelectionListener();
     tree.getSelectionModel().addTreeSelectionListener(openSourceListener);
 
     return tree;
@@ -218,11 +216,8 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
     return proxy;
   }
 
-  public void addTestResult(final TestResultMessage result, List<Printable> output, int exceptionMark) {
-    if (failedToStart != null) {
-      output.addAll(failedToStart.getOutput());
-      exceptionMark += failedToStart.getExceptionMark();
-    }
+  public void addTestResult(final TestResultMessage result, int exceptionMark) {
+
 
     TestProxy testCase;
     synchronized (started) {
@@ -261,7 +256,6 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
       failedToStart = testCase;
     }
 
-    testCase.setOutput(output);
     testCase.setExceptionMark(exceptionMark);
 
     if (result.getResult() == MessageHelper.FAILED_TEST) {
@@ -415,8 +409,6 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
 
   public void dispose() {
     super.dispose();
-    openSourceListener.structure = null;
-    openSourceListener.console = null;
     tree.getSelectionModel().removeTreeSelectionListener(openSourceListener);
   }
 
@@ -425,13 +417,6 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
   }
 
   private class OpenSourceSelectionListener implements TreeSelectionListener {
-    private TestTreeStructure structure;
-    private TestNGConsoleView console;
-
-    public OpenSourceSelectionListener(TestTreeStructure structure, TestNGConsoleView console) {
-      this.structure = structure;
-      this.console = console;
-    }
 
     public void valueChanged(TreeSelectionEvent e) {
       TreePath path = e.getPath();
@@ -440,13 +425,6 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
       if (proxy == null) return;
       if (ScrollToTestSourceAction.isScrollEnabled(TestNGResults.this)) {
         OpenSourceUtil.openSourcesFrom(tree, false);
-      }
-      if (proxy == structure.getRootElement()) {
-        console.reset();
-      }
-      else {
-        console
-          .setView(proxy.getOutput(), TestNGConsoleProperties.SCROLL_TO_STACK_TRACE.value(getProperties()) ? proxy.getExceptionMark() : 0);
       }
     }
   }

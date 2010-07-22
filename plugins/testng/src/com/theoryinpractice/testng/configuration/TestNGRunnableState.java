@@ -31,9 +31,7 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.testframework.TestConsoleProperties;
-import com.intellij.execution.testframework.TestFrameworkRunningModel;
-import com.intellij.execution.testframework.TestSearchScope;
+import com.intellij.execution.testframework.*;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.application.PathManager;
@@ -60,10 +58,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.PathUtil;
 import com.intellij.util.net.NetUtils;
-import com.theoryinpractice.testng.model.IDEARemoteTestRunnerClient;
-import com.theoryinpractice.testng.model.TestData;
-import com.theoryinpractice.testng.model.TestNGRemoteListener;
-import com.theoryinpractice.testng.model.TestType;
+import com.theoryinpractice.testng.model.*;
 import com.theoryinpractice.testng.ui.TestNGConsoleView;
 import com.theoryinpractice.testng.ui.TestNGResults;
 import com.theoryinpractice.testng.ui.actions.RerunFailedTestsAction;
@@ -131,7 +126,8 @@ public class TestNGRunnableState extends JavaCommandLineState {
       }
       throw e;
     }
-    final TestNGConsoleView console = new TestNGConsoleView(config, runnerSettings, myConfigurationPerRunnerSettings);
+    final TreeRootNode unboundOutputRoot = new TreeRootNode();
+    final TestNGConsoleView console = new TestNGConsoleView(config, runnerSettings, myConfigurationPerRunnerSettings, unboundOutputRoot);
     console.initUI();
     for (RunConfigurationExtension ext : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
       ext.handleStartProcess(config, processHandler);
@@ -166,8 +162,9 @@ public class TestNGRunnableState extends JavaCommandLineState {
 
       @Override
       public void startNotified(final ProcessEvent event) {
-        TestNGRemoteListener listener = new TestNGRemoteListener(console);
+        TestNGRemoteListener listener = new TestNGRemoteListener(console, unboundOutputRoot);
         client.startListening(listener, listener, port);
+
       }
 
       @Override
@@ -180,9 +177,20 @@ public class TestNGRunnableState extends JavaCommandLineState {
 
       @Override
       public void onTextAvailable(final ProcessEvent event, final Key outputType) {
-        //we override this since we wrap the underlying console, and proxy the attach call,
-        //so we never get a chance to intercept the text.
-        console.print(event.getText(), ConsoleViewContentType.getConsoleViewType(outputType));
+        final TestProxy currentTest = console.getCurrentTest();
+        final String text = event.getText();
+        final ConsoleViewContentType consoleViewType = ConsoleViewContentType.getConsoleViewType(outputType);
+        final Printable printable = new Printable() {
+          public void printOn(final Printer printer) {
+            printer.print(text, consoleViewType);
+          }
+        };
+        if (currentTest != null) {
+          currentTest.addLast(printable);
+        }
+        else {
+          unboundOutputRoot.addLast(printable);
+        }
       }
     });
     console.attachToProcess(processHandler);
