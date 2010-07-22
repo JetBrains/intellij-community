@@ -16,10 +16,12 @@
 
 package com.intellij.ide;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -199,22 +201,31 @@ public class PsiCopyPasteManager {
         return getDataAsText();
       }
       if (DataFlavor.javaFileListFlavor.equals(flavor)) {
-        return asFileList(myDataProxy.getElements());
+        ApplicationManager.getApplication().runReadAction(new Computable<List<File>>() {
+          @Override
+          public List<File> compute() {
+            return asFileList(myDataProxy.getElements());
+          }
+        });
       }
       return null;
     }
 
     @Nullable
     private String getDataAsText() {
-      List<String> names = new ArrayList<String>();
-      for (PsiElement element : myDataProxy.getElements()) {
-        if (element instanceof PsiNamedElement) {
-          String name = ((PsiNamedElement) element).getName();
-          if (name != null) {
-            names.add(name);
+      final List<String> names = new ArrayList<String>();
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          for (PsiElement element : myDataProxy.getElements()) {
+            if (element instanceof PsiNamedElement) {
+              String name = ((PsiNamedElement) element).getName();
+              if (name != null) {
+                names.add(name);
+              }
+            }
           }
         }
-      }
+      });
       if (names.isEmpty()) {
         return null;
       }
