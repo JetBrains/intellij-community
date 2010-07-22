@@ -225,7 +225,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
               iterator.processFile(file);
             }
           }
-        });
+        }, null);
 
         final ModuleRootManager rootManager = ModuleRootManager.getInstance(ourModule);
 

@@ -19,7 +19,10 @@ package com.intellij.util.indexing;
 import com.intellij.AppTopics;
 import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationAdapter;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.CachedSingletonsRegistry;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -102,6 +105,7 @@ public class FileBasedIndex implements ApplicationComponent {
   private final ChangedFilesCollector myChangedFilesCollector;
 
   private final List<IndexableFileSet> myIndexableSets = ContainerUtil.createEmptyCOWList();
+  private final Map<IndexableFileSet, Project> myIndexableSetToProjectMap = new HashMap<IndexableFileSet, Project>();
 
   public static final int OK = 1;
   public static final int REQUIRES_REBUILD = 2;
@@ -259,7 +263,7 @@ public class FileBasedIndex implements ApplicationComponent {
       myChangedFilesCollector = new ChangedFilesCollector();
       vfManager.addVirtualFileListener(myChangedFilesCollector);
 
-      registerIndexableSet(new AdditionalIndexableFileSet());
+      registerIndexableSet(new AdditionalIndexableFileSet(), null);
     }
     finally {
       ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
@@ -854,8 +858,7 @@ public class FileBasedIndex implements ApplicationComponent {
         }
       };
 
-      final Application application = ApplicationManager.getApplication();
-      if (cleanupOnly || application.isUnitTestMode()) {
+      if (cleanupOnly || myIsUnitTestMode) {
         rebuildRunnable.run();
       }
       else {
@@ -1129,10 +1132,18 @@ private boolean indexUnsavedDocument(final Document document, final ID<?, ?> req
   }
 
   public Collection<VirtualFile> getFilesToUpdate(final Project project) {
-    final ProjectFileIndex projectIndex = ProjectRootManager.getInstance(project).getFileIndex();
     return ContainerUtil.findAll(myChangedFilesCollector.getAllFilesToUpdate(), new Condition<VirtualFile>() {
       public boolean value(VirtualFile virtualFile) {
-        return projectIndex.isInContent(virtualFile);
+        for (IndexableFileSet set : myIndexableSets) {
+          final Project proj = myIndexableSetToProjectMap.get(set);
+          if (proj != null && !proj.equals(project)) {
+            continue; // skip this set as associated with a different project
+          }
+          if (set.isInSet(virtualFile)) {
+            return true;
+          }
+        }
+        return false;
       }
     });
   }
@@ -1326,8 +1337,9 @@ private boolean indexUnsavedDocument(final Document document, final ID<?, ?> req
     }
 
     private void markDirty(final VirtualFileEvent event) {
-      cleanProcessedFlag(event.getFile());
-      iterateIndexableFiles(event.getFile(), new Processor<VirtualFile>() {
+      final VirtualFile eventFile = event.getFile();
+      cleanProcessedFlag(eventFile);
+      iterateIndexableFiles(eventFile, new Processor<VirtualFile>() {
         public boolean process(final VirtualFile file) {
           FileContent fileContent = null;
           // handle 'content-less' indices separately
@@ -1711,13 +1723,15 @@ private boolean indexUnsavedDocument(final Document document, final ID<?, ?> req
     return new UnindexedFilesFinder();
   }
 
-  public void registerIndexableSet(IndexableFileSet set) {
+  public void registerIndexableSet(IndexableFileSet set, @Nullable Project project) {
     myIndexableSets.add(set);
+    myIndexableSetToProjectMap.put(set, project);
   }
 
   public void removeIndexableSet(IndexableFileSet set) {
     myChangedFilesCollector.forceUpdate(null, null, true);
     myIndexableSets.remove(set);
+    myIndexableSetToProjectMap.remove(set);
   }
 
   @Nullable
