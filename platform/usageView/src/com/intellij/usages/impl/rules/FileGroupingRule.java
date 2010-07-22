@@ -18,12 +18,14 @@ package com.intellij.usages.impl.rules;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.ui.ComputableIcon;
 import com.intellij.usages.NamedPresentably;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
@@ -58,7 +60,7 @@ public class FileGroupingRule implements UsageGroupingRule {
     private final Project myProject;
     private final VirtualFile myFile;
     private String myPresentableName;
-    private Icon myIcon;
+    private ComputableIcon myIcon;
 
     public FileUsageGroup(Project project, VirtualFile file) {
       myProject = project;
@@ -73,7 +75,12 @@ public class FileGroupingRule implements UsageGroupingRule {
 
     public void update() {
       if (isValid()) {
-        myIcon = getIconImpl();
+        myIcon = new ComputableIcon(new Computable<Icon>() {
+          @Override
+          public Icon compute() {
+            return getIconImpl();
+          }
+        });
         myPresentableName = myFile.getName();
       }
     }
@@ -94,7 +101,7 @@ public class FileGroupingRule implements UsageGroupingRule {
     }
 
     public Icon getIcon(boolean isOpen) {
-      return myIcon;
+      return myIcon.getIcon();
     }
 
     @NotNull

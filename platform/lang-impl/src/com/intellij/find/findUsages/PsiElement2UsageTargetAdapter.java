@@ -37,6 +37,7 @@ import com.intellij.psi.meta.PsiPresentableMetaData;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.ui.ComputableIcon;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.PsiElementUsageTarget;
@@ -180,8 +181,8 @@ public class PsiElement2UsageTargetAdapter implements PsiElementUsageTarget, Typ
 
   private class MyItemPresentation implements ItemPresentation {
     private String myPresentableText;
-    private Icon myIconOpen;
-    private Icon myIconClosed;
+    private ComputableIcon myIconOpen;
+    private ComputableIcon myIconClosed;
 
     public MyItemPresentation() {
       update();
@@ -191,8 +192,8 @@ public class PsiElement2UsageTargetAdapter implements PsiElementUsageTarget, Typ
       final PsiElement element = getElement();
       if (element != null) {
         final ItemPresentation presentation = ((NavigationItem)element).getPresentation();
-        myIconOpen = presentation != null ? presentation.getIcon(true) : null;
-        myIconClosed = presentation != null ? presentation.getIcon(false) : null;
+        myIconOpen = presentation != null ? ComputableIcon.create(presentation, true) : null;
+        myIconClosed = presentation != null ? ComputableIcon.create(presentation, false) : null;
         myPresentableText = UsageViewUtil.createNodeText(element);
         if (myIconOpen == null || myIconClosed == null) {
           if (element instanceof PsiMetaOwner) {
@@ -200,16 +201,16 @@ public class PsiElement2UsageTargetAdapter implements PsiElementUsageTarget, Typ
             final PsiMetaData metaData = psiMetaOwner.getMetaData();
             if (metaData instanceof PsiPresentableMetaData) {
               final PsiPresentableMetaData psiPresentableMetaData = (PsiPresentableMetaData)metaData;
-              if (myIconOpen == null) myIconOpen = psiPresentableMetaData.getIcon();
-              if (myIconClosed == null) myIconClosed = psiPresentableMetaData.getIcon();
+              if (myIconOpen == null) myIconOpen = ComputableIcon.create(psiPresentableMetaData);
+              if (myIconClosed == null) myIconClosed = ComputableIcon.create(psiPresentableMetaData);
             }
           }
           else if (element instanceof PsiFile) {
             final PsiFile psiFile = (PsiFile)element;
             final VirtualFile virtualFile = psiFile.getVirtualFile();
             if (virtualFile != null) {
-              myIconOpen = virtualFile.getIcon();
-              myIconClosed = virtualFile.getIcon();
+              myIconOpen = ComputableIcon.create(virtualFile);
+              myIconClosed = ComputableIcon.create(virtualFile);
             }
           }
         }
@@ -229,7 +230,7 @@ public class PsiElement2UsageTargetAdapter implements PsiElementUsageTarget, Typ
     }
 
     public Icon getIcon(boolean open) {
-      return open ? myIconOpen : myIconClosed;
+      return open ? myIconOpen.getIcon() : myIconClosed.getIcon();
     }
   }
 }
