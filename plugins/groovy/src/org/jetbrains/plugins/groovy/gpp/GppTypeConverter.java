@@ -66,6 +66,11 @@ public class GppTypeConverter extends GrTypeConverter {
           (!TypesUtil.isAssignable(lKeyType, parameters[0], context) || !TypesUtil.isAssignable(lValueType, parameters[1], context))) {
         return null;
       }
+
+      if (((GrMapType)rType).getValueType("super") != null) {
+        return true;
+      }
+
       if (hasDefaultConstructor(lType)) {
         return true;
       }
