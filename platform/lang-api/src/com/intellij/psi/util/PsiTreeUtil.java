@@ -175,6 +175,26 @@ public class PsiTreeUtil {
     return parents;
   }
 
+  @Nullable public static <T extends PsiElement> T findChildOfType(@NotNull final PsiElement element, @NotNull final Class<T> aClass) {
+    return findChildOfType(element, aClass, true);
+  }
+
+  @Nullable public static <T extends PsiElement> T findChildOfType(@NotNull final PsiElement element, @NotNull final Class<T> aClass, final boolean strict) {
+    PsiElementProcessor.FindElement<PsiElement> processor = new PsiElementProcessor.FindElement<PsiElement>() {
+      @Override
+      public boolean execute(PsiElement each) {
+        if (strict && each == element) return true;
+        if (instanceOf(aClass, each)) {
+          return setFound(each);
+        }
+        return true;
+      }
+    };
+
+    PsiTreeUtil.processElements(element, processor);
+    return (T)processor.getFoundElement();
+  }
+
   @Nullable public static <T extends PsiElement> T getChildOfType(@NotNull PsiElement element, @NotNull Class<T> aClass) {
     for(PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()){
       if (instanceOf(aClass, child)) return (T)child;
