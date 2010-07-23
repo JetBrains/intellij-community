@@ -66,27 +66,6 @@ public abstract class PsiFileBase extends PsiFileImpl {
     return myLanguage;
   }
 
-  protected final FileElement createFileElement(final CharSequence docText) {
-    //final ParserDefinition parserDefinition = myLanguage.getParserDefinition();
-    //if (parserDefinition != null && parserDefinition.createParser(getProject()) != PsiUtil.NULL_PARSER) {
-    //  return _createFileElement(docText, myLanguage, getProject(), parserDefinition);
-    //}
-    return super.createFileElement(docText);
-  }
-
-  //private static FileElement _createFileElement(final CharSequence docText,
-  //                                              final Language language,
-  //                                              Project project,
-  //                                              final ParserDefinition parserDefinition) {
-  //  final PsiParser parser = parserDefinition.createParser(project);
-  //  final IElementType root = parserDefinition.getFileNodeType();
-  //  final PsiBuilderImpl builder = new PsiBuilderImpl(language, project, null, docText);
-  //  final FileElement fileRoot = (FileElement)parser.parse(root, builder);
-  //  LOG.assertTrue(fileRoot.getElementType() == root,
-  //                 "Parsing file text returns rootElement with type different from declared in parser definition");
-  //  return fileRoot;
-  //}
-
   public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitFile(this);
   }

@@ -42,8 +42,4 @@ public class IFileElementType extends ILazyParseableElementType {
     final PsiParser parser = LanguageParserDefinitions.INSTANCE.forLanguage(getLanguage()).createParser(project);
     return parser.parse(this, builder).getFirstChildNode();
   }
-
-  //public boolean isParsable(CharSequence buffer, final Project project) {
-  //  return true;
-  //}
 }
