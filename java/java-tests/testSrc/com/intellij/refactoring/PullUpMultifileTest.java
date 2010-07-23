@@ -24,10 +24,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.memberPullUp.PullUpConflictsUtil;
 import com.intellij.refactoring.memberPullUp.PullUpHelper;
@@ -75,8 +72,10 @@ public class PullUpMultifileTest extends MultiFileTestCase {
         memberInfo.setChecked(true);
         membersToMove[0] = memberInfo;
 
+        final PsiDirectory targetDirectory = targetClass.getContainingFile().getContainingDirectory();
+        final PsiPackage targetPackage = targetDirectory != null ? JavaDirectoryService.getInstance().getPackage(targetDirectory) : null;
         conflictsMap.putAllValues(
-          PullUpConflictsUtil.checkConflicts(membersToMove, srcClass, targetClass, null, null, new InterfaceContainmentVerifier() {
+          PullUpConflictsUtil.checkConflicts(membersToMove, srcClass, targetClass, targetPackage, targetDirectory, new InterfaceContainmentVerifier() {
             public boolean checkedInterfacesContain(PsiMethod psiMethod) {
               return PullUpHelper.checkedInterfacesContain(Arrays.asList(membersToMove), psiMethod);
             }
