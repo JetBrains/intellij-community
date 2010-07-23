@@ -39,6 +39,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class PathMacrosImpl extends PathMacros implements ApplicationComponent, NamedJDOMExternalizable, RoamingTypeDisabled {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.PathMacrosImpl");
+  private final Map<String,String> myLegacyMacros = new HashMap<String,String>();
   private final Map<String,String> myMacros = new HashMap<String, String>();
   private final JBReentrantReadWriteLock myLock = LockFactory.createReadWriteLock();
   private final List<String> myIgnoredMacros = new CopyOnWriteArrayList<String>();
@@ -213,11 +214,34 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
     }
   }
 
+  @Override
+  public Collection<String> getLegacyMacroNames() {
+    try {
+      myLock.readLock().lock();
+      return myLegacyMacros.keySet();
+    }
+    finally {
+      myLock.readLock().unlock();
+    }
+  }
+
   public void setMacro(@NotNull String name, @NotNull String value) {
     if (value.trim().length() == 0) return;
     try {
       myLock.writeLock().lock();
       myMacros.put(name, value);
+    }
+    finally {
+      myLock.writeLock().unlock();
+    }
+  }
+
+  @Override
+  public void addLegacyMacro(@NotNull String name, @NotNull String value) {
+    try {
+      myLock.writeLock().lock();
+      myLegacyMacros.put(name, value);
+      myMacros.remove(name);
     }
     finally {
       myLock.writeLock().unlock();
@@ -278,8 +302,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
   }
 
   public void addMacroReplacements(ReplacePathToMacroMap result) {
-    final Set<String> macroNames = getUserMacroNames();
-    for (final String name : macroNames) {
+    for (final String name : getUserMacroNames()) {
       final String value = getValue(name);
       if (value != null && value.trim().length() > 0) result.addMacroReplacement(value, name);
     }
@@ -287,10 +310,19 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
 
 
   public void addMacroExpands(ExpandMacroToPathMap result) {
-    final Set<String> macroNames = getUserMacroNames();
-    for (final String name : macroNames) {
+    for (final String name : getUserMacroNames()) {
       final String value = getValue(name);
       if (value != null && value.trim().length() > 0) result.addMacroExpand(name, value);
+    }
+
+    myLock.readLock().lock();
+    try {
+      for (Map.Entry<String, String> entry : myLegacyMacros.entrySet()) {
+        result.addMacroExpand(entry.getKey(), entry.getValue());
+      }
+    }
+    finally {
+      myLock.readLock().unlock();
     }
   }
 
