@@ -401,9 +401,10 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
   @Nullable
   private static PsiElement resolve(final PsiReference ref) {
-    PsiElement resolvedElement = null;
+    // IDEA-56727 try resolve first as in GotoDeclarationAction
+    PsiElement resolvedElement = ref.resolve();
 
-    if (ref instanceof PsiPolyVariantReference) {
+    if (resolvedElement == null && ref instanceof PsiPolyVariantReference) {
       final ResolveResult[] psiElements = ((PsiPolyVariantReference)ref).multiResolve(false);
       if (psiElements.length > 0) {
         final ResolveResult resolveResult = psiElements[0];
@@ -411,9 +412,6 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
           resolvedElement = resolveResult.getElement();
         }
       }
-    }
-    else {
-      resolvedElement = ref.resolve();
     }
     return resolvedElement;
   }
