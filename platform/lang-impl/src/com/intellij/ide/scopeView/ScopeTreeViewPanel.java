@@ -33,6 +33,7 @@ import com.intellij.ide.scopeView.nodes.BasePsiNode;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.ide.util.EditorHelper;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -505,7 +506,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
       final NamedScope scope = getCurrentScope();
       final PsiElement element = event.getNewChild();
       final PsiFile psiFile = event.getFile();
-      if (psiFile != null) {
+      if (psiFile != null && !InjectedLanguageManager.getInstance(myProject).isInjectedFragment(psiFile)) {
         if (psiFile.getLanguage() == psiFile.getViewProvider().getBaseLanguage()) {
           queueUpdate(new Runnable() {
             public void run() {
