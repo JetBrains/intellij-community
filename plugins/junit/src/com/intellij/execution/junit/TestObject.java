@@ -264,6 +264,7 @@ public abstract class TestObject implements JavaCommandLine {
     final JUnitTreeConsoleView consoleView = new JUnitTreeConsoleView(consoleProperties, getRunnerSettings(), getConfigurationSettings(), unboundOutputRoot);
     consoleView.initUI();
     consoleView.attachToProcess(handler);
+    unboundOutputRoot.setPrinter(consoleView.getPrinter());
 
     final TestsPacketsReceiver packetsReceiver = new TestsPacketsReceiver(consoleView) {
       @Override
