@@ -67,8 +67,8 @@ def wire_build_date(String buildNumber) {
 target('default': 'The default target') {
   depends(compile)
   layoutAll(
-          buildNumber: "IC-90.SNAPSHOT",
-          version: "Maia",
+          buildNumber: "IC-X.SNAPSHOT",
+          version: "IdeaX",
           system_selector: "IntelliJIdeaCE10",
           jdk_req: "1.6*",
           vmoptions: "-Xms128m -Xmx512m -XX:MaxPermSize=250m -ea",
