@@ -85,6 +85,7 @@ import java.util.regex.Pattern;
 
 public class FindInProjectUtil {
   private static final int USAGES_LIMIT = 1000;
+  private static final int USAGES_PER_READ_ACTION = 100;
   private static final int FILES_SIZE_LIMIT = 70 * 1024 * 1024; // megabytes.
   private static final int SINGLE_FILE_SIZE_LIMIT = 5 * 1024 * 1024; // megabytes.
 
@@ -218,7 +219,7 @@ public class FindInProjectUtil {
       int i = 0;
       long totalFilesSize = 0;
       int count = 0;
-      boolean warningShown = false;
+      final boolean[] warningShown = new boolean[] {false};
 
       final UsageViewManager usageViewManager = UsageViewManager.getInstance(project);
       for (final PsiFile psiFile : psiFiles) {
@@ -252,21 +253,15 @@ public class FindInProjectUtil {
           progress.setText2(FindBundle.message("find.searching.for.string.in.file.occurrences.progress", count));
         }
 
-        int countInFile = processUsagesInFile(psiFile, findModel, consumer);
+        int countInFile = processUsagesInFile(psiFile, findModel, consumer, count, warningShown);
 
         if (countInFile > 0) {
           totalFilesSize += fileLength;
-          if (totalFilesSize > FILES_SIZE_LIMIT && !warningShown) {
+          if (totalFilesSize > FILES_SIZE_LIMIT && !warningShown[0]) {
             showTooManyUsagesWaring(project, FindBundle.message("find.excessive.total.size.prompt", presentableSize(totalFilesSize),
                                                                 ApplicationNamesInfo.getInstance().getProductName()));
-            warningShown = true;
+            warningShown[0] = true;
           }
-        }
-
-        count += countInFile;
-        if (count > USAGES_LIMIT && !warningShown) {
-          showTooManyUsagesWaring(project, FindBundle.message("find.excessive.usage.count.prompt", count));
-          warningShown = true;
         }
       }
 
@@ -317,22 +312,37 @@ public class FindInProjectUtil {
     }
   }
 
-  private static int processUsagesInFile(final PsiFile psiFile, final FindModel findModel, final Processor<UsageInfo> consumer) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
-      public Integer compute() {
-        if (psiFile.isValid()) {
-          VirtualFile virtualFile = psiFile.getVirtualFile();
-          // Check once more if valid and text since we're in new read action and things might have been changed.
-          if (FileTypeManager.getInstance().getFileTypeByFile(virtualFile).isBinary()) return 0; // do not decompile .class files
-          final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
-          if (document != null) {
-            return addToUsages(document, consumer, findModel, psiFile);
-          }
+  private static int processUsagesInFile(final PsiFile psiFile,
+                                         final FindModel findModel,
+                                         final Processor<UsageInfo> consumer,
+                                         int alreadyCounted,
+                                         boolean[] warningShown) {
+    final VirtualFile virtualFile = psiFile.getVirtualFile();
+    if (virtualFile == null) return 0;
+    if (FileTypeManager.getInstance().getFileTypeByFile(virtualFile).isBinary()) return 0; // do not decompile .class files
+    final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+    if (document == null) return 0;
+    final int[] offset = new int[] {0};
+    int count = 0;
+    int found;
+    do {
+      found = ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
+        @Override
+        @NotNull
+        public Integer compute() {
+          if (!psiFile.isValid()) return 0;
+          return addToUsages(document, consumer, findModel, psiFile, offset, USAGES_PER_READ_ACTION);
         }
-
-        return 0;
+      });
+      count += found;
+      if (found > 0 && count + alreadyCounted > USAGES_LIMIT && !warningShown[0]) {
+        showTooManyUsagesWaring(psiFile.getProject(), FindBundle.message("find.excessive.usage.count.prompt", count));
+        warningShown[0] = true;
       }
-    }).intValue();
+
+    }
+    while (found != 0);
+    return count;
   }
 
   private static String getPresentablePath(final VirtualFile virtualFile) {
@@ -605,12 +615,11 @@ public class FindInProjectUtil {
   }
 
   private static int addToUsages(@NotNull Document document, @NotNull Processor<UsageInfo> consumer, @NotNull FindModel findModel,
-                                 @NotNull final PsiFile psiFile) {
-
+                                 @NotNull final PsiFile psiFile, int[] offsetRef, int maxUsages) {
     int count = 0;
     CharSequence text = document.getCharsSequence();
     int textLength = document.getTextLength();
-    int offset = 0;
+    int offset = offsetRef[0];
 
     Project project = psiFile.getProject();
 
@@ -632,7 +641,11 @@ public class FindInProjectUtil {
         // for regular expr the size of the match could be zero -> could be infinite loop in finding usages!
         ++offset;
       }
+      if (maxUsages > 0 && count >= maxUsages) {
+        break;
+      }
     }
+    offsetRef[0] = offset;
     return count;
   }
 
