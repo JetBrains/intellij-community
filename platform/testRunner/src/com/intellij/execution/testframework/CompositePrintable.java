@@ -15,11 +15,13 @@
  */
 package com.intellij.execution.testframework;
 
+import com.intellij.openapi.Disposable;
+
 import java.util.ArrayList;
 
 import java.util.List;
 
-public class CompositePrintable implements Printable {
+public class CompositePrintable implements Printable, Disposable {
   public static final String NEW_LINE = "\n";
 
   protected final ArrayList<Printable> myNestedPrintables = new ArrayList<Printable>();
@@ -44,6 +46,11 @@ public class CompositePrintable implements Printable {
     for (final T printable : printables) {
       printable.printOn(console);
     }
+  }
+
+  @Override
+  public void dispose() {
+    clear();
   }
 }
 
