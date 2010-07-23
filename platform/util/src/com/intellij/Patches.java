@@ -17,26 +17,26 @@ package com.intellij;
 
 import com.intellij.openapi.util.SystemInfo;
 
-@SuppressWarnings({"HardCodedStringLiteral"})
+@SuppressWarnings({"HardCodedStringLiteral", "UtilityClassWithoutPrivateConstructor"})
 public class Patches {
   public static final boolean ALL_FOLDERS_ARE_WRITABLE = SystemInfo.isWindows;
 
   /**
-   * See sun bug parage.
+   * See sun bug parade.
    * When JTable loses focus it cancel cell editing. It should stop cell editing instead.
    * Actually SUN-boys told they have fixed the bug, but they cancel editing instead of stopping it.
    */
   public static final boolean SUN_BUG_ID_4503845 = SystemInfo.JAVA_VERSION.indexOf("1.4.") != -1;
 
   /**
-   * See sun bug parage [http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4620537].
+   * See sun bug parade [http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4620537].
    * MouseListener on JTabbedPane with SCROLL_TAB_LAYOUT policy doesn't get events. In the related bug
    * #4499556 Sun advices to reimplement or hack JTabbedPane as workaround :)
    */
   public static final boolean SUN_BUG_ID_4620537 = SystemInfo.JAVA_VERSION.indexOf("1.4.") != -1;
 
   /**
-   * See sun bug parage.
+   * See sun bug parade.
    * Debugger hangs on any attempt to attach/listen Connector when attach hanged once. 
    */
   public static final boolean SUN_BUG_338675 = SystemInfo.JAVA_VERSION.indexOf("1.4.") != -1;
@@ -68,7 +68,7 @@ public class Patches {
   public static final boolean SUN_BUG_ID_4738042 = SystemInfo.JAVA_VERSION.indexOf("1.4.") != -1 &&
                                                    SystemInfo.JAVA_VERSION.indexOf("1.4.2") == -1;
 
-  /** BasicTreeUI.FocusHandler doesn't preperly repaint JTree on focus changes */
+  /** BasicTreeUI.FocusHandler doesn't properly repaint JTree on focus changes */
   public static final boolean SUN_BUG_ID_4893787 = true;
 
   public static final boolean FILE_CHANNEL_TRANSFER_BROKEN = SystemInfo.isLinux && SystemInfo.OS_VERSION.startsWith("2.6");
@@ -111,12 +111,14 @@ public class Patches {
   public static final boolean MAC_AQUA_TABS_HACK = SystemInfo.isMac;
 
   /**
-   * it happened on Mac that some thread did not suspended during VM suspend
-   * resiming VM in this case caused com.sun.jdi.InternalException #13
+   * It happened on Mac that some thread did not suspended during VM suspend
+   * resuming VM in this case caused com.sun.jdi.InternalException #13
    */
   public static final boolean MAC_RESUME_VM_HACK = SystemInfo.isMac;
   
-  // IBM java machine 1.4.2 craches if debugger uses ObjectReference.disableCollection() and ObjectReference.enableCollection()
+  /**
+   * IBM java machine 1.4.2 crashes if debugger uses ObjectReference.disableCollection() and ObjectReference.enableCollection()
+   */
   public static final boolean IBM_JDK_DISABLE_COLLECTION_BUG = "false".equalsIgnoreCase(System.getProperty("idea.debugger.keep.temp.objects"));
 
   public static final boolean MAC_HIDE_QUIT_HACK = false;
