@@ -39,6 +39,7 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
     myListeners = listeners;
     try {
       Test suite = TestRunnerUtil.getTestSuite(this, args);
+      if (suite == null) return -1;
       TestResult result = doRun(suite);
       if (!result.wasSuccessful()) {
         return -1;
