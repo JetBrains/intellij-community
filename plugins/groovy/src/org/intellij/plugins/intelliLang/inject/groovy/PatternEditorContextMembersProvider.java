@@ -16,11 +16,14 @@
 package org.intellij.plugins.intelliLang.inject.groovy;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.patterns.compiler.PatternClassBean;
 import com.intellij.patterns.compiler.PatternCompilerFactory;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.search.LowLevelSearchUtil;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -33,7 +36,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.StringSearcher;
+import com.intellij.util.xml.DomManager;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jetbrains.annotations.NotNull;
@@ -132,7 +138,7 @@ public class PatternEditorContextMembersProvider extends NonCodeMembersContribut
     if (beanClass != null) {
       final GlobalSearchScope scope =
         GlobalSearchScope.getScopeRestrictedByFileTypes(GlobalSearchScope.allScope(project), StdFileTypes.XML);
-      beanClass.getManager().getSearchHelper().processElementsWithWord(new TextOccurenceProcessor() {
+      final TextOccurenceProcessor occurenceProcessor = new TextOccurenceProcessor() {
         @Override
         public boolean execute(PsiElement element, int offsetInElement) {
           final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
@@ -142,7 +148,15 @@ public class PatternEditorContextMembersProvider extends NonCodeMembersContribut
           }
           return true;
         }
-      }, scope, "patterns.patternClass", UsageSearchContext.IN_FOREIGN_LANGUAGES, true);
+      };
+      final StringSearcher searcher = new StringSearcher("patternClass", true, true);
+      ((PsiManagerEx)beanClass.getManager()).getCacheManager().processFilesWithWord(new Processor<PsiFile>() {
+        @Override
+        public boolean process(PsiFile psiFile) {
+          LowLevelSearchUtil.processElementsContainingWordInElement(occurenceProcessor, psiFile, searcher, false, new EmptyProgressIndicator());
+          return true;
+        }
+      }, searcher.getPattern(), UsageSearchContext.IN_FOREIGN_LANGUAGES, scope, searcher.isCaseSensitive());
     }
     final Class[] classes = PatternCompilerFactory.getFactory().getPatternClasses(type);
     if (classes.length != 0) {
