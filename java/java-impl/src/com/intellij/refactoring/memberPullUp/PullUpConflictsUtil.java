@@ -28,10 +28,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringConflictsUtil;
@@ -143,9 +140,20 @@ public class PullUpConflictsUtil {
     }
     RefactoringConflictsUtil.analyzeModuleConflicts(subclass.getProject(), checkModuleConflictsList,
                                            new UsageInfo[0], targetRepresentativeElement, conflicts);
+    final String fqName = subclass.getQualifiedName();
+    final String packageName;
+    if (fqName != null) {
+      packageName = StringUtil.getPackageName(fqName);
+    } else {
+      final PsiFile psiFile = PsiTreeUtil.getParentOfType(subclass, PsiFile.class);
+      if (psiFile instanceof PsiClassOwner) {
+        packageName = ((PsiClassOwner)psiFile).getPackageName();
+      } else {
+        packageName = null;
+      }
+    }
+    final boolean toDifferentPackage = !Comparing.strEqual(targetPackage.getQualifiedName(), packageName);
     for (final PsiMethod abstractMethod : abstractMethods) {
-      final boolean toDifferentPackage =
-        !Comparing.strEqual(targetPackage.getQualifiedName(), StringUtil.getPackageName(subclass.getQualifiedName()));
       abstractMethod.accept(new ClassMemberReferencesVisitor(subclass) {
         @Override
         protected void visitClassMemberReferenceElement(PsiMember classMember, PsiJavaCodeReferenceElement classMemberReference) {
