@@ -48,7 +48,7 @@ public class FileReferenceHelperRegistrar {
   @NotNull
   public static <T extends PsiFileSystemItem> FileReferenceHelper getNotNullHelper(@NotNull T psiFileSystemItem) {
     final FileReferenceHelper helper = getHelper(psiFileSystemItem);
-    return helper == null ? NullFileReferenceHelper.INSTANCE : helper;
+    return helper == null ? new NullFileReferenceHelper() : helper;
   }
 
   @Nullable
@@ -67,9 +67,7 @@ public class FileReferenceHelperRegistrar {
     return element2.getManager().areElementsEquivalent(element1, element2);
   }
 
-  public static class NullFileReferenceHelper extends FileReferenceHelper {
-
-    public static final NullFileReferenceHelper INSTANCE = new NullFileReferenceHelper();
+  private static class NullFileReferenceHelper extends FileReferenceHelper {
 
     public PsiFileSystemItem findRoot(final Project project, @NotNull final VirtualFile file) {
       final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
