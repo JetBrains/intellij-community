@@ -266,9 +266,11 @@ public class JarHandler implements FileSystemInterface {
       }
 
       final ZipFile zip = getZip();
-      assert zip != null;
+      assert zip != null : file;
 
       final InputStream stream = zip.getInputStream(entry);
+      assert stream != null : file;
+
       try {
         return FileUtil.loadBytes(stream, (int)entry.getSize());
       }
