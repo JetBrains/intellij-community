@@ -420,7 +420,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     }
 
     private void processNodeCreation(final PsiElement psiElement) {
-      if (psiElement instanceof PsiFile) {
+      if (psiElement instanceof PsiFile && !isInjected((PsiFile)psiElement)) {
         reload(myBuilder.addFileNode((PsiFile)psiElement));
       }
       else if (psiElement instanceof PsiDirectory) {
@@ -434,7 +434,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     public void beforeChildRemoval(final PsiTreeChangeEvent event) {
       final PsiElement child = event.getChild();
       final PsiElement parent = event.getParent();
-      if (parent instanceof PsiDirectory && (child instanceof PsiFile || child instanceof PsiDirectory)) {
+      if (parent instanceof PsiDirectory && (child instanceof PsiFile && !isInjected((PsiFile)child) || child instanceof PsiDirectory)) {
         queueUpdate(new Runnable() {
           public void run() {
             collapseExpand(myBuilder.removeNode(child, (PsiDirectory)parent));
@@ -448,7 +448,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
       final PsiElement newParent = event.getNewParent();
       final PsiElement child = event.getChild();
       if (oldParent instanceof PsiDirectory && newParent instanceof PsiDirectory) {
-        if (child instanceof PsiFile) {
+        if (child instanceof PsiFile && !isInjected((PsiFile)child)) {
           final PsiFile file = (PsiFile)child;
           queueUpdate(new Runnable() {
             public void run() {
@@ -471,7 +471,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
       final PsiElement parent = event.getParent();
       final PsiFile file = parent.getContainingFile();
       if (file != null && file.getFileType() == StdFileTypes.JAVA) {
-        if (!file.getViewProvider().isPhysical()) return;
+        if (!file.getViewProvider().isPhysical() && !isInjected(file)) return;
         queueUpdate(new Runnable() {
           public void run() {
             if (file.isValid()) {
@@ -506,7 +506,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
       final NamedScope scope = getCurrentScope();
       final PsiElement element = event.getNewChild();
       final PsiFile psiFile = event.getFile();
-      if (psiFile != null && !InjectedLanguageManager.getInstance(myProject).isInjectedFragment(psiFile)) {
+      if (psiFile != null && !isInjected(psiFile)) {
         if (psiFile.getLanguage() == psiFile.getViewProvider().getBaseLanguage()) {
           queueUpdate(new Runnable() {
             public void run() {
@@ -518,6 +518,10 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
       else if (element instanceof PsiDirectory && element.isValid()) {
         queueRefreshScope(scope);
       }
+    }
+
+    private boolean isInjected(PsiFile psiFile) {
+      return InjectedLanguageManager.getInstance(myProject).isInjectedFragment(psiFile);
     }
 
     private void queueRefreshScope(final NamedScope scope) {
