@@ -34,23 +34,26 @@ public abstract class BaseExtractModuleAction extends BaseRefactoringAction {
   public boolean isEnabledOnElements(PsiElement[] elements) {
     if (elements.length > 0) {
       final Language language = elements[0].getLanguage();
-      final RefactoringActionHandler handler = LanguageRefactoringSupport.INSTANCE.forLanguage(language).getExtractModuleHandler();
+      final RefactoringActionHandler handler = getRefactoringSupport(language).getExtractModuleHandler();
       return isEnabledOnLanguage(language) && handler instanceof ElementsHandler && ((ElementsHandler)handler).isEnabledOnElements(elements);
     }
     return false;
+  }
+
+  protected RefactoringSupportProvider getRefactoringSupport(Language language) {
+    return LanguageRefactoringSupport.INSTANCE.forLanguage(language);
   }
 
 
   public RefactoringActionHandler getHandler(DataContext dataContext) {
     PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
     if (file == null) return null;
-    final RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(file.getViewProvider().getBaseLanguage());
+    final RefactoringSupportProvider supportProvider = getRefactoringSupport(file.getViewProvider().getBaseLanguage());
     return supportProvider != null ? supportProvider.getExtractModuleHandler() : null;
   }
 
   protected boolean isAvailableForLanguage(final Language language) {
-    return isEnabledOnLanguage(language) &&
-           LanguageRefactoringSupport.INSTANCE.forLanguage(language).getExtractModuleHandler() != null;
+    return isEnabledOnLanguage(language) && getRefactoringSupport(language).getExtractModuleHandler() != null;
   }
 
   protected abstract boolean isEnabledOnLanguage(final Language language);
