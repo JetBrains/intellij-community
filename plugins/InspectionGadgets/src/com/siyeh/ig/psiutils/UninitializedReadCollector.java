@@ -438,7 +438,7 @@ public class UninitializedReadCollector {
         } else if(expression instanceof PsiAssignmentExpression){
             final PsiAssignmentExpression assignment =
                     (PsiAssignmentExpression) expression;
-            return assignmentExpressonAssignsVariable(assignment, variable,
+            return assignmentExpressionAssignsVariable(assignment, variable,
                     stamp, checkedMethods);
         } else if(expression instanceof PsiParenthesizedExpression) {
             final PsiParenthesizedExpression parenthesizedExpression =
@@ -453,7 +453,7 @@ public class UninitializedReadCollector {
         }
     }
 
-    private boolean assignmentExpressonAssignsVariable(
+    private boolean assignmentExpressionAssignsVariable(
             @NotNull PsiAssignmentExpression assignment,
             @NotNull PsiVariable variable,
             int stamp, @NotNull Set<MethodSignature> checkedMethods) {
