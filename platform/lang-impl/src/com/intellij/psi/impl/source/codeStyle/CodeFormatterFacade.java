@@ -120,7 +120,7 @@ public class CodeFormatterFacade {
                                                                          PsiDocumentManager.getInstance(project).getDocument(file),
                                                                          project, mySettings, fileType, file);
 
-          printToConsole(rootBlock, model);
+          //printToConsole(rootBlock, model);
 
           FormatterEx.getInstanceEx().format(model, mySettings, mySettings.getIndentOptions(fileType), ranges);
         }
