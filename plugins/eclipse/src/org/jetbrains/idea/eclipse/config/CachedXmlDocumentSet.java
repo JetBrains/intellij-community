@@ -23,6 +23,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.io.fs.IFile;
 import org.jdom.Document;
 import org.jdom.JDOMException;
 import org.jdom.output.EclipseJDOMUtil;
@@ -30,10 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class CachedXmlDocumentSet implements FileSet {
   protected final Map<String, String> nameToDir = new HashMap<String, String>();
@@ -179,6 +177,19 @@ public class CachedXmlDocumentSet implements FileSet {
       VirtualFile vFile = getVFile(name);
       if (vFile != null) {
         list.add(vFile);
+      }
+    }
+  }
+
+  @Override
+  public void listModifiedFiles(List<VirtualFile> list) {
+    for (String key : modifiedContent.keySet()) {
+      try {
+        if (hasChanged(key)) {
+          list.add(getOrCreateVFile(key));
+        }
+      }
+      catch (IOException ignore) {
       }
     }
   }
