@@ -162,7 +162,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
               }
             }
           }
-          else if (((PyFile)getContainingFile()).getLanguageLevel().isPy3K()) {
+          else if (((PyFile)getContainingFile()).getLanguageLevel().isPy3K() && containingClass != null) {
             return getFirstSuperClassType(containingClass);
           }
         }
@@ -192,7 +192,8 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
     return null;
   }
 
-  private static PyType getFirstSuperClassType(PyClass first_class) {
+  @Nullable
+  private static PyType getFirstSuperClassType(@NotNull PyClass first_class) {
     // TODO handle __mro__ here
     final PyClass[] supers = first_class.getSuperClasses();
     if (supers.length > 0) {

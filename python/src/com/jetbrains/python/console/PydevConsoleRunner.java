@@ -9,8 +9,10 @@ import com.intellij.execution.process.CommandLineArgumentsProvider;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunContentManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.EditorModificationUtil;
@@ -187,13 +189,16 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
       @Override
       public void actionPerformed(AnActionEvent e) {
         if (myPydevConsoleCommunication != null) {
+          final AnActionEvent furtherActionEvent =
+            new AnActionEvent(e.getInputEvent(), e.getDataContext(), e.getPlace(),
+                              e.getPresentation(), e.getActionManager(), e.getModifiers());
           try {
             myPydevConsoleCommunication.close();
           }
           catch (Exception e1) {
             // Ignore
           }
-          generalStopAction.actionPerformed(e);
+          generalStopAction.actionPerformed(furtherActionEvent);
         }
       }
     };

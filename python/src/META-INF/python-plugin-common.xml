@@ -283,6 +283,7 @@
     <extensionPoint qualifiedName="Pythonid.unresolvedReferenceQuickFixProvider"
                     interface="com.jetbrains.python.inspections.PyUnresolvedReferenceQuickFixProvider"/>
     <extensionPoint qualifiedName="Pythonid.dumbAnnotator" interface="com.jetbrains.python.validation.PyAnnotator"/>
+    <extensionPoint qualifiedName="Pythonid.unusedLocalFilter" interface="com.jetbrains.python.inspections.UnusedLocalFilter"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
@@ -299,6 +300,7 @@
     <typeProvider implementation="com.jetbrains.django.codeInsight.DjangoTypeProvider"/>
     <unresolvedReferenceQuickFixProvider implementation="com.jetbrains.django.ref.DjangoViewReferenceQuickFixProvider"/>
     <runnableUnitTestFilter implementation="com.jetbrains.django.testRunner.DjangoUnitTestFilter"/>
+    <unusedLocalFilter implementation="com.jetbrains.django.codeInsight.DjangoUnusedLocalFilter"/>
 
     <!-- App Engine -->
     <typeProvider implementation="com.jetbrains.appengine.model.AppEngineTypeProvider"/>

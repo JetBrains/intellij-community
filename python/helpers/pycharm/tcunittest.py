@@ -51,7 +51,7 @@ class TeamcityTestResult(TestResult):
         start = getattr(test, "startTime", datetime.datetime.now())
         d = datetime.datetime.now() - start
         duration=d.microseconds / 1000 + d.seconds * 1000 + d.days * 86400000
-        self.messages.testFinished(self.getTestName(test), duration=duration)
+        self.messages.testFinished(self.getTestName(test), duration=int(duration))
 
 class TeamcityTestRunner:
     def __init__(self, stream=sys.stdout):
