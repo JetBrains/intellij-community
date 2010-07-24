@@ -22,6 +22,7 @@ package org.jetbrains.idea.devkit.dom;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter;
 
 import java.util.List;
 
@@ -66,6 +67,7 @@ public interface Group extends Actions {
 	@com.intellij.util.xml.Attribute ("class")
         @ExtendClass(value = "com.intellij.openapi.actionSystem.ActionGroup",
             instantiatable = true, allowAbstract = false, allowInterface = false)
+        @Convert(PluginPsiClassConverter.class)
 	GenericAttributeValue<PsiClass> getClazz();
 
 
