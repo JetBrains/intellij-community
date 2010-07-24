@@ -282,13 +282,13 @@ public class TypedHandler implements TypedActionHandler {
     if (!iterator.atEnd()) {
       iterator.advance();
 
-      IElementType tokenType = iterator.atEnd() ? null : iterator.getTokenType();
-      if (!BraceMatchingUtil.isPairedBracesAllowedBeforeTypeInFileType(braceTokenType, tokenType, fileType)) {
-        return;
-      }
-
-      if (!iterator.atEnd() && BraceMatchingUtil.isLBraceToken(iterator, fileText, fileType)) {
-        return;
+      if (!iterator.atEnd()) {
+        if (!BraceMatchingUtil.isPairedBracesAllowedBeforeTypeInFileType(braceTokenType, iterator.getTokenType(), fileType)) {
+          return;
+        }
+        if (BraceMatchingUtil.isLBraceToken(iterator, fileText, fileType)) {
+          return;
+        }
       }
 
       iterator.retreat();
@@ -393,8 +393,9 @@ public class TypedHandler implements TypedActionHandler {
 
     int offset = editor.getCaretModel().getOffset();
 
-    CharSequence chars = editor.getDocument().getCharsSequence();
-    int length = editor.getDocument().getTextLength();
+    final Document document = editor.getDocument();
+    CharSequence chars = document.getCharsSequence();
+    int length = document.getTextLength();
     if (isTypingEscapeQuote(editor, quoteHandler, offset)) return false;
 
     if (offset < length && chars.charAt(offset) == quote){
@@ -424,7 +425,10 @@ public class TypedHandler implements TypedActionHandler {
 
     if (isOpeningQuote(editor, quoteHandler, offset - 1) &&
         hasNonClosedLiterals(editor, quoteHandler, offset - 1)) {
-      editor.getDocument().insertString(offset, String.valueOf(quote));
+      if (offset == document.getTextLength() ||
+          !Character.isUnicodeIdentifierPart(document.getCharsSequence().charAt(offset))) { //any better heuristic or an API?
+        document.insertString(offset, String.valueOf(quote));
+      }
     }
 
     return true;
