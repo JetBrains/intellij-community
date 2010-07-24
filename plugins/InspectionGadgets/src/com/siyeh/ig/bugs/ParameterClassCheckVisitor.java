@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,22 +43,60 @@ class ParameterClassCheckVisitor extends JavaRecursiveElementVisitor{
             return;
         }
         super.visitMethodCallExpression(expression);
+        if (isGetClassCall(expression)) {
+            checked = true;
+        } else if (isGetInstanceCall(expression)) {
+            checked = true;
+        }
+    }
+
+    private boolean isGetInstanceCall(
+            PsiMethodCallExpression methodCallExpression) {
         final PsiReferenceExpression methodExpression =
-                expression.getMethodExpression();
+                methodCallExpression.getMethodExpression();
+        final String methodName = methodExpression.getReferenceName();
+        if (!HardcodedMethodConstants.IS_INSTANCE.equals(methodName)) {
+            return false;
+        }
+        final PsiMethod method = methodCallExpression.resolveMethod();
+        final PsiClass aClass = method.getContainingClass();
+        final String className = aClass.getQualifiedName();
+        if (!"java.lang.Class".equals(className)) {
+            return false;
+        }
+        final PsiExpressionList argumentList =
+                methodCallExpression.getArgumentList();
+        final PsiExpression[] expressions = argumentList.getExpressions();
+        if (expressions.length != 1) {
+            return false;
+        }
+        final PsiExpression expression = expressions[0];
+        return isParameterReference(expression);
+    }
+
+    private boolean isGetClassCall(
+            PsiMethodCallExpression methodCallExpression) {
+        final PsiReferenceExpression methodExpression =
+                methodCallExpression.getMethodExpression();
         final String methodName = methodExpression.getReferenceName();
         if(!HardcodedMethodConstants.GET_CLASS.equals(methodName)){
-            return;
+            return false;
         }
-        final PsiExpressionList argumentList = expression.getArgumentList();
+        final PsiExpressionList argumentList =
+                methodCallExpression.getArgumentList();
         final PsiExpression[] arguments = argumentList.getExpressions();
-        if(arguments.length != 0){
-            return;
+        if (arguments.length != 0) {
+            return false;
+        }
+        final PsiMethod method = methodCallExpression.resolveMethod();
+        final PsiClass aClass = method.getContainingClass();
+        final String className = aClass.getQualifiedName();
+        if (!"java.lang.Object".equals(className)) {
+            return false;
         }
         final PsiExpression qualifier =
                 methodExpression.getQualifierExpression();
-        if(isParameterReference(qualifier)){
-            checked = true;
-        }
+        return isParameterReference(qualifier);
     }
 
     @Override public void visitInstanceOfExpression(
