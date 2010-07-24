@@ -34,6 +34,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
   protected static final String SOURCE = "source";
   protected static final String CLASSES = "classes";
   protected static final String DATA_FILE_NAME = "data.xml";
+  private static final long TIMESTAMP_DELTA = 10L;
   private final String myDataRootPath;
   private Semaphore mySemaphore;
 
@@ -391,7 +392,16 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     return ".";
   }
 
-  protected void copyFiles(VirtualFile dataDir, VirtualFile destDir, VirtualFileFilter filter) throws Exception {
+  protected final void copyFiles(VirtualFile dataDir, VirtualFile destDir, VirtualFileFilter filter) throws Exception {
+    final boolean stampsChanged = doCopyFiles(dataDir, destDir, filter);
+    if (stampsChanged) {
+      // need this to ensure that the compilation start timestamp will be ahead of any stamps of copied files 
+      Thread.sleep(TIMESTAMP_DELTA);
+    }
+  }
+
+  private boolean doCopyFiles(VirtualFile dataDir, VirtualFile destDir, VirtualFileFilter filter) throws Exception {
+    boolean wereStampChanges = false;
     VirtualFile[] children = destDir.getChildren();
     for (VirtualFile child : children) {
       if (shouldDelete(child)) {
@@ -410,7 +420,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
         if (destChild == null) {
           destChild = destDir.createChildDirectory(this, child.getName());
         }
-        copyFiles(child, destChild, filter);
+        wereStampChanges |= doCopyFiles(child, destChild, filter);
       }
       else {
         String name = child.getName();
@@ -430,9 +440,14 @@ public abstract class CompilerTestCase extends ModuleTestCase {
 
         VirtualFile newChild = VfsUtil.copyFile(this, child, destDir, name);
         //to ensure that compiler will threat the file as changed. On Linux system timestamp may be rounded to multiple of 1000
-        ((NewVirtualFile)newChild).setTimeStamp(newChild.getTimeStamp() + 10);
+        final long newStamp = newChild.getTimeStamp();
+        if (newStamp == currentTimeStamp) {
+          wereStampChanges = true;
+          ((NewVirtualFile)newChild).setTimeStamp(newStamp + TIMESTAMP_DELTA);
+        }
       }
     }
+    return wereStampChanges;
   }
 
   private boolean shouldDelete(VirtualFile file) {
