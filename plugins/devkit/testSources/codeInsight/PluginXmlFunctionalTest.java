@@ -67,6 +67,7 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     final String root = "idea_core";
     addPluginXml(root, "<idea-plugin>\n" +
                        "    <id>com.intellij</id>\n" +
+                       "    <module value=\"com.intellij.modules.vcs\"/>\n" +
                        "</idea-plugin>");
     addPluginXml("custom", "<idea-plugin>\n" +
                            "    <id>com.intellij.custom</id>\n" +

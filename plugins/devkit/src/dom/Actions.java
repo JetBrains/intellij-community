@@ -39,4 +39,6 @@ public interface Actions extends DomElement {
 
   @NotNull
   List<Reference> getReferences();
+
+  Reference addReference();
 }

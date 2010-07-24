@@ -28,7 +28,7 @@ import java.util.List;
 /**
  * plugin.dtd:group interface.
  */
-public interface Group extends DomElement {
+public interface Group extends Actions {
 
 	/**
 	 * Returns the value of the popup child.
