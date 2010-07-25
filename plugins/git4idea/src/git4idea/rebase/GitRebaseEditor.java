@@ -42,6 +42,8 @@ import java.awt.event.ActionListener;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Editor for rebase entries. It allows reordering of
@@ -134,26 +136,10 @@ public class GitRebaseEditor extends DialogWrapper {
         GitShowAllSubmittedFilesAction.showSubmittedFiles(project, entry.getCommit(), gitRoot);
       }
     });
-    myMoveUpButton.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        final IntIntervalBuilder intervalBuilder = new IntIntervalBuilder();
-        for (int rowNo : myCommitsTable.getSelectedRows()) {
-          myTableModel.moveUp( rowNo );
-          intervalBuilder.register( rowNo - 1 );
-        }
-        myCommitsTable.getSelectionModel().setSelectionInterval( intervalBuilder.getMin() , intervalBuilder.getMax());
-      }
-    });
-    myMoveDownButton.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        final IntIntervalBuilder intervalBuilder = new IntIntervalBuilder();
-        for (int rowNo : ArrayUtil.reverseArray( myCommitsTable.getSelectedRows() )) {
-          myTableModel.moveDown( rowNo );
-          intervalBuilder.register( rowNo + 1 );
-        }
-        myCommitsTable.getSelectionModel().setSelectionInterval( intervalBuilder.getMin() , intervalBuilder.getMax());
-      }
-    });
+
+    myMoveUpButton.addActionListener(new MoveUpDownActionListener(MoveDirection.up));
+    myMoveDownButton.addActionListener(new MoveUpDownActionListener(MoveDirection.down));
+
     myTableModel.addTableModelListener(new TableModelListener() {
       public void tableChanged(final TableModelEvent e) {
         validateFields();
@@ -165,7 +151,7 @@ public class GitRebaseEditor extends DialogWrapper {
    * Validate fields
    */
   private void validateFields() {
-    final ArrayList<GitRebaseEntry> entries = myTableModel.myEntries;
+    final List<GitRebaseEntry> entries = myTableModel.myEntries;
     if (entries.size() == 0) {
       setErrorText(GitBundle.getString("rebase.editor.invalid.entryset"));
       setOKActionEnabled(false);
@@ -246,7 +232,7 @@ public class GitRebaseEditor extends DialogWrapper {
     /**
      * The entries
      */
-    final ArrayList<GitRebaseEntry> myEntries = new ArrayList<GitRebaseEntry>();
+    final List<GitRebaseEntry> myEntries = new ArrayList<GitRebaseEntry>();
     private int[] myLastEditableSelectedRows = new int[]{};
 
     /**
@@ -314,12 +300,19 @@ public class GitRebaseEditor extends DialogWrapper {
       assert columnIndex == ACTION;
 
       if ( ArrayUtil.indexOf( myLastEditableSelectedRows , rowIndex ) > -1 ) {
+        final ContiguousIntIntervalTracker intervalBuilder = new ContiguousIntIntervalTracker();
         for (int lastEditableSelectedRow : myLastEditableSelectedRows) {
+          intervalBuilder.track( lastEditableSelectedRow );
           setRowAction(aValue, lastEditableSelectedRow, columnIndex);
         }
+        setSelection(intervalBuilder);
       } else {
         setRowAction(aValue, rowIndex, columnIndex);
       }
+    }
+
+    private void setSelection(ContiguousIntIntervalTracker intervalBuilder) {
+      myCommitsTable.getSelectionModel().setSelectionInterval( intervalBuilder.getMin() , intervalBuilder.getMax() );
     }
 
     private void setRowAction(Object aValue, int rowIndex, int columnIndex) {
@@ -398,58 +391,55 @@ public class GitRebaseEditor extends DialogWrapper {
     }
 
 
-    /**
-     * Move selected row up. If row cannot be moved up, do nothing and return false.
-     *
-     * @param row a row to move
-     * @return true if row was moved
-     */
-    public boolean moveUp(final int row) {
-      if (row < 1 || row >= myEntries.size()) {
-        return false;
-      }
+    public void moveRows(int[] rows, MoveDirection direction) {
+
       myCommitsTable.removeEditor();
-      GitRebaseEntry e = myEntries.get(row);
-      myEntries.set(row, myEntries.get(row - 1));
-      myEntries.set(row - 1, e);
-      fireTableRowsUpdated(row - 1, row);
-      return true;
+
+      final ContiguousIntIntervalTracker selectionInterval = new ContiguousIntIntervalTracker();
+      final ContiguousIntIntervalTracker rowsUpdatedInterval = new ContiguousIntIntervalTracker();
+
+      for (int row : direction.preprocessRowIndexes( rows )) {
+        final int targetIndex = row + direction.offset();
+        assertIndexInRange( row , targetIndex );
+
+        Collections.swap( myEntries , row , targetIndex );
+
+        rowsUpdatedInterval.track(targetIndex, row );
+        selectionInterval.track( targetIndex );
+      }
+
+      if ( selectionInterval.hasValues() ) {
+        setSelection(selectionInterval);
+        fireTableRowsUpdated(rowsUpdatedInterval.getMin(), rowsUpdatedInterval.getMax());
+      }
     }
 
-    /**
-     * Move selected row down. If row cannot be moved down, do nothing and return false.
-     *
-     * @param row a row to move
-     * @return true if row was moved
-     */
-    public boolean moveDown(final int row) {
-      if (row < 0 || row >= myEntries.size() - 1) {
-        return false;
+    private void assertIndexInRange(int... rowIndexes) {
+      for (int rowIndex : rowIndexes) {
+        assert rowIndex >= 0;
+        assert rowIndex < myEntries.size();
       }
-      myCommitsTable.removeEditor();
-      GitRebaseEntry e = myEntries.get(row);
-      myEntries.set(row, myEntries.get(row + 1));
-      myEntries.set(row + 1, e);
-      fireTableRowsUpdated(row, row + 1);
-      return true;
     }
   }
 
-  private static class IntIntervalBuilder {
+  private static class ContiguousIntIntervalTracker {
     private Integer myMin = null;
     private Integer myMax = null;
+    private static final int UNSET_VALUE = -1;
 
     public Integer getMin() {
-      return myMin;
+      return myMin == null ? UNSET_VALUE : myMin;
     }
 
     public Integer getMax() {
-      return myMax;
+      return myMax == null ? UNSET_VALUE : myMax;
     }
 
-    public void register( int entry ) {
-      checkMax( entry );
-      checkMin( entry );
+    public void track( int... entries ) {
+      for (int entry : entries) {
+        checkMax( entry );
+        checkMin( entry );
+      }
     }
 
     private void checkMax(int entry) {
@@ -464,6 +454,42 @@ public class GitRebaseEditor extends DialogWrapper {
       }
     }
 
+    public boolean hasValues() {
+      return ( null != myMin && null != myMax);
+    }
+  }
+
+  private enum MoveDirection {
+    up , down;
+    public int offset() {
+      if (this == up) {
+        return -1;
+      } else {
+        return +1;
+      }
+    }
+    public int[] preprocessRowIndexes( int[] seletion ) {
+      int[] copy = seletion.clone();
+      Arrays.sort( copy );
+      if (this == up) {
+        return copy;
+      } else {
+        return ArrayUtil.reverseArray( copy );
+      }
+    }
+  }
+
+
+  private class MoveUpDownActionListener implements ActionListener {
+    private final MoveDirection direction;
+
+    public MoveUpDownActionListener(MoveDirection direction) {
+      this.direction = direction;
+    }
+
+    public void actionPerformed(final ActionEvent e) {
+      myTableModel.moveRows(myCommitsTable.getSelectedRows(), direction );
+    }
   }
 
 }
