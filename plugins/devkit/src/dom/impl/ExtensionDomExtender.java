@@ -100,8 +100,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
       public void registerExtensions(@NotNull final DomElement domElement, @NotNull final DomExtensionsRegistrar registrar) {
         final String interfaceName = extensionPoint.getInterface().getStringValue();
         if (interfaceName != null) {
-          registrar.registerGenericAttributeValueChildExtension(new XmlName("implementation"), PsiClass.class).setConverter(
-              CLASS_CONVERTER);
+          registrar.registerGenericAttributeValueChildExtension(new XmlName("implementation"), PsiClass.class).setConverter(CLASS_CONVERTER);
 
           final PsiClass implClass =
             JavaPsiFacade.getInstance(manager.getProject()).findClass(interfaceName, GlobalSearchScope.allScope(manager.getProject()));
@@ -136,6 +135,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   private static void registerField(final DomExtensionsRegistrar registrar, @NotNull final PsiField field) {
     final PsiModifierList modifierList = field.getModifierList();
     if (modifierList == null) return;
+    final String fieldName = field.getName();
     final PsiConstantEvaluationHelper evalHelper = JavaPsiFacade.getInstance(field.getProject()).getConstantEvaluationHelper();
     final PsiAnnotation attrAnno = modifierList.findAnnotation(Attribute.class.getName());
     if (attrAnno != null) {
@@ -145,7 +145,11 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
         PsiExpression expression = (PsiExpression)attributeName;
         final Object evaluatedExpression = evalHelper.computeConstantExpression(expression, false);
         if (evaluatedExpression != null) {
-          registrar.registerGenericAttributeValueChildExtension(new XmlName(evaluatedExpression.toString()), type);
+          final DomExtension extension =
+            registrar.registerGenericAttributeValueChildExtension(new XmlName(evaluatedExpression.toString()), type);
+          if (fieldName.length()>5 && fieldName.endsWith("Class")) {
+            extension.setConverter(new PluginPsiClassConverter());
+          }
         }
       }
       return;
