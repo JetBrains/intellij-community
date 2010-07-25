@@ -392,7 +392,9 @@ public class IdeaProjectLoader implements MacroExpansion {
         }
         else {
           currentModule.outputPath = expandMacro(pathFromUrl(componentTag.output?.first()?.@url), moduleBasePath)
-          currentModule.testOutputPath = expandMacro(pathFromUrl(componentTag."output-test"?.first()?.@url), moduleBasePath)
+          def outputTestEl = componentTag."output-test"[0];
+          def testOutputUrl = outputTestEl != null ? outputTestEl.'@url' : "file://\$MODULE_DIR\$/test-classes";
+          currentModule.testOutputPath = expandMacro(pathFromUrl(testOutputUrl), moduleBasePath)
         }
       }
 
