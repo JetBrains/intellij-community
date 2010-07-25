@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ListWithSelection;
 import com.intellij.util.ui.ComboBoxTableCellEditor;
 import com.intellij.util.ui.ComboBoxTableCellRenderer;
@@ -110,25 +111,17 @@ public class GitRebaseEditor extends DialogWrapper {
     myTableModel = new MyTableModel();
     myTableModel.load(file);
     myCommitsTable.setModel(myTableModel);
-    myCommitsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    myCommitsTable.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
     TableColumn actionColumn = myCommitsTable.getColumnModel().getColumn(MyTableModel.ACTION);
     actionColumn.setCellEditor(ComboBoxTableCellEditor.INSTANCE);
     actionColumn.setCellRenderer(ComboBoxTableCellRenderer.INSTANCE);
     myCommitsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(final ListSelectionEvent e) {
-        boolean selected = myCommitsTable.getSelectedRowCount() != 0;
-        myMoveUpButton.setEnabled(selected);
-        if (selected) {
-          myViewButton.setEnabled(true);
-          int row = myCommitsTable.getSelectedRow();
-          myMoveUpButton.setEnabled(row != 0);
-          myMoveDownButton.setEnabled(row != myTableModel.myEntries.size() - 1);
-        }
-        else {
-          myMoveUpButton.setEnabled(false);
-          myMoveDownButton.setEnabled(false);
-          myViewButton.setEnabled(false);
-        }
+        myViewButton.setEnabled(myCommitsTable.getSelectedRowCount() == 1);
+        final ListSelectionModel selectionModel = myCommitsTable.getSelectionModel();
+        myMoveUpButton.setEnabled( selectionModel.getMinSelectionIndex() > 0);
+        myMoveDownButton.setEnabled( selectionModel.getMaxSelectionIndex() != -1 &&
+                                     selectionModel.getMaxSelectionIndex() < myTableModel.myEntries.size() - 1);
       }
     });
     myViewButton.addActionListener(new ActionListener() {
@@ -143,18 +136,22 @@ public class GitRebaseEditor extends DialogWrapper {
     });
     myMoveUpButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        final int row = myCommitsTable.getSelectedRow();
-        if (myTableModel.moveUp(row)) {
-          myCommitsTable.getSelectionModel().setSelectionInterval(row - 1, row - 1);
+        final IntIntervalBuilder intervalBuilder = new IntIntervalBuilder();
+        for (int rowNo : myCommitsTable.getSelectedRows()) {
+          myTableModel.moveUp( rowNo );
+          intervalBuilder.register( rowNo - 1 );
         }
+        myCommitsTable.getSelectionModel().setSelectionInterval( intervalBuilder.getMin() , intervalBuilder.getMax());
       }
     });
     myMoveDownButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        final int row = myCommitsTable.getSelectedRow();
-        if (myTableModel.moveDown(row)) {
-          myCommitsTable.getSelectionModel().setSelectionInterval(row + 1, row + 1);
+        final IntIntervalBuilder intervalBuilder = new IntIntervalBuilder();
+        for (int rowNo : ArrayUtil.reverseArray( myCommitsTable.getSelectedRows() )) {
+          myTableModel.moveDown( rowNo );
+          intervalBuilder.register( rowNo + 1 );
         }
+        myCommitsTable.getSelectionModel().setSelectionInterval( intervalBuilder.getMin() , intervalBuilder.getMax());
       }
     });
     myTableModel.addTableModelListener(new TableModelListener() {
@@ -164,7 +161,6 @@ public class GitRebaseEditor extends DialogWrapper {
     });
     init();
   }
-
   /**
    * Validate fields
    */
@@ -425,4 +421,36 @@ public class GitRebaseEditor extends DialogWrapper {
       return true;
     }
   }
+
+  private static class IntIntervalBuilder {
+    private Integer myMin = null;
+    private Integer myMax = null;
+
+    public Integer getMin() {
+      return myMin;
+    }
+
+    public Integer getMax() {
+      return myMax;
+    }
+
+    public void register( int entry ) {
+      checkMax( entry );
+      checkMin( entry );
+    }
+
+    private void checkMax(int entry) {
+      if ( null == myMax || entry > myMax ) {
+        myMax = entry;
+      }
+    }
+
+    private void checkMin(int entry) {
+      if ( null == myMin || entry < myMin ) {
+        myMin = entry;
+      }
+    }
+
+  }
+
 }
