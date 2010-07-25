@@ -247,6 +247,7 @@ public class GitRebaseEditor extends DialogWrapper {
      * The entries
      */
     final ArrayList<GitRebaseEntry> myEntries = new ArrayList<GitRebaseEntry>();
+    private int[] myLastEditableSelectedRows = new int[]{};
 
     /**
      * {@inheritDoc}
@@ -311,6 +312,17 @@ public class GitRebaseEditor extends DialogWrapper {
     @SuppressWarnings({"unchecked"})
     public void setValueAt(final Object aValue, final int rowIndex, final int columnIndex) {
       assert columnIndex == ACTION;
+
+      if ( ArrayUtil.indexOf( myLastEditableSelectedRows , rowIndex ) > -1 ) {
+        for (int lastEditableSelectedRow : myLastEditableSelectedRows) {
+          setRowAction(aValue, lastEditableSelectedRow, columnIndex);
+        }
+      } else {
+        setRowAction(aValue, rowIndex, columnIndex);
+      }
+    }
+
+    private void setRowAction(Object aValue, int rowIndex, int columnIndex) {
       GitRebaseEntry e = myEntries.get(rowIndex);
       e.setAction((GitRebaseEntry.Action)aValue);
       fireTableCellUpdated(rowIndex, columnIndex);
@@ -321,6 +333,7 @@ public class GitRebaseEditor extends DialogWrapper {
      */
     @Override
     public boolean isCellEditable(final int rowIndex, final int columnIndex) {
+      myLastEditableSelectedRows = myCommitsTable.getSelectedRows();
       return columnIndex == ACTION;
     }
 
