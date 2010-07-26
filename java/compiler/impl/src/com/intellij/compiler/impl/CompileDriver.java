@@ -1019,47 +1019,52 @@ public class CompileDriver {
               didSomething |= compiledSomething;
             }
 
-            final Set<VirtualFile> compiledWithSuccess;
-            final Set<VirtualFile> compiledWithErrors = CacheUtils.getFilesCompiledWithErrors(context);
-            if (compiledWithErrors.isEmpty()) {
-              compiledWithSuccess = sink.getCompiledSources();
-            }
-            else {
-              compiledWithSuccess = new HashSet<VirtualFile>();
-              compiledWithSuccess.addAll(sink.getCompiledSources());
-              compiledWithSuccess.removeAll(compiledWithErrors);
-            }
-            filesToRecompile.removeAll(compiledWithSuccess);
-            filesToRecompile.addAll(compiledWithErrors);
-            
-            dependentFiles = CacheUtils.findDependentFiles(context, compiledWithSuccess, dependencyFilter);
-            
-            if (ourDebugMode) {
-              if (!dependentFiles.isEmpty()) {
-                for (VirtualFile dependentFile : dependentFiles) {
-                  System.out.println("FOUND TO RECOMPILE: " + dependentFile.getPresentableUrl());
-                }
+            final boolean hasUnprocessedTraverseRoots = context.getDependencyCache().hasUnprocessedTraverseRoots();
+            if (!isRebuild && (didSomething || hasUnprocessedTraverseRoots)) {
+              final Set<VirtualFile> compiledWithSuccess;
+              final Set<VirtualFile> compiledWithErrors = CacheUtils.getFilesCompiledWithErrors(context);
+              if (compiledWithErrors.isEmpty()) {
+                compiledWithSuccess = sink.getCompiledSources();
               }
               else {
-                System.out.println("NO FILES TO RECOMPILE");
+                compiledWithSuccess = new HashSet<VirtualFile>();
+                compiledWithSuccess.addAll(sink.getCompiledSources());
+                compiledWithSuccess.removeAll(compiledWithErrors);
               }
+              filesToRecompile.removeAll(compiledWithSuccess);
+              filesToRecompile.addAll(compiledWithErrors);
+
+              dependentFiles = CacheUtils.findDependentFiles(context, compiledWithSuccess, dependencyFilter);
+
+              if (ourDebugMode) {
+                if (!dependentFiles.isEmpty()) {
+                  for (VirtualFile dependentFile : dependentFiles) {
+                    System.out.println("FOUND TO RECOMPILE: " + dependentFile.getPresentableUrl());
+                  }
+                }
+                else {
+                  System.out.println("NO FILES TO RECOMPILE");
+                }
+              }
+
+              if (!dependentFiles.isEmpty()) {
+                filesToRecompile.addAll(dependentFiles);
+                allDependent.addAll(dependentFiles);
+                if (context.getProgressIndicator().isCanceled() || context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
+                  break;
+                }
+                final List<VirtualFile> filesInScope = getFilesInScope(context, currentChunk, dependentFiles);
+                if (filesInScope.isEmpty()) {
+                  break;
+                }
+                context.getDependencyCache().clearTraverseRoots();
+                chunkFiles = filesInScope;
+                total += chunkFiles.size() * translators.length;
+              }
+              
+              didSomething |= (hasUnprocessedTraverseRoots != context.getDependencyCache().hasUnprocessedTraverseRoots());
             }
-            
-            if (!dependentFiles.isEmpty()) {
-              filesToRecompile.addAll(dependentFiles);
-              allDependent.addAll(dependentFiles);
-              if (context.getProgressIndicator().isCanceled() || context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
-                break;
-              }
-              final List<VirtualFile> filesInScope = getFilesInScope(context, currentChunk, dependentFiles);
-              if (filesInScope.isEmpty()) {
-                break;
-              }
-              context.getDependencyCache().clearTraverseRoots();
-              chunkFiles = filesInScope;
-              total += chunkFiles.size() * translators.length;
-            }
-            
+
             round++;
           }
           while (!dependentFiles.isEmpty() && context.getMessageCount(CompilerMessageCategory.ERROR) == 0);
@@ -1638,7 +1643,6 @@ public class CompileDriver {
     context.getProgressIndicator().pushState();
 
     final boolean[] wereFilesDeleted = new boolean[]{false};
-    boolean traverseRootsProcessed = false;
     try {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
@@ -1695,16 +1699,14 @@ public class CompileDriver {
         }
       }
 
-      final boolean hadUnprocessedTraverseRoots = context.getDependencyCache().hasUnprocessedTraverseRoots();
-      if ((wereFilesDeleted[0] || hadUnprocessedTraverseRoots || !toCompile.isEmpty()) && context.getMessageCount(CompilerMessageCategory.ERROR) == 0) {
+      if ((wereFilesDeleted[0] || !toCompile.isEmpty()) && context.getMessageCount(CompilerMessageCategory.ERROR) == 0) {
         compiler.compile(context, moduleChunk, VfsUtil.toVirtualFileArray(toCompile), sink);
-        traverseRootsProcessed = hadUnprocessedTraverseRoots != context.getDependencyCache().hasUnprocessedTraverseRoots();
       }
     }
     finally {
       context.getProgressIndicator().popState();
     }
-    return !toCompile.isEmpty() || traverseRootsProcessed || wereFilesDeleted[0];
+    return !toCompile.isEmpty() || wereFilesDeleted[0];
   }
 
   private static boolean syncOutputDir(final CompileContextEx context, final Collection<Trinity<File, String, Boolean>> toDelete) throws CacheCorruptedException {
