@@ -839,8 +839,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int spaceSize = EditorUtil.getSpaceWidth(fontType, this);
 
     int x = 0;
+    int charWidth;
     outer:
     while (true) {
+      charWidth = -1;
       if (offset >= textLength) {
         break;
       }
@@ -879,12 +881,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
               continue;
             }
             prevX = x;
-            int diff = charToVisibleWidth(c, fontType, x);
-            if (diff == 0) {
+            charWidth = charToVisibleWidth(c, fontType, x);
+            if (charWidth == 0) {
               break outer;
             }
 
-            x += diff;
+            x += charWidth;
             if (x >= px) {
               break outer;
             }
@@ -894,7 +896,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
           // Process 'after soft wrap' sign.
           prevX = x;
-          x += mySoftWrapModel.getMinDrawingWidth(SoftWrapDrawingType.AFTER_SOFT_WRAP);
+          charWidth = mySoftWrapModel.getMinDrawingWidth(SoftWrapDrawingType.AFTER_SOFT_WRAP);
+          x += charWidth;
           if (x >= px) {
             break outer;
           }
@@ -903,11 +906,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
         prevX = x;
         c = text.charAt(offset);
-        int diff = charToVisibleWidth(c, fontType, x);
-        if (diff == 0) {
+        charWidth = charToVisibleWidth(c, fontType, x);
+        if (charWidth == 0) {
           break;
         } else {
-          x += diff;
+          x += charWidth;
         }
 
         if (x >= px) {
@@ -919,17 +922,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }
 
-    int charWidth = EditorUtil.charWidth(c, fontType, this);
+    if (charWidth < 0) {
+      charWidth = EditorUtil.charWidth(c, fontType, this);
+    }
 
     if (x >= px && c == '\t') {
       if (mySettings.isCaretInsideTabs()) {
         column += (px - prevX) / spaceSize;
         if ((px - prevX) % spaceSize > spaceSize / 2) column++;
       }
-      else {
-        if ((x - px) * 2 < x - prevX) {
-          column += (x - prevX) / spaceSize;
-        }
+      else if ((x - px) * 2 < x - prevX) {
+        column += columnsNumber(c, x, prevX, spaceSize);
       }
     }
     else {
@@ -977,7 +980,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (c != '\t') {
       return 1;
     }
-    return (x - prevX) / spaceSize;
+    int result = (x - prevX) / spaceSize;
+    if ((x - prevX) % spaceSize > 0) {
+      result++;
+    }
+    return result;
   }
 
   @NotNull
@@ -1080,12 +1087,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }
 
-    int x = getTabbedTextWidth(lineStartOffset, column);
-    return new Point(x + reserved, y);
+    int x = getTabbedTextWidth(lineStartOffset, column, reserved);
+    return new Point(x, y);
   }
 
-  private int getTabbedTextWidth(int startOffset, int length) {
-    int x = 0;
+  private int getTabbedTextWidth(int startOffset, int length, int xOffset) {
+    int x = xOffset;
     if (startOffset == 0 && myPrefixText != null) {
       for (char c : myPrefixText) {
         x += EditorUtil.charWidth(c, myPrefixAttributes.getFontType(), this);
@@ -1128,7 +1135,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (c == '\t') {
           int prevX = x;
           x = EditorUtil.nextTabStop(x, this);
-          column += (x - prevX) / spaceSize;
+          int columnDiff = (x - prevX) / spaceSize;
+          if ((x - prevX) % spaceSize > 0) {
+            // There is a possible case that tabulation symbol takes more than one visual column to represent and it's shown at
+            // soft-wrapped line. Soft wrap sign width may be not divisible by space size, hence, part of tabulation symbol represented
+            // as a separate visual column may take less space than space width.
+            columnDiff++;
+          }
+          column += columnDiff;
         }
         else {
           x += EditorUtil.charWidth(c, fontType, this);
@@ -4843,11 +4857,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         fontType = state.getMergedAttributes().getFontType();
       }
 
+      TextChange softWrap = getSoftWrapModel().getSoftWrap(i);
+      if (softWrap != null) {
+        column++; // For 'after soft wrap' drawing.
+        x = getSoftWrapModel().getMinDrawingWidth(SoftWrapDrawingType.AFTER_SOFT_WRAP);
+      }
+
       char c = text.charAt(i);
       if (c == '\t') {
         int prevX = x;
         x = EditorUtil.nextTabStop(x, this);
-        column += (x - prevX) / spaceSize;
+        column += columnsNumber(c, x, prevX, spaceSize);
         //column += Math.max(1, (x - prevX) / spaceSize);
       }
       else {

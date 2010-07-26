@@ -179,34 +179,43 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
     if (newColumnNumber < 0) newColumnNumber = 0;
     if (newLineNumber < 0) newLineNumber = 0;
 
+    VisualPosition pos = new VisualPosition(newLineNumber, newColumnNumber);
     int lastColumnNumber = newColumnNumber;
-    if (!editorSettings.isCaretInsideTabs()) {
+    if (!editorSettings.isCaretInsideTabs() && !myEditor.getSoftWrapModel().isInsideSoftWrap(pos)) {
       LogicalPosition log = myEditor.visualToLogicalPosition(new VisualPosition(newLineNumber, newColumnNumber));
       int offset = myEditor.logicalPositionToOffset(log);
       CharSequence text = myEditor.getDocument().getCharsSequence();
       if (offset >= 0 && offset < myEditor.getDocument().getTextLength()) {
-        if (text.charAt(offset) == '\t') {
+        if (text.charAt(offset) == '\t' && (columnShift <= 0 || offset == myOffset)) {
           if (columnShift <= 0) {
             newColumnNumber = myEditor.offsetToVisualPosition(offset).column;
           }
           else {
-            if (myEditor.offsetToVisualPosition(offset).column < newColumnNumber) {
+            TextChange softWrap = myEditor.getSoftWrapModel().getSoftWrap(offset + 1);
+            // There is a possible case that tabulation symbol is the last document symbol represented on a visual line before
+            // soft wrap. We can't just use column from 'offset + 1' because it would point on a next visual line.
+            if (softWrap == null) {
               newColumnNumber = myEditor.offsetToVisualPosition(offset + 1).column;
+            }
+            else {
+              newColumnNumber = EditorUtil.getLastVisualLineColumnNumber(myEditor, newLineNumber);
             }
           }
         }
       }
     }
 
-    VisualPosition pos = new VisualPosition(newLineNumber, newColumnNumber);
+    pos = new VisualPosition(newLineNumber, newColumnNumber);
     if (columnShift != 0 && lineShift == 0 && myEditor.getSoftWrapModel().isInsideSoftWrap(pos)) {
       LogicalPosition logical = myEditor.visualToLogicalPosition(pos);
-      int offsetToUse = myEditor.logicalPositionToOffset(logical);
-      if (columnShift < 0) {
-        offsetToUse--;
-
+      int softWrapOffset = myEditor.logicalPositionToOffset(logical);
+      if (columnShift >= 0) {
+        moveToOffset(softWrapOffset);
       }
-      moveToOffset(offsetToUse);
+      else {
+        int line = myEditor.offsetToVisualPosition(softWrapOffset - 1).line;
+        moveToVisualPosition(new VisualPosition(line, EditorUtil.getLastVisualLineColumnNumber(myEditor, line)));
+      }
     }
     else {
       moveToVisualPosition(pos);
