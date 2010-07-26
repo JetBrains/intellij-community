@@ -13,14 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.compiler.impl.javaCompiler;
+package com.intellij.compiler;
 
 import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.extensions.ExtensionPointName;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: Aug 19, 2008
  */
 public interface DependencyProcessor {
+  ExtensionPointName<DependencyProcessor> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.compiler.makeDependencyProcessor");
+  
   void processDependencies(CompileContext context, int classQualifiedName);
 }

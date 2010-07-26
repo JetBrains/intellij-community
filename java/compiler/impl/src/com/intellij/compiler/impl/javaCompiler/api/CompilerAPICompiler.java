@@ -17,7 +17,6 @@ package com.intellij.compiler.impl.javaCompiler.api;
 
 import com.intellij.compiler.OutputParser;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
-import com.intellij.compiler.impl.javaCompiler.DependencyProcessor;
 import com.intellij.compiler.impl.javaCompiler.ModuleChunk;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacCompiler;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfigurable;
@@ -54,10 +53,6 @@ public class CompilerAPICompiler implements BackendCompiler {
 
   public CompilerAPICompiler(Project project) {
     myProject = project;
-  }
-
-  public DependencyProcessor getDependencyProcessor() {
-    return null;
   }
 
   public boolean checkCompiler(final CompileScope scope) {

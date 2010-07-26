@@ -1032,8 +1032,7 @@ public class CompileDriver {
             filesToRecompile.removeAll(compiledWithSuccess);
             filesToRecompile.addAll(compiledWithErrors);
             
-            // TODO: use something to obtain additional processor EXTENSION POINT?
-            dependentFiles = CacheUtils.findDependentFiles(context, compiledWithSuccess, null, dependencyFilter);
+            dependentFiles = CacheUtils.findDependentFiles(context, compiledWithSuccess, dependencyFilter);
             
             if (ourDebugMode) {
               if (!dependentFiles.isEmpty()) {
@@ -1107,7 +1106,7 @@ public class CompileDriver {
       ProgressManager.getInstance().executeNonCancelableSection(new Runnable() {
         public void run() {
           try {
-            final Collection<VirtualFile> deps = CacheUtils.findDependentFiles(context, Collections.<VirtualFile>emptySet(), null, null);
+            final Collection<VirtualFile> deps = CacheUtils.findDependentFiles(context, Collections.<VirtualFile>emptySet(), null);
             if (deps.size() > 0) {
               TranslatingCompilerFilesMonitor.getInstance().update(context, null, Collections.<TranslatingCompiler.OutputItem>emptyList(),
                                                                    VfsUtil.toVirtualFileArray(deps));
