@@ -6,7 +6,7 @@
     <group id="AddAllToFavorites" class="com.intellij.ide.favoritesTreeView.actions.AddAllToFavoritesActionGroup" popup="true"/>
     <action id="AddNewFavoritesList" class="com.intellij.ide.favoritesTreeView.actions.AddNewFavoritesListAction"/>
     <group id="SendToFavoritesGroup" class="com.intellij.ide.favoritesTreeView.actions.SendToFavoritesGroup" popup="true"/>
-    
+
     <action id="RunConfiguration" class="com.intellij.execution.actions.RunConfigurationAction"/>
     <action id="ChooseRunConfiguration" class="com.intellij.execution.actions.ChooseRunConfigurationAction" text="Run..." icon="/general/toolWindowRun.png"/>
     <action id="ChooseDebugConfiguration" class="com.intellij.execution.actions.ChooseDebugConfigurationAction" text="Debug..." icon="/general/debug.png"/>
@@ -285,6 +285,8 @@
       <action id="MemberPushDown" class="com.intellij.refactoring.actions.PushDownAction"/>
       <separator/>
       <action id="ExtractInclude" class="com.intellij.refactoring.actions.ExtractIncludeAction"/>
+      <action id="ExtractInterface" class="com.intellij.refactoring.actions.ExtractInterfaceAction"/>
+      <action id="ExtractModule" class="com.intellij.refactoring.actions.ExtractModuleAction"/>
       <action id="ExtractSuperclass" class="com.intellij.refactoring.actions.ExtractSuperclassAction"/>
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="CodeMenu"/>
     </group>

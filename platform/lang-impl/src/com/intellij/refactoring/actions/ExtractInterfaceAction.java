@@ -18,10 +18,18 @@ package com.intellij.refactoring.actions;
 
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.refactoring.RefactoringActionHandler;
+import org.jetbrains.annotations.Nullable;
 
-public class ExtractSuperclassAction extends ExtractSuperActionBase {
+public class ExtractInterfaceAction extends ExtractSuperActionBase {
+
+  public ExtractInterfaceAction() {
+    setInjectedContext(true);
+  }
+
+  @Nullable
   @Override
   protected RefactoringActionHandler getRefactoringHandler(RefactoringSupportProvider supportProvider) {
-    return supportProvider.getExtractSuperClassHandler();
+    return supportProvider.getExtractInterfaceHandler();
   }
+
 }
