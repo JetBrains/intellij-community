@@ -15,7 +15,7 @@
     <orderEntry type="module" module-name="RegExpSupport" />
     <orderEntry type="module" module-name="platform-api" />
     <orderEntry type="module" module-name="java-impl" />
-    <orderEntry type="module" module-name="IntelliLangJava" />
+    <orderEntry type="module" module-name="IntelliLang" />
   </component>
   <component name="copyright">
     <Base>

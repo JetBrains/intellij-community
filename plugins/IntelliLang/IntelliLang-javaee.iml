@@ -7,7 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="IntelliLangJava" />
+    <orderEntry type="module" module-name="IntelliLang" />
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="jsp-spi" />
   </component>
