@@ -52,7 +52,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
     myWaitSemaphore.down();
   }
 
-  public void startNotify() {
+  public synchronized void startNotify() {
     if(myState.compareAndSet(STATE_INITIAL, STATE_RUNNING)) {
       myEventMulticaster.startNotified(new ProcessEvent(this));
     }
@@ -173,7 +173,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
     myEventMulticaster.processWillTerminate(new ProcessEvent(this), willBeDestroyed);
   }
 
-  private void afterStartNotified(final Runnable runnable) {
+  private synchronized void afterStartNotified(final Runnable runnable) {
     if (isStartNotified()) {
       runnable.run();
     }
@@ -184,7 +184,6 @@ public abstract class ProcessHandler extends UserDataHolderBase {
           runnable.run();
         }
       });
-      assert !isStartNotified();
     }
   }
 
