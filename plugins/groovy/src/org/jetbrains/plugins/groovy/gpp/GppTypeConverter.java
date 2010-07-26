@@ -19,24 +19,27 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
  */
 public class GppTypeConverter extends GrTypeConverter {
 
+  public static final String GROOVY_LANG_TYPED = "groovy.lang.Typed";
+
   public static boolean hasTypedContext(PsiElement context) {
     if (context == null) {
       return false;
     }
 
-    if (AnnotatedContextFilter.hasAnnotatedContext(context, "groovy.lang.Typed")) {
+    if (AnnotatedContextFilter.hasAnnotatedContext(context, GROOVY_LANG_TYPED)) {
       return true;
     }
 
     final VirtualFile vfile = context.getContainingFile().getOriginalFile().getVirtualFile();
-    if (vfile != null) {
-      final String extension = vfile.getExtension();
-      if ("gpp".equals(extension) || "grunit".equals(vfile.getExtension())) {
-        return true;
-      }
+    if (vfile != null && isGppExtension(vfile.getExtension())) {
+      return true;
     }
 
     return false;
+  }
+
+  public static boolean isGppExtension(String extension) {
+    return "gpp".equals(extension) || "grunit".equals(extension);
   }
 
   @Override
