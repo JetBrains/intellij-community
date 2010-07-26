@@ -52,4 +52,12 @@ public class IntersectionPackageSet implements PackageSet {
 
     return buf.toString();
   }
+
+  public PackageSet getFirstSet() {
+    return myFirstSet;
+  }
+
+  public PackageSet getSecondSet() {
+    return mySecondSet;
+  }
 }
