@@ -1212,9 +1212,22 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
               if (srcFile != null) {
                 final SourceFileInfo srcInfo = loadSourceInfo(srcFile);
                 if (srcInfo != null) {
+                  final boolean srcWillBeDeleted = VfsUtil.isAncestor(eventFile, srcFile, false);
                   for (int projectId : srcInfo.getProjectIds().toArray()) {
                     if (srcInfo.isAssociated(projectId, filePath)) {
-                      addSourceForRecompilation(projectId, srcFile, srcInfo);
+                      if (srcWillBeDeleted) {
+                        if (LOG.isDebugEnabled() || ourDebugMode) {
+                          final String message = "Unschedule recompilation because of deletion " + srcFile.getPresentableUrl();
+                          LOG.debug(message);
+                          if (ourDebugMode) {
+                            System.out.println(message);
+                          }
+                        }
+                        removeSourceForRecompilation(projectId, Math.abs(getFileId(srcFile)));
+                      }
+                      else {
+                        addSourceForRecompilation(projectId, srcFile, srcInfo);
+                      }
                     }
                   }
                 }
@@ -1226,6 +1239,8 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
               final TIntHashSet projects = srcInfo.getProjectIds();
               if (!projects.isEmpty()) {
                 final ScheduleOutputsForDeletionProc deletionProc = new ScheduleOutputsForDeletionProc(file.getUrl());
+                deletionProc.setRootBeingDeleted(eventFile);
+                final int sourceFileId = Math.abs(getFileId(file));
                 for (int projectId : projects.toArray()) {
                   // mark associated outputs for deletion
                   srcInfo.processOutputPaths(projectId, deletionProc);
@@ -1236,7 +1251,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
                       System.out.println(message);
                     }
                   }
-                  removeSourceForRecompilation(projectId, Math.abs(getFileId(file)));
+                  removeSourceForRecompilation(projectId, sourceFileId);
                 }
               }
             }
@@ -1381,18 +1396,29 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   private class ScheduleOutputsForDeletionProc implements Proc {
     private final String mySrcUrl;
     private final LocalFileSystem myFileSystem;
+    @Nullable
+    private VirtualFile myRootBeingDeleted;
 
     private ScheduleOutputsForDeletionProc(final String srcUrl) {
       mySrcUrl = srcUrl;
       myFileSystem = LocalFileSystem.getInstance();
     }
 
+    public void setRootBeingDeleted(@Nullable VirtualFile rootBeingDeleted) {
+      myRootBeingDeleted = rootBeingDeleted;
+    }
+
     public boolean execute(final int projectId, String outputPath) {
       final VirtualFile outFile = myFileSystem.findFileByPath(outputPath);
       if (outFile != null) { // not deleted yet
-        final OutputFileInfo outputInfo = loadOutputInfo(outFile);
-        final String classname = outputInfo != null? outputInfo.getClassName() : null;
-        markOutputPathForDeletion(projectId, outputPath, classname, mySrcUrl);
+        if (myRootBeingDeleted != null && VfsUtil.isAncestor(myRootBeingDeleted, outFile, false)) {
+          unmarkOutputPathForDeletion(outputPath);
+        }
+        else {
+          final OutputFileInfo outputInfo = loadOutputInfo(outFile);
+          final String classname = outputInfo != null? outputInfo.getClassName() : null;
+          markOutputPathForDeletion(projectId, outputPath, classname, mySrcUrl);
+        }
       }
       return true;
     }

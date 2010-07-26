@@ -26,7 +26,10 @@ import com.intellij.compiler.*;
 import com.intellij.compiler.classParsing.AnnotationConstantValue;
 import com.intellij.compiler.classParsing.MethodInfo;
 import com.intellij.compiler.impl.CompilerUtil;
-import com.intellij.compiler.make.*;
+import com.intellij.compiler.make.Cache;
+import com.intellij.compiler.make.CacheCorruptedException;
+import com.intellij.compiler.make.DependencyCache;
+import com.intellij.compiler.make.MakeUtil;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
 import com.intellij.openapi.application.Application;
@@ -38,7 +41,6 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -52,10 +54,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Chunk;
-import com.intellij.util.Function;
 import com.intellij.util.cls.ClsFormatException;
 import gnu.trove.THashMap;
-import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,20 +74,18 @@ public class BackendCompilerWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.BackendCompilerWrapper");
 
   private final BackendCompiler myCompiler;
-  private final Set<VirtualFile> mySuccesfullyCompiledJavaFiles; // VirtualFile
 
   private final CompileContextEx myCompileContext;
   private final List<VirtualFile> myFilesToCompile;
   private final TranslatingCompiler.OutputSink mySink;
   private final Chunk<Module> myChunk;
   private final Project myProject;
-  private final Set<VirtualFile> myFilesToRecompile;
   private final Map<Module, VirtualFile> myModuleToTempDirMap = new THashMap<Module, VirtualFile>();
   private final ProjectFileIndex myProjectFileIndex;
   @NonNls private static final String PACKAGE_ANNOTATION_FILE_NAME = "package-info.java";
   private static final FileObject myStopThreadToken = new FileObject(new File(""), new byte[0]);
   public final Map<String, Set<CompiledClass>> myFileNameToSourceMap=  new THashMap<String, Set<CompiledClass>>();
-
+  private final Set<VirtualFile> myProcessedPackageInfos = new HashSet<VirtualFile>();
 
   public BackendCompilerWrapper(Chunk<Module> chunk, @NotNull final Project project,
                                 @NotNull List<VirtualFile> filesToCompile,
@@ -98,44 +96,19 @@ public class BackendCompilerWrapper {
     myCompiler = compiler;
     myCompileContext = compileContext;
     myFilesToCompile = filesToCompile;
-    myFilesToRecompile = new HashSet<VirtualFile>(filesToCompile);
     mySink = sink;
     myProjectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-    mySuccesfullyCompiledJavaFiles = new HashSet<VirtualFile>(filesToCompile.size());
   }
 
   public void compile() throws CompilerException, CacheCorruptedException {
     Application application = ApplicationManager.getApplication();
-    final Set<VirtualFile> allDependent = new HashSet<VirtualFile>();
-    COMPILE:
     try {
       if (!myFilesToCompile.isEmpty()) {
         if (application.isUnitTestMode()) {
           saveTestData();
         }
-
         compileModules(buildModuleToFilesMap(myFilesToCompile));
       }
-
-      Collection<VirtualFile> dependentFiles;
-      do {
-        dependentFiles = CacheUtils.findDependentFiles(myCompileContext, mySuccesfullyCompiledJavaFiles, myCompiler.getDependencyProcessor(), DEPENDENCY_FILTER);
-
-        if (!dependentFiles.isEmpty()) {
-          myFilesToRecompile.addAll(dependentFiles);
-          allDependent.addAll(dependentFiles);
-          if (myCompileContext.getProgressIndicator().isCanceled() || myCompileContext.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
-            break COMPILE;
-          }
-          final List<VirtualFile> filesInScope = getFilesInScope(dependentFiles);
-          if (filesInScope.isEmpty()) {
-            break;
-          }
-          myCompileContext.getDependencyCache().clearTraverseRoots();
-          compileModules(buildModuleToFilesMap(filesInScope));
-        }
-      }
-      while (!dependentFiles.isEmpty() && myCompileContext.getMessageCount(CompilerMessageCategory.ERROR) == 0);
     }
     catch (SecurityException e) {
       throw new CompilerException(CompilerBundle.message("error.compiler.process.not.started", e.getMessage()), e);
@@ -153,33 +126,21 @@ public class BackendCompilerWrapper {
       myModuleToTempDirMap.clear();
     }
 
-    // do not update caches if cancelled because there is a chance that they will be incomplete
-    if (CompilerConfiguration.MAKE_ENABLED) {
-      if (!myCompileContext.getProgressIndicator().isCanceled()) {
-        // when cancelled pretend nothing was compiled and next compile will compile everything from the scratch
-        final ProgressIndicator indicator = myCompileContext.getProgressIndicator();
-        final DependencyCache cache = myCompileContext.getDependencyCache();
-
-        indicator.pushState();
-        indicator.setText(CompilerBundle.message("progress.updating.caches"));
-        indicator.setText2("");
-
-        cache.update();
-
-        indicator.setText(CompilerBundle.message("progress.saving.caches"));
-        cache.resetState();
-
-        indicator.popState();
+    if (!myFilesToCompile.isEmpty() && myCompileContext.getMessageCount(CompilerMessageCategory.ERROR) == 0) {
+      // package-info.java hack
+      final List<TranslatingCompiler.OutputItem> outputs = new ArrayList<TranslatingCompiler.OutputItem>();
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          for (final VirtualFile file : myFilesToCompile) {
+            if (PACKAGE_ANNOTATION_FILE_NAME.equals(file.getName()) && !myProcessedPackageInfos.contains(file)) {
+              outputs.add(new OutputItemImpl(file));
+            }
+          }
+        }
+      });
+      if (!outputs.isEmpty()) {
+        mySink.add(null, outputs, VirtualFile.EMPTY_ARRAY);
       }
-    }
-
-    myFilesToRecompile.removeAll(mySuccesfullyCompiledJavaFiles);
-    if (myCompileContext.getMessageCount(CompilerMessageCategory.ERROR) != 0) {
-      myFilesToRecompile.addAll(allDependent);
-    }
-    final List<TranslatingCompiler.OutputItem> outputs = processPackageInfoFiles();
-    if (myFilesToRecompile.size() > 0 || outputs.size() > 0) {
-      mySink.add(null, outputs, VfsUtil.toVirtualFileArray(myFilesToRecompile));
     }
   }
 
@@ -188,51 +149,6 @@ public class BackendCompilerWrapper {
       return Collections.singletonMap(myChunk.getNodes().iterator().next(), Collections.unmodifiableList(filesToCompile));
     }
     return CompilerUtil.buildModuleToFilesMap(myCompileContext, filesToCompile);
-  }
-
-  // package-info.java hack
-  private List<TranslatingCompiler.OutputItem> processPackageInfoFiles() {
-    if (myFilesToRecompile.isEmpty()) {
-      return Collections.emptyList();
-    }
-    final List<TranslatingCompiler.OutputItem> outputs = new ArrayList<TranslatingCompiler.OutputItem>();
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        final List<VirtualFile> packageInfoFiles = new ArrayList<VirtualFile>(myFilesToRecompile.size());
-        for (final VirtualFile file : myFilesToRecompile) {
-          if (PACKAGE_ANNOTATION_FILE_NAME.equals(file.getName())) {
-            packageInfoFiles.add(file);
-          }
-        }
-        if (!packageInfoFiles.isEmpty()) {
-          final Set<VirtualFile> badFiles = getFilesCompiledWithErrors();
-          for (final VirtualFile packageInfoFile : packageInfoFiles) {
-            if (!badFiles.contains(packageInfoFile)) {
-              outputs.add(new OutputItemImpl(packageInfoFile));
-              myFilesToRecompile.remove(packageInfoFile);
-            }
-          }
-        }
-      }
-    });
-    return outputs;
-  }
-
-  private List<VirtualFile> getFilesInScope(final Collection<VirtualFile> files) {
-    final List<VirtualFile> filesInScope = new ArrayList<VirtualFile>(files.size());
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        for (VirtualFile file : files) {
-          if (myCompileContext.getCompileScope().belongs(file.getUrl())) {
-            final Module module = myCompileContext.getModuleByFile(file);
-            if (myChunk.getNodes().contains(module)) {
-              filesInScope.add(file);
-            }
-          }
-        }
-      }
-    });
-    return filesInScope;
   }
 
   private void compileModules(final Map<Module, List<VirtualFile>> moduleToFilesMap) throws CompilerException {
@@ -346,21 +262,6 @@ public class BackendCompilerWrapper {
       }
     });
   }
-
-  private final TIntHashSet myProcessedNames = new TIntHashSet();
-  private final Set<VirtualFile> myProcessedFiles = new HashSet<VirtualFile>();
-  private final Function<Pair<int[], Set<VirtualFile>>, Pair<int[], Set<VirtualFile>>> DEPENDENCY_FILTER = new Function<Pair<int[], Set<VirtualFile>>, Pair<int[], Set<VirtualFile>>>() {
-    public Pair<int[], Set<VirtualFile>> fun(Pair<int[], Set<VirtualFile>> deps) {
-      final TIntHashSet currentDeps = new TIntHashSet(deps.getFirst());
-      currentDeps.removeAll(myProcessedNames.toArray());
-      myProcessedNames.addAll(deps.getFirst());
-
-      final Set<VirtualFile> depFiles = new HashSet<VirtualFile>(deps.getSecond());
-      depFiles.removeAll(myProcessedFiles);
-      myProcessedFiles.addAll(deps.getSecond());
-      return new Pair<int[], Set<VirtualFile>>(currentDeps.toArray(), depFiles);
-    }
-  };
 
   private final Object lock = new Object();
 
@@ -599,8 +500,7 @@ public class BackendCompilerWrapper {
   }
 
   private void compileFinished(int exitValue, final ModuleChunk chunk, final String outputDir) {
-    if (exitValue != 0 && !myCompileContext.getProgressIndicator().isCanceled() &&
-        myCompileContext.getMessageCount(CompilerMessageCategory.ERROR) == 0) {
+    if (exitValue != 0 && !myCompileContext.getProgressIndicator().isCanceled() && myCompileContext.getMessageCount(CompilerMessageCategory.ERROR) == 0) {
       myCompileContext.addMessage(CompilerMessageCategory.ERROR, CompilerBundle.message("error.compiler.internal.error", exitValue), null, -1, -1);
     }
 
@@ -610,7 +510,6 @@ public class BackendCompilerWrapper {
     try {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
-          final Set<VirtualFile> compiledWithErrors = getFilesCompiledWithErrors();
           final FileTypeManager typeManager = FileTypeManager.getInstance();
           final String outputDirPath = outputDir.replace(File.separatorChar, '/');
           try {
@@ -620,7 +519,7 @@ public class BackendCompilerWrapper {
                 if (LOG.isDebugEnabled()) {
                   LOG.debug("Building output items for " + root.getPresentableUrl() + "; output dir = " + outputDirPath + "; packagePrefix = \"" + packagePrefix + "\"");
                 }
-                buildOutputItemsList(outputDirPath, module, root, typeManager, compiledWithErrors, root, packagePrefix, toRefresh, results);
+                buildOutputItemsList(outputDirPath, module, root, typeManager, root, packagePrefix, toRefresh, results);
               }
             }
           }
@@ -644,24 +543,8 @@ public class BackendCompilerWrapper {
     myFileNameToSourceMap.clear(); // clear the map before the next use
   }
 
-  private Set<VirtualFile> getFilesCompiledWithErrors() {
-    CompilerMessage[] messages = myCompileContext.getMessages(CompilerMessageCategory.ERROR);
-    Set<VirtualFile> compiledWithErrors = Collections.emptySet();
-    if (messages.length > 0) {
-      compiledWithErrors = new HashSet<VirtualFile>(messages.length);
-      for (CompilerMessage message : messages) {
-        final VirtualFile file = message.getVirtualFile();
-        if (file != null) {
-          compiledWithErrors.add(file);
-        }
-      }
-    }
-    return compiledWithErrors;
-  }
-
   private void buildOutputItemsList(final String outputDir, Module module, VirtualFile from,
                                     final FileTypeManager typeManager,
-                                    final Set<VirtualFile> compiledWithErrors,
                                     final VirtualFile sourceRoot,
                                     final String packagePrefix, final List<File> filesToRefresh, final Map<String, Collection<TranslatingCompiler.OutputItem>> results) throws CacheCorruptedException {
     final Ref<CacheCorruptedException> exRef = new Ref<CacheCorruptedException>(null);
@@ -671,7 +554,7 @@ public class BackendCompilerWrapper {
         try {
           assert child.isValid();
           if (!child.isDirectory() && myCompiler.getCompilableFileTypes().contains(typeManager.getFileTypeByFile(child))) {
-            updateOutputItemsList(outputDir, child, compiledWithErrors, sourceRoot, packagePrefix, filesToRefresh, results);
+            updateOutputItemsList(outputDir, child, sourceRoot, packagePrefix, filesToRefresh, results);
           }
           return true;
         }
@@ -720,7 +603,7 @@ public class BackendCompilerWrapper {
     paths.add(new CompiledClass(classQName, relativePathToSource, pathToClass));
   }
 
-  private void updateOutputItemsList(final String outputDir, VirtualFile srcFile, Set<VirtualFile> compiledWithErrors,
+  private void updateOutputItemsList(final String outputDir, VirtualFile srcFile,
                                      VirtualFile sourceRoot,
                                      final String packagePrefix, final List<File> filesToRefresh,
                                      Map<String, Collection<TranslatingCompiler.OutputItem>> results) throws CacheCorruptedException {
@@ -745,15 +628,15 @@ public class BackendCompilerWrapper {
             results.put(realLocation.getFirst(), outputs);
           }
           outputs.add(new OutputItemImpl(realLocation.getSecond(), srcFile));
+          if (PACKAGE_ANNOTATION_FILE_NAME.equals(srcFile.getName())) {
+            myProcessedPackageInfos.add(srcFile);
+          }
           if (CompilerConfiguration.MAKE_ENABLED) {
             newCache.setPath(cc.qName, realLocation.getSecond());
           }
           if (LOG.isDebugEnabled()) {
             LOG.debug("Added output item: [outputDir; outputPath; sourceFile]  = [" + realLocation.getFirst() + "; " +
                       realLocation.getSecond() + "; " + srcFile.getPresentableUrl() + "]");
-          }
-          if (!compiledWithErrors.contains(srcFile)) {
-            mySuccesfullyCompiledJavaFiles.add(srcFile);
           }
         }
         else {
@@ -773,7 +656,7 @@ public class BackendCompilerWrapper {
    * @param packagePrefix
    * @return A 'package'-path to a given src file relative to a specified root. "/" slashes must be used
    */
-  protected String calcPackagePath(VirtualFile srcFile, VirtualFile sourceRoot, String packagePrefix) {
+  protected static String calcPackagePath(VirtualFile srcFile, VirtualFile sourceRoot, String packagePrefix) {
     final String prefix = packagePrefix != null && packagePrefix.length() > 0 ? packagePrefix.replace('.', '/') + "/" : "";
     return prefix + VfsUtil.getRelativePath(srcFile, sourceRoot, '/');
   }
