@@ -139,17 +139,12 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     final PsiConstantEvaluationHelper evalHelper = JavaPsiFacade.getInstance(field.getProject()).getConstantEvaluationHelper();
     final PsiAnnotation attrAnno = modifierList.findAnnotation(Attribute.class.getName());
     if (attrAnno != null) {
-      final PsiAnnotationMemberValue attributeName = attrAnno.findAttributeValue("value");
-      if (attributeName != null && attributeName instanceof PsiExpression) {
-        final Class<String> type = String.class;
-        PsiExpression expression = (PsiExpression)attributeName;
-        final Object evaluatedExpression = evalHelper.computeConstantExpression(expression, false);
-        if (evaluatedExpression != null) {
-          final DomExtension extension =
-            registrar.registerGenericAttributeValueChildExtension(new XmlName(evaluatedExpression.toString()), type);
-          if (fieldName.length()>5 && fieldName.endsWith("Class")) {
-            extension.setConverter(new PluginPsiClassConverter());
-          }
+      final String attrName = getStringAttribute(attrAnno, "value", evalHelper);
+      if (attrName != null) {
+        final DomExtension extension =
+          registrar.registerGenericAttributeValueChildExtension(new XmlName(attrName), String.class);
+        if (fieldName.endsWith("Class")) {
+          extension.setConverter(CLASS_CONVERTER);
         }
       }
       return;
@@ -162,7 +157,10 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
                            propAnno != null && getBooleanAttribute(propAnno, "surroundWithTag", evalHelper)? Constants.OPTION : null;
     if (tagName != null) {
       if (absColAnno == null) {
-        registrar.registerFixedNumberChildExtension(new XmlName(tagName), SimpleTagValue.class);
+        final DomExtension extension = registrar.registerFixedNumberChildExtension(new XmlName(tagName), SimpleTagValue.class);
+        if (fieldName.endsWith("Class")) {
+          extension.setConverter(CLASS_CONVERTER);
+        }
       }
       else {
         registrar.registerFixedNumberChildExtension(new XmlName(tagName), DomElement.class).addExtender(new DomExtender() {
