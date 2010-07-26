@@ -123,6 +123,12 @@ public class TemplateBuilderImpl implements TemplateBuilder {
     myElements.add(key);
   }
 
+  public void replaceRange(TextRange rangeWithinElement, Expression expression) {
+    final RangeMarker key = myDocument.createRangeMarker(rangeWithinElement);
+    myExpressions.put(key, expression);
+    myElements.add(key);
+  }
+
   /**
    * Adds end variable after the specified element
    */
