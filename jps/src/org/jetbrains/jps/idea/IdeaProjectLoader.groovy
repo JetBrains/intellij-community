@@ -100,7 +100,7 @@ public class IdeaProjectLoader implements MacroExpansion {
     }
 
     Node modulesXmlRoot = new XmlParser(false, false).parse(modulesXml)
-    loadModules(modulesXmlRoot.component.first())
+    loadModules(modulesXmlRoot.component[0])
 
     def librariesFolder = new File(dir, "libraries")
     if (librariesFolder.isDirectory()) {
@@ -123,7 +123,7 @@ public class IdeaProjectLoader implements MacroExpansion {
     def includePatterns = []
     def excludePatterns = []
     def componentTag = getComponent(root, "CompilerConfiguration")
-    componentTag?.wildcardResourcePatterns?.first()?.entry?.each {Node entryTag ->
+    componentTag?.wildcardResourcePatterns[0]?.entry?.each {Node entryTag ->
       String pattern = entryTag."@name"
       if (pattern.startsWith("!")) {
         excludePatterns << convertPattern(pattern.substring(1))
@@ -155,9 +155,8 @@ public class IdeaProjectLoader implements MacroExpansion {
     if (sdk == null) {
       project.info("Project SDK '$sdkName' is not defined. Embedded javac will be used")
     }
-    def outputTag = componentTag.output[0];
-    def outputUrl = outputTag != null ? outputTag.'@url' : "file://\$PROJECT_DIR\$/out";
-    projectOutputPath = expandProjectMacro(pathFromUrl(outputUrl));
+    String outputPath = pathFromUrl(componentTag.output[0].'@url')
+    projectOutputPath = outputPath != null && outputPath.length() > 0 ? expandProjectMacro(outputPath) : null
     project.projectSdk = sdk
   }
 
@@ -172,8 +171,8 @@ public class IdeaProjectLoader implements MacroExpansion {
     ArtifactLoader artifactLoader = new ArtifactLoader(this)
     artifactsComponent.artifact.each {Node artifactTag ->
       def artifactName = artifactTag."@name"
-      def outputPath = expandProjectMacro(artifactTag."output-path"?.first()?.text())
-      def root = artifactLoader.loadLayoutElement(artifactTag.root.first(), artifactName)
+      def outputPath = expandProjectMacro(artifactTag."output-path"[0]?.text())
+      def root = artifactLoader.loadLayoutElement(artifactTag.root[0], artifactName)
       def artifact = new Artifact(name: artifactName, rootElement: root, outputPath: outputPath)
       project.artifacts[artifact.name] = artifact;
     }
@@ -186,12 +185,12 @@ public class IdeaProjectLoader implements MacroExpansion {
   }
 
   public String expandMacro(String path, String moduleDir) {
-    String answer = expandProjectMacro(path)
+    if (path == null) return null
 
+    String answer = expandProjectMacro(path)
     if (moduleDir != null) {
       answer = answer.replace("\$MODULE_DIR\$", moduleDir)
     }
-
     return answer
   }
 
@@ -289,7 +288,7 @@ public class IdeaProjectLoader implements MacroExpansion {
               break
 
             case "module-library":
-              def libraryTag = entryTag.library.first()
+              def libraryTag = entryTag.library[0]
               def libraryName = libraryTag."@name"
               def moduleLibrary = loadLibrary(project, libraryName != null ? libraryName : "moduleLibrary#${libraryCount++}",
                                               libraryTag, projectBasePath, moduleBasePath)
@@ -386,15 +385,16 @@ public class IdeaProjectLoader implements MacroExpansion {
         }
 
         if (componentTag."@inherit-compiler-output" == "true") {
+          if (projectOutputPath == null) {
+            project.error("Module '$currentModuleName' uses output path inherited from project but project output path is not specified")
+          }
           File compileOutput = new File(projectOutputPath, "classes")
           currentModule.outputPath = new File(new File(compileOutput, "production"), currentModuleName).absolutePath
           currentModule.testOutputPath = new File(new File(compileOutput, "test"), currentModuleName).absolutePath
         }
         else {
-          currentModule.outputPath = expandMacro(pathFromUrl(componentTag.output?.first()?.@url), moduleBasePath)
-          def outputTestEl = componentTag."output-test"[0];
-          def testOutputUrl = outputTestEl != null ? outputTestEl.'@url' : "file://\$MODULE_DIR\$/test-classes";
-          currentModule.testOutputPath = expandMacro(pathFromUrl(testOutputUrl), moduleBasePath)
+          currentModule.outputPath = expandMacro(pathFromUrl(componentTag.output[0]?.@url), moduleBasePath)
+          currentModule.testOutputPath = expandMacro(pathFromUrl(componentTag."output-test"[0]?.'@url'), moduleBasePath)
         }
       }
 
