@@ -303,8 +303,7 @@ public class DeclarationParser {
       }
       else {
         if (typeParams != null) {
-          final PsiBuilder.Marker error = typeParams.precede();
-          error.errorBefore(JavaErrorMessages.message("unexpected.token"), type);
+          typeParams.precede().errorBefore(JavaErrorMessages.message("unexpected.token"), type);
         }
         builder.error(JavaErrorMessages.message("expected.identifier"));
         declaration.drop();
@@ -322,7 +321,10 @@ public class DeclarationParser {
       }
     }
 
-    return parseFieldOrLocalVariable(builder, declaration);
+    if (typeParams != null) {
+      typeParams.precede().errorBefore(JavaErrorMessages.message("unexpected.token"), type);
+    }
+    return parseFieldOrLocalVariable(builder, declaration, context);
   }
 
   @NotNull
@@ -367,9 +369,73 @@ public class DeclarationParser {
   }
 
   @Nullable
-  private static PsiBuilder.Marker parseFieldOrLocalVariable(final PsiBuilder builder, final PsiBuilder.Marker declaration) {
-    // todo: implement
-    throw new UnsupportedOperationException(builder.toString() + declaration);
+  private static PsiBuilder.Marker parseFieldOrLocalVariable(final PsiBuilder builder, final PsiBuilder.Marker declaration,
+                                                             final Context context) {
+    final IElementType varType;
+    if (context == Context.CLASS || context == Context.ANNOTATION_INTERFACE) {
+      varType = JavaElementType.FIELD;
+    }
+    else if (context == Context.CODE_BLOCK) {
+      varType = JavaElementType.LOCAL_VARIABLE;
+    }
+    else {
+      LOG.error("Unexpected context: " + context);
+      declaration.drop();
+      return null;
+    }
+
+    PsiBuilder.Marker variable = declaration;
+    boolean openMarker = true;
+    boolean eatSemicolon = true;
+    boolean expectSemicolon = true;
+    while (true) {
+      while (expect(builder, JavaTokenType.LBRACKET)) {
+        if (!expect(builder, JavaTokenType.RBRACKET)) {
+          error(builder, JavaErrorMessages.message("expected.rbracket"));
+          expectSemicolon = false;
+          break;
+        }
+      }
+
+      if (expect(builder, JavaTokenType.EQ)) {
+        final PsiBuilder.Marker expr = ExpressionParser.parse(builder);
+        if (expr == null) {
+          error(builder, JavaErrorMessages.message("expected.expression"));
+          expectSemicolon = false;
+          break;
+        }
+      }
+
+      if (builder.getTokenType() == JavaTokenType.COMMA) {
+        variable.done(varType);
+        builder.advanceLexer();
+        variable = builder.mark();
+      }
+      else {
+        break;
+      }
+
+      if (!expect(builder, JavaTokenType.IDENTIFIER)) {
+        variable.drop();
+        error(builder, JavaErrorMessages.message("expected.identifier"));
+        openMarker = false;
+        eatSemicolon = false;
+        break;
+      }
+    }
+
+    if (eatSemicolon) {
+      if (!expect(builder, JavaTokenType.SEMICOLON) && expectSemicolon) {
+        error(builder, JavaErrorMessages.message("expected.semicolon"));
+      }
+      // todo: special treatment - see DeclarationParserTest.testMultiLineUnclosed()
+    }
+
+    if (openMarker) {
+      variable.done(varType);
+    }
+
+    return declaration;
   }
 
   @Nullable

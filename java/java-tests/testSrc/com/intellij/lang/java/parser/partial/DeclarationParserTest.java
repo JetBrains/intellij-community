@@ -35,6 +35,15 @@ public class DeclarationParserTest extends JavaParsingTestCase {
   public void testEnumBody4() { doParserTest("{ RED(0), GREEN(1), BLUE(2); }", false, true); }
   public void testEnumBody5() { doParserTest("{ @ANNOTATION A(10) }", false, true); }
 
+  public void testFieldSimple() { doParserTest("{ int field = 0; }", false, false); }
+  public void testFieldMulti() { doParserTest("{ int field1 = 0, field2; }", false, false); }
+  public void testUnclosedBracket() { doParserTest("{ int field[ }", false, false); }
+  public void testMissingInitializer() { doParserTest("{ int field = }", false, false); }
+  public void testUnclosedComma() { doParserTest("{ int field, }", false, false); }
+  public void testUnclosedSemicolon() { doParserTest("{ int field }", false, false); }
+  public void testMissingInitializerExpression() { doParserTest("{ int field=; }", false, false); }
+  //public void testMultiLineUnclosed() { doParserTest("{ int \n  Object o; }", false, false); }  // todo: implement
+
   private void doParserTest(final String text, final boolean isAnnotation, final boolean isEnum) {
     doParserTest(text, new Parser() {
       public void parse(final PsiBuilder builder) {
