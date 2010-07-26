@@ -18,6 +18,7 @@ package com.intellij.lang.java.parser;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.PsiBuilder;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -36,6 +37,8 @@ public class DeclarationParser {
     FILE, CLASS, CODE_BLOCK, ANNOTATION_INTERFACE
   }
 
+  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.java.parser.DeclarationParser");
+
   private static final TokenSet AFTER_END_DECLARATION_SET = TokenSet.create(JavaElementType.FIELD, JavaElementType.METHOD);
 
   private DeclarationParser() { }
@@ -48,10 +51,11 @@ public class DeclarationParser {
     marker.drop();
     builder.advanceLexer();
 
+    final PsiBuilder builderWrapper = braceMatchingBuilder(builder);
     if (isEnum) {
-      parseEnumConstants(builder);
+      parseEnumConstants(builderWrapper);
     }
-    parseClassBodyDeclarations(builder, isAnnotation);
+    parseClassBodyDeclarations(builderWrapper, isAnnotation);
 
     expectOrError(builder, JavaTokenType.RBRACE, JavaErrorMessages.message("expected.rbrace"));
 
@@ -189,7 +193,7 @@ public class DeclarationParser {
     final PsiBuilder.Marker modList = parseModifierList(builder);
 
     if (expect(builder, JavaTokenType.AT)) {
-      if (tokenType == JavaTokenType.INTERFACE_KEYWORD) {
+      if (builder.getTokenType() == JavaTokenType.INTERFACE_KEYWORD) {
         return parseClassFromKeyword(builder, declaration, true);
       }
       else {
@@ -197,9 +201,8 @@ public class DeclarationParser {
         return null;
       }
     }
-    else if (ElementType.CLASS_KEYWORD_BIT_SET.contains(tokenType)) {
+    else if (ElementType.CLASS_KEYWORD_BIT_SET.contains(builder.getTokenType())) {
       final PsiBuilder.Marker root = parseClassFromKeyword(builder, declaration, false);
-
       if (context == Context.FILE) {
         // todo: append following declarations to root
         boolean declarationsAfterEnd = false;
@@ -233,18 +236,100 @@ public class DeclarationParser {
     }
 
     if (context == Context.FILE) {
-      if (typeParams == null) {
-        error(builder, JavaErrorMessages.message("expected.class.or.interface"));
-      }
-      else {
-        typeParams.precede().errorBefore(JavaErrorMessages.message("expected.class.or.interface"), typeParams);
-      }
+      error(builder, JavaErrorMessages.message("expected.class.or.interface"), typeParams);
       declaration.drop();
       return modList;
     }
 
-    // todo: implement
-    throw new UnsupportedOperationException(builder.toString() + context);
+    PsiBuilder.Marker type;
+    if (ElementType.PRIMITIVE_TYPE_BIT_SET.contains(builder.getTokenType())) {
+      type = parseTypeNotNull(builder);
+    }
+    else if (builder.getTokenType() == JavaTokenType.IDENTIFIER) {
+      final PsiBuilder.Marker idPos = builder.mark();
+      type = parseTypeNotNull(builder);
+      if (builder.getTokenType() == JavaTokenType.LPARENTH) {  // constructor
+        if (context == Context.CODE_BLOCK) {
+          declaration.rollbackTo();
+          return null;
+        }
+        idPos.rollbackTo();
+        if (typeParams == null) {
+          emptyElement(type, JavaElementType.TYPE_PARAMETER_LIST);
+        }
+        builder.advanceLexer();
+        if (builder.getTokenType() != JavaTokenType.LPARENTH) {
+          declaration.drop();
+          return null;
+        }
+        parseMethodFromLeftParenth(builder, declaration, false);
+        return declaration;
+      }
+      idPos.drop();
+    }
+    else if (builder.getTokenType() == JavaTokenType.LBRACE) {
+      if (context == Context.CODE_BLOCK) {
+        error(builder, JavaErrorMessages.message("expected.identifier.or.type"), typeParams);
+        declaration.drop();
+        return modList;
+      }
+
+      final PsiBuilder.Marker codeBlock = StatementParser.parseCodeBlock(builder);
+      LOG.assertTrue(codeBlock != null);
+
+      if (typeParams != null) {
+        final PsiBuilder.Marker error = typeParams.precede();
+        error.errorBefore(JavaErrorMessages.message("unexpected.token"), codeBlock);
+      }
+      declaration.done(JavaElementType.CLASS_INITIALIZER);
+      return declaration;
+    }
+    else {
+      final PsiBuilder.Marker error;
+      if (typeParams != null) {
+        error = typeParams.precede();
+      }
+      else {
+        error = builder.mark();
+      }
+      error.error(JavaErrorMessages.message("expected.identifier.or.type"));
+      return modList;
+    }
+
+    if (!expect(builder, JavaTokenType.IDENTIFIER)) {
+      if (context == Context.CODE_BLOCK /* todo: && modifierList.getFirstChildNode() == null */) {
+        declaration.rollbackTo();
+        return null;
+      }
+      else {
+        if (typeParams != null) {
+          final PsiBuilder.Marker error = typeParams.precede();
+          error.errorBefore(JavaErrorMessages.message("unexpected.token"), type);
+        }
+        builder.error(JavaErrorMessages.message("expected.identifier"));
+        declaration.drop();
+        return modList;
+      }
+    }
+
+    if (builder.getTokenType() == JavaTokenType.LPARENTH) {
+      if (context == Context.CLASS || context == Context.ANNOTATION_INTERFACE) {  // method
+        if (typeParams == null) {
+          emptyElement(type, JavaElementType.TYPE_PARAMETER_LIST);
+        }
+        parseMethodFromLeftParenth(builder, declaration, (context == Context.ANNOTATION_INTERFACE));
+        return declaration;
+      }
+    }
+
+    return parseFieldOrLocalVariable(builder, declaration);
+  }
+
+  @NotNull
+  private static PsiBuilder.Marker parseTypeNotNull(final PsiBuilder builder) {
+    final ReferenceParser.TypeInfo typeInfo = ReferenceParser.parseType(builder);
+    assert typeInfo != null : builder.getOriginalText();
+    return typeInfo.marker;
   }
 
   @NotNull
@@ -274,6 +359,17 @@ public class DeclarationParser {
 
     modList.done(JavaElementType.MODIFIER_LIST);
     return modList;
+  }
+
+  private static void parseMethodFromLeftParenth(final PsiBuilder builder, final PsiBuilder.Marker declaration, final boolean anno) {
+    // todo: implement
+    throw new UnsupportedOperationException(builder.toString() + declaration + anno);
+  }
+
+  @Nullable
+  private static PsiBuilder.Marker parseFieldOrLocalVariable(final PsiBuilder builder, final PsiBuilder.Marker declaration) {
+    // todo: implement
+    throw new UnsupportedOperationException(builder.toString() + declaration);
   }
 
   @Nullable
