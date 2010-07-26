@@ -22,6 +22,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 
@@ -34,8 +35,8 @@ import java.util.Set;
  */
 public class GroovyNameSuggestionProvider implements NameSuggestionProvider {
   @Override
-  public SuggestedNameInfo getSuggestedNames(final PsiElement element, PsiElement nameSuggestionContext, Set<String> result) {
-    if (!(element instanceof GroovyPsiElement)) return null;
+  public SuggestedNameInfo getSuggestedNames(final PsiElement element, @Nullable PsiElement nameSuggestionContext, Set<String> result) {
+    if (nameSuggestionContext == null || !(element instanceof GroovyPsiElement)) return null;
     if (element instanceof GrVariable) {
       final PsiType type = ((GrVariable)element).getTypeGroovy();
       if (type != null) {
@@ -56,7 +57,7 @@ public class GroovyNameSuggestionProvider implements NameSuggestionProvider {
   }
 
   @Override
-  public Collection<LookupElement> completeName(PsiElement element, PsiElement nameSuggestionContext, String prefix) {
+  public Collection<LookupElement> completeName(PsiElement element, @Nullable PsiElement nameSuggestionContext, String prefix) {
     return null;
   }
 }
