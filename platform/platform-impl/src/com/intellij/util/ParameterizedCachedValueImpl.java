@@ -30,6 +30,8 @@ import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.util.ObjectUtils.*;
+
 public abstract class ParameterizedCachedValueImpl<T,P> extends CachedValueBase<T> implements ParameterizedCachedValue<T,P> {
 
   private final ParameterizedCachedValueProvider<T,P> myProvider;
