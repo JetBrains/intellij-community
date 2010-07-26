@@ -19,6 +19,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
 
@@ -49,7 +50,7 @@ public class GppClosureParameterTypeProvider extends AbstractClosureParameterEnh
         if (listType instanceof GrTupleType) {
           for (PsiType type : GroovyExpectedTypesProvider.getDefaultExpectedTypes(list)) {
             if (type instanceof PsiClassType) {
-              for (GroovyResolveResult resolveResult : GppTypeConverter
+              for (GroovyResolveResult resolveResult : PsiUtil
                 .getConstructorCandidates((PsiClassType)type, ((GrTupleType)listType).getComponentTypes(), closure)) {
                 final PsiElement method = resolveResult.getElement();
                 if (method instanceof PsiMethod && ((PsiMethod)method).isConstructor()) {
