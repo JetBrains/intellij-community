@@ -269,7 +269,17 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
     // Try to find target offset that is not greater than preferred position.
     for (int i = preferred; i > min; i--) {
       char c = text[i];
-      if ((i < preferred) && (SPECIAL_SYMBOLS_TO_WRAP_AFTER.contains(c) || WHITE_SPACES.contains(c))) {
+
+      if (i < preferred && WHITE_SPACES.contains(c)) {
+        return i + 1;
+      }
+
+      // Don't wrap on the non-id symbol preceded by another non-id symbol. E.g. consider that we have a statement
+      // like 'foo(int... args)'. We don't want to wrap on the second or third dots then.
+      if (i > min + 1 && !isIdSymbol(c) && !isIdSymbol(text[i - 1])) {
+        continue;
+      }
+      if ((i < preferred) && SPECIAL_SYMBOLS_TO_WRAP_AFTER.contains(c)) {
         return i + 1;
       }
       if (SPECIAL_SYMBOLS_TO_WRAP_BEFORE.contains(c) || WHITE_SPACES.contains(c)) {
@@ -286,7 +296,15 @@ public class DefaultSoftWrapApplianceManager implements SoftWrapApplianceManager
     // Try to find target offset that is greater than preferred position.
     for (int i = preferred + 1; i < max; i++) {
       char c = text[i];
-      if (SPECIAL_SYMBOLS_TO_WRAP_BEFORE.contains(c) || WHITE_SPACES.contains(c)) {
+      if (WHITE_SPACES.contains(c)) {
+        return i;
+      }
+      // Don't wrap on the non-id symbol preceded by another non-id symbol. E.g. consider that we have a statement
+      // like 'foo(int... args)'. We don't want to wrap on the second or third dots then.
+      if (i < max - 1 && !isIdSymbol(c) && !isIdSymbol(text[i + 1]) && !isIdSymbol(text[i - 1])) {
+        continue;
+      }
+      if (SPECIAL_SYMBOLS_TO_WRAP_BEFORE.contains(c)) {
         return i;
       }
       if (SPECIAL_SYMBOLS_TO_WRAP_AFTER.contains(c) && i < max - 1) {
