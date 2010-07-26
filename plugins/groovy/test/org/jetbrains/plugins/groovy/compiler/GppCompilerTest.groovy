@@ -59,7 +59,7 @@ class Foo implements SomeTrait {
     assertEmpty(make());
   }
 
-  public void _testRecompileDependentGroovyClasses() throws Exception {
+  public void testRecompileDependentGroovyClasses() throws Exception {
     def a = myFixture.addFileToProject("A.gpp", """
 class A {
   void foo() {
@@ -85,7 +85,7 @@ class A {
     assertOutput "b", "239"
   }
   
-  public void _testRecompileDependentJavaClasses() throws Exception {
+  public void testRecompileDependentJavaClasses() throws Exception {
     def a = myFixture.addFileToProject("A.gpp", """
 class A {
   void foo() {
@@ -93,15 +93,15 @@ class A {
   }
 }
 """)
-    myFixture.addFileToProject("B.gpp", """
+    myFixture.addFileToProject("B.java", """
 public class B {
-  public static void main() {
+  public static void main(String[] args) {
     new A().foo();
   }
 }
 """)
     assertEmpty make()
-    assertOutput "b", "239"
+    assertOutput "B", "239"
 
     VfsUtil.saveText a.virtualFile, """
 class A {
@@ -112,7 +112,7 @@ class A {
 """
 
     assertEmpty make()
-    assertOutput "b", "239"
+    assertOutput "B", "239"
   }
 
 }
