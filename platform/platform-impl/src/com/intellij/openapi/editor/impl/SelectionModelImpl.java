@@ -277,7 +277,6 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
       mySelectionMarker.release();
       mySelectionMarker = null;
       fireSelectionChanged(startOffset, endOffset, myLastSelectionStart, myLastSelectionStart);
-      updateSystemSelection();
     }
   }
 

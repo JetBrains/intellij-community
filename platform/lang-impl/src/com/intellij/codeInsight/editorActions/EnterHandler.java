@@ -149,13 +149,15 @@ public class EnterHandler extends BaseEnterHandler {
 
   private static boolean isCommentComplete(PsiComment comment, CodeDocumentationAwareCommenter commenter) {
     String commentText = comment.getText();
-    final String expectedCommentEnd = isDocComment(comment, commenter) ? commenter.getDocumentationCommentSuffix():commenter.getBlockCommentSuffix();
+    final boolean docComment = isDocComment(comment, commenter);
+    final String expectedCommentEnd = docComment ? commenter.getDocumentationCommentSuffix():commenter.getBlockCommentSuffix();
     if (!commentText.endsWith(expectedCommentEnd)) return false;
 
     final PsiFile containingFile = comment.getContainingFile();
     final Language language = comment.getParent().getLanguage();
     Lexer lexer = LanguageParserDefinitions.INSTANCE.forLanguage(language).createLexer(containingFile.getProject());
-    lexer.start(commentText, commenter.getDocumentationCommentPrefix().length(), commentText.length());
+    final String commentPrefix = docComment? commenter.getDocumentationCommentPrefix() : commenter.getBlockCommentPrefix();
+    lexer.start(commentText, commentPrefix == null? 0 : commentPrefix.length(), commentText.length());
     QuoteHandler fileTypeHandler = TypedHandler.getQuoteHandler(containingFile);
     JavaLikeQuoteHandler javaLikeQuoteHandler = fileTypeHandler instanceof JavaLikeQuoteHandler ?
                                                              (JavaLikeQuoteHandler)fileTypeHandler:null;

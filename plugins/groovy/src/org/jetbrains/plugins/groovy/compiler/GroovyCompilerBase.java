@@ -20,6 +20,8 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.impl.FileSetCompileScope;
 import com.intellij.compiler.impl.javaCompiler.ModuleChunk;
+import com.intellij.compiler.make.CacheCorruptedException;
+import com.intellij.compiler.make.DependencyCache;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
@@ -34,6 +36,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.JdkUtil;
@@ -58,6 +62,7 @@ import com.intellij.util.Chunk;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.SmartList;
+import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -207,6 +212,33 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
         }
         addStubsToCompileScope(outputPaths, compileContext, module);
         outputItems = Collections.emptyList();
+      } else {
+        final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+        if (indicator != null) {
+          indicator.setText("Updating caches...");
+        }
+
+        final DependencyCache dependencyCache = ((CompileContextEx)compileContext).getDependencyCache();
+        for (OutputItem outputItem : outputItems) {
+          if (indicator != null) {
+            indicator.setText2(outputItem.getSourceFile().getName());
+          }
+
+          final String path = outputItem.getOutputPath();
+          final File classFile = new File(path);
+          try {
+            dependencyCache.reparseClassFile(classFile, FileUtil.loadFileBytes(classFile));
+          }
+          catch (ClsFormatException e) {
+            LOG.error(e);
+          }
+          catch (CacheCorruptedException e) {
+            LOG.error(e);
+          }
+          catch (IOException e) {
+            LOG.error(e);
+          }
+        }
       }
 
       sink.add(outputDir.getPath(), outputItems, VfsUtil.toVirtualFileArray(toRecompile));

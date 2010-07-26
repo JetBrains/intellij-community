@@ -73,7 +73,7 @@ class CustomFileTypeQuoteHandler implements QuoteHandler {
         iterator.advance();
       }
     } finally {
-      while(iterator.getStart() != offset) iterator.retreat();
+      while (!iterator.atEnd() && iterator.getStart() != offset) iterator.retreat();
     }
 
     return false;

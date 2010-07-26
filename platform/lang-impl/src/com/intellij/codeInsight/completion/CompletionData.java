@@ -204,7 +204,7 @@ public class CompletionData {
     return null;
   }
 
-  public static String findPrefixStatic(final PsiElement insertedElement, final int offsetInFile) {
+  public static String findPrefixStatic(final PsiElement insertedElement, final int offsetInFile, ElementPattern<Character> prefixStartTrim) {
     if(insertedElement == null) return "";
 
     final String prefix = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
@@ -221,7 +221,11 @@ public class CompletionData {
       return CompletionUtil.findJavaIdentifierPrefix(insertedElement, offsetInFile);
     }
 
-    return findPrefixDefault(insertedElement, offsetInFile, not(character().javaIdentifierPart()));
+    return findPrefixDefault(insertedElement, offsetInFile, prefixStartTrim);
+  }
+
+  public static String findPrefixStatic(final PsiElement insertedElement, final int offsetInFile) {
+    return findPrefixStatic(insertedElement, offsetInFile, not(character().javaIdentifierPart()));
   }
 
   protected static String findPrefixDefault(final PsiElement insertedElement, final int offset, @NotNull final ElementPattern trimStart) {

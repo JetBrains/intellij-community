@@ -114,7 +114,9 @@ public class SoftWrapDataMapper {
               return result;
             }
           }
-          context.onSoftWrapSymbol('a'); // Emulate 'after soft wrap' sign
+          // Emulate 'after soft wrap' sign
+          //int afterSoftWrapColumns = myEditor.getSoftWrapModel().get
+          context.onSoftWrapSymbol('a');
         }
 
         // Process document symbol.

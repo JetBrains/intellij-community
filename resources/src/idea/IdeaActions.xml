@@ -161,10 +161,6 @@
       <add-to-group group-id="RefactoringMenu" anchor="before" relative-to-action="IntroduceVariable"/>
     </group>
 
-    <action id="ExtractInterface" class="com.intellij.refactoring.extractInterface.ExtractInterfaceAction">
-      <add-to-group group-id="RefactoringMenu" anchor="before" relative-to-action="ExtractSuperclass"/>
-    </action>
-
     <group id="RefactoringMenu4">
       <action id="TurnRefsToSuper" class="com.intellij.refactoring.actions.TurnRefsToSuperAction"/>
       <action id="InheritanceToDelegation" class="com.intellij.refactoring.actions.InheritanceToDelegationAction"/>

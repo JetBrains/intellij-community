@@ -199,25 +199,36 @@ public class ClasspathStorage implements StateStorage {
       }
 
       public Collection<IFile> getStorageFilesToSave() throws StateStorageException {
-        return needsSave() ? getAllStorageFiles() : Collections.<IFile>emptyList();
+        if (needsSave()) {
+          final List<IFile> list = new ArrayList<IFile>();
+          final ArrayList<VirtualFile> virtualFiles = new ArrayList<VirtualFile>();
+          getFileSet().listModifiedFiles(virtualFiles);
+          convert2Io(list, virtualFiles);
+          return list;
+        }
+        else {
+          return Collections.emptyList();
+        }
       }
 
       public List<IFile> getAllStorageFiles() {
         final List<IFile> list = new ArrayList<IFile>();
         final ArrayList<VirtualFile> virtualFiles = new ArrayList<VirtualFile>();
         getFileSet().listFiles(virtualFiles);
-
-        for (VirtualFile virtualFile : virtualFiles) {
-          final File ioFile = VfsUtil.virtualToIoFile(virtualFile);
-          list.add(FileSystem.FILE_SYSTEM.createFile(ioFile.getAbsolutePath()));
-        }
-
+        convert2Io(list, virtualFiles);
         return list;
       }
     };
 
     mySession = session;
     return session;
+  }
+
+  private static void convert2Io(List<IFile> list, ArrayList<VirtualFile> virtualFiles) {
+    for (VirtualFile virtualFile : virtualFiles) {
+      final File ioFile = VfsUtil.virtualToIoFile(virtualFile);
+      list.add(FileSystem.FILE_SYSTEM.createFile(ioFile.getAbsolutePath()));
+    }
   }
 
   public void finishSave(final SaveSession saveSession) {

@@ -32,6 +32,13 @@ public abstract class PathMacros {
 
   public abstract void setMacro(String name, String value);
 
+  /**
+   * Obsolete macros that are to be removed gently from the project files. They can be read, but not written again. Not persisted.
+   * @param name
+   * @param value
+   */
+  public abstract void addLegacyMacro(@NotNull String name, @NotNull String value);
+
   public abstract void removeMacro(String name);
 
   public abstract Set<String> getUserMacroNames();
@@ -47,4 +54,6 @@ public abstract class PathMacros {
   public abstract boolean isIgnoredMacroName(@NotNull final String macro);
 
   public abstract void removeAllMacros();
+
+  public abstract Collection<String> getLegacyMacroNames();
 }

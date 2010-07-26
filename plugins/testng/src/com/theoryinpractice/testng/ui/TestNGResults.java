@@ -33,6 +33,7 @@ import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.ui.table.TableView;
@@ -55,7 +56,6 @@ import java.awt.event.MouseEvent;
 import java.text.NumberFormat;
 import java.util.*;
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class TestNGResults extends TestResultsPanel implements TestFrameworkRunningModel {
@@ -77,11 +77,9 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
   private TestTreeBuilder treeBuilder;
   private Animator animator;
 
-  private final Pattern packagePattern = Pattern.compile("(.*)\\.(.*)");
   private final TreeRootNode rootNode;
   private static final String NO_PACKAGE = "No Package";
   private TestNGResults.OpenSourceSelectionListener openSourceListener;
-  private final TestNGConsoleView myConsole;
   private int myStatus = MessageHelper.PASSED_TEST;
   private Set<String> startedMethods = new HashSet<String>();
 
@@ -92,7 +90,6 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
                        final ConfigurationPerRunnerSettings configurationSettings) {
     super(component, console.createConsoleActions(), console.getProperties(),
           runnerSettings, configurationSettings, TESTNG_SPLITTER_PROPERTY, 0.5f);
-    myConsole = console;
     this.project = configuration.getProject();
 
     model = new TestNGResultsTableModel();
@@ -132,7 +129,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
 
     animator = new Animator(this, treeBuilder);
 
-    openSourceListener = new OpenSourceSelectionListener(structure, myConsole);
+    openSourceListener = new OpenSourceSelectionListener();
     tree.getSelectionModel().addTreeSelectionListener(openSourceListener);
 
     return tree;
@@ -181,15 +178,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
   }
 
   public TestProxy testStarted(TestResultMessage result) {
-    // TODO This should be an action button which rebuilds the tree when toggled.
-    boolean flattenPackages = true;
-    TestProxy classNode;
-    if (flattenPackages) {
-      classNode = getPackageClassNodeFor(result);
-    }
-    else {
-      classNode = getClassNodeFor(result);
-    }
+    TestProxy classNode = getPackageClassNodeFor(result);
     TestProxy proxy = new TestProxy();
     proxy.setParent(classNode);
     proxy.setResultMessage(result);
@@ -218,12 +207,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
     return proxy;
   }
 
-  public void addTestResult(final TestResultMessage result, List<Printable> output, int exceptionMark) {
-    if (failedToStart != null) {
-      output.addAll(failedToStart.getOutput());
-      exceptionMark += failedToStart.getExceptionMark();
-    }
-
+  public void addTestResult(final TestResultMessage result, int exceptionMark) {
     TestProxy testCase;
     synchronized (started) {
       final List<TestProxy> dups = started.get(result);
@@ -257,11 +241,10 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
     }
     else {
       //do not remember testresultmessage: test hierarchy is not set
-      testCase = new TestProxy();
+      testCase = new TestProxy(result.toDisplayString());
       failedToStart = testCase;
     }
 
-    testCase.setOutput(output);
     testCase.setExceptionMark(exceptionMark);
 
     if (result.getResult() == MessageHelper.FAILED_TEST) {
@@ -274,34 +257,15 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
     updateStatusLine();
   }
 
-  private String packageNameFor(String fqnClassName) {
-    Matcher matcher = packagePattern.matcher(fqnClassName);
-    if (matcher.matches()) {
-      return matcher.group(1);
-    }
-    else {
-      return NO_PACKAGE;
-    }
-  }
-
-  private String classNameFor(String fqnClassName) {
-    Matcher matcher = packagePattern.matcher(fqnClassName);
-    if (matcher.matches()) {
-      return matcher.group(2);
-    }
-    else {
-      return fqnClassName;
-    }
-  }
-
   private TestProxy getPackageClassNodeFor(final TestResultMessage result) {
     TestProxy owner = treeBuilder.getRoot();
-    String packageName = packageNameFor(result.getTestClass());
+    final String packageName1 = StringUtil.getPackageName(result.getTestClass());
+    String packageName = packageName1.length() == 0 ? NO_PACKAGE : packageName1;
     owner = getChildNodeNamed(owner, packageName);
     if (owner.getPsiElement() == null) {
       owner.setPsiElement(JavaPsiFacade.getInstance(project).findPackage(packageName));
     }
-    owner = getChildNodeNamed(owner, classNameFor(result.getTestClass()));
+    owner = getChildNodeNamed(owner, StringUtil.getShortName(result.getTestClass()));
     //look up the psiclass now
     if (owner.getPsiElement() == null) {
       final TestProxy finalOwner = owner;
@@ -310,16 +274,6 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
           finalOwner.setPsiElement(ClassUtil.findPsiClass(PsiManager.getInstance(project), result.getTestClass()));
         }
       });
-    }
-    return owner;
-  }
-
-  private TestProxy getClassNodeFor(TestResultMessage result) {
-
-    String[] nodes = result.getTestClass().split("\\.");
-    TestProxy owner = treeBuilder.getRoot();
-    for (String node : nodes) {
-      owner = getChildNodeNamed(owner, node);
     }
     return owner;
   }
@@ -415,8 +369,6 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
 
   public void dispose() {
     super.dispose();
-    openSourceListener.structure = null;
-    openSourceListener.console = null;
     tree.getSelectionModel().removeTreeSelectionListener(openSourceListener);
   }
 
@@ -425,13 +377,6 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
   }
 
   private class OpenSourceSelectionListener implements TreeSelectionListener {
-    private TestTreeStructure structure;
-    private TestNGConsoleView console;
-
-    public OpenSourceSelectionListener(TestTreeStructure structure, TestNGConsoleView console) {
-      this.structure = structure;
-      this.console = console;
-    }
 
     public void valueChanged(TreeSelectionEvent e) {
       TreePath path = e.getPath();
@@ -440,13 +385,6 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
       if (proxy == null) return;
       if (ScrollToTestSourceAction.isScrollEnabled(TestNGResults.this)) {
         OpenSourceUtil.openSourcesFrom(tree, false);
-      }
-      if (proxy == structure.getRootElement()) {
-        console.reset();
-      }
-      else {
-        console
-          .setView(proxy.getOutput(), TestNGConsoleProperties.SCROLL_TO_STACK_TRACE.value(getProperties()) ? proxy.getExceptionMark() : 0);
       }
     }
   }

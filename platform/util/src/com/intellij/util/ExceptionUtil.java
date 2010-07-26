@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,42 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.util;
 
-
-
-package com.intellij.execution.testframework;
-
-
-
-import com.intellij.execution.ui.ConsoleViewContentType;
-
-
-
-
-
-public class ExternalOutput implements Printable {
-
-  private final ConsoleViewContentType myType;
-
-  private final String myContents;
-
-
-
-  public ExternalOutput(final String contents, final ConsoleViewContentType type) {
-
-    myType = type;
-
-    myContents = contents;
-
+public class ExceptionUtil {
+  public static Throwable getRootCause(Throwable e) {
+    while (true) {
+      if (e.getCause() == null) return e;
+      e = e.getCause();
+    }
   }
 
-
-
-  public void printOn(final Printer printer) {
-
-    printer.print(myContents, myType);
-
+  public static <T extends Throwable> T findCause(Throwable e, Class<T> klass) {
+    while (e != null && !klass.isInstance(e)) {
+      e = e.getCause();
+    }
+    return (T)e;
   }
 
+  public static boolean causedBy(Throwable e, Class klass) {
+    return findCause(e, klass) != null;
+  }
 }
-

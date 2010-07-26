@@ -25,24 +25,13 @@ import com.intellij.openapi.Disposable;
 public class TestsOutputConsolePrinter implements Printer, Disposable {
   private final ConsoleView myConsole;
   private final TestConsoleProperties myProperties;
-  private ChangingPrintable myCurrentPrintable = ChangingPrintable.DEAF;
-  private Printer myOutput;
+  private final AbstractTestProxy myUnboundOutputRoot;
+  private AbstractTestProxy myCurrentTest;
 
   // After pause action has been invoked -  all output will be redirected to special
-  // myDeferingPrinter which will dump all buffered data after user will continue process.
-  private final DeferingPrinter myDeferingPrinter = new DeferingPrinter(false);
-
-  // It seems it is storage for uncaptured output by other printers (e.g. test proxies).
-  // To prevent duplicated output collectioning output on this printer must be paused
-  // (i.e. setCollectOutput(false)) after additional printer have been attached. You can
-  // continue to collect output after additional printers will be deattached(e.g. test runner stops
-  // sending events to test proxies).
-
-  // If output collection was enabled for this console printer - all output will be collected in
-  // myOutputStorage component. Otherwise no output will be stored.
-  // 'myCurrentOutputStorage' printer is used for displaying whole output for test's root
-  private final Intermediate myOutputStorage = new DeferingPrinter(true);
-  private Intermediate myCurrentOutputStorage = myOutputStorage;
+  // myPausedPrinter which will dump all buffered data after user will continue process.
+  private final DeferingPrinter myPausedPrinter = new DeferingPrinter();
+  private boolean myPaused = false;
 
   private int myMarkOffset = 0;
 
@@ -52,11 +41,11 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
         }
       };
 
-  public TestsOutputConsolePrinter(final ConsoleView console, final TestConsoleProperties properties) {
+  public TestsOutputConsolePrinter(final ConsoleView console, final TestConsoleProperties properties, final AbstractTestProxy unboundOutputRoot) {
     myConsole = console;
     myProperties = properties;
+    myUnboundOutputRoot = unboundOutputRoot;
     myProperties.addListener(TestConsoleProperties.SCROLL_TO_STACK_TRACE, myPropertyListener);
-    myOutput = this;
   }
 
   public ConsoleView getConsole() {
@@ -64,15 +53,13 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
   }
 
   public boolean isPaused() {
-    return myOutput != this;
+    return myPaused;
   }
 
   public void pause(final boolean doPause) {
-    if (doPause)
-      myOutput = myDeferingPrinter;
-    else {
-      myOutput = this;
-      myDeferingPrinter.printOn(myOutput);
+    myPaused = doPause;
+    if (!doPause) {
+      myPausedPrinter.printAndForget(this);
     }
   }
 
@@ -81,8 +68,11 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
   }
 
   public void onNewAvailable(final Printable printable) {
-    printable.printOn(myCurrentOutputStorage);
-    printable.printOn(myOutput);
+    if (myPaused) {
+      printable.printOn(myPausedPrinter);
+    } else {
+      printable.printOn(this);
+    }
   }
 
   /**
@@ -91,27 +81,34 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
    * This method must be invoked in Event Dispatch Thread
    * @param test Selected test
    */
-  public void updateOnTestSelected(final PrintableTestProxy test) {
-    if (myCurrentPrintable == test) {
+  public void updateOnTestSelected(final AbstractTestProxy test) {
+    if (myCurrentTest == test) {
       return;
     }
-    myCurrentPrintable.setPrintLinstener(DEAF);
+    if (myCurrentTest != null) {
+      myCurrentTest.setPrinter(null);
+    }
     myConsole.clear();
     myMarkOffset = 0;
     if (test == null) {
-      myCurrentPrintable = ChangingPrintable.DEAF;
+      myCurrentTest = null;
       return;
     }
-    myCurrentPrintable = test;
-    myCurrentPrintable.setPrintLinstener(this);
-    if (test.isRoot()) {
-      myOutputStorage.printOn(this);
+    myCurrentTest = test;
+    myCurrentTest.setPrinter(this);
+    if (isRoot() && myUnboundOutputRoot != null) {
+      myUnboundOutputRoot.printOn(this);
+    } else {
+      myCurrentTest.printOn(this);
     }
-    myCurrentPrintable.printOn(this);
     scrollToBeginning();
     if (myConsole instanceof ConsoleViewImpl) {
       ((ConsoleViewImpl)myConsole).foldImmediately();
     }
+  }
+
+  private boolean isRoot() {
+    return myCurrentTest.getParent() == myUnboundOutputRoot;
   }
 
   public void printHyperlink(final String text, final HyperlinkInfo info) {
@@ -126,17 +123,9 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
   public void dispose() {
     myProperties.removeListener(TestConsoleProperties.SCROLL_TO_STACK_TRACE, myPropertyListener);
   }
-  
-  public void setCollectOutput(final boolean doCollect) {
-    myCurrentOutputStorage = doCollect ? myOutputStorage : DEAF;
-  }
 
   public boolean canPause() {
-    if (myCurrentPrintable instanceof AbstractTestProxy) {
-      final AbstractTestProxy test = (AbstractTestProxy)myCurrentPrintable;
-      return test.isInProgress();
-    }
-    return false;
+    return myCurrentTest != null ? myCurrentTest.isInProgress() : false;
   }
 
   protected void scrollToBeginning() {

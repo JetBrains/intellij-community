@@ -35,6 +35,7 @@ import java.util.List;
 public class HyperlinkLabel extends HighlightableComponent {
   private HighlightedText myHighlightedText;
   private final List<HyperlinkListener> myListeners = new ArrayList<HyperlinkListener>();
+  private boolean myUseIconAsLink;
   private final Color myTextForegroundColor;
   private final Color myTextBackgroundColor;
   private final Color myTextEffectColor;
@@ -62,6 +63,7 @@ public class HyperlinkLabel extends HighlightableComponent {
   }
 
   public void setHyperlinkText(String text) {
+    myUseIconAsLink = true;
     setHyperlinkText("", text, "");
   }
 
@@ -69,6 +71,10 @@ public class HyperlinkLabel extends HighlightableComponent {
     prepareText(beforeLinkText, linkText, afterLinkText);
     revalidate();
     adjustSize();
+  }
+
+  public void setUseIconAsLink(boolean useIconAsLink) {
+    myUseIconAsLink = useIconAsLink;
   }
 
   private void adjustSize() {
@@ -96,6 +102,9 @@ public class HyperlinkLabel extends HighlightableComponent {
   }
 
   private boolean isOnLink(int x) {
+    if (myUseIconAsLink && myIcon != null && x < myIcon.getIconWidth()) {
+      return true;
+    }
     return findRegionByX(x) != null;
   }
 

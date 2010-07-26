@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.lang.ElementsHandler;
+import org.jetbrains.annotations.Nullable;
 
-public abstract class BaseExtractModuleAction extends BaseRefactoringAction {
+public abstract class ExtractSuperActionBase extends BasePlatformRefactoringAction {
+
   public boolean isAvailableInEditorOnly() {
     return false;
   }
@@ -34,24 +36,25 @@ public abstract class BaseExtractModuleAction extends BaseRefactoringAction {
   public boolean isEnabledOnElements(PsiElement[] elements) {
     if (elements.length > 0) {
       final Language language = elements[0].getLanguage();
-      final RefactoringActionHandler handler = LanguageRefactoringSupport.INSTANCE.forLanguage(language).getExtractModuleHandler();
-      return isEnabledOnLanguage(language) && handler instanceof ElementsHandler && ((ElementsHandler)handler).isEnabledOnElements(elements);
+      final RefactoringActionHandler handler = getRefactoringHandler(LanguageRefactoringSupport.INSTANCE.forLanguage(language));
+      return handler instanceof ElementsHandler && ((ElementsHandler)handler).isEnabledOnElements(elements);
     }
     return false;
   }
 
-
   public RefactoringActionHandler getHandler(DataContext dataContext) {
     PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
     if (file == null) return null;
-    final RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(file.getViewProvider().getBaseLanguage());
-    return supportProvider != null ? supportProvider.getExtractModuleHandler() : null;
+    final RefactoringSupportProvider supportProvider =
+      LanguageRefactoringSupport.INSTANCE.forLanguage(file.getViewProvider().getBaseLanguage());
+    return supportProvider != null ? getRefactoringHandler(supportProvider) : null;
   }
+
+  @Nullable
+  protected abstract RefactoringActionHandler getRefactoringHandler(RefactoringSupportProvider supportProvider);
 
   protected boolean isAvailableForLanguage(final Language language) {
-    return isEnabledOnLanguage(language) &&
-           LanguageRefactoringSupport.INSTANCE.forLanguage(language).getExtractModuleHandler() != null;
+    return getRefactoringHandler(LanguageRefactoringSupport.INSTANCE.forLanguage(language)) != null;
   }
 
-  protected abstract boolean isEnabledOnLanguage(final Language language);
 }

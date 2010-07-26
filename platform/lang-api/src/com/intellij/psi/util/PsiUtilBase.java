@@ -432,7 +432,7 @@ public class PsiUtilBase {
   }
 
   @Nullable
-  public static PsiElement getElementAtCaret(Editor editor) {
+  public static PsiElement getElementAtCaret(@NotNull Editor editor) {
     Project project = editor.getProject();
     if (project == null) return null;
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());

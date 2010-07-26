@@ -26,6 +26,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -147,6 +148,11 @@ public class GrMapType extends GrLiteralClassType {
       return myStringEntries.equals(((GrMapType)obj).myStringEntries) && myOtherEntries.equals(((GrMapType)obj).myOtherEntries);
     }
     return super.equals(obj);
+  }
+
+  @Nullable
+  public PsiType getValueType(@NotNull String key) {
+    return myStringEntries.get(key);
   }
 
   public boolean isAssignableFrom(@NotNull PsiType type) {

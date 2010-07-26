@@ -125,7 +125,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
   }
 
   private void initChunks() {
-    myTextChunks = new ChunkExtractor(getElement(), myRangeMarkers).extractChunks();
+    myTextChunks = ChunkExtractor.extractChunks(getElement(), myRangeMarkers);
   }
   
   @NotNull

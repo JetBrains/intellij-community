@@ -20,7 +20,6 @@ import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.sm.TestsLocationProviderUtil;
 import com.intellij.execution.testframework.sm.runner.states.*;
 import com.intellij.execution.testframework.sm.runner.ui.TestsPresentationUtil;
-import com.intellij.execution.testframework.ui.PrintableTestProxy;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,7 +38,7 @@ import java.util.List;
 /**
  * @author: Roman Chernyatchik
  */
-public class SMTestProxy extends CompositePrintable implements PrintableTestProxy {
+public class SMTestProxy extends AbstractTestProxy {
   private static final Logger LOG = Logger.getInstance(SMTestProxy.class.getName());
 
   private List<SMTestProxy> myChildren;
@@ -52,8 +51,6 @@ public class SMTestProxy extends CompositePrintable implements PrintableTestProx
   private boolean myDurationIsCached = false; // is used for separating unknown and unset duration
   private boolean myHasErrors = false;
   private boolean myHasErrorsCached = false;
-
-  private Printer myPrinter = Printer.DEAF;
 
   private final boolean myIsSuite;
 
@@ -152,9 +149,7 @@ public class SMTestProxy extends CompositePrintable implements PrintableTestProx
     child.setParent(this);
     // if parent is being printed then all childs output
     // should be also send to the same printer
-    if (myPrinter != Printer.DEAF) {
-      child.setPrintLinstener(myPrinter);
-    }
+    child.setPrinter(myPrinter);
   }
 
   public String getName() {
@@ -329,21 +324,6 @@ public class SMTestProxy extends CompositePrintable implements PrintableTestProx
     return myState.wasLaunched();
   }
 
-  public boolean isRoot() {
-    return getParent() == null;
-  }
-
-  public void setPrintLinstener(final Printer printer) {
-    myPrinter = printer;
-
-    if (myChildren == null) {
-      return;
-    }
-
-    for (ChangingPrintable child : myChildren) {
-      child.setPrintLinstener(printer);
-    }
-  }
 
   /**
    * Prints this proxy and all its children on given printer
@@ -354,17 +334,6 @@ public class SMTestProxy extends CompositePrintable implements PrintableTestProx
 
     //Tests State, that provide and formats additional output
     myState.printOn(printer);
-  }
-
-  /**
-   * Stores printable information in internal buffer and notifies
-   * proxy's printer about new text available
-   * @param printable Printable info
-   */
-  @Override
-  public void addLast(final Printable printable) {
-    super.addLast(printable);
-    fireOnNewPrintable(printable);
   }
 
   public void addStdOutput(final String output, final Key outputType) {
@@ -402,10 +371,6 @@ public class SMTestProxy extends CompositePrintable implements PrintableTestProx
         printer.print(output, ConsoleViewContentType.SYSTEM_OUTPUT);
       }
     });
-  }
-
-  private void fireOnNewPrintable(final Printable printable) {
-    myPrinter.onNewAvailable(printable);
   }
 
   @NotNull

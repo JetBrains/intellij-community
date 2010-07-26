@@ -187,8 +187,9 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
     LOG.assertTrue(callText != null, myMethodCall.getMethodExpression());
     PsiType[] expectedTypes;
     PsiType type;
+    PsiField field = targetClass.findFieldByName(fieldName, true);
     if (callText.startsWith(GET_PREFIX)) {
-      expectedTypes = CreateFromUsageUtils.guessType(myMethodCall, false);
+      expectedTypes = field != null ? new PsiType[]{field.getType()} : CreateFromUsageUtils.guessType(myMethodCall, false);
       type = expectedTypes[0];
     }
     else if (callText.startsWith(IS_PREFIX)) {
@@ -206,7 +207,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
 
     try {
-      PsiField field = targetClass.findFieldByName(fieldName, true);
+
       if (field == null) {
         field = factory.createField(fieldName, type);
         PsiUtil.setModifierProperty(field, PsiModifier.STATIC, isStatic);

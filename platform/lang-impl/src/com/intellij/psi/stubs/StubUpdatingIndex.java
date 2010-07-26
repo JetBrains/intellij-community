@@ -27,6 +27,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IFileElementType;
@@ -126,24 +127,37 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     };
   }
 
+  private static Key<StubElement> stubElementKey = Key.create("stub.tree.for.file.content");
+
   @Nullable
-  static StubElement buildStubTree(final FileContent inputData) {
-    final FileType fileType = inputData.getFileType();
+  public static StubElement buildStubTree(final FileContent inputData) {
+    StubElement data = inputData.getUserData(stubElementKey);
+    if (data != null) return data;
 
-    if (fileType.isBinary()) {
-      final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
-      assert builder != null;
+    synchronized (inputData) {
+      data = inputData.getUserData(stubElementKey);
+      if (data != null) return data;
 
-      return builder.buildStubTree(inputData.getFile(), inputData.getContent(), inputData.getProject());
+      final FileType fileType = inputData.getFileType();
+
+      if (fileType.isBinary()) {
+        final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
+        assert builder != null;
+
+        data = builder.buildStubTree(inputData.getFile(), inputData.getContent(), inputData.getProject());
+      } else {
+        final LanguageFileType filetype = (LanguageFileType)fileType;
+        Language l = filetype.getLanguage();
+        final IFileElementType type = LanguageParserDefinitions.INSTANCE.forLanguage(l).getFileNodeType();
+
+        PsiFile psi = inputData.getPsiFile();
+
+        data = ((IStubFileElementType)type).getBuilder().buildStubTree(psi);
+      }
+
+      inputData.putUserData(stubElementKey, data);
+      return data;
     }
-
-    final LanguageFileType filetype = (LanguageFileType)fileType;
-    Language l = filetype.getLanguage();
-    final IFileElementType type = LanguageParserDefinitions.INSTANCE.forLanguage(l).getFileNodeType();
-
-    PsiFile psi = inputData.getPsiFile();
-
-    return ((IStubFileElementType)type).getBuilder().buildStubTree(psi);
   }
 
   public KeyDescriptor<Integer> getKeyDescriptor() {

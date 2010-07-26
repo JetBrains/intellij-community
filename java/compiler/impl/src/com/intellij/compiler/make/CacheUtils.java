@@ -19,9 +19,10 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.compiler.SymbolTable;
 import com.intellij.compiler.classParsing.MethodInfo;
-import com.intellij.compiler.impl.javaCompiler.DependencyProcessor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.compiler.CompilerMessage;
+import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
@@ -31,6 +32,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.StringBuilderSpinAllocator;
 import gnu.trove.TIntHashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -126,9 +128,11 @@ public class CacheUtils {
     return true;
   }
 
-  public static Collection<VirtualFile> findDependentFiles(final CompileContextEx context, final Set<VirtualFile> succesfullyCompiledJavaFiles,
-                                                            final @Nullable DependencyProcessor additionalDependencyProcessor,
-                                                            final @Nullable Function<Pair<int[], Set<VirtualFile>>, Pair<int[], Set<VirtualFile>>> filter) throws CacheCorruptedException {
+  public static Collection<VirtualFile> findDependentFiles(
+    final CompileContextEx context, 
+    final Set<VirtualFile> succesfullyCompiledJavaFiles, 
+    final @Nullable Function<Pair<int[], Set<VirtualFile>>, Pair<int[], Set<VirtualFile>>> filter) throws CacheCorruptedException {
+    
     if (!CompilerConfiguration.MAKE_ENABLED) {
       return Collections.emptyList();
     }
@@ -137,7 +141,7 @@ public class CacheUtils {
     final DependencyCache dependencyCache = context.getDependencyCache();
 
     final Pair<int[], Set<VirtualFile>> deps =
-        dependencyCache.findDependentClasses(context, context.getProject(), succesfullyCompiledJavaFiles, additionalDependencyProcessor);
+        dependencyCache.findDependentClasses(context, context.getProject(), succesfullyCompiledJavaFiles);
     final Pair<int[], Set<VirtualFile>> filteredDeps = filter != null? filter.fun(deps) : deps;
 
     final Set<VirtualFile> dependentFiles = new HashSet<VirtualFile>();
@@ -186,5 +190,21 @@ public class CacheUtils {
     context.getProgressIndicator().setText(CompilerBundle.message("progress.found.dependent.files", dependentFiles.size()));
 
     return dependentFiles;
+  }
+
+  @NotNull
+  public static Set<VirtualFile> getFilesCompiledWithErrors(final CompileContextEx context) {
+    CompilerMessage[] messages = context.getMessages(CompilerMessageCategory.ERROR);
+    Set<VirtualFile> compiledWithErrors = Collections.emptySet();
+    if (messages.length > 0) {
+      compiledWithErrors = new HashSet<VirtualFile>(messages.length);
+      for (CompilerMessage message : messages) {
+        final VirtualFile file = message.getVirtualFile();
+        if (file != null) {
+          compiledWithErrors.add(file);
+        }
+      }
+    }
+    return compiledWithErrors;
   }
 }

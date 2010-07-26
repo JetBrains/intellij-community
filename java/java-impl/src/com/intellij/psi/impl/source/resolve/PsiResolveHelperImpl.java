@@ -175,7 +175,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
             }
             break;
           case SUBTYPE:
-            if (PsiType.NULL.equals(upperBound)) {
+            if (PsiType.NULL.equals(upperBound) || TypeConversionUtil.isAssignable(upperBound, type)) {
               upperBound = type;
             }
         }

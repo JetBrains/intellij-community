@@ -530,7 +530,7 @@
   <component name="ProjectFileVersion" converted="true" />
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/IntelliLang.iml" filepath="$PROJECT_DIR$/IntelliLang.iml" />
+      <module fileurl="file://$PROJECT_DIR$/IntelliLang-standalone.iml" filepath="$PROJECT_DIR$/IntelliLang-standalone.iml" />
       <module fileurl="file://$PROJECT_DIR$/../../RegExpSupport/Trunk/regexp-lang.iml" filepath="$PROJECT_DIR$/../../RegExpSupport/Trunk/regexp-lang.iml" />
       <module fileurl="file://$PROJECT_DIR$/../../XPathView/Trunk/xpath-lang/xpath-lang-java.iml" filepath="$PROJECT_DIR$/../../XPathView/Trunk/xpath-lang/xpath-lang-java.iml" />
       <module fileurl="file://$PROJECT_DIR$/../../XPathView/Trunk/xpath-view/xpath-view.iml" filepath="$PROJECT_DIR$/../../XPathView/Trunk/xpath-view/xpath-view.iml" />

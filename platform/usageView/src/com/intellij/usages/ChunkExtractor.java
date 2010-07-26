@@ -29,14 +29,19 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageTreeColorsScheme;
+import com.intellij.util.containers.FactoryMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author peter
@@ -44,29 +49,65 @@ import java.util.List;
 public class ChunkExtractor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.usages.ChunkExtractor");
 
-  private final PsiElement myElement;
-  private final Document myDocument;
-  private final int myLineNumber;
-  private final int myColumnNumber;
-
-  private final List<RangeMarker> myRangeMarkers;
   private final EditorColorsScheme myColorsScheme;
 
-  public ChunkExtractor(final PsiElement element, final List<RangeMarker> rangeMarkers) {
-    myElement = element;
-    myRangeMarkers = new ArrayList<RangeMarker>(rangeMarkers.size());
-    for (RangeMarker rangeMarker : rangeMarkers) {
-      if (rangeMarker.isValid()) myRangeMarkers.add(rangeMarker);
+  private final Document myDocument;
+  private final SyntaxHighlighter myHighlighter;
+
+  private final Lexer myLexer;
+
+  private static abstract class WeakFactory<T> {
+
+    private WeakReference<T> myRef;
+
+    @NotNull
+    protected abstract T create();
+
+    @NotNull
+    public T getValue() {
+      final T cur = myRef == null ? null : myRef.get();
+      if (cur != null) return cur;
+      final T result = create();
+      myRef = new WeakReference<T>(result);
+      return result;
     }
-    Collections.sort(myRangeMarkers, RangeMarker.BY_START_OFFSET);
+
+  }
+
+  private static final ThreadLocal<WeakFactory<Map<PsiFile, ChunkExtractor>>> ourExtractors = new ThreadLocal<WeakFactory<Map<PsiFile, ChunkExtractor>>>() {
+    @Override
+    protected WeakFactory<Map<PsiFile, ChunkExtractor>> initialValue() {
+      return new WeakFactory<Map<PsiFile, ChunkExtractor>>() {
+        @NotNull
+        @Override
+        protected Map<PsiFile, ChunkExtractor> create() {
+          return new FactoryMap<PsiFile, ChunkExtractor>() {
+            @Override
+            protected ChunkExtractor create(PsiFile key) {
+              return new ChunkExtractor(key);
+            }
+          };
+        }
+      };
+    }
+  };
+
+  public static TextChunk[] extractChunks(PsiElement element, List<RangeMarker> rangeMarkers) {
+    return ourExtractors.get().getValue().get(element.getContainingFile()).extractChunks(rangeMarkers);
+  }
+
+
+  private ChunkExtractor(PsiFile file) {
     myColorsScheme = UsageTreeColorsScheme.getInstance().getScheme();
 
-    int absoluteStartOffset = getStartOffset(myRangeMarkers);
-    assert absoluteStartOffset != -1;
-
-    myDocument = PsiDocumentManager.getInstance(myElement.getProject()).getDocument(myElement.getContainingFile());
-    myLineNumber = myDocument.getLineNumber(absoluteStartOffset);
-    myColumnNumber = absoluteStartOffset - myDocument.getLineStartOffset(myLineNumber);
+    myDocument = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+    LOG.assertTrue(myDocument != null);
+    final FileType fileType = file.getFileType();
+    final SyntaxHighlighter highlighter =
+      SyntaxHighlighter.PROVIDER.create(fileType, file.getProject(), file.getVirtualFile());
+    myHighlighter = highlighter == null ? new PlainSyntaxHighlighter() : highlighter;
+    myLexer = myHighlighter.getHighlightingLexer();
+    myLexer.start(myDocument.getCharsSequence());
   }
 
   public static int getStartOffset(final List<RangeMarker> rangeMarkers) {
@@ -80,30 +121,40 @@ public class ChunkExtractor {
     return minStart == Integer.MAX_VALUE ? -1 : minStart;
   }
 
-  public TextChunk[] extractChunks() {
-    final int lineStartOffset = myDocument.getLineStartOffset(myLineNumber);
-    final int lineEndOffset = lineStartOffset < myDocument.getTextLength() ? myDocument.getLineEndOffset(myLineNumber):0;
-    if (lineStartOffset > lineEndOffset) return new TextChunk[0];
-    final FileType fileType = myElement.getContainingFile().getFileType();
-    SyntaxHighlighter highlighter =
-      SyntaxHighlighter.PROVIDER.create(fileType, myElement.getProject(), myElement.getContainingFile().getVirtualFile());
-    if (highlighter == null) {
-      highlighter = new PlainSyntaxHighlighter();
+  public TextChunk[] extractChunks(List<RangeMarker> rangeMarkers) {
+    final ArrayList<RangeMarker> markers = new ArrayList<RangeMarker>(rangeMarkers.size());
+    for (RangeMarker rangeMarker : rangeMarkers) {
+      if (rangeMarker.isValid()) markers.add(rangeMarker);
     }
-    return createTextChunks(myDocument.getCharsSequence(), highlighter, lineStartOffset, lineEndOffset);
+    int absoluteStartOffset = getStartOffset(markers);
+    assert absoluteStartOffset != -1;
+
+    final int lineNumber = myDocument.getLineNumber(absoluteStartOffset);
+    final int columnNumber = absoluteStartOffset - myDocument.getLineStartOffset(lineNumber);
+
+    Collections.sort(markers, RangeMarker.BY_START_OFFSET);
+    final int lineStartOffset = myDocument.getLineStartOffset(lineNumber);
+    final int lineEndOffset = lineStartOffset < myDocument.getTextLength() ? myDocument.getLineEndOffset(lineNumber) : 0;
+    if (lineStartOffset > lineEndOffset) return TextChunk.EMPTY_ARRAY;
+
+    final CharSequence chars = myDocument.getCharsSequence();
+    if (myLexer.getTokenStart() > absoluteStartOffset) {
+      myLexer.start(chars);
+    }
+    final List<TextChunk> result = new ArrayList<TextChunk>();
+    appendPrefix(result, lineNumber, columnNumber);
+    return createTextChunks(markers, chars, lineStartOffset, lineEndOffset, result);
   }
 
-  private TextChunk[] createTextChunks(final CharSequence chars,
-                                       SyntaxHighlighter highlighter,
+  private TextChunk[] createTextChunks(final List<RangeMarker> markers,
+                                       final CharSequence chars,
                                        int start,
-                                       int end) {
+                                       int end,
+                                       final List<TextChunk> result) {
+    final Lexer lexer = myLexer;
+    final SyntaxHighlighter highlighter = myHighlighter;
+
     LOG.assertTrue(start <= end);
-    List<TextChunk> result = new ArrayList<TextChunk>();
-
-    appendPrefix(result);
-
-    Lexer lexer = highlighter.getHighlightingLexer();
-    lexer.start(chars);
 
     int i = StringUtil.indexOf(chars, '\n', start, end);
     if (i != -1) end = i;
@@ -127,7 +178,7 @@ public class ChunkExtractor {
         IElementType tokenType = lexer.getTokenType();
         TextAttributesKey[] tokenHighlights = highlighter.getTokenHighlights(tokenType);
 
-        processIntersectingRange(chars, hiStart, hiEnd, tokenHighlights, result);
+        processIntersectingRange(markers, chars, hiStart, hiEnd, tokenHighlights, result);
       }
       finally {
         lexer.advance();
@@ -137,14 +188,15 @@ public class ChunkExtractor {
     return result.toArray(new TextChunk[result.size()]);
   }
 
-  private void processIntersectingRange(CharSequence chars,
+  private void processIntersectingRange(List<RangeMarker> markers,
+                                        CharSequence chars,
                                         int hiStart,
                                         int hiEnd,
                                         TextAttributesKey[] tokenHighlights,
                                         List<TextChunk> result) {
     TextAttributes originalAttrs = convertAttributes(tokenHighlights);
     int lastOffset = hiStart;
-    for(RangeMarker rangeMarker: myRangeMarkers) {
+    for(RangeMarker rangeMarker: markers) {
       int usageStart = rangeMarker.getStartOffset();
       int usageEnd = rangeMarker.getEndOffset();
       if (rangeMarker.isValid() && rangeIntersect(lastOffset, hiEnd, usageStart, usageEnd)) {
@@ -191,11 +243,11 @@ public class ChunkExtractor {
     return attrs;
   }
 
-  private void appendPrefix(List<TextChunk> result) {
+  private void appendPrefix(List<TextChunk> result, int lineNumber, int columnNumber) {
     StringBuilder buffer = new StringBuilder("(");
-    buffer.append(myLineNumber + 1);
+    buffer.append(lineNumber + 1);
     buffer.append(", ");
-    buffer.append(myColumnNumber + 1);
+    buffer.append(columnNumber + 1);
     buffer.append(") ");
     TextChunk prefixChunk = new TextChunk(myColorsScheme.getAttributes(UsageTreeColors.USAGE_LOCATION), buffer.toString());
     result.add(prefixChunk);

@@ -150,8 +150,10 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
+        final PsiDirectory targetDirectory = superClass.getContainingFile().getContainingDirectory();
+        final PsiPackage targetPackage = targetDirectory != null ? JavaDirectoryService.getInstance().getPackage(targetDirectory) : null;
         conflicts
-          .putAllValues(PullUpConflictsUtil.checkConflicts(infos, mySubclass, superClass, null, null, dialog.getContainmentVerifier()));
+          .putAllValues(PullUpConflictsUtil.checkConflicts(infos, mySubclass, superClass, targetPackage, targetDirectory, dialog.getContainmentVerifier()));
       }
     }, "Detecting possible conflicts...", true, myProject)) return false;
     if (!conflicts.isEmpty()) {

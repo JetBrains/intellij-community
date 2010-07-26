@@ -19,32 +19,35 @@ package com.intellij.execution.testframework;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.ui.ConsoleViewContentType;
 
-public class DeferingPrinter extends CompositePrintable implements Printer.Intermediate {
-  private final boolean myCollectOutput;
+public class DeferingPrinter implements Printer {
+  private CompositePrintable myCompositePrintable;
 
-  public DeferingPrinter(final boolean collectOutput) {
-    myCollectOutput = collectOutput;
+  public DeferingPrinter() {
+    myCompositePrintable = new CompositePrintable();
   }
 
   public void print(final String text, final ConsoleViewContentType contentType) {
-    addLast(new ExternalOutput(text, contentType));
+    myCompositePrintable.addLast(new Printable() {
+      public void printOn(final Printer printer) {
+        printer.print(text, contentType);
+      }
+    });
   }
 
   public void onNewAvailable(final Printable printable) {
-    addLast(printable);
+    myCompositePrintable.addLast(printable);
   }
 
   public void printHyperlink(final String text, final HyperlinkInfo info) {
-    addLast(new HyperLink(text, info));
+    myCompositePrintable.addLast(new HyperLink(text, info));
   }
 
   public void mark() {
-    addLast(new PrinterMark());
+    myCompositePrintable.addLast(new PrinterMark());
   }
 
-  public void printOn(final Printer printer) {
-    super.printOn(printer);
-    if (!myCollectOutput)
-      clear();
+  public void printAndForget(final Printer printer) {
+    myCompositePrintable.printOn(printer);
+    myCompositePrintable.clear();
   }
 }

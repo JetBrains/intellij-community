@@ -19,6 +19,7 @@ package org.intellij.lang.xpath.xslt.impl;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -32,6 +33,7 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumDataDescriptor;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.xml.NanoXmlUtil;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.psi.*;
@@ -40,10 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /*
 * Created by IntelliJ IDEA.
@@ -90,6 +89,10 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
         return new DataIndexer<String, Kind, FileContent>() {
             @NotNull
             public Map<String, Kind> map(FileContent inputData) {
+                CharSequence inputDataContentAsText = inputData.getContentAsText();
+                if (CharArrayUtil.indexOf(inputDataContentAsText, XsltSupport.XSLT_NS, 0) == -1) {
+                  return Collections.emptyMap();
+                }
                 final HashMap<String, Kind> map = new HashMap<String, Kind>();
                 NanoXmlUtil.parse(new ByteArrayInputStream(inputData.getContent()), new NanoXmlUtil.IXMLBuilderAdapter() {
                     NanoXmlUtil.IXMLBuilderAdapter attributeHandler;
@@ -139,6 +142,9 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
     public FileBasedIndex.InputFilter getInputFilter() {
         return new FileBasedIndex.InputFilter() {
             public boolean acceptInput(VirtualFile file) {
+                if (file.getFileSystem() instanceof JarFileSystem) {
+                  return false; // there is lots and lots of custom XML inside zip files
+                }
                 return file.getFileType() == StdFileTypes.XML;
             }
         };

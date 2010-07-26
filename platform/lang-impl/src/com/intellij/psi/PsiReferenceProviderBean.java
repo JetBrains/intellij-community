@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class PsiReferenceProviderBean extends AbstractExtensionPointBean {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.PsiReferenceProviderBean");
-  @Tag("className")
+  @Attribute("providerClass")
   public String className;
   @Tag("description")
   public String description;

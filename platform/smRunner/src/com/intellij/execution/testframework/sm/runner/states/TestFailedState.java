@@ -15,8 +15,9 @@
  */
 package com.intellij.execution.testframework.sm.runner.states;
 
+import com.intellij.execution.testframework.CompositePrintable;
 import com.intellij.execution.testframework.Printer;
-import com.intellij.execution.testframework.ui.PrintableTestProxy;
+import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -38,16 +39,16 @@ public class TestFailedState extends AbstractState {
                                                   @Nullable final String stackTrace) {
     final String text = (StringUtil.isEmptyOrSpaces(localizedMessage)
                            ? ""
-                           : localizedMessage + PrintableTestProxy.NEW_LINE) +
+                           : localizedMessage + CompositePrintable.NEW_LINE) +
                         (StringUtil.isEmptyOrSpaces(stackTrace)
                            ? ""
-                           : stackTrace + PrintableTestProxy.NEW_LINE);
+                           : stackTrace + CompositePrintable.NEW_LINE);
     return StringUtil.isEmptyOrSpaces(text) ? null : text;
   }
 
   public static void printError(@NotNull final Printer printer,
                                 @NotNull final String errorPresentationText) {
-    printer.print(PrintableTestProxy.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
+    printer.print(CompositePrintable.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
     printer.mark();
     printer.print(errorPresentationText, ConsoleViewContentType.ERROR_OUTPUT);
   }

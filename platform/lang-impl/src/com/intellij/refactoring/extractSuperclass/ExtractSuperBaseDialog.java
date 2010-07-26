@@ -128,6 +128,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
     final ButtonGroup buttonGroup = new ButtonGroup();
     buttonGroup.add(myRbExtractSuperclass);
     buttonGroup.add(myRbExtractSubclass);
+    customizeRadiobuttons(box, buttonGroup);
     myRbExtractSuperclass.setSelected(true);
 
     ItemListener listener = new ItemListener() {
@@ -138,6 +139,9 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
     myRbExtractSuperclass.addItemListener(listener);
     myRbExtractSubclass.addItemListener(listener);
     return box;
+  }
+
+  protected void customizeRadiobuttons(Box box, ButtonGroup buttonGroup) {
   }
 
   protected JComponent createNorthPanel() {

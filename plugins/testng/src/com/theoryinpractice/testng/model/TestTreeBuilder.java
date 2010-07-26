@@ -50,7 +50,7 @@ public class TestTreeBuilder extends AbstractTestTreeBuilder
     }
 
     public void addItem(TestProxy parent, TestProxy proxy) {
-        parent.addResult(proxy);
+        parent.addChild(proxy);
         DefaultMutableTreeNode parentNode = getNodeForElement(parent);
         if (parentNode != null)
             updateSubtree(parentNode);

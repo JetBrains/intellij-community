@@ -82,6 +82,11 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doTest("Super");
   }
 
+  public void testMethodDeepHierarchy() throws Exception {
+    myDoCompare = false;
+    doTest("Super");
+  }
+
   public void testLocalVariableSideEffect() throws Exception {
     myDoCompare = false;
     try {

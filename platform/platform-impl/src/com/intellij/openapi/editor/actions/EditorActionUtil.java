@@ -268,16 +268,19 @@ public class EditorActionUtil {
   private static void moveCaretToStartOfSoftWrappedLine(Editor editor, VisualPosition currentVisual) {
     CaretModel caretModel = editor.getCaretModel();
     int line = currentVisual.line;
-    int column = 0;
 
-    if (currentVisual.column == 0) {
+    // We use default column value as '1' below in assumption that we work with soft-wrapped line and don't want to put cursor
+    // before 'after soft wrap' drawing.
+    int column = 1;
+
+    if (currentVisual.column <= 1) {
       line--;
       int nonSpaceColumn = findFirstNonSpaceColumnOnTheLine(editor, line);
-      column = nonSpaceColumn >= 0 ? nonSpaceColumn : 0;
+      column = nonSpaceColumn >= 1 ? nonSpaceColumn : 1;
     }
     else {
       int nonSpaceColumn = findFirstNonSpaceColumnOnTheLine(editor, currentVisual.line);
-      if (nonSpaceColumn > 0 /* current visual line is not empty */ && nonSpaceColumn < currentVisual.column) {
+      if (nonSpaceColumn > 1 /* current visual line is not empty */ && nonSpaceColumn < currentVisual.column) {
         column = nonSpaceColumn;
       }
     }
@@ -364,18 +367,13 @@ public class EditorActionUtil {
           // There are soft wrap-introduced visual lines after the target one
           return -1;
         }
-
-        end = findFirstNonSpaceOffsetInRange(document.getCharsSequence(), softWrap.getStart(), logLineEndOffset);
-        if (end >= 0) {
-          // Width of soft wrap virtual text that is located at the target visual line.
-          int result = EditorUtil.calcColumnNumber(editor, softWrapText, j, softWrapTextLength);
-          result++; // For column reserved for 'after soft wrap' sign.
-          result += EditorUtil.calcColumnNumber(editor, document.getCharsSequence(), softWrap.getStart(), end);
-          return result;
-        }
-        else {
-          return -1;
-        }
+      }
+      int end = findFirstNonSpaceOffsetInRange(document.getCharsSequence(), softWrap.getStart(), logLineEndOffset);
+      if (end >= 0) {
+        return EditorUtil.calcColumnNumber(editor, document.getCharsSequence(), softWrap.getStart(), end);
+      }
+      else {
+        return -1;
       }
     }
     return -1;
@@ -415,6 +413,7 @@ public class EditorActionUtil {
     LogicalPosition blockSelectionStart = selectionModel.hasBlockSelection()
                                           ? selectionModel.getBlockStart()
                                           : caretModel.getLogicalPosition();
+    SoftWrapModel softWrapModel = editor.getSoftWrapModel();
 
     int lineNumber = editor.getCaretModel().getLogicalPosition().line;
     if (lineNumber >= document.getLineCount()) {
@@ -434,7 +433,7 @@ public class EditorActionUtil {
       LogicalPosition logical = editor.visualToLogicalPosition(visualEndOfLineWithCaret);
       int offset = editor.logicalPositionToOffset(logical);
       if (offset < editor.getDocument().getTextLength()) {
-        SoftWrapModel softWrapModel = editor.getSoftWrapModel();
+
         TextChange softWrap = softWrapModel.getSoftWrap(offset);
         if (softWrap == null) {
           // Same offset may correspond to positions on different visual lines in case of soft wraps presence
@@ -442,21 +441,33 @@ public class EditorActionUtil {
           // Hence, we check for soft wraps presence at two offsets.
           softWrap = softWrapModel.getSoftWrap(offset + 1);
         }
+        int line = currentVisualCaret.line;
+        int column = currentVisualCaret.column;
         if (softWrap != null) {
-          int line = currentVisualCaret.line + 1;
-          int column = EditorUtil.getLastVisualLineColumnNumber(editor, line);
-          visualEndOfLineWithCaret = new VisualPosition(line, column);
+          line++;
+          column = EditorUtil.getLastVisualLineColumnNumber(editor, line);
         }
+        // There is a possible case that the last visual line of particular logical line contains only white spaces. We want to move
+        // caret just after 'after soft wrap' drawing then.
+        else if (line == editor.offsetToVisualPosition(document.getLineEndOffset(lineNumber)).line) {
+          column = 1;
+        }
+        visualEndOfLineWithCaret = new VisualPosition(line, column);
       }
     }
-    
+
+    int offset;
+    int newOffset;
     LogicalPosition logLineEnd = editor.visualToLogicalPosition(visualEndOfLineWithCaret);
-    int offset = editor.logicalPositionToOffset(logLineEnd);
+    offset = editor.logicalPositionToOffset(logLineEnd);
     lineNumber = logLineEnd.line;
-    int newOffset = offset;
+    newOffset = offset;
 
     CharSequence text = document.getCharsSequence();
     for (int i = newOffset - 1; i >= document.getLineStartOffset(lineNumber); i--) {
+      if (softWrapModel.getSoftWrap(i) != null) {
+        break;
+      }
       if (text.charAt(i) != ' ' && text.charAt(i) != '\t') {
         break;
       }

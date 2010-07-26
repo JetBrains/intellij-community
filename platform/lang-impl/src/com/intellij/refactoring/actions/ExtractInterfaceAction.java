@@ -13,14 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.compiler.impl.javaCompiler;
 
-import com.intellij.openapi.compiler.CompileContext;
+package com.intellij.refactoring.actions;
 
-/**
- * @author Eugene Zhuravlev
- *         Date: Aug 19, 2008
- */
-public interface DependencyProcessor {
-  void processDependencies(CompileContext context, int classQualifiedName);
+import com.intellij.lang.refactoring.RefactoringSupportProvider;
+import com.intellij.refactoring.RefactoringActionHandler;
+import org.jetbrains.annotations.Nullable;
+
+public class ExtractInterfaceAction extends ExtractSuperActionBase {
+
+  public ExtractInterfaceAction() {
+    setInjectedContext(true);
+  }
+
+  @Nullable
+  @Override
+  protected RefactoringActionHandler getRefactoringHandler(RefactoringSupportProvider supportProvider) {
+    return supportProvider.getExtractInterfaceHandler();
+  }
+
 }

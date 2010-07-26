@@ -28,10 +28,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringConflictsUtil;
@@ -43,6 +40,7 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -56,17 +54,17 @@ public class PullUpConflictsUtil {
   public static MultiMap<PsiElement, String> checkConflicts(final MemberInfo[] infos,
                                         PsiClass subclass,
                                         @Nullable PsiClass superClass,
-                                        PsiPackage targetPackage,
-                                        PsiDirectory targetDirectory,
+                                        @NotNull PsiPackage targetPackage,
+                                        @NotNull PsiDirectory targetDirectory,
                                         final InterfaceContainmentVerifier interfaceContainmentVerifier) {
     return checkConflicts(infos, subclass, superClass, targetPackage, targetDirectory, interfaceContainmentVerifier, true);
   }
 
   public static MultiMap<PsiElement, String> checkConflicts(final MemberInfo[] infos,
-                                                            final PsiClass subclass,
+                                                            @NotNull final PsiClass subclass,
                                                             @Nullable PsiClass superClass,
-                                                            final PsiPackage targetPackage,
-                                                            PsiDirectory targetDirectory,
+                                                            @NotNull final PsiPackage targetPackage,
+                                                            @NotNull PsiDirectory targetDirectory,
                                                             final InterfaceContainmentVerifier interfaceContainmentVerifier,
                                                             boolean movedMembers2Super) {
     final Set<PsiMember> movedMembers = new HashSet<PsiMember>();
@@ -143,9 +141,20 @@ public class PullUpConflictsUtil {
     }
     RefactoringConflictsUtil.analyzeModuleConflicts(subclass.getProject(), checkModuleConflictsList,
                                            new UsageInfo[0], targetRepresentativeElement, conflicts);
+    final String fqName = subclass.getQualifiedName();
+    final String packageName;
+    if (fqName != null) {
+      packageName = StringUtil.getPackageName(fqName);
+    } else {
+      final PsiFile psiFile = PsiTreeUtil.getParentOfType(subclass, PsiFile.class);
+      if (psiFile instanceof PsiClassOwner) {
+        packageName = ((PsiClassOwner)psiFile).getPackageName();
+      } else {
+        packageName = null;
+      }
+    }
+    final boolean toDifferentPackage = !Comparing.strEqual(targetPackage.getQualifiedName(), packageName);
     for (final PsiMethod abstractMethod : abstractMethods) {
-      final boolean toDifferentPackage =
-        !Comparing.strEqual(targetPackage.getQualifiedName(), StringUtil.getPackageName(subclass.getQualifiedName()));
       abstractMethod.accept(new ClassMemberReferencesVisitor(subclass) {
         @Override
         protected void visitClassMemberReferenceElement(PsiMember classMember, PsiJavaCodeReferenceElement classMemberReference) {

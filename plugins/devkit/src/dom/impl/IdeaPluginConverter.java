@@ -19,17 +19,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Function;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomService;
 import com.intellij.util.xml.ResolvingConverter;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+import org.jetbrains.idea.devkit.dom.PluginModule;
 
 import java.util.Collection;
 import java.util.List;
@@ -39,11 +40,6 @@ import java.util.Set;
  * @author mike
  */
 public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
-  @NonNls private static final Set<String> PLATFORM_MODULES = CollectionFactory.newTroveSet("com.intellij.modules.platform",
-                                                                                            "com.intellij.modules.lang",
-                                                                                            "com.intellij.modules.vcs",
-                                                                                            "com.intellij.modules.xdebugger",
-                                                                                            "com.intellij.modules.xml");
 
   @NotNull
   public Collection<? extends IdeaPlugin> getVariants(final ConvertContext context) {
@@ -53,7 +49,13 @@ public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
   @NotNull
   @Override
   public Set<String> getAdditionalVariants(@NotNull final ConvertContext context) {
-    return PLATFORM_MODULES;
+    final THashSet<String> result = new THashSet<String>();
+    for (IdeaPlugin ideaPlugin : getVariants(context)) {
+      for (PluginModule module : ideaPlugin.getModules()) {
+        ContainerUtil.addIfNotNull(module.getValue().getValue(), result);
+      }
+    }
+    return result;
   }
 
   @Override
@@ -78,6 +80,10 @@ public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
       final String otherId = ideaPlugin.getPluginId();
       if (otherId == null) continue;
       if (otherId.equals(s)) return ideaPlugin;
+      for (PluginModule module : ideaPlugin.getModules()) {
+        final String moduleName = module.getValue().getValue();
+        if (moduleName != null && moduleName.equals(s)) return ideaPlugin;
+      }
     }
     return null;
   }

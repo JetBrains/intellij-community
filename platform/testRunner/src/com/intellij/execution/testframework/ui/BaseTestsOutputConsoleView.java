@@ -18,10 +18,7 @@ package com.intellij.execution.testframework.ui;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
-import com.intellij.execution.testframework.ExternalOutput;
-import com.intellij.execution.testframework.HyperLink;
-import com.intellij.execution.testframework.Printable;
-import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.execution.testframework.*;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ObservableConsoleView;
@@ -38,10 +35,10 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
   protected TestConsoleProperties myProperties;
   protected TestResultsPanel myTestResultsPanel;
 
-  public BaseTestsOutputConsoleView(final TestConsoleProperties properties) {
+  public BaseTestsOutputConsoleView(final TestConsoleProperties properties, final AbstractTestProxy unboundOutputRoot) {
     myProperties = properties;
     myConsole = TextConsoleBuilderFactory.getInstance().createBuilder(properties.getProject(), myProperties.getScope()).getConsole();
-    myPrinter = new TestsOutputConsolePrinter(myConsole, properties);
+    myPrinter = new TestsOutputConsolePrinter(myConsole, properties, unboundOutputRoot);
     myProperties.setConsole(this);
 
     Disposer.register(this, myProperties);
@@ -57,7 +54,11 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
   protected abstract TestResultsPanel createTestResultsPanel();
 
   public void print(final String s, final ConsoleViewContentType contentType) {
-    printNew(new ExternalOutput(s, contentType));
+    printNew(new Printable() {
+      public void printOn(final Printer printer) {
+        printer.print(s, contentType);
+      }
+    });
   }
 
   public void clear() {
