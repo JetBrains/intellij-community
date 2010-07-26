@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.IntInlineKeyDescriptor;
@@ -127,37 +128,43 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     };
   }
 
-  private static Key<StubElement> stubElementKey = Key.create("stub.tree.for.file.content");
+  private static Key<Object> stubElementKey = Key.create("stub.tree.for.file.content");
 
   @Nullable
   public static StubElement buildStubTree(final FileContent inputData) {
-    StubElement data = inputData.getUserData(stubElementKey);
-    if (data != null) return data;
+    Object data = inputData.getUserData(stubElementKey);
+    if (data == null) {
+      synchronized (inputData) {
+        data = inputData.getUserData(stubElementKey);
+        if (data == null) {
+          final FileType fileType = inputData.getFileType();
 
-    synchronized (inputData) {
-      data = inputData.getUserData(stubElementKey);
-      if (data != null) return data;
+          if (fileType.isBinary()) {
+            final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
+            if (builder != null) {
+              data = builder.buildStubTree(inputData.getFile(), inputData.getContent(), inputData.getProject());
+            }
+            else {
+              data = ObjectUtils.NULL;
+            }
+          }
+          else {
+            final LanguageFileType filetype = (LanguageFileType)fileType;
+            Language l = filetype.getLanguage();
+            final IFileElementType type = LanguageParserDefinitions.INSTANCE.forLanguage(l).getFileNodeType();
 
-      final FileType fileType = inputData.getFileType();
+            PsiFile psi = inputData.getPsiFile();
 
-      if (fileType.isBinary()) {
-        final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
-        assert builder != null;
+            data = ((IStubFileElementType)type).getBuilder().buildStubTree(psi);
+          }
 
-        data = builder.buildStubTree(inputData.getFile(), inputData.getContent(), inputData.getProject());
-      } else {
-        final LanguageFileType filetype = (LanguageFileType)fileType;
-        Language l = filetype.getLanguage();
-        final IFileElementType type = LanguageParserDefinitions.INSTANCE.forLanguage(l).getFileNodeType();
-
-        PsiFile psi = inputData.getPsiFile();
-
-        data = ((IStubFileElementType)type).getBuilder().buildStubTree(psi);
+          inputData.putUserData(stubElementKey, data);
+        }
       }
-
-      inputData.putUserData(stubElementKey, data);
-      return data;
     }
+    if (data == ObjectUtils.NULL) return null;
+    if (data instanceof StubElement) return (StubElement)data;
+    throw new AssertionError(data);
   }
 
   public KeyDescriptor<Integer> getKeyDescriptor() {
