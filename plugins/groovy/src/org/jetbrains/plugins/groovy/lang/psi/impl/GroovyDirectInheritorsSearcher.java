@@ -18,18 +18,49 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
+import com.intellij.psi.stubs.StubIndex;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
-import org.jetbrains.plugins.groovy.lang.stubs.GroovyCacheUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.GrClassSubstitutor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnonymousClassIndex;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrDirectInheritorsIndex;
+
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * @author ven
  */
 class GroovyDirectInheritorsSearcher implements QueryExecutor<PsiClass, DirectClassInheritorsSearch.SearchParameters> {
   public GroovyDirectInheritorsSearcher() {
+  }
+
+  @NotNull
+  private static PsiClass[] getDeriverCandidates(PsiClass clazz, GlobalSearchScope scope) {
+    final String name = clazz.getName();
+    if (name == null) return GrTypeDefinition.EMPTY_ARRAY;
+    final ArrayList<PsiClass> inheritors = new ArrayList<PsiClass>();
+    final Collection<GrReferenceList> refLists = StubIndex.getInstance().get(GrDirectInheritorsIndex.KEY, name, clazz.getProject(), scope);
+    for (GrReferenceList list : refLists) {
+      final PsiElement parent = list.getParent();
+      if (parent instanceof GrTypeDefinition) {
+        inheritors.add(GrClassSubstitutor.getSubstitutedClass(((GrTypeDefinition)parent)));
+      }
+    }
+    final Collection<GrAnonymousClassDefinition> classes =
+      StubIndex.getInstance().get(GrAnonymousClassIndex.KEY, name, clazz.getProject(), scope);
+    for (GrAnonymousClassDefinition aClass : classes) {
+      inheritors.add(aClass);
+    }
+    return inheritors.toArray(new PsiClass[inheritors.size()]);
   }
 
   public boolean execute(DirectClassInheritorsSearch.SearchParameters queryParameters, final Processor<PsiClass> consumer) {
@@ -39,7 +70,7 @@ class GroovyDirectInheritorsSearcher implements QueryExecutor<PsiClass, DirectCl
       final PsiClass[] candidates = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
         public PsiClass[] compute() {
           if (!clazz.isValid()) return PsiClass.EMPTY_ARRAY;
-          return GroovyCacheUtil.getDeriverCandidates(clazz, (GlobalSearchScope)scope);
+          return getDeriverCandidates(clazz, (GlobalSearchScope)scope);
         }
       });
       for (final PsiClass candidate : candidates) {
