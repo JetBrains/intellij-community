@@ -48,7 +48,6 @@ import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
 import javax.swing.event.HyperlinkEvent;
 import java.io.IOException;
@@ -164,13 +163,13 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     return pair.first;
   }
 
-  public static boolean processExecutors(PsiClass psiClass, PsiElement place, PsiScopeProcessor processor) {
-    if (!(place instanceof GrReferenceExpression) || PsiTreeUtil.getParentOfType(place, PsiAnnotation.class) != null) {
+  public static boolean processExecutors(PsiType psiType, PsiElement place, PsiScopeProcessor processor) {
+    if (PsiTreeUtil.getParentOfType(place, PsiAnnotation.class) != null) {
       // Basic filter, all DSL contexts are applicable for reference expressions only
       return true;
     }
 
-    final String qname = psiClass.getQualifiedName();
+    final String qname = psiType.getCanonicalText();
     if (qname == null) {
       return true;
     }
@@ -178,7 +177,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     final PsiFile placeFile = place.getContainingFile().getOriginalFile();
 
     for (GroovyDslScript script : getDslScripts(place.getProject())) {
-      if (!script.processExecutor(processor, psiClass, place, placeFile, qname)) {
+      if (!script.processExecutor(processor, psiType, place, placeFile, qname)) {
         return false;
       }
     }

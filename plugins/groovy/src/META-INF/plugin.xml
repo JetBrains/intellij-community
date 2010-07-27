@@ -48,7 +48,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.intellij.groovy">
-    <membersContributor implementation="org.jetbrains.plugins.groovy.lang.psi.impl.GdkMembersContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicMembersContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.ImmutableAnnotationProcessor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.GrInheritConstructorContributor"/>

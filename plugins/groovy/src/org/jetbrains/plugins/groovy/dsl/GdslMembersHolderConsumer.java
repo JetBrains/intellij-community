@@ -19,6 +19,8 @@ package org.jetbrains.plugins.groovy.dsl;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.holders.CustomMembersHolder;
 
 /**
@@ -28,5 +30,7 @@ public interface GdslMembersHolderConsumer {
   void addMemberHolder(CustomMembersHolder holder);
   Project getProject();
   PsiElement getPlace();
-  PsiClass getClassType();
+  PsiType getClassType();
+  @Nullable
+  PsiClass getPsiClass();
 }

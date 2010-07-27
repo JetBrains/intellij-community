@@ -143,14 +143,8 @@ public class ResolveUtil {
       return false;
     }
 
-    if (type instanceof PsiClassType) {
-      PsiClass psiClass = ((PsiClassType)type).resolve();
-      if (psiClass instanceof PsiTypeParameter) {
-        psiClass = psiClass.getSuperClass();
-      }
-      if (psiClass != null && !GroovyDslFileIndex.processExecutors(psiClass, place, processor)) {
-        return false;
-      }
+    if (!GroovyDslFileIndex.processExecutors(type, place, processor)) {
+      return false;
     }
 
     for (PsiType psiType : getAllSuperTypes(type, place).values()) {
