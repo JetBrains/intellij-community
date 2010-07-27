@@ -35,4 +35,6 @@ public class Groovy16HighlightingTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testInnerEnum() throws Exception {doTest();}
+  public void testSuperWithNotEnclosingClass() throws Throwable {doTest();}
+  public void testThisWithWrongQualifier() throws Throwable {doTest();}
 }
