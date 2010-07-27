@@ -73,6 +73,13 @@ public class PyTypeTest extends PyLightFixtureTestCase {
     assertEquals("set", type.getName());
   }
 
+  public void testNone() {   // PY-1425
+    PyType type = doTest("class C:\n" +
+                         "    def __init__(self): self.foo = None\n" +
+                         "expr = C().foo");
+    assertNull(type);
+  }
+
   private PyType doTest(final String text) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
