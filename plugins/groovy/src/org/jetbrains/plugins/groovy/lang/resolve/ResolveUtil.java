@@ -427,7 +427,6 @@ public class ResolveUtil {
 
     PsiParameter[] params1 = method1.getParameterList().getParameters();
     PsiParameter[] params2 = method2.getParameterList().getParameters();
-    if (argumentCount != params1.length && argumentCount == params2.length) return true;
 
     if (params1.length != params2.length) return false;
 
