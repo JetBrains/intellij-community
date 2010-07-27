@@ -1086,7 +1086,7 @@ public class DeclarationParsing extends Parsing {
 
     if (type == null) {
       type = ASTFactory.composite(JavaElementType.TYPE);
-      param.rawAddChildren(Factory.createErrorElement("Parameter type missing"));
+      param.rawAddChildren(Factory.createErrorElement(JavaErrorMessages.message("expected.type")));
     }
 
     param.rawAddChildren(type);
