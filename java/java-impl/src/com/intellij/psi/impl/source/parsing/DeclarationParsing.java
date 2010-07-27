@@ -705,8 +705,8 @@ public class DeclarationParsing extends Parsing {
       aClass.rawAddChildren(invalidElementsGroup);
       while (true) {
         IElementType tokenType = lexer.getTokenType();
-        if (tokenType == JavaTokenType.IDENTIFIER || tokenType == JavaTokenType.COMMA || tokenType == JavaTokenType.EXTENDS_KEYWORD || tokenType ==
-                                                                                                                                       JavaTokenType.IMPLEMENTS_KEYWORD) {
+        if (tokenType == JavaTokenType.IDENTIFIER || tokenType == JavaTokenType.COMMA || tokenType == JavaTokenType.EXTENDS_KEYWORD ||
+            tokenType == JavaTokenType.IMPLEMENTS_KEYWORD) {
           invalidElementsGroup.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
         }
         else {
