@@ -180,6 +180,7 @@ class ProjectBuilder {
             excludes: chunk.excludes,
             classpath: moduleCompileClasspath(chunk, tests, true),
             targetFolder: dst,
+            moduleDependenciesSourceRoots: transitiveModuleDependenciesSourcePaths(chunk, tests),
             tempRootsToDelete: []
     )
 
@@ -209,13 +210,19 @@ class ProjectBuilder {
     Set<String> set = new LinkedHashSet()
     Set<Object> processed = new HashSet()
 
-    transitiveClasspath(chunk, test, provided, set, processed)
+    collectPathTransitively(chunk, false, test, provided, set, processed)
 
     if (test) {
       set.add(chunkOutput(chunk))
     }
 
     map[chunk] = set.asList()
+  }
+
+  List<String> transitiveModuleDependenciesSourcePaths(ModuleChunk chunk, boolean tests) {
+    Set<String> result = new LinkedHashSet<String>()
+    collectPathTransitively(chunk, true, tests, true, result, new HashSet<Object>())
+    return result.asList()
   }
 
   List<String> moduleRuntimeClasspath(Module module, boolean test) {
@@ -234,15 +241,24 @@ class ProjectBuilder {
     return set.asList()
   }
 
-  private def transitiveClasspath(Object chunkOrModule, boolean test, boolean provided, Set<String> set, Set<Object> processed) {
+  private def collectPathTransitively(Object chunkOrModule, boolean collectSources, boolean test, boolean provided, Set<String> set, Set<Object> processed) {
     if (processed.contains(chunkOrModule)) return
     processed << chunkOrModule
     
     chunkOrModule.getClasspath(test, provided).each {
       if (it instanceof Module) {
-        transitiveClasspath(it, test, provided, set, processed)
+        collectPathTransitively(it, collectSources, test, provided, set, processed)
+        if (collectSources) {
+          set.addAll(it.sourceRoots)
+          if (test) {
+            set.addAll(it.testRoots)
+          }
+        }
       }
-      set.addAll(it.getClasspathRoots(test))
+      if (!collectSources) {
+        set.addAll(it.getClasspathRoots(test))
+      }
+
     }
   }
 

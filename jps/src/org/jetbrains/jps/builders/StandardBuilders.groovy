@@ -210,6 +210,12 @@ class JetBrainsInstrumentations implements ModuleBuilder {
         src(path: it)
       }
 
+      nestedformdirs {
+        state.moduleDependenciesSourceRoots.each {
+          pathelement(location: it)
+        }
+      }
+
       classpath {
         state.classpath.each {
           pathelement(location: it)
