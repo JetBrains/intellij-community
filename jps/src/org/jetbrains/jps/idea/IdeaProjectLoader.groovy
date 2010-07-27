@@ -123,7 +123,7 @@ public class IdeaProjectLoader implements MacroExpansion {
     def includePatterns = []
     def excludePatterns = []
     def componentTag = getComponent(root, "CompilerConfiguration")
-    componentTag?.wildcardResourcePatterns[0]?.entry?.each {Node entryTag ->
+    componentTag?.wildcardResourcePatterns?.getAt(0)?.entry?.each {Node entryTag ->
       String pattern = entryTag."@name"
       if (pattern.startsWith("!")) {
         excludePatterns << convertPattern(pattern.substring(1))
