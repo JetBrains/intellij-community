@@ -56,6 +56,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -237,7 +238,11 @@ public class GroovyConstructorUsagesSearchHelper {
                                                         final PsiMethod constructor,
                                                         final Processor<PsiReference> consumer,
                                                         PsiReference ref) {
-    final PsiElement parent = element.getParent();
+    PsiElement parent = element.getParent();
+
+    if (parent instanceof GrAnonymousClassDefinition) {
+      parent = parent.getParent();
+    }
     if (parent instanceof GrNewExpression) {
       final PsiMethod resolvedConstructor = ((GrNewExpression)parent).resolveConstructor();
       if (constructor.getManager().areElementsEquivalent(resolvedConstructor, constructor) && !consumer.process(ref)) {
