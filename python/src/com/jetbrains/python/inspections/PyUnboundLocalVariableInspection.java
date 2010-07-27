@@ -1,14 +1,20 @@
 package com.jetbrains.python.inspections;
 
+import com.intellij.codeInsight.controlflow.ControlFlowUtil;
+import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.Function;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.actions.AddGlobalQuickFix;
+import com.jetbrains.python.codeInsight.controlflow.PyControlFlowUtil;
+import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeVariable;
@@ -90,18 +96,51 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
             }
           }
           // Ignore this if can resolve not to local variable
-          if (resolves2LocalVariable) {
-            if (owner instanceof PyClass || owner instanceof PyFunction){
-              registerProblem(node, PyBundle.message("INSP.unbound.local.variable", node.getName()),
-                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                              null,
-                              new AddGlobalQuickFix());
-            } else {
-              if (resolve2Scope){
-                registerProblem(node, PyBundle.message("INSP.unbound.name.not.defined", node.getName()));
+          if (!resolves2LocalVariable) {
+            return;
+          }
+
+          final Ref<Boolean> readAccessSeen = new Ref<Boolean>(false);
+          final Instruction[] instructions = owner.getControlFlow().getInstructions();
+          final int number = ControlFlowUtil.findInstructionNumberByElement(instructions, node);
+          PyControlFlowUtil.iteratePrev(number, instructions, new Function<Instruction, PyControlFlowUtil.Operation>() {
+            public PyControlFlowUtil.Operation fun(final Instruction inst) {
+              if (inst.num() == number){
+                return PyControlFlowUtil.Operation.NEXT;
               }
+              if (inst instanceof ReadWriteInstruction) {
+                final ReadWriteInstruction rwInst = (ReadWriteInstruction)inst;
+                if (name.equals(rwInst.getName())) {
+                  if (scope.getDeclaredVariable(inst.getElement(), name) != null) {
+                    return PyControlFlowUtil.Operation.BREAK;
+                  }
+                  if (rwInst.getAccess().isWriteAccess()) {
+                    return PyControlFlowUtil.Operation.CONTINUE;
+                  }
+                  else {
+                    readAccessSeen.set(true);
+                    return PyControlFlowUtil.Operation.BREAK;
+                  }
+                }
+              }
+              return PyControlFlowUtil.Operation.NEXT;
             }
-          }}
+          });
+          // In this case we've already inspected prev read access and shouldn't warn about this one
+          if (readAccessSeen.get()){
+            return;
+          }
+          if (owner instanceof PyClass || owner instanceof PyFunction){
+            registerProblem(node, PyBundle.message("INSP.unbound.local.variable", node.getName()),
+                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                            null,
+                            new AddGlobalQuickFix());
+          } else {
+            if (resolve2Scope){
+              registerProblem(node, PyBundle.message("INSP.unbound.name.not.defined", node.getName()));
+            }
+          }
+        }
       }
     };
   }
