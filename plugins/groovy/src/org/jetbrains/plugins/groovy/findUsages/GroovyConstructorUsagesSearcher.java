@@ -16,9 +16,7 @@
 
 package org.jetbrains.plugins.groovy.findUsages;
 
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
@@ -28,8 +26,6 @@ import com.intellij.util.QueryExecutor;
  */
 public class GroovyConstructorUsagesSearcher implements QueryExecutor<PsiReference, MethodReferencesSearch.SearchParameters> {
   public boolean execute(MethodReferencesSearch.SearchParameters p, final Processor<PsiReference> consumer) {
-    final PsiMethod method = p.getMethod();
-    final SearchScope searchScope = p.getScope();
-    return GroovyConstructorUsagesSearchHelper.execute(method, searchScope, consumer);
+    return GroovyConstructorUsagesSearchHelper.processConstructorUsages(p.getMethod(), p.getScope(), consumer, p.getOptimizer());
   }
 }

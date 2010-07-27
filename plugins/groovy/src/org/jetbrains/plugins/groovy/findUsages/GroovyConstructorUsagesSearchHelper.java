@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy.findUsages;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
@@ -26,9 +25,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMemberReference;
-import com.intellij.psi.search.DelegatingGlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.AnnotatedElementsSearch;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
@@ -37,6 +34,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ContainerUtil;
@@ -79,7 +77,7 @@ public class GroovyConstructorUsagesSearchHelper {
   private GroovyConstructorUsagesSearchHelper() {
   }
 
-  public static boolean execute(final PsiMethod constructor, final SearchScope searchScope, final Processor<PsiReference> consumer) {
+  public static boolean processConstructorUsages(final PsiMethod constructor, final SearchScope searchScope, final Processor<PsiReference> consumer, final SearchRequestCollector collector) {
     if (!constructor.isConstructor()) return true;
 
     SearchScope onlyGroovy = searchScope;
@@ -117,10 +115,11 @@ public class GroovyConstructorUsagesSearchHelper {
 
 
     final Set<PsiMethod> processedMethods = new ConcurrentHashSet<PsiMethod>();
-    ReferencesSearch.search(clazz, searchScope, true).forEach(new Processor<PsiReference>() {
+
+    ReferencesSearch.searchOptimized(clazz, searchScope, true, collector, true, new PairProcessor<PsiReference, SearchRequestCollector>() {
       @Override
-      public boolean process(PsiReference ref) {
-        return processClassReference(ref, clazz, constructor, consumer, processedMethods, searchScope);
+      public boolean process(PsiReference ref, SearchRequestCollector collector) {
+        return processClassReference(ref, clazz, constructor, consumer, processedMethods, searchScope, collector);
       }
     });
 
@@ -166,29 +165,21 @@ public class GroovyConstructorUsagesSearchHelper {
                                                final PsiClass clazz,
                                                final PsiMethod constructor,
                                                final Processor<PsiReference> consumer,
-                                               final Set<PsiMethod> processedMethods, SearchScope scope) {
+                                               final Set<PsiMethod> processedMethods, SearchScope scope, SearchRequestCollector collector) {
     final PsiElement element = ref.getElement();
     if (element instanceof GrCodeReferenceElement) {
-      if (!ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          return processGroovyConstructorUsages((GrCodeReferenceElement)element, constructor, consumer, ref);
-        }
-      })) {
+      if (!processGroovyConstructorUsages((GrCodeReferenceElement)element, constructor, consumer, ref)) {
         return false;
       }
 
     }
 
-    final PsiMethod method = ApplicationManager.getApplication().runReadAction(new Computable<PsiMethod>() {
-      public PsiMethod compute() {
-        return getMethodToSearchForCallsWithLiteralArguments(element, clazz, processedMethods);
-      }
-    });
+    final PsiMethod method = getMethodToSearchForCallsWithLiteralArguments(element, clazz, processedMethods);
     if (method != null) {
-      return MethodReferencesSearch.search(method, getGppScope(clazz.getProject()).intersectWith(scope), true).forEach(new ReadActionProcessor<PsiReference>() {
+      final GlobalSearchScope gppScope = getGppScope(clazz.getProject());
+      MethodReferencesSearch.searchOptimized(method, gppScope.intersectWith(scope), true, collector, true, new PairProcessor<PsiReference, SearchRequestCollector>() {
         @Override
-        public boolean processInReadAction(PsiReference psiReference) {
+        public boolean process(PsiReference psiReference, SearchRequestCollector collector) {
           if (psiReference instanceof GrReferenceElement) {
             final PsiElement parent = ((GrReferenceElement)psiReference).getParent();
             if (parent instanceof GrCall) {
