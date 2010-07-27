@@ -555,6 +555,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     final MultiMap<VirtualFile, RequestWithProcessor> candidateFiles = collectFiles(singles);
 
+    if (candidateFiles.isEmpty()) {
+      return true;
+    }
+
     final Map<RequestWithProcessor, StringSearcher> searchers = new HashMap<RequestWithProcessor, StringSearcher>();
     final Set<String> allWords = new TreeSet<String>();
     for (RequestWithProcessor singleRequest : candidateFiles.values()) {
